@@ -213,6 +213,7 @@
 #define MI_ERR_TOOFEWDIMS       1342  /* Too few dimensions to be an image */
 #define MI_ERR_ICVNOTATTACHED   1343  /* Tried to access an unattached icv */
 #define MI_ERR_DIMSIZE          1344  /* Dimensions differ in size */
+#define MI_ERR_ICV_INVCOORDS    1345  /* Invalid icv coordinates */
 
 /* MINC public functions */
 /* Define public constant */

@@ -96,6 +96,8 @@ struct mi_icv_struct {
    long   *derv_var_pix_off;    /* variable and user buffers, as well as */
    long    derv_usr_pix_num;    /* pointers to arrays of offsets */
    long   *derv_usr_pix_off;
+   long    derv_icv_start[MAX_VAR_DIMS]; /* Space for storing parameters to */
+   long    derv_icv_count[MAX_VAR_DIMS]; /* MI_icv_access */
 
                            /* Stuff that affects first MI_PRIV_IMGDIMS 
                               (excluding any vector dimension) as image

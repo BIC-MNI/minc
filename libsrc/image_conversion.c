@@ -437,6 +437,7 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    icvp->derv_var_pix_off = NULL;
    icvp->derv_usr_pix_off = NULL;
    for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+      icvp->var_dim_size[idim] = -1;
       icvp->derv_dim_flip[idim] = FALSE;
       icvp->derv_dim_grow[idim] = TRUE;
       icvp->derv_dim_scale[idim] = 1;
@@ -704,7 +705,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
                      icvp->derv_firstdim = MAX(icvp->derv_firstdim, i);
                }
                /* Get the dimension size */
-               MI_CHK_ERR(ncdiminq(cdfid, dim[idim], NULL, &(count[i])))
+               MI_CHK_ERR(ncdiminq(cdfid, dim[idim], NULL, &(count[idim])))
                size *= count[i];
             }
             /* Get space */
@@ -831,6 +832,7 @@ public int miicv_put(int icvid, long start[], long count[], void *values)
    /* Check icv id */
    if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
+
    MI_CHK_ERR(MI_icv_access(MI_PRIV_PUT, icvp, start, count, values))
 
    MI_RETURN(MI_NOERROR);
@@ -864,7 +866,7 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
    long var_count[MAX_VAR_DIMS];     /* Edge lengths in variable */
    long var_end[MAX_VAR_DIMS];       /* Coordinates of last var element */
    int firstdim;
-   int idim;
+   int idim, ndims;
 
    MI_SAVE_ROUTINE_NAME("MI_icv_access");
 
@@ -881,6 +883,16 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 
    /* Translate icv coordinates to variable coordinates */
    {MI_CHK_ERR(MI_icv_coords_tovar(icvp, start, count, var_start, var_count))}
+
+   /* Save icv coordinates for future reference (for dimension conversion
+      routines) */
+   ndims = icvp->var_ndims;
+   if (icvp->var_is_vector && icvp->user_do_scalar)
+      ndims--;
+   for (idim=0; idim < ndims; idim++) {
+      icvp->derv_icv_start[idim] = start[idim];
+      icvp->derv_icv_count[idim] = count[idim];
+   }
 
    /* Do we care about getting variable in convenient increments ? 
       Only if we are getting data and the icv structure wants it */
@@ -985,8 +997,8 @@ private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_coords_tovar
 @INPUT      : icvp      - icv structure pointer
-              icv_start - start vector for icv (if NULL, don't do conversion)
-              icv_count - count vector for icv (if NULL, don't do conversion)
+              icv_start - start vector for icv
+              icv_count - count vector for icv
 @OUTPUT     : var_start - start vector for variable
               var_count - count vector for variable
 @RETURNS    : MI_ERROR if an error occurs
@@ -999,12 +1011,12 @@ private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 private int MI_icv_coords_tovar(mi_icv_type *icvp, 
-                                long *icv_start, long *icv_count,
-                                long *var_start, long *var_count)
+                                long icv_start[], long icv_count[],
+                                long var_start[], long var_count[])
 {
    int i, j;
    int num_non_img_dims;
-   long coord;
+   long coord, last_coord, icv_dim_size;
 
    MI_SAVE_ROUTINE_NAME("MI_icv_coords_tovar");
 
@@ -1013,45 +1025,63 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
    if (icvp->var_is_vector)
       num_non_img_dims--;
 
-   /* Set the start values */
-   if (icv_start!=NULL) {
-      for (i=0; i < num_non_img_dims; i++)
-         var_start[i] = icv_start[i];
-      for (i=num_non_img_dims, j=MI_PRIV_IMGDIMS-1; 
-           i < num_non_img_dims+MI_PRIV_IMGDIMS; i++, j--) {
-         coord = icv_start[i];
-         if (icvp->derv_dim_flip[j])
-            coord = icvp->var_dim_size[j]-1-coord;
-         coord -= icvp->derv_dim_off[j];
-         if (icvp->derv_dim_grow[j])
-            var_start[i] = coord*icvp->derv_dim_scale[j];
-         else
-            var_start[i] = coord/icvp->derv_dim_scale[j];
+   /* Go through first, non-image dimensions */
+   for (i=0; i < num_non_img_dims; i++) {
+      var_count[i] = icv_count[i];
+      var_start[i] = icv_start[i];
+   }
+
+   /* Go through image dimensions */
+   for (i=num_non_img_dims, j=MI_PRIV_IMGDIMS-1; 
+        i < num_non_img_dims+MI_PRIV_IMGDIMS; i++, j--) {
+      /* Check coordinates. We use icvp->var_dim_size[]<0 to flag
+         that no dimension conversions are being done */
+      icv_dim_size = (icvp->user_dim_size[j] > 0) ?
+            icvp->user_dim_size[j] : icvp->var_dim_size[j];
+      last_coord = icv_start[i] + icv_count[i] - 1;
+      if ((icvp->var_dim_size[j]>=0) && 
+          ((icv_start[i]<0) || (icv_start[i]>=icv_dim_size) ||
+          (last_coord<0) || (last_coord>=icv_dim_size) ||
+          (icv_count[i]<0))) {
+         MI_LOG_PKG_ERROR2(MI_ERR_ICV_INVCOORDS,
+                           "Invalid icv coordinates");
+         MI_RETURN_ERROR(MI_ERROR);
       }
-      if (icvp->var_is_vector) {
-         var_start[icvp->var_ndims-1] = (icvp->user_do_scalar ?
-                                       0 : icv_start[icvp->var_ndims-1]);
+      /* Remove offset */
+      coord = icv_start[i]-icvp->derv_dim_off[j];
+      /* Check for growing or shrinking */
+      if (icvp->derv_dim_grow[j]) {
+         var_count[i] = (icv_count[i]+icvp->derv_dim_scale[j]-1)
+            /icvp->derv_dim_scale[j];
+         coord /= icvp->derv_dim_scale[j];
+      }
+      else {
+         var_count[i] = icv_count[i]*icvp->derv_dim_scale[j];
+         coord *= icvp->derv_dim_scale[j];
+      }
+      /* Check for flipping */
+      if (icvp->derv_dim_flip[j])
+         coord = icvp->var_dim_size[j] - coord -
+            ((icv_count!=NULL) ? var_count[i] : 0L);
+      var_start[i] = coord;
+      /* Check for indices out of variable bounds (but in icv bounds) */
+      last_coord = var_start[i] + var_count[i];
+      if ((icvp->var_dim_size[j]>=0) &&
+          ((var_start[i]<0) || (last_coord>=icvp->var_dim_size[j]))) {
+         if (var_start[i]<0) var_start[i] = 0;
+         if (last_coord>=icvp->var_dim_size[j]) 
+            last_coord = icvp->var_dim_size[j] - 1;
+         var_count[i] = last_coord - var_start[i] + 1;
       }
    }
 
-   /* Set the count value */
-   if (icv_count!=NULL) {
-      for (i=0; i < num_non_img_dims; i++)
-         var_count[i] = icv_count[i];
-      for (i=num_non_img_dims, j=MI_PRIV_IMGDIMS-1; 
-           i < num_non_img_dims+MI_PRIV_IMGDIMS; i++, j--) {
-         coord = icv_count[i];
-         if (icvp->derv_dim_grow[j])
-            var_count[i] = coord*icvp->derv_dim_scale[j];
-         else
-            var_count[i] = coord/icvp->derv_dim_scale[j];
-      }
-      if (icvp->var_is_vector) {
-         var_count[icvp->var_ndims-1] = (icvp->user_do_scalar ?
-                                         icvp->var_vector_size : 
-                                         icv_count[icvp->var_ndims-1]);
-
-      }
+   /* Check for vector dimension */
+   if (icvp->var_is_vector) {
+      var_count[icvp->var_ndims-1] = (icvp->user_do_scalar ?
+                                      icvp->var_vector_size : 
+                                      icv_count[icvp->var_ndims-1]);
+      var_start[icvp->var_ndims-1] = (icvp->user_do_scalar ?
+                                      0 : icv_start[icvp->var_ndims-1]);
    }
 
    MI_RETURN(MI_NOERROR);

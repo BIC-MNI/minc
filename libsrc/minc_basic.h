@@ -19,7 +19,7 @@
 
 /* Maximum buffer size for conversions. Should not be a power of 2 - this
    can cause poor performance on some systems (e.g. SGI) due to caching-
-   related problems */
+   related inefficiencies */
 #define MI_MAX_VAR_BUFFER_SIZE 10000
 
 /* Possible values for sign of a value */
