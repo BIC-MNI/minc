@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.16 1995-08-02 19:22:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.15 1995-08-02 19:21:50 david Exp $";
 #endif
 
 private    void       record_alloc( size_t );
@@ -232,4 +232,53 @@ public  void  set_up_array_pointers_2D(
 
     for_less( i, 1, n1 )
         ptr[i] = (void *) ((long) ptr[i-1] + n2 * type_size);
+}
+
+#ifdef DELETE_THIS
+public  void  set_up_array_pointers_3D(
+    void      ***ptr,
+    long      n1,
+    long      n2,
+    long      n3,
+    size_t    type_size )
+{
+    int   i, j;
+
+    for_less( i, 0, n1 )
+    {
+        if( i > 0 )
+            ptr[i][0] = (void *) ((long) (ptr[i-1][0]) + n2 * n3 * type_size);
+
+        for_less( j, 1, n2 )
+            ptr[i][j] = (void *) ((long) (ptr[i][j-1]) + n3 * type_size);
+    }
+}
+
+public  void  set_up_array_pointers_4D(
+    void      ****ptr,
+    long      n1,
+    long      n2,
+    long      n3,
+    long      n4,
+    size_t    type_size )
+{
+    int   i, j, k;
+
+    for_less( i, 0, n1 )
+    {
+        if( i > 0 )
+            ptr[i][0][0] = (void *) ((long) (ptr[i-1][0][0]) +
+                                     n2 * n3 * n4 *type_size);
+        for_less( j, 0, n2 )
+        {
+            if( j > 0 )
+                ptr[i][j][0] = (void *) ((long) (ptr[i][j-1][0]) +
+                                         n3 * n4 * type_size);
+            for_less( k, 1, n3 )
+            {
+                ptr[i][j][k] = (void *) ((long) (ptr[i][j][k-1]) +
+                                         n4 * type_size);
+            }
+        }
+    }                                  
 }
