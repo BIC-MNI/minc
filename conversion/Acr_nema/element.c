@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.6  1993-11-30 08:57:28  neelin
-@MODIFIED   : Added element copy routine.
+@MODIFIED   : Revision 1.7  1993-11-30 12:19:15  neelin
+@MODIFIED   : Handle MALLOC returning NULL because of extremely large data element length.
 @MODIFIED   :
+ * Revision 1.6  93/11/30  08:57:28  neelin
+ * Added element copy routine.
+ * 
  * Revision 1.5  93/11/26  18:47:36  neelin
  * Added element copy routine.
  * 
@@ -145,6 +148,10 @@ public Acr_Element acr_copy_element(Acr_Element element)
    /* Copy the data */
    length = acr_get_element_length(element);
    data = MALLOC(length+1);
+   if (data == NULL) {
+      length = 0;
+      data = MALLOC(length+1);
+   }
    data[length] = '\0';
    if (length > 0) {
       (void) memcpy(data, acr_get_element_data(element), length);

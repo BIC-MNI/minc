@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.3  1993-11-25 10:34:34  neelin
-@MODIFIED   : Added routine to test byte-ordering of input.
+@MODIFIED   : Revision 1.4  1993-11-30 12:18:34  neelin
+@MODIFIED   : Handle MALLOC returning NULL because of extremely large data element length.
 @MODIFIED   :
+ * Revision 1.3  93/11/25  10:34:34  neelin
+ * Added routine to test byte-ordering of input.
+ * 
  * Revision 1.2  93/11/24  11:24:48  neelin
  * Changed short to unsigned short.
  * 
@@ -368,6 +371,11 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
    /* Allocate space for the data and null-terminate it */
    size_allocated = *data_length + 1;
    *data_pointer = MALLOC(size_allocated);
+   if (*data_pointer == NULL) {
+      *data_length = 0;
+      size_allocated = *data_length + 1;
+      *data_pointer = MALLOC(size_allocated);
+   }
    (*data_pointer)[*data_length] = '\0';
 
    /* Read in the data */
