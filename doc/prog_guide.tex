@@ -1,7 +1,7 @@
 \documentstyle{article}
 \title{MINC User Guide}
 \author{Peter Neelin}
-\date{February 1, 1993}
+\date{February 2, 1993}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -287,11 +287,29 @@ are the image dimensions.
 
 The MINC standard defines how spatial coordinates should be oriented
 relative to patients. Files are free to have data stored in the
-desired direction, but positive coordinates are given a definite
-meaning in the medical image context. The standard is that the
+desired direction, but positive world coordinates are given a definite
+meaning in the medical imaging context. The standard is that the
 positive x axis points from the patient's left to right, the positive
 y axis points from posterior to anterior and the positive z axis
 points from inferior to superior.
+
+The conversion of element index to world coordinates is done using the
+dimension variable attributes \verb+MIdirection_cosines+,
+\verb+MIstep+ and \verb+MIstart+. If the direction cosines are 
+${\bf c}=(c_x, c_y, c_z)$, then the vector between adjacent elements
+along an axis is $step\times {\bf c}$. If $start(i)$ and 
+${\bf c}(i)$ are the \verb+MIstart+ and
+\verb+MIdirection_cosines+ attributes for dimension $i$ (one of
+\verb+MIxspace+, \verb+MIyspace+ and \verb+MIzspace+),
+then the first element of the image variable is at world coordinate
+$ \sum_i start(i) {\bf c}(i) $.
+
+If the direction cosines are not present, then they are
+assumed to be $(1,0,0)$ for \verb+MIxspace+, $(0,1,0)$ for
+\verb+MIyspace+ and $(0,0,1)$ for \verb+MIzspace+. Direction cosines are
+unit vectors and should be normalized. As well, the step attribute
+should carry the information about axis flipping (negative or
+positive) rather than the direction cosine.
 
 \subsubsection{Pixel values and real values}
 
