@@ -3,6 +3,9 @@
 
 #define  INVALID_AXIS   -1
 
+#define  MIN_SLAB_SIZE   10000      /* at least 10000 entries per read */
+#define  MAX_SLAB_SIZE   200000     /* no more than 200 K at a time */
+
 private  void  create_world_transform(
     Point       *origin,
     Vector      axes[N_DIMENSIONS],
@@ -20,8 +23,9 @@ public  Minc_file  initialize_minc_input(
     Volume     volume )
 {
     minc_file_struct    *file;
-    int                 img_var, dim_vars[MAX_VAR_DIMS];
-    long                long_size;
+    int                 img_var, min_var_id, max_var_id, dim_vars[MAX_VAR_DIMS];
+    int                 slab_size;
+    long                long_size, mindex[MAX_VAR_DIMS];
     Boolean             converted_sign;
     nc_type             converted_type;
     String              signed_flag;
@@ -36,6 +40,7 @@ public  Minc_file  initialize_minc_input(
     Boolean             spatial_dim_flags[MAX_VAR_DIMS];
     Vector              offset;
     Point               origin;
+    double              min_value, max_value, real_min, real_max;
     int                 d, dimvar, which_valid_axis;
     int                 spatial_axis_indices[MAX_VAR_DIMS];
 
@@ -44,9 +49,8 @@ public  Minc_file  initialize_minc_input(
     file->file_is_being_read = TRUE;
     file->volume = volume;
 
-    ncopts = 0;
+    ncopts = NC_VERBOSE;
     file->cdfid =  ncopen( filename, NC_NOWRITE );
-    ncopts = NC_VERBOSE | NC_FATAL;
 
     if( file->cdfid == MI_ERROR )
     {
@@ -119,6 +123,7 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
+    ncopts = 0;
     for_less( d, 0, file->n_file_dimensions )
     {
         separation[d] = 1.0;
@@ -132,7 +137,6 @@ public  Minc_file  initialize_minc_input(
             dir_cosines[d][spatial_axis_indices[d]] = 1.0;
         }
 
-        ncopts = 0;
         dimvar = ncvarid( file->cdfid, dim_names[d] );
         if( dimvar != MI_ERROR )
         {
@@ -148,7 +152,6 @@ public  Minc_file  initialize_minc_input(
                                   (void *) (dir_cosines[d]), (int *) NULL );
             }
         }
-        ncopts = NC_VERBOSE | NC_FATAL;
 
         if( file->axis_index_in_file[d] == INVALID_AXIS )
         {
@@ -160,6 +163,7 @@ public  Minc_file  initialize_minc_input(
             volume->separation[file->axis_index_in_file[d]] = separation[d];
         }
     }
+    ncopts = NC_VERBOSE;
 
     fill_Vector( axes[X], 1.0, 0.0, 0.0 );
     fill_Vector( axes[Y], 0.0, 1.0, 0.0 );
@@ -197,10 +201,8 @@ public  Minc_file  initialize_minc_input(
 
     if( volume->data_type == NO_DATA_TYPE )
     {
-        ncopts = 0;
         (void) ncattget( file->cdfid, img_var, MIsigntype,
                          (void *) signed_flag );
-        ncopts = NC_VERBOSE | NC_FATAL;
         converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
 
         converted_type = file_datatype;
@@ -218,20 +220,56 @@ public  Minc_file  initialize_minc_input(
     (void) miicv_setint( file->icv, MI_ICV_TYPE, converted_type );
     (void) miicv_setstr( file->icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
-
     (void) miicv_attach( file->icv, file->cdfid, img_var );
+    (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &min_value );
+    (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &max_value );
 
-/*
-    volume->value_scale = (real_max - real_min) / 255.0;
-    volume->value_translation = real_min;
-*/
-    volume->value_scale = 1.0;
-    volume->value_translation = 0.0;
+    volume->min_value = min_value;
+    volume->max_value = max_value;
+
+    min_var_id = ncvarid( file->cdfid, MIimagemin );
+    max_var_id = ncvarid( file->cdfid, MIimagemax );
+
+    for_less( d, 0, file->n_file_dimensions )
+        mindex[d] = 0;
+
+    if( mivarget1( file->cdfid, min_var_id, mindex, NC_DOUBLE, MI_SIGNED,
+                      (void *) (&real_min) ) == MI_ERROR )
+        real_min = 0.0;
+    if( mivarget1( file->cdfid, max_var_id, mindex, NC_DOUBLE, MI_SIGNED,
+                      (void *) (&real_max) ) )
+        real_max = 1.0;
+
+    if( real_min == real_max )
+        volume->value_scale = 1.0;
+    else
+        volume->value_scale = (real_max - real_min) / (max_value - min_value);
+
+    volume->value_translation = real_min - min_value * volume->value_scale;
 
     for_less( d, 0, file->n_file_dimensions )
         file->input_indices[d] = 0;
 
     file->end_volume_flag = FALSE;
+
+    ncopts = NC_VERBOSE | NC_FATAL;
+
+    file->n_slab_dims = 0;
+    slab_size = 1;
+    
+    do
+    {
+        ++file->n_slab_dims;
+        d = file->valid_file_axes[volume->n_dimensions-file->n_slab_dims];
+        slab_size *= file->sizes_in_file[d];
+    }
+    while( file->n_slab_dims < volume->n_dimensions &&
+           slab_size < MIN_SLAB_SIZE );
+
+    if( slab_size > MAX_SLAB_SIZE && file->n_slab_dims > 1 )
+    {
+        --file->n_slab_dims;
+    }
 
     return( file );
 }
@@ -272,17 +310,31 @@ private  void  input_slab(
     int      i, valid_ind, file_ind;
     int      iv[MAX_DIMENSIONS], n_to_read;
     void     *void_ptr;
+    Boolean  direct_to_volume;
+    Boolean  non_one_found;
     char     *buffer;
 
-    n_to_read = 1;
+    non_one_found = FALSE;
+    direct_to_volume = TRUE;
 
-    for_less( i, 0, file->n_file_dimensions )
-         n_to_read *= count[i];
+    for_less( i, 0, volume->n_dimensions )
+    {
+        file_ind = file->valid_file_axes[i];
 
-    ALLOC( buffer, sizeof(double) * n_to_read );
-    void_ptr = (void *) buffer;
-
-    (void) miicv_get( file->icv, start, count, void_ptr );
+        if( !non_one_found )
+        {
+            if( count[file_ind] != 1 )
+                non_one_found = TRUE;
+        }
+        else
+        {
+            if( count[file_ind] != file->sizes_in_file[file_ind] )
+            {
+                direct_to_volume = FALSE;
+                break;
+            }
+        }
+    }
 
     for_less( i, 0, volume->n_dimensions )
     {
@@ -290,41 +342,66 @@ private  void  input_slab(
         iv[file->axis_index_in_file[file_ind]] = start[file_ind];
     }
 
-    for_less( i, 0, n_to_read )
+    if( direct_to_volume )
     {
-        switch( volume->data_type )
+        GET_VOXEL_PTR( void_ptr, volume, iv[0], iv[1], iv[2], iv[3], iv[4] );
+        (void) miicv_get( file->icv, start, count, void_ptr );
+    }
+    else
+    {
+        n_to_read = 1;
+
+        for_less( i, 0, file->n_file_dimensions )
+            n_to_read *= count[i];
+
+        ALLOC( buffer, sizeof(double) * n_to_read );
+
+        void_ptr = (void *) buffer;
+
+        (void) miicv_get( file->icv, start, count, void_ptr );
+
+        for_less( i, 0, volume->n_dimensions )
         {
-        case UNSIGNED_BYTE:
-            SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                       ( (unsigned char *) void_ptr )[i] );
-            break;
+            file_ind = file->valid_file_axes[i];
+            iv[file->axis_index_in_file[file_ind]] = start[file_ind];
         }
 
-        valid_ind = volume->n_dimensions-1;
-
-        while( i >= 0 )
+        for_less( i, 0, n_to_read )
         {
-            file_ind = file->valid_file_axes[valid_ind];
-            if( count[file_ind] > 1 )
+            switch( volume->data_type )
             {
-                ++iv[file->axis_index_in_file[file_ind]];
-                if( iv[file->axis_index_in_file[file_ind]] <
-                    start[file_ind] + count[file_ind])
-                    break;
-                iv[file->axis_index_in_file[file_ind]] = start[file_ind];
+            case UNSIGNED_BYTE:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (unsigned char *) void_ptr )[i] );
+                break;
             }
 
-            --valid_ind;
-        }
-    }
+            valid_ind = volume->n_dimensions-1;
 
-    FREE( buffer );
+            while( i >= 0 )
+            {
+                file_ind = file->valid_file_axes[valid_ind];
+                if( count[file_ind] > 1 )
+                {
+                    ++iv[file->axis_index_in_file[file_ind]];
+                    if( iv[file->axis_index_in_file[file_ind]] <
+                        start[file_ind] + count[file_ind])
+                        break;
+                    iv[file->axis_index_in_file[file_ind]] = start[file_ind];
+                }
+
+                --valid_ind;
+            }
+        }
+
+        FREE( buffer );
+    }
 }
 
 public  int  input_more_minc_file(
     Minc_file   file )
 {
-    int      ind, file_ind, fastest_varying;
+    int      ind, file_ind;
     long     start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
     Volume   volume;
 
@@ -342,14 +419,18 @@ public  int  input_more_minc_file(
         start[ind] = file->input_indices[ind];
     }
 
-    fastest_varying = file->valid_file_axes[volume->n_dimensions-1];
-    count[fastest_varying] = file->sizes_in_file[fastest_varying];
+    for_less( ind, volume->n_dimensions - file->n_slab_dims,
+              volume->n_dimensions )
+    {
+        file_ind = file->valid_file_axes[ind];
+        count[file_ind] = file->sizes_in_file[file_ind];
+    }
 
     input_slab( file, volume, start, count );
 
-    /* advance to next 1D strip */
+    /* advance to next slab */
 
-    ind = volume->n_dimensions-2;
+    ind = volume->n_dimensions-file->n_slab_dims-1;
 
     while( ind >= 0 )
     {
