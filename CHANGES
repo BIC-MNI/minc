@@ -1,3 +1,6 @@
+Tue Jan 15 12:55:21 EST 2002
+   - Modified libsrc/Makefile to install ParseArgv man pages.
+
 Tue Jan 15 10:40:49 EST 2002
    - Updated README to include minccalc and mincstats.
 
