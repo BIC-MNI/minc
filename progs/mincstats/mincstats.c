@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.9  2002-01-09 13:23:16  neelin
+ * Revision 1.10  2002-04-08 21:46:34  jgsled
+ * fixed problem where mincstats segmentation fault when trying to close a NULL file pointer
+ *
+ * Revision 1.9  2002/01/09 13:23:16  neelin
  * Removed extraneous newline for histogram output with -quiet turned on.
  *
  * Revision 1.8  2001/12/11 14:36:00  neelin
@@ -710,7 +713,8 @@ int main(int argc, char *argv[])
    }   /* End of loop over ranges */
 
    /* Close the histogram file */
-   (void) fclose(FP);
+   if (FP != NULL)
+     (void) fclose(FP);
 
    /* Free things up */
    for (irange=0; irange < num_ranges; irange++) {
