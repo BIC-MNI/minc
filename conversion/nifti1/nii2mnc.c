@@ -31,7 +31,21 @@ void test_xform(mat44 m, int i, int j, int k)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: nii2mnc [] filename.nii [filename.mnc]\n");
+    static const char msg[] = {
+        "nii2mnc: Convert NIfTI-1 files to MINC format\n"
+        "usage: nii2mnc [-q -r] [datatype] filename.nii [filename.mnc]\n"
+        "-q: quiet operation\n"
+        "-r: scan data to determine valid range\n"
+        "Datatype specifies the voxel type of the output MINC file.  The\n"
+        "default is the same as the voxel type of the input NIfTI-1 file.\n"
+        " -f32: 32-bit floating point output *\n"
+        " -f64: 64-bit floating point output\n"
+        " -i16: signed 16-bit integer output\n"
+        " -u16: unsigned 16-bit integer output\n"
+        " -i32: signed 32-bit integer output\n"
+        " -u32: unsigned 32-bit integer output\n"
+    };
+    fprintf(stderr, "%s", msg);
     return (-1);
 }
 

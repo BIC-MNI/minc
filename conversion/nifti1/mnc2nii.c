@@ -21,6 +21,7 @@ void test_xform(mat44 m, int i, int j, int k)
 static int usage(void)
 {
     static const char msg[] = {
+        "mnc2nii: Convert MINC files to NIfTI-1 format\n"
         "usage: mnc2nii [-q] [filetype] [datatype] filename.mnc [filename.nii]\n"
         " -q: quiet operation\n"
         "Filetype specifies the output file format:\n"
