@@ -2,13 +2,7 @@
 
 # Routine to initialize tape drive
 sub ge4_initialize_tape_drive {
-    local($tapedrive) = @_;
-
-    local($nextfile) = &read_next_file($tapedrive);
-    if ($delete_files) {
-        &remove_file($nextfile);
-    }
-    
+   &cleanup_and_die("ge4_to_minc does not support tape reading.\n",1);
 }
 
 # Routine to convert data general float to ieee
