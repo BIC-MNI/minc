@@ -53,7 +53,7 @@
 
 /* General attribute constants */
 /*    Prefix for identifying a variable attribute pointer */
-#define MI_VARATT_POINTER_PREFIX "_->_"
+#define MI_VARATT_POINTER_PREFIX "--->"
 /*    Separator for elements of MIchildren */
 #define MI_CHILD_SEPARATOR "\n"
 /*    MIvartype values */
