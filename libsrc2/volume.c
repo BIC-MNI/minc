@@ -337,7 +337,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
      Close all Groups and Datset.
    */
   H5Tclose(hdf_type);
-  H5Sclose(dataspace_id);
   H5Dclose(dataset_id);
   H5Dclose(dimage_id);
   H5Gclose(grp_dimensions_id);
