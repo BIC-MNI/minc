@@ -62,6 +62,27 @@ typedef  volume_struct  *Volume;
          case UNSIGNED_BYTE:  \
              SET_ONE( volume, unsigned char, asterisks, subscripts, value);\
              break;  \
+         case SIGNED_BYTE:  \
+             SET_ONE( volume, signed char, asterisks, subscripts, value);\
+             break;  \
+         case UNSIGNED_SHORT:  \
+             SET_ONE( volume, unsigned short, asterisks, subscripts, value);\
+             break;  \
+         case SIGNED_SHORT:  \
+             SET_ONE( volume, signed short, asterisks, subscripts, value);\
+             break;  \
+         case UNSIGNED_LONG:  \
+             SET_ONE( volume, unsigned long, asterisks, subscripts, value);\
+             break;  \
+         case SIGNED_LONG:  \
+             SET_ONE( volume, signed long, asterisks, subscripts, value);\
+             break;  \
+         case FLOAT:  \
+             SET_ONE( volume, float, asterisks, subscripts, value);\
+             break;  \
+         case DOUBLE:  \
+             SET_ONE( volume, double, asterisks, subscripts, value);\
+             break;  \
          }
 
 #define  SET_VOXEL_1D( volume, x, value )       \
@@ -100,6 +121,27 @@ typedef  volume_struct  *Volume;
          case UNSIGNED_BYTE:  \
              GET_ONE( value, volume, unsigned char, asterisks, subscripts );\
              break;  \
+         case SIGNED_BYTE:  \
+             GET_ONE( value, volume, signed char, asterisks, subscripts );\
+             break;  \
+         case UNSIGNED_SHORT:  \
+             GET_ONE( value, volume, unsigned short, asterisks, subscripts );\
+             break;  \
+         case SIGNED_SHORT:  \
+             GET_ONE( value, volume, signed short, asterisks, subscripts );\
+             break;  \
+         case UNSIGNED_LONG:  \
+             GET_ONE( value, volume, unsigned long, asterisks, subscripts );\
+             break;  \
+         case SIGNED_LONG:  \
+             GET_ONE( value, volume, signed long, asterisks, subscripts );\
+             break;  \
+         case FLOAT:  \
+             GET_ONE( value, volume, float, asterisks, subscripts );\
+             break;  \
+         case DOUBLE:  \
+             GET_ONE( value, volume, double, asterisks, subscripts );\
+             break;  \
          }
 
 #define  GET_VOXEL_1D( value, volume, x )       \
@@ -127,6 +169,27 @@ typedef  volume_struct  *Volume;
          {  \
          case UNSIGNED_BYTE:  \
              GET_ONE_PTR( ptr, volume, unsigned char, asterisks, subscripts );\
+             break;  \
+         case SIGNED_BYTE:  \
+             GET_ONE_PTR( ptr, volume, signed char, asterisks, subscripts );\
+             break;  \
+         case UNSIGNED_SHORT:  \
+             GET_ONE_PTR( ptr, volume, unsigned short, asterisks, subscripts );\
+             break;  \
+         case SIGNED_SHORT:  \
+             GET_ONE_PTR( ptr, volume, signed short, asterisks, subscripts );\
+             break;  \
+         case UNSIGNED_LONG:  \
+             GET_ONE_PTR( ptr, volume, unsigned long, asterisks, subscripts );\
+             break;  \
+         case SIGNED_LONG:  \
+             GET_ONE_PTR( ptr, volume, signed long, asterisks, subscripts );\
+             break;  \
+         case FLOAT:  \
+             GET_ONE_PTR( ptr, volume, float, asterisks, subscripts );\
+             break;  \
+         case DOUBLE:  \
+             GET_ONE_PTR( ptr, volume, double, asterisks, subscripts );\
              break;  \
          }
 
