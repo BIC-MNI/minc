@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:21  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-02-19 15:04:24  neelin
+@MODIFIED   : Minor bug fixes.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:21  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:22  neelin
  * Release of minc version 0.5
  *
@@ -117,7 +120,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.0 1997-09-12 13:23:21 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.1 1998-02-19 15:04:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -587,6 +590,9 @@ public void get_arginfo(int argc, char *argv[],
    get_voxel_to_world_transf(&args.volume_def, out_vol->voxel_to_world);
    create_inverse_general_transform(out_vol->voxel_to_world,
                                     out_vol->world_to_voxel);
+
+   /* Free the time stamp */
+   FREE(tm_stamp);
 
 }
 
@@ -1347,6 +1353,9 @@ public void create_output_file(char *filename, int clobber,
          (void) sprintf(string, "transformation%d-inverted", itrans);
          (void) miattputstr(out_file->mincid, varid, string, MI_TRUE);
       }
+
+      FREE(string);
+
    }         /* If transform specified on command line */
 
    /* Get into data mode */
