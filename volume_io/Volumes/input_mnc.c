@@ -89,12 +89,14 @@ public  Minc_file  initialize_minc_input(
     {
         print( "Error: MINC file has only %d dims, volume requires %d.\n",
                file->n_file_dimensions, volume->n_dimensions );
+        (void) ncclose( file->cdfid );
         return( (Minc_file) 0 );
     }
     else if( file->n_file_dimensions > MAX_VAR_DIMS )
     {
         print( "Error: MINC file has %d dims, can only handle %d.\n",
                file->n_file_dimensions, MAX_VAR_DIMS );
+        (void) ncclose( file->cdfid );
         return( (Minc_file) 0 );
     }
 
@@ -122,6 +124,9 @@ public  Minc_file  initialize_minc_input(
         print( "In File:\n" );
         for_less( d, 0, file->n_file_dimensions )
             print( "%d: %s\n", d+1, dim_names[d] );
+
+        (void) ncclose( file->cdfid );
+        return( (Minc_file) 0 );
     }
 
     file->n_volumes_in_file = 1;

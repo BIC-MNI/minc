@@ -18,6 +18,7 @@ private  void  get_mni_scaling(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : start_volume_input
 @INPUT      : filename               - file to input
+              dim_names              - names of dimensions, or null
               convert_to_byte_flag   - whether to convert volume data to byte
 @OUTPUT     : volume                 - the volume data
               input_info             - information for use while inputting
@@ -34,6 +35,7 @@ private  void  get_mni_scaling(
 
 public  Status  start_volume_input(
     char                 filename[],
+    String               dim_names[],
     Boolean              convert_to_byte_flag,
     Volume               *volume,
     volume_input_struct  *input_info )
@@ -43,8 +45,12 @@ public  Status  start_volume_input(
     Real            mni_scale, mni_translation;
     Boolean         mni_format;
     nc_type         data_type;
-    static String   dim_names[N_DIMENSIONS] = { MIxspace, MIyspace, MIzspace };
+    static String   default_dim_names[N_DIMENSIONS] =
+                                         { MIzspace, MIyspace, MIxspace };
     String          expanded_filename, filename_no_z;
+
+    if( dim_names == (String *) NULL )
+        dim_names = default_dim_names;
 
     (void) strcpy( filename_no_z, filename );
     len = strlen( filename );
@@ -204,6 +210,7 @@ public  void  cancel_volume_input(
 
 public  Status  input_volume(
     char           filename[],
+    String         dim_names[],
     Volume         *volume )
 {
     Status               status;
@@ -212,7 +219,8 @@ public  Status  input_volume(
     progress_struct      progress;
     static const int     FACTOR = 1000;
 
-    status = start_volume_input( filename, FALSE, volume, &input_info );
+    status = start_volume_input( filename, dim_names, FALSE, volume,
+                                 &input_info );
 
     if( status == OK )
     {
@@ -242,6 +250,7 @@ private  void  setup_input_mni_as_free_format(
     FILE    *file;
     String  tmp_name;
     String  abs_filename;
+    char    *getwd();
 
     if( filename[0] != '/' )
     {
