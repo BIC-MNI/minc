@@ -6,10 +6,13 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.3  1995-03-21 15:33:07  neelin
-@MODIFIED   : Changed call to voxel_function to always use proper vector length and
-@MODIFIED   : set num_voxels to the number of voxels, not multiplying by vector length.
+@MODIFIED   : Revision 1.4  1995-05-01 20:04:50  neelin
+@MODIFIED   : Fixed memory leak - not freeing global_minimum/maximum.
 @MODIFIED   :
+ * Revision 1.3  1995/03/21  15:33:07  neelin
+ * Changed call to voxel_function to always use proper vector length and
+ * set num_voxels to the number of voxels, not multiplying by vector length.
+ *
  * Revision 1.2  1995/03/21  14:06:39  neelin
  * Improved interface and added lots of functionality (much for the benefit
  * of mincconcat).
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.3 1995-03-21 15:33:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.4 1995-05-01 20:04:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1118,11 +1121,17 @@ private void do_voxel_loop(Loop_Options *loop_options,
       extra_buffers = NULL;
 
    /* Initialize global min and max */
-   global_minimum = MALLOC(num_output_files * sizeof(double));
-   global_maximum = MALLOC(num_output_files * sizeof(double));
-   for (ofile=0; ofile < num_output_files; ofile++) {
-      global_minimum[ofile] = DBL_MAX;
-      global_maximum[ofile] = -DBL_MAX;
+   if (num_output_files < 0) {
+      global_minimum = MALLOC(num_output_files * sizeof(double));
+      global_maximum = MALLOC(num_output_files * sizeof(double));
+      for (ofile=0; ofile < num_output_files; ofile++) {
+         global_minimum[ofile] = DBL_MAX;
+         global_maximum[ofile] = -DBL_MAX;
+      }
+   }
+   else {
+      global_minimum = NULL;
+      global_maximum = NULL;
    }
 
    /* Initialize loop info - just to be safe */
@@ -1397,6 +1406,10 @@ private void do_voxel_loop(Loop_Options *loop_options,
    }
    if (num_output_buffers > 0) {
       FREE(results_buffers);
+   }
+   if (num_output_files > 0) {
+      FREE(global_minimum);
+      FREE(global_maximum);
    }
 
    return;
