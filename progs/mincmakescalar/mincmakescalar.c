@@ -9,13 +9,16 @@
 @CALLS      : 
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : $Log: mincmakescalar.c,v $
-@MODIFIED   : Revision 1.1  1997-08-07 16:09:07  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-08-07 16:23:19  neelin
+@MODIFIED   : Change -length to -magnitude.
 @MODIFIED   :
+ * Revision 1.1  1997/08/07  16:09:07  neelin
+ * Initial revision
+ *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 1.1 1997-08-07 16:09:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 1.2 1997-08-07 16:23:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -45,7 +48,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmak
 
 /* Types */
 typedef enum 
-{CONV_DEFAULT, CONV_AVERAGE, CONV_LENGTH, CONV_GREY, CONV_LINEAR} 
+{CONV_DEFAULT, CONV_AVERAGE, CONV_MAGNITUDE, CONV_GREY, CONV_LINEAR} 
 Conversion_Type;
 
 /* Double_Array structure */
@@ -110,8 +113,9 @@ ArgvInfo argTable[] = {
        "Write unsigned integer data (default if type specified)."},
    {"-valid_range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
        "Valid range for output data."},
-   {"-length", ARGV_CONSTANT, (char *) CONV_LENGTH, (char *) &conversion_type,
-       "Compute length of vectors (default)."},
+   {"-magnitude", ARGV_CONSTANT, (char *) CONV_MAGNITUDE, 
+       (char *) &conversion_type,
+       "Compute magnitude of vectors (default)."},
    {"-average", ARGV_CONSTANT, (char *) CONV_AVERAGE, 
        (char *) &conversion_type,
        "Average components of vectors."},
@@ -160,7 +164,7 @@ int main(int argc, char *argv[])
    }
 
    /* Set up conversion information */
-   if (conversion_type == CONV_DEFAULT) conversion_type = CONV_LENGTH;
+   if (conversion_type == CONV_DEFAULT) conversion_type = CONV_MAGNITUDE;
    program_data.conversion_type = conversion_type;
    program_data.num_coefficients = 0;
    program_data.linear_coefficients = NULL;
@@ -302,7 +306,7 @@ public void do_makescalar(void *caller_data, long num_voxels,
          case CONV_AVERAGE:
             result += value;
             break;
-         case CONV_LENGTH:
+         case CONV_MAGNITUDE:
             result += value * value;
             break;
          case CONV_GREY:
@@ -321,7 +325,7 @@ public void do_makescalar(void *caller_data, long num_voxels,
          case CONV_AVERAGE:
             result /= (double) input_vector_length;
             break;
-         case CONV_LENGTH:
+         case CONV_MAGNITUDE:
             result = sqrt(result);
             break;
          }
