@@ -35,7 +35,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.2  1999-10-19 14:45:11  neelin
+ * Revision 6.3  2000-02-02 18:43:29  neelin
+ * Fixed bug in miexpand_file that would call fclose with a NULL file handle.
+ * For newer versions of glibc, this would cause a seg fault.
+ *
+ * Revision 6.2  1999/10/19 14:45:11  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.1  1997/10/06 12:54:08  neelin
@@ -109,7 +113,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.2 1999-10-19 14:45:11 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.3 2000-02-02 18:43:29 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -325,8 +329,10 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
    if (first_ncerr == NC_NOERR) {
       fp = fopen(path, "r");
       if (fp == NULL) {
-         (void) fclose(fp);
          first_ncerr = NC_SYSERR;
+      }
+      else {
+         (void) fclose(fp);
       }
    }
 
