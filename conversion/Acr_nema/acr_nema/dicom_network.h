@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 4.1  1997-07-09 20:01:40  neelin
-@MODIFIED   : Added function acr_dicom_get_io_data.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/07/09  20:01:40  neelin
+ * Added function acr_dicom_get_io_data.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:26  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:06:20  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/03/11  13:10:48  neelin
  * Working version of dicomserver.
  *

@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 4.1  1997-06-03 14:57:23  neelin
-@MODIFIED   : Really fixed dimension width name suffixes.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:13  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/06/03  14:57:23  neelin
+ * Really fixed dimension width name suffixes.
+ *
  * Revision 4.0  1997/05/07  20:01:54  neelin
  * Release of minc version 0.4
  *
@@ -48,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 4.1 1997-06-03 14:57:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 5.0 1997-08-21 13:25:13 neelin Rel $";
 #endif
 
 #include <stdlib.h>

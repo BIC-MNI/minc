@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: convert_origin_to_start.h,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:50  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.1  1995/11/10  20:01:27  neelin
  * Initial revision
  *

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 1.1 1997-08-07 16:42:36 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 5.0 1997-08-21 13:25:19 neelin Rel $
 .\"
 .TH MINCMAKESCALAR 1
 

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 4.1  1997-06-13 22:08:13  neelin
-@MODIFIED   : Modifications to get gcomserver working with modified Acr_nema library.
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/06/13  22:08:13  neelin
+ * Modifications to get gcomserver working with modified Acr_nema library.
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *

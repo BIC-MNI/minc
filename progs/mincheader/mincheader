@@ -1,9 +1,12 @@
 #! /bin/csh -f
 
 # Modifications: $Log: mincheader,v $
-# Modifications: Revision 4.0  1997-05-07 20:00:42  neelin
-# Modifications: Release of minc version 0.4
+# Modifications: Revision 5.0  1997-08-21 13:24:37  neelin
+# Modifications: Release of minc version 0.5
 # Modifications:
+# Revision 4.0  1997/05/07  20:00:42  neelin
+# Release of minc version 0.4
+#
 # Revision 3.0  1995/05/15  19:31:32  neelin
 # Release of minc version 0.3
 #

@@ -5,11 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 4.1  1997-06-13 21:27:16  neelin
-@MODIFIED   : Made use of message length to figure out how much to read in -
-@MODIFIED   : previously was not checking it, so if watchpoint was not set, we would
-@MODIFIED   : read indefinitely.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/06/13  21:27:16  neelin
+ * Made use of message length to figure out how much to read in -
+ * previously was not checking it, so if watchpoint was not set, we would
+ * read indefinitely.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *

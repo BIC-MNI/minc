@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : June 18, 1993 (Peter Neelin)
 @MODIFIED   : $Log: strdup.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:07:52  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:53  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:07:52  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:33:12  neelin
  * Release of minc version 0.3
  *

@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minccopy.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:35  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:34  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:35  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:08  neelin
  * Release of minc version 0.3
  *
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 4.0 1997-05-07 20:00:35 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 5.0 1997-08-21 13:24:34 neelin Rel $";
 #endif
 
 #include <stdlib.h>

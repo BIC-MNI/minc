@@ -2,7 +2,7 @@
  *	Copyright 1990, University Corporation for Atmospheric Research
  *      See netcdf/README file for copying and redistribution conditions.
  */
-/* $Header: /private-cvsroot/minc/fortran/Attic/netcdf_jacket_code.c,v 4.0 1997-05-07 20:06:39 neelin Rel $ */
+/* $Header: /private-cvsroot/minc/fortran/Attic/netcdf_jacket_code.c,v 5.0 1997-08-21 13:25:35 neelin Rel $ */
 
 static void
 reverse (array, length)

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minctoraw.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:01  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:27  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:01  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:01  neelin
  * Release of minc version 0.3
  *
@@ -43,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 4.0 1997-05-07 20:00:01 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 5.0 1997-08-21 13:24:27 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 19:59:42  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:22  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  19:59:42  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:30:57  neelin
  * Release of minc version 0.3
  *
@@ -67,7 +70,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 4.0 1997-05-07 19:59:42 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 5.0 1997-08-21 13:24:22 neelin Rel $";
 #endif
 
 #include <stdlib.h>

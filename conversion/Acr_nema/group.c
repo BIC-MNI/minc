@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 4.1  1997-06-17 23:49:08  neelin
-@MODIFIED   : Added routines for inserting elements into a group list.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.2  1997/08/21  13:24:55  neelin
+ * Pre-release
+ *
+ * Revision 4.1  1997/06/17  23:49:08  neelin
+ * Added routines for inserting elements into a group list.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *
@@ -449,6 +455,43 @@ public void acr_group_add_element(Acr_Group group, Acr_Element element)
    insert_element(group, element, group->list_tail);
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_group_remove_element
+@INPUT      : group
+              element_id
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Remove an element from a group.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_group_remove_element(Acr_Group group, int element_id)
+{
+   Acr_Element next_element, prev_element;
+
+   /* Search for the appropriate location */
+   prev_element = NULL;
+   next_element = group->list_head;
+   while ((next_element != NULL) && 
+          (acr_get_element_element(next_element) != element_id)) {
+      prev_element = next_element;
+      next_element = acr_get_element_next(next_element);
+   }
+
+   /* Check for an existing element and get rid of it */
+   if ((next_element != NULL) &&
+       (acr_get_element_element(next_element) == element_id)) {
+
+      /* Set pointers and get rid of the old element */
+      remove_element(group, next_element, prev_element);
+
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------

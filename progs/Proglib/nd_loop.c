@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:50  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:35  neelin
  * Release of minc version 0.3
  *
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 4.0 1997-05-07 20:00:50 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 5.0 1997-08-21 13:24:41 neelin Rel $";
 #endif
 
 #include <stdlib.h>

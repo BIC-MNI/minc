@@ -6,11 +6,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 4.2  1997-06-20 13:58:35  neelin
-@MODIFIED   : Fixed bug: when doing accumulation with no output file and with
-@MODIFIED   : 4D input (or more), had problem setting input start vector. This broke
-@MODIFIED   : mincconcat for 4D input files.
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.2  1997/06/20  13:58:35  neelin
+ * Fixed bug: when doing accumulation with no output file and with
+ * 4D input (or more), had problem setting input start vector. This broke
+ * mincconcat for 4D input files.
+ *
  * Revision 4.1  1997/05/22  12:41:40  neelin
  * Loosened up checking of start coordinates so that we look at error
  * relative to the total extent of the volume (nelements*step) instead of
@@ -57,7 +60,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 4.2 1997-06-20 13:58:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 5.0 1997-08-21 13:24:41 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 4.1  1997-05-13 22:46:25  neelin
-@MODIFIED   : Modified behaviour of acr_create_element_string (and numeric) so that
-@MODIFIED   : the VR type is taken from the elid if it is specified there.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/05/13  22:46:25  neelin
+ * Modified behaviour of acr_create_element_string (and numeric) so that
+ * the VR type is taken from the elid if it is specified there.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *

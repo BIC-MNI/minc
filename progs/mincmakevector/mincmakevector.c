@@ -10,13 +10,16 @@
 @CALLS      : 
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : $Log: mincmakevector.c,v $
-@MODIFIED   : Revision 1.1  1997-08-12 19:03:46  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:32  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 1.1  1997/08/12  19:03:46  neelin
+ * Initial revision
+ *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 1.1 1997-08-12 19:03:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 5.0 1997-08-21 13:25:32 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:02:04  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:16  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:02:04  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.5  1997/04/24  13:48:51  neelin
  * Fixed handling of invalid or uninitialized data for cumulative operations.
  * Added options -illegal_value and -count_valid.
@@ -40,7 +43,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 4.0 1997-05-07 20:02:04 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 5.0 1997-08-21 13:25:16 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -5,9 +5,12 @@
 @METHOD     : 
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : $Log: vax_conversions.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:50  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:35  neelin
  * Release of minc version 0.3
  *
@@ -19,9 +22,12 @@
  * 
  * Revision 1.4  93/08/04  13:04:01  neelin
  * Added RCS $Log: vax_conversions.c,v $
- * Added RCS Revision 4.0  1997-05-07 20:00:50  neelin
- * Added RCS Release of minc version 0.4
+ * Added RCS Revision 5.0  1997-08-21 13:24:41  neelin
+ * Added RCS Release of minc version 0.5
  * Added RCS
+ * Revision 4.0  1997/05/07  20:00:50  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:35  neelin
  * Release of minc version 0.3
  *
@@ -45,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 4.0 1997-05-07 20:00:50 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 5.0 1997-08-21 13:24:41 neelin Rel $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

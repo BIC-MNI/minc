@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 4.1  1997-06-13 22:08:13  neelin
-@MODIFIED   : Modifications to get gcomserver working with modified Acr_nema library.
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/06/13  22:08:13  neelin
+ * Modifications to get gcomserver working with modified Acr_nema library.
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *
@@ -96,7 +99,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 4.1 1997-06-13 22:08:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 5.0 1997-08-21 13:24:50 neelin Rel $";
 #endif
 
 #include <sys/types.h>

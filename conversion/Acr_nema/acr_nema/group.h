@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 4.1  1997-06-17 23:49:08  neelin
-@MODIFIED   : Added routines for inserting elements into a group list.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.2  1997/08/21  13:24:55  neelin
+ * Pre-release
+ *
+ * Revision 4.1  1997/06/17  23:49:08  neelin
+ * Added routines for inserting elements into a group list.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *
@@ -73,6 +79,7 @@ public Acr_Group acr_copy_group_list(Acr_Group group_list);
 public void acr_group_insert_element(Acr_Group group,
                                      Acr_Element element);
 public void acr_group_add_element(Acr_Group group, Acr_Element element);
+public void acr_group_remove_element(Acr_Group group, int element_id);
 public void acr_set_group_next(Acr_Group group, Acr_Group next);
 public int acr_get_group_group(Acr_Group group);
 public Acr_Element acr_get_group_element_list(Acr_Group group);

@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 4.2  1997-07-10 17:14:38  neelin
-@MODIFIED   : Added more status codes and function to return status string.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.3  1997/08/21  13:24:56  neelin
+ * Pre-release
+ *
+ * Revision 4.2  1997/07/10  17:14:38  neelin
+ * Added more status codes and function to return status string.
+ *
  * Revision 4.1  1997/07/09  17:38:55  neelin
  * Added function acr_dicom_get_io_data.
  *
@@ -332,7 +338,7 @@ private Acr_Status read_assoc_rq_ac(Acr_File *afp, Acr_Group group,
                                  int is_request)
 {
    unsigned char buffer[ASSOC_RQ_LEN - PDU_HEADER_LEN];
-   Acr_Element item, presentation_context_list, nextitem;
+   Acr_Element item, presentation_context_list, nextitem, followingitem;
    int have_pres_context_request;
    Acr_Status status;
 
@@ -363,8 +369,14 @@ private Acr_Status read_assoc_rq_ac(Acr_File *afp, Acr_Group group,
 
       /* Loop over items, checking that we got an acceptable one and
          add it to the appropriate thing */
-      for (nextitem = item; nextitem != NULL; 
-           nextitem = acr_get_element_next(nextitem)) {
+      for (nextitem = item; nextitem != NULL; nextitem = followingitem) {
+
+         /* We have to get the next item before adding the current one
+            to the list, otherwise we lose the link, since adding sets
+            the next pointer to NULL */
+         followingitem = acr_get_element_next(nextitem);
+
+         /* Put presentation context items in a list */
          if (acr_match_element_id(DCM_PDU_Presentation_context, nextitem) ||
              acr_match_element_id(DCM_PDU_Presentation_context_reply, 
                                   nextitem)) {

@@ -6,10 +6,13 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 4.1  1997-06-13 12:51:21  neelin
-@MODIFIED   : Changed definition of time index and acquisition id to match change
-@MODIFIED   : in Siemens dicom software.
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:26  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/06/13  12:51:21  neelin
+ * Changed definition of time index and acquisition id to match change
+ * in Siemens dicom software.
+ *
  * Revision 4.0  1997/05/07  20:06:20  neelin
  * Release of minc version 0.4
  *

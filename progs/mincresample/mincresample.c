@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 4.1  1997-08-13 15:41:12  neelin
-@MODIFIED   : Fixed initialization problem that caused crashing under Linux.
+@MODIFIED   : Revision 5.0  1997-08-21 13:24:22  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.1  1997/08/13  15:41:12  neelin
+ * Fixed initialization problem that caused crashing under Linux.
+ *
  * Revision 4.0  1997/05/07  19:59:42  neelin
  * Release of minc version 0.4
  *
@@ -111,7 +114,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 4.1 1997-08-13 15:41:12 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 5.0 1997-08-21 13:24:22 neelin Rel $";
 #endif
 
 #include <stdlib.h>

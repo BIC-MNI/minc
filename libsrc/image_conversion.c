@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:07:52  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 5.0  1997-08-21 13:25:53  neelin
+@MODIFIED   : Release of minc version 0.5
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:07:52  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.3  1997/04/21  17:32:04  neelin
  * Fixed calculation of scale for icv so that values are not re-scaled
  * from real values to file floating-point values.
@@ -96,7 +99,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 4.0 1997-05-07 20:07:52 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 5.0 1997-08-21 13:25:53 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
