@@ -1,3 +1,13 @@
+2003-01-07  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* autogen.sh: New.
+	* Makefile.am: New.
+	* configure.in: Updated to use automake, libtool.
+
+	* AUTHORS: New. 
+	* LICENCE: Renamed to ...
+	* COPYING: ... this.  Makes automake happier.
+
 2002-12-11  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* progs/minccalc/gram.y: Insert missing semicolon at end

@@ -1,159 +1,41 @@
-dnl Process this file with autoconf to produce a configure script
-AC_INIT(libsrc/minc_private.h)
+dnl Process this file with autoconf to produce a configure script.
+
+AC_INIT
+AC_CONFIG_SRCDIR([libsrc/minc.h])
 AC_CONFIG_AUX_DIR(ac_config_aux)
+AM_INIT_AUTOMAKE(minc, 1.1)
+AM_CONFIG_HEADER([config.h])
 
-#------------------------------------------------------------------------
-# Look for ranlib
-#------------------------------------------------------------------------
+AC_REVISION($Revision: 6.3 $)
+
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
+AM_PROG_CC_C_O
 AC_PROG_RANLIB
+AC_PROG_F77
+AM_PROG_LEX
+AC_PROG_YACC
 
-#------------------------------------------------------------------------
-# Look for groff or nroff
-#------------------------------------------------------------------------
-AC_CHECK_PROGS(NROFF, groff nroff, true)
-NROFF_FLAGS=-man
-if test $NROFF = groff; then NROFF_FLAGS="$NROFF_FLAGS -Tascii"; fi
-AC_SUBST(NROFF_FLAGS)
+dnl Build only static libs by default
+AC_DISABLE_SHARED
+AC_PROG_LIBTOOL
 
-#------------------------------------------------------------------------
-# Look for make or gmake
-#------------------------------------------------------------------------
-AC_CHECK_PROGS(MAKE, make gmake)
+smr_WITH_BUILD_PATH
 
-#------------------------------------------------------------------------
-# Check for an ANSI'ish C compiler, starting with CC (we really just look for
-# void's, prototypes and enum's because you can't always 
-# trust __STDC__ and those are the main things that we need)
-# If CC is not defined, then use cc. If either of those fail, then
-# look for gcc with AC_PROG_CC.
-#------------------------------------------------------------------------
-AC_CHECKING(for ANSI-ish compiler)
-: ${CC=cc}
-AC_TRY_RUN([
-typedef enum {FIRST, SECOND} enum_type;
-void minc_test(void *ptr, enum_type enum_arg);
-int main(int argc, char *argv[])
-{
-   enum_type enum_val;
-   void *ptr = &enum_val;
-   *((signed char *) ptr) = (signed char) 0;
-   minc_test(ptr, enum_val);
-   return 0;
-}
-void minc_test(void *ptr, enum_type enum_arg)
-{
-   return;
-}
-   ],:, [unset CC
-        AC_PROG_CC
-        if test -z "$GCC"
-        then 
-           AC_MSG_ERROR(Compiler is not ANSI C - try gcc)
-        fi],:)
+# Check for required C libraries
+mni_REQUIRE_LIB(m,[#include <math.h>],[double x = sqrt(3.);])
+mni_REQUIRE_LIB(netcdf,[#include <netcdf.h>],[int i = ncopen("",0);])
 
-#------------------------------------------------------------------------
-# Look for netcdf header, etc
-#------------------------------------------------------------------------
-AC_MSG_CHECKING(for netcdf package)
-ROOT=.
-latest_netcdf=''
-for file in `ls -d ../netcdf-* 2> /dev/null | sort`
-do
-   if test -d "$file"
-   then
-      latest_netcdf="$file"
-   fi
-done
-if test "x$latest_netcdf" != x
-then
-   latest_netcdf='${ROOT}/'"$latest_netcdf"
-fi
-for testdir in "$latest_netcdf" '${ROOT}/..' /usr/local
-do
-   if test -z "$NETCDF_PREFIX"
-   then
-      thedir=`eval echo $testdir`
-      if test -d "$thedir" -a -r "$thedir/include/netcdf.h"
-      then
-         NETCDF_PREFIX=`echo "$testdir" |sed -e s'/{/(/' -e s'/}/)/'`
-      fi
-   fi
-done
-if test -z "$NETCDF_PREFIX"
-then
-   AC_MSG_RESULT("")
-   AC_MSG_ERROR(Cannot find the netcdf package - define NETCDF_PREFIX)
-fi
-AC_MSG_RESULT(found in $NETCDF_PREFIX)
-AC_SUBST(NETCDF_PREFIX)
+dnl Replacement implementations for systems that lack the function.
 
-#------------------------------------------------------------------------
-# Check make variants
-#------------------------------------------------------------------------
-AC_CHECKING(make handling of targets in the dependency)
-: ${TARGET_IN_DEPENDENCY='$$@'}
-cat > conftest.Make <<EOF
-conf-target :
-	@true
-conf : ${TARGET_IN_DEPENDENCY}-target
-EOF
-if $MAKE -f conftest.Make conf 2> /dev/null
-then
-   :
-else
-   TARGET_IN_DEPENDENCY='% : %'
-cat > conftest.Make <<EOF
-conf-target :
-	@true
-conf : ${TARGET_IN_DEPENDENCY}-target
-EOF
-   if $MAKE -f conftest.Make conf 2> /dev/null
-   then
-      :
-   else
-      AC_MSG_ERROR(Cannot get make to put the target in a dependency)
-   fi
-fi
-AC_SUBST(TARGET_IN_DEPENDENCY)
-rm -f conftest.Make
+dnl need ac 2.57 for this? AC_CONFIG_LIBOBJ_DIR(libsrc)
+AC_REPLACE_FUNCS(strdup)
 
-#------------------------------------------------------------------------
-# Check to see if we should use fortran.
-# We now only support fortran on irix since netcdf has abandoned its
-# m4 approach to wrapper building as of 3.x
-# We still set the OS_TYPE just in case it is useful to someone
-#------------------------------------------------------------------------
-AC_MSG_CHECKING(whether to build fortran jackets)
-if test "$BUILD_FORTRAN" = "yes"
-then
-   FORTRAN_SUBDIR=fortran
-   FORTRAN_OBJ='$(ROOT)/$(FORTRAN_SUBDIR)/minc_jackets.o'
-   AC_CANONICAL_HOST
-   changequote(<<, >>)dnl
-   OS_TYPE=`echo $host_os | sed 's/^\([^0-9\]*\)[0-9].*$/\1/'`
-   changequote([, ])dnl
-   AC_CHECK_PROGS(FC, f77)
-else
-   OS_TYPE=
-   FORTRAN_SUBDIR=
-   FORTRAN_OBJ=
-fi
-AC_SUBST(OS_TYPE)
-AC_SUBST(FORTRAN_SUBDIR)
-AC_SUBST(FORTRAN_OBJ)
-if test "$FORTRAN_SUBDIR"
-then
-   AC_MSG_RESULT(yes)
-else
-   AC_MSG_RESULT(no)
-fi
+dnl This link is needed to allow <volume_io/foo.h> style includes.
+AC_CONFIG_LINKS(volume_io/Include/volume_io:volume_io/Include)
 
-#------------------------------------------------------------------------
-# Look for library functions
-#------------------------------------------------------------------------
-GLOBAL_CDEFINES=""
-AC_SUBST(GLOBAL_CDEFINES)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
 
-AC_PREFIX_DEFAULT('/usr/local')
-
-AC_OUTPUT(Make_machine_specific Make_configuration)

@@ -1,5 +1,8 @@
 config.log
 config.cache
 config.status
-Make_machine_specific
-Make_configuration
+.deps
+config.h.in
+Makefile.in
+aclocal.m4
+autom4te.cache
