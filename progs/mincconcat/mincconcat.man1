@@ -1,0 +1,160 @@
+.\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 1.1 1995-03-29 15:34:23 neelin Exp $
+.\"
+.TH MINCCONCAT 1
+
+.SH NAME
+mincconcat - concatenate minc files along a specific dimension
+
+.SH SYNOPSIS
+.B mincconcat
+[<options>] <infile1>.mnc [<infile2>.mnc ...] <outfile>.mnc
+
+.SH DESCRIPTION
+.I Mincconcat
+will concatenate a number of minc files together, producing a single
+output file. The concatenation is done along a specified dimension,
+with the slices being sorted into ascending order. The concatenation
+dimension can either be a dimension in the file, in which case
+coordinates for sorting are taken directly from the input files, or it
+can be a new dimension and the coordinates are specified with a
+command-line option.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied
+(default).
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.I -max_chunk_size_in_kb:
+Specify the maximum size of the copy buffer (in kbytes). Default is
+4096 kbytes.
+
+.SH Output type options
+.P
+.I -filetype:
+Don't do any type conversion (default).
+.P
+.I -byte:
+Write out bytes values.
+.P
+.I -short:
+Write out short integer values.
+.P
+.I -long:
+Write out long integer values.
+.P
+.I -float:
+Write out single-precision floating point values.
+.P
+.I -double:
+Write out double-precision floating point values.
+.P
+.I -signed:
+Write out values as signed integers (default for short and long). Ignored for
+floating point types.
+.P
+.I -unsigned:
+Write out values as unsigned integers (default for byte). Ignored for
+floating point types.
+.P
+.I -valid_range 
+<min> <max>:
+specifies the valid range of output voxel values in their integer
+representation. Default is the full range
+for the type and sign. This option is ignored for floating point
+values.
+
+.SH Concatenation options
+.P
+.I -concat_dimension
+<name>:
+specifies the name of concatenation dimension. If the dimension exists
+in the input files, then coordinates are taken from those files. If
+not, then a new dimension is created and the coordinate for each input
+file is taken from command-line options. The default is to use the
+slowest varying dimension of the first file.
+.P
+.I -start
+<start>:
+specifies the starting coordinate for the new dimension (default = 0.0).
+.P
+.I -step
+<step>:
+specifies the separation between voxels for the new dimension 
+(default = 1.0).
+.P
+.I -width
+<width>:
+specifies the (constant) width of each sample along the new dimension 
+(default = none).
+.P
+.I -coordlist
+<c1>,<c2>,...:
+specifies a comma-separated list of coordinates along the new dimension.
+.P
+.I -widthlist
+<w1>,<w2>,...:
+specifies a comma-separated list of widths along the new dimension.
+.P
+.I -check_dimensions:
+Check that all input files have matching sampling in world dimensions
+(default).
+.P
+.I -nocheck_dimensions:
+Ignore any differences between input files in world dimensions
+sampling.
+.P
+.I -ascending:
+Sort coordinates in ascending order (default).
+.P
+.I -descending:
+Sort coordinates in descending order.
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH EXAMPLES:
+
+To concatenate two volumes with dimensions zspace, yspace, xspace,
+having interleaved slices along zspace, we can simply use
+
+   mincconcat input1.mnc input2.mnc output.mnc
+
+If we have a bunch of compressed (yspace,  xspace) images that we wish
+to concatenate into an evenly spaced volume, then we can type
+
+   mincconcat input1.mnc.gz input2.mnc.gz input3.mnc.gz \\
+      input4.mnc.gz output.mnc \\
+      -concat_dimension zspace -start -23 -step 2
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 1995 by Peter Neelin
