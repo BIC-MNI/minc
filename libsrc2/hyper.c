@@ -349,7 +349,6 @@ mirw_hyperslab_raw(int opcode,
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
     hid_t fspc_id = -1;
-    char path[MI2_MAX_PATH];
     int result = MI_ERROR;
     hssize_t hdf_start[MI2_MAX_VAR_DIMS];
     hsize_t hdf_count[MI2_MAX_VAR_DIMS];
@@ -366,9 +365,7 @@ mirw_hyperslab_raw(int opcode,
         type_id = mitype_to_hdftype(midatatype);
     }
 
-    sprintf(path, "/minc-2.0/image/%d/image", volume->selected_resolution);
-
-    dset_id = H5Dopen(file_id, path);
+    dset_id = volume->image_id;
     if (dset_id < 0) {
         goto cleanup;
     }
@@ -432,9 +429,6 @@ mirw_hyperslab_raw(int opcode,
  cleanup:
     if (type_id >= 0) {
         H5Tclose(type_id);
-    }
-    if (dset_id >= 0) {
-        H5Dclose(dset_id);
     }
     if (mspc_id >= 0) {
         H5Sclose(mspc_id);
