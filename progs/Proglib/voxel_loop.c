@@ -6,11 +6,16 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 4.1  1997-05-22 12:41:40  neelin
-@MODIFIED   : Loosened up checking of start coordinates so that we look at error
-@MODIFIED   : relative to the total extent of the volume (nelements*step) instead of
-@MODIFIED   : relative to start value (which may be close to zero).
+@MODIFIED   : Revision 4.2  1997-06-20 13:58:35  neelin
+@MODIFIED   : Fixed bug: when doing accumulation with no output file and with
+@MODIFIED   : 4D input (or more), had problem setting input start vector. This broke
+@MODIFIED   : mincconcat for 4D input files.
 @MODIFIED   :
+ * Revision 4.1  1997/05/22  12:41:40  neelin
+ * Loosened up checking of start coordinates so that we look at error
+ * relative to the total extent of the volume (nelements*step) instead of
+ * relative to start value (which may be close to zero).
+ *
  * Revision 4.0  1997/05/07  20:00:50  neelin
  * Release of minc version 0.4
  *
@@ -52,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 4.1 1997-05-22 12:41:40 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 4.2 1997-06-20 13:58:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1341,15 +1346,15 @@ private void do_voxel_loop(Loop_Options *loop_options,
                                           !outer_file_loop, &ifile, 
                                           &dim_index, &dummy_index)) {
 
-               /* Get input icvid and mincid and translate coords for file */
-               if (dim_index == 0) {
-                  input_icvid = get_input_icvid(loopfile_info, ifile);
-                  (void) miicv_inqint(input_icvid, MI_ICV_CDFID, 
-                                      &input_mincid);
-                  translate_input_coords(input_mincid, chunk_cur, input_cur,
-                                         chunk_curcount, input_curcount,
-                                         &loop_dim_index, loop_options);
-               }
+               /* Get input icvid and mincid and translate coords for file.
+                  We need to do this each time in case we have an outer
+                  file loop. */
+               input_icvid = get_input_icvid(loopfile_info, ifile);
+               (void) miicv_inqint(input_icvid, MI_ICV_CDFID, 
+                                   &input_mincid);
+               translate_input_coords(input_mincid, chunk_cur, input_cur,
+                                      chunk_curcount, input_curcount,
+                                      &loop_dim_index, loop_options);
 
 
                /* Read buffer */
