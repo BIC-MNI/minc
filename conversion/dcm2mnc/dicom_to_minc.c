@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.3  2005-03-03 18:59:15  bert
+   * Revision 1.4  2005-03-13 19:35:11  bert
+   * Lots of changes for dealing with some proprietary Philips stuff
+   *
+   * Revision 1.3  2005/03/03 18:59:15  bert
    * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
    *
    * Revision 1.2  2005/03/02 20:16:24  bert
@@ -120,7 +123,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.3 2005-03-03 18:59:15 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.4 2005-03-13 19:35:11 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -499,11 +502,9 @@ read_std_dicom(const char *filename, int max_group)
     return (group_list);
 }
 
-Acr_Group
-read_numa4_dicom(const char *filename, int max_group)
+static Acr_Group 
+add_siemens_info(Acr_Group group_list)
 {
-    Acr_Group group_list;
-
     /* needed for group repair - some essential info
      * only available in ascii dump of MrProt structure
      */
@@ -518,11 +519,6 @@ read_numa4_dicom(const char *filename, int max_group)
     int enc_ix;
     string_t str_buf;
     char *str_ptr;
-
-    group_list = read_std_dicom(filename, max_group);
-    if (group_list == NULL) {
-        return NULL;
-    }
 
     /* now fix the group list to provide essential info
      * via standard dicom elements
@@ -803,8 +799,114 @@ read_numa4_dicom(const char *filename, int max_group)
              acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
          }
      } // end of diffusion scan handling
-
      return (group_list);
+}
+
+#define PMS_SET_CREATOR(el, cr) \
+     (el)->element_id = ((el)->element_id & 0xff) + ((cr)->element_id << 8)
+
+static Acr_Group
+add_philips_info(Acr_Group group_list)
+{
+    struct Acr_Element_Id creator_id;
+    Acr_Group pms_group;
+    Acr_Element pms_element;
+    Acr_Element pms_element_list;
+    char *str_ptr;
+    int slice_count;
+    int slice_index;
+
+    /* To use the Philips proprietary group, we have to figure out the
+     * DICOM private creator ID in use.  The group ID is always 0x2001,
+     * but the upper eight bits of the element ID are somewhat variable.
+     * To tell what they are, we have to search through the element ID's
+     * from 0x0001-0x00ff and find one that contains the text
+     * "PHILIPS IMAGING DD 001" or "Philips Imaging DD 001".  The value
+     * of this element is then used for the upper eight bits of all
+     * subsequent Philips private element ID's.
+     */
+    pms_group = acr_find_group(group_list, PMS_PRIVATE_GROUP_ID);
+    if (pms_group != NULL) {
+        pms_element_list = acr_get_group_element_list(pms_group);
+        creator_id.group_id = PMS_PRIVATE_GROUP_ID;
+        creator_id.vr_code = ACR_VR_LO;
+        for (creator_id.element_id = 0x0001; 
+             creator_id.element_id <= 0x00ff; 
+             creator_id.element_id++) {
+            pms_element = acr_find_element_id(pms_element_list, &creator_id);
+            if (pms_element != NULL) {
+                str_ptr = acr_get_element_string(pms_element);
+                if (str_ptr != NULL && 
+                    (!strcmp(str_ptr, "Philips Imaging DD 001") ||
+                     !strcmp(str_ptr, "PHILIPS IMAGING DD 001"))) {
+                    /* Found it!!! */
+                    break;
+                }
+            }
+        }
+    }
+    if (creator_id.element_id > 0xff) {
+        printf("WARNING: Can't find Philips private creator ID.\n");
+    }
+    else {
+        if (G.Debug >= HI_LOGGING) {
+            printf("Found Philips private creator ID at %#x\n", 
+                   creator_id.element_id);
+        }
+
+        PMS_SET_CREATOR(PMS_Number_of_Slices_MR, &creator_id);
+        slice_count = acr_find_int(group_list, PMS_Number_of_Slices_MR, -1);
+        if (slice_count < 0) {
+            printf("WARNING: Can't find Philips slice count\n");
+        }
+        else {
+            acr_insert_short(&group_list, ACR_Images_in_acquisition, 
+                             slice_count);
+        }
+        PMS_SET_CREATOR(PMS_Slice_Number_MR, &creator_id);
+        slice_index = acr_find_int(group_list, PMS_Slice_Number_MR, -1);
+        if (slice_index < 0) {
+            printf("WARNING: Can't find Philips slice index\n");
+        }
+        else {
+            /* TODO: It is really quite gross that we have to resort to
+             * using a Siemens-proprietary field to tell the rest of the
+             * code which slice we are on.  But such is life, for now...
+             */
+            acr_insert_numeric(&group_list, SPI_Current_slice_number,
+                               (double) slice_index);
+        }
+    }
+    return (group_list);
+}
+
+Acr_Group
+read_numa4_dicom(const char *filename, int max_group)
+{
+    Acr_Group group_list;
+    char *str_ptr;
+
+    group_list = read_std_dicom(filename, max_group);
+    if (group_list == NULL) {
+        return NULL;
+    }
+
+    /* Check the manufacturer.  If it is one we know, try to interpret
+     * the private/proprietary data if present.  This is converted to
+     * standard DICOM fields whereever it makes sense to do so.
+     */
+    str_ptr = acr_find_string(group_list, ACR_Manufacturer, "");
+    if (G.Debug >= HI_LOGGING) {
+        printf("Manufacturer string is '%s'\n", str_ptr);
+    }
+    if (strstr(str_ptr, "SIEMENS") != NULL ||
+        strstr(str_ptr, "Siemens") != NULL) {
+        group_list = add_siemens_info(group_list);
+    }
+    else if (strstr(str_ptr, "Philips") != NULL) {
+        group_list = add_philips_info(group_list);
+    }
+    return (group_list);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
