@@ -149,6 +149,8 @@ GLOBAL_ELEMENT(ACR_Bits_allocated        , 0x0028, 0x0100, US);
 GLOBAL_ELEMENT(ACR_Bits_stored           , 0x0028, 0x0101, US);
 GLOBAL_ELEMENT(ACR_Smallest_pixel_value  , 0x0028, 0x0104, US);
 GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0105, US);
+GLOBAL_ELEMENT(ACR_Smallest_pixel_value_in_series , 0x0028, 0x0108, US);
+GLOBAL_ELEMENT(ACR_Largest_pixel_value_in_series  , 0x0028, 0x0109, US);
 GLOBAL_ELEMENT(ACR_Pixel_data            , 0x7fe0, 0x0010, OW);
 
 /* Element id's for SPI */
