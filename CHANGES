@@ -1,3 +1,16 @@
+Thu Aug 16 12:47:32 EDT 2001
+   - added library functions to handle reading and writing of valid_range
+     and reading of type and sign, as well as setting of default range
+     values for a given type. These routines properly handle type differences
+     between valid_range and the image variable. For the case of a float image
+     and a double valid_range attribute, valid data can go out of range 
+     and appear invalid through rounding in the conversion from double to 
+     float and back. Writing of the valid_range attribute now follows the
+     NetCDF convention of having the same type for variables and valid_range.
+     Modified volume_io, voxel_loop and programs to use these functions.
+   - modified minctoraw so that user must specify either -normalize or
+     -nonormalize
+
 Mon Aug 13 09:44:13 EDT 2001
    - Changed use of floorf to floor in macro SCALAR_ROUND of node.h in
      minccalc.
