@@ -5,7 +5,15 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.8  2000-02-09 23:53:52  neelin
+ * Revision 1.9  2000-02-21 23:48:13  neelin
+ * More changes to improve dicom conformance for MNH PACS system.
+ * Allow UID prefix to be defined in project file. Define SOP instance UID in
+ * addition to study and series instance UIDs and frame-of-reference UID and
+ * make sure that these are all the constant for the same image data.
+ * Set series number from acquisition number.
+ * Set study description from part of comment field.
+ *
+ * Revision 1.8  2000/02/09 23:53:52  neelin
  * Added code to create the series description using the orientation and the
  * scanning sequence.
  *
@@ -50,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.8 2000-02-09 23:53:52 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.9 2000-02-21 23:48:13 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -84,7 +92,9 @@ typedef enum { XCOORD = 0, YCOORD, ZCOORD, WORLD_NDIMS } World_Index;
 
 /* Dicom definitions */
 DEFINE_ELEMENT(static, ACR_Image_type                 , 0x0008, 0x0008, CS);
+DEFINE_ELEMENT(static, ACR_SOP_instance_UID           , 0x0008, 0x0018, UI);
 DEFINE_ELEMENT(static, ACR_Accession_number           , 0x0008, 0x0050, SH);
+DEFINE_ELEMENT(static, ACR_Study_description          , 0x0008, 0x1030, LO);
 DEFINE_ELEMENT(static, ACR_Series_description         , 0x0008, 0x103e, LO);
 DEFINE_ELEMENT(static, ACR_Patient_comments           , 0x0010, 0x4000, SH);
 DEFINE_ELEMENT(static, ACR_Sequence_variant           , 0x0018, 0x0021, CS);
@@ -117,6 +127,7 @@ private void calculate_image_position(int orientation,
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : convert_to_dicom
 @INPUT      : group_list
+              uid_prefix
 @OUTPUT     : (nothing)
 @RETURNS    : output message.
 @DESCRIPTION: Convert a group list so that its elements are dicom-conformant.
@@ -126,11 +137,12 @@ private void calculate_image_position(int orientation,
 @CREATED    : June 13, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void convert_to_dicom(Acr_Group group_list)
+public void convert_to_dicom(Acr_Group group_list, char *uid_prefix)
 {
    Acr_Element element;
    double value;
-   char string[64], *ptr;
+   char string[64], *ptr, *imagenum;
+   char comment[64];
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
    union {
       unsigned char ch[4];
@@ -139,15 +151,39 @@ public void convert_to_dicom(Acr_Group group_list)
    int study, series, echo;
    int orientation;
    int row_world, column_world;
+   int index;
    double field_of_view, centre[WORLD_NDIMS], position[WORLD_NDIMS];
 
-   /* Set up uid prefix */
-   host_id.ul = gethostid();
-   (void) sprintf(string, "1.%d.%d.%d.%d.%d.%d.%d", 
-                  (int) 'I',(int) 'P',
-                  (int) host_id.ch[0], (int) host_id.ch[1], 
-                  (int) host_id.ch[2], (int) host_id.ch[3], (int) getpid());
+   /* Set up uid prefix: strip off any trailing blanks or . and then either
+      copy the string or make one up if needed. */
+   index = strlen(uid_prefix)-1;
+   while ((index >= 0) && 
+          ((uid_prefix[index] == ' ') || (uid_prefix[index] == '.'))) {
+      index--;
+   }
+   index++;
+   uid_prefix[index] = '\0';
+   if (index > 0) {
+      (void) strcpy(string, uid_prefix);
+   }
+   else {
+      host_id.ul = gethostid();
+      (void) sprintf(string, "1.%d.%d.%d.%d.%d.%d.%d", 
+                     (int) 'I',(int) 'P',
+                     (int) host_id.ch[0], (int) host_id.ch[1], 
+                     (int) host_id.ch[2], (int) host_id.ch[3], (int) getpid());
+   }
    ptr = &string[strlen(string)];
+
+   /* Get the image number. Check that it is not too long - just chop it off
+      if it is. */
+   imagenum = acr_find_string(group_list, ACR_Image_Number, NULL);
+   if ((imagenum != NULL) && (strlen(imagenum) > (size_t) ACR_MAX_IS_LEN)) {
+      imagenum[ACR_MAX_IS_LEN] = '\0';
+      acr_insert_string(&group_list, ACR_Image_Number, imagenum);
+      imagenum = acr_find_string(group_list, ACR_Image_Number, NULL);
+   }
+   if (imagenum == NULL) imagenum = "1";
 
    /* Set study, series and frame of reference UID's.
       Note that the series UID includes echo for the sake of viewing
@@ -166,6 +202,11 @@ public void convert_to_dicom(Acr_Group group_list)
    acr_insert_string(&group_list, ACR_Series_instance_UID, string);
    (void) sprintf(ptr, ".3.%d.%d", study, series);
    acr_insert_string(&group_list, ACR_Frame_of_reference_UID, string);
+   (void) sprintf(ptr, ".4.%d.%d.%s", study, series, imagenum);
+   acr_insert_string(&group_list, ACR_SOP_instance_UID, string);
+
+   /* Fix the series number */
+   acr_insert_numeric(&group_list, ACR_Series, (double) series);
    
    /* Update dates and times */
    convert_date(acr_find_string(group_list, ACR_Study_date, NULL));
@@ -183,6 +224,19 @@ public void convert_to_dicom(Acr_Group group_list)
    acr_insert_string(&group_list, ACR_Accession_number,
                      acr_find_string(group_list, ACR_Patient_comments, ""));
 
+   /* Get the comment field and use it to set the study descriptions */
+   (void) strncpy(comment, 
+                  acr_find_string(group_list, ACR_Acq_comments, ""),
+                  sizeof(comment));
+   comment[sizeof(comment)-1] = '\0';
+   if (strlen(comment) >= (size_t) 10) {
+      ptr = &comment[9];
+      while (*ptr == ' ') {ptr--;}
+      ptr++;
+      *ptr = '\0';
+      acr_insert_string(&group_list, ACR_Study_description, comment);
+   }
+
    /* Make up a series description from orientation, scanning sequence */
    if (strlen(acr_find_string(group_list, ACR_Series_description, "")) == 0) {
       orientation = acr_find_int(group_list, SPI_Slice_orientation, 0);
@@ -198,14 +252,6 @@ public void convert_to_dicom(Acr_Group group_list)
       (void) sprintf(string, "%s %s", ptr, 
                      acr_find_string(group_list, ACR_Scanning_sequence, ""));
       acr_insert_string(&group_list, ACR_Series_description, string);
-   }
-
-   /* Check that the image number is not too long - just chop it off
-      if it is. */
-   ptr = acr_find_string(group_list, ACR_Image_Number, NULL);
-   if ((ptr != NULL) && (strlen(ptr) > (size_t) ACR_MAX_IS_LEN)) {
-      ptr[ACR_MAX_IS_LEN] = '\0';
-      acr_insert_string(&group_list, ACR_Image_Number, ptr);
    }
 
    /* Get image orientation */

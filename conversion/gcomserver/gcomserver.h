@@ -6,7 +6,15 @@
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.h,v $
- * Revision 6.3  2000-01-31 13:57:38  neelin
+ * Revision 6.4  2000-02-21 23:48:14  neelin
+ * More changes to improve dicom conformance for MNH PACS system.
+ * Allow UID prefix to be defined in project file. Define SOP instance UID in
+ * addition to study and series instance UIDs and frame-of-reference UID and
+ * make sure that these are all the constant for the same image data.
+ * Set series number from acquisition number.
+ * Set study description from part of comment field.
+ *
+ * Revision 6.3  2000/01/31 13:57:38  neelin
  * Added keyword to project file to allow definition of the local AEtitle.
  * A simple syntax allows insertion of the host name into the AEtitle.
  *
@@ -174,6 +182,7 @@ typedef struct {
          char port[SHORT_LINE];
          char AEtitle[SHORT_LINE];
          char LocalAEtitle[SHORT_LINE];
+         char UIDprefix[SHORT_LINE];
          Acr_File *afpin;
          Acr_File *afpout;
       } dicom;

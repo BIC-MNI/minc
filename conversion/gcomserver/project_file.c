@@ -8,7 +8,15 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.3  2000-01-31 13:57:38  neelin
+ * Revision 6.4  2000-02-21 23:48:14  neelin
+ * More changes to improve dicom conformance for MNH PACS system.
+ * Allow UID prefix to be defined in project file. Define SOP instance UID in
+ * addition to study and series instance UIDs and frame-of-reference UID and
+ * make sure that these are all the constant for the same image data.
+ * Set series number from acquisition number.
+ * Set study description from part of comment field.
+ *
+ * Revision 6.3  2000/01/31 13:57:38  neelin
  * Added keyword to project file to allow definition of the local AEtitle.
  * A simple syntax allows insertion of the host name into the AEtitle.
  *
@@ -224,6 +232,7 @@ public int read_project_file(char *project_name,
                   project_info->info.dicom.port[0] = '\0';
                   project_info->info.dicom.AEtitle[0] = '\0';
                   project_info->info.dicom.LocalAEtitle[0] = '\0';
+                  project_info->info.dicom.UIDprefix[0] = '\0';
                   project_info->info.dicom.afpin = NULL;
                   project_info->info.dicom.afpout = NULL;
                }
@@ -281,6 +290,10 @@ public int read_project_file(char *project_name,
                }
                else if (STREQ("LocalAEtitle", keyword)) {
                   STRCOPY(project_info->info.dicom.LocalAEtitle,
+                          value, SHORT_LINE);
+               }
+               else if (STREQ("UIDprefix", keyword)) {
+                  STRCOPY(project_info->info.dicom.UIDprefix,
                           value, SHORT_LINE);
                }
                else {

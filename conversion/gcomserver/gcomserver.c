@@ -5,7 +5,15 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.c,v $
- * Revision 6.2  1999-10-29 17:52:02  neelin
+ * Revision 6.3  2000-02-21 23:48:14  neelin
+ * More changes to improve dicom conformance for MNH PACS system.
+ * Allow UID prefix to be defined in project file. Define SOP instance UID in
+ * addition to study and series instance UIDs and frame-of-reference UID and
+ * make sure that these are all the constant for the same image data.
+ * Set series number from acquisition number.
+ * Set study description from part of comment field.
+ *
+ * Revision 6.2  1999/10/29 17:52:02  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1997/09/12 23:13:28  neelin
@@ -109,7 +117,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.2 1999-10-29 17:52:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.3 2000-02-21 23:48:14 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -423,7 +431,8 @@ int main(int argc, char *argv[])
             /* Check that we have image data and send it */
             if (acr_find_group_element(group_list, ACR_Pixel_data)
                 != NULL) {
-               convert_to_dicom(group_list);
+               convert_to_dicom(group_list, 
+                                project_info.info.dicom.UIDprefix);
                if (!acr_send_group_list(project_info.info.dicom.afpin,
                                         project_info.info.dicom.afpout, 
                                         group_list,
