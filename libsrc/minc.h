@@ -52,15 +52,15 @@
 #define MIversion  "version"
 
 /* General attribute constants */
-/*    Prefix for identifying a dimensional attribute pointer */
-#define MI_DIMATT_POINTER_PREFIX "_->_"
+/*    Prefix for identifying a variable attribute pointer */
+#define MI_VARATT_POINTER_PREFIX "_->_"
 /*    Separator for elements of MIchildren */
 #define MI_CHILD_SEPARATOR "\n"
 /*    MIvartype values */
 #define MI_GROUP     "group________"
 #define MI_DIMENSION "dimension____"
 #define MI_DIM_WIDTH "dim-width____"
-#define MI_DIMATT    "dim_attribute"
+#define MI_VARATT    "var_attribute"
 /*    MIvarid value */
 #define MI_STDVAR "MINC standard variable"
 /*    MIsigntype values */
@@ -212,6 +212,7 @@
 #define MI_ERR_ICVATTACHED      1341  /* Tried to modify attached icv */
 #define MI_ERR_TOOFEWDIMS       1342  /* Too few dimensions to be an image */
 #define MI_ERR_ICVNOTATTACHED   1343  /* Tried to access an unattached icv */
+#define MI_ERR_DIMSIZE          1344  /* Dimensions differ in size */
 
 /* MINC public functions */
 /* Define public constant */
