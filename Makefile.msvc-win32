@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.1 2004-09-28 18:43:23 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.2 2004-09-28 19:39:38 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -61,7 +61,6 @@ MINC_OBJS = \
 	libsrc\minc_globdef.obj \
 	libsrc\nd_loop.obj \
 	libsrc\netcdf_convenience.obj \
-	libsrc\strdup.obj \
 	libsrc\time_stamp.obj \
 	libsrc\value_conversion.obj \
 	libsrc\voxel_loop.obj
