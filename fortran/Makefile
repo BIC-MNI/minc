@@ -30,7 +30,7 @@ default: $(PROGS)
 #Dependency on Makefile
 $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
 
-all: $(PROGS) lint library
+all: $(PROGS) lint library test
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
@@ -44,6 +44,10 @@ all: $(PROGS) lint library
 # How to make executables
 $(PROGS) : $$@.o $(JACKETS_OBJ) $(CC_MINC_LIB)
 	$(FC) -o $@ $@.o $(JACKETS_OBJ) $(FFLAGS) $(LDOPT)
+
+# How to run test
+test: $(PROGS)
+	minc_ftest
 
 $(JACKETS_C): $(JACKETS_SRC) \
               $(NETCDF_FORTRAN_DIR)/fortc1.sed \
