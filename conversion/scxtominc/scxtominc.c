@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.2 1993-01-25 16:40:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.3 1993-02-02 09:34:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -22,6 +22,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtomi
 #include <math.h>
 #include <float.h>
 #include <ParseArgv.h>
+#include <time_stamp.h>
 #include <scx_file.h>
 #include <minc.h>
 #include "isotope_list.h"
@@ -221,6 +222,10 @@ int main(int argc, char *argv[])
    short *image;
    scx_file *scx_fp;
    int status;
+   char *tm_stamp;
+
+   /* Get time stamp */
+   tm_stamp = time_stamp(argc, argv);
 
    /* Check arguments */
    pname = argv[0];
@@ -281,6 +286,7 @@ int main(int argc, char *argv[])
    }
    count[ndims-1] = count[ndims-2] = scx_general_info->max_size;
    mincid = nccreate(mincfile, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   (void) miattputstr(mincid, NC_GLOBAL, MIhistory, tm_stamp);
    icvid=setup_minc_file(mincid, write_byte_data, copy_all_header,
                          ndims, count, num_scx_files,
                          scx_file_info, scx_general_info);
@@ -686,7 +692,7 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
 
             /* Save length of string */
             if (mtype==scx_string) {
-               mnem_list[imnem].mult = length;
+               mnem_list[imnem].mult = length - 1;
             }
             
             /* Save pointer to attributes */
@@ -1148,7 +1154,7 @@ int write_minc_slice(double scale, int write_byte_data,
       (void) mivarput1(mincid, ncvarid(mincid, MItime_width), start,
                        NC_DOUBLE, NULL, &time_width);
    }
-   (void) mivarput1(mincid, ncvarid(mincid, MIzspace), &start[ndims-2],
+   (void) mivarput1(mincid, ncvarid(mincid, MIzspace), &start[ndims-3],
                     NC_DOUBLE, NULL, &zpos);
 
    return FALSE;
