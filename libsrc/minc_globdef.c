@@ -5,7 +5,10 @@
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_globdef.c,v $
- * Revision 6.1  1999-10-19 14:45:09  neelin
+ * Revision 6.2  2004-04-27 15:48:34  bert
+ * Get rid of minc_callers_ncopts
+ *
+ * Revision 6.1  1999/10/19 14:45:09  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -42,12 +45,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 6.1 1999-10-19 14:45:09 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 6.2 2004-04-27 15:48:34 bert Exp $ MINC (MNI)";
 #endif
 
 /* Variable for storing the name of the current routine */
 char *minc_routine_name = "MINC";
 int minc_call_depth;
-int minc_callers_ncopts;
 int minc_trash_var;         /* Just for getting rid of lint messages */
 
