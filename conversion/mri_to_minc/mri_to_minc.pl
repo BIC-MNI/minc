@@ -71,11 +71,51 @@ sub create_tmpdir {
     $SIG{'QUIT'} = 'cleanup_and_die';
 }
 
+# Routine to get the current tape position
+sub get_tape_position {
+    if (defined($counter_for_read_next_file)) {
+        return $counter_for_read_next_file;
+    }
+    else {
+        return 0;
+    }
+}
+
+# Routine to set the current tape position
+sub set_tape_position {
+    local($tapedrive, $position) = @_;
+    if (length($tapedrive) <= 0) {return;}
+
+    # Loop to position tape
+    local($repos_sleep) = 1;
+    local($nreposition_retries) = 4;
+    local($tmp_status);
+    foreach $reposloop (0..$nreposition_retries-1) {
+        select(undef, undef, undef, $repos_sleep);
+        $tmp_status = system("mt -t $tapedrive rewind");
+        select(undef, undef, undef, $repos_sleep);
+        if ($position > 0) {
+            $tmp_status = system("mt -t $tapedrive fsf $position")
+                unless ($tmp_status != 0);
+        }
+        if ($tmp_status == 0) {last;}
+        print STDERR "Error repositioning tape - trying again.\n";
+    }
+    if ($tmp_status != 0) {
+        warn "\n\nWARNING!!!!! Unable to reposition the tape.\n\n";
+    }
+
+    # Set counter
+    $counter_for_read_next_file = $position;
+
+    return $tmp_status;
+}
+
 # Subroutine to read a file from tape
 sub read_next_file {
     local($tapedrive, *input_list) = @_;
     if (!defined($tapedrive) && !defined(@input_list)) {
-        $tapedrive = "/dev/tape";
+        $tapedrive = "/dev/nrtape";
     }
 
     # Constants
@@ -83,7 +123,6 @@ sub read_next_file {
     $tape_sleep = 1;
     $retry_sleep = 1;
     $nretries = 4;
-    $nreposition_retries = 4;
 
 
     # Get next value from list if no tape drive
@@ -117,23 +156,9 @@ sub read_next_file {
         if ($status == 0) {last;}
 
         # If we get to here then the read failed. Try to reposition the tape.
-        # We'll try a few times just in case. Throw in a sleep before 
-        # rewinding for good measure.
         print STDERR "Error reading from tape - trying again.\n";
-        local($tmp_status);
-        foreach $reposloop (0..$nreposition_retries-1) {
-            select(undef, undef, undef, $retry_sleep);
-            $tmp_status = system("mt -t $tapedrive rewind");
-            select(undef, undef, undef, $retry_sleep);
-            $tmp_status = system("mt -t $tapedrive fsf $cur_file_number")
-                unless ($tmp_status != 0);
-            if ($tmp_status == 0) {last;}
-            print STDERR "Error repositioning tape - trying again.\n";
-        }
-        if ($tmp_status != 0) {
-            warn "\n\nWARNING!!!!! Unable to reposition the tape.\n\n";
-            last;
-        }
+        if (&set_tape_position($tapedrive, $cur_file_number) != 0) {last;}
+        $counter_for_read_next_file++;
 
         # Sleep to let things settle after repositioning
         select(undef, undef, undef, $retry_sleep);
@@ -183,12 +208,12 @@ sub create_mincfile {
     if (scalar(@_) != 5) {
         die "Argument error in create_mincfile";
     }
-    local($mincfile, *file_list, *mincinfo, *image_list, $echo) 
+    local($mincfile, *file_list, *mincinfo, $image_list, $echo) 
         = @_;
 
     # Sort images by z position
     local($cur_image, %pos_to_image, @positions, $cur_slicepos);
-    foreach $cur_image (split($;, $image_list{$echo})) {
+    foreach $cur_image (split($;, $image_list)) {
         $cur_slicepos = $mincinfo{$cur_image, 'slicepos'};
         if (!defined($pos_to_image{$cur_slicepos})) {
             $pos_to_image{$cur_slicepos} = $cur_image;
@@ -408,33 +433,110 @@ sub create_mincfile {
 
 }
 
+# Routine to add to the list file
+sub save_list_info {
+    local($listfile, $mincfile, *mincinfo, $image_list, $echo) = @_;
+    local($pos) = $mincinfo{'tape_position'};
+    local($pat_name) = '"'.substr($mincinfo{'patient_name'},0,30).'"';
+    local($exam) = $mincinfo{'exam'};
+    local($acq) = $mincinfo{'series'};
+    local($nslc) = scalar(split($;, $image_list));
+    local($date) = '"'.substr($mincinfo{'start_time'},0,30).'"';
+    local($inst) = '"'.substr($mincinfo{'institution'},0,30).'"';
+    open(LIST, ">>$listfile") || 
+        warn "Error writing to list file \"$listfile\" ($!)\n";
+    write LIST;
+    close(LIST);
+    format LIST =
+@>>>> @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @>>>>>>> @>> @> @>> @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$pos  $pat_name                        $exam    $acq $echo $nslc $date $inst
+.
+}
+
+# Routine to get argument values
+sub get_arguments {
+
+    # Usage line
+    $0 =~ /([^\/]+)$/;
+    local($prog) = $1;
+    local($usage) = 
+        "Usage: $prog <outputdir> [<file1> <file2> ...] [<options>]\n";
+
+    # Set default values
+    local($outputdir) = undef;
+    local($tapedrive) = '';
+    local($listfile) = '';
+    local($nominc) = 0;
+    local($tape_position) = 0;
+    local($tape_end) = -1;
+    local(@input_list) = ();
+
+    # Loop through arguments
+    while (@_) {
+        $_ = shift;
+        if (/^-list$/) { $listfile = shift;}
+        elsif (/^-tape$/) { $tapedrive = shift;}
+        elsif (/^-nominc$/) { $nominc = 1;}
+        elsif (/^-first$/) { $tape_position = shift;}
+        elsif (/^-last$/) {$tape_end = shift;}
+        elsif (/^-h(|elp)$/) {
+            die
+"Command-specific options:
+ -list:\t\tSpecify a file for listing contents of tape
+ -tape:\t\tSpecify an input tape drive (default=/dev/nrtape if no files given)
+ -nominc:\t\tDo not produce output minc files
+ -first:\t\tSpecify a starting tape position (# files to skip)
+ -last:\t\tSpecify an ending tape position
+Generic options for all commands:
+ -help:\t\tPrint summary of comand-line options and abort
+
+$usage
+";
+        }
+        elsif (/^-./) {
+            die "Unknown option \"$_\"\n";
+        }
+        else {
+            if (!defined($outputdir)) {
+                $outputdir = $_;
+            }
+            else {
+                push(@input_list, $_);
+            }
+        }
+    }
+
+    # Check expected values
+    if ((length($tapedrive) > 0) && (scalar(@input_list) > 0)) {
+        die "You cannot specify both a tape drive and a file list.\n";
+    }
+    elsif ((length($tapedrive) <= 0) && (scalar(@input_list) <= 0)) {
+        $tapedrive = "/dev/nrtape";
+    }
+    if (!defined($outputdir)) {
+        die $usage;
+    }
+    if ($tape_position < 0) {
+        die "Tape position must be >= 0\n";
+    }
+    if (!defined($tape_end)) {$tape_end = -1;}
+
+    # Return values
+    return($outputdir, $tapedrive, $listfile, $nominc, 
+           $tape_position, $tape_end, @input_list);
+}
+
 # Subroutine to do all the work - loops through files collecting info,
 # then calls routine to create minc file.
 # Because this was the main program, it uses global variables
 sub mri_to_minc {
 
     $| = 1;
-    $outputdir = shift;
-    if (!defined($outputdir)) {
-        die "Usage: $0 <outputdir> [/dev/<tape device> | <file1> <file2> ...]";
-    }
 
     # Get arguments
-    if (!defined($_[0])) {
-        $tapedrive = "/dev/nrtape";
-        @input_list = ();
-    }
-    elsif ($_[0] =~ m+^/dev/+) {
-        $tapedrive = shift;
-        @input_list = ();
-        if (scalar(@_) > 0) {
-            die "Do not specify tapedrive and input file list, stopped";
-        }
-    }
-    else {
-        $tapedrive = '';
-        @input_list = @_;
-    }
+    ($outputdir, $tapedrive, $listfile, $nominc, 
+     $tape_position, $tape_end, @input_list) = 
+         &get_arguments(@_);
 
     # Should we delete the files?
     $delete_files = (length($tapedrive) > 0);
@@ -442,19 +544,49 @@ sub mri_to_minc {
     # Create a temporary directory
     &create_tmpdir("mri_to_minc_$$");
 
+    # Check if list file already exists
+    if (length($listfile) > 0) {
+        if (-e $listfile) {
+            die "List file \"$listfile\" already exists.\n";
+        }
+        open(LIST_START, ">$listfile") || 
+            die "Unable to write to list file \"$listfile\" ($!)\n";
+        write LIST_START;
+        close(LIST_START);
+        format LIST_START =
+@>>>> @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @>>>>>>> @>> @> @>> @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+'File'  'Patient Name' 'Exam' 'Acq' 'E#' 'Slc' 'Date' 'Institution'
+
+.
+    }
+
     # Rewind and initialize the tape
     if (length($tapedrive) > 0) {
         &initialize_tape_drive($tapedrive);
+        if ($tape_position > 0) {
+            &set_tape_position($tapedrive, $tape_position);
+        }
     }
 
     # Loop through files on tape
     $keep_looping = 1;
     while ($keep_looping) {
 
-        # Get next file
-        $nextfile = &read_next_file($tapedrive, *input_list);
-        if ($nextfile eq "") {
+        # Save current tape position
+        $tape_position = &get_tape_position;
+
+        # Check for reaching last tape file requested
+        if (($tape_end >= 0) && ($tape_position > $tape_end)) {
+            warn "Reached last file requested (file number $tape_end).\n";
             $keep_looping = 0;
+        }
+
+        # Get next file
+        if ($keep_looping) {
+            $nextfile = &read_next_file($tapedrive, *input_list);
+            if ($nextfile eq "") {
+                $keep_looping = 0;
+            }
         }
 
         # Read in headers
@@ -492,8 +624,9 @@ sub mri_to_minc {
 
                 # Create minc file
                 ($patient_name = $mincinfo{'patient_name'}) =~
-                    tr/a-zA-Z0-9_\-/_/cs;
-                $patient_name =~ tr/A-Z/a-z/;
+                    tr/a-zA-Z0-9_\-/_/cs;             # Use only legal chars
+                $patient_name =~ tr/A-Z/a-z/;         # Lowercase
+                $patient_name =~ s/_*(.*[^_])_*$/$1/; # Remove _ on ends
                 $mincfile = "$outputdir/".$patient_name."_".
                     $mincinfo{'exam'}."_".$mincinfo{'series'};
                 if ($mincinfo{'numechos'} > 1) {
@@ -501,8 +634,14 @@ sub mri_to_minc {
                 }
                 $mincfile .= "_mri.mnc";
                 print STDERR "Creating minc file \"$mincfile\"\n";
-                &create_mincfile($mincfile, *file_list, *mincinfo, 
-                                 *image_list, $echo);
+                if (length($listfile) > 0) {
+                    &save_list_info($listfile, $mincfile, *mincinfo, 
+                                    $image_list{$echo}, $echo);
+                }
+                if (!$nominc) {
+                    &create_mincfile($mincfile, *file_list, *mincinfo, 
+                                     $image_list{$echo}, $echo);
+                }
             }
 
             # Delete files (if needed) and reset variables
@@ -517,6 +656,7 @@ sub mri_to_minc {
 
         # If first file, then save appropriate info
         if (scalar(keys(%file_list)) <= 0) {
+            $mincinfo{'tape_position'} = $tape_position;
             $mincinfo{'exam'} = $cur_exam;
             $mincinfo{'series'} = $cur_series;
             $mincinfo{'width'} = $cur_width;
