@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 2.2 1995-03-29 15:34:23 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 2.3 1995-03-29 15:39:29 neelin Exp $
 .\"
 .TH MINCINFO 1
 
@@ -91,23 +91,28 @@ Print summary of command-line options and abort.
 .SH EXAMPLES
 
 Print out standard information about a minc file.
+
      mincinfo file.mnc
 
 Print out contents of global history attribute.
+
      mincinfo file.mnc -attvalue :history
 
 Print out step value for x dimension, setting the default value
 to 1.
+
      mincinfo file.mnc -attvalue xspace:step -error 1
 
 Print out the step values for x, y and z, setting the default value to
 1.
+
      mincinfo file.mnc -error 1 \\
           -attvalue xspace:step \\
           -attvalue yspace:step \\
           -attvalue zspace:step
 
 Print out the names of the dimensions subscripting the image variable.
+
      mincinfo file.mnc -vardims image
 
 .SH AUTHOR
