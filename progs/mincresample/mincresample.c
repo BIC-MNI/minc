@@ -9,7 +9,18 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: mincresample.c,v $
+@MODIFIED   : Revision 1.6  1993-08-11 13:27:59  neelin
+@MODIFIED   : Converted to use Dave MacDonald's General_transform code.
+@MODIFIED   : Fixed bug in get_slice - for non-linear transformations coord was
+@MODIFIED   : transformed, then used again as a starting coordinate.
+@MODIFIED   : Handle files that have image-max/min that doesn't vary over slices.
+@MODIFIED   : Handle files that have image-max/min varying over row/cols.
+@MODIFIED   : Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
+@MODIFIED   : Handle out-of-range values (-fill values from a previous mincresample, for
+@MODIFIED   : example).
+@MODIFIED   : Save transformation file as a string attribute to processing variable.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -23,7 +34,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.5 1993-07-21 12:49:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.6 1993-08-11 13:27:59 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -35,29 +46,24 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <def_tag_io.h>
+#include <def_mni.h>
 #include <minc_def.h>
 #include "mincresample.h"
-
-#define public
-#define private static
 
 /* Main program */
 
 public int main(int argc, char *argv[])
 {
-   Volume in_vol_struct, out_vol_struct;
-   Volume *in_vol = &in_vol_struct, *out_vol = &out_vol_struct;
-   Transformation transformation_struct;
-   Transformation *transformation = &transformation_struct;
-   Program_Flags program_flags_struct;
-   Program_Flags *program_flags = &program_flags_struct;
+   VVolume in_vol_struct, out_vol_struct;
+   VVolume *in_vol = &in_vol_struct, *out_vol = &out_vol_struct;
+   General_transform transformation;
+   Program_Flags program_flags;
 
    /* Get argument information */
-   get_arginfo(argc, argv, program_flags, in_vol, out_vol, transformation);
+   get_arginfo(argc, argv, &program_flags, in_vol, out_vol, &transformation);
 
    /* Do the resampling */
-   resample_volumes(program_flags, in_vol, out_vol, transformation);
+   resample_volumes(&program_flags, in_vol, out_vol, &transformation);
 
    /* Finish up */
    finish_up(in_vol, out_vol);
@@ -85,19 +91,9 @@ public int main(int argc, char *argv[])
 ---------------------------------------------------------------------------- */
 public void get_arginfo(int argc, char *argv[],
                         Program_Flags *program_flags,
-                        Volume *in_vol, Volume *out_vol, 
-                        Transformation *transformation)
+                        VVolume *in_vol, VVolume *out_vol, 
+                        General_transform *transformation)
 {
-   /* Identity transformation */
-   static Linear_Transformation identity_matrix = {
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0
-   };
-   static Transformation identity_transformation = {
-      TRUE, do_linear_transformation, &identity_matrix
-   };
-
    /* Argument parsing information */
    static Arg_Data args={
       TRUE,                   /* Clobber */
@@ -107,7 +103,9 @@ public void get_arginfo(int argc, char *argv[],
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
       {TRUE},                 /* Verbose */
       trilinear_interpolant,
-      {TRUE, NULL, NULL},     /* Set the default transformation later */
+      {NULL, NULL, 0, NULL},  /* Transformation info is empty at beginning.
+                                 Transformation must be set before invoking
+                                 argument parsing */
       {
           {2, 1, 0},          /* Axis order */
           {0, 0, 0},          /* nelements will be modified */
@@ -135,7 +133,7 @@ public void get_arginfo(int argc, char *argv[],
           (char *) &args.flags.verbose,
           "Do not print out any log messages.\n"},
       {"-transformation", ARGV_FUNC, (char *) get_transformation, 
-          (char *) &args.transformation,
+          (char *) &args.transform_info,
           "File giving world transformation. (Default = identity)."},
       {"-like", ARGV_FUNC, (char *) get_model_file, 
           (char *) &args.volume_def,
@@ -235,14 +233,17 @@ public void get_arginfo(int argc, char *argv[],
    };
 
    /* Other variables */
-   int save_argc, iarg, idim, index, ivar, varid;
-   int ndims, dim[MAX_VAR_DIMS], imgdim[MAX_VAR_DIMS];
+   int save_argc, iarg, idim, index;
    int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
    int in_findex, out_findex;  /* File indices (0 to ndims-1) */
    long size, total_size;
    char **save_argv, *infile, *outfile;
    File_Info *fp;
    char *tm_stamp, *pname;
+
+   /* Initialize the to identity transformation */
+   create_linear_transform(transformation, NULL);
+   args.transform_info.transformation = transformation;
 
    /* Get the time stamp */
    tm_stamp = time_stamp(argc, argv);
@@ -271,18 +272,27 @@ public void get_arginfo(int argc, char *argv[],
    get_file_info(infile, &args.volume_def, in_vol->file);
 
    /* Save the voxel_to_world transformation information */
-   in_vol->voxel_to_world = MALLOC(sizeof(Transformation));
-   in_vol->world_to_voxel = MALLOC(sizeof(Transformation));
-   in_vol->voxel_to_world->trans_data = NULL;
-   in_vol->world_to_voxel->trans_data = NULL;
+   in_vol->voxel_to_world = MALLOC(sizeof(General_transform));
+   in_vol->world_to_voxel = MALLOC(sizeof(General_transform));
    get_voxel_to_world_transf(&args.volume_def, in_vol->voxel_to_world);
-   invert_transformation(in_vol->world_to_voxel, in_vol->voxel_to_world);
+   create_inverse_general_transform(in_vol->voxel_to_world,
+                                    in_vol->world_to_voxel);
+
+   /* Check min/max variables */
+   fp = in_vol->file;
+   fp->using_icv=FALSE;
+   if ((fp->maxid != MI_ERROR) && (fp->minid != MI_ERROR) &&
+       (fp->datatype!=NC_FLOAT) && (fp->datatype!=NC_DOUBLE)) {
+      check_imageminmax(fp);
+   }
 
    /* Get for input volume data information */
    in_vol->slice = NULL;
    in_vol->volume = MALLOC(sizeof(Volume_Data));
    in_vol->volume->datatype = in_vol->file->datatype;
    in_vol->volume->is_signed = in_vol->file->is_signed;
+   in_vol->volume->vrange[0] = in_vol->file->vrange[0];
+   in_vol->volume->vrange[1] = in_vol->file->vrange[1];
    if (args.fillvalue == FILL_DEFAULT) {
       in_vol->volume->fillvalue = 0.0;
       in_vol->volume->use_fill = TRUE;
@@ -305,43 +315,10 @@ public void get_arginfo(int argc, char *argv[],
                                  nctypelen(in_vol->volume->datatype));
 
    /* Get space for slice scale and offset */
-   in_vol->volume->scale = MALLOC(sizeof(double) * in_vol->volume->size[0]);
-   in_vol->volume->offset = MALLOC(sizeof(double) * in_vol->volume->size[0]);
-
-   /* Check min/max variables */
-   fp = in_vol->file;
-   if ((fp->maxid != MI_ERROR) && (fp->minid != MI_ERROR)) {
-
-      /* Get MIimage dimensions */
-      (void) ncvarinq(fp->mincid, fp->imgid, NULL, NULL, &ndims, imgdim, NULL);
-
-      /* Check MIimagemax/min dimensions */
-      for (ivar=0; ivar<2; ivar++) {
-         varid = (ivar==0 ? fp->maxid : fp->minid);
-         (void) ncvarinq(fp->mincid, varid, NULL, NULL, &ndims, dim, NULL);
-         for (idim=0; idim < ndims; idim++) {
-            if ((dim[idim] == imgdim[fp->indices[1]]) ||
-                (dim[idim] == imgdim[fp->indices[2]])) {
-               (void) fprintf(stderr, 
-                              "MIimagemax/min vary over slice dimensions.\n");
-               exit(EXIT_FAILURE);
-            }
-         }        /* End loop over MIimagemax/min dimensions */
-      }        /* End loop over variables MIimagemax/min */
-
-   }        /* If both MIimagemax/min exist */
-
-   /* Save the transformation - if not set, use identity */
-   if (args.transformation.transform!=NULL) {
-      *transformation = args.transformation;
-   }
-   else {
-      *transformation = identity_transformation;
-      transformation->trans_data = MALLOC(sizeof(Linear_Transformation));
-      (void) memcpy(transformation->trans_data,
-                    identity_transformation.trans_data,
-                    sizeof(Linear_Transformation));
-   }
+   in_vol->volume->scale = 
+      MALLOC(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
+   in_vol->volume->offset = 
+      MALLOC(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
 
    /* Save the program flags */
    *program_flags = args.flags;
@@ -422,15 +399,74 @@ public void get_arginfo(int argc, char *argv[],
    /* Create the output file */
    create_output_file(outfile, args.clobber, &args.volume_def, 
                       in_vol->file, out_vol->file,
-                      tm_stamp, transformation);
+                      tm_stamp, &args.transform_info);
    
    /* Save the voxel_to_world transformation information */
-   out_vol->voxel_to_world = MALLOC(sizeof(Transformation));
-   out_vol->world_to_voxel = MALLOC(sizeof(Transformation));
-   out_vol->voxel_to_world->trans_data = NULL;
-   out_vol->world_to_voxel->trans_data = NULL;
+   out_vol->voxel_to_world = MALLOC(sizeof(General_transform));
+   out_vol->world_to_voxel = MALLOC(sizeof(General_transform));
    get_voxel_to_world_transf(&args.volume_def, out_vol->voxel_to_world);
-   invert_transformation(out_vol->world_to_voxel, out_vol->voxel_to_world);
+   create_inverse_general_transform(out_vol->voxel_to_world,
+                                    out_vol->world_to_voxel);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_imageminmax
+@INPUT      : fp - pointer to file description
+@OUTPUT     : 
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to check that MIimagemax and MIimagemin do not vary
+              over volume rows and columns. If they do, set up an icv to
+              handle it.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 5, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void check_imageminmax(File_Info *fp)
+{
+   int ndims, idim, dim[MAX_VAR_DIMS], imgdim[MAX_VAR_DIMS];
+   int ivar, varid;
+
+   /* Get MIimage dimensions */
+   (void) ncvarinq(fp->mincid, fp->imgid, NULL, NULL, &ndims, imgdim, NULL);
+
+   /* Check MIimagemax/min dimensions */
+   for (ivar=0; ivar<2; ivar++) {
+      varid = (ivar==0 ? fp->maxid : fp->minid);
+      (void) ncvarinq(fp->mincid, varid, NULL, NULL, &ndims, dim, NULL);
+      for (idim=0; idim < ndims; idim++) {
+         if ((dim[idim] == imgdim[fp->indices[ROW_AXIS]]) ||
+             (dim[idim] == imgdim[fp->indices[COL_AXIS]])) {
+            fp->using_icv = TRUE;
+         }
+      }        /* End loop over MIimagemax/min dimensions */
+   }        /* End loop over variables MIimagemax/min */
+
+   /* Set up an icv if needed to handle values varying over slice dims. */
+   if (fp->using_icv) {
+
+      /* Change type to floating point so that there is no loss of 
+         precision (except possibly for long values). */
+      if (fp->datatype != NC_DOUBLE)
+         fp->datatype = NC_FLOAT;
+      fp->is_signed = TRUE;
+
+      /* Create the icv */
+      fp->icvid = miicv_create();
+      (void) miicv_setint(fp->icvid, MI_ICV_TYPE, fp->datatype);
+      (void) miicv_setstr(fp->icvid, MI_ICV_SIGN, 
+                          (fp->is_signed ? MI_SIGNED : MI_UNSIGNED));
+      (void) miicv_setint(fp->icvid, MI_ICV_DO_NORM, TRUE);
+      (void) miicv_setint(fp->icvid, MI_ICV_DO_FILLVALUE, TRUE);
+      (void) miicv_attach(fp->icvid, fp->mincid, fp->imgid);
+
+      /* Get max and min for doing valid range checking */
+      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MIN, &fp->vrange[0]);
+      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MAX, &fp->vrange[1]);
+         
+   }
 
 }
 
@@ -548,11 +584,11 @@ public void get_file_info(char *filename,
       /* Check variable name */
       cur_axis = NO_AXIS;
       if (strcmp(dimname, MIxspace)==0)
-         cur_axis = X;
+         cur_axis = XAXIS;
       else if (strcmp(dimname, MIyspace)==0)
-         cur_axis = Y;
+         cur_axis = YAXIS;
       else if (strcmp(dimname, MIzspace)==0)
-         cur_axis = Z;
+         cur_axis = ZAXIS;
 
       /* Save world axis info */
       file_info->world_axes[idim] = cur_axis;
@@ -631,7 +667,8 @@ public void create_output_file(char *filename, int clobber,
                                Volume_Definition *volume_def,
                                File_Info *in_file,
                                File_Info *out_file,
-                               char *tm_stamp, Transformation *transformation)
+                               char *tm_stamp, 
+                               Transform_Info *transform_info)
 {
    int ndims, in_dims[MAX_VAR_DIMS], out_dims[MAX_VAR_DIMS];
    char dimname[MAX_NC_NAME];
@@ -640,7 +677,6 @@ public void create_output_file(char *filename, int clobber,
    nc_type datatype;
    int nexcluded, excluded_vars[10];
    char *string;
-   Linear_Transformation *matrx;
    int dim_exists, is_volume_dimension;
    int in_index, out_index;
 
@@ -790,9 +826,9 @@ public void create_output_file(char *filename, int clobber,
       there are non-spatial dimensions that vary faster than the fastest two
       spatial dimensions, but the way the resample code is set up, there's 
       no easy way around it, except to fix it when finishing up) */
-   cur_dim = out_file->indices[1];
-   for (idim=out_file->indices[1]+1; idim<ndims; idim++) {
-      if (idim != out_file->indices[2]) {
+   cur_dim = out_file->indices[ROW_AXIS];
+   for (idim=out_file->indices[ROW_AXIS]+1; idim<ndims; idim++) {
+      if (idim != out_file->indices[COL_AXIS]) {
          out_dims[cur_dim] = out_dims[idim];
          cur_dim++;
       }
@@ -832,43 +868,41 @@ public void create_output_file(char *filename, int clobber,
       (void) micopy_all_atts(in_file->mincid, in_file->minid,
                              out_file->mincid, out_file->minid);
 
-   /* Add transformation information to image processing variable */
+   /* Add transformation information to image processing variable if 
+      a transformation is given on the command line */
 
-   ncopts = 0;
+   if (transform_info->file_name != NULL) {
 
-   /* Get id of processing variable (create it if needed) */
-   varid = ncvarid(out_file->mincid, PROCESSING_VAR);
-   if (varid == MI_ERROR) {
-      varid = ncvardef(out_file->mincid, PROCESSING_VAR, NC_LONG, 0, NULL);
-      (void) miadd_child(out_file->mincid, 
-                         ncvarid(out_file->mincid, MIrootvariable), varid);
-   }
+      ncopts = 0;
 
-   /* Look for an unused transformation attribute */
-   string = MALLOC(MI_MAX_ATTSTR_LEN);
-   itrans = 0;
-   do {
-      (void) sprintf(string, "transformation%d-type", itrans);
-      itrans++;
-   } while (ncattinq(out_file->mincid, varid, string,
-                     NULL, NULL) != MI_ERROR);
-   itrans--;
+      /* Get id of processing variable (create it if needed) */
+      varid = ncvarid(out_file->mincid, PROCESSING_VAR);
+      if (varid == MI_ERROR) {
+         varid = ncvardef(out_file->mincid, PROCESSING_VAR, NC_LONG, 0, NULL);
+         (void) miadd_child(out_file->mincid, 
+                            ncvarid(out_file->mincid, MIrootvariable), varid);
+      }
 
-   /* Reset error handling */
-   ncopts = NC_VERBOSE | NC_FATAL;
+      /* Look for an unused transformation attribute */
+      string = MALLOC(MI_MAX_ATTSTR_LEN);
+      itrans = 0;
+      do {
+         (void) sprintf(string, "transformation%d-filename", itrans);
+         itrans++;
+      } while (ncattinq(out_file->mincid, varid, string,
+                        NULL, NULL) != MI_ERROR);
+      itrans--;
 
-   /* Add the attributes describing the transformation */
-   if (IS_LINEAR(transformation)) {
-      (void) miattputstr(out_file->mincid, varid, string, "linear");
-      (void) sprintf(string, "transformation%d-description", itrans);
+      /* Reset error handling */
+      ncopts = NC_VERBOSE | NC_FATAL;
+
+      /* Add the attributes describing the transformation */
+      (void) miattputstr(out_file->mincid, varid, string, 
+                         transform_info->file_name);
+      (void) sprintf(string, "transformation%d-filedata", itrans);
       (void) miattputstr(out_file->mincid, varid, string,
-                         "Linear transformation from new space to old space "
-                         "(3x4 matrix, columns vary fastest)");
-      (void) sprintf(string, "transformation%d-data", itrans);
-      matrx = (Linear_Transformation *) transformation->trans_data;
-      (void) ncattput(out_file->mincid, varid, string, NC_DOUBLE,
-                      WORLD_NDIMS * MAT_NDIMS, matrx->mat);
-   }
+                         transform_info->file_contents);
+   }         /* If transform specified on command line */
 
    /* Get into data mode */
    (void) ncendef(out_file->mincid);
@@ -878,6 +912,7 @@ public void create_output_file(char *filename, int clobber,
                                 nexcluded, excluded_vars);
 
    /* Create and attach an icv */
+   out_file->using_icv = TRUE;
    out_file->icvid = miicv_create();
    (void) miicv_setint(out_file->icvid, MI_ICV_TYPE, NC_DOUBLE);
    (void) miicv_setint(out_file->icvid, MI_ICV_DO_NORM, TRUE);
@@ -901,21 +936,13 @@ public void create_output_file(char *filename, int clobber,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public void get_voxel_to_world_transf(Volume_Definition *volume_def, 
-                                      Transformation *voxel_to_world)
+                                      General_transform *voxel_to_world)
 {
    int idim, jdim, cur_dim;
-   Linear_Transformation *matrix;
+   Transform matrix;
 
-   voxel_to_world->linear = TRUE;
-   voxel_to_world->transform = do_linear_transformation;
-   matrix = MALLOC(sizeof(*matrix));
-   if (voxel_to_world->trans_data!=NULL) FREE(voxel_to_world->trans_data);
-   voxel_to_world->trans_data = matrix;
-
-   /* Zero the matrix */
-   for (idim=0; idim < WORLD_NDIMS; idim++)
-      for (jdim=0; jdim < VOL_NDIMS; jdim++)
-         matrix->mat[idim][jdim] = 0.0;
+   /* Make an identity matrix */
+   make_identity_transform(&matrix);
 
    /* Loop over rows of matrix */
    for (idim=0; idim<WORLD_NDIMS; idim++) {
@@ -925,14 +952,17 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
          cur_dim = volume_def->axes[jdim];
 
          /* Get rotation/scale components of matrix */
-         matrix->mat[idim][cur_dim] = 
+         Transform_elem(matrix, idim, cur_dim) = 
             volume_def->step[jdim] * volume_def->dircos[jdim][idim];
 
          /* Get translation components */
-         matrix->mat[idim][VOL_NDIMS] += 
+         Transform_elem(matrix, idim, VOL_NDIMS) +=
             volume_def->start[jdim] * volume_def->dircos[jdim][idim];
       }
    }
+
+   /* Save the general transform */
+   create_linear_transform(voxel_to_world, &matrix);
 
    return;
 }
@@ -995,7 +1025,7 @@ public double get_default_range(char *what, nc_type datatype, int is_signed)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void finish_up(Volume *in_vol, Volume *out_vol)
+public void finish_up(VVolume *in_vol, VVolume *out_vol)
 {
    File_Info *in_file, *out_file;
    int idim, ndims, dims[MAX_VAR_DIMS];
@@ -1044,9 +1074,15 @@ public void finish_up(Volume *in_vol, Volume *out_vol)
 
    /* Close the output file */
    (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete, MI_TRUE);
+   if (out_file->using_icv) {
+      (void) miicv_free(out_file->icvid);
+   }
    (void) ncclose(out_file->mincid);
 
    /* Close the input file */
+   if (in_file->using_icv) {
+      (void) miicv_free(in_file->icvid);
+   }
    (void) ncclose(in_file->mincid);
 
    return;
@@ -1058,7 +1094,8 @@ public void finish_up(Volume *in_vol, Volume *out_vol)
               key - argument key
               nextArg - argument following key
 @OUTPUT     : (nothing) 
-@RETURNS    : TRUE so that ParseArgv will discard nextArg
+@RETURNS    : TRUE so that ParseArgv will discard nextArg, unless there
+              is no following argument.
 @DESCRIPTION: Routine called by ParseArgv to read in a transformation file
 @METHOD     : 
 @GLOBALS    : 
@@ -1068,40 +1105,76 @@ public void finish_up(Volume *in_vol, Volume *out_vol)
 ---------------------------------------------------------------------------- */
 public int get_transformation(char *dst, char *key, char *nextArg)
 {     /* ARGSUSED */
-   Transformation *transformation;
-   Linear_Transformation *matrx;
+   Transform_Info *transform_info;
+   General_transform *transformation;
+   General_transform input_transformation;
    FILE *fp;
+   int ch, index;
 
-   /* Get pointer to transformation structure */
-   transformation = (Transformation *) dst;
+   /* Check for following argument */
+   if (nextArg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      return FALSE;
+   }
 
-   /* Must be a linear transformation */
-   transformation->linear = TRUE;
-   transformation->transform = do_linear_transformation;
-   if (transformation->trans_data != NULL) FREE(transformation->trans_data);
-   matrx = MALLOC(sizeof(Linear_Transformation));
-   transformation->trans_data = matrx;
+   /* Get pointer to transform info structure */
+   transform_info = (Transform_Info *) dst;
+
+   /* Save file name */
+   transform_info->file_name = nextArg;
+   transformation = transform_info->transformation;
 
    /* Open the file */
    if (strcmp(nextArg, "-") == 0) {
-      fp = stdin;
+      /* Create a temporary for standard input */
+      fp=tmpfile();
+      if (fp==NULL) {
+         (void) fprintf(stderr, "Error opening temporary file.\n");
+         exit(EXIT_FAILURE);
+      }
+      while ((ch=getc(stdin))!=EOF) (void) putc(ch, fp);
+      rewind(fp);
    }
    else {
       fp = fopen(nextArg, "r");
       if (fp==NULL) {
-         (void) fprintf(stderr, "Error opening transformation file.\n");
+         (void) fprintf(stderr, "Error opening transformation file %s.\n",
+                        nextArg);
          exit(EXIT_FAILURE);
       }
    }
 
+   /* Read in the file for later use */
+   if (transform_info->file_contents == NULL) {
+      transform_info->file_contents = MALLOC(TRANSFORM_BUFFER_INCREMENT);
+      transform_info->buffer_length = TRANSFORM_BUFFER_INCREMENT;
+   }
+   for (index = 0; (ch=getc(fp)) != EOF; index++) {
+      if (index >= transform_info->buffer_length-1) {
+         transform_info->buffer_length += TRANSFORM_BUFFER_INCREMENT;
+         transform_info->file_contents = 
+            REALLOC(transform_info->file_contents, 
+                    transform_info->buffer_length);
+      }
+      transform_info->file_contents[index] = ch;
+   }
+   transform_info->file_contents[index] = '\0';
+   rewind(fp);
+
    /* Read the file */
-   if (!input_transform(fp, matrx->mat)) {
+   if (input_transform(fp, &input_transformation)!=OK) {
       (void) fprintf(stderr, "Error reading transformation file.\n");
       exit(EXIT_FAILURE);
    }
+   (void) fclose(fp);
+
+   /* Get rid of the old one */
+   delete_general_transform(transformation);
 
    /* Invert the transformation */
-   invert_transformation(transformation, transformation);
+   create_inverse_general_transform(&input_transformation, transformation);
 
    return TRUE;
 }
@@ -1112,7 +1185,8 @@ public int get_transformation(char *dst, char *key, char *nextArg)
               key - argument key
               nextArg - argument following key
 @OUTPUT     : (nothing) 
-@RETURNS    : TRUE so that ParseArgv will discard nextArg
+@RETURNS    : TRUE so that ParseArgv will discard nextArg unless there
+              is no following argument.
 @DESCRIPTION: Routine called by ParseArgv to read in a model file (-like)
 @METHOD     : 
 @GLOBALS    : 
@@ -1125,11 +1199,22 @@ public int get_model_file(char *dst, char *key, char *nextArg)
    Volume_Definition *volume_def;
    File_Info file;
 
+   /* Check for following argument */
+   if (nextArg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      return FALSE;
+   }
+
    /* Get pointer to volume definition structure */
    volume_def = (Volume_Definition *) dst;
 
    /* Get file information */
    get_file_info(nextArg, volume_def, &file);
+
+   /* Close the file */
+   (void) ncclose(file.mincid);
 
    return TRUE;
 }
@@ -1198,7 +1283,7 @@ public int get_fillvalue(char *dst, char *key, char *nextArg)
 
    /* Check key for fill value to set */
    if (strcmp(key, "-fill") == 0) {
-      *dptr = -FLT_MAX;
+      *dptr = -DBL_MAX;
    }
    else if (strcmp(key, "-nofill") == 0) {
       *dptr = FILL_DEFAULT;
