@@ -30,7 +30,7 @@ sub convert_dg_float_to_ieee {
         }
                                       
     }
-    return @result;
+    return (scalar(@result) > 1) ? @result : $result[0];
 }
 
 # Subroutine to unpack a data general float from a string

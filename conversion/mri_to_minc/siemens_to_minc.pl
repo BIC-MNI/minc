@@ -1,14 +1,5 @@
 # Subroutines for Siemens mri machines
 
-# Routine to take absolute value
-sub abs {
-    local(@new, $val);
-    foreach $val (@_) {
-        push(@new, ($val<=>0) * $val);
-    }
-    return @new;
-}
-
 # Routine to get a VAX integer
 sub unpack_int {
     if (scalar(@_) != 2) {
@@ -579,7 +570,7 @@ sub acr_find_numeric {
    foreach $value (@values) {
       $value += 0;
    }
-   return @values;
+   return (scalar(@values) > 1) ? @values : $values[0];
 }
 
 # Routine to get an integer from the header

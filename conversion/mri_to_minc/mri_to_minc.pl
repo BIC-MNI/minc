@@ -13,7 +13,7 @@ sub abs {
     foreach $val (@_) {
         push(@new, ($val<=>0) * $val);
     }
-    return @new;
+    return (scalar(@new) > 1) ? @new : $new[0];
 }
 
 # Subroutine to clean up files and exit
@@ -239,15 +239,6 @@ sub read_next_file {
 sub unpack_value {
     local(*string, $offset, $type) = @_;
     return unpack("x$offset $type", $string);
-}
-
-# Subroutine to take the absolute values of an array
-sub abs {
-    local(@vals) = @_;
-    foreach $val (@vals) {
-        if ($val < 0) {$val = -$val;}
-    }
-    return @vals;
 }
 
 # Subroutine to get a direction cosine from a vector, correcting for
@@ -791,7 +782,8 @@ sub mri_to_minc {
 
         # Read in headers
         if ($keep_looping) {
-            undef(%file_info, %specific_file_info);
+            undef(%file_info);
+            undef(%specific_file_info);
             if (&read_file_info($nextfile, *file_info, *specific_file_info)) {
                 warn "Error reading file \"$nextfile\". Skipping to next.\n";
                 next;
@@ -856,7 +848,10 @@ sub mri_to_minc {
             if ($delete_files) {
                 &remove_file(values(%file_list));
             }
-            undef(%file_list, %echo_list, %image_list, %mincinfo);
+            undef(%file_list);
+            undef(%echo_list);
+            undef(%image_list);
+            undef(%mincinfo);
         }
 
         # Break out here if stopping loop
