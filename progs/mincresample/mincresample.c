@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.11  2002-11-06 13:32:23  jason
+ * Revision 6.12  2003-09-18 15:01:33  bert
+ * Removed unnecessary brackets from initializer
+ *
+ * Revision 6.11  2002/11/06 13:32:23  jason
  * Fixes to mincresample: setting the interpolation type is now done
  * through an enum rather than function pointers.
  *
@@ -159,7 +162,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.11 2002-11-06 13:32:23 jason Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.12 2003-09-18 15:01:33 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -244,7 +247,7 @@ public void get_arginfo(int argc, char *argv[],
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
       {NO_VALUE, NO_VALUE, NO_VALUE}, /* Flag indicating that origin not set */
       {TRUE},                 /* Verbose */
-      {TRILINEAR},            /* use trilinear interpolation by default */
+      TRILINEAR,              /* use trilinear interpolation by default */
       {FALSE, NULL, NULL, 0, NULL}, /* Transformation info is empty at start.
                                  Transformation must be set before invoking
                                  argument parsing */
