@@ -33,7 +33,9 @@ void minc_test(void *ptr, enum_type enum_arg);
 int main(int argc, char *argv[])
 {
    enum_type enum_val;
-   minc_test(0, enum_val);
+   void *ptr = &enum_val;
+   *((signed char *) ptr) = (signed char) 0;
+   minc_test(ptr, enum_val);
    return 0;
 }
 void minc_test(void *ptr, enum_type enum_arg)
@@ -113,6 +115,23 @@ changequote(<<, >>)dnl
 OS_TYPE=`echo $host_os | sed 's/^\([^0-9\]*\)[0-9].*$/\1/'`
 changequote([, ])dnl
 AC_SUBST(OS_TYPE)
+
+#------------------------------------------------------------------------
+# Check to see if we should use fortran
+#------------------------------------------------------------------------
+AC_CHECK_PROGS(FC, f77)
+AC_CHECKING(whether to build fortran jackets)
+if test "$OS_TYPE" = "irix" && test "$FC" = "f77" || test "$BUILD_FORTRAN"
+then
+   FORTRAN_SUBDIR=fortran
+   FORTRAN_OBJ='$(ROOT)/$(FORTRAN_SUBDIR)/minc_jackets.o'
+else
+   FORTRAN_SUBDIR=
+   FORTRAN_OBJ=
+fi
+AC_SUBST(FORTRAN_SUBDIR)
+AC_SUBST(FORTRAN_OBJ)
+
 
 AC_PREFIX_DEFAULT('$(ROOT)/..')
 
