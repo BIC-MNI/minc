@@ -4,10 +4,19 @@
 
 #include <stdlib.h>
 #include <hdf5.h>
+#include <limits.h>
+#include <float.h>
 #include "minc2.h"
 #include "minc2_private.h"
 
-/* Create a volume with the specified properties.
+/* Forward declarations */
+
+static void miinit_default_range(mitype_t mitype, double *valid_max, 
+                                 double *valid_min);
+static void miread_valid_range(mihandle_t volume, double *valid_max, 
+                               double *valid_min);
+
+/** Create a volume with the specified properties.
  */ 
 
 int
@@ -30,11 +39,15 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hid_t dataset_id = -1;
   hid_t dataset_width = -1;
   hid_t dataspace_id = -1;
+  hsize_t hdf_count;
   char *name;
   int size;
   hsize_t hdf_chunk_size[MI2_MAX_BLOCK_EDGES];
+
   volumehandle *handle;
   volprops *props_handle;
+
+  miinit();
 
   if (filename == NULL || number_of_dimensions <=0 || 
       dimensions == NULL || create_props == NULL) {
@@ -54,34 +67,27 @@ micreate_volume(const char *filename, int number_of_dimensions,
     return (MI_ERROR);
   }
   
-  /* Try opening ROOT GROUP i.e. /minc-2.0 or CREATE ONE!
+  /* Create the root group.
    */
-  if ((grp_root_id = H5Gopen(file_id, MI_ROOT_PATH)) < 0) {
-    grp_root_id = H5Gcreate(file_id, MI_ROOT_PATH , 0);
-    if (grp_root_id < 0) {
+  grp_root_id = H5Gcreate(file_id, MI_ROOT_PATH , 0);
+  if (grp_root_id < 0) {
       return (MI_ERROR);
-    }
   }
 
-  /* Try opening IMAGE GROUP i.e. /minc-2.0/image/ or CREATE ONE!
+  /* Create the image group.
    */
-  if((grp_image_id = H5Gopen(grp_root_id, MI_IMAGE_PATH)) < 0) {
-    grp_image_id = H5Gcreate(grp_root_id, MI_IMAGE_PATH , 0);
-    if (grp_image_id < 0) {
+  grp_image_id = H5Gcreate(grp_root_id, MI_IMAGE_PATH , 0);
+  if (grp_image_id < 0) {
       return (MI_ERROR);
-    }
   }
 
-  /* Try opening FULLIMAGE GROUP i.e. /minc-2.0/image/0 or CREATE ONE!
+  /* Create the "full image" group "/minc-2.0/image/0"
    */
-  if((grp_fullimage_id = H5Gopen(grp_image_id, MI_FULLIMAGE_PATH)) < 0) {
-    grp_fullimage_id = H5Gcreate(grp_image_id, MI_FULLIMAGE_PATH , 0);
-    if (grp_fullimage_id < 0) {
+  grp_fullimage_id = H5Gcreate(grp_image_id, MI_FULLIMAGE_PATH , 0);
+  if (grp_fullimage_id < 0) {
       return (MI_ERROR);
-    }
   }
- 
-  /* Create dataset property list */
+
   hdf_plist = H5Pcreate(H5P_DATASET_CREATE);
   if (hdf_plist < 0) {
     return (MI_ERROR);
@@ -131,20 +137,17 @@ micreate_volume(const char *filename, int number_of_dimensions,
     
   /* Try opening IMAGE dataset i.e. /minc-2.0/image/0/image or CREATE ONE!
    */
-  if((dimage_id = H5Dopen(grp_fullimage_id, MI_DIMAGE_PATH)) < 0) {
-    dimage_id = H5Dcreate(grp_fullimage_id, MI_DIMAGE_PATH, hdf_type, dataspace_id, hdf_plist);
-    if (dimage_id < 0) {  
+
+  dimage_id = H5Dcreate(grp_fullimage_id, MI_DIMAGE_PATH, hdf_type, dataspace_id, hdf_plist);
+  if (dimage_id < 0) {  
       return (MI_ERROR);
-    }
   }
-  
+      
    /* Try opening DIMENSIONS GROUP i.e. /minc-2.0/dimensions or CREATE ONE!
    */
-  if((grp_dimensions_id = H5Gopen(grp_root_id, MI_FULLDIMENSIONS_PATH)) < 0) {
-    grp_dimensions_id = H5Gcreate(grp_root_id, MI_FULLDIMENSIONS_PATH , 0);
-    if (grp_dimensions_id < 0) {
+  grp_dimensions_id = H5Gcreate(grp_root_id, MI_FULLDIMENSIONS_PATH , 0);
+  if (grp_dimensions_id < 0) {
       return (MI_ERROR);
-    }
   }
    
   for (i=0; i < number_of_dimensions ; i++) {
@@ -250,19 +253,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
    /* Close attribute. */
    H5Aclose(hdf_attr);
    
-   /* Create Dimension flipping_order attribute */
-   dataspace_id = H5Screate(H5S_SCALAR);
-   hdf_attr = H5Acreate(dataset_id, "flipping_order", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
-   if (hdf_attr < 0) {
-     return (MI_ERROR);
-   }
-   H5Awrite(hdf_attr, H5T_NATIVE_INT, &dimensions[i]->flipping_order);
-   /* Close attribute dataspace. */
-   H5Sclose(dataspace_id); 
-   /* Close attribute. */
-   H5Aclose(hdf_attr);
-
-   
    /* Create Dimension attribute "sampling_flag" */
    dataspace_id = H5Screate(H5S_SCALAR);
    hdf_attr = H5Acreate(dataset_id, "sampling_flag", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
@@ -311,10 +301,13 @@ micreate_volume(const char *filename, int number_of_dimensions,
    /* Close attribute. */
    H5Aclose(hdf_attr);
    
+   /* !!! DELETE DATA TYPE OBJECT !!! */
+   H5Tclose(hdf_type);
+
    /* Create Dimension attribute "units" */
    dataspace_id = H5Screate(H5S_SCALAR);
    hdf_type = H5Tcopy(H5T_C_S1);
-              H5Tset_size(hdf_type, (strlen(dimensions[i]->units) + 1));
+   H5Tset_size(hdf_type, (strlen(dimensions[i]->units) + 1));
    hdf_attr = H5Acreate(dataset_id, "units", hdf_type, dataspace_id, H5P_DEFAULT);
    if (hdf_attr < 0) {
      return (MI_ERROR);
@@ -361,6 +354,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
     return (MI_ERROR);
   }
   handle->hdf_id = file_id;
+  handle->mode = MI2_OPEN_RDWR;
   handle->has_slice_scaling = FALSE;
   handle->number_of_dims = number_of_dimensions;
   handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions*sizeof(int));
@@ -424,6 +418,15 @@ micreate_volume(const char *filename, int number_of_dimensions,
   default:
     return (MI_ERROR);
   }
+
+  /* Set the initial value of the valid-range 
+   */
+  miinit_default_range(handle->volume_type,
+                       &handle->valid_max, 
+                       &handle->valid_min);
+
+  miget_voxel_to_world(handle, handle->v2w_transform);
+
   switch (volume_class) {
   case MI_CLASS_REAL:
     handle->volume_class = MI_CLASS_REAL;
@@ -448,6 +451,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   }
   
   props_handle = (volprops *)malloc(sizeof(*props_handle));
+  memset(props_handle, 0, sizeof (volprops));
   
   props_handle->enable_flag = create_props->enable_flag;
   
@@ -509,6 +513,94 @@ miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
   return (MI_NOERROR);
 }
 
+static int 
+_miget_file_dimension_count(hid_t file_id)
+{
+    hid_t dset_id;
+    hid_t space_id;
+    int result = -1;
+
+    H5E_BEGIN_TRY {
+        dset_id = midescend_path(file_id, "/minc-2.0/image/0/image");
+    } H5E_END_TRY;
+
+    if (dset_id >= 0) {
+        space_id = H5Dget_space(dset_id);
+        if (space_id > 0) {
+            result = H5Sget_simple_extent_ndims(space_id);
+            H5Sclose(space_id);
+        }
+        H5Dclose(dset_id);
+    }
+    return (result);
+}
+
+static int
+_miget_file_dimension(mihandle_t volume, const char *dimname, 
+                      midimhandle_t *hdim_ptr)
+{
+    char path[128];
+    midimhandle_t hdim;
+
+    sprintf(path, "/minc-2.0/dimensions/%s", dimname);
+
+    hdim = (midimhandle_t) malloc(sizeof (*hdim));
+    memset(hdim, 0, sizeof (*hdim));
+
+    hdim->name = strdup(dimname);
+    H5E_BEGIN_TRY {
+        int r;
+        r = miget_attribute(volume, path, "attr", MI_TYPE_INT, 1, &hdim->attr);
+        if (r < 0) {
+            /* Use the default, regularly sampled. */
+            hdim->attr = MI_DIMATTR_REGULARLY_SAMPLED;
+        }
+        r = miget_attribute(volume, path, "class", MI_TYPE_INT, 1, &hdim->class);
+        if (r < 0) {
+            /* Get the default class. */
+            if (!strcmp(dimname, "time")) {
+                hdim->class = MI_DIMCLASS_TIME;
+            }
+            else {
+                hdim->class =  MI_DIMCLASS_SPATIAL;
+            }
+        }
+        r = miget_attribute(volume, path, "length", MI_TYPE_INT, 1, &hdim->length);
+        if (r < 0) {
+            fprintf(stderr, "Can't get length\n");
+        }
+        r = miget_attribute(volume, path, "start", MI_TYPE_DOUBLE, 1, &hdim->start);
+        if (r < 0) {
+            hdim->start = 0.0;
+        }
+        
+        r = miget_attribute(volume, path, "step", MI_TYPE_DOUBLE, 1, &hdim->step);
+        if (r < 0) {
+            hdim->step = 1.0;
+        }
+        r = miget_attribute(volume, path, "direction_cosines", MI_TYPE_DOUBLE, 3, 
+                            hdim->direction_cosines);
+        if (r < 0) {
+            hdim->direction_cosines[MI2_X] = 0.0;
+            hdim->direction_cosines[MI2_Y] = 0.0;
+            hdim->direction_cosines[MI2_Z] = 0.0;
+            if (!strcmp(dimname, "xspace")) {
+                hdim->direction_cosines[MI2_X] = 1.0;
+            }
+            else if (!strcmp(dimname, "yspace")) {
+                hdim->direction_cosines[MI2_Y] = 1.0;
+            }
+            else if (!strcmp(dimname, "zspace")) {
+                hdim->direction_cosines[MI2_Z] = 1.0;
+            }
+        }
+    } H5E_END_TRY;
+
+    *hdim_ptr = hdim;
+    return (MI_NOERROR);
+}
+
+
 int
 miopen_volume(const char *filename, int mode, mihandle_t *volume)
 {
@@ -517,6 +609,10 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     hid_t space_id;
     volumehandle *handle;
     int hdf_mode;
+    char dimorder[128];
+    int i;
+    char *p1, *p2;
+    miinit();
 
     if (mode == MI2_OPEN_READ) {
         hdf_mode = H5F_ACC_RDONLY;
@@ -527,23 +623,47 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     else {
         return (MI_ERROR);
     }
-    file_id = H5Fopen(filename, hdf_mode, H5P_DEFAULT);
+    file_id = hdf_open(filename, hdf_mode);
     if (file_id < 0) {
 	return (MI_ERROR);
     }
 
-    /* SEE IF SLICE SCALING IS ENABLED
-     */
     handle = (volumehandle *)malloc(sizeof(*handle));
     if (handle == NULL) {
       return (MI_ERROR);
     }
     
-
     handle->hdf_id = file_id;
+    handle->mode = mode;
 
+    /* GET THE DIMENSION COUNT
+     */
+    handle->number_of_dims = _miget_file_dimension_count(file_id);
+
+    /* READ EACH OF THE DIMENSIONS 
+     */
+    handle->dim_handles = (midimhandle_t *)malloc(handle->number_of_dims *
+                                                  sizeof(midimhandle_t));
+    miget_attribute(handle, "/minc-2.0/image/0/image", "dimorder", 
+                    MI_TYPE_STRING, sizeof(dimorder), dimorder);
+
+    p1 = dimorder;
+
+    for (i = 0; i < handle->number_of_dims; i++) {
+        p2 = strchr(p1, ',');
+        if (p2 != NULL) {
+            *p2 = '\0';
+        }
+        _miget_file_dimension(handle, p1, &handle->dim_handles[i]);
+        p1 = p2 + 1;
+    }
+
+    /* SEE IF SLICE SCALING IS ENABLED
+     */
     handle->has_slice_scaling = FALSE;
-    dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-max");
+    H5E_BEGIN_TRY {
+        dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-max");
+    } H5E_END_TRY;
     if (dset_id >= 0) {
 	space_id = H5Dget_space(dset_id);
 	if (space_id >= 0) {
@@ -557,6 +677,19 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 	}
 	H5Dclose(dset_id);	/* Close the dataset handle */
     }
+
+    /* Read the current settings for valid-range */
+    miread_valid_range(handle, &handle->valid_max, &handle->valid_min);
+
+    /* Read the current voxel-to-world transform */
+    miget_voxel_to_world(handle, handle->v2w_transform);
+
+    /* Calculate the inverse transform */
+    miinvert_transform(handle->v2w_transform, handle->w2v_transform);
+
+    /* Initialize the selected resolution. */
+    handle->selected_resolution = 0;
+    
     *volume = handle;
     return (MI_NOERROR);
 }
@@ -568,13 +701,10 @@ miclose_volume(mihandle_t volume)
     if (volume == NULL || H5Fclose(volume->hdf_id) < 0) {
       return (MI_ERROR);
     }
-    
     free(volume->dim_handles);
     free(volume->dim_indices);
     if (volume->create_props != NULL) {
-      free(volume->create_props->edge_lengths);
-      free(volume->create_props->record_name);
-      free(volume->create_props);
+        mifree_volume_props(volume->create_props);
     }
     free(volume);
 
@@ -583,6 +713,85 @@ miclose_volume(mihandle_t volume)
 
 
 
+/* Internal functions
+ */
+static void
+miinit_default_range(mitype_t mitype, double *valid_max, double *valid_min)
+{
+    switch (mitype) {
+    case MI_TYPE_BYTE:
+        *valid_min = CHAR_MIN;
+        *valid_max = CHAR_MAX;
+        break;
+    case MI_TYPE_SHORT:
+        *valid_min = SHRT_MIN;
+        *valid_max = SHRT_MAX;
+        break;
+    case MI_TYPE_INT:
+        *valid_min = INT_MIN;
+        *valid_max = INT_MAX;
+        break;
+    case MI_TYPE_UBYTE:
+        *valid_min = 0;
+        *valid_max = UCHAR_MAX;
+        break;
+    case MI_TYPE_USHORT:
+        *valid_min = 0;
+        *valid_max = USHRT_MAX;
+        break;
+    case MI_TYPE_UINT:
+        *valid_min = 0;
+        *valid_max = UINT_MAX;
+        break;
+    case MI_TYPE_FLOAT:
+        *valid_min = -FLT_MAX;
+        *valid_max = FLT_MAX;
+        break;
+    case MI_TYPE_DOUBLE:
+        *valid_min = -DBL_MAX;
+        *valid_max = DBL_MAX;
+        break;
+    default:
+        *valid_min = 0;
+        *valid_max = 1;
+        break;
+    }
+}
 
+static void
+miread_valid_range(mihandle_t volume, double *valid_max, double *valid_min)
+{
+    int r;
+    double range[2];
 
+    H5E_BEGIN_TRY {
+        r = miget_attribute(volume, "/minc-2.0/image/0/image", "valid_range",
+                            MI_TYPE_DOUBLE, 2, range);
+    } H5E_END_TRY;
+    if (r == MI_NOERROR) {
+        if (range[0] < range[1]) {
+            *valid_min = range[0];
+            *valid_max = range[1];
+        }
+        else {
+            *valid_min = range[1];
+            *valid_max = range[0];
+        }
+    }
+    else {
+        /* Didn't find the attribute, so assign default values. */
+        miinit_default_range(volume->volume_type, valid_max, valid_min);
+    }
+}
+
+static void
+misave_valid_range(mihandle_t volume, double valid_max, double valid_min)
+{
+    double range[2];
+    range[0] = valid_min;
+    range[1] = valid_max;
+
+    miset_attribute(volume, "/minc-2.0/image/0/image", "valid_range",
+                    MI_TYPE_DOUBLE, 2, range);
+}
 
