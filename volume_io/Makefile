@@ -9,6 +9,7 @@ include $(ROOT)/Make_configuration
 
 # Compiler options
 LDOPT    = $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)
+CDEFINES = $(GLOBAL_CDEFINES)
 
 # Source definitions 
 include ProgFiles
@@ -81,7 +82,7 @@ clean: mostlyclean
 mostlyclean:
 	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
 
-install:
+install: $(CC_VOLIO_LIB)
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
 	$(CP) $(CP_FLAGS) $(HEADERS) $(INSTALL_VOLIO_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) \
