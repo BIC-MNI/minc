@@ -1,3 +1,16 @@
+Tue Jan 15 10:40:49 EST 2002
+   - Updated README to include minccalc and mincstats.
+
+Mon Jan 14 16:26:53
+   - Moved nd_loop, voxel_loop, ParseArgv and time_stamp to the libsrc
+     directory for inclusion in the minc library. The header files will
+     continue to be separate from minc.h
+
+Mon Jan 14 15:02:39 EST 2002
+   - Modified voxel_loop so that input buffers have a minimum size (1K 
+     voxels). This prevents large output images from forcing buffers to 
+     contain only one voxel when the requested memory is not large enough.
+
 Wed Jan  9 08:58:27 EST 2002
    - Modified mincstats to only print a blank line after the histogram info
      if -quiet is not specified.
