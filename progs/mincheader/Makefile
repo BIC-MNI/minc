@@ -8,36 +8,9 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 # Executable names
-PROGS    = mincheader
+SCRIPTS  = mincheader
 MANSECT  = 1
-MANPAGES = $(PROGS).$(MANSECT)
+MANPAGES = $(SCRIPTS).$(MANSECT)
 
-# --------------------------------------------------------------------
-
-#Suffixes for man pages
-.SUFFIXES: .1 .man1 .3 .man3
-
-default: build
-
-all: build
-
-build: $(PROGS) man
-
-$(PROGS):
-	@echo Cannot create $(PROGS)
-	@false
-
-man: $(MANPAGES)
-
-# how to make man pages
-.man1.1:
-	$(NROFF) $(NROFF_FLAGS) $< > $@
-
-mostlyclean clean:
-	$(RM) $(RM_FLAGS) $(MANPAGES)
-
-install:
-	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
-	$(CD) $(INSTALL_BINDIR); $(CHMOD) $(CHMOD_FLAGS) $(PROGS)
-	$(CP) $(CP_FLAGS) $(MANPAGES) $(INSTALL_MANDIR)$(MANSECT)
+include $(ROOT)/progs/Make_scripts
 
