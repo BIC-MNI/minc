@@ -107,7 +107,7 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 clean:
 	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
 	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST) \
-	         $(DOCS) $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
+	         $(DOCDIR)/*.dvi $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
 
 install:
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
