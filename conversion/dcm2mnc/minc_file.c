@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.2  2005-03-03 18:59:15  bert
+   * Revision 1.3  2005-03-13 19:34:21  bert
+   * Minor change to avoid core dump with strange files
+   *
+   * Revision 1.2  2005/03/03 18:59:15  bert
    * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
    *
    * Revision 1.1  2005/02/17 16:38:10  bert
@@ -89,7 +92,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.2 2005-03-03 18:59:15 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.3 2005-03-13 19:34:21 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -808,6 +811,9 @@ void setup_minc_variables(int mincid, General_Info *general_info,
             is_char = TRUE;
             length = acr_get_element_length(cur_element);
             data = acr_get_element_data(cur_element);
+            if (data == NULL) {
+                length = 0;
+            }
             for (ich=0; ich < length; ich++) {
                 if (!isprint((int) data[ich])) {
                     is_char = FALSE;
