@@ -14,7 +14,10 @@
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_private.h,v $
- * Revision 6.1  1999-10-19 14:45:09  neelin
+ * Revision 6.2  2004-04-27 15:47:47  bert
+ * #include minc_config.h and minc_error.h
+ *
+ * Revision 6.1  1999/10/19 14:45:09  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -54,7 +57,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.1 1999-10-19 14:45:09 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.2 2004-04-27 15:47:47 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include  <stdlib.h>
@@ -66,5 +69,6 @@
 #include  <minc_basic.h>
 #include  <minc_structures.h>
 #include  <minc_routines.h>
-
+#include  <minc_config.h>
+#include  <minc_error.h>
 #endif
