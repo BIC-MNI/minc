@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.6  2003-11-14 16:52:24  stever
+ * Revision 6.7  2004-02-02 18:27:06  bert
+ * Include config.h
+ *
+ * Revision 6.6  2003/11/14 16:52:24  stever
  * More last-minute fixes.
  *
  * Revision 6.5  2001/04/17 18:40:16  neelin
@@ -66,9 +69,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.6 2003-11-14 16:52:24 stever Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.7 2004-02-02 18:27:06 bert Exp $";
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
