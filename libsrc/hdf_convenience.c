@@ -877,6 +877,24 @@ hdf_diminq(int fd, int dimid, char *dimnm_ptr, long *len_ptr)
     return (MI_NOERROR);
 }
 
+private void
+hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
+{
+    hid_t att_id;
+    hid_t aspc_id;
+
+    aspc_id = H5Screate(H5S_SCALAR);
+    if (aspc_id >= 0) {
+        att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
+                           H5P_DEFAULT);
+        if (att_id >= 0) {
+            H5Awrite(att_id, H5T_NATIVE_LONG, (void *) &length);
+            H5Aclose(att_id);
+        }
+        H5Sclose(aspc_id);
+    }
+}
+
 public int
 hdf_dimdef(int fd, const char *dimnm, long length)
 {
@@ -886,6 +904,10 @@ hdf_dimdef(int fd, const char *dimnm, long length)
 
     if ((file = hdf_id_check(fd)) != NULL &&
         (dim = hdf_dim_add(file, dimnm, length)) != NULL) {
+        struct m2_var *var = hdf_var_byname(file, dimnm);
+        if (var != NULL) {
+            hdf_set_length(var->dset_id, dimnm, length);
+        }
         status = dim->id;
     }
     return (status);
@@ -1078,14 +1100,6 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
         spc_id = H5Screate(H5S_SCALAR);
     }
     else {
-        if (val_len == 1) {
-            spc_id = H5Screate(H5S_SCALAR);
-        }
-        else {
-            hsize_t temp_size = val_len;
-            spc_id = H5Screate_simple(1, &temp_size, NULL);
-        }
-
         switch (val_typ) {
         case NC_BYTE:
             mtyp_id = H5T_NATIVE_UCHAR;
@@ -1114,6 +1128,15 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
         mtyp_id = H5Tcopy(mtyp_id);
         ftyp_id = H5Tcopy(ftyp_id);
+
+        if (val_len == 1) {
+            spc_id = H5Screate(H5S_SCALAR);
+        }
+        else {
+            hsize_t temp_size = val_len;
+            spc_id = H5Screate_simple(1, &temp_size, NULL);
+        }
+
     }
 
     /* If the attribute already exists, delete it.  It is not possible
@@ -1121,11 +1144,11 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
      */
     H5E_BEGIN_TRY {
         H5Adelete(loc_id, attnm);
-    } H5E_END_TRY;
 
-    /* Create the attribute anew.
-     */
-    att_id = H5Acreate(loc_id, attnm, ftyp_id, spc_id, H5P_DEFAULT);
+        /* Create the attribute anew.
+         */
+        att_id = H5Acreate(loc_id, attnm, ftyp_id, spc_id, H5P_DEFAULT);
+    } H5E_END_TRY;
 
     if (att_id < 0)
         goto cleanup;
@@ -1304,20 +1327,7 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
      * attribute now.
      */
     if ((dim = hdf_dim_byname(file, varnm)) != NULL) {
-        hid_t att_id;
-        hid_t aspc_id;
-
-        aspc_id = H5Screate(H5S_SCALAR);
-        if (aspc_id >= 0) {
-            att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
-                               H5P_DEFAULT);
-            if (att_id >= 0) {
-                status = H5Awrite(att_id, H5T_NATIVE_LONG, 
-                                  (void *) &dim->length);
-                H5Aclose(att_id);
-            }
-            H5Sclose(aspc_id);
-        }
+        hdf_set_length(dst_id, varnm, dim->length);
     }
 
     /* Add the dimension order information.
