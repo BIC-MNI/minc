@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 1.1  1993-11-23 14:12:06  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 12:09:32  neelin
+@MODIFIED   : Changed to use new acr-nema dump function. spi_reply returns a group list
+@MODIFIED   : instead of a message.
 @MODIFIED   :
+ * Revision 1.1  93/11/23  14:12:06  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
@@ -14,57 +18,43 @@
 static int Do_logging = TRUE;
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : print_message_contents
-@INPUT      : input_message
+@NAME       : make_message
+@INPUT      : group_list
 @OUTPUT     : (nothing)
-@RETURNS    : (nothing)
-@DESCRIPTION: Dump out message contents to stderr.
+@RETURNS    : output message.
+@DESCRIPTION: Convert a group list into a message.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : November 22, 1993 (Peter Neelin)
+@CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void print_message_contents(Acr_Message input_message)
+private Acr_Message make_message(Acr_Group group_list)
 {
-   Acr_Group group;
-   Acr_Element element;
+   Acr_Group next_group, group;
+   Acr_Message output_message;
 
-   /* Loop over groups */
-   group = acr_get_message_group_list(input_message);
+   /* Create the output message */
+   output_message = acr_create_message();
+
+   /* Loop through groups, adding them to the message */
+   group = group_list;
    while (group != NULL) {
-
-      /* Print the group id */
-      (void) fprintf(stderr, "\nGroup 0x%04x :\n\n", 
-                     acr_get_group_group(group));
-
-      /* Loop over elements */
-      element = acr_get_group_element_list(group);
-      while (element != NULL) {
-
-         /* Print the element id */
-         (void) fprintf(stderr, "     0x%04x  0x%04x  length = %d\n",
-                        acr_get_element_group(element),
-                        acr_get_element_element(element),
-                        (int) acr_get_element_length(element));
-
-         element = acr_get_element_next(element);
-      }
-
-      group = acr_get_group_next(group);
+      next_group = acr_get_group_next(group);
+      acr_set_group_next(group, NULL);
+      acr_message_add_group(output_message, group);
+      group = next_group;
    }
 
-   /* Flush the buffer */
-   (void) fflush(stderr);
+   return output_message;
 
-   return;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : spi_reply
 @INPUT      : input_message
 @OUTPUT     : (nothing)
-@RETURNS    : output_message
+@RETURNS    : group_list for output message.
 @DESCRIPTION: Composes reply for SPI messages
 @METHOD     : 
 @GLOBALS    : 
@@ -72,16 +62,16 @@ private void print_message_contents(Acr_Message input_message)
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Acr_Message spi_reply(Acr_Message input_message)
+private Acr_Group spi_reply(Acr_Message input_message)
 {
-   Acr_Group group;
+   Acr_Group group, group_list;
    Acr_Element element;
-   Acr_Message output_message;
-   short his_message_id = 0;
-   short my_message_id = 0;
+   unsigned short his_message_id = 1;
+   unsigned short my_message_id = 1;
    char *his_station_id = "CANPHIMR000000";
-   char *my_station_id =  "CANMNIPT000101";
-   short his_session_id = 0;
+   char *my_station_id =  "CANMNIPT010101";
+   unsigned short my_session_id = 1;
+   int num_files = 1;
    int acr_command = ACR_UNKNOWN_COMMAND;
    int spi_command = SPI_UNKNOWN_COMMAND;
 
@@ -121,19 +111,20 @@ private Acr_Message spi_reply(Acr_Message input_message)
    element = acr_find_group_element(group, ACR_Initiator);
    if (element != NULL)
       his_station_id = acr_get_element_string(element);
-   
+   element = acr_find_group_element(group, SPI_Nr_data_objects);
+   if (element != NULL)
+      num_files = acr_get_element_short(element);
 
    /* Compose the reply */
-   output_message = acr_create_message();
 
    /* Acr-nema group */
-   group = acr_create_group(ACR_MESSAGE_GID);
+   group_list = group = acr_create_group(ACR_MESSAGE_GID);
    acr_group_add_element(group,
-      acr_create_element_long(ACR_Length_to_eom, (short) 0));
+      acr_create_element_long(ACR_Length_to_eom, (unsigned short) 0));
    acr_group_add_element(group,
       acr_create_element_string(ACR_Recognition_code, ACR_RECOGNITION_CODE));
    acr_group_add_element(group,
-      acr_create_element_short(ACR_Command, (short) acr_command));
+      acr_create_element_short(ACR_Command, (unsigned short) acr_command));
    acr_group_add_element(group,
       acr_create_element_short(ACR_Message_id, my_message_id));
    acr_group_add_element(group,
@@ -143,23 +134,34 @@ private Acr_Message spi_reply(Acr_Message input_message)
    acr_group_add_element(group,
       acr_create_element_string(ACR_Receiver, his_station_id));
    acr_group_add_element(group,
-      acr_create_element_short(ACR_Status, (short) ACR_SUCCESS));
-   acr_message_add_group(output_message, group);
+      acr_create_element_short(ACR_Dataset_type,
+                               (unsigned short) ACR_NULL_DATASET));
+   acr_group_add_element(group,
+      acr_create_element_short(ACR_Status, 
+                               (unsigned short) ACR_SUCCESS));
 
    /* SPI group */
-   if (acr_command != CANCELq) {
-      group = acr_create_group(SPI_MESSAGE_GID);
+   if (acr_command == SENDp) {
+      acr_set_group_next(group, acr_create_group(SPI_MESSAGE_GID));
+      group = acr_get_group_next(group);
       acr_group_add_element(group,
          acr_create_element_string(SPI_Recognition_code, 
                                    SPI_RECOGNITION_CODE));
       acr_group_add_element(group,
-         acr_create_element_short(SPI_Command, (short) spi_command));
+         acr_create_element_short(SPI_Command, (unsigned short) spi_command));
       acr_group_add_element(group,
-         acr_create_element_short(SPI_Session_id, his_session_id));
-      acr_message_add_group(output_message, group);
+         acr_create_element_short(SPI_Session_id, my_session_id));
+      if (spi_command == GCBEGINp) {
+         acr_group_add_element(group,
+            acr_create_element_short(SPI_Nr_data_objects, num_files));
+      }
+      acr_group_add_element(group,
+         acr_create_element_string(SPI_Operator_text, "OK"));
+      acr_group_add_element(group,
+         acr_create_element_string(SPI_Log_info, "OK"));
    }
 
-   return output_message;
+   return group_list;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -176,14 +178,13 @@ private Acr_Message spi_reply(Acr_Message input_message)
 ---------------------------------------------------------------------------- */
 public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
 {
-   Acr_Message output_message;
-   Acr_Group group;
+   Acr_Group group, group_list;
    Acr_Element element;
 
    /* Print log message */
    if (Do_logging) {
       (void) fprintf(stderr, "\n\nReceived GCBEGINq message:\n");
-      print_message_contents(input_message);
+      acr_dump_message(stderr, input_message);
    }
 
    /* Get the group list */
@@ -197,16 +198,10 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
       *num_files = 1;
 
    /* Create the reply */
-   output_message = spi_reply(input_message);
+   group_list = spi_reply(input_message);
 
-   /* Get the SPI group in the reply (2nd in list) */
-   group = acr_get_group_next(acr_get_message_group_list(output_message));
+   return make_message(group_list);
 
-   /* Add the number of data objects */
-   acr_group_add_element(group,
-      acr_create_element_short(SPI_Nr_data_objects, *num_files));
-
-   return output_message;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -223,18 +218,16 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
 ---------------------------------------------------------------------------- */
 public Acr_Message ready_reply(Acr_Message input_message)
 {
-   Acr_Message output_message;
 
    /* Print log message */
    if (Do_logging) {
       (void) fprintf(stderr, "\n\nReceived READYq message:\n");
-      print_message_contents(input_message);
+      acr_dump_message(stderr, input_message);
    }
 
    /* Create the reply */
-   output_message = spi_reply(input_message);
+   return make_message(spi_reply(input_message));
 
-   return output_message;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -253,15 +246,13 @@ public Acr_Message ready_reply(Acr_Message input_message)
 public Acr_Message send_reply(Acr_Message input_message, char *file_prefix,
                               char **new_file_name)
 {
-   Acr_Message output_message;
    Acr_Group group;
-   size_t new_file_length;
    char temp_name[256];
 
    /* Print log message */
    if (Do_logging) {
       (void) fprintf(stderr, "\n\nReceived SENDq message:\n");
-      print_message_contents(input_message);
+      acr_dump_message(stderr, input_message);
    }
 
    /* Get the group list */
@@ -272,9 +263,8 @@ public Acr_Message send_reply(Acr_Message input_message, char *file_prefix,
    *new_file_name = strdup(temp_name);
 
    /* Create the reply */
-   output_message = spi_reply(input_message);
+   return make_message(spi_reply(input_message));
 
-   return output_message;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -291,18 +281,16 @@ public Acr_Message send_reply(Acr_Message input_message, char *file_prefix,
 ---------------------------------------------------------------------------- */
 public Acr_Message gcend_reply(Acr_Message input_message)
 {
-   Acr_Message output_message;
 
    /* Print log message */
    if (Do_logging) {
       (void) fprintf(stderr, "\n\nReceived GCENDq message:\n");
-      print_message_contents(input_message);
+      acr_dump_message(stderr, input_message);
    }
 
    /* Create the reply */
-   output_message = spi_reply(input_message);
+   return make_message(spi_reply(input_message));
 
-   return output_message;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -319,17 +307,14 @@ public Acr_Message gcend_reply(Acr_Message input_message)
 ---------------------------------------------------------------------------- */
 public Acr_Message cancel_reply(Acr_Message input_message)
 {
-   Acr_Message output_message;
-
    /* Print log message */
    if (Do_logging) {
       (void) fprintf(stderr, "\n\nReceived CANCELq message:\n");
-      print_message_contents(input_message);
+      acr_dump_message(stderr, input_message);
    }
 
    /* Create the reply */
-   output_message = spi_reply(input_message);
+   return make_message(spi_reply(input_message));
 
-   return output_message;
 }
 
