@@ -14,7 +14,7 @@
 
 /** The fixed path to the full-resolution image data.
  */
-#define MI_IMAGE_PATH MI_ROOT_PATH MI_DIMAGE_PATH
+#define MI_IMAGE_PATH MI_ROOT_PATH "/" MI_DIMAGE_PATH
 #define MI_FULLIMAGE_PATH MI_IMAGE_PATH "/0"
 
 /** The fixed path to the dimension 
@@ -30,6 +30,19 @@
 /** Size of a linear transform */
 #define MI2_LIN_XFM_SIZE 4
 
+/** The fixed path to the full-resolution image data.
+ */
+#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
+
+/** Standard linear transform, a 4x4 matrix.
+ */
+typedef double mi_lin_xfm_t[MI2_LIN_XFM_SIZE][MI2_LIN_XFM_SIZE];
+
+typedef long long mi_i64_t;
+
+/** The fixed path to the dimension 
+ */
+#define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
 /*! Volume properties  
  */
@@ -76,29 +89,29 @@ struct volumehandle_struct {
   mitype_t volume_type;
   miclass_t volume_class;
   mivolumeprops_t create_props;
+  double valid_min;             /* Volume-wide valid min */
+  double valid_max;             /* Volume-wide valid max */
+  mi_lin_xfm_t v2w_transform;   /* Voxel-to-world transform */
+  mi_lin_xfm_t w2v_transform;   /* World-to-voxel transform (inverse) */
+  int selected_resolution;
 };
 
-/** Standard linear transform, a 4x4 matrix.
- */
-typedef double mi_lin_xfm_t[MI2_LIN_XFM_SIZE][MI2_LIN_XFM_SIZE];
-
-typedef long long mi_i64_t;
-
 extern hid_t midescend_path(hid_t file_id, const char *path);
-extern hid_t miget_volume_file_handle(mihandle_t volume);
 extern hid_t mitype_to_hdftype(mitype_t);
 extern int mitype_to_nctype(mitype_t, int *is_signed);
 
-extern mi_i64_t miget_voxel_count(int mincid);
-extern double miget_voxel_volume(int mincid);
-extern void miget_attribute(int mincid, char *varname, char *attname,
-                            int maxvals, double vals[]);
-extern int miget_dim_count(int mincid);
+extern int miget_attribute(mihandle_t volume, const char *varpath, 
+                           const char *attname, mitype_t data_type, 
+                           int maxvals, void *values);
+extern int miset_attribute(mihandle_t volume, const char *varpath, 
+                           const char *attname, mitype_t data_type, 
+                           int maxvals, const void *values);
 extern void mifind_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[]);
-extern void miget_voxel_to_world(int mincid, mi_lin_xfm_t voxel_to_world);
+extern void miget_voxel_to_world(mihandle_t volume, mi_lin_xfm_t voxel_to_world);
 extern void minormalize_vector(double vector[]);
 extern void mitransform_coord(double out_coord[],
                               mi_lin_xfm_t transform,
-                              double in_coord[]);
+                              const double in_coord[]);
+extern int miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse);
 
 extern void miinit(void);
