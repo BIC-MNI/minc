@@ -5,6 +5,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <minc.h>
+#include <limits.h>
 #include "minc2.h"
 #include "minc2_private.h"
 
@@ -154,71 +155,169 @@ miget_voxel_count(int mincid)
     return (nvoxels);
 }
 
-/* Get the volume of a spatial voxel */
-double
-miget_voxel_volume(int mincid)
+/** Set an attribute from a minc file */
+int
+miset_attribute(mihandle_t volume, const char *path, const char *name, 
+                mitype_t data_type, int length, const void *values)
 {
-    int imgid;
-    int dim[MAX_VAR_DIMS];
-    int idim;
-    int ndims;
-    double volume;
-    double step;
-    char dimname[MAX_NC_NAME];
+    hid_t hdf_file;
+    hid_t hdf_loc;
+    hid_t hdf_type;
+    hid_t hdf_space;
+    hid_t hdf_attr;
+    hsize_t hdf_len;
+    hsize_t hdf_max;
 
-    /* Get the dimension ids for the image variable */
-    imgid = ncvarid(mincid, MIimage);
-    (void)ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
+    /* Get a handle to the actual HDF file 
+     */
+    hdf_file = volume->hdf_id;
+    if (hdf_file < 0) {
+	return (MI_ERROR);
+    }
 
-    /* Loop over them to get the total spatial volume */
-    volume = 1.0;
-    for (idim = 0; idim < ndims; idim++) {
+    /* Search through the path, descending into each group encountered.
+     */
+    hdf_loc = midescend_path(hdf_file, path);
+    if (hdf_loc < 0) {
+	return (MI_ERROR);
+    }
 
-        /* Get the name and check that this is a spatial dimension */
-        (void)ncdiminq(mincid, dim[idim], dimname, NULL);
-        if (!strcmp(dimname, MIxspace) ||
-            !strcmp(dimname, MIyspace) ||
-            !strcmp(dimname, MIzspace)) {
+    H5E_BEGIN_TRY {
+      hdf_attr = H5Aopen_name(hdf_loc, name);
+    } H5E_END_TRY;
 
-            /* Get the step attribute of the coordinate variable */
-            step = 1.0;
-            miget_attribute(mincid, dimname, MIstep, 1, &step);
+    /* Delete the existing attribute. */
+    if (hdf_attr >= 0) {
+        H5Adelete(hdf_loc, name);
+    }
 
-            /* Make sure that it is positive and calculate the volume */
-            if (step < 0.0)
-                step = -step;
-            volume *= step;
-        }
-   }
-   return (volume);
+    switch (data_type) {
+    case MI_TYPE_INT:
+	hdf_type = H5Tcopy(H5T_NATIVE_INT);
+	break;
+    case MI_TYPE_FLOAT:
+	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
+	break;
+    case MI_TYPE_DOUBLE:
+	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
+	break;
+    case MI_TYPE_STRING:
+	hdf_type = H5Tcopy(H5T_C_S1);
+	H5Tset_size(hdf_type, length);
+        length = 1;             /* Apparent length is one. */
+	break;
+    default:
+	return (MI_ERROR);
+    }
+
+    hdf_len = (hsize_t) length;
+    hdf_space = H5Screate_simple(1, &hdf_len, NULL);
+    if (hdf_space < 0) {
+	return (MI_ERROR);
+    }
+    
+    hdf_attr = H5Acreate(hdf_loc, name, hdf_type, hdf_space, H5P_DEFAULT);
+    if (hdf_attr < 0) {
+	return (MI_ERROR);
+    }
+
+    H5Awrite(hdf_attr, hdf_type, values);
+
+    H5Aclose(hdf_attr);
+    H5Tclose(hdf_type);
+    H5Sclose(hdf_space);
+
+    /* The hdf_loc identifier could be a group or a dataset.
+     */
+    if (H5Iget_type(hdf_loc) == H5I_GROUP) {
+        H5Gclose(hdf_loc);
+    }
+    else {
+        H5Dclose(hdf_loc);
+    }
+    return (MI_NOERROR);
 }
 
 /** Get a double attribute from a minc file */
-void 
-miget_attribute(int mincid, char *varname, char *attname,
-                int maxvals, double vals[])
-{
-    int varid;
-    int old_ncopts;
-    int length;
-
-    if (!mivar_exists(mincid, varname))
-        return;
-    varid = ncvarid(mincid, varname);
-    old_ncopts = ncopts;
-    ncopts = 0;
-    (void)miattget(mincid, varid, attname, NC_DOUBLE, maxvals, vals, &length);
-    ncopts = old_ncopts;
-}
-
-/* Get the total number of image dimensions in a minc file */
 int
-miget_dim_count(int mincid)
+miget_attribute(mihandle_t volume, const char *path, const char *name, 
+                mitype_t data_type, int length, void *values)
 {
-    int ndims;
+    hid_t hdf_file;
+    hid_t hdf_loc;
+    hid_t hdf_type;
+    hid_t hdf_space;
+    hid_t hdf_attr;
 
-    ncvarinq(mincid, ncvarid(mincid, MIimage), NULL, NULL, &ndims, NULL, NULL);
-    return (ndims);
+    /* Get a handle to the actual HDF file 
+     */
+    hdf_file = volume->hdf_id;
+    if (hdf_file < 0) {
+	return (MI_ERROR);
+    }
+
+    /* Search through the path, descending into each group encountered.
+     */
+    hdf_loc = midescend_path(hdf_file, path);
+    if (hdf_loc < 0) {
+	return (MI_ERROR);
+    }
+
+    hdf_attr = H5Aopen_name(hdf_loc, name);
+    if (hdf_attr < 0) {
+	return (MI_ERROR);
+    }
+
+    switch (data_type) {
+    case MI_TYPE_INT:
+	hdf_type = H5Tcopy(H5T_NATIVE_INT);
+	break;
+    case MI_TYPE_FLOAT:
+	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
+	break;
+    case MI_TYPE_DOUBLE:
+	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
+	break;
+    case MI_TYPE_STRING:
+	hdf_type = H5Tcopy(H5T_C_S1);
+	H5Tset_size(hdf_type, length);
+	break;
+    default:
+	return (MI_ERROR);
+    }
+
+    hdf_space = H5Aget_space(hdf_attr);
+    if (hdf_space < 0) {
+	return (MI_ERROR);
+    }
+
+    /* If we're retrieving a vector, make certain the length passed into this
+     * function is sufficient.
+     */
+    if (H5Sget_simple_extent_ndims(hdf_space) == 1) {
+	hsize_t hdf_dims[1];
+
+	H5Sget_simple_extent_dims(hdf_space, hdf_dims, NULL);
+	if (length < hdf_dims[0]) {
+	    return (MI_ERROR);
+	}
+    }
+    
+    H5Aread(hdf_attr, hdf_type, values);
+
+    H5Aclose(hdf_attr);
+    H5Tclose(hdf_type);
+    H5Sclose(hdf_space);
+
+    /* The hdf_loc identifier could be a group or a dataset.
+     */
+    if (H5Iget_type(hdf_loc) == H5I_GROUP) {
+        H5Gclose(hdf_loc);
+    }
+    else {
+        H5Dclose(hdf_loc);
+    }
+    return (MI_NOERROR);
 }
 
 /* Get the mapping from spatial dimension - x, y, z - to file dimensions
@@ -269,16 +368,19 @@ mifind_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[])
 }
 
 /** Get the voxel to world transform (for column vectors) */
-void 
-miget_voxel_to_world(int mincid,
-                     mi_lin_xfm_t voxel_to_world)
+void
+miget_voxel_to_world(mihandle_t volume, mi_lin_xfm_t voxel_to_world)
 {
     int i;
     int j;
     double dircos[MI2_3D];
     double step;
     double start;
-    static char *dimensions[] = { MIxspace, MIyspace, MIzspace };
+
+    static char *dimensions[] = { 
+        "/minc-2.0/dimensions/" MIxspace, 
+        "/minc-2.0/dimensions/" MIyspace, 
+        "/minc-2.0/dimensions/" MIzspace };
 
     /* Zero the matrix */
     for (i = 0; i < MI2_LIN_XFM_SIZE; i++) {
@@ -297,10 +399,14 @@ miget_voxel_to_world(int mincid,
         dircos[j] = 1.0;
 
         /* Get the attributes */
-        miget_attribute(mincid, dimensions[j], MIstart, 1, &start);
-        miget_attribute(mincid, dimensions[j], MIstep, 1, &step);
-        miget_attribute(mincid, dimensions[j], MIdirection_cosines,
-                        MI2_3D, dircos);
+        H5E_BEGIN_TRY {
+            miget_attribute(volume, dimensions[j], MIstart, 
+                            MI_TYPE_DOUBLE, 1, &start);
+            miget_attribute(volume, dimensions[j], MIstep, 
+                            MI_TYPE_DOUBLE, 1, &step);
+            miget_attribute(volume, dimensions[j], MIdirection_cosines,
+                            MI_TYPE_DOUBLE, MI2_3D, dircos);
+        } H5E_END_TRY;
         minormalize_vector(dircos);
 
         /* Put them in the matrix */
@@ -334,7 +440,7 @@ minormalize_vector(double vector[MI2_3D])
 void 
 mitransform_coord(double out_coord[],
                   mi_lin_xfm_t transform,
-                  double in_coord[])
+                  const double in_coord[])
 {
     int i, j;
     double in_homogeneous[MI2_3D + 1];
@@ -352,7 +458,9 @@ mitransform_coord(double out_coord[],
         }
     }
 
+#if 0
     printf("W = %f\n", out_homogeneous[3]);
+#endif /* 0 */
 
     for (i = 0; i < MI2_3D; i++) {
         out_coord[i] = out_homogeneous[i];
@@ -372,58 +480,106 @@ mi2_int_to_dbl(hid_t src_id,
                void *bkg_ptr,
                hid_t dset_xfer_plist)
 {
-    double *dptr;
-    unsigned char *sptr;
-    int i;
-    int nb;
-    H5T_sign_t sg;
+    unsigned char *dst_ptr;
+    unsigned char *src_ptr;
+    int src_nb;
+    int dst_nb;
+    H5T_sign_t src_sg;
     double t;
+    int dst_cnt;
+    int src_cnt;
 
     switch (cdata->command) {
     case H5T_CONV_INIT:
-	nb = H5Tget_size(src_id);
-	if (nb != 1 && nb != 2 && nb != 4) {
+        cdata->need_bkg = H5T_BKG_NO;
+	src_nb = H5Tget_size(src_id);
+	if (src_nb != 1 && src_nb != 2 && src_nb != 4) {
 	    return (-1);
 	}
+        dst_nb = H5Tget_size(dst_id);
+        if (dst_nb != 8) {
+            return (-1);
+        }
 	break;
 
     case H5T_CONV_CONV:
-	nb = H5Tget_size(src_id);
-	sg = H5Tget_sign(src_id);
+	src_nb = H5Tget_size(src_id);
+	src_sg = H5Tget_sign(src_id);
+        dst_nb = H5Tget_size(dst_id);
+        if (buf_stride == 0) {
+            dst_cnt = dst_nb;
+            src_cnt = src_nb;
+        }
+        else {
+            dst_cnt = buf_stride;
+            src_cnt = buf_stride;
+        }
 
         /* Convert starting from "far side" of buffer... (Hope this works!)
          */
-        dptr = ((double *) buf_ptr) + nelements;
-	sptr = ((unsigned char *) buf_ptr) + (nelements * nb);
+        dst_ptr = ((unsigned char *) buf_ptr) + ((nelements - 1) * dst_nb);
+	src_ptr = ((unsigned char *) buf_ptr) + ((nelements - 1) * src_nb);
 
-	if (sg == H5T_SGN_2) {
-	    for (i = 0; i < nelements; i++) {
-		sptr -= nb;
-		if (nb == 4) {
-		    t = *((int *)sptr);
+	if (src_sg == H5T_SGN_2) {
+            switch (src_nb) {
+            case 4:
+                while (nelements-- > 0) {
+		    t = *(int *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
 		}
-		else if (nb == 2) {
-		    t = *((short *)sptr);
+                break;
+            case 2:
+                while (nelements-- > 0) {
+		    t = *(short *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
 		}
-		else if (nb == 1) {
-		    t = *((char *)sptr);
-		}
-                *--dptr = t;
+                break;
+            case 1:
+                while (nelements-- > 0) {
+		    t = *(char *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
+                }
+                break;
+            default:
+                /* Should not happen! */
+                break;
 	    }
 	}
 	else {
-	    for (i = 0; i < nelements; i++) {
-		sptr -= nb;
-		if (nb == 4) {
-		    t = *((unsigned int *)sptr);
+            switch (src_nb) {
+            case 4:
+                while (nelements-- > 0) {
+		    t = *(unsigned int *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
 		}
-		else if (nb == 2) {
-		    t = *((unsigned short *)sptr);
+                break;
+            case 2:
+                while (nelements-- > 0) {
+		    t = *(unsigned short *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
 		}
-		else if (nb == 1) {
-		    t = *((unsigned char *)sptr);
-		}
-                *--dptr = t;
+                break;
+            case 1:
+                while (nelements-- > 0) {
+		    t = *(unsigned char *)src_ptr;
+                    *(double *)dst_ptr = t;
+                    src_ptr -= src_cnt;
+                    dst_ptr -= dst_cnt;
+                }
+                break;
+            default:
+                /* Should not happen! */
+                break;
 	    }
 	}
 	break;
@@ -451,56 +607,147 @@ mi2_dbl_to_int(hid_t src_id,
                void *bkg_ptr,
                hid_t dset_xfer_plist)
 {
-    unsigned char *uptr;
-    double *dptr;
-    int i;
-    int nb;
-    H5T_sign_t sg;
-    double t;                   /* Signed data */
+    unsigned char *dst_ptr;
+    unsigned char *src_ptr;
+    int src_nb;
+    int dst_nb;
+    H5T_sign_t dst_sg;
+    double t;
+    int dst_cnt;
+    int src_cnt;
 
     switch (cdata->command) {
     case H5T_CONV_INIT:
-	nb = H5Tget_size(src_id);
-        fprintf(stderr, "d2i(INIT): %d\n", nb);
-	if (nb != 8) {
+        cdata->need_bkg = H5T_BKG_NO;
+        /* Verify that we can handle this conversion.
+         */
+	src_nb = H5Tget_size(src_id);
+	if (src_nb != 8) {
 	    return (-1);
 	}
+        dst_nb = H5Tget_size(dst_id);
+        if (dst_nb != 4 && dst_nb != 2 && dst_nb != 1) {
+            return (-1);
+        }
 	break;
 
     case H5T_CONV_CONV:
-	nb = H5Tget_size(dst_id);
-	sg = H5Tget_sign(dst_id);
-	uptr = (unsigned char *) buf_ptr;
-	dptr = (double *) buf_ptr;
+	dst_nb = H5Tget_size(dst_id);
+	dst_sg = H5Tget_sign(dst_id);
+        src_nb = H5Tget_size(src_id);
+	dst_ptr = (unsigned char *) buf_ptr;
+	src_ptr = (unsigned char *) buf_ptr;
+        /* The logic of HDF5 seems to be that if a stride is specified,
+         * both the source and destination pointers should advance by that
+         * amount.  This seems wrong to me, but I've examined the HDF5 sources
+         * and that's what their own type converters do.
+         */
+        if (buf_stride == 0) {
+            dst_cnt = dst_nb;
+            src_cnt = src_nb;
+        }
+        else {
+            dst_cnt = buf_stride;
+            src_cnt = buf_stride;
+        }
 
-	if (sg == H5T_SGN_2) {
-	    for (i = 0; i < nelements; i++) {
-                t = rint(*dptr++);
-		if (nb == 4) {
-		    *((int *)uptr) = (int) t;
+	if (dst_sg == H5T_SGN_2) {
+            switch (dst_nb) {
+            case 4:
+                while (nelements-- > 0) {
+                    t = rint(*(double *) src_ptr);
+                    if (t > INT_MAX) {
+                        t = INT_MAX; 
+                    }
+                    else if (t < INT_MIN) {
+                        t = INT_MIN;
+                    }
+                    *((int *)dst_ptr) = (int) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
+                }
+                break;
+            case 2:
+                while (nelements-- > 0) {
+                    t = rint(*(double *) src_ptr);
+                    if (t > SHRT_MAX) {
+                        t = SHRT_MAX;
+                    }
+                    else if (t < SHRT_MIN) {
+                        t = SHRT_MIN;
+                    }
+		    *((short *)dst_ptr) = (short) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
 		}
-		else if (nb == 2) {
-		    *((short *)uptr) = (short) t;
+                break;
+            case 1:
+                while (nelements-- > 0) {
+                    t = rint(*(double *) src_ptr);
+                    if (t > CHAR_MAX) {
+                        t = CHAR_MAX;
+                    }
+                    else if (t < CHAR_MIN) {
+                        t = CHAR_MIN;
+                    }
+                    *((char *)src_ptr) = (char) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
 		}
-		else if (nb == 1) {
-                    *((char *)uptr) = (char) t;
-		}
-		uptr += nb;
+                break;
+            default:
+                /* Can't handle this! */
+                break;
 	    }
 	}
 	else {
-	    for (i = 0; i < nelements; i++) {
-                t = rint(*dptr++);
-		if (nb == 4) {
-		    *((unsigned int *)uptr) = (unsigned int) t;
+            switch (dst_nb) {
+            case 4:
+                while (nelements-- > 0) {
+                    t = rint(*(double *)src_ptr);
+                    if (t > UINT_MAX) {
+                        t = UINT_MAX;
+                    }
+                    else if (t < 0) {
+                        t = 0;
+                    }
+		    *((unsigned int *)dst_ptr) = (unsigned int) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
+                }
+                break;
+
+            case 2:
+                while (nelements-- > 0) {
+                    t = rint(*(double *)src_ptr);
+                    if (t > USHRT_MAX) {
+                        t = USHRT_MAX;
+                    }
+                    else if (t < 0) {
+                        t = 0;
+                    }
+		    *((unsigned short *)dst_ptr) = (unsigned short) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
 		}
-		else if (nb == 2) {
-		    *((unsigned short *)uptr) = (unsigned short) t;
+                break;
+            case 1:
+                while (nelements-- > 0) {
+                    t = rint(*(double *)src_ptr);
+                    if (t > UCHAR_MAX) {
+                        t = UCHAR_MAX;
+                    }
+                    else if (t < 0) {
+                        t = 0;
+                    }
+		    *((unsigned char *)dst_ptr) = (unsigned char) t;
+                    dst_ptr += dst_cnt;
+                    src_ptr += src_cnt;
 		}
-		else if (nb == 1) {
-		    *((unsigned char *)uptr) = (unsigned char) t;
-		}
-		uptr += nb;
+                break;
+            default:
+                /* Can't handle any other values */
+                break;
 	    }
 	}
 	break;
@@ -763,3 +1010,183 @@ minc_update_thumbnails(hid_t file_id)
 
 }
 
+/** Performs scaled maximal pivoting gaussian elimination as a
+    numerically robust method to solve systems of linear equations.
+*/
+
+static int
+scaled_maximal_pivoting_gaussian_elimination(int   row[4],
+                                             double  a[4][4],
+                                             double solution[4][4] )
+{
+    int i, j, k, p, v, tmp;
+    double s[4], val, best_val, m, scale_factor;
+    int result;
+
+    for ( i = 0; i < 4; i++) {
+        row[i] = i;
+    }
+
+    for ( i = 0; i < 4; i++) {
+        s[i] = fabs( a[i][0] );
+        for ( j = 1; j < 4; j++ ) {
+            if ( fabs(a[i][j]) > s[i] ) {
+                s[i] = fabs(a[i][j]);
+            }
+        }
+
+        if ( s[i] == 0.0 ) {
+            return ( MI_ERROR );
+        }
+    }
+
+    result = MI_NOERROR;
+
+    for ( i = 0; i < 4 - 1; i++ ) {
+        p = i;
+        best_val = a[row[i]][i] / s[row[i]];
+        best_val = fabs( best_val );
+        for ( j = i + 1; j < 4; j++ ) {
+            val = a[row[j]][i] / s[row[j]];
+            val = fabs( val );
+            if( val > best_val ) {
+                best_val = val;
+                p = j;
+            }
+        }
+
+        if ( a[row[p]][i] == 0.0 ) {
+            result = MI_ERROR;
+            break;
+        }
+
+        if ( i != p ) {
+            tmp = row[i];
+            row[i] = row[p];
+            row[p] = tmp;
+        }
+
+        for ( j = i + 1; j < 4; j++ ) {
+            if ( a[row[i]][i] == 0.0 ) {
+                result = MI_ERROR;
+                break;
+            }
+
+            m = a[row[j]][i] / a[row[i]][i];
+            for ( k = i + 1; k < 4; k++ )
+                a[row[j]][k] -= m * a[row[i]][k];
+            for( v = 0; v < 4; v++ )
+                solution[row[j]][v] -= m * solution[row[i]][v];
+        }
+
+        if (result != MI_NOERROR)
+            break;
+    }
+
+    if ( result == MI_NOERROR && a[row[4-1]][4-1] == 0.0 )
+        result = MI_ERROR;
+
+    if ( result == MI_NOERROR ) {
+        for ( i = 4-1;  i >= 0;  --i ) {
+            for ( j = i+1; j < 4; j++) {
+                scale_factor = a[row[i]][j];
+                for ( v = 0; v < 4; v++ )
+                    solution[row[i]][v] -= scale_factor * solution[row[j]][v];
+            }
+
+            for( v = 0; v < 4; v++ )
+                solution[row[i]][v] /= a[row[i]][i];
+        }
+    }
+
+    return (result);
+}
+
+static int
+scaled_maximal_pivoting_gaussian_elimination_real(double coefs[4][4],
+                                                  double values[4][4])
+{
+    int i, j, v, row[4];
+    double a[4][4], solution[4][4];
+    int result;
+
+    for ( i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++)
+            a[i][j] = coefs[i][j];
+        for ( v = 0; v < 4; v++ )
+            solution[i][v] = values[v][i];
+    }
+
+    result = scaled_maximal_pivoting_gaussian_elimination(row, a, solution);
+
+    if ( result == MI_NOERROR ) {
+        for ( i = 0; i < 4; i++ ) {
+            for ( v = 0; v < 4; v++ )
+                values[v][i] = solution[row[i]][v];
+        }
+    }
+
+    return ( result );
+}
+
+/** Computes the inverse of a square matrix.
+ */
+static int
+invert_4x4_matrix(double matrix[4][4], /**< Input matrix */
+                  double inverse[4][4]) /**< Output (inverted) matrix */
+{
+    double tmp;
+    int result;
+    int i, j;
+
+    /* Start off with the identity matrix. */
+    for ( i = 0; i < 4; i++ ) {
+        for ( j = 0; j < 4; j++ ) {
+            inverse[i][j] = 0.0;
+        }
+        inverse[i][i] = 1.0;
+    }
+
+    result = scaled_maximal_pivoting_gaussian_elimination_real( matrix,
+                                                                inverse );
+
+    if ( result == MI_NOERROR )  {
+        for ( i = 0; i < 4 - 1; i++) {
+            for ( j = i + 1; j < 4; j++ ) {
+                tmp = inverse[i][j];
+                inverse[i][j] = inverse[j][i];
+                inverse[j][i] = tmp;
+            }
+        }
+    }
+    return (result);
+}
+
+/** Fills in the transform with the identity matrix.
+ */
+static void
+mimake_identity_transform(mi_lin_xfm_t transform)
+{
+    int i, j;
+
+    for (i = 0; i < MI2_LIN_XFM_SIZE; i++) {
+        for (j = 0; j < MI2_LIN_XFM_SIZE; j++) {
+            transform[i][j] = 0.0;
+        }
+        transform[i][i] = 1.0;
+    }
+}
+
+/** Function for inverting a MINC linear transform.
+ */
+int 
+miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse )
+{
+    int result;
+
+    result = invert_4x4_matrix( transform, inverse );
+    if (result != MI_NOERROR) {
+        mimake_identity_transform(inverse);
+    }
+    return ( result );
+}
