@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.41 1995-11-10 20:23:09 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.42 1995-11-20 12:33:40 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -53,7 +53,7 @@ extern  STRING   File_order_dimension_names[];
 
 #define  ANY_SPATIAL_DIMENSION   "any_spatial_dimension"
 
-typedef  struct
+typedef  struct volume_struct
 {
     BOOLEAN                 is_cached_volume;
     volume_cache_struct     cache;
@@ -65,6 +65,27 @@ typedef  struct
     nc_type                 nc_data_type;
     BOOLEAN                 signed_flag;
     BOOLEAN                 is_rgba_data;
+
+    Real                    (*get_1d)( struct volume_struct *, int );
+    Real                    (*get_2d)( struct volume_struct *, int, int );
+    Real                    (*get_3d)( struct volume_struct *, int, int, int );
+    Real                    (*get_4d)( struct volume_struct *, int, int, int,
+                                       int );
+    Real                    (*get_5d)( struct volume_struct *, int, int, int,
+                                       int, int );
+    Real                    (*get)( struct volume_struct *, int, int, int,
+                                       int, int );
+
+    void                    (*set_1d)( struct volume_struct *, int, Real );
+    void                    (*set_2d)( struct volume_struct *, int, int, Real );
+    void                    (*set_3d)( struct volume_struct *, int, int, int,
+                                       Real );
+    void                    (*set_4d)( struct volume_struct *, int, int, int,
+                                       int, Real );
+    void                    (*set_5d)( struct volume_struct *, int, int, int,
+                                       int, int, Real );
+    void                    (*set)( struct volume_struct *, int, int, int,
+                                    int, int, Real );
 
     Real                    voxel_min;
     Real                    voxel_max;
@@ -110,87 +131,72 @@ typedef  volume_struct  *Volume;
              }                                                                \
          }
 
+#define  CONVERT_VOXEL_TO_VALUE( volume, voxel ) \
+         ( (volume)->real_range_set ? \
+               (volume)->real_value_scale * (voxel) + \
+               (volume)->real_value_translation : (voxel) )
+
+#define  CONVERT_VALUE_TO_VOXEL( volume, value ) \
+         ( (volume)->real_range_set ? \
+               ((value) - (volume)->real_value_translation) / \
+                (volume)->real_value_scale : (value) )
+
 /* ------------------------- set voxel value ------------------------ */
 
 /* --- public macros to set the [x][y]... voxel of 'volume' to 'value' */
 
 #define  SET_VOXEL_1D( volume, x, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, 0, 0, 0, 0, (Real) value ); \
-           else \
-               SET_MULTIDIM_1D( (volume)->array, x, value )
+           (volume)->set_1d( volume, x, value )
 
 #define  SET_VOXEL_2D( volume, x, y, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, 0, 0, 0, (Real) value ); \
-           else \
-               SET_MULTIDIM_2D( (volume)->array, x, y, value )
+           (volume)->set_2d( volume, x, y, value )
 
 #define  SET_VOXEL_3D( volume, x, y, z, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, 0, 0, (Real) value ); \
-           else \
-               SET_MULTIDIM_3D( (volume)->array, x, y, z, value )
+           (volume)->set_3d( volume, x, y, z, value )
 
 #define  SET_VOXEL_4D( volume, x, y, z, t, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, 0, (Real) value ); \
-           else \
-               SET_MULTIDIM_4D( (volume)->array, x, y, z, t, value )
+           (volume)->set_4d( volume, x, y, z, t, value )
 
 #define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
-           else \
-               SET_MULTIDIM_5D( (volume)->array, x, y, z, t, v, value )
+           (volume)->set_5d( volume, x, y, z, t, v, value )
 
 /* --- same as previous, but don't have to know dimensions of volume */
 
 #define  SET_VOXEL( volume, x, y, z, t, v, value )       \
-           if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
-           else \
-               SET_MULTIDIM( (volume)->array, x, y, z, t, v, value )
+           (volume)->set( volume, x, y, z, t, v, value )
 
 /* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
 
 #define  GET_VOXEL_1D( value, volume, x )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, 0, 0, 0, 0 ); \
-           else \
-               GET_MULTIDIM_1D( value, (volume)->array, x )
+           (value) = (volume)->get_1d( volume, x )
 
 #define  GET_VOXEL_2D( value, volume, x, y )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, 0, 0, 0 ); \
-           else \
-               GET_MULTIDIM_2D( value, (volume)->array, x, y )
+           (value) = (volume)->get_2d( volume, x, y )
 
 #define  GET_VOXEL_3D( value, volume, x, y, z )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, 0, 0 ); \
-           else \
-               GET_MULTIDIM_3D( value, (volume)->array, x, y, z )
+           (value) = (volume)->get_3d( volume, x, y, z )
 
 #define  GET_VOXEL_4D( value, volume, x, y, z, t )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, 0 ); \
-           else \
-               GET_MULTIDIM_4D( value, (volume)->array, x, y, z, t )
+           (value) = (volume)->get_4d( volume, x, y, z, t )
 
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
-           else \
-               GET_MULTIDIM_5D( value, (volume)->array, x, y, z, t, v )
+           (value) = (volume)->get_5d( volume, x, y, z, t, v )
 
 /* --- same as previous, but no need to know volume dimensions */
 
 #define  GET_VOXEL( value, volume, x, y, z, t, v )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
-           else \
-               GET_MULTIDIM( value, (volume)->array, x, y, z, t, v )
+           (value) = (volume)->get( volume, x, y, z, t, v )
+
+#define  get_volume_voxel_value( volume, v0, v1, v2, v3, v4 ) \
+           (volume)->get( volume, v0, v1, v2, v3, v4 )
+#define  set_volume_voxel_value( volume, v0, v1, v2, v3, v4, value ) \
+           (volume)->set( volume, v0, v1, v2, v3, v4, value )
+#define  get_volume_real_value( volume, v0, v1, v2, v3, v4 ) \
+           CONVERT_VOXEL_TO_VALUE( volume, \
+                                (volume)->get( volume, v0, v1, v2, v3, v4 ) )
+#define  set_volume_real_value( volume, v0, v1, v2, v3, v4, value ) \
+           (volume)->set( volume, v0, v1, v2, v3, v4, \
+                              CONVERT_VALUE_TO_VOXEL( volume, value ) )
 
 /* ------------------------- get voxel ptr ------------------------ */
 
@@ -235,46 +241,36 @@ typedef  volume_struct  *Volume;
            else \
               GET_MULTIDIM_PTR( ptr, (volume)->array, x, y, z, t, v )
 
-/* --- returns the conversion of the 'voxel' value to a real value */
-
-#define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
-            convert_voxel_to_value( volume, voxel )
-
-/* --- returns the conversion of the 'real' value to a voxel value */
-
-#define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
-            convert_value_to_voxel( volume, value )
-
 /* --- assigns 'value' the value of the [x][y]...'th voxel of 'volume' */
 
 #define  GET_VALUE_1D( value, volume, x )       \
          { \
              GET_VOXEL_1D( value, volume, x ); \
-             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+             (value) = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 #define  GET_VALUE_2D( value, volume, x, y )       \
          { \
              GET_VOXEL_2D( value, volume, x, y ); \
-             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+             (value) = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 #define  GET_VALUE_3D( value, volume, x, y, z )       \
          { \
              GET_VOXEL_3D( value, volume, x, y, z ); \
-             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+             (value) = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 #define  GET_VALUE_4D( value, volume, x, y, z, t )       \
          { \
              GET_VOXEL_4D( value, volume, x, y, z, t ); \
-             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+             (value) = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 #define  GET_VALUE_5D( value, volume, x, y, z, t, v )       \
          { \
              GET_VOXEL_5D( value, volume, x, y, z, t, v ); \
-             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+             (value) = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 /* --- same as previous, without knowing number of dimensions of volume */

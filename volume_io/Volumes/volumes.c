@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.56 1995-11-17 20:25:41 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.57 1995-11-20 12:37:39 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -214,6 +214,8 @@ public   Volume   create_volume(
     make_identity_transform( &identity );
     create_linear_transform( &volume->voxel_to_world_transform, &identity );
 
+    set_volume_functions( volume );
+
     return( volume );
 }
 
@@ -282,6 +284,8 @@ public  void  set_volume_type(
         volume->signed_flag = signed_flag;
 
         set_volume_voxel_range( volume, voxel_min, voxel_max );
+
+        set_volume_functions( volume );
     }
 }
 
@@ -402,6 +406,8 @@ public  void  alloc_volume_data(
     {
         alloc_multidim_array( &volume->array );
     }
+
+    set_volume_functions( volume );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

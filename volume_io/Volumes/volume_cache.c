@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.18 1995-11-17 20:25:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.19 1995-11-20 12:37:39 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -1349,7 +1349,7 @@ private  cache_block_struct  *get_cache_block_for_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_cached_volume_voxel(
+private  Real  get_cached_volume_voxel(
     Volume   volume,
     int      x,
     int      y,
@@ -1390,7 +1390,7 @@ public  Real  get_cached_volume_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_cached_volume_voxel(
+private  void  set_cached_volume_voxel(
     Volume   volume,
     int      x,
     int      y,
@@ -1432,4 +1432,107 @@ public  BOOLEAN  cached_volume_has_been_modified(
     volume_cache_struct  *cache )
 {
     return( cache->minc_file != NULL );
+}
+
+private  Real  get_voxel_1d(
+    Volume   volume,
+    int      v0 )
+{
+    return( get_cached_volume_voxel( volume, v0, 0, 0, 0, 0 ) );
+}
+
+private  Real  get_voxel_2d(
+    Volume   volume,
+    int      v0,
+    int      v1 )
+{
+    return( get_cached_volume_voxel( volume, v0, v1, 0, 0, 0 ) );
+}
+
+private  Real  get_voxel_3d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2 )
+{
+    return( get_cached_volume_voxel( volume, v0, v1, v2, 0, 0 ) );
+}
+
+private  Real  get_voxel_4d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3 )
+{
+    return( get_cached_volume_voxel( volume, v0, v1, v2, v3, 0 ) );
+}
+
+private  void  set_voxel_1d(
+    Volume   volume,
+    int      v0,
+    Real     value )
+{
+    set_cached_volume_voxel( volume, v0, 0, 0, 0, 0, value );
+}
+
+private  void  set_voxel_2d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    Real     value )
+{
+    set_cached_volume_voxel( volume, v0, v1, 0, 0, 0, value );
+}
+
+private  void  set_voxel_3d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    Real     value )
+{
+    set_cached_volume_voxel( volume, v0, v1, v2, 0, 0, value );
+}
+
+private  void  set_voxel_4d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    Real     value )
+{
+    set_cached_volume_voxel( volume, v0, v1, v2, v3, 0, value );
+}
+
+public  void  set_volume_cache_functions(
+    Volume   volume )
+{
+    volume->set = set_cached_volume_voxel;
+    volume->get = get_cached_volume_voxel;
+
+    switch( get_volume_n_dimensions(volume) )
+    {
+    case 1:
+        volume->set_1d = set_voxel_1d;
+        volume->get_1d = get_voxel_1d;
+        break;
+    case 2:
+        volume->set_2d = set_voxel_2d;
+        volume->get_2d = get_voxel_2d;
+        break;
+    case 3:
+        volume->set_3d = set_voxel_3d;
+        volume->get_3d = get_voxel_3d;
+        break;
+    case 4:
+        volume->set_4d = set_voxel_4d;
+        volume->get_4d = get_voxel_4d;
+        break;
+    case 5:
+        volume->set_5d = set_cached_volume_voxel;
+        volume->get_5d = get_cached_volume_voxel;
+        break;
+    }
 }
