@@ -917,7 +917,7 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
                 }
             }
             d /= total;
-            out_ptr[(j * osize[1]) + k] = d;
+            out_ptr[(j * osize[2]) + k] = d;
         }
     }
 }
@@ -1043,8 +1043,7 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     }
     
     free(in_ptr);
-    // THIS CALL RESULTS IN segfault, NOT SURE WHY!
-    //free(out_ptr);
+    free(out_ptr);
     
     H5Sclose(omspc_id);
     H5Sclose(imspc_id);
