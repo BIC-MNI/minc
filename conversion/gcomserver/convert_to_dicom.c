@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.14  2001-03-19 18:37:33  neelin
+ * Revision 1.15  2001-04-09 22:15:17  neelin
+ * Fixed definition of FALSE
+ *
+ * Revision 1.14  2001/03/19 18:37:33  neelin
  * Fixes to image number (and hence SOP instance UID) to get things working
  * with the GE viewing station.
  *
@@ -77,7 +80,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.14 2001-03-19 18:37:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.15 2001-04-09 22:15:17 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -105,7 +108,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/conver
 #  define TRUE 1
 #endif
 #ifndef FALSE
-#  define TRUE 0
+#  define FALSE 0
 #endif
 
 /* World dimensions */
