@@ -1,6 +1,10 @@
 #include  <def_mni.h>
 #include  <def_splines.h>
 #include  <limits.h>
+#undef FLT_DIG
+#undef DBL_DIG
+#undef DBL_MIN
+#undef DBL_MAX
 #include  <float.h>
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -13,6 +17,42 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
     { MItime, MIzspace, MIyspace, MIxspace },
     { "", MItime, MIzspace, MIyspace, MIxspace }
 };
+
+public  char  **get_default_dim_names(
+    int    n_dimensions )
+{
+    return( default_dimension_names[n_dimensions-1] );
+}
+
+private  char  *get_dim_name(
+    int   axis )
+{
+    switch( axis )
+    {
+    case X:  return( MIxspace );
+    case Y:  return( MIyspace );
+    case Z:  return( MIzspace );
+    default:  HANDLE_INTERNAL_ERROR( "get_dim_name" ); break;
+    }
+
+    return( (char *) 0 );
+}
+
+public  Boolean  convert_dim_name_to_axis(
+    char    name[],
+    int     *axis )
+{
+    *axis = -1;
+
+    if( strcmp( name, MIxspace ) == 0 )
+        *axis = X;
+    else if( strcmp( name, MIyspace ) == 0 )
+        *axis = Y;
+    else if( strcmp( name, MIzspace ) == 0 )
+        *axis = Z;
+
+    return( *axis >= 0 );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_volume
@@ -50,7 +90,7 @@ public   Volume   create_volume(
     Real        voxel_min,
     Real        voxel_max )
 {
-    int             i, c, sizes[MAX_DIMENSIONS];
+    int             i, axis, sizes[MAX_DIMENSIONS];
     Status          status;
     char            *name;
     volume_struct   *volume;
@@ -80,21 +120,30 @@ public   Volume   create_volume(
     volume->real_value_scale = 1.0;
     volume->real_value_translation = 0.0;
 
-    for_less( c, 0, N_DIMENSIONS )
-    {
-        volume->translation_voxel[c] = 0.0;
-        volume->world_space_for_translation_voxel[c] = 0.0;
-        volume->separations[c] = 1.0;
-    }
+    for_less( i, 0, N_DIMENSIONS )
+        volume->world_space_for_translation_voxel[i] = 0.0;
 
     for_less( i, 0, n_dimensions )
     {
+        volume->translation_voxel[i] = 0.0;
+        volume->spatial_axes[i] = -1;
+        volume->separations[i] = 1.0;
+        volume->direction_cosines[i][X] = 0.0;
+        volume->direction_cosines[i][Y] = 0.0;
+        volume->direction_cosines[i][Z] = 0.0;
+
         sizes[i] = 0;
 
         if( dimension_names != (char **) NULL )
             name = dimension_names[i];
         else
             name = default_dimension_names[n_dimensions-1][i];
+
+        if( convert_dim_name_to_axis( name, &axis ) )
+        {
+            volume->spatial_axes[axis] = i;
+            volume->direction_cosines[i][axis] = 1.0;
+        }
 
         ALLOC( volume->dimension_names[i], strlen( name ) + 1 );
         (void) strcpy( volume->dimension_names[i], name );
@@ -252,9 +301,7 @@ public  void  alloc_volume_data(
     void   *ptr;
 
     if( volume->data != (void *) NULL )
-    {
         free_volume_data( volume );
-    }
 
     if( volume->data_type == NO_DATA_TYPE )
     {
@@ -463,29 +510,112 @@ public  General_transform  *get_voxel_to_world_transform(
 private  void  recompute_world_transform(
     Volume  volume )
 {
-    Transform                scale_xform, translation_xform, linear_xform;
+    Transform                transform;
     General_transform        general_transform;
-    Real                     x, y, z;
+    Real                     separations[MAX_DIMENSIONS];
+    Real                     separations_3D[N_DIMENSIONS];
+    Vector                   directions[N_DIMENSIONS];
+    Point                    point;
+    Real                     x_trans, y_trans, z_trans;
+    Real                     voxel[N_DIMENSIONS];
+    int                      c, axis, n_axes, axis_list[N_DIMENSIONS];
 
-    make_scale_transform( volume->separations[X],
-                          volume->separations[Y],
-                          volume->separations[Z], &scale_xform );
+    get_volume_separations( volume, separations );
 
-    transform_point( &scale_xform,
-                     volume->translation_voxel[X],
-                     volume->translation_voxel[Y],
-                     volume->translation_voxel[Z], &x, &y, &z );
+    n_axes = 0;
 
-    make_translation_transform(volume->world_space_for_translation_voxel[X] - x,
-                               volume->world_space_for_translation_voxel[Y] - y,
-                               volume->world_space_for_translation_voxel[Z] - z,
-                               &translation_xform );
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        axis = volume->spatial_axes[c];
+        if( axis >= 0 )
+        {
+            separations_3D[c] = separations[axis];
+            voxel[c] = volume->translation_voxel[axis];
+            fill_Vector( directions[c],
+                         volume->direction_cosines[axis][X],
+                         volume->direction_cosines[axis][Y],
+                         volume->direction_cosines[axis][Z]);
 
-    concat_transforms( &linear_xform, &scale_xform, &translation_xform );
+            axis_list[n_axes] = c;
+            ++n_axes;
+        }
+        else
+        {
+            separations_3D[c] = 0.0;
+            voxel[c] = 0.0;
+        }
+    }
 
-    create_linear_transform( &general_transform, &linear_xform );
+    if( n_axes == 0 )
+    {
+        print( "error recompute_world_transform:  no axes.\n" );
+        return;
+    }
+
+    if( n_axes == 1 )
+    {
+        create_two_orthogonal_vectors( &directions[axis_list[0]],
+                            &directions[(axis_list[0]+1) % N_DIMENSIONS],
+                            &directions[(axis_list[0]+2) % N_DIMENSIONS] );
+    }
+    else if( n_axes == 2 )
+    {
+        axis = N_DIMENSIONS - axis_list[0] - axis_list[1];
+
+        create_orthogonal_vector( &directions[(axis+1) % N_DIMENSIONS],
+                                  &directions[(axis+2) % N_DIMENSIONS],
+                                  &directions[axis] );
+    }
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        NORMALIZE_VECTOR( directions[c], directions[c] );
+        SCALE_VECTOR( directions[c], directions[c], separations_3D[c] );
+    }
+
+    fill_Point( point, 0.0, 0.0, 0.0 );
+
+    make_change_to_bases_transform( &point,
+              &directions[X], &directions[Y], &directions[Z], &transform );
+
+    transform_point( &transform, voxel[X], voxel[Y], voxel[Z],
+                     &x_trans, &y_trans, &z_trans );
+
+    fill_Point( point, volume->world_space_for_translation_voxel[X] - x_trans,
+                       volume->world_space_for_translation_voxel[Y] - y_trans,
+                       volume->world_space_for_translation_voxel[Z] - z_trans );
+
+    set_transform_origin( &transform, &point );
+
+    create_linear_transform( &general_transform, &transform );
 
     set_voxel_to_world_transform( volume, &general_transform );
+}
+
+public  char  **get_volume_dimension_names(
+    Volume   volume )
+{
+    int    i;
+    char   **names;
+
+    ALLOC2D( names, get_volume_n_dimensions(volume), MAX_STRING_LENGTH+1 );
+
+    for_less( i, 0, get_volume_n_dimensions(volume) )
+        (void) strcpy( names[i], volume->dimension_names[i] );
+
+    for_less( i, 0, N_DIMENSIONS )
+    {
+        if( volume->spatial_axes[i] >= 0 )
+            (void) strcpy( names[volume->spatial_axes[i]], get_dim_name( i ) );
+    }
+
+    return( names );
+}
+
+public  void  delete_dimension_names(
+    char   **dimension_names )
+{
+    FREE2D( dimension_names );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -541,6 +671,59 @@ public  void  set_volume_translation(
     recompute_world_transform( volume );
 }
 
+public  void  get_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] )
+{
+    int  c;
+
+    for_less( c, 0, volume->n_dimensions )
+        voxel[c] = volume->translation_voxel[c];
+
+    for_less( c, 0, N_DIMENSIONS )
+        world_space_voxel_maps_to[c] =
+                 volume->world_space_for_translation_voxel[c];
+}
+
+public  void  set_volume_direction_cosine(
+    Volume   volume,
+    int      axis,
+    Real     dir[] )
+{
+    Real   len;
+
+    if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
+    {
+        print(
+         "set_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
+          axis );
+        return;
+    }
+
+    volume->direction_cosines[axis][X] = dir[X];
+    volume->direction_cosines[axis][Y] = dir[Y];
+    volume->direction_cosines[axis][Z] = dir[Z];
+
+    len = dir[X] * dir[X] + dir[Y] * dir[Y] + dir[Z] * dir[Z];
+
+    if( len == 0.0 )
+    {
+        print( "Warning: zero length direction cosine in set_volume_direction_cosine()\n" );
+        return;
+    }
+
+    if( len != 1.0 )
+    {
+        len = sqrt( len );
+        volume->direction_cosines[axis][X] /= len;
+        volume->direction_cosines[axis][Y] /= len;
+        volume->direction_cosines[axis][Z] /= len;
+    }
+
+    recompute_world_transform( volume );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : convert_voxel_to_world
 @INPUT      : volume
@@ -560,6 +743,37 @@ public  void  set_volume_translation(
 
 public  void  convert_voxel_to_world(
     Volume   volume,
+    Real     voxel[],
+    Real     *x_world,
+    Real     *y_world,
+    Real     *z_world )
+{
+    Real   x_voxel, y_voxel, z_voxel;
+
+    if( volume->spatial_axes[0] >= 0 )
+        x_voxel = voxel[volume->spatial_axes[0]];
+    else
+        x_voxel = 0.0;
+
+    if( volume->spatial_axes[1] >= 0 )
+        y_voxel = voxel[volume->spatial_axes[1]];
+    else
+        y_voxel = 0.0;
+
+    if( volume->spatial_axes[2] >= 0 )
+        z_voxel = voxel[volume->spatial_axes[2]];
+    else
+        z_voxel = 0.0;
+
+    /* apply linear transform */
+
+    general_transform_point( &volume->voxel_to_world_transform,
+                             x_voxel, y_voxel, z_voxel,
+                             x_world, y_world, z_world );
+}
+
+public  void  convert_3D_voxel_to_world(
+    Volume   volume,
     Real     x_voxel,
     Real     y_voxel,
     Real     z_voxel,
@@ -567,11 +781,19 @@ public  void  convert_voxel_to_world(
     Real     *y_world,
     Real     *z_world )
 {
-    /* apply linear transform */
+    Real   voxel[MAX_DIMENSIONS];
 
-    general_transform_point( &volume->voxel_to_world_transform,
-                             x_voxel, y_voxel, z_voxel,
-                             x_world, y_world, z_world );
+    if( get_volume_n_dimensions(volume) != 3 )
+    {
+        print( "convert_3D_voxel_to_world:  Volume must be 3D.\n" );
+        return;
+    }
+
+    voxel[X] = x_voxel;
+    voxel[Y] = y_voxel;
+    voxel[Z] = z_voxel;
+
+    convert_voxel_to_world( volume, voxel, x_world, y_world, z_world );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -612,14 +834,14 @@ public  void  convert_voxel_normal_vector_to_world(
 
     /* transform vector by transpose of inverse transformation */
 
-    *x_world = Transform_elem(*inverse,0,0) * x_voxel+
-               Transform_elem(*inverse,1,0) * y_voxel+
+    *x_world = Transform_elem(*inverse,0,0) * x_voxel +
+               Transform_elem(*inverse,1,0) * y_voxel +
                Transform_elem(*inverse,2,0) * z_voxel;
-    *y_world = Transform_elem(*inverse,0,1) * x_voxel+
-               Transform_elem(*inverse,1,1) * y_voxel+
+    *y_world = Transform_elem(*inverse,0,1) * x_voxel +
+               Transform_elem(*inverse,1,1) * y_voxel +
                Transform_elem(*inverse,2,1) * z_voxel;
-    *z_world = Transform_elem(*inverse,0,2) * x_voxel+
-               Transform_elem(*inverse,1,2) * y_voxel+
+    *z_world = Transform_elem(*inverse,0,2) * x_voxel +
+               Transform_elem(*inverse,1,2) * y_voxel +
                Transform_elem(*inverse,2,2) * z_voxel;
 }
 
@@ -643,14 +865,52 @@ public  void  convert_world_to_voxel(
     Real     x_world,
     Real     y_world,
     Real     z_world,
+    Real     voxel[] )
+{
+    int    c;
+    Real   x_voxel, y_voxel, z_voxel;
+
+    /* apply linear transform */
+
+    general_inverse_transform_point( &volume->voxel_to_world_transform,
+                     x_world, y_world, z_world,
+                     &x_voxel, &y_voxel, &z_voxel );
+
+    for_less( c, 0, get_volume_n_dimensions(volume) )
+        voxel[c] = 0.0;
+
+    if( volume->spatial_axes[0] >= 0 )
+        voxel[volume->spatial_axes[0]] = x_voxel;
+
+    if( volume->spatial_axes[1] >= 0 )
+        voxel[volume->spatial_axes[1]] = y_voxel;
+
+    if( volume->spatial_axes[2] >= 0 )
+        voxel[volume->spatial_axes[2]] = z_voxel;
+}
+
+public  void  convert_3D_world_to_voxel(
+    Volume   volume,
+    Real     x_world,
+    Real     y_world,
+    Real     z_world,
     Real     *x_voxel,
     Real     *y_voxel,
     Real     *z_voxel )
 {
-    /* apply linear transform */
+    Real   voxel[MAX_DIMENSIONS];
 
-    general_inverse_transform_point( &volume->voxel_to_world_transform,
-                     x_world, y_world, z_world, x_voxel, y_voxel, z_voxel );
+    if( get_volume_n_dimensions(volume) != 3 )
+    {
+        print( "convert_3D_world_to_voxel:  Volume must be 3D.\n" );
+        return;
+    }
+
+    convert_world_to_voxel( volume, x_world, y_world, z_world, voxel );
+
+    *x_voxel = voxel[X];
+    *y_voxel = voxel[Y];
+    *z_voxel = voxel[Z];
 }
 
 public  Real  get_volume_voxel_min(
@@ -821,7 +1081,7 @@ public  Volume   copy_volume_definition(
     Real     voxel_min,
     Real     voxel_max )
 {
-    int                sizes[MAX_DIMENSIONS];
+    int                c, sizes[MAX_DIMENSIONS];
     Real               separations[MAX_DIMENSIONS];
     Volume             copy;
     General_transform  transform;
@@ -842,11 +1102,17 @@ public  Volume   copy_volume_definition(
     set_volume_sizes( copy, sizes );
     alloc_volume_data( copy );
 
+    for_less( c, 0, N_DIMENSIONS )
+        copy->spatial_axes[c] = volume->spatial_axes[c];
+
     set_volume_real_range( copy,
                            get_volume_real_min(volume),
                            get_volume_real_max(volume) );
 
     set_volume_separations( copy, separations );
+
+    for_less( c, 0, get_volume_n_dimensions(volume) )
+        set_volume_direction_cosine( copy, c, volume->direction_cosines[c] );
 
     copy_general_transform( get_voxel_to_world_transform(volume),
                             &transform );

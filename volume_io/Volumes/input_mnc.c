@@ -55,20 +55,19 @@ public  Minc_file  initialize_minc_input(
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
-    Real                axis_separations[MI_NUM_SPACE_DIMS];
     Real                volume_separations[MI_NUM_SPACE_DIMS];
     Real                default_voxel_min, default_voxel_max;
+    Real                world_space[N_DIMENSIONS];
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    Vector              axes[MI_NUM_SPACE_DIMS];
     Boolean             spatial_dim_flags[MAX_VAR_DIMS];
     Vector              offset;
     Point               origin;
+    Real                zero_voxel[MAX_DIMENSIONS];
+    Vector              spatial_axis;
     double              real_min, real_max;
-    int                 d, dimvar, which_valid_axis;
+    int                 d, dimvar, which_valid_axis, axis;
     int                 spatial_axis_indices[MAX_VAR_DIMS];
-    Transform           voxel_to_world_transform;
-    General_transform   general_transform;
     minc_input_options  default_options;
 
     if( options == (minc_input_options *) NULL )
@@ -136,7 +135,8 @@ public  Minc_file  initialize_minc_input(
 
     /* --- match the dimension names of the volume with those in the file */
 
-    if( !match_dimension_names( volume->n_dimensions, volume->dimension_names,
+    if( !match_dimension_names( get_volume_n_dimensions(volume),
+                                volume->dimension_names,
                                 file->n_file_dimensions, dim_names,
                                 file->axis_index_in_file ) )
     {
@@ -162,14 +162,13 @@ public  Minc_file  initialize_minc_input(
 
     which_valid_axis = 0;
 
+    for_less( d, 0, MAX_DIMENSIONS )
+        volume->spatial_axes[d] = -1;
+
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( strcmp( dim_names[d], MIxspace ) == 0 )
-            spatial_axis_indices[d] = X;
-        else if( strcmp( dim_names[d], MIyspace ) == 0 )
-            spatial_axis_indices[d] = Y;
-        else if( strcmp( dim_names[d], MIzspace ) == 0 )
-            spatial_axis_indices[d] = Z;
+        if( convert_dim_name_to_axis( dim_names[d], &axis ) )
+            spatial_axis_indices[d] = axis;
         else
             spatial_axis_indices[d] = INVALID_AXIS;
 
@@ -178,6 +177,13 @@ public  Minc_file  initialize_minc_input(
         if( file->axis_index_in_file[d] != INVALID_AXIS )
         {
             file->valid_file_axes[which_valid_axis] = d;
+
+            if( spatial_dim_flags[d] )
+            {
+                volume->spatial_axes[spatial_axis_indices[d]] =
+                                        file->axis_index_in_file[d];
+            }
+
             ++which_valid_axis;
         }
     }
@@ -225,43 +231,38 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
-    set_volume_separations( volume, volume_separations );
-
     /* --- create the world transform from slice separation, cosines, etc. */
-
-    fill_Vector( axes[X], 1.0, 0.0, 0.0 );
-    fill_Vector( axes[Y], 0.0, 1.0, 0.0 );
-    fill_Vector( axes[Z], 0.0, 0.0, 1.0 );
-
-    axis_separations[X] = 1.0;
-    axis_separations[Y] = 1.0;
-    axis_separations[Z] = 1.0;
 
     fill_Point( origin, 0.0, 0.0, 0.0 );
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( spatial_axis_indices[d] != INVALID_AXIS )
+        if( file->axis_index_in_file[d] != INVALID_AXIS )
         {
-            fill_Vector( axes[spatial_axis_indices[d]],
+            set_volume_direction_cosine( volume,
+                                         file->axis_index_in_file[d],
+                                         dir_cosines[d] );
+
+            fill_Vector( spatial_axis,
                          dir_cosines[d][0],
                          dir_cosines[d][1],
                          dir_cosines[d][2] );
-            NORMALIZE_VECTOR( axes[spatial_axis_indices[d]],
-                              axes[spatial_axis_indices[d]] );
+            NORMALIZE_VECTOR( spatial_axis, spatial_axis );
             
-            SCALE_VECTOR( offset, axes[spatial_axis_indices[d]],
-                          start_position[d] );
+            SCALE_VECTOR( offset, spatial_axis, start_position[d] );
             ADD_POINT_VECTOR( origin, origin, offset );
-
-            axis_separations[spatial_axis_indices[d]] = file_separations[d];
         }
     }
 
-    create_world_transform( &origin, axes, axis_separations,
-                            &voxel_to_world_transform );
-    create_linear_transform( &general_transform, &voxel_to_world_transform );
-    set_voxel_to_world_transform( volume, &general_transform );
+    for_less( d, 0, MAX_DIMENSIONS )
+        zero_voxel[d] = 0.0;
+
+    world_space[X] = Point_x(origin);
+    world_space[Y] = Point_y(origin);
+    world_space[Z] = Point_z(origin);
+
+    set_volume_translation( volume, zero_voxel, world_space );
+    set_volume_separations( volume, volume_separations );
 
     /* --- decide on type conversion */
 
@@ -420,7 +421,7 @@ public  Minc_file  initialize_minc_input(
     if( prev_nc_type != converted_type )
         different = TRUE;
 
-    if( different )
+    if( different && volume->data != (char *) NULL )
         free_volume_data( volume );
 
     for_less( d, 0, file->n_file_dimensions )
@@ -753,41 +754,6 @@ public  void  reset_input_volume(
     for_less( d, 0, file->n_file_dimensions )
         file->indices[d] = 0;
     file->end_volume_flag = FALSE;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : create_world_transform
-@INPUT      : origin        - point origin
-              axes          - 3 vectors
-              axis_spacing  - voxel spacing
-@OUTPUT     : transform
-@RETURNS    : 
-@DESCRIPTION: Using the information from the mnc file, creates a 4 by 4
-              transform which converts a voxel to world space.
-              Voxel centres are at integer numbers in voxel space.  So the
-              bottom left voxel is (0.0,0.0,0.0).
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  create_world_transform(
-    Point       *origin,
-    Vector      axes[N_DIMENSIONS],
-    Real        axis_spacing[N_DIMENSIONS],
-    Transform   *transform )
-{
-    Vector   x_axis, y_axis, z_axis;
-
-    x_axis = axes[X];
-    y_axis = axes[Y];
-    z_axis = axes[Z];
-
-    SCALE_VECTOR( x_axis, x_axis, axis_spacing[X] );
-    SCALE_VECTOR( y_axis, y_axis, axis_spacing[Y] );
-    SCALE_VECTOR( z_axis, z_axis, axis_spacing[Z] );
-
-    make_change_to_bases_transform( origin, &x_axis, &y_axis, &z_axis,
-                                    transform );
 }
 
 public  Boolean  is_spatial_dimension(
