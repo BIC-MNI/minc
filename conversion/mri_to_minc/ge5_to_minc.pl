@@ -58,7 +58,7 @@ sub ge5_read_headers {
 
     # Open file
     if (!open(GEF, "<".$filename)) {
-        warn "Can't open file $filename: $!";
+        warn "Can't open file $filename: $!\n";
         return 1;
     }
 
@@ -91,7 +91,7 @@ sub ge5_read_headers {
 
        # Check the image file magic number
        if (substr($pixel_hdr, 0, 4) ne $magic_string) {
-          warn "Bad image file magic number in \"$filename\"";
+          warn "Bad image file magic number in \"$filename\"\n";
           return 1;
        }
 
@@ -265,13 +265,13 @@ sub ge5_read_file_info {
     local($compress) = &unpack_value(*pixel_hdr, 20, 'i');
     $specific_file_info{'compress'} = $compress;
     if (($compress != 1) && ($compress != 3)) {
-        warn "Unusable compression scheme ($compress).";
+        warn "Unusable compression scheme ($compress).\n";
         return 1;
     }
     local($depth) = &unpack_value(*pixel_hdr, 16, 'i');
     $specific_file_info{'depth'} = $depth;
     if ($depth != 16) {
-        warn "Unusable pixel depth ($depth).";
+        warn "Unusable pixel depth ($depth).\n";
         return 1;
     }
 

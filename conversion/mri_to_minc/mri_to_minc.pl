@@ -534,7 +534,7 @@ sub create_mincfile {
             if (length($image_data) != $image_data_len) {
                 close(MINC);
                 warn "Error reading image from $cur_file ".
-                    "while creating minc file \"$mincfile\"";
+                    "while creating minc file \"$mincfile\"\n";
                 return;
             }
         }
@@ -754,7 +754,7 @@ sub mri_to_minc {
         if ($keep_looping) {
             undef(%file_info, %specific_file_info);
             if (&read_file_info($nextfile, *file_info, *specific_file_info)) {
-                warn "Error reading file \"$nextfile\". Skipping to next.";
+                warn "Error reading file \"$nextfile\". Skipping to next.\n";
                 next;
             }
 
@@ -864,7 +864,7 @@ sub mri_to_minc {
             if (($cur_width != $mincinfo{'width'}) || # 
                 ($cur_height != $mincinfo{'height'})) {
                 warn "Width or height do not match first file ".
-                    "for file $nextfile. Skipping to next.";
+                    "for file $nextfile. Skipping to next.\n";
                 next;
             }
         }
