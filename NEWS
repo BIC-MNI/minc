@@ -1,8 +1,10 @@
                 New in Release 2.0.08
                 ---------------------
-* Fix bug in hdf emulation that sometimes left "length" attribute unset in 
-dimension variables.
-* Other bug fixes
+* Added conversion subdirectory with PRELIMINARY converters for ECAT, 
+Concorde microPET, and NIfTI-1 data files.
+* Simplified MINC programming interface.
+* Many bug fixes
+* See WHATSNEW-2.0 for additional details
 
                 New in Release 2.0.07
                 ---------------------

@@ -1,4 +1,23 @@
 MINC 2:
+2005-01-28 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Incorporate NIfTI-1 converters, nii2mnc and mnc2nii
+	* Incorporate upet2mnc, converter for Concorde microPET data.
+	* Copied fix for mincmakescalar to warn user if the
+	vector_dimension is not the last dimension in the file.
+	* Modify Leila's vector_dimension-test code to create its own
+	data file, to avoid having to carry around a multi-megabyte test
+	file as part of the distrbution.
+	
+2005-01-19 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Incorporate Anthonin Reilhac's changes to ecattominc
+	* Add ecattominc, mnc2nii, and nii2mnc to the automake files
+	* Modify mincdump to print long attributes of type NC_BYTE as
+	  strings if all of the characters are printable.
+	
+2005-01-04 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Adapt minc_simple.c to use Leila's revision of the 
+	restructure_array() parameters.  This seems to work properly again.
+	
 2004-12-14 Bert Vincent <bert@bic.mni.mcgill.ca>
      * Got rid of lots of C99-related warnings
      * Added new biModalT algorithms to mincstats

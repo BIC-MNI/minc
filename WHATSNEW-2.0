@@ -1,3 +1,34 @@
+Release 2.0.08 ("beta 4")
+--------------
+Several major changes are incorporated into this release.
+
+First, the "simplified" MINC interface is now included in the
+release. This interface, which is still under development, is intended
+to provide easier access for software that does not need to use MINC's
+more advanced features.
+
+Second, we are beginning to include conversion programs with MINC.  For
+this release, we are including converters for the new NIfTI-1 format,
+created as a successor to Analyze.  FSL 3.2 and other popular fMRI
+packages now support this format.  For PET users we are also including the 
+ECAT to MINC format converter, with updates from Anthonin Reilhac
+
+Third, some new tool features have been added and bugs have been fixed.
+ * The mincstats bimodal threshold calculation has been fixed and
+ improved.  Mincstats now supports multiple algorithms for calculating
+ the bimodal threshold.  The default is still the "Otsu '97" algorithm,
+ where the code for this has been corrected to give more reasonable
+ results. In addition we have implemented the "Kittler & Illingworth
+ '86", the "Kapur et al. '85", and a simple "mean of means" algorithms 
+ as options.
+* mincmakescalar now warns the user if an attempt is made to convert
+a file that has a vector_dimension that is NOT the fastest-varying 
+dimension in the image.  Previously the program would simply copy the
+input file to the output unmodified, without warning the user.
+
+In addition to these changes, many bugs and issues with the MINC 2.0
+format and interface have been fixed. 
+
 Release 2.0.05 ("beta 1")
 --------------
 
