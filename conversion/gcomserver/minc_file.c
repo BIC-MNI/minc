@@ -6,10 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.5  1994-01-17 15:06:22  neelin
-@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
-@MODIFIED   : of scanning sequence.
+@MODIFIED   : Revision 1.6  1994-01-18 15:08:57  neelin
+@MODIFIED   : Cast enumerated types to int when they can be negative for gcc on sun.
+@MODIFIED   : (For decrementing loop on Mri_index).
 @MODIFIED   :
+ * Revision 1.5  94/01/17  15:06:22  neelin
+ * Added some acquisition parameters (flip angle) and fixed error in writing
+ * of scanning sequence.
+ * 
  * Revision 1.4  94/01/14  11:37:24  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.
@@ -205,7 +209,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
 
    ndims=0;
    /* Create the non-spatial dimensions (from slowest to fastest) */
-   for (imri=MRI_NDIMS-1; imri > SLICE; imri--) {
+   for (imri=MRI_NDIMS-1; (int) imri > SLICE; imri--) {
       dimsize = general_info->size[imri];
       if (general_info->size[imri] > 1) {
          dimname = mri_dim_names[imri];
@@ -448,7 +452,7 @@ public void save_minc_image(int icvid, General_Info *general_info,
 
    /* Create start and count variables */
    idim = 0;
-   for (imri=MRI_NDIMS-1; imri >= 0; imri--) {
+   for (imri=MRI_NDIMS-1; (int) imri >= 0; imri--) {
       if ((general_info->image_index[imri] >= 0) &&
           (general_info->position[imri] != NULL)) {
          index = general_info->image_index[imri];
