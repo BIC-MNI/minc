@@ -116,6 +116,7 @@ int miconvert_3D_world_to_voxel(mihandle_t volume,
     return (MI_NOERROR);
 }
 
+/** Convert a */
 int 
 miconvert_3D_voxel_to_spatial_frequency(mihandle_t volume,
                                         const double voxel[MI2_3D],
@@ -134,6 +135,10 @@ miconvert_3D_spatial_frequency_to_voxel(mihandle_t volume,
     return (MI_NOERROR);
 }
 
+/**
+ * This function converts coordinates in voxel coordinates to world 
+ * coordinates.  Only the spatial coordinates are converted.
+ */
 int
 miconvert_voxel_to_world(midimhandle_t dimensions[],
                          int ndims,
@@ -143,6 +148,10 @@ miconvert_voxel_to_world(midimhandle_t dimensions[],
     return (MI_NOERROR);
 }
 
+/**
+ * This function converts coordinates in world coordinates to voxel
+ * coordinates.  Only the spatial coordinates are converted.
+ */
 int
 miconvert_world_to_voxel(midimhandle_t dimensions[],
                          int ndims,
