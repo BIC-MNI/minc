@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.51 1998-02-20 14:59:37 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.52 1998-11-03 16:34:44 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -233,6 +233,9 @@ private  Status  output_world_transform(
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : Nov. 15, 1996   D. MacDonald  - added handling of space type
+@MODIFIED   : Nov.  2, 1998   D. MacDonald  - fixed the bug with non-global
+                                              limits on multiple volumes,
+                                              found by peter
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_output(
@@ -443,9 +446,9 @@ public  Minc_file  initialize_minc_output(
             --n_range_dims;
 
         file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
-                                      NC_DOUBLE, n_range_dims, file->dim_ids );
+                                      NC_DOUBLE, n_range_dims, dim_vars );
         file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
-                                      NC_DOUBLE, n_range_dims, file->dim_ids );
+                                      NC_DOUBLE, n_range_dims, dim_vars );
     }
 
     ncopts = NC_VERBOSE | NC_FATAL;
