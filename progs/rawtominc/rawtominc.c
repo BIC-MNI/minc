@@ -11,8 +11,8 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.14  2004-04-27 15:26:34  bert
- * Added -2 option
+ * Revision 6.13.2.1  2004-09-28 20:07:30  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.13  2004/02/02 18:24:58  bert
  * Include a ARGV_VERINFO record in the argTable[]
@@ -143,7 +143,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.14 2004-04-27 15:26:34 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.13.2.1 2004-09-28 20:07:30 bert Exp $";
 #endif
 
 #include "config.h"
@@ -152,9 +152,13 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <string.h>
 #include <ctype.h>
 #include <minc.h>
+#if HAVE_FLOAT_H
 #include <float.h>
+#endif /* HAVE_FLOAT_H */
 #include <math.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <convert_origin_to_start.h>
@@ -223,9 +227,6 @@ nc_type convert_types[] = {
 char *pname;
 char *filename;
 int clobber=FALSE;
-#ifdef MINC2
-int v2format=FALSE;		/* Version 2.0 file format? */
-#endif /* MINC2 defined */
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
@@ -365,10 +366,6 @@ ArgvInfo argTable[] = {
        "Do not scan input for min and max (default)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for writing output file. Default = -noclobber."},
-#ifdef MINC2
-   {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
-       "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -467,7 +464,6 @@ int main(int argc, char *argv[])
    int status;
    double scale, offset, denom, pixel_min, pixel_max;
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
-   int cflags;
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -571,18 +567,7 @@ int main(int argc, char *argv[])
    }
 
    /* Create the file and save the time stamp */
-   if (clobber) {
-       cflags = NC_CLOBBER;
-   }
-   else {
-       cflags = NC_NOCLOBBER;
-   }
-#ifdef MINC2
-   if (v2format) {
-       cflags |= MI2_CREATE_V2;
-   }
-#endif /* MINC2 defined */
-   cdfid=micreate(filename, cflags);
+   cdfid=micreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Set the number of image dimensions */
