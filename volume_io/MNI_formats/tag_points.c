@@ -1,10 +1,5 @@
-#include  <stdio.h>
-#include  <string.h>
-#include  <malloc.h>
+#include  <def_mni.h>
 #include  <def_tag_io.h>
-
-#define  public
-#define  private   static
 
 static   const char      COMMENT_CHAR1 = '%';
 static   const char      COMMENT_CHAR2 = '#';
@@ -114,7 +109,7 @@ private  int  line_is_blank(
     return( blank );
 }
 
-private  int  input_line(
+private  int  input_a_line(
     FILE     *file,
     char     line[] )
 {
@@ -296,7 +291,7 @@ public  int  input_tag_points(
 
     /* okay read the header */
 
-    if( !input_line( file, line ) ||
+    if( !input_a_line( file, line ) ||
         strcmp( line, TAG_FILE_HEADER ) != 0 )
     {
         (void) fprintf(stderr, "input_tag_points(): invalid header in file.\n");
@@ -305,7 +300,7 @@ public  int  input_tag_points(
 
     /* now read the number of volumes */
 
-    if( !input_line( file, line ) ||
+    if( !input_a_line( file, line ) ||
         strncmp( line, VOLUMES_EQUAL, strlen(VOLUMES_EQUAL) ) != 0 )
     {
         (void) fprintf(stderr, "input_tag_points(): invalid # volumes line.\n");
@@ -323,7 +318,7 @@ public  int  input_tag_points(
 
     *n_tag_points = 0;
 
-    while( input_line( file, line ) )
+    while( input_a_line( file, line ) )
     {
         if( !extract_tag_points( *n_volumes, line,
                                  &x1, &y1, &z1, &x2, &y2, &z2, label ) )
@@ -402,7 +397,7 @@ public  int  input_transform(
 
     /* okay read the header */
 
-    if( !input_line( file, line ) ||
+    if( !input_a_line( file, line ) ||
         strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
     {
         (void) fprintf(stderr, "input_transform(): invalid header in file.\n");
@@ -413,7 +408,7 @@ public  int  input_transform(
 
     for( i = 0;  i < 3;  ++i )
     {
-        if( !input_line( file, line ) ||
+        if( !input_a_line( file, line ) ||
             sscanf( line, "%lf %lf %lf %lf",
                     &transform[i][0], &transform[i][1],
                     &transform[i][2], &transform[i][3] ) != 4 )

@@ -1,7 +1,10 @@
 
 #include  <def_mni.h>
 
-#define  LIGHT_INDEX       0
+#define  LIGHT_INDEX         0
+
+#define  PIXELS_X_ZOOM       2.0
+#define  PIXELS_Y_ZOOM       2.0
 
 main()
 {
@@ -82,7 +85,8 @@ main()
     x_position = 10;
     y_position = 10;
     initialize_pixels( &pixels, x_position, y_position,
-                       pixels_x_size, pixels_y_size, RGB_PIXEL );
+                       pixels_x_size, pixels_y_size,
+                       PIXELS_X_ZOOM, PIXELS_Y_ZOOM, RGB_PIXEL );
 
     for_less( i, 0, pixels_x_size )
     {
