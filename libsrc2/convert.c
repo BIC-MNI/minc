@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <hdf5.h>
 #include <math.h>
+#include <float.h>
 #include "minc.h"
 #include "minc2.h"
 #include "minc2_private.h"
@@ -236,7 +237,7 @@ miget_voxel_value(mihandle_t volume,
     for (i = 0; i < volume->number_of_dims; i++) {
         count[i] = 1;
     }
-    result = miset_voxel_value_hyperslab(volume, MI_TYPE_DOUBLE, 
+    result = miget_voxel_value_hyperslab(volume, MI_TYPE_DOUBLE, 
                                          coords, count, voxel_ptr);
     return (result);
 }
@@ -264,6 +265,71 @@ miset_voxel_value(mihandle_t volume,
     return (result);
 }
 
+
+/** Get the absolute minimum and maximum values of a volume.
+ */
+int
+miget_volume_real_range(mihandle_t volume, double real_range[])
+{
+    hid_t spc_id;
+    int n;
+    double *buffer;
+    int i;
+
+    /* First find the real minimum.
+     */
+    spc_id = H5Dget_space(volume->imin_id);
+
+    n = (int) H5Sget_simple_extent_npoints(spc_id);
+
+    H5Sclose(spc_id);
+
+    buffer = malloc(n * sizeof(double));
+    if (buffer == NULL) {
+        return (MI_ERROR);
+    }
+
+    H5Dread(volume->imin_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+            buffer);
+
+    real_range[0] = FLT_MAX;
+
+    for (i = 0; i < n; i++) {
+        if (buffer[i] < real_range[0]) {
+            real_range[0] = buffer[i];
+        }
+    }
+    
+    free(buffer);
+
+    /* Now find the maximum.
+     */
+    spc_id = H5Dget_space(volume->imax_id);
+
+    n = (int) H5Sget_simple_extent_npoints(spc_id);
+
+    H5Sclose(spc_id);
+
+    buffer = malloc(n * sizeof(double));
+    if (buffer == NULL) {
+        return (MI_ERROR);
+    }
+
+    H5Dread(volume->imax_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+            buffer);
+
+    real_range[1] = FLT_MIN;
+
+    for (i = 0; i < n; i++) {
+        if (buffer[i] > real_range[1]) {
+            real_range[1] = buffer[i];
+        }
+    }
+    
+    free(buffer);
+
+    return (MI_NOERROR);
+}
 
 #ifdef M2_TEST
 #define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
