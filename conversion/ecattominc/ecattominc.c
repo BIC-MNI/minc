@@ -10,7 +10,11 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.2  1999-11-09 13:44:56  neelin
+ * Revision 6.3  2000-09-08 18:17:15  neelin
+ * Fixed swapping of x and y sizes when getting dimensions sizes from ecat file.
+ * This has not previously shown up since normal ECAT images are square.
+ *
+ * Revision 6.2  1999/11/09 13:44:56  neelin
  * Year 2000 fixes for scan date in minc file.
  *
  * Revision 6.1  1999/10/29 17:52:01  neelin
@@ -49,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.2 1999-11-09 13:44:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.3 2000-09-08 18:17:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -619,11 +623,11 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
       if (ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_X_Dimension, 0,
                                 &lvalue, NULL, NULL)) return curframe;
       fip->image_xsize = lvalue;
-      if (lvalue > *max_xsize) *max_ysize = lvalue;
+      if (lvalue > *max_xsize) *max_xsize = lvalue;
       if (ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_Y_Dimension, 0,
                                 &lvalue, NULL, NULL)) return curframe;
       fip->image_ysize = lvalue;
-      if (lvalue > *max_xsize) *max_xsize = lvalue;
+      if (lvalue > *max_ysize) *max_ysize = lvalue;
 
       /* Get frame start time (in seconds) */
       if (ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_Frame_Start_Time, 0,
