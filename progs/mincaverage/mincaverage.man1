@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 1.1 1995-04-27 12:48:42 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 1.2 1995-04-27 14:05:38 neelin Exp $
 .\"
 .TH MINCAVERAGE 1
 
@@ -22,7 +22,7 @@ mincaverage - average minc files
 .SH DESCRIPTION
 .I Mincaverage
 averages minc files together. A range of optional behaviour is
-permitted as well: pre-normalising volumes, creating a standard
+permitted as well: pre-normalizing volumes, creating a standard
 deviation volume, averaging over a specified dimension of the input
 files.
 
@@ -46,7 +46,7 @@ Print out progress information for each chunk of data copied
 Do not print out progress information.
 .P
 .I -debug:
-Print extra information (e.g. normalisation factors).
+Print extra information (e.g. normalization factors).
 .P
 .I -max_buffer_size_in_kb:
 Specify the maximum size of the internal buffers (in kbytes). Default is
@@ -89,13 +89,13 @@ values. For it to have any effect, you must specify a type.
 
 .SH Averaging options
 .P
-.I -normalise:
-Normalise volumes to their global average before averaging them (based
+.I -normalize:
+Normalize volumes to their global average before averaging them (based
 on the mean of voxels with value greater than 2 percent of full range
 above the minimum).
 .P
-.I -nonormalise:
-Do not normalise volumes (default).
+.I -nonormalize:
+Do not normalize volumes (default).
 .P
 .I -sdfile 
 <sdfile>.mnc:
@@ -112,9 +112,25 @@ Do not copy additional header information (default).
 .I -avgdim
 <dimname>:
 Specify the name of a dimension over which we should be averaging (or
-calculating standard deviation). If normalisation is done, it still
-only applies to separate files only - no normalisation is done within
+calculating standard deviation). If normalization is done, it still
+only applies to separate files only - no normalization is done within
 a file.
+.P
+.I -binarize:
+Binarize the input volumes before calculating the average. The
+binarization is done by specifying a range of values that contribute 1
+to the average. Normalization of the input is not permitted when
+performing binarization.
+.P
+.I -binrange
+<min> <max>:
+Specify the range of values for binarization.
+.P
+.I -binvalue
+<value>:
+Specify a single legal value (integer) for binarization. The range is
+set to be +/- 0.5 around this value to achieve an effective rounding
+of input values.
 
 .SH Generic options for all commands:
 .P

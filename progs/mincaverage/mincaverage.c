@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.3  1995-04-27 12:48:42  neelin
-@MODIFIED   : Changed order of options.
+@MODIFIED   : Revision 1.4  1995-04-27 14:05:38  neelin
+@MODIFIED   : Added binarization options.
 @MODIFIED   :
+ * Revision 1.3  1995/04/27  12:48:42  neelin
+ * Changed order of options.
+ *
  * Revision 1.2  1995/04/27  11:50:35  neelin
  * Require either -norm or -nonorm on command line.
  *
@@ -21,7 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.3 1995-04-27 12:48:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.4 1995-04-27 14:05:38 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -50,8 +53,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverag
 
 /* Structure for window information */
 typedef struct {
-   double *norm_factor;
+   int binarize;
    int need_sd;
+   double binrange[2];
+   double *norm_factor;
 } Average_Data;
 
 typedef struct {
@@ -62,7 +67,7 @@ typedef struct {
 
 /* Function prototypes */
 public int main(int argc, char *argv[]);
-public void do_normalisation(void *caller_data, long num_voxels, 
+public void do_normalization(void *caller_data, long num_voxels, 
                              int input_num_buffers, int input_vector_length,
                              double *input_data[],
                              int output_num_buffers, int output_vector_length,
@@ -90,9 +95,9 @@ int verbose = TRUE;
 int debug = FALSE;
 #define NO_DEFAULT_NORM
 #ifdef NO_DEFAULT_NORM
-int normalise = -1;
+int normalize = -1;
 #else
-int normalise = FALSE;
+int normalize = FALSE;
 #endif
 char *sdfile = NULL;
 nc_type datatype = NC_UNSPECIFIED;
@@ -101,6 +106,9 @@ double valid_range[2] = {0.0, 0.0};
 int copy_all_header = FALSE;
 char *averaging_dimension = NULL;
 int max_buffer_size_in_kb = 4 * 1024;
+int binarize = FALSE;
+double binrange[2] = {DBL_MAX, -DBL_MAX};
+double binvalue = -DBL_MAX;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -137,10 +145,10 @@ ArgvInfo argTable[] = {
        "Write unsigned integer data (default if type specified)."},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
        "Valid range for output data."},
-   {"-normalise", ARGV_CONSTANT, (char *) TRUE, (char *) &normalise,
-       "Normalise data sets for mean intensity."},
-   {"-nonormalise", ARGV_CONSTANT, (char *) FALSE, (char *) &normalise,
-       "Do not normalise data sets (default)."},
+   {"-normalize", ARGV_CONSTANT, (char *) TRUE, (char *) &normalize,
+       "Normalize data sets for mean intensity."},
+   {"-nonormalize", ARGV_CONSTANT, (char *) FALSE, (char *) &normalize,
+       "Do not normalize data sets (default)."},
    {"-sdfile", ARGV_STRING, (char *) 1, (char *) &sdfile,
        "Specify an output sd file (default=none)."},
    {"-copy_header", ARGV_CONSTANT, (char *) TRUE, (char *) &copy_all_header,
@@ -149,6 +157,12 @@ ArgvInfo argTable[] = {
        "Do not copy all of the header from the first file (default)."},
    {"-avgdim", ARGV_STRING, (char *) 1, (char *) &averaging_dimension,
        "Specify a dimension along which we wish to average."},
+   {"-binarize", ARGV_CONSTANT, (char *) TRUE, (char *) &binarize,
+       "Binarize the volume by looking for values in a given range."},
+   {"-binrange", ARGV_FLOAT, (char *) 2, (char *) binrange,
+       "Specify a range for binarization."},
+   {"-binvalue", ARGV_FLOAT, (char *) 1, (char *) &binvalue,
+       "Specify a target value (+/- 0.5) for binarization."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -183,12 +197,36 @@ public int main(int argc, char *argv[])
    outfiles[1] = sdfile;
    nout = ((sdfile == NULL) ? 1 : 2);
 
-   /* Check for no specification of normalisation */
+   /* Check for binarization */
+   if (binarize) {
+      if (normalize == TRUE) {
+         (void) fprintf(stderr, 
+            "%s: Normalization and binarization cannot both be specified\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+      normalize = FALSE;
+      if (binvalue != -DBL_MAX) {
+         binrange[0] = binvalue - 0.5;
+         binrange[1] = binvalue + 0.5;
+      }
+      if (binrange[0] > binrange[1]) {
+         (void) fprintf(stderr, 
+         "%s: Please specify a binarization range with min less than max\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+      average_data.binrange[0] = binrange[0];
+      average_data.binrange[1] = binrange[1];
+   }
+   average_data.binarize = binarize;
+
+   /* Check for no specification of normalization */
 #ifdef NO_DEFAULT_NORM
-   if (normalise == -1) {
+   if (normalize == -1) {
       (void) fprintf(stderr, "\n%s: %s\n\n%s\n%s\n%s\n%s\n%s\n\n", argv[0],
 "Please specify either -norm or -nonorm.",
-"The default setting for normalisation is being changed from \"-norm\" to",
+"The default setting for normalization is being changed from \"-norm\" to",
 "\"-nonorm\". To prevent undetected problems with data, this program will ",
 "not work unless one of these flags is explicitly given on the command-line",
 "(ie. no default is permitted). The new default will come into effect some",
@@ -198,10 +236,10 @@ public int main(int argc, char *argv[])
    }
 #endif
 
-   /* Do normalisation if needed */
+   /* Do normalization if needed */
    average_data.norm_factor = 
       MALLOC(sizeof(*average_data.norm_factor) * nfiles);
-   if (normalise) {
+   if (normalize) {
       vol_mean = MALLOC(sizeof(*vol_mean) * nfiles);
       loop_options = create_loop_options();
       set_loop_verbose(loop_options, FALSE);
@@ -210,7 +248,7 @@ public int main(int argc, char *argv[])
       vol_total = 0.0;
       nvols = 0;
       if (verbose) {
-         (void) fprintf(stderr, "Normalising:");
+         (void) fprintf(stderr, "Normalizing:");
          (void) fflush(stderr);
       }
       for (ifile=0; ifile < nfiles; ifile++) {
@@ -222,7 +260,7 @@ public int main(int argc, char *argv[])
             (void) fflush(stderr);
          }
          voxel_loop(1, &infiles[ifile], 0, NULL, NULL, loop_options,
-                    do_normalisation, (void *) &norm_data);
+                    do_normalization, (void *) &norm_data);
          if (norm_data.sum0 > 0.0) {
             vol_mean[ifile] = norm_data.sum1 / norm_data.sum0;
             vol_total += vol_mean[ifile];
@@ -285,19 +323,19 @@ public int main(int argc, char *argv[])
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : do_normalisation
+@NAME       : do_normalization
 @INPUT      : Standard for voxel_loop
 @OUTPUT     : Standard for voxel_loop
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to loop through an array of voxels and calculate 
-              normalisation values.
+              normalization values.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_normalisation(void *caller_data, long num_voxels, 
+public void do_normalization(void *caller_data, long num_voxels, 
                              int input_num_buffers, int input_vector_length,
                              double *input_data[],
                              int output_num_buffers, int output_vector_length,
@@ -314,7 +352,7 @@ public void do_normalisation(void *caller_data, long num_voxels,
 
    /* Check arguments */
    if ((input_num_buffers != 1) || (output_num_buffers != 0)) {
-      (void) fprintf(stderr, "Bad arguments to do_normalisation!\n");
+      (void) fprintf(stderr, "Bad arguments to do_normalization!\n");
       exit(EXIT_FAILURE);
    }
 
@@ -439,7 +477,8 @@ public void do_average(void *caller_data, long num_voxels,
    double value;
    int curfile;
    int num_out;
-   double norm_factor;
+   double norm_factor, binmin, binmax;
+   int binarize;
 
    /* Get pointer to window info */
    average_data = (Average_Data *) caller_data;
@@ -452,13 +491,19 @@ public void do_average(void *caller_data, long num_voxels,
       exit(EXIT_FAILURE);
    }
 
-   /* Get the current file number */
+   /* Get the normalization factor and binarization range */
    curfile = get_info_current_file(loop_info);
    norm_factor = average_data->norm_factor[curfile];
+   binarize = average_data->binarize;
+   binmin = average_data->binrange[0];
+   binmax = average_data->binrange[1];
 
    /* Loop through the voxels */
    for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
       value = input_data[0][ivox];
+      if (binarize) {
+         value = ( ((value >= binmin) && (value <= binmax)) ? 1.0 : 0.0 );
+      }
       if (value != -DBL_MAX) {
          value *= norm_factor;
          output_data[0][ivox] += 1.0;
