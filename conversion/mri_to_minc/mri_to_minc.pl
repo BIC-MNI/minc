@@ -743,7 +743,7 @@ sub mri_to_minc {
 
                 # Create minc file
                 ($patient_name = $mincinfo{'patient_name'}) =~
-                    tr/a-zA-Z0-9_\-/_/cs;             # Use only legal chars
+                    tr/a-zA-Z0-9_/_/cs;             # Use only legal chars
                 $patient_name =~ tr/A-Z/a-z/;         # Lowercase
                 $patient_name =~ s/_*(.*[^_])_*$/$1/; # Remove _ on ends
                 $mincfile = "$outputdir/".$patient_name."_".
