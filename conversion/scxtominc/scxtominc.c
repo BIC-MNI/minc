@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.1 1993-01-22 09:01:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.2 1993-01-25 16:40:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -20,6 +20,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtomi
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <ParseArgv.h>
 #include <scx_file.h>
 #include <minc.h>
@@ -240,6 +241,11 @@ int main(int argc, char *argv[])
    num_scx_files = argc - 2;
    scx_files = &argv[1];
 
+   /* Print log message */
+   if (verbose) {
+      (void) fprintf(stderr, "Reading headers.\n");
+   }
+
    /* Read the files to get basic information */
    scx_general_info=MALLOC(1, *scx_general_info);
    scx_file_info = MALLOC(num_scx_files, *scx_file_info);
@@ -286,7 +292,7 @@ int main(int argc, char *argv[])
    }
 
    /* Initialize minc start and count vectors */
-   for (i=0; i<ndims-2; i++) count[0]=1;
+   for (i=0; i<ndims-2; i++) count[i]=1;
    (void) miset_coords(ndims, (long) 0, start);
 
    /* Set up values for decay correction */
@@ -295,6 +301,11 @@ int main(int argc, char *argv[])
    /* Allocate an image buffer */
    image = MALLOC(scx_general_info->max_size * scx_general_info->max_size, 
                   short);
+
+   /* Print log message */
+   if (verbose) {
+      (void) fprintf(stderr, "Copying files:\n");
+   }
 
    /* Loop through files */
    for (ifile=0; ifile<num_scx_files; ifile++) {
@@ -308,7 +319,7 @@ int main(int argc, char *argv[])
 
       /* Print log message */
       if (verbose) {
-         (void) fprintf(stderr, "Copying file %s.\n", scx_files[ifile]);
+         (void) fprintf(stderr, "   %s\n", scx_files[ifile]);
       }
 
       /* Get decay correction (scan time is already measured from injection
@@ -987,7 +998,7 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), scx_var);
 
       /* Loop through mnemonics */
-      for (imnem=0; scx_general_info->num_mnems; imnem++){
+      for (imnem=0; imnem<scx_general_info->num_mnems; imnem++){
          ncattput(mincid, scx_var, 
                   scx_general_info->mnem_list[imnem].name,
                   scx_general_info->mnem_list[imnem].type,
@@ -1036,7 +1047,7 @@ int get_scx_slice(scx_file *scx_fp, int slice_num,
    npix = scx_file_info->image_size * scx_file_info->image_size;
    for (iy=0; iy<scx_file_info->image_size/2; iy++) {
       y_offset = iy * scx_file_info->image_size;
-      for (ix=0; ix<scx_file_info->image_size/2; ix++) {
+      for (ix=0; ix<scx_file_info->image_size; ix++) {
          off1 = y_offset + ix;
          off2 = npix - off1 - 1;
          temp = image[off1];
@@ -1164,18 +1175,32 @@ int write_minc_slice(double scale, int write_byte_data,
 double decay_correction(double scan_time, double measure_time, 
                         double start_time, double half_life)
 {
+   double mean_life;
+   double measure_correction;
    double decay;
 
-   scan_time -= start_time;
-   if (half_life > 0.0) {
-      decay = half_life/log(2.0) * 
-         (pow(2.0, -scan_time/half_life) - 
-          pow(2.0, -(scan_time+measure_time)/half_life));
-      if (decay!=0.0) decay = 1.0/decay;
+   /* Check for negative half_life and calculate mean life */
+   if (half_life <= 0.0) return 1.0;
+   mean_life = half_life/ log(2.0);
+
+   /* Normalize scan time and measure_time */
+   scan_time = (scan_time - start_time) / mean_life;
+   measure_time /= mean_life;
+
+   /* Calculate correction for decay over measuring time (assuming a
+      constant activity). Check for possible rounding errors. */
+   if ((measure_time*measure_time/2.0) < DBL_EPSILON) {
+      measure_correction = 1.0 - measure_time/2.0;
    }
    else {
-      decay = 1.0;
+      measure_correction = (1.0 - exp(-measure_time)) / fabs(measure_time);
    }
+
+   /* Calculate decay */
+   decay = exp(-scan_time) * measure_correction;
+   if (decay<=0.0) decay = DBL_MAX;
+   else decay = 1.0/decay;
+
    return decay;
 }
 
