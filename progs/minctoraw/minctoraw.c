@@ -12,10 +12,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.4 1993-05-05 12:55:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.5 1993-07-13 16:32:11 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +22,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #include <limits.h>
 #include <float.h>
 #include <ParseArgv.h>
+#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
    }
 
    /* Allocate space */
-   data = malloc(size);
+   data = MALLOC(size);
 
    /* Loop over input slices */
 
@@ -221,7 +221,8 @@ int main(int argc, char *argv[])
    /* Clean up */
    (void) ncclose(mincid);
    (void) miicv_free(icvid);
+   FREE(data);
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 }
 

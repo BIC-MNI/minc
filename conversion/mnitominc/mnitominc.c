@@ -12,10 +12,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.7 1993-04-30 13:03:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.8 1993-07-13 16:35:15 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <minc.h>
@@ -23,9 +22,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitomi
 #include <string.h>
 #include <math.h>
 #include <ParseArgv.h>
-#include "mnitominc.h"
 #include <vax_conversions.h>
 #include <time_stamp.h>
+#include <minc_def.h>
+#include "mnitominc.h"
 
 
 /* Main program */
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
    mni_image.image_pix=mni_image.npixels*mni_image.npixels;
    mni_image.pix_size=mni_header.pix_size;
    mni_image.image_size=mni_image.image_pix*mni_image.pix_size;
-   mni_image.image=malloc(mni_image.image_size);
+   mni_image.image=MALLOC(mni_image.image_size);
 
    /* Write log message if needed */
    if (verbose) {
@@ -310,13 +310,13 @@ main(int argc, char *argv[])
    }
 
    /* Free the memory */
-   free(mni_image.image);
+   FREE(mni_image.image);
 
    /* Close the file */
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_TRUE);
    (void) ncclose(cdfid);
    
-   return NORMAL_STATUS;
+   exit(NORMAL_STATUS);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
