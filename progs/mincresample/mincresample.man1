@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 3.2 1995-12-12 19:56:08 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 3.3 1996-01-31 15:26:52 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1
 
@@ -120,12 +120,14 @@ Invert the transformation before using it.
 Do no invert the transformation (default).
 .P
 .I -tfm_input_sampling:
-Transformation the input sampling and use this as the default sampling
+Transform the input sampling (using the transform specified by
+-transformation) along with the data and use this as the default sampling
 (default).
 .P
 .I -use_input_sampling:
-Use the input sampling as the default, as is, without transformation
-(old behaviour).
+Use the input sampling as the default sampling, as is, without
+transformation, even though the data is being transformed (old
+behaviour). 
 .P
 .I -like 
 <file.mnc>:
