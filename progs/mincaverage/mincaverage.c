@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.4  2001-04-24 13:38:42  neelin
+ * Revision 6.5  2004-04-27 15:38:15  bert
+ * Added -2 option
+ *
+ * Revision 6.4  2001/04/24 13:38:42  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.3  2001/04/17 18:40:17  neelin
@@ -65,7 +68,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.4 2001-04-24 13:38:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.5 2004-04-27 15:38:15 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -170,9 +173,16 @@ double binvalue = -DBL_MAX;
 Double_Array weights = {0, NULL};
 int width_weighted = FALSE;
 char *filelist = NULL;
+#ifdef MINC2
+int minc2_format = FALSE;
+#endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
+#ifdef MINC2
+    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
+     "Produce a MINC 2.0 format output file"},
+#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -479,6 +489,9 @@ public int main(int argc, char *argv[])
       vol_mean = MALLOC(sizeof(*vol_mean) * nfiles);
       loop_options = create_loop_options();
       set_loop_verbose(loop_options, FALSE);
+#ifdef MINC2
+      set_loop_v2format(loop_options, minc2_format);
+#endif /* MINC2 */
       set_loop_accumulate(loop_options, TRUE, 0, NULL, NULL);
       set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
       set_loop_check_dim_info(loop_options, check_dimensions);
