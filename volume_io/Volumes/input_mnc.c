@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.32 1994-12-08 17:03:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.33 1995-03-07 13:35:51 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -44,7 +44,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 {
     minc_file_struct    *file;
     int                 img_var, dim_vars[MAX_VAR_DIMS], n_vol_dims;
-    int                 slab_size, length, prev_sizes[MAX_VAR_DIMS];
+    int                 i, slab_size, length, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
     BOOLEAN             different;
     BOOLEAN             min_voxel_found, max_voxel_found, range_specified;
@@ -52,7 +52,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     long                long_size, mindex[MAX_VAR_DIMS];
     BOOLEAN             converted_sign;
     nc_type             converted_type;
-    STRING              signed_flag, last_dim_name;
+    STRING              signed_flag;
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
@@ -95,21 +95,45 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     ncvarinq( file->cdfid, img_var, (char *) NULL, &file_datatype,
               &file->n_file_dimensions, dim_vars, (int *) NULL );
 
-    (void) ncdiminq( file->cdfid, dim_vars[file->n_file_dimensions-1],
-                     last_dim_name, &long_size );
+    for_less( d, 0, file->n_file_dimensions )
+    {
+        ALLOC( file->dim_names[d], MAX_STRING_LENGTH + 1 );
+
+        (void) ncdiminq( file->cdfid, dim_vars[d], file->dim_names[d],
+                         &long_size );
+        file->sizes_in_file[d] = long_size;
+    }
 
     file->converting_to_colour = FALSE;
 
-    if( strcmp( last_dim_name, MIvector_dimension ) == 0 )
+    if( strcmp( file->dim_names[file->n_file_dimensions-1],
+                MIvector_dimension ) == 0 )
     {
-        if( options->convert_vector_to_colour_flag && long_size == 3 )
+        if( options->convert_vector_to_colour_flag &&
+            options->dimension_size_for_colour_data ==
+                                file->sizes_in_file[file->n_file_dimensions-1] )
         {
+            for_less( i, 0, 4 )
+            {
+                if( options->rgba_indices[i] >=
+                    options->dimension_size_for_colour_data )
+                {
+                    print( "Error: rgba indices out of range.\n" );
+                    FREE( file );
+                    return( (Minc_file) 0 );
+                }
+                file->rgba_indices[i] = options->rgba_indices[i];
+            }
+
             set_volume_type( volume, NC_LONG, FALSE, 0.0, 0.0 );
+            volume->is_rgba_data = TRUE;
             file->converting_to_colour = TRUE;
+            FREE( file->dim_names[file->n_file_dimensions-1] );
             --file->n_file_dimensions;
         }
         else if( options->convert_vector_to_scalar_flag )
         {
+            FREE( file->dim_names[file->n_file_dimensions-1] );
             --file->n_file_dimensions;
         }
     }
@@ -129,15 +153,6 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                file->n_file_dimensions, MAX_VAR_DIMS );
         FREE( file );
         return( (Minc_file) NULL );
-    }
-
-    for_less( d, 0, file->n_file_dimensions )
-    {
-        ALLOC( file->dim_names[d], MAX_STRING_LENGTH + 1 );
-
-        (void) ncdiminq( file->cdfid, dim_vars[d], file->dim_names[d],
-                         &long_size );
-        file->sizes_in_file[d] = long_size;
     }
 
     /* --- match the dimension names of the volume with those in the file */
@@ -795,7 +810,7 @@ private  void  input_slab(
     int      tmp_ind, tmp_sizes[MAX_VAR_DIMS], vol1_indices[MAX_DIMENSIONS];
     int      zero[MAX_VAR_DIMS];
     int      v[MAX_DIMENSIONS], voxel[MAX_DIMENSIONS];
-    Real     rgb[3];
+    Real     rgb[4];
     Colour   colour;
     nc_type  data_type;
 
@@ -858,8 +873,9 @@ private  void  input_slab(
             rgb_volume = create_volume( file->n_slab_dims+1, NULL,
                                         NC_FLOAT, FALSE, 0.0, 1.0 );
             start[file->n_file_dimensions] = 0;
-            count[file->n_file_dimensions] = 3;
-            tmp_sizes[file->n_slab_dims] = 3;
+            count[file->n_file_dimensions] =
+                                 file->sizes_in_file[file->n_file_dimensions];
+            tmp_sizes[file->n_slab_dims] = count[file->n_file_dimensions];
             set_volume_sizes( rgb_volume, tmp_sizes );
             alloc_volume_data( rgb_volume );
             volume_to_read = rgb_volume;
@@ -874,16 +890,28 @@ private  void  input_slab(
         if( file->converting_to_colour )
         {
             BEGIN_ALL_VOXELS( slab_volume, v[0], v[1], v[2], v[3], v[4] )
+
                 for_less( d, 0, file->n_slab_dims )
                     voxel[d] = v[d];
-                for_less( i, 0, 3 )
+
+                for_less( i, 0, 4 )
                 {
-                    voxel[file->n_slab_dims] = i;
-                    GET_VOXEL( rgb[i], rgb_volume, voxel[0], voxel[1],
-                                        voxel[2], voxel[3], voxel[4] );
+                    if( file->rgba_indices[i] < 0 )
+                    {
+                        if( i < 3 )
+                            rgb[i] = 0.0;
+                        else
+                            rgb[i] = 1.0;
+                    }
+                    else
+                    {
+                         voxel[file->n_slab_dims] = file->rgba_indices[i];
+                         GET_VOXEL( rgb[i], rgb_volume, voxel[0], voxel[1],
+                                             voxel[2], voxel[3], voxel[4] );
+                    }
                 }
 
-                colour = make_Colour_0_1( rgb[0], rgb[1], rgb[2] );
+                colour = make_rgba_Colour_0_1( rgb[0], rgb[1], rgb[2], rgb[3] );
                 SET_VOXEL( slab_volume, v[0], v[1], v[2], v[3], v[4], colour );
             END_ALL_VOXELS
 
@@ -1202,9 +1230,13 @@ public  int  get_minc_file_id(
 public  void  set_default_minc_input_options(
     minc_input_options  *options )
 {
+    static  int     default_rgba_indices[4] = { 0, 1, 2, -1 };
+
     set_minc_input_promote_invalid_to_min_flag( options, TRUE );
     set_minc_input_vector_to_scalar_flag( options, TRUE );
     set_minc_input_vector_to_colour_flag( options, FALSE );
+    set_minc_input_colour_dimension_size( options, 3 );
+    set_minc_input_colour_indices( options, default_rgba_indices );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1267,4 +1299,55 @@ public  void  set_minc_input_vector_to_colour_flag(
     BOOLEAN             flag )
 {
     options->convert_vector_to_colour_flag = flag;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_colour_dimension_size
+@INPUT      : size
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the required number of vector components in a file that
+              contains colour data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_colour_dimension_size(
+    minc_input_options  *options,
+    int                 size )
+{
+    if( size > 0 )
+        options->dimension_size_for_colour_data = size;
+    else
+    {
+        print( "Warning: set_minc_input_colour_dimension_size:\n" );
+        print( "         illegal size: %d\n", size );
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_colour_indices
+@INPUT      : indices
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the indices of the red, green, blue, and alpha in
+              files that contain colours as the vector dimension.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_colour_indices(
+    minc_input_options  *options,
+    int                 indices[4] )
+{
+    int   i;
+
+    for_less( i, 0, 4 )
+        options->rgba_indices[i] = indices[i];
 }

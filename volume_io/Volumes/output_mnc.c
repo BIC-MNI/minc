@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.22 1995-02-20 13:12:24 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.23 1995-03-07 13:35:59 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -283,11 +283,17 @@ public  Minc_file  initialize_minc_output(
         (void) strcpy( file->dim_names[d], dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
-        file->dim_ids[d] = micreate_std_variable( file->cdfid,
-                                  dim_names[d], NC_DOUBLE, 0, NULL);
-
         if( convert_dim_name_to_spatial_axis( dim_names[d], &axis ) )
         {
+            file->dim_ids[d] = micreate_std_variable( file->cdfid,
+                                      dim_names[d], NC_DOUBLE, 0, NULL);
+
+            if( file->dim_ids[d] < 0 )
+            {
+                FREE( file );
+                return( (Minc_file) NULL );
+            }
+
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
                                 separation[axis]);
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
@@ -300,6 +306,8 @@ public  Minc_file  initialize_minc_output(
             }
             (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
         }
+        else
+            file->dim_ids[d] = -1;
     }
 
     file->img_var_id = micreate_std_variable( file->cdfid, MIimage,

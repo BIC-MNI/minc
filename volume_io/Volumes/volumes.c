@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.40 1995-02-20 23:01:40 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.41 1995-03-07 13:36:03 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -964,6 +964,7 @@ public  void  set_volume_direction_cosine(
     int      axis,
     Real     dir[] )
 {
+    int    d;
     Real   len;
 
     if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
@@ -973,6 +974,15 @@ public  void  set_volume_direction_cosine(
           axis );
         return;
     }
+
+    for_less( d, 0, N_DIMENSIONS )
+    {
+        if( volume->spatial_axes[d] == axis )
+            break;
+    }
+
+    if( d == N_DIMENSIONS )   /* this is not a spatial axis, ignore the dir */
+        return;
 
     volume->direction_cosines[axis][X] = dir[X];
     volume->direction_cosines[axis][Y] = dir[Y];
@@ -1128,21 +1138,15 @@ public  void  convert_3D_voxel_to_world(
 ---------------------------------------------------------------------------- */
 public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
-    Real            voxel_vector0,
-    Real            voxel_vector1,
-    Real            voxel_vector2,
+    Real            voxel_vector[],
     Real            *x_world,
     Real            *y_world,
     Real            *z_world )
 {
-    Real        voxel[N_DIMENSIONS], xyz[N_DIMENSIONS];
+    Real        xyz[N_DIMENSIONS];
     Transform   *inverse;
 
-    voxel[0] = voxel_vector0;
-    voxel[1] = voxel_vector1;
-    voxel[2] = voxel_vector2;
-
-    reorder_voxel_to_xyz( volume, voxel, xyz );
+    reorder_voxel_to_xyz( volume, voxel_vector, xyz );
 
     if( get_transform_type( &volume->voxel_to_world_transform ) != LINEAR )
         handle_internal_error( "Cannot get normal vector of nonlinear xforms.");
@@ -1664,7 +1668,7 @@ public  Volume  copy_volume(
     BEGIN_ALL_VOXELS( volume, v0, v1, v2, v3, v4 )
 
         GET_VALUE( value, volume, v0, v1, v2, v3, v4 );
-        voxel = CONVERT_VOXEL_TO_VALUE( copy, value );
+        voxel = CONVERT_VALUE_TO_VOXEL( copy, value );
         SET_VOXEL( copy, v0, v1, v2, v3, v4, voxel );
 
     END_ALL_VOXELS
