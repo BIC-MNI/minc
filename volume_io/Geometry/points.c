@@ -64,6 +64,24 @@ public  void  create_noncolinear_vector(
     }
 }
 
+public  void  create_orthogonal_vector(
+    Vector   *v1,
+    Vector   *v2,
+    Vector   *v )
+{
+    CROSS_VECTORS( *v, *v1, *v2 );
+}
+
+public  void  create_two_orthogonal_vectors(
+    Vector   *v,
+    Vector   *v1,
+    Vector   *v2 )
+{
+    create_noncolinear_vector( v, v1 );
+
+    create_orthogonal_vector( v, v1, v2 );
+}
+
 public  void  apply_point_to_min_and_max(
     Point   *point,
     Point   *min_point,
