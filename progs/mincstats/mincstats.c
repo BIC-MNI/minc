@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.14  2003-09-05 18:29:40  bert
+ * Revision 1.15  2004-04-27 15:29:22  bert
+ * Added milog_init() call during initialization
+ *
+ * Revision 1.14  2003/09/05 18:29:40  bert
  * Avoid passing NULL to fprintf when no mask file is specified, to avoid seg. faults reported by Richard Boyes.
  *
  * Revision 1.13  2003/08/20 05:52:55  rotor
@@ -354,6 +357,8 @@ int main(int argc, char *argv[])
    Stats_Info *stats;
    FILE    *FP;
    double   scale, voxmin, voxmax;
+
+   milog_init(argv[0]);
 
    /* Get arguments */
    if(ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
