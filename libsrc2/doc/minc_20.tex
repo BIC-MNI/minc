@@ -98,7 +98,7 @@ FRI  JUL 25/2003 Leila and John and Bert\\*
 FRI  OCT 31/2003 Bert\\*
 * Added missing documentation for some functions\\*
 * Added mode argument to miopen\_volume\\*
-* Changed hyper_cube to hyperslab for all relevant functions\\*
+* Changed hyper\_cube to hyperslab for all relevant functions\\*
 
 SUN FEB 01/2004 Leila\\*
 * Updated the entire document according to the current cvs
@@ -2580,7 +2580,8 @@ SYNOPSIS
 
 int miget_volume_dimension_count ( mihandle_t           volume, 
                                    midimclass_t         class,
-                                   midimattr_t          attr );
+                                   midimattr_t          attr,
+                                   int                  *dimension\_count );
 
 DESCRIPTION
 
@@ -2589,8 +2590,7 @@ given class and attributes.
 
 RETURN VALUE
 
-The number of dimensions defined in the file, or MI_ERROR if an error
-is detected.
+MI_NOERROR if the call succeeds, or MI_ERROR if an error is detected.
 \end{verbatim}
 
 \subsection{miopen\_volume}
