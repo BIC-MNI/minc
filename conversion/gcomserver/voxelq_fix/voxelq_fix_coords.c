@@ -56,17 +56,7 @@ void voxelq_fix_coords(double position[],
    Axis_Index iaxis;
    World_Index iworld, largest_index;
    int world_to_axis[WORLD_NDIMS];
-   double world_axis_flips[WORLD_NDIMS];
-
-   /* This variable gives the proper sign for each world axis as
-      normal, column or row axis. This is used to ensure that axes
-      are pointing in the right directino and the signs of the coordinates
-      are correct */
-   static double world_axis_signs[WORLD_NDIMS][AXIS_NDIMS] = {
-      {-1.0,  1.0, 1.0},
-      { 1.0,  1.0, 1.0},
-      { 1.0, -1.0,-1.0}
-   };
+   double axis_flips[AXIS_NDIMS];
 
    /* 
     * Get orthogonal vector
@@ -102,7 +92,8 @@ void voxelq_fix_coords(double position[],
    /* 
     * Find world component (x,y,z) to axis (normal, column, row) mapping 
     * by looking for the largest world coordinate (absolute value) of
-    * each axis. Also keep track of whether axis needs to be flipped.
+    * each axis. Also keep track of whether axis needs to be flipped - this
+    * will happen if the direction cosines point in the negative direction.
     */
    for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
       world_to_axis[iworld] = -1;
@@ -120,10 +111,8 @@ void voxelq_fix_coords(double position[],
       world_to_axis[largest_index] = iaxis;
 
       /* Figure out whether to flip the coordinate or not */
-      world_axis_flips[largest_index] = world_axis_signs[largest_index][iaxis];
-      if (largest_value * world_axis_signs[largest_index][iaxis] < 0.0) {
-         world_axis_flips[largest_index] *= -1.0;
-      }
+      axis_flips[iaxis] = ((largest_value < 0.0) ? -1.0 : 1.0);
+
    }
 
    /* 
@@ -150,17 +139,19 @@ void voxelq_fix_coords(double position[],
     */
    for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
       iaxis = world_to_axis[iworld];
-      position[iworld] = new_position[iaxis] * world_axis_flips[iworld];
+      position[iworld] = new_position[iaxis] * axis_flips[iaxis];
    }
 
    /* Set the standard direction cosines. Since dircos just points back
     * to the original data, this writes the output arguments. We are also
-    *  setting the normal vector, but that does not hurt.
+    * setting the normal vector, but that does not hurt. We preserve the
+    * orientation (positive or negative) of the original ones through
+    * the axis_flips array.
     */
    for (iaxis=0; iaxis < AXIS_NDIMS; iaxis++) {
       for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
          if (world_to_axis[iworld] == iaxis) {
-            dircos[iaxis][iworld] = world_axis_signs[iworld][iaxis];
+            dircos[iaxis][iworld] = axis_flips[iaxis];
          }
          else {
             dircos[iaxis][iworld] = 0.0;
