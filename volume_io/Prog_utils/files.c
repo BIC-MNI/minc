@@ -19,7 +19,7 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.37 2000-09-13 14:32:26 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.38 2003-03-17 16:22:33 bert Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
@@ -805,11 +805,7 @@ public  BOOLEAN  file_exists_as_compressed(
 
 public  STRING  get_temporary_filename( void )
 {
-    char     tmp_name[L_tmpnam+1];
-
-    (void) tmpnam( tmp_name );
-
-    return( create_string( tmp_name ) );
+    return micreate_tempfile();
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -835,7 +831,7 @@ public  Status  open_file(
 {
     Status   status;
     int      i;
-    char     tmp_name[L_tmpnam+1];
+    char     *tmp_name;
     char     command[EXTREMELY_LARGE_STRING_SIZE];
     STRING   access_str, expanded;
     BOOLEAN  gzipped;
@@ -895,7 +891,7 @@ public  Status  open_file(
     {
         /* --- uncompress to a temporary file */
 
-        (void) tmpnam( tmp_name );
+        tmp_name = get_temporary_filename();
 
         (void) sprintf( command, "gunzip -c %s > %s", expanded, tmp_name );
         command_status = system( command );
@@ -916,6 +912,8 @@ public  Status  open_file(
         }
         else
             replace_string( &expanded, create_string(tmp_name) );
+
+        free(tmp_name);
     }
 
     /* --- finally, open the file */
