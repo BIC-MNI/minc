@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-13 12:51:21  neelin
+@MODIFIED   : Changed definition of time index and acquisition id to match change
+@MODIFIED   : in Siemens dicom software.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:06:20  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/03/11  13:10:48  neelin
  * Working version of dicomserver.
  *
@@ -64,7 +68,7 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    /* Array of elements for mri dimensions */
    mri_index_list[SLICE] = SPI_Current_slice_number;
    mri_index_list[ECHO] = ACR_Echo_number;
-   mri_index_list[TIME] = ACR_Series;
+   mri_index_list[TIME] = ACR_Study;
    mri_index_list[PHASE] = NULL;
    mri_index_list[CHEM_SHIFT] = NULL;
    mri_total_list[SLICE] = SPI_Number_of_slices_nominal;
@@ -319,12 +323,16 @@ public void get_identification_info(Acr_Group group_list,
                                     int *study_id, int *acq_id, 
                                     int *rec_num, int *image_type)
 {
+   int number_of_frames;
+
    if (study_id != NULL) {
       *study_id = acr_find_int(group_list, ACR_Study_date, 0);
    }
    if (acq_id != NULL) {
       *acq_id = acr_find_int(group_list, ACR_Study, 0);
-      if (*acq_id == 0) {
+      number_of_frames = 
+         acr_find_int(group_list, ACR_Acquisitions_in_series, 1);
+      if ((number_of_frames > 1) || (*acq_id == 0)) {
          *acq_id = acr_find_int(group_list, ACR_Study_time, 0);
       }
    }
