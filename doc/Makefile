@@ -8,7 +8,7 @@ default : build
 
 all : build
 
-build : minc_reference.dvi minc_user.dvi
+build : prog_ref.dvi prog_guide.dvi
 
 .tex.dvi :
 	latex $<
