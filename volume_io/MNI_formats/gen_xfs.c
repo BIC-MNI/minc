@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.20 1995-10-19 15:47:12 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.21 1995-12-19 15:47:20 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -806,6 +806,25 @@ public  void  copy_general_transform(
     General_transform   *copy )
 {
     copy_and_invert_transform( transform, FALSE, copy );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : invert_general_transform
+@INPUT      : transform
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Inverts a general transform in place.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov. 20, 1995   David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  invert_general_transform(
+    General_transform   *transform )
+{
+    transform->inverse_flag = !transform->inverse_flag;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

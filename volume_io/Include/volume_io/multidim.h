@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.1 1995-11-17 21:01:08 david Exp $";
+static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.2 1995-12-19 15:47:13 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -90,6 +90,36 @@ typedef  struct
              SET_ONE( array, double, asterisks, subscripts, value);\
              break;  \
          }
+
+#define  GET_MULTIDIM_TYPE_1D( array, type, v0 )   \
+         (((type *) ((array).data)) [v0])
+
+#define  GET_MULTIDIM_TYPE_2D( array, type, v0, v1 )   \
+         (((type **) ((array).data)) [v0][v1])
+
+#define  GET_MULTIDIM_TYPE_3D( array, type, v0, v1, v2 )   \
+         (((type ***) ((array).data)) [v0][v1][v2])
+
+#define  GET_MULTIDIM_TYPE_4D( array, type, v0, v1, v2, v3 )   \
+         (((type ****) ((array).data)) [v0][v1][v2][v3])
+
+#define  GET_MULTIDIM_TYPE_5D( array, type, v0, v1, v2, v3, v4 )   \
+         (((type *****) ((array).data)) [v0][v1][v2][v3][v4])
+
+#define  SET_MULTIDIM_TYPE_1D( array, type, v0, value )   \
+           (GET_MULTIDIM_TYPE_1D( array, type, v0 ) = (type) (value))
+
+#define  SET_MULTIDIM_TYPE_2D( array, type, v0, v1, value )   \
+           (GET_MULTIDIM_TYPE_2D( array, type, v0, v1 ) = (type) (value))
+
+#define  SET_MULTIDIM_TYPE_3D( array, type, v0, v1, v2, value )   \
+           (GET_MULTIDIM_TYPE_3D( array, type, v0, v1, v2 ) = (type) (value))
+
+#define  SET_MULTIDIM_TYPE_4D( array, type, v0, v1, v2, v3, value )   \
+        (GET_MULTIDIM_TYPE_4D( array, type, v0, v1, v2, v3 ) = (type) (value))
+
+#define  SET_MULTIDIM_TYPE_5D( array, type, v0, v1, v2, v3, v4, value )   \
+      (GET_MULTIDIM_TYPE_5D( array, type, v0, v1, v2, v3, v4 ) = (type) (value))
 
 /* --- public macros to set the [x][y]... voxel of 'array' to 'value' */
 

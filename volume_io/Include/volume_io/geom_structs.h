@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.16 1995-07-31 13:44:32 david Exp $";
+static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.17 1995-12-19 15:47:12 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -125,7 +125,7 @@ typedef  struct
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#ifdef  dec
+#ifdef  __alpha
 typedef  unsigned  int     Colour;
 #else
 typedef  unsigned  long    Colour;

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.42 1995-11-17 20:25:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.43 1995-12-19 15:47:18 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -225,8 +225,7 @@ public  Minc_file  initialize_minc_output(
     int                 n_volume_dims;
     double              valid_range[2];
     int                 d, vol_index, n_range_dims;
-    static  STRING      default_dim_names[] = { { MIzspace }, { MIyspace },
-                                                { MIxspace } };
+    static  STRING      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     STRING              *vol_dimension_names;
     minc_output_options default_options;
 

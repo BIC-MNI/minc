@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.24 1995-10-19 15:46:41 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.25 1995-12-19 15:47:12 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -104,9 +104,7 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 
 /* --------- C and LINT stuff -------------------------- */
 
-#define USE_ANSI
-
-#ifdef USE_ANSI
+#ifdef __STDC__
 #define GLUE(x,y) x##y
 #define GLUE3(x,y,z) x##y##z
 #define CREATE_STRING(x) #x

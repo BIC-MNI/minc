@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.19 1995-10-19 15:46:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.20 1995-12-19 15:47:14 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -353,9 +353,7 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
 
 private  Real  get_random_0_to_1( void )
 {
-#define  MAX_RAND  2147483648.0
-
-    return( (Real) random() / MAX_RAND );
+    return( (Real) rand() );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -899,7 +897,7 @@ public  void  output_alloc_to_file(
                "Please report this file to the author of the program.\n" );
             print_error( "\n" );
 
-            if( filename != NULL && filename[0] != NULL )
+            if( filename != NULL && filename[0] != (char) 0 )
                 file = fopen( filename, "w" );
             else
                 file = stdout;

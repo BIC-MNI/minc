@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.7 1995-10-19 15:46:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.8 1995-12-19 15:47:15 david Exp $";
 #endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
@@ -250,25 +250,20 @@ private  void  show_multi_line_progress(
     Real               est_total_time )
 {
     int     percent_done;
-    Real    time_remaining;
-    STRING  time_so_far_str, est_total_time_str, time_remaining_str;
+    STRING  time_so_far_str, est_total_time_str;
 
     percent_done = ROUND( 100.0 * (Real) current_step /
                           (Real) progress->n_steps );
 
-    time_remaining = est_total_time - time_so_far;
-
     time_so_far_str = format_time( "%g %s", time_so_far );
     est_total_time_str = format_time( "%g %s", est_total_time );
-    time_remaining_str = format_time( "%g %s", time_remaining );
 
-    print( "%s: %3d%% done. (%d/%d) (%s out of approx %s with %s remaining)\n",
+    print( "%s: %3d%% done. (%d/%d)   Time: %s out of approx %s\n",
            progress->title, percent_done, current_step, progress->n_steps,
-           time_so_far_str, est_total_time_str, time_remaining_str );
+           time_so_far_str, est_total_time_str );
 
     delete_string( time_so_far_str );
     delete_string( est_total_time_str );
-    delete_string( time_remaining_str );
 
     (void) flush_file( stdout );
 }

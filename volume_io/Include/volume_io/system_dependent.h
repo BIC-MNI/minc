@@ -14,16 +14,21 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifdef sun
-
+#ifdef NO_DBL_MAX
 #ifndef DBL_MAX
 #include <values.h>
 #define DBL_MAX  MAXDOUBLE
 #endif
+#endif  /* NO_DBL_MAX */
 
+#include <stdlib.h>
+
+#ifndef  EXIT_FAILURE
 #define  EXIT_FAILURE  1
-#define  EXIT_SUCCESS  0
+#endif
 
-#endif  /* sun */
+#ifndef  EXIT_SUCCESS
+#define  EXIT_SUCCESS  0
+#endif
 
 #endif

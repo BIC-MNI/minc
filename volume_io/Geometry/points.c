@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.10 1995-07-31 13:44:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.11 1995-12-19 15:47:10 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -26,8 +26,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.
 @DESCRIPTION: Creates a vector which is not colinear with the given vector.
               This is used, for instance, when creating a vector which is
               perpendicular to a given vector.
-@METHOD     : Copies v to not_v and sets the largest absolute component of
-              not_v to 0.
+@METHOD     : Copies v to not_v and interchanges the largest absolute
+              component with the smallest absolute component.
 @GLOBALS    :
 @CALLS      :
 @CREATED    : 1993            David MacDonald
@@ -38,8 +38,8 @@ public  void  create_noncolinear_vector(
     Vector  *v,
     Vector  *not_v )
 {
-    int    max_index;
-    Real   abs_x, abs_y, abs_z;
+    int    max_index, min_index;
+    Real   abs_x, abs_y, abs_z, min_abs, max_abs;
 
     abs_x = ABS( Vector_x(*v) );
     abs_y = ABS( Vector_y(*v) );
@@ -47,18 +47,27 @@ public  void  create_noncolinear_vector(
 
     if( abs_x > abs_y )
     {
-        if( abs_x > abs_z )
-            max_index = X;
-        else
-            max_index = Z;
+        max_index = X;
+        min_index = Y;
+        max_abs = abs_x;
+        min_abs = abs_y;
     }
-    else if( abs_y > abs_z )
-        max_index = Y;
     else
+    {
+        max_index = Y;
+        min_index = X;
+        max_abs = abs_y;
+        min_abs = abs_x;
+    }
+
+    if( abs_z > max_abs )
         max_index = Z;
+    else if( abs_z < min_abs )
+        min_index = Z;
 
     *not_v = *v;
-    Vector_coord( *not_v, max_index ) = 0.0;
+    Vector_coord( *not_v, max_index ) = Vector_coord( *v, min_index );
+    Vector_coord( *not_v, min_index ) = Vector_coord( *v, max_index );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
