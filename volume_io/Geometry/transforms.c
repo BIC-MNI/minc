@@ -21,14 +21,14 @@ public  void  make_identity_transform( Transform   *transform )
     Transform_elem( *transform, 3, 3 ) = 1.0;
 }
 
+#define   TOLERANCE   0.001
+
 public  BOOLEAN  close_to_identity(
     Transform   *transform )
 {
     BOOLEAN    close;
-    Transform  identity;
+    Real       expected_val;
     int        i, j;
-
-    make_identity_transform( &identity );
 
     close = TRUE;
 
@@ -36,9 +36,16 @@ public  BOOLEAN  close_to_identity(
     {
         for_less( j, 0, 4 )
         {
-            if( !numerically_close(Transform_elem(identity,i,j),
-                                   Transform_elem(*transform,i,j), 1.0e-3) )
+            if( i == j )
+                expected_val = 1.0;
+            else
+                expected_val = 0.0;
+
+            if( Transform_elem(*transform,i,j) < expected_val - TOLERANCE ||
+                Transform_elem(*transform,i,j) > expected_val + TOLERANCE )
+            {
                 close = FALSE;
+            }
         }
     }
 

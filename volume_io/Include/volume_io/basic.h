@@ -17,6 +17,7 @@
 
 #include  <stdlib.h>
 #include  <stdio.h>
+#include  <memory.h>     /* --- for memcpy, etc. */
 #include  <def_math.h>
 
 /* --------- define the prefixes to all functions ---------- */
@@ -89,10 +90,8 @@
 
 /* --------- C and LINT stuff -------------------------- */
 
-#ifdef sgi
 #ifndef lint
 #define USE_ANSI
-#endif
 #endif
 
 #ifdef USE_ANSI

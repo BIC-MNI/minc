@@ -1,7 +1,6 @@
 #ifndef  DEF_VOLUME
 #define  DEF_VOLUME
 
-#include  <netcdf.h>
 #include  <minc.h>
 #include  <transforms.h>
 

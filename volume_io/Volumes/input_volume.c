@@ -108,6 +108,7 @@ public  Status  start_volume_input(
 
     if( mni_format )
     {
+        unlink_file( expanded_filename );
         get_volume_voxel_range( *volume, &min_voxel, &max_voxel );
         real_min = mni_scale * (min_voxel - mni_translation);
         real_max = mni_scale * (max_voxel - mni_translation);

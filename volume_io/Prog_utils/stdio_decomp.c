@@ -26,6 +26,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef sun
+#define  SEEK_SET   0
+#define  SEEK_CUR   1
+#define  SEEK_END   2
+#endif
+
 /* --------- memory allocation macros -------------------------- */
 
 #define  _MALLOC( n_items, type ) \
@@ -870,7 +876,7 @@ private  int  should_open_compressed( char *filename, char *mode,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  FILE  *fopen_compress( char *filename, char *mode )
+FILE  *fopen_compress( char *filename, char *mode )
 {
     FILE             *file;
     char             compressed_filename[300];
@@ -911,7 +917,7 @@ public  FILE  *fopen_compress( char *filename, char *mode )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  FILE  *freopen_compress( const char *filename, const char *mode,
+FILE  *freopen_compress( const char *filename, const char *mode,
                                  FILE *file )
 {
     char             compressed_filename[300];
@@ -955,7 +961,7 @@ public  FILE  *freopen_compress( const char *filename, const char *mode,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  fclose_compress( FILE *file )
+int  fclose_compress( FILE *file )
 {
     void  terminate_compress_file();
     void  delete_struct();
@@ -983,7 +989,7 @@ public  int  fclose_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  ungetc_compress( int  ch, FILE *file )
+int  ungetc_compress( int  ch, FILE *file )
 {
     if( set_file_context(file) )
         return( un_get_char(ch) );
@@ -1004,7 +1010,7 @@ public  int  ungetc_compress( int  ch, FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  getw_compress( FILE *file )
+int  getw_compress( FILE *file )
 {
     int  i;
     int  word, ch;
@@ -1039,7 +1045,7 @@ public  int  getw_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  getc_compress( FILE *file )
+int  getc_compress( FILE *file )
 {
     int  ch;
     if( set_file_context(file) )
@@ -1064,7 +1070,7 @@ public  int  getc_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  fgetc_compress( FILE *file )
+int  fgetc_compress( FILE *file )
 {
     int  ch;
     if( set_file_context(file) )
@@ -1089,7 +1095,7 @@ public  int  fgetc_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  rewind_compress( FILE *file )
+void  rewind_compress( FILE *file )
 {
     void    initialize_compress_file();
     void    terminate_compress_file();
@@ -1119,7 +1125,7 @@ public  void  rewind_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  feof_compress( FILE *file )
+int  feof_compress( FILE *file )
 {
     if( set_file_context(file) )
         return( get_feof() );
@@ -1140,7 +1146,7 @@ public  int  feof_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  long  int  ftell_compress( FILE *file )
+long  int  ftell_compress( FILE *file )
 {
     if( set_file_context(file) )
         return( file_position );
@@ -1163,7 +1169,7 @@ public  long  int  ftell_compress( FILE *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  char *fgets_compress( char *s, int n, FILE *file )
+char *fgets_compress( char *s, int n, FILE *file )
 {
     int  i, ch;
 
@@ -1269,7 +1275,7 @@ private  void  convert_to_tmp_uncompressed( FILE  *file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  fseek_compress( FILE *file, long int pos, int flag )
+int  fseek_compress( FILE *file, long int pos, int flag )
 {
     int   result, i, ch;
     long  new_position;
@@ -1340,7 +1346,7 @@ public  int  fseek_compress( FILE *file, long int pos, int flag )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  fread_compress( char *ptr, size_t sizef, size_t n, FILE *file )
+int  fread_compress( char *ptr, size_t sizef, size_t n, FILE *file )
 {
     int   result, n_chars, n_read, n_left, n_to_copy;
     void  extract_more_characters();

@@ -308,6 +308,13 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
     return( found );
 }
 
+#define  MAX_RAND  2147483648.0
+
+private  Real  get_random_0_to_1( void )
+{
+    return( (Real) random() / MAX_RAND );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_random_level
 @INPUT      : 

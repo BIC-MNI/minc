@@ -69,6 +69,7 @@ public  Minc_file  initialize_minc_input(
     int                 d, dimvar, which_valid_axis, axis;
     int                 spatial_axis_indices[MAX_VAR_DIMS];
     minc_input_options  default_options;
+    BOOLEAN             no_volume_data_type;
 
     if( options == (minc_input_options *) NULL )
     {
@@ -294,7 +295,8 @@ public  Minc_file  initialize_minc_input(
 
     /* --- decide on type conversion */
 
-    if( volume->data_type == NO_DATA_TYPE )     /* --- use type of file */
+    no_volume_data_type = (volume->data_type == NO_DATA_TYPE);
+    if( no_volume_data_type )     /* --- use type of file */
     {
         if( miattgetstr( file->cdfid, img_var, MIsigntype, MAX_STRING_LENGTH,
                          signed_flag ) != (char *) NULL )
@@ -337,7 +339,7 @@ public  Minc_file  initialize_minc_input(
     valid_range[0] = 0.0;
     valid_range[1] = 0.0;
 
-    if( volume->data_type == NO_DATA_TYPE )
+    if( no_volume_data_type )
     {
         if( miattget( file->cdfid, img_var, MIvalid_range, NC_DOUBLE,
                          2, (void *) valid_range, &length ) == MI_ERROR ||
@@ -367,7 +369,7 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
-    if( volume->data_type == NO_DATA_TYPE || !range_specified )
+    if( no_volume_data_type || !range_specified )
     {
         set_volume_voxel_range( volume, 0.0, 0.0 );
         get_volume_voxel_range( volume, &default_voxel_min, &default_voxel_max);
@@ -406,9 +408,7 @@ public  Minc_file  initialize_minc_input(
 
     if( options->promote_invalid_to_min_flag )
     {
-        (void) miicv_detach( file->icv );
         (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, valid_range[0] );
-        (void) miicv_attach( file->icv, file->cdfid, img_var );
     }
 
     for_less( d, 0, file->n_file_dimensions )

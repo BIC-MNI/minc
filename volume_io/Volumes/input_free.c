@@ -106,7 +106,7 @@ public  Status  initialize_free_format_input(
         volume->spatial_axes[Z] < 0 )
     {
         print(
-         "warning initialize_free_format_input: setting spatial axes to XYZ." );
+         "warning initialize_free_format_input: setting spatial axes to XYZ.\n");
         volume->spatial_axes[X] = 0;
         volume->spatial_axes[Y] = 1;
         volume->spatial_axes[Z] = 2;

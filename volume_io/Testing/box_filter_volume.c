@@ -9,6 +9,7 @@ int  main(
     Real       x_width, y_width, z_width, separations[MAX_DIMENSIONS];
     BOOLEAN    world_space;
     char       *input_filename, *output_filename, *history, *dummy;
+    static     int  axis_ordering[] = { X, Y, Z };
 
     initialize_argument_processing( argc, argv );
 
@@ -25,7 +26,7 @@ int  main(
 
     world_space = get_string_argument( "", &dummy );
 
-    status = input_volume( input_filename, 3, (char **) NULL,
+    status = input_volume( input_filename, 3, XYZ_dimension_names,
                       NC_UNSPECIFIED, FALSE, 0.0, 0.0,
                       TRUE, &volume, (minc_input_options *) NULL ) ;
 
@@ -44,8 +45,14 @@ int  main(
 
     history = "box filtered";
 
-    status = output_volume( output_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
-                            new_volume, history, (minc_output_options *) NULL );
+    if( filename_extension_matches( output_filename, "mnc" ) )
+        status = output_volume( output_filename, NC_UNSPECIFIED, FALSE,
+                           0.0, 0.0,
+                           new_volume, history, (minc_output_options *) NULL );
+    else
+        status =  output_volume_free_format( output_filename,
+                                        new_volume, axis_ordering );
+
 
     return( 0 );
 }

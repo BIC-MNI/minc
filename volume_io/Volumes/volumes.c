@@ -209,6 +209,15 @@ public  void  set_volume_type(
     }
 }
 
+public  nc_type  get_volume_nc_data_type(
+    Volume       volume,
+    BOOLEAN      *signed_flag )
+{
+    if( signed_flag != (BOOLEAN *) NULL )
+        *signed_flag = volume->signed_flag;
+    return( volume->nc_data_type );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_type_size
 @INPUT      : type

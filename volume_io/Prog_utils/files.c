@@ -79,6 +79,12 @@ public  void  remove_file(
     (void) system( command );
 }
 
+public  void  unlink_file(
+    char  filename[] )
+{
+    (void) unlink( filename );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : expand_filename
 @INPUT      : filename
