@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 2.1  1994-12-07 08:20:10  neelin
-@MODIFIED   : Added support for irix 5 decnet.
+@MODIFIED   : Revision 2.2  1994-12-07 09:45:59  neelin
+@MODIFIED   : Fixed called to ioctl to get rid of type mismatch warning messages.
 @MODIFIED   :
+ * Revision 2.1  94/12/07  08:20:10  neelin
+ * Added support for irix 5 decnet.
+ * 
  * Revision 2.0  94/09/28  10:35:32  neelin
  * Release of minc version 0.2
  * 
@@ -145,9 +148,9 @@ public int open_connection(int argc, char *argv[],
    /* Accept the connection and get the maximum buffer length */
    link = fileno(stdin);
    (void) memset((void *) &sd, 0, sizeof(sd));
-   (void) GCOM_IOCTL(link, SES_ACCEPT, &sd);
+   (void) GCOM_IOCTL(link, SES_ACCEPT, (char *) &sd);
    maxlength = 0;
-   if ((GCOM_IOCTL(link, SES_MAX_IO, &maxlength) == -1) ||
+   if ((GCOM_IOCTL(link, SES_MAX_IO, (char *) &maxlength) == -1) ||
        (maxlength <= 0)) {
       maxlength = DN_MAX_IO;
    }
