@@ -5,7 +5,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: reply.c,v $
- * Revision 6.3  1999-10-29 17:51:57  neelin
+ * Revision 6.4  2002-12-08 20:45:34  neelin
+ * Added new implementation class uid for Siemens MREASE_VA21A
+ *
+ * Revision 6.3  1999/10/29 17:51:57  neelin
  * Fixed Log keyword
  *
  * Revision 6.2  1999/08/05 20:01:16  neelin
@@ -53,6 +56,7 @@ extern int Do_logging;
 static char *SPI_Vision_Implementation_UIDs[] = {
    "2.16.840.1.113669.2.931128",
    "1.3.12.2.1107.5.1995.1",          /* Version VB33A */
+   "1.3.12.2.1107.5.2",               /* Version MREASE_VA21A */ 
    NULL
 };
 /* Index into above array for version VB33A */
