@@ -13,7 +13,15 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.5  2001-04-24 13:38:45  neelin
+ * Revision 6.6  2001-08-16 16:41:36  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.5  2001/04/24 13:38:45  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.4  2001/04/17 18:40:24  neelin
@@ -74,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.5 2001-04-24 13:38:45 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.6 2001-08-16 16:41:36 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -827,6 +835,7 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
    double vrange[2];
    char string[MI_MAX_ATTSTR_LEN];
    int length;
+   int file_is_signed;
 
    /* Get the image variable id */
    imgid = ncvarid(mincid, MIimage);
@@ -836,55 +845,23 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
       if (*is_signed == INT_MIN) {
          *is_signed = ((*datatype == NC_BYTE) ? FALSE : TRUE);
       }
+      if (valid_range[0] == DBL_MAX) {
+         (void) miget_default_range(*datatype, *is_signed, valid_range);
+      }
       return;
    }
 
    /* Get data type */
-   (void) ncvarinq(mincid, imgid, NULL, datatype, NULL, NULL, NULL);
+   (void) miget_datatype(mincid, imgid, datatype, &file_is_signed);
 
    /* Look for sign if needed */
    if (*is_signed == INT_MIN) {
-      ncopts = 0;
-      if (miattgetstr(mincid, imgid, MIsigntype, sizeof(string), string) 
-          != NULL) {
-         if (strcmp(string, MI_SIGNED) == 0)
-            *is_signed = TRUE;
-         else if (strcmp(string, MI_UNSIGNED) == 0)
-            *is_signed = FALSE;
-      }
-      ncopts = NCOPTS_DEFAULT;
-      if (*is_signed == INT_MIN) {
-         *is_signed = ((*datatype == NC_BYTE) ? FALSE : TRUE);
-      }
+      *is_signed = file_is_signed;
    }
 
    /* Look for valid range if needed */
    if (valid_range[0] == DBL_MAX) {
-      ncopts = 0;
-      status=miattget(mincid, imgid, MIvalid_range, 
-                      NC_DOUBLE, 2, vrange, &length);
-      if ((status!=MI_ERROR) && (length==2)) {
-         if (vrange[1] > vrange[0]) {
-            valid_range[0] = vrange[0];
-            valid_range[1] = vrange[1];
-         }
-         else {
-            valid_range[0] = vrange[1];
-            valid_range[1] = vrange[0];
-         }
-      }
-      else {
-         status=miattget1(mincid, imgid, MIvalid_max, 
-                          NC_DOUBLE, &vrange[1]);
-         if (status!=MI_ERROR) valid_range[1] = vrange[1];
-  
-         status=miattget1(mincid, imgid, MIvalid_min, 
-                          NC_DOUBLE, &vrange[0]);
-         if (status!=MI_ERROR)
-         if (status!=MI_ERROR) valid_range[1] = vrange[1];
-
-      }
-      ncopts = NCOPTS_DEFAULT;
+      (void) miget_valid_range(mincid, imgid, valid_range);
    }
 
    return;
@@ -1359,7 +1336,7 @@ public void setup_output_file(int mincid, char *history,
                           ncvarid(reshape_info->inmincid, MIimage),
                           mincid, imgid);
    (void) miattputstr(mincid, imgid, MIsigntype, signtype);
-   (void) ncattput(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, valid_range);
+   (void) miset_valid_range(mincid, imgid, valid_range);
    (void) miattputstr(mincid, imgid, MIcomplete, MI_FALSE);
 
    /* Create the imagemax/min variables */

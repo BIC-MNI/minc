@@ -7,7 +7,15 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.5  2001-08-16 13:32:27  neelin
+ * Revision 6.6  2001-08-16 16:41:32  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.5  2001/08/16 13:32:27  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -86,7 +94,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.5 2001-08-16 13:32:27 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.6 2001-08-16 16:41:32 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1008,8 +1016,7 @@ private void setup_variables(int inmincid, int outmincid,
       ncopts = NC_OPTS_VAL;
       valid_range[0] = 0;
       valid_range[1] = 1;
-      (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
-                      (void *) valid_range);
+      (void) miset_valid_range(outmincid, outimgid, valid_range);
    }
    else if (loop_options->datatype != MI_ORIGINAL_TYPE) {
       if (loop_options->is_signed)
@@ -1017,8 +1024,8 @@ private void setup_variables(int inmincid, int outmincid,
       else
          (void) miattputstr(outmincid, outimgid, MIsigntype, MI_UNSIGNED);
       if ((loop_options->valid_range[1] > loop_options->valid_range[0])) {
-         (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
-                         (void *) loop_options->valid_range);
+         (void) miset_valid_range(outmincid, outimgid, 
+                                  loop_options->valid_range);
       }
       else {
          ncopts = 0;
@@ -1549,8 +1556,8 @@ private void do_voxel_loop(Loop_Options *loop_options,
             valid_range[1] = (float) valid_range[1];
          }
 
-         (void) ncattput(outmincid, imgid, MIvalid_range, NC_DOUBLE, 2,
-                         (void *) valid_range);
+         (void) miset_valid_range(outmincid, imgid, valid_range);
+
       }
    }
 

@@ -3,6 +3,10 @@
 @DESCRIPTION: File of convenience functions following the minc standard.
 @METHOD     : Routines included in this file :
               public :
+                 miget_datatype
+                 miget_default_range
+                 miget_valid_range
+                 miset_valid_range
                  miattput_pointer
                  miattget_pointer
                  miadd_child
@@ -21,7 +25,15 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.3  2001-08-16 13:32:18  neelin
+ * Revision 6.4  2001-08-16 16:41:32  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.3  2001/08/16 13:32:18  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -71,7 +83,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.3 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.4 2001-08-16 16:41:32 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -116,9 +128,11 @@ public int miget_datatype(int cdfid, int imgid,
    int old_ncopts;
    char attstr[MI_MAX_ATTSTR_LEN];
 
+   MI_SAVE_ROUTINE_NAME("miget_datatype");
+
    /* Get the type information for the variable */
    if (ncvarinq(cdfid, imgid, NULL, datatype, NULL, NULL, NULL) == MI_ERROR)
-      return MI_ERROR;
+      MI_RETURN(MI_ERROR);
 
    /* Save the ncopts value */
    old_ncopts = ncopts;
@@ -142,7 +156,7 @@ public int miget_datatype(int cdfid, int imgid,
    /* Restore ncopts */
    ncopts = old_ncopts;
 
-   return MI_NOERROR;
+   MI_RETURN(MI_NOERROR);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -150,7 +164,7 @@ public int miget_datatype(int cdfid, int imgid,
 @INPUT      : datatype
               is_signed - TRUE if type is signed
 @OUTPUT     : default_range - array containing default range for variable
-@RETURNS    : MI_ERROR when an error occurs.
+@RETURNS    : MI_NOERROR
 @DESCRIPTION: Gets the default range for a data type.
 @METHOD     : 
 @GLOBALS    : 
@@ -158,9 +172,11 @@ public int miget_datatype(int cdfid, int imgid,
 @CREATED    : August 15, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void miget_default_range(nc_type datatype, int is_signed, 
-                                double default_range[])
+public int miget_default_range(nc_type datatype, int is_signed, 
+                               double default_range[])
 {
+   MI_SAVE_ROUTINE_NAME("miget_default_range");
+
    switch (datatype) {
    case NC_INT:
       default_range[0] = (is_signed) ? INT_MIN : 0;
@@ -187,6 +203,8 @@ public void miget_default_range(nc_type datatype, int is_signed,
       default_range[1]= MI_DEFAULT_MAX;
       break;
    }
+
+   MI_RETURN(MI_NOERROR);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -215,9 +233,11 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
    int is_signed;
    double temp;
 
+   MI_SAVE_ROUTINE_NAME("miget_valid_range");
+
    /* Get the type information for the variable */
    if (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR)
-      return MI_ERROR;
+      MI_RETURN(MI_ERROR);
 
    /* Save the ncopts value */
    old_ncopts = ncopts;
@@ -231,7 +251,7 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
    if ((status==MI_ERROR) || (length!=2)) {
 
       /* Get the default range for the type */
-      miget_default_range(datatype, is_signed, valid_range);
+      (void) miget_default_range(datatype, is_signed, valid_range);
 
       /* Try to read the valid max */
       (void) miattget1(cdfid, imgid, MIvalid_max, NC_DOUBLE, &valid_range[1]);
@@ -272,7 +292,7 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
       break;
    }
 
-   return MI_NOERROR;
+   MI_RETURN(MI_NOERROR);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -306,9 +326,11 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    int sival[2];
    float fval[2];
 
+   MI_SAVE_ROUTINE_NAME("miset_valid_range");
+
    /* Get the type information for the variable */
    if (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR)
-      return MI_ERROR;
+      MI_RETURN(MI_ERROR);
 
    /* Cast to the appropriate type and save */
    attname = MIvalid_range;
@@ -359,7 +381,7 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
       break;
    }
 
-   return status;
+   MI_RETURN(status);
 
 }
 

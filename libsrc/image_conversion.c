@@ -34,7 +34,15 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.3  2001-08-16 13:32:18  neelin
+ * Revision 6.4  2001-08-16 16:41:31  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.3  2001/08/16 13:32:18  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -116,7 +124,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.3 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.4 2001-08-16 16:41:31 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -950,33 +958,11 @@ private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 
    MI_SAVE_ROUTINE_NAME("MI_icv_get_vrange");
 
-   /* Look for valid range info */
-   oldncopts = ncopts; ncopts = 0;
-   status=miattget(cdfid, varid, MIvalid_range, NC_DOUBLE, 2, vrange, &length);
-   if ((status!=MI_ERROR) && (length==2)) {
-      icvp->var_vmax=MAX(vrange[0],vrange[1]);
-      icvp->var_vmin=MIN(vrange[0],vrange[1]);
+   if (miget_valid_range(cdfid, varid, vrange) == MI_ERROR) {
+      MI_RETURN(MI_ERROR);
    }
-   else {
-      status=miattget1(cdfid, varid, MIvalid_max, NC_DOUBLE, 
-                       &(icvp->var_vmax));
-      if (status==MI_ERROR) 
-         icvp->var_vmax=MI_get_default_range(MIvalid_max, 
-                                             icvp->var_type, icvp->var_sign);
-      status=miattget1(cdfid, varid, MIvalid_min, NC_DOUBLE, 
-                       &(icvp->var_vmin));
-      if (status==MI_ERROR) 
-         icvp->var_vmin=MI_get_default_range(MIvalid_min, 
-                                             icvp->var_type, icvp->var_sign);
-   }
-   ncopts = oldncopts;
-
-   /* Handle possible rounding errors in having double valid_range for
-      float image type */
-   if (icvp->var_type == NC_FLOAT) {
-      icvp->var_vmax = (float) icvp->var_vmax;
-      icvp->var_vmin = (float) icvp->var_vmin;
-   }
+   icvp->var_vmin = vrange[0];
+   icvp->var_vmax = vrange[1];
 
    MI_RETURN(MI_NOERROR);
 }
@@ -999,41 +985,24 @@ private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 ---------------------------------------------------------------------------- */
 private double MI_get_default_range(char *what, nc_type datatype, int sign)
 {
-   double limit;
+   double range[2];
 
    MI_SAVE_ROUTINE_NAME("MI_get_default_range");
 
+   (void) miget_default_range(datatype, (sign == MI_PRIV_SIGNED), range);
+
    if (STRINGS_EQUAL(what, MIvalid_max)) {
-      switch (datatype) {
-      case NC_INT:
-         limit = (sign == MI_PRIV_SIGNED) ? INT_MAX : UINT_MAX; break;
-      case NC_SHORT:
-         limit = (sign == MI_PRIV_SIGNED) ? SHRT_MAX : USHRT_MAX; break;
-      case NC_BYTE:
-         limit = (sign == MI_PRIV_SIGNED) ? SCHAR_MAX : UCHAR_MAX; break;
-      default:
-         limit = MI_DEFAULT_MAX; break;
-      }
+      MI_RETURN(range[1]);
    }
    else if (STRINGS_EQUAL(what, MIvalid_min)) {
-      switch (datatype) {
-      case NC_INT:
-         limit = (sign == MI_PRIV_SIGNED) ? INT_MIN : 0; break;
-      case NC_SHORT:
-         limit = (sign == MI_PRIV_SIGNED) ? SHRT_MIN : 0; break;
-      case NC_BYTE:
-         limit = (sign == MI_PRIV_SIGNED) ? SCHAR_MIN : 0; break;
-      default:
-         limit = MI_DEFAULT_MIN; break;
-      }
+      MI_RETURN(range[0]);
    }
    else {
       ncopts = NC_VERBOSE | NC_FATAL;
       MI_LOG_PKG_ERROR2(-1,"MINC bug - this line should never be printed");
-      limit = MI_DEFAULT_MIN;
    }
 
-   MI_RETURN(limit);
+   MI_RETURN(MI_DEFAULT_MIN);
 }
 
 /* ----------------------------- MNI Header -----------------------------------

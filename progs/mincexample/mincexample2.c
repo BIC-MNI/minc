@@ -12,7 +12,15 @@
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexample2.c,v $
- * Revision 6.2  2001-04-17 18:40:19  neelin
+ * Revision 6.3  2001-08-16 16:41:34  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.2  2001/04/17 18:40:19  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -48,7 +56,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.2 2001-04-17 18:40:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.3 2001-08-16 16:41:34 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -625,7 +633,7 @@ public void setup_image_variables(int inmincid, int mincid,
       ncopts = NC_OPTS_VAL;
    }
    (void) miattputstr(mincid, imgid, MIsigntype, MI_UNSIGNED);
-   (void) ncattput(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, valid_range);
+   (void) miset_valid_range(mincid, imgid, valid_range);
 
    /* Create the image max and min variables (varying over slices) */
    maxid = micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, 1, dim);

@@ -10,7 +10,15 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.2  2000-04-25 18:12:05  neelin
+ * Revision 6.3  2001-08-16 16:41:35  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.2  2000/04/25 18:12:05  neelin
  * Added modified version of patch from Steve Robbins to allow use on
  * multiple input files.
  *
@@ -67,7 +75,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.2 2000-04-25 18:12:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.3 2001-08-16 16:41:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -92,24 +100,6 @@ char* exec_name;
 
 char *type_names[] = {
    NULL, "byte", "char", "short", "long", "float", "double"
-};
-double default_min[][2] = {
-   0.0, 0.0,
-   0.0, SCHAR_MIN,
-   0.0, 0.0,
-   0.0, SHRT_MIN,
-   0.0, LONG_MIN,
-   0.0, 0.0,
-   0.0, 0.0,
-};
-double default_max[][2] = {
-   0.0, 0.0,
-   UCHAR_MAX, SCHAR_MAX,
-   0.0, 0.0,
-   USHRT_MAX, SHRT_MAX,
-   ULONG_MAX, LONG_MAX,
-   1.0, 1.0,
-   1.0, 1.0
 };
 
 /* Types */
@@ -543,7 +533,7 @@ public int print_image_info(char *filename, int mincid)
    double valid_range[2];
    char sign_type[MI_MAX_ATTSTR_LEN];
    int sign_index;
-   int att_length;
+   int is_signed;
    long length;
    int idim;
    char name[MAX_NC_NAME];
@@ -552,34 +542,12 @@ public int print_image_info(char *filename, int mincid)
 
    /* Get information about variable */
    RTN_ERR(imgid = ncvarid(mincid, MIimage));
-   RTN_ERR(ncvarinq(mincid, imgid, NULL, &datatype, &ndims, dim, NULL));
+   RTN_ERR(ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL));
+   RTN_ERR(miget_datatype(mincid, imgid, &datatype, &is_signed));
+   RTN_ERR(miget_valid_range(mincid, imgid, valid_range));
 
-   oldncopts = ncopts;
-   ncopts = 0;
-
-   /* Look for signtype */
-   if ((miattgetstr(mincid, imgid, MIsigntype, MI_MAX_ATTSTR_LEN, sign_type)
-                  == NULL) || ((strcmp(sign_type, MI_UNSIGNED)!=0) && 
-                               (strcmp(sign_type, MI_SIGNED)!=0))) {
-      if (datatype == NC_BYTE)
-         (void) strcpy(sign_type, MI_UNSIGNED);
-      else
-         (void) strcpy(sign_type, MI_SIGNED);
-   }
-   sign_index = (strcmp(sign_type, MI_UNSIGNED) == 0) ? 0 : 1;
-
-   /* Get valid range */
-   if ((miattget(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, valid_range,
-                 &att_length) == MI_ERROR) || (att_length != 2)) {
-      if (miattget1(mincid, imgid, MIvalid_min, NC_DOUBLE, 
-                    &valid_range[0]) == MI_ERROR)
-         valid_range[0] = default_min[datatype][sign_index];
-      if (miattget1(mincid, imgid, MIvalid_max, NC_DOUBLE, 
-                    &valid_range[1]) == MI_ERROR)
-         valid_range[1] = default_max[datatype][sign_index];
-   }
-
-   ncopts = oldncopts;
+   /* Get sign index;
+   sign_index = (is_signed ? 1 : 0);
 
    /* Write out image info line */
    (void) printf("file: %s\n", filename);

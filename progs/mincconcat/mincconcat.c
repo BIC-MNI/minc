@@ -11,7 +11,15 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.6  2001-08-16 13:32:33  neelin
+ * Revision 6.7  2001-08-16 16:41:33  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.6  2001/08/16 13:32:33  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -79,7 +87,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.6 2001-08-16 13:32:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.7 2001-08-16 16:41:33 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -240,16 +248,9 @@ public int main(int argc, char *argv[])
       valid_range[0] = concat_info->global_minimum;
       valid_range[1] = concat_info->global_maximum;
 
-      /* Force truncation of valid_range to match float image */
-      if ((ncvarinq(concat_info->output_mincid, imgid, 
-                    NULL, &file_datatype, NULL, NULL, NULL) != MI_ERROR) && 
-          (file_datatype == NC_FLOAT)) {
-         valid_range[0] = (float) valid_range[0];
-         valid_range[1] = (float) valid_range[1];
-      }
+      (void) miset_valid_range(concat_info->output_mincid, imgid,  
+                               valid_range);
 
-      (void) ncattput(concat_info->output_mincid, imgid, MIvalid_range, 
-                      NC_DOUBLE, 2, (void *) valid_range);
    }
    (void) miclose(concat_info->output_mincid);
    (void) miicv_free(concat_info->output_icvid);
@@ -1297,8 +1298,8 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
       ncopts = NC_OPTS_VAL;
       valid_range[0] = 0;
       valid_range[1] = 1;
-      (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
-                      (void *) valid_range);
+      (void) miset_valid_range(outmincid, outimgid,  
+                               valid_range);
    }
    if (concat_info->output_datatype != MI_ORIGINAL_TYPE) {
       if (concat_info->output_is_signed)
@@ -1307,8 +1308,8 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
          (void) miattputstr(outmincid, outimgid, MIsigntype, MI_UNSIGNED);
       if (concat_info->output_valid_range[1] > 
           concat_info->output_valid_range[0]) {
-         (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
-                         (void *) concat_info->output_valid_range);
+         (void) miset_valid_range(outmincid, outimgid,
+                                  concat_info->output_valid_range);
       }
       else {
          ncopts = 0;

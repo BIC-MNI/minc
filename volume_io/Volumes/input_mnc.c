@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.62 2001-08-16 13:32:43 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.63 2001-08-16 16:41:37 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -107,7 +107,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     int                 i, slab_size, length, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
     BOOLEAN             different;
-    BOOLEAN             min_voxel_found, max_voxel_found, range_specified;
+    BOOLEAN             range_specified;
     double              valid_range[2], temp;
     long                long_size;
     BOOLEAN             converted_sign, space_type_consensus;
@@ -121,7 +121,6 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     double              file_separations[MAX_VAR_DIMS];
     Real                volume_separations[MAX_VAR_DIMS];
     Real                volume_starts[MAX_VAR_DIMS];
-    Real                default_voxel_min, default_voxel_max;
     Real                voxel_zero;
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
@@ -424,70 +423,27 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
     range_specified = (valid_range[0] < valid_range[1]);
 
-    max_voxel_found = FALSE;
-    min_voxel_found = FALSE;
-
     valid_range[0] = 0.0;
     valid_range[1] = 0.0;
 
     if( file->converting_to_colour )
     {
-        min_voxel_found = TRUE;
-        max_voxel_found = TRUE;
         valid_range[0] = 0.0;
         valid_range[1] = 2.0 * (double) (1ul << 31ul) - 1.0;
         set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
     }
     else if( no_volume_data_type )
     {
-        if( miattget( file->cdfid, file->img_var, MIvalid_range, NC_DOUBLE,
-                         2, (void *) valid_range, &length ) == MI_ERROR ||
-            length != 2 )
-        {
-            if( miattget1( file->cdfid, file->img_var, MIvalid_min, NC_DOUBLE,
-                           (void *) &valid_range[0] ) != MI_ERROR )
-            {
-                min_voxel_found = TRUE;
-            }
-            if( miattget1( file->cdfid, file->img_var, MIvalid_max, NC_DOUBLE,
-                           (void *) &valid_range[1] ) != MI_ERROR )
-            {
-                max_voxel_found = TRUE;
-            }
-        }
-        else
-        {
-            if( valid_range[0] > valid_range[1] )
-            {
-                temp = valid_range[0];
-                valid_range[0] = valid_range[1];
-                valid_range[1] = temp;
-            }
-            min_voxel_found = TRUE;
-            max_voxel_found = TRUE;
-        }
-
-        /* Check for float image and cast the valid range to float to
-           handle potential float/double rounding errors */
-        if ( file_datatype == NC_FLOAT )
-        {
-            valid_range[0] = (float) valid_range[0];
-            valid_range[1] = (float) valid_range[1];
+        if (miget_valid_range( file->cdfid, file->img_var, 
+                               valid_range) == MI_ERROR) {
+           valid_range[0] = valid_range[1] = 0.0;
         }
     }
 
     if( !file->converting_to_colour &&
         (no_volume_data_type || !range_specified) )
     {
-        set_volume_voxel_range( volume, 0.0, 0.0 );
-        get_volume_voxel_range( volume, &default_voxel_min, &default_voxel_max);
-
-        if( min_voxel_found && max_voxel_found )
-            set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
-        else if( min_voxel_found && !max_voxel_found )
-            set_volume_voxel_range( volume, valid_range[0], default_voxel_max );
-        else if( !min_voxel_found && max_voxel_found )
-            set_volume_voxel_range( volume, default_voxel_min, valid_range[0] );
+        set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
     }
 
     if( !file->converting_to_colour )

@@ -10,7 +10,15 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.5  2001-08-16 16:18:47  neelin
+ * Revision 6.6  2001-08-16 16:41:36  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.5  2001/08/16 16:18:47  neelin
  * Fixed typo for compile
  *
  * Revision 6.4  2001/08/16 16:17:22  neelin
@@ -68,7 +76,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.5 2001-08-16 16:18:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.6 2001-08-16 16:41:36 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -86,24 +94,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #  define FALSE 0
 #endif
 #define BOOLEAN_DEFAULT -1
-static double default_max[][2] = {
-   0.0, 0.0,
-   UCHAR_MAX, SCHAR_MAX,
-   0.0, 0.0,
-   USHRT_MAX, SHRT_MAX,
-   ULONG_MAX, LONG_MAX,
-   1.0, 1.0,
-   1.0, 1.0
-};
-static double default_min[][2] = {
-   0.0, 0.0,
-   0.0, SCHAR_MIN,
-   0.0, 0.0,
-   0.0, SHRT_MIN,
-   0.0, LONG_MIN,
-   0.0, 0.0,
-   0.0, 0.0
-};
 
 /* Variables used for argument parsing */
 nc_type output_datatype = INT_MAX;
@@ -175,7 +165,8 @@ int main(int argc, char *argv[])
 
    /* Inquire about the image variable */
    imgid = ncvarid(mincid, MIimage);
-   (void) ncvarinq(mincid, imgid, NULL, &datatype, &ndims, dims, NULL);
+   (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dims, NULL);
+   (void)miget_datatype(mincid, imgid, &datatype, &is_signed);
 
    /* Check if arguments set */
 
@@ -183,19 +174,6 @@ int main(int argc, char *argv[])
    if (output_datatype == INT_MAX) output_datatype = datatype;
 
    /* Get output sign */ 
-   ncopts = 0;
-   if (miattgetstr(mincid, imgid, MIsigntype, MI_MAX_ATTSTR_LEN, 
-                   the_sign) != NULL) {
-      if (strcmp(the_sign, MI_SIGNED) == 0)
-         is_signed = TRUE;
-      else if (strcmp(the_sign, MI_UNSIGNED) == 0)
-         is_signed = FALSE;
-      else
-         is_signed = (datatype != NC_BYTE);
-   }
-   else
-      is_signed = (datatype != NC_BYTE);
-   ncopts = NC_VERBOSE | NC_FATAL;
    if (output_signed == INT_MAX) {
       if (output_datatype == datatype)
          output_signed = is_signed;
@@ -206,21 +184,11 @@ int main(int argc, char *argv[])
    /* Get output range */
    if (valid_range[0] == DBL_MAX) {
       if ((output_datatype == datatype) && (output_signed == is_signed)) {
-         ncopts = 0;
-         if ((miattget(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, 
-                       valid_range, &length) == MI_ERROR) || (length!=2)) {
-            if (miattget1(mincid, imgid, MIvalid_max, NC_DOUBLE, 
-                          &valid_range[1]) == MI_ERROR)
-               valid_range[1] = default_max[datatype][is_signed]; 
-            if (miattget1(mincid, imgid, MIvalid_min, NC_DOUBLE, 
-                          &valid_range[0]) == MI_ERROR)
-               valid_range[0] = default_min[datatype][is_signed]; 
-         }
-         ncopts = NC_VERBOSE | NC_FATAL;
+         (void) miget_valid_range(mincid, imgid, valid_range);
       }
       else {
-         valid_range[0] = default_min[output_datatype][output_signed];
-         valid_range[1] = default_max[output_datatype][output_signed];
+         (void) miget_default_range(output_datatype, output_signed, 
+                                    valid_range);
       }
    }
    if (valid_range[0] > valid_range[1]) {

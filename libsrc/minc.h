@@ -19,7 +19,15 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.5  2001-08-16 13:32:18  neelin
+ * Revision 6.6  2001-08-16 16:41:31  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.5  2001/08/16 13:32:18  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -93,7 +101,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.5 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.6 2001-08-16 16:41:31 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -446,8 +454,8 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 /* From minc_convenience.c */
 public int miget_datatype(int cdfid, int imgid, 
                           nc_type *datatype, int *is_signed);
-public void miget_default_range(nc_type datatype, int is_signed, 
-                                double default_range[]);
+public int miget_default_range(nc_type datatype, int is_signed, 
+                               double default_range[]);
 public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
 public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
 public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);

@@ -11,7 +11,15 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.5  2001-04-24 13:38:46  neelin
+ * Revision 6.6  2001-08-16 16:41:37  neelin
+ * Added library functions to handle reading of datatype, sign and valid range,
+ * plus writing of valid range and setting of default ranges. These functions
+ * properly handle differences between valid_range type and image type. Such
+ * difference can cause valid data to appear as invalid when double to float
+ * conversion causes rounding in the wrong direction (out of range).
+ * Modified voxel_loop, volume_io and programs to use these functions.
+ *
+ * Revision 6.5  2001/04/24 13:38:46  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.4  2001/04/17 18:40:25  neelin
@@ -110,7 +118,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.5 2001-04-24 13:38:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.6 2001-08-16 16:41:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -606,7 +614,7 @@ main(int argc, char *argv[])
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
    (void) miattputstr(cdfid, imgid, MIsigntype, osign);
    if (ovrange_set) 
-      (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
+      (void) miset_valid_range(cdfid, imgid, ovalid_range);
    if (do_minmax || do_real_range) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
                                     NC_DOUBLE, ndims-image_dims, dim);
@@ -777,7 +785,7 @@ main(int argc, char *argv[])
 
    /* Write the valid max and min */
    if (do_vrange) {
-      (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
+      (void) miset_valid_range(cdfid, imgid, ovalid_range);
    }
 
    /* Close the file */
