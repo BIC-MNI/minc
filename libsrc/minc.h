@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.12  2004-04-27 15:44:04  bert
+ * Revision 6.13  2004-06-04 18:14:52  bert
+ * Add micreate_ident()
+ *
+ * Revision 6.12  2004/04/27 15:44:04  bert
  * Add MINC 2.0 specific stuff
  *
  * Revision 6.11  2004/04/15 21:13:21  bert
@@ -122,7 +125,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.12 2004-04-27 15:44:04 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.13 2004-06-04 18:14:52 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -502,6 +505,7 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 public int micreate_group_variable(int cdfid, char *name);
 public const char *miget_version(void);
 public int miappend_history(int fd, const char *tm_stamp);
+public int micreate_ident(char * id_str, size_t length);
 
 /* From image_conversion.c */
 public int miicv_create(void);
