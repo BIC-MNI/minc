@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 3.0 1995-05-15 19:30:57 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 3.1 1995-11-21 17:25:29 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1
 
@@ -106,18 +106,45 @@ Options that give the output sampling (all of the following except
 command line. Thus a command with -like file.mnc -znelements 34
 -zstep 2 will give a sampling like that in file in file.mnc but with
 34 samples at 2 mm along the zspace axis. The default sampling is
-taken from the input file.
+taken from the input file, transformed according to any transformation.
 .P
 .I -transformation 
 <file.xfm>:
 Specify a file giving the world coordinate transformation (default is
 the identity transformation).
 .P
+.I -invert_transformation:
+Invert the transformation before using it.
+.P
+.I -noinvert_transformation:
+Do no invert the transformation (default).
+.P
+.I -tfm_input_sampling:
+Transformation the input sampling and use this as the default sampling
+(default).
+.P
+.I -use_input_sampling:
+Use the input sampling as the default, as is, without transformation
+(old behaviour).
+.P
 .I -like 
 <file.mnc>:
 Specify a model file that gives the output world to voxel
 transformation and number of elements (ie. transform this file so that it
 looks like that one).
+.P
+.I -standard_sampling:
+Set the sampling to standard values (start = 0, step = 1, direction
+cosines point along appropriate axes).
+.P
+.I -origin
+<ox> <oy> <oz>:
+Specify the coordinate of the first voxel. This is not the same as the
+start value if the direction cosines are non-standard. As well, the
+start is not just a perpendicular projection of the origin onto the
+axis, it is a parallel projection (as in a multi-dimensional
+parallelogram projection). The conversion is handled properly by this
+option.
 .P
 .I -nelements 
 <nx> <ny> <nz>:
