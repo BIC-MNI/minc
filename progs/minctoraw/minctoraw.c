@@ -10,7 +10,10 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.4  2001-08-16 16:17:22  neelin
+ * Revision 6.5  2001-08-16 16:18:47  neelin
+ * Fixed typo for compile
+ *
+ * Revision 6.4  2001/08/16 16:17:22  neelin
  * Added hint about normalization in error message of previous change.
  *
  * Revision 6.3  2001/08/16 16:10:50  neelin
@@ -65,7 +68,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.4 2001-08-16 16:17:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.5 2001-08-16 16:18:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -163,7 +166,7 @@ int main(int argc, char *argv[])
    if (normalize_output == BOOLEAN_DEFAULT) {
       (void) fprintf(stderr, 
                      "Please specify either -normalize or -nonormalize\n");
-      (void) fprintf(stderr, "Usually -normalize is most appropriate\n")
+      (void) fprintf(stderr, "Usually -normalize is most appropriate\n");
       exit(EXIT_FAILURE);
    }
 
