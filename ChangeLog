@@ -1,4 +1,7 @@
 MINC 2:
+2004-06-01 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fixed endian-ness issues in MINC 2.0 format.
+	
 2004-05-25  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Added -dappend, -sappend to minc_modify_header
 	
