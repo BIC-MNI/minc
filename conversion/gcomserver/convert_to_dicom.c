@@ -5,7 +5,11 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.13  2001-02-19 22:03:13  neelin
+ * Revision 1.14  2001-03-19 18:37:33  neelin
+ * Fixes to image number (and hence SOP instance UID) to get things working
+ * with the GE viewing station.
+ *
+ * Revision 1.13  2001/02/19 22:03:13  neelin
  * Port to linux.
  *
  * Revision 1.12  2000/10/31 00:53:13  neelin
@@ -73,7 +77,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.13 2001-02-19 22:03:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.14 2001-03-19 18:37:33 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -123,9 +127,6 @@ DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
 DEFINE_ELEMENT(static, ACR_Slice_location             , 0x0020, 0x1041, DS);
 
-/* Dicom constants */
-#define ACR_MAX_IS_LEN 12
-
 /* Function prototypes */
 private void convert_image(Acr_Group *group_list);
 private void convert_date(char *string);
@@ -146,8 +147,10 @@ private void calculate_slice_location(int orientation,
                                       double position[WORLD_NDIMS],
                                       double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                       double *location);
+private int convert_imagenum(char *string);
 
 /* Acr-nema elements to be removed */
+DEFINE_ELEMENT(static, ACR_Length_to_End              , 0x0008, 0x0001, UL);
 DEFINE_ELEMENT(static, ACR_Recognition_Code_Ret       , 0x0008, 0x0010, SH);
 DEFINE_ELEMENT(static, ACR_Image_Position_Ret         , 0x0020, 0x0030, DS);
 DEFINE_ELEMENT(static, ACR_Image_Orientation_Ret      , 0x0020, 0x0035, DS);
@@ -161,6 +164,7 @@ DEFINE_ELEMENT(static, ACR_Image_Location             , 0x0028, 0x0200, US);
 
 /* Retired elements to remove from group list */
 static Acr_Element_Id *Elements_to_remove[] = {
+   &ACR_Length_to_End,
    &ACR_Recognition_Code_Ret, 
    &ACR_Data_set_type,
    &ACR_Data_set_subtype,
@@ -222,7 +226,7 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    Acr_Element element;
    Acr_Group group;
    double value;
-   char string[256], *ptr, *imagenum;
+   char string[256], *ptr, *imagenumptr, imagenum[64];
    char comment[256];
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
    union {
@@ -257,15 +261,16 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    }
    ptr = &string[strlen(string)];
 
-   /* Get the image number. Check that it is not too long - just chop it off
-      if it is. */
-   imagenum = acr_find_string(group_list, ACR_Image_Number, NULL);
-   if ((imagenum != NULL) && (strlen(imagenum) > (size_t) ACR_MAX_IS_LEN)) {
-      imagenum[ACR_MAX_IS_LEN] = '\0';
-      acr_insert_string(&group_list, ACR_Image_Number, imagenum);
-      imagenum = acr_find_string(group_list, ACR_Image_Number, NULL);
+   /* Get the image number, make a copy and then shorten it. */
+   imagenumptr = acr_find_string(group_list, ACR_Image_Number, NULL);
+   if (imagenumptr == NULL) {
+      imagenumptr = "1";
    }
-   if (imagenum == NULL) imagenum = "1";
+   (void) strncpy(imagenum, imagenumptr, sizeof(imagenum)-1);
+   imagenum[sizeof(imagenum)-1] = '\0';
+   if (convert_imagenum(imagenum)) {
+      acr_insert_string(&group_list, ACR_Image_Number, imagenum);
+   }
 
    /* Set study, series and frame of reference UID's.
       Note that the series UID includes echo for the sake of viewing
@@ -970,3 +975,89 @@ private void calculate_slice_location(int orientation,
    *location = distance;
    
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_imagenum
+@INPUT      : string - string to be converted in place
+@OUTPUT     : string - modified date string
+@RETURNS    : TRUE if string was modified, FALSE otherwise.
+@DESCRIPTION: Routine to convert an image number from gyroscan format to 
+              a valid dicom integer by making it smaller, if necessary.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 5, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int convert_imagenum(char *string)
+{
+   int istart, iend, iold, inew, oldlen, ipos;
+   static Acr_max_IS_len = 8;
+   static int chars_to_remove[] = {1,2,5,6,13};
+   static int nchars_to_remove = 
+      sizeof(chars_to_remove) / sizeof(chars_to_remove[0]);
+   int ichar;
+
+   /* Check for NULL string */
+   if (string == NULL) return FALSE;
+
+   /* Get the original length of the string */
+   oldlen = strlen(string);
+
+   /* Check for zero-length string */
+   if (oldlen == 0) return FALSE;
+
+   /* Find the start of the number */
+   for (istart=0; (string[istart] != '\0') && 
+           (string[istart] < '0' || string[istart] > '9'); istart++) {}
+
+   /* Find the end of the string */
+   for (iend=istart; (string[iend] >= '0') && (string[iend] <= '9'); iend++) {}
+
+   /* Does anything need to be fixed? If not, then return. */
+   if (iend-istart <= Acr_max_IS_len) {
+      return FALSE;
+   }
+
+   /* Copy the string */
+   inew = 0;
+   iold = istart;
+   ichar = nchars_to_remove - 1;
+   while (string[iold] >= '0' && string[iold] <= '9') {
+
+      /* Get position from end of string */
+      ipos = iend-iold;
+
+      /* Skip any chars to the left of the highest position, and skip
+         the specified character positions and skip any leading zeros */
+      if ((ipos > chars_to_remove[ichar]) && (ichar == nchars_to_remove-1)) {}
+      else if (ipos == chars_to_remove[ichar]) {
+         if (ichar > 0) ichar--;
+      }
+      else if ((inew == 0) && (string[iold] == '0')) {}
+      else {
+
+         if (inew != iold)
+            string[inew] = string[iold];
+         inew++;
+
+      }
+
+      iold++;
+   }
+
+   /* Check for an empty string */
+   if (inew == 0) {
+      string[inew] = '0';
+      inew++;
+   }
+
+   /* Pad the string with NULs */
+   while (inew < oldlen) {
+      string[inew] = '\0';
+      inew++;
+   }
+
+   return TRUE;
+}
+
