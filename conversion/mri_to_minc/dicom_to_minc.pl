@@ -253,8 +253,11 @@ sub dicom3_read_file_info {
     # Get interesting values
     $file_info{'numechos'} = 1;
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
-    ($file_info{'exam'} = &acr_find_string(*header, &dc3_exam))
-       =~ s/\W//g;
+    $file_info{'exam'} = &acr_find_string(*header, &dc3_exam);
+    if (length($file_info{'exam'}) == 0) {
+       $file_info{'exam'} = &acr_find_string(*header, &dc3_study_date);
+    }
+    $file_info{'exam'} =~ s/\W//g;
     local($series) = &acr_find_numeric(*header, &dc3_series);
     local($acquisition) = &acr_find_numeric(*header, &dc3_acquisition);
     local($the_series);
