@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 2.1  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 2.2  1995-02-09 14:05:51  neelin
+@MODIFIED   : Mods to make irix 5 lint happy.
 @MODIFIED   :
+ * Revision 2.1  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 2.0  1994/09/28  10:32:46  neelin
  * Release of minc version 0.2
  *
@@ -74,7 +77,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.1 1995-02-08 19:31:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.2 1995-02-09 14:05:51 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1440,7 +1443,7 @@ public int get_transformation(char *dst, char *key, char *nextArg)
             REALLOC(transform_info->file_contents, 
                     transform_info->buffer_length);
       }
-      transform_info->file_contents[index] = ch;
+      transform_info->file_contents[index] = (char) ch;
    }
    transform_info->file_contents[index] = '\0';
    rewind(fp);
