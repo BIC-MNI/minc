@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 1.2  1993-11-24 11:26:09  neelin
-@MODIFIED   : Added TRUE and FALSE.
+@MODIFIED   : Revision 1.3  1993-12-08 09:07:02  neelin
 @MODIFIED   :
+@MODIFIED   :
+ * Revision 1.2  93/11/24  11:26:09  neelin
+ * Added TRUE and FALSE.
+ * 
  * Revision 1.1  93/11/19  12:49:34  neelin
  * Initial revision
  * 
@@ -44,4 +47,3 @@
 #include <element.h>
 #include <group.h>
 #include <message.h>
-
