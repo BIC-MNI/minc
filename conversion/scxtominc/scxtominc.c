@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 1.8  1993-08-11 15:27:34  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.9  1993-11-17 12:21:55  neelin
+@MODIFIED   : Changed default to -noclobber.
 @MODIFIED   :
+ * Revision 1.8  93/08/11  15:27:34  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.8 1993-08-11 15:27:34 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.9 1993-11-17 12:21:55 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -188,7 +191,7 @@ int main(int argc, char *argv[])
    /* Variables for arguments */
    static int write_byte_data=TRUE;
    static int sort_over_time=TRUE;
-   static int clobber=TRUE;
+   static int clobber=FALSE;
    static int verbose=TRUE;
    static int decay_correct=TRUE;
    static int slice_range[2]={0, 9999};
@@ -209,9 +212,9 @@ int main(int argc, char *argv[])
       {"-nodecay_correct", ARGV_CONSTANT, (char *) FALSE, 
           (char *) &decay_correct, "Don't do decay correction."},
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
-          "Overwrite existing file (default)."},
+          "Overwrite existing file."},
       {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
-          "Don't overwrite existing file."},
+          "Don't overwrite existing file (default)."},
       {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
           "List files as they are converted (default)"},
       {"-quiet", ARGV_CONSTANT, (char *) FALSE, (char *) &verbose,
