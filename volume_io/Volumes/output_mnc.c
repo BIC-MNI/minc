@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.38 1995-10-26 18:27:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.39 1995-11-02 21:20:13 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -535,7 +535,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
 
     status = OK;
 
-    if( history_string != (char *) NULL )
+    if( history_string != NULL )
         status = add_minc_history( file, history_string );
 
     (void) ncendef( file->cdfid );
@@ -687,7 +687,7 @@ private  Status  get_dimension_ordering(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  check_minc_output_variables(
+private  void  check_minc_output_variables(
     Minc_file   file )
 {
     int               d, axis;
@@ -768,6 +768,28 @@ public  void  check_minc_output_variables(
         }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_output_random_order
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the file into random order access, used by volume
+              caching.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 26, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_output_random_order(
+    Minc_file   file )
+{
+    check_minc_output_variables( file );
+
+    file->outputting_in_order = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
