@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicomserver.c,v $
-@MODIFIED   : Revision 4.1  1997-07-08 23:15:09  neelin
-@MODIFIED   : Added support for C_ECHO command.
+@MODIFIED   : Revision 4.2  1997-07-10 17:35:35  neelin
+@MODIFIED   : Changed error handling and fixed message deletion.
 @MODIFIED   :
+ * Revision 4.1  1997/07/08  23:15:09  neelin
+ * Added support for C_ECHO command.
+ *
  * Revision 4.0  1997/05/07  20:06:20  neelin
  * Release of minc version 0.4
  *
@@ -29,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 4.1 1997-07-08 23:15:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 4.2 1997-07-10 17:35:35 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -79,7 +82,7 @@ int main(int argc, char *argv[])
    Acr_Group group_list;
    Acr_Message input_message, output_message;
    int exit_status;
-   char *exit_string;
+   char exit_string[256];
    char **file_list;
    Data_Object_Info **file_info_list;
    int num_files, num_files_alloc;
@@ -283,15 +286,14 @@ int main(int argc, char *argv[])
 
          /* Get rid of the command groups */
          group_list = skip_command_groups(group_list);
-         while ((group_list != NULL) &&
-                ((acr_get_group_group(group_list) == DCM_PDU_GRPID) ||
-                 (acr_get_group_group(group_list) == ACR_MESSAGE_GID))) {
-            group_list = acr_get_group_next(group_list);
-         }
 
          /* Was the data attached to the command? If not, read in the next
             message - it should contain the data */
          if (group_list == NULL) {
+
+            /* Delete the previous message */
+            if (input_message != NULL)
+               acr_delete_message(input_message);
 
             /* Read the data and check the status */
             Alarmed_afp = afpin;
@@ -365,7 +367,8 @@ int main(int argc, char *argv[])
       }        /* End of switch on pdu_type */
 
       /* Delete input message */
-      acr_delete_message(input_message);
+      if (input_message != NULL)
+         acr_delete_message(input_message);
 
       /* Use the files if we have a complete acquisition */
       if (process_files) {
@@ -446,7 +449,8 @@ int main(int argc, char *argv[])
       (void) alarm(0);
 
       /* Delete output message */
-      acr_delete_message(output_message);
+      if (output_message != NULL)
+         acr_delete_message(output_message);
 
       if (status != ACR_OK) {
          state = TERMINATING;
@@ -487,40 +491,14 @@ int main(int argc, char *argv[])
    }
 
    /* Print final message */
-   switch (status) {
-   case ACR_OK:
-   case ACR_END_OF_INPUT:
+   if ((status == ACR_OK) || (status == ACR_END_OF_INPUT)) {
+      (void) sprintf(exit_string, "Finished transfer.");
       exit_status = EXIT_SUCCESS;
-      exit_string = "Finished transfer.";
-      break;
-   case ACR_REACHED_WATCHPOINT:
+   }
+   else {
+      (void) sprintf(exit_string, "%s. Disconnecting.", 
+                     acr_status_string(status));
       exit_status = EXIT_FAILURE;
-      exit_string = "Protocol error (reached watchpoint). Disconnecting.";
-      break;
-   case ACR_PROTOCOL_ERROR:
-      exit_status = EXIT_FAILURE;
-      exit_string = "Protocol error. Disconnecting.";
-      break;
-   case ACR_ABNORMAL_END_OF_INPUT:
-      exit_status = EXIT_FAILURE;
-      exit_string = "Abnormal end of input. Disconnecting.";
-      break;
-   case ACR_ABNORMAL_END_OF_OUTPUT:
-      exit_status = EXIT_FAILURE;
-      exit_string = "Abnormal end of output. Disconnecting.";
-      break;
-   case ACR_HIGH_LEVEL_ERROR:
-      exit_status = EXIT_FAILURE;
-      exit_string = "High-level protocol error. Disconnecting";
-      break;
-   case ACR_OTHER_ERROR:
-      exit_status = EXIT_FAILURE;
-      exit_string = "I/O error. Disconnecting.";
-      break;
-   default:
-      exit_status = EXIT_FAILURE;
-      exit_string = "Unknown error. Disconnecting.";
-      break;
    }
 
    if (Do_logging >= LOW_LOGGING) {
