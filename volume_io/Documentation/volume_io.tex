@@ -1651,7 +1651,7 @@ up with corresponding dimensions in the file and the dimension
 ordering of the volume array is reordered on input.  So, if the user
 wishes to represent the volume in X-Z-Y order, then the value passed
 as the \name{dim\_names} array should be the three strings,
-``\name{MIxspace}'', ``\name{MIzspace}'', and ``\name{MIyspace}''.}
+\name{MIxspace}, \name{MIzspace}, and \name{MIyspace}.}
 
 \desc{The four arguments, \name{volume\_nc\_data\_type},
 \name{volume\_signed\_flag}, \name{volume\_voxel\_min}, and
@@ -1748,9 +1748,23 @@ public  void  set_default_minc_output_options(
 
 \desc{Sets the \name{options} structure to the default values.  The
 user can then override the default values and pass the structure to
-the \name{output\_volume()} function.  Currently, there are no output
-options, but this function exists as a place holder for future
-revisions.}
+the \name{output\_volume()} function.  Currently, there is only one
+output option:}
+
+{\bf\begin{verbatim}
+public  void  set_minc_output_dimensions_order(
+    minc_output_options  *options,
+    int                  n_dimensions,
+    STRING               dimension_names[] )
+\end{verbatim}}
+
+\desc{Defines the output order of the file.  Each dimension name
+string must have a matching dimension name in the volume, which
+defines the order of the dimensions in the output file.  For instance,
+one may have input the volume in \name{(x, y, z)} order.
+To get it output in \name{(z, y, x)} order, set \name{dimension\_names} to
+the three strings \name{MIzspace},
+\name{MIyspace}, and \name{MIxspace}.}
 
 If the volume is a modification of another volume currently stored in
 a file, then it is more appropriate to use the following function to
