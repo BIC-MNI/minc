@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 3.1  1996-07-10 14:38:03  neelin
-@MODIFIED   : Added options to set output file type, sign and range.
+@MODIFIED   : Revision 3.2  1996-07-10 16:58:37  neelin
+@MODIFIED   : Added -lut_string option and added special handling of duplicated first
+@MODIFIED   : or last entries.
 @MODIFIED   :
+ * Revision 3.1  1996/07/10  14:38:03  neelin
+ * Added options to set output file type, sign and range.
+ *
  * Revision 3.0  1995/05/15  19:32:39  neelin
  * Release of minc version 0.3
  *
@@ -37,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.1 1996-07-10 14:38:03 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.2 1996-07-10 16:58:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,7 +95,7 @@ typedef struct {
 } Sort_Key;
 
 /* Function prototypes */
-public Lookup_Table *read_lookup_table(char *lookup_file);
+public Lookup_Table *read_lookup_table(char *lookup_file, char *lookup_string);
 public double *get_values_from_string(char *string, int array_size,
                                       double *array, int *nread);
 public double *get_null_value(int vector_length, char *null_value_string);
@@ -104,6 +108,7 @@ public void do_lookup(void *caller_data, long num_voxels,
 public void lookup_in_table(double index, Lookup_Table *lookup_table,
                             int discrete_values, double null_value[],
                             double output_value[]);
+private char *get_next_line(char *line, int linelen, FILE *fp, char **string);
 private int sorting_function(const void *value1, const void *value2);
 
 /* Lookup tables */
@@ -170,9 +175,12 @@ int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int buffer_size = 10 * 1024;
 char *lookup_file = NULL;
+char *lookup_string = NULL;
 Lookup_Type lookup_type = LU_GRAY;
 int invert_table = FALSE;
 double lookup_range[2] = {DEFAULT_RANGE, DEFAULT_RANGE};
+double lookup_min = DEFAULT_RANGE;
+double lookup_max = DEFAULT_RANGE;
 int discrete_lookup = FALSE;
 char *null_value_string = NULL;
 
@@ -220,12 +228,14 @@ ArgvInfo argTable[] = {
        "Don't invert the lookup table."},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) lookup_range,
        "Min and max for lookup table (default from file)."},
-   {"-minimum", ARGV_FLOAT, (char *) 1, (char *) &lookup_range[0],
+   {"-minimum", ARGV_FLOAT, (char *) 1, (char *) &lookup_min,
        "Minimum for continuous lookup table."},
-   {"-maximum", ARGV_FLOAT, (char *) 1, (char *) &lookup_range[1],
+   {"-maximum", ARGV_FLOAT, (char *) 1, (char *) &lookup_max,
        "Maximum for continuous lookup table."},
    {"-lookup_table", ARGV_STRING, (char *) 1, (char *) &lookup_file,
        "File containing the lookup table (use - for stdin)."},
+   {"-lut_string", ARGV_STRING, (char *) 1, (char *) &lookup_string,
+       "String containing the lookup table, with \";\" to separate lines."},
    {"-discrete", ARGV_CONSTANT, (char *) TRUE, (char *) &discrete_lookup,
        "Lookup table has discrete (integer) entries - range is ignored."},
    {"-continuous", ARGV_CONSTANT, (char *) FALSE, (char *) &discrete_lookup,
@@ -259,8 +269,8 @@ int main(int argc, char *argv[])
    outfile = argv[2];
 
    /* Get the appropriate lookup table */
-   if (lookup_file != NULL) {
-      lookup_data.lookup_table = read_lookup_table(lookup_file);
+   if ((lookup_file != NULL) || (lookup_string != NULL)) {
+      lookup_data.lookup_table = read_lookup_table(lookup_file, lookup_string);
    }
    else {
       switch (lookup_type) {
@@ -286,6 +296,10 @@ int main(int argc, char *argv[])
    if (!discrete_lookup && (lookup_range[0] == DEFAULT_RANGE)) {
       get_full_range(inmincid, lookup_range);
    }
+   if (lookup_min != DEFAULT_RANGE)
+      lookup_range[0] = lookup_min;
+   if (lookup_max != DEFAULT_RANGE)
+      lookup_range[1] = lookup_max;
 
    /* Set up lookup information */
    lookup_data.invert = invert_table;
@@ -323,16 +337,20 @@ int main(int argc, char *argv[])
 @NAME       : read_lookup_table
 @INPUT      : lookup_filename - name of file from which to read lookup table
                  ("-" means use stdin)
+              lookup_string - string from which to read lookup table if
+                 lookup_filename is NULL
 @OUTPUT     : (nothing)
 @RETURNS    : Pointer to lookup table
-@DESCRIPTION: Routine to read in a lookup table from a file or stdin.
+@DESCRIPTION: Routine to read in a lookup table from a file or stdin. If
+              the filename is NULL, then data is read from the lookup_string.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Lookup_Table *read_lookup_table(char *lookup_filename)
+public Lookup_Table *read_lookup_table(char *lookup_filename, 
+                                       char *lookup_string)
 {
    Lookup_Table *lookup_table;
    FILE *fp;
@@ -342,12 +360,16 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
    Sort_Key *sort_table;
    int need_sort;
    int old_offset, new_offset;
+   char *lut_string;
 
    /* Check for null file name */
-   if (lookup_filename == NULL) return NULL;
+   if ((lookup_filename == NULL) && (lookup_string == NULL)) return NULL;
 
    /* Open the file */
-   if (strcmp(lookup_filename, "-") == 0) {
+   if (lookup_filename == NULL) {
+      fp = NULL;
+   }
+   else if (strcmp(lookup_filename, "-") == 0) {
       fp = stdin;
    }
    else {
@@ -363,8 +385,12 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
 
    /* Read the first line and get the vector length from that*/
    nentries = 0;
-   if (fgets(line, sizeof(line), fp) == NULL) {
-      (void) fprintf(stderr, "File %s is empty.\n", lookup_filename);
+   lut_string = lookup_string;
+   if (get_next_line(line, sizeof(line), fp, &lut_string) == NULL) {
+      if (fp != NULL)
+         (void) fprintf(stderr, "Lookup file %s is empty.\n", lookup_filename);
+      else
+         (void) fprintf(stderr, "Lookup string is empty.\n");
       exit(EXIT_FAILURE);
    }
    row = get_values_from_string(line, 0, NULL, &table_nvalues);
@@ -378,7 +404,7 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
       table[ivalue] = row[ivalue];
    nentries++;
    need_sort = FALSE;
-   while (fgets(line, sizeof(line), fp) != NULL) {
+   while (get_next_line(line, sizeof(line), fp, &lut_string) != NULL) {
       (void) get_values_from_string(line, table_nvalues, row, &nvalues);
       if (nvalues != table_nvalues) {
          (void) fprintf(stderr, 
@@ -402,7 +428,9 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
    }
 
    /* Close the input file */
-   (void) fclose(fp);
+   if (fp != NULL) {
+      (void) fclose(fp);
+   }
 
    /* Do sorting if needed */
    if (need_sort) {
@@ -441,6 +469,60 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
 
    /* Return the lookup table */
    return lookup_table;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_next_line
+@INPUT      : linelen - length of line to read in
+              fp - file pointer or NULL if data should be read from a string
+              string - pointer string containing data
+@OUTPUT     : line - line that has been read in
+              string - pointer is advanced to character following ";"
+@RETURNS    : pointer to line or NULL if end of data occurs
+@DESCRIPTION: Routine to get the next line from a file or from a string
+              that uses ";" as a line separator.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : July 10, 1996 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+#define LOOKUP_LINE_SEPARATOR ';'
+private char *get_next_line(char *line, int linelen, FILE *fp, char **string)
+{
+   int count;
+
+   /* Read from the file if appropriate */
+   if (fp != NULL) {
+      return fgets(line, linelen, fp);
+   }
+
+   /* Otherwise search the string for the ";", copying characters */
+   else { 
+
+      /* Check for an empty string */
+      if (**string == '\0') return NULL;
+
+      /* Loop over characters */
+      count = 0;
+      while ((**string != '\0') && (**string != LOOKUP_LINE_SEPARATOR)) {
+         if (count < linelen-1) {
+            line[count] = **string;
+            count++;
+         }
+         (*string)++;
+      }
+
+      /* Terminate the line and move past the ";" */
+      line[count] = '\0';
+      if (**string != '\0')
+         (*string)++;
+
+      /* Return the line */
+      return line;
+
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -787,7 +869,7 @@ public void lookup_in_table(double index, Lookup_Table *lookup_table,
    vector_length = lookup_table->vector_length;
    if ((nentries < 1) || (vector_length < 1)) {
       (void) fprintf(stderr, "Bad table size %d x %d\n", 
-                     lookup_table->nentries, vector_length);
+                     nentries, vector_length);
       exit(EXIT_FAILURE);
    }
 
@@ -796,7 +878,7 @@ public void lookup_in_table(double index, Lookup_Table *lookup_table,
 
    /* Search the table for the value */
    start = 0;
-   length = lookup_table->nentries;
+   length = nentries;
    while (length > 1) {
       mid = start + length / 2;
       offset = mid*(vector_length+1);
@@ -807,6 +889,17 @@ public void lookup_in_table(double index, Lookup_Table *lookup_table,
          length = start + length - mid;
          start = mid;
       }
+   }
+
+   /* Add a special check for the end of the table */
+   if (nentries > 1) {
+      offset1 = vector_length+1;
+      offset2 = (nentries-2) * (vector_length+1);
+      if ((start == 0) && (index == lookup_table->table[offset1]))
+         start = 1;
+      else if ((start == nentries-1) && 
+               (index == lookup_table->table[offset2]))
+         start = nentries-2;
    }
 
    /* Save the value */
