@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 1.3)
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.13 $)
+AC_REVISION($Revision: 6.14 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -20,6 +20,7 @@ AC_PROG_YACC
 
 AC_HEADER_TIME
 AC_CHECK_HEADERS(sys/time.h sys/stat.h sys/wait.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h pwd.h float.h)
 
 dnl Build only static libs by default
 AC_DISABLE_SHARED
@@ -38,6 +39,9 @@ AC_REPLACE_FUNCS(strdup)
 
 dnl Verify existence of mkstemp, tempnam, and tmpnam
 AC_CHECK_FUNCS(mkstemp tempnam tmpnam)
+
+dnl Verify existence of some functions we'd like to use
+AC_CHECK_FUNCS(getpwnam select strerror)
 
 # Functions required for execute_decompress_command().
 AC_FUNC_FORK
