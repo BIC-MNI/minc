@@ -434,9 +434,12 @@ sub numaris2_read_file_info {
     $file_info{'numechos'} = &unpack_int(*meas_hdr, 512);
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
     # We cheat and use exam date for exam, getting rid of weird characters
-    ($file_info{'exam'} = &unpack_value(*ident_hdr, 52, 'A10') . "_" .
-                          substr(&unpack_value(*ident_hdr, 70, 'A14'),0,8))
-       =~ s/\W//g;
+    $file_info{'exam'} = &unpack_value(*ident_hdr, 52, 'A10');
+    if (!$Use_date_for_exam) {
+       $file_info{'exam'} .= 
+          "_" . substr(&unpack_value(*ident_hdr, 70, 'A14'),0,8);
+    }
+    $file_info{'exam'} =~ s/\W//g;
     $file_info{'series'} = &unpack_int(*patient_hdr, 112);
     $file_info{'image'} = &unpack_value(*relat_hdr, 56, 'A6') + 0;
 
@@ -644,9 +647,12 @@ sub numaris3_read_file_info {
     $file_info{'numechos'} = &acr_find_numeric(*header, 0x21, 0x1370);
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
     # We cheat and use study date for exam, getting rid of weird characters
-    ($file_info{'exam'} = &acr_find_string(*header, 0x8, 0x22) . "_" .
-                          substr(&acr_find_string(*header, 0x8, 0x32),0,8))
-       =~ s/\W//g;
+    $file_info{'exam'} = &acr_find_string(*header, 0x8, 0x22);
+    if (!$Use_date_for_exam) {
+       $file_info{'exam'} .= 
+          "_" . substr(&acr_find_string(*header, 0x8, 0x32),0,8);
+    }
+    $file_info{'exam'} =~ s/\W//g;
     if (length(&acr_find_string(*header, 0x20, 0x11)) > 0) {
        $file_info{'series'} = &acr_find_numeric(*header, 0x20, 0x11);
     }
@@ -845,6 +851,26 @@ sub siemens_get_image_cmd {
 *initialize_tape_drive = *siemens_initialize_tape_drive;
 *read_file_info = *siemens_read_file_info;
 *get_image_cmd = *siemens_get_image_cmd;
+
+# Check for siemens-specific arguments
+$Use_date_for_exam = 0;
+@args_to_remove = ();
+foreach $i (0..$#ARGV) {
+   $_ = $ARGV[$i];
+   if (/^-h(elp)?$/) {
+      warn 
+"Siemens-specific options:
+ -use_date_for_exam:\tUse only the date to identify the exam, not the time
+";
+   }
+   elsif (/^-use_date_for_exam$/) {
+      $Use_date_for_exam = 1;
+      push(@args_to_remove, $i);
+   }
+}
+foreach $i (reverse(@args_to_remove)) {
+   splice(@ARGV, $i, 1);
+}
 
 &mri_to_minc(@ARGV);
 
