@@ -32,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.7 1992-12-01 16:29:52 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.8 1992-12-04 08:29:25 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -990,7 +990,7 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       /* Increment the start counter */
       chunk_start[firstdim] += chunk_count[firstdim];
       for (idim=firstdim; 
-           (idim>0) && (chunk_start[idim]>var_end[idim]); idim--) {
+           (idim>0) && (chunk_start[idim]>=var_end[idim]); idim--) {
          chunk_start[idim]=var_start[idim];
          chunk_start[idim-1]++;
       }
