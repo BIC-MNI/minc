@@ -15,7 +15,6 @@ HEADERS = minc.h minc_routines.h minc_varlists.h minc_basic.h \
 
 # Compiler and loader options
 CDEFINES = 
-LDOPT    = -L$(NETCDF_LIB_DIR) -lnetcdf $(MACHINE_LDOPT)
 
 # --------------------------------------------------------------------
 
