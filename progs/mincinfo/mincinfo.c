@@ -8,7 +8,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: mincinfo.c,v $
+@MODIFIED   : Revision 1.8  1993-08-11 15:22:19  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.7 1993-07-21 12:47:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.8 1993-08-11 15:22:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>

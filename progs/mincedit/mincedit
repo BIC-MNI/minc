@@ -4,6 +4,12 @@
 #
 # Usage: mincedit <minc file> [<editor>]
 #
+# Modifications: $Log: mincedit,v $
+# Modifications: Revision 1.4  1993-08-11 15:19:09  neelin
+# Modifications: Added RCS logging in source.
+# Modifications:
+#
+#
 # Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
 # Montreal Neurological Institute, McGill University.
 # Permission to use, copy, modify, and distribute this
