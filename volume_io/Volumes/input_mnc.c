@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.35 1995-03-21 19:01:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.36 1995-03-30 21:14:46 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -10,11 +10,6 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mn
 #define  MIN_SLAB_SIZE   10000      /* at least 10000 entries per read */
 #define  MAX_SLAB_SIZE   200000     /* no more than 200 K at a time */
 
-private  void  create_world_transform(
-    Point       *origin,
-    Vector      axes[N_DIMENSIONS],
-    Real        axis_spacing[N_DIMENSIONS],
-    Transform   *transform );
 private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
     char              *volume_dimension_names[],
