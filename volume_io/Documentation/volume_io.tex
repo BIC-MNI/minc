@@ -1,6 +1,7 @@
 \documentstyle{report}
 
-\title{Programmer's Reference for the MNI Volume IO Library}
+\title{Programmer's Reference for the \\
+MNI Volume IO Library}
 \author{David MacDonald}
 
 \newcommand{\path}{{\bf\tt /nil/david/Release/MNI\_lib}}
@@ -30,41 +31,43 @@ The library comprises a set of functions for reading and writing
 volumes of medical imaging data, as well as some general support
 routines useful to many programming tasks.  All images at the Brain
 Imaging Centre are stored on disk in a format called {\bf MINC}, which
-stands for {\bf Medical Image Net CDF}.  More information on this
-format is available in related documentation concerning the format and
+stands for {\bf Medical Image Net CDF}.  More information 
+is available in related documentation specifically concerning this
+format and
 the MINC library of routines used to read and write MINC files.  The
-Volume IO library is a library built on top of the MINC library to
-provide easy access to MINC files, without having to learn too much of
-the details of the MINC library.  It provides a structure for internal
+Volume IO library is built on top of the MINC library to
+provide easy access to MINC files for most general operations, without
+having to learn too much of
+the details of the MINC library, which is a comprehensive system which
+handles every conceivable case.  It provides a structure for internal
 storage of volumes and routines to access and modify volumes.  In
 addition, it provides routines to manipulate tag points and
 transformations and to perform input and output on these objects in
 the standardized formats of the Brain Imaging Centre.
 
-This document describes where to find the Volume IO library, how to
-integrate it into a user's programs, and what functionality
-is provided.  The library is written in C source code, and is designed
+This document describes where to find the Volume IO library,
+what functionality is provided, and
+how to integrate it into a user's programs.
+The library is written in C source code, and is designed
 to be linked with C source.  It makes calls to three other libraries:
-\name{MINC}, \name{netcdf}, and \name{recipes}, the library associated
-with the Numerical Recipes handbook.
+\name{MINC}, \name{netcdf} (a public domain portable file format
+manager), and \name{recipes} (the library associated
+with the Numerical Recipes handbook).
 
 \chapter{Compiling and Linking}
 
-The relevent directory is \path.  In this directory is the library,
+The relevant directory is \path.  In this directory is the library,
 \name{libvolume\_io.a}, and the related include files in the directory
 \name{Include}.  In order to compile a program using the Volume IO
-library, it is necessary to not only specify this include directory on
-the compile line, but also the include directories for the three
-libraries called by Volume IO, \name{MINC}, \name{netcdf}, and
-\name{recipes}.  The path for these is most likely \name{/usr/local/include},
-which is automatically in the search path, so the compile line would look like:
+library, it is necessary to specify this include directory on
+the compile line:
 {\bf\begin{verbatim}
         cc -prototypes -I/nil/david/Release/MNI_lib/Include \
            -c test_volume_io.c
 \end{verbatim}}
 
 Source files making calls to Volume IO functions must have the
-following line at the top, to include the relevent type definitions and
+following line at the top, to include the relevant type definitions and
 prototypes:
 
 {\bf\begin{verbatim}
@@ -78,7 +81,8 @@ specified:
            -L/nil/david/Release/MNI_lib -lmni \
            -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
 \end{verbatim}}
-The three libraries are usually in /usr/local/lib, which is
+The three libraries, \name{minc}, \name{netcdf}, and \name{recipes},
+are usually in /usr/local/lib, which is
 automatically in the search path.  The \name{-lm} option includes the
 math library, which is sometimes called by the Volume IO library.  The
 \name{-lsun} library provides network support useful to all programs.
@@ -91,13 +95,14 @@ In order to use this library, one must become accustomed to certain
 subtleties of style, some of which are peculiar to the author of this
 software and some of which have evolved in ways dependent on history
 of the software.  Therefore, it is important to note the following
-style-related issues.
+style-related issues, for which no apologies are forthcoming.
 
-\subsection{Global Variables}
+\section{Global Variables}
 
 The philosophy that global variables are generally a bad idea has been
-adopted.  In general, global variables hide the behaviour of a
-function, and it is preferable to specify all relevent information to
+adopted.  In many cases, using global variables within functions
+hides the behaviour of a function, and therefore,
+it is preferable to specify all relevant information to
 a function in the argument list, rather than relying on any global
 variables.  Secondly, modification of a global variable by a given function
 precludes the use of this function in a multi-threaded environment
@@ -108,27 +113,28 @@ many arguments to a function.  This seems a small price to pay, in
 return for the ability to see all factors controlling
 the behaviour of each function in the argument list.
 
-\subsection{Identifier Names}
+\section{Identifier Names}
 
 The implementer of this library has an affinity to typing large
-amounts of texts, and generally dislikes abbreviations.  As a result,
+amounts of text, and generally dislikes abbreviations.  As a result,
 the function and variable names occurring in the Volume IO library may
-be quite verbose.  In general, one will never see functions with names
+be quite verbose, almost to the point of being complete grammatically
+correct sentences.  In general, one will never see functions with names
 such as \name{rem\_garb()}.  Instead, functions are more likely to have
 names such as \name{remove\_garbage()}, and, in many cases, even
 \name{take\_garbage\_to\_curb()}.  As a result, the user of the Volume IO
-library will have to type longer than usual function and variable
+library will have to type longer-than-usual function and variable
 names, but hopefully will have a clearer insight into the associated
 functionality.
 
-\subsection{Structure Arguments}
+\section{Structure Arguments}
 
 There are many objects defined throughout the library as structures of
 varying and possibly large sizes.  Due to the inefficiency of passing
 structures by value (copying the whole structure to a function),
 structures are generally passed to functions by reference.  Because of
 this, there is always a potential to pass an invalid pointer to a
-function expecting a pointer to a structure.  The following examples
+function which expects a pointer to a structure.  The following examples
 illustrate the right and wrong ways to use such a function.  Given a
 structure and a library function which initializes it,
 \begin{verbatim}
@@ -139,10 +145,7 @@ typedef  struct
 
 void    initialize( struct  big_struct   *s )
 {
-    s->a = 1;
-    s->b = 2;
-    s->c = 3;
-    s->d = 4;
+    s->a = 1;   s->b = 2;   s->c = 3;    s->d = 4;
 }
 \end{verbatim}
 the incorrect method of using this function is:
@@ -165,14 +168,17 @@ int  main()
     initialize( &s );
 }
 \end{verbatim}
+Alternately, the incorrect example above could have been corrected by
+allocating the \name{s} pointer before calling \name{initialize}.
 
 \chapter{Types and Macros}
 
-There are several types and macros defined for used with the Volume IO
-library.  All functions in the library are prefixed with either the
-word \name{public} or \name{private}, which indicates whether the
+There are several types and macros defined for use with the Volume IO
+library.  All function declarations in the library are preceded with either
+the word \name{public} or \name{private}, which indicates whether the
 function is accessible from outside the file in which it resides.
-They are defined as follows:
+Users of the library will only be interested in those functions
+preceded by \name{public}.  They are defined as follows:
 {\bf\begin{verbatim}
         #define  public
         #define  private   static
@@ -230,8 +236,8 @@ various XYZ structures.}
         }
 \end{verbatim}}
 
-\definemacro{ROUND( x )}{returns the nearest integer to the value.  If
-halfway in between, returns the higher of the two.}
+\definemacro{ROUND( x )}{returns the nearest integer to the \name{x}.  If
+halfway in between two integers, returns the higher of the two.}
 
 \definemacro{IS\_INT( x )}{returns \name{TRUE} if the real argument is exactly an integer.}
 
@@ -277,10 +283,12 @@ $\left[ i , j , k \right]$ of a 3-D \name{ni} by \name{nj} by
 
 \definemacro{for\_less( i, start, end )}{performs a for loop where \name{i}
 starts at \name{start} and increments until it is greater than or
-equal to \name{end}}
+equal to \name{end}.
+Equivalent to \name{for( i = start;  i < end; ++i )}.}
 
 \definemacro{for\_inclusive( i, start, end )}{performs a for loop where \name{i}
-starts at \name{start} and increments until it is greater than \name{end}}
+starts at \name{start} and increments until it is greater than \name{end}.
+Equivalent to \name{for( i = start;  i <= end; ++i )}.}
 
 \definemacro{GLUE(x,y)}{Special C source macro to stick two different
 identifiers together, i.e., \name{GLUE(colour,\_name)} results in
@@ -292,7 +300,7 @@ identifiers together, i.e., \name{GLUE(a,b,c)} results in \name{abc}.}
 \chapter{Programming Utilities}
 
 A set of functions which are useful for general purpose, portable
-programming are provided.  These include such basic areas as strings,
+programming is provided.  These include such basic areas as strings,
 time, file IO, etc.  Many parts of the Volume IO library refer
 to the programming utilities, and it is advisable that users of the
 Volume IO library try to use these functions whenever convenient.
@@ -340,7 +348,8 @@ public  BOOLEAN  get_string_argument(
     char   *value[] )
 \end{verbatim}}
 
-\desc{checks if an argument exists and is of the desired type.  If so,
+\desc{checks if there is a current argument and that it
+is of the desired type.  If so,
 then it assigns the appropriate \name{value}, advances to the next
 argument, and returns \name{TRUE}.  Otherwise, the default value is assigned
 to the \name{value} and the current argument is not advanced.}
@@ -352,7 +361,7 @@ public  BOOLEAN  get_prefix_argument(
 
 \desc{checks if the next argument starts with the given prefix and if so,
 advances to the point in the argument just after the end of the prefix, or
-to the next argument, if there are no characters after the prefix.
+to the next argument if there are no characters after the prefix.
 Returns \name{TRUE} if the command line argument starts with the prefix.}
 
 \section{Colour Manipulation}
@@ -456,7 +465,7 @@ public  void  rgb_to_hsl(
     Real    *l )
 public  void  hsl_to_rgb(
     Real   h,
-    Real   sl,
+    Real   s,
     Real   l,
     Real   *r,
     Real   *g,
@@ -542,9 +551,10 @@ public  void  expand_filename(
 
 \desc{Searches the argument \name{filename} for certain patterns, and
 expands them appropriately, storing the resulting expanded filename in
-the second argument, \name{expanded\_filename}.  Any sequence of
+the second argument, \name{expanded\_filename}, which must be a
+different string pointer.  Any sequence of
 characters starting with a \name{\~\ } up to but not including a slash,
-\name{\/}, will be changed to the current users home directory.  Note
+\name{/}, will be changed to the current users home directory.  Note
 that this will only work properly if the \name{\~\ } is used alone, or
 in conjunction with the current user's user name.  For example,
 if user \name{john} passes this routine a filename of
@@ -593,7 +603,7 @@ public  void  get_absolute_filename(
     char    abs_filename[] )
 \end{verbatim}}
 
-\desc{Given a filename and a current directory, constructs and
+\desc{Given a filename and a current directory, constructs an
 absolute filename (one starting with a slash, \name{/}.}
 
 {\bf\begin{verbatim}
@@ -601,18 +611,14 @@ public  BOOLEAN  file_exists(
     char        filename[] )
 \end{verbatim}}
 
-\desc{Returns \name{TRUE} if the file exists, \name{FALSE} otherwise.  The filename
-may contain the home directory character, \name{\~\ }, and environment
-variables, such as \name{\$PET\_IMAGE}.}
+\desc{Returns \name{TRUE} if the file exists, \name{FALSE} otherwise.}
 
 {\bf\begin{verbatim}
 public  void  remove_file(
     char  filename[] )
 \end{verbatim}}
 
-\desc{Removes the specified file.  The filename
-may contain the home directory character, \name{\~\ }, and environment
-variables, such as \name{\$PET\_IMAGE}.}
+\desc{Removes the specified file.}
 
 {\bf\begin{verbatim}
 public  void  unlink_file(
@@ -664,14 +670,15 @@ public  Status  set_file_position(
 \end{verbatim}}
 
 \desc{Seeks to the specified position in the file, where 0 corresponds
-to the beginning of the file.}
+to the beginning of the file, returning \name{OK} if successful.}
 
 {\bf\begin{verbatim}
 public  Status  flush_file(
     FILE     *file )
 \end{verbatim}}
 
-\desc{Flushes the file buffer of any pending output.}
+\desc{Flushes the file buffer of any pending output, returning
+\name{OK} if successful.}
 
 {\bf\begin{verbatim}
 public  Status  input_character(
@@ -719,9 +726,9 @@ public  Status  input_string(
 
 \desc{Inputs a string from the file, where the maximum storage of the
 string is specified by the argument \name{string\_length}.  The file
-is read into the string until either the termination character or and
-newline character is found.  If the string ends at an newline
-character and the termination character is not an newline, the
+is read into the string until either the termination character or a
+newline character is found.  If the string ends at a newline
+character and the termination character is not a newline, the
 next character available from the file will be the newline
 character.  Otherwise, the next character available is the one just
 after the termination character found.
@@ -751,7 +758,8 @@ public  Status  input_line(
 \desc{Inputs characters from the file into the argument \name{line},
 up until the next newline character, or until \name{str\_length}
 characters have been read.  If a newline was found, the next available
-character will be the one after the newline.}
+character will be the one after the newline.  The newline character is
+not stored in the string.}
 
 {\bf\begin{verbatim}
 public  Status  input_boolean(
@@ -773,15 +781,15 @@ public  Status  input_unsigned_short(
     FILE            *file,
     unsigned short  *s )
 public  Status  input_int(
-    FILE  *file,
-    int   *i )
+    FILE            *file,
+    int             *i )
 public  Status  input_real(
     FILE            *file,
     Real            *r )
 public  Status  input_float(
     FILE            *file,
     float           *f )
-ublic  Status  input_double(
+public  Status  input_double(
     FILE            *file,
     double          *d )
 \end{verbatim}}
@@ -824,7 +832,8 @@ public  Status  output_string(
     char  str[] )
 \end{verbatim}}
 
-\desc{Outputs the specified string to the file.}
+\desc{Outputs the specified string to the file, returning \name{OK} or
+\name{ERROR}.}
 
 {\bf\begin{verbatim}
 public  Status  output_quoted_string(
@@ -874,7 +883,7 @@ public  Status  output_double(
     double          d )
 \end{verbatim}}
 
-\desc{Outputs the specified value to an ascii file.}
+\desc{Outputs a space and then the specified value to an ascii file.}
 
 {\bf\begin{verbatim}
 public  Status  output_binary_data(
@@ -884,7 +893,7 @@ public  Status  output_binary_data(
     int             n )
 \end{verbatim}}
 
-\desc{Outputs an array of data from a file, in binary format.  The
+\desc{Outputs an array of data to a file, in binary format.  The
 array contains \name{n} elements, each of size \name{element\_size}.
 Returns either \name{OK} or \name{ERROR}.}
 
@@ -945,7 +954,7 @@ public  Status  io_unsigned_short(
     IO_types        io_flag,
     File_formats    format,
     unsigned short  *unsigned_short )
-ublic  Status  io_unsigned_char(
+public  Status  io_unsigned_char(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -954,7 +963,8 @@ public  Status  io_int(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
-    int             *i )public  Status  io_real(
+    int             *i )
+public  Status  io_real(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -1037,7 +1047,8 @@ usually the main program file, as follows:
 #include  <globals.h>
 \end{verbatim}}
 which creates a global variable lookup table called
-\name{my\_globals}.  Relevent functions for global variables are:
+\name{my\_globals} (any name may be chosen for this table).
+Relevant functions for global variables are:
 
 
 {\bf\begin{verbatim}
@@ -1179,6 +1190,11 @@ memory for the first part of the structure.  An example of usage is:}
                    }                    *ptr;
 
             ALLOC_VAR_SIZED_STRUCT( ptr, char, 10 );
+
+            ptr->a = 1;
+            ptr->b = 2.5;
+            ptr->data[0] = 'a';
+            ptr->data[9] = 'i';
         }
 \end{verbatim}
 
@@ -1210,7 +1226,7 @@ one memory allocation for each dimension required.}
 
 In addition to the basic memory allocation macros described previously,
 a set of useful macros for dealing with arrays of dynamically changing
-size.
+size are provided:
 
 {\bf\begin{verbatim}
     SET_ARRAY_SIZE( array, previous_n_elems, new_n_elems,
@@ -1218,7 +1234,8 @@ size.
 \end{verbatim}}
 
 \desc{This macro increases or decreases the size of an array, by
-specifying the number of elements previously allocated to the array.
+specifying the number of elements previously allocated to the array
+(starts out at zero).
 The \name{chunk\_size} argument defines the size of the memory chunks which
 are allocated.  For instance, if \name{chunk\_size} is 100, then this
 macro will only reallocate the array if the size change crosses to a
@@ -1226,7 +1243,7 @@ different multiple of 100, thus avoiding memory allocation every time
 it is called.  This specification of the granularity of the memory
 allocation must be consistently specified; if this macro is called
 with a given variable and chunk size, then subsequent calls to this
-macro with same variable must specify the same chunk size.  Note also
+macro with the same variable must specify the same chunk size.  Note also
 that the number passed in as \name{new\_n\_elems} must be passed in as
 \name{previous\_n\_elems} on the next call to this macro.}
 
@@ -1236,7 +1253,7 @@ that the number passed in as \name{new\_n\_elems} must be passed in as
 \end{verbatim}}
 
 \desc{Adds the argument \name{elem\_to\_add} to the array at the
-\name{n\_elems}'th index, then incrementing \name{n\_elems}. The
+\name{n\_elems}'th index, then increments \name{n\_elems}. The
 argument \name{chunk\_size} specifies the granularity of memory
 allocation.}
 
@@ -1295,14 +1312,14 @@ public  int  solve_quadratic(
     Real   a,
     Real   b,
     Real   c,
-    Real   *solution1,
-    Real   *solution2 )
+    Real   *root1,
+    Real   *root2 )
 \end{verbatim}}
 
 \desc{Finds the real roots of the equation $a * x^2 + b * x + c$.
 Returns either 0, 1, or 2, indicating the number of unique real roots,
-which are passed back either the argument \name{solution1}, or in both
-arguments, \name{solution1} and \name{solution2}.}
+which are passed back either in the argument \name{root1}, or in both
+arguments, \name{root1} and \name{root2}.}
 
 {\bf\begin{verbatim}
 public  int solve_cubic(
@@ -1310,12 +1327,12 @@ public  int solve_cubic(
     Real   b,
     Real   c,
     Real   d,
-    Real   s[ 3 ] )
+    Real   roots[ 3 ] )
 \end{verbatim}}
 
 \desc{Finds the real roots of the equation $a * x^3 + b * x^2 + c * x
 + d$.  Returns the number of unique real solutions, and passes them
-back in the array \name{s}.}
+back in the array \name{roots}.}
 
 {\bf\begin{verbatim}
 public  Real  evaluate_polynomial(
@@ -1398,7 +1415,7 @@ public  void  terminate_progress_report(
 A simple random number package is provided, which produces a sequence
 of pseudo-random numbers based on a seed value, which totally
 determines the entire sequence of numbers.  If the user does not set a
-seed, a seed is automatically created by the current time and date.
+seed, a seed is automatically created from the current time and date.
 
 {\bf\begin{verbatim}
 public  void  set_random_seed(
@@ -1442,8 +1459,8 @@ public    void   strip_blanks(
 \end{verbatim}}
 
 \desc{Removes leading and trailing blanks from the string, placing the
-result in the argument \name{stripped}.  Works correctly even if both
-arguments refer to the same string.}
+result in the argument \name{stripped}.
+Correctly handles case where the two string arguments point to the same memory.}
 
 {\bf\begin{verbatim}
 public  void  get_upper_case_string(
@@ -1451,8 +1468,8 @@ public  void  get_upper_case_string(
     char    upper_case[] )
 \end{verbatim}}
 
-\desc{Converts the string to an all upper case string.  Correctly
-handles case where the two string arguments point to the same memory.}
+\desc{Converts the string to an all upper case string.
+Correctly handles case where the two string arguments point to the same memory.}
 
 {\bf\begin{verbatim}
 public  int  find_character(
@@ -1550,7 +1567,7 @@ public  void  format_time(
 \end{verbatim}}
 
 \desc{Takes a time in seconds and a format string which has format
-components, i.e. "%g %s", and prints the time into the string
+components, i.e. ``\%g \%s'', and prints the time into the string
 \name{str}, in appropriate units of milliseconds, seconds, minutes,
 days, etc.}
 
@@ -1576,7 +1593,7 @@ Systems this will be to the nearest hundredth of a second.}
 \chapter{Volumes}
 
 Processing tasks within the lab where this software was developed
-deals with multidimensional volumes of data such as created by
+deal with multi-dimensional volumes of data such as created by
 Magnetic Resonance and PET scanners.  Therefore, an extensive set of
 routines is provided to represent volumes, and to read and write
 volumes in the MINC format.
@@ -1590,10 +1607,10 @@ allocated.  Alternately, a volume may be automatically created by
 calling the appropriate function to read a MINC file and create a
 volume.
 
-A volume has an associated dimension, which must be in the range
+A volume has an associated number of dimensions, which must be in the range
 from one to five, but typically is three.  The volume is thought of as
-multidimensional array of any of a variety of types, including all
-sizes of integer and real C scalar types.  Even though a volume may be
+a multi-dimensional array of any of a variety of types, including all
+sizes of integer and real types.  Even though a volume may be
 stored in a 1 byte type, with values from zero to 255, there is an
 optional real value mapping, which provides a mapping to any arbitrary
 real range.  In this way, the real range may be any valid real
@@ -1620,19 +1637,20 @@ public  Status  input_volume(
 \end{verbatim}}
 
 \desc{This routine reads a volume from a MINC file, first creating
-the volume if the \name{create\_volume\_flag} is specified.  The
+the volume if the \name{create\_volume\_flag} is specified as
+\name{TRUE} (the usual case).  The
 number of dimensions is the desired number of dimensions for the
 volume.  If this is less than the number of dimensions in the file,
 then only the first part of the file, corresponding to this number of
-dimensions is read.  The argument \name{dim\_names} specifies in what
+dimensions, is read.  The argument \name{dim\_names} specifies in what
 order the volume is to be stored in the volume variable.  For each
 dimension in the stored volume, there is a corresponding name, which
 is one of \name{MIxspace}, \name{MIyspace}, \name{MIzspace},
 \name{ANY\_SPATIAL\_DIMENSION}, or an empty string.  These are matched
 up with corresponding dimensions in the file and the dimension
 ordering of the volume array is reordered on input.  So, if the user
-wishes to represent the volume in X-Z-Y order, then the the value of
-the \name{dim\_names} array should be the three strings,
+wishes to represent the volume in X-Z-Y order, then the value passed
+as the \name{dim\_names} array should be the three strings,
 ``\name{MIxspace}'', ``\name{MIzspace}'', and ``\name{MIyspace}''.}
 
 \desc{The four arguments, \name{volume\_nc\_data\_type},
@@ -1648,7 +1666,7 @@ desired, otherwise, it is \name{FALSE}.  The \name{volume\_voxel\_min}
 and \name{volume\_voxel\_max} specify the range of valid voxel values,
 and are usually set equal to indicate to use the full range of the
 type, e.g. zero to 255.0 for unsigned \name{NC\_BYTE}.
-If \name{NC\_UNSPECIFIED} is passed, then the type, sign. and voxel
+If \name{NC\_UNSPECIFIED} is passed, then the type, sign, and voxel
 range in the file are used.}
 
 \desc{If the \name{create\_volume\_flag} is \name{TRUE}, the usual
@@ -1711,7 +1729,7 @@ public  Status  output_volume(
 \end{verbatim}}
 
 \desc{Outputs the specified volume to the specified filename.  If the
-argument \name{file\_nc\_data\_type} is \name{NC\_SPECIFIED} then the
+argument \name{file\_nc\_data\_type} is \name{NC\_UNSPECIFIED} then the
 volume is stored in the MINC file in the same type as in the volume
 variable.  Otherwise, the four arguments, \name{file\_nc\_data\_type},
 \name{file\_signed\_flag}, \name{file\_voxel\_min}, and
@@ -1730,7 +1748,7 @@ public  void  set_default_minc_output_options(
 
 \desc{Sets the \name{options} structure to the default values.  The
 user can then override the default values and pass the structure to
-the \name{output\_volume} function.  Currently, there are no output
+the \name{output\_volume()} function.  Currently, there are no output
 options, but this function exists as a place holder for future
 revisions.}
 
@@ -1752,7 +1770,7 @@ public  Status  output_modified_volume(
 \end{verbatim}}
 
 \desc{The only difference between this function and the other method
-of volume output (\name{output\_volume}), is that this function copies
+of volume output (\name{output\_volume()}), is that this function copies
 auxiliary data from the original file (\name{original\_filename}) to
 the new file.  This auxiliary data includes such items as patient
 name and other scanning data, and is not read into a volume, so the
@@ -1783,33 +1801,34 @@ if the volume is three
 dimensional, then the final two arguments are ignored.}
 
 {\bf\begin{verbatim}
-    GET_VOXEL_1D( value, volume, v1 )
-    GET_VOXEL_2D( value, volume, v1, v2 )
-    GET_VOXEL_3D( value, volume, v1, v2, v3 )
-    GET_VOXEL_4D( value, volume, v1, v2, v3, v4 )
-    GET_VOXEL_5D( value, volume, v1, v2, v3, v4, v5 )
+GET_VOXEL_1D( value, volume, v1 )
+GET_VOXEL_2D( value, volume, v1, v2 )
+GET_VOXEL_3D( value, volume, v1, v2, v3 )
+GET_VOXEL_4D( value, volume, v1, v2, v3, v4 )
+GET_VOXEL_5D( value, volume, v1, v2, v3, v4, v5 )
 \end{verbatim}}
 
-\desc{Given a volume and the required number of voxel indices for the
+\desc{More convenient versions of \name{GET\_VOXEL}.  Given a volume and
+the required number of voxel indices for the
 volume, assigns the corresponding voxel value to the argument
 \name{value}.}
 
 {\bf\begin{verbatim}
-    CONVERT_VOXEL_TO_VALUE( volume, voxel )
+CONVERT_VOXEL_TO_VALUE( volume, voxel )
 \end{verbatim}}
 
 \desc{Given a volume and a voxel value, converts this to a value in
 the real range, and returns it.}
 
 {\bf\begin{verbatim}
-    CONVERT_VALUE_TO_VOXEL( volume, value )
+CONVERT_VALUE_TO_VOXEL( volume, value )
 \end{verbatim}}
 
 \desc{Given a volume and a real value, converts this to a voxel value in
 the valid voxel range, and returns it.}
 
 {\bf\begin{verbatim}
-    GET_VALUE( value, volume, v1, v2, v3, v4, v5 )
+GET_VALUE( value, volume, v1, v2, v3, v4, v5 )
 \end{verbatim}}
 
 \desc{Given a volume and from one to five voxel indices, depending on
@@ -1819,14 +1838,15 @@ which may be of any type.  For instance, if the volume is three
 dimensional, then the final two arguments are ignored.}
 
 {\bf\begin{verbatim}
-    GET_VALUE_1D( value, volume, v1 )
-    GET_VALUE_2D( value, volume, v1, v2 )
-    GET_VALUE_3D( value, volume, v1, v2, v3 )
-    GET_VALUE_4D( value, volume, v1, v2, v3, v4 )
-    GET_VALUE_5D( value, volume, v1, v2, v3, v4, v5 )
+GET_VALUE_1D( value, volume, v1 )
+GET_VALUE_2D( value, volume, v1, v2 )
+GET_VALUE_3D( value, volume, v1, v2, v3 )
+GET_VALUE_4D( value, volume, v1, v2, v3, v4 )
+GET_VALUE_5D( value, volume, v1, v2, v3, v4, v5 )
 \end{verbatim}}
 
-\desc{Given a volume and the required number of voxel indices for the
+\desc{More convenient versions of \name{GET\_VALUE}.
+Given a volume and the required number of voxel indices for the
 volume, assigns the corresponding real value to the argument
 \name{value}.  This is the most efficient method to access the volume
 values (as compared to the \name{GET\_VALUE} macro, for instance).
@@ -1834,7 +1854,7 @@ Typically, the \name{GET\_VALUE\_3D} macro is used for
 most applications.}
 
 {\bf\begin{verbatim}
-    SET_VOXEL( volume, v1, v2, v3, v4, v5, value )
+SET_VOXEL( volume, v1, v2, v3, v4, v5, value )
 \end{verbatim}}
 
 \desc{Given a volume, one to five voxel indices, and a \name{voxel}
@@ -1856,7 +1876,7 @@ public  nc_type  get_volume_nc_data_type(
     BOOLEAN      *signed_flag )
 \end{verbatim}}
 
-\desc{Returns the storage type of the volume (e.g. \name{NC\_SHORT}),
+\desc{Returns the storage type of the volume (for instance, \name{NC\_SHORT}),
 and passes back an indication of whether it is signed or unsigned.}
 
 {\bf\begin{verbatim}
@@ -2009,7 +2029,7 @@ world coordinate system.}
 
 \section{Volume Creation from Scratch}
 
-In some circumstances, it is desireable to create volumes in ways
+In some circumstances, it is desirable to create volumes in ways
 other than reading from a file.  The following functions provide
 methods to create a volume from scratch or to create a volume which is
 similar to an existing volume.
@@ -2024,7 +2044,7 @@ public   Volume   create_volume(
     Real        voxel_max )
 \end{verbatim}}
 
-\desc{Creates and returns a volume of the given type (e.g.
+\desc{Creates and returns a volume of the given type (for instance,
 \name{NC\_BYTE}, \name{signed\_flag} equal \name{FALSE}), and given
 valid voxel range.  The \name{dimension\_names} is used to describe
 each dimension of the volume and is currently only used when writing
@@ -2083,7 +2103,7 @@ public  void  set_volume_separations(
 \end{verbatim}}
 
 \desc{Sets the inter-voxel separations in each of the volume
-dimensions.  Note that this will cause the voxel to world
+dimensions.  Note that this will cause the voxel-to-world
 transformation to be updated accordingly.}
 
 {\bf\begin{verbatim}
@@ -2093,10 +2113,10 @@ public  void  set_volume_translation(
     Real    world_space_voxel_maps_to[] )
 \end{verbatim}}
 
-\desc{Sets the translation portion of the voxel to world
+\desc{Sets the translation portion of the voxel-to-world
 transformation.  A voxel coordinate is specified (\name{voxel}), as
 well as a real world position to which it is desired that this voxel
-map (\name{world\_space\_voxel\_maps\_to}).  The voxel to world
+map (\name{world\_space\_voxel\_maps\_to}).  The voxel-to-world
 transformation is updated to provide this mapping.}
 
 {\bf\begin{verbatim}
@@ -2127,7 +2147,7 @@ public  Volume   copy_volume_definition(
 \end{verbatim}}
 
 \desc{Creates and returns a new volume which has the same definition
-(sizes, voxel to world space transform, etc.), as an existing volume.
+(sizes, voxel-to-world space transform, etc.), as an existing volume.
 If the argument \name{nc\_data\_type} is not \name{NC\_UNSPECIFIED},
 then the storage type of the new volume differs from the original and
 is specified by \name{nc\_data\_type}, \name{signed\_flag},
@@ -2138,8 +2158,6 @@ but not initialized.}
 
 An examples of reading, writing, and manipulating volumes is
 presented here.
-
-\subsection{Program to Read, Modify, and Write Volumes}
 
 This is a complete program to read a MINC volume, change all values
 over 100.0 to 100.0, then write out the result in a new file.
@@ -2200,16 +2218,16 @@ Tag points are sets of three dimensional points which are used to mark
 positions of interest.  Generally these result from manually locating
 corresponding positions in multiple volumes to provide a mapping among
 the volumes.  Tag points are stored in an ascii format devised at the
-McConnell Brain Imaging Centre, with convention of filenames ending in
+McConnell Brain Imaging Centre, with a convention of filenames ending in
 \name{.tag}.  A tag file can contain either sets of single tag points
 or two tag points, depending on whether the file corresponds to one or
 two volumes.  Each tag point consists of three coordinates, x, y, and
 z.  Each set of one or two tag points has additional optional
 information stored with it.  A tag point set may or may not include a
-set of three values, a real valued weight, an integer structure id,
+set of three values:  a real valued weight, an integer structure id,
 and an integer patient id.  A tag point may or may not include a label
-string.  Functions are provided to read and write files of this
-format are provided:
+string.  Functions to read and write files of this
+format are described:
 
 {\bf\begin{verbatim}
 public  Status  input_tag_points(
@@ -2234,7 +2252,7 @@ public  Status  input_tag_file(
     char      ***labels )
 \end{verbatim}}
 
-\desc{These two functions input a set of tag points from a file.  The
+\desc{These two functions read a set of tag points from a file.  The
 first form assumes the file is already open and will be closed by the
 calling function, while the second form
 opens and closes the file specified by a filename, with a default
@@ -2291,19 +2309,19 @@ public  Status  output_tag_file(
     char      **labels )
 \end{verbatim}}
 
-\desc{These two functions output a list of tag points to a tag point
+\desc{These two functions write a list of tag points to a tag point
 file.  The first form assumes that the file has already been opened
 and will be closed later by the calling function, while the second
 form opens and closes the file, with the default extension of
 \name{.tag}.  The \name{comments} argument is any arbitrary string
 documenting the contents of this file.  The number of volumes
 (\name{n\_volumes}) must be either one or two.  The number of tag
-points is specified by the argument \name{n\_tag\_points}.  The actual
+points is specified by the argument \name{n\_tag\_points}.  The
 positions of the sets of one or two tag points are in the arguments
 \name{tags\_volume1} and \name{tags\_volume2}.  If any of the three
 arguments, \name{weights}, \name{structure\_ids}, or
 \name{patient\_ids}, are specified as \name{NULL}, then none of these
-three pieces or information are written to the file.  Similarly, if
+three pieces or information is written to the file.  Similarly, if
 the \name{labels} argument is \name{NULL}, then no labels are written
 to the file.}
 
@@ -2483,7 +2501,7 @@ public  void  transform_vector(
 \desc{Transforms a three dimensional vector by the given transform,
 passing back the three transformed coordinates.  The only difference
 between transforming a point and a vector is that transforming a
-vector does not include the translational component of the transform.}
+vector does not involve the translational component of the transform.}
 
 {\bf\begin{verbatim}
 public  void  inverse_transform_point(
@@ -2522,7 +2540,7 @@ public  void   concat_transforms(
     Transform   *t2 )
 \end{verbatim}}
 
-\desc{Multiplies the two matrices \name{t1} and \name{t2}, storing the
+\desc{Multiplies the two transforms \name{t1} and \name{t2}, storing the
 product in \name{result}.  Transforming a point by \name{result} is
 equivalent to transforming the point by \name{t1}, then transforming
 the result by \name{t2}.}
@@ -2566,7 +2584,7 @@ which provides a smooth non-linear mapping of a multidimensional
 space.  The \name{points} argument is an array of size
 \name{n\_points} by \name{n\_dimensions}, representing a set of points.
 The \name{displacements} is a (\name{n\_points} + \name{n\_dimensions}
-+ 1) by \name{n\_dimensions}, which is created by the following
++ 1) by \name{n\_dimensions} array, which is created by the following
 function:}
 
 {\bf\begin{verbatim}
@@ -2622,13 +2640,13 @@ public  Status  output_transform_file(
     General_transform   *transform )
 \end{verbatim}}
 
-\desc{These two functions output the general transform to a file, in the
-appropriate format.  The comments line is an arbitrary string which is
+\desc{These two functions write the general transform to a file, in the
+appropriate format.  The \name{comments} line is an arbitrary string which is
 stored in the file for documentation purposes.  The first form of the
 function assumes
 the file is already open
 and will later be closed.  The second form opens the file, with a
-default extension of \name{.xfm}, outputs the transform, then closes
+default extension of \name{.xfm}, writes the transform, then closes
 the file.  Both functions return \name{ERROR} or \name{OK}.}
 
 {\bf\begin{verbatim}
@@ -2658,8 +2676,8 @@ transform points in the world space of the first volume to the world
 space of the second volume.  The program transforms each tag point by
 the transformation input (presumably transforming from the world space
 of the first volume to that of the second volume), then transforms the
-result to the voxel space of the second volume.  If the corresponding
-voxel coordinate is within the second volume, then the value at the
+result to the voxel space of the second volume.  If the
+voxel coordinate is within the second volume, then the value of the
 corresponding voxel is printed.
 
 {\small
