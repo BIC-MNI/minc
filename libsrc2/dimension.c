@@ -891,7 +891,7 @@ miget_dimension_separations(const midimhandle_t dimensions[], mivoxel_order_t vo
   int i;
   /* Allocated space for the separations array.
    */
-  separations  = (double *) malloc(array_length*sizeof(double));
+  //separations  = (double *) malloc(array_length*sizeof(double));
   for (i=0; i< array_length; i++) {
     miget_dimension_separation(dimensions[i], voxel_order, &separations[i]);
   }
@@ -952,7 +952,7 @@ miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
   int i;
   /* Allocated space for the length array.
    */
-  sizes  = (unsigned long *) malloc(array_length*sizeof(unsigned long));
+  //sizes  = (unsigned long *) malloc(array_length*sizeof(unsigned long));
   for(i=0; i<array_length; i++) {
     miget_dimension_size(dimensions[i], &sizes[i]);
   }
@@ -1007,7 +1007,7 @@ miget_dimension_starts(const midimhandle_t dimensions[], mivoxel_order_t voxel_o
   int i;
   /* Allocated space for the starts array.
    */
-  starts  = (double *) malloc(array_length*sizeof(double));
+  //starts  = (double *) malloc(array_length*sizeof(double));
   for (i=0; i < array_length; i++) {
     miget_dimension_start(dimensions[i], voxel_order, &starts[i]);
   }
@@ -1222,7 +1222,6 @@ int main(int argc, char **argv)
 {
   mihandle_t vol;
   int r;
-  midimhandle_t dimh, dimh1,dimh2; 
   midimhandle_t dim[3];
   mivolumeprops_t props;
   double cosines[3];
@@ -1252,23 +1251,23 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   }
   
-  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh);
+  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dim[0]);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  dim[0]=dimh;
+  //dim[0]=dimh;
   
-  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh1);
+  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dim[1]);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  dim[1]=dimh1;
-  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 6,&dimh2);
+  //dim[1]=dimh1;
+  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 6,&dim[2]);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   
-  dim[2]=dimh2;
+  //dim[2]=dimh2;
  
   r = micreate_volume("test_multi_h5.mnc", 3, dim, MI_TYPE_UINT, MI_CLASS_REAL,props,&vol);
   if (r < 0) {
@@ -1306,6 +1305,7 @@ int main(int argc, char **argv)
         }
     }
 
+ 
   /* call miselect_resolution() 
    */
   r = miselect_resolution(vol,1);
