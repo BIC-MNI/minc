@@ -1,3 +1,8 @@
+Wed Feb  2 13:43:43 EST 2000
+   - modified miexpand_file in library so that fclose is not called with a
+     NULL fp when the file does not exist. This would cause a seg fault with
+     newer versions of glibc.
+
 Thu Jan 20 15:36:04 EST 2000
    - Re-arranged headers in volume_io so that only volume_io.h needs to be 
      on the search path. Other header files are installed in the 
