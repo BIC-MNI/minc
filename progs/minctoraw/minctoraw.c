@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.2 1993-03-03 16:13:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.3 1993-05-03 10:47:56 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static double default_min[][2] = {
 nc_type output_datatype = INT_MAX;
 int output_signed = INT_MAX;
 double valid_range[2] = {DBL_MAX, DBL_MAX};
+int normalize_output = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -71,6 +72,10 @@ ArgvInfo argTable[] = {
        "Write out unsigned data"},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
        "Specify the range of output values"},
+   {"-normalize", ARGV_CONSTANT, (char *) TRUE, (char *) &normalize_output,
+       "Normalize integer pixel values to file max and min"},
+   {"-nonormalize", ARGV_CONSTANT, (char *) FALSE, (char *) &normalize_output,
+       "Turn off pixel normalization (Default)"},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -165,6 +170,9 @@ int main(int argc, char *argv[])
    if ((output_datatype == NC_FLOAT) || (output_datatype == NC_DOUBLE)) {
       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);
+   }
+   else if (normalize_output) {
+      (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
    }
    (void) miicv_attach(icvid, mincid, imgid);
 
