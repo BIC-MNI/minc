@@ -58,15 +58,15 @@ mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
       $(LINT_EXTRA) $(EXTRA_OBJS) $(MANPAGES)
 
-install:
+install: $(PROGS) $(SCRIPTS) $(MANPAGES)
 	@for prog in $(PROGS) $(SCRIPTS) DUMMY; do \
 	   if test -x $$prog ; then \
 	      cmd="$(CP) $(CP_FLAGS) $$prog $(INSTALL_BINDIR)/."; \
 	      echo "$$cmd"; \
-	      eval "$$cmd"; \
+	      $$cmd; \
 	      cmd="$(CHMOD) $(CHMOD_XFLAGS) $(INSTALL_BINDIR)/$$prog"; \
 	      echo "$$cmd"; \
-	      eval "$$cmd"; \
+	      $$cmd; \
 	   fi; \
 	done
 	@for manpage in $(MANPAGES) DUMMY; do \
