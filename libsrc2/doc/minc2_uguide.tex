@@ -193,7 +193,7 @@ format output file.
 
 \end{itemize}
 
-\subsection{Format conversion}
+\subsection{Converting between MINC 1 and MINC 2 format}
 The new tool ``mincconvert'' has been created for conversion between
 MINC 1 and MINC 2 format.  To convert a MINC 1 file to a MINC 2 file you
 would use mincconvert like this:\\
@@ -218,63 +218,127 @@ to indicate that output in MINC 2 format is desired.
 \begin{itemize}
 \item Image geometry and discretization
 \begin{itemize}
-\item mincreshape - This tool is used to restructure the data in a MINC
+\item {\tt mincreshape} - This tool is used to restructure the data in a MINC
 file.  It can be used to extract a subset of data, or to reorder the 
 dimensions in the data.  It does not modify the scaling of data, and it
 does not change the world coordinate system of the file.  Performs dimension
 length changes, however these are accomplished using very simple voxel
 averaging or doubling.  For more sophisticated file reshaping, see
 {\tt mincresample}.
-\item mincresample - This tool is used to apply an arbitray coordinate
+\item {\tt mincresample} - This tool is used to apply an arbitray coordinate
 transformation on a MINC file.  Can perform tricubic, trilinear, or
 nearest-neighbor interpolation.
-\item mincconcat - This tool will concatentate any number of MINC
+\item {\tt mincconcat} - This tool will concatentate any number of MINC
 files along a specific axis, producing a single output file.
 \end{itemize}
 \item Voxelwise calculations
 \begin{itemize}
-\item mincmath - Performs simple, ``voxelwise'' math operations
+\item {\tt mincmath} - Performs simple, ``voxelwise'' math operations
 on one or more MINC files.  For example, {\tt mincmath} may be used
 to add two volumes, to add a constant to a volume, to calculate the
 square or inversion of a volume, etc.
-\item mincstats - Calculates a number of basic statistical
+\item {\tt mincstats} - Calculates a number of basic statistical
 characteristics of a MINC file.  These include voxel count, volume,
 global minimum and maximum, sum, variance, standard deviation, etc.
-Will also calculate histograms and histogram-related statistics.
-\item minccalc - Similar to {\tt mincmath}, {\tt minccalc} can perform
+{\tt mincstats} also can calculate and save histograms and
+histogram-related statistics.
+\item {\tt minccalc} - Similar to {\tt mincmath}, {\tt minccalc} can perform
 a wider and more complex range of voxelwise mathematical operations
-on a series of MINC files.
-\item mincaverage - Calculates an average MINC volume from a number of
+involving one or more MINC files.
+\item {\tt mincaverage} - Calculates an average MINC volume from a number of
 input volumes.
-\item minclookup - Performs a ``lookup table'' conversion on a MINC file
+\item {\tt minclookup} - Performs a ``lookup table'' conversion on a MINC file
 replacing values with new values according to an arbitrary function.
 For example, the file can be converted to a grayscale, spectral RGB values.
-\item mincmakescalar - Convert a vector image to a scalar image.
-\item mincmakevector - Convert a group of scalar images into a vector image.
+\item {\tt mincmakescalar} - Convert a vector image to a scalar image by
+selecting or combining vector elements.
+\item {\tt mincmakevector} - Convert a group of scalar images into a 
+single vector image.
 \end{itemize}
 \item Utility functions
 \begin{itemize}
-\item mincheader - Print the header of a MINC file.
-\item minc\_modify\_header - Change individual attributes in a MINC file. This
-is useful for adding or changing supporting information, or for correcting
-coordinate information without altering data.
-\item mincedit - Edit a MINC file.
-\item mincview - View a MINC file.
-\item minchistory - Print the ``history'' attribute of a MINC file, which
+\item {\tt mincinfo} - Print an arbitrary set of header fields from a
+MINC file.
+\item {\tt mincheader} - Print all of the header information from a MINC file.
+\item {\tt minc\_modify\_header} - Change individual attributes in a
+MINC file. This is useful for adding or changing supporting information,
+or for correcting coordinate information without altering data.
+However, this tool should be used with care, since it directly alters
+the header of the file and does not create a backup.
+\item {\tt mincedit} - Edit a MINC file.  The MINC file is converted to
+  a text representation which is automatically loaded into a text
+  editor. The text representation is converted back into MINC format
+  when the user finishes the editing session.  A backup copy of the
+  original file is preserved.
+\item {\tt mincview} - View a MINC file.
+\item {\tt minchistory} - Print the ``history'' attribute of a MINC file, which
 provides an audit trail of the commands used to generate this file.
-\item mincdiff - Display the differences between two MINC files.
-\item minccopy - Copy data from one MINC file to another.
+\item {\tt mincdiff} - Display the differences between two MINC files.
+\item {\tt minccopy} - Copy data from one MINC file to another.
 \end{itemize}
 \item Basic file format conversion
 \begin{itemize}
-\item mincconvert - Used to convert a MINC 1 file to a MINC 2 file, or
+\item {\tt mincconvert} - Used to convert a MINC 1 file to a MINC 2 file, or
 vice versa.
-\item minctoraw - Convert a MINC file to a raw data file.  A raw data file
-is a file that consists only of voxel values, stored in a well-ordered
-arrangement.
-\item rawtominc - Convert a raw datafile to a MINC file.
-\item mincextract - Extract an arbitrary chunk of MINC file data.
-\item mincpik - Generate graphic images from a MINC file.
+\item {\tt minctoraw} - Convert a MINC file to a raw data file.  A raw
+data file is a file that consists only of voxel values, stored in a
+well-ordered arrangement.
+\item {\tt rawtominc} - Convert a raw datafile to a MINC file.
+\item {\tt mincextract} - Extract an arbitrary chunk of MINC file data.
+\item {\tt mincpik} - Generate graphic images from a MINC file.
+\end{itemize}
+\item Extended file format conversion
+\begin{itemize}
+\item {\tt ecattominc} - Convert ECAT image data to MINC format.
+\item {\tt minctoecat} - Convert MINC image data to ECAT format.
+\item {\tt nii2mnc} - Convert NIfTI-1 and Analyze image data to MINC format.
+\item {\tt mnc2nii} - Convert MINC image data to NIfTI-1 or Analyze format.
+\item {\tt upet2mnc} - Convert microPET image data to MINC format.
+\end{itemize}
+\end{itemize}
+\subsection{Additional MINC tools}
+\begin{itemize}
+\item Visualization
+\begin{itemize}
+\item {\tt MNI Register} - A visualization program which supports image
+ registration via tagging of homologous points on two displayed images.
+\item {\tt MNI Display} - A complex visualization program which supports
+display of both voxel and 3D surface image data.
+\item {\tt xdisp} - A program for visualizing dynamic images.
+\item {\tt postf} - A very simple program for visualizing dynamic images.
+\end{itemize}
+\item Data simulation
+\begin{itemize}
+\item {\tt mrisim} - An tool for generating highly-realistic simulated
+  anatomical MRI images.
+\end{itemize}
+\item Image registration
+\begin{itemize}
+\item {\tt mni\_autoreg} - A tool to compute the transform to coregister two
+ MRI volumes or to register one MRI volume to a standard coordinate
+ space.
+\end{itemize}
+\item Intensity normalization
+\begin{itemize}
+\item {\tt N3} - Nonparametric Nonuniform intensity Normalization provides a
+  method for automatically correcting smooth variations of MRI image
+  intensity resulting from RF field nonuniformity, eddy currents, and/or
+  patient anatomy.
+\end{itemize}
+\item Tissue classification
+\begin{itemize}
+\item {\tt classify} - 
+\end{itemize}
+\item Other tools available but still under development
+\begin{itemize}
+\item {\tt mincdti} - Diffusion tensor calculations from MINC images.
+\item {\tt mincfft} - Fast Fourier transform of MINC images.
+\item {\tt mincmorph} - Perform standard image-processing operations:
+  dilation, erosion, highpass, lowpass, clamp, binarise, convolution,
+  etc.
+\item {\tt mincsample} - Extract a random subsample of one or more MINC files
+given an optional masking volume.
+\item {\tt volregrid} - 
 \end{itemize}
 \end{itemize}
 \subsection{Where to get more information}
