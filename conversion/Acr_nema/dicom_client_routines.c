@@ -6,7 +6,11 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.18  2000-10-03 14:01:24  neelin
+ * Revision 6.19  2001-03-19 18:31:55  neelin
+ * Modifications to allow opening a stream to stdout (with no input) so
+ * that a dicom stream can be captured.
+ *
+ * Revision 6.18  2000/10/03 14:01:24  neelin
  * Changed inclusion of bstring.h to happen only on SGIs, since linux also has
  * bcopy, etc. in string.h.
  *
@@ -106,7 +110,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.18 2000-10-03 14:01:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.19 2001-03-19 18:31:55 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -259,6 +263,8 @@ private Dicom_client_data *get_client_data_ptr(Acr_File *afp)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_open_dicom_connection
 @INPUT      : host - name of host to which we should connect
+                 If host name is "-" then output is sent to standard out
+                 and input is not opened - afpin is set to NULL.
               port - string giving port number or name of service to which 
                  we should connect
               called_ae - Remote application entity requested
@@ -286,15 +292,23 @@ public int acr_open_dicom_connection(char *host, char *port,
    char *abstract_syntax_list[2] = {NULL, NULL};
    char *transfer_syntax_list[2] = {NULL, NULL};
 
-   /* Make network connection */
-   if (!acr_connect_to_host(host, port, &fpin, &fpout)) {
-      return FALSE;
+   /* Make network connection if a host name is given. If no host,
+      then set timeout to zero to indicate infinite wait */
+   if (strcmp(host, "-") == 0) {
+      *afpin = NULL;
+      *afpout = acr_initialize_dicom_output(stdout, 0, acr_stdio_write);
+      acr_set_client_timeout(*afpout, 0.0);
    }
-   *afpin = acr_initialize_dicom_input(fpin, 0, acr_stdio_read);
-   *afpout = acr_initialize_dicom_output(fpout, 0, acr_stdio_write);
+   else {
+      if (!acr_connect_to_host(host, port, &fpin, &fpout)) {
+         return FALSE;
+      }
+      *afpin = acr_initialize_dicom_input(fpin, 0, acr_stdio_read);
+      *afpout = acr_initialize_dicom_output(fpout, 0, acr_stdio_write);
 
-   /* Add ismore function to input */
-   acr_dicom_set_ismore_function(*afpin, acr_stdio_ismore);
+      /* Add ismore function to input */
+      acr_dicom_set_ismore_function(*afpin, acr_stdio_ismore);
+   }
 
    /* Establish association */
    abstract_syntax_list[0] = abstract_syntax;
@@ -311,7 +325,7 @@ public int acr_open_dicom_connection(char *host, char *port,
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_close_dicom_no_release
-@INPUT      : afpin - dicom file handle for input
+@INPUT      : afpin - dicom file handle for input (can be NULL)
               afpout - dicom file handle for output
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
@@ -327,22 +341,23 @@ public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout)
 {
    FILE *fpin, *fpout;
 
-   /* Get the file handles */
-   fpin = (FILE *) acr_dicom_get_io_data(afpin);
+   /* Close the input handle */
+   if (afpin != NULL) {
+      fpin = (FILE *) acr_dicom_get_io_data(afpin);
+      acr_close_dicom_file(afpin);
+      (void) fclose(fpin);
+   }
+
+   /* Close the output handle */
    fpout = (FILE *) acr_dicom_get_io_data(afpout);
-
-   /* Close the dicom streams */
-   acr_close_dicom_file(afpin);
    acr_close_dicom_file(afpout);
-
-   /* Close the file handles */
-   (void) fclose(fpin);
    (void) fclose(fpout);
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_close_dicom_connection
-@INPUT      : afpin - dicom file handle for input
+@INPUT      : afpin - dicom file handle for input (can be NULL)
               afpout - dicom file handle for output
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
@@ -486,7 +501,7 @@ public int acr_connect_to_host(char *host, char *port,
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_make_dicom_association
-@INPUT      : afpin - input stream
+@INPUT      : afpin - input stream (can be NULL)
               afpout - output stream
               abstract_syntax_list - NULL terminated list of abstract 
                  syntaxes
@@ -518,7 +533,9 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
    long maximum_length;
 
    /* Synchronize input */
-   if (!synchronize_input(afpin)) return NULL;
+   if (afpin != NULL) {
+      if (!synchronize_input(afpin)) return NULL;
+   }
 
    /* Compose a message */
    message = compose_assoc_request(called_ae, calling_ae,
@@ -527,6 +544,10 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
    if (message == NULL) {
       return NULL;
    }
+
+   /* Get the requested maximum length */
+   maximum_length = acr_find_long(acr_get_message_group_list(message),
+                                  DCM_PDU_Maximum_length, 0L);
 
    /* Ship it out */
    status = send_message(afpout, message);
@@ -537,20 +558,28 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
    }
 
    /* Wait for an answer */
-   status = receive_message(afpin, &message);
-   if (status != ACR_OK) {
-      acr_dicom_error(status, "Error receiving association reply");
-      return NULL;
+   if (afpin == NULL) {
+      presentation_context_id = 1;
+      transfer_syntax = transfer_syntax_list[0];
    }
+   else {
+      status = receive_message(afpin, &message);
+      if (status != ACR_OK) {
+         acr_dicom_error(status, "Error receiving association reply");
+         return NULL;
+      }
 
-   /* Check it */
-   if (!check_reply(message, &presentation_context_id, 
-                    &transfer_syntax, &maximum_length)) {
-      return NULL;
+      /* Check it */
+      if (!check_reply(message, &presentation_context_id, 
+                       &transfer_syntax, &maximum_length)) {
+         return NULL;
+      }
    }
 
    /* Set the presentation context id for the streams */
-   acr_set_dicom_pres_context_id(afpin, presentation_context_id);
+   if (afpin != NULL) {
+      acr_set_dicom_pres_context_id(afpin, presentation_context_id);
+   }
    acr_set_dicom_pres_context_id(afpout, presentation_context_id);
 
    /* Figure out which abstract syntax was accepted */
@@ -581,8 +610,10 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
                      transfer_syntax);
       return NULL;
    }
-   acr_set_byte_order(afpin, byte_order);
-   acr_set_vr_encoding(afpin, vr_encoding);
+   if (afpin != NULL) {
+      acr_set_byte_order(afpin, byte_order);
+      acr_set_vr_encoding(afpin, vr_encoding);
+   }
    acr_set_byte_order(afpout, byte_order);
    acr_set_vr_encoding(afpout, vr_encoding);
 
@@ -590,7 +621,9 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
    acr_set_dicom_maximum_length(afpout, maximum_length);
 
    /* Delete the input message */
-   acr_delete_message(message);
+   if (afpin != NULL) {
+      acr_delete_message(message);
+   }
 
    /* Return the abstract syntax */
    return abstract_syntax;
@@ -711,7 +744,7 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
                                                  1048576L));
    acr_group_add_element(group, 
       acr_create_element_string(DCM_PDU_Implementation_class_uid,
-                                acr_implementation_uid()));
+                                acr_get_implementation_uid()));
 
    /* Make a message and add this group */
    message = acr_create_message();
@@ -956,7 +989,7 @@ private void timeout_handler(int sig)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_set_client_max_outstanding
-@INPUT      : afp - stream on which to set asynchronous transfer
+@INPUT      : afp - stream on which to set asynchronous transfer (can be NULL)
               max - maximum number of outstanding messages that are allowed
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
@@ -984,6 +1017,7 @@ public void acr_set_client_max_outstanding(Acr_File *afp, int max)
 {
    Dicom_client_data *client_data;
 
+   if (afp == NULL) return;
    client_data = get_client_data_ptr(afp);
    client_data->max_outstanding_responses = max;
 }
@@ -1039,7 +1073,7 @@ public void acr_dicom_error(Acr_Status status, char *string)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_release_dicom_association
-@INPUT      : afpin - input stream
+@INPUT      : afpin - input stream (can be NULL)
               afpout - output stream
 @OUTPUT     : (none)
 @RETURNS    : TRUE if release went smoothly.
@@ -1058,7 +1092,9 @@ public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout)
    int pdu_type;
 
    /* Synchronize input */
-   if (!synchronize_input(afpin)) return FALSE;
+   if (afpin != NULL) {
+      if (!synchronize_input(afpin)) return FALSE;
+   }
 
    /* Compose a message */
    group = acr_create_group(DCM_PDU_GRPID);
@@ -1075,19 +1111,23 @@ public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout)
       return FALSE;
    }
 
-   /* Wait for an answer */
-   status = receive_message(afpin, &message);
-   if (status != ACR_OK) {
-      acr_dicom_error(status, "Error receiving release reply");
-      return FALSE;
-   }
+   if (afpin != NULL) {
 
-   /* Check it */
-   pdu_type = acr_find_short(group, DCM_PDU_Type, -1);
-   if (pdu_type != ACR_PDU_REL_RP) {
-      (void) fprintf(stderr, "Bad reply to release request (PDU type %d)\n",
-                     pdu_type);
-      return FALSE;
+      /* Wait for an answer */
+      status = receive_message(afpin, &message);
+      if (status != ACR_OK) {
+         acr_dicom_error(status, "Error receiving release reply");
+         return FALSE;
+      }
+
+      /* Check it */
+      pdu_type = acr_find_short(group, DCM_PDU_Type, -1);
+      if (pdu_type != ACR_PDU_REL_RP) {
+         (void) fprintf(stderr, "Bad reply to release request (PDU type %d)\n",
+                        pdu_type);
+         return FALSE;
+      }
+
    }
 
    return TRUE;
@@ -1095,7 +1135,7 @@ public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_send_group_list
-@INPUT      : afpin - input stream
+@INPUT      : afpin - input stream (can be NULL)
               afpout - output stream
               group_list - dicom dataset  to send
               sop_class_uid - this should just be abstract syntax
@@ -1119,11 +1159,24 @@ public int acr_send_group_list(Acr_File *afpin, Acr_File *afpout,
 {
    Dicom_client_data *client_data;
 
-   /* Get the client_data */
-   client_data = get_client_data_ptr(afpin);
+   if (afpin != NULL) {
 
-   /* Read in replies */
-   if (!read_replies(afpin)) return FALSE;
+      /* Get the client_data. Message ids are tracked on the input side
+         unless there is no input side */
+      client_data = get_client_data_ptr(afpin);
+
+      /* Read in replies */
+      if (!read_replies(afpin)) return FALSE;
+
+   }
+
+   else {
+
+      /* Get the client_data. Since there is no input we store it on
+         the output side. */
+      client_data = get_client_data_ptr(afpout);
+
+   }
 
    /* Send the message */
    if (!acr_transmit_group_list(afpout, group_list, sop_class_uid,
@@ -1132,8 +1185,10 @@ public int acr_send_group_list(Acr_File *afpin, Acr_File *afpout,
    }
 
    /* Check the reply if user wants to force synchronous operation */
-   if (client_data->max_outstanding_responses < 0) {
-      if (!read_replies(afpin)) return FALSE;
+   if (afpin != NULL) {
+      if (client_data->max_outstanding_responses < 0) {
+         if (!read_replies(afpin)) return FALSE;
+      }
    }
 
    return TRUE;
