@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.12 1993-01-22 08:57:59 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.13 1993-02-02 10:37:38 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -338,6 +338,17 @@ private int MI_create_dim_variable(int cdfid, char *name,
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_DIMENSION))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
+
+   /* Add comments for spatial dimensions */ 
+   if (STRINGS_EQUAL(name, MIxspace))
+      {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
+                     "X increases from patient left to right"))}
+   else if (STRINGS_EQUAL(name, MIyspace))
+      {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
+                     "Y increases from patient posterior to anterior"))}
+   else if (STRINGS_EQUAL(name, MIzspace))
+      {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
+                     "Z increases from patient inferior to superior"))}
 
    /* Dimension attributes */
    if (ndims==0) {
