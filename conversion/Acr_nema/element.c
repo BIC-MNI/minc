@@ -6,7 +6,14 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.1  1999-10-29 17:51:52  neelin
+ * Revision 6.2  2001-12-12 19:00:54  neelin
+ * Corrected error in reading of a sequence element. When making a linked
+ * list of items, previtem was not being updated properly and items were
+ * being dropped. This exhibited itself as protocol error since an incorrect
+ * element length was being computed. (Thanks to Roch Comeau for pointing
+ * this out.)
+ *
+ * Revision 6.1  1999/10/29 17:51:52  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -586,7 +593,8 @@ public int acr_element_has_variable_length(Acr_Element element)
 @INPUT      : element
 @OUTPUT     : (none)
 @RETURNS    : data_length
-@DESCRIPTION: Get data length for element
+@DESCRIPTION: Get data length for element. If we have a variable length
+              sequence, then we add in the length of the sequence delimiter.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -779,6 +787,7 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
    /* If we have a sequence, read in all the items and store them as a 
       list of elements. We must turn off explicit VR encoding for items. */
    if (is_sequence) {
+
       more_to_read = TRUE;
       itemlist = NULL;
       old_vr_encoding = acr_get_vr_encoding(afp);
@@ -807,11 +816,11 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
          if (!found_delimiter) {
             if (itemlist == NULL) {
                itemlist = item;
-               previtem = item;
             }
             else {
                acr_set_element_next(previtem, item);
             }
+            previtem = item;
          }
 
          /* Check for end of items */
