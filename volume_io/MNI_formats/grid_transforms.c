@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.5 1995-03-21 19:02:12 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.6 1995-05-24 17:00:17 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -362,6 +362,16 @@ private  void   evaluate_grid_volume(
         }
     }
 
+    if( degrees_continuity < 0 && deriv_x != NULL )
+    {
+        for_less( v, 0, N_COMPONENTS )
+        {
+            deriv_x[v] = 0.0;
+            deriv_y[v] = 0.0;
+            deriv_z[v] = 0.0;
+        }
+    }
+
     if( degrees_continuity == -2 )
     {
         for_less( v, 0, N_COMPONENTS )
@@ -377,7 +387,14 @@ private  void   evaluate_grid_volume(
         {
             pos = voxel[d] - bound;
             start[d] =       FLOOR( pos );
-            fraction[id] = pos - start[d];
+            if( voxel[d] == (Real) sizes[d] - 1.0 - bound )
+            {
+                --start[d];
+                fraction[id] = 1.0;
+            }
+            else
+                fraction[id] = pos - start[d];
+
             end[d] = start[d] + degrees_continuity + 2;
             ++id;
         }
@@ -437,16 +454,6 @@ private  void   evaluate_grid_volume(
     {
         for_less( v, 0, N_COMPONENTS )
             values[v] = coefs[v];
-
-        if( deriv_x != NULL )
-        {
-            for_less( v, 0, N_COMPONENTS )
-            {
-                deriv_x[v] = 0.0;
-                deriv_y[v] = 0.0;
-                deriv_z[v] = 0.0;
-            }
-        }
     }
     else
     {
