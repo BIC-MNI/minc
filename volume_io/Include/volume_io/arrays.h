@@ -28,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.9 1996-05-17 19:36:13 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.10 1998-11-03 15:39:07 david Exp $";
 #endif
 
 #include  <alloc.h>
@@ -134,10 +134,13 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 
 #define  ADD_ELEMENT_TO_ARRAY_WITH_SIZE( array, n_alloced, n_elems, elem_to_add, chunk_size )                                                         \
          {                                                                    \
-             SET_ARRAY_SIZE( array, n_alloced, (n_elems) + 1, chunk_size );   \
+             if( (n_elems) >= (n_alloced) )                                   \
+             {                                                                \
+                 SET_ARRAY_SIZE( array, n_alloced, (n_elems) + 1, chunk_size );\
+                 (n_alloced) = (n_elems)+1;                                   \
+             }                                                                \
              (array) [(n_elems)] = (elem_to_add);                             \
              ++(n_elems);                                                     \
-             (n_alloced) = (n_elems);                                         \
          }
 
 #endif
