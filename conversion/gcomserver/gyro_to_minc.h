@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.2  1993-12-10 15:35:48  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.3  1993-12-14 16:37:48  neelin
+@MODIFIED   : Modified general_info structure a little bit.
 @MODIFIED   :
+ * Revision 1.2  93/12/10  15:35:48  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.1  93/11/30  14:42:43  neelin
  * Initial revision
  * 
@@ -69,8 +72,8 @@ typedef struct {
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
    double slice_step;
    double slice_start;
-   double slicepos_min;
-   double slicepos_max;
+   double slicepos_first;
+   double slicepos_last;
    nc_type datatype;
    int is_signed;
    double pixel_min;
