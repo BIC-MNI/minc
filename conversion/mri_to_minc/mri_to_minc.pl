@@ -132,6 +132,7 @@ sub read_next_file {
         if ($status != 0) {
             warn "\n\nWARNING!!!! ".
                 "Error occurred while reading tape. Giving up.\n\n\n";
+            &cleanup_and_die("Not creating last minc file.\n", $status);
         }
         else {
             print STDERR "End of tape.\n";
