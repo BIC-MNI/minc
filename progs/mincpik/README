@@ -7,11 +7,11 @@ http://www.cmr.uq.edu.au/~rotor/software/
 
 WHATS HERE:
 
-   * mincpik.pl  - MIFF file gererator (Imagemagick's internal file format) 
-                      from MINC files.
-   * rugister.pl - Script that mimicks register from the MNI in that it produces 
-                      the three views (Transverse, Coronal, Saggital) of a 3D volume
-                      from the origin.          
+   * mincpik  - MIFF file gererator (Imagemagick's internal file format) 
+                   from MINC files.
+   * rugister - Script that mimicks register from the MNI in that it produces 
+                   the three views (Transverse, Coronal, Saggital) of a 3D volume
+                   from the origin.          
 
 WHAT YOU'LL NEED:
 
@@ -20,18 +20,3 @@ WHAT YOU'LL NEED:
    * The ImageMagick conversion utilities  
         http://www.wizards.dupont.com/cristy/ImageMagick.html
         compiled without 16-bit quanta. (the default)
-
-HOW TO USE THEM:
-
-   * To display a default view, transverse slicing, middle slice
-     using display. (display is part of the Imagemagick package)
-
-        mincpik infile.mnc | display -
-   
-   * To generate a PNG file of the 15th coronal slice
-   
-        mincpik -slice 15 -coronal infile.mnc outfile.png
-
-   * To display something akin to register of a MINC file
-   
-        rugister infile.mnc
