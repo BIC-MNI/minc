@@ -31,6 +31,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.6 1992-12-01 14:01:57 neelin Exp $ MINC (MNI)";
+#endif
+
 #include <type_limits.h>
 #include <minc_private.h>
 
@@ -100,8 +104,9 @@ public int miicv_create()
    icvp->user_xdim_dir = MI_ICV_POSITIVE;
    icvp->user_ydim_dir = MI_ICV_POSITIVE;
    icvp->user_zdim_dir = MI_ICV_POSITIVE;
+   icvp->user_num_imgdims = 2;
    icvp->user_keep_aspect = TRUE;
-   for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+   for (idim=0; idim<MI_MAX_IMGDIMS; idim++) {
       icvp->user_dim_size[idim]=MI_ICV_ANYSIZE;
    }
 
@@ -112,7 +117,7 @@ public int miicv_create()
    /* Values that can be read by user */
    icvp->derv_imgmax = MI_DEFAULT_MAX;
    icvp->derv_imgmin = MI_DEFAULT_MIN;
-   for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+   for (idim=0; idim<MI_MAX_IMGDIMS; idim++) {
       icvp->derv_dim_step[idim] = 0.0;
       icvp->derv_dim_start[idim] = 0.0;
    }
@@ -225,7 +230,7 @@ public int miicv_setint(int icvid, int icv_property, int value)
 ---------------------------------------------------------------------------- */
 public int miicv_set(int icvid, int icv_property, void *value)
 {
-   int ival;
+   int ival, idim;
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_set");
@@ -290,6 +295,15 @@ public int miicv_set(int icvid, int icv_property, void *value)
       icvp->user_zdim_dir = ((ival==MI_ICV_POSITIVE) || 
                              (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
       break;
+   case MI_ICV_NUM_IMGDIMS:
+      ival = *((int *) value);
+      if ((ival<0) || (ival>MI_MAX_IMGDIMS)) {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "MI_ICV_NUM_IMGDIMS out of range");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      icvp->user_num_imgdims = ival;
+      break;
    case MI_ICV_ADIM_SIZE:
       icvp->user_dim_size[0] = *((long *) value); break;
    case MI_ICV_BDIM_SIZE:
@@ -297,9 +311,18 @@ public int miicv_set(int icvid, int icv_property, void *value)
    case MI_ICV_KEEP_ASPECT:
       icvp->user_keep_aspect = *((int *) value); break;
    default:
-      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
-                        "Tried to set unknown or illegal icv property");
-      MI_RETURN_ERROR(MI_ERROR);
+      /* Check for image dimension properties */
+      if ((icv_property>=MI_ICV_DIM_SIZE) && 
+          (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
+         idim = icv_property - MI_ICV_DIM_SIZE;
+         icvp->user_dim_size[idim] = *((long *) value);
+      }
+      else {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set unknown or illegal icv property");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      break;
    }
 
    MI_RETURN(MI_NOERROR);
@@ -320,6 +343,7 @@ public int miicv_set(int icvid, int icv_property, void *value)
 ---------------------------------------------------------------------------- */
 public int miicv_inq(int icvid, int icv_property, void *value)
 {
+   int idim;
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_inq");
@@ -364,6 +388,8 @@ public int miicv_inq(int icvid, int icv_property, void *value)
       *((int *) value) = icvp->user_ydim_dir; break;
    case MI_ICV_ZDIM_DIR:
       *((int *) value) = icvp->user_zdim_dir; break;
+   case MI_ICV_NUM_IMGDIMS:
+      *((int *) value) = icvp->user_num_imgdims; break;
    case MI_ICV_ADIM_SIZE:
       *((long *) value) = icvp->user_dim_size[0]; break;
    case MI_ICV_BDIM_SIZE:
@@ -379,9 +405,28 @@ public int miicv_inq(int icvid, int icv_property, void *value)
    case MI_ICV_KEEP_ASPECT:
       *((int *) value) = icvp->user_keep_aspect; break;
    default:
-      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
-                        "Tried to inquire about unknown icv property");
-      MI_RETURN_ERROR(MI_ERROR);
+      /* Check for image dimension properties */
+      if ((icv_property>=MI_ICV_DIM_SIZE) && 
+          (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
+         idim = icv_property - MI_ICV_DIM_SIZE;
+         *((long *) value) = icvp->user_dim_size[idim];
+      }
+      else if ((icv_property>=MI_ICV_DIM_STEP) && 
+               (icv_property<MI_ICV_DIM_STEP+MI_MAX_IMGDIMS)) {
+         idim = icv_property - MI_ICV_DIM_STEP;
+         *((double *) value) = icvp->derv_dim_step[idim];
+      }
+      else if ((icv_property>=MI_ICV_DIM_START) && 
+               (icv_property<MI_ICV_DIM_START+MI_MAX_IMGDIMS)) {
+         idim = icv_property - MI_ICV_DIM_START;
+         *((double *) value) = icvp->derv_dim_start[idim];
+      }
+      else {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to inquire about unknown icv property");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      break;
    }
 
    MI_RETURN(MI_NOERROR);
@@ -444,7 +489,7 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    icvp->derv_do_bufsize_step = FALSE;
    icvp->derv_var_pix_off = NULL;
    icvp->derv_usr_pix_off = NULL;
-   for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+   for (idim=0; idim<icvp->user_num_imgdims; idim++) {
       icvp->derv_dim_flip[idim] = FALSE;
       icvp->derv_dim_grow[idim] = TRUE;
       icvp->derv_dim_scale[idim] = 1;
@@ -676,10 +721,6 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       icvp->derv_imgmax = MI_DEFAULT_MAX;
       icvp->derv_imgmin = MI_DEFAULT_MIN;
    }
-   else if (icvp->user_user_norm) {
-      icvp->derv_imgmax = icvp->user_imgmax;
-      icvp->derv_imgmin = icvp->user_imgmin;
-   }
    else {
       /* Get image max, min variable ids */
       vid[0]=icvp->imgmaxid;
@@ -692,7 +733,8 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
          icvp->derv_imgmin = icvp->var_vmin;
       }
 
-      /* If the variables are there then get the max and min */
+      /* If the variables are there then get the max and min and fastest 
+         varying dimension */
       else {
          immptr[0] = &(icvp->derv_imgmax);
          immptr[1] = &(icvp->derv_imgmin);
@@ -703,7 +745,6 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
             /* Loop through dimensions, checking dimensions against image,
                getting dimension sizes and total max/min variable size */
             size=1;     /* Size of MIimagemax/min variable */
-            icvp->derv_firstdim = -1;  /* Doesn't vary with image */
             for (idim=0; idim<ndims; idim++) {
                /* Look to see where this dimension falls as an image 
                   dimension */
@@ -713,30 +754,39 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
                }
                /* Get the dimension size */
                MI_CHK_ERR(ncdiminq(cdfid, dim[idim], NULL, &(count[idim])))
-               size *= count[i];
+               size *= count[idim];
             }
-            /* Get space */
-            if ((buffer=MALLOC(size, double))==NULL) {
-               MI_LOG_SYS_ERROR1("MI_icv_get_norm");
-               MI_RETURN_ERROR(MI_ERROR);
-            }
-            /* Get values */
-            if (mivarget(cdfid, vid[imm], 
-                         miset_coords(ndims, 0L, start),
-                         count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
+
+            /* Don't bother reading variable if user set image range */
+
+            if (!icvp->user_user_norm) {
+               /* Get space */
+               if ((buffer=MALLOC(size, double))==NULL) {
+                  MI_LOG_SYS_ERROR1("MI_icv_get_norm");
+                  MI_RETURN_ERROR(MI_ERROR);
+               }
+               /* Get values */
+               if (mivarget(cdfid, vid[imm], 
+                            miset_coords(ndims, 0L, start),
+                            count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
+                  FREE(buffer);
+                  MI_RETURN_ERROR(MI_ERROR);
+               }
+               /* Loop through values, getting max/min */
+               *immptr[imm] = buffer[0];
+               for (ientry=1; ientry<size; ientry++) {
+                  if (imm==0)
+                     *immptr[imm] = MAX(*immptr[imm], buffer[ientry]);
+                  else
+                     *immptr[imm] = MIN(*immptr[imm], buffer[ientry]);
+               }
                FREE(buffer);
-               MI_RETURN_ERROR(MI_ERROR);
-            }
-            /* Loop through values, getting max/min */
-            *immptr[imm] = buffer[0];
-            for (ientry=1; ientry<size; ientry++) {
-               if (imm==0)
-                  *immptr[imm] = MAX(*immptr[imm], buffer[ientry]);
-               else
-                  *immptr[imm] = MIN(*immptr[imm], buffer[ientry]);
-            }
-            FREE(buffer);
-         }
+            }         /* End if (!icvp->user_user_norm) */
+         }         /* End for (imm=0; imm<2; imm++) */
+      }         /* End if {} else {} no max/min vars */
+      if (icvp->user_user_norm) {
+         icvp->derv_imgmax = icvp->user_imgmax;
+         icvp->derv_imgmin = icvp->user_imgmin;
       }
    }
 
@@ -773,7 +823,7 @@ public int miicv_detach(int icvid)
    /* Reset values that are read-only (and set when attached) */
    icvp->derv_imgmax = MI_DEFAULT_MAX;
    icvp->derv_imgmin = MI_DEFAULT_MIN;
-   for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+   for (idim=0; idim<MI_MAX_IMGDIMS; idim++) {
       icvp->derv_dim_step[idim] = 0.0;
       icvp->derv_dim_start[idim] = 0.0;
    }
@@ -1038,7 +1088,7 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
    }
 
    /* Get the number of non image dimensions */
-   num_non_img_dims=icvp->var_ndims-MI_PRIV_IMGDIMS;
+   num_non_img_dims=icvp->var_ndims-icvp->user_num_imgdims;
    if (icvp->var_is_vector)
       num_non_img_dims--;
 
@@ -1049,8 +1099,8 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
    }
 
    /* Go through image dimensions */
-   for (i=num_non_img_dims, j=MI_PRIV_IMGDIMS-1; 
-        i < num_non_img_dims+MI_PRIV_IMGDIMS; i++, j--) {
+   for (i=num_non_img_dims, j=icvp->user_num_imgdims-1; 
+        i < num_non_img_dims+icvp->user_num_imgdims; i++, j--) {
       /* Check coordinates. */
       icv_dim_size = (icvp->user_dim_size[j] > 0) ?
             icvp->user_dim_size[j] : icvp->var_dim_size[j];
