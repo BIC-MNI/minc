@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.2  2001-12-12 19:00:54  neelin
+ * Revision 6.3  2002-12-07 01:37:24  neelin
+ * Added missing type
+ *
+ * Revision 6.2  2001/12/12 19:00:54  neelin
  * Corrected error in reading of a sequence element. When making a linked
  * list of items, previtem was not being updated properly and items were
  * being dropped. This exhibited itself as protocol error since an incorrect
@@ -1525,7 +1528,7 @@ public void acr_dump_element_list(FILE *file_pointer,
    int printable;
    int i;
    char *string, copy[1024];
-   static current_indent_level = 0;
+   static int current_indent_level = 0;
    Acr_VR_Type vr_code;
 
    /* Check that we have something to print */
