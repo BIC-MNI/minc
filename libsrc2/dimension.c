@@ -433,7 +433,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
 	  break;
 	}
       }
-      if (j == 3) {
+      if (j == array_length) {
 	volume->dim_indices[k] = i;
 	k++;
       }
@@ -518,7 +518,7 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
 	  break;
 	}
       }
-      if (j == 3) {
+      if (j == array_length) {
 	volume->dim_indices[k] = i;
 	k++;
       }
