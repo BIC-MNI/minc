@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 2.0 1994-09-28 10:32:49 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 2.1 1994-10-25 14:49:59 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1 "MINC Image File Format"
 
@@ -277,14 +277,14 @@ Print summary of command-line options and abort.
 
 Resample an individual's brain in a standardized space on a
 standard sampling grid:
-     mincresample individual.mnc individual_in_standard_space.mnc
-          -transform transform_to_standard_space.xfm 
+     mincresample individual.mnc individual_in_standard_space.mnc \\
+          -transform transform_to_standard_space.xfm \\
           -like standard_sampling.mnc
 
 Resample an MRI volume to be matched with a PET volume, but with
 finer resolution:
-     mincresample mri.mnc mri_resampled.mnc -transform mri_to_pet.xfm
-          -like pet.mnc -step 1 1 2 -xstart -0.5 -ystart -0.5
+     mincresample mri.mnc mri_resampled.mnc -transform mri_to_pet.xfm \\
+          -like pet.mnc -step 1 1 2 -xstart -0.5 -ystart -0.5 \\
           -nelements 256 256 64
 
 Turn a transverse volume into a sagittal volume:
@@ -292,11 +292,11 @@ Turn a transverse volume into a sagittal volume:
 
 Turn a 256x256x64 (1x1x2mm) transverse volume into 256x128x256
 (1x1x1mm) sagittal volume:
-     mincresample transverse.mnc sagittal.mnc -sagittal 
+     mincresample transverse.mnc sagittal.mnc -sagittal \\
           -zstep 1 -znelem 128
 
 Get a finer axial sampling on a PET volume:
-     mincresample pet_15_slices.mnc pet_46_slices.mnc 
+     mincresample pet_15_slices.mnc pet_46_slices.mnc \\
           -zstep 2 -znelements 46
 
 .SH AUTHOR
