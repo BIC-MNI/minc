@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.9 1995-09-15 20:35:11 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.10 1995-09-19 14:28:24 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -228,11 +228,12 @@ public  void  initialize_volume_cache(
     n_dims = get_volume_n_dimensions( volume );
     cache->n_dimensions = n_dims;
     cache->dim_names_set = FALSE;
+    cache->previous_block_index = -1;
+    cache->writing_to_temp_file = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
     {
         cache->file_offset[dim] = 0;
-        cache->previous_lookup[dim].block_start = -1000000000;
     }
 
     cache->hash_table = NULL;
@@ -297,22 +298,17 @@ private  void  check_alloc_volume_cache(
                                      + 1;
 
         ALLOC( cache->lookup[dim], sizes[dim] );
-        ALLOC( cache->block_offsets[dim], sizes[dim] );
         for_less( x, 0, sizes[dim] )
         {
             remainder = x % cache->block_sizes[dim];
             block_index = x / cache->block_sizes[dim];
-            cache->lookup[dim][x].block_start = x - remainder;
             cache->lookup[dim][x].block_index_offset =
                                        block_index * block_stride;
-            cache->block_offsets[dim][x] = remainder * block_size;
+            cache->lookup[dim][x].block_offset = remainder * block_size;
         }
 
         block_size *= cache->block_sizes[dim];
         block_stride *= cache->blocks_per_dim[dim];
-
-        cache->last_block[dim] = cache->blocks_per_dim[dim] *
-                                 cache->block_sizes[dim];
     }
 
     cache->total_block_size = block_size;
@@ -532,7 +528,7 @@ private  void  free_cache_blocks(
     this = cache->head;
     while( this != NULL )
     {
-        if( this->modified_flag )
+        if( this->modified_flag && !cache->writing_to_temp_file )
         {
             block_index = this->block_index;
             get_block_start( cache, block_index, block_start );
@@ -571,6 +567,9 @@ public  void  delete_volume_cache(
 {
     int   dim, n_dims;
 
+    if( !cache_is_alloced( cache ) )
+        return;
+
     free_cache_blocks( cache, volume );
 
     FREE( cache->hash_table );
@@ -579,7 +578,6 @@ public  void  delete_volume_cache(
     for_less( dim, 0, n_dims )
     {
         FREE( cache->lookup[dim] );
-        FREE( cache->block_offsets[dim] );
     }
 
     /*--- close the file that cache was reading from or writing to */
@@ -713,12 +711,14 @@ private  void  open_cache_volume_output_file(
 
     if( strlen( cache->output_filename ) == 0 )
     {
+        cache->writing_to_temp_file = TRUE;
         (void) tmpnam( output_filename );
         (void) strcat( output_filename, "." );
         (void) strcat( output_filename, MNC_ENDING );
     }
     else
     {
+        cache->writing_to_temp_file = FALSE;
         (void) strcpy( output_filename, cache->output_filename );
     }
 
@@ -863,7 +863,7 @@ private  void  read_cache_block(
     volume_cache_struct  *cache,
     Volume               volume,
     cache_block_struct   *block,
-    cache_lookup_struct  lookup[] )
+    int                  block_start[] )
 {
     Minc_file        minc_file;
     int              dim, ind, n_dims;
@@ -893,7 +893,7 @@ private  void  read_cache_block(
         ind = minc_file->to_volume_index[dim];
         if( ind >= 0 )
         {
-            file_start[dim] = cache->file_offset[dim] + lookup[ind].block_start;
+            file_start[dim] = cache->file_offset[dim] + block_start[ind];
             file_count[dim] = sizes[ind] - file_start[dim];
             if( file_count[dim] >= cache->block_sizes[ind] )
                 file_count[dim] = cache->block_sizes[ind];
@@ -1119,8 +1119,10 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     int      *offset )
 {
     cache_block_struct   *block;
+    cache_lookup_struct  *lookup0, *lookup1, *lookup2, *lookup3, *lookup4;
     int                  block_index;
     int                  indices[MAX_DIMENSIONS];
+    int                  block_start[MAX_DIMENSIONS];
     int                  dim, n_dims, hash_index;
     volume_cache_struct  *cache;
     BOOLEAN              same;
@@ -1128,103 +1130,139 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     cache = &volume->cache;
     n_dims = cache->n_dimensions;
 
-    indices[0] = (n_dims > 0) ? x : 0;
-    indices[1] = (n_dims > 1) ? y : 0;
-    indices[2] = (n_dims > 2) ? z : 0;
-    indices[3] = (n_dims > 3) ? t : 0;
-    indices[4] = (n_dims > 4) ? v : 0;
-
-    same = TRUE;
-
-    for_less( dim, 0, n_dims )
+    switch( n_dims )
     {
-        if( indices[dim] < cache->previous_lookup[dim].block_start ||
-            indices[dim] >= cache->previous_lookup[dim].block_start +
-                            cache->block_sizes[dim] )
-        {
-            same = FALSE;
-            break;
-        }
+    case 1:
+        lookup0 = &cache->lookup[0][x];
+        block_index = lookup0->block_index_offset;
+        *offset = lookup0->block_offset;
+        break;
+
+    case 2:
+        lookup0 = &cache->lookup[0][x];
+        lookup1 = &cache->lookup[1][y];
+        block_index = lookup0->block_index_offset +
+                      lookup1->block_index_offset;
+        *offset = lookup0->block_offset +
+                  lookup1->block_offset;
+        break;
+
+    case 3:
+        lookup0 = &cache->lookup[0][x];
+        lookup1 = &cache->lookup[1][y];
+        lookup2 = &cache->lookup[2][z];
+        block_index = lookup0->block_index_offset +
+                      lookup1->block_index_offset +
+                      lookup2->block_index_offset;
+        *offset = lookup0->block_offset +
+                  lookup1->block_offset +
+                  lookup2->block_offset;
+        break;
+
+    case 4:
+        lookup0 = &cache->lookup[0][x];
+        lookup1 = &cache->lookup[1][y];
+        lookup2 = &cache->lookup[2][z];
+        lookup3 = &cache->lookup[3][t];
+        block_index = lookup0->block_index_offset +
+                      lookup1->block_index_offset +
+                      lookup2->block_index_offset +
+                      lookup3->block_index_offset;
+        *offset = lookup0->block_offset +
+                  lookup1->block_offset +
+                  lookup2->block_offset +
+                  lookup3->block_offset;
+        break;
+
+    case 5:
+        lookup0 = &cache->lookup[0][x];
+        lookup1 = &cache->lookup[1][y];
+        lookup2 = &cache->lookup[2][z];
+        lookup3 = &cache->lookup[3][t];
+        lookup4 = &cache->lookup[4][v];
+        block_index = lookup0->block_index_offset +
+                      lookup1->block_index_offset +
+                      lookup2->block_index_offset +
+                      lookup3->block_index_offset +
+                      lookup4->block_index_offset;
+        *offset = lookup0->block_offset +
+                  lookup1->block_offset +
+                  lookup2->block_offset +
+                  lookup3->block_offset +
+                  lookup4->block_offset;
+        break;
     }
 
-    if( !same )
+    if( block_index == cache->previous_block_index )
+        return( cache->previous_block );
+
+    hash_index = hash_block_index( block_index, cache->hash_table_size );
+
+    block = cache->hash_table[hash_index];
+
+    while( block != NULL && block->block_index != block_index )
     {
-        block_index = 0;
+        block = block->next_hash;
+    }
 
-        for_less( dim, 0, n_dims )
+    if( block == NULL )
+    {
+        block = appropriate_a_cache_block( cache, volume );
+        block->block_index = block_index;
+        if( cache->must_read_blocks_before_use )
         {
-            cache->previous_lookup[dim] = cache->lookup[dim][indices[dim]];
-            block_index += cache->previous_lookup[dim].block_index_offset;
+            get_block_start( cache, block_index, block_start );
+            read_cache_block( cache, volume, block, block_start );
         }
 
-        hash_index = hash_block_index( block_index, cache->hash_table_size );
+        /*--- insert in cache */
 
-        block = cache->hash_table[hash_index];
+        block->next_hash = cache->hash_table[hash_index];
+        if( block->next_hash != NULL )
+            block->next_hash->prev_hash = &block->next_hash;
+        block->prev_hash = &cache->hash_table[hash_index];
+        *block->prev_hash = block;
+    }
+    else
+    {
+        /*--- move to head of used list */
 
-        while( block != NULL && block->block_index != block_index )
+        if( block != cache->head )
         {
-            block = block->next_hash;
+            block->prev_used->next_used = block->next_used;
+            if( block->next_used != NULL )
+                block->next_used->prev_used = block->prev_used;
+            else
+                cache->tail = block->prev_used;
+
+            cache->head->prev_used = block;
+            block->prev_used = NULL;
+            block->next_used = cache->head;
+            cache->head = block;
         }
 
-        if( block == NULL )
+        /*--- move to beginning of hash chain */
+
+        if( cache->hash_table[hash_index] != block )
         {
-            block = appropriate_a_cache_block( cache, volume );
-            block->block_index = block_index;
-            if( cache->must_read_blocks_before_use )
-                read_cache_block( cache, volume, block, cache->previous_lookup);
+            /*--- remove it from where it is */
 
-            /*--- insert in cache */
+            *block->prev_hash = block->next_hash;
+            if( block->next_hash != NULL )
+                block->next_hash->prev_hash = block->prev_hash;
 
+            /*--- place it at the front of the list */
+                
             block->next_hash = cache->hash_table[hash_index];
             if( block->next_hash != NULL )
                 block->next_hash->prev_hash = &block->next_hash;
             block->prev_hash = &cache->hash_table[hash_index];
             *block->prev_hash = block;
         }
-        else
-        {
-            /*--- move to head of used list */
-
-            if( block != cache->head )
-            {
-                block->prev_used->next_used = block->next_used;
-                if( block->next_used != NULL )
-                    block->next_used->prev_used = block->prev_used;
-                else
-                    cache->tail = block->prev_used;
-
-                cache->head->prev_used = block;
-                block->prev_used = NULL;
-                block->next_used = cache->head;
-                cache->head = block;
-            }
-
-            /*--- move to beginning of hash chain */
-
-            if( cache->hash_table[hash_index] != block )
-            {
-                /*--- remove it from where it is */
-
-                *block->prev_hash = block->next_hash;
-                if( block->next_hash != NULL )
-                    block->next_hash->prev_hash = block->prev_hash;
-
-                /*--- place it at the front of the list */
-                    
-                block->next_hash = cache->hash_table[hash_index];
-                if( block->next_hash != NULL )
-                    block->next_hash->prev_hash = &block->next_hash;
-                block->prev_hash = &cache->hash_table[hash_index];
-                *block->prev_hash = block;
-            }
-        }
-
-        cache->previous_block = block;
     }
 
-    *offset = cache->block_offsets[0][indices[0]];
-    for_less( dim, 1, n_dims )
-        *offset += cache->block_offsets[dim][indices[dim]];
+    cache->previous_block = block;
+    cache->previous_block_index = block_index;
 
     return( cache->previous_block );
 }
