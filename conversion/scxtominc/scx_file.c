@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.7  1993-10-06 10:15:46  neelin
-@MODIFIED   : Added include of memory.h for compilation on SUNs
+@MODIFIED   : Revision 1.8  1993-11-03 17:16:19  neelin
+@MODIFIED   : Removed check for DPR==1 when getting images (this applies only to data).
 @MODIFIED   :
+ * Revision 1.7  93/10/06  10:15:46  neelin
+ * Added include of memory.h for compilation on SUNs
+ * 
  * Revision 1.6  93/09/22  14:50:32  neelin
  * Added DTYP = 2 for short values in scx_get_image (this isn't documented,
  * but seems to occur for version 6 files sometimes).
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.7 1993-10-06 10:15:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.8 1993-11-03 17:16:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -377,7 +380,7 @@ private void scx_get_value(unsigned char *header, long position,
 ---------------------------------------------------------------------------- */
 public int scx_get_image(scx_file *file, int image_num, short *image)
 {
-   long data_present, header_size, record_size, data_type;
+   long header_size, record_size, data_type;
    long image_width, image_pos, image_npix, image_size;
    long file_offset, array_offset, ipix;
    int pix_size;
@@ -385,12 +388,6 @@ public int scx_get_image(scx_file *file, int image_num, short *image)
 
    /* Check file pointer */
    if (file==NULL) return TRUE;
-
-   /* Check that data is in file */
-   if (scx_get_mnem(file, SCX_DPR, 0, &data_present, NULL, NULL) || 
-       (data_present!=1)) {
-      return TRUE;
-   }
 
    /* Parameters for calculating image position */
    if (scx_get_mnem(file, SCX_FHS, 0, &header_size, NULL, NULL) ||
