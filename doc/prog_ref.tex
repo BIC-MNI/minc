@@ -680,7 +680,7 @@ public int micopy_all_atts(int incdfid, int invarid,
 
 \item \code{micopy\_var\_def} : Copy a variable definition (including
 attributes) from one file to another. \code{outcdfid} must be in
-define mode.
+define mode. The id of the newly created variable is returned.
 \begin{verbatim}
 public int micopy_var_def(int incdfid, int invarid, int outcdfid);
 \end{verbatim}
@@ -741,7 +741,8 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid);
 
 \item \code{micreate\_std\_variable} : Create any of the standard MINC
 variables and set some attributes. Called in the manner of
-\code{ncvardef}. For all variables, attributes \code{MIvarid},
+\code{ncvardef}. The id of the newly created variable is returned.
+For all variables, attributes \code{MIvarid},
 \code{MIvartype} and \code{MIversion} are all set. For dimension
 and dimension width variables, \code{MIspacing} is set to
 \code{MI\_REGULAR} if the number of dimensions is zero and
@@ -762,7 +763,8 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 
 \item \code{micreate\_group\_variable} : Like
 \code{micreate\_std\_variable}, but \code{ndims} is always set to zero
-and the datatype is \code{NC\_LONG}.
+and the datatype is \code{NC\_LONG}. The id of the newly created
+variable is returned.
 \begin{verbatim}
 public int micreate_group_variable(int cdfid, char *name);
 \end{verbatim}
