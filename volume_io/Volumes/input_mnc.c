@@ -307,32 +307,39 @@ private  void  input_slab(
     long        start[],
     long        count[] )
 {
-    int      i, valid_ind, file_ind;
+    int      i, ind, valid_ind, file_ind, expected_ind;
     int      iv[MAX_DIMENSIONS], n_to_read;
     void     *void_ptr;
     Boolean  direct_to_volume;
-    Boolean  non_one_found;
+    Boolean  non_full_size_found;
     char     *buffer;
 
-    non_one_found = FALSE;
+    non_full_size_found = FALSE;
     direct_to_volume = TRUE;
 
-    for_less( i, 0, volume->n_dimensions )
-    {
-        file_ind = file->valid_file_axes[i];
+    expected_ind = volume->n_dimensions-1;
 
-        if( !non_one_found )
+    for( file_ind = file->n_file_dimensions-1;  file_ind >= 0;  --file_ind )
+    {
+        ind = file->axis_index_in_file[file_ind];
+        if( ind != INVALID_AXIS && (count[file_ind] != 1 ||
+                                    file->sizes_in_file[file_ind] == 1) )
         {
-            if( count[file_ind] != 1 )
-                non_one_found = TRUE;
-        }
-        else
-        {
-            if( count[file_ind] != file->sizes_in_file[file_ind] )
+            if( non_full_size_found )
             {
                 direct_to_volume = FALSE;
                 break;
             }
+
+            if( ind != expected_ind )
+            {
+                direct_to_volume = FALSE;
+                break;
+            }
+            --expected_ind;
+
+            if( count[file_ind] != file->sizes_in_file[file_ind] )
+                non_full_size_found = TRUE;
         }
     }
 
@@ -360,12 +367,6 @@ private  void  input_slab(
 
         (void) miicv_get( file->icv, start, count, void_ptr );
 
-        for_less( i, 0, volume->n_dimensions )
-        {
-            file_ind = file->valid_file_axes[i];
-            iv[file->axis_index_in_file[file_ind]] = start[file_ind];
-        }
-
         for_less( i, 0, n_to_read )
         {
             switch( volume->data_type )
@@ -374,11 +375,39 @@ private  void  input_slab(
                 SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
                            ( (unsigned char *) void_ptr )[i] );
                 break;
+            case SIGNED_BYTE:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (signed char *) void_ptr )[i] );
+                break;
+            case UNSIGNED_SHORT:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (unsigned short *) void_ptr )[i] );
+                break;
+            case SIGNED_SHORT:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (signed short *) void_ptr )[i] );
+                break;
+            case UNSIGNED_LONG:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (unsigned long *) void_ptr )[i] );
+                break;
+            case SIGNED_LONG:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (signed long *) void_ptr )[i] );
+                break;
+            case FLOAT:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (float *) void_ptr )[i] );
+                break;
+            case DOUBLE:
+                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
+                           ( (double *) void_ptr )[i] );
+                break;
             }
 
             valid_ind = volume->n_dimensions-1;
 
-            while( i >= 0 )
+            while( valid_ind >= 0 )
             {
                 file_ind = file->valid_file_axes[valid_ind];
                 if( count[file_ind] > 1 )
@@ -399,10 +428,11 @@ private  void  input_slab(
 }
 
 public  int  input_more_minc_file(
-    Minc_file   file )
+    Minc_file   file,
+    Real        *fraction_done )
 {
-    int      ind, file_ind;
-    long     start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+    int      ind, file_ind, n_done, total;
+    long     count[MAX_VAR_DIMS];
     Volume   volume;
 
     if( file->end_volume_flag )
@@ -416,7 +446,6 @@ public  int  input_more_minc_file(
     for_less( ind, 0, file->n_file_dimensions )
     {
         count[ind] = 1;
-        start[ind] = file->input_indices[ind];
     }
 
     for_less( ind, volume->n_dimensions - file->n_slab_dims,
@@ -426,7 +455,7 @@ public  int  input_more_minc_file(
         count[file_ind] = file->sizes_in_file[file_ind];
     }
 
-    input_slab( file, volume, start, count );
+    input_slab( file, volume, file->input_indices, count );
 
     /* advance to next slab */
 
@@ -445,7 +474,23 @@ public  int  input_more_minc_file(
     }
 
     if( ind < 0 )
+    {
+        *fraction_done = 1.0;
         file->end_volume_flag = TRUE;
+    }
+    else
+    {
+        n_done = 0;
+        total = 1;
+        for_less( ind, 0, volume->n_dimensions - file->n_slab_dims )
+        {
+            n_done = n_done * file->sizes_in_file[file->valid_file_axes[ind]] +
+                     file->input_indices[ind];
+            total *= file->sizes_in_file[file->valid_file_axes[ind]];
+        }
+
+        *fraction_done = (Real) n_done / (Real) total;
+    }
 
     return( !file->end_volume_flag );
 }
