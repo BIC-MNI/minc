@@ -1,3 +1,13 @@
+2003-03-17  Bert Vincent      <bert@bic.mni.mcgill.ca>
+
+	* configure.in: added check for mkstemp(), tempnam(), and tmpnam()
+	* libsrc/netcdf_convenience.c: added definition of micreate_tempfile()
+	* libsrc/minc.h: added declaration of micreate_tempfile()
+	* volume_io/Prog_utils/files.c: replaced uses of tmpnam() with
+	  micreate_tempfile().
+	* volume_io/Volumes/volume_cache.c: replaced use of tmpnam() with
+	  micreate_tempfile()
+	
 2003-02-14  Jason Lerch	      <jason@bic.mni.mcgill.ca>
 
 	* configure.in: Set version to 1.1.1
