@@ -30,13 +30,19 @@
                  micopy_all_var_defs
                  micopy_all_var_values
                  micreate_tempfile
+                 miget_cfg_bool
+                 miget_cfg_int
+                 miget_cfg_str
               private :
                  execute_decompress_command
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.12  2004-04-30 18:57:39  bert
+ * Revision 6.13  2004-06-04 18:16:25  bert
+ * Create and add an 'ident' attribute when a file is created
+ *
+ * Revision 6.12  2004/04/30 18:57:39  bert
  * Explicitly cast return values of NULL to char * where appropriate to make IRIX MIPSpro compiler happy
  *
  * Revision 6.11  2004/04/27 15:50:41  bert
@@ -148,7 +154,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.12 2004-04-30 18:57:39 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.13 2004-06-04 18:16:25 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
@@ -192,6 +198,7 @@ private int MI_vcopy_action(int ndims, long start[], long count[],
  */
 static int mi_nc_files = 0;
 static int mi_h5_files = 0;
+
 #endif /* MINC2 defined */
 
 
@@ -668,6 +675,12 @@ public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
     }
     if (fd < 0) {
 	milog_message(MI_MSG_CREATEFILE, path);
+    }
+    else {
+        char ident[128];
+
+        micreate_ident(ident, sizeof(ident));
+        miattputstr(fd, NC_GLOBAL, "ident", ident);
     }
     MI_RETURN(fd);
 }
@@ -1940,7 +1953,7 @@ micreate_tempfile(void)
 
 /** Simple function to read a user's .mincrc file, if present.
  */
-int
+static int
 miread_cfg(const char *name, char *buffer, int maxlen)
 {
     FILE *fp;
@@ -2025,3 +2038,4 @@ miget_cfg_str(const char *name)
     }
     return (strdup(buffer));
 }
+
