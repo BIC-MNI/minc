@@ -22,7 +22,8 @@ include_HEADERS = \
 	libsrc/voxel_loop.h \
 	libsrc/nd_loop.h \
 	libsrc/time_stamp.h \
-	volume_io/Include/volume_io.h
+	volume_io/Include/volume_io.h \
+	libsrc/minc_simple.h
 
 include_volume_iodir = $(includedir)/volume_io
 
@@ -221,7 +222,8 @@ libminc_la_SOURCES = \
 	libsrc/netcdf_convenience.c \
 	libsrc/time_stamp.c \
 	libsrc/value_conversion.c \
-	libsrc/voxel_loop.c
+	libsrc/voxel_loop.c \
+	libsrc/minc_simple.c
 
 libvolume_io_la_LDFLAGS = -version-info 0:1:0
 libvolume_io_la_SOURCES = \
