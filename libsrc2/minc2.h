@@ -234,7 +234,13 @@ typedef struct {
  ************************************************************************/
 
 /* ATTRIBUTE/GROUP FUNCTIONS */
-
+extern int milist_start(mihandle_t vol, const char *path, int flags,
+			milisthandle_t *handle);
+extern int milist_attr_next(mihandle_t vol, milisthandle_t handle, 
+			    char *path, int maxpath,
+			    char *name, int maxname);
+extern int milist_finish(milisthandle_t handle);
+extern int milist_grp_next(milisthandle_t handle, char *path, int maxpath);
 extern int micreate_group(mihandle_t vol, const char *path, const char *name);
 extern int midelete_attr(mihandle_t vol, const char *path, const char *name);
 extern int midelete_group(mihandle_t vol, const char *path, const char *name);
