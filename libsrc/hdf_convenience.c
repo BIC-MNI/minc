@@ -21,7 +21,8 @@ struct m2_var {
     int ndims;
     hsize_t *dims;
     hid_t dset_id;
-    hid_t type_id;
+    hid_t ftyp_id;              /* File type */
+    hid_t mtyp_id;              /* Memory type */
     hid_t fspc_id;
 };
 
@@ -116,7 +117,8 @@ hdf_id_del(int fd)
                 /* Close the HDF5 handles we were holding open.
                  */
                 H5Dclose(tmp->dset_id);
-                H5Tclose(tmp->type_id);
+                H5Tclose(tmp->ftyp_id);
+                H5Tclose(tmp->mtyp_id);
                 H5Sclose(tmp->fspc_id);
 		free(tmp);
 	    }
@@ -174,7 +176,8 @@ hdf_var_add(struct m2_file *file, const char *name, const char *path,
 	strncpy(new->name, name, NC_MAX_NAME - 1);
 	strncpy(new->path, path, NC_MAX_NAME - 1);
         new->dset_id = H5Dopen(file->fd, path);
-        new->type_id = H5Dget_type(new->dset_id);
+        new->ftyp_id = H5Dget_type(new->dset_id);
+        new->mtyp_id = H5Tget_native_type(new->ftyp_id, H5T_DIR_ASCEND);
         new->fspc_id = H5Dget_space(new->dset_id);
 	new->ndims = ndims;
 	if (ndims != 0) {
@@ -308,17 +311,17 @@ nc_to_hdf5_type(nc_type dtype, int is_signed)
 {
     switch (dtype) {
     case NC_CHAR:
-	return (is_signed ? H5T_NATIVE_CHAR : H5T_NATIVE_UCHAR);
+	return (is_signed ? H5T_STD_I8LE : H5T_STD_U8LE);
     case NC_BYTE:
-	return (is_signed ? H5T_NATIVE_CHAR : H5T_NATIVE_UCHAR);
+	return (is_signed ? H5T_STD_I8LE : H5T_STD_U8LE);
     case NC_SHORT:
-	return (is_signed ? H5T_NATIVE_SHORT : H5T_NATIVE_USHORT);
+	return (is_signed ? H5T_STD_I16LE : H5T_STD_U16LE);
     case NC_INT:
-	return (is_signed ? H5T_NATIVE_LONG : H5T_NATIVE_ULONG);
+	return (is_signed ? H5T_STD_I32LE : H5T_STD_U32LE);
     case NC_FLOAT:
-	return (H5T_NATIVE_FLOAT);
+	return (H5T_IEEE_F32LE);
     case NC_DOUBLE:
-	return (H5T_NATIVE_DOUBLE);
+	return (H5T_IEEE_F64LE);
     }
     return (-1);
 }
@@ -485,7 +488,7 @@ hdf_attinq(int fd, int varid, const char *attnm, nc_type *type_ptr,
   /* Special case - emulate the signtype attribute.
    */
   if (!strcmp(attnm, MIsigntype)) {
-      if (var != NULL && H5Tget_class(var->type_id) == H5T_INTEGER) {
+      if (var != NULL && H5Tget_class(var->ftyp_id) == H5T_INTEGER) {
           if (type_ptr != NULL) {
               *type_ptr = NC_CHAR;
           }
@@ -750,7 +753,7 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
     }
 
     dst_id = var->dset_id;
-    typ_id = var->type_id;
+    typ_id = var->ftyp_id;
  
     class = H5Tget_class(typ_id);
     size = H5Tget_size(typ_id);
@@ -895,7 +898,8 @@ public int
 hdf_attget(int fd, int varid, const char *attnm, void *value)
 {
     hid_t att_id;
-    hid_t typ_id;
+    hid_t ftyp_id;
+    hid_t mtyp_id;
     hid_t loc_id;
     int status = MI_ERROR;
     struct m2_file *file;
@@ -919,8 +923,8 @@ hdf_attget(int fd, int varid, const char *attnm, void *value)
     /* Special case - emulate the signtype attribute.
      */
     if (!strcmp(attnm, MIsigntype)) {
-        if (H5Tget_class(var->type_id) == H5T_INTEGER) {
-            if (H5Tget_sign(var->type_id) == H5T_SGN_NONE) {
+        if (H5Tget_class(var->ftyp_id) == H5T_INTEGER) {
+            if (H5Tget_sign(var->ftyp_id) == H5T_SGN_NONE) {
                 strcpy((char *) value, MI_UNSIGNED);
             }
             else {
@@ -932,7 +936,7 @@ hdf_attget(int fd, int varid, const char *attnm, void *value)
     else if (!strcmp(attnm, MI_FillValue)) {
         hid_t plist_id = H5Dget_create_plist(loc_id);
         if (plist_id >= 0) {
-            if (H5Pget_fill_value(plist_id, var->type_id, value) >= 0) {
+            if (H5Pget_fill_value(plist_id, var->mtyp_id, value) >= 0) {
                 status = MI_NOERROR;
             }
             H5Pclose(plist_id);
@@ -943,11 +947,15 @@ hdf_attget(int fd, int varid, const char *attnm, void *value)
             att_id = H5Aopen_name(loc_id, attnm);
         } H5E_END_TRY;
         if (att_id >= 0) {
-            if ((typ_id = H5Aget_type(att_id)) >= 0) {
-                if (H5Aread(att_id, typ_id, value) >= 0) {
-                    status = 1; /* 1 -> success */
+            if ((ftyp_id = H5Aget_type(att_id)) >= 0) {
+                mtyp_id = H5Tget_native_type(ftyp_id, H5T_DIR_ASCEND);
+                if (mtyp_id >= 0) {
+                    if (H5Aread(att_id, mtyp_id, value) >= 0) {
+                        status = 1; /* 1 -> success */
+                    }
+                    H5Tclose(mtyp_id);
                 }
-                H5Tclose(typ_id);
+                H5Tclose(ftyp_id);
             }
             H5Aclose(att_id);
         }
@@ -960,7 +968,8 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 	   int val_len, void *val_ptr)
 {
     hid_t att_id = -1;
-    hid_t typ_id = -1;
+    hid_t mtyp_id = -1;         /* Memory type */
+    hid_t ftyp_id = -1;         /* File type */
     hid_t spc_id = -1;
     hid_t loc_id;
     int status = MI_ERROR;
@@ -1012,8 +1021,8 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
             return (MI_ERROR);
         }
         
-        if ((H5Tget_sign(var->type_id) == H5T_SGN_NONE && new_signed) ||
-            (H5Tget_sign(var->type_id) == H5T_SGN_2 && !new_signed)) {
+        if ((H5Tget_sign(var->ftyp_id) == H5T_SGN_NONE && new_signed) ||
+            (H5Tget_sign(var->ftyp_id) == H5T_SGN_2 && !new_signed)) {
             hid_t new_type_id;
             hid_t new_dset_id;
             hid_t new_plst_id;
@@ -1022,7 +1031,7 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
             sprintf(temp, "junkXXXX");
 
-            new_type_id = H5Tcopy(var->type_id);
+            new_type_id = H5Tcopy(var->ftyp_id);
             if (new_type_id < 0) {
                 milog_message(MI_MSG_SNH);
             }
@@ -1040,7 +1049,8 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
             H5Aiterate(var->dset_id, &i, hdf_copy_attr, (void *) new_dset_id);
 
             H5Dclose(var->dset_id);
-            H5Tclose(var->type_id);
+            H5Tclose(var->ftyp_id);
+            H5Tclose(var->mtyp_id);
             H5Tclose(new_type_id);
             H5Pclose(new_plst_id);
             H5Sclose(var->fspc_id);
@@ -1054,15 +1064,17 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
             }
 
             var->dset_id = new_dset_id;
-            var->type_id = H5Dget_type(var->dset_id);
+            var->ftyp_id = H5Dget_type(var->dset_id);
+            var->mtyp_id = H5Tget_native_type(var->ftyp_id, H5T_DIR_ASCEND);
             var->fspc_id = H5Dget_space(var->dset_id);
         }
         return (MI_NOERROR);
     }
 
     if (val_typ == NC_CHAR) {
-        typ_id = H5Tcopy(H5T_C_S1);
-        H5Tset_size(typ_id, val_len);
+        ftyp_id = H5Tcopy(H5T_C_S1);
+        H5Tset_size(ftyp_id, val_len);
+        mtyp_id = H5Tcopy(ftyp_id);
         spc_id = H5Screate(H5S_SCALAR);
     }
     else {
@@ -1076,26 +1088,32 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
         switch (val_typ) {
         case NC_BYTE:
-            typ_id = H5T_NATIVE_UCHAR;
+            mtyp_id = H5T_NATIVE_UCHAR;
+            ftyp_id = H5T_STD_U8LE;
             break;
         case NC_SHORT:
-            typ_id = H5T_NATIVE_USHORT;
+            mtyp_id = H5T_NATIVE_USHORT;
+            ftyp_id = H5T_STD_U16LE;
             break;
         case NC_INT:
-            typ_id = H5T_NATIVE_UINT;
+            mtyp_id = H5T_NATIVE_UINT;
+            ftyp_id = H5T_STD_U32LE;
             break;
         case NC_FLOAT:
-            typ_id = H5T_NATIVE_FLOAT;
+            mtyp_id = H5T_NATIVE_FLOAT;
+            ftyp_id = H5T_IEEE_F32LE;
             break;
         case NC_DOUBLE:
-            typ_id = H5T_NATIVE_DOUBLE;
+            mtyp_id = H5T_NATIVE_DOUBLE;
+            ftyp_id = H5T_IEEE_F64LE;
             break;
         default:
             milog_message(MI_MSG_BADTYPE, val_typ);
             return (MI_ERROR);
         }
 
-        typ_id = H5Tcopy(typ_id);
+        mtyp_id = H5Tcopy(mtyp_id);
+        ftyp_id = H5Tcopy(ftyp_id);
     }
 
     /* If the attribute already exists, delete it.  It is not possible
@@ -1107,14 +1125,14 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
     /* Create the attribute anew.
      */
-    att_id = H5Acreate(loc_id, attnm, typ_id, spc_id, H5P_DEFAULT);
+    att_id = H5Acreate(loc_id, attnm, ftyp_id, spc_id, H5P_DEFAULT);
 
     if (att_id < 0)
         goto cleanup;
 
     /* Save the value.
      */
-    status = H5Awrite(att_id, typ_id, val_ptr);
+    status = H5Awrite(att_id, mtyp_id, val_ptr);
     if (status >= 0) {
         status = MI_NOERROR;
     }
@@ -1122,8 +1140,10 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
  cleanup:
     if (spc_id >= 0) 
         H5Sclose(spc_id);
-    if (typ_id >= 0)
-        H5Tclose(typ_id);
+    if (ftyp_id >= 0)
+        H5Tclose(ftyp_id);
+    if (mtyp_id >= 0)
+        H5Tclose(mtyp_id);
     if (att_id >= 0)
         H5Aclose(att_id);
 
@@ -1289,7 +1309,7 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
 
         aspc_id = H5Screate(H5S_SCALAR);
         if (aspc_id >= 0) {
-            att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_NATIVE_LONG, aspc_id, 
+            att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
                                H5P_DEFAULT);
             if (att_id >= 0) {
                 status = H5Awrite(att_id, H5T_NATIVE_LONG, 
@@ -1376,7 +1396,7 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   }
 
   dst_id = var->dset_id;
-  typ_id = var->type_id;
+  typ_id = var->mtyp_id;
   fspc_id = var->fspc_id;
 
   ndims = var->ndims;
@@ -1448,7 +1468,7 @@ hdf_varputg(int fd, int varid, const long *start,
     }
     
     dst_id = varp->dset_id;
-    typ_id = varp->type_id;
+    typ_id = varp->mtyp_id;
     fspc_id = varp->fspc_id;
 
     mspc_id = H5Scopy(fspc_id);
@@ -1791,7 +1811,7 @@ hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
   }
 
   dst_id = var->dset_id;
-  typ_id = var->type_id;
+  typ_id = var->mtyp_id;
   fspc_id = var->fspc_id;
 
   ndims = var->ndims;

@@ -18,6 +18,27 @@
 
 #define MI_LABEL_MAX 128
 
+int miswap2(unsigned short tmp)
+{
+    unsigned char *x = &tmp;
+    unsigned char t = x[0];
+    x[0] = x[1];
+    x[1] = t;
+    return (tmp);
+}
+
+int miswap4(unsigned int tmp)
+{
+    unsigned char *x = &tmp;
+    unsigned char t = x[0];
+    x[0] = x[3];
+    x[3] = t;
+    t = x[1];
+    x[1] = x[2];
+    x[2] = t;
+    return (tmp);
+}
+
 /**
 This function associates a label name with an integer value for the given
 volume. Functions which read and write voxel values will read/write 
@@ -41,11 +62,29 @@ midefine_label(mihandle_t volume, int value, const char *name)
 	return (MI_ERROR);
     }
 
-    if (volume->type_id <= 0) {
+    if (volume->ftype_id <= 0 || volume->mtype_id <= 0) {
 	return (MI_ERROR);
     }
 
-    result = H5Tenum_insert(volume->type_id, name, &value);
+    result = H5Tenum_insert(volume->mtype_id, name, &value);
+    if (result < 0) {
+	return (MI_ERROR);
+    }
+
+    /* We might have to swap these values before adding them to
+     * the file type.
+     */
+    if (H5Tget_order(volume->ftype_id) != H5Tget_order(volume->mtype_id)) {
+        switch (H5Tget_size(volume->ftype_id)) {
+        case 2:
+            value = miswap2((unsigned short) value);
+            break;
+        case 4:
+            value = miswap4((unsigned int) value);
+            break;
+        }
+    }
+    result = H5Tenum_insert(volume->ftype_id, name, &value);
     if (result < 0) {
 	return (MI_ERROR);
     }
@@ -71,7 +110,7 @@ miget_label_name(mihandle_t volume, int value, char **name)
     if (volume->volume_class != MI_CLASS_LABEL) {
         return (MI_ERROR);
     }
-    if (volume->type_id <= 0) {
+    if (volume->mtype_id <= 0) {
         return (MI_ERROR);
     }
     *name = malloc(MI_LABEL_MAX);
@@ -80,7 +119,7 @@ miget_label_name(mihandle_t volume, int value, char **name)
     }
 
     H5E_BEGIN_TRY {
-        result = H5Tenum_nameof(volume->type_id, &value, *name, MI_LABEL_MAX);
+        result = H5Tenum_nameof(volume->mtype_id, &value, *name, MI_LABEL_MAX);
     } H5E_END_TRY;
 
     if (result < 0) {
@@ -106,12 +145,12 @@ miget_label_value(mihandle_t volume, const char *name, int *value_ptr)
         return (MI_ERROR);
     }
 
-    if (volume->type_id <= 0) {
+    if (volume->mtype_id <= 0) {
         return (MI_ERROR);
     }
 
     H5E_BEGIN_TRY {
-        result = H5Tenum_valueof(volume->type_id, name, value_ptr);
+        result = H5Tenum_valueof(volume->mtype_id, name, value_ptr);
     } H5E_END_TRY;
 
     if (result < 0) {

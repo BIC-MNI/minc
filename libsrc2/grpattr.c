@@ -228,13 +228,14 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
     }
 
     hdf_type = H5Aget_type(hdf_attr);
-    if (hdf_type == H5T_NATIVE_DOUBLE) {
+    switch (H5Tget_class(hdf_type)) {
+    case H5T_FLOAT:
 	*data_type = MI_TYPE_DOUBLE;
-    }
-    else if (H5Tget_class(hdf_type) == H5T_STRING) {
+        break;
+    case H5T_STRING:
 	*data_type = MI_TYPE_STRING;
-    }
-    else {
+        break;
+    default:
 	return (MI_ERROR);
     }
 
@@ -253,7 +254,7 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 {
     hid_t hdf_file;
     hid_t hdf_grp;
-    hid_t hdf_type;
+    hid_t mtyp_id;
     hid_t hdf_space;
     hid_t hdf_attr;
 
@@ -278,17 +279,17 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 
     switch (data_type) {
     case MI_TYPE_INT:
-	hdf_type = H5Tcopy(H5T_NATIVE_INT);
+	mtyp_id = H5Tcopy(H5T_NATIVE_INT);
 	break;
     case MI_TYPE_FLOAT:
-	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
+	mtyp_id = H5Tcopy(H5T_NATIVE_FLOAT);
 	break;
     case MI_TYPE_DOUBLE:
-	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
+	mtyp_id = H5Tcopy(H5T_NATIVE_DOUBLE);
 	break;
     case MI_TYPE_STRING:
-	hdf_type = H5Tcopy(H5T_C_S1);
-	H5Tset_size(hdf_type, length);
+	mtyp_id = H5Tcopy(H5T_C_S1);
+	H5Tset_size(mtyp_id, length);
 	break;
     default:
 	return (MI_ERROR);
@@ -312,10 +313,10 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     }
     
 
-    H5Aread(hdf_attr, hdf_type, values);
+    H5Aread(hdf_attr, mtyp_id, values);
 
     H5Aclose(hdf_attr);
-    H5Tclose(hdf_type);
+    H5Tclose(mtyp_id);
     H5Sclose(hdf_space);
     H5Gclose(hdf_grp);
 
@@ -330,9 +331,7 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 {
     hid_t hdf_file;
     hid_t hdf_grp;
-    hid_t hdf_type;
-    hid_t hdf_space;
-    hid_t hdf_attr;
+    int result;
 
     /* Get a handle to the actual HDF file 
      */
@@ -348,49 +347,9 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	return (MI_ERROR);
     }
 
-    switch (data_type) {
-    case MI_TYPE_DOUBLE:
-	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
-	break;
+    result = miset_attr_at_loc(hdf_grp, name, data_type, length, values);
 
-    case MI_TYPE_STRING:
-	hdf_type = H5Tcopy(H5T_C_S1);
-	H5Tset_size(hdf_type, length);
-	break;
-
-    default:
-	return (MI_ERROR);
-    }
-
-    if (length == 1 || data_type == MI_TYPE_STRING) {
-	hdf_space = H5Screate(H5S_SCALAR);
-    }
-    else {
-	hsize_t dims[1];
-	hsize_t maxdims[1];
-
-	dims[0] = length;
-	maxdims[0] = length;
-
-	hdf_space = H5Screate_simple(1, dims, maxdims);
-    }
-
-    H5E_BEGIN_TRY {
-        /* Delete attribute if it already exists. */
-        H5Adelete(hdf_grp, name);
-    } H5E_END_TRY;
-
-    hdf_attr = H5Acreate(hdf_grp, name, hdf_type, hdf_space, H5P_DEFAULT);
-    if (hdf_attr < 0) {
-	return (MI_ERROR);
-    }
-
-    H5Awrite(hdf_attr, hdf_type, values);
-
-    H5Aclose(hdf_attr);
-    H5Sclose(hdf_space);
-    H5Tclose(hdf_type);
     H5Gclose(hdf_grp);
 
-    return (MI_NOERROR);
+    return (result);
 }

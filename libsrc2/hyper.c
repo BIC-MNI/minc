@@ -257,7 +257,7 @@ miget_hyperslab_size(mitype_t volume_data_type, /**< Data type of a voxel. */
     int i;
     hid_t type_id;
 
-    type_id = mitype_to_hdftype(volume_data_type);
+    type_id = mitype_to_hdftype(volume_data_type, TRUE);
     if (type_id < 0) {
         return (MI_ERROR);
     }
@@ -357,10 +357,10 @@ mirw_hyperslab_raw(int opcode,
                    const unsigned long count[],
                    void *buffer)
 {
-    hid_t type_id = -1;
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
     hid_t fspc_id = -1;
+    hid_t type_id = -1;
     int result = MI_ERROR;
     hssize_t hdf_start[MI2_MAX_VAR_DIMS];
     hsize_t hdf_count[MI2_MAX_VAR_DIMS];
@@ -374,13 +374,6 @@ mirw_hyperslab_raw(int opcode,
         return (MI_ERROR);
     }
 
-    if (midatatype == MI_TYPE_UNKNOWN) {
-        type_id = H5Tcopy(volume->type_id);
-    }
-    else {
-        type_id = mitype_to_hdftype(midatatype);
-    }
-
     dset_id = volume->image_id;
     if (dset_id < 0) {
         goto cleanup;
@@ -389,6 +382,13 @@ mirw_hyperslab_raw(int opcode,
     fspc_id = H5Dget_space(dset_id);
     if (fspc_id < 0) {
         goto cleanup;
+    }
+    
+    if (midatatype == MI_TYPE_UNKNOWN) {
+        type_id = H5Tcopy(volume->mtype_id);
+    }
+    else {
+        type_id = mitype_to_hdftype(midatatype, TRUE);
     }
 
     ndims = volume->number_of_dims;
@@ -454,6 +454,7 @@ mirw_hyperslab_raw(int opcode,
     }
 
  cleanup:
+
     if (type_id >= 0) {
         H5Tclose(type_id);
     }
