@@ -127,8 +127,8 @@
 
 /* The image variable and its attributes */
 #define MIimage    "image"
-#define MIimagemax "imagemax"
-#define MIimagemin "imagemin"
+#define MIimagemax "image-max"
+#define MIimagemin "image-min"
 #define MIcomplete "complete"
 
 /* The patient variable and its attributes */
