@@ -18,7 +18,10 @@
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
  * $Log: dim_conversion.c,v $
- * Revision 6.1  1999-10-19 14:45:07  neelin
+ * Revision 6.2  2003-09-18 16:16:15  bert
+ * Use standard labs() and fabs() instead of our private macros
+ *
+ * Revision 6.1  1999/10/19 14:45:07  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -74,7 +77,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.1 1999-10-19 14:45:07 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.2 2003-09-18 16:16:15 bert Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -641,7 +644,7 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    dmax = icvp->fill_valid_max;
    dmin = icvp->fill_valid_min;
    epsilon = (dmax - dmin) * FILLVALUE_EPSILON;
-   epsilon = ABS(epsilon);
+   epsilon = fabs(epsilon);
    dmax += epsilon;
    dmin -= epsilon;
 
@@ -896,8 +899,8 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                   - icvp->derv_icv_start[idim] + offset;
          }
       }
-      buffer_off += buffer_index * ABS(dcp->buf_step[idim]);
-      values_off += values_index * ABS(dcp->usr_step[idim]);
+      buffer_off += buffer_index * labs(dcp->buf_step[idim]);
+      values_off += values_index * labs(dcp->usr_step[idim]);
    }
 
    /* Calculate arrays of offsets for compress/expand. */
