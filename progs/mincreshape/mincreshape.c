@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:12  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-08-19 13:03:56  neelin
+@MODIFIED   : Fixed index mapping in setting up reshaping info.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:24:12  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:10  neelin
  * Release of minc version 0.5
  *
@@ -56,7 +59,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.0 1997-09-12 13:24:12 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.1 1998-08-19 13:03:56 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1152,7 +1155,7 @@ public void setup_reshaping_info(int icvid, int mincid,
    for (iloop=2; iloop < num_imgdims; iloop++) {
       idim = fastest_input_img_dim - iloop;
       if (idim >= 0)
-         reshape_info->dim_used_in_block[o2i[idim]] = TRUE;
+         reshape_info->dim_used_in_block[i2o[idim]] = TRUE;
    }
 
    /* If we are doing icv normalization, then all dimensions are used in the
@@ -1186,9 +1189,9 @@ public void setup_reshaping_info(int icvid, int mincid,
          (void) ncvarinq(mincid, minid, NULL, NULL, &min_ndims, min_dim, NULL);
          (void) ncvarinq(mincid, maxid, NULL, NULL, &max_ndims, max_dim, NULL);
          for (idim=0; idim < input_ndims; idim++) {
-            jdim = reshape_info->map_out_to_in[idim];
-            if (reshape_info->dim_used_in_block[jdim]) {
-               dimid = input_dim[jdim];
+            jdim = reshape_info->map_in_to_out[idim];
+            if ((jdim>=0) && reshape_info->dim_used_in_block[jdim]) {
+               dimid = input_dim[idim];
                for (jdim=0; jdim < min_ndims; jdim++) {
                   if (min_dim[jdim] == dimid) {
                      reshape_info->do_block_normalization = TRUE;
