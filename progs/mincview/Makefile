@@ -66,4 +66,5 @@ clean:
 	            
 install:
 	$(CP) $(CP_FLAGS) $(SCRIPTS) $(PROGS) $(INSTALL_BINDIR)
+	$(CD) $(INSTALL_BINDIR); $(CHMOD) $(CHMOD_FLAGS) $(SCRIPTS)
 
