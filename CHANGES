@@ -1,3 +1,7 @@
+Wed Jan  9 08:58:27 EST 2002
+   - Modified mincstats to only print a blank line after the histogram info
+     if -quiet is not specified.
+
 Fri Dec 14 12:12:42 EST 2001
    - Removed rcsid variables from volume_io .h files.
 
