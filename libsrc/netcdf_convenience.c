@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.4  1995-02-08 19:01:06  neelin
-@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
+@MODIFIED   : Revision 2.5  1995-02-08 19:14:44  neelin
+@MODIFIED   : More changes for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.4  1995/02/08  19:01:06  neelin
+ * Moved private function declarations from minc_routines.h to appropriate file.
+ *
  * Revision 2.3  1995/01/24  08:34:11  neelin
  * Added optional tempfile argument to miexpand_file.
  *
@@ -72,10 +75,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.4 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.5 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
+#ifdef unix
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
 
 /* Private functions */
 private int execute_decompress_command(char *command, char *infile, 
@@ -1192,7 +1199,8 @@ public int micopy_var_values(int incdfid, int invarid,
 ---------------------------------------------------------------------------- */
 private int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data)
-{         /* ARGSUSED */
+     /* ARGSUSED */
+{
    mi_vcopy_type *ptr;       /* Pointer to data from micopy_var_values */
 
    MI_SAVE_ROUTINE_NAME("MI_vcopy_action");

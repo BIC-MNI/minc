@@ -13,9 +13,12 @@
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 2.1  1995-02-08 19:01:06  neelin
-@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
+@MODIFIED   : Revision 2.2  1995-02-08 19:14:44  neelin
+@MODIFIED   : More changes for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.1  1995/02/08  19:01:06  neelin
+ * Moved private function declarations from minc_routines.h to appropriate file.
+ *
  * Revision 2.0  1994/09/28  10:38:21  neelin
  * Release of minc version 0.2
  *
@@ -48,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 2.1 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 2.2 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -219,7 +222,8 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
 ---------------------------------------------------------------------------- */
 private int MI_var_action(int ndims, long var_start[], long var_count[], 
                           long nvalues, void *var_buffer, void *caller_data)
-{          /* ARGSUSED */
+     /* ARGSUSED */
+{
    mi_varaccess_type *ptr;   /* Pointer to data from MI_varaccess */
    int status;               /* Status returned by function call */
 

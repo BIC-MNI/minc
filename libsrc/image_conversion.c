@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 2.2  1995-02-08 19:01:06  neelin
-@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
+@MODIFIED   : Revision 2.3  1995-02-08 19:14:44  neelin
+@MODIFIED   : More changes for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.2  1995/02/08  19:01:06  neelin
+ * Moved private function declarations from minc_routines.h to appropriate file.
+ *
  * Revision 2.1  1994/12/09  09:12:30  neelin
  * Added test in miicv_detach to make sure that icv is attached before
  * detaching it.
@@ -77,7 +80,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.2 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.3 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -999,7 +1002,8 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
-{             /* ARGSUSED */
+     /* ARGSUSED */
+{
    int oldncopts;             /* For saving value of ncopts */
    int vid[2];                /* Variable ids for max and min */
    double *immptr[2];         /* Pointers to imgmax and imgmin */

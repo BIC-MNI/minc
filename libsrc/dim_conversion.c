@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 2.2  1995-02-08 19:01:06  neelin
-@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
+@MODIFIED   : Revision 2.3  1995-02-08 19:14:44  neelin
+@MODIFIED   : More changes for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.2  1995/02/08  19:01:06  neelin
+ * Moved private function declarations from minc_routines.h to appropriate file.
+ *
  * Revision 2.1  1994/11/02  09:42:37  neelin
  * Fixed conversion of vector to scalar (old code simply returned the first
  * component of the vector - now averaging is done properly).
@@ -52,7 +55,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.2 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.3 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -171,7 +174,8 @@ public int miicv_attach(int icvid, int cdfid, int varid)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
-{        /* ARGSUSED */
+     /* ARGSUSED */
+{
    int oldncopts;             /* For saving value of ncopts */
    char dimname[MAX_NC_NAME]; /* Dimensions name */
    int idim;                  /* Looping counter for fastest image dims */
@@ -513,7 +517,8 @@ private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[])
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[])
-{            /* ARGSUSED */
+     /* ARGSUSED */
+{
    int idim;
 
    MI_SAVE_ROUTINE_NAME("MI_icv_get_dim_conversion");
@@ -762,7 +767,8 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               mi_icv_dimconv_type *dcp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer)
-{   /* ARGSUSED */
+     /* ARGSUSED */
+{
    long buffer_len, values_len; /* Buffer lengths, offsets and indices */
    long buffer_off, values_off;
    long buffer_index, values_index;
