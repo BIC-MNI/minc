@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.13  1994-04-08 09:15:10  neelin
-@MODIFIED   : Added printing of filename to /dev/log on error.
+@MODIFIED   : Revision 1.14  1994-04-08 10:35:36  neelin
+@MODIFIED   : Fixed handling of input trace (don't do trace while using the files).
 @MODIFIED   :
+ * Revision 1.13  94/04/08  09:15:10  neelin
+ * Added printing of filename to /dev/log on error.
+ * 
  * Revision 1.12  94/04/07  16:18:54  neelin
  * Fixed bug in setting of state when input error or end-of-file occurs.
  * 
@@ -244,7 +247,15 @@ int main(int argc, char *argv[])
                (void) fprintf(stderr, "\nFinished group copy.\n");
             }
             /* Do something with the files */
+#ifdef DO_INPUT_TRACING
+            /* Disable input tracing */
+            acr_disable_input_trace();
+#endif
             use_the_files(num_files, file_list, file_info_list);
+#ifdef DO_INPUT_TRACING
+   /* Enable input tracing */
+            acr_enable_input_trace();
+#endif
             /* Remove the temporary files */
             cleanup_files(num_files, file_list);
             free_list(num_files, file_list, file_info_list);
