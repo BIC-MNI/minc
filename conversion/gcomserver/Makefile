@@ -16,7 +16,8 @@ EXTRA_OBJS = spi_element_defs.o open_connection.o reply.o spi_message.o \
 HEADERS  = gcomserver.h gcom_prototypes.h spi_element_defs.h gyro_to_minc.h
 MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines
-INCLUDES = -I. -I$(ACR_LIB_DIR) -I$(PROG_LIB_DIR) -I$(VOLIO_LIB_DIR)/Include \
+INCLUDES = -I/usr/include -I. -I$(ACR_LIB_DIR) -I$(PROG_LIB_DIR) \
+	            -I$(VOLIO_LIB_DIR)/Include \
 	            -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
 LDOPT    = -lm $(CC_ACR_LIB) $(CC_PROG_LIB) $(CC_VOLIO_LIB) $(MINC_LDOPT)
 # --------------------------------------------------------------------

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:32  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-12-07 08:20:10  neelin
+@MODIFIED   : Added support for irix 5 decnet.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:32  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.5  94/09/28  10:34:50  neelin
  * Pre-release
  * 
@@ -41,8 +44,17 @@
 #include <acr_nema.h>
 #include <minc_def.h>
 
-/* Function prototypes */
+/* Decnet functions */
+#ifdef DNIOCTL
+#  define GCOM_IOCTL DNIOCTL
+#  define GCOM_READ DNREAD
+#  define GCOM_WRITE DNWRITE
+#else
+#  define GCOM_IOCTL ioctl
+#  define GCOM_READ read
+#  define GCOM_WRITE write
 int ioctl (int fildes, int request, ...);
+#endif
 
 /* Structure for passing info around */
 typedef struct {
@@ -72,7 +84,7 @@ private int input_routine(void *user_data, void *buffer, int nbytes)
    io_data = (Io_data *) user_data;
 
    /* Read the data */
-   nread = read(io_data->fd, buffer, (unsigned int) nbytes);
+   nread = GCOM_READ(io_data->fd, buffer, (unsigned int) nbytes);
    if (nread < 0) nread = 0;
 
    return nread;
@@ -102,7 +114,7 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
    io_data = (Io_data *) user_data;
 
    /* Write the data */
-   nwritten = write(io_data->fd, buffer, (unsigned int) nbytes);
+   nwritten = GCOM_WRITE(io_data->fd, buffer, (unsigned int) nbytes);
    if (nwritten < 0) nwritten = 0;
 
    return nwritten;
@@ -133,8 +145,13 @@ public int open_connection(int argc, char *argv[],
    /* Accept the connection and get the maximum buffer length */
    link = fileno(stdin);
    (void) memset((void *) &sd, 0, sizeof(sd));
-   (void) ioctl(link, SES_ACCEPT, &sd);
-   (void) ioctl(link, SES_MAX_IO, &maxlength);
+   (void) GCOM_IOCTL(link, SES_ACCEPT, &sd);
+   maxlength = 0;
+   if ((GCOM_IOCTL(link, SES_MAX_IO, &maxlength) == -1) ||
+       (maxlength <= 0)) {
+      maxlength = DN_MAX_IO;
+   }
+   (void) fprintf(stderr, "Maxlength = %d\n", (int) maxlength);
 
    /* Set up input */
    io_data = MALLOC(sizeof(*io_data));
