@@ -479,17 +479,21 @@ public  Boolean   evaluate_volume(
     Boolean voxel_is_active;
     int     n_inactive;
     int     i, j, k;
-    double  u, v, w;
-    double  c000, c001, c010, c011, c100, c101, c110, c111;
-    double  c00, c01, c10, c11;
-    double  c0, c1;
-    double  du00, du01, du10, du11, du0, du1;
-    double  dv0, dv1;
+    int     xi, yi, zi, x_voxel, y_voxel, z_voxel;
+    Real    u, v, w;
+    Real    val;
+    Real    c000, c001, c010, c011, c100, c101, c110, c111;
+    Real    c00, c01, c10, c11;
+    Real    c0, c1;
+    Real    du00, du01, du10, du11, du0, du1;
+    Real    dv0, dv1;
     int     nx, ny, nz;
 
     get_volume_size( volume, &nx, &ny, &nz );
 
-    if( !voxel_is_within_volume( volume, x, y, z ) )
+    if( x < 0.0 || x > (Real) (nx-1) ||
+        y < 0.0 || y > (Real) (ny-1) ||
+        z < 0.0 || z > (Real) (nz-1) )
     {
         *value = 0.0;
         if( deriv_x != (Real *) 0 )
@@ -502,42 +506,143 @@ public  Boolean   evaluate_volume(
         return( FALSE );
     }
 
-    i = (int) x;
-    u = FRACTION( x );
-
-    if( i == nx-1 )
+    if( x < 0.0 )
+        i = -1;
+    else if( x == (Real) (nx-1) )
     {
-        --i;
-        u += 1.0;
+        i = nx-2;
+        u = 1.0;
+    }
+    else
+    {
+        i = (int) x;
+        u = FRACTION( x );
     }
 
-    j = (int) y;
-    v = FRACTION( y );
-
-    if( j == ny-1 )
+    if( y < 0.0 )
+        j = -1;
+    else if( y == (Real) (ny-1) )
     {
-        --j;
-        v += 1.0;
+        j = ny-2;
+        v = 1.0;
+    }
+    else
+    {
+        j = (int) y;
+        v = FRACTION( y );
     }
 
-    k = (int) z;
-    w = FRACTION( z );
+    if( z < 0.0 )
+        k = -1;
+    else if( z == (Real) (nz-1) )
+    {
+        k = nz-2;
+        w = 1.0;
+    }
+    else
+    {
+        k = (int) z;
+        w = FRACTION( z );
+    }
+
+    n_inactive = 0;
+
+    if( i >= 0 && i < nx-1 && j >= 0 && j < ny-1 && k >= 0 && k < nz-1 )
+    {
+        c000 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k );
+        c001 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k+1 );
+        c010 = (Real) GET_VOLUME_DATA( *volume, i,   j+1, k );
+        c011 = (Real) GET_VOLUME_DATA( *volume, i,   j+1, k+1 );
+        c100 = (Real) GET_VOLUME_DATA( *volume, i+1, j,   k );
+        c101 = (Real) GET_VOLUME_DATA( *volume, i+1, j,   k+1 );
+        c110 = (Real) GET_VOLUME_DATA( *volume, i+1, j+1, k );
+        c111 = (Real) GET_VOLUME_DATA( *volume, i+1, j+1, k+1 );
+
+        if( !get_voxel_activity_flag( volume, i  , j  , k ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i  , j+1, k ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i  , j+1, k+1 ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i+1, j  , k ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i+1, j  , k+1 ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i+1, j+1, k ) )
+            ++n_inactive;
+        if( !get_voxel_activity_flag( volume, i+1, j+1, k+1 ) )
+            ++n_inactive;
+    }
+    else         /* for now, won't get to this case */
+    {
+        HANDLE_INTERNAL_ERROR( "evaluate_volume" );
+        for_less( xi, 0, 2 )
+        {
+            x_voxel = i + xi;
+            for_less( yi, 0, 2 )
+            {
+                y_voxel = j + yi;
+                for_less( zi, 0, 2 )
+                {
+                    z_voxel = k + zi;
+                    if( x_voxel >= 0 && x_voxel < nx &&
+                        y_voxel >= 0 && y_voxel < ny &&
+                        z_voxel >= 0 && z_voxel < nz )
+                    {
+                        val = (Real) GET_VOLUME_DATA( *volume, x_voxel,
+                                                      y_voxel, z_voxel );
+
+                        if( !get_voxel_activity_flag( volume, x_voxel,
+                                                      y_voxel, z_voxel ) )
+                            ++n_inactive;
+                    }
+                    else
+                    {
+                        val = 0.0;
+                        ++n_inactive;
+                    }
+
+                    if( xi == 0 )
+                    {
+                        if( yi == 0 )
+                        {
+                            if( zi == 0 )
+                                c000 = val;
+                            else
+                                c001 = val;
+                        }
+                        else
+                        {
+                            if( zi == 0 )
+                                c010 = val;
+                            else
+                                c011 = val;
+                        }
+                    }
+                    else
+                    {
+                        if( yi == 0 )
+                        {
+                            if( zi == 0 )
+                                c100 = val;
+                            else
+                                c101 = val;
+                        }
+                        else
+                        {
+                            if( zi == 0 )
+                                c110 = val;
+                            else
+                                c111 = val;
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-    if( k == nz-1 )
-    {
-        --k;
-        w += 1.0;
-    }
-
-    c000 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k );
-    c001 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k+1 );
-    c010 = (Real) GET_VOLUME_DATA( *volume, i,   j+1, k );
-    c011 = (Real) GET_VOLUME_DATA( *volume, i,   j+1, k+1 );
-    c100 = (Real) GET_VOLUME_DATA( *volume, i+1, j,   k );
-    c101 = (Real) GET_VOLUME_DATA( *volume, i+1, j,   k+1 );
-    c110 = (Real) GET_VOLUME_DATA( *volume, i+1, j+1, k );
-    c111 = (Real) GET_VOLUME_DATA( *volume, i+1, j+1, k+1 );
-
     du00 = c100 - c000;
     du01 = c101 - c001;
     du10 = c110 - c010;
@@ -565,24 +670,6 @@ public  Boolean   evaluate_volume(
         *deriv_y = INTERPOLATE( w, dv0, dv1 );
         *deriv_z = (c1 - c0);
     }
-
-    n_inactive = 0;
-    if( !get_voxel_activity_flag( volume, i  , j  , k ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i  , j+1, k ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i  , j+1, k+1 ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i+1, j  , k ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i+1, j  , k+1 ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i+1, j+1, k ) )
-        ++n_inactive;
-    if( !get_voxel_activity_flag( volume, i+1, j+1, k+1 ) )
-        ++n_inactive;
 
     if( n_inactive == 0 )
         voxel_is_active = TRUE;

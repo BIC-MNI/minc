@@ -31,6 +31,7 @@ public  Status  initialize_free_format_input(
     String         volume_filename, abs_volume_filename, directory;
     String         slice_filename;
     int            slice;
+    int            volume_byte_offset;
     int            n_bytes_per_voxel, min_value, max_value, i;
     int            n_slices, n_voxels_in_slice;
     unsigned short value;
@@ -183,6 +184,10 @@ public  Status  initialize_free_format_input(
         extract_directory( volume->filename, directory );
         get_absolute_filename( volume_filename, directory,
                                abs_volume_filename );
+
+        if( input_int( file, &volume_byte_offset ) != OK )
+            volume_byte_offset = 0;
+
     }
 
     if( status == OK )
@@ -249,6 +254,9 @@ public  Status  initialize_free_format_input(
         {
             status = open_file( abs_volume_filename, READ_FILE, BINARY_FORMAT,
                                 &volume_input->volume_file );
+
+            if( status == OK )
+                status = set_file_position( file, (long) volume_byte_offset );
         }
 
         min_value = 0;
@@ -299,6 +307,9 @@ public  Status  initialize_free_format_input(
                                abs_volume_filename );
         status = open_file( abs_volume_filename, READ_FILE, BINARY_FORMAT,
                             &volume_input->volume_file );
+
+        if( status == OK )
+            status = set_file_position( file, (long) volume_byte_offset );
     }
 
     volume_input->slice_index = 0;
@@ -372,8 +383,8 @@ private  Status  input_slice(
                                 &file );
             if( status == OK )
                 status = set_file_position( file,
-                           (long) volume_input->slice_byte_offsets
-                                           [volume_input->slice_index] );
+                           (long) (volume_input->slice_byte_offsets
+                                           [volume_input->slice_index]) );
         }
         else
             file = volume_input->volume_file;
@@ -489,7 +500,7 @@ public  Boolean  input_more_free_format_file(
                          volume->value_translation) / volume->value_scale );
                     }
                     else
-                        value = (int) *byte_buffer_ptr;
+                        value = (int) *short_buffer_ptr;
 
                     ASSIGN_VOLUME_DATA( *volume,
                          indices[X], indices[Y], indices[Z], value );

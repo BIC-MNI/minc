@@ -33,6 +33,8 @@ public  Status  start_volume_input(
 
     status = OK;
 
+    initialize_volume( volume );
+
     expand_filename( filename, expanded_filename );
 
 #ifndef  NO_MNC_FILES
@@ -64,9 +66,6 @@ public  Status  start_volume_input(
                                    &volume->world_to_voxel_transform );
 
         alloc_volume( volume );
-
-        volume->value_scale = 1.0;
-        volume->value_translation = 0.0;
 
         input_info->slice_index = 0;
     }
@@ -220,69 +219,4 @@ public  Status  input_volume(
     }
 
     return( status );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : alloc_volume
-@INPUT      : volume
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Assumes that the volume sizes and the data type have been
-              assigned, and allocates the volume data.
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  alloc_volume(
-    volume_struct  *volume )
-{
-    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
-    {
-        switch( volume->data_type )
-        {
-        case UNSIGNED_BYTE:
-            ALLOC3D( volume->byte_data, volume->sizes[X], volume->sizes[Y],
-                     volume->sizes[Z] );
-            break;
-
-        case UNSIGNED_SHORT:
-            ALLOC3D( volume->short_data, volume->sizes[X], volume->sizes[Y],
-                     volume->sizes[Z] );
-            break;
-
-        default:
-            HANDLE_INTERNAL_ERROR( "alloc_volume" );
-        }
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : delete_volume
-@INPUT      : volume
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the memory associated with the volume.
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  delete_volume(
-    volume_struct  *volume )
-{
-    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
-    {
-        switch( volume->data_type )
-        {
-        case UNSIGNED_BYTE:
-            FREE3D( volume->byte_data );
-            break;
-
-        case UNSIGNED_SHORT:
-            FREE3D( volume->short_data );
-            break;
-
-        default:
-            HANDLE_INTERNAL_ERROR( "alloc_volume" );
-        }
-    }
 }
