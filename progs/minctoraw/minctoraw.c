@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minctoraw.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:06  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-23 09:03:19  neelin
+@MODIFIED   : Changed ncopen to miopen.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:33:06  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.8  94/09/28  10:33:03  neelin
  * Pre-release
  * 
@@ -31,7 +34,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 2.0 1994-09-28 10:33:06 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 2.1 1995-01-23 09:03:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -123,7 +126,7 @@ int main(int argc, char *argv[])
    filename = argv[1];
 
    /* Open the file */
-   mincid = ncopen(filename, NC_NOWRITE);
+   mincid = miopen(filename, NC_NOWRITE);
 
    /* Inquire about the image variable */
    imgid = ncvarid(mincid, MIimage);
