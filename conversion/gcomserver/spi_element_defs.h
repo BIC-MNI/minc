@@ -16,6 +16,7 @@ GLOBAL_ELEMENT(ACR_Message_id      , 0x0, 0x110);
 GLOBAL_ELEMENT(ACR_Message_id_brt  , 0x0, 0x120);
 GLOBAL_ELEMENT(ACR_Initiator       , 0x0, 0x200);
 GLOBAL_ELEMENT(ACR_Receiver        , 0x0, 0x300);
+GLOBAL_ELEMENT(ACR_Dataset_type    , 0x0, 0x800);
 GLOBAL_ELEMENT(ACR_Status          , 0x0, 0x900);
 
 /* Element id's for SPI */
@@ -23,6 +24,8 @@ GLOBAL_ELEMENT(SPI_Recognition_code, 0x1, 0x0010);
 GLOBAL_ELEMENT(SPI_Command         , 0x1, 0x0018);
 GLOBAL_ELEMENT(SPI_Session_id      , 0x1, 0x0028);
 GLOBAL_ELEMENT(SPI_Nr_data_objects , 0x1, 0x0081);
+GLOBAL_ELEMENT(SPI_Operator_text   , 0x1, 0x1060);
+GLOBAL_ELEMENT(SPI_Log_info        , 0x1, 0x1070);
 
 /* Define group numbers for message stuff */
 #define ACR_MESSAGE_GID 0
@@ -45,6 +48,9 @@ GLOBAL_ELEMENT(SPI_Nr_data_objects , 0x1, 0x0081);
 #define READYp              0x8008
 #define GCENDq              0x0029
 #define GCENDp              0x8029
+
+/* Define dataset type */
+#define ACR_NULL_DATASET 0x0101
 
 /* Define status codes */
 #define ACR_SUCCESS 0x0000
