@@ -13,7 +13,7 @@ PROG_SUBDIRS = progs
 
 BUILD_SUBDIRS = $(LIB_SUBDIRS) $(PROG_SUBDIRS)
 
-DOC_SUBDIRS = doc
+DOC_SUBDIRS = doc volume_io/Documentation
 
 TEST_SUBDIRS = testdir $(FORTRAN_SUBDIR)
 
@@ -36,6 +36,9 @@ programs:
 
 docs:
 	$(MAKE) 'TARGET=build' 'SUBDIRS=$(DOC_SUBDIRS)' subdirs
+
+install-docs:
+	$(MAKE) 'TARGET=install' 'SUBDIRS=$(DOC_SUBDIRS)' subdirs
 
 test :
 	$(MAKE) 'TARGET=test' 'SUBDIRS=$(TEST_SUBDIRS)' subdirs
@@ -60,6 +63,14 @@ installdirs:
       $(INSTALL_MANDIR)1 $(INSTALL_MANDIR)3 $(INSTALL_VOLIO_INCDIR) ; do \
       if test ! -d $$dir; \
       then echo Creating directory $$dir;mkdir -p $$dir; \
+      fi; done
+
+install-docs: install-doc-dirs
+
+install-doc-dirs:
+	if test ! -d $(INSTALL_DOCDIR) ; \
+      then echo Creating directory $(INSTALL_DOCDIR) ; \
+           mkdir -p $(INSTALL_DOCDIR); \
       fi; done
 
 distclean : clean configclean

@@ -8,6 +8,8 @@ exec_prefix = @exec_prefix@
 # Things to configure:
 #    (note that all relative directories should be given with respect to
 #    $(ROOT), the current directory)
+#    Note that required directories are created by the top-level Makefile
+#    but not by Makfiles in subdirectories.
 #    NETCDF_LIB_DIR = directory in which netcdf library is found
 #    NETCDF_INCLUDE_DIR = directory in which netcdf include file is found
 #    NETCDF_FORTRAN_DIR = directory (or link) in which netcdf fortran jackets
@@ -27,6 +29,9 @@ exec_prefix = @exec_prefix@
 #    INSTALL_MANDIR = directory into which man files should be copied. The
 #        appropriate digit is appended (1 for user commands, 3 for 
 #        library functions). The directories must exist already.
+#    INSTALL_DOCDIR = directory into which documentation should be copied.
+#        The directory must exist. If blank, then no documentation is
+#        installed.
 #    INSTALL_VOLIO_INCDIR = directory into which volume_io include files 
 #        should be copied. The directory must exist.
 #
@@ -40,6 +45,7 @@ INSTALL_BINDIR = $(exec_prefix)/bin
 INSTALL_LIBDIR = $(exec_prefix)/lib
 INSTALL_INCDIR = $(prefix)/include
 INSTALL_MANDIR = $(prefix)/man/cat
+INSTALL_DOCDIR = $(prefix)/doc
 INSTALL_VOLIO_INCDIR = $(INSTALL_INCDIR)/volume_io
 
 # ------------------------------------------------------------
