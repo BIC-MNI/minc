@@ -4,11 +4,15 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.7  1993-12-10 15:31:25  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.8  1993-12-14 16:35:57  neelin
+@MODIFIED   : Set Keep_files and input tracing according to macros so that 
+@MODIFIED   : gcomserver-debug can turn them on.
 @MODIFIED   :
+ * Revision 1.7  93/12/10  15:31:25  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.6  93/12/08  09:35:06  neelin
  * changed logging level.
  * 
@@ -50,7 +54,12 @@ typedef enum {
 int Do_logging = LOW_LOGGING;
 
 /* Do we keep files or are they temporary? */
-static int Keep_files = FALSE;
+static int Keep_files = 
+#ifndef KEEP_FILES
+   FALSE;
+#else
+   TRUE;
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -79,7 +88,7 @@ int main(int argc, char *argv[])
       (void) setbuf(stderr, NULL);
    }
 
-#if 0
+#ifdef DO_INPUT_TRACING
    /* Enable input tracing */
    acr_enable_input_trace();
 #endif
