@@ -176,6 +176,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   }
   handle->start = 0.0;
   handle->separation = 1.0;
+  handle->width = 1.0;
   handle->flipping_order = MI_FILE_ORDER;
   handle->cosines[0] = 0.0;
   handle->cosines[1] = 0.0;
@@ -183,7 +184,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   handle->size = size;
   handle->offsets = NULL;
   handle->widths = NULL;
-  handle->units = NULL;
+  handle->units = "mm";
   handle->volume_handle = NULL;
 
   *new_dim_ptr = handle;
@@ -237,7 +238,6 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   int i, max_dims;
   char *name;
   ssize_t size_of_obj;
-  
   midimclass_t dim_class;
   midimattr_t  dim_attr;
  
@@ -251,9 +251,9 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   if (hdf_file < 0) {
     return (MI_ERROR);
   }
-  /* Try opening the DIMENSION group.
+  /* Try opening the DIMENSIONS GROUP
      */
-  hdf_dims_grp = H5Gopen(hdf_file,"/minc-2.0/dimensions");
+  hdf_dims_grp = H5Gopen(hdf_file, MI_FULLDIMENSIONS_PATH);
   if (hdf_dims_grp < 0 ) {
     return (MI_ERROR);
   }
@@ -1167,8 +1167,8 @@ int main(int argc, char **argv)
 {
   mihandle_t vol, vol1;
   int r;
-  midimhandle_t dimh, dimh1,dimh2; 
-  midimhandle_t dim[3];
+  midimhandle_t dimh, dimh1,dimh2, dimh3; 
+  midimhandle_t dim[4];
   mivolumeprops_t props;
   
   int n;
@@ -1186,18 +1186,22 @@ int main(int argc, char **argv)
   }
   dim[0]=dimh;
   
-  r = micreate_dimension("MIyspace",MI_DIMCLASS_SPATIAL,2, 12,&dimh1);
+  r = micreate_dimension("MIyspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension("MIzspace",MI_DIMCLASS_ANY,2, 12,&dimh2);
+  r = micreate_dimension("MIzspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[2]=dimh2;
-
-  r = micreate_volume("test.h5", 3, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
+   r = micreate_dimension("MIwspace",MI_DIMCLASS_ANY,1, 12,&dimh3);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  dim[3]=dimh3;
+  r = micreate_volume("test.h5", 4, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
@@ -1206,6 +1210,7 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  printf( " N is %d \n", n);
   r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol1);
   if (r < 0) {
     TESTRPT("failed", r);

@@ -34,7 +34,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
       dimensions == NULL || create_props == NULL) {
     return (MI_ERROR);
   }    
-  printf(" I \n");
+  
   /* convert minc type to hdf type
    */
   hdf_type = mitype_to_hdftype(volume_type);
@@ -55,7 +55,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
       return (MI_ERROR);
     }
   }
-  printf(" II \n");
+  
   /* Try opening DIMENSIONS GROUP i.e. /minc-2.0/dimensions or CREATE ONE!
    */
   if((grp_dimensions_id = H5Gopen(grp_root_id, MI_DIMENSIONS_PATH)) < 0) {
@@ -66,7 +66,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   }
    
   for (i=0; i < number_of_dimensions ; i++) {
-    printf(" %d \n", i);
+    
     dim[0] = dimensions[i]->size;
     if (dimensions[i]->attr == MI_DIMATTR_REGULARLY_SAMPLED) {
       /* Dimension variable for a regular dimension contains
@@ -92,7 +92,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
     if (dataspace_id < 0) {
       return (MI_ERROR);
     }
-    printf(" III \n");
+    
     /* Create a dataset in DIMENSIONS GROUP */
     dataset_id = H5Dcreate(grp_dimensions_id, dimensions[i]->name, hdf_type, dataspace_id, H5P_DEFAULT);
    
@@ -136,7 +136,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" IIII \n");
+   
    /* Create Dimension attribute "cosines"  */
    dims[0] = 3;
    maxdims[0] = 3;
@@ -153,7 +153,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" IIIII \n");
+   
    /* Create Dimension flipping_order attribute */
    dataspace_id = H5Screate(H5S_SCALAR);
    /* Delete attribute if it already exists. */
@@ -178,7 +178,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" V \n");
+   
 
    /* Create Dimension attribute "sampling_flag" */
    dataspace_id = H5Screate(H5S_SCALAR);
@@ -209,7 +209,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" VV \n");
+   
    /* Create Dimension attribute "separation" */
    dataspace_id = H5Screate(H5S_SCALAR);
    /* Delete attribute if it already exists. */
@@ -224,7 +224,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" VVV \n");
+   
    /* Create Dimension start attribute */
    dataspace_id = H5Screate(H5S_SCALAR);
    /* Delete attribute if it already exists. */
@@ -239,7 +239,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" X \n");
+   
    /* Create Dimension attribute "units" */
    dataspace_id = H5Screate(H5S_SCALAR);
    /* Delete attribute if it already exists. */
@@ -257,7 +257,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" XX \n");
+   
    /* Create Dimension attribute "width" */
    dataspace_id = H5Screate(H5S_SCALAR);
    /* Delete attribute if it already exists. */
@@ -272,7 +272,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   printf(" XXX \n");
+   
    if (dimensions[i]->widths != NULL) {
      /* Create Dimension direction attribute "widths" */
      dims[0] = dimensions[i]->size;
@@ -291,7 +291,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
      /* Close attribute. */
      H5Aclose(hdf_attr);
    }
-    printf("P \n");
+    
   }
   
   /* "mitype_to_hdftype" returns a copy of the datatype, so the returned value 

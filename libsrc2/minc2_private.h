@@ -1,6 +1,11 @@
 /** The root of all MINC 2.0 objects in the HDF5 hierarchy.
  */
 #define MI_ROOT_PATH "/minc-2.0"
+//#define MI_ROOT_COMMENT "Root of the MINC 2.0 data hierarchy"
+//#define MI_INFO_NAME "info"
+//#define MI_INFO_COMMENT "Group holding directly accessible attributes"
+#define MI_DIMENSIONS_PATH "dimensions"
+//#define MI_DIMS_COMMENT "Group holding dimension variables"
 
 #define MI2_3D 3
 #define MI2_X 0
@@ -13,6 +18,10 @@
 /** The fixed path to the full-resolution image data.
  */
 #define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
+
+/** The fixed path to the dimension 
+ */
+#define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
 /*! Volume properties  
  */

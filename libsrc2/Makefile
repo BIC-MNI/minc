@@ -6,7 +6,9 @@ LDFLAGS = -L/home/bic/baghdadi/lib -L/usr/local/lib
 LIBS = -lminc -lnetcdf -lhdf5 -lm
 
 all: dimension-test grpattr-test datatype-test label-test volprops-test \
-     hyper-test slice-test valid-test convert-test
+     hyper-test slice-test valid-test 
+
+#convert-test
 
 # convert.c
 convert-test-objs = convert-test.o m2util.o volume.o hyper.o free.o valid.o slice.o

@@ -599,10 +599,10 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
 int
 minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 {
-    hsize_t isize[MAX_DIMS];
-    hsize_t osize[MAX_DIMS];
-    hsize_t count[MAX_DIMS];
-    hsize_t start[MAX_DIMS];
+    hsize_t isize[MAX_VAR_DIMS];
+    hsize_t osize[MAX_VAR_DIMS];
+    hsize_t count[MAX_VAR_DIMS];
+    hsize_t start[MAX_VAR_DIMS];
     hid_t idst_id;              /* Input dataset */
     hid_t odst_id;              /* Output dataset */
     hid_t ifspc_id;             /* Input "file" dataspace */

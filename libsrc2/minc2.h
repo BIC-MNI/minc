@@ -27,17 +27,10 @@
 #define MI_DIMATTR_REGULARLY_SAMPLED 0x1
 #define MI_DIMATTR_NOT_REGULARLY_SAMPLED 0x2
 
-#define MI2_ROOT_NAME "/minc-2.0"
-#define MI2_ROOT_COMMENT "Root of the MINC 2.0 data hierarchy"
-#define MI2_INFO_NAME "info"
-#define MI2_INFO_COMMENT    "Group holding directly accessible attributes"
-#define MI2_DIMS_NAME "dimensions"
-#define MI2_DIMS_COMMENT    "Group holding dimension variables"
-
 #define MI2_CHAR_LENGTH 128
 #define MI2_MAX_BLOCK_EDGES 3
 #define MAX_ZLIB_LEVEL 9
-#define MAX_DIMS 10
+#define MAX_VAR_DIMS 10
 #define MAX_PATH 32
 #define MAX_RESOLUTION_GROUP 16
 
