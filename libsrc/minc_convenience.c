@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.14 1993-03-02 11:09:24 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.15 1993-03-03 11:28:34 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -624,7 +624,11 @@ private int MI_verify_maxmin_dims(int cdfid,
       dimensions against maxmin_dim */
    for (i=MAX(0,image_ndims-nbaddims); i<image_ndims; i++)
       for (j=0; j<maxmin_ndims; j++)
-         MI_CHK_ERR((image_dim[i]==maxmin_dim[j]) ? MI_ERROR : MI_NOERROR)
+         if (image_dim[i]==maxmin_dim[j]) {
+            MI_LOG_PKG_ERROR2(MI_ERR_MAXMIN_DIMS,
+                        "Imagemax/min dimensions vary over image dimensions");
+            MI_RETURN_ERROR(MI_ERROR);
+         }
 
    MI_RETURN(MI_NOERROR);
 }
