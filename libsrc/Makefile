@@ -59,7 +59,7 @@ $(CC_MINC_LIB): $(OBJS)
 lint: $(LINT_MINC_LIB)
 
 $(LINT_MINC_LIB) : $(LINT_LIST)
-	lint -o $(MINC_LIB) -x -u $(LINTFLAGS) $(LINT_LIST)
+	lint -o $(MINC_LIB) -m -x -u $(LINTFLAGS) $(LINT_LIST)
 
 # Remove all derived files
 clean:
