@@ -688,7 +688,7 @@ public  Boolean  voxel_contains_value(
     int      y,
     int      z,
     Real     target_value )
-{
+{               
     Boolean  less, greater;
     int      x_offset, y_offset, z_offset;
     Real     value;
@@ -762,21 +762,62 @@ public  Boolean   evaluate_volume_in_world(
     Real           *value,
     Real           *deriv_x,
     Real           *deriv_y,
-    Real           *deriv_z )
+    Real           *deriv_z,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_xz,
+    Real           *deriv_yy,
+    Real           *deriv_yz,
+    Real           *deriv_zz )
 {
-    Boolean voxel_is_active;
+    Boolean   voxel_is_active;
+    Real      ignore, dxx, dxy, dxz, dyy, dyz, dzz;
+    Real      tx, ty, tz;
 
     convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
 
     voxel_is_active = evaluate_volume( volume, x, y, z, degrees_continuity,
                                        activity_if_mixed,
-                                       value, deriv_x, deriv_y, deriv_z );
+                                       value, deriv_x, deriv_y, deriv_z,
+                                       deriv_xx, deriv_xy, deriv_xz,
+                                       deriv_yy, deriv_yz,
+                                       deriv_zz );
 
     if( deriv_x != (Real *) 0 )
     {
         convert_voxel_normal_vector_to_world( volume,
                                               *deriv_x, *deriv_y, *deriv_z,
                                               deriv_x, deriv_y, deriv_z );
+    }
+
+    if( deriv_xx != (Real *) 0 )
+    {
+        dxx = *deriv_xx;
+        dxy = *deriv_xy;
+        dxz = *deriv_xz;
+        dyy = *deriv_yy;
+        dyz = *deriv_yz;
+        dzz = *deriv_zz;
+        convert_voxel_normal_vector_to_world( volume,
+                                              dxx, dxy, dxz,
+                                              &tx, &ty, &tz );
+        convert_voxel_normal_vector_to_world( volume,
+                                              tx, ty, tz,
+                                              deriv_xx, deriv_xy, deriv_xz );
+
+        convert_voxel_normal_vector_to_world( volume,
+                                              dxy, dyy, dyz,
+                                              &tx, &ty, &tz );
+        convert_voxel_normal_vector_to_world( volume,
+                                              tx, ty, tz,
+                                              &ignore, deriv_yy, deriv_yz );
+
+        convert_voxel_normal_vector_to_world( volume,
+                                              dxz, dyz, dzz,
+                                              &tx, &ty, &tz );
+        convert_voxel_normal_vector_to_world( volume,
+                                              tx, ty, tz,
+                                              &ignore, &ignore, deriv_zz );
     }
 
     return( voxel_is_active );
@@ -1034,7 +1075,13 @@ private  Group_activity   triquadratic_interpolate_volume(
     Real           *value,
     Real           *deriv_x,
     Real           *deriv_y,
-    Real           *deriv_z )
+    Real           *deriv_z,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_xz,
+    Real           *deriv_yy,
+    Real           *deriv_yz,
+    Real           *deriv_zz )
 {
     Group_activity     activity;
     int                n_inactive;
@@ -1141,6 +1188,12 @@ private  Group_activity   triquadratic_interpolate_volume(
         QUADRATIC_TRIVAR_DERIV( c, u, v, w, *deriv_x, *deriv_y, *deriv_z );
     }
 
+    if( deriv_xx != (Real *) 0 )
+    {
+        QUADRATIC_TRIVAR_DERIV2( c, u, v, w, *deriv_xx, *deriv_xy, *deriv_xz,
+                                 *deriv_yy, *deriv_yz, *deriv_zz );
+    }
+
     if( n_inactive == 0 )
         activity = ALL_ACTIVE;
     else if( n_inactive == 27 )
@@ -1159,7 +1212,13 @@ private  Group_activity   tricubic_interpolate_volume(
     Real           *value,
     Real           *deriv_x,
     Real           *deriv_y,
-    Real           *deriv_z )
+    Real           *deriv_z,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_xz,
+    Real           *deriv_yy,
+    Real           *deriv_yz,
+    Real           *deriv_zz )
 {
     Group_activity     activity;
     int                n_inactive;
@@ -1305,6 +1364,12 @@ private  Group_activity   tricubic_interpolate_volume(
         CUBIC_TRIVAR_DERIV( c, u, v, w, *deriv_x, *deriv_y, *deriv_z );
     }
 
+    if( deriv_xx != (Real *) 0 )
+    {
+        CUBIC_TRIVAR_DERIV2( c, u, v, w, *deriv_xx, *deriv_xy, *deriv_xz,
+                             *deriv_yy, *deriv_yz, *deriv_zz );
+    }
+
     if( n_inactive == 0 )
         activity = ALL_ACTIVE;
     else if( n_inactive == 64 )
@@ -1347,7 +1412,13 @@ public  Boolean   evaluate_volume(
     Real           *value,
     Real           *deriv_x,
     Real           *deriv_y,
-    Real           *deriv_z )
+    Real           *deriv_z,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_xz,
+    Real           *deriv_yy,
+    Real           *deriv_yz,
+    Real           *deriv_zz )
 {
     Group_activity   activity;
     Boolean          voxel_is_active;
@@ -1368,17 +1439,36 @@ public  Boolean   evaluate_volume(
             *deriv_y = 0.0;
             *deriv_z = 0.0;
         }
+        if( deriv_xx != (Real *) NULL )
+        {
+            *deriv_xx = 0.0;
+            *deriv_xy = 0.0;
+            *deriv_xz = 0.0;
+            *deriv_yy = 0.0;
+            *deriv_yz = 0.0;
+            *deriv_zz = 0.0;
+        }
         return( FALSE );
     }
 
-    if( x < (Real) degrees_continuity / 0.5 ||
-        x > (Real) (nx-1) - (Real) degrees_continuity / 0.5 ||
-        y < (Real) degrees_continuity / 0.5 ||
-        y > (Real) (ny-1) - (Real) degrees_continuity / 0.5 ||
-        z < (Real) degrees_continuity / 0.5 ||
-        z > (Real) (nz-1) - (Real) degrees_continuity / 0.5 )
+    if( x < (Real) degrees_continuity * 0.5 ||
+        x > (Real) (nx-1) - (Real) degrees_continuity * 0.5 ||
+        y < (Real) degrees_continuity * 0.5 ||
+        y > (Real) (ny-1) - (Real) degrees_continuity * 0.5 ||
+        z < (Real) degrees_continuity * 0.5 ||
+        z > (Real) (nz-1) - (Real) degrees_continuity * 0.5 )
     {
         degrees_continuity = -1;
+    }
+
+    if( degrees_continuity < 1 && deriv_xx != (Real *) NULL )
+    {
+        *deriv_xx = 0.0;
+        *deriv_xy = 0.0;
+        *deriv_xz = 0.0;
+        *deriv_yy = 0.0;
+        *deriv_yz = 0.0;
+        *deriv_zz = 0.0;
     }
 
     switch( degrees_continuity )
@@ -1395,12 +1485,16 @@ public  Boolean   evaluate_volume(
 
     case 1:
         activity = triquadratic_interpolate_volume( volume, x, y, z, value,
-                                                    deriv_x, deriv_y, deriv_z );
+                                               deriv_x, deriv_y, deriv_z,
+                                               deriv_xx, deriv_xy, deriv_xz,
+                                               deriv_yy, deriv_yz, deriv_zz );
         break;
 
     case 2:
         activity = tricubic_interpolate_volume( volume, x, y, z, value,
-                                                deriv_x, deriv_y, deriv_z );
+                                                deriv_x, deriv_y, deriv_z,
+                                                deriv_xx, deriv_xy, deriv_xz,
+                                                deriv_yy, deriv_yz, deriv_zz );
         break;
 
     default:
