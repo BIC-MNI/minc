@@ -19,11 +19,8 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.13  2004-06-04 18:14:52  bert
- * Add micreate_ident()
- *
- * Revision 6.12  2004/04/27 15:44:04  bert
- * Add MINC 2.0 specific stuff
+ * Revision 6.11.2.1  2004-08-11 21:03:06  bert
+ * Fix MI_MAX_IMGDIMS at 100 to avoid netCDF 3.5.1 problem
  *
  * Revision 6.11  2004/04/15 21:13:21  bert
  * Add C++ linkage specifier
@@ -125,15 +122,10 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.13 2004-06-04 18:14:52 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.11.2.1 2004-08-11 21:03:06 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
-
-#ifdef MINC2
-#include <hdf5.h>
-#include "minc_compat.h"
-#endif /* MINC2 defined */
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,7 +161,17 @@ extern "C" {
 /* Number of spatial dimensions */
 #define MI_NUM_SPACE_DIMS 3
 /* Maximum number of image dimensions for image conversion */
-#define MI_MAX_IMGDIMS MAX_VAR_DIMS
+
+/* Bert 10-Aug-2004 - MI_MAX_IMGDIMS used to be defined to be MAX_VAR_DIMS,
+ * a constant defined in netcdf.h. For many years MAX_VAR_DIMS was 100,
+ * but in netCDF 3.5.1 the value was changed to 512.
+ * Unfortunately, the definitions of MI_ICV_DIM_SIZE, MI_ICV_DIM_STEP,
+ * and MI_ICV_DIM_START assume that MI_MAX_IMGDIMS is less than or
+ * equal to 100.  To avoid changing the MINC API, we have to define
+ * MI_MAX_IMGDIMS to 100 here.  Otherwise the miicv_inqdbl() function
+ * will return bogus values for these ICV properties.
+ */
+#define MI_MAX_IMGDIMS 100
 
 /* NetCDF standard attributes */
 #define MIunits       "units"
@@ -505,7 +507,6 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 public int micreate_group_variable(int cdfid, char *name);
 public const char *miget_version(void);
 public int miappend_history(int fd, const char *tm_stamp);
-public int micreate_ident(char * id_str, size_t length);
 
 /* From image_conversion.c */
 public int miicv_create(void);
@@ -526,48 +527,11 @@ public int miicv_put(int icvid, long start[], long count[], void *values);
 /* From dim_conversion.c */
 public int miicv_attach(int icvid, int cdfid, int varid);
 
-/* From minc_error.c */
-public void milog_init(const char *);
-public int milog_set_verbosity(int);
-
 /* Undefine public if needed */
 #ifdef MINC_NEED_TO_UNDEF_PUBLIC
 #undef public
 #undef MINC_NEED_TO_UNDEF_PUBLIC
 #endif
-
-#ifdef MINC2
-
-/* New functions, not directly part of compatibility layer. */
-extern int MI2varsize(int fd, int varid, long *size_ptr);
-
-#define MI2_GRPNAME "/minc-2.0"
-/* These must not interfere with any NC_ flags we might have to support. */
-#define MI2_CREATE_V2 0x1000    /* Force V2 format */
-#define MI2_CREATE_V1 0x2000    /* Force V1 format */
-
-/* Possible compression type values. */
-#define MI2_COMP_UNKNOWN (-1)
-#define MI2_COMP_NONE 0
-#define MI2_COMP_ZLIB 1
-
-#define MI2_CHUNK_UNKNOWN (-1)
-#define MI2_CHUNK_OFF 0
-#define MI2_CHUNK_ON 1
-
-#define MI2_OPTS_V1 1
-
-struct mi2opts {
-    int struct_version;
-    int comp_type;
-    int comp_param;
-    int chunk_type;
-    int chunk_param;
-};
-
-#define MI2_ISH5OBJ(x) (H5Iget_type(x) > 0)
-
-#endif /* MINC2 defined */
 
 #ifdef __cplusplus
 }
