@@ -92,6 +92,7 @@ GLOBAL_ELEMENT(ACR_Device_serial_number  , 0x0018, 0x1000, LO);
 GLOBAL_ELEMENT(ACR_Software_versions     , 0x0018, 0x1020, LO);
 GLOBAL_ELEMENT(ACR_Protocol_name         , 0x0018, 0x1030, LO);
 GLOBAL_ELEMENT(ACR_Calibration_date      , 0x0018, 0x1200, DA);
+GLOBAL_ELEMENT(ACR_Actual_frame_duration , 0x0018, 0x1242, IS);
 GLOBAL_ELEMENT(ACR_Receiving_coil        , 0x0018, 0x1250, SH);
 GLOBAL_ELEMENT(ACR_Transmitting_coil     , 0x0018, 0x1251, SH);
 GLOBAL_ELEMENT(ACR_Acquisition_matrix    , 0x0018, 0x1310, US);
@@ -125,6 +126,11 @@ GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0107, US);
 GLOBAL_ELEMENT(ACR_Image_location        , 0x0028, 0x0200, US);
 GLOBAL_ELEMENT(ACR_Window_centre         , 0x0028, 0x1050, DS);
 GLOBAL_ELEMENT(ACR_Window_width          , 0x0028, 0x1051, DS);
+
+GLOBAL_ELEMENT(ACR_Number_of_slices      , 0x0054, 0x0081, US);
+GLOBAL_ELEMENT(ACR_Number_of_time_slices , 0x0054, 0x0101, US);
+GLOBAL_ELEMENT(ACR_Units                 , 0x0054, 0x1001, CS);
+GLOBAL_ELEMENT(ACR_Frame_reference_time  , 0x0054, 0x1300, DS);
 
 GLOBAL_ELEMENT(ACR_Pixel_data            , ACR_IMAGE_GID, ACR_IMAGE_EID, OW);
 
