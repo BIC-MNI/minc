@@ -1,6 +1,6 @@
 #ifdef MINC2                    /* Ignore this file if not MINC2 */
 
-#define NC_FILL_INT 1
+/* #define NC_FILL_INT 1 */
 #include "minc.h"
 #include "minc_private.h"
 #include "hdf_convenience.h"
@@ -58,6 +58,7 @@ hdf_id_check(int fd)
 	    return (curr);
 	}
     }
+    return (NULL);
 }
 
 static struct m2_file *
@@ -148,7 +149,7 @@ hdf_var_byname(struct m2_file *file, const char *name)
     return (NULL);
 }
 
-inline struct m2_var *
+struct m2_var *
 hdf_var_byid(struct m2_file *file, int varid)
 {
     if (varid >= 0 && varid < file->nvars) {
@@ -217,7 +218,7 @@ hdf_dim_byname(struct m2_file *file, const char *name)
 
 /** Find a dimension by ID number.
  */
-inline struct m2_dim *
+struct m2_dim *
 hdf_dim_byid(struct m2_file *file, int dimid)
 {
     if (dimid >= 0 && dimid < file->ndims) {
@@ -266,7 +267,6 @@ hdf_is_dimension_name(struct m2_file *file, const char *varnm)
 	MItfrequency
     };
     int i;
-    struct m2_dim *dim;
 
     if (hdf_dim_byname(file, varnm) != NULL) {
 	return (1);
@@ -287,8 +287,6 @@ hdf_is_dimension_name(struct m2_file *file, const char *varnm)
 static hid_t
 hdf_path_from_name(struct m2_file *file, const char *varnm, char *varpath)
 {
-    int i;
-
     if (!strcmp(varnm, MIimage) ||
 	!strcmp(varnm, MIimagemax) ||
 	!strcmp(varnm, MIimagemin)) {
@@ -721,12 +719,9 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
 {
     hid_t dst_id;
     hid_t typ_id;
-    hid_t spc_id;
-    int status = MI_ERROR;
     size_t size;
     H5T_class_t class;
     int ndims;
-    int stat;
     struct m2_file *file;
     struct m2_var *var;
 
@@ -755,7 +750,6 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
     }
 
     dst_id = var->dset_id;
-    spc_id = var->fspc_id;
     typ_id = var->type_id;
  
     class = H5Tget_class(typ_id);
@@ -1024,7 +1018,7 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
             hid_t new_dset_id;
             hid_t new_plst_id;
             char temp[128];
-            int i;
+            unsigned int i;
 
             sprintf(temp, "junkXXXX");
 
@@ -1144,14 +1138,13 @@ private void
 hdf_dim_commit(int fd)
 {
     struct m2_file *file;
-    struct m2_var *var;
     struct m2_dim *dim;
     int i;
 
     if ((file = hdf_id_check(fd)) != NULL) {
         for (i = 0; i < file->ndims; i++) {
             if ((dim = hdf_dim_byid(file, i)) != NULL) {
-                if ((var = hdf_var_byname(file, dim->name)) == NULL) {
+                if (hdf_var_byname(file, dim->name) == NULL) {
                     hdf_vardef(fd, dim->name, NC_INT, 0, NULL);
                 }
             }
@@ -1183,7 +1176,6 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
     int spc_id = -1;
     int prp_id = -1;
     int status = MI_ERROR;
-    int unlimited = 0;
     int i;
     long length;
     hsize_t dims[MAX_NC_DIMS];
@@ -1363,8 +1355,7 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   int mspc_id = -1;
   int i;
   int ndims;
-  hsize_t fstart[MAX_VAR_DIMS];
-  hsize_t mstart[MAX_VAR_DIMS];
+  hssize_t fstart[MAX_VAR_DIMS];
   hsize_t count[MAX_VAR_DIMS];
   struct m2_file *file;
   struct m2_var *var;
@@ -1396,7 +1387,6 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   else {
     for (i = 0; i < ndims; i++) {
       fstart[i] = start_ptr[i];
-      mstart[i] = 0;
       count[i] = length_ptr[i];
     }
 
@@ -1434,14 +1424,13 @@ hdf_varputg(int fd, int varid, const long *start,
     int status = MI_ERROR;      /* Assume guilty */
     int maxidim;		/* maximum dimensional index */
     int idim;
-    hsize_t *mystart = NULL;
+    hssize_t *mystart = NULL;
     hsize_t *myedges;
     hsize_t *iocount;	/* count vector */
     hsize_t *stop;	/* stop indexes */
     hsize_t *length;	/* edge lengths in bytes */
     ptrdiff_t *mystride;
     ptrdiff_t *mymap;
-    hsize_t *zero = NULL;
 
     struct m2_var *varp;
     struct m2_file *file;
@@ -1487,12 +1476,12 @@ hdf_varputg(int fd, int varid, const long *start,
 	}
     }
 
-    mystart = (hsize_t *)calloc(varp->ndims * 7, sizeof(hsize_t));
+    mystart = (hssize_t *)calloc(varp->ndims * 7, sizeof(hsize_t));
     if (mystart == NULL) {
         goto cleanup;
     }
 
-    myedges = mystart + varp->ndims;
+    myedges = (hsize_t *)(mystart + varp->ndims);
     iocount = myedges + varp->ndims;
     stop = iocount + varp->ndims;
     length = stop + varp->ndims;
@@ -1593,11 +1582,11 @@ hdf_varputg(int fd, int varid, const long *start,
 	 */
 	idim = maxidim;
     carry:
-	value += mymap[idim];
+	value = ((char *)value) + mymap[idim];
 	mystart[idim] += mystride[idim];
 	if (mystart[idim] == stop[idim]) {
 	    mystart[idim] = start[idim];
-	    value -= length[idim];
+	    value = ((char *)value) - length[idim];
 	    if (--idim < 0)
 		break; /* normal return */
 	    goto carry;
@@ -1758,11 +1747,11 @@ hdf_vargetg(int fd, int varid, const long *start,
 	 */
 	idim = maxidim;
     carry:
-	value += mymap[idim];
+	value = ((char *)value) + mymap[idim];
 	mystart[idim] += mystride[idim];
 	if (mystart[idim] == stop[idim]) {
 	    mystart[idim] = start[idim];
-	    value -= length[idim];
+	    value = ((char *)value) - length[idim];
 	    if (--idim < 0)
 		break; /* normal return */
 	    goto carry;
@@ -1784,8 +1773,7 @@ hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
   int mspc_id = -1;
   int i;
   int ndims;
-  hsize_t fstart[MAX_VAR_DIMS];
-  hsize_t mstart[MAX_VAR_DIMS];
+  hssize_t fstart[MAX_VAR_DIMS];
   hsize_t count[MAX_VAR_DIMS];
   struct m2_file *file;
   struct m2_var *var;
@@ -1813,7 +1801,6 @@ hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
   else {
     for (i = 0; i < ndims; i++) {
       fstart[i] = start_ptr[i];
-      mstart[i] = 0;
       count[i] = length_ptr[i];
     }
 
@@ -1897,9 +1884,7 @@ hdf_attdel(int fd, int varid, const char *attnm)
 public int
 hdf_varsize(int fd, int varid, long *size_ptr)
 {
-    int ndims;
     int i;
-    int status = MI_ERROR;
     hsize_t dims[MAX_VAR_DIMS];
 
     struct m2_file *file;
@@ -2066,7 +2051,6 @@ hdf_open(const char *path, int mode)
     hid_t fd;
     hid_t grp_id;
     hid_t dset_id;
-    int i, n;
     struct m2_file *file;
     hsize_t dims[MAX_NC_DIMS];
     int ndims;
