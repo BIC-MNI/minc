@@ -6,7 +6,10 @@
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: message.c,v $
- * Revision 6.5  2002-11-13 03:00:27  neelin
+ * Revision 6.6  2002-12-08 21:43:08  neelin
+ * Fixed excessive memory freeing on error when reading message (seen in linux)
+ *
+ * Revision 6.5  2002/11/13 03:00:27  neelin
  * Fixed an unterminated comment
  *
  * Revision 6.4  1999/10/29 17:51:53  neelin
@@ -493,7 +496,6 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
 
       /* Check the status */
       if (status != ACR_OK) {
-         if (group != NULL) acr_delete_group(group);
          if (status == ACR_END_OF_INPUT) status = ACR_ABNORMAL_END_OF_INPUT;
          return status;
       }
