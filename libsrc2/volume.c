@@ -60,7 +60,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
     handle->dim_handles[i] = dimensions[i];  
   }
   /* Set the apparent order of dimensions to NULL
-     until user defines them.
+     until user defines them. Switch is used to 
+     avoid errors.
    */
   handle->dim_indices = NULL;
   switch (volume_type) {
@@ -164,7 +165,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   /* Explicitly allocate storage for name
    */
   if (create_props->record_name != NULL) {
-    props_handle->record_name =malloc(strlen(create_props->record_name));
+    props_handle->record_name =malloc(strlen(create_props->record_name) + 1 );
     strcpy(props_handle->record_name, create_props->record_name);
   }
   props_handle->template_flag = create_props->template_flag;

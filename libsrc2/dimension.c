@@ -66,7 +66,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   }
   /* Explicitly allocate storage for name
    */
-  handle->name =malloc(strlen(dim_ptr->name));
+  handle->name =malloc(strlen(dim_ptr->name) + 1);
   strcpy(handle->name, dim_ptr->name);
   handle->size = dim_ptr->size;
   if (dim_ptr->offsets != NULL) {
@@ -84,7 +84,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   if (dim_ptr->units != NULL) {
     /* Explicitly allocate storage for units
      */
-    handle->units =malloc(strlen(dim_ptr->units));
+    handle->units =malloc(strlen(dim_ptr->units) + 1);
     strcpy(handle->units, dim_ptr->units);
   }
   else {
@@ -308,7 +308,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 	  handle->name = malloc(strlen(name) + 1);
 	} 
 	else {
-	  handle->name = malloc( MI2_CHAR_LENGTH + 1);
+	  handle->name = malloc( MI2_CHAR_LENGTH );
 	}
 	strcpy(handle->name, name);
 	handle->class = dim_class;
