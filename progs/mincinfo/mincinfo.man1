@@ -1,0 +1,108 @@
+.\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 1.1 1993-10-19 13:05:36 neelin Exp $
+.\"
+.TH MINCINFO 1 "MINC Image File Format"
+
+.SH NAME
+mincinfo - print out specified information about a minc file
+
+.SH SYNOPSIS
+.B mincinfo
+[<options>] <file>
+
+.SH DESCRIPTION
+.I Mincinfo
+will print out either a general description of a minc file (type,
+sign and range of data, plus a brief description of dimensions and
+their order), or specific information about dimensions, variables or
+attributes in the file. This program can be very useful for building
+shell scripts that access minc files.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+Dimensions, variables and attributes are all specified by name.
+Attributes are specified by <variable>:<attribute> where <variable>
+can be omitted to specify global attributes.
+
+.I -image_info :
+Print out the default general information about the file. This
+information includes the type, sign and range of the pixel data, the
+order of the dimensions, and a list of dimensions giving name,
+length, start and step for each one.
+.P
+.I -dimnames :
+Print out a space-separated list of the dimensions in the file.
+.P
+.I -varnames :
+Print out a space-separated list of the variables in the file.
+.P
+.I -dimlength <dimension> :
+Print the length of the specified dimension.
+.P
+.I -vartype <variable> :
+Print the type of the variable.
+.P
+.I -vardims <variable> :
+Print a space-separated list of the dimensions that subscript the
+variable (in C order).
+.P
+.I -varatts <variable> :
+Print a space-separated list of the attribute names for the specified
+variable.
+.P
+.I -varvalues <variable> :
+Print a newline-separated list of the values of the specified variable.
+.P
+.I -atttype <variable>:<attribute> :
+Print out the type of the specified attribute.
+.P
+.I -attvalue <variable>:<attribute> :
+Print out a space-separated list of the values of the specified attribute.
+.P
+.I -error_string <string> :
+Specifies a string to print out if an error occurs. This will cause
+the program to exit with normal status. The default is to print an
+appropriate error message and exit with an error status.
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH EXAMPLES
+
+Print out standard information about a minc file.
+.in +5
+mincinfo file.mnc
+.in -5
+
+Print out contents of global history attribute.
+.in +5
+mincinfo file.mnc -attvalue :history
+.in -5
+
+Print out step value for x dimension, setting the default value
+to 1.
+.in +5
+mincinfo file.mnc -attvalue xspace:step -error 1
+.in -5
+
+Print out the names of the dimensions subscripting the image variable.
+.in +5
+mincinfo file.mnc -vardims image
+.in -5
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+\fB\(co\fR\s12 Copyright 1993 by Peter Neelin
