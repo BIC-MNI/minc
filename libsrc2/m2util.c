@@ -255,23 +255,26 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
-
+    
     /* Search through the path, descending into each group encountered.
      */
     hdf_loc = midescend_path(hdf_file, path);
     if (hdf_loc < 0) {
 	return (MI_ERROR);
     }
-
+    
     hdf_attr = H5Aopen_name(hdf_loc, name);
     if (hdf_attr < 0) {
 	return (MI_ERROR);
     }
-
+    
     switch (data_type) {
     case MI_TYPE_INT:
 	hdf_type = H5Tcopy(H5T_NATIVE_INT);
 	break;
+    case MI_TYPE_UINT:
+        hdf_type = H5Tcopy(H5T_NATIVE_ULONG);
+        break;
     case MI_TYPE_FLOAT:
 	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
 	break;

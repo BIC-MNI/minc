@@ -256,13 +256,13 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
     return (MI_ERROR);
   }
   free(dim_ptr->name);
-  if (dim_ptr->offsets != NULL) {
+  //if (dim_ptr->offsets != NULL) {
     free(dim_ptr->offsets);
-  }
+    //}
   free(dim_ptr->units);
-  if (dim_ptr->widths !=NULL) {
+  //if (dim_ptr->widths !=NULL) {
     free(dim_ptr->widths);
-  }
+    // }
   free(dim_ptr);
   
   return (MI_NOERROR);
@@ -1220,11 +1220,11 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   }
   printf( " N is %d \n", n);
-  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol1);
+  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  r = miclose_volume(vol1);
+  r = miclose_volume(vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }

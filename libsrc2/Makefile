@@ -12,7 +12,7 @@ OBJS = \
 	hyper.o \
 	label.o \
 	slice.o \
-	valid.o
+	valid.o 
 
 LIBS = -lminc -lnetcdf -lhdf5 -lm
 
@@ -49,11 +49,13 @@ convert-test-objs = convert-test.o libminc2.a
 
 convert-test: $(convert-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o convert-test $(convert-test-objs) $(LIBS)
-
 convert-test.o: convert.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o convert-test.o convert.c
 
+convert.o: convert.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o convert.o convert.c
 # slice.c
+
 slice-test-objs = slice-test.o libminc2.a
 
 slice-test: $(slice-test-objs)
@@ -65,7 +67,9 @@ slice-test.o: slice.c minc2.h minc2_private.h
 slice.o: slice.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o slice.o slice.c
 # hyper.c
+
 hyper-test-objs = hyper-test.o libminc2.a
+
 
 hyper-test: $(hyper-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o hyper-test $(hyper-test-objs) $(LIBS)
@@ -89,6 +93,7 @@ dimension.o: dimension.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o dimension.o dimension.c
 
 # grpattr.c
+
 grpattr-test-objs = grpattr-test.o libminc2.a
 
 grpattr-test: $(grpattr-test-objs)
@@ -101,6 +106,7 @@ grpattr.o: grpattr.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o grpattr.o grpattr.c
 
 # datatype.c
+
 datatype-test-objs = datatype-test.o libminc2.a
 
 datatype-test: $(datatype-test-objs)
@@ -109,14 +115,22 @@ datatype-test: $(datatype-test-objs)
 datatype-test.o: datatype.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o datatype-test.o datatype.c
 
+datatype.o: datatype.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o datatype.o datatype.c
+
 # label.c
+
 label-test-objs = label-test.o libminc2.a
+
 
 label-test: $(label-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o label-test $(label-test-objs) $(LIBS)
 
 label-test.o: label.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o label-test.o label.c
+
+label.o: label.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o label.o label.c
 
 # volprops.c
 volprops-test-objs = volprops-test.o libminc2.a
@@ -130,7 +144,9 @@ volprops-test.o: volprops.c minc2.h minc2_private.h
 volprops.o: volprops.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volprops.o volprops.c
 
+
 valid-test-objs = valid-test.o libminc2.a
+
 
 valid-test: $(valid-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o valid-test $(valid-test-objs) $(LIBS)
@@ -145,7 +161,7 @@ volume.o: volume.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volume.o volume.c
 
 m2util.o: m2util.c minc2.h minc2_private.h
-	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c -lm
+	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c -lm -lhdf5
 
 free.o: free.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o free.o free.c

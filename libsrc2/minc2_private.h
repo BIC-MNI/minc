@@ -33,7 +33,7 @@
 
 /** The fixed path to the full-resolution image data.
  */
-#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
+//#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
 
 /** Standard linear transform, a 4x4 matrix.
  */
