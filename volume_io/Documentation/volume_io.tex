@@ -1521,6 +1521,21 @@ specified by \name{set\_minc\_input\_colour\_dimension\_size}
 indices specified by \name{set\-\_minc\-\_input\-\_colour\-\_indices}
 (default 0, 1, 2).}
 
+{\bf\begin{verbatim}
+public  void  set_minc_input_user_real_range(
+    minc_input_options  *options,
+    double              minimum,
+    double              maximum )
+\end{verbatim}}
+
+\desc{By default, files read into an integer-type volume will be
+scaled so that the real range is the full range of the data in the
+input file. The user can define another range by calling this function
+with an appropriate real minimum and maximum. For float-type Volumes,
+setting the range will change the real range of the volume, but
+not change the actual values in the volume. If minimum is greater than
+or equal to maximum, then the default behaviour is restored.}
+
 \section{Alternative Volume Input Methods}
 
 Rather than using the \name{input\_volume()} function to input a volume in one

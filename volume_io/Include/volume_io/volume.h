@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.51 2001-09-18 15:33:10 neelin Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.52 2001-11-28 16:31:01 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -353,6 +353,7 @@ typedef  struct
     int         dimension_size_for_colour_data;
     int         max_dimension_size_for_colour_data;
     int         rgba_indices[4];
+    double      user_real_range[2];
 } minc_input_options;
 
 typedef  struct

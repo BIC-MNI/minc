@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.63 2001-08-16 16:41:37 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.64 2001-11-28 16:31:02 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -457,6 +457,14 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     {
         (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MIN, 0.0 );
         (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MAX, 1.0 );
+    }
+
+    if (options->user_real_range[0] < options->user_real_range[1]) {
+       (void) miicv_setint( file->minc_icv, MI_ICV_USER_NORM, TRUE );
+       (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MIN,
+                            options->user_real_range[0] );
+       (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MAX,
+                            options->user_real_range[1] );
     }
 
     if( options->convert_vector_to_scalar_flag && !file->converting_to_colour )
@@ -1290,6 +1298,7 @@ public  void  set_default_minc_input_options(
     set_minc_input_colour_dimension_size( options, 3 );
     set_minc_input_colour_max_dimension_size( options, 4 );
     set_minc_input_colour_indices( options, default_rgba_indices );
+    set_minc_input_user_real_range(options, 0.0, 0.0);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1453,4 +1462,30 @@ public  void  set_minc_input_colour_indices(
 
     for_less( i, 0, 4 )
         options->rgba_indices[i] = indices[i];
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_user_real_range
+@INPUT      : minimum, maximum - real range for scaling of input
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the user-defined real range for scaling input when
+              the Volume type is integer. The max must be greater than
+              the min for this option to take effect. Setting this
+              will force the Volume to have a particular real range,
+              rather than using the full range of the input file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 2001            Peter Neelin
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_user_real_range(
+    minc_input_options  *options,
+    double              minimum,
+    double              maximum )
+{
+    options->user_real_range[0] = minimum;
+    options->user_real_range[1] = maximum;
 }

@@ -331,6 +331,11 @@ public  void  set_minc_input_colour_indices(
     minc_input_options  *options,
     int                 indices[4] );
 
+public  void  set_minc_input_user_real_range(
+    minc_input_options  *options,
+    double              minimum,
+    double              maximum );
+
 public  Status  start_volume_input(
     STRING               filename,
     int                  n_dimensions,
