@@ -12,10 +12,14 @@
 #    FORTRAN_SUBDIR = "fortran" to get compilation of fortran jackets, or
 #        nothing to leave out fortran jackets
 #    INSTALL_BINDIR = directory into which binaries are to be copied - they
-#        are not truly installed, just copied
-#    INSTALL_LIBDIR = directory into which libraries should be copied
-#    INSTALL_INCDIR = directory into which include files should be copied
-#    INSTALL_MANDIR = directory into which man files should be copied
+#        are not truly installed, just copied. The directory must exist.
+#    INSTALL_LIBDIR = directory into which libraries should be copied. The
+#        directory must exist.
+#    INSTALL_INCDIR = directory into which include files should be copied.
+#        The directory must exist.
+#    INSTALL_MANDIR = directory into which man files should be copied. The
+#        appropriate digit is appended (1 for user commands, 3 for 
+#        library functions). The directories must exist already.
 #
 NETCDF_LIB_DIR = /usr/local/lib
 NETCDF_INCLUDE_DIR = /usr/local/include
@@ -25,7 +29,7 @@ FORTRAN_SUBDIR = fortran
 INSTALL_BINDIR = $(ROOT)/bin
 INSTALL_LIBDIR = $(ROOT)/lib
 INSTALL_INCDIR = $(ROOT)/include
-INSTALL_MANDIR = $(ROOT)/man
+INSTALL_MANDIR = $(ROOT)/man/cat
 
 # ------------------------------------------------------------
 # You probably shouldn't modify things beyond here
