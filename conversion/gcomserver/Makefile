@@ -14,6 +14,7 @@ EXTRA_OBJS = spi_element_defs.o open_connection.o reply.o spi_message.o \
              gyro_to_minc.o gyro_read.o minc_file.o \
              string_to_filename.o project_file.o
 HEADERS  = gcomserver.h gcom_prototypes.h spi_element_defs.h gyro_to_minc.h
+OPT      = -O
 CDEFINES = -DDEBUG#                        cpp defines
 INCLUDES = -I/usr/include -I. -I$(ACR_LIB_DIR) -I$(PROG_LIB_DIR) \
 	            -I$(VOLIO_LIB_DIR)/Include \
@@ -24,3 +25,4 @@ MANSECT  = 1
 
 include $(ROOT)/progs/Make_progs
 
+gcomserver-debug.o: gcomserver.c

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-13 22:08:13  neelin
+@MODIFIED   : Modifications to get gcomserver working with modified Acr_nema library.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:07  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1995/08/02  13:41:36  neelin
  * Fixed bug in direction cosine inversion (in test cases, this code was never
  * called, so it does not seem to be an important bug).
@@ -163,7 +166,7 @@ public Acr_Group read_gyro(char *filename, int max_group)
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_ordering(afp);
+   (void) acr_test_byte_order(afp);
 
    /* Read in group list */
    (void) acr_input_group_list(afp, &group_list, max_group);
@@ -716,6 +719,7 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
    unsigned char pixel[2][2];
    int need_byte_flip;
    unsigned char temp_byte;
+   Acr_byte_order byte_order;
 
    /* Get the image information */
    bits_alloc = find_short(group_list, ACR_Bits_allocated, 0);
@@ -761,15 +765,18 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
    }
    else {
 
+      /* Get byte order */
+      byte_order = acr_get_element_byte_order(element);
+
       /* Look for unpacked short data */
       if (bits_alloc == nctypelen(datatype) * CHAR_BIT) {
-         acr_get_short(nrows*ncolumns, data, image->data);
+         acr_get_short(byte_order, nrows*ncolumns, data, image->data);
       }
 
       /* Get packed short data */
       else if ((bits_alloc == PACK_BITS) && (bits_stored <= bits_alloc) &&
                ((imagepix % 2) == 0)) {
-         need_byte_flip = acr_need_invert();
+         need_byte_flip = acr_need_invert(byte_order);
          packed = (unsigned char *) data;
          for (ipix=0; ipix < imagepix; ipix+=2) {
             pixel[0][0] = packed[0];

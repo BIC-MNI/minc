@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-13 22:08:13  neelin
+@MODIFIED   : Modifications to get gcomserver working with modified Acr_nema library.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:07  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:44  neelin
  * Release of minc version 0.3
  *
@@ -93,7 +96,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 4.0 1997-05-07 20:01:07 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 4.1 1997-06-13 22:08:13 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -167,11 +170,6 @@ int main(int argc, char *argv[])
       setbuf(stderr, NULL);
    }
 
-#ifdef DO_INPUT_TRACING
-   /* Enable input tracing */
-   acr_enable_input_trace();
-#endif
-
    /* Print message at start */
    pname = argv[0];
    if (Do_logging >= LOW_LOGGING) {
@@ -180,6 +178,14 @@ int main(int argc, char *argv[])
 
    /* Make connection */
    open_connection(argc, argv, &afpin, &afpout);
+
+#ifdef DO_INPUT_TRACING
+   /* Enable input tracing */
+   acr_file_enable_trace(afpin);
+#endif
+
+   /* Test endian-ness of input data */
+   (void) acr_test_byte_order(afpin);
 
    /* Create file prefix. Create the temporary file to avoid file name 
       clashes */
@@ -305,12 +311,12 @@ int main(int argc, char *argv[])
             /* Do something with the files */
 #ifdef DO_INPUT_TRACING
             /* Disable input tracing */
-            acr_disable_input_trace();
+            acr_file_disable_trace(afpin);
 #endif
             use_the_files(project_name, num_files, file_list, file_info_list);
 #ifdef DO_INPUT_TRACING
    /* Enable input tracing */
-            acr_enable_input_trace();
+            acr_file_enable_trace(afpin);
 #endif
             /* Remove the temporary files */
             cleanup_files(num_files, file_list);

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-13 22:08:13  neelin
+@MODIFIED   : Modifications to get gcomserver working with modified Acr_nema library.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:07  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:44  neelin
  * Release of minc version 0.3
  *
@@ -163,28 +166,39 @@ public void open_connection(int argc, char *argv[],
    int link;
    long maxlength;
 
-   /* Accept the connection and get the maximum buffer length */
-   link = fileno(stdin);
-   (void) memset((void *) &sd, 0, sizeof(sd));
-   (void) GCOM_IOCTL(link, SES_ACCEPT, (char *) &sd);
-   maxlength = 0;
-   if ((GCOM_IOCTL(link, SES_MAX_IO, (char *) &maxlength) == -1) ||
-       (maxlength <= 0)) {
-      maxlength = DN_MAX_IO;
+   /* If there are no arguments, then assume that we are not using
+      decnet and just use stdin and stdout */
+   if (argc == 1) {
+      *afpin = acr_file_initialize((void *) stdin, 0, acr_stdio_read);
+      *afpout = acr_file_initialize((void *) stdout, 0, acr_stdio_write);
    }
 
-   /* Set up input */
-   io_data = MALLOC(sizeof(*io_data));
-   io_data->fd = fileno(stdin);
-   *afpin = acr_file_initialize((void *) io_data, (int) maxlength, 
-                                input_routine);
-   (void) acr_test_byte_ordering(*afpin);
+   /* Otherwise, use decnet routines */
+   else {
 
-   /* Set up output */
-   io_data = MALLOC(sizeof(*io_data));
-   io_data->fd = fileno(stdout);
-   *afpout = acr_file_initialize((void *) io_data, (int) maxlength, 
-                                output_routine);
+      /* Accept the connection and get the maximum buffer length */
+      link = fileno(stdin);
+      (void) memset((void *) &sd, 0, sizeof(sd));
+      (void) GCOM_IOCTL(link, SES_ACCEPT, (char *) &sd);
+      maxlength = 0;
+      if ((GCOM_IOCTL(link, SES_MAX_IO, (char *) &maxlength) == -1) ||
+          (maxlength <= 0)) {
+         maxlength = DN_MAX_IO;
+      }
+
+      /* Set up input */
+      io_data = MALLOC(sizeof(*io_data));
+      io_data->fd = fileno(stdin);
+      *afpin = acr_file_initialize((void *) io_data, (int) maxlength, 
+                                   input_routine);
+
+      /* Set up output */
+      io_data = MALLOC(sizeof(*io_data));
+      io_data->fd = fileno(stdout);
+      *afpout = acr_file_initialize((void *) io_data, (int) maxlength, 
+                                    output_routine);
+
+   }        /* If decnet else */
 
 }
 
