@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.12  1993-11-03 14:32:44  neelin
-@MODIFIED   : Turn off fill for output file.
+@MODIFIED   : Revision 1.13  1993-11-04 15:13:13  neelin
+@MODIFIED   : Added support for irregularly spaced dimensions.
 @MODIFIED   :
+ * Revision 1.12  93/11/03  14:32:44  neelin
+ * Turn off fill for output file.
+ * 
  * Revision 1.11  93/11/03  12:32:17  neelin
  * Change ncopen, nccreate and ncclose to miopen, micreate and miclose.
  * 
@@ -55,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.12 1993-11-03 14:32:44 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.13 1993-11-04 15:13:13 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -135,6 +138,7 @@ public void get_arginfo(int argc, char *argv[],
           {{1.0, 0.0, 0.0},   /* Default direction cosines */
            {0.0, 1.0, 0.0},
            {0.0, 0.0, 1.0}},
+          {NULL, NULL, NULL}, /* Pointers to coordinate arrays */
           {"", "", ""},       /* units */
           {"", "", ""}        /* spacetype */
        }
@@ -354,6 +358,14 @@ public void get_arginfo(int argc, char *argv[],
    }
    FREE(save_argv);
 
+   /* Explicitly force output files to have regular spacing */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      if (args.volume_def.coords[idim] != NULL) {
+         FREE(args.volume_def.coords[idim]);
+         args.volume_def.coords[idim] = NULL;
+      }
+   }
+
    /* Check to see if sign and range have been explicitly set. If not set
       them now */
    if (args.is_signed == INT_MIN) {
@@ -512,9 +524,12 @@ public void get_file_info(char *filename,
 {
    int dim[MAX_VAR_DIMS], dimid, status, length;
    int axis_counter, idim, jdim, cur_axis;
+   int varndims, vardim[MAX_VAR_DIMS];
+   long varstart, varcount, dimlength;
    char attstr[MI_MAX_ATTSTR_LEN];
    char dimname[MAX_NC_NAME];
    double vrange[2];
+   enum {UNKNOWN, REGULAR, IRREGULAR} coord_spacing;
 
    /* Open the minc file */
    file_info->mincid = miopen(filename, NC_NOWRITE);
@@ -591,6 +606,10 @@ public void get_file_info(char *filename,
          else
             volume_def->dircos[idim][jdim] = 0.0;
       }
+      if (volume_def->coords[idim] != NULL) {
+         FREE(volume_def->coords[idim]);
+         volume_def->coords[idim] = NULL;
+      }
       (void) strcpy(volume_def->units[idim], "mm");
       (void) strcpy(volume_def->spacetype[idim], MI_NATIVE);
    }
@@ -641,6 +660,8 @@ public void get_file_info(char *filename,
       ncopts = 0;
       (void) miattget1(file_info->mincid, dimid, MIstep, 
                        NC_DOUBLE, &volume_def->step[cur_axis]);
+      if (volume_def->step[cur_axis] == 0.0)
+         volume_def->step[cur_axis] = 1.0;
       (void) miattget1(file_info->mincid, dimid, MIstart, 
                        NC_DOUBLE, &volume_def->start[cur_axis]);
       (void) miattget(file_info->mincid, dimid, MIdirection_cosines, 
@@ -650,6 +671,53 @@ public void get_file_info(char *filename,
                          MI_MAX_ATTSTR_LEN, volume_def->units[cur_axis]);
       (void) miattgetstr(file_info->mincid, dimid, MIspacetype, 
                          MI_MAX_ATTSTR_LEN, volume_def->spacetype[cur_axis]);
+      ncopts = NC_VERBOSE | NC_FATAL;
+
+      /* Look for irregular coordinates for dimension variable */
+      ncopts = 0;
+      coord_spacing = UNKNOWN;
+      dimlength = volume_def->nelements[cur_axis];
+      if (miattgetstr(file_info->mincid, dimid, MIspacing, MI_MAX_ATTSTR_LEN,
+                       attstr) != NULL) {
+         if (strcmp(attstr, MI_IRREGULAR) == 0)
+            coord_spacing = IRREGULAR;
+         else if (strcmp(attstr, MI_REGULAR) == 0)
+            coord_spacing = REGULAR;
+      }
+      if (ncvarinq(file_info->mincid, dimid, NULL, NULL, 
+                   &varndims, vardim, NULL) == MI_ERROR) {
+         ncopts = NC_VERBOSE | NC_FATAL;
+         continue;
+      }
+      if ((coord_spacing != REGULAR) && 
+          (varndims == 1) && (vardim[0] == dim[idim])) {
+         coord_spacing = IRREGULAR;
+      }
+      if ((coord_spacing == UNKNOWN) || (dimlength <= 1)) {
+         coord_spacing = REGULAR;
+      }
+      if (coord_spacing == IRREGULAR) {
+         volume_def->coords[cur_axis] = MALLOC(sizeof(double) * dimlength);
+         varstart = 0;
+         varcount = dimlength;
+         if (mivarget(file_info->mincid, dimid, &varstart, &varcount,
+                      NC_DOUBLE, MI_SIGNED, volume_def->coords[cur_axis])
+                   == MI_ERROR) {
+            ncopts = NC_VERBOSE | NC_FATAL;
+            FREE(volume_def->coords[cur_axis]);
+            volume_def->coords[cur_axis] = NULL;
+            continue;
+         }
+         volume_def->start[cur_axis] = volume_def->coords[cur_axis][0];
+         if (dimlength > 1) {
+            volume_def->step[cur_axis] = 
+               (volume_def->coords[cur_axis][dimlength-1] - 
+                            volume_def->coords[cur_axis][0]) /
+                               (dimlength - 1);
+            if (volume_def->step[cur_axis] == 0.0)
+               volume_def->step[cur_axis] = 1.0;
+         }
+      }
       ncopts = NC_VERBOSE | NC_FATAL;
 
    }   /* End of loop over dimensions */
@@ -955,8 +1023,12 @@ public void create_output_file(char *filename, int clobber,
 public void get_voxel_to_world_transf(Volume_Definition *volume_def, 
                                       General_transform *voxel_to_world)
 {
-   int idim, jdim, cur_dim;
+   int idim, jdim, cur_dim, vol_axis;
+   int irregular;
+   long ielement, dimlength;
    Transform matrix;
+   Irregular_Transform_Data *irreg_transf_data;
+   General_transform linear_transf, irreg_transf;
 
    /* Make an identity matrix */
    make_identity_transform(&matrix);
@@ -980,6 +1052,220 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
 
    /* Save the general transform */
    create_linear_transform(voxel_to_world, &matrix);
+
+   /* Check for an irregularly spaced dimension */
+   irregular = FALSE;
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      if (volume_def->coords[idim] != NULL)
+         irregular = TRUE;
+   }
+
+   /* If we have an irregularly spaced dimension, then create the appropriate
+      transform */
+   if (irregular) {
+      irreg_transf_data = MALLOC(sizeof(*irreg_transf_data));
+
+      /* Loop through the axes */
+      for (idim=0; idim < WORLD_NDIMS; idim++) {
+
+         vol_axis = volume_def->axes[idim];
+         irreg_transf_data->last_index[vol_axis] = 0;
+
+         /* Check whether the axis is irregularly spaced or not */
+         if (volume_def->coords[idim] == NULL) {
+            irreg_transf_data->nelements[vol_axis] = 0;
+            irreg_transf_data->coords[vol_axis] = NULL;
+         }
+         else {
+
+            /* If irregular then get the number of elements and
+               allocate space */
+            dimlength = volume_def->nelements[idim];
+            irreg_transf_data->nelements[vol_axis] = dimlength;
+            irreg_transf_data->coords[vol_axis] =
+               MALLOC(sizeof(double) * dimlength);
+
+            /* Normalize the coordinates to give first coord 0 and
+               last coord n-1 (so that we can concat with the linear
+               transform already created */
+            for (ielement=0; ielement < dimlength; ielement++) {
+               irreg_transf_data->coords[vol_axis][ielement] = 
+                  (volume_def->coords[idim][ielement] - 
+                              volume_def->start[idim]) /
+                                 volume_def->step[idim];
+            }
+         }
+      }
+
+      /* Create an irregular transform and free the data (we only free
+         the Irregular_Transform_Data structure, not the coord pointers,
+         since these arrays are not copied) */
+      create_user_transform(&irreg_transf, (void *) irreg_transf_data,
+                            sizeof(*irreg_transf_data),
+                            irregular_transform_function,
+                            irregular_inverse_transform_function);
+      FREE(irreg_transf_data);
+
+      /* Concatenate the linear transform with the irregular transform */
+      copy_general_transform(voxel_to_world, &linear_transf);
+      delete_general_transform(voxel_to_world);
+      concat_general_transforms(&irreg_transf, &linear_transf,
+                                voxel_to_world);
+
+   }
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : irregular_transform_function
+@INPUT      : user_data - pointer to user data
+              x, y, z   - coordinate to transform
+@OUTPUT     : x_trans, y_trans, z_trans - resulting coordinate
+@RETURNS    : (nothin)
+@DESCRIPTION: Routine to transform irregularly spaced coordinate to a 
+              regular spacing.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 4, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void irregular_transform_function(void *user_data,
+                                         Real x,
+                                         Real y,
+                                         Real z,
+                                         Real *x_trans,
+                                         Real *y_trans,
+                                         Real *z_trans)
+{
+   Irregular_Transform_Data *irreg_transf_data;
+   int idim;
+   long dimlength, index;
+   double coord[VOL_NDIMS], coord_transf[VOL_NDIMS];
+   double frac;
+
+   /* Get the pointer to the data */
+   irreg_transf_data = (Irregular_Transform_Data *) user_data;
+
+   /* Get the coordinate */
+   coord[0] = x; coord[1] = y; coord[2] = z;
+
+   /* Loop through axes, renormalizing coordinate */
+   for (idim=0; idim < VOL_NDIMS; idim++) {
+      dimlength = irreg_transf_data->nelements[idim];
+      if (dimlength <= 1) {
+         coord_transf[idim] = coord[idim];
+      }
+      else {
+
+         /* For irregular dimension, do linear interpolation between coords */
+         index = (long) coord[idim];
+         if (index < 0) index = 0;
+         if (index > dimlength-2) index = dimlength-2;
+         frac = coord[idim] - index;
+         coord_transf[idim] = 
+            (1.0 - frac) * irreg_transf_data->coords[idim][index] + 
+            frac * irreg_transf_data->coords[idim][index + 1];
+
+      }
+   }
+
+   /* Save the coordinates */
+   *x_trans = coord_transf[0];
+   *y_trans = coord_transf[1];
+   *z_trans = coord_transf[2];
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : irregular_inverse_transform_function
+@INPUT      : user_data - pointer to user data
+              x, y, z   - coordinate to transform
+@OUTPUT     : x_trans, y_trans, z_trans - resulting coordinate
+@RETURNS    : (nothin)
+@DESCRIPTION: Routine to transform irregularly spaced coordinate to a 
+              regular spacing.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 4, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void irregular_inverse_transform_function(void *user_data,
+                                                 Real x,
+                                                 Real y,
+                                                 Real z,
+                                                 Real *x_trans,
+                                                 Real *y_trans,
+                                                 Real *z_trans)
+{
+   Irregular_Transform_Data *irreg_transf_data;
+   int idim, not_found;
+   long dimlength, index;
+   double coord[VOL_NDIMS], coord_transf[VOL_NDIMS];
+   double first, next, step, frac;
+
+   /* Get the pointer to the data */
+   irreg_transf_data = (Irregular_Transform_Data *) user_data;
+
+   /* Get the coordinate */
+   coord[0] = x; coord[1] = y; coord[2] = z;
+
+   /* Loop through axes, renormalizing coordinate */
+   for (idim=0; idim < VOL_NDIMS; idim++) {
+      dimlength = irreg_transf_data->nelements[idim];
+      if (dimlength <= 1) {
+         coord_transf[idim] = coord[idim];
+      }
+      else {
+
+         /* Search for the closest index (checking for out-of-range values) */
+         index = irreg_transf_data->last_index[idim];
+         if (index < 0) index = 0;
+         if (index > dimlength-2) index = dimlength-2;
+         not_found = TRUE;
+         while (not_found) {
+            if (coord[idim] < irreg_transf_data->coords[idim][index]) {
+               if (index > 0) index--;
+               else {
+                  index = 0;
+                  not_found = FALSE;
+               }
+            }
+            else if (coord[idim] > irreg_transf_data->coords[idim][index+1]) {
+               if (index < dimlength-2) index++;
+               else {
+                  index = dimlength-2;
+                  not_found = FALSE;
+               }
+            }
+            else {
+               not_found = FALSE;
+            }
+            
+         }
+         irreg_transf_data->last_index[idim] = index;
+
+         /* Do linear interpolation */
+         first = irreg_transf_data->coords[idim][index];
+         next = irreg_transf_data->coords[idim][index + 1];
+         step = next - first;
+         if (step == 0.0)
+            frac = 0.0;
+         else
+            frac = (coord[idim] - first) / step;
+         coord_transf[idim] = 
+            (1.0 - frac) * index + frac * (index + 1);
+
+      }
+   }
+
+   /* Save the coordinates */
+   *x_trans = coord_transf[0];
+   *y_trans = coord_transf[1];
+   *z_trans = coord_transf[2];
 
    return;
 }

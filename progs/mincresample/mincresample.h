@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 1.9  1993-11-02 11:23:56  neelin
-@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
+@MODIFIED   : Revision 1.10  1993-11-04 15:13:40  neelin
+@MODIFIED   : Added support for irregularly spaced dimensions.
 @MODIFIED   :
+ * Revision 1.9  93/11/02  11:23:56  neelin
+ * Handle imagemax/min potentially varying over slices (for vector data, etc.)
+ * 
  * Revision 1.8  93/10/20  14:05:42  neelin
  * Added VOXEL_COORD_EPS - an epsilon for doing voxel coordinate comparisons.
  * 
@@ -147,6 +150,7 @@ typedef struct {
    double step[WORLD_NDIMS];
    double start[WORLD_NDIMS];
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
+   double *coords[WORLD_NDIMS];
    char units[WORLD_NDIMS][MI_MAX_ATTSTR_LEN];
    char spacetype[WORLD_NDIMS][MI_MAX_ATTSTR_LEN];
 } Volume_Definition;
@@ -173,6 +177,12 @@ typedef struct {
    Transform_Info transform_info;
    Volume_Definition volume_def;
 } Arg_Data;
+
+typedef struct {
+   long last_index[VOL_NDIMS];
+   long nelements[VOL_NDIMS];
+   double *coords[VOL_NDIMS];
+} Irregular_Transform_Data;
 
 /* Macros used in program */
 
@@ -261,6 +271,20 @@ public void create_output_file(char *filename, int clobber,
                                Transform_Info *transform_info);
 public void get_voxel_to_world_transf(Volume_Definition *volume_def, 
                                       General_transform *voxel_to_world);
+public void irregular_transform_function(void *user_data,
+                                         Real x,
+                                         Real y,
+                                         Real z,
+                                         Real *x_trans,
+                                         Real *y_trans,
+                                         Real *z_trans);
+public void irregular_inverse_transform_function(void *user_data,
+                                                 Real x,
+                                                 Real y,
+                                                 Real z,
+                                                 Real *x_trans,
+                                                 Real *y_trans,
+                                                 Real *z_trans);
 public double get_default_range(char *what, nc_type datatype, int is_signed);
 public void finish_up(VVolume *in_vol, VVolume *out_vol);
 public int get_transformation(char *dst, char *key, char *nextArg);
