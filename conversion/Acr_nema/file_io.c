@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.1  1993-11-10 10:33:22  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-23 13:21:42  neelin
+@MODIFIED   : Added fflush for stdio write routine.
 @MODIFIED   :
+ * Revision 1.1  93/11/10  10:33:22  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -260,9 +263,12 @@ public int acr_stdio_write(void *user_data, void *buffer, int nbytes)
    if (user_data == NULL) return 0;
    fp = (FILE *) user_data;
 
-   /* Read the data */
+   /* Write the data */
    nwritten = fwrite(buffer, sizeof(char), (size_t) nbytes, fp);
    if (nwritten < 0) nwritten = 0;
+
+   /* Flush the buffer */
+   (void) fflush(fp);
 
    return nwritten;
 }
