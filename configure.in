@@ -1,5 +1,6 @@
 dnl Process this file with autoconf to produce a configure script
 AC_INIT(libsrc/minc_private.h)
+AC_CONFIG_AUX_DIR(ac_config_aux)
 
 #------------------------------------------------------------------------
 # Look for ranlib
