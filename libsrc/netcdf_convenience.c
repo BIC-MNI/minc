@@ -32,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.6 1993-05-14 10:44:09 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.7 1993-05-14 10:54:02 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -230,6 +230,7 @@ public char *miattgetstr(int cdfid, int varid, char *name,
 
    /* Copy the attribute */
    (void) strncpy(value, att_value, (size_t) maxlen-1);
+   value[maxlen-1] = '\0';
 
    /* Free the string */
    FREE(att_value);
