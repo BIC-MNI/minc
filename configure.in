@@ -4,9 +4,9 @@ AC_INIT
 AC_CONFIG_SRCDIR([libsrc/minc.h])
 AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 1.2)
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.11 $)
+AC_REVISION($Revision: 6.12 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S

@@ -1,4 +1,6 @@
-INCLUDES = -I$(top_srcdir)/libsrc
+INCLUDES = -I$(top_srcdir)/libsrc \
+	-I$(top_srcdir)/volume_io/Include \
+	-I$(top_builddir)/volume_io/Include
 LDADD = ../libvolume_io.la ../libminc.la
 
 script_tests = \

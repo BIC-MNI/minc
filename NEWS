@@ -1,9 +1,11 @@
 	        New in Release 1.2
         	------------------
 
-* Add ability to easily create binary packages.
+* New tools: mincpik, minchistory.
 
-* Added -dimorder and -swap_bytes options to rawtominc
+* Rawtominc has new options -dimorder and -swap_bytes.
+
+* Ability to easily create binary packages; see README.binary_packaging.
 
 
 		New in Release 1.1

@@ -67,12 +67,14 @@ noinst_HEADERS = \
 #
 lib_LTLIBRARIES = libminc.la libvolume_io.la
 
-# Scripts we install.  These depend on /bin/sh or /bin/csh
+# Scripts we install: sh, csh, or perl.
 #
 dist_bin_SCRIPTS = \
 	progs/mincdiff/mincdiff \
 	progs/mincedit/mincedit \
 	progs/mincheader/mincheader \
+	progs/minchistory/minchistory \
+	progs/mincpik/mincpik \
 	progs/mincview/mincview
 
 
@@ -114,7 +116,7 @@ EXTRA_DIST = GETTING_STARTED $(m4_files) \
 	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
-	mni_minc.epm.header
+	mni_minc.epm.header README.binary_packaging
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS
@@ -254,8 +256,8 @@ libvolume_io_la_SOURCES = \
 	volume_io/Volumes/volume_cache.c \
 	volume_io/Volumes/volumes.c
 
-# MAN pages go here.  
-# Using "dist_" should force them to be added the distribution.
+# MAN pages go here.  The "dist_" prefix signals that they files
+# are to be included in source distribution.
 #
 dist_man1_MANS = \
 	progs/coordinates/voxeltoworld.man1 \
@@ -274,6 +276,7 @@ dist_man1_MANS = \
 	progs/mincmakescalar/mincmakescalar.man1 \
 	progs/mincmakevector/mincmakevector.man1 \
 	progs/mincmath/mincmath.man1 \
+	progs/mincpik/mincpik.man1 \
 	progs/mincresample/mincresample.man1 \
 	progs/mincreshape/mincreshape.man1 \
 	progs/mincstats/mincstats.man1 \

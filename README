@@ -15,8 +15,8 @@ to users.
 Here's a list of some of the tools:
 
  * rawtominc, minctoraw, mincextract - format conversion
- * mincheader, mincedit, mincdiff, minc_modify_header, mincinfo -
-      header manipulation
+ * mincheader, mincdiff, mincinfo, minchistory - file information
+ * mincedit, minc_modify_header - header manipulation
  * mincresample - arbitrary volume resampling
  * mincreshape - extraction of volume sub-cubes, image flipping,
       dimension re-ordering, type conversion
@@ -31,6 +31,8 @@ Here's a list of some of the tools:
  * worldtovoxel, voxeltoworld - coordinate conversion
  * xfmconcat, xfminvert - generalized transformation utilities
  * mincview - simple image display using xv or ImageMagick
+ * mincpik - generate picture from slice through volume
+
 
 Additional tools are available from the Montreal Neurological
 Institute (MNI). These include register, a program designed for
@@ -44,12 +46,9 @@ registration, both linear and nonlinear.
 
 GETTING MINC
 ------------
-The minc package is available through anonymous ftp from
-ftp.bic.mni.mcgill.ca in directory pub/minc:
+The minc package is available from
 
-   ftp://ftp.bic.mni.mcgill.ca/pub/minc/
-
-Pre-compiled versions exist in the compiled subdirectory.
+    http://www.bic.mni.mcgill.ca/software/distribution/
 
 Minc requires that the NetCDF package be built and installed first. It
 is available through anonymous ftp from the Unidata Program centre at

@@ -1,6 +1,27 @@
-2003-10-31  Bert Vincent <bert@bic.mni.mcgill.ca>
-	* Added -dimorder and -swap_bytes options to rawtominc
+2003-11-13  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* progs/minchistory:
+	* progs/mincpik: New.  Perl scripts moved here from Andrew Janke's
+	"minc_dev" tool set.
 	
+	* Makefile.am (dist_bin_SCRIPTS): Install minchistory and mincpik.
+
+	* README: Mention minchistory, mincpik.  Correct distribution
+	URL.
+
+	* mni_minc.epm.header: Update license, version.
+
+	* Makefile.am (EXTRA_DIST): Distribute README.binary_packaging.
+
+	* configure.in: Run autoupdate; change AM_CONFIG_HEADER to
+	AC_CONFIG_HEADERS.
+
+	* testdir/Makefile.am (INCLUDES): Add volume_io/Include.
+
+2003-10-31  Bert Vincent <bert@bic.mni.mcgill.ca>
+
+	* progs/rawtominc/rawtominc.c: Add options -dimorder and -swap_bytes.
+
 2003-06-01  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* testdir/Makefile.am (script_tests): 
