@@ -29,6 +29,7 @@ public  void ludcmp(
 			a[i][j]=sum;
 		}
 		big=0.0;
+                imax = j;
 		for (i=j;i<=n;i++) {
 			sum=a[i][j];
 			for (k=1;k<j;k++)

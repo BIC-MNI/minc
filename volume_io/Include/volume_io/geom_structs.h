@@ -64,9 +64,9 @@ typedef  unsigned  long    Colour;
                          COLOUR_0_1_TO_256(b) )
 
 #define  SCALE_COLOUR( col, factor )                  \
-          make_Colour( get_Colour_r(col) * factor,    \
-                       get_Colour_g(col) * factor,    \
-                       get_Colour_b(col) * factor )
+          make_Colour( get_Colour_r(col) * (factor),    \
+                       get_Colour_g(col) * (factor),    \
+                       get_Colour_b(col) * (factor) )
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \
@@ -80,7 +80,7 @@ typedef  unsigned  long    Colour;
             r = r1 * r2; \
             g = g1 * g2; \
             b = b1 * b2; \
-            (prod) = make_Colour( r, g, b ); \
+            (prod) = make_Colour_0_1( r, g, b ); \
         }
 
 #define  ADD_COLOURS( sum, c1, c2 )                  \
@@ -95,6 +95,9 @@ typedef  unsigned  long    Colour;
             r = r1 + r2; \
             g = g1 + g2; \
             b = b1 + b2; \
+            if( r > 255 ) r = 255; \
+            if( g > 255 ) g = 255; \
+            if( b > 255 ) b = 255; \
             (sum) = make_Colour( r, g, b ); \
         }
 

@@ -12,6 +12,10 @@ typedef  enum  { MNC_FORMAT, FREE_FORMAT }       Volume_file_types;
 
 typedef  enum  { UNSIGNED_BYTE, UNSIGNED_SHORT } Data_types;
 
+#define  LABEL_BIT                 128
+#define  ACTIVE_BIT                64
+#define  LOWER_AUXILIARY_BITS      63
+
 /* -------------------------- volume struct --------------------- */
 
 typedef  struct
@@ -33,6 +37,8 @@ typedef  struct
     Transform       voxel_to_world_transform;    /* inverse of above */
 
     int             axis_index_from_file[N_DIMENSIONS];
+
+    unsigned char   ***labels;                   /* labelling, activity, etc. */
 } volume_struct;
 
 #define  ASSIGN_VOLUME_DATA( volume, x, y, z, val )                           \

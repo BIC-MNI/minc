@@ -271,9 +271,9 @@ public  Status  initialize_free_format_input(
             for_less( i, 0, n_voxels_in_slice )
             {
                 value = (int) volume_input->short_slice_buffer[i];
-                if( i == 0 || value < min_value )
+                if( slice == 0 && i == 0 || value < min_value )
                     min_value = value;
-                if( i == 0 || value > max_value )
+                if( slice == 0 && i == 0 || value > max_value )
                     max_value = value;
             }
 
@@ -286,12 +286,12 @@ public  Status  initialize_free_format_input(
         }
         else
         {
-            volume->value_scale = (Real) (NUM_BYTE_VALUES - 1) /
-                                  (Real) (max_value - min_value);
+            volume->value_scale = (Real) (max_value - min_value) /
+                                  (Real) (NUM_BYTE_VALUES - 1);
             volume->value_translation = (Real) min_value;
         }
 
-        if( status == OK )
+        if( status == OK && !volume_input->one_file_per_slice )
             status = close_file( volume_input->volume_file );
     }
     else

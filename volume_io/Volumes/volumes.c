@@ -70,6 +70,16 @@ public  void  delete_volume(
     free_auxiliary_data( volume );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Initializes a volume to empty.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  initialize_volume(
     volume_struct  *volume )
 {
@@ -80,6 +90,18 @@ public  void  initialize_volume(
     volume->sizes[Z] = 0;
     volume->labels = (unsigned char ***) NULL;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_size
+@INPUT      : volume
+@OUTPUT     : x_size
+              y_size
+              z_size
+@RETURNS    : 
+@DESCRIPTION: Passes back the number of voxels in the 3 dimensions of volume.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  get_volume_size(
     volume_struct   *volume,
@@ -92,6 +114,18 @@ public  void  get_volume_size(
     *z_size = volume->sizes[Z];
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_slice_thickness
+@INPUT      : volume
+@OUTPUT     : x_thickness
+              y_thickness
+              z_thickness
+@RETURNS    : 
+@DESCRIPTION: Passes back slice thicknesses of the volume
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  get_volume_slice_thickness(
     volume_struct   *volume,
     Real            *x_thickness,
@@ -102,6 +136,23 @@ public  void  get_volume_slice_thickness(
     *y_thickness = volume->thickness[Y];
     *z_thickness = volume->thickness[Z];
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_voxel_to_world
+@INPUT      : volume
+              x_voxel
+              y_voxel
+              z_voxel
+@OUTPUT     : x_world
+              y_world
+              z_world
+@RETURNS    : 
+@DESCRIPTION: Converts the given voxel position to a world coordinate.
+              Note that centre of first voxel corresponds to (0.0,0.0,0.0) in
+              voxel coordinates.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  convert_voxel_to_world(
     volume_struct   *volume,
@@ -124,26 +175,58 @@ public  void  convert_voxel_to_world(
     *z_world = Point_z(world);
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_voxel_vector_to_world
+@INPUT      : volume
+              x_voxel
+              y_voxel
+              z_voxel
+@OUTPUT     : x_world
+              y_world
+              z_world
+@RETURNS    : 
+@DESCRIPTION: Converts a voxel vector to world coordinates.  Assumes the
+              vector is a normal vector, so transforms by transpose of inverse
+              transform.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  convert_voxel_vector_to_world(
     volume_struct   *volume,
-    Real            xv_voxel,
-    Real            yv_voxel,
-    Real            zv_voxel,
-    Real            *xv_world,
-    Real            *yv_world,
-    Real            *zv_world )
+    Real            x_voxel,
+    Real            y_voxel,
+    Real            z_voxel,
+    Real            *x_world,
+    Real            *y_world,
+    Real            *z_world )
 {
     /* transform vector by transpose of inverse transformation */
-    *xv_world = Transform_elem(volume->world_to_voxel_transform,0,0) * xv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,1,0) * yv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,2,0) * zv_voxel;
-    *yv_world = Transform_elem(volume->world_to_voxel_transform,0,1) * xv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,1,1) * yv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,2,1) * zv_voxel;
-    *zv_world = Transform_elem(volume->world_to_voxel_transform,0,2) * xv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,1,2) * yv_voxel+
-                Transform_elem(volume->world_to_voxel_transform,2,2) * zv_voxel;
+    *x_world = Transform_elem(volume->world_to_voxel_transform,0,0) * x_voxel+
+               Transform_elem(volume->world_to_voxel_transform,1,0) * y_voxel+
+               Transform_elem(volume->world_to_voxel_transform,2,0) * z_voxel;
+    *y_world = Transform_elem(volume->world_to_voxel_transform,0,1) * x_voxel+
+               Transform_elem(volume->world_to_voxel_transform,1,1) * y_voxel+
+               Transform_elem(volume->world_to_voxel_transform,2,1) * z_voxel;
+    *z_world = Transform_elem(volume->world_to_voxel_transform,0,2) * x_voxel+
+               Transform_elem(volume->world_to_voxel_transform,1,2) * y_voxel+
+               Transform_elem(volume->world_to_voxel_transform,2,2) * z_voxel;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_world_to_voxel
+@INPUT      : volume
+              x_world
+              y_world
+              z_world
+@OUTPUT     : x_voxel
+              y_voxel
+              z_voxel
+@RETURNS    : 
+@DESCRIPTION: Converts from world coordinates to voxel coordinates.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  convert_world_to_voxel(
     volume_struct   *volume,
@@ -166,6 +249,19 @@ public  void  convert_world_to_voxel(
     *z_voxel = Point_z(voxel);
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : voxel_is_within_volume
+@INPUT      : volume
+              x
+              y
+              z
+@OUTPUT     : 
+@RETURNS    : TRUE if voxel is within volume.
+@DESCRIPTION: Determines if a voxel position is within the volume.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  voxel_is_within_volume(
     volume_struct   *volume,
     Real            x, 
@@ -180,6 +276,20 @@ public  Boolean  voxel_is_within_volume(
             z < (Real) volume->sizes[Z] - 0.5 );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cube_is_within_volume
+@INPUT      : volume
+              x
+              y
+              z
+@OUTPUT     : 
+@RETURNS    : TRUE if cube within volume
+@DESCRIPTION: Determines if the voxel with integer coordinates is within the
+              volume.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  cube_is_within_volume(
     volume_struct   *volume,
     int             x,
@@ -192,6 +302,22 @@ public  Boolean  cube_is_within_volume(
 
     return( x >= 0 && x < nx-1 && y >= 0 && y < ny-1 && z >= 0 && z < nz-1 );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : voxel_contains_value
+@INPUT      : volume
+              x
+              y
+              z
+              target_value
+@OUTPUT     : 
+@RETURNS    : TRUE if voxel contains this value
+@DESCRIPTION: Determines if the voxel contains this value, by assuming
+              trilinear interpolation between the 8 corner values of this
+              voxel.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Boolean  voxel_contains_value(
     volume_struct   *volume,
@@ -236,6 +362,18 @@ public  Boolean  voxel_contains_value(
     return( FALSE );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_auxiliary_data
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Allocates memory for the auxiliary data, which is used for
+              setting voxels active and inactive, and in general,
+              labeling voxels with an integer value between 0 and 255.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  alloc_auxiliary_data(
     volume_struct  *volume )
 {
@@ -244,12 +382,33 @@ public  void  alloc_auxiliary_data(
     set_all_volume_auxiliary_data( volume, ACTIVE_BIT );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_auxiliary_data
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the memory associated with the auxiliary volume data.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  free_auxiliary_data(
     volume_struct  *volume )
 {
     if( volume->labels != (unsigned char ***) NULL )
         FREE3D( volume->labels );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_all_volume_auxiliary_data
+@INPUT      : volume
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the auxiliary value of all voxels to the value specified.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_all_volume_auxiliary_data(
     volume_struct  *volume,
@@ -270,6 +429,19 @@ public  void  set_all_volume_auxiliary_data(
         ++label_ptr;
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_all_volume_auxiliary_data_bit
+@INPUT      : volume
+              bit
+              value - ON or OFF
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets just the given bit of all the voxels' auxiliary data to the
+              given value.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_all_volume_auxiliary_data_bit(
     volume_struct  *volume,
@@ -296,6 +468,17 @@ public  void  set_all_volume_auxiliary_data_bit(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_all_voxel_activity_flags
+@INPUT      : volume
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets all voxels active or inactive.  (TRUE = active).
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_all_voxel_activity_flags(
     volume_struct  *volume,
     Boolean        value )
@@ -303,12 +486,37 @@ public  void  set_all_voxel_activity_flags(
     set_all_volume_auxiliary_data_bit( volume, ACTIVE_BIT, value );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_all_voxel_label_flags
+@INPUT      : volume
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the label bit of all auxiliary data to the given value.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_all_voxel_label_flags(
     volume_struct  *volume,
     Boolean        value )
 {
     set_all_volume_auxiliary_data_bit( volume, LABEL_BIT, value );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_auxiliary_data
+@INPUT      : volume
+              x
+              y
+              z
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the auxiliary data of the given voxel to the value.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_volume_auxiliary_data(
     volume_struct   *volume,
@@ -319,6 +527,20 @@ public  void  set_volume_auxiliary_data(
 {
     volume->labels[x][y][z] = (unsigned char) value;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_voxel_activity_flag
+@INPUT      : volume
+              x
+              y
+              z
+@OUTPUT     : 
+@RETURNS    : TRUE if voxel is active
+@DESCRIPTION: Returns the active bit of the voxel, or if no auxiliary data,
+              then all voxels are active.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Boolean  get_voxel_activity_flag(
     volume_struct   *volume,
@@ -331,6 +553,20 @@ public  Boolean  get_voxel_activity_flag(
     else
         return( (volume->labels[x][y][z] & ACTIVE_BIT) != 0 );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_voxel_activity_flag
+@INPUT      : volume
+              x
+              y
+              z
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the activity flag for the given voxel.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_voxel_activity_flag(
     volume_struct   *volume,
@@ -348,14 +584,41 @@ public  void  set_voxel_activity_flag(
         *ptr ^= ACTIVE_BIT;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_voxel_label_flag
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : TRUE if voxel labeled
+@DESCRIPTION: Returns the label bit of the voxel's auxiliary data.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  get_voxel_label_flag(
     volume_struct   *volume,
     int             x,
     int             y,
     int             z )
 {
-    return( (volume->labels[x][y][z] & LABEL_BIT) != 0 );
+    if( volume->labels == (unsigned char ***) NULL )
+        return( FALSE );
+    else
+        return( (volume->labels[x][y][z] & LABEL_BIT) != 0 );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_voxel_label_flag
+@INPUT      : volume
+              x
+              y
+              z
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the label flag for the given voxel.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_voxel_label_flag(
     volume_struct   *volume,
@@ -372,6 +635,20 @@ public  void  set_voxel_label_flag(
     else if( (*ptr & LABEL_BIT) != 0 )
         *ptr ^= LABEL_BIT;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : io_volume_auxiliary_bit
+@INPUT      : file
+              io_type  - READ_FILE or WRITE_FILE
+              volume
+              bit
+@OUTPUT     : 
+@RETURNS    : OK if successful
+@DESCRIPTION: Reads or writes the given bit of the auxiliary data for all
+              voxels.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  io_volume_auxiliary_bit(
     FILE           *file,
@@ -438,6 +715,28 @@ public  Status  io_volume_auxiliary_bit(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : evaluate_volume_in_world
+@INPUT      : volume
+              x
+              y
+              z
+              activity_if_mixed
+@OUTPUT     : value
+              deriv_x
+              deriv_y
+              deriv_z
+@RETURNS    : TRUE if point is within active voxel.
+@DESCRIPTION: Takes a world space position and evaluates the value within
+              the volume by trilinear interpolation.  If the activities of the
+              8 voxels containing this point agree, then that activity is
+              returned, if not, then activity_if_mixed is returned.  If
+              deriv_x is not a null pointer, then the 3 derivatives are passed
+              back.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean   evaluate_volume_in_world(
     volume_struct  *volume,
     Real           x,
@@ -464,6 +763,28 @@ public  Boolean   evaluate_volume_in_world(
 
     return( voxel_is_active );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : evaluate_volume
+@INPUT      : volume
+              x
+              y
+              z
+              activity_if_mixed
+@OUTPUT     : value
+              deriv_x
+              deriv_y
+              deriv_z
+@RETURNS    : TRUE if point is within active voxel.
+@DESCRIPTION: Takes a voxel space position and evaluates the value within
+              the volume by trilinear interpolation.  If the activities of the
+              8 voxels containing this point agree, then that activity is
+              returned, if not, then activity_if_mixed is returned.  If
+              deriv_x is not a null pointer, then the 3 derivatives are passed
+              back.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Boolean   evaluate_volume(
     volume_struct  *volume,
