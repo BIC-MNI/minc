@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.1  2005-02-17 16:38:09  bert
+ * Revision 1.2  2005-03-02 18:23:32  bert
+ * Added mosaic sequence and bitwise options
+ *
+ * Revision 1.1  2005/02/17 16:38:09  bert
  * Initial checkin, revised DICOM to MINC converter
  *
  * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -48,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.1 2005-02-17 16:38:09 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.2 2005-03-02 18:23:32 bert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -95,6 +98,20 @@ ArgvInfo argTable[] = {
      "Combine all echoes into a single file."},
     {"-splitdynamic", ARGV_CONSTANT, (char *) TRUE, (char *)&G.splitDynScan,
      "Split dynamic scans into a separate files."},
+    {"-opts", ARGV_INT, (char *) 1, (char *) &G.opts, 
+     "Set debugging options"},
+
+    {"-descending", 
+     ARGV_CONSTANT, 
+     (char *) MOSAIC_SEQ_DESCENDING, 
+     (char *) &G.mosaic_seq,
+     "Mosaic sequence is in descending slice order."},
+
+    {"-interleaved", 
+     ARGV_CONSTANT, 
+     (char *) MOSAIC_SEQ_INTERLEAVED, 
+     (char *) &G.mosaic_seq,
+     "Mosaic sequence is in interleaved slice order."},
     {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -110,6 +127,7 @@ main(int argc, char *argv[])
     string_t message;           /* Generic message */
     int num_files_ok;           /* Actual number of DICOM/IMA files */
 
+    G.mosaic_seq = MOSAIC_SEQ_ASCENDING; /* Assume ascending by default. */
     G.splitDynScan = FALSE;     /* Don't split dynamic scans by default */
     G.splitEcho = TRUE;         /* Do split by echo by default */
 

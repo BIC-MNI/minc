@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.2  2005-02-23 18:28:11  bert
+ * Revision 1.3  2005-03-02 18:23:33  bert
+ * Added mosaic sequence and bitwise options
+ *
+ * Revision 1.2  2005/02/23 18:28:11  bert
  * Minor updates
  *
  * Revision 1.1  2005/02/17 16:38:09  bert
@@ -145,6 +148,13 @@ typedef struct {
 #include "siemens_to_dicom.h"
 #include "string_to_filename.h"
 
+typedef enum {
+    MOSAIC_SEQ_UNKNOWN,
+    MOSAIC_SEQ_INTERLEAVED,
+    MOSAIC_SEQ_ASCENDING,
+    MOSAIC_SEQ_DESCENDING
+} mosaic_seq_t;
+
 /* Globals */
 struct globals {
     char *minc_history;         /* Global for minc history */
@@ -159,7 +169,12 @@ struct globals {
     short clobber;
     string_t Name;
     string_t command_line;
+    unsigned long opts;
+    mosaic_seq_t mosaic_seq;
 };
+
+/* Values for options flags */
+#define OPTS_NO_MOSAIC 0x00000001
 
 extern struct globals G;
 
