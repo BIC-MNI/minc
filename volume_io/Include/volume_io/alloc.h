@@ -31,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.9 1995-07-31 13:44:36 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.10 1995-08-02 19:21:44 david Exp $";
 #endif
 
 #include  <basic.h>
@@ -48,98 +48,39 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 
 #define  ALLOC2D_private( ptr, size, n1, n2 )                                 \
          {                                                                    \
-             long  _i2_;                                                      \
-                                                                              \
              ALLOC_private( ptr, sizeof(*(ptr)), n1 );                        \
              ALLOC_private( (ptr)[0], size, (n1) * (n2) );                    \
                                                                               \
-             for_less( _i2_, 1, n1 )                                          \
-                 ((ptr)[_i2_]) = (void *) ((long) ((ptr)[_i2_-1]) +           \
-                                                (n2) * (size));               \
+             set_up_array_pointers_2D( (void **) (ptr), n1, n2, size );       \
          }
 
 #define  ALLOC3D_private( ptr, size, n1, n2, n3 )                             \
          {                                                                    \
-             long  _i3_, _j3_;                                                \
-                                                                              \
              ALLOC2D_private( ptr, sizeof(**(ptr)), n1, n2 );                 \
                                                                               \
              ALLOC_private( (ptr)[0][0], size, (n1) * (n2) * (n3) );          \
                                                                               \
-             for_less( _i3_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i3_ > 0 )                                               \
-                      (ptr)[_i3_][0] = (void *) ((long) ((ptr)[_i3_-1][0]) +  \
-                                            (n2) * (n3) * (size));            \
-                 for_less( _j3_, 1, n2 )                                      \
-                      (ptr)[_i3_][_j3_] = (void *) ((long)                    \
-                               ((ptr)[_i3_][_j3_-1]) + (n3) * (size));        \
-             }                                                                \
+             set_up_array_pointers_2D( (void **) *(ptr), n1 * n2, n3, size  );\
          }
 
 #define  ALLOC4D_private( ptr, size, n1, n2, n3, n4 )                         \
          {                                                                    \
-             long  _i4_, _j4_, _k4_;                                          \
-                                                                              \
              ALLOC3D_private( ptr, sizeof(***(ptr)), n1, n2, n3 );            \
                                                                               \
              ALLOC_private( (ptr)[0][0][0], size, (n1) * (n2) * (n3) * (n4) );\
                                                                               \
-             for_less( _i4_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i4_ > 0 )                                               \
-                     (ptr)[_i4_][0][0] = (void *) ((long) ((ptr)[_i4_-1][0][0])\
-                                            + (n2)*(n3)*(n4)*(size));         \
-                 for_less( _j4_, 0, n2 )                                      \
-                 {                                                            \
-                     if( _j4_ > 0 )                                           \
-                         (ptr)[_i4_][_j4_][0] =                               \
-                                   (void *) ((long)((ptr)[_i4_][_j4_-1][0]) + \
-                                                (n3)*(n4) * (size));          \
-                     for_less( _k4_, 1, n3 )                                  \
-                     {                                                        \
-                         (ptr)[_i4_][_j4_][_k4_] = (void *) (                 \
-                                   (long) ((ptr)[_i4_][_j4_][_k4_-1]) +       \
-                                                   (n4) * (size));            \
-                     }                                                        \
-                 }                                                            \
-             }                                                                \
+             set_up_array_pointers_2D( (void **) **(ptr), n1 * n2 * n3, n4,   \
+                                       size );                                \
          }
 
 #define  ALLOC5D_private( ptr, size, n1, n2, n3, n4, n5 )                     \
          {                                                                    \
-             long  _i5_, _j5_, _k5_, _l5_;                                    \
-                                                                              \
              ALLOC4D_private( ptr, sizeof(****(ptr)), n1, n2, n3, n4 );       \
                                                                               \
              ALLOC_private( (ptr)[0][0][0][0], size, (n1) * (n2) * (n3) * (n4) * (n5) );    \
                                                                               \
-             for_less( _i5_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i5_ > 0 )                                               \
-                     (ptr)[_i5_][0][0][0] = (void *)                          \
-                            ((long) ((ptr)[_i5_-1][0][0][0]) +                \
-                                            (n2)*(n3)*(n4)*(n5)*(size));      \
-                 for_less( _j5_, 0, n2 )                                      \
-                 {                                                            \
-                     if( _j5_ > 0 )                                           \
-                         (ptr)[_i5_][_j5_][0][0] = (void *)                   \
-                                       ((long) ((ptr)[_i5_][_j5_-1][0][0]) +  \
-                                                    (n3)*(n4)*(n5)*(size));   \
-                     for_less( _k5_, 0, n3 )                                  \
-                     {                                                        \
-                         if( _k5_ > 0 )                                       \
-                             (ptr)[_i5_][_j5_][_k5_][0] = (void *) ((long)    \
-                                 ((ptr)[_i5_][_j5_][_k5_-1][0]) +             \
-                                                    (n4)*(n5)*(size));        \
-                                                                              \
-                         for_less( _l5_, 1, (n4) )                            \
-                             (ptr)[_i5_][_j5_][_k5_][_l5_] = (void *)(        \
-                             (long) ((ptr)[_i5_][_j5_][_k5_][_l5_-1]) +       \
-                                                     (n5) * (size));          \
-                     }                                                        \
-                 }                                                            \
-             }                                                                \
+             set_up_array_pointers_2D( (void **) ***(ptr), n1 * n2 * n3 * n4, \
+                                       n5, size );                            \
          }
 
 /* ----------------------------- MNI Header -----------------------------------

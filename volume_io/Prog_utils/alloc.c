@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.14 1995-07-31 13:44:39 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.16 1995-08-02 19:22:04 david Exp $";
 #endif
 
 private    void       record_alloc( size_t );
@@ -220,4 +220,16 @@ private  void  record_free( void )
         (void) fprintf( file, "FREE\n" );
         (void) fflush( file );
     }
+}
+
+public  void  set_up_array_pointers_2D(
+    void      **ptr,
+    long      n1,
+    long      n2,
+    size_t    type_size )
+{
+    int   i;
+
+    for_less( i, 1, n1 )
+        ptr[i] = (void *) ((long) ptr[i-1] + n2 * type_size);
 }
