@@ -12,7 +12,7 @@
 \documentstyle{article}
 \title{MINC Reference Manual}
 \author{Peter Neelin}
-\date{June 15, 1993}
+\date{November 3, 1993}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -588,6 +588,24 @@ minc.h.
 
 \begin{itemize}
 
+\item \code{miopen} : Like \code{ncopen}, but will temporarily
+uncompress files (compress, pack, gzip, zip) opened with mode 
+\code{NC\_NOWRITE}.
+\begin{verbatim}
+public int miopen(char *path, int mode);
+\end{verbatim}
+
+\item \code{micreate} : Like \code{nccreate}. May be enhanced in the future.
+\begin{verbatim}
+public int micreate(char *path, int cmode);
+\end{verbatim}
+
+\item \code{miclose} : Like \code{ncclose}, but finishes up for \code{miopen}
+and \code{micreate}.
+\begin{verbatim}
+public int miclose(int cdfid);
+\end{verbatim}
+
 \item \code{miattget} : Like \code{ncattget}, but the caller specifies
 the desired numeric type and maximum number of values to get. Type is
 specified with \code{datatype} (the sign is the default for the type:
@@ -608,9 +626,10 @@ public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
 \end{verbatim}
 
 \item \code{miattgetstr} : Gets a string value from an attribute.
-\code{maxlen} gives the maximum number of characters to be returned
-(including the terminating \verb+'\0'+). The string is written to the array
-specified by value and a pointer to the string is returned.
+  \code{maxlen} gives the maximum number of characters to be returned
+  (including the terminating \verb+'\0'+). The string is written to
+  the array specified by value and a pointer to the string is
+  returned.
 \begin{verbatim}
 public char *miattgetstr(int cdfid, int varid, char *name, 
                          int maxlen, char *value);
