@@ -16,37 +16,8 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.21 1996-05-17 19:36:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.22 1998-04-27 14:59:30 david Exp $";
 #endif
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_up_array_pointers_2D
-@INPUT      : ptr
-              n1
-              n2
-              type_size
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Given a pointer allocated for 2D, creates the 1st level
-              pointers.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  set_up_array_pointers_2D(
-    void      **ptr,
-    size_t    n1,
-    size_t    n2,
-    size_t    type_size )
-{
-    size_t   i;
-
-    for_less( i, 1, n1 )
-        ptr[i] = (void *) ((long) ptr[i-1] + (long) n2* (long) type_size);
-}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : private_alloc_memory
@@ -79,145 +50,112 @@ private  Status  private_alloc_memory(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_alloc_memory_2d
-@INPUT      : n1
-              n2
+@NAME       : realloc_memory
+@INPUT      : ptr
+              n_elements
               type_size
-@OUTPUT     : ptr
+              filename
+              line_number
+@OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Allocates the specified number of 2d elements.
+@DESCRIPTION: Reallocates the ptr.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : Aug.  2, 1995        David MacDonald
+@CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_2d(
-    void         ***ptr,
-    size_t       n1,
-    size_t       n2,
-    size_t       type_size )
+public  void  realloc_memory(
+    void      **ptr,
+    size_t    n_elements,
+    size_t    type_size
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory( (void **) ptr, n1 * sizeof(**ptr) ) != OK ||
-        private_alloc_memory( *ptr, n1 * n2 * type_size ) != OK )
+#ifndef  NO_DEBUG_ALLOC
+    void   *old_ptr = *ptr;
+#endif
+
+    if( n_elements != 0 )
     {
-        return( ERROR );
+        *ptr = (void *) realloc( *ptr, n_elements * type_size );
+
+        if( *ptr == NULL )
+        {
+            print_error( "Error reallocing %d elements of size %d.\n",
+                         n_elements, type_size );
+            PRINT_ALLOC_SOURCE_LINE
+            abort_if_allowed();
+        }
+
+#ifndef  NO_DEBUG_ALLOC
+        change_ptr_alloc_check( old_ptr, *ptr, n_elements * type_size,
+                                filename, line_number );
+#endif
     }
-
-    set_up_array_pointers_2D( *ptr, n1, n2, type_size );
-
-    return( OK );
+    else
+    {
+        print_error("Error: tried to realloc invalid number of elements, %d.\n",
+                     n_elements );
+        PRINT_ALLOC_SOURCE_LINE
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_alloc_memory_3d
-@INPUT      : n1
-              n2
-              n3
-              type_size
-@OUTPUT     : ptr
+@NAME       : private_free_memory_1d
+@INPUT      : ptr
+@OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Allocates the specified number of 3d elements.
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : Aug.  2, 1995        David MacDonald
+@CREATED    : Aug.  2, 1995    David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_3d(
-    void         ****ptr,
-    size_t       n1,
-    size_t       n2,
-    size_t       n3,
-    size_t       type_size )
+private  void  private_free_memory_1d(
+    void   **ptr)
 {
-    if( private_alloc_memory_2d( (void ***) ptr, n1, n2, sizeof(***ptr) )!= OK||
-        private_alloc_memory( **ptr, n1 * n2 * n3 * type_size ) != OK)
+    if( *ptr != NULL )
     {
-        return( ERROR );
+        free( *ptr );
+
+        *ptr = NULL;
     }
-
-    set_up_array_pointers_2D( **ptr, n1 * n2, n3, type_size );
-
-    return( OK );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_alloc_memory_4d
-@INPUT      : n1
+@NAME       : set_up_array_pointers
+@INPUT      : ptr
+              n1
               n2
-              n3
-              n4
               type_size
-@OUTPUT     : ptr
+@OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Allocates the specified number of 4d elements.
+@DESCRIPTION: Given a pointer allocated for 2D, creates the 1st level
+              pointers.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : Aug.  2, 1995        David MacDonald
-@MODIFIED   : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_4d(
-    void         *****ptr,
-    size_t       n1,
-    size_t       n2,
-    size_t       n3,
-    size_t       n4,
-    size_t       type_size )
+private  void  set_up_array_pointers(
+    void      **ptr,
+    size_t    n1,
+    size_t    n2,
+    size_t    type_size )
 {
-    if( private_alloc_memory_3d( (void ****) ptr, n1, n2, n3,
-                                 sizeof(****ptr) )!= OK ||
-        private_alloc_memory( ***ptr, n1 * n2 * n3 * n4 * type_size ) != OK )
-    {
-        return( ERROR );
-    }
+    void     *start_of_data;
+    size_t   i;
 
-    set_up_array_pointers_2D( ***ptr, n1 * n2 * n3, n4, type_size );
-
-    return( OK );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_alloc_memory_5d
-@INPUT      : n1
-              n2
-              n3
-              n4
-              n5
-              type_size
-@OUTPUT     : ptr
-@RETURNS    : 
-@DESCRIPTION: Allocates the specified number of 5d elements.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995        David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  Status  private_alloc_memory_5d(
-    void         ******ptr,
-    size_t       n1,
-    size_t       n2,
-    size_t       n3,
-    size_t       n4,
-    size_t       n5,
-    size_t       type_size )
-{
-    if( private_alloc_memory_4d( (void *****) ptr, n1, n2, n3, n4,
-                                 sizeof(*****ptr) )!= OK ||
-        private_alloc_memory( ****ptr, n1 * n2 * n3 * n4 * n5 * type_size )!=OK)
-    {
-        return( ERROR );
-    }
-
-    set_up_array_pointers_2D( ****ptr, n1 * n2 * n3 * n4, n5, type_size );
-
-    return( OK );
+    start_of_data = &ptr[n1];
+    for_less( i, 0, n1 )
+        ptr[i] = (void *) ((long) start_of_data +
+                           (long) i * (long) n2 * (long) type_size);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -310,7 +248,8 @@ public  void  *alloc_memory_1d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  *alloc_memory_2d(
@@ -321,7 +260,9 @@ public  void  *alloc_memory_2d(
 {
     void   **ptr;
 
-    if( private_alloc_memory_2d( &ptr, n1, n2, type_size ) != OK )
+    if( private_alloc_memory( (void **) &ptr,
+                              n1 * sizeof(void *) +
+                              n1 *  n2 * type_size ) != OK )
     {
         print_error( "Cannot alloc 2D array of %d by %d elements of %d bytes.\n",
                      n1, n2, type_size );
@@ -331,12 +272,12 @@ public  void  *alloc_memory_2d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( *ptr, n1 * n2 * type_size,
+        record_ptr_alloc_check( ptr, n1 * sizeof(void *) + n1 * n2 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    set_up_array_pointers( ptr, n1, n2, type_size );
 
     return( (void *) ptr );
 }
@@ -356,7 +297,8 @@ public  void  *alloc_memory_2d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  *alloc_memory_3d(
@@ -368,7 +310,10 @@ public  void  *alloc_memory_3d(
 {
     void         ***ptr;
 
-    if( private_alloc_memory_3d( &ptr, n1, n2, n3, type_size ) != OK )
+    if( private_alloc_memory( (void **) &ptr,
+                              n1 *           sizeof(void **) +
+                              n1 * n2 *      sizeof(void *) +
+                              n1 * n2 * n3 * type_size ) != OK )
     {
         print_error( "Cannot alloc 3D array of %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, type_size );
@@ -378,14 +323,16 @@ public  void  *alloc_memory_3d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * type_size,
+        record_ptr_alloc_check( ptr,
+                                n1 * sizeof(void **) +
+                                n1 * n2 * sizeof(void *) +
+                                n1 * n2 * n3 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    set_up_array_pointers( (void **) ptr, n1, n2, sizeof(void *) );
+    set_up_array_pointers( ptr[0], n1 * n2, n3, type_size );
 
     return( (void *) ptr );
 }
@@ -406,7 +353,8 @@ public  void  *alloc_memory_3d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  *alloc_memory_4d(
@@ -419,7 +367,11 @@ public  void  *alloc_memory_4d(
 {
     void         ****ptr;
 
-    if( private_alloc_memory_4d( &ptr, n1, n2, n3, n4, type_size ) != OK )
+    if( private_alloc_memory( (void **) &ptr,
+                              n1 * sizeof(void ***) +
+                              n1 * n2 * sizeof(void **) +
+                              n1 * n2 * n3 * sizeof( void * ) +
+                              n1 * n2 * n3 * n4 * type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, type_size );
@@ -429,16 +381,18 @@ public  void  *alloc_memory_4d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * sizeof(***ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * n4 * type_size,
+        record_ptr_alloc_check( ptr,
+                                n1 * sizeof(void ***) +
+                                n1 * n2 * sizeof(void **) +
+                                n1 * n2 * n3 * sizeof( void * ) +
+                                n1 * n2 * n3 * n4 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    set_up_array_pointers( (void **) ptr, n1, n2, sizeof(void **) );
+    set_up_array_pointers( (void **) (ptr[0]), n1 * n2, n3, sizeof(void *) );
+    set_up_array_pointers( ptr[0][0], n1 * n2 * n3, n4, type_size );
 
     return( (void *) ptr );
 }
@@ -460,7 +414,8 @@ public  void  *alloc_memory_4d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  *alloc_memory_5d(
@@ -474,7 +429,12 @@ public  void  *alloc_memory_5d(
 {
     void         *****ptr;
 
-    if( private_alloc_memory_5d( &ptr, n1, n2, n3, n4, n5, type_size ) != OK )
+    if( private_alloc_memory( (void **) &ptr,
+                              n1 * sizeof(void ****) +
+                              n1 * n2 * sizeof(void ***) +
+                              n1 * n2 * n3 * sizeof( void ** ) +
+                              n1 * n2 * n3 * n4 * sizeof( void * ) +
+                              n1 * n2 * n3 * n4 * n5 * type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, n5, type_size );
@@ -484,176 +444,23 @@ public  void  *alloc_memory_5d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * sizeof(***ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * n4 * sizeof(****ptr),
-                                filename, line_number );
-        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * n5 * type_size,
+        record_ptr_alloc_check( ptr,
+                                n1 * sizeof(void ****) +
+                                n1 * n2 * sizeof(void ***) +
+                                n1 * n2 * n3 * sizeof( void ** ) +
+                                n1 * n2 * n3 * n4 * sizeof( void * ) +
+                                n1 * n2 * n3 * n4 * n5 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    set_up_array_pointers( (void **) ptr, n1, n2, sizeof(void ***) );
+    set_up_array_pointers( (void **) (ptr[0]), n1 * n2, n3, sizeof(void **) );
+    set_up_array_pointers( (void **) (ptr[0][0]), n1 * n2 * n3, n4,
+                                                  sizeof( void * ) );
+    set_up_array_pointers( ptr[0][0][0], n1 * n2 * n3 * n4, n5, type_size );
 
     return( (void *) ptr );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : realloc_memory
-@INPUT      : ptr
-              n_elements
-              type_size
-              filename
-              line_number
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Reallocates the ptr.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  realloc_memory(
-    void      **ptr,
-    size_t    n_elements,
-    size_t    type_size
-    _ALLOC_SOURCE_LINE_ARG_DEF )
-{
-#ifndef  NO_DEBUG_ALLOC
-    void   *old_ptr = *ptr;
-#endif
-
-    if( n_elements != 0 )
-    {
-        *ptr = (void *) realloc( *ptr, n_elements * type_size );
-
-        if( *ptr == NULL )
-        {
-            print_error( "Error reallocing %d elements of size %d.\n",
-                         n_elements, type_size );
-            PRINT_ALLOC_SOURCE_LINE
-            abort_if_allowed();
-        }
-
-#ifndef  NO_DEBUG_ALLOC
-        change_ptr_alloc_check( old_ptr, *ptr, n_elements * type_size,
-                                filename, line_number );
-#endif
-    }
-    else
-    {
-        print_error("Error: tried to realloc invalid number of elements, %d.\n",
-                     n_elements );
-        PRINT_ALLOC_SOURCE_LINE
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_free_memory_1d
-@INPUT      : ptr
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the array and assigns the pointer to NULL.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  private_free_memory_1d(
-    void   **ptr)
-{
-    if( *ptr != NULL )
-    {
-        free( *ptr );
-
-        *ptr = NULL;
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_free_memory_2d
-@INPUT      : ptr
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the array and assigns the pointer to NULL.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  private_free_memory_2d(
-    void   ***ptr)
-{
-    private_free_memory_1d( *ptr );
-    private_free_memory_1d( (void **) ptr );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_free_memory_3d
-@INPUT      : ptr
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the array and assigns the pointer to NULL.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  private_free_memory_3d(
-    void   ****ptr)
-{
-    private_free_memory_1d( **ptr );
-    private_free_memory_2d( (void ***) ptr );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_free_memory_4d
-@INPUT      : ptr
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the array and assigns the pointer to NULL.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  private_free_memory_4d(
-    void   *****ptr)
-{
-    private_free_memory_1d( ***ptr );
-    private_free_memory_3d( (void ****) ptr );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : private_free_memory_5d
-@INPUT      : ptr
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the array and assigns the pointer to NULL.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Aug.  2, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  private_free_memory_5d(
-    void   ******ptr)
-{
-    private_free_memory_1d( ****ptr );
-    private_free_memory_4d( (void *****) ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -668,7 +475,8 @@ private  void  private_free_memory_5d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  free_memory_1d(
@@ -693,18 +501,15 @@ public  void  free_memory_1d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  free_memory_2d(
     void   ***ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-#ifndef  NO_DEBUG_ALLOC
-    if( unrecord_ptr_alloc_check( **ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
-#endif
-        private_free_memory_2d( ptr );
+    free_memory_1d( (void **) ptr  _ALLOC_SOURCE_LINE_ARGUMENTS );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -719,19 +524,15 @@ public  void  free_memory_2d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  free_memory_3d(
     void   ****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-#ifndef  NO_DEBUG_ALLOC
-    if( unrecord_ptr_alloc_check( ***ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
-#endif
-        private_free_memory_3d( ptr );
+    free_memory_1d( (void **) ptr  _ALLOC_SOURCE_LINE_ARGUMENTS );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -746,20 +547,15 @@ public  void  free_memory_3d(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  free_memory_4d(
     void   *****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-#ifndef  NO_DEBUG_ALLOC
-    if( unrecord_ptr_alloc_check( ****ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) ***ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
-#endif
-        private_free_memory_4d( ptr );
+    free_memory_1d( (void **) ptr  _ALLOC_SOURCE_LINE_ARGUMENTS );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -775,18 +571,13 @@ public  void  free_memory_4d(
 @CALLS      : 
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
+@MODIFIED   : Apr. 27, 1998   D. MacDonald    - now makes only 1 alloc for
+                                                multidim arrays
 ---------------------------------------------------------------------------- */
 
 public  void  free_memory_5d(
     void   ******ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-#ifndef  NO_DEBUG_ALLOC
-    if( unrecord_ptr_alloc_check( *****ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) ****ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) ***ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
-        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
-#endif
-        private_free_memory_5d( ptr );
+    free_memory_1d( (void **) ptr  _ALLOC_SOURCE_LINE_ARGUMENTS );
 }
