@@ -828,7 +828,7 @@ public int miicv_inqlong(int icvid, int icv_property, long *value);
 \end{verbatim}
 
 \item \code{miicv\_inqstr} : Inquire about a string icv property. \code{value}
-points to a the variable in which the value should be returned. The
+points to the character array in which the value should be returned. The
 calling routine must allocate enough space for the return string.
 \begin{verbatim}
 public int miicv_inqstr(int icvid, int icv_property, char *value);
@@ -950,14 +950,10 @@ desired orientation of the z image dimensions. Default =
 \item \code{MI\_ICV\_ADIM\_SIZE} (type \code{long}) : Specifies the
 desired size of the fastest varying image dimension. A value of
 \code{MI\_ICV\_ANYSIZE} means that the actual size of the dimension
-should be used. This value can be specified through a call to
-\code{miicv\_setint} ---  the conversion to \code{int} is done
-automatically. Default = \code{MI\_ICV\_ANYSIZE}.
+should be used. Default = \code{MI\_ICV\_ANYSIZE}.
 
 \item \code{MI\_ICV\_BDIM\_SIZE} (type \code{long}) : Specifies the
-desired size of the second image dimension. This value can be
-specified through a call to \code{miicv\_setint} ---  the conversion
-to \code{int} is done automatically. Default =
+desired size of the second image dimension. Default =
 \code{MI\_ICV\_ANYSIZE}. 
 
 \item \code{MI\_ICV\_KEEP\_ASPECT} (type \code{int}) : If \code{TRUE},
@@ -986,10 +982,7 @@ number of image dimensions used in dimension conversions. Default = 2.
 \item \code{MI\_ICV\_DIM\_SIZE} (type \code{long}) : Specifies the
 desired size of an image dimension. The number of the dimension to be
 changed should be added to the property (adding zero corresponds to
-the fastest varying dimension). This value can be
-specified through a call to \code{miicv\_setint} ---  the conversion
-to \code{int} is done automatically. Default =
-\code{MI\_ICV\_ANYSIZE}. 
+the fastest varying dimension). Default = \code{MI\_ICV\_ANYSIZE}. 
 
 \item \code{MI\_ICV\_DIM\_STEP} (type \code{double}) : Read-only
 property that gives the equivalent of attribute \code{MIstep} for the
