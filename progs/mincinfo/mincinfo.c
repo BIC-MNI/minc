@@ -9,10 +9,13 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 2.1  1995-01-23 13:47:46  neelin
-@MODIFIED   : Changed ncopen, ncclose to miopen, miclose. Added miexpand_file to get
-@MODIFIED   : header only when appropriate.
+@MODIFIED   : Revision 2.2  1995-02-01 15:29:31  neelin
+@MODIFIED   : Fixed call of miexpand_file.
 @MODIFIED   :
+ * Revision 2.1  95/01/23  13:47:46  neelin
+ * Changed ncopen, ncclose to miopen, miclose. Added miexpand_file to get
+ * header only when appropriate.
+ * 
  * Revision 2.0  94/09/28  10:34:04  neelin
  * Release of minc version 0.2
  * 
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.1 1995-01-23 13:47:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.2 1995-02-01 15:29:31 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,7 +187,7 @@ public int main(int argc, char *argv[])
    }
 
    /* Expand file */
-   tempfile = miexpand_file(filename, header_only, &created_tempfile);
+   tempfile = miexpand_file(filename, NULL, header_only, &created_tempfile);
    if (tempfile == NULL) {
       (void) fprintf(stderr, "%s: Error expanding file \"%s\"\n",
                      argv[0], filename);
