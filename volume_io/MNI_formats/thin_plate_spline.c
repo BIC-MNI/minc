@@ -15,7 +15,7 @@
 #include <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.12 1996-05-17 19:36:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.13 1997-03-23 21:11:33 david Exp $";
 #endif
 
 #define   INVERSE_FUNCTION_TOLERANCE     0.01

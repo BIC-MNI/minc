@@ -19,11 +19,24 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.33 1997-02-03 18:17:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.34 1997-03-23 21:11:30 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
 private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : print_system_error
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Prints the most recent system error.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    :        , 1996    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  print_system_error( void )
 {
@@ -207,12 +220,167 @@ public  BOOLEAN  check_clobber_file_default_suffix(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_backup_filename
+@INPUT      : filename
+@OUTPUT     : 
+@RETURNS    : STRING - a backup filename
+@DESCRIPTION: Creates a backup filename that is filename.{date}.bkp
+              If this already exists (not very likely), then it tries
+              appending _1, _2, ...
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Feb.  3, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  STRING  create_backup_filename(
+    STRING   filename )
+{
+    int      i, len, count;
+    STRING   expanded, backup_filename, date;
+
+    expanded = expand_filename( filename );
+    date = get_date();
+
+    len = string_length( expanded ) + string_length( date ) + 100;
+
+    ALLOC( backup_filename, len );
+
+    count = 0;
+    do
+    {
+        if( count == 0 )
+        {
+            (void) sprintf( backup_filename, "%s.%s.bkp",
+                            expanded, date );
+        }
+        else
+        {
+            (void) sprintf( backup_filename, "%s.%s.bkp_%d",
+                            expanded, date, count );
+        }
+
+        len = string_length( backup_filename );
+        while( len > 0 && 
+               (backup_filename[len-1] == ' ' ||
+                backup_filename[len-1] == '\t' ||
+                backup_filename[len-1] == '\n') )
+        {
+            --len;
+        }
+        backup_filename[len] = (char) 0;
+
+        for_less( i, 0, len )
+        {
+            if( backup_filename[i] == ' ' || backup_filename[i] == '\t' ||
+                backup_filename[i] == '\n' )
+                backup_filename[i] = '_';
+        }
+
+        ++count;
+    }
+    while( file_exists( backup_filename ) );
+
+    delete_string( expanded );
+    delete_string( date );
+
+    return( backup_filename );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : make_backup_file
+@INPUT      : filename
+@OUTPUT     : backup_filename
+@RETURNS    : OK or ERROR
+@DESCRIPTION: If the file exists, creates a backup of the file, and passes
+              back the name of the backup file, which must be passed to
+              cleanup_backup_file after the write of filename is performed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Feb.  3, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  make_backup_file(
+    STRING   filename,
+    STRING   *backup_filename )
+{
+    Status   status;
+
+    status = OK;
+
+    if( file_exists( filename ) )
+    {
+        *backup_filename = create_backup_filename( filename );
+
+        status = copy_file( filename, *backup_filename );
+
+        if( status != OK )
+        {
+            print_error( "Error making backup file for: %s\n", filename );
+            *backup_filename = NULL;
+        }
+    }
+    else
+        *backup_filename = NULL;
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cleanup_backup_file
+@INPUT      : filename
+              backup_filename
+              status_of_write
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: This function is called after writing a file.  If a backup file
+              was made before the write, then it is deleted, if the write was
+              successful, or copied to the original file, otherwise.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Feb.  3, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  cleanup_backup_file(
+    STRING   filename,
+    STRING   backup_filename,
+    Status   status_of_write )
+{
+    BOOLEAN  can_remove;
+
+    if( backup_filename != NULL )
+    {
+        can_remove = TRUE;
+        if( status_of_write != OK )
+        {
+            if( copy_file( backup_filename, filename ) != OK )
+            {
+                print_error( "File %s was corrupted during a failed write,\n",
+                             filename );
+                print_error(
+                   "File %s contains the state prior to the write attempt.\n",
+                  backup_filename );
+                can_remove = FALSE;
+            }
+        }
+
+        if( can_remove )
+            remove_file( backup_filename );
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : remove_file
 @INPUT      : filename
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Deletes the given file.
-@METHOD     : Makes a system call to perform a UNIX "rm"
+@METHOD     : Makes a system call to unlink().
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
@@ -233,6 +401,96 @@ public  void  remove_file(
     }
 
     delete_string( expanded );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_file
+@INPUT      : src
+              dest
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Copies the src file to the dest file.
+@METHOD     : Makes a UNIX system call, using /bin/cp
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Feb.  3, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  copy_file(
+    STRING  src,
+    STRING  dest )
+{
+    Status   status;
+    STRING   src_expanded, dest_expanded, command;
+
+    src_expanded = expand_filename( src );
+    dest_expanded = expand_filename( dest );
+
+    command = concat_strings( "/bin/cp ", src_expanded );
+    concat_to_string( &command, " " );
+    concat_to_string( &command, dest_expanded );
+
+    if( system( command ) != 0 )
+    {
+        print_error( "Error copying file %s to %s: ",
+                     src_expanded, dest_expanded );
+        print_system_error();
+        status = ERROR;
+    }
+    else
+        status = OK;
+
+    delete_string( src_expanded );
+    delete_string( dest_expanded );
+    delete_string( command );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : move_file
+@INPUT      : src
+              dest
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Move the src file to the dest file.
+@METHOD     : Makes a UNIX system call, using /bin/mv
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Feb.  3, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  move_file(
+    STRING  src,
+    STRING  dest )
+{
+    Status   status;
+    STRING   src_expanded, dest_expanded, command;
+
+    src_expanded = expand_filename( src );
+    dest_expanded = expand_filename( dest );
+
+    command = concat_strings( "/bin/cp -f ", src_expanded );
+    concat_to_string( &command, " " );
+    concat_to_string( &command, dest_expanded );
+
+    if( system( command ) != 0 )
+    {
+        print_error( "Error moving file %s to %s: ",
+                     src_expanded, dest_expanded );
+        print_system_error();
+        status = ERROR;
+    }
+    else
+        status = OK;
+
+    delete_string( src_expanded );
+    delete_string( dest_expanded );
+    delete_string( command );
+
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -2047,7 +2305,7 @@ public  Status  io_quoted_string(
 
         if( status == OK )
         {
-            status = io_binary_data( file, io_flag, (void *) str,
+            status = io_binary_data( file, io_flag, (void *) (*str),
                                      sizeof((*str)[0]), length );
         }
 

@@ -29,12 +29,18 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.28 1996-11-15 16:09:42 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.29 1997-03-23 21:11:29 david Exp $";
 #endif
 
 #include  <stdlib.h>
 #include  <stdio.h>
+
+#ifdef __sgi
+#include  <string.h>     /* --- for memcpy, etc. */
+#else
 #include  <memory.h>     /* --- for memcpy, etc. */
+#endif
+
 #include  <def_math.h>
 #include  <system_dependent.h>
 
