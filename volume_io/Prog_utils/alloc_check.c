@@ -1,7 +1,6 @@
 
 #include  <def_mni.h>
 #include  <stdlib.h>
-#include  <malloc.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_check.c
@@ -522,11 +521,6 @@ public  void  set_alloc_checking( Boolean state )
 {
     enabled_initialized = TRUE;
     checking_enabled = state;
-}
-
-public  void  set_alloc_debug( Boolean state )
-{
-    mallopt( M_DEBUG, state );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

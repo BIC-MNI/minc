@@ -810,6 +810,65 @@ public  Boolean   evaluate_volume_in_world(
     return( voxel_is_active );
 }
 
+public  Boolean   evaluate_slice_in_world(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Boolean        activity_if_mixed,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_yy )
+{
+    Boolean   voxel_is_active;
+    Real      ignore, dxx, dxy, dyy;
+    Real      txx, txy, txz;
+    Real      tyx, tyy, tyz;
+    Real      tzx, tzy, tzz;
+
+    convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
+
+    voxel_is_active = evaluate_slice( volume, x, y, z,
+                                      activity_if_mixed,
+                                      value, deriv_x, deriv_y,
+                                      deriv_xx, deriv_xy, deriv_yy );
+
+    if( deriv_x != (Real *) 0 )
+    {
+        convert_voxel_normal_vector_to_world( volume,
+                                              *deriv_x, *deriv_y, 0.0,
+                                              deriv_x, deriv_y, &ignore );
+    }
+
+    if( deriv_xx != (Real *) 0 )
+    {
+        dxx = *deriv_xx;
+        dxy = *deriv_xy;
+        dyy = *deriv_yy;
+        convert_voxel_normal_vector_to_world( volume,
+                                              dxx, dxy, 0.0,
+                                              &txx, &txy, &txz );
+        convert_voxel_normal_vector_to_world( volume,
+                                              dxy, dyy, 0.0,
+                                              &tyx, &tyy, &tyz );
+        convert_voxel_normal_vector_to_world( volume,
+                                              0.0, 0.0, 0.0,
+                                              &tzx, &tzy, &tzz );
+
+        convert_voxel_normal_vector_to_world( volume,
+                                              txx, tyx, tzx,
+                                              deriv_xx, &ignore, &ignore );
+        convert_voxel_normal_vector_to_world( volume,
+                                              txy, tyy, tzy,
+                                              deriv_xy, deriv_yy, &ignore );
+    }
+
+    return( voxel_is_active );
+}
+
 typedef enum { NONE_ACTIVE, SOME_ACTIVE, ALL_ACTIVE } Group_activity;
 
 private  Group_activity   triconstant_interpolate_volume(
@@ -1367,6 +1426,118 @@ private  Group_activity   tricubic_interpolate_volume(
     return( activity );
 }
 
+private  Group_activity   bicubic_interpolate_volume(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_yy )
+{
+    Group_activity     activity;
+    int                n_inactive;
+    int                i, j, k, di, dj;
+    int                nx, ny, nz;
+    Real               u, v;
+    Real               c00, c01, c02, c03, c10, c11, c12, c13;
+    Real               c20, c21, c22, c23, c30, c31, c32, c33;
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    if( x == (Real) nx - 1.5 )
+    {
+        i = nx-2;
+        u = 1.0;
+    }
+    else
+    {
+        i = (int) x;
+        u = FRACTION( x );
+    }
+
+    if( y == (Real) ny - 1.5 )
+    {
+        j = ny-2;
+        v = 1.0;
+    }
+    else
+    {
+        j = (int) y;
+        v = FRACTION( y );
+    }
+
+    if( z == (Real) nz - 1.5 )
+    {
+        k = nz-2;
+    }
+    else
+    {
+        k = (int) z;
+    }
+
+    GET_VALUE_3D( c00, volume, i-1, j-1, k );
+    GET_VALUE_3D( c01, volume, i-1, j+0, k );
+    GET_VALUE_3D( c02, volume, i-1, j+1, k );
+    GET_VALUE_3D( c03, volume, i-1, j+2, k );
+    GET_VALUE_3D( c10, volume, i+0, j-1, k );
+    GET_VALUE_3D( c11, volume, i+0, j+0, k );
+    GET_VALUE_3D( c12, volume, i+0, j+1, k );
+    GET_VALUE_3D( c13, volume, i+0, j+2, k );
+    GET_VALUE_3D( c20, volume, i+1, j-1, k );
+    GET_VALUE_3D( c21, volume, i+1, j+0, k );
+    GET_VALUE_3D( c22, volume, i+1, j+1, k );
+    GET_VALUE_3D( c23, volume, i+1, j+2, k );
+    GET_VALUE_3D( c30, volume, i+2, j-1, k );
+    GET_VALUE_3D( c31, volume, i+2, j+0, k );
+    GET_VALUE_3D( c32, volume, i+2, j+1, k );
+    GET_VALUE_3D( c33, volume, i+2, j+2, k );
+
+    n_inactive = 0;
+    for_inclusive( di, -1, 2 )
+    {
+        for_inclusive( dj, -1, 2 )
+        {
+            if( !get_voxel_activity_flag( volume, i+di, j+dj, k ) )
+                ++n_inactive;
+        }
+    }
+
+    if( value != (Real *) 0 )
+    {
+        CUBIC_BIVAR( c00, c01, c02, c03, c10, c11, c12, c13,
+                     c20, c21, c22, c23, c30, c31, c32, c33, u, v, *value );
+    }
+
+    if( deriv_x != (Real *) 0 )
+    {
+        CUBIC_BIVAR_DERIV( c00, c01, c02, c03, c10, c11, c12, c13,
+                           c20, c21, c22, c23, c30, c31, c32, c33,
+                           u, v, *deriv_x, *deriv_y );
+    }
+
+    if( deriv_xx != (Real *) 0 )
+    {
+        CUBIC_BIVAR_DERIV2( c00, c01, c02, c03, c10, c11, c12, c13,
+                            c20, c21, c22, c23, c30, c31, c32, c33,
+                            u, v, *deriv_xx, *deriv_xy, *deriv_yy );
+    }
+
+    if( n_inactive == 0 )
+        activity = ALL_ACTIVE;
+    else if( n_inactive == 16 )
+        activity = NONE_ACTIVE;
+    else
+        activity = SOME_ACTIVE;
+
+    return( activity );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : evaluate_volume
 @INPUT      : volume
@@ -1487,6 +1658,60 @@ public  Boolean   evaluate_volume(
     default:
         HANDLE_INTERNAL_ERROR( "evaluate_volume: invalid continuity" );
     }
+
+    if( activity == ALL_ACTIVE )
+        voxel_is_active = TRUE;
+    else if( activity == NONE_ACTIVE )
+        voxel_is_active = FALSE;
+    else
+        voxel_is_active = activity_if_mixed;
+
+    return( voxel_is_active );
+}
+
+public  Boolean   evaluate_slice(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Boolean        activity_if_mixed,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_xx,
+    Real           *deriv_xy,
+    Real           *deriv_yy )
+{
+    Group_activity   activity;
+    Boolean          voxel_is_active;
+    int              nx, ny, nz;
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    if( x < 1.0 || x > (Real) nx - 2.0 ||
+        y < 1.0 || y > (Real) ny - 2.0 ||
+        z < 1.0 || z > (Real) nz - 2.0 )
+    {
+        *value = volume->fill_value;
+        if( deriv_x != (Real *) NULL )
+        {
+            *deriv_x = 0.0;
+            *deriv_y = 0.0;
+        }
+        if( deriv_xx != (Real *) NULL )
+        {
+            *deriv_xx = 0.0;
+            *deriv_xy = 0.0;
+            *deriv_yy = 0.0;
+        }
+        return( FALSE );
+    }
+
+    activity = bicubic_interpolate_volume( volume, x, y, z, value,
+                                           deriv_x, deriv_y,
+                                           deriv_xx, deriv_xy, deriv_yy );
 
     if( activity == ALL_ACTIVE )
         voxel_is_active = TRUE;

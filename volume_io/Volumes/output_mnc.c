@@ -60,6 +60,18 @@ public  Minc_file  initialize_minc_output(
     int                 i, j, d, axis;
     Point               origin;
     Vector              axes[N_DIMENSIONS];
+    static  String      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+
+    if( dim_names == (String *) NULL )
+    {
+        if( n_dimensions != 3 )
+        {
+            print( "initialize_minc_output: can't use NULL dim_names except with 3 dimensions.\n" );
+            return( (Minc_file) NULL );
+        }
+
+        dim_names = default_dim_names;
+    }
 
     ALLOC( file, 1 );
 
@@ -352,13 +364,13 @@ public  Status  output_minc_volume(
     return( OK );
 }
 
-public  int  close_minc_output(
+public  Status  close_minc_output(
     Minc_file   file )
 {
     if( file == (Minc_file) NULL )
     {
         print( "close_minc_output(): NULL file.\n" );
-        return( MI_ERROR );
+        return( ERROR );
     }
 
     (void) ncclose( file->cdfid );
@@ -366,5 +378,5 @@ public  int  close_minc_output(
 
     FREE( file );
 
-    return( MI_NOERROR );
+    return( OK );
 }

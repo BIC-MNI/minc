@@ -254,7 +254,7 @@ private  void  delete_struct()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  set_file_context( FILE *file )
+private  int  set_file_context( FILE *file )
 {
     int   i;
     void  copy_to_context( compress_struct * );
@@ -734,7 +734,7 @@ private  int  get_feof()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  un_get_char(
+private  int  un_get_char(
     int  ch )
 {
     int   i;
@@ -777,7 +777,7 @@ public  int  un_get_char(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_char()
+private  int  get_char()
 {
     int   ch;
 
@@ -872,7 +872,6 @@ private  int  should_open_compressed( char *filename, char *mode,
 
 public  FILE  *fopen_compress( char *filename, char *mode )
 {
-    int              set_file_context( FILE * );
     FILE             *file;
     char             compressed_filename[300];
     void             create_struct( FILE * );
@@ -915,7 +914,6 @@ public  FILE  *fopen_compress( char *filename, char *mode )
 public  FILE  *freopen_compress( const char *filename, const char *mode,
                                  FILE *file )
 {
-    int              set_file_context( FILE * );
     char             compressed_filename[300];
     void             create_struct( FILE * );
     void             initialize_compress_file();

@@ -287,26 +287,15 @@ public  Status  initialize_free_format_input(
 
         }
 
-        if( min_value == max_value )
-        {
-            volume->value_scale = 1.0;
-            volume->value_translation = (Real) min_value;
-        }
-        else
-        {
-            volume->value_scale = (Real) (max_value - min_value) /
-                                  (Real) (NUM_BYTE_VALUES - 1);
-            volume->value_translation = (Real) min_value;
-        }
+        volume->min_value = min_value;
+        volume->max_value = max_value;
 
         if( status == OK && !volume_input->one_file_per_slice )
             status = close_file( volume_input->volume_file );
     }
-    else
-    {
-        volume->value_scale = 1.0;
-        volume->value_translation = 0.0;
-    }
+
+    volume->value_scale = 1.0;
+    volume->value_translation = 0.0;
 
     if( status == OK && !volume_input->one_file_per_slice )
     {
@@ -462,8 +451,20 @@ public  Boolean  input_more_free_format_file(
 
         status = input_slice( volume_input );
 
-        scaling_flag = (volume->value_scale != 1.0 ||
-                        volume->value_translation != 0.0);
+        scaling_flag = FALSE;
+        if( volume->data_type != volume_input->file_data_type )
+        {
+            scaling_flag = TRUE;
+            volume->value_translation = (Real) volume->min_value;
+            if( volume->min_value == volume->max_value )
+                volume->value_scale = 1.0;
+            else
+            {
+                volume->value_scale = (Real) (volume->max_value -
+                                              volume->min_value) /
+                                      (Real) (NUM_BYTE_VALUES - 1);
+            }
+        }
 
         inner_index = &indices[volume_input->axis_index_from_file[2]];
 
@@ -484,7 +485,7 @@ public  Boolean  input_more_free_format_file(
                     {
                         value = (int)(
                          ((Real) (*byte_buffer_ptr) -
-                         volume->value_translation) / volume->value_scale );
+                            volume->value_translation) / volume->value_scale );
 
                         if( value < 0 )
                             value = 0;
@@ -513,7 +514,7 @@ public  Boolean  input_more_free_format_file(
                     {
                         value = (int)(
                          ((Real) (*short_buffer_ptr) -
-                         volume->value_translation) / volume->value_scale );
+                            volume->value_translation) / volume->value_scale );
                     }
                     else
                         value = (int) (*short_buffer_ptr);
@@ -541,7 +542,6 @@ public  Boolean  input_more_free_format_file(
         volume->sizes[volume_input->axis_index_from_file[0]] )
     {
         more_to_do = FALSE;
-        delete_volume_input( volume_input );
 
         GET_VOXEL_3D( min_value, volume, 0, 0, 0 );
         get_volume_sizes( volume, sizes );

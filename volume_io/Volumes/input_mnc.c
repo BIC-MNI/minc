@@ -271,9 +271,12 @@ public  Minc_file  initialize_minc_input(
     file->icv = miicv_create();
 
     (void) miicv_setint( file->icv, MI_ICV_TYPE, converted_type );
-    (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
     (void) miicv_setstr( file->icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
+    (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
+    (void) miicv_setint( file->icv, MI_ICV_DO_FILLVALUE, TRUE );
+    (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, volume->fill_value );
+
     (void) miicv_attach( file->icv, file->cdfid, img_var );
 
     /* --- compute the mapping to real values */

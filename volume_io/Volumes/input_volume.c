@@ -233,6 +233,8 @@ public  Status  input_volume(
         }
 
         terminate_progress_report( &progress );
+
+        delete_volume_input( &input_info );
     }
 
     return( status );

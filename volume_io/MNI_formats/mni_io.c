@@ -24,6 +24,9 @@ public  Status  mni_get_nonwhite_character(
     while( status == OK &&
            (in_comment || *ch == ' ' || *ch == '\t' || *ch == '\n') );
 
+    if( status == ERROR )
+        status = END_OF_FILE;
+
     return( status );
 }
 
@@ -50,6 +53,31 @@ public  Status  mni_skip_expected_character(
         (void) fprintf( stderr, "Expected '%c', found end of file.\n",
                         expected_ch );
     }
+
+    return( status );
+}
+
+public  Status  mni_input_line(
+    FILE   *file,
+    char   string[],
+    int    max_length )
+{
+    Status   status;
+    int      len;
+    char     ch;
+
+    len = 0;
+
+    status = input_character( file, &ch );
+
+    while( status == OK && len < max_length-1 && ch != '\n' )
+    {
+        string[len] = ch;
+        ++len;
+        status = input_character( file, &ch );
+    }
+
+    string[len] = (char) 0;
 
     return( status );
 }
@@ -107,13 +135,17 @@ public  Status  mni_input_keyword_and_equal_sign(
     Status     status;
     String     str;
 
-    status = OK;
+    status = mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 );
 
-    if( mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 ) != OK ||
+    if( status == END_OF_FILE )
+        return( status );
+
+    if( status != OK ||
         strcmp( str, keyword ) != 0 ||
         mni_skip_expected_character( file, '=' ) != OK )
     {
-        print( "Expected \"%s =\"\n", keyword );
+        if( print_error_message )
+            print( "Expected \"%s =\"\n", keyword );
         status = ERROR;
     }
 

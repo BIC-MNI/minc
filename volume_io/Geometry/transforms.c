@@ -439,140 +439,111 @@ public  void  make_rotation_about_axis(
 
 public  void  transform_point(
     Transform  *transform,
-    Point      *p,
-    Point      *transformed_point )
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
 {
-    Boolean    args_same;
     Real       w;
-    Point      *t, tmp;
 
-    if( p == transformed_point )
-    {
-        args_same = TRUE;
-        t = &tmp;
-    }
-    else
-    {
-        args_same = FALSE;
-        t = transformed_point;
-    }
-    
-    Point_x(*t) = Transform_elem(*transform,0,0) * Point_x(*p) +
-                  Transform_elem(*transform,0,1) * Point_y(*p) +
-                  Transform_elem(*transform,0,2) * Point_z(*p) +
-                  Transform_elem(*transform,0,3);
+    *x_trans = Transform_elem(*transform,0,0) * x +
+               Transform_elem(*transform,0,1) * y +
+               Transform_elem(*transform,0,2) * z +
+               Transform_elem(*transform,0,3);
 
-    Point_y(*t) = Transform_elem(*transform,1,0) * Point_x(*p) +
-                  Transform_elem(*transform,1,1) * Point_y(*p) +
-                  Transform_elem(*transform,1,2) * Point_z(*p) +
-                  Transform_elem(*transform,1,3);
+    *y_trans = Transform_elem(*transform,1,0) * x +
+               Transform_elem(*transform,1,1) * y +
+               Transform_elem(*transform,1,2) * z +
+               Transform_elem(*transform,1,3);
 
-    Point_z(*t) = Transform_elem(*transform,2,0) * Point_x(*p) +
-                  Transform_elem(*transform,2,1) * Point_y(*p) +
-                  Transform_elem(*transform,2,2) * Point_z(*p) +
-                  Transform_elem(*transform,2,3);
+    *z_trans = Transform_elem(*transform,2,0) * x +
+               Transform_elem(*transform,2,1) * y +
+               Transform_elem(*transform,2,2) * z +
+               Transform_elem(*transform,2,3);
 
-    w =           Transform_elem(*transform,3,0) * Point_x(*p) +
-                  Transform_elem(*transform,3,1) * Point_y(*p) +
-                  Transform_elem(*transform,3,2) * Point_z(*p) +
-                  Transform_elem(*transform,3,3);
+    w =        Transform_elem(*transform,3,0) * x +
+               Transform_elem(*transform,3,1) * y +
+               Transform_elem(*transform,3,2) * z +
+               Transform_elem(*transform,3,3);
 
     if( w != 0.0 && w != 1.0 )
     {
-        Point_x(*t) /= w;
-        Point_y(*t) /= w;
-        Point_z(*t) /= w;
-    }
-
-    if( args_same )
-    {
-        *transformed_point = tmp;
+        *x_trans /= w;
+        *y_trans /= w;
+        *z_trans /= w;
     }
 }
 
 public  void  transform_vector(
     Transform  *transform,
-    Vector     *v,
-    Vector     *transformed_vector )
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
 {
-    Boolean    args_same;
-    Vector     *t, tmp;
+    *x_trans = Transform_elem(*transform,0,0) * x +
+               Transform_elem(*transform,0,1) * y +
+               Transform_elem(*transform,0,2) * z;
 
-    if( v == transformed_vector )
-    {
-        args_same = TRUE;
-        t = &tmp;
-    }
-    else
-    {
-        args_same = FALSE;
-        t = transformed_vector;
-    }
-    
-    Vector_x(*t) = Transform_elem(*transform,0,0) * Vector_x(*v) +
-                   Transform_elem(*transform,0,1) * Vector_y(*v) +
-                   Transform_elem(*transform,0,2) * Vector_z(*v);
+    *y_trans = Transform_elem(*transform,1,0) * x +
+               Transform_elem(*transform,1,1) * y +
+               Transform_elem(*transform,1,2) * z;
 
-    Vector_y(*t) = Transform_elem(*transform,1,0) * Vector_x(*v) +
-                   Transform_elem(*transform,1,1) * Vector_y(*v) +
-                   Transform_elem(*transform,1,2) * Vector_z(*v);
-
-    Vector_z(*t) = Transform_elem(*transform,2,0) * Vector_x(*v) +
-                   Transform_elem(*transform,2,1) * Vector_y(*v) +
-                   Transform_elem(*transform,2,2) * Vector_z(*v);
-
-    if( args_same )
-    {
-        *transformed_vector = tmp;
-    }
+    *z_trans = Transform_elem(*transform,2,0) * x +
+               Transform_elem(*transform,2,1) * y +
+               Transform_elem(*transform,2,2) * z;
 }
 
 public  void  inverse_transform_point(
     Transform  *transform,
-    Point      *p,
-    Point      *transformed_point )
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
 {
-    Real       x, y, z;
-
-    x = Point_x(*p) - Transform_elem(*transform,0,3);
-    y = Point_y(*p) - Transform_elem(*transform,1,3);
-    z = Point_z(*p) - Transform_elem(*transform,2,3);
+    x -= Transform_elem(*transform,0,3);
+    y -= Transform_elem(*transform,1,3);
+    z -= Transform_elem(*transform,2,3);
     
-    Point_x(*transformed_point) = Transform_elem(*transform,0,0) * x +
-                                  Transform_elem(*transform,1,0) * y +
-                                  Transform_elem(*transform,2,0) * z;
+    *x_trans = Transform_elem(*transform,0,0) * x +
+               Transform_elem(*transform,1,0) * y +
+               Transform_elem(*transform,2,0) * z;
     
-    Point_y(*transformed_point) = Transform_elem(*transform,0,1) * x +
-                                  Transform_elem(*transform,1,1) * y +
-                                  Transform_elem(*transform,2,1) * z;
+    *y_trans = Transform_elem(*transform,0,1) * x +
+               Transform_elem(*transform,1,1) * y +
+               Transform_elem(*transform,2,1) * z;
     
-    Point_z(*transformed_point) = Transform_elem(*transform,0,2) * x +
-                                  Transform_elem(*transform,1,2) * y +
-                                  Transform_elem(*transform,2,2) * z;
+    *z_trans = Transform_elem(*transform,0,2) * x +
+               Transform_elem(*transform,1,2) * y +
+               Transform_elem(*transform,2,2) * z;
 }
 
 public  void  inverse_transform_vector(
     Transform  *transform,
-    Vector     *v,
-    Vector     *transformed_vector )
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
 {
-    Real       x, y, z;
-
-    x = Vector_x(*v);
-    y = Vector_y(*v);
-    z = Vector_z(*v);
+    *x_trans = Transform_elem(*transform,0,0) * x +
+               Transform_elem(*transform,1,0) * y +
+               Transform_elem(*transform,2,0) * z;
     
-    Vector_x(*transformed_vector) = Transform_elem(*transform,0,0) * x +
-                                    Transform_elem(*transform,1,0) * y +
-                                    Transform_elem(*transform,2,0) * z;
+    *y_trans = Transform_elem(*transform,0,1) * x +
+               Transform_elem(*transform,1,1) * y +
+               Transform_elem(*transform,2,1) * z;
     
-    Vector_y(*transformed_vector) = Transform_elem(*transform,0,1) * x +
-                                    Transform_elem(*transform,1,1) * y +
-                                    Transform_elem(*transform,2,1) * z;
-    
-    Vector_z(*transformed_vector) = Transform_elem(*transform,0,2) * x +
-                                    Transform_elem(*transform,1,2) * y +
-                                    Transform_elem(*transform,2,2) * z;
+    *z_trans = Transform_elem(*transform,0,2) * x +
+               Transform_elem(*transform,1,2) * y +
+               Transform_elem(*transform,2,2) * z;
 }
 
 public  void  convert_2d_transform_to_rotation_translation(

@@ -30,22 +30,7 @@ int  main(
         (void) strcpy( dim_names[2], MIzspace );
     }
 
-    print( "Inputting volume: %s\n", input_filename );
-    volume = create_volume( 3, dim_names, NC_UNSPECIFIED, FALSE, 0.0, 0.0 );
-
-    start_time = current_realtime_seconds();
-
-    file = initialize_minc_input( input_filename, volume );
-
-    while( input_more_minc_file( file, &fraction_done ) )
-    {
-    }
-
-    end_time = current_realtime_seconds();
-
-    print( "Seconds: %g\n", end_time - start_time );
-
-    return( 0 );
+    status = input_volume( input_filename, dim_names, &volume );
 
     get_volume_sizes( volume, sizes );
     get_volume_separations( volume, separations );
@@ -61,9 +46,14 @@ int  main(
                                    NC_BYTE, FALSE, min_value, max_value,
                                    &volume->voxel_to_world_transform );
 
-    status = output_minc_volume( file, volume );
+    if( status == OK )
+        status = copy_auxiliary_data_from_minc_file( file, input_filename );
 
-    status = close_minc_output( file );
+    if( status == OK )
+        status = output_minc_volume( file, volume );
+
+    if( status == OK )
+        status = close_minc_output( file );
 
     return( status != OK );
 }

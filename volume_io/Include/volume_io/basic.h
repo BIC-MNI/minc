@@ -131,7 +131,7 @@ typedef  char     String[MAX_STRING_LENGTH+1];
 
 #define  FRACTION( x )  ((x) - (int) (x))
 
-#define  IS_INT( x )    ((double) (x) == (double) ((int) x))
+#define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
 
 /* for loops */
 
@@ -153,6 +153,7 @@ typedef enum {
                OK,
                ERROR,
                INTERNAL_ERROR,
+               END_OF_FILE,
                QUIT
              } Status;
 

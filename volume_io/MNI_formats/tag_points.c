@@ -114,13 +114,9 @@ private  void  add_tag_point(
     double  y,
     double  z )
 {
-    if( n_tag_points == 0 )
-        *tags = (double **) malloc( sizeof(double*) );
-    else
-        *tags = (double **) realloc( (void *) (*tags),
-                                     (n_tag_points+1)*sizeof(double*));
+    SET_ARRAY_SIZE( *tags, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE );
 
-    (*tags)[n_tag_points] = (double *) malloc( 3 * sizeof(double) );
+    ALLOC( (*tags)[n_tag_points], 3 );
 
     (*tags)[n_tag_points][0] = x;
     (*tags)[n_tag_points][1] = y;
@@ -132,12 +128,7 @@ private  void  add_tag_weight(
     int     n_tag_points,
     double  weight )
 {
-    if( n_tag_points == 0 )
-        *weights = (double *) malloc( sizeof(double) );
-    else
-        *weights = (double *) realloc( (void *) (*weights),
-                                       (n_tag_points+1)*sizeof(double));
-
+    SET_ARRAY_SIZE( *weights, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
     (*weights)[n_tag_points] = weight;
 }
 
@@ -146,11 +137,7 @@ private  void  add_tag_id(
     int  n_tag_points,
     int  id )
 {
-    if( n_tag_points == 0 )
-        *ids = (int *) malloc( sizeof(int) );
-    else
-        *ids = (int *) realloc( (void *) (*ids), (n_tag_points+1)*sizeof(int));
-
+    SET_ARRAY_SIZE( *ids, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
     (*ids)[n_tag_points] = id;
 }
 
@@ -159,13 +146,9 @@ private  void  add_tag_label(
     int     n_tag_points,
     char    label[] )
 {
-    if( n_tag_points == 0 )
-        *labels = (char **) malloc( sizeof(char*) );
-    else
-        *labels = (char **) realloc( (void *) (*labels),
-                                     (n_tag_points+1) * sizeof(char*));
+    SET_ARRAY_SIZE( *labels, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
 
-    (*labels)[n_tag_points] = (char *) malloc( strlen(label)+1 );
+    ALLOC( (*labels)[n_tag_points], strlen(label)+1 );
     (void) strcpy( (*labels)[n_tag_points], label );
 }
 
@@ -176,10 +159,10 @@ private   void  free_tags(
     int   i;
 
     for( i = 0;  i < n_tag_points;  ++i )
-        free( (void *) (tags[i]) );
+        FREE( tags[i] );
 
     if( n_tag_points > 0 )
-        free( (void *) tags );
+        FREE( tags );
 }
 
 private  void  free_labels(
@@ -189,10 +172,10 @@ private  void  free_labels(
     int   i;
 
     for( i = 0;  i < n_tag_points;  ++i )
-        free( (void *) (labels[i]) );
+        FREE( labels[i] );
 
     if( n_tag_points > 0 )
-        free( (void *) labels );
+        FREE( labels );
 }
 
 public  void  free_tag_points(
@@ -211,13 +194,13 @@ public  void  free_tag_points(
         free_tags( tags_volume2, n_tag_points );
 
     if( weights != (Real *) NULL )
-        free( (void *) weights );
+        FREE( weights );
 
     if( structure_ids != (int *) NULL )
-        free( (void *) structure_ids );
+        FREE( structure_ids );
 
     if( patient_ids != (int *) NULL )
-        free( (void *) patient_ids );
+        FREE( patient_ids );
 
     if( labels != (char **) NULL )
         free_labels( labels, n_tag_points );
@@ -382,7 +365,10 @@ public  Status  input_tag_points(
             }
         }
 
-        if( n_strings == 1 )
+        if( n_strings == 0 )
+        {
+        }
+        else if( n_strings == 1 )
         {
             extract_label( line, label );
         }

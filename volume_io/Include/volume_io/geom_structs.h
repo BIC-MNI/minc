@@ -129,14 +129,14 @@ typedef  struct
 
 typedef  struct
 {
-    float    m2d[2][3];
+    double    m2d[2][3];
 } Transform_2d;
 
 #define  Transform_2d_elem( t, i, j ) ((t).m2d[i][j])
 
 typedef  struct
 {
-    float    m[4][4];
+    double    m[4][4];
 } Transform;
 
 #define  Transform_elem( t, i, j ) ((t).m[j][i])
