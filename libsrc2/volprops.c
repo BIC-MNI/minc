@@ -18,10 +18,19 @@
 #include "minc2.h"
 #include "minc2_private.h"
 
+/**
+ * \defgroup mi2VPrp MINC 2.0 Volume Properties Functions
+ */
+
 /** Maximum number of elements in a filter parameter list. */
 #define MI2_MAX_CD_ELEMENTS 100
 
-/*! Create a volume property list.
+/*! Create a volume property list.  The new list will be returned in the
+ * \a props parameter.    When the program is finished 
+ * using the property list it should call  mifree_volume_props() to free the
+ * memory associated with the list.
+ * \param props A pointer to the returned volume properties handle.
+ * \ingroup mi2VPrp
  */
 int
 minew_volume_props(mivolumeprops_t  *props)
@@ -52,6 +61,8 @@ minew_volume_props(mivolumeprops_t  *props)
 }
 
 /*! Destroy a volume property list.
+ * \param props The volume property list to delete.
+ * \ingroup mi2VPrp
  */
 int
 mifree_volume_props(mivolumeprops_t props)
@@ -69,7 +80,12 @@ mifree_volume_props(mivolumeprops_t props)
   return (MI_NOERROR);
 }
 
-/*! Get a copy of the volume property list
+/*! Get a copy of the volume property list.  When the program is finished 
+ * using the property list it should call  mifree_volume_props() to free the
+ * memory associated with the list.
+ * \param volume A volume handle
+ * \param props A pointer to the returned volume properties handle.
+ * \ingroup mi2VPrp
  */
 int
 miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
@@ -161,7 +177,20 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
 }
 
 
-/*! Set Multi-resolution properties
+/*! Set multi-resolution properties.  The \a enable_flag determines
+ * whether or not thumbnail images will be calculated at all.  The \a
+ * depth parameter determines the lowest-resolution image that will be
+ * available.  The full resolution image is considered to be image #0,
+ * the half resolution image is image #1, the quarter-resolution image
+ * is #2, etc. Therefore a \a depth value of 2 implies both the half
+ * and quarter resolution thumbnails will be calculated and stored in
+ * the file.
+ * \param props A volume property list handle 
+ * \param enable_flag TRUE if multiresolution support should be enabled in
+ * this file.  
+ * \param depth The maximum depth of multiresolution data
+ * to support.
+ * \ingroup mi2VPrp
  */
 int
 miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
@@ -176,7 +205,14 @@ miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
     return (MI_NOERROR);
 }
   
-/*! Get Multi-resolution properties
+/*! Get multi-resolution properties.  Returns the value of the \a enable_flag
+ * and \a depth parameters.
+ * \param props A volume property list handle
+ * \param enable_flag Pointer to a BOOLEAN which will be set to TRUE if 
+ * multiresolution has been enabled.
+ * \param depth Pointer to a integer which will contain the maximum resolution
+ * depth enabled if multiresolution is enabled.
+ * \ingroup mi2VPrp
  */
 int 
 miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
@@ -192,7 +228,8 @@ miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
   return (MI_NOERROR);
 }
 
-/*! Compute a different resolution
+/*! Select a different resolution from a multi-resolution image.
+ * \ingroup mi2VPrp
  */
 int
 miselect_resolution(mihandle_t volume, int depth)
@@ -243,7 +280,9 @@ miselect_resolution(mihandle_t volume, int depth)
   return (MI_NOERROR);
 }
 
-/*! Compute all resolution
+/*! Compute or recompute all resolution groups.
+ * 
+ * \ingroup mi2VPrp
  */
 int
 miflush_from_resolution(mihandle_t volume, int depth)
@@ -266,11 +305,16 @@ miflush_from_resolution(mihandle_t volume, int depth)
 }
 
 /*! Set compression type for a volume property list
-    Note that enabling compression will automatically 
-    enable blocking with default parameters. 
+ * Note that enabling compression will automatically 
+ * enable blocking with default parameters. 
+ * \param props A volume properties list
+ * \param compression_type The type of compression to use (MI_COMPRESS_NONE
+ * or MI_COMPRESS_ZLIB)
+ * \ingroup mi2VPrp
  */
 int
-miset_props_compression_type(mivolumeprops_t props, micompression_t compression_type)
+miset_props_compression_type(mivolumeprops_t props,
+                             micompression_t compression_type)
 {
     int i;
     int edge_lengths[MI2_MAX_VAR_DIMS];
@@ -297,9 +341,14 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
 }
 
 /*! Get compression type for a volume property list
+ * \param props A volume property list handle
+ * \param compression_type A pointer to a variable to which the current
+ * compression type will be assigned.
+ * \ingroup mi2VPrp
  */
 int 
-miget_props_compression_type(mivolumeprops_t props, micompression_t *compression_type)
+miget_props_compression_type(mivolumeprops_t props, 
+                             micompression_t *compression_type)
 {
 
   if (props == NULL) {
@@ -310,7 +359,14 @@ miget_props_compression_type(mivolumeprops_t props, micompression_t *compression
   return (MI_NOERROR);
 }
 
-/*! Set zlib compression properties for a volume list
+/*! Set zlib compression properties for a volume list.  The \a zlib_level
+ * parameter may range from 1 to 9, where higher numbers request that the
+ * library attempt to use more memory (and possibly processing power) to
+ * achieve the highest possible compression ratio.
+ *
+ * \param props A volume property list handle
+ * \param zlib_level An integer specifying the desired compression level.
+ * \ingroup mi2VPrp
  */
 int
 miset_props_zlib_compression(mivolumeprops_t props, int zlib_level)
@@ -323,7 +379,11 @@ miset_props_zlib_compression(mivolumeprops_t props, int zlib_level)
   return (MI_NOERROR);
 }
 
-/*! Get zlib compression properties for a volume list
+/*! Get zlib compression properties from a volume property list.
+ * \param props A volume property list handle
+ * \param zlib_level Pointer to an integer variable that will receive the
+ * current compression level.
+ * \ingroup mi2VPrp
  */
 int
 miget_props_zlib_compression(mivolumeprops_t props, int *zlib_level)
@@ -337,6 +397,10 @@ if (props == NULL) {
 }
 
 /*! Set blocking structure properties for the volume
+ * \param props A volume property list handle
+ * \param edge_count 
+ * \param edge_lengths
+ * \ingroup mi2VPrp
  */
 int
 miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_lengths)
@@ -371,6 +435,7 @@ miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_leng
  * \param edge_count Returns the number of edges (dimensions) in a block
  * \param edge_lengths The lengths of the edges
  * \param max_lengths The number of elements of the edge_lengths array
+ * \ingroup mi2VPrp
  */
 int
 miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
@@ -397,6 +462,7 @@ miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
 }
 
 /*! Set properties for uniform/nonuniform record dimension
+ * \ingroup mi2VPrp
  */
 int 
 miset_props_record(mivolumeprops_t props, long record_length, char *record_name)
@@ -418,6 +484,7 @@ miset_props_record(mivolumeprops_t props, long record_length, char *record_name)
 }
   
 /*! Set the template volume flag
+ * \ingroup mi2VPrp
  */ 
 int
 miset_props_template(mivolumeprops_t props, int template_flag)
