@@ -103,7 +103,8 @@ struct volumehandle_struct {
   mi_lin_xfm_t w2v_transform;   /* World-to-voxel transform (inverse) */
   int selected_resolution;      /* The current resolution (0-N) */
   int mode;                     /* Open mode */
-  hid_t type_id;                /* Type ID if record or label type. */
+  hid_t ftype_id;               /* File type ID of image. */
+  hid_t mtype_id;               /* Memory type ID of image. */
   hid_t plist_id;               /* Image property list */
   hid_t image_id;               /* Dataset for image */
   hid_t imax_id;                /* Dataset for image-max */
@@ -119,7 +120,7 @@ struct volumehandle_struct {
  ****************************************************************************/
 /* From m2util.c */
 extern hid_t midescend_path(hid_t file_id, const char *path);
-extern hid_t mitype_to_hdftype(mitype_t);
+extern hid_t mitype_to_hdftype(mitype_t, int);
 extern int mitype_to_nctype(mitype_t, int *is_signed);
 
 extern int miget_attribute(mihandle_t volume, const char *varpath, 
@@ -160,7 +161,6 @@ extern int mitranslate_hyperslab_origin(mihandle_t volume,
 extern void misave_valid_range(mihandle_t volume);
 
 /* External */
-extern int hdf_var_declare(int fd, char *varnm, char *varpath, int ndims, hsize_t *sizes);
-extern int hdf_create(const char *path, int cmode);
-extern int hdf_open(const char *path, int mode);
+#include "../libsrc/minc_private.h"
+
 
