@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.8  1993-12-08 09:04:59  neelin
-@MODIFIED   : Fixed memory leak in acr_input_group_with_max.
-@MODIFIED   : Fixed acr_input_group_list (didn't stop reading when reached max group).
+@MODIFIED   : Revision 1.9  1993-12-10 09:20:32  neelin
+@MODIFIED   : Added acr_find_<type> routines.
 @MODIFIED   :
+ * Revision 1.8  93/12/08  09:04:59  neelin
+ * Fixed memory leak in acr_input_group_with_max.
+ * Fixed acr_input_group_list (didn't stop reading when reached max group).
+ * 
  * Revision 1.7  93/11/30  08:57:42  neelin
  * Added group and group list copy routines.
  * 
@@ -702,5 +705,140 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
 
    return;
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_short
+@INPUT      : group_list
+              elid
+              default_value
+@OUTPUT     : (none)
+@RETURNS    : Element value or default_value if element not found
+@DESCRIPTION: Find an element in a group list and return its value (assuming
+              that it is stored as a binary short).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
+                          int default_value)
+{
+   Acr_Element element;
+
+   element = acr_find_group_element(group_list, elid);
+   if (element != NULL) 
+      return (int) acr_get_element_short(element);
+   else
+      return default_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_long
+@INPUT      : group_list
+              elid
+              default_value
+@OUTPUT     : (none)
+@RETURNS    : Element value or default_value if element not found
+@DESCRIPTION: Find an element in a group list and return its value (assuming
+              that it is stored as a binary long).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
+                          long default_value)
+{
+   Acr_Element element;
+
+   element = acr_find_group_element(group_list, elid);
+   if (element != NULL) 
+      return acr_get_element_long(element);
+   else
+      return default_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_int
+@INPUT      : group_list
+              elid
+              default_value
+@OUTPUT     : (none)
+@RETURNS    : Element value or default_value if element not found
+@DESCRIPTION: Find an element in a group list and return its value (assuming
+              that it is stored as an ascii integer).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_find_int(Acr_Group group_list, Acr_Element_Id elid, 
+                        int default_value)
+{
+   Acr_Element element;
+
+   element = acr_find_group_element(group_list, elid);
+   if (element != NULL) 
+      return (int) acr_get_element_numeric(element);
+   else
+      return default_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_double
+@INPUT      : group_list
+              elid
+              default_value
+@OUTPUT     : (none)
+@RETURNS    : Element value or default_value if element not found
+@DESCRIPTION: Find an element in a group list and return its value (assuming
+              that it is stored as an ascii double).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
+                              double default_value)
+{
+   Acr_Element element;
+
+   element = acr_find_group_element(group_list, elid);
+   if (element != NULL) 
+      return acr_get_element_numeric(element);
+   else
+      return default_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_string
+@INPUT      : group_list
+              elid
+              default_value
+@OUTPUT     : (none)
+@RETURNS    : Element value or default_value if element not found
+@DESCRIPTION: Find an element in a group list and return its value (assuming
+              that it is stored as an ascii string).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
+                             char *default_value)
+{
+   Acr_Element element;
+
+   element = acr_find_group_element(group_list, elid);
+   if (element != NULL) 
+      return acr_get_element_string(element);
+   else
+      return default_value;
 }
 
