@@ -231,6 +231,20 @@ public  void  get_volume_voxel_hyperslab_1d(
     int      n0,
     Real     values[] );
 
+public  void  get_volume_voxel_hyperslab(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    Real     voxels[] );
+
 public  Status  initialize_free_format_input(
     STRING               filename,
     Volume               volume,
@@ -495,6 +509,10 @@ public  void  set_minc_output_real_range(
     Real                 real_min,
     Real                 real_max );
 
+public  void  set_minc_output_use_volume_starts_and_steps_flag(
+    minc_output_options  *options,
+    BOOLEAN              flag );
+
 public  Status   get_file_dimension_names(
     STRING   filename,
     int      *n_dims,
@@ -532,6 +550,140 @@ public  Status  output_volume(
     Volume                volume,
     STRING                history,
     minc_output_options   *options );
+
+public  void  convert_values_to_voxels(
+    Volume   volume,
+    int      n_voxels,
+    Real     values[],
+    Real     voxels[] );
+
+public  void  set_volume_value_hyperslab(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    Real     values[] );
+
+public  void  set_volume_value_hyperslab_5d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    Real     values[] );
+
+public  void  set_volume_value_hyperslab_4d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    Real     values[] );
+
+public  void  set_volume_value_hyperslab_3d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      n0,
+    int      n1,
+    int      n2,
+    Real     values[] );
+
+public  void  set_volume_value_hyperslab_2d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      n0,
+    int      n1,
+    Real     values[] );
+
+public  void  set_volume_value_hyperslab_1d(
+    Volume   volume,
+    int      v0,
+    int      n0,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab_5d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab_4d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab_3d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      n0,
+    int      n1,
+    int      n2,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab_2d(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      n0,
+    int      n1,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab_1d(
+    Volume   volume,
+    int      v0,
+    int      n0,
+    Real     values[] );
+
+public  void  set_volume_voxel_hyperslab(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    Real     voxels[] );
 
 public  void  set_n_bytes_cache_threshold(
     int  threshold );
@@ -686,20 +838,28 @@ public  void  set_volume_sizes(
 public  unsigned int  get_volume_total_n_voxels(
     Volume    volume );
 
+public  void  compute_world_transform(
+    int                 spatial_axes[N_DIMENSIONS],
+    Real                separations[],
+    Real                direction_cosines[][N_DIMENSIONS],
+    Real                starts[],
+    General_transform   *world_transform );
+
+public  void  convert_transform_to_starts_and_steps(
+    General_transform  *transform,
+    int                n_volume_dimensions,
+    Real               step_signs[],
+    int                spatial_axes[],
+    Real               starts[],
+    Real               steps[],
+    Real               dir_cosines[][N_DIMENSIONS] );
+
 public  void  set_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform );
 
 public  General_transform  *get_voxel_to_world_transform(
     Volume   volume );
-
-public  void  compute_world_transform(
-    int                 spatial_axes[N_DIMENSIONS],
-    Real                separations[],
-    Real                translation_voxel[],
-    Real                world_space_for_translation_voxel[N_DIMENSIONS],
-    Real                direction_cosines[][N_DIMENSIONS],
-    General_transform   *world_transform );
 
 public  STRING  *get_volume_dimension_names(
     Volume   volume );
@@ -723,15 +883,18 @@ public  void  set_volume_separations(
     Volume   volume,
     Real     separations[] );
 
-public  void  set_volume_translation(
+public  void  set_volume_starts(
     Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] );
+    Real    starts[] );
 
-public  void  get_volume_translation(
+public  void  get_volume_starts(
     Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] );
+    Real    starts[] );
+
+public  void  set_volume_direction_unit_cosine(
+    Volume   volume,
+    int      axis,
+    Real     dir[] );
 
 public  void  set_volume_direction_cosine(
     Volume   volume,
@@ -1321,29 +1484,57 @@ public  void  set_transform_origin(
     Transform   *transform,
     Point       *origin );
 
+public  void  get_transform_origin_real(
+    Transform   *transform,
+    Real        origin[] );
+
 public  void  get_transform_x_axis(
     Transform   *transform,
     Vector      *x_axis );
+
+public  void  get_transform_x_axis_real(
+    Transform   *transform,
+    Real        x_axis[] );
 
 public  void  set_transform_x_axis(
     Transform   *transform,
     Vector      *x_axis );
 
+public  void  set_transform_x_axis_real(
+    Transform   *transform,
+    Real        x_axis[] );
+
 public  void  get_transform_y_axis(
     Transform   *transform,
     Vector      *y_axis );
+
+public  void  get_transform_y_axis_real(
+    Transform   *transform,
+    Real        y_axis[] );
 
 public  void  set_transform_y_axis(
     Transform   *transform,
     Vector      *y_axis );
 
+public  void  set_transform_y_axis_real(
+    Transform   *transform,
+    Real        y_axis[] );
+
 public  void  get_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis );
 
+public  void  get_transform_z_axis_real(
+    Transform   *transform,
+    Real        z_axis[] );
+
 public  void  set_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis );
+
+public  void  set_transform_z_axis_real(
+    Transform   *transform,
+    Real        z_axis[] );
 
 public  void   make_change_to_bases_transform(
     Point      *origin,
@@ -1501,8 +1692,25 @@ public  BOOLEAN  check_clobber_file_default_suffix(
     STRING   filename,
     STRING   default_suffix );
 
+public  Status  make_backup_file(
+    STRING   filename,
+    STRING   *backup_filename );
+
+public  void  cleanup_backup_file(
+    STRING   filename,
+    STRING   backup_filename,
+    Status   status_of_write );
+
 public  void  remove_file(
     STRING  filename );
+
+public  Status  copy_file(
+    STRING  src,
+    STRING  dest );
+
+public  Status  move_file(
+    STRING  src,
+    STRING  dest );
 
 public  STRING  expand_filename(
     STRING  filename );
@@ -1517,6 +1725,8 @@ public  STRING  remove_directories_from_filename(
 public  BOOLEAN  file_exists_as_compressed(
     STRING       filename,
     STRING       *compressed_filename );
+
+public  STRING  get_temporary_filename( void );
 
 public  Status  open_file(
     STRING             filename,
