@@ -9,10 +9,10 @@ include $(ROOT)/Makefile_configuration
 
 # Executable names
 PROGS    = acr_nema_test
-EXTRA_OBJS = file_io.o acr_nema_io.o element.o group.o message.o
+OBJS     = file_io.o acr_nema_io.o element.o group.o message.o
 HEADERS  = $(EXTRA_OBJS:.o=.h) acr_nema.h
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(PROG_LDOPT)
+LDOPT    = $(MACHINE_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ LINTFLAGS = $(CDEFINES) $(INCLUDES)#        be same, except for -g/-O
 
 PROG_OBJ  = $(PROGS:=.o)#                 list of objects
 LINT_LIST = $(PROG_OBJ:.o=.ln)
-LINT_EXTRA= $(EXTRA_OBJS:.o=.ln)
+LINT_OBJS = $(OBJS:.o=.ln)
 LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 # --------------------------------------------------------------------
@@ -33,10 +33,10 @@ default: build
 
 all: build lint
 
-build: $(PROGS)
+build: $(CC_ACR_LIB) $(PROGS)
 
 #Dependency on Makefile
-$(PROG_OBJ) $(LINT_LIST) $(EXTRA_OBJS) $(LINT_EXTRA) : Makefile
+$(PROG_OBJ) $(LINT_LIST) $(OBJS) $(LINT_OBJS) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
@@ -45,19 +45,29 @@ $(PROG_OBJ) $(LINT_LIST) $(EXTRA_OBJS) $(LINT_EXTRA) : Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 #Dependency of .o and .ln on .h
-$(PROG_OBJ) $(EXTRA_OBJS) : $(HEADERS)
+$(PROG_OBJ) $(OBJS) : $(HEADERS)
 
-$(LINT_LIST) $(LINT_EXTRA) : $(HEADERS)
+$(LINT_LIST) $(LINT_OBJS) : $(HEADERS)
+
+#How to create library
+$(CC_ACR_LIB): $(OBJS)
+	$(RM) $(RM_FLAGS) $(CC_ACR_LIB)
+	$(AR) $(AR_FLAGS) $(CC_ACR_LIB) $(OBJS)
+	$(RANLIB) $(CC_ACR_LIB)
 
 # How to make executables
-$(PROGS) : $$@.o $(EXTRA_OBJS) $(CC_PROG_LIB) $(CC_MINC_LIB)
-	$(CC) -o $@ $@.o $(EXTRA_OBJS) $(LDOPT)
+$(PROGS) : $$@.o $(CC_ACR_LIB)
+	$(CC) -o $@ $@.o $(CC_ACR_LIB) $(MACHINE_LDOPT)
 
 #  how to lint the executable source
-lint: $(LINT_LIST_EXE)
+lint: $(LINT_ACR_LIB) $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
+# How to create lint library
+$(LINT_ACR_LIB) : $(LINT_OBJS)
+	lint -o $(ACR_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
+
+$(LINT_LIST_EXE) : $$@ln $(LINT_ACR_LIB)
+	lint -u $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
 
 # how to make man pages
 .man1.1:
@@ -66,7 +76,8 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 # Remove all derived files in this directory
 clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
-	            $(EXTRA_OBJS) $(LINT_EXTRA) $(MANPAGES)
+               $(CC_ACR_LIB) $(LINT_ACR_LIB) \
+	            $(OBJS) $(LINT_OBJS) $(MANPAGES)
 
 install:
 	@echo Nothing to install.
