@@ -13,6 +13,11 @@ static   const char      *N_DIMENSIONS_STRING = "Number_Dimensions";
 static   const char      *POINTS_STRING = "Points";
 static   const char      *DISPLACEMENTS_STRING = "Displacements";
 
+public  char  *get_default_transform_file_suffix()
+{
+    return( "xfm" );
+}
+
 private  void  output_one_transform(
     FILE                *file,
     Boolean             invert,

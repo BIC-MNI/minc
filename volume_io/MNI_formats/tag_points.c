@@ -4,13 +4,18 @@ static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
 static   const char      *VOLUMES_STRING = "Volumes";
 static   const char      *TAG_POINTS_STRING = "Points";
 
+public  char  *get_default_tag_file_suffix()
+{
+    return( "tag" );
+}
+
 public  Status  output_tag_points(
     FILE      *file,
     char      comments[],
     int       n_volumes,
     int       n_tag_points,
-    double    **tags_volume1,
-    double    **tags_volume2,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
@@ -108,11 +113,11 @@ public  Status  output_tag_points(
 }
 
 private  void  add_tag_point(
-    double  ***tags,
+    Real    ***tags,
     int     n_tag_points,
-    double  x,
-    double  y,
-    double  z )
+    Real    x,
+    Real    y,
+    Real    z )
 {
     SET_ARRAY_SIZE( *tags, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE );
 
@@ -124,9 +129,9 @@ private  void  add_tag_point(
 }
 
 private  void  add_tag_weight(
-    double  **weights,
+    Real    **weights,
     int     n_tag_points,
-    double  weight )
+    Real    weight )
 {
     SET_ARRAY_SIZE( *weights, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
     (*weights)[n_tag_points] = weight;
@@ -153,7 +158,7 @@ private  void  add_tag_label(
 }
 
 private   void  free_tags(
-    double  **tags,
+    Real    **tags,
     int     n_tag_points )
 {
     int   i;
@@ -181,8 +186,8 @@ private  void  free_labels(
 public  void  free_tag_points(
     int       n_volumes,
     int       n_tag_points,
-    double    **tags_volume1,
-    double    **tags_volume2,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
@@ -243,18 +248,18 @@ public  Status  input_tag_points(
     FILE      *file,
     int       *n_volumes,
     int       *n_tag_points,
-    double    ***tags_volume1,
-    double    ***tags_volume2,
+    Real      ***tags_volume1,
+    Real      ***tags_volume2,
     Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
     char      ***labels )
 {
     String  line;
-    double  weight;
+    Real    weight;
     Boolean last_was_blank, in_quotes;
     int     n_strings, structure_id, patient_id, pos, i;
-    double  x1, y1, z1, x2, y2, z2;
+    Real    x1, y1, z1, x2, y2, z2;
     String  label;
 
     /* parameter checking */
@@ -309,8 +314,8 @@ public  Status  input_tag_points(
         if( mni_input_double( file, &y1 ) != OK ||
             mni_input_double( file, &z1 ) != OK ||
             (*n_volumes == 2 &&
-             (mni_input_double( file, &y2 ) != OK ||
-              mni_input_double( file, &x2 ) != OK ||
+             (mni_input_double( file, &x2 ) != OK ||
+              mni_input_double( file, &y2 ) != OK ||
               mni_input_double( file, &z2 ) != OK)) )
         {
             (void) fprintf( stderr,
@@ -374,7 +379,7 @@ public  Status  input_tag_points(
         }
         else if( n_strings < 3 || n_strings > 4 ||
                  sscanf( line, "%lf %d %d %n", &weight, &structure_id,
-                         &patient_id, &pos ) != 4 )
+                         &patient_id, &pos ) != 3 )
         {
             (void) fprintf( stderr,
                   "input_tag_points(): error reading tag point %d\n",

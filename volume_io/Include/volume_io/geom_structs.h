@@ -41,11 +41,13 @@ typedef  struct
 
 typedef  unsigned  long    Colour;
 
-#define  make_Colour( r, g, b )                  \
-          ( (Colour) (r) |                \
+#define  make_rgba_Colour( r, g, b, a )            \
+          ( (Colour) (r) |                         \
            ((Colour) (g) << (Colour) 8) |          \
            ((Colour) (b) << (Colour) 16) |         \
-           ((Colour) 255 << (Colour) 24) )
+           ((Colour) (a) << (Colour) 24) )
+
+#define  make_Colour( r, g, b )  make_rgba_Colour( r, g, b, 255 )
 
 #define  get_Colour_r( colour ) ((colour) & 255)
 #define  get_Colour_g( colour ) (((colour) >> 8) & 255)
