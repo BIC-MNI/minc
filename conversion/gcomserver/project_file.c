@@ -7,9 +7,13 @@
 @CALLS      : 
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : $Log: project_file.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-11 13:09:40  neelin
+@MODIFIED   : Added more complicated syntax for project files so that different things
+@MODIFIED   : can be done to the data. The old syntax is still supported.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:50  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *
@@ -35,7 +39,13 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <string.h>
 #include <gcomserver.h>
+
+/* Macros */
+#define STREQ(s1, s2) (strcmp(s1, s2) == 0)
+#define STRCOPY(s1, s2, maxlen) \
+{ (void) strncpy(s1, s2, (maxlen)-1); s1[(maxlen)-1] = '\0'; }
 
 /* Function prototypes */
 int gethostname (char *name, int namelen);
@@ -43,51 +53,43 @@ int gethostname (char *name, int namelen);
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : read_project_file
 @INPUT      : project_name - name to use for project file
-@OUTPUT     : file_prefix - string used as prefix for output files 
-                 (can be NULL)
-              output_uid - uid for created files (can be NULL). Set to 
-                 INT_MIN if file not found.
-              output_gid - gid for created files (can be NULL). Set to
-                 INT_MIN if file not found.
-              command_line - command to execute on new file (can be NULL)
-              maxlen_command - maximum length for command_line
+@OUTPUT     : project_info - information about the project returned in
+                 a user-allocated structure. If NULL, then no data is
+                 returned.
 @RETURNS    : TRUE if an error occurs, FALSE otherwise.
-@DESCRIPTION: Routine to read in default information for a given project.
+@DESCRIPTION: Routine to read in information for a given project.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 14, 1995 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : September 9, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public int read_project_file(char *project_name, 
-                             char *file_prefix, 
-                             int *output_uid, int *output_gid,
-                             char *command_line, int maxlen_command)
+                             Project_File_Info *project_info)
 {
+   Project_File_Info temp_project_info;
    char project_string[256];
    char output_default_file[256];
-   char temp_file_prefix[256];
-   int temp_uid, temp_gid;
-   char temp_command_line[4];
    int ichar, ochar;
-   int length, index;
+   int length;
    FILE *fp;
    char string[512];
    int project_name_given;
+   char *keyword, *value, *ptr, *error;
+   int oldformat;
+   int iline;
 
    /* Check that the user actually wants return values */
-   if (file_prefix == NULL) file_prefix = temp_file_prefix;
-   if (output_uid == NULL) output_uid = &temp_uid;
-   if (output_gid == NULL) output_gid = &temp_gid;
-   if ((command_line == NULL) || (maxlen_command <= 0)) {
-      command_line = temp_command_line;
-      maxlen_command = sizeof(temp_command_line);
+   if (project_info == NULL) {
+      project_info = &temp_project_info;
    }
 
    /* Set some default values */
-   file_prefix[0] = '\0';
-   command_line[0] = '\0';
-   *output_uid = *output_gid = INT_MIN;
+   project_info->type = PROJECT_DIRECTORY;
+   project_info->info.directory.file_prefix[0] = '\0';
+   project_info->info.directory.command_line[0] = '\0';
+   project_info->info.directory.output_uid = INT_MIN;
+   project_info->info.directory.output_gid = INT_MIN;
 
    /* Copy the project name, removing spaces */
    if (project_name != NULL)
@@ -118,17 +120,187 @@ public int read_project_file(char *project_name,
    if ((fp=fopen(output_default_file, "r")) == NULL) {
       return project_name_given;
    }
-   if (fgets(string, (int) sizeof(string), fp) == NULL) {
-      return TRUE;
+
+   /* Loop over lines of the file */
+   iline = 0;
+   project_info->type = PROJECT_UNKNOWN;
+   while (fgets(string, (int) sizeof(string), fp) != NULL) {
+
+      /* Remove the newline, or read in the rest of the line 
+         if it is too long */
+      if (string[strlen(string) - 1] == '\n') {
+         string[strlen(string) - 1] = '\0';
+      }
+      else {
+         while ((getc(fp) != (int) '\n') && !feof(fp)) {}
+      }
+
+      /* Ignore comments and blank lines (don't even count them as lines) */
+      if (string[0] == '#') continue;
+      for (ptr=string; (*ptr != '\0') && isspace((int) *ptr); ptr++) {}
+      if (*ptr == '\0') continue;
+
+      /* If this is the first line, figure out whether we have an old
+         or new format file (look for the "=") */
+      ptr = strchr(string, (int) '=');
+      if (iline == 0) {
+         oldformat = (ptr == NULL);
+      }
+
+      /* Read old format file */
+      if (oldformat) {
+         switch (iline) {
+         case 0:
+            project_info->type = PROJECT_DIRECTORY;
+            if (sscanf(string, "%s %d %d", 
+                       project_info->info.directory.file_prefix, 
+                       &project_info->info.directory.output_uid, 
+                       &project_info->info.directory.output_gid) != 3) {
+               (void) fclose(fp);
+               return TRUE;
+            }
+            break;
+         case 1:
+            (void) strcpy(project_info->info.directory.command_line, string);
+            break;
+         default:
+            (void) fprintf(stderr, 
+               "Old format project file (%s) contains extra lines\n",
+                           project_string);
+            (void) fclose(fp);
+            return TRUE;
+         }
+      }
+
+      /* Read new format file */
+      else {                /* New format */
+
+         /* Check for missing '=' */
+         if (ptr == NULL) {
+            (void) fprintf(stderr, "Project file error (%s): syntax error\n",
+                           project_string);
+            (void) fclose(fp);
+            return TRUE;
+         }
+
+         /* Get keyword and value (remove leading and trailing whitespace) */
+         for (keyword=string; isspace((int) *keyword); keyword++) {}
+         if (*keyword == '=') keyword--;
+         for (value = ptr+1; isspace((int) *value); value++) {}
+         for (ptr--; (ptr > keyword) && isspace((int) *ptr); ptr--) {}
+         ptr++;
+         *ptr = '\0';
+         for (ptr=&value[strlen(value)-1]; 
+              (ptr > value) && isspace((int) *ptr); ptr--) {}
+         ptr++;
+         *ptr = '\0';
+
+         /* Set up error string */
+         error = NULL;
+
+         /* Look for the project type on the first line */
+         if (iline == 0) {
+            if (STREQ(keyword, "Type")) {
+               if (STREQ(value, "Directory")) {
+                  project_info->type = PROJECT_DIRECTORY;
+               }
+               else if (STREQ(value, "Dicom")) {
+                  project_info->type = PROJECT_DICOM;
+                  project_info->info.dicom.hostname[0] = '\0';
+                  project_info->info.dicom.port[0] = '\0';
+                  project_info->info.dicom.AEtitle[0] = '\0';
+               }
+               else {
+                  error = "Unknown project type";
+               }
+            }
+            else {
+               error = "Type must be given on first line";
+            }
+         }
+
+         /* Get other keywords */
+         else {                           /* Subsequent lines */
+
+            /* Check that project type is defined */
+            if (project_info->type == PROJECT_UNKNOWN) {
+               error = "Type must be given on first line";
+            }
+
+            /* Keywords for directory type */
+            else if (project_info->type == PROJECT_DIRECTORY) {
+               if (STREQ("Prefix", keyword)) {
+                  STRCOPY(project_info->info.directory.file_prefix,
+                          value, LONG_LINE);
+               }
+               else if (STREQ("Uid", keyword)) {
+                  project_info->info.directory.output_uid = atoi(value);
+               }
+               else if (STREQ("Gid", keyword)) {
+                  project_info->info.directory.output_gid = atoi(value);
+               }
+               else if (STREQ("Command", keyword)) {
+                  STRCOPY(project_info->info.directory.command_line,
+                          value, LONG_LINE);
+               }
+               else {
+                  error = "Unrecognized keyword for given type";
+               }
+            }
+
+            /* Keywords for dicom type */
+            else if (project_info->type == PROJECT_DICOM) {
+               if (STREQ("Host", keyword)) {
+                  STRCOPY(project_info->info.dicom.hostname,
+                          value, SHORT_LINE);
+               }
+               else if (STREQ("Port", keyword)) {
+                  STRCOPY(project_info->info.dicom.port,
+                          value, SHORT_LINE);
+               }
+               else if (STREQ("AEtitle", keyword)) {
+                  STRCOPY(project_info->info.dicom.AEtitle,
+                          value, SHORT_LINE);
+               }
+               else {
+                  error = "Unrecognized keyword for given type";
+               }
+            }
+
+         }          /* Subsequent lines */
+
+         /* Check for error */
+         if (error != NULL) {
+            (void) fprintf(stderr, "Project file error (%s), keyword %s: %s\n",
+                           project_string, keyword, error);
+            (void) fclose(fp);
+            return TRUE;
+         }
+
+      }             /* New format */
+
+      /* Increment the line counter */
+      iline++;
    }
-   if (sscanf(string, "%s %d %d", file_prefix, output_uid, output_gid) != 3) {
-      return TRUE;
-   }
-   (void) fgets(command_line, maxlen_command, fp);
-   index = strlen(command_line) - 1;
-   if ((index >= 0) && (command_line[index] == '\n'))
-      command_line[index] = '\0';
+
+   /* Close the file */
    (void) fclose(fp);
+
+   /* Check that something was found */
+   if (project_info->type == PROJECT_UNKNOWN) {
+      return TRUE;
+   }
+
+   /* Check that minimal set of keywords was found */
+   if (project_info->type == PROJECT_DICOM) {
+      if ((project_info->info.dicom.hostname[0] == '\0') ||
+          (project_info->info.dicom.port[0] == '\0') ||
+          (project_info->info.dicom.AEtitle[0] == '\0')) {
+         (void) fprintf(stderr, "Project file (%s) missing options\n",
+                        project_string);
+         return TRUE;
+      }
+   }
 
    return FALSE;
 }
@@ -182,7 +354,7 @@ public void get_project_option_string(char *project_option_string,
             name = &dp->d_name[compare_length];
 
             /* Check that we can read the project file */
-            if (!read_project_file(name, NULL, NULL, NULL, NULL, 0)) {
+            if (!read_project_file(name, NULL)) {
                if (length > 1)
                   filler = ", ";
                else

@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-11 13:09:40  neelin
+@MODIFIED   : Added more complicated syntax for project files so that different things
+@MODIFIED   : can be done to the data. The old syntax is still supported.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:50  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *
@@ -111,6 +115,10 @@
 #define OUTPUT_DEFAULT_FILE_DIR "/usr/local/lib"
 #define OUTPUT_DEFAULT_FILE_PREFIX "gcomserver."
 
+/* String lengths */
+#define SHORT_LINE 64
+#define LONG_LINE 512
+
 /* System log file (set to NULL for no logging of error) */
 #define SYSTEM_LOG "/dev/log"
 
@@ -125,6 +133,34 @@ typedef struct {
    int num_dyn_scans;
    int dyn_scan_number;
 } Data_Object_Info;
+
+/* Type for project file information */
+typedef struct {
+
+   /* Type of information stored in project file */
+   enum {PROJECT_DIRECTORY, PROJECT_DICOM, PROJECT_UNKNOWN} type;
+
+   /* Information associated with project */
+   union {
+
+      /* Information for storing data in directories */
+      struct {
+         char file_prefix[LONG_LINE];
+         int output_uid;
+         int output_gid;
+         char command_line[LONG_LINE];
+      } directory;
+
+      /* Information for converting data to dicom */
+      struct {
+         char hostname[SHORT_LINE];
+         char port[SHORT_LINE];
+         char AEtitle[SHORT_LINE];
+      } dicom;
+
+   } info;
+
+} Project_File_Info;
 
 /* Define macro for array size */
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))

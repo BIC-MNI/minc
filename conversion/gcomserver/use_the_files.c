@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-11 13:09:40  neelin
+@MODIFIED   : Added more complicated syntax for project files so that different things
+@MODIFIED   : can be done to the data. The old syntax is still supported.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:50  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *
@@ -116,16 +120,19 @@ public void use_the_files(char *project_name,
    int dyn_scans_in_one_file;
    int exit_status;
    char *output_file_name;
-   char file_prefix[256];
+   char *file_prefix;
+   char *command_line;
    int output_uid, output_gid;
-   char command_line[512];
    char string[512];
    FILE *fp;
+   Project_File_Info project_info;
 
    /* Look for defaults file */
-   (void) read_project_file(project_name, file_prefix, 
-                            &output_uid, &output_gid,
-                            command_line, (int) sizeof(command_line));
+   (void) read_project_file(project_name, &project_info);
+   file_prefix = project_info.info.directory.file_prefix;
+   output_uid = project_info.info.directory.output_uid;
+   output_gid = project_info.info.directory.output_gid;
+   command_line = project_info.info.directory.command_line;
 
    /* Allocate space for acquisition file list */
    acq_file_list = MALLOC(num_files * sizeof(*acq_file_list));
@@ -183,9 +190,8 @@ public void use_the_files(char *project_name,
          }
 
          /* Create minc file */
-         exit_status = gyro_to_minc(num_acq_files, acq_file_list, NULL,
-                                    FALSE, file_prefix, 
-                                    &output_file_name);
+         exit_status = gyro_to_minc(num_acq_files, acq_file_list, NULL, FALSE, 
+                                    file_prefix, &output_file_name);
 
          if (exit_status != EXIT_SUCCESS) continue;
 

@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:50  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-11 13:09:40  neelin
+@MODIFIED   : Added more complicated syntax for project files so that different things
+@MODIFIED   : can be done to the data. The old syntax is still supported.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:50  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:07  neelin
  * Release of minc version 0.4
  *
@@ -274,7 +278,7 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
 
    /* Check that the project file is okay - if not get a string listing 
       possible project names and send it back */
-   if (read_project_file(*project_name, NULL, NULL, NULL, NULL, 0)) {
+   if (read_project_file(*project_name, NULL)) {
 
       /* Print an error message */
       (void) fprintf(stderr, "Unknown project \"%s\"\n", *project_name);

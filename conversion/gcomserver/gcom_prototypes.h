@@ -63,8 +63,6 @@ public void save_minc_image(int icvid, General_Info *general_info,
 public void close_minc_file(int icvid);
 public void string_to_filename(char *string, char *filename, int maxlen);
 public int read_project_file(char *project_name, 
-                             char *file_prefix, 
-                             int *output_uid, int *output_gid,
-                             char *command_line, int maxlen_command);
+                             Project_File_Info *project_info);
 public void get_project_option_string(char *project_option_string,
                                       int maxlen_project_option);
