@@ -27,7 +27,8 @@ include_HEADERS = \
 	libsrc/time_stamp.h \
 	libsrc/minc_compat.h \
 	volume_io/Include/volume_io.h \
-	libsrc2/minc2.h
+	libsrc2/minc2.h \
+	libsrc/minc_simple.h
 
 include_volume_iodir = $(includedir)/volume_io
 
@@ -131,11 +132,15 @@ noinst_PROGRAMS = \
 
 LDADD = libvolume_io2.la libminc2.la
 
-EXTRA_DIST = GETTING_STARTED $(m4_files) \
+EXTRA_DIST = GETTING_STARTED \
+	$(m4_files) \
 	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
-	mni_minc.epm.header README.binary_packaging \
+	mni_minc.epm.header \
+	README.binary_packaging \
+	libsrc/config.h.msvc-win32 \
+	Makefile.msvc-win32 \
 	WHATSNEW-2.0
 
 # The fortran directory is not yet automakified, so it is just
@@ -258,6 +263,7 @@ libminc2_la_SOURCES = \
 	libsrc/voxel_loop.c \
 	libsrc/hdf_convenience.c \
 	libsrc/minc_compat.c \
+	libsrc/minc_simple.c \
 	libsrc2/convert.c \
 	libsrc2/datatype.c \
 	libsrc2/dimension.c \
