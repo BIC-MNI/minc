@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.4  1997-10-20 23:22:38  neelin
-@MODIFIED   : Added routine acr_dicom_close_no_release to close a connection that does
-@MODIFIED   : not have an association.
+@MODIFIED   : Revision 6.5  1998-02-18 20:27:13  neelin
+@MODIFIED   : Minor bug fix in uid_equal.
 @MODIFIED   :
+ * Revision 6.4  1997/10/20  23:22:38  neelin
+ * Added routine acr_dicom_close_no_release to close a connection that does
+ * not have an association.
+ *
  * Revision 6.3  1997/10/20  22:52:46  neelin
  * Added support for implementation user information in association request.
  *
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.4 1997-10-20 23:22:38 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.5 1998-02-18 20:27:13 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -244,7 +247,6 @@ public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout)
 ---------------------------------------------------------------------------- */
 public void acr_close_dicom_connection(Acr_File *afpin, Acr_File *afpout)
 {
-   FILE *fpin, *fpout;
 
    /* Release the association */
    (void) acr_release_dicom_association(afpin, afpout);
@@ -829,17 +831,16 @@ public int acr_uid_equal(char *uid1, char *uid2)
 {
    int len1, len2, i;
 
-   len1 = strlen(uid1);
-   len2 = strlen(uid2);
-
    /* Skip leading blanks */
    while (isspace(*uid1)) {uid1++;}
    while (isspace(*uid2)) {uid2++;}
 
    /* Skip trailing blanks */
-   for (i=len1-1; (i >= 0) && isspace(uid1[i]); i++) {}
+   len1 = strlen(uid1);
+   for (i=len1-1; (i >= 0) && isspace(uid1[i]); i--) {}
    if (isspace(uid1[i+1])) uid1[i+1] = '\0';
-   for (i=len2-1; (i >= 0) && isspace(uid1[i]); i++) {}
+   len2 = strlen(uid2);
+   for (i=len2-1; (i >= 0) && isspace(uid1[i]); i--) {}
    if (isspace(uid1[i+1])) uid1[i+1] = '\0';
 
    /* Compare the strings */
