@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.8  2001-11-13 21:00:24  neelin
+ * Revision 6.9  2001-11-28 15:38:07  neelin
+ * Removed limit on number of icvs that can exist at one time.
+ *
+ * Revision 6.8  2001/11/13 21:00:24  neelin
  * Modified icv scaling calculations for no normalization. When the icv
  * type is double, normalization is always done, regardless of the
  * normalization setting. When the external type is floating point,
@@ -141,7 +144,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.8 2001-11-13 21:00:24 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.9 2001-11-28 15:38:07 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -161,10 +164,8 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 
 /* Array of pointers to image conversion structures */
-static mi_icv_type *minc_icv_list[MI_MAX_NUM_ICV] = {
-   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+static int minc_icv_list_nalloc = 0;
+static mi_icv_type **minc_icv_list = NULL;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_create
@@ -184,15 +185,41 @@ public int miicv_create()
    int new_icv;       /* Id of newly created icv */
    mi_icv_type *icvp;  /* Pointer to new icv structure */
    int idim;
+   int new_nalloc;
 
    MI_SAVE_ROUTINE_NAME("miicv_create");
 
    /* Look for free slot */
-   for (new_icv=0; new_icv<MI_MAX_NUM_ICV; new_icv++)
+   for (new_icv=0; new_icv<minc_icv_list_nalloc; new_icv++)
       if (minc_icv_list[new_icv]==NULL) break;
-   if (new_icv>=MI_MAX_NUM_ICV) {
-      MI_LOG_PKG_ERROR2(MI_ERR_NOICV,"No more icv's available");
-      MI_RETURN_ERROR(MI_ERROR);
+
+   /* If none, then extend the list */
+   if (new_icv>=minc_icv_list_nalloc) {
+
+      /* How much space will be needed? */
+      new_nalloc = minc_icv_list_nalloc + MI_MAX_NUM_ICV;
+
+      /* Check for first allocation */
+      if (minc_icv_list_nalloc == 0) {
+         minc_icv_list = MALLOC(new_nalloc, mi_icv_type *);
+      }
+      else {
+         minc_icv_list = REALLOC(minc_icv_list, new_nalloc, mi_icv_type *);
+      }
+
+      /* Check that the allocation was successful */
+      if (minc_icv_list == NULL) {
+         MI_LOG_SYS_ERROR1("miicv_create");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      /* Put in NULL pointers */
+      for (new_icv=minc_icv_list_nalloc; new_icv<new_nalloc; new_icv++)
+         minc_icv_list[new_icv] = NULL;
+
+      /* Use the first free slot and update the list length */
+      new_icv = minc_icv_list_nalloc;
+      minc_icv_list_nalloc = new_nalloc;
+
    }
 
    /* Allocate a new structure */
@@ -1702,7 +1729,8 @@ semiprivate mi_icv_type *MI_icv_chkid(int icvid)
    MI_SAVE_ROUTINE_NAME("MI_icv_chkid");
 
    /* Check icv id */
-   if ((icvid<0) || (icvid>MI_MAX_NUM_ICV) || (minc_icv_list[icvid]==NULL)) {
+   if ((icvid<0) || (icvid>=minc_icv_list_nalloc) || 
+       (minc_icv_list[icvid]==NULL)) {
       MI_LOG_PKG_ERROR2(MI_ERR_BADICV,"Illegal icv identifier");
       MI_RETURN_ERROR((void *) NULL);
    }
