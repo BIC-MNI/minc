@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.6  1993-11-26 18:47:51  neelin
+@MODIFIED   : Revision 1.7  1993-11-30 08:57:42  neelin
 @MODIFIED   : Added group and group list copy routines.
 @MODIFIED   :
+ * Revision 1.6  93/11/26  18:47:51  neelin
+ * Added group and group list copy routines.
+ * 
  * Revision 1.5  93/11/25  10:36:57  neelin
  * Fixed input_group_list (wasn't checking max properly).
  * 
@@ -157,6 +160,7 @@ public Acr_Group acr_copy_group(Acr_Group group)
    cur = acr_get_element_next(group->list_head);
    while (cur != NULL) {
       acr_group_add_element(copy, acr_copy_element(cur));
+      cur = acr_get_element_next(cur);
    }
 
    return copy;
