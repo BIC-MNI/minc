@@ -1,4 +1,8 @@
 MINC 2:
+2004-12-14 Bert Vincent <bert@bic.mni.mcgill.ca>
+     * Got rid of lots of C99-related warnings
+     * Added new biModalT algorithms to mincstats
+
 2004-12-15 Andrew Janke <rotor@bic.mni.mcgill.ca>
     * added epm-header.in, removed mni_minc.epm.header
 
