@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.8  2001-09-18 15:32:39  neelin
+ * Revision 6.9  2004-04-27 15:37:13  bert
+ * Added -2 flag
+ *
+ * Revision 6.8  2001/09/18 15:32:39  neelin
  * Create image variable last to allow big images and to fix compatibility
  * problems with 2.3 and 3.x.
  *
@@ -91,7 +94,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.8 2001-09-18 15:32:39 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.9 2004-04-27 15:37:13 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -136,7 +139,7 @@ typedef struct {
    char *output_file;
    int num_input_files;
    char *history;
-   int clobber;
+   int cflags;
    int verbose;
    nc_type output_datatype;
    int output_is_signed;
@@ -288,6 +291,9 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Argument variables */
    static int clobber = FALSE;
+#ifdef MINC2
+   static int minc2_format = FALSE;
+#endif /* MINC2 defined */
    static int verbose = TRUE;
    static nc_type datatype = MI_ORIGINAL_TYPE;
    static int is_signed = INT_MIN;
@@ -306,6 +312,11 @@ public void get_arginfo(int argc, char *argv[],
    static ArgvInfo argTable[] = {
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "General options:"},
+
+#ifdef MINC2
+      {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
+       "Produce a MINC 2.0 format output file"},
+#endif /* MINC2 defined */
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber, 
           "Overwrite existing file."},
       {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber, 
@@ -490,7 +501,17 @@ public void get_arginfo(int argc, char *argv[],
    concat_info->output_file = output_file;
    concat_info->num_input_files = *num_input_files;
    concat_info->history = history;
-   concat_info->clobber = clobber;
+   if (clobber) {
+       concat_info->cflags = NC_CLOBBER;
+   }
+   else {
+       concat_info->cflags = NC_NOCLOBBER;
+   }
+#ifdef MINC2
+   if (minc2_format) {
+       concat_info->cflags |= MI2_CREATE_V2;
+   }
+#endif /* MINC2 defined */
    concat_info->verbose = verbose;
    concat_info->max_memory_use_in_kb = max_chunk_size_in_kb;
    concat_info->check_dim_info = check_dim_info;
@@ -1181,8 +1202,7 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
    double valid_range[2];
 
    /* Create the file */
-   outmincid = micreate(concat_info->output_file,
-                        (concat_info->clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   outmincid = micreate(concat_info->output_file, concat_info->cflags);
 
    /* Get image variable id for input file */
    inimgid = ncvarid(inmincid, MIimage);
