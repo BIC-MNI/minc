@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : $Log: minc_modify_header.c,v $
-@MODIFIED   : Revision 1.1  1995-04-04 15:51:42  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1995-04-04 19:10:56  neelin
+@MODIFIED   : Fixed handling of compressed files.
 @MODIFIED   :
+ * Revision 1.1  1995/04/04  15:51:42  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 1.1 1995-04-04 15:51:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 1.2 1995-04-04 19:10:56 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -112,20 +115,20 @@ main(int argc, char *argv[])
    /* Create temp file name. First try looking for minc extension, then
       a compression extension. Chop off the unwanted extension. */
    (void) strncpy(string, filename, sizeof(string)-1);
-   tempfile = strstr(filename, MINC_EXTENSION);
+   tempfile = strstr(string, MINC_EXTENSION);
    if (tempfile != NULL) {
       tempfile += strlen(MINC_EXTENSION);
       if (*tempfile == '\0')
          tempfile = NULL;
    }
    else {
-      tempfile = strstr(filename, GZIP_EXTENSION);
+      tempfile = strstr(string, GZIP_EXTENSION);
       if (tempfile == NULL)
-         tempfile = strstr(filename, COMPRESS_EXTENSION);
+         tempfile = strstr(string, COMPRESS_EXTENSION);
       if (tempfile == NULL)
-         tempfile = strstr(filename, PACK_EXTENSION);
+         tempfile = strstr(string, PACK_EXTENSION);
       if (tempfile == NULL)
-         tempfile = strstr(filename, ZIP_EXTENSION);
+         tempfile = strstr(string, ZIP_EXTENSION);
    }
    if (tempfile != NULL) {
       *tempfile = '\0';
