@@ -41,41 +41,6 @@ private  BOOLEAN  is_default_direction_cosine(
     return( is_default );
 }
 
-private  BOOLEAN  get_dimension_ordering(
-    int          n_dimensions,
-    char         *dim_names[],
-    char         output_dim_names[][MAX_NC_NAME+1],
-    int          ordering[] )
-{
-    int      d, c, n_found;
-
-    for_less( d, 0, n_dimensions )
-        ordering[d] = -1;
-
-    n_found = 0;
-
-    for_less( d, 0, n_dimensions )
-    {
-        for_less( c, 0, n_dimensions )
-        {
-            if( ordering[c] < 0 &&
-                strcmp( dim_names[d], output_dim_names[c] ) == 0 )
-            {
-                ordering[c] = d;
-                ++n_found;
-            }
-        }
-    }
-
-    if( n_found != n_dimensions && n_found != 0 )
-    {
-        print( "Unsuccessful matching of volume and output dimension names.\n");
-        print( "Using default\n" );
-    }
-
-    return( n_found == n_dimensions );
-}
-
 public  Minc_file  initialize_minc_output(
     char                   filename[],
     int                    n_dimensions,
@@ -394,16 +359,67 @@ public  Status  add_minc_history(
     return( OK );
 }
 
+private  Status  get_dimension_ordering(
+    int          n_vol_dims,
+    char         *vol_dim_names[],
+    int          n_file_dims,
+    char         *file_dim_names[],
+    int          to_volume[],
+    int          to_file[] )
+{
+    Status   status;
+    int      v, f, n_found;
+
+    for_less( f, 0, n_file_dims )
+        to_volume[f] = -1;
+
+    for_less( v, 0, n_vol_dims )
+        to_file[v] = -1;
+
+    n_found = 0;
+
+    for_less( v, 0, n_vol_dims )
+    {
+        for_less( f, 0, n_file_dims )
+        {
+            if( to_volume[f] < 0 &&
+                strcmp( vol_dim_names[v], file_dim_names[f] ) == 0 )
+            {
+                to_volume[f] = v;
+                to_file[v] = f;
+                ++n_found;
+            }
+        }
+    }
+
+    if( n_found != n_vol_dims )
+    {
+        print( "Unsuccessful matching of volume and output dimension names.\n");
+        status = ERROR;
+    }
+    else
+        status = OK;
+
+    return( status );
+}
+
 public  Status  output_minc_volume(
     Minc_file   file,
     Volume      volume )
 {
-    int    d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
-    long   start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
-    long   start_index, mindex[MAX_VAR_DIMS];
-    Real   voxel_min, voxel_max;
-    double dim_value;
-    void   *data_ptr;
+    int               d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
+    int               first_vol_index;
+    int               to_volume[MAX_DIMENSIONS], to_file[MAX_DIMENSIONS];
+    int               vol_index, step, n_steps;
+    int               ind[MAX_DIMENSIONS];
+    long              start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+    long              start_index, mindex[MAX_VAR_DIMS];
+    Real              voxel_min, voxel_max;
+    char              **vol_dimension_names;
+    double            dim_value;
+    BOOLEAN           increment;
+    void              *data_ptr;
+    progress_struct   progress;
 
     if( !file->end_def_done )
     {
@@ -474,58 +490,155 @@ public  Status  output_minc_volume(
         return( ERROR );
     }
 
+    /*--- find correspondence between volume dimensions and file dimensions */
+
+    vol_dimension_names = get_volume_dimension_names( volume );
+
+    if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
+                                file->n_file_dimensions, file->dim_names,
+                                to_volume, to_file ) != OK )
+        return( ERROR );
+
+    delete_dimension_names( vol_dimension_names );
+
     get_volume_sizes( volume, sizes );
 
-    for_less( d, 0, n_volume_dims )
+    /*--- check sizes match between volume and file */
+
+    for_less( d, 0, file->n_file_dimensions )
     {
-        if( sizes[d] !=
-            file->sizes_in_file[d + file->n_file_dimensions - n_volume_dims] )
+        vol_index = to_volume[d];
+ 
+        if( vol_index >= 0 && sizes[vol_index] != file->sizes_in_file[d] )
         {
             print(
             "output_minc_volume: volume size[%d]=%d does not match file[%d]=%d.\n",
-                d, sizes[d], d + file->n_file_dimensions - n_volume_dims,
-                file->sizes_in_file[d + file->n_file_dimensions-n_volume_dims]);
+                vol_index, sizes[vol_index], d, file->sizes_in_file[d] );
             return( ERROR );
         }
     }
 
-    if( file->indices[0] >= file->sizes_in_file[0] )
+    /*--- check number of volumes written */
+
+    d = 0;
+    while( d < file->n_file_dimensions && to_volume[d] != -1 )
+        ++d;
+
+    if( d < file->n_file_dimensions &&
+        file->indices[d] >= file->sizes_in_file[d] )
     {
         print( "output_minc_volume: attempted to write too many subvolumes.\n");
         return( ERROR );
     }
 
-    for_less( d, 0, file->n_file_dimensions )
+    /*--- determine which contiguous blocks of volume to output */
+
+    first_vol_index = n_volume_dims-1;
+
+    while( first_vol_index > 0 &&
+           to_file[first_vol_index-1] < to_file[first_vol_index] )
     {
-        if( d < file->n_file_dimensions - n_volume_dims )
-        {
-            start[d] = file->indices[d];
-            count[d] = 1;
-        }
-        else
-        {
-            start[d] = 0;
-            count[d] = file->sizes_in_file[d];
-        }
+        --first_vol_index;
     }
 
-    GET_VOXEL_PTR( data_ptr, volume, 0, 0, 0, 0, 0 );
-    (void) miicv_put( file->icv, start, count, (void *) data_ptr );
+    /*--- now write entire volume in contiguous chunks (possibly only 1 req'd)*/
 
-    d = file->n_file_dimensions - n_volume_dims - 1;
-    if( d < 0 )
-        d = 0;
+    n_steps = 1;
+    for_less( i, 0, first_vol_index )
+        n_steps *= sizes[i];
+    step = 0;
 
-    while( TRUE )
+    initialize_progress( &progress, FALSE, n_steps,"Outputting Volume" );
+
+    increment = FALSE;
+    while( !increment )
     {
-        ++file->indices[d];
+        /*--- set the indices of the file array to write */
 
-        if( file->indices[d] < file->sizes_in_file[d] || d == 0 )
-            break;
+        for_less( d, 0, file->n_file_dimensions )
+        {
+            vol_index = to_volume[d];
+            if( vol_index >= first_vol_index )
+            {
+                start[d] = 0;
+                count[d] = file->sizes_in_file[d];
+            }
+            else
+            {
+                start[d] = file->indices[d];
+                count[d] = 1;
+            }
+        }
 
-        file->indices[d] = 0;
+        /*--- set the indices of the volume to write */
 
-        --d;
+        for_less( d, 0, MAX_DIMENSIONS )
+        {
+            if( d < first_vol_index )
+                ind[d] = file->indices[to_file[d]];
+            else
+                ind[d] = 0;
+        }
+
+        /*--- get a pointer to the chunk in the volume */
+
+        GET_VOXEL_PTR( data_ptr, volume,
+                       ind[0], ind[1], ind[2], ind[3], ind[4] );
+
+        /*--- output the data */
+
+        (void) miicv_put( file->icv, start, count, (void *) data_ptr );
+
+        increment = TRUE;
+
+        /*--- increment the file index dimensions which correspond
+              to volume dimensions before first_vol_index */
+
+        d = first_vol_index-1;
+
+        while( increment && d >= 0 )
+        {
+            ++file->indices[to_file[d]];
+            if( file->indices[to_file[d]] < file->sizes_in_file[to_file[d]] )
+            {
+                increment = FALSE;
+            }
+            else
+            {
+                file->indices[to_file[d]] = 0;
+                --d;
+            }
+        }
+
+        ++step;
+
+        update_progress_report( &progress, step );
+    }
+
+    terminate_progress_report( &progress );
+
+    /*--- increment the file index dimensions which do not
+          correspond to volume dimensions */
+
+    d = file->n_file_dimensions-1;
+    while( increment && d <= 0 )
+    {
+        if( to_volume[d] != -1 )
+            --d;
+        else
+        {
+            ++file->indices[d];
+
+            if( file->indices[d] < file->sizes_in_file[d] )
+            {
+                increment = FALSE;
+            }
+            else
+            {
+                file->indices[d] = 0;
+                --d;
+            }
+        }
     }
 
     return( OK );
@@ -559,13 +672,13 @@ public  void  set_default_minc_output_options(
     int   i;
 
     for_less( i, 0, MAX_DIMENSIONS )
-        (void) strpcy( options->dimension_names[i], "" );
+        (void) strcpy( options->dimension_names[i], "" );
 }
 
 public  void  set_minc_output_dimensions_order(
     minc_output_options  *options,
     int                  n_dimensions,
-    char                 *dimension_names[] )
+    STRING               dimension_names[] )
 {
     int   i;
 
