@@ -1,0 +1,779 @@
+<!DOCTYPE HTML PUBLIC "-//Netscape Comm. Corp.//DTD HTML//EN">
+<HTML>
+<HEAD>
+    <!-- SGI_COMMENT COSMOCREATE -->
+    <!-- SGI_COMMENT VERSION NUMBER="1.0" -->
+    <TITLE>ANALYZE (TM) Coordinate system / File Format</TITLE>
+</HEAD>
+<BODY BGCOLOR="white">
+<H1>
+ANALYZE<sup><KBD>TM</KBD></sup> 7.5 <A NAME="CoordinateSystem">Coordinate 
+System</A></H1>
+<P>
+The coordinate system employed by the ANALYZE<sup><KBD>TM</KBD></sup>
+ programs is left-handed, with the coordinate origin in the lower left 
+corner. Thus, with the subject lying supine, the coordinate origin is 
+on the right side of the body (x), at the back (y), and at the feet (z).</P>
+<P>
+A major advantage of this convention is that the coordinate origin of 
+each orthogonal orientation (transverse, coronal, and sagittal) lies in 
+the lower left corner of the slice as it is displayed.</P>
+<P>
+Orthogonal slices are numbered from one to the number of slices in that 
+orientation. For example, a volume (x, y, z) dimensioned 128, 256, 48 
+has: </P>
+<UL>
+    <LI>
+    48 transverse slices numbered 1 through 48 
+    <LI>
+    128 sagittal slices numbered 1 through 128 
+    <LI>
+    256 coronal slices numbered 1 through 256 
+</UL>
+<P>
+Pixel coordinates are made with reference to the slice numbers from 
+which the pixels come. Thus, the first pixel in the volume is 
+referenced p(1,1,1) and not at p(0,0,0).</P>
+<P>
+The names of the orthogonal planes can be changed in the Configure 
+program.</P>
+<P>
+This system is illustrated in the following diagrams.</P>
+<H4>
+<B>Volume</B></H4>
+<UL>
+    <LI>
+    Transverse slices are in the XY plane. 
+    <LI>
+    Sagittal slices are in the ZY plane. 
+    <LI>
+    Coronal slices are in the ZX plane. 
+</UL>
+<CENTER><P ALIGN="CENTER">
+<IMG SRC="images/Orthodiagramsg.gif"
+ SGI_SRC="/images/bir/STAFF/mar/web/analyze/images/Orthodiagramsg.gif"></P>
+</CENTER><H4>
+Origin/Order Consistency</H4>
+<P>
+We refer to the ANALYZE<sup><KBD>TM</KBD></sup> coordinate system as an 
+origin/order system because it is based on an unambiguous single 3-D 
+origin in the image data, and on the idea that the order of pixels in 
+one line of a section, the order of lines in a section, and the order 
+of sections in a volume all proceed from the origin. As shown in Figure 
+2, the projection of the origin is always displayed at the lower left 
+of the screen, and the order of slices is always from the origin 
+outward. Image data in any of these three orientations (if properly 
+identified) will be correctly rendered as a 3D image (i.e. left-sided 
+defects will appear on the left side of the 3-D rendering). Flipping 
+data in any of the three orientations about two axes will also result 
+in a correctly rendered 3-D image, but the two axis flip will move the 
+effective location of the origin, and the orthogonal sections may 
+appear upside down or left/right reversed when displayed. Flipping the 
+data about one or three axes will ruin the integrity of the data and 
+cause 3-D renderings to appear mirror-reversed (i.e. right-sided 
+lesions will appear to be on the left). Mislabeling transverse data 
+sets as sagittal or vice-versa will not destroy the coherence of the 
+data, and renderings will be correct although the labelling of axes 
+will be in error. However, mislabeling transverse or sagittal images as 
+coronal (or vice-versa) will cause renderings to be mirror reversed.</P>
+<CENTER><P ALIGN="CENTER">
+<IMG SRC="images/Figure2.gif"
+ SGI_SRC="/images/bir/STAFF/mar/web/analyze/images/Figure2.gif"> </P>
+</CENTER><P>
+It should be noted that the choice of a particular origin/order system 
+is largely arbitrary, and that there are 16 possible origin/order 
+systems based on the transverse orientation, and another 16 possible 
+systems based on each of the other two orientations. </P>
+<H4>
+Other Consistent Systems</H4>
+<P>
+Origin/order systems provide many conveniences to the programmer, 
+because the complete 3-D orientation of a volume image is coded into 
+the order of pixels in the image file. Origin/order is not, however, 
+the only logically consistent way of thinking about 3-D images made up 
+of 2-D sections. Those who work with sectional images which are not 
+inherently registered by the imaging modality (such as serial 
+microscopic sections or photographs of gross tissue specimens) may 
+naturally think of the sections in a view/order system.</P>
+<P>
+View/order consistency is not concerned with the maintenance of a 
+single unambiguous 3-D origin, it simply posits a relationship which 
+should hold between the orientation of the sectional images and their 
+order in the data file. A view/order based system would accept 
+sectional images in any of six orientations, and would assign the x, y, 
+and z axis to the row, column, and slice directions of the image data 
+regardless of the physical section orientation. The main advantage of 
+the view/order concept is that it is highly intuitive and is completely 
+insensitive to orientation. Its major drawback is that the location of 
+the origin and orientations of the axes will vary depending upon the 
+section orientation. Figure 3 illustrates the view order system which 
+most closely matches the origin/order system of ANALYZE<sup><KBD>TM</KBD></sup>, 
+i.e., it is a left-handed coordinate system based on the transverse 
+ANALYZE<sup><KBD>TM</KBD></sup> specification. Note carefully the 
+nconsistencies between this system and the one used in ANALYZE<sup><KBD>TM</KBD></sup>. 
+For example, the first possible transverse orientation of Figure 3 is 
+completely compatible with the ANALYZE<sup><KBD>TM</KBD></sup> format, 
+while the second transverse format is not. If images in this second 
+transverse format are loaded into ANALYZE<sup><KBD>TM</KBD></sup>, the 
+3-D coherence of the image will remain intact, but the initial 3-D 
+rendering will be upside down. On the other hand, neither of the 
+Coronal orientations of Figure 3 are compatible with ANALYZE<sup><KBD>TM</KBD></sup>,and 
+loading images in this order will cause a mirror-reversed 3-D 
+rendering. </P>
+<CENTER><P ALIGN="CENTER">
+<IMG SRC="images/Figure3.gif"
+ SGI_SRC="/images/bir/STAFF/mar/web/analyze/images/Figure3.gif"></P>
+</CENTER><H4>
+Other Systems</H4>
+<P>
+Finally, other systems of data order may be completely arbitrary. 
+Figure 4 illustrates the conventions currently in use at the Mayo 
+Foundation for 3-D MR images. The transverse standard is also the 
+current convention for CT. Note that the conventions describe a 
+consistently right-handed system, but it is not an origin/order system 
+because that the location of the 3-D origin is ambiguous. The order of 
+coronal images implies that the origin is at the back of the head, 
+while the orientation of the transverse and sagittal images clearly 
+indicates it is at the front. Note also that it is not a consistent 
+view/order system, and to add further confusion, the sagittal 
+orientation is standard only for GE and Siemens and is not followed by 
+other manufacturers. </P>
+<CENTER><P ALIGN="CENTER">
+<IMG SRC="images/Figure4.gif"
+ SGI_SRC="/images/bir/STAFF/mar/web/analyze/images/Figure4.gif"></P>
+</CENTER><P>
+The ANALYZE<sup><KBD>TM</KBD></sup> functions for reading GE and 
+Siemens MR tapes correctly convert the above orientations into the 
+ANALYZE<sup><KBD>TM</KBD></sup> system, but this means the orientation 
+and order of sections in ANALYZE<sup> <KBD>TM</KBD></sup> differs from 
+that seen on the MR console.</P>
+<P>
+We strongly suggest a carefully review of data order conventions 
+whenever integrating a new source of images into the ANALYZE<sup><KBD>TM</KBD></sup>
+ system. Only properly labelled images in the correct orientation can 
+be accurately rendered by ANALYZE<sup><KBD>TM</KBD></sup>, and 
+mirror-reversed images are often almost impossible to detect.</P>
+<HR>
+<H1>
+ANALYZE<sup><KBD>TM</KBD></sup> 7.5 <A NAME="FileFormat">File Format</A></H1>
+<P>
+The image database is the system of files that the ANALYZE<sup><KBD>TM</KBD></sup>
+ package uses to organize and access image data on the disk. Facilities 
+are provided for converting data from a number of sources for use with 
+the package. A description of the database format is provided to aid 
+developers in porting images from other sources for use with the ANALYZE<sup>
+ <KBD>TM</KBD></sup> system. An ANALYZE<sup><KBD>TM</KBD></sup> image 
+database consists of at least two files: </P>
+<UL>
+    <LI>
+    an image file 
+    <LI>
+    a header file 
+</UL>
+<P>
+The files have the same name being distinguished by the extensions .img 
+for the image file and .hdr for the header file. Thus, for the image 
+database heart, there are the UNIX files heart.img and heart.hdr. The 
+ANALYZE<sup><KBD>TM</KBD></sup> programs all refer to this pair of 
+files as a single entity named heart.</P>
+<H4>
+Image File </H4>
+<P>
+The format of the image file is very simple containing usually 
+uncompressed pixel data for the images in one of several possible pixel 
+formats: </P>
+<UL>
+    <LI>
+    <B>1 bit</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;packed 
+    binary (slices must begin on byte boundaries) 
+    <LI>
+    <B>8 bit</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8 
+    bits per pixel (unsigned char) 
+    <LI>
+    <B>16 bit</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;16 
+    bits per pixel (signed short) 
+    <LI>
+    <B>32 bit</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32 
+    bits per pixel signed integers, or floating point 
+    <LI>
+    <B>64 bit </B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;64 
+    bits per pixel; double precision, floating point, or complex. 
+    <LI>
+    <B>24 bit</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RGB 
+    , 8-bits per channel Red, Green, Blue. 
+</UL>
+<H4>
+Header File </H4>
+<P>
+The header file is represented here as a `C' structure which describes 
+the dimensions and history of the pixel data. The header structure 
+consists of three substructures: </P>
+<DD>
+<B>header_key</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes 
+the header 
+<DD>
+<B>image_dimension</B> &nbsp;&nbsp;&nbsp;describes image sizes 
+<DD>
+<B>data_history</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optional 
+<HR>
+<CENTER><H4 ALIGN="CENTER">
+ANALYZE<sup><KBD>TM</KBD></sup> Header File Format (analyze_db.h)</H4>
+</CENTER><PRE>
+<B>struct header_key</B>       /* header key   */ 
+       <B>{                                </B>/* off + size      */
+       int sizeof_hdr                   /* 0 + 4           */
+       char data_type[10];              /* 4 + 10          */
+       char db_name[18];                /* 14 + 18         */
+       int extents;                     /* 32 + 4          */
+       short int session_error;         /* 36 + 2          */
+       char regular;                    /* 38 + 1          */
+       char hkey_un0;                   /* 39 + 1          */
+       <B>}</B>;                               /* total=40 bytes  */
+       <B>struct image_dimension</B> 
+<B>       {                                </B>/* off + size      */
+       short int dim[8];                /* 0 + 16          */
+       short int unused8;               /* 16 + 2          */
+       short int unused9;               /* 18 + 2          */
+       short int unused10;              /* 20 + 2          */
+       short int unused11;              /* 22 + 2          */
+       short int unused12;              /* 24 + 2          */
+       short int unused13;              /* 26 + 2          */
+       short int unused14;              /* 28 + 2          */
+       short int datatype;              /* 30 + 2          */
+       short int bitpix;                /* 32 + 2          */
+       short int dim_un0;               /* 34 + 2          */
+       float pixdim[8];                 /* 36 + 32         */
+       float funused8;                  /* 68 + 4          */
+       float funused9;                  /* 72 + 4          */
+       float funused10;                 /* 76 + 4          */
+       float funused11;                 /* 80 + 4          */
+       float funused12;                 /* 84 + 4          */
+       float funused13;                 /* 88 + 4          */
+       float compressed;                /* 92 + 4          */
+       float verified;                  /* 96 + 4          */
+       int glmax,glmin;                 /* 100 + 8         */
+       <B>}</B>;                               /* total=108 bytes */
+<B>struct data_history</B>       
+       <B>{                                </B>/* off + size      */
+       char descrip[80];                /* 0 + 80          */
+       char aux_file[24];               /* 80 + 24         */
+       char orient;                     /* 104 + 1         */
+       char originator[10];             /* 105 + 10        */
+       char generated[10];              /* 115 + 10        */
+       char scannum[10];                /* 125 + 10        */
+       char patient_id[10];             /* 135 + 10        */
+       char exp_date[10];               /* 145 + 10        */
+       char exp_time[10];               /* 155 + 10        */
+       char hist_un0[3];                /* 165 + 3         */
+       int views                        /* 168 + 4         */
+       int vols_added;                  /* 172 + 4         */
+       int start_field;                 /* 176 + 4         */
+       int field_skip;                  /* 180 + 4         */
+       int omax, omin;                  /* 184 + 8         */
+       int smax, smin;                  /* 192 + 8         */
+<B>       }</B>;
+<B>struct dsr</B>
+<B>       {</B> 
+       struct header_key hk;            /* 0 + 40          */
+       struct image_dimension dime;     /* 40 + 108        */
+       struct data_history hist;        /* 148 + 200       */
+       <B>}</B>;                               /* total= 348 bytes*/   
+
+</PRE>
+<HR>
+<H4>
+Comments</H4>
+<P>
+The header format is flexible and can be extended for new user-defined 
+data types. The essential structures of the header are the header_key 
+and the image_dimension.</P>
+<P>
+The required elements in the <B>header_key</B> substructure are: </P>
+<DD>
+<B>int sizeof_header</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Must indicate 
+the byte size of the header file. 
+<DD>
+<B>int extents&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Should 
+be 16384, the image file is created as contiguous with a minimum extent 
+size. 
+<DD>
+<B>char regular</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Must 
+be `r' to indicate that all images and volumes are the same size. 
+<P>
+The <B>image_dimension</B> substructure describes the organization and 
+size of the images. These elements enable the database to reference 
+images by volume and slice number. Explanation of each element follows: </P>
+<DL>
+    <DT>
+
+    <DD>
+
+    <DL>
+        <DT>
+        <B>short int dim[]</B>; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* array 
+        of the image dimensions */ 
+        <DD>
+        <B>dim[0] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Number of 
+        dimensions in database; usually 4 
+        <DD>
+        <B>dim[1]</B> <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Image X 
+        dimension; number of pixels in an image row 
+        <DD>
+        <B>dim[2]</B> <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Image Y 
+        dimension; number of pixel rows in slice 
+        <DD>
+        <B>dim[3]</B> <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Volume Z 
+        dimension; number of slices in a volume 
+        <DD>
+        <B>cdim[4] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>Time points, 
+        number of volumes in database.<BR>
+         <B>char vox_units[4]</B> &nbsp;&nbsp;&nbsp;&nbsp;specifies the 
+        spatial units of measure for a voxel 
+        <DD>
+        <B>char cal_units[4]</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specifies 
+        the name of the calibration unit 
+        <DT>
+        <B>short int datatype</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* 
+        datatype for this image set */ 
+        <DD>
+        /*Acceptable values for datatype are*/ 
+        <DD>
+        <B>#define DT_NONE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</B>
+         
+        <DD>
+        <B>#define DT_UNKNOWN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0</B>
+         <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Unknown data type*/ 
+        <DD>
+        <B>#define DT_BINARY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</B>
+         <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Binary (1 bit per 
+        voxel)*/ 
+        <DD>
+        <B>#define DT_UNSIGNED_CHAR &nbsp;&nbsp;&nbsp;&nbsp;2</B> <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Unsigned 
+        character (8 bits per voxel)*/ 
+        <DD>
+        <B>#define DT_SIGNED_SHORT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4</B>
+         <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Signed short (16 bits 
+        per voxel)*/ 
+        <DD>
+        <B>#define DT_SIGNED_INT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8</B>
+         <B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Signed integer (32 bits 
+        per voxel)*/ 
+        <DD>
+        <B>#define DT_FLOAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Floating 
+        point (32 bits per voxel)*/ 
+        <DD>
+        <B>#define DT_COMPLEX &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Complex 
+        (64 bits per voxel; 2 floating point numbers) 
+        <DD>
+        <B>#define DT_DOUBLE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;64&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*</B>Double 
+        precision (64 bits per voxel)*/ 
+        <DD>
+        <B>#define DT_RGB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;128&nbsp;&nbsp;&nbsp;&nbsp;/* </B>*/<BR>
+         <B>#define DT_ALL &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;255&nbsp;&nbsp;&nbsp;&nbsp;/* </B>*/<BR>
+         
+        <DT>
+        <B>short int bitpix;</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* 
+        number of bits per pixel; 1, 8, 16, 32, or 64. */ 
+        <DT>
+        <B>short int dim_un0;</B> &nbsp;&nbsp;/* unused */ 
+        <DT>
+        <B>float pixdim[];</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Parallel 
+        array to dim[], giving real world measurements in <I>mm</I>. 
+        and <I>ms.</I> 
+        <DD>
+        <B>pixdim[1];</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;voxel width in 
+        mm. 
+        <DD>
+        <B>pixdim[2];</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;voxel height in 
+        mm. 
+        <DD>
+        <B>pixdim[3];</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slice thickness 
+        in mm. 
+        <DT>
+        <B>float vox_offset;</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;byte 
+        offset in the .img file at which voxels start. This value can be <BR>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;negative 
+        to specify that the absolute value is applied for every image<BR>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in 
+        the file. 
+        <DT>
+        <B>float calibrated Max, Min&nbsp;&nbsp;&nbsp;</B> specify the 
+        range of calibration values 
+        <DT>
+        <B>int glmax, glmin;</B> &nbsp;&nbsp;&nbsp;The maximum and 
+        minimum pixel values for the entire database. 
+    </DL>
+</DL>
+<P>
+The <B>data_history</B> substructure is not required, but the orient 
+field is used to indicate individual slice orientation and determines 
+whether the Movie program will attempt to flip the images before 
+displaying a movie sequence.</P>
+<DD>
+<B>orient:</B> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slice orientation 
+for this dataset. 
+<DD>
+0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transverse unflipped 
+<DD>
+1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coronal unflipped 
+<DD>
+2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sagittal unflipped 
+<DD>
+3 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transverse flipped 
+<DD>
+4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coronal flipped 
+<DD>
+5 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sagittal flipped 
+<HR>
+<H4>
+Sample Program</H4>
+<P>
+Any image data can be ported to the ANALYZE<sup><KBD>TM</KBD></sup>
+ system by creating the appropriate image and header files. Although 
+header files can be created with the <B>Header Edit</B> program, the 
+following <B>C</B> program is provided to illustrate how to make an 
+ANALYZE<sup><KBD>TM</KBD></sup> image database header file given the 
+critical image dimensions as parameters. For example; </P>
+<DD>
+make_header heart.hdr 128 128 97 3 CHAR 255 0 
+<P>
+Makes the header file heart.hdr with the following dimensions: </P>
+<UL>
+    <LI>
+    x dimension = 128 
+    <LI>
+    y dimension = 128 
+    <LI>
+    slices/volume = 97 
+    <LI>
+    volumes in file = 3 
+    <LI>
+    bits/pixel = 8 
+    <LI>
+    global max = 255 
+    <LI>
+    global min = 0 
+</UL>
+<HR>
+<PRE>
+/* <B>This program creates an ANALYZE</B><sup><KBD>TM</KBD></sup><B> database header</B>  */
+/*
+ * (c) Copyright, 1986-1995
+ * Biomedical Imaging Resource
+ * Mayo Foundation
+ *
+ * to compile:
+ *
+ *    cc -o make_hdr make_hdr.c
+ *
+ */
+#include &lt;stdio.h&gt;
+#include &quot;dbh.h&quot;
+
+main(argc,argv) /* file x y z t datatype max min */
+int argc;
+char **argv;
+{
+    int i;
+    struct dsr hdr;
+    FILE *fp;
+    static char DataTypes[9][12] = {&quot;UNKNOWN&quot;, &quot;BINARY&quot;,
+          &quot;CHAR&quot;, &quot;SHORT&quot;, &quot;INT&quot;,&quot;FLOAT&quot;, &quot;COMPLEX&quot;, 
+          &quot;DOUBLE&quot;, &quot;RGB&quot;};
+                                                           
+    static int DataTypeSizes[9] = {0,1,8,16,32,32,64,64,24};
+    
+    if(argc != 9)
+    {
+                       usage();
+        exit(0);
+    }
+    memset(&amp;hdr,0, sizeof(struct dsr));
+    for(i=0;i&lt;8;i++)
+               hdr.dime.pixdim[i] = 0.0;
+   
+    hdr.dime.vox_offset  = 0.0;
+    hdr.dime.funused1    = 0.0;
+    hdr.dime.funused2    = 0.0;
+    hdr.dime.funused3    = 0.0;
+    hdr.dime.cal_max     = 0.0;
+    hdr.dime.cal_min     = 0.0;
+  
+    
+    hdr.dime.datatype = -1;
+
+    for(i=1;i&lt;=8;i++)
+               if(!strcmp(argv[6],DataTypes[i]))
+               {
+                       hdr.dime.datatype = (1&lt;&lt;(i-1));
+                       hdr.dime.bitpix = DataTypeSizes[i];
+                       break;
+               }
+               
+    if(hdr.dime.datatype &lt;= 0)
+    {
+               printf(&quot;&lt;%s&gt; is an unacceptable datatype \n\n&quot;, argv[6]);
+               usage();
+        exit(0);
+    }
+ 
+    if((fp=fopen(argv[1],&quot;w&quot;))==0)
+    {
+        printf(&quot;unable to create: %s\n&quot;,argv[1]);
+        exit(0);
+    }
+
+    hdr.dime.dim[0] = 4;  /* all Analyze images are taken as 4 dimensional */
+    hdr.hk.regular = 'r';
+    hdr.hk.sizeof_hdr = sizeof(struct dsr);
+
+    hdr.dime.dim[1] = atoi(argv[2]);  /* slice width  in pixels */
+    hdr.dime.dim[2] = atoi(argv[3]);  /* slice height in pixels */
+    hdr.dime.dim[3] = atoi(argv[4]);  /* volume depth in slices */
+    hdr.dime.dim[4] = atoi(argv[5]);  /* number of volumes per file */
+
+    hdr.dime.glmax  = atoi(argv[7]);  /* maximum voxel value  */
+    hdr.dime.glmin  = atoi(argv[8]);  /* minimum voxel value */
+    
+
+
+
+/*     Set the voxel dimension fields: 
+       A value of 0.0 for these fields implies that the value is unknown.
+         Change these values to what is appropriate for your data
+         or pass additional command line arguments     */      
+         
+    hdr.dime.pixdim[1] = 0.0; /* voxel x dimension */
+    hdr.dime.pixdim[2] = 0.0; /* voxel y dimension */
+    hdr.dime.pixdim[3] = 0.0; /* pixel z dimension, slice thickness */
+    
+/*   Assume zero offset in .img file, byte at which pixel
+       data starts in the image file */
+
+    hdr.dime.vox_offset = 0.0; 
+    
+/*   Planar Orientation;    */
+/*   Movie flag OFF: 0 = transverse, 1 = coronal, 2 = sagittal
+     Movie flag ON:  3 = transverse, 4 = coronal, 5 = sagittal  */  
+
+    hdr.hist.orient     = 0;  
+    
+/*   up to 3 characters for the voxels units label; i.e. mm., um., cm. */               */
+
+    strcpy(hdr.dime.vox_units,&quot; &quot;);
+   
+/*   up to 7 characters for the calibration units label; i.e. HU */
+
+    strcpy(hdr.dime.cal_units,&quot; &quot;);  
+    
+/*     Calibration maximum and minimum values;  
+       values of 0.0 for both fields imply that no 
+       calibration max and min values are used    */
+
+    hdr.dime.cal_max = 0.0; 
+    hdr.dime.cal_min = 0.0;
+
+    fwrite(&amp;hdr,sizeof(struct dsr),1,fp);
+    fclose(fp);
+}
+
+usage()
+{
+   printf(&quot;usage:  make_hdr name.hdr x y z t datatype max min \n\n&quot;);
+   printf(&quot;  name.hdr = the name of the header file\n&quot;);
+   printf(&quot;  x = width, y = height,  z = depth,  t = number of volumes\n&quot;);
+   printf(&quot;  acceptable datatype values are: BINARY, CHAR, SHORT,\n&quot;);
+   printf(&quot;                 INT, FLOAT, COMPLEX, DOUBLE, and RGB\n&quot;);
+   printf(&quot;  max = maximum voxel value,  min = minimum voxel value\n&quot;);
+}
+</PRE>
+<HR>
+<PRE>
+The following program displays information in an Analyze header file.
+
+#include &lt;stdio.h&gt;
+#include &quot;dbh.h&quot;
+
+void ShowHdr(char *, struct dsr *);
+void swap_long(unsigned char *);
+void swap_short(unsigned char *);
+
+main(argc,argv) 
+int argc;
+char **argv;
+    {
+    struct dsr hdr;
+    int size;
+    double cmax, cmin;
+    FILE *fp;
+    
+       if((fp=fopen(argv[1],&quot;r&quot;))==NULL)
+    {
+        fprintf(stderr,&quot;Can't open:&lt;%s&gt;\n&quot;, argv[1]);
+        exit(0);
+    }
+    fread(&amp;hdr,1,sizeof(struct dsr),fp);
+
+       if(hdr.dime.dim[0] &lt; 0 || hdr.dime.dim[0] &gt; 15)
+               swap_hdr(&amp;hdr);
+    
+     ShowHdr(argv[1], &amp;hdr);
+    
+
+     }
+     
+        
+
+
+void ShowHdr(fileName,hdr)
+struct dsr *hdr;
+char *fileName;
+{
+int i;
+char string[128];
+printf(&quot;Analyze Header Dump of: &lt;%s&gt; \n&quot;, fileName);
+/* Header Key */
+printf(&quot;sizeof_hdr: &lt;%d&gt; \n&quot;, hdr-&gt;hk.sizeof_hdr);
+printf(&quot;data_type:  &lt;%s&gt; \n&quot;, hdr-&gt;hk.data_type);
+printf(&quot;db_name:    &lt;%s&gt; \n&quot;, hdr-&gt;hk.db_name);
+printf(&quot;extents:    &lt;%d&gt; \n&quot;, hdr-&gt;hk.extents);
+printf(&quot;session_error: &lt;%d&gt; \n&quot;, hdr-&gt;hk.session_error);
+printf(&quot;regular:  &lt;%c&gt; \n&quot;, hdr-&gt;hk.regular);
+printf(&quot;hkey_un0: &lt;%c&gt; \n&quot;, hdr-&gt;hk.hkey_un0);
+
+/* Image Dimension */
+for(i=0;i&lt;8;i++)
+       printf(&quot;dim[%d]: &lt;%d&gt; \n&quot;, i, hdr-&gt;dime.dim[i]);
+       
+       strncpy(string,hdr-&gt;dime.vox_units,4);
+       printf(&quot;vox_units:  &lt;%s&gt; \n&quot;, string);
+       
+       strncpy(string,hdr-&gt;dime.cal_units,8);
+       printf(&quot;cal_units: &lt;%s&gt; \n&quot;, string);
+       printf(&quot;unused1:   &lt;%d&gt; \n&quot;, hdr-&gt;dime.unused1);
+       printf(&quot;datatype:  &lt;%d&gt; \n&quot;, hdr-&gt;dime.datatype);
+       printf(&quot;bitpix:    &lt;%d&gt; \n&quot;, hdr-&gt;dime.bitpix);
+       
+for(i=0;i&lt;8;i++)
+       printf(&quot;pixdim[%d]: &lt;%6.4f&gt; \n&quot;,i, hdr-&gt;dime.pixdim[i]);
+       
+printf(&quot;vox_offset: &lt;%6.4&gt; \n&quot;,  hdr-&gt;dime.vox_offset);
+printf(&quot;funused1:   &lt;%6.4f&gt; \n&quot;, hdr-&gt;dime.funused1);
+printf(&quot;funused2:   &lt;%6.4f&gt; \n&quot;, hdr-&gt;dime.funused2);
+printf(&quot;funused3:   &lt;%6.4f&gt; \n&quot;, hdr-&gt;dime.funused3);
+printf(&quot;cal_max:    &lt;%6.4f&gt; \n&quot;, hdr-&gt;dime.cal_max);
+printf(&quot;cal_min:    &lt;%6.4f&gt; \n&quot;, hdr-&gt;dime.cal_min);
+printf(&quot;compressed: &lt;%d&gt; \n&quot;, hdr-&gt;dime.compressed);
+printf(&quot;verified:   &lt;%d&gt; \n&quot;, hdr-&gt;dime.verified);
+printf(&quot;glmax:      &lt;%d&gt; \n&quot;, hdr-&gt;dime.glmax);
+printf(&quot;glmin:      &lt;%d&gt; \n&quot;, hdr-&gt;dime.glmin);
+
+/* Data History */
+strncpy(string,hdr-&gt;hist.descrip,80);
+printf(&quot;descrip:  &lt;%s&gt; \n&quot;, string);
+strncpy(string,hdr-&gt;hist.aux_file,24);
+printf(&quot;aux_file: &lt;%s&gt; \n&quot;, string);
+printf(&quot;orient:   &lt;%d&gt; \n&quot;, hdr-&gt;hist.orient);
+
+strncpy(string,hdr-&gt;hist.originator,10);
+printf(&quot;originator: &lt;%s&gt; \n&quot;, string);
+
+strncpy(string,hdr-&gt;hist.generated,10);
+printf(&quot;generated: &lt;%s&gt; \n&quot;, string);
+
+
+strncpy(string,hdr-&gt;hist.scannum,10);
+printf(&quot;scannum: &lt;%s&gt; \n&quot;, string);
+
+strncpy(string,hdr-&gt;hist.patient_id,10);
+printf(&quot;patient_id: &lt;%s&gt; \n&quot;, string);
+
+strncpy(string,hdr-&gt;hist.exp_date,10);
+printf(&quot;exp_date: &lt;%s&gt; \n&quot;, string);
+
+strncpy(string,hdr-&gt;hist.exp_time,10);
+printf(&quot;exp_time: &lt;%s&gt; \n&quot;, string);
+
+strncpy(string,hdr-&gt;hist.hist_un0,10);
+printf(&quot;hist_un0: &lt;%s&gt; \n&quot;, string);
+
+printf(&quot;views:      &lt;%d&gt; \n&quot;, hdr-&gt;hist.views);
+printf(&quot;vols_added: &lt;%d&gt; \n&quot;, hdr-&gt;hist.vols_added);
+printf(&quot;start_field:&lt;%d&gt; \n&quot;, hdr-&gt;hist.start_field);
+printf(&quot;field_skip: &lt;%d&gt; \n&quot;, hdr-&gt;hist.field_skip);
+printf(&quot;omax: &lt;%d&gt; \n&quot;, hdr-&gt;hist.omax);
+printf(&quot;omin: &lt;%d&gt; \n&quot;, hdr-&gt;hist.omin);
+printf(&quot;smin: &lt;%d&gt; \n&quot;, hdr-&gt;hist.smax);
+printf(&quot;smin: &lt;%d&gt; \n&quot;, hdr-&gt;hist.smin);
+
+}
+
+
+swap_hdr(pntr)
+struct dsr *pntr;
+       {
+       swap_long(&amp;pntr-&gt;hk.sizeof_hdr) ;
+       swap_long(&amp;pntr-&gt;hk.extents) ;
+       swap_short(&amp;pntr-&gt;hk.session_error) ;
+       swap_short(&amp;pntr-&gt;dime.dim[0]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[1]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[2]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[3]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[4]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[5]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[6]) ;
+       swap_short(&amp;pntr-&gt;dime.dim[7]) ;
+       swap_short(&amp;pntr-&gt;dime.unused1) ;
+       swap_short(&amp;pntr-&gt;dime.datatype) ;
+       swap_short(&amp;pntr-&gt;dime.bitpix) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[0]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[1]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[2]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[3]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[4]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[5]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[6]) ;
+       swap_long(&amp;pntr-&gt;dime.pixdim[7]) ;
+       swap_long(&amp;pntr-&gt;dime.vox_offset) ;
+       swap_long(&amp;pntr-&gt;dime.funused1) ;
+       swap_long(&amp;pntr-&gt;dime.funused2) ;
+       swap_long(&amp;pntr-&gt;dime.cal_max) ;
+       swap_long(&amp;pntr-&gt;dime.cal_min) ;
+       swap_long(&amp;pntr-&gt;dime.compressed) ;
+       swap_long(&amp;pntr-&gt;dime.verified) ;
+       swap_short(&amp;pntr-&gt;dime.dim_un0) ;
+       swap_long(&amp;pntr-&gt;dime.glmax) ;
+       swap_long(&amp;pntr-&gt;dime.glmin) ;
+       }
+       
+swap_long(pntr)
+unsigned char *pntr;
+        {
+        unsigned char b0, b1, b2, b3;
+
+        b0 = *pntr;
+        b1 = *(pntr+1);
+        b2 = *(pntr+2);
+        b3 = *(pntr+3);
+
+        *pntr = b3;
+        *(pntr+1) = b2;
+        *(pntr+2) = b1;
+        *(pntr+3) = b0;
+        }
+        
+swap_short(pntr)
+unsigned char *pntr;
+        {
+        unsigned char b0, b1;
+
+        b0 = *pntr;
+        b1 = *(pntr+1);
+
+        *pntr = b1;
+        *(pntr+1) = b0;
+        }
+</PRE>
+<HR>
+</BODY>
+</HTML>
