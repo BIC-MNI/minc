@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.3 2004-06-08 16:13:12 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.4 2004-06-11 15:27:16 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -20,7 +20,7 @@ static char* name_path(const char* path);
 static char* type_name(nc_type  type);
 static void tztrim(char* ss);
 static void pr_att_string(long len, const char* string);
-static void pr_att_vals(nc_type  type, long len, const double* vals);
+static void pr_att_vals(nc_type  type, long len, const void * vals);
 static void pr_att(int ncid, int varid, const char *varname, int ia);
 static void do_ncdump(char* path, struct fspec* specp);
 static void make_lvars(char* optarg, struct fspec* fspecp);
@@ -214,7 +214,7 @@ static void
 pr_att_vals(
      nc_type type,
      long len,
-     const double *vals
+     const void *vals
      )
 {
     int iel;
@@ -230,25 +230,25 @@ pr_att_vals(
     for (iel = 0; iel < len-1; iel++) {
 	switch (type) {
 	case NC_BYTE:
-	    sc = (signed char) vals[iel] & 0377;
+	    sc = ((signed char *) vals)[iel] & 0377;
 	    Printf ("%db, ", sc);
 	    break;
 	case NC_SHORT:
-	    ss = vals[iel];
+	    ss = ((short *)vals)[iel];
 	    Printf ("%ds, ", ss);
 	    break;
 	case NC_INT:
-	    ii = (int) vals[iel];
+	    ii = ((int *)vals)[iel];
 	    Printf ("%d, ", ii);
 	    break;
 	case NC_FLOAT:
-	    ff = vals[iel];
+	    ff = ((float *)vals)[iel];
 	    (void) sprintf(gps, float_att_fmt, ff);
 	    tztrim(gps);	/* trim trailing 0's after '.' */
 	    Printf ("%s, ", gps);
 	    break;
 	case NC_DOUBLE:
-	    dd = vals[iel];
+	    dd = ((double *)vals)[iel];
 	    (void) sprintf(gps, double_att_fmt, dd);
 	    tztrim(gps);
 	    Printf ("%s, ", gps);
@@ -259,25 +259,25 @@ pr_att_vals(
     }
     switch (type) {
     case NC_BYTE:
-	sc = (signed char) vals[iel] & 0377;
+	sc = ((signed char *) vals)[iel] & 0377;
 	Printf ("%db", sc);
 	break;
     case NC_SHORT:
-	ss = vals[iel];
+	ss = ((short *)vals)[iel];
 	Printf ("%ds", ss);
 	break;
     case NC_INT:
-	ii = (int) vals[iel];
+	ii = ((int *)vals)[iel];
 	Printf ("%d", ii);
 	break;
     case NC_FLOAT:
-	ff = vals[iel];
+	ff = ((float *)vals)[iel];
 	(void) sprintf(gps, float_att_fmt, ff);
 	tztrim(gps);
 	Printf ("%s", gps);
 	break;
     case NC_DOUBLE:
-	dd = vals[iel];
+	dd = ((double *)vals)[iel];
 	(void) sprintf(gps, double_att_fmt, dd);
 	tztrim(gps);
 	Printf ("%s", gps);
