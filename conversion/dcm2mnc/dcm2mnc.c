@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.8  2005-03-18 19:10:31  bert
+ * Revision 1.9  2005-04-05 21:52:24  bert
+ * Add -minmax option to enable use of explicit DICOM pixel min/max information, and updated version number
+ *
+ * Revision 1.8  2005/03/18 19:10:31  bert
  * Scan coordinate and location information for validity before relying on it
  *
  * Revision 1.7  2005/03/15 17:03:34  bert
@@ -68,7 +71,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.8 2005-03-18 19:10:31 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.9 2005-04-05 21:52:24 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -95,7 +98,7 @@ static int check_file_type_consistency(int num_files, const char *file_list[]);
 
 struct globals G;
 
-#define VERSION_STRING "2.00.001 built " __DATE__ " " __TIME__
+#define VERSION_STRING "2.0.03 built " __DATE__ " " __TIME__
 
 ArgvInfo argTable[] = {
     {NULL, ARGV_VERINFO, VERSION_STRING, NULL, NULL },
@@ -131,6 +134,12 @@ ArgvInfo argTable[] = {
      (char *) MOSAIC_SEQ_INTERLEAVED, 
      (char *) &G.mosaic_seq,
      "Mosaic sequence is in interleaved slice order."},
+
+    {"-minmax", 
+     ARGV_CONSTANT, 
+     (char *)TRUE, 
+     (char *) &G.useMinMax,
+     "Honor DICOM pixel minimum and pixel maximum values."},
     {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
