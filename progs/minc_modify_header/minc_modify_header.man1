@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 3.0 1995-05-15 19:32:21 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 3.1 1995-12-13 19:29:15 neelin Exp $
 .\"
 .TH MINC_MODIFY_HEADER 1
 
@@ -42,17 +42,20 @@ removed from the file.
 Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 .P
-.I -sinsert:
+.I -sinsert
+<var>:<attr>=<value> :
 Insert a string attribute into the header. If the attribute does not
 exist or the new string is longer than the existing one, then all data
 in the file will be copied.
 .P
-.I -dinsert:
+.I -dinsert
+<var>:<attr>=<value> :
 Insert a double precision attribute into the header. If the attribute
 does not exist or the new attribute is longer than the existing one,
 then all data in the file will be copied.
 .P
-.I -delete:
+.I -delete
+<var>:<attr> :
 Delete an attribute from the header. USE OF THIS OPTION WILL FORCE A
 COMPLETE COPY OF ALL DATA TO BE MADE. Use "-sinsert" with an empty
 string to delete information without copying data (the attribute will
