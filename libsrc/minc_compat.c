@@ -324,4 +324,45 @@ MI2typelen(int type_id)
     return (-1);
 }
 
+int
+MI2redef(int fd)
+{
+    if (MI2_ISH5OBJ(fd)) {
+        /* Do nothing, since there is no equivalent in HDF5. */
+        return (MI_NOERROR);
+    }
+    else {
+        return (ncredef(fd));
+    }
+}
+
+int
+MI2sync(int fd)
+{
+    if (MI2_ISH5OBJ(fd)) {
+        /* Commit the (entire) file to disk. */
+        if (H5Fflush(fd, H5F_SCOPE_GLOBAL) < 0) {
+            return (MI_ERROR);
+        }
+        else {
+            return (MI_NOERROR);
+        }
+    }
+    else {
+        return (ncsync(fd));
+    }
+}
+
+int
+MI2setfill(int fd, int fillmode)
+{
+    if (MI2_ISH5OBJ(fd)) {
+        /* TODO: ??? */
+        return (MI_NOERROR);
+    }
+    else {
+        return (ncsetfill(fd, fillmode));
+    }
+}
+
 #endif /* MINC2 defined */
