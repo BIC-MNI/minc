@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.46 1996-05-17 19:36:11 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.47 1996-11-15 16:09:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -342,7 +342,7 @@ typedef  struct
 
 typedef  struct
 {
-    BOOLEAN     promote_invalid_to_min_flag;
+    BOOLEAN     promote_invalid_to_zero_flag;
     BOOLEAN     convert_vector_to_scalar_flag;
     BOOLEAN     convert_vector_to_colour_flag;
     int         dimension_size_for_colour_data;

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.63 1996-05-17 19:36:21 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.64 1996-11-15 16:09:46 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -1024,6 +1024,35 @@ public  void  set_volume_direction_cosine(
     }
 
     recompute_world_transform( volume );
+}
+
+public  void  get_volume_direction_cosine(
+    Volume   volume,
+    int      axis,
+    Real     dir[] )
+{
+    int    d;
+
+    if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
+    {
+        print_error(
+         "get_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
+          axis );
+        return;
+    }
+
+    for_less( d, 0, N_DIMENSIONS )
+    {
+        if( volume->spatial_axes[d] == axis )
+            break;
+    }
+
+    if( d == N_DIMENSIONS )   /* this is not a spatial axis, ignore the dir */
+        return;
+
+    dir[X] = volume->direction_cosines[axis][X];
+    dir[Y] = volume->direction_cosines[axis][Y];
+    dir[Z] = volume->direction_cosines[axis][Z];
 }
 
 /* ----------------------------- MNI Header -----------------------------------

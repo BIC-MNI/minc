@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.18 1996-05-17 19:36:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.19 1996-11-15 16:09:49 david Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
@@ -96,7 +96,7 @@ private  void  output_one_transform(
 
         for_less( i, 0, 3 )
         {
-            (void) fprintf( file, " %15.8f %15.8f %15.8f %15.8f",
+            (void) fprintf( file, " %.15g %.15g %.15g %.15g",
                                   Transform_elem(*lin_transform,i,0),
                                   Transform_elem(*lin_transform,i,1),
                                   Transform_elem(*lin_transform,i,2),
@@ -125,7 +125,7 @@ private  void  output_one_transform(
         for_less( i, 0, transform->n_points )
         {
             for_less( c, 0, transform->n_dimensions )
-                (void) fprintf( file, " %g", transform->points[i][c] );
+                (void) fprintf( file, " %.15g", transform->points[i][c] );
 
             if( i == transform->n_points-1 )
                 (void) fprintf( file, ";" );
@@ -138,7 +138,7 @@ private  void  output_one_transform(
         for_less( i, 0, transform->n_points + transform->n_dimensions + 1 )
         {
             for_less( c, 0, transform->n_dimensions )
-                (void) fprintf( file, " %g", transform->displacements[i][c] );
+                (void) fprintf( file, " %.15g", transform->displacements[i][c]);
 
             if( i == transform->n_points + transform->n_dimensions + 1 - 1 )
                 (void) fprintf( file, ";" );

@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.27 1996-05-17 19:36:12 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.28 1996-11-15 16:09:42 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -125,6 +125,8 @@ typedef  unsigned char   unsigned_byte;
 typedef  int             BOOLEAN;
 
 typedef  double          Real;
+
+#define  REAL_MAX        DBL_MAX
 
 typedef  char            *STRING;
 

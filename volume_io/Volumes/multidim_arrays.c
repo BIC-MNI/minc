@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.13 1996-08-21 15:35:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.14 1996-11-15 16:09:48 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -262,25 +262,27 @@ public  void  alloc_multidim_array(
     switch( array->n_dimensions )
     {
     case  1:
-        p1 = alloc_memory_1d( sizes[0], type_size _ALLOC_SOURCE_LINE );
+        ASSIGN_PTR(p1) = alloc_memory_1d( sizes[0], type_size
+                                          _ALLOC_SOURCE_LINE );
         array->data = (void *) p1;
         break;
     case  2:
-        p2 = alloc_memory_2d( sizes[0], sizes[1], type_size _ALLOC_SOURCE_LINE);
+        ASSIGN_PTR(p2) = alloc_memory_2d( sizes[0], sizes[1], type_size
+                                          _ALLOC_SOURCE_LINE);
         array->data = (void *) p2;
         break;
     case  3:
-        p3 = alloc_memory_3d( sizes[0], sizes[1], sizes[2], type_size
-                             _ALLOC_SOURCE_LINE );
+        ASSIGN_PTR(p3) = alloc_memory_3d( sizes[0], sizes[1], sizes[2],
+                                          type_size _ALLOC_SOURCE_LINE );
         array->data = (void *) p3;
         break;
     case  4:
-        p4 = alloc_memory_4d( sizes[0], sizes[1],
+        ASSIGN_PTR(p4) = alloc_memory_4d( sizes[0], sizes[1],
                              sizes[2], sizes[3], type_size _ALLOC_SOURCE_LINE );
         array->data = (void *) p4;
         break;
     case  5:
-        p5 = alloc_memory_5d( sizes[0], sizes[1],
+        ASSIGN_PTR(p5) = alloc_memory_5d( sizes[0], sizes[1],
                               sizes[2], sizes[3], sizes[4], type_size
                               _ALLOC_SOURCE_LINE );
         array->data = (void *) p5;
@@ -602,6 +604,7 @@ public  void  copy_multidim_reordered(
     int       n_src_dims, n_dest_dims, type_size;
     int       src_sizes[MAX_DIMENSIONS], dest_sizes[MAX_DIMENSIONS];
     char      *dest_ptr, *src_ptr;
+    void      *void_ptr;
 
     type_size = get_type_size( get_multidim_data_type(dest) );
 
@@ -609,15 +612,17 @@ public  void  copy_multidim_reordered(
 
     n_dest_dims = get_multidim_n_dimensions( dest );
     get_multidim_sizes( dest, dest_sizes );
-    GET_MULTIDIM_PTR( dest_ptr, *dest, dest_ind[0], dest_ind[1], dest_ind[2],
+    GET_MULTIDIM_PTR( void_ptr, *dest, dest_ind[0], dest_ind[1], dest_ind[2],
                       dest_ind[3], dest_ind[4] );
+    ASSIGN_PTR( dest_ptr ) = void_ptr;
 
     /*--- initialize src */
 
     n_src_dims = get_multidim_n_dimensions( src );
     get_multidim_sizes( src, src_sizes );
-    GET_MULTIDIM_PTR( src_ptr, *src, src_ind[0], src_ind[1], src_ind[2],
+    GET_MULTIDIM_PTR( void_ptr, *src, src_ind[0], src_ind[1], src_ind[2],
                       src_ind[3], src_ind[4] );
+    ASSIGN_PTR( src_ptr ) = void_ptr;
 
     copy_multidim_data_reordered( type_size,
                                   dest_ptr, n_dest_dims, dest_sizes,

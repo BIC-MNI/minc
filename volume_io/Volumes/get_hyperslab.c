@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.4 1996-08-21 15:31:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.5 1996-11-15 16:09:48 david Exp $";
 #endif
 
 public  void  convert_voxels_to_values(
@@ -275,7 +275,7 @@ public  void  get_voxel_values_5d(
     switch( data_type )
     {
     case UNSIGNED_BYTE:
-        unsigned_byte_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -302,7 +302,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case SIGNED_BYTE:
-        signed_byte_ptr = void_ptr;
+        ASSIGN_PTR(signed_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -329,7 +329,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case UNSIGNED_SHORT:
-        unsigned_short_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -356,7 +356,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case SIGNED_SHORT:
-        signed_short_ptr = void_ptr;
+        ASSIGN_PTR(signed_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -383,7 +383,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case UNSIGNED_LONG:
-        unsigned_long_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -409,7 +409,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case SIGNED_LONG:
-        signed_long_ptr = void_ptr;
+        ASSIGN_PTR(signed_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -435,7 +435,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case FLOAT:
-        float_ptr = void_ptr;
+        ASSIGN_PTR(float_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -461,7 +461,7 @@ public  void  get_voxel_values_5d(
         break;
 
     case DOUBLE:
-        double_ptr = void_ptr;
+        ASSIGN_PTR(double_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -523,7 +523,7 @@ public  void  get_voxel_values_4d(
     switch( data_type )
     {
     case UNSIGNED_BYTE:
-        unsigned_byte_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -546,7 +546,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case SIGNED_BYTE:
-        signed_byte_ptr = void_ptr;
+        ASSIGN_PTR(signed_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -568,7 +568,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case UNSIGNED_SHORT:
-        unsigned_short_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -591,7 +591,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case SIGNED_SHORT:
-        signed_short_ptr = void_ptr;
+        ASSIGN_PTR(signed_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -614,7 +614,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case UNSIGNED_LONG:
-        unsigned_long_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -636,7 +636,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case SIGNED_LONG:
-        signed_long_ptr = void_ptr;
+        ASSIGN_PTR(signed_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -658,7 +658,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case FLOAT:
-        float_ptr = void_ptr;
+        ASSIGN_PTR(float_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -680,7 +680,7 @@ public  void  get_voxel_values_4d(
         break;
 
     case DOUBLE:
-        double_ptr = void_ptr;
+        ASSIGN_PTR(double_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -735,7 +735,7 @@ public  void  get_voxel_values_3d(
     switch( data_type )
     {
     case UNSIGNED_BYTE:
-        unsigned_byte_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -753,7 +753,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case SIGNED_BYTE:
-        signed_byte_ptr = void_ptr;
+        ASSIGN_PTR(signed_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -771,7 +771,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case UNSIGNED_SHORT:
-        unsigned_short_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -789,7 +789,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case SIGNED_SHORT:
-        signed_short_ptr = void_ptr;
+        ASSIGN_PTR(signed_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -807,7 +807,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case UNSIGNED_LONG:
-        unsigned_long_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -825,7 +825,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case SIGNED_LONG:
-        signed_long_ptr = void_ptr;
+        ASSIGN_PTR(signed_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -843,7 +843,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case FLOAT:
-        float_ptr = void_ptr;
+        ASSIGN_PTR(float_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -861,7 +861,7 @@ public  void  get_voxel_values_3d(
         break;
 
     case DOUBLE:
-        double_ptr = void_ptr;
+        ASSIGN_PTR(double_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -909,7 +909,7 @@ public  void  get_voxel_values_2d(
     switch( data_type )
     {
     case UNSIGNED_BYTE:
-        unsigned_byte_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -923,7 +923,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case SIGNED_BYTE:
-        signed_byte_ptr = void_ptr;
+        ASSIGN_PTR(signed_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -937,7 +937,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case UNSIGNED_SHORT:
-        unsigned_short_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -951,7 +951,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case SIGNED_SHORT:
-        signed_short_ptr = void_ptr;
+        ASSIGN_PTR(signed_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -965,7 +965,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case UNSIGNED_LONG:
-        unsigned_long_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -979,7 +979,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case SIGNED_LONG:
-        signed_long_ptr = void_ptr;
+        ASSIGN_PTR(signed_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -993,7 +993,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case FLOAT:
-        float_ptr = void_ptr;
+        ASSIGN_PTR(float_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -1007,7 +1007,7 @@ public  void  get_voxel_values_2d(
         break;
 
     case DOUBLE:
-        double_ptr = void_ptr;
+        ASSIGN_PTR(double_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -1044,7 +1044,7 @@ public  void  get_voxel_values_1d(
     switch( data_type )
     {
     case UNSIGNED_BYTE:
-        unsigned_byte_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = unsigned_byte_to_real[(long) *unsigned_byte_ptr];
@@ -1054,7 +1054,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case SIGNED_BYTE:
-        signed_byte_ptr = void_ptr;
+        ASSIGN_PTR(signed_byte_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = signed_byte_to_real[(long) *signed_byte_ptr];
@@ -1064,7 +1064,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case UNSIGNED_SHORT:
-        unsigned_short_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = unsigned_short_to_real[(long) *unsigned_short_ptr];
@@ -1074,7 +1074,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case SIGNED_SHORT:
-        signed_short_ptr = void_ptr;
+        ASSIGN_PTR(signed_short_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = signed_short_to_real[(long) *signed_short_ptr];
@@ -1084,7 +1084,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case UNSIGNED_LONG:
-        unsigned_long_ptr = void_ptr;
+        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = (Real) *unsigned_long_ptr;
@@ -1094,7 +1094,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case SIGNED_LONG:
-        signed_long_ptr = void_ptr;
+        ASSIGN_PTR(signed_long_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = (Real) *signed_long_ptr;
@@ -1104,7 +1104,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case FLOAT:
-        float_ptr = void_ptr;
+        ASSIGN_PTR(float_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = (Real) *float_ptr;
@@ -1114,7 +1114,7 @@ public  void  get_voxel_values_1d(
         break;
 
     case DOUBLE:
-        double_ptr = void_ptr;
+        ASSIGN_PTR(double_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             *values = (Real) *double_ptr;

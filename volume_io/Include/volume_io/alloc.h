@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.13 1996-05-17 19:36:12 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.14 1996-11-15 16:09:43 david Exp $";
 #endif
 
 #include  <basic.h>
@@ -63,7 +63,8 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC( ptr, n_items )                                                \
-             (ptr) = alloc_memory_1d( (size_t) (n_items),                     \
+             ASSIGN_PTR(ptr) =                                                \
+                     alloc_memory_1d( (size_t) (n_items),                     \
                                       sizeof(*(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -139,7 +140,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC_VAR_SIZED_STRUCT( ptr, element_type, n_elements )              \
-  (ptr) = alloc_memory_in_bytes(                                              \
+  ASSIGN_PTR(ptr) = alloc_memory_in_bytes(                                    \
   (size_t) (sizeof(*(ptr))+((size_t)(n_elements)-1) * sizeof(element_type))   \
   _ALLOC_SOURCE_LINE )
 
@@ -161,7 +162,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC2D( ptr, n1, n2 )                                               \
-         (ptr) = alloc_memory_2d( (size_t) (n1), (size_t) (n2),               \
+   ASSIGN_PTR(ptr) = alloc_memory_2d( (size_t) (n1), (size_t) (n2),           \
                           sizeof(**(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -197,7 +198,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC3D( ptr, n1, n2, n3 )                                           \
-         (ptr) = alloc_memory_3d( (size_t) (n1), (size_t) (n2),   \
+         ASSIGN_PTR(ptr) = alloc_memory_3d( (size_t) (n1), (size_t) (n2),     \
                           (size_t) (n3), sizeof(***(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -234,7 +235,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC4D( ptr, n1, n2, n3, n4 )                                       \
-         (ptr) = alloc_memory_4d( (size_t) (n1), (size_t) (n2),  \
+       ASSIGN_PTR(ptr) = alloc_memory_4d( (size_t) (n1), (size_t) (n2),       \
                           (size_t) (n3), (size_t) (n4),                       \
                           sizeof(****(ptr)) _ALLOC_SOURCE_LINE )
 
@@ -274,7 +275,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC5D( ptr, n1, n2, n3, n4, n5 )                                   \
-         (ptr) = alloc_memory_5d( (size_t) (n1), (size_t) (n2),  \
+     ASSIGN(ptr) = alloc_memory_5d( (size_t) (n1), (size_t) (n2),             \
                           (size_t) (n3), (size_t) (n4), (size_t) (n5),        \
                           sizeof(*****(ptr)) _ALLOC_SOURCE_LINE )
 

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.54 1996-05-17 19:36:20 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.55 1996-11-15 16:09:45 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -116,7 +116,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     double              file_separations[MAX_VAR_DIMS];
     Real                volume_separations[MI_NUM_SPACE_DIMS];
     Real                default_voxel_min, default_voxel_max;
-    Real                world_space[N_DIMENSIONS];
+    Real                world_space[N_DIMENSIONS], voxel_zero;
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     double              tmp_cosines[MI_NUM_SPACE_DIMS];
@@ -525,20 +525,40 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- compute the mapping to real values */
 
+    (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MIN, &real_min );
+    (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MAX, &real_max );
+
     if( !file->converting_to_colour )
-    {
-         (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MIN, &real_min );
-         (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MAX, &real_max );
+        set_volume_real_range( volume, real_min, real_max );
 
-         set_volume_real_range( volume, real_min, real_max );
-    }
+    /* --- if promoting invalid values to zero, then we need to detach and
+           reattach in order to change the fillvalue in the icv */
 
-    if( options->promote_invalid_to_min_flag )
+    if( options->promote_invalid_to_zero_flag )
     {
+        (void) miicv_detach( file->minc_icv );
+
         if( !file->converting_to_colour )
-            (void) miicv_setdbl( file->minc_icv, MI_ICV_FILLVALUE, valid_range[0] );
+        {
+            if( real_min == real_max )
+                voxel_zero = valid_range[0];
+            else if( real_min > 0.0 )
+                voxel_zero = valid_range[0];
+            else if( real_max < 0.0 )
+                voxel_zero = valid_range[1];
+            else
+            {
+                voxel_zero = valid_range[0] +
+                             (valid_range[1] - valid_range[0]) *
+                             (0.0 - real_min) / (real_max - real_min);
+            }
+
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_FILLVALUE, voxel_zero );
+        }
         else
             (void) miicv_setdbl( file->minc_icv, MI_ICV_FILLVALUE, 0.0 );
+
+        (void) miicv_attach( file->minc_icv, file->cdfid, file->img_var );
     }
 
     for_less( d, 0, file->n_file_dimensions )
@@ -1298,7 +1318,7 @@ public  void  set_default_minc_input_options(
 {
     static  int     default_rgba_indices[4] = { 0, 1, 2, 3 };
 
-    set_minc_input_promote_invalid_to_min_flag( options, TRUE );
+    set_minc_input_promote_invalid_to_zero_flag( options, TRUE );
     set_minc_input_vector_to_scalar_flag( options, TRUE );
     set_minc_input_vector_to_colour_flag( options, FALSE );
     set_minc_input_colour_dimension_size( options, 3 );
@@ -1307,7 +1327,7 @@ public  void  set_default_minc_input_options(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_minc_input_promote_invalid_to_min_flag
+@NAME       : set_minc_input_promote_invalid_to_zero_flag
 @INPUT      : flag
 @OUTPUT     : options
 @RETURNS    : 
@@ -1316,14 +1336,37 @@ public  void  set_default_minc_input_options(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Oct. 25, 1996   D. MacDonald    - changed to promote to 0,
+                                                used to be min_valid
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_promote_invalid_to_zero_flag(
+    minc_input_options  *options,
+    BOOLEAN             flag )
+{
+    options->promote_invalid_to_zero_flag = flag;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_promote_invalid_to_zero_flag
+@INPUT      : flag
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the invalid promotion flag of the input options.  Maintained
+              for functional interface backward compatibility.  Programmers
+              should now be calling set_minc_input_promote_invalid_to_zero_flag.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : Oct. 25, 1996   D. MacDonald    - replaced with above function
 ---------------------------------------------------------------------------- */
 
 public  void  set_minc_input_promote_invalid_to_min_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
-    options->promote_invalid_to_min_flag = flag;
+    set_minc_input_promote_invalid_to_zero_flag( options, flag );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

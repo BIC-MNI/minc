@@ -31,4 +31,10 @@
 #define  EXIT_SUCCESS  0
 #endif
 
+#ifdef __cplusplus
+#define  ASSIGN_PTR( ptr )  (*((void **) &(ptr)))
+#else
+#define  ASSIGN_PTR( ptr )  (ptr)
+#endif
+
 #endif

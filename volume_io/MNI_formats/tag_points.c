@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.21 1996-05-17 19:36:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.22 1996-11-15 16:09:49 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -132,14 +132,14 @@ public  Status  output_one_tag(
 
     status = OK;
 
-    (void) fprintf( file, "\n %.8g %.8g %.8g",
+    (void) fprintf( file, "\n %.15g %.15g %.15g",
                     tag_volume1[0],
                     tag_volume1[1],
                     tag_volume1[2] );
 
     if( n_volumes >= 2 )
     {
-        (void) fprintf( file, " %.8g %.8g %.8g",
+        (void) fprintf( file, " %.15g %.15g %.15g",
                         tag_volume2[0],
                         tag_volume2[1],
                         tag_volume2[2] );
@@ -154,9 +154,9 @@ public  Status  output_one_tag(
     if( aux_present )
     {
         if( weight != (Real *) NULL )
-            (void) fprintf( file, " %g", *weight );
+            (void) fprintf( file, " %.15g", *weight );
         else
-            (void) fprintf( file, " %g", 0.0 );
+            (void) fprintf( file, " %.15g", 0.0 );
 
         if( structure_id != NULL )
             (void) fprintf( file, " %d", *structure_id );

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.5 1996-05-17 19:36:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.6 1996-11-15 16:09:41 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -50,7 +50,7 @@ public  Colour  make_rgba_Colour(
     unsigned  char  *byte_ptr;
 
     c = 0;    /* to avoid used-before-set compiler messages */
-    byte_ptr = (void *) &c;
+    ASSIGN_PTR(byte_ptr) = (void *) &c;
 
     byte_ptr[0] = (unsigned char) a;
     byte_ptr[1] = (unsigned char) b;
@@ -78,7 +78,7 @@ public  int  get_Colour_r(
 {
     unsigned  char  *b;
 
-    b = (void *) &colour;
+    ASSIGN_PTR(b) = (void *) &colour;
 
     return( (int) b[3] );
 }
@@ -101,7 +101,7 @@ public  int  get_Colour_g(
 {
     unsigned  char  *b;
 
-    b = (void *) &colour;
+    ASSIGN_PTR(b) = (void *) &colour;
 
     return( (int) b[2] );
 }
@@ -124,7 +124,7 @@ public  int  get_Colour_b(
 {
     unsigned  char  *b;
 
-    b = (void *) &colour;
+    ASSIGN_PTR(b) = (void *) &colour;
 
     return( (int) b[1] );
 }
@@ -148,7 +148,7 @@ public  int  get_Colour_a(
 {
     unsigned  char  *b;
 
-    b = (void *) &colour;
+    ASSIGN_PTR(b) = (void *) &colour;
 
     return( (int) b[0] );
 }
