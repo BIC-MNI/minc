@@ -1,5 +1,4 @@
 #include  <volume_io.h>
-#include  <splines.h>
 #include  <limits.h>
 #undef FLT_DIG
 #undef DBL_DIG
@@ -1094,9 +1093,8 @@ public  void  set_volume_real_range(
             volume->real_value_translation = real_min;
         }
 
+        volume->real_range_set = TRUE;
     }
-
-    volume->real_range_set = TRUE;
 }
 
 public  Volume   copy_volume_definition(
