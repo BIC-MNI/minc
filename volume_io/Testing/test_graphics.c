@@ -31,12 +31,13 @@ main()
     int               current_mouse_x, current_mouse_y;
     int               x_position, y_position, x_size, y_size;
     int               x_pixel, y_pixel;
+    Boolean           in_rotation_mode;
+    int               prev_rotation_mouse_x;
+    Real              angle_in_radians;
     int               i, j, pixels_x_size, pixels_y_size;
     int               pixels_x_position, pixels_y_position;
     Real              x, y;
-    Transform         modeling_transform;
-    Transform         rotate_clockwise_transform;
-    Transform         rotate_counter_clockwise_transform;
+    Transform         modeling_transform, rotation_transform;
     void              make_identity_transform();
     void              make_rotation_transform();
     void              concat_transforms();
@@ -144,23 +145,18 @@ main()
     /* ------------ do main loop ------------- */
     /* --------------------------------------- */
 
+    current_mouse_x = 0;
+    current_mouse_y = 0;
+
     make_identity_transform( &modeling_transform );
-    make_rotation_transform( 5.0 * DEG_TO_RAD, Y, &rotate_clockwise_transform );
-    make_rotation_transform( -5.0 * DEG_TO_RAD, Y,
-                             &rotate_counter_clockwise_transform );
-
-    fill_Point( centre_of_rotation, 0.5, 0.5, 0.0 );
-    make_transform_relative_to_point( &centre_of_rotation,
-                                      &rotate_clockwise_transform,
-                                      &rotate_clockwise_transform );
-    make_transform_relative_to_point( &centre_of_rotation,
-                                      &rotate_counter_clockwise_transform,
-                                      &rotate_counter_clockwise_transform );
-
     update_required = TRUE;
-    done = FALSE;
 
+    in_rotation_mode = FALSE;
+
+    (void) printf( "Hold down left button and move mouse to rotate\n" );
     (void) printf( "Hit middle mouse button to exit\n" );
+
+    done = FALSE;
 
     do
     {
@@ -178,20 +174,16 @@ main()
                     break;
 
                 case LEFT_MOUSE_DOWN_EVENT:
-                    concat_transforms( &modeling_transform, &modeling_transform,
-                                       &rotate_clockwise_transform );
-                    G_set_modeling_transform( window, &modeling_transform );
-                    update_required = TRUE;
+                    prev_rotation_mouse_x = current_mouse_x;
+                    in_rotation_mode = TRUE;
                     break;
 
                 case LEFT_MOUSE_UP_EVENT:
+                    in_rotation_mode = FALSE;
+                    update_required = TRUE;
                     break;
 
                 case RIGHT_MOUSE_DOWN_EVENT:
-                    concat_transforms( &modeling_transform, &modeling_transform,
-                                       &rotate_counter_clockwise_transform );
-                    G_set_modeling_transform( window, &modeling_transform );
-                    update_required = TRUE;
                     break;
 
                 case RIGHT_MOUSE_UP_EVENT:
@@ -230,6 +222,28 @@ main()
             }
         }                  /* break to do update when no events */
         while( event_type != NO_EVENT );
+
+        /* check if in rotation mode and moved mouse horizontally */
+
+        if( in_rotation_mode && current_mouse_x != prev_rotation_mouse_x )
+        {
+            angle_in_radians = (prev_rotation_mouse_x - current_mouse_x);
+
+            make_rotation_transform( angle_in_radians * DEG_TO_RAD, Y,
+                                     &rotation_transform );
+
+            fill_Point( centre_of_rotation, 0.5, 0.5, 0.0 );
+            make_transform_relative_to_point( &centre_of_rotation,
+                                              &rotation_transform,
+                                              &rotation_transform );
+            concat_transforms( &modeling_transform, &modeling_transform,
+                               &rotation_transform );
+            G_set_modeling_transform( window, &modeling_transform );
+
+            prev_rotation_mouse_x = current_mouse_x;
+
+            update_required = TRUE;
+        }
 
         /* if one or more events caused an update, redraw the screen */
 
