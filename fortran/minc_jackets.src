@@ -57,7 +57,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 28, 1993
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_jackets.src,v $
+@MODIFIED   : Revision 1.5  1993-08-11 15:08:48  neelin
+@MODIFIED   : Added RCS logging in sources code.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -71,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 1.4 1993-07-21 09:33:40 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 1.5 1993-08-11 15:08:48 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <ctype.h>
