@@ -5,11 +5,14 @@
 @CALLS      : 
 @CREATED    : December 9, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.h,v $
-@MODIFIED   : Revision 1.9  1993-08-30 16:44:30  neelin
-@MODIFIED   : Added -slcstep option.
-@MODIFIED   : Fixed -field_of_view option.
-@MODIFIED   : Changed -xstep/-ystep to -colstep -rowstep.
+@MODIFIED   : Revision 1.10  1994-09-26 08:58:12  neelin
+@MODIFIED   : Changed default to -noclobber.
 @MODIFIED   :
+ * Revision 1.9  93/08/30  16:44:30  neelin
+ * Added -slcstep option.
+ * Fixed -field_of_view option.
+ * Changed -xstep/-ystep to -colstep -rowstep.
+ * 
  * Revision 1.8  93/08/11  15:24:29  neelin
  * Added RCS logging to source.
  * 
@@ -132,7 +135,7 @@ char *sign_names[][6] = {
 char *pname;
 char *infilename;
 char *outfilename;
-int clobber = TRUE;
+int clobber = FALSE;
 int verbose = TRUE;
 char *dimname[MAX_VAR_DIMS] = {MItime, NULL, NULL, NULL};
 long dimlength[MAX_VAR_DIMS] = {0};
@@ -163,7 +166,7 @@ ArgvInfo argTable[] = {
    {"-nframes", ARGV_INT, (char *) 1, (char *) &dimlength[0],
        "Number of time frames."},
    {NULL, ARGV_HELP, NULL, NULL,
-       "Options for writing output file. Default = -clobber."},
+       "Options for writing output file. Default = -noclobber."},
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
