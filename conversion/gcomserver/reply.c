@@ -4,18 +4,31 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 1.2  1993-11-24 12:09:32  neelin
-@MODIFIED   : Changed to use new acr-nema dump function. spi_reply returns a group list
-@MODIFIED   : instead of a message.
+@MODIFIED   : Revision 1.3  1993-11-25 13:26:58  neelin
+@MODIFIED   : Working version.
 @MODIFIED   :
+ * Revision 1.2  93/11/24  12:09:32  neelin
+ * Changed to use new acr-nema dump function. spi_reply returns a group list
+ * instead of a message.
+ * 
  * Revision 1.1  93/11/23  14:12:06  neelin
  * Initial revision
  * 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
 
-static int Do_logging = TRUE;
+extern int Do_logging;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : make_message
@@ -66,12 +79,11 @@ private Acr_Group spi_reply(Acr_Message input_message)
 {
    Acr_Group group, group_list;
    Acr_Element element;
-   unsigned short his_message_id = 1;
-   unsigned short my_message_id = 1;
+   unsigned short his_message_id = 0;
+   static unsigned short my_message_id = 0;
    char *his_station_id = "CANPHIMR000000";
    char *my_station_id =  "CANMNIPT010101";
-   unsigned short my_session_id = 1;
-   int num_files = 1;
+   unsigned short my_session_id = 0;
    int acr_command = ACR_UNKNOWN_COMMAND;
    int spi_command = SPI_UNKNOWN_COMMAND;
 
@@ -111,11 +123,12 @@ private Acr_Group spi_reply(Acr_Message input_message)
    element = acr_find_group_element(group, ACR_Initiator);
    if (element != NULL)
       his_station_id = acr_get_element_string(element);
-   element = acr_find_group_element(group, SPI_Nr_data_objects);
-   if (element != NULL)
-      num_files = acr_get_element_short(element);
 
-   /* Compose the reply */
+   /* Compose the reply. Increment message id number and increment
+      session id number if GCBEGINp */
+   my_message_id++;
+   if ((acr_command == SENDp) && (spi_command == GCBEGINp))
+      my_session_id++;
 
    /* Acr-nema group */
    group_list = group = acr_create_group(ACR_MESSAGE_GID);
@@ -150,15 +163,12 @@ private Acr_Group spi_reply(Acr_Message input_message)
       acr_group_add_element(group,
          acr_create_element_short(SPI_Command, (unsigned short) spi_command));
       acr_group_add_element(group,
+         acr_create_element_long(SPI_Status, (long) ACR_SUCCESS));
+      acr_group_add_element(group,
          acr_create_element_short(SPI_Session_id, my_session_id));
-      if (spi_command == GCBEGINp) {
-         acr_group_add_element(group,
-            acr_create_element_short(SPI_Nr_data_objects, num_files));
-      }
       acr_group_add_element(group,
-         acr_create_element_string(SPI_Operator_text, "OK"));
-      acr_group_add_element(group,
-         acr_create_element_string(SPI_Log_info, "OK"));
+         acr_create_element_short(SPI_Dataset_type,
+                                  (unsigned short) ACR_NULL_DATASET));
    }
 
    return group_list;
@@ -182,7 +192,7 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
    Acr_Element element;
 
    /* Print log message */
-   if (Do_logging) {
+   if (Do_logging >= HIGH_LOGGING) {
       (void) fprintf(stderr, "\n\nReceived GCBEGINq message:\n");
       acr_dump_message(stderr, input_message);
    }
@@ -199,6 +209,37 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
 
    /* Create the reply */
    group_list = spi_reply(input_message);
+
+   /* Add to the reply */
+   group = acr_get_group_next(group_list);
+   acr_group_add_element(group,
+      acr_create_element_short(SPI_Delay_time, (unsigned short) 0));
+   acr_group_add_element(group,
+      acr_create_element_short(SPI_Nr_data_objects, *num_files));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Operator_text, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Log_info, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_name, "PET"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Creation_date, "1993.11.23"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Creation_time, "10:00:0000"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_type, "FOREIGN"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_status, "OPEN"));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Space_left, (double) 1000000));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Nr_exams, (double) 10));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Nr_images, (double) 200));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Closing_date, "2010.11.23"));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Perc_space_used, (double) 20));
 
    return make_message(group_list);
 
@@ -218,15 +259,27 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
 ---------------------------------------------------------------------------- */
 public Acr_Message ready_reply(Acr_Message input_message)
 {
+   Acr_Group group_list, group;
 
    /* Print log message */
-   if (Do_logging) {
+   if (Do_logging >= HIGH_LOGGING) {
       (void) fprintf(stderr, "\n\nReceived READYq message:\n");
       acr_dump_message(stderr, input_message);
    }
 
    /* Create the reply */
-   return make_message(spi_reply(input_message));
+   group_list = spi_reply(input_message);
+
+   /* Add to the reply */
+   group = acr_get_group_next(group_list);
+   acr_group_add_element(group,
+      acr_create_element_short(SPI_Delay_time, (unsigned short) 0));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Operator_text, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Log_info, "OK"));
+
+   return make_message(group_list);
 
 }
 
@@ -243,27 +296,27 @@ public Acr_Message ready_reply(Acr_Message input_message)
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Message send_reply(Acr_Message input_message, char *file_prefix,
-                              char **new_file_name)
+public Acr_Message send_reply(Acr_Message input_message)
 {
-   Acr_Group group;
-   char temp_name[256];
+   Acr_Group group_list, group;
 
    /* Print log message */
-   if (Do_logging) {
+   if (Do_logging >= HIGH_LOGGING) {
       (void) fprintf(stderr, "\n\nReceived SENDq message:\n");
       acr_dump_message(stderr, input_message);
    }
 
-   /* Get the group list */
-   group = acr_get_message_group_list(input_message);
-
-   /* Create the new file name */
-   (void) sprintf(temp_name, "%s____", file_prefix);
-   *new_file_name = strdup(temp_name);
-
    /* Create the reply */
-   return make_message(spi_reply(input_message));
+   group_list = spi_reply(input_message);
+
+   /* Add to the reply */
+   group = acr_get_group_next(group_list);
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Operator_text, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Log_info, "OK"));
+
+   return make_message(group_list);
 
 }
 
@@ -281,15 +334,45 @@ public Acr_Message send_reply(Acr_Message input_message, char *file_prefix,
 ---------------------------------------------------------------------------- */
 public Acr_Message gcend_reply(Acr_Message input_message)
 {
+   Acr_Group group_list, group;
 
    /* Print log message */
-   if (Do_logging) {
+   if (Do_logging >= HIGH_LOGGING) {
       (void) fprintf(stderr, "\n\nReceived GCENDq message:\n");
       acr_dump_message(stderr, input_message);
    }
 
    /* Create the reply */
-   return make_message(spi_reply(input_message));
+   group_list = spi_reply(input_message);
+
+   /* Add to the reply */
+   group = acr_get_group_next(group_list);
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Operator_text, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Log_info, "OK"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_name, "PET"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Creation_date, "1993.11.23"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Creation_time, "10:00:0000"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_type, "FOREIGN"));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Volume_status, "OPEN"));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Space_left, (double) 1000000));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Nr_exams, (double) 10));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Nr_images, (double) 200));
+   acr_group_add_element(group,
+      acr_create_element_string(SPI_Closing_date, "2010.11.23"));
+   acr_group_add_element(group,
+      acr_create_element_numeric(SPI_Perc_space_used, (double) 20));
+
+   return make_message(group_list);
 
 }
 
@@ -308,7 +391,7 @@ public Acr_Message gcend_reply(Acr_Message input_message)
 public Acr_Message cancel_reply(Acr_Message input_message)
 {
    /* Print log message */
-   if (Do_logging) {
+   if (Do_logging >= HIGH_LOGGING) {
       (void) fprintf(stderr, "\n\nReceived CANCELq message:\n");
       acr_dump_message(stderr, input_message);
    }

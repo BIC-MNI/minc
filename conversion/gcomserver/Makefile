@@ -10,7 +10,7 @@ include $(ROOT)/Makefile_configuration
 # Executable names
 PROGS    = gcomserver
 EXTRA_OBJS = spi_element_defs.o open_connection.o reply.o spi_message.o \
-             use_the_files.o
+             save_transferred_object.o use_the_files.o 
 HEADERS  = $(PROGS:=.h) gcom_prototypes.h spi_element_defs.h
 MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines

@@ -4,9 +4,22 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.1  1993-11-23 14:11:36  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-25 13:26:35  neelin
+@MODIFIED   : Working version.
 @MODIFIED   :
+ * Revision 1.1  93/11/23  14:11:36  neelin
+ * Initial revision
+ * 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
@@ -15,6 +28,9 @@ typedef enum {
    WAITING_FOR_GROUP, WAITING_FOR_OBJECT, READY_FOR_OBJECT, 
    END_OF_GROUP, DISCONNECTING
 } Server_state;
+
+/* Do we do logging? */
+int Do_logging = LOW_LOGGING;
 
 /* Do we keep files or are they temporary? */
 static int Keep_files = TRUE;
@@ -30,19 +46,30 @@ int main(int argc, char *argv[])
    Acr_Group group_list;
    Acr_Message input_message, output_message;
    int exit_status;
+   char *exit_string;
    char **file_list;
    int num_files;
    int cur_file;
-   char file_prefix_string[256] = "gcomserver";
+   static char file_prefix_string[256] = "gcomserver";
    char *file_prefix = file_prefix_string;
+   int continue_looping;
    FILE *fptemp;
 
-   /* Re-open stderr */
-   (void) freopen("gcomserver.log", "w", stderr);
+   /* Re-open stderr if we are logging */
+   if (Do_logging > NO_LOGGING) {
+      (void) freopen("gcomserver.log", "w", stderr);
+   }
+
+#if 0
+   /* Enable input tracing */
+   acr_enable_input_trace();
+#endif
 
    /* Print message at start */
    pname = argv[0];
-   (void) fprintf(stderr, "%s: Started gyrocom server.\n", pname);
+      if (Do_logging >= LOW_LOGGING) {
+      (void) fprintf(stderr, "%s: Started gyrocom server.\n", pname);
+   }
 
    /* Make connection */
    open_connection(argc, argv, &afpin, &afpout);
@@ -62,7 +89,17 @@ int main(int argc, char *argv[])
 
    /* Loop while reading messages */
    state = WAITING_FOR_GROUP;
-   while ((status=spi_input_message(afpin, &input_message)) == ACR_OK) {
+   continue_looping = TRUE;
+   while (continue_looping) {
+
+      /* Read in the message */
+      status=spi_input_message(afpin, &input_message);
+
+      /* Check for error */
+      if (status != ACR_OK) {
+         continue_looping = FALSE;
+         break;
+      }
 
       /* Get group list */
       group_list = acr_get_message_group_list(input_message);
@@ -96,7 +133,7 @@ int main(int argc, char *argv[])
             }
             output_message = gcbegin_reply(input_message, &num_files);
             file_list = MALLOC((size_t) num_files * sizeof(*file_list));
-            cur_file = 0;
+            cur_file = -1;
             state = WAITING_FOR_OBJECT;
             break;
 
@@ -119,10 +156,9 @@ int main(int argc, char *argv[])
                state = DISCONNECTING;
                break;
             }
-            output_message = send_reply(input_message, file_prefix,
-                                        &file_list[cur_file]);
+            output_message = send_reply(input_message);
             cur_file++;
-            if (cur_file >= num_files) {
+            if (cur_file >= num_files-1) {
                state = END_OF_GROUP;
             }
             else {
@@ -182,9 +218,28 @@ int main(int argc, char *argv[])
       /* Send reply */
       status = spi_output_message(afpout, output_message);
 
+      /* Delete output message */
+      acr_delete_message(output_message);
+
       if (status != ACR_OK) break;
 
+      /* Read in groups for SENDq command */
+      if ((acr_command == SENDq) && (spi_command == SENDq)) {
+         status = spi_input_data_object(afpin, &group_list);
+         if (Do_logging >= HIGH_LOGGING) {
+            (void) fprintf(stderr, "\n\nReceived data object:\n");
+            acr_dump_group_list(stderr, group_list);
+         }
+         if (status != ACR_OK) break;
+         save_transferred_object(group_list, 
+                                 file_prefix, &file_list[cur_file]);
+      }
+
    }        /* End of loop over messages */
+
+   /* Free the input and output streams */
+   acr_file_free(afpin);
+   acr_file_free(afpout);
 
    /* Clean up files, if needed */
    if ((state == WAITING_FOR_OBJECT) || (state == READY_FOR_OBJECT)) {
@@ -202,20 +257,24 @@ int main(int argc, char *argv[])
    case ACR_OK:
    case ACR_END_OF_INPUT:
       exit_status = EXIT_SUCCESS;
-      (void) fprintf(stderr, "%s: Finished transfer.\n", pname);
+      exit_string = "Finished transfer.";
       break;
    case ACR_PROTOCOL_ERROR:
       exit_status = EXIT_FAILURE;
-      (void) fprintf(stderr, "%s: Protocol error. Disconnecting.\n", pname);
+      exit_string = "Protocol error. Disconnecting.";
       break;
    case ACR_OTHER_ERROR:
       exit_status = EXIT_FAILURE;
-      (void) fprintf(stderr, "%s: I/O error. Disconnecting.\n", pname);
+      exit_string = "I/O error. Disconnecting.";
       break;
    default:
       exit_status = EXIT_FAILURE;
-      (void) fprintf(stderr, "%s: Unknown error. Disconnecting.\n", pname);
+      exit_string = "Unknown error. Disconnecting.";
       break;
+   }
+
+   if (Do_logging >= LOW_LOGGING) {
+      (void) fprintf(stderr, "%s: %s\n", pname, exit_string);
    }
 
    exit(exit_status);
