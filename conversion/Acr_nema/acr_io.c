@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.2  1993-11-24 11:24:48  neelin
-@MODIFIED   : Changed short to unsigned short.
+@MODIFIED   : Revision 1.3  1993-11-25 10:34:34  neelin
+@MODIFIED   : Added routine to test byte-ordering of input.
 @MODIFIED   :
+ * Revision 1.2  93/11/24  11:24:48  neelin
+ * Changed short to unsigned short.
+ * 
  * Revision 1.1  93/11/19  12:47:35  neelin
  * Initial revision
  * 
@@ -256,6 +259,65 @@ public void acr_put_long(long nvals, long *mach_value, void *output_value)
    }
 
    return ;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_test_byte_ordering
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : status.
+@DESCRIPTION: Tests input for byte ordering to use.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Status acr_test_byte_ordering(Acr_File *afp)
+{
+   int ch, i, buflen;
+   unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
+   long data_length;
+
+   buflen = sizeof(buffer)/sizeof(buffer[0]);
+
+   /* Read in group id, element id and length of data, get length of data */
+   for (i=0; i < buflen; i++) {
+      ch = acr_getc(afp);
+      if (ch == EOF) {
+         if (i == 0)
+            return ACR_END_OF_INPUT;
+         else
+            return ACR_PROTOCOL_ERROR;
+      }
+      buffer[i] = ch;
+   }
+
+   /* Test data length (the first element should be a group length).
+      Try non-vax ordering first. */
+   (void) acr_set_vax_byte_ordering(FALSE);
+   acr_get_long(1, &buffer[4], &data_length);
+
+   /* If that doesn't work, set it to vax ordering. */
+   if (data_length != ACR_SIZEOF_LONG) {
+      (void) acr_set_vax_byte_ordering(TRUE);
+      acr_get_long(1, &buffer[4], &data_length);
+   }
+
+   /* Put the characters back */
+   for (i=buflen-1; i >=0; i--) {
+      if (acr_ungetc((int) buffer[i],afp) == EOF) {
+         return ACR_PROTOCOL_ERROR;
+      }
+   }
+
+   if (data_length != ACR_SIZEOF_LONG) {
+      return ACR_PROTOCOL_ERROR;
+   }
+   else {
+      return ACR_OK;
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
