@@ -13,11 +13,8 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.7 2001-12-14 17:12:27 neelin Exp $
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char string_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.6 1995-10-19 15:46:41 david Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : string.h

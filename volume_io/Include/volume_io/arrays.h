@@ -12,6 +12,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.12 2001-12-14 17:12:24 neelin Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -26,10 +27,6 @@
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.11 2000-01-20 20:22:25 neelin Exp $";
-#endif
 
 #include  <volume_io/alloc.h>
 

@@ -13,11 +13,8 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.12 2001-12-14 17:12:28 neelin Exp $
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.11 1995-07-31 13:44:33 david Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : transforms.h

@@ -13,11 +13,8 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.19 2001-12-14 17:12:26 neelin Exp $
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.18 1996-05-17 19:36:11 david Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : geom_structs.h

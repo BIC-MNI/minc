@@ -13,11 +13,8 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.9 2001-12-14 17:12:28 neelin Exp $
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.8 2000-01-20 20:22:27 neelin Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : volume_cache.h

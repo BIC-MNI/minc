@@ -13,6 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.8 2001-12-14 17:12:25 neelin Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -27,10 +28,6 @@
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char files_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.7 2000-01-20 20:22:26 neelin Exp $";
-#endif
 
 #include  <stdio.h>
 #include  <volume_io/basic.h>

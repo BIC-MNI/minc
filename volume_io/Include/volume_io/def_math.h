@@ -13,11 +13,8 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/def_math.h,v 1.8 2001-12-14 17:12:25 neelin Exp $
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid_math[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/def_math.h,v 1.7 1995-07-31 13:44:35 david Exp $";
-#endif
 
 /*  Redefines y1 and y0 so lint does not make erroneous messages */
 
