@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 3.0 1995-05-15 19:31:00 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 3.1 1997-04-21 20:19:17 neelin Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -79,6 +79,17 @@ Other conventions have the opposite: first pixel at patient's
 posterior/left, so step values are positive. Sometimes the first slice
 is inferior, so the z step should be positive. Other times it is
 superior, so z step is negative.
+
+The image axes do not have to be aligned with the world coordinate
+axes. The axis directions are recorded in the file as direction
+cosines - unit vectors - one for each spatial axis. In this case, the
+step and start attributes described in the previous paragraph refer to
+distances along the axis, not to coordinates of the first voxel. This
+makes them invariant under a change of axis direction (the whole
+coordinate system can in fact be rotated just by changing the
+direction cosines). If the coordinate of the first voxel is known,
+then it can be converted (projected) to a set of start values by using
+the -origin option.
 
 .SH OPTIONS
 
@@ -238,15 +249,18 @@ Step size for z dimension (default = none).
 .P
 .I -xstart
 <xstart>:
-Starting coordinate for x dimension (default = none).
+Starting coordinate for x dimension (default = none). This is a
+distance parallel to the axis.
 .P
 .I -ystart
 <ystart>:
-Starting coordinate for y dimension (default = none).
+Starting coordinate for y dimension (default = none). This is a
+distance parallel to the axis.
 .P
 .I -zstart
 <zstart>:
-Starting coordinate for z dimension (default = none).
+Starting coordinate for z dimension (default = none). This is a
+distance parallel to the axis.
 .P
 .I -xdircos
 <x1> <x2> <x3>:
@@ -259,6 +273,14 @@ Direction cosines for y dimension (default = none).
 .I -zdircos
 <z1> <z2> <z3>:
 Direction cosines for z dimension (default = none).
+.P
+.I -origin
+<o1> <o2> <o3>:
+Specify the spatial coordinates of the first voxel. If the direction
+cosines are not given or are the default ones, this option will
+give the same results as using the -start options. Otherwise, the
+coordinate is projected parallel to the axes to determine the
+appropriate start values.
 
 .SH Frame time and length specification
 .P

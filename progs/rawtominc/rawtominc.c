@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 3.2  1996-06-19 18:24:16  neelin
-@MODIFIED   : Check errors on fopen when -input is used.
-@MODIFIED   : Try opening input before creating minc file.
+@MODIFIED   : Revision 3.3  1997-04-21 20:19:17  neelin
+@MODIFIED   : Added -origin option.
 @MODIFIED   :
+ * Revision 3.2  1996/06/19  18:24:16  neelin
+ * Check errors on fopen when -input is used.
+ * Try opening input before creating minc file.
+ *
  * Revision 3.1  1995/11/16  13:11:16  neelin
  * Added include of math.h to get declaration of strtod under SunOs
  *
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.2 1996-06-19 18:24:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.3 1997-04-21 20:19:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,6 +94,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <math.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
+#include <convert_origin_to_start.h>
 #include <minc_def.h>
 
 /* Some constants */
@@ -119,10 +123,12 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define X 0
 #define Y 1
 #define Z 2
+#define WORLD_NDIMS 3
 #define DEF_STEP DBL_MAX
 #define DEF_START DBL_MAX
 #define DEF_RANGE DBL_MAX
 #define DEF_DIRCOS DBL_MAX
+#define DEF_ORIGIN DBL_MAX
 
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
@@ -179,6 +185,7 @@ double dimdircos[3][3] = {
    DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS,
    DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS
 };
+double origin[3] = {DEF_ORIGIN, DEF_ORIGIN, DEF_ORIGIN};
 int vector_dimsize = -1;
 char *modality = NULL;
 int attribute_list_size = 0;
@@ -309,6 +316,8 @@ ArgvInfo argTable[] = {
        "Direction cosines for y dimension."},
    {"-zdircos", ARGV_FLOAT, (char *) 3, (char *) dimdircos[Z],
        "Direction cosines for z dimension."},
+   {"-origin", ARGV_FLOAT, (char *) 3, (char *) origin,
+       "Coordinate of first pixel."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying imaging modality. Default = -nomodality."},
    {"-nomodality", ARGV_CONSTANT, NULL, (char *) &modality,
@@ -374,7 +383,9 @@ main(int argc, char *argv[])
    void *ptr;
    int floating_type;
    int do_real_range;
+   int status;
    double scale, offset, denom, pixel_min, pixel_max;
+   double dircos[WORLD_NDIMS][WORLD_NDIMS];
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -391,6 +402,47 @@ main(int argc, char *argv[])
 
    /* Did the user provide a real range */
    do_real_range = (real_range[0] != DEF_RANGE) && !floating_type;
+
+   /* Check that only start or origin are specified, not both */
+   for (i=0; i<WORLD_NDIMS; i++) {
+      if ((dimstart[i] != DEF_START) && (origin[0] != DEF_START)) {
+         (void) fprintf(stderr, "Do not specify both start and origin.\n");
+         exit(ERROR_STATUS);
+      }
+   }
+
+   /* If origin is given, convert it to a start using direction cosines.
+      Default direction cosines must be provided. */
+   if (origin[0] != DEF_ORIGIN) {
+
+      /* Set direction cosines */
+      for (i=0; i<WORLD_NDIMS; i++) {
+         if (dimdircos[i][0] != DEF_DIRCOS) {
+            for (j=0; j<WORLD_NDIMS; j++)
+               dircos[i][j] = dimdircos[i][j];
+         }
+         else {    /* Use default */
+            for (j=0; j<WORLD_NDIMS; j++)
+               dircos[i][j] = 0.0;
+            dircos[i][i] = 1.0;
+         }
+      }
+
+      /* Convert the origin to a start value */
+      status = convert_origin_to_start(origin, dircos[X], dircos[Y], dircos[Z],
+                                       dimstart);
+      switch (status) {
+      case 1:
+         (void) fprintf(stderr, 
+                        "Cannot convert origin to start - some direction cosines have zero length.\n");
+         break;
+      case 2:
+         (void) fprintf(stderr, 
+                        "Cannot convert origin to start - some direction cosines are parallel.\n");
+         break;
+      }
+
+   }
 
    /* Open the input file */
    if (inputfile == NULL) {
