@@ -8,22 +8,26 @@
 # Tue Dec  3 23:38:15 EST 2002 - rewritten to pretty-print entries <smr>
 # Tue Dec  3 08:25:23 EST 2002 - shifted to CVS
 
+my($n_columns) = 80;
 
 use strict;
 use warnings "all";
 use Text::Format;
 use File::Basename;
 
-my($Usage, $me, $text, $fname, $counter);
+my($Usage, $me, $cmd_text, $text, $fname, $counter, @tmp, $c);
 
 $me = &basename($0);
 $Usage = "Usage: $me <file1.mnc> [<file2.mnc> ... ]\n\n";
 die $Usage if ($#ARGV < 0);
 
-# set up text object
+# set up text objects
 $text = new Text::Format( firstIndent => 0,
                           bodyIndent => 5,
-                          columns => 78 );
+                          columns => $n_columns );
+$cmd_text = new Text::Format( firstIndent => 0,
+                          bodyIndent => 5,
+                          columns => ($n_columns - 2) );
 
 # for each input file
 foreach $fname (@ARGV){
@@ -32,16 +36,24 @@ foreach $fname (@ARGV){
       next;
       }
 
-   print "--- History of $fname ---\n";
+   print STDOUT $text->format("--- History of $fname ---\n");
 
    $counter = 1;
    foreach (`mincinfo -attvalue :history $fname`){
       chomp;
       next if $_ eq '';
       
-      printf "[%02d] ", $counter ++;
-      print $text->format($_);
+      # add the command number to the front
+      $_ = sprintf("[%02d] ", $counter ++) . $_;
+      
+      # add \'s to the end of each line except the last
+      @tmp = split(/\n/, $cmd_text->format($_));
+      for($c=0; $c<$#tmp; $c++){
+         print STDOUT "$tmp[$c] \\\n";
+         }
+      print STDOUT "$tmp[$#tmp]\n";
       }
-   print "\n";
+   
+   print STDOUT "\n";
    }
 
