@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.12  1994-04-07 16:18:54  neelin
-@MODIFIED   : Fixed bug in setting of state when input error or end-of-file occurs.
+@MODIFIED   : Revision 1.13  1994-04-08 09:15:10  neelin
+@MODIFIED   : Added printing of filename to /dev/log on error.
 @MODIFIED   :
+ * Revision 1.12  94/04/07  16:18:54  neelin
+ * Fixed bug in setting of state when input error or end-of-file occurs.
+ * 
  * Revision 1.11  94/04/07  11:02:17  neelin
  * Changed error handling to be more explicit about errors.
  * When the server terminates due to an error, a message is printed to /dev/log.
@@ -104,6 +107,7 @@ int main(int argc, char *argv[])
    char *file_prefix = file_prefix_string;
    int continue_looping;
    FILE *fptemp;
+   char last_file_name[256];
 
    /* Re-open stderr if we are logging */
    if (Do_logging > NO_LOGGING) {
@@ -320,6 +324,15 @@ int main(int argc, char *argv[])
    acr_file_free(afpin);
    acr_file_free(afpout);
 
+   /* Save name of first file in last set transferred */
+   if ((num_files > 0) && (file_list[0] != NULL)) {
+      last_file_name[sizeof(last_file_name) - 1] = '\0';
+      (void) strncpy(last_file_name, file_list[0], sizeof(last_file_name)-1);
+   }
+   else {
+      last_file_name[0] = '\0';
+   }
+
    /* Clean up files, if needed */
    if (num_files > 0) {
       cleanup_files(num_files, file_list);
@@ -369,6 +382,10 @@ int main(int argc, char *argv[])
    if ((status != ACR_OK) && (status != ACR_END_OF_INPUT)) {
       if (SYSTEM_LOG != NULL) {
          if ((fptemp = fopen(SYSTEM_LOG, "w")) != NULL) {
+            if (strlen(last_file_name) > 0) {
+               (void) fprintf(fptemp, "%s: File \"%s\"\n",
+                              pname, last_file_name);
+            }
             (void) fprintf(fptemp, "%s: %s\n", pname, exit_string);
             (void) fclose(fptemp);
          }
