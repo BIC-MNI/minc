@@ -14,7 +14,7 @@ HEADERS  =
 CDEFINES = -DDEBUG                 # cpp defines
 LDOPT    = $(PROG_LDOPT)
 MANSECT  = 1
-#MANPAGES = $(PROGS).$(MANSECT)
+MANPAGES = $(PROGS).$(MANSECT)
 
 include $(ROOT)/progs/Make_progs
 
