@@ -26,10 +26,16 @@ OBJS     = \
    Volumes/output_mnc.o Volumes/output_volume.o \
    Volumes/input_free.o
 
-CDEFINES = #                        cpp defines
+# Header files
+HEADERS  = \
+   Include/volume_io.h Include/volume_io_prototypes.h \
+   Include/basic.h Include/string_funcs.h Include/files.h \
+   Include/arrays.h Include/geom_structs.h Include/progress.h \
+   Include/geometry.h Include/volume.h Include/transforms.h \
+   Include/alloc.h Include/alloc_check.h Include/def_math.h
 
-INCLUDES = -IInclude -I. -I$(PROG_LIB_DIR) -I$(PROG_LIB_DIR)/dave_includes \
-	      -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
+
+CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
 
@@ -87,3 +93,8 @@ clean:
 	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
 	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
 
+install:
+	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
+	$(CP) $(CP_FLAGS) $(HEADERS) $(INSTALL_INCDIR)
+	$(CHMOD) $(CHMOD_FLAGS) \
+	      `echo $(HEADERS) | sed 's+Include/+$(INSTALL_INCDIR)/+g'`

@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 
 default : build
 
-all build clean : 
+all build clean install : 
 	$(MAKE) 'TARGET=$@' subdirs
 
 subdirs : 

@@ -15,3 +15,6 @@ build : minc_reference.dvi minc_user.dvi
 
 clean:
 	$(RM) $(RM_FLAGS) *.aux *.dvi *.log
+
+install:
+	@echo Nothing to install

@@ -54,3 +54,6 @@ test: $(PROGS)
 # Remove all derived files in this directory
 clean:
 	$(RM) $(RM_FLAGS) $(PROG_OBJ)  $(LINT_LIST) $(PROGS)
+
+install:
+	@echo Nothing to install
