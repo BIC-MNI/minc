@@ -359,7 +359,12 @@ mirw_hyperslab_raw(int opcode,
 
     file_id = volume->hdf_id;
 
-    type_id = mitype_to_hdftype(midatatype);
+    if (midatatype == MI_TYPE_UNKNOWN) {
+        type_id = H5Tcopy(volume->type_id);
+    }
+    else {
+        type_id = mitype_to_hdftype(midatatype);
+    }
 
     sprintf(path, "/minc-2.0/image/%d/image", volume->selected_resolution);
 
