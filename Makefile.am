@@ -141,6 +141,8 @@ EXTRA_DIST = GETTING_STARTED \
 	README.binary_packaging \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
+	progs/mincdump/getopt.c \
+	progs/mincdump/getopt.h \
 	WHATSNEW-2.0
 
 # The fortran directory is not yet automakified, so it is just
