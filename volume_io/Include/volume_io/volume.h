@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.34 1995-08-16 01:58:03 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.35 1995-08-17 14:43:16 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

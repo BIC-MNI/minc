@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.29 1995-08-16 01:58:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.30 1995-08-17 14:43:17 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -144,6 +144,21 @@ public  Minc_file  initialize_minc_output(
         }
 
         dim_names = default_dim_names;
+    }
+
+    if( file_nc_data_type == NC_UNSPECIFIED )
+    {
+        file_nc_data_type = get_volume_nc_data_type( volume_to_attach,
+                                                     &file_signed_flag );
+        get_volume_voxel_range( volume_to_attach,
+                                &file_voxel_min, &file_voxel_max );
+    }
+    else if( (file_nc_data_type == NC_FLOAT ||
+              file_nc_data_type == NC_DOUBLE) &&
+              file_voxel_min >= file_voxel_max )
+    {
+        get_volume_real_range( volume_to_attach,
+                               &file_voxel_min, &file_voxel_max );
     }
 
     /* --- check if dimension name correspondence between volume and file */

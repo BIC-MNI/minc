@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.2 1995-08-16 01:58:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.3 1995-08-17 14:43:18 david Exp $";
 #endif
 
 public   void   create_empty_multidim_array(
@@ -226,7 +226,7 @@ public  void  copy_multidim_reordered(
     int     dest_offset[MAX_DIMENSIONS], src_offset[MAX_DIMENSIONS];
     int     dest_sizes[MAX_DIMENSIONS], dest_index;
     char    *dest_ptr, *src_ptr;
-    BOOLEAN done;
+    BOOLEAN done, full_count_used;
 
     type_size = get_type_size( get_multidim_data_type(dest) );
 
@@ -257,10 +257,18 @@ public  void  copy_multidim_reordered(
 
     /*--- check if we can transfer more than one at once */
 
+    full_count_used = TRUE;
+
     while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 &&
-           counts[n_src_dims-1] == src_sizes[n_src_dims-1] )
+           full_count_used )
     {
-        type_size *= src_sizes[n_src_dims-1];
+        if( counts[n_src_dims-1] != src_sizes[n_src_dims-1] ||
+            counts[n_src_dims-1] != dest_sizes[to_dest_index[n_src_dims-1]] )
+        {
+            full_count_used = FALSE;
+        }
+
+        type_size *= counts[n_src_dims-1];
         --n_src_dims;
         --n_dest_dims;
     }
