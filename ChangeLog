@@ -1,4 +1,12 @@
-2003-02-02  Bert Vincent <bert@mni.mcgill.ca>
+2004-03-24  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Minor fix to miappend_history() in libsrc/minc_convenience.c
+	
+2004-03-23  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Modify configure.in, libsrc/netcdf_convenience.c, 
+	volume_io/Prog_utils/files.c, and volume_io/Prog_utils/time.c to 
+	make MINC more portable, especially to Windows compilers.
+	
+2003-02-02  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Added -version flag for all executables (or at least all "C" 
 	language executables).  Implemented in ParseArgv() to make it
 	universal, and applications can override their version number by
