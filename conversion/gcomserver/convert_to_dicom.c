@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.10  2000-06-14 18:24:07  neelin
+ * Revision 1.11  2000-10-30 22:03:50  neelin
+ * Modifications to set correct direction cosines and position.
+ *
+ * Revision 1.10  2000/06/14 18:24:07  neelin
  * Added UseSafeOrientations keyword to project files to allow forcing of
  * direction cosines to standard (safe) ones, and modified convert_to_dicom
  * so that this is no longer the default behaviour.
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.10 2000-06-14 18:24:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.11 2000-10-30 22:03:50 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -109,6 +112,7 @@ DEFINE_ELEMENT(static, ACR_Series_instance_UID        , 0x0020, 0x000e, UI);
 DEFINE_ELEMENT(static, ACR_Image_position             , 0x0020, 0x0032, DS);
 DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
+DEFINE_ELEMENT(static, ACR_Slice_location             , 0x0020, 0x1041, DS);
 
 /* Dicom constants */
 #define ACR_MAX_IS_LEN 12
@@ -129,6 +133,44 @@ private void calculate_image_position(int orientation,
                                       double centre[WORLD_NDIMS],
                                       double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                       double position[WORLD_NDIMS]);
+private void calculate_slice_location(int orientation,
+                                      double position[WORLD_NDIMS],
+                                      double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                      double *location);
+
+/* Acr-nema elements to be removed */
+DEFINE_ELEMENT(static, ACR_Recognition_Code_Ret       , 0x0008, 0x0010, SH);
+DEFINE_ELEMENT(static, ACR_Image_Position_Ret         , 0x0020, 0x0030, DS);
+DEFINE_ELEMENT(static, ACR_Image_Orientation_Ret      , 0x0020, 0x0035, DS);
+DEFINE_ELEMENT(static, ACR_Location_Ret               , 0x0020, 0x0050, DS);
+DEFINE_ELEMENT(static, ACR_Modified_Image_ID          , 0x0020, 0x3402, LO);
+DEFINE_ELEMENT(static, ACR_Modified_Image_Date        , 0x0020, 0x3403, LO);
+DEFINE_ELEMENT(static, ACR_Modified_Image_Time        , 0x0020, 0x3405, LO);
+DEFINE_ELEMENT(static, ACR_Image_Dimensions           , 0x0028, 0x0005, US);
+DEFINE_ELEMENT(static, ACR_Compression_Code           , 0x0028, 0x0060, SH);
+DEFINE_ELEMENT(static, ACR_Smallest_Valid_Pixel_Value , 0x0028, 0x0104, US);
+DEFINE_ELEMENT(static, ACR_Largest_Valid_Pixel_Value  , 0x0028, 0x0105, US);
+DEFINE_ELEMENT(static, ACR_Image_Location             , 0x0028, 0x0200, US);
+
+/* Retired elements to remove from group list */
+static Acr_Element_Id *Elements_to_remove[] = {
+   &ACR_Recognition_Code_Ret, 
+   &ACR_Data_set_type,
+   &ACR_Data_set_subtype,
+   &ACR_Image_Position_Ret, 
+   &ACR_Image_Orientation_Ret, 
+   &ACR_Location_Ret,
+   &ACR_Modified_Image_ID,
+   &ACR_Modified_Image_Date,
+   &ACR_Modified_Image_Time,
+   &ACR_Image_Dimensions,
+   &ACR_Compression_Code,
+   &ACR_Smallest_Valid_Pixel_Value,
+   &ACR_Largest_Valid_Pixel_Value,
+   &ACR_Image_Location,
+   NULL
+};
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : convert_to_dicom
@@ -149,6 +191,7 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
                              int use_safe_orientations)
 {
    Acr_Element element;
+   Acr_Group group;
    double value;
    char string[64], *ptr, *imagenum;
    char comment[64];
@@ -162,6 +205,7 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    int row_world, column_world;
    int index;
    double field_of_view, centre[WORLD_NDIMS], position[WORLD_NDIMS];
+   double location;
 
    /* Set up uid prefix: strip off any trailing blanks or . and then either
       copy the string or make one up if needed. */
@@ -209,7 +253,7 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    acr_insert_string(&group_list, ACR_Study_instance_UID, string);
    (void) sprintf(ptr, ".2.%d.%d.%d", study, series, echo);
    acr_insert_string(&group_list, ACR_Series_instance_UID, string);
-   (void) sprintf(ptr, ".3.%d.%d", study, series);
+   (void) sprintf(ptr, ".3.%d", study);
    acr_insert_string(&group_list, ACR_Frame_of_reference_UID, string);
    (void) sprintf(ptr, ".4.%d.%d.%s", study, series, imagenum);
    acr_insert_string(&group_list, ACR_SOP_instance_UID, string);
@@ -299,13 +343,17 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    centre[XCOORD] = acr_find_double(group_list, SPI_Off_center_lr, 0.0);
    centre[YCOORD] = acr_find_double(group_list, SPI_Off_center_ap, 0.0);
    centre[ZCOORD] = acr_find_double(group_list, SPI_Off_center_cc, 0.0);
-   convert_coordinate(centre);
    field_of_view = acr_find_double(group_list, SPI_Field_of_view, 0);
    calculate_image_position(orientation, field_of_view, field_of_view, 
                             centre, dircos, position);
    (void) sprintf(string, "%.8g\\%.8g\\%.8g",
                   position[XCOORD], position[YCOORD], position[ZCOORD]);
    acr_insert_string(&group_list, ACR_Image_position, string);
+
+   /* Add slice location */
+   calculate_slice_location(orientation, position, dircos, &location);
+   (void) sprintf(string, "%.8g", location);
+   acr_insert_string(&group_list, ACR_Slice_location, string);
 
    /* Fix pixel size field */
    element = acr_find_group_element(group_list, ACR_Pixel_size);
@@ -332,6 +380,15 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    value = acr_find_int(group_list, SPI_Number_of_echoes, -1);
    if (value >= 0) {
       acr_insert_numeric(&group_list, ACR_Echo_train_length, value);
+   }
+
+   /* Remove some retired elements */
+   for (index=0; Elements_to_remove[index] != NULL; index++) {
+      group = acr_find_group(group_list, 
+                             (*Elements_to_remove[index])->group_id);
+      if (group == NULL) continue;
+      acr_group_remove_element(group, 
+                               (*Elements_to_remove[index])->element_id);
    }
 
    /* Fix the image, if necessary */
@@ -527,8 +584,12 @@ private void convert_time(char *string)
 @INPUT      : coord - coordinate according to old convention
 @OUTPUT     : coord - coordinate converted to DICOM convention
 @RETURNS    : (nothing)
-@DESCRIPTION: Routine to convert coordinates to DICOM
-@METHOD     : 
+@DESCRIPTION: Routine to convert coordinates to and from DICOM.
+@METHOD     : Since this operation is its own inverse, we do not provide a
+              flag to indicate which direction we are going. If this
+              ever changes, then the interface will have to be changed.
+              (It would have been a good idea to begin with, but we all 
+              know how code evolves...)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : October 18, 1994 (Peter Neelin)
@@ -701,13 +762,16 @@ private void get_direction_cosines(int orientation,
 @INPUT      : orientation - indicates orientation of slice
               row_fov - field-of-view for rows
               column_fov - field-of-view for columns
-              centre - coordinate of centre of slice
+              centre - coordinate of centre of slice as a rotated Philips
+                 coordinate
               dircos - direction cosines for axes
 @OUTPUT     : position - calculated position coordinate for slice
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to calculate the position (top left) coordinate for 
               a slice given its centre, field-of-view and direction cosines.
-@METHOD     : 
+@METHOD     : Direction cosines are converted back to Philips coordinate
+              convention before being used to rotate the centre. The final
+              position is converted to DICOM convention at the end.
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : September 2, 1997 (Peter Neelin)
@@ -722,7 +786,7 @@ private void calculate_image_position(int orientation,
 {
    double coord[WORLD_NDIMS], pos_dircos[WORLD_NDIMS][WORLD_NDIMS];
    double row_offset, column_offset;
-   double biggest;
+   double biggest, flip;
    int slice_world, row_world, column_world;
    World_Index iloop, jloop;
 
@@ -747,31 +811,36 @@ private void calculate_image_position(int orientation,
    }
 
    /* Work out positive direction cosines and direction of row and column
-      offsets */
+      offsets. */
    for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
 
-      /* Find biggest component */
-      biggest = dircos[iloop][0];
+      /* Switch the direction cosine back to Philips orientation */
+      for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
+         pos_dircos[iloop][jloop] = dircos[iloop][jloop];
+      }
+      convert_coordinate(pos_dircos[iloop]);
+
+      /* Find biggest component and figure out if we need to flip the
+         direction cosine */
+      biggest = pos_dircos[iloop][0];
       for (jloop=1; jloop < WORLD_NDIMS; jloop++) {
-         if (fabs(biggest) < fabs(dircos[iloop][jloop])) {
-            biggest = dircos[iloop][jloop];
+         if (fabs(biggest) < fabs(pos_dircos[iloop][jloop])) {
+            biggest = pos_dircos[iloop][jloop];
          }
       }
+      flip = ((biggest >= 0.0) ? +1.0 : -1.0);
 
-      /* Save positive direction cosines */
+      /* Make the direction cosine positive */
       for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
-         if (biggest >= 0.0)
-            pos_dircos[iloop][jloop] = dircos[iloop][jloop];
-         else
-            pos_dircos[iloop][jloop] = -dircos[iloop][jloop];
+         pos_dircos[iloop][jloop] *= flip;
       }
 
-      /* Work out direction of row and column offsets */
+      /* Work out row and column offsets */
       if (iloop == row_world) {
-         row_offset = ((biggest >= 0.0) ? +1.0 : -1.0) * row_fov / 2.0;
+         row_offset = flip * row_fov / 2.0;
       }
       if (iloop == column_world) {
-         column_offset = ((biggest >= 0.0) ? +1.0 : -1.0) * column_fov / 2.0;
+         column_offset = flip * column_fov / 2.0;
       }
 
    }
@@ -789,5 +858,60 @@ private void calculate_image_position(int orientation,
       }
    }
 
+   /* Convert the coordinate back to DICOM */
+   convert_coordinate(position);
+
 }
       
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : calculate_slice_location
+@INPUT      : orientation - indicates orientation of slice
+              position - position of slice
+              dircos - direction cosines for axes
+@OUTPUT     : location - offset perpendicular to slice 
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to calculate the location of the slice along an
+              axis perpendicular to it.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : July 11, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void calculate_slice_location(int orientation,
+                                      double position[WORLD_NDIMS],
+                                      double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                      double *location)
+{
+   double distance;
+   int index, slice_world;
+
+   /* Figure out which direction cosine to use */
+   switch (orientation) {
+   case SPI_SAGITTAL_ORIENTATION:
+      slice_world = XCOORD;
+      break;
+   case SPI_CORONAL_ORIENTATION:
+      slice_world = YCOORD;
+      break;
+   case SPI_TRANSVERSE_ORIENTATION:
+   default:
+      slice_world = ZCOORD;
+      break;
+   }
+
+   /* Project the position onto the appropriate direction cosine */
+   distance = 0.0;
+   for (index=0; index < WORLD_NDIMS; index++) {
+      distance += dircos[slice_world][index] * position[index];
+   }
+
+   /* Check for a negative direction cosine */
+   if (dircos[slice_world][slice_world] < 0.0) {
+      distance *= -1.0;
+   }
+
+   /* Save the result */
+   *location = distance;
+   
+}
