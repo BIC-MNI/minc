@@ -371,6 +371,12 @@ mirw_hyperslab_raw(int opcode,
 
     file_id = volume->hdf_id;
 
+    /* Disallow write operations to anything but the highest resolution.
+     */
+    if (opcode == MIRW_OP_WRITE && volume->selected_resolution != 0) {
+        return (MI_ERROR);
+    }
+
     if (midatatype == MI_TYPE_UNKNOWN) {
         type_id = H5Tcopy(volume->type_id);
     }
@@ -484,6 +490,12 @@ mirw_hyperslab_icv(int opcode,
     long icv_count[MI2_MAX_VAR_DIMS];
     int dir[MI2_MAX_VAR_DIMS];  /* Direction, 1 or -1, in file order */
     int n_different = 0;
+
+    /* Disallow write operations to anything but the highest resolution.
+     */
+    if (opcode == MIRW_OP_WRITE && volume->selected_resolution != 0) {
+        return (MI_ERROR);
+    }
 
     miicv_inqint(icv, MI_ICV_TYPE, &nc_type);
 
