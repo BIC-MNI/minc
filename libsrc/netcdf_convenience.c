@@ -32,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.4 1992-12-01 14:03:59 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.5 1993-03-02 11:11:31 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -579,7 +579,11 @@ public int micopy_all_atts(int incdfid, int invarid,
    MI_SAVE_ROUTINE_NAME("micopy_all_atts");
 
    /* Inquire about the number of input variable attributes */
-   MI_CHK_ERR(ncvarinq(incdfid, invarid, NULL, NULL, NULL, NULL, &num_atts))
+   if (invarid != NC_GLOBAL)
+      {MI_CHK_ERR(ncvarinq(incdfid, invarid, 
+                           NULL, NULL, NULL, NULL, &num_atts))}
+   else
+      {MI_CHK_ERR(ncinquire(incdfid, NULL, NULL, &num_atts, NULL))}
 
    /* Loop through input attributes */
    for (i=0; i<num_atts; i++){
@@ -727,6 +731,8 @@ public int micopy_var_values(int incdfid, int invarid,
        (ncvarinq(outcdfid, outvarid, NULL, &outtype, &outndims, outdim, NULL)
                      == MI_ERROR) ||
        (intype != outtype) || (inndims != outndims)) {
+      MI_LOG_PKG_ERROR2(MI_ERR_BADMATCH,
+         "Variables do not match for value copy");
       MI_RETURN_ERROR(MI_ERROR);
    }
 
@@ -838,6 +844,15 @@ public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
       if (i>=nexclude) {
          MI_CHK_ERR(micopy_var_def(incdfid, varid, outcdfid))
       }
+   }
+
+   /* Copy global attributes */
+   for (i=0; i<nexclude; i++) {
+      if (NC_GLOBAL==excluded_vars[i]) break;
+   }
+   if (i>=nexclude) {
+      {MI_CHK_ERR(micopy_all_atts(incdfid, NC_GLOBAL, outcdfid, NC_GLOBAL))}
+
    }
 
    MI_RETURN(MI_NOERROR);

@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.13 1993-02-02 10:37:38 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.14 1993-03-02 11:09:24 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -151,6 +151,7 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
    int oldncopts;              /* To set and reset ncopts */
    nc_type datatype;           /* Type of attribute */
    int status;                 /* Status of function call */
+   char *new_child;            /* String containing name of new child */
 
    MI_SAVE_ROUTINE_NAME("miadd_child");
 
@@ -187,11 +188,20 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
       child_list_size += strlen(MI_CHILD_SEPARATOR);
    }
 
+   /* Get pointer to name of new child */
+   new_child = &child_list[child_list_size];
+
    /* Add the new child name to the list */
-   if (ncvarinq(cdfid, child_varid, &child_list[child_list_size], NULL,
+   if (ncvarinq(cdfid, child_varid, new_child, NULL,
                 NULL, NULL, NULL) == MI_ERROR) {
       FREE(child_list);
       MI_RETURN_ERROR(MI_ERROR);
+   }
+
+   /* Check for multiple copies of child */
+   if (strstr(child_list, new_child) != new_child) {
+      child_list_size -= strlen(MI_CHILD_SEPARATOR);
+      child_list[child_list_size] = '\0';
    }
 
    /* Put the attribute MIchildren */
