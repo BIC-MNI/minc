@@ -1,6 +1,9 @@
-
 #ifndef  DEF_VOLUME_IO
 #define  DEF_VOLUME_IO
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ----------------------------------------------------------------------------
 @COPYRIGHT  :
@@ -14,7 +17,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11.2.2 2005-03-31 17:39:49 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11.2.3 2005-04-03 18:02:54 stever Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -54,5 +57,9 @@
 #endif /* VIOAPI not defined */
 
 #include  <volume_io/vol_io_prototypes.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DEF_VOLUME_IO */

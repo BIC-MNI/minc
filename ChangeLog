@@ -1,3 +1,8 @@
+2005-04-02  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* volume_io/Include/volume_io.h: Wrap contents in "extern C"
+	declaration, if compiled with C++.
+
 2005-03-31  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Port A. Janke's fix to volume_io/Prog_utils/files.c to the
 	1.X branch.  This replaces any ':' characters in a temporary
