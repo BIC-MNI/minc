@@ -386,7 +386,7 @@ private  void  transform_or_invert_point(
         break;
 
     default:
-        HANDLE_INTERNAL_ERROR( "general_transform_point" );
+        HANDLE_INTERNAL_ERROR( "transform_or_invert_point" );
         break;
     }
 }
