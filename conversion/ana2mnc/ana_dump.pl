@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#! /usr/bin/env perl 
 #
 # Andrew Janke - rotor@cmr.uq.edu.au
 # Center for Magnetic Resonance
@@ -10,7 +10,7 @@
 #
 # Tue Feb  6 09:49:25 EST 2001 - created
 
-
+use warnings "all";
 use strict;
 
 chomp(my($prog) = `basename $0`);

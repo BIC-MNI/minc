@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 
 
 for i in mnc2ana ana_show spm2mnc spm2xfm spm_show;

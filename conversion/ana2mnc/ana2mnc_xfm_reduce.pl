@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#! /usr/bin/env perl
 #
 # Andrew Janke - rotor@cmr.uq.edu.au
 # Center for Magnetic Resonance
@@ -36,7 +36,10 @@
 # Wed Oct 25 10:29:54 EST 2000 - Added mnc2ana, ana_show and ana_write functionality
 # Tue Nov 28 15:58:57 EST 2000 - Completed transformation decomposition added xfm_reduce
 
+require 5.0;
+
 use strict;
+use warnings "all";
 
 use Math::Trig;
 use Math::MatrixReal;

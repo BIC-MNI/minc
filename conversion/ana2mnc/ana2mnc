@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl5 -w
+#! /usr/bin/env perl
 #
 # Andrew Janke - rotor@cmr.uq.edu.au
 # Center for Magnetic Resonance
@@ -23,8 +23,10 @@
 # Wed Feb 13 16:22:05 EST 2002 - Added byte_swapping, THANKS PETER! 
 # Thu Feb 28 13:38:03 EST 2002 - Removed dependencies on MNI::Perllib stuff
 
+require 5.0;
 
 use strict;
+use warnings "all";
 use Getopt::Tabular;
 
 my($Help, $Usage, $me, @files, $history);
@@ -120,7 +122,7 @@ elsif($me eq "ana_show"){  @files = ('<in.hdr>');              }
 elsif($me eq "spm_show"){  @files = ('<in.mat>');              }
 
 $Usage = "Usage: $me [options] @files\n".
-         "       $me -help to list options\n";
+         "       $me -help to list options\n\n";
 
 # Check arguments
 &Getopt::Tabular::SetHelp($Help, $Usage);
