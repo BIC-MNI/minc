@@ -27,6 +27,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
     hid_t g1_id;
     mivolume_ptr vol_ptr;
 
+    miinit();                   /* Initialize the library */
+
     file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (file_id < 0) {
         return (MI_ERROR);
@@ -66,6 +68,9 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     hid_t space_id;
     mivolume_ptr vol_ptr;
     int hdf_mode;
+
+    miinit();                   /* Initialize the library */
+
     if (mode == MI2_OPEN_READ) {
         hdf_mode = H5F_ACC_RDONLY;
     }
