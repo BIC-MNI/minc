@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.44 1996-02-28 16:03:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.45 1996-05-07 13:24:50 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -125,7 +125,7 @@ private  Status  output_world_transform(
 
     for_less( i, 0, 3 )
     {
-        if( Vector_coord(axes[i],i) < 0.0 )
+        if( Vector_coord(axes[i],i) < 0.0f )
         {
             SCALE_VECTOR( axes[i], axes[i], -1.0 );
             separation[i] *= -1.0;
@@ -135,7 +135,7 @@ private  Status  output_world_transform(
     for_less( i, 0, 3 )
     {
         for_less( j, 0, 3 )
-            dir_cosines[i][j] = Vector_coord(axes[i],j);
+            dir_cosines[i][j] = (Real) Vector_coord(axes[i],j);
     }
 
     make_identity_transform( &t );
@@ -360,10 +360,11 @@ public  Minc_file  initialize_minc_output(
 
     for_less( d, 0, n_dimensions )
     {
-        file->sizes_in_file[d] = sizes[d];
+        file->sizes_in_file[d] = (long) sizes[d];
         file->indices[d] = 0;
         file->dim_names[d] = create_string( dim_names[d] );
-        dim_vars[d] = ncdimdef( file->cdfid, file->dim_names[d], sizes[d] );
+        dim_vars[d] = ncdimdef( file->cdfid, file->dim_names[d],
+                                (long) sizes[d] );
     }
 
     if( output_world_transform( file, voxel_to_world_transform )
@@ -498,7 +499,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     int         src_cdfid,
     STRING      history_string )
 {
-    int     src_img_var, varid, n_excluded, excluded_vars[10];
+    int     src_img_var, varid, n_excluded, excluded_vars[10], ret;
     int     i, src_min_id, src_max_id, src_root_id;
     Status  status;
     STRING  excluded_list[] = {
@@ -579,11 +580,24 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     if( history_string != NULL )
         status = add_minc_history( file, history_string );
 
-    (void) ncendef( file->cdfid );
-    file->end_def_done = TRUE;
+    if( status == OK )
+    {
+        ret = ncendef( file->cdfid );
 
-    (void) micopy_all_var_values( src_cdfid, file->cdfid,
-                                  n_excluded, excluded_vars );
+        if( ret == MI_ERROR )
+        {
+            print_error( "Error outputting volume: possibly disk full?\n" );
+            status = ERROR;
+        }
+    }
+
+    if( status == OK )
+    {
+        file->end_def_done = TRUE;
+
+        (void) micopy_all_var_values( src_cdfid, file->cdfid,
+                                      n_excluded, excluded_vars );
+    }
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
@@ -728,10 +742,10 @@ private  Status  get_dimension_ordering(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  check_minc_output_variables(
+private  Status  check_minc_output_variables(
     Minc_file   file )
 {
-    int               d, axis;
+    int               d, axis, ret;
     long              start_index, mindex[MAX_VAR_DIMS];
     Real              voxel_min, voxel_max, real_min, real_max;
     double            dim_value;
@@ -741,8 +755,16 @@ private  void  check_minc_output_variables(
     {
         /* --- Get into data mode */
 
-        (void) ncendef( file->cdfid );
+        ncopts = NC_VERBOSE;
+        ret = ncendef( file->cdfid );
+        ncopts = NC_VERBOSE | NC_FATAL;
         file->end_def_done = TRUE;
+
+        if( ret == MI_ERROR )
+        {
+            print_error( "Error outputting volume: possibly disk full?\n" );
+            return( ERROR );
+        }
     }
 
     if( !file->variables_written )
@@ -767,7 +789,8 @@ private  void  check_minc_output_variables(
 
         file->minc_icv = miicv_create();
 
-        (void) miicv_setint( file->minc_icv, MI_ICV_TYPE, volume->nc_data_type);
+        (void) miicv_setint( file->minc_icv, MI_ICV_TYPE,
+                             (int) volume->nc_data_type);
         (void) miicv_setstr( file->minc_icv, MI_ICV_SIGN,
                              volume->signed_flag ? MI_SIGNED : MI_UNSIGNED );
         (void) miicv_setint( file->minc_icv, MI_ICV_DO_NORM, TRUE );
@@ -809,6 +832,8 @@ private  void  check_minc_output_variables(
         }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
+
+    return( OK );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -825,12 +850,16 @@ private  void  check_minc_output_variables(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_output_random_order(
+public  Status  set_minc_output_random_order(
     Minc_file   file )
 {
-    check_minc_output_variables( file );
+    Status  status;
+
+    status = check_minc_output_variables( file );
 
     file->outputting_in_order = FALSE;
+
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -876,7 +905,10 @@ public  Status  output_minc_hyperslab(
     Status           status;
     multidim_array   buffer_array;
 
-    check_minc_output_variables( file );
+    status = check_minc_output_variables( file );
+
+    if( status != OK )
+        return( status );
 
     n_file_dims = file->n_file_dimensions;
     expected_ind = n_array_dims-1;
@@ -904,7 +936,7 @@ public  Status  output_minc_hyperslab(
             array_counts[ind] = file_count[file_ind];
 
             if( !non_full_size_found &&
-                file_count[file_ind] < file->sizes_in_file[file_ind] )
+                (long) file_count[file_ind] < file->sizes_in_file[file_ind] )
                 non_full_size_found = TRUE;
             else if( non_full_size_found && file_count[file_ind] > 1 )
                 direct_from_array = FALSE;
@@ -1137,7 +1169,7 @@ private  Status  output_the_volume(
     long        file_start[] )
 {
     Status            status;
-    int               i, d, n_volume_dims, sizes[MAX_DIMENSIONS];
+    int               d, n_volume_dims, sizes[MAX_DIMENSIONS];
     int               slab_size, n_slab, this_count;
     int               vol_index, step, n_steps, n_range_dims;
     int               to_volume_index[MAX_VAR_DIMS];
@@ -1149,7 +1181,10 @@ private  Status  output_the_volume(
     BOOLEAN           increment;
     progress_struct   progress;
 
-    check_minc_output_variables( file );
+    status = check_minc_output_variables( file );
+
+    if( status != OK )
+        return( status );
 
     /* --- check if dimension name correspondence between volume and file */
 
@@ -1202,7 +1237,7 @@ private  Status  output_the_volume(
             this_count = 1;
         }
 
-        if( file_start[d] < 0 || file_start[d] + this_count >
+        if( file_start[d] < 0 || file_start[d] + (long) this_count >
             file->sizes_in_file[d] )
         {
             print_error( "output_the_volume:  invalid minc file position.\n" );
@@ -1218,6 +1253,7 @@ private  Status  output_the_volume(
     if( file->image_range[0] >= file->image_range[1] )
     {
         long     n_ranges, range_start[MAX_VAR_DIMS], range_count[MAX_VAR_DIMS];
+        long     r;
         double   *image_range;
 
         n_range_dims = file->n_file_dimensions - 2;
@@ -1236,8 +1272,8 @@ private  Status  output_the_volume(
             }
             else
             {
-                n_ranges *= volume_count[vol_index];
-                range_count[d] = volume_count[vol_index];
+                n_ranges *= (long) volume_count[vol_index];
+                range_count[d] = (long) volume_count[vol_index];
                 range_start[d] = 0;
             }
         }
@@ -1246,15 +1282,15 @@ private  Status  output_the_volume(
 
         ALLOC( image_range, n_ranges );
 
-        for_less( i, 0, n_ranges )
-            image_range[i] = real_min;
+        for_less( r, 0, n_ranges )
+            image_range[r] = real_min;
 
         (void) mivarput( file->minc_icv, file->min_id,
                          range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
-        for_less( i, 0, n_ranges )
-            image_range[i] = real_max;
+        for_less( r, 0, n_ranges )
+            image_range[r] = real_max;
 
         (void) mivarput( file->minc_icv, file->max_id,
                          range_start, range_count,
@@ -1315,7 +1351,7 @@ private  Status  output_the_volume(
             if( vol_index == INVALID_AXIS || n_slab >= file->n_slab_dims )
                 count[d] = 1;
             else
-                count[d] = volume_count[vol_index];
+                count[d] = (long) volume_count[vol_index];
 
             if( vol_index != INVALID_AXIS )
                 ++n_slab;
@@ -1337,7 +1373,8 @@ private  Status  output_the_volume(
             if( vol_index != INVALID_AXIS && n_slab >= file->n_slab_dims )
             {
                 ++file_indices[d];
-                if( file_indices[d] < file_start[d] + volume_count[vol_index] )
+                if( file_indices[d] <
+                    file_start[d] + (long) volume_count[vol_index] )
                     increment = FALSE;
                 else
                     file_indices[d] = file_start[d];

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.29 1996-04-11 19:01:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.30 1996-05-07 13:22:38 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -96,7 +96,7 @@ public  Real  get_volume_voxel_value(
 {
     Real   voxel;
 
-    GET_VOXEL( voxel, volume, v0, v1, v2, v3, v4 );
+    GET_VOXEL_TYPED( voxel, (Real), volume, v0, v1, v2, v3, v4 );
 
     return( voxel );
 }
@@ -205,7 +205,7 @@ public  void  set_volume_real_value(
     if( data_type != FLOAT &&
         data_type != DOUBLE )
     {
-        voxel = ROUND( voxel );
+        voxel = (Real) ROUND( voxel );
     }
 
     set_volume_voxel_value( volume, v0, v1, v2, v3, v4, voxel );
@@ -259,14 +259,14 @@ private  void    trilinear_interpolate(
         j = (int) y;
         k = (int) z;
 
-        GET_VOXEL_3D( c000, volume, i  , j  , k );
-        GET_VOXEL_3D( c001, volume, i  , j  , k+1 );
-        GET_VOXEL_3D( c010, volume, i  , j+1, k );
-        GET_VOXEL_3D( c011, volume, i  , j+1, k+1 );
-        GET_VOXEL_3D( c100, volume, i+1, j  , k );
-        GET_VOXEL_3D( c101, volume, i+1, j  , k+1 );
-        GET_VOXEL_3D( c110, volume, i+1, j+1, k );
-        GET_VOXEL_3D( c111, volume, i+1, j+1, k+1 );
+        GET_VOXEL_3D_TYPED( c000, (Real), volume, i  , j  , k );
+        GET_VOXEL_3D_TYPED( c001, (Real), volume, i  , j  , k+1 );
+        GET_VOXEL_3D_TYPED( c010, (Real), volume, i  , j+1, k );
+        GET_VOXEL_3D_TYPED( c011, (Real), volume, i  , j+1, k+1 );
+        GET_VOXEL_3D_TYPED( c100, (Real), volume, i+1, j  , k );
+        GET_VOXEL_3D_TYPED( c101, (Real), volume, i+1, j  , k+1 );
+        GET_VOXEL_3D_TYPED( c110, (Real), volume, i+1, j+1, k );
+        GET_VOXEL_3D_TYPED( c111, (Real), volume, i+1, j+1, k+1 );
     }
     else
     {
@@ -284,7 +284,8 @@ private  void    trilinear_interpolate(
                 j + dy >= 0 && j + dy < sizes[1] &&
                 k + dz >= 0 && k + dz < sizes[2] )
             {
-                GET_VOXEL_3D( coefs[dx][dy][dz], volume, i+dx, j+dy, k+dz );
+                GET_VOXEL_3D_TYPED( coefs[dx][dy][dz], (Real),
+                                    volume, i+dx, j+dy, k+dz );
             }
             else
                 coefs[dx][dy][dz] = outside_value;
@@ -571,7 +572,7 @@ private  void   extract_coefficients(
     case 1:
         for_less( v0, start0, end0 )
         {
-            GET_VALUE_1D( coefs[ind], volume, v0 );
+            GET_VALUE_1D_TYPED( coefs[ind], (Real), volume, v0 );
             ind += inc0;
         }
         break;
@@ -581,7 +582,7 @@ private  void   extract_coefficients(
         {
             for_less( v1, start1, end1 )
             {
-                GET_VALUE_2D( coefs[ind], volume, v0, v1 );
+                GET_VALUE_2D_TYPED( coefs[ind], (Real), volume, v0, v1 );
                 ind += inc1;
             }
             ind += inc0;
@@ -595,7 +596,7 @@ private  void   extract_coefficients(
             {
                 for_less( v2, start2, end2 )
                 {
-                    GET_VALUE_3D( coefs[ind], volume, v0, v1, v2 );
+                    GET_VALUE_3D_TYPED( coefs[ind], (Real), volume, v0, v1, v2);
                     ind += inc2;
                 }
                 ind += inc1;
@@ -613,7 +614,8 @@ private  void   extract_coefficients(
                 {
                     for_less( v3, start3, end3 )
                     {
-                        GET_VALUE_4D( coefs[ind], volume, v0, v1, v2, v3 );
+                        GET_VALUE_4D_TYPED( coefs[ind], (Real),
+                                            volume, v0, v1, v2, v3 );
                         ind += inc3;
                     }
                     ind += inc2;
@@ -635,8 +637,8 @@ private  void   extract_coefficients(
                     {
                         for_less( v4, start4, end4 )
                         {
-                            GET_VALUE_5D( coefs[ind], volume,
-                                          v0, v1, v2, v3, v4 );
+                            GET_VALUE_5D_TYPED( coefs[ind], (Real), volume,
+                                                v0, v1, v2, v3, v4 );
                             ind += inc4;
                         }
                         ind += inc3;
@@ -836,7 +838,7 @@ public  int   evaluate_volume(
             interp_dims[n_interp_dims] = d;
             pos = voxel[d] - bound;
             start[d] =       FLOOR( pos );
-            fraction[n_interp_dims] = pos - start[d];
+            fraction[n_interp_dims] = pos - (Real) start[d];
 
             if( voxel[d] == (Real) sizes[d] - 1.0 - bound )
             {
