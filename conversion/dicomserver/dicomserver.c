@@ -5,7 +5,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.4  2001-03-20 16:17:01  neelin
+ * Revision 6.5  2001-06-26 10:19:41  neelin
+ * Only check for children when doing forking.
+ *
+ * Revision 6.4  2001/03/20 16:17:01  neelin
  * Changed from tmpnam to tempnam so that TMPDIR can be used.
  *
  * Revision 6.3  2001/03/19 18:57:45  neelin
@@ -55,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.4 2001-03-20 16:17:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.5 2001-06-26 10:19:41 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -228,11 +231,15 @@ int main(int argc, char *argv[])
    while (continue_looping) {
 
       /* Wait for any children that have finished */
-      while ((child_pid=wait3(&statptr, WNOHANG, NULL)) > 0) {}
+      if (do_fork) {
 
-      /* If there are children, slow down the processing */
-      if (child_pid == 0) {
-         (void) sleep((unsigned int) SERVER_SLEEP_TIME);
+         while ((child_pid=wait3(&statptr, WNOHANG, NULL)) > 0) {}
+
+         /* If there are children, slow down the processing */
+         if (child_pid == 0) {
+            (void) sleep((unsigned int) SERVER_SLEEP_TIME);
+         }
+
       }
 
       /* Read in the message */
