@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.10  1998-03-23 20:22:56  neelin
-@MODIFIED   : Removed unnecessary include.
+@MODIFIED   : Revision 6.11  1998-04-01 20:56:58  neelin
+@MODIFIED   : Added code to set socket buffer size so that things will go faster
+@MODIFIED   : under SunOS.
 @MODIFIED   :
+ * Revision 6.10  1998/03/23  20:22:56  neelin
+ * Removed unnecessary include.
+ *
  * Revision 6.9  1998/03/23  20:17:04  neelin
  * Moved some general-purpose functions to dicom_network.c.
  *
@@ -71,7 +75,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.10 1998-03-23 20:22:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.11 1998-04-01 20:56:58 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -143,6 +147,9 @@ DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
 DEFINE_ELEMENT(static, ACR_Samples_per_pixel          , 0x0028, 0x0002, US);
 DEFINE_ELEMENT(static, ACR_Photometric_interpretation , 0x0028, 0x0004, CS);
+
+/* Minimum socket buffer size that we would like to have for TCP connections */
+#define MIN_SOCK_BUFLEN (50*1024)
 
 /* Globals for handling connection timeouts */
 static int Timeout_length = 60 * 2 ;       /* Timeout in seconds */
@@ -290,6 +297,8 @@ public int acr_connect_to_host(char *host, char *port,
    struct hostent *hp;
    struct sockaddr_in server;
    int sock;
+   int sockbuflen, oldsockbuflen;
+   int sockoptlen;
 
    /* Set default file pointers */
    *fpin = *fpout = NULL;
@@ -346,6 +355,26 @@ public int acr_connect_to_host(char *host, char *port,
       return FALSE;
    }
    (void) alarm(0);
+
+   /* Get socket buffer size */
+   sockbuflen = MIN_SOCK_BUFLEN;
+   sockoptlen = sizeof(sockbuflen);
+   if ((getsockopt(sock, SOL_SOCKET, SO_SNDBUF, 
+                   (char *) &sockbuflen, &sockoptlen) == 0) &&
+       (sockbuflen < MIN_SOCK_BUFLEN) && (sockbuflen > 0)) {
+      oldsockbuflen = sockbuflen;
+      sockbuflen = MIN_SOCK_BUFLEN;
+      sockoptlen = sizeof(sockbuflen);
+      while ((sockbuflen > oldsockbuflen) &&
+             (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, 
+                         (char *) &sockbuflen, sockoptlen) != 0)) {
+         sockbuflen = (int) ((double) sockbuflen * 0.75);
+      }
+      if (sockbuflen <= oldsockbuflen) {
+         (void) setsockopt(sock, SOL_SOCKET, SO_SNDBUF, 
+                           (char *) &oldsockbuflen, sockoptlen);
+      }
+   }
 
    /* Open file handles */
    if ((*fpin = fdopen(sock, "r")) == NULL) {
