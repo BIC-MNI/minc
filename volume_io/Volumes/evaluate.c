@@ -463,6 +463,13 @@ public  int   evaluate_volume(
             pos = voxel[d] - bound;
             start[d] =       FLOOR( pos );
             fraction[n_interp_dims] = pos - start[d];
+
+            if( voxel[d] == (Real) sizes[d] - 1.0 - bound )
+            {
+                --start[d];
+                fraction[n_interp_dims] = 1.0;
+            }
+
             end[d] = start[d] + spline_degree;
             n_coefs *= spline_degree;
 
