@@ -1,5 +1,9 @@
 #include  <volume_io.h>
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.9 1994-11-16 09:36:55 david Exp $";
+#endif
+
 #ifdef sgi
 typedef  size_t    alloc_int;
 typedef  void      *alloc_ptr;
@@ -148,6 +152,19 @@ private  BOOLEAN  writing_alloc_debug( void )
     return( writing );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : record_alloc
+@INPUT      : n_bytes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: If enabled, prints out the amount of memory allocated.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  record_alloc( int  n_bytes )
 {
     if( writing_alloc_debug() )
@@ -157,6 +174,19 @@ private  void  record_alloc( int  n_bytes )
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : record_realloc
+@INPUT      : n_bytes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: If enabled, prints out the amount of memory reallocated.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  record_realloc( int n_bytes )
 {
     if( writing_alloc_debug() )
@@ -165,6 +195,19 @@ private  void  record_realloc( int n_bytes )
         (void) fflush( file );
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : record_free
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: If enabled, prints out that memory was deallocated.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  record_free( void )
 {
