@@ -6,10 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.6  1994-01-17 15:05:46  neelin
-@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
-@MODIFIED   : of scanning sequence.
+@MODIFIED   : Revision 1.7  1994-03-14 16:44:30  neelin
+@MODIFIED   : Changed scale to be fp_scaled_min/max instead of ext_scale_min/max.
+@MODIFIED   : Check units for millirad and change to radians.
 @MODIFIED   :
+ * Revision 1.6  94/01/17  15:05:46  neelin
+ * Added some acquisition parameters (flip angle) and fixed error in writing
+ * of scanning sequence.
+ * 
  * Revision 1.5  94/01/14  11:37:18  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.
@@ -150,7 +154,6 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    Acr_Element_Id mri_index_list[MRI_NDIMS];
    Acr_Element_Id mri_total_list[MRI_NDIMS];
    Acr_Element_Id off_center_elid[WORLD_NDIMS];
-   double fp_scaled_max, fp_scaled_min, scale;
 
    /* Directions of axes for different orientations */
    static double axis_direction[NUM_ORIENTATIONS][WORLD_NDIMS] = {
@@ -231,26 +234,16 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    file_info->pixel_min = find_short(group_list, ACR_Smallest_pixel_value, 0);
    file_info->pixel_max = find_short(group_list, ACR_Largest_pixel_value, 
                                      (1 << file_info->bits_stored) - 1);
-   file_info->slice_min = find_double(group_list, SPI_Ext_scale_minimum,
+   file_info->slice_min = find_double(group_list, SPI_Fp_scaled_minimum,
                                       (double) file_info->pixel_min);
-   file_info->slice_max = find_double(group_list, SPI_Ext_scale_maximum, 
+   file_info->slice_max = find_double(group_list, SPI_Fp_scaled_maximum, 
                                       (double) file_info->pixel_max);
 
-   /* Get window min and max (doing normalization) */
-   fp_scaled_min = find_double(group_list, SPI_Fp_scaled_minimum, DBL_MAX);
-   fp_scaled_max = find_double(group_list, SPI_Fp_scaled_maximum, 0.0);
-   if ((fp_scaled_min == DBL_MAX) || (fp_scaled_max == 0.0) ||
-       (file_info->slice_max == 0.0)) {
-      file_info->window_min = file_info->slice_min;
-      file_info->window_max = file_info->slice_max;
-   }
-   else {
-      scale = file_info->slice_max / fp_scaled_max;
-      file_info->window_min = scale *
-         find_double(group_list, SPI_Fp_window_minimum, fp_scaled_min);
-      file_info->window_max = scale *
-         find_double(group_list, SPI_Fp_window_maximum, fp_scaled_max);
-   }
+   /* Get window min and max */
+   file_info->window_min =
+      find_double(group_list, SPI_Fp_window_minimum, file_info->slice_min);
+   file_info->window_max =
+      find_double(group_list, SPI_Fp_window_maximum, file_info->slice_max);
 
    /* Get image indices */
    for (imri=0; imri < MRI_NDIMS; imri++) {
@@ -415,6 +408,9 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       /* Get intensity units */
       (void) strncpy(general_info->units,
               find_string(group_list, SPI_Ext_scale_units, ""), maxlen);
+      if (strcmp(general_info->units, "millirad") == 0) {
+         (void) strncpy(general_info->units, "radians", maxlen);
+      }
 
       /* Get patient info */
       (void) strncpy(general_info->patient.name,
