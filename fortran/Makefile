@@ -77,6 +77,5 @@ mostlyclean clean:
                      $(PROGS) $(PROG_OBJ)
 
 install:
-	$(CP) $(CP_FLAGS) $(CC_MINC_LIB) $(INSTALL_LIBDIR)
 	$(CP) $(CP_FLAGS) minc.inc $(INSTALL_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_INCDIR)/minc.inc
