@@ -16,7 +16,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.17 1995-08-04 15:33:39 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.18 1995-08-14 18:08:23 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -239,19 +239,12 @@ private  Status  private_alloc_memory_5d(
 public  void  alloc_memory_in_bytes(
     void         **ptr,
     size_t       n_bytes
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory( ptr, n_bytes ) != OK )
     {
         print_error( "Cannot alloc 1D array of %d bytes.\n", n_bytes );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -280,20 +273,13 @@ public  void  alloc_memory_1d(
     void         **ptr,
     size_t       n_elements,
     size_t       type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory( ptr, n_elements * type_size ) != OK )
     {
         print_error( "Cannot alloc 1D array of %d elements of %d bytes.\n",
                      n_elements, type_size );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -325,20 +311,13 @@ public  void  alloc_memory_2d(
     size_t       n1,
     size_t       n2,
     size_t       type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory_2d( ptr, n1, n2, type_size ) != OK )
     {
         print_error( "Cannot alloc 2D array of %d by %d elements of %d bytes.\n",
                      n1, n2, type_size );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -376,20 +355,13 @@ public  void  alloc_memory_3d(
     size_t       n2,
     size_t       n3,
     size_t       type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory_3d( ptr, n1, n2, n3, type_size ) != OK )
     {
         print_error( "Cannot alloc 3D array of %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, type_size );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -431,20 +403,13 @@ public  void  alloc_memory_4d(
     size_t       n3,
     size_t       n4,
     size_t       type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory_4d( ptr, n1, n2, n3, n4, type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, type_size );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -490,20 +455,13 @@ public  void  alloc_memory_5d(
     size_t       n4,
     size_t       n5,
     size_t       type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                             )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
     if( private_alloc_memory_5d( ptr, n1, n2, n3, n4, n5, type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, n5, type_size );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
         abort_if_allowed();
     }
 #ifndef  NO_DEBUG_ALLOC
@@ -544,12 +502,7 @@ public  void  realloc_memory(
     void      **ptr,
     size_t    n_elements,
     size_t    type_size
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                            )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     void   *old_ptr = *ptr;
@@ -563,9 +516,7 @@ public  void  realloc_memory(
         {
             print_error( "Error reallocing %d elements of size %d.\n",
                          n_elements, type_size );
-#ifndef  NO_DEBUG_ALLOC
-            print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+            PRINT_ALLOC_SOURCE_LINE
             abort_if_allowed();
         }
 
@@ -578,9 +529,7 @@ public  void  realloc_memory(
     {
         print_error("Error: tried to realloc invalid number of elements, %d.\n",
                      n_elements );
-#ifndef  NO_DEBUG_ALLOC
-        print_error( "   in source file %s:%d\n", filename, line_number );
-#endif
+        PRINT_ALLOC_SOURCE_LINE
     }
 }
 
@@ -705,12 +654,7 @@ private  void  private_free_memory_5d(
 
 public  void  free_memory_1d(
     void   **ptr
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                         )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     if( unrecord_ptr_alloc_check( *ptr, filename, line_number ) )
@@ -735,12 +679,7 @@ public  void  free_memory_1d(
 
 public  void  free_memory_2d(
     void   ***ptr
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                         )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     if( unrecord_ptr_alloc_check( **ptr, filename, line_number ) &&
@@ -766,12 +705,7 @@ public  void  free_memory_2d(
 
 public  void  free_memory_3d(
     void   ****ptr
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                         )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     if( unrecord_ptr_alloc_check( ***ptr, filename, line_number ) &&
@@ -798,12 +732,7 @@ public  void  free_memory_3d(
 
 public  void  free_memory_4d(
     void   *****ptr
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                         )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     if( unrecord_ptr_alloc_check( ****ptr, filename, line_number ) &&
@@ -831,12 +760,7 @@ public  void  free_memory_4d(
 
 public  void  free_memory_5d(
     void   ******ptr
-#ifndef NO_DEBUG_ALLOC
-                        ,
-    char         filename[],
-    int          line_number
-#endif
-                         )
+    _ALLOC_SOURCE_LINE_ARG_DEF )
 {
 #ifndef  NO_DEBUG_ALLOC
     if( unrecord_ptr_alloc_check( *****ptr, filename, line_number ) &&

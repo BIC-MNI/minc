@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.47 1995-07-31 13:44:51 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.48 1995-08-14 18:08:25 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -418,25 +418,27 @@ public  void  alloc_volume_data(
     switch( volume->n_dimensions )
     {
     case  1:
-        ALLOC_private( p1, type_size, sizes[0] );
+        alloc_memory_1d( &p1, sizes[0], type_size _ALLOC_SOURCE_LINE );
         volume->data = (void *) p1;
         break;
     case  2:
-        ALLOC2D_private( p2, type_size, sizes[0], sizes[1] );
+        alloc_memory_2d( &p2, sizes[0], sizes[1], type_size _ALLOC_SOURCE_LINE);
         volume->data = (void *) p2;
         break;
     case  3:
-        ALLOC3D_private( p3, type_size, sizes[0], sizes[1], sizes[2] );
+        alloc_memory_3d( &p3, sizes[0], sizes[1], sizes[2], type_size
+                         _ALLOC_SOURCE_LINE );
         volume->data = (void *) p3;
         break;
     case  4:
-        ALLOC4D_private( p4, type_size, sizes[0], sizes[1],
-                         sizes[2], sizes[3] );
+        alloc_memory_4d( &p4, sizes[0], sizes[1],
+                         sizes[2], sizes[3], type_size _ALLOC_SOURCE_LINE );
         volume->data = (void *) p4;
         break;
     case  5:
-        ALLOC5D_private( p5, type_size, sizes[0], sizes[1],
-                         sizes[2], sizes[3], sizes[4] );
+        alloc_memory_5d( &p5, sizes[0], sizes[1],
+                         sizes[2], sizes[3], sizes[4], type_size
+                         _ALLOC_SOURCE_LINE );
         volume->data = (void *) p5;
         break;
     }
@@ -458,34 +460,25 @@ public  void  alloc_volume_data(
 public  void  free_volume_data(
     Volume   volume )
 {
-    void   *ptr, **ptr2, ***ptr3, ****ptr4, *****ptr5;
-
     if( volume->data == (void *) NULL )
     {
         print_error( "Warning: cannot free NULL volume data.\n" );
         return;
     }
 
-    ptr = volume->data;
     switch( volume->n_dimensions )
     {
-    case  1:  FREE( ptr );
+    case  1:  free_memory_1d( (void **) &volume->data _ALLOC_SOURCE_LINE );
               break;
-    case  2:  ptr2 = (void **) ptr;
-              FREE2D( ptr2 );
+    case  2:  free_memory_2d( (void ***) &volume->data _ALLOC_SOURCE_LINE );
               break;
-    case  3:  ptr3 = (void ***) ptr;
-              FREE3D( ptr3 );
+    case  3:  free_memory_3d( (void ****) &volume->data _ALLOC_SOURCE_LINE );
               break;
-    case  4:  ptr4 = (void ****) ptr;
-              FREE4D( ptr4 );
+    case  4:  free_memory_4d( (void *****) &volume->data _ALLOC_SOURCE_LINE );
               break;
-    case  5:  ptr5 = (void *****) ptr;
-              FREE5D( ptr5 );
+    case  5:  free_memory_5d( (void ******) &volume->data _ALLOC_SOURCE_LINE );
               break;
     }
-
-    volume->data = (void *) NULL;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

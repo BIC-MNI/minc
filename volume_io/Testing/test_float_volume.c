@@ -12,7 +12,7 @@ int  main(
     int                  x, y, z, sizes[N_DIMENSIONS];
     static char          *dim_names[] = { MIxspace, MIyspace, MIzspace };
 
-    volume = create_volume( 3, dim_names, NC_FLOAT, FALSE, 0.0, 0.0 );
+    volume = create_volume( 3, dim_names, NC_FLOAT, FALSE, 0.0, 10.0 );
 
     sizes[X] = X_SIZE;
     sizes[Y] = Y_SIZE;
@@ -21,7 +21,7 @@ int  main(
     set_volume_sizes( volume, sizes );
 
 /*
-    set_volume_real_range( volume, -100.0, 100.0 );
+    set_volume_real_range( volume, 0.0, 10.0 );
 */
 
     alloc_volume_data( volume );
@@ -31,7 +31,7 @@ int  main(
     for_less( z, 0, sizes[z] )
         set_volume_real_value( volume, x, y, z, 0, 0, (Real) (x + y + z) );
 
-    if( output_volume( "float_volume.mnc", NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+    if( output_volume( "float_volume.mnc", NC_FLOAT, FALSE, 0.0, 0.0,
                        volume, "float", (minc_output_options *) NULL ) != OK )
         return( 1 );
 

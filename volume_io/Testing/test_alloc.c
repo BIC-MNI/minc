@@ -9,8 +9,13 @@ int  main()
     REALLOC( p, 30 );
     FREE( p );
 
-    p = (int *) 3245534;
-    FREE( p );
+#ifndef NO_DEBUG_ALLOC
+    if( alloc_checking_enabled() )
+    {
+        p = (int *) 3245534;
+        FREE( p );
+    }
+#endif
 
     p = NULL;
     FREE( p );

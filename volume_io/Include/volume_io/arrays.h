@@ -28,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.7 1995-08-04 15:27:28 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.8 1995-08-14 18:08:22 david Exp $";
 #endif
 
 #include  <alloc.h>
@@ -53,31 +53,10 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 ---------------------------------------------------------------------------- */
 
 #define  SET_ARRAY_SIZE( array, previous_n_elems, new_n_elems, chunk_size )   \
-     {                                                                        \
-         if( (new_n_elems) > 0 )                                              \
-         {                                                                    \
-             size_t  _size_required;                                          \
-                                                                              \
-             _size_required = (((new_n_elems)+(chunk_size)-1)/(chunk_size))   \
-                              * (chunk_size);                                 \
-             if( (previous_n_elems) <= 0 )                                    \
-             {                                                                \
-                 ALLOC( array, _size_required );                              \
-             }                                                                \
-             else                                                             \
-             {                                                                \
-                 size_t  _previous_n_elems;                                   \
-                                                                              \
-                 _previous_n_elems = (((previous_n_elems)+(chunk_size)-1)/    \
-                                  (chunk_size)) * (chunk_size);               \
-                                                                              \
-                 if( _size_required != _previous_n_elems )                    \
-                     REALLOC( array, _size_required );                        \
-             }                                                                \
-         }                                                                    \
-         else if( (previous_n_elems) > 0 )                                    \
-             FREE( array );                                                   \
-     }
+         set_array_size( (void **) (&(array)), sizeof(*(array)),              \
+                         (size_t) (previous_n_elems),                         \
+                         (size_t) (new_n_elems),                              \
+                         (size_t) (chunk_size) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ADD_ELEMENT_TO_ARRAY
@@ -120,15 +99,17 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 ---------------------------------------------------------------------------- */
 
 #define  DELETE_ELEMENT_FROM_ARRAY( array, n_elems, index_to_remove, chunk_size ) \
-         {                                                                     \
-             size_t    _i_;                                                    \
-             for_less( _i_, index_to_remove, (n_elems) - 1 )                   \
-                 (array) [_i_] = (array)[_i_+1];                               \
-                                                                               \
-             --(n_elems);                                                      \
-                                                                               \
-             SET_ARRAY_SIZE( array, (n_elems)+1, (n_elems),chunk_size);        \
-         }
+     {                                                                        \
+         (void) memmove( (void *) ((long) (array) +                           \
+                         (index_to_remove) * sizeof(*(array))),               \
+                  (void *) ((long) (array) +                                  \
+                         ((index_to_remove)+1)* sizeof(*(array))),            \
+                  ((n_elems) - (index_to_remove) - 1) * sizeof(*(array)) );   \
+                                                                              \
+         --(n_elems);                                                         \
+                                                                              \
+         SET_ARRAY_SIZE( array, (n_elems)+1, n_elems, chunk_size);            \
+     }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ADD_ELEMENT_TO_ARRAY_WITH_SIZE

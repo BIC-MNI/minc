@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.12 1995-07-31 13:44:54 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.13 1995-08-14 18:08:26 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -114,6 +114,12 @@ public  Status  output_modified_volume(
         file_nc_data_type = volume->nc_data_type;
         file_signed_flag = volume->signed_flag;
         get_volume_voxel_range( volume, &file_voxel_min, &file_voxel_max );
+    }
+    else if( (file_nc_data_type == NC_FLOAT ||
+              file_nc_data_type == NC_DOUBLE) &&
+             file_voxel_min >= file_voxel_max )
+    {
+        get_volume_real_range( volume, &file_voxel_min, &file_voxel_max );
     }
 
     get_volume_sizes( volume, vol_sizes );

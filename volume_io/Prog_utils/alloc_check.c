@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.17 1995-08-04 15:32:13 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.18 1995-08-14 18:08:23 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -918,3 +918,14 @@ public  void  output_alloc_to_file(
         }
     }
 }
+
+#ifndef  NO_DEBUG_ALLOC
+
+public  void  print_alloc_source_line(
+    char  filename[],
+    int   line_number )
+{
+    print_error( "    Source position: %s:%d\n", filename, line_number );
+}
+
+#endif

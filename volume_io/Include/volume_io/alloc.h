@@ -21,9 +21,7 @@
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: A set of macros for allocating 1, 2, and 3 dimensional arrays.
-@METHOD     : Requires the file alloc.c linked in.  This includes file
-            : references alloc_check.h, to allow for allocation error
-            : checking (these are the macros RECORD_PTR, UNRECORD_PTR, etc.)
+@METHOD     : Requires the file alloc.c linked in.
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
@@ -31,57 +29,24 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.10 1995-08-02 19:21:44 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.11 1995-08-14 18:08:22 david Exp $";
 #endif
 
 #include  <basic.h>
-#include  <alloc_check.h>
+#include  <stdlib.h>
 
-/* --- prototypes and macros used by the public allocation macros --- */
-
-#define  ALLOC_private( ptr, size, n_items )                                  \
-         {                                                                    \
-             alloc_memory( (void **) &(ptr),                                  \
-                           (long) ((n_items) * (size)) );                     \
-             RECORD_PTR( ptr, (long) ((n_items) * (size)) );                  \
-         }
-
-#define  ALLOC2D_private( ptr, size, n1, n2 )                                 \
-         {                                                                    \
-             ALLOC_private( ptr, sizeof(*(ptr)), n1 );                        \
-             ALLOC_private( (ptr)[0], size, (n1) * (n2) );                    \
-                                                                              \
-             set_up_array_pointers_2D( (void **) (ptr), n1, n2, size );       \
-         }
-
-#define  ALLOC3D_private( ptr, size, n1, n2, n3 )                             \
-         {                                                                    \
-             ALLOC2D_private( ptr, sizeof(**(ptr)), n1, n2 );                 \
-                                                                              \
-             ALLOC_private( (ptr)[0][0], size, (n1) * (n2) * (n3) );          \
-                                                                              \
-             set_up_array_pointers_2D( (void **) *(ptr), n1 * n2, n3, size  );\
-         }
-
-#define  ALLOC4D_private( ptr, size, n1, n2, n3, n4 )                         \
-         {                                                                    \
-             ALLOC3D_private( ptr, sizeof(***(ptr)), n1, n2, n3 );            \
-                                                                              \
-             ALLOC_private( (ptr)[0][0][0], size, (n1) * (n2) * (n3) * (n4) );\
-                                                                              \
-             set_up_array_pointers_2D( (void **) **(ptr), n1 * n2 * n3, n4,   \
-                                       size );                                \
-         }
-
-#define  ALLOC5D_private( ptr, size, n1, n2, n3, n4, n5 )                     \
-         {                                                                    \
-             ALLOC4D_private( ptr, sizeof(****(ptr)), n1, n2, n3, n4 );       \
-                                                                              \
-             ALLOC_private( (ptr)[0][0][0][0], size, (n1) * (n2) * (n3) * (n4) * (n5) );    \
-                                                                              \
-             set_up_array_pointers_2D( (void **) ***(ptr), n1 * n2 * n3 * n4, \
-                                       n5, size );                            \
-         }
+#ifdef NO_DEBUG_ALLOC
+#define  _ALLOC_SOURCE_LINE
+#define  _ALLOC_SOURCE_LINE_ARG_DEF
+#define  _ALLOC_SOURCE_LINE_ARGUMENTS
+#define  PRINT_ALLOC_SOURCE_LINE
+#else
+#define  _ALLOC_SOURCE_LINE    , __FILE__, __LINE__
+#define  _ALLOC_SOURCE_LINE_ARG_DEF   , char  filename[], int line_number
+#define  _ALLOC_SOURCE_LINE_ARGUMENTS   , filename, line_number
+#define  PRINT_ALLOC_SOURCE_LINE   \
+         print_alloc_source_line( filename, line_number );
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC
@@ -98,7 +63,8 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC( ptr, n_items )                                                \
-             ALLOC_private( ptr, sizeof(*(ptr)), n_items )
+             alloc_memory_1d( (void **) (&(ptr)), (size_t) (n_items),         \
+                              sizeof(*(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE
@@ -114,10 +80,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  FREE( ptr )                                                          \
-         {                                                                    \
-             UNRECORD_PTR(ptr)                                                \
-                 free_memory( (void **) &(ptr) );                             \
-         }
+         free_memory_1d( (void **) &(ptr) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : REALLOC
@@ -135,12 +98,8 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  REALLOC( ptr, n_items )                                              \
-         {                                                                    \
-           OLD_PTR( ptr )                                                     \
-           realloc_memory( (void **) &(ptr),                                  \
-                           (size_t) ((n_items) * sizeof((ptr)[0])) );         \
-           CHANGE_PTR( ptr, (size_t) (n_items) * (int) sizeof((ptr)[0]) );    \
-         }
+           realloc_memory( (void **) &(ptr), (size_t) (n_items),              \
+                           sizeof(*(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC_VAR_SIZED_STRUCT
@@ -180,12 +139,9 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC_VAR_SIZED_STRUCT( ptr, element_type, n_elements )              \
-         {                                                                    \
-             alloc_memory( (void **) &(ptr),                                  \
-               (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
-             RECORD_PTR( ptr,                                                 \
-               (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
-         }
+             alloc_memory_in_bytes( (void **) &(ptr),                         \
+             (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type))\
+             _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC2D
@@ -205,7 +161,8 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC2D( ptr, n1, n2 )                                               \
-         ALLOC2D_private( ptr, sizeof(**(ptr)), n1, n2 )
+         alloc_memory_2d( (void ***) &(ptr), (size_t) (n1), (size_t) (n2),    \
+                          sizeof(**(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE2D
@@ -221,10 +178,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  FREE2D( ptr )                                                        \
-         {                                                                    \
-             FREE( (ptr)[0] );                                                \
-             FREE( ptr );                                                     \
-         }
+         free_memory_2d( (void ***) &(ptr) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC3D
@@ -243,7 +197,8 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC3D( ptr, n1, n2, n3 )                                           \
-         ALLOC3D_private( ptr, sizeof(***(ptr)), n1, n2, n3 )
+         alloc_memory_3d( (void ****) &(ptr), (size_t) (n1), (size_t) (n2),   \
+                          (size_t) (n3), sizeof(***(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE3D
@@ -259,10 +214,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  FREE3D( ptr )                                                        \
-         {                                                                    \
-             FREE( (ptr)[0][0] );                                             \
-             FREE2D( (ptr) );                                                 \
-         }
+         free_memory_3d( (void ****) &(ptr) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC4D
@@ -282,7 +234,9 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC4D( ptr, n1, n2, n3, n4 )                                       \
-         ALLOC4D_private( ptr, sizeof(****(ptr)), n1, n2, n3, n4 )
+         alloc_memory_4d( (void *****) &(ptr), (size_t) (n1), (size_t) (n2),  \
+                          (size_t) (n3), (size_t) (n4),                       \
+                          sizeof(****(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE4D
@@ -298,10 +252,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  FREE4D( ptr )                                                        \
-         {                                                                    \
-             FREE( (ptr)[0][0][0] );                                          \
-             FREE3D( (ptr) );                                                 \
-         }
+         free_memory_4d( (void *****) &(ptr) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC5D
@@ -323,7 +274,9 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC5D( ptr, n1, n2, n3, n4, n5 )                                   \
-         ALLOC5D_private( ptr, sizeof(*****(ptr)), n1, n2, n3, n4, n5 )
+         alloc_memory_5d( (void ******) &(ptr), (size_t) (n1), (size_t) (n2),  \
+                          (size_t) (n3), (size_t) (n4), (size_t) (n5),        \
+                          sizeof(*****(ptr)) _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE5D
@@ -339,9 +292,6 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  FREE5D( ptr )                                                        \
-         {                                                                    \
-             FREE( (ptr)[0][0][0][0] );                                       \
-             FREE4D( (ptr) );                                                 \
-         }
+         free_memory_5d( (void ******) &(ptr) _ALLOC_SOURCE_LINE )
 
 #endif
