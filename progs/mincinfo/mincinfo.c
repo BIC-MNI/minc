@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.2 1993-05-28 15:24:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.3 1993-06-07 15:03:03 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -234,7 +234,7 @@ public int main(int argc, char *argv[])
             CHK_ERR(mivarget(mincid, varid, start, count, 
                              NC_DOUBLE, NULL, ddata));
             for (ival=0; ival<var_length; ival++) {
-               (void) printf("%.10g\n", ddata[ival]);
+               (void) printf("%.20g\n", ddata[ival]);
             }
             free(ddata);
          }
@@ -258,7 +258,7 @@ public int main(int argc, char *argv[])
             CHK_ERR(miattget(mincid, varid, name, NC_DOUBLE, att_length,
                              ddata, NULL));
             for (iatt=0; iatt<att_length; iatt++) {
-               (void) printf("%.10g ", ddata[iatt]);
+               (void) printf("%.20g ", ddata[iatt]);
             }
             (void) printf("\n");
          }
@@ -447,7 +447,7 @@ public void print_image_info(char *filename, int mincid)
 
    /* Write out image info line */
    (void) printf("file: %s\n", filename);
-   (void) printf("image: %s %s %.10g to %.10g\n", 
+   (void) printf("image: %s %s %.20g to %.20g\n", 
                  sign_type, type_names[datatype],
                  valid_range[0], valid_range[1]);
 
