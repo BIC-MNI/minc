@@ -343,16 +343,34 @@ sub create_mincfile {
     }
     @positions = sort(numeric_order @positions);
 
-    # Get smallest step size and get nslices and ordered list of images
+    # Get step size and get nslices and ordered list of images
     local(@image_list, $slicestep, $nslices, $slicestart, $slicerange);
     if (scalar(@positions) > 1) {
+
+        # Find smallest step size
         $slicestep = $positions[1] - $positions[0];
+        local(@difflist, $diff);
         foreach $i (2..$#positions) {
-            local($diff) = $positions[$i] - $positions[$i-1];
+            $diff = $positions[$i] - $positions[$i-1];
+            push(@difflist, $diff);
             if (($diff < $slicestep) && ($diff > 0)) {
-                $diff = $slicestep;
+                $slicestep = $diff;
             }
         }
+
+        # Find average step, accounting for stepping over multiple slices
+        # (based on rounded ratio to smallest step)
+        local($ndiffs) = 0;
+        local($totaldiff) = 0;
+        foreach $diff (@difflist) {
+           $totaldiff += $diff;
+           $ndiffs += int($diff/$slicestep + 0.5);
+        }
+        if ($ndiffs > 0) {
+           $slicestep = $totaldiff / $ndiffs;
+        }
+
+        # Work out number of slices and get the ordered list of images
         if ($slicestep <= 0) {
             $nslices = scalar(@positions);
             $slicestep = 1;
