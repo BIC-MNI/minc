@@ -10,7 +10,10 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.1  1999-10-29 17:52:01  neelin
+ * Revision 6.2  1999-11-09 13:44:56  neelin
+ * Year 2000 fixes for scan date in minc file.
+ *
+ * Revision 6.1  1999/10/29 17:52:01  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:22  neelin
@@ -46,7 +49,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.1 1999-10-29 17:52:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.2 1999-11-09 13:44:56 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -827,7 +830,7 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
             tm_ptr = localtime(&the_time);
             general_info->start_day = tm_ptr->tm_mday;
             general_info->start_month = tm_ptr->tm_mon + 1;
-            general_info->start_year = tm_ptr->tm_year;
+            general_info->start_year = tm_ptr->tm_year + 1900;
             general_info->start_hour = tm_ptr->tm_hour;
             general_info->start_minute = tm_ptr->tm_min;
             general_info->start_seconds = tm_ptr->tm_sec;
@@ -847,6 +850,8 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
                                     &start_seconds, NULL, NULL)) {
                return curframe;
             }
+            start_year += 1900;
+            if (start_year < 1950) start_year += 100;
             general_info->start_day = start_day;
             general_info->start_month = start_month;
             general_info->start_year = start_year;
@@ -857,7 +862,7 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
          (void) sprintf(general_info->start_time, "%d-%s-%d %d:%d:%d",
                         (int) general_info->start_day,
                         the_months[general_info->start_month],
-                        (int) general_info->start_year+1900,
+                        (int) general_info->start_year,
                         (int) general_info->start_hour,
                         (int) general_info->start_minute,
                         (int) general_info->start_seconds);
