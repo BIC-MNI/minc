@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.9  2003-03-17 16:03:28  bert
+ * Revision 6.10  2004-02-02 18:22:34  bert
+ * Added miget_version() and miappend_history()
+ *
+ * Revision 6.9  2003/03/17 16:03:28  bert
  * Added declaration of micreate_tempfile()
  *
  * Revision 6.8  2001/11/13 14:15:17  neelin
@@ -113,7 +116,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.9 2003-03-17 16:03:28 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.10 2004-02-02 18:22:34 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -482,6 +485,8 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid);
 public int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
                                  int ndims, int dim[]);
 public int micreate_group_variable(int cdfid, char *name);
+public const char *miget_version(void);
+public int miappend_history(int fd, const char *tm_stamp);
 
 /* From image_conversion.c */
 public int miicv_create(void);

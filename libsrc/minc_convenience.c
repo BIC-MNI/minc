@@ -27,7 +27,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.10  2001-12-06 14:09:07  neelin
+ * Revision 6.11  2004-02-02 18:22:46  bert
+ * Added miget_version() and miappend_history()
+ *
+ * Revision 6.10  2001/12/06 14:09:07  neelin
  * Corrected return from mivar_exists to use minc macro MI_RETURN so that
  * ncopts is properly restored.
  *
@@ -110,9 +113,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.10 2001-12-06 14:09:07 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.11 2004-02-02 18:22:46 bert Exp $ MINC (MNI)";
 #endif
 
+#include "config.h"
 #include <type_limits.h>
 #include <minc_private.h>
 #include <minc_varlists.h>
@@ -1305,6 +1309,63 @@ public int micreate_group_variable(int cdfid, char *name)
 
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : miappend_history
+@INPUT      : id - cdf file id
+              tm_stamp  - timestamp as returned by time_stamp() function.
+@OUTPUT     : (none)
+@RETURNS    : MI_NOERROR if successfuly
+@DESCRIPTION: Appends the string (which should be in the format returned
+              by the time_stamp() function) to the global "history" 
+              attribute.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines
+@CREATED    : January 1, 2004 (Bert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int
+miappend_history(int fd, const char *tm_stamp)
+{
+    nc_type att_type;
+    int att_length;
+    int r;
+    char *att_value;
+
+    r = ncattinq(fd, NC_GLOBAL, MIhistory, &att_type, &att_length);
+    if (r < 0 || att_type != NC_CHAR) {
+        att_length = 0;
+    }
+
+    att_value = malloc(att_length + strlen(tm_stamp) + 1);
+    if (att_value == NULL) {
+        return (MI_ERROR);
+    }
+    if (miattgetstr(fd, NC_GLOBAL, MIhistory, att_length, att_value) == NULL) {
+        return (MI_ERROR);
+    }
+
+    if (att_value[att_length-1] == '\0') {
+        att_length--;
+    }
+
+    if (att_value[att_length-1] != '\n') {
+        att_value[att_length] = '\n';
+        att_length++;
+    }
+
+    /* Append the new history.
+     */
+    strcpy(att_value + att_length, tm_stamp);
+
+    r = miattputstr(fd, NC_GLOBAL, MIhistory, att_value);
+
+    free(att_value);
+
+    return (r);
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_is_in_list
 @INPUT      : string    - string for which to look
               list      - list in which to look (must be NULL terminated)
@@ -1331,3 +1392,20 @@ private int MI_is_in_list(char *string, char *list[])
    MI_RETURN(FALSE);
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miget_version
+@INPUT      : (none)
+@OUTPUT     : const char *
+@RETURNS    : A string describing the MINC library version.
+@DESCRIPTION: Just returns a fixed string.
+              
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 8 2003
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+const char * miget_version(void)
+{
+    return (VERSION);
+}
