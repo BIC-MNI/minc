@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.17  2001-04-09 23:27:19  neelin
+ * Revision 1.18  2001-04-21 12:50:23  neelin
+ * Added in elements for samples per pixel and photometric interpretation.
+ *
+ * Revision 1.17  2001/04/09 23:27:19  neelin
  * Fixed convert_imagenum to handle case where string is shorter than
  * expect, but still needs characters trimmed.
  *
@@ -82,7 +85,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.17 2001-04-09 23:27:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.18 2001-04-21 12:50:23 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -131,6 +134,8 @@ DEFINE_ELEMENT(static, ACR_Image_position             , 0x0020, 0x0032, DS);
 DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
 DEFINE_ELEMENT(static, ACR_Slice_location             , 0x0020, 0x1041, DS);
+DEFINE_ELEMENT(static, ACR_Samples_per_pixel          , 0x0028, 0x0002, US);
+DEFINE_ELEMENT(static, ACR_Photometric_interpretation , 0x0028, 0x0004, CS);
 
 /* Function prototypes */
 private void convert_image(Acr_Group *group_list);
@@ -446,6 +451,11 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
                          ACR_Largest_pixel_value_in_series->group_id,
                          ACR_Largest_pixel_value_in_series->element_id);
    }
+
+   /* Add in samples per pixel and photometric interpretation */
+   acr_insert_short(&group_list, ACR_Samples_per_pixel, 1);
+   acr_insert_string(&group_list, ACR_Photometric_interpretation, 
+                     "MONOCHROME2");
 
    /* Remove some retired elements */
    for (index=0; Elements_to_remove[index] != NULL; index++) {
