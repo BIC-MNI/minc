@@ -5,7 +5,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.2  2004-04-27 15:43:04  bert
+ * Added set_loop_v2format()
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -251,6 +254,10 @@ public Loop_Options *create_loop_options(void);
 public void free_loop_options(Loop_Options *loop_options);
 public void set_loop_clobber(Loop_Options *loop_options, 
                              int clobber);
+#ifdef MINC2
+public void set_loop_v2format(Loop_Options *loop_options,
+			      int use_v2_format);
+#endif /* MINC2 defined */
 public void set_loop_verbose(Loop_Options *loop_options, 
                              int verbose);
 public void set_loop_datatype(Loop_Options *loop_options, 
