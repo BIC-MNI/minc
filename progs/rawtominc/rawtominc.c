@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.5 1993-05-03 10:33:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.6 1993-05-05 15:48:35 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -89,6 +89,7 @@ double ovalid_range[2] = {0.0, -1.0};
 int ovrange_set;
 double dimstep[3] = {DEF_STEP, DEF_STEP, DEF_STEP};
 double dimstart[3] = {DEF_START, DEF_START, DEF_START};
+int vector_dimsize = -1;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -104,6 +105,8 @@ ArgvInfo argTable[] = {
        "Coronal images      : [[time] y] z x"},
    {"-time", ARGV_CONSTANT, (char *) TIME_FAST, (char *) &orientation,
        "Time ordered images : [[z] time] y x"},
+   {"-vector", ARGV_INT, (char *) 1, (char *) &vector_dimsize,
+       "Specifies the size of a vector dimension"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options to specify input data type. Default = -byte."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &type,
@@ -190,6 +193,7 @@ main(int argc, char *argv[])
    double imgmax, imgmin, value;
    long image_size, image_pix, nread, fastdim;
    int pix_size;
+   int image_dims;
    int i, j;
    int index;
    FILE *instream;
@@ -224,6 +228,9 @@ main(int argc, char *argv[])
    cdfid=nccreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
+   /* Set the number of image dimensions */
+   image_dims = 2;
+
    /* Create the dimensions */
    for (i=0; i<ndims; i++) {
 
@@ -245,8 +252,19 @@ main(int argc, char *argv[])
       
       /* Set variables for looping through images */
       start[i]=0;
-      count[i]= ((i<ndims-2) ? 1 : dimlength[i]);
+      count[i]= ((i<ndims-image_dims) ? 1 : dimlength[i]);
       end[i]=dimlength[i];
+   }
+
+   /* Check for vector dimension */
+   if (vector_dimsize > 0) {
+      ndims++;
+      image_dims++;
+      dim[ndims-1] = ncdimdef(cdfid, MIvector_dimension, 
+                              (long) vector_dimsize);
+      start[ndims-1] = 0;
+      count[ndims-1] = vector_dimsize;
+      end[ndims-1] = vector_dimsize;
    }
 
    /* Create the image */
@@ -257,9 +275,9 @@ main(int argc, char *argv[])
       (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
    if (do_norm) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
-                                    NC_DOUBLE, ndims-2, dim);
+                                    NC_DOUBLE, ndims-image_dims, dim);
       minid = micreate_std_variable(cdfid, MIimagemin, 
-                                    NC_DOUBLE, ndims-2, dim);
+                                    NC_DOUBLE, ndims-image_dims, dim);
    }
 
    /* End definition mode */
@@ -269,14 +287,16 @@ main(int argc, char *argv[])
    (void) miicv_attach(icv, cdfid, imgid);
 
    /* Get a buffer for reading images */
-   image_pix=dimlength[ndims-1]*dimlength[ndims-2];
+   image_pix = 1;
+   for (i=1; i<=image_dims; i++)
+      image_pix *= end[ndims-i];
    pix_size=nctypelen(type);
    image_size=image_pix*pix_size;
    image=malloc(image_size);
 
    /* Loop through the images */
    instream=stdin;
-   fastdim=ndims-2-1;
+   fastdim=ndims-image_dims-1;
    if (fastdim<0) fastdim=0;
    if (do_vrange) {
       ovalid_range[0]=DBL_MAX;
