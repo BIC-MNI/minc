@@ -229,6 +229,7 @@ public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
                     void *value);
 public char *miattgetstr(int cdfid, int varid, char *name, 
                          int maxlen, char *value);
+public int miattputint(int cdfid, int varid, char *name, int value);
 public int miattputdbl(int cdfid, int varid, char *name, double value);
 public int miattputstr(int cdfid, int varid, char *name, char *value);
 public int mivarget(int cdfid, int varid, long start[], long count[],
