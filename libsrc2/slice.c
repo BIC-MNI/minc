@@ -1,16 +1,36 @@
-/************************************************************************
- * MINC 2.0 "SLICE/VOLUME SCALE" FUNCTIONS
+/**
+ * \file slice.c
+ * \brief MINC 2.0 Slice/volume scale functions
+ * \author Bert Vincent
+ *
+ * These functions get and set the real minimum and maximum values for
+ * either a particular slice or an entire volume.
+ *
+ * Each of the slice scale functions take an array of long integer
+ * coordinates to specify the slice to consider.  The order of these
+ * coordinates is always raw file (voxel) order, rather than the
+ * apparent order.
+ *
+ * If slice scaling is not enabled, the slice scaling functions will
+ * use the appropriate global volume scale value.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
 #include "minc2.h"
 #include "minc2_private.h"
 
-/*! Get the minimum or maximum value for the slice containing the given point.
- */
 #define MIRW_SCALE_SET 0x0001
-#define MIRW_SCALE_MIN 0x0002
+#define MIRW_SCALE_GET 0x0000
 
+#define MIRW_SCALE_MIN 0x0002
+#define MIRW_SCALE_MAX 0x0000
+
+/* Forward declaration
+ */
+static int mirw_volume_minmax(int opcode, mihandle_t volume, double *value);
+
+/** Get the minimum or maximum value for the slice containing the given point.
+ */
 static int
 mirw_slice_minmax(int opcode, mihandle_t volume, 
                   const unsigned long start_positions[],
@@ -20,18 +40,22 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     hid_t dset_id;
     hid_t fspc_id;
     hid_t mspc_id;
-    hssize_t coords[3][0];
+    hssize_t coords[3][1];
     int ndims;
     int i;
     int result;
-    BOOLEAN slice_scaling_enabled;
 
-    result = miget_slice_scaling_flag(volume, &slice_scaling_enabled);
-    if (result < 0 || !slice_scaling_enabled) {
-	return (MI_ERROR);
+    if (volume == NULL || value == NULL) {
+        return (MI_ERROR);      /* Bad parameters */
+    }
+
+    if (!volume->has_slice_scaling) {
+        mirw_volume_minmax(opcode, volume, value);
     }
 
     file_id = volume->hdf_id;
+
+    /* TODO: get the min/max from alternate resolutions??? */
     if (opcode & MIRW_SCALE_MIN) {
 	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-min");
     }
@@ -85,24 +109,48 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     return (MI_NOERROR);
 }
 
+/**
+This function sets \a slice_min to the minimum real value of
+voxels in the slice containing the coordinates \a start_positions.
+The \a array_length may be less than or equal to the number of dimensions
+in the volume, extra coordinates will be ignored.  Specifying too few
+coordinates will trigger an error.
+Coordinates must always be specified in raw file order.
+ */
 int
 miget_slice_min(mihandle_t volume, const unsigned long start_positions[],
 		int array_length, double *slice_min)
 {
-    return (mirw_slice_minmax(MIRW_SCALE_MIN, 
+    return (mirw_slice_minmax(MIRW_SCALE_MIN + MIRW_SCALE_GET, 
 			      volume, start_positions, 
 			      array_length, slice_min));
 }
 
+/**
+This function sets \a slice_max to the maximum real value of
+voxels in the slice containing the coordinates \a start_positions.
+The \a array_length may be less than or equal to the number of dimensions
+in the volume, extra coordinates will be ignored.  Specifying too few
+coordinates will trigger an error.
+Coordinates must always be specified in raw file order.
+ */
 int
 miget_slice_max(mihandle_t volume, const unsigned long start_positions[],
 		int array_length, double *slice_max)
 {
-    return (mirw_slice_minmax(0, 
+    return (mirw_slice_minmax(MIRW_SCALE_MAX + MIRW_SCALE_GET, 
 			      volume, start_positions, 
 			      array_length, slice_max));
 }
 
+/**
+This function sets minimum real value of
+values in the slice containing the coordinates \a start_positions.
+The \a array_length may be less than or equal to the number of dimensions
+in the volume, extra coordinates will be ignored.  Specifying too few
+coordinates will trigger an error.
+Coordinates must always be specified in raw file order.
+ */
 int
 miset_slice_min(mihandle_t volume, const unsigned long start_positions[],
 		int array_length, double slice_min)
@@ -112,53 +160,77 @@ miset_slice_min(mihandle_t volume, const unsigned long start_positions[],
 			      array_length, &slice_min));
 }
 
+/**
+This function sets maximum real value of
+values in the slice containing the coordinates \a start_positions.
+The \a array_length may be less than or equal to the number of dimensions
+in the volume, extra coordinates will be ignored.  Specifying too few
+coordinates will trigger an error.
+Coordinates must always be specified in raw file order.
+ */
 int
 miset_slice_max(mihandle_t volume, const unsigned long start_positions[],
 		int array_length, double slice_max)
 {
-    return (mirw_slice_minmax(MIRW_SCALE_SET, 
+    return (mirw_slice_minmax(MIRW_SCALE_MAX + MIRW_SCALE_SET, 
 			      volume, start_positions, 
 			      array_length, &slice_max));
 }
 
+/**
+This function gets both the minimum and
+maximum real value of voxels in the slice containing the coordinates
+\a start_positions.  The \a array_length may be less than or equal to
+the number of dimensions in the volume, extra coordinates will be
+ignored.  Specifying too few coordinates will trigger an error.
+Coordinates must always be specified in raw file order.
+ */
 int
 miget_slice_range(mihandle_t volume, const unsigned long start_positions[],
 		  int array_length, double *slice_max, double *slice_min)
 {
     int r;
 
-    r = mirw_slice_minmax(0, 
+    r = mirw_slice_minmax(MIRW_SCALE_MAX + MIRW_SCALE_GET, 
 			  volume, start_positions, 
 			  array_length, slice_max);
     if (r < 0) {
-	return (MI_ERROR);
+        *slice_max = 1.0;
     }
 
-    r = mirw_slice_minmax(MIRW_SCALE_MIN,
+    r = mirw_slice_minmax(MIRW_SCALE_MIN + MIRW_SCALE_GET,
 			  volume, start_positions,
 			  array_length, slice_min);
 
     if (r < 0) {
-	return (MI_ERROR);
+        *slice_min = 0.0;
     }
 
     return (MI_NOERROR);
 }
 
+/**
+This function the minimum and maximum real value of voxels in the
+slice containing the coordinates \a start_positions.  The \a
+array_length may be less than or equal to the number of dimensions in
+the volume, extra coordinates will be ignored.  Specifying too few
+coordinates will trigger an error.  Coordinates must always be
+specified in raw file order.
+ */
 int
 miset_slice_range(mihandle_t volume, const unsigned long start_positions[],
 		  int array_length, double slice_max, double slice_min)
 {
     int r;
 
-    r = mirw_slice_minmax(MIRW_SCALE_SET, 
+    r = mirw_slice_minmax(MIRW_SCALE_MAX + MIRW_SCALE_SET, 
 			  volume, start_positions, 
 			  array_length, &slice_max);
     if (r < 0) {
 	return (MI_ERROR);
     }
 
-    r = mirw_slice_minmax(MIRW_SCALE_SET + MIRW_SCALE_MIN,
+    r = mirw_slice_minmax(MIRW_SCALE_MIN + MIRW_SCALE_SET,
 			  volume, start_positions,
 			  array_length, &slice_min);
 
@@ -169,7 +241,8 @@ miset_slice_range(mihandle_t volume, const unsigned long start_positions[],
     return (MI_NOERROR);
 }
 
-/*!
+/*! Internal function to read/write the volume global minimum or
+ * maximum real range.
  */
 static int
 mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
@@ -179,10 +252,11 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
     hid_t fspc_id;
     hid_t mspc_id;
     int result;
-    BOOLEAN slice_scaling_enabled;
 
-    result = miget_slice_scaling_flag(volume, &slice_scaling_enabled);
-    if (result < 0 || slice_scaling_enabled) {
+    if (volume == NULL || value == NULL) {
+        return (MI_ERROR);
+    }
+    if (volume->has_slice_scaling) {
 	return (MI_ERROR);
     }
 
@@ -231,18 +305,35 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
     return (MI_NOERROR);
 }
 
+/**
+This function returns the minimum real value of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miget_volume_min(mihandle_t volume, double *vol_min)
 {
-    return (mirw_volume_minmax(MIRW_SCALE_MIN, volume, vol_min));
+    return (mirw_volume_minmax(MIRW_SCALE_MIN + MIRW_SCALE_GET, 
+                               volume, vol_min));
 }
 
+/**
+This function returns the maximum real value of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miget_volume_max(mihandle_t volume, double *vol_max)
 {
-    return (mirw_volume_minmax(0, volume, vol_max));
+    return (mirw_volume_minmax(MIRW_SCALE_MAX + MIRW_SCALE_GET, 
+                               volume, vol_max));
 }
 
+/**
+This function sets the minimum real value of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miset_volume_min(mihandle_t volume, double vol_min)
 {
@@ -250,24 +341,34 @@ miset_volume_min(mihandle_t volume, double vol_min)
 			       volume, &vol_min));
 }
 
+/**
+This function sets the maximum real value of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miset_volume_max(mihandle_t volume, double vol_max)
 {
-    return (mirw_volume_minmax(MIRW_SCALE_SET, 
+    return (mirw_volume_minmax(MIRW_SCALE_MAX + MIRW_SCALE_SET, 
 			       volume, &vol_max));
 }
 
+/**
+This function retrieves the maximum and minimum real values of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miget_volume_range(mihandle_t volume, double *vol_max, double *vol_min)
 {
     int r;
 
-    r = mirw_volume_minmax(0, volume, vol_max);
+    r = mirw_volume_minmax(MIRW_SCALE_MAX + MIRW_SCALE_GET, volume, vol_max);
     if (r < 0) {
 	return (MI_ERROR);
     }
 
-    r = mirw_volume_minmax(MIRW_SCALE_MIN, volume, vol_min);
+    r = mirw_volume_minmax(MIRW_SCALE_MIN + MIRW_SCALE_GET, volume, vol_min);
     if (r < 0) {
 	return (MI_ERROR);
     }
@@ -275,18 +376,22 @@ miget_volume_range(mihandle_t volume, double *vol_max, double *vol_min)
     return (MI_NOERROR);
 }
 
+/**
+This function sets the maximum and minimum real values of
+voxels in the entire \a volume.  If per-slice scaling is enabled, this
+function will return an error.
+ */
 int
 miset_volume_range(mihandle_t volume, double vol_max, double vol_min)
 {
     int r;
 
-    r = mirw_volume_minmax(MIRW_SCALE_SET, volume, &vol_max);
+    r = mirw_volume_minmax(MIRW_SCALE_MAX + MIRW_SCALE_SET, volume, &vol_max);
     if (r < 0) {
 	return (MI_ERROR);
     }
 
-    r = mirw_volume_minmax(MIRW_SCALE_SET + MIRW_SCALE_MIN, volume, 
-			   &vol_min);
+    r = mirw_volume_minmax(MIRW_SCALE_MIN + MIRW_SCALE_MIN, volume, &vol_min);
     if (r < 0) {
 	return (MI_ERROR);
     }
@@ -354,5 +459,6 @@ main(int argc, char **argv)
 	    miclose_volume(hvol);
 	}
     }
+    return (0);
 }
 #endif
