@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
 
-SUBDIRS = . testdir
+SUBDIRS = . testdir doc
 
 
 # Add these to the include searches.
@@ -112,7 +112,7 @@ noinst_PROGRAMS = \
 
 LDADD = libvolume_io.la libminc.la
 
-EXTRA_DIST = $(m4_files) libsrc/strdup.c
+EXTRA_DIST = GETTING_STARTED $(m4_files) libsrc/strdup.c
 
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \

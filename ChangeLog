@@ -1,5 +1,8 @@
 2003-01-09  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+	* doc/Makefile: Removed.
+	* doc/Makefile.am: New.
+
 	* testdir/run_tests.csh: Use -e flag to stop on error.  Look
 	for expected output files in $srcdir.
 
