@@ -7,16 +7,10 @@ ROOT = ..
 include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
-# Volume io library
-VOLIO_LIB_DIR  = $(ROOT)/volume_io
-VOLIO_LIB      = volume_io
-CC_VOLIO_LIB   = $(VOLIO_LIB_DIR)/lib$(VOLIO_LIB).a
-LINT_VOLIO_LIB = $(VOLIO_LIB_DIR)/llib-l$(VOLIO_LIB).ln
-
 # Example program
 PROGS = example/convert_volume_to_byte
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(CC_VOLIO_LIB) $(MINC_LDOPT) -lm
+LDOPT    = $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)
 
 # Object names
 OBJS     = \
@@ -91,5 +85,5 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 # Remove all derived files in this directory
 clean:
 	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
-	         $(OBJS) $(LINT_OBJS) $(PROG) $(PROG_OBJ) $(LINT_LIST)
+	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
 
