@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.9  1993-10-12 12:48:08  neelin
-@MODIFIED   : Use volume_io.h instead of def_mni.h
+@MODIFIED   : Revision 1.10  1993-10-15 13:48:22  neelin
+@MODIFIED   : Removed include of recipes.h
 @MODIFIED   :
+ * Revision 1.9  93/10/12  12:48:08  neelin
+ * Use volume_io.h instead of def_mni.h
+ * 
  * Revision 1.8  93/08/11  14:29:53  neelin
  * Use volume->datatype in load_volume instead of file->datatype.
  * Loop for slice max/min is from 0, not 1 in load_volume.
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.9 1993-10-12 12:48:08 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.10 1993-10-15 13:48:22 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -45,7 +48,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 #include <string.h>
 #include <math.h>
 #include <minc.h>
-#include <recipes.h>
 #include <volume_io.h>
 #include <minc_def.h>
 #include "mincresample.h"
