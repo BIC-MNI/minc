@@ -1,3 +1,10 @@
+Fri Jun 20 09:59:47 EDT 1997
+   - Fixed bug in voxel_loop that affected mincconcat when concatenating
+     4D (or greater) files. Basically, when there are no output files
+     and accumulation is used, then an outer loop over files is done
+     (process each file in order). With 4D or greater input files, the first
+     volume of each file would be handled correctly, but subsequent volumes
+     would only have the last slice read in.
 Tue Jun  3 10:59:29 EDT 1997
    - Really corrected dimension width suffix added by mincconcat. 
      Changed to _width to -width (fix of Aug 27, 1996 was not complete)
