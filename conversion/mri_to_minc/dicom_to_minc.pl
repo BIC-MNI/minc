@@ -196,7 +196,7 @@ sub dicom3_read_headers {
     # Dump the header
     local($group, $element, $data);
     open(DUMP, "extract $file_offset -1 $filename | " .
-         "dump_acr_nema - $header_maxid|");
+         "dump_acr_nema -i - $header_maxid|");
     while (<DUMP>) {
        chop;
        if (/^\s*(0x[\da-f]{4,4})\s+(0x[\da-f]{4,4})\s+length = \d+ :(.*)$/) {
@@ -367,7 +367,7 @@ sub dicom3_get_image_cmd {
         "extract " .
         $specific_file_info{'file_offset'} . 
         " -1 $cur_file" .
-        " | extract_acr_nema " . 
+        " | extract_acr_nema -i " . 
         $specific_file_info{'pixel_data_group'} . " " .
         $specific_file_info{'pixel_data_element'} . " " .
         " | byte_swap ";
