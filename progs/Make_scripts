@@ -32,7 +32,7 @@ install:
 	      cmd="$(CP) $(CP_FLAGS) $$prog $(INSTALL_BINDIR)/."; \
 	      echo "$$cmd"; \
 	      eval "$$cmd"; \
-	      cmd="$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_BINDIR)/$$prog"; \
+	      cmd="$(CHMOD) $(CHMOD_XFLAGS) $(INSTALL_BINDIR)/$$prog"; \
 	      echo "$$cmd"; \
 	      eval "$$cmd"; \
 	   fi; \
