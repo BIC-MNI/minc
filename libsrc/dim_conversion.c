@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 1.8  1993-08-11 12:06:03  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.9  1994-03-16 10:30:00  neelin
+@MODIFIED   : Changed default MI_ICV_STEP: if not found use 1.0 (and 0.0 for start).
 @MODIFIED   :
+ * Revision 1.8  93/08/11  12:06:03  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.8 1993-08-11 12:06:03 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.9 1994-03-16 10:30:00 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -392,30 +395,28 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
 
       /* Get pixel step and start for variable and calculate for user.
          Look for them in the dimension variable (if MIstep is not
-         there, then leave values at 0.0) */
+         there, then use defaults step = 1.0, start = 0.0 */
       oldncopts = ncopts; ncopts = 0;
-      if (miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep) 
-                          != MI_ERROR) {
-         /* Flip dimstep if needed */
-         if (icvp->derv_dim_flip[idim]) 
-            dimstep *= (-1);
-         /* Get step size for user's image */
-         icvp->derv_dim_step[idim] = icvp->derv_dim_grow[idim] ?
-            dimstep / icvp->derv_dim_scale[idim] :
+      dimstep = 1.0;
+      (void) miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep);
+      /* Flip dimstep if needed */
+      if (icvp->derv_dim_flip[idim]) 
+         dimstep *= (-1);
+      /* Get step size for user's image */
+      icvp->derv_dim_step[idim] = icvp->derv_dim_grow[idim] ?
+         dimstep / icvp->derv_dim_scale[idim] :
             dimstep * icvp->derv_dim_scale[idim];
-         /* Get start position for user's image - if no MIstart for
-            dimension, then assume 0.0 */
-         if (miattget1(cdfid, dimvid[idim], MIstart, NC_DOUBLE, &dimstart)
-                             == MI_ERROR)
-            dimstart=0.0;
-         /* Flip dimstart if needed */
-         if (icvp->derv_dim_flip[idim])
-            dimstart -= dimstep * (icvp->var_dim_size[idim]-1);
-         /* Calculate start position */
-         icvp->derv_dim_start[idim] = dimstart + 
-            (icvp->derv_dim_step[idim] - dimstep) / 2.0 -
-               icvp->derv_dim_off[idim] * icvp->derv_dim_step[idim];
-      }             /* if found MIstep */
+      /* Get start position for user's image - if no MIstart for
+         dimension, then assume 0.0 */
+      dimstart = 0.0;
+      (void) miattget1(cdfid, dimvid[idim], MIstart, NC_DOUBLE, &dimstart);
+      /* Flip dimstart if needed */
+      if (icvp->derv_dim_flip[idim])
+         dimstart -= dimstep * (icvp->var_dim_size[idim]-1);
+      /* Calculate start position */
+      icvp->derv_dim_start[idim] = dimstart + 
+         (icvp->derv_dim_step[idim] - dimstep) / 2.0 -
+            icvp->derv_dim_off[idim] * icvp->derv_dim_step[idim];
       ncopts = oldncopts;
 
    }                 /* for each dimension */
