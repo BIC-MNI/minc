@@ -135,9 +135,6 @@ main(int argc, char **argv)
     int r;
     double min, max;
     double orig_min, orig_max;
-    double range[2];
-    int length;
-    hid_t file_id;
 
     while (--argc > 0) {
 	r = miopen_volume(*++argv, MI2_OPEN_RDWR, &hvol);
