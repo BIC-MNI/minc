@@ -18,12 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.15 1992-12-01 16:30:55 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.16 1993-01-19 17:07:36 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.15 1992-12-01 16:30:55 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.16 1993-01-19 17:07:36 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -180,6 +180,7 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.1
 #define MIoperator            "operator"
 #define MIadmitting_diagnosis "admitting_diagnosis"
 #define MIprocedure           "procedure"
+#define MIstudy_id            "study_id"
 
 /* Study attribute constants */
 #define MI_PET   "PET__"
