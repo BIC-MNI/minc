@@ -1076,6 +1076,68 @@ public  Status  output_short(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_unsigned_short
+@INPUT      : file
+@OUTPUT     : s
+@RETURNS    : Status
+@DESCRIPTION: Inputs an ascii unsigned short.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  input_unsigned_short(
+    FILE            *file,
+    unsigned short  *s )
+{
+    int      i;
+    Status   status;
+
+    if( fscanf( file, "%d", &i ) == 1 )
+    {
+        *s = (unsigned short) i;
+        status = OK;
+    }
+    else
+        status = ERROR;
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_unsigned_short
+@INPUT      : file
+            : s
+@OUTPUT     :
+@RETURNS    : Status
+@DESCRIPTION: Outputs an ascii unsigned short.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  output_unsigned_short(
+    FILE            *file,
+    unsigned short  s )
+{
+    Status   status;
+
+    if( fprintf( file, " %d", (int) s ) > 0 )
+        status = OK;
+    else
+    {
+        print( "Error outputting unsigned short.\n" );
+        status = ERROR;
+    }
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_int
 @INPUT      : file
 @OUTPUT     : i
@@ -1535,6 +1597,46 @@ public  Status  io_short(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : io_unsigned_short
+@INPUT      : file
+            : io_flag
+            : format
+            : unsigned_short              short value
+@OUTPUT     :
+@RETURNS    : Status
+@DESCRIPTION: Inputs or outputs an ascii or binary unsigned short value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  io_unsigned_short(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    unsigned short  *unsigned_short )
+{
+    Status   status;
+
+    status = OK;
+
+    if( format == ASCII_FORMAT )
+    {
+        if( io_flag == READ_FILE )
+            status = input_unsigned_short( file, unsigned_short );
+        else
+            status = output_unsigned_short( file, *unsigned_short );
+    }
+    else
+        status = io_binary_data( file, io_flag, (void *) unsigned_short,
+                                 sizeof(*unsigned_short), 1 );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : io_unsigned_char
 @INPUT      : file
             : io_flag
@@ -1662,6 +1764,45 @@ public  Status  io_real(
     }
     else
         status = io_binary_data( file, io_flag, (void *) r, sizeof(*r), 1 );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : io_float
+@INPUT      : file
+            : io_flag
+            : format
+            : f              float value
+@OUTPUT     :
+@RETURNS    : Status
+@DESCRIPTION: Inputs or outputs an ascii or binary double value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  io_float(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    float           *f )
+{
+    Status   status;
+
+    status = OK;
+
+    if( format == ASCII_FORMAT )
+    {
+        if( io_flag == READ_FILE )
+            status = input_float( file, f );
+        else
+            status = output_float( file, *f );
+    }
+    else
+        status = io_binary_data( file, io_flag, (void *) f, sizeof(*f), 1 );
 
     return( status );
 }
