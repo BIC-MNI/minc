@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.12  2003-09-18 15:01:33  bert
+ * Revision 6.13  2004-04-27 15:31:20  bert
+ * Added -2 option
+ *
+ * Revision 6.12  2003/09/18 15:01:33  bert
  * Removed unnecessary brackets from initializer
  *
  * Revision 6.11  2002/11/06 13:32:23  jason
@@ -162,7 +165,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.12 2003-09-18 15:01:33 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.13 2004-04-27 15:31:20 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -262,10 +265,16 @@ public void get_arginfo(int argc, char *argv[],
           {NULL, NULL, NULL}, /* Pointers to coordinate arrays */
           {"", "", ""},       /* units */
           {"", "", ""}        /* spacetype */
-       }
+      },
+      FALSE			/* MINC 2.0 format? */
    };
 
    static ArgvInfo argTable[] = {
+#ifdef MINC2
+       {"-2", ARGV_CONSTANT, (char *) TRUE, 
+	(char *) &args.v2format,
+       "Produce a MINC 2.0 format output file."},
+#endif /* MINC2 defined */
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, 
           (char *) &args.clobber,
           "Overwrite existing file."},
@@ -423,6 +432,7 @@ public void get_arginfo(int argc, char *argv[],
    char *tm_stamp, *pname;
    Volume_Definition input_volume_def, transformed_volume_def;
    General_transform input_transformation;
+   int cflags;
 
    /* Initialize the transformation to identity */
    create_linear_transform(&input_transformation, NULL);
@@ -648,7 +658,18 @@ public void get_arginfo(int argc, char *argv[],
    out_vol->slice->data = MALLOC((size_t) total_size * sizeof(double));
 
    /* Create the output file */
-   create_output_file(outfile, args.clobber, &args.volume_def, 
+   if (args.clobber) {
+       cflags = NC_CLOBBER;
+   }
+   else {
+       cflags = NC_NOCLOBBER;
+   }
+#ifdef MINC2
+   if (args.v2format) {
+       cflags |= MI2_CREATE_V2;
+   }
+#endif /* MINC2 defined */
+   create_output_file(outfile, cflags, &args.volume_def, 
                       in_vol->file, out_vol->file,
                       tm_stamp, &args.transform_info);
    
@@ -1129,8 +1150,7 @@ public void normalize_vector(double vector[])
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_output_file
 @INPUT      : filename - name of file to create
-              clobber - flag indicating whether any existing file should be
-                 overwritten
+              cflags - flag creation flags
               volume_def - description of volume
               in_file - description of input file
               out_file - description of output file
@@ -1146,7 +1166,7 @@ public void normalize_vector(double vector[])
 @CREATED    : February 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void create_output_file(char *filename, int clobber, 
+public void create_output_file(char *filename, int cflags, 
                                Volume_Definition *volume_def,
                                File_Info *in_file,
                                File_Info *out_file,
@@ -1185,8 +1205,7 @@ public void create_output_file(char *filename, int clobber,
    ncopts = NC_VERBOSE | NC_FATAL;
 
    /* Create the file */
-   out_file->mincid = micreate(filename, 
-                               (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   out_file->mincid = micreate(filename, cflags);
  
    /* Copy all other variable definitions */
    (void) micopy_all_var_defs(in_file->mincid, out_file->mincid, 

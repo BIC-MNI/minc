@@ -11,7 +11,10 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.3  2001-04-24 13:38:44  neelin
+ * Revision 6.4  2004-04-27 15:32:15  bert
+ * Added -2 option
+ *
+ * Revision 6.3  2001/04/24 13:38:44  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.2  2001/04/17 18:40:21  neelin
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.3 2001-04-24 13:38:44 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.4 2004-04-27 15:32:15 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -79,6 +82,9 @@ public long get_vector_length(int mincid);
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
+#ifdef MINC2
+int v2format = FALSE;
+#endif /* MINC2 defined */
 nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
@@ -86,6 +92,10 @@ int buffer_size = 10 * 1024;
 
 /* Argument table */
 ArgvInfo argTable[] = {
+#ifdef MINC2
+    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
+       "Produce a MINC 2.0 format output file."},
+#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -160,6 +170,9 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
+#ifdef MINC2
+   set_loop_v2format(loop_options, v2format);
+#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_output_vector_size(loop_options, num_input_files);

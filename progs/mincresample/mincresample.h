@@ -7,7 +7,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.4  2002-11-06 13:32:23  jason
+ * Revision 6.5  2004-04-27 15:31:20  bert
+ * Added -2 option
+ *
+ * Revision 6.4  2002/11/06 13:32:23  jason
  * Fixes to mincresample: setting the interpolation type is now done
  * through an enum rather than function pointers.
  *
@@ -241,6 +244,7 @@ typedef struct {
    enum Interpolant_type interpolant_type;  /* Type of interpolation */
    Transform_Info transform_info;
    Volume_Definition volume_def;
+   int v2format;                /* If non-zero, create a MINC 2.0 output */
 } Arg_Data;
 
 typedef struct {

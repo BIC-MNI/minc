@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.5  2001-04-24 13:38:44  neelin
+ * Revision 6.6  2004-04-27 15:31:45  bert
+ * Added -2 option
+ *
+ * Revision 6.5  2001/04/24 13:38:44  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.4  2001/04/17 18:40:22  neelin
@@ -66,7 +69,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.5 2001-04-24 13:38:44 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.6 2004-04-27 15:31:45 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -201,11 +204,18 @@ int use_nan_for_illegal_values = TRUE;
 double value_for_illegal_operations = DEFAULT_DBL;
 int check_dim_info = TRUE;
 char *filelist = NULL;
+#ifdef MINC2
+int minc2_format = FALSE;
+#endif /* MINC2 defined */
 
 /* Argument table */
 ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "General options:"},
+#ifdef MINC2
+   {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
+    "Produce a MINC 2.0 format output file"},
+#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -475,6 +485,9 @@ public int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
+#ifdef MINC2
+   set_loop_v2format(loop_options, minc2_format);
+#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    if (num_operands == NARY_NUMOP) {

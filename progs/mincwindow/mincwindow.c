@@ -10,7 +10,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.1  1999-10-19 14:45:30  neelin
+ * Revision 6.2  2004-04-27 15:28:39  bert
+ * Added -2 option
+ *
+ * Revision 6.1  1999/10/19 14:45:30  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:05  neelin
@@ -61,7 +64,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.1 1999-10-19 14:45:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.2 2004-04-27 15:28:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -102,9 +105,16 @@ public void do_window(void *caller_data, long num_voxels,
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
+#ifdef MINC2
+int v2format = FALSE;
+#endif /* MINC2 defined */
 
 /* Argument table */
 ArgvInfo argTable[] = {
+#ifdef MINC2
+    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
+       "Produce a MINC 2.0 format output file."},
+#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -167,6 +177,9 @@ public int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
+#ifdef MINC2
+   set_loop_v2format(loop_options, v2format);
+#endif /* MINC2 defined */
    voxel_loop(1, &infile, 1, &outfile, arg_string, loop_options,
               do_window, (void *) &window_data);
 
