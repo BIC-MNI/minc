@@ -11,8 +11,8 @@ HEADERS = minc.h minc_routines.h minc_varlists.h minc_basic.h \
 LIBRARY = minc
 
 # Compiler and loader options
-CDEFINES = -DDEBUG
-OPT      = -O
+CDEFINES = 
+OPT      = -O -prototypes
 LDOPT    = -L/usr/local/lib -lnetcdf -lsun -lm -lc_s
 INCLUDES = -I. -I/usr/local/include
 
