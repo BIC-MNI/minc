@@ -41,10 +41,45 @@ private  BOOLEAN  is_default_direction_cosine(
     return( is_default );
 }
 
+private  BOOLEAN  get_dimension_ordering(
+    int          n_dimensions,
+    char         *dim_names[],
+    char         output_dim_names[][MAX_NC_NAME+1],
+    int          ordering[] )
+{
+    int      d, c, n_found;
+
+    for_less( d, 0, n_dimensions )
+        ordering[d] = -1;
+
+    n_found = 0;
+
+    for_less( d, 0, n_dimensions )
+    {
+        for_less( c, 0, n_dimensions )
+        {
+            if( ordering[c] < 0 &&
+                strcmp( dim_names[d], output_dim_names[c] ) == 0 )
+            {
+                ordering[c] = d;
+                ++n_found;
+            }
+        }
+    }
+
+    if( n_found != n_dimensions && n_found != 0 )
+    {
+        print( "Unsuccessful matching of volume and output dimension names.\n");
+        print( "Using default\n" );
+    }
+
+    return( n_found == n_dimensions );
+}
+
 public  Minc_file  initialize_minc_output(
     char                   filename[],
     int                    n_dimensions,
-    char                   *dim_names[],
+    STRING                 dim_names[],
     int                    sizes[],
     nc_type                file_nc_data_type,
     BOOLEAN                file_signed_flag,
@@ -151,8 +186,8 @@ public  Minc_file  initialize_minc_output(
 
         if( is_spatial_dimension( dim_names[d], &axis ) )
         {
-            file->dim_ids[d] = micreate_std_variable( file->cdfid, dim_names[d],
-                                                      NC_DOUBLE, 0, NULL);
+            file->dim_ids[d] = micreate_std_variable( file->cdfid,
+                                dim_names[d], NC_DOUBLE, 0, NULL);
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
                                 separation[axis]);
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
@@ -519,6 +554,21 @@ public  Status  close_minc_output(
 }
 
 public  void  set_default_minc_output_options(
-    minc_output_options  *options           /* ARGSUSED */ )
+    minc_output_options  *options           )
 {
+    int   i;
+
+    for_less( i, 0, MAX_DIMENSIONS )
+        (void) strpcy( options->dimension_names[i], "" );
+}
+
+public  void  set_minc_output_dimensions_order(
+    minc_output_options  *options,
+    int                  n_dimensions,
+    char                 *dimension_names[] )
+{
+    int   i;
+
+    for_less( i, 0, n_dimensions )
+        (void) strcpy( options->dimension_names[i], dimension_names[i] );
 }
