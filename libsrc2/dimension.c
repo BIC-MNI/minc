@@ -343,7 +343,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   hsize_t number_of_dims; 
   int i=0, max_dims;
   int num_ret_dims = 0;
-  
+  midimhandle_t hdim;
   
   if (volume == NULL) {
     return (MI_ERROR);
@@ -369,7 +369,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
      if the user has set the apparent order use the dim_indices
      to search the dimensions otherwise use dim_handles
    */
-  midimhandle_t hdim;
+  
   
   for (i=0; i < max_dims; i++) {
       if (order == MI_DIMORDER_APPARENT) {
