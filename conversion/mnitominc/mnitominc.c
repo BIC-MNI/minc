@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.2 1993-01-22 12:08:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.3 1993-02-01 16:06:47 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -25,6 +25,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitomi
 #include <ParseArgv.h>
 #include "mnitominc.h"
 #include <vax_conversions.h>
+#include <time_stamp.h>
 
 
 /* Main program */
@@ -46,12 +47,17 @@ main(int argc, char *argv[])
    double last_z, diff_z, curr_diff_z, first_z;
    double last_t, diff_t, curr_diff_t, first_t;
    int z_regular, t_regular;
+   char *tm_stamp;
+
+   /* Get time stamp */
+   tm_stamp = time_stamp(argc, argv);
 
    /* Parse arguments and get header info from mni file */
    parse_args(argc, argv, &mni_header);
 
    /* Create the file */
    cdfid=nccreate(outfilename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Create the dimensions */
    zdim = tdim = -1;
