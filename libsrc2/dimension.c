@@ -535,7 +535,7 @@ miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
 /*! 
   Get the apparent order of voxels (i.e., the order that voxel indices increase/decrease)
   \param dimension The dimension handle
-  \param file_order The order of voxels.
+  \param flipping_order The order of voxels.
   \param sign The sign of the step value.
   *
   * This method gets the apparent order of voxels for the specified dimension
@@ -545,7 +545,7 @@ miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
 
 int 
 miget_dimension_apparent_voxel_order(midimhandle_t dimension, 
-                                     miflipping_t *file_order,
+                                     miflipping_t *flipping_order,
 				     miflipping_t *sign)
 {
   if (dimension == NULL) {
@@ -553,7 +553,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension,
   }
   switch (dimension->flipping_order) {
   case MI_FILE_ORDER:
-    *file_order = MI_FILE_ORDER;
+    *flipping_order = MI_FILE_ORDER;
     if (dimension->step > 0) {
       *sign = MI_POSITIVE;
     }
@@ -562,7 +562,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension,
     }
     break;
   case MI_COUNTER_FILE_ORDER:
-    *file_order = MI_COUNTER_FILE_ORDER;
+    *flipping_order = MI_COUNTER_FILE_ORDER;
     if (dimension->step > 0) {
       *sign = MI_NEGATIVE;
     }
@@ -573,19 +573,19 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension,
   case MI_POSITIVE:
     *sign = MI_POSITIVE;
     if (dimension->step > 0) {
-      *file_order = MI_FILE_ORDER;
+      *flipping_order = MI_FILE_ORDER;
     }
     else {
-      *file_order = MI_COUNTER_FILE_ORDER; 
+      *flipping_order = MI_COUNTER_FILE_ORDER; 
     }
     break;  
   case MI_NEGATIVE:
     *sign = MI_NEGATIVE;
     if (dimension->step > 0) {
-      *file_order = MI_COUNTER_FILE_ORDER;
+      *flipping_order = MI_COUNTER_FILE_ORDER;
     }
     else {
-      *file_order = MI_FILE_ORDER; 
+      *flipping_order = MI_FILE_ORDER; 
     }
     break;  
   default:
