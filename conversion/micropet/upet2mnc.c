@@ -26,6 +26,7 @@ struct conversion_info {
     FILE *img_fp;
     int mnc_fd;
     int frame_index;
+    int frame_zero;
     int data_type;
     nc_type minc_type;
     int dim_count;
@@ -38,6 +39,7 @@ struct conversion_info {
     double scale_factor;
     double deadtime_correction;
     double decay_correction;
+    double calibration_factor;
 };
 
 DECLARE_FUNC(upet_file_type);
@@ -56,6 +58,7 @@ DECLARE_FUNC(upet_scan_time);
 DECLARE_FUNC(upet_axial_crystal_pitch);
 DECLARE_FUNC(upet_pixel_size);
 DECLARE_FUNC(upet_dose_units);
+DECLARE_FUNC(upet_calibration_factor);
 
 DECLARE_FUNC(upet_frame_no);
 DECLARE_FUNC(upet_frame_start);
@@ -288,7 +291,7 @@ struct keywd_entry vol_atts[] = {
     {"calibration_units", 
      UPET_TYPE_INT, NULL, NULL, NULL },
     {"calibration_factor", 
-     UPET_TYPE_REAL, NULL, NULL, NULL },
+     UPET_TYPE_REAL, NULL, NULL, upet_calibration_factor },
     {"calibration_branching_fraction", 
      UPET_TYPE_REAL, NULL, NULL, NULL },
     {"number_of_singles_rates", 
@@ -417,6 +420,8 @@ main(int argc, char **argv)
         perror(argv[2]);
         return (-1);
     }
+
+    ci.frame_zero = -1;         /* Initial frame is -1 until set. */
 
     /* Define the basic MINC group variables.
      */
@@ -766,17 +771,28 @@ DECLARE_FUNC(upet_dose_units)
     miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, new_var), new_att, str_ptr);
 }
 
+DECLARE_FUNC(upet_calibration_factor)
+{
+    double dbl_tmp = atof(val_str);
+
+    ci_ptr->calibration_factor = dbl_tmp;
+}
 
 /***********************/
 /* Per-frame functions */
 DECLARE_FUNC(upet_frame_no)
 {
     ci_ptr->frame_index = atoi(val_str);
+    /* Set index of "zeroth" frame if not already set.
+     */
+    if (ci_ptr->frame_zero < 0) {
+        ci_ptr->frame_zero = ci_ptr->frame_index;
+    }
 }
 
 DECLARE_FUNC(upet_frame_start)
 {
-    long index = ci_ptr->frame_index;
+    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MItime), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
@@ -784,7 +800,7 @@ DECLARE_FUNC(upet_frame_start)
 
 DECLARE_FUNC(upet_frame_duration)
 {
-    long index = ci_ptr->frame_index;
+    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MItime_width), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
@@ -792,28 +808,25 @@ DECLARE_FUNC(upet_frame_duration)
 
 DECLARE_FUNC(upet_frame_min)
 {
-#if 0
-    long index = ci_ptr->frame_index;
+    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
+    dbl_tmp *= (ci_ptr->scale_factor*ci_ptr->calibration_factor);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimagemin), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
-#endif
 }
 
 DECLARE_FUNC(upet_frame_max)
 {
-#if 0
-    long index = ci_ptr->frame_index;
+    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
-    dbl_tmp *= ci_ptr->scale_factor;
+    dbl_tmp *= (ci_ptr->scale_factor*ci_ptr->calibration_factor);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimagemax), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
-#endif
 }
 
 DECLARE_FUNC(upet_frame_file_ptr)
 {
-    long index = ci_ptr->frame_index;
+    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     long hipart;
     long lopart;
     char *end_ptr;
@@ -950,7 +963,7 @@ copy_frame(struct conversion_info *ci_ptr)
 
     fread(ci_ptr->frame_buffer, ci_ptr->frame_nbytes, 1, ci_ptr->img_fp);
 
-    start[DIM_T] = ci_ptr->frame_index;
+    start[DIM_T] = ci_ptr->frame_index - ci_ptr->frame_zero;
     start[DIM_X] = 0;
     start[DIM_Y] = 0;
     start[DIM_Z] = 0;
@@ -963,7 +976,7 @@ copy_frame(struct conversion_info *ci_ptr)
     count[DIM_W] = ci_ptr->dim_lengths[DIM_W];
 
     scale_data(ci_ptr->minc_type, ci_ptr->frame_nvoxels, ci_ptr->frame_buffer,
-               ci_ptr->scale_factor*10.0 /* fudge factor */);
+               ci_ptr->scale_factor*ci_ptr->calibration_factor);
 
     mivarput(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimage), start, count, 
              ci_ptr->minc_type, MI_SIGNED, ci_ptr->frame_buffer);
