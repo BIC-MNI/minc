@@ -2,6 +2,10 @@
 
 Thu Aug 21 09:22:18 EDT 1997 *** RELEASE OF MINC 0.5
 
+Wed Aug 13 19:30:00 EDT 1997
+   - Changes to acr-nema library: Fixed bug that was causing the loss of
+     PDU items on read in dicom_network.c. Added function 
+     acr_group_remove_element to group.c.
 Wed Aug 13 12:09:37 EDT 1997
    - Copied in new release of volume_io
 Wed Aug 13 11:44:38 EDT 1997
