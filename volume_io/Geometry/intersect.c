@@ -1,34 +1,33 @@
 
-#include  <def_mni.h>
-#include  <def_module.h>
+#include  <module.h>
 
 #define  MAX_POINTS    30
 
-private  Boolean  point_within_polygon(
+private  BOOLEAN  point_within_polygon(
     Point   *pt,
     int     n_points,
     Point   points[],
     Vector  *polygon_normal );
-private  Boolean  point_within_triangle_2d(
+private  BOOLEAN  point_within_triangle_2d(
     Point   *pt,
     int     i1,
     int     i2,
     Point   points[] );
-private  Boolean  point_within_polygon_2d(
+private  BOOLEAN  point_within_polygon_2d(
     Point   *pt,
     int     i1,
     int     i2,
     int     n_points,
     Point   points[] );
 
-public  Boolean   intersect_ray_polygon(
+public  BOOLEAN   intersect_ray_polygon(
     Point            *ray_origin,
     Vector           *ray_direction,
     Real             *dist,
     polygons_struct  *polygons,
     int              poly_index )
 {
-    Boolean  intersects;
+    BOOLEAN  intersects;
     Point    points[MAX_POINTS];
     Vector   normal;
     Real     n_dot_d, t, plane_const;
@@ -86,13 +85,13 @@ public  Boolean   intersect_ray_polygon(
     return( intersects );
 }
 
-private  Boolean  point_within_polygon(
+private  BOOLEAN  point_within_polygon(
     Point   *pt,
     int     n_points,
     Point   points[],
     Vector  *polygon_normal )
 {
-    Boolean  intersects;
+    BOOLEAN  intersects;
     Real     nx, ny, nz, max_val;
     int      i1, i2;
 
@@ -130,13 +129,13 @@ private  Boolean  point_within_polygon(
     return( intersects );
 }
 
-private  Boolean  point_within_triangle_2d(
+private  BOOLEAN  point_within_triangle_2d(
     Point   *pt,
     int     i1,
     int     i2,
     Point   points[] )
 {
-    Boolean  intersects;
+    BOOLEAN  intersects;
     Real     alpha, beta, u0, u1, u2, v0, v1, v2, bottom;
 
     intersects = FALSE;
@@ -182,17 +181,17 @@ private  Boolean  point_within_triangle_2d(
     return( intersects );
 }
 
-private  Boolean  point_within_polygon_2d(
+private  BOOLEAN  point_within_polygon_2d(
     Point   *pt,
     int     i1,
     int     i2,
     int     n_points,
     Point   points[] )
 {
-    Boolean  intersects;
+    BOOLEAN  intersects;
     Real     x, y, x1, y1, x2, y2, x_inter, dy;
     int      i;
-    Boolean  cross;
+    BOOLEAN  cross;
 
     x = Point_coord( *pt, i1 );
     y = Point_coord( *pt, i2 );

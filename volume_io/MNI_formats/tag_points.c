@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
 static   const char      *VOLUMES_STRING = "Volumes";
@@ -60,7 +60,7 @@ public  Status  output_tag_points(
 {
     Status   status;
     int      i;
-    Boolean  aux_present;
+    BOOLEAN  aux_present;
 
     /* parameter checking */
 
@@ -272,7 +272,7 @@ private  void  extract_label(
     char     str[],
     char     label[] )
 {
-    Boolean  quoted;
+    BOOLEAN  quoted;
     int      i, len;
 
     i = 0;
@@ -334,12 +334,12 @@ public  Status  input_tag_points(
     int       **patient_ids,
     char      ***labels )
 {
-    String  line;
+    STRING  line;
     Real    weight;
-    Boolean last_was_blank, in_quotes;
+    BOOLEAN last_was_blank, in_quotes;
     int     n_strings, structure_id, patient_id, pos, i;
     Real    x1, y1, z1, x2, y2, z2;
-    String  label;
+    STRING  label;
 
     /* parameter checking */
 

@@ -1,5 +1,5 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 public  void  make_identity_transform( Transform   *transform )
 {
@@ -21,10 +21,10 @@ public  void  make_identity_transform( Transform   *transform )
     Transform_elem( *transform, 3, 3 ) = 1.0;
 }
 
-public  Boolean  close_to_identity(
+public  BOOLEAN  close_to_identity(
     Transform   *transform )
 {
-    Boolean    close;
+    BOOLEAN    close;
     Transform  identity;
     int        i, j;
 
@@ -300,7 +300,7 @@ public  void   concat_transforms(
 {
     int         i, j, k;
     Real        sum;
-    Boolean     result_is_also_an_arg;
+    BOOLEAN     result_is_also_an_arg;
     Transform   tmp, *t;
 
     if( result == t1 || result == t2 )

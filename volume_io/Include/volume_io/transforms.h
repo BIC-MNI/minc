@@ -16,7 +16,7 @@ typedef  void   (*User_transform_function)( void  *user_data,
 typedef struct General_transform
 {
     Transform_types             type;
-    Boolean                     inverse_flag;
+    BOOLEAN                     inverse_flag;
 
     /* --- linear transform */
 

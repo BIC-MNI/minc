@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_basic.h
+@NAME       : basic.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
@@ -109,13 +109,13 @@ typedef  char            Smallest_int;
 
 typedef  unsigned char   unsigned_byte;
 
-typedef  int             Boolean;
+typedef  int             BOOLEAN;
 
 typedef  double          Real;
 
 #define  MAX_STRING_LENGTH    200
 
-typedef  char     String[MAX_STRING_LENGTH+1];
+typedef  char     STRING[MAX_STRING_LENGTH+1];
 
 /* --------------- */
 
@@ -125,6 +125,9 @@ typedef  char     String[MAX_STRING_LENGTH+1];
                                     : (int) ((x) + 0.5) )
 
 #define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
+
+#define  FLOOR( x )   (  (x < 0.0) ? (IS_INT(x) ? (int) (x) : (int) (x) - 1) \
+                                   : (int) (x) )
 
 #define  CEILING( x )   (  IS_INT(x) ?                                      \
                                ((int) (x)) :                                \

@@ -3,7 +3,7 @@
 
 #include  <netcdf.h>
 #include  <minc.h>
-#include  <def_transforms.h>
+#include  <transforms.h>
 
 #define  MAX_DIMENSIONS     5
 
@@ -28,21 +28,25 @@ typedef  struct
 {
     int                     n_dimensions;
     char                    *dimension_names[MAX_DIMENSIONS];
+    int                     spatial_axes[N_DIMENSIONS];
     Data_types              data_type;
     nc_type                 nc_data_type;
-    Boolean                 signed_flag;
+    BOOLEAN                 signed_flag;
 
     void                    *data;
 
     Real                    voxel_min;
     Real                    voxel_max;
-    Boolean                 real_range_set;
+    BOOLEAN                 real_range_set;
     Real                    real_value_scale;
     Real                    real_value_translation;
     int                     sizes[MAX_DIMENSIONS];
+
     Real                    separations[MAX_DIMENSIONS];
     Real                    translation_voxel[MAX_DIMENSIONS];
-    Real                    world_space_for_translation_voxel[MAX_DIMENSIONS];
+    Real                    direction_cosines[MAX_DIMENSIONS][N_DIMENSIONS];
+
+    Real                    world_space_for_translation_voxel[N_DIMENSIONS];
 
     General_transform       voxel_to_world_transform;
 } volume_struct;
@@ -157,6 +161,16 @@ typedef  volume_struct  *Volume;
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
            GET_GIVEN_DIM( value, volume, *****, [x][y][z][t][v] )
 
+#define  GET_VOXEL( value, volume, x, y, z, t, v )       \
+         switch( (volume)->n_dimensions ) \
+         { \
+         case 1:  GET_VOXEL_1D( value, volume, x );              break; \
+         case 2:  GET_VOXEL_2D( value, volume, x, y );           break; \
+         case 3:  GET_VOXEL_3D( value, volume, x, y, z );        break; \
+         case 4:  GET_VOXEL_4D( value, volume, x, y, z, t );     break; \
+         case 5:  GET_VOXEL_5D( value, volume, x, y, z, t, v );  break; \
+         }
+
 /* ------------------------- get voxel ptr ------------------------ */
 
 #define  GET_ONE_PTR( ptr, volume, type, asterisks, subscripts )   \
@@ -256,11 +270,21 @@ typedef  volume_struct  *Volume;
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
+#define  GET_VALUE( value, volume, x, y, z, t, v )       \
+         switch( (volume)->n_dimensions ) \
+         { \
+         case 1:  GET_VALUE_1D( value, volume, x );              break; \
+         case 2:  GET_VALUE_2D( value, volume, x, y );           break; \
+         case 3:  GET_VALUE_3D( value, volume, x, y, z );        break; \
+         case 4:  GET_VALUE_4D( value, volume, x, y, z, t );     break; \
+         case 5:  GET_VALUE_5D( value, volume, x, y, z, t, v );  break; \
+         }
+
 /* -------------------- minc file struct -------------------- */
 
 typedef  struct
 {
-    Boolean            file_is_being_read;
+    BOOLEAN            file_is_being_read;
 
     /* input and output */
 
@@ -272,7 +296,7 @@ typedef  struct
 
     /* input only */
 
-    Boolean            end_volume_flag;
+    BOOLEAN            end_volume_flag;
     int                n_volumes_in_file;
     Volume             volume;
 
@@ -281,14 +305,17 @@ typedef  struct
 
     int                n_slab_dims;
 
+    int                spatial_axes[N_DIMENSIONS];
+    General_transform  voxel_to_world_transform;
+
     /* output only */
 
     int                img_var_id;
     int                min_id;
     int                max_id;
     double             image_range[2];
-    Boolean            end_def_done;
-    Boolean            variables_written;
+    BOOLEAN            end_def_done;
+    BOOLEAN            variables_written;
     int                dim_ids[MAX_VAR_DIMS];
     char               *dim_names[MAX_VAR_DIMS];
 } minc_file_struct;
@@ -302,8 +329,8 @@ typedef  struct
 
 typedef  struct
 {
-    Boolean     promote_invalid_to_min_flag;
-    Boolean     convert_vector_to_scalar_flag;
+    BOOLEAN     promote_invalid_to_min_flag;
+    BOOLEAN     convert_vector_to_scalar_flag;
 } minc_input_options;
 
 typedef  struct
@@ -328,9 +355,9 @@ typedef struct
     int                  sizes_in_file[MAX_DIMENSIONS];
     int                  axis_index_from_file[MAX_DIMENSIONS];
     Data_types           file_data_type;
-    Boolean              one_file_per_slice;
-    String               directory;
-    String               *slice_filenames;
+    BOOLEAN              one_file_per_slice;
+    STRING               directory;
+    STRING               *slice_filenames;
     int                  *slice_byte_offsets;
     unsigned char        *byte_slice_buffer;
     unsigned short       *short_slice_buffer;

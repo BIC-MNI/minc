@@ -1,4 +1,4 @@
-#include  <mni.h>
+#include  <volume_io.h>
 
 #define TINY 1.0e-20
 

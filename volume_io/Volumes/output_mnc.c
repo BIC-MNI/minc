@@ -1,5 +1,5 @@
 #include  <minc.h>
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 #define  INVALID_AXIS   -1
 
@@ -20,11 +20,11 @@ private  int  match_dimension_names(
     char              *file_dimension_names[],
     int               axis_index_in_file[] );
 
-private  Boolean  is_default_direction_cosine(
+private  BOOLEAN  is_default_direction_cosine(
     int        axis,
     double     dir_cosines[] )
 {
-    Boolean   is_default;
+    BOOLEAN   is_default;
     int       i;
 
     is_default = TRUE;
@@ -47,7 +47,7 @@ public  Minc_file  initialize_minc_output(
     char                   *dim_names[],
     int                    sizes[],
     nc_type                file_nc_data_type,
-    Boolean                file_signed_flag,
+    BOOLEAN                file_signed_flag,
     Real                   file_voxel_min,
     Real                   file_voxel_max,
     Real                   real_min,
@@ -62,7 +62,7 @@ public  Minc_file  initialize_minc_output(
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     int                 i, j, d, axis;
     Point               origin;
-    Vector              axes[N_DIMENSIONS];
+    Vector              axes[MAX_DIMENSIONS];
     static  char        *default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     Transform           transform;
     minc_output_options default_options;

@@ -1,5 +1,5 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : string_ends_in
@@ -16,12 +16,12 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  string_ends_in(
+public  BOOLEAN  string_ends_in(
     char   string[],
     char   ending[] )
 {
     int      len_string, len_ending;
-    Boolean  ending_present;
+    BOOLEAN  ending_present;
 
     len_string = strlen( string );
     len_ending = strlen( ending );
@@ -160,11 +160,11 @@ public  void  get_upper_case_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  blank_string(
+public  BOOLEAN  blank_string(
     char   string[] )
 {
     int      i;
-    Boolean  blank;
+    BOOLEAN  blank;
 
     blank = TRUE;
     i = 0;

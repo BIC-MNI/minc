@@ -1,9 +1,8 @@
 #ifndef  DEF_GEOMETRY
 #define  DEF_GEOMETRY
 
-#include  <def_basic.h>
-#include  <def_geom_structs.h>
-#include  <def_math.h>
+#include  <basic.h>
+#include  <geom_structs.h>
 
 /* point and vector operations */
 
@@ -128,6 +127,11 @@
          ( Point_x(p1) == Point_x(p2) && \
            Point_y(p1) == Point_y(p2) && \
            Point_z(p1) == Point_z(p2) )
+
+#define  EQUAL_VECTORS( v1, v2 ) \
+         ( Vector_x(v1) == Vector_x(v2) && \
+           Vector_y(v1) == Vector_y(v2) && \
+           Vector_z(v1) == Vector_z(v2) )
 
 #define  DIST_FROM_PLANE( normal, d, point ) \
          ( DOT_POINT_VECTOR(point,normal) - (d) )

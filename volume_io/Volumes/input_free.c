@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 #include  <minc.h>
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -28,10 +28,10 @@ public  Status  initialize_free_format_input(
     volume_input_struct  *volume_input )
 {
     Status         status, file_status;
-    String         volume_filename, abs_volume_filename;
-    String         slice_filename;
+    STRING         volume_filename, abs_volume_filename;
+    STRING         slice_filename;
     int            slice, sizes[N_DIMENSIONS];
-    int            volume_byte_offset;
+    int            c, volume_byte_offset;
     int            n_bytes_per_voxel, min_value, max_value, i;
     int            n_slices, n_voxels_in_slice;
     nc_type        desired_data_type;
@@ -39,10 +39,10 @@ public  Status  initialize_free_format_input(
     char           ch;
     Real           file_separations[MAX_DIMENSIONS];
     Real           volume_separations[MAX_DIMENSIONS];
-    Real           origin_voxel[N_DIMENSIONS];
+    Real           origin_voxel[MAX_DIMENSIONS];
     Real           trans[N_DIMENSIONS];
     FILE           *file;
-    Boolean        axis_valid;
+    BOOLEAN        axis_valid;
     int            axis;
 
     status = OK;
@@ -101,6 +101,13 @@ public  Status  initialize_free_format_input(
              negative voxel separation means flip on display 
     */
 
+    if( volume->spatial_axes[X] < 0 ||
+        volume->spatial_axes[Y] < 0 ||
+        volume->spatial_axes[Z] < 0 )
+    {
+        print( "initialize_free_format_input: spatial axes must be set\n" );
+    }
+
     if( status == OK )
     for_less( axis, 0, N_DIMENSIONS )
     {
@@ -120,15 +127,18 @@ public  Status  initialize_free_format_input(
         switch( ch )
         {
         case 'x':
-        case 'X':  volume_input->axis_index_from_file[axis] = X;
+        case 'X':  volume_input->axis_index_from_file[axis] =
+                                           volume->spatial_axes[X];
                    break;
 
         case 'y':
-        case 'Y':  volume_input->axis_index_from_file[axis] = Y;
+        case 'Y':  volume_input->axis_index_from_file[axis] =
+                                           volume->spatial_axes[Y];
                    break;
 
         case 'z':
-        case 'Z':  volume_input->axis_index_from_file[axis] = Z;
+        case 'Z':  volume_input->axis_index_from_file[axis] =
+                                           volume->spatial_axes[Z];
                    break;
 
         default:   axis_valid = FALSE;    break;
@@ -141,6 +151,15 @@ public  Status  initialize_free_format_input(
         }
 
         status = OK;
+    }
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        volume->spatial_axes[c] = c;
+        volume->direction_cosines[c][X] = 0.0;
+        volume->direction_cosines[c][Y] = 0.0;
+        volume->direction_cosines[c][Z] = 0.0;
+        volume->direction_cosines[c][c] = 1.0;
     }
 
     if( status == OK &&
@@ -353,7 +372,7 @@ private  Status  input_slice(
 {
     Status           status;
     FILE             *file;
-    String           slice_filename;
+    STRING           slice_filename;
 
     status = OK;
 
@@ -422,18 +441,18 @@ private  Status  input_slice(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  input_more_free_format_file(
+public  BOOLEAN  input_more_free_format_file(
     Volume                volume,
     volume_input_struct   *volume_input,
     Real                  *fraction_done )
 {
     int             min_value, max_value;
-    int             x, y, z, sizes[N_DIMENSIONS];
+    int             x, y, z, sizes[MAX_DIMENSIONS];
     Status          status;
-    Boolean         more_to_do, scaling_flag;
+    BOOLEAN         more_to_do, scaling_flag;
     Real            value_translation, value_scale;
     Real            original_min_voxel, original_max_voxel;
-    int             *inner_index, i, value, indices[N_DIMENSIONS];
+    int             *inner_index, i, value, indices[MAX_DIMENSIONS];
     unsigned char   *byte_buffer_ptr;
     unsigned short  *short_buffer_ptr;
 

@@ -1,5 +1,5 @@
+#include  <volume_io.h>
 #include  <minc.h>
-#include  <def_mni.h>
 
 #define  INVALID_AXIS   -1
 
@@ -44,13 +44,13 @@ public  Minc_file  initialize_minc_input(
     int                 img_var, dim_vars[MAX_VAR_DIMS];
     int                 slab_size, length, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
-    Boolean             different;
-    Boolean             min_voxel_found, max_voxel_found, range_specified;
+    BOOLEAN             different;
+    BOOLEAN             min_voxel_found, max_voxel_found, range_specified;
     double              valid_range[2], temp;
     long                long_size, mindex[MAX_VAR_DIMS];
-    Boolean             converted_sign;
+    BOOLEAN             converted_sign;
     nc_type             converted_type;
-    String              signed_flag, last_dim_name;
+    STRING              signed_flag, last_dim_name;
     char                *dim_names[MAX_VAR_DIMS];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
@@ -60,7 +60,7 @@ public  Minc_file  initialize_minc_input(
     Real                world_space[N_DIMENSIONS];
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    Boolean             spatial_dim_flags[MAX_VAR_DIMS];
+    BOOLEAN             spatial_dim_flags[MAX_VAR_DIMS];
     Vector              offset;
     Point               origin;
     Real                zero_voxel[MAX_DIMENSIONS];
@@ -162,13 +162,19 @@ public  Minc_file  initialize_minc_input(
 
     which_valid_axis = 0;
 
-    for_less( d, 0, MAX_DIMENSIONS )
-        volume->spatial_axes[d] = -1;
+    for_less( d, 0, N_DIMENSIONS )
+    {
+        volume->spatial_axes[d] = INVALID_AXIS;
+        file->spatial_axes[d] = INVALID_AXIS;
+    }
 
     for_less( d, 0, file->n_file_dimensions )
     {
         if( convert_dim_name_to_axis( dim_names[d], &axis ) )
+        {
             spatial_axis_indices[d] = axis;
+            file->spatial_axes[axis] = d;
+        }
         else
             spatial_axis_indices[d] = INVALID_AXIS;
 
@@ -231,7 +237,38 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
-    /* --- create the world transform from slice separation, cosines, etc. */
+    /* --- create the file world transform */
+
+    fill_Point( origin, 0.0, 0.0, 0.0 );
+
+    for_less( d, 0, MAX_DIMENSIONS )
+        zero_voxel[d] = 0.0;
+
+    for_less( d, 0, N_DIMENSIONS )
+    {
+        axis = file->spatial_axes[d];
+        if( axis != INVALID_AXIS )
+        {
+            fill_Vector( spatial_axis,
+                         dir_cosines[axis][0],
+                         dir_cosines[axis][1],
+                         dir_cosines[axis][2] );
+            NORMALIZE_VECTOR( spatial_axis, spatial_axis );
+            
+            SCALE_VECTOR( offset, spatial_axis, start_position[axis] );
+            ADD_POINT_VECTOR( origin, origin, offset );
+        }
+    }
+
+    world_space[X] = Point_x(origin);
+    world_space[Y] = Point_y(origin);
+    world_space[Z] = Point_z(origin);
+
+    compute_world_transform( file->spatial_axes, file_separations,
+                             zero_voxel, world_space, dir_cosines,
+                             &file->voxel_to_world_transform );
+
+    /* --- create the world transform stored in the volume */
 
     fill_Point( origin, 0.0, 0.0, 0.0 );
 
@@ -242,24 +279,15 @@ public  Minc_file  initialize_minc_input(
             set_volume_direction_cosine( volume,
                                          file->axis_index_in_file[d],
                                          dir_cosines[d] );
-
-            fill_Vector( spatial_axis,
-                         dir_cosines[d][0],
-                         dir_cosines[d][1],
-                         dir_cosines[d][2] );
-            NORMALIZE_VECTOR( spatial_axis, spatial_axis );
-            
-            SCALE_VECTOR( offset, spatial_axis, start_position[d] );
-            ADD_POINT_VECTOR( origin, origin, offset );
         }
     }
 
-    for_less( d, 0, MAX_DIMENSIONS )
-        zero_voxel[d] = 0.0;
+    general_transform_point( &file->voxel_to_world_transform,
+                             0.0, 0.0, 0.0,
+                             &world_space[X], &world_space[Y], &world_space[Z]);
 
-    world_space[X] = Point_x(origin);
-    world_space[Y] = Point_y(origin);
-    world_space[Z] = Point_z(origin);
+    for_less( d, 0, N_DIMENSIONS )
+        zero_voxel[d] = 0.0;
 
     set_volume_translation( volume, zero_voxel, world_space );
     set_volume_separations( volume, volume_separations );
@@ -476,6 +504,7 @@ public  Status  close_minc_input(
     (void) ncclose( file->cdfid );
     (void) miicv_free( file->icv );
 
+    delete_general_transform( &file->voxel_to_world_transform );
     FREE( file );
 
     return( OK );
@@ -507,8 +536,8 @@ private  void  input_slab(
     int      i, ind, valid_ind, file_ind, expected_ind;
     int      iv[MAX_DIMENSIONS], n_to_read;
     void     *void_ptr;
-    Boolean  direct_to_volume;
-    Boolean  non_full_size_found;
+    BOOLEAN  direct_to_volume;
+    BOOLEAN  non_full_size_found;
     char     *buffer;
 
     non_full_size_found = FALSE;
@@ -639,7 +668,7 @@ private  void  input_slab(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  input_more_minc_file(
+public  BOOLEAN  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done )
 {
@@ -648,7 +677,10 @@ public  Boolean  input_more_minc_file(
     Volume   volume;
 
     if( file->end_volume_flag )
+    {
+        print( "End of file in input_more_minc_file()\n" );
         return( FALSE );
+    }
 
     volume = file->volume;
 
@@ -712,10 +744,11 @@ public  Boolean  input_more_minc_file(
     return( !file->end_volume_flag );
 }
 
-public  Boolean  advance_input_volume(
+public  BOOLEAN  advance_input_volume(
     Minc_file   file )
 {
-    int   ind;
+    int   ind, c, axis;
+    Real  voxel[MAX_DIMENSIONS], world_space[N_DIMENSIONS];
 
     ind = file->n_file_dimensions-1;
 
@@ -739,6 +772,24 @@ public  Boolean  advance_input_volume(
         for_less( ind, 0, file->volume->n_dimensions )
             file->indices[file->valid_file_axes[ind]] = 0;
 
+        for_less( c, 0, N_DIMENSIONS )
+        {
+            axis = file->spatial_axes[c];
+            if( axis != INVALID_AXIS )
+                voxel[c] = file->indices[axis];
+            else
+                voxel[c] = 0.0;
+        }
+
+        general_transform_point( &file->voxel_to_world_transform,
+                                 voxel[0], voxel[1], voxel[2],
+                                 &world_space[X], &world_space[Y],
+                                 &world_space[Z]);
+
+        for_less( c, 0, get_volume_n_dimensions(file->volume) )
+            voxel[c] = 0.0;
+
+        set_volume_translation( file->volume, voxel, world_space );
     }
     else
         file->end_volume_flag = TRUE;
@@ -756,7 +807,7 @@ public  void  reset_input_volume(
     file->end_volume_flag = FALSE;
 }
 
-public  Boolean  is_spatial_dimension(
+public  BOOLEAN  is_spatial_dimension(
     char   dimension_name[],
     int    *axis )
 {
@@ -787,8 +838,8 @@ private  int  match_dimension_names(
     int               axis_index_in_file[] )
 {
     int      i, j, iteration, n_matches, dummy;
-    Boolean  match;
-    Boolean  volume_dim_found[MAX_DIMENSIONS];
+    BOOLEAN  match;
+    BOOLEAN  volume_dim_found[MAX_DIMENSIONS];
 
     n_matches = 0;
 
@@ -856,14 +907,14 @@ public  void  set_default_minc_input_options(
 
 public  void  set_minc_input_promote_invalid_to_min_flag(
     minc_input_options  *options,
-    Boolean             flag )
+    BOOLEAN             flag )
 {
     options->promote_invalid_to_min_flag = flag;
 }
 
 public  void  set_minc_input_vector_to_scalar_flag(
     minc_input_options  *options,
-    Boolean             flag )
+    BOOLEAN             flag )
 {
     options->convert_vector_to_scalar_flag = flag;
 }

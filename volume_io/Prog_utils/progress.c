@@ -1,5 +1,5 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
 
@@ -46,7 +46,7 @@ private  void  show_multi_line_progress(
 
 public  void  initialize_progress_report(
     progress_struct   *progress,
-    Boolean           one_line_only,
+    BOOLEAN           one_line_only,
     int               n_steps,
     char              title[] )
 {
@@ -230,7 +230,7 @@ private  void  show_multi_line_progress(
 {
     int     percent_done;
     Real    time_remaining;
-    String  time_so_far_str, est_total_time_str, time_remaining_str;
+    STRING  time_so_far_str, est_total_time_str, time_remaining_str;
 
     percent_done = ROUND( 100.0 * (Real) current_step /
                           (Real) progress->n_steps );
@@ -265,7 +265,7 @@ public  void  terminate_progress_report(
     progress_struct   *progress )
 {
     Real    total_time;
-    String  time_str;
+    STRING  time_str;
 
     if( progress->first_msg_displayed )
     {

@@ -1,9 +1,9 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 public  Status  output_modified_volume(
     char                  filename[],
     nc_type               file_nc_data_type,
-    Boolean               file_signed_flag,
+    BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,
@@ -15,6 +15,7 @@ public  Status  output_modified_volume(
     Minc_file    minc_file;
     int          sizes[MAX_DIMENSIONS];
     Real         min_value, max_value;
+    char         **dimension_names;
 
     if( file_nc_data_type == NC_UNSPECIFIED )
     {
@@ -26,15 +27,18 @@ public  Status  output_modified_volume(
     get_volume_real_range( volume, &min_value, &max_value );
     get_volume_sizes( volume, sizes );
 
+    dimension_names = get_volume_dimension_names( volume );
+
     minc_file = initialize_minc_output( filename,
                                         get_volume_n_dimensions(volume),
-                                        volume->dimension_names,
-                                        sizes,
+                                        dimension_names, sizes,
                                         file_nc_data_type, file_signed_flag,
                                         file_voxel_min, file_voxel_max,
                                         min_value, max_value,
                                         get_voxel_to_world_transform(volume),
                                         options );
+
+    delete_dimension_names( dimension_names );
 
     status = OK;
 
@@ -61,7 +65,7 @@ public  Status  output_modified_volume(
 public  Status  output_volume(
     char                  filename[],
     nc_type               file_nc_data_type,
-    Boolean               file_signed_flag,
+    BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,

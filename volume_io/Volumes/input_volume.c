@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 #ifndef  NO_MNC_FILES
 #include  <minc.h>
@@ -27,7 +27,7 @@ private  void  get_mni_scaling(
               volume data yet.  Allocates the data also.
 
               Note: if you wish to modify the volume file input routines,
-              then look at the new_C_dev/Include/def_volume.h for the
+              then look at the new_C_dev/Include/volume.h for the
               description of Volum and volume_input_struct.
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
@@ -38,10 +38,10 @@ public  Status  start_volume_input(
     int                  n_dimensions,
     char                 *dim_names[],
     nc_type              volume_nc_data_type,
-    Boolean              volume_signed_flag,
+    BOOLEAN              volume_signed_flag,
     Real                 volume_voxel_min,
     Real                 volume_voxel_max,
-    Boolean              create_volume_flag,
+    BOOLEAN              create_volume_flag,
     Volume               *volume,
     minc_input_options   *options,
     volume_input_struct  *input_info )
@@ -50,13 +50,11 @@ public  Status  start_volume_input(
     int             d;
     Real            mni_scale, mni_translation;
     Real            min_voxel, max_voxel, real_min, real_max;
-    Boolean         mni_format;
-    static char     *default_dim_names[N_DIMENSIONS] =
-                                         { MIzspace, MIyspace, MIxspace };
-    String          expanded_filename;
+    BOOLEAN         mni_format;
+    STRING          expanded_filename;
 
     if( dim_names == (char **) NULL )
-        dim_names = default_dim_names;
+        dim_names = get_default_dim_names( n_dimensions );
 
     status = OK;
 
@@ -66,7 +64,8 @@ public  Status  start_volume_input(
                                  volume_signed_flag,
                                  volume_voxel_min, volume_voxel_max );
     }
-    else if( n_dimensions != get_volume_n_dimensions( *volume ) )
+    else if( n_dimensions != get_volume_n_dimensions( *volume ) &&
+             (*volume)->data != (void *) NULL )
         free_volume_data( *volume );
 
     expand_filename( filename, expanded_filename );
@@ -159,12 +158,12 @@ public  void  delete_volume_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  input_more_of_volume(
+public  BOOLEAN  input_more_of_volume(
     Volume                volume,
     volume_input_struct   *input_info,
     Real                  *fraction_done )
 {
-    Boolean       more_to_do;
+    BOOLEAN       more_to_do;
 
     switch( input_info->file_format )
     {
@@ -222,10 +221,10 @@ public  Status  input_volume(
     int                  n_dimensions,
     char                 *dim_names[],
     nc_type              volume_nc_data_type,
-    Boolean              volume_signed_flag,
+    BOOLEAN              volume_signed_flag,
     Real                 volume_voxel_min,
     Real                 volume_voxel_max,
-    Boolean              create_volume_flag,
+    BOOLEAN              create_volume_flag,
     Volume               *volume,
     minc_input_options   *options )
 {
@@ -269,8 +268,8 @@ private  void  setup_input_mni_as_free_format(
 {
     Status  status;
     FILE    *file;
-    String  tmp_name;
-    String  abs_filename;
+    STRING  tmp_name;
+    STRING  abs_filename;
     char    *getwd();
 
     if( filename[0] != '/' )

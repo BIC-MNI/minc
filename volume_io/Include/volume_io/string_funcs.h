@@ -2,7 +2,7 @@
 #define  DEF_STRING
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_string.h
+@NAME       : string.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 

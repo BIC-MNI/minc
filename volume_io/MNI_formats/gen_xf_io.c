@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
 static   const char      *TYPE_STRING = "Transform_Type";
@@ -48,7 +48,7 @@ public  char  *get_default_transform_file_suffix()
 
 private  void  output_one_transform(
     FILE                *file,
-    Boolean             invert,
+    BOOLEAN             invert,
     General_transform   *transform )
 {
     int        i, c, trans;
@@ -213,10 +213,10 @@ private  Status  input_one_transform(
     int               i, j, n_points, n_dimensions;
     float             **points, **displacements;
     double            value, *points_1d;
-    String            type_name, str;
+    STRING            type_name, str;
     Transform         linear_transform;
     Transform_types   type;
-    Boolean           inverse_flag;
+    BOOLEAN           inverse_flag;
     General_transform inverse;
 
     inverse_flag = FALSE;
@@ -412,7 +412,7 @@ public  Status  input_transform(
 {
     Status              status;
     int                 n_transforms;
-    String              line;
+    STRING              line;
     General_transform   next, concated;
 
     /* parameter checking */

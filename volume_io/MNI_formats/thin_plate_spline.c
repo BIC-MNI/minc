@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 
-#include <def_mni.h>
+#include <volume_io.h>
 
 private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
                     float **bdefor, float **INVMLY, int num_marks);
@@ -60,7 +60,7 @@ public  void  thin_plate_spline_transform(
     Real    *y_transformed,
     Real    *z_transformed )
 {
-    Boolean   markpoint;
+    BOOLEAN   markpoint;
     int       i, j;
     float     r,some_number,*tempcor,*coord_flt;
     float     input_point[N_DIMENSIONS], output_point[N_DIMENSIONS];

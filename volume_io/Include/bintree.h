@@ -1,7 +1,7 @@
 #ifndef  DEF_BINTREE
 #define  DEF_BINTREE
 
-#include  <def_geometry.h>
+#include  <geometry.h>
 
 #define  NO_CHILD_SIGNAL  -1
 #define  LEAF_SIGNAL      -2

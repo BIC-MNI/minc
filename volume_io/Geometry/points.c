@@ -1,7 +1,7 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 
-public  Boolean  null_Point(
+public  BOOLEAN  null_Point(
     Point   *point )
 {
     return( Point_x(*point) == 0.0 &&
@@ -9,7 +9,7 @@ public  Boolean  null_Point(
             Point_z(*point) == 0.0 );
 }
 
-public  Boolean  null_Vector(
+public  BOOLEAN  null_Vector(
     Vector   *vector )
 {
     return( Vector_x(*vector) == 0.0 &&
@@ -28,7 +28,7 @@ public  Real  distance_between_points(
     return( MAGNITUDE( diff ) );
 }
 
-public  Boolean  points_within_distance(
+public  BOOLEAN  points_within_distance(
     Point  *p1,
     Point  *p2,
     Real   distance )

@@ -1,5 +1,5 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 #include  <stdlib.h>
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -48,7 +48,7 @@ typedef  struct
 private  void     update_total_memory( alloc_struct *, int );
 private  int      get_random_level( void );
 private  void     output_entry( FILE *, skip_entry * );
-private  Boolean  size_display_enabled( void );
+private  BOOLEAN  size_display_enabled( void );
 
 #ifdef sgi
 typedef  size_t    alloc_int;
@@ -93,7 +93,7 @@ private   void  initialize_alloc_list(
 private  void  check_initialized_alloc_list(
     alloc_struct  *alloc_list )
 {
-    static   Boolean  first = TRUE;
+    static   BOOLEAN  first = TRUE;
 
     if( first )
     {
@@ -117,14 +117,14 @@ private  void  check_initialized_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  find_pointer_position(
+private  BOOLEAN  find_pointer_position(
     alloc_struct    *alloc_list,
     void            *ptr,
     update_struct   *update )
 {
     int           i;
     skip_entry    *x;
-    Boolean       found;
+    BOOLEAN       found;
 
     x = alloc_list->header;
 
@@ -217,14 +217,14 @@ private   void  insert_ptr_in_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  check_overlap(
+private  BOOLEAN  check_overlap(
     alloc_struct       *alloc_list,
     update_struct      *update,
     void               *ptr,
     int                n_bytes,
     skip_entry         **entry )
 {
-    Boolean      overlap;
+    BOOLEAN      overlap;
 
     overlap = FALSE;
 
@@ -264,7 +264,7 @@ private  Boolean  check_overlap(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   Boolean  remove_ptr_from_alloc_list(
+private   BOOLEAN  remove_ptr_from_alloc_list(
     alloc_struct   *alloc_list,
     void           *ptr,
     char           *source_file[],
@@ -272,7 +272,7 @@ private   Boolean  remove_ptr_from_alloc_list(
     int            *sequence_number )
 {
     int           i;
-    Boolean       found;
+    BOOLEAN       found;
     skip_entry    *x;
     update_struct update;
 
@@ -486,8 +486,8 @@ public  int  get_total_memory_alloced( void )
     return( alloc_list.total_memory_allocated );
 }
 
-static  Boolean  checking_enabled;
-static  Boolean  enabled_initialized = FALSE;
+static  BOOLEAN  checking_enabled;
+static  BOOLEAN  enabled_initialized = FALSE;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_checking_enabled
@@ -503,7 +503,7 @@ static  Boolean  enabled_initialized = FALSE;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  alloc_checking_enabled( void )
+private  BOOLEAN  alloc_checking_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -517,7 +517,7 @@ private  Boolean  alloc_checking_enabled( void )
 #endif
 }
 
-public  void  set_alloc_checking( Boolean state )
+public  void  set_alloc_checking( BOOLEAN state )
 {
     enabled_initialized = TRUE;
     checking_enabled = state;
@@ -537,13 +537,13 @@ public  void  set_alloc_checking( Boolean state )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  size_display_enabled( void )
+private  BOOLEAN  size_display_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
 #else
-    static  Boolean  first = TRUE;
-    static  Boolean  enabled;
+    static  BOOLEAN  first = TRUE;
+    static  BOOLEAN  enabled;
 
     if( first )
     {
@@ -739,12 +739,12 @@ public  void  change_ptr(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  unrecord_ptr(
+public  BOOLEAN  unrecord_ptr(
     void   *ptr,
     char   source_file[],
     int    line_number )
 {
-    Boolean  was_previously_alloced;
+    BOOLEAN  was_previously_alloced;
     char     *orig_source;
     int      orig_line;
     int      sequence_number;
@@ -794,7 +794,7 @@ public  void  output_alloc_to_file(
     char   filename[] )
 {
     FILE     *file;
-    String   date_str;
+    STRING   date_str;
 
     if( alloc_checking_enabled() )
     {

@@ -2,7 +2,7 @@
 #define  DEF_ARRAYS
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_arrays.h
+@NAME       : arrays.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
@@ -14,7 +14,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <def_alloc.h>
+#include  <alloc.h>
 
 #define  DEFAULT_CHUNK_SIZE    100
 

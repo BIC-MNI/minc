@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 #ifdef sgi
 typedef  size_t    alloc_int;
@@ -164,10 +164,10 @@ private  FILE  *file;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  writing_alloc_debug( void )
+private  BOOLEAN  writing_alloc_debug( void )
 {
-    static   Boolean   first = TRUE;
-    static   Boolean   writing = FALSE;
+    static   BOOLEAN   first = TRUE;
+    static   BOOLEAN   writing = FALSE;
     char               *filename;
 
     if( first )

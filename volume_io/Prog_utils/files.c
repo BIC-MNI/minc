@@ -1,7 +1,7 @@
 
-#include  <def_mni.h>
+#include  <volume_io.h>
 
-private  Boolean  has_no_extension( char [] );
+private  BOOLEAN  has_no_extension( char [] );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : real_is_double
@@ -16,7 +16,7 @@ private  Boolean  has_no_extension( char [] );
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  real_is_double()
+public  BOOLEAN  real_is_double()
 {
     return( sizeof(Real) == 8 );
 }
@@ -34,12 +34,12 @@ public  Boolean  real_is_double()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  file_exists(
+public  BOOLEAN  file_exists(
     char        filename[] )
 {
-    Boolean  exists;
+    BOOLEAN  exists;
     FILE     *file;
-    String   expanded;
+    STRING   expanded;
 
     expand_filename( filename, expanded );
 
@@ -72,7 +72,7 @@ public  Boolean  file_exists(
 public  void  remove_file(
     char  filename[] )
 {
-    String  command;
+    STRING  command;
 
     (void) sprintf( command, "rm -f %s", filename );
 
@@ -100,9 +100,9 @@ public  void  expand_filename(
     char  expanded_filename[] )
 {
     int      i, dest, len, env_index;
-    Boolean  use_home;
+    BOOLEAN  use_home;
     char     *env_value;
-    String   env;
+    STRING   env;
 
     len = strlen( filename );
 
@@ -144,12 +144,12 @@ public  void  expand_filename(
     }
 }
 
-public  Boolean  filename_extension_matches(
+public  BOOLEAN  filename_extension_matches(
     char   filename[],
     char   extension[] )
 {
     int       len;
-    String    filename_no_z, ending;
+    STRING    filename_no_z, ending;
 
     (void) strcpy( filename_no_z, filename );
     len = strlen( filename );
@@ -218,7 +218,7 @@ public  Status  open_file(
     FILE               **file )
 {
     Status   status;
-    String   access_str, expanded;
+    STRING   access_str, expanded;
 
     switch( io_type )
     {
@@ -277,8 +277,8 @@ public  Status  open_file_with_default_suffix(
     File_formats       file_format,
     FILE               **file )
 {
-    Boolean  suffix_added;
-    String   used_filename, expanded;
+    BOOLEAN  suffix_added;
+    STRING   used_filename, expanded;
 
     expand_filename( filename, expanded );
 
@@ -317,7 +317,7 @@ public  Status  open_file_with_default_suffix(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  has_no_extension(
+private  BOOLEAN  has_no_extension(
     char   filename[] )
 {
     int   i;
@@ -446,7 +446,7 @@ public  void  get_absolute_filename(
     char    directory[],
     char    abs_filename[] )
 {
-    String  save_filename;
+    STRING  save_filename;
 
     /* in case abs_filename and filename are same variable */
 
@@ -1035,7 +1035,7 @@ public  Status  input_line(
 @INPUT      : file
 @OUTPUT     : b
 @RETURNS    : Status
-@DESCRIPTION: Inputs a Boolean value from a file, by looking for an 'f' or 't'.
+@DESCRIPTION: Inputs a BOOLEAN value from a file, by looking for an 'f' or 't'.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -1045,7 +1045,7 @@ public  Status  input_line(
 
 public  Status  input_boolean(
     FILE            *file,
-    Boolean         *b )
+    BOOLEAN         *b )
 {
     Status   status;
     char     ch;
@@ -1081,7 +1081,7 @@ public  Status  input_boolean(
 
 public  Status  output_boolean(
     FILE            *file,
-    Boolean         b )
+    BOOLEAN         b )
 {
     Status   status;
     char     *str;
@@ -1095,7 +1095,7 @@ public  Status  output_boolean(
 
     if( fprintf( file, " %s", str ) > 0 )
     {
-        print( "Error outputting Boolean.\n" );
+        print( "Error outputting BOOLEAN.\n" );
         status = ERROR;
     }
 
@@ -1581,7 +1581,7 @@ public  Status  io_quoted_string(
 
         if( io_flag == READ_FILE && length >= str_length )
         {
-            print( "String too large: " );
+            print( "STRING too large: " );
             status = ERROR;
         }
 
@@ -1622,7 +1622,7 @@ public  Status  io_boolean(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
-    Boolean         *b )
+    BOOLEAN         *b )
 {
     Status   status;
 

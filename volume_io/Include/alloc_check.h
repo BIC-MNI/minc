@@ -2,7 +2,7 @@
 #define  DEF_ALLOC_CHECK
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_alloc_check.h
+@NAME       : alloc_check.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
@@ -20,11 +20,11 @@
 
 #ifndef NO_DEBUG_ALLOC
 
-#include  <def_basic.h>
+#include  <basic.h>
 
 void      record_ptr( void *, int, char [], int );
 void      change_ptr( void *, void *, int, char [], int );
-Boolean   unrecord_ptr( void *, char [], int );
+BOOLEAN   unrecord_ptr( void *, char [], int );
 int       get_total_memory_alloced( void );
 void      output_alloc_to_file( char [] );
 

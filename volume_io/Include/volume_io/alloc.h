@@ -2,13 +2,13 @@
 #define  DEF_ALLOC
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_alloc.h
+@NAME       : alloc.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: A set of macros for allocating 1, 2, and 3 dimensional arrays.
 @METHOD     : Requires the file alloc.c linked in.  This include file references
-            : def_alloc_check.h, to allow for allocation error checking
+            : alloc_check.h, to allow for allocation error checking
             : (these are the macros RECORD_PTR, UNRECORD_PTR, etc.)
 @GLOBALS    : 
 @CALLS      : 
@@ -16,8 +16,8 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <def_basic.h>
-#include  <def_alloc_check.h>
+#include  <basic.h>
+#include  <alloc_check.h>
 
 void   alloc_memory( void **, int );
 void   realloc_memory( void **, int );

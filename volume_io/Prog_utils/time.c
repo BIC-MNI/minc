@@ -3,7 +3,7 @@
 #include  <sys/time.h>
 #include  <sys/param.h>
 #include  <limits.h>
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : current_cpu_seconds
@@ -46,7 +46,7 @@ public  Real  current_cpu_seconds( void )
 
 public  Real  current_realtime_seconds( void )
 {
-    static  Boolean          first_call = TRUE;
+    static  BOOLEAN          first_call = TRUE;
     static  struct  timeval  first;
     struct  timeval          current;
     Real                     secs;
@@ -92,7 +92,7 @@ public  void  format_time(
                                 "days", "years"
                               };
     static  Real   scales[] = { 1000.0, 1000.0, 60.0, 60.0, 24.0, 365.0 };
-    Boolean  negative;
+    BOOLEAN  negative;
 
     negative = seconds < 0.0;
     if( negative )  seconds = -seconds;
@@ -136,7 +136,7 @@ public  void  print_time(
     char   format[],
     Real   seconds )
 {
-    String  str;
+    STRING  str;
 
     format_time( str, format, seconds );
 

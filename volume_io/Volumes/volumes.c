@@ -1,5 +1,5 @@
-#include  <def_mni.h>
-#include  <def_splines.h>
+#include  <volume_io.h>
+#include  <splines.h>
 #include  <limits.h>
 #undef FLT_DIG
 #undef DBL_DIG
@@ -38,7 +38,7 @@ private  char  *get_dim_name(
     return( (char *) 0 );
 }
 
-public  Boolean  convert_dim_name_to_axis(
+public  BOOLEAN  convert_dim_name_to_axis(
     char    name[],
     int     *axis )
 {
@@ -86,7 +86,7 @@ public   Volume   create_volume(
     int         n_dimensions,
     char        *dimension_names[],
     nc_type     nc_data_type,
-    Boolean     signed_flag,
+    BOOLEAN     signed_flag,
     Real        voxel_min,
     Real        voxel_max )
 {
@@ -163,7 +163,7 @@ public   Volume   create_volume(
 public  void  set_volume_type(
     Volume       volume,
     nc_type      nc_data_type,
-    Boolean      signed_flag,
+    BOOLEAN      signed_flag,
     Real         voxel_min,
     Real         voxel_max )
 {
@@ -507,12 +507,15 @@ public  General_transform  *get_voxel_to_world_transform(
     return( &volume->voxel_to_world_transform );
 }
 
-private  void  recompute_world_transform(
-    Volume  volume )
+public  void  compute_world_transform(
+    int                 spatial_axes[N_DIMENSIONS],
+    Real                separations[],
+    Real                translation_voxel[],
+    Real                world_space_for_translation_voxel[N_DIMENSIONS],
+    Real                direction_cosines[][N_DIMENSIONS],
+    General_transform   *world_transform )
 {
     Transform                transform;
-    General_transform        general_transform;
-    Real                     separations[MAX_DIMENSIONS];
     Real                     separations_3D[N_DIMENSIONS];
     Vector                   directions[N_DIMENSIONS];
     Point                    point;
@@ -520,35 +523,33 @@ private  void  recompute_world_transform(
     Real                     voxel[N_DIMENSIONS];
     int                      c, axis, n_axes, axis_list[N_DIMENSIONS];
 
-    get_volume_separations( volume, separations );
-
     n_axes = 0;
 
     for_less( c, 0, N_DIMENSIONS )
     {
-        axis = volume->spatial_axes[c];
+        axis = spatial_axes[c];
         if( axis >= 0 )
         {
             separations_3D[c] = separations[axis];
-            voxel[c] = volume->translation_voxel[axis];
+            voxel[c] = translation_voxel[axis];
             fill_Vector( directions[c],
-                         volume->direction_cosines[axis][X],
-                         volume->direction_cosines[axis][Y],
-                         volume->direction_cosines[axis][Z]);
+                         direction_cosines[axis][X],
+                         direction_cosines[axis][Y],
+                         direction_cosines[axis][Z]);
 
             axis_list[n_axes] = c;
             ++n_axes;
         }
         else
         {
-            separations_3D[c] = 0.0;
+            separations_3D[c] = 1.0;
             voxel[c] = 0.0;
         }
     }
 
     if( n_axes == 0 )
     {
-        print( "error recompute_world_transform:  no axes.\n" );
+        print( "error compute_world_transform:  no axes.\n" );
         return;
     }
 
@@ -567,6 +568,15 @@ private  void  recompute_world_transform(
                                   &directions[axis] );
     }
 
+    if( EQUAL_VECTORS( directions[0], directions[1] ) ||
+        EQUAL_VECTORS( directions[1], directions[2] ) ||
+        EQUAL_VECTORS( directions[2], directions[0] ) )
+    {
+        fill_Vector( directions[0], 1.0, 0.0, 0.0 );
+        fill_Vector( directions[1], 0.0, 1.0, 0.0 );
+        fill_Vector( directions[2], 0.0, 0.0, 1.0 );
+    }
+
     for_less( c, 0, N_DIMENSIONS )
     {
         NORMALIZE_VECTOR( directions[c], directions[c] );
@@ -581,15 +591,30 @@ private  void  recompute_world_transform(
     transform_point( &transform, voxel[X], voxel[Y], voxel[Z],
                      &x_trans, &y_trans, &z_trans );
 
-    fill_Point( point, volume->world_space_for_translation_voxel[X] - x_trans,
-                       volume->world_space_for_translation_voxel[Y] - y_trans,
-                       volume->world_space_for_translation_voxel[Z] - z_trans );
+    fill_Point( point, world_space_for_translation_voxel[X] - x_trans,
+                       world_space_for_translation_voxel[Y] - y_trans,
+                       world_space_for_translation_voxel[Z] - z_trans );
 
     set_transform_origin( &transform, &point );
 
-    create_linear_transform( &general_transform, &transform );
+    create_linear_transform( world_transform, &transform );
+}
 
-    set_voxel_to_world_transform( volume, &general_transform );
+private  void  recompute_world_transform(
+    Volume  volume )
+{
+    General_transform        world_transform;
+    Real                     separations[MAX_DIMENSIONS];
+
+    get_volume_separations( volume, separations );
+
+    compute_world_transform( volume->spatial_axes, separations,
+                             volume->translation_voxel,
+                             volume->world_space_for_translation_voxel,
+                             volume->direction_cosines,
+                             &world_transform );
+
+    set_voxel_to_world_transform( volume, &world_transform );
 }
 
 public  char  **get_volume_dimension_names(
@@ -1059,7 +1084,7 @@ public  void  set_volume_real_range(
         if( voxel_min < voxel_max )
         {
             volume->real_value_scale = (real_max - real_min) /
-                                       (voxel_min - voxel_min);
+                                       (voxel_max - voxel_min);
             volume->real_value_translation = real_min -
                                        voxel_min * volume->real_value_scale;
         }
@@ -1077,7 +1102,7 @@ public  void  set_volume_real_range(
 public  Volume   copy_volume_definition(
     Volume   volume,
     nc_type  nc_data_type,
-    Boolean  signed_flag,
+    BOOLEAN  signed_flag,
     Real     voxel_min,
     Real     voxel_max )
 {

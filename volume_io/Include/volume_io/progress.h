@@ -1,13 +1,13 @@
 #ifndef  DEF_PROGRESS
 #define  DEF_PROGRESS
 
-#include  <def_basic.h>
+#include  <basic.h>
 
 typedef  struct
 {
-    Boolean    force_one_line;
-    Boolean    first_msg_displayed;
-    Boolean    one_line_flag;
+    BOOLEAN    force_one_line;
+    BOOLEAN    first_msg_displayed;
+    BOOLEAN    one_line_flag;
     int        n_steps;
     int        n_dots_so_far;
     int        total_n_dots;
@@ -15,7 +15,7 @@ typedef  struct
     Real       previous_time;
     Real       sum_xy;
     Real       sum_xx;
-    String     title;
+    STRING     title;
 
     Real       last_check_time;
     int        check_every;

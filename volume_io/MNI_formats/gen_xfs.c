@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_linear_transform
@@ -296,7 +296,7 @@ public  Transform  *get_inverse_linear_transform_ptr(
 
 private  void  transform_or_invert_point(
     General_transform   *transform,
-    Boolean             inverse_flag,
+    BOOLEAN             inverse_flag,
     Real                x,
     Real                y,
     Real                z,
@@ -471,7 +471,7 @@ public  void  general_inverse_transform_point(
 
 private  void  copy_and_invert_transform(
     General_transform   *transform,
-    Boolean             invert_it,
+    BOOLEAN             invert_it,
     General_transform   *copy )
 {
     unsigned char  *byte_ptr;
@@ -607,8 +607,8 @@ public  void  concat_general_transforms(
     int                  first_start, first_end, first_step;
     int                  second_start, second_end, second_step;
     int                  i, trans;
-    Boolean              crunching_linear;
-    Boolean              first_inverted_concat, second_inverted_concat;
+    BOOLEAN              crunching_linear;
+    BOOLEAN              first_inverted_concat, second_inverted_concat;
     Transform            *first_transform, *first_inverse;
     Transform            *second_transform, *second_inverse;
     General_transform    result_tmp, *result_ptr;

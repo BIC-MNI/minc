@@ -20,7 +20,7 @@
 
 #define  IN_DECOMP_C      /* to avoid getting the redefining stdio.h */
 
-#include <def_mni.h>
+#include <volume_io.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <sys/types.h>

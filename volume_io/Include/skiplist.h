@@ -3,7 +3,7 @@
 
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : def_skiplist.h
+@NAME       : skiplist.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
@@ -15,7 +15,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <def_basic.h>
+#include  <basic.h>
 
 typedef  struct  skip_struct
 {

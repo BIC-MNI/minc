@@ -1,4 +1,4 @@
-#include  <mni.h>
+#include  <volume_io.h>
 
 public  void lubksb(
     float **a,

@@ -1,4 +1,4 @@
-#include  <def_mni.h>
+#include  <volume_io.h>
 
 static   const char      COMMENT_CHAR1 = '%';
 static   const char      COMMENT_CHAR2 = '#';
@@ -7,7 +7,7 @@ public  Status  mni_get_nonwhite_character(
     FILE   *file,
     char   *ch )
 {
-    Boolean  in_comment;
+    BOOLEAN  in_comment;
     Status   status;
 
     in_comment = FALSE;
@@ -92,7 +92,7 @@ public  Status  mni_input_string(
     Status   status;
     int      len;
     char     ch;
-    Boolean  quoted;
+    BOOLEAN  quoted;
 
     len = 0;
     status = mni_get_nonwhite_character( file, &ch );
@@ -130,10 +130,10 @@ public  Status  mni_input_string(
 public  Status  mni_input_keyword_and_equal_sign(
     FILE         *file,
     const char   keyword[],
-    Boolean      print_error_message )
+    BOOLEAN      print_error_message )
 {
     Status     status;
-    String     str;
+    STRING     str;
 
     status = mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 );
 
@@ -172,7 +172,7 @@ public  Status  mni_input_double(
     double  *d )
 {
     Status   status;
-    String   str;
+    STRING   str;
 
     status = mni_input_string( file, str, MAX_STRING_LENGTH, ' ', ';' );
 
@@ -207,7 +207,7 @@ public  Status  mni_input_int(
     int     *i )
 {
     Status   status;
-    String   str;
+    STRING   str;
 
     status = mni_input_string( file, str, MAX_STRING_LENGTH, ' ', ';' );
 
