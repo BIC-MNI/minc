@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.0 1997-09-12 13:24:07 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.1 2000-09-13 14:12:36 neelin Exp $
 .\"
 .TH MINC_MODIFY_HEADER 1
 
@@ -31,8 +31,9 @@ replaces the original.
 
 If the file is compressed, then it is first decompressed into a file
 whose name is either the same as that of the original file up to the
-".mnc" extension or the same minus the compression extension (".gz",
-".Z", ".z" or ".zip"). The new file will not be re-compressed.
+".mnc" extension or the same minus the compression extension 
+(".bz", ".bz2", ".gz", ".Z", ".z" or ".zip"). 
+The new file will not be re-compressed.
 
 Care is taken to completely overwrite any existing attribute when
 inserting a new attribute so that information is guaranteed to be

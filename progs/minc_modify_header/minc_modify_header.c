@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.1  1999-10-19 14:45:17  neelin
+ * Revision 6.2  2000-09-13 14:12:35  neelin
+ * Added support for bzipped files (thanks to Steve Robbins).
+ *
+ * Revision 6.1  1999/10/19 14:45:17  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:07  neelin
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.1 1999-10-19 14:45:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.2 2000-09-13 14:12:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -61,6 +64,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/min
 
 /* Constants */
 #define MINC_EXTENSION ".mnc"
+#define BZIP_EXTENSION ".bz"
+#define BZIP2_EXTENSION ".bz2"
 #define GZIP_EXTENSION ".gz"
 #define COMPRESS_EXTENSION ".Z"
 #define PACK_EXTENSION ".z"
@@ -143,6 +148,10 @@ main(int argc, char *argv[])
    }
    else {
       tempfile = strstr(string, GZIP_EXTENSION);
+      if (tempfile == NULL)
+         tempfile = strstr(string, BZIP_EXTENSION);
+      if (tempfile == NULL)
+         tempfile = strstr(string, BZIP2_EXTENSION);
       if (tempfile == NULL)
          tempfile = strstr(string, COMPRESS_EXTENSION);
       if (tempfile == NULL)
