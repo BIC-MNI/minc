@@ -11,8 +11,8 @@ include $(ROOT)/Makefile_configuration
 PROGS    = mincresample
 EXTRA_OBJS = resample_volumes.o
 HEADERS  = $(PROGS:=.h)
-CDEFINES = -D__STDC__#                        cpp defines
-LDOPT    = $(CC_PROG_LIB)  -lrecipes -lm $(MINC_LDOPT)
+CDEFINES = -D__STDC__ -DDEBUG#                        cpp defines
+LDOPT    = $(CC_PROG_LIB) -lm $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 
