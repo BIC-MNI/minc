@@ -1,10 +1,10 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.2 2004-06-16 16:19:51 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.3 2004-12-07 17:27:37 bert Exp $
  *********************************************************************/
 
-#include <stdio.h>		/* has getopt() under VMS */
+#include <stdio.h>
 #include <string.h>
 
 #ifdef __hpux
@@ -12,6 +12,7 @@
 #endif
     
 #include <minc.h>
+#include <ParseArgv.h>
 
 #include "generic.h"
 #include "ncgen.h"
@@ -70,11 +71,19 @@ main(
 	int argc,
 	char *argv[])
 {
-    extern int optind;
-    extern int opterr;
-    extern char *optarg;
     int c;
     FILE *fp;
+    static ArgvInfo argTable[] = {
+        { "-b", ARGV_CONSTANT, (char *) 1, (char *) &netcdf_flag,
+          "Select binary netCDF output" },
+        { "-c", ARGV_CONSTANT, (char *) 1, (char *) &c_flag,
+          "Select 'C' output" },
+        { "-f", ARGV_CONSTANT, (char *) 1, (char *) &fortran_flag,
+          "Select FORTRAN output" },
+        { "-o", ARGV_STRING, (char *) 1, (char *) &netcdf_name,
+          "Select name for netCDF output" },
+        { NULL, ARGV_END, NULL, NULL, NULL }
+    };
 
 #ifdef __hpux
     setlocale(LC_CTYPE,"");
@@ -84,7 +93,6 @@ main(
 	malloc_debug(2) ;	/* helps find malloc/free errors on Sun */
 #endif /* MDEBUG */
 
-    opterr = 1;			/* print error message if bad option */
     progname = ubasename(argv[0]);
     cdlname = "-";
 
@@ -97,38 +105,18 @@ main(
     (void) par_io_init(32, 32);
 #endif
 
-    while ((c = getopt(argc, argv, "bcfo:")) != EOF)
-      switch(c) {
-	case 'c':		/* for c output */
-	  c_flag = 1;
-	  break;
-	case 'f':		/* for fortran output */
-	  fortran_flag = 1;
-	  break;
-	case 'b':		/* for binary netcdf output, ".nc" extension */
-	  netcdf_flag = 1;
-	  break;
-	case 'o':		/* to explicitly specify output name */
-	  netcdf_flag = 1;
-	  netcdf_name = (char *) emalloc(strlen(optarg)+1);
-	  if (! netcdf_name) {
-	      derror ("%s: out of memory", progname);
-	      return(1);
-	  }
-	  (void)strcpy(netcdf_name,optarg);
-	  break;
-	case '?':
-	  usage();
-	  return(8);
-      }
+    if (ParseArgv(&argc, argv, argTable, 0)) {
+        usage();
+        return (8);
+    }
 
     if (fortran_flag && c_flag) {
 	derror("Only one of -c or -f may be specified");
 	return(8);
-      }
+    }
 
-    argc -= optind;
-    argv += optind;
+    argc -= 1;
+    argv += 1;
 
     if (argc > 1) {
 	derror ("%s: only one input file argument permitted",progname);

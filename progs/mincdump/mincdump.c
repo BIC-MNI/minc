@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.5 2004-06-16 16:09:24 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.6 2004-12-07 17:27:19 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include <minc.h>
+#include <ParseArgv.h>
 #include "mincdump.h"
 #include "dumplib.h"
 #include "vardata.h"
@@ -23,9 +24,6 @@ static void pr_att_string(long len, const char* string);
 static void pr_att_vals(nc_type  type, long len, const void * vals);
 static void pr_att(int ncid, int varid, const char *varname, int ia);
 static void do_ncdump(char* path, struct fspec* specp);
-static void make_lvars(char* optarg, struct fspec* fspecp);
-static void set_sigdigs( const char* optarg);
-static void set_precision( const char *optarg);
 int main(int argc, char** argv);
 
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
@@ -528,9 +526,40 @@ do_ncdump(char *path, struct fspec* specp)
 	free(vlist);
 }
 
+static void
+set_brief(struct fspec * fspecp, char *key, char *optarg)
+{
+    fspecp->brief_data_cmnts = true;
+    switch (tolower(optarg[0])) {
+    case 'c':
+        fspecp->data_lang = LANG_C;
+        break;
+    case 'f':
+        fspecp->data_lang = LANG_F;
+        break;
+    default:
+        error("invalid value for -b option: %s", optarg);
+    }
+}
 
 static void
-make_lvars(char *optarg, struct fspec* fspecp)
+set_full(struct fspec * fspecp, char *key, char *optarg)
+{
+    fspecp->full_data_cmnts = true;
+    switch (tolower(optarg[0])) {
+    case 'c':
+        fspecp->data_lang = LANG_C;
+        break;
+    case 'f':
+        fspecp->data_lang = LANG_F;
+        break;
+    default:
+        error("invalid value for -f option: %s", optarg);
+    }
+}
+
+static int
+make_lvars(struct fspec * fspecp, char *key, char *optarg)
 {
     char *cp = optarg;
     int nvars = 1;
@@ -561,6 +590,7 @@ make_lvars(char *optarg, struct fspec* fspecp)
 	cpp++;
     }
     fspecp->nlvars = nvars;
+    return 1;
 }
 
 
@@ -568,8 +598,8 @@ make_lvars(char *optarg, struct fspec* fspecp)
  * Extract the significant-digits specifiers from the -d argument on the
  * command-line and update the default data formats appropriately.
  */
-static void
-set_sigdigs(const char *optarg)
+static int
+set_sigdigs(char *dest, char *key, const char *optarg)
 {
     char *ptr1 = 0;
     char *ptr2 = 0;
@@ -590,6 +620,7 @@ set_sigdigs(const char *optarg)
 	      dbl_digits);
     }
     set_formats(flt_digits, dbl_digits);
+    return 1;
 }
 
 
@@ -598,8 +629,8 @@ set_sigdigs(const char *optarg)
  * command-line, set flags so we can override C_format attributes (if any),
  * and update the default data formats appropriately.
  */
-static void
-set_precision(const char *optarg)
+static int
+set_precision(char *dest, char *key, const char *optarg)
 {
     char *ptr1 = 0;
     char *ptr2 = 0;
@@ -624,15 +655,12 @@ set_precision(const char *optarg)
 	      dbl_digits);
     }
     set_formats(flt_digits, dbl_digits);
+    return 1;
 }
-
 
 int
 main(int argc, char *argv[])
 {
-    extern int optind;
-    extern int opterr;
-    extern char *optarg;
     static struct fspec fspec =	/* defaults, overridden on command line */
       {
 	  0,			/* construct netcdf name from file name */
@@ -646,84 +674,44 @@ main(int argc, char *argv[])
 	  };
     int c;
     int i;
-    int max_len = 80;		/* default maximum line length */
-    int nameopt = 0;
+    static int max_len = 80;    /* default maximum line length */
+    static ArgvInfo argTable[] = {
+        {"-b", ARGV_FUNC, (char *) set_brief, (char *) &fspec,
+         "Brief annotations for C or Fortran indices in data" },
+        {"-c", ARGV_CONSTANT, (char *) true, (char *) &fspec.coord_vals,
+         "Coordinate variable data and header information" },
+        {"-d", ARGV_FUNC, (char *) set_sigdigs, (char *) NULL,
+         "Obsolete option for setting significant digits" },
+        {"-f", ARGV_FUNC, (char *) set_full, (char *) &fspec,
+         "Full annotations for C or Fortran indices in data" },
+        {"-h", ARGV_CONSTANT, (char *) true, (char *) &fspec.header_only, 
+         "Header information only, no data" }, 
+        {"-l", ARGV_INT, (char *) 1, (char *) &max_len, 
+         "Line length maximum in data section (default 80)" },
+        {"-n", ARGV_STRING, (char *) 1, (char *) &fspec.name,
+         "Name for netCDF (default derived from file name)" },
+        {"-p", ARGV_FUNC, (char *) set_precision, (char *) NULL,
+         "Display floating-point values with less precision" },
+        {"-v", ARGV_FUNC, (char *) make_lvars, (char *) &fspec,
+         "Data for variable(s) <var1>,... only" },
+        {NULL, ARGV_END, NULL, NULL, NULL}
+        };
 
-    opterr = 1;
     progname = argv[0];
     set_formats(FLT_DIGITS, DBL_DIGITS); /* default for float, double data */
 
-    while ((c = getopt(argc, argv, "b:cf:hl:n:v:d:p:")) != EOF)
-      switch(c) {
-	case 'h':		/* dump header only, no data */
-	  fspec.header_only = true;
-	  break;
-	case 'c':		/* header, data only for coordinate dims */
-	  fspec.coord_vals = true;
-	  break;
-	case 'n':		/*
-				 * provide different name than derived from
-				 * file name
-				 */
-	  fspec.name = optarg;
-	  nameopt = 1;
-	  break;
-	case 'b':		/* brief comments in data section */
-	  fspec.brief_data_cmnts = true;
-	  switch (tolower(optarg[0])) {
-	    case 'c':
-	      fspec.data_lang = LANG_C;
-	      break;
-	    case 'f':
-	      fspec.data_lang = LANG_F;
-	      break;
-	    default:
-	      error("invalid value for -b option: %s", optarg);
-	  }
-	  break;
-	case 'f':		/* full comments in data section */
-	  fspec.full_data_cmnts = true;
-	  switch (tolower(optarg[0])) {
-	    case 'c':
-	      fspec.data_lang = LANG_C;
-	      break;
-	    case 'f':
-	      fspec.data_lang = LANG_F;
-	      break;
-	    default:
-	      error("invalid value for -f option: %s", optarg);
-	  }
-	  break;
-	case 'l':		/* maximum line length */
-	  max_len = (int) strtol(optarg, 0, 0);
-	  if (max_len < 10) {
-	      error("unreasonably small line length specified: %d", max_len);
-	  }
-	  break;
-	case 'v':		/* variable names */
-	  /* make list of names of variables specified */
-	  make_lvars (optarg, &fspec);
-	  break;
-	case 'd':		/* specify precision for floats (old option) */
-	  set_sigdigs(optarg);
-	  break;
-	case 'p':		/* specify precision for floats */
-	  set_precision(optarg);
-	  break;
-	case '?':
-	  usage();
-	  break;
-      }
+    if (ParseArgv(&argc, argv, argTable, 0)) {
+        usage();
+    }
 
     set_max_len(max_len);
-    
-    argc -= optind;
-    argv += optind;
+
+    argc--;
+    argv++;
 
     i = 0;
 
     do {		
-        if (!nameopt) fspec.name = (char *)0;
 	if (argc > 0)
 	  do_ncdump(argv[i], &fspec);
     } while (++i < argc);
