@@ -64,7 +64,7 @@ public  BOOLEAN   intersect_ray_polygon(
 
             t = (plane_const - DOT_POINT_VECTOR(normal,*ray_origin) ) / n_dot_d;
 
-            if( t >= 0.0 && t < *dist )
+            if( t >= 0.0 && t <= *dist )
             {
                 GET_POINT_ON_RAY( pt, *ray_origin, *ray_direction, t );
 
