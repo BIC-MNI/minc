@@ -1,5 +1,48 @@
 #include  <internal_volume_io.h>
 
+private  void    trilinear_interpolate_volume(
+    Real     u,
+    Real     v,
+    Real     w,
+    Real     coefs[],
+    Real     *value,
+    Real     derivs[] )
+{
+    Real   du00, du01, du10, du11, c00, c01, c10, c11, c0, c1, du0, du1;
+    Real   dv0, dv1, dw;
+
+    du00 = coefs[4] - coefs[0];
+    du01 = coefs[5] - coefs[1];
+    du10 = coefs[6] - coefs[2];
+    du11 = coefs[7] - coefs[3];
+
+    c00 = coefs[0] + u * du00;
+    c01 = coefs[1] + u * du01;
+    c10 = coefs[2] + u * du10;
+    c11 = coefs[3] + u * du11;
+
+    dv0 = c10 - c00;
+    dv1 = c11 - c01;
+
+    c0 = c00 + v * dv0;
+    c1 = c01 + v * dv1;
+
+    dw = c1 - c0;
+
+    if( value != NULL )
+        *value = c0 + w * dw;
+
+    if( derivs != NULL )
+    {
+        du0 = INTERPOLATE( v, du00, du10 );
+        du1 = INTERPOLATE( v, du01, du11 );
+
+        derivs[X] = INTERPOLATE( w, du0, du1 );
+        derivs[Y] = INTERPOLATE( w, dv0, dv1 );
+        derivs[Z] = dw;
+    }
+}
+
 private  void   interpolate_volume(
     int      n_dims,
     Real     parameters[],
@@ -256,9 +299,27 @@ public  int   evaluate_volume(
     case 0:
     case 1:
     case 2:
-        interpolate_volume( n_interp_dims, fraction, n_values,
-                            degrees_continuity + 2, coefs,
-                            values, first_deriv, second_deriv );
+        /*--- check for the common case which must be done fast */
+
+        if( degrees_continuity == 0 && n_interp_dims == 3 && n_values == 1 )
+        {
+            Real   *deriv;
+
+            if( first_deriv == NULL )
+                deriv = NULL;
+            else
+                deriv = first_deriv[0];
+
+            trilinear_interpolate_volume( fraction[0], fraction[1], fraction[2],
+                                          coefs, values, deriv );
+        }
+        else
+        {
+            interpolate_volume( n_interp_dims, fraction, n_values,
+                                degrees_continuity + 2, coefs,
+                                values, first_deriv, second_deriv );
+        }
+
         break;
     }
 
