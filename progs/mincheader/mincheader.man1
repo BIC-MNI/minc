@@ -8,9 +8,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 1.1 1993-10-19 12:13:24 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 1.2 1993-10-19 12:51:48 neelin Exp $
 .\"
-.TH MINC 1 "MINC Image File Format" "Montreal Neurological Institute"
+.TH MINCHEADER 1 "MINC Image File Format"
 
 .SH NAME
 mincheader - prints out header information for a minc file
