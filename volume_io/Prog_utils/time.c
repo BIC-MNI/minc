@@ -7,7 +7,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.7 1995-04-04 03:42:19 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.8 1995-04-20 18:18:09 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -30,7 +30,7 @@ public  Real  current_cpu_seconds( void )
 
     (void) times( &buffer );
 
-    cpu_time = (Real) buffer.tms_utime / (Real) HZ;
+    cpu_time = (Real) buffer.tms_utime / (Real) CLK_TCK;
 
     return( cpu_time );
 }
@@ -200,6 +200,13 @@ public  void  sleep_program( Real seconds )
 
     ticks = (long) ROUND( seconds * CLK_TCK );
     (void) sginap( ticks );
+#endif
+#ifdef dec
+    struct timespec  rqtp, rmtp;
+
+    rqtp.tv_sec = FLOOR( seconds );
+    rqtp.tv_nsec = (long) (1.0e6 * FRACTION(seconds));
+    (void) nanosleep( &rqtp, &rmtp );
 #endif
 }
 
