@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.2  2000-07-07 13:19:54  neelin
+ * Revision 6.3  2001-01-15 14:58:43  neelin
+ * Modified description of -segment option.
+ *
+ * Revision 6.2  2000/07/07 13:19:54  neelin
  * Added option -filelist to read file names from a file. This gets around
  * command-line length limits.
  *
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.2 2000-07-07 13:19:54 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.3 2001-01-15 14:58:43 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -295,7 +298,7 @@ ArgvInfo argTable[] = {
    {"-clamp", ARGV_CONSTANT, (char *) CLAMP_OP, (char *) &operation,
        "Clamp a volume to lie between two values."},
    {"-segment", ARGV_CONSTANT, (char *) SEGMENT_OP, (char *) &operation,
-       "Segment a volume: within range = 1, outside range = 0."},
+       "Segment a volume using range of -const2: within range = 1, outside range = 0."},
    {"-nsegment", ARGV_CONSTANT, (char *) NSEGMENT_OP, (char *) &operation,
        "Opposite of -segment: within range = 0, outside range = 1."},
    {"-percentdiff", ARGV_CONSTANT, (char *) PERCENTDIFF_OP, 
