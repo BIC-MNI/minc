@@ -106,10 +106,6 @@
 #define MNI_XLOC_TLEN 4
 #define MNI_YLOC_TLEN 3
 
-/* Macros */
-#define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
-#define ROUND( x ) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) )
-
 /* Structure containing information about orientation */
 char *orientation_names[][IMAGE_DIMS+1] = {
    {MIzspace, MIyspace, MIxspace},
