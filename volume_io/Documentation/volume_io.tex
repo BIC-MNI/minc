@@ -1463,7 +1463,8 @@ GET_VOXEL_5D( value, volume, v1, v2, v3, v4, v5 )
 \desc{More convenient versions of \name{GET\_VOXEL}.  Given a volume and
 the required number of voxel indices for the
 volume, assigns the corresponding voxel value to the argument
-\name{value}.}
+\name{value}.  This is more efficient than \name{GET\_VOXEL} because the
+macro does not look up the number of dimensions in the volume.}
 
 {\bf\begin{verbatim}
 CONVERT_VOXEL_TO_VALUE( volume, voxel )
@@ -1487,7 +1488,9 @@ GET_VALUE( value, volume, v1, v2, v3, v4, v5 )
 the volume dimensions, stores the corresponding real value in the
 variable \name{value},
 which may be of any type.  For instance, if the volume is three
-dimensional, then the final two arguments are ignored.}
+dimensional, then the final two arguments are ignored.  This macro just
+performs the two macros \name{GET\_VOXEL} and
+\name{CONVERT\_VOXEL\_TO\_VALUE}.}
 
 {\bf\begin{verbatim}
 GET_VALUE_1D( value, volume, v1 )
@@ -1500,10 +1503,10 @@ GET_VALUE_5D( value, volume, v1, v2, v3, v4, v5 )
 \desc{More convenient versions of \name{GET\_VALUE}.
 Given a volume and the required number of voxel indices for the
 volume, assigns the corresponding real value to the argument
-\name{value}.  This is the most efficient method to access the volume
-values (as compared to the \name{GET\_VALUE} macro, for instance).
+\name{value}.  This just performs one of the \name{GET\_VOXEL\_?D}
+macros, then a \name{CONVERT\_VOXEL\_TO\_VALUE}.
 Typically, the \name{GET\_VALUE\_3D} macro is used for
-most applications.}
+many applications.}
 
 {\bf\begin{verbatim}
 SET_VOXEL( volume, v1, v2, v3, v4, v5, value )
@@ -1888,6 +1891,25 @@ have a matching dimension name in the file.  A file handle is
 returned, for use in the following routines.}
 
 {\bf\begin{verbatim}
+public  Minc_file  initialize_minc_input_from_minc_id(
+    int                  minc_id,
+    Volume               volume,
+    minc_input_options   *options )
+\end{verbatim}}
+
+\desc{This performs the same task as \name{initialize\_minc\_input},
+except it takes a previously opened MINC file as an argument, rather
+than a filename.}
+
+{\bf\begin{verbatim}
+public  int  get_minc_file_id(
+    Minc_file  file )
+\end{verbatim}}
+
+\desc{Returns the MINC id of the file, a handle which can be used to perform
+MINC functions on the file.}
+
+{\bf\begin{verbatim}
 public  int  get_n_input_volumes(
     Minc_file  file )
 \end{verbatim}}
@@ -1962,6 +1984,14 @@ specified by \name{real\_min} and \name{real\_max}.  The
 transformation to world coordinates is specified by the
 \name{voxel\_to\_world\_transform} argument.  The \name{options} are
 as specified for the \name{output\_volume} function.}
+
+{\bf\begin{verbatim}
+public  int  get_minc_file_id(
+    Minc_file  file )
+\end{verbatim}}
+
+\desc{Returns the MINC id of the file, a handle which can be used to perform
+MINC functions on the file.}
 
 {\bf\begin{verbatim}
 public  Status  copy_auxiliary_data_from_minc_file(
