@@ -217,8 +217,8 @@ sub dicom3_read_headers {
           $group = $1;
           $element = $2;
           $data = $3;
-          if ($data =~ /string = "(.*)"$/) {
-             $header{$group, $element, 'string'} = $1;
+          if ($data =~ /(string|value) = "(.*)"$/) {
+             $header{$group, $element, 'string'} = $2;
           }
           if ($data =~ /short = (\d+)/) {
              $header{$group, $element, 'short'} = $1;
