@@ -1,5 +1,74 @@
 #include  <internal_volume_io.h>
 
+public  Real  get_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 )
+{
+    Real   voxel;
+
+    GET_VOXEL( voxel, volume, v0, v1, v2, v3, v4 );
+
+    return( voxel );
+}
+
+public  Real  get_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 )
+{
+    Real   voxel, value;
+
+    voxel = get_volume_voxel_value( volume, v0, v1, v2, v3, v4 );
+
+    value = CONVERT_VOXEL_TO_VALUE( volume, voxel );
+
+    return( value );
+}
+
+public  void  set_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     voxel )
+{
+    SET_VOXEL( volume, v0, v1, v2, v3, v4, voxel );
+}
+
+public  void  set_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     value )
+{
+    Real         voxel;
+    Data_types   data_type;
+
+    voxel = CONVERT_VALUE_TO_VOXEL( volume, value );
+
+    data_type = get_volume_data_type( volume );
+
+    if( data_type != FLOAT &&
+        data_type != DOUBLE )
+    {
+        voxel = ROUND( voxel );
+    }
+
+    set_volume_voxel_value( volume, v0, v1, v2, v3, v4, voxel );
+}
+
 private  void    trilinear_interpolate_volume(
     Real     u,
     Real     v,
@@ -259,7 +328,8 @@ public  int   evaluate_volume(
         for_less( vi[interp_dims[3]], start[3], end[3] )
         for_less( vi[interp_dims[4]], start[4], end[4] )
         {
-            GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3], vi[4] );
+            coefs[ind] = get_volume_real_value( volume,
+                                            vi[0], vi[1], vi[2], vi[3], vi[4] );
             ++ind;
         }
     }
@@ -280,8 +350,8 @@ public  int   evaluate_volume(
 
             if( d == n_dims )
             {
-                GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3],
-                                               vi[4] );
+                coefs[ind] = get_volume_real_value( volume,
+                                            vi[0], vi[1], vi[2], vi[3], vi[4] );
             }
             else
                 coefs[ind] = outside_value;
