@@ -9,13 +9,16 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.1  1995-04-26 14:16:38  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1995-04-27 11:50:35  neelin
+@MODIFIED   : Require either -norm or -nonorm on command line.
 @MODIFIED   :
+ * Revision 1.1  1995/04/26  14:16:38  neelin
+ * Initial revision
+ *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.1 1995-04-26 14:16:38 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.2 1995-04-27 11:50:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -82,13 +85,19 @@ public void finish_average(void *caller_data, long num_voxels,
 int clobber = FALSE;
 int verbose = TRUE;
 int debug = FALSE;
+#define NO_DEFAULT_NORM
+#ifdef NO_DEFAULT_NORM
+int normalise = -1;
+#else
 int normalise = FALSE;
+#endif
 char *sdfile = NULL;
 nc_type datatype = NC_UNSPECIFIED;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int copy_all_header = FALSE;
 char *averaging_dimension = NULL;
+int max_buffer_size_in_kb = 4 * 1024;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -104,6 +113,9 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-debug", ARGV_CONSTANT, (char *) TRUE, (char *) &debug,
        "Print out debugging messages."},
+   {"-max_buffer_size_in_kb", ARGV_INT, (char *) 1, 
+       (char *) &max_buffer_size_in_kb,
+       "Specify the maximum size of the internal buffers (in kbytes)."},
    {"-normalise", ARGV_CONSTANT, (char *) TRUE, (char *) &normalise,
        "Normalise data sets for mean intensity."},
    {"-nonormalise", ARGV_CONSTANT, (char *) FALSE, (char *) &normalise,
@@ -168,6 +180,21 @@ public int main(int argc, char *argv[])
    outfiles[1] = sdfile;
    nout = ((sdfile == NULL) ? 1 : 2);
 
+   /* Check for no specification of normalisation */
+#ifdef NO_DEFAULT_NORM
+   if (normalise == -1) {
+      (void) fprintf(stderr, "\n%s: %s\n\n%s\n%s\n%s\n%s\n%s\n\n", argv[0],
+"Please specify either -norm or -nonorm.",
+"The default setting for normalisation is being changed from \"-norm\" to",
+"\"-nonorm\". To prevent undetected problems with data, this program will ",
+"not work unless one of these flags is explicitly given on the command-line",
+"(ie. no default is permitted). The new default will come into effect some",
+"time in the future."
+                     );
+      exit(EXIT_FAILURE);
+   }
+#endif
+
    /* Do normalisation if needed */
    average_data.norm_factor = 
       MALLOC(sizeof(*average_data.norm_factor) * nfiles);
@@ -176,6 +203,7 @@ public int main(int argc, char *argv[])
       loop_options = create_loop_options();
       set_loop_verbose(loop_options, FALSE);
       set_loop_accumulate(loop_options, TRUE, 0, NULL, NULL);
+      set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
       vol_total = 0.0;
       nvols = 0;
       if (verbose) {
@@ -242,6 +270,7 @@ public int main(int argc, char *argv[])
    set_loop_accumulate(loop_options, TRUE, 1, start_average, finish_average);
    set_loop_copy_all_header(loop_options, copy_all_header);
    set_loop_dimension(loop_options, averaging_dimension);
+   set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
    voxel_loop(nfiles, infiles, nout, outfiles, arg_string, loop_options,
               do_average, (void *) &average_data);
    free_loop_options(loop_options);
