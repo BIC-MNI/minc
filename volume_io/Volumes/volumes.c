@@ -7,7 +7,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.36 1994-11-25 14:20:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.37 1995-02-01 11:26:58 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -158,6 +158,8 @@ public   Volume   create_volume(
     ALLOC( volume, 1 );
 
     volume->data = (void *) NULL;
+
+    volume->is_rgba_data = FALSE;
 
     volume->n_dimensions = n_dimensions;
 
@@ -347,6 +349,12 @@ public  int  get_type_size(
     }
 
     return( size );
+}
+
+public  BOOLEAN  is_an_rgb_volume(
+    Volume   volume )
+{
+    return( volume->is_rgba_data );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
