@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.33 1998-05-28 12:47:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.34 2001-11-08 14:44:23 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -729,7 +729,7 @@ public  int   evaluate_volume(
 
     /*--- check for the common case trilinear interpolation of 1 value */
 
-    if( n_dims == 3 && degrees_continuity == 0 &&
+    if( n_dims == 3 && degrees_continuity == 0 && second_deriv == NULL &&
         (interpolating_dimensions == NULL ||
          interpolating_dimensions[0] &&
          interpolating_dimensions[1] &&
