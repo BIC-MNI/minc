@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.47 1995-09-19 18:23:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.48 1995-10-19 15:47:00 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -26,9 +26,9 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mn
 
 private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
-    char              *volume_dimension_names[],
+    STRING            volume_dimension_names[],
     int               n_file_dims,
-    char              *file_dimension_names[],
+    STRING            file_dimension_names[],
     int               to_volume_index[] );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -61,7 +61,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     long                long_size, mindex[MAX_VAR_DIMS];
     BOOLEAN             converted_sign;
     nc_type             converted_type;
-    STRING              signed_flag;
+    char                signed_flag[MI_MAX_ATTSTR_LEN+1];
+    char                dim_name[MI_MAX_ATTSTR_LEN+1];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
@@ -109,10 +110,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        ALLOC( file->dim_names[d], MAX_STRING_LENGTH + 1 );
-
-        (void) ncdiminq( file->cdfid, dim_vars[d], file->dim_names[d],
-                         &long_size );
+        (void) ncdiminq( file->cdfid, dim_vars[d], dim_name, &long_size );
+        file->dim_names[d] = create_string( dim_name );
         file->sizes_in_file[d] = (int) long_size;
     }
 
@@ -132,7 +131,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                 {
                     print_error( "Error: rgba indices out of range.\n" );
                     FREE( file );
-                    return( (Minc_file) 0 );
+                    return( (Minc_file) NULL );
                 }
                 file->rgba_indices[i] = options->rgba_indices[i];
             }
@@ -140,12 +139,12 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             set_volume_type( volume, NC_LONG, FALSE, 0.0, 0.0 );
             volume->is_rgba_data = TRUE;
             file->converting_to_colour = TRUE;
-            FREE( file->dim_names[file->n_file_dimensions-1] );
+            delete_string( file->dim_names[file->n_file_dimensions-1] );
             --file->n_file_dimensions;
         }
         else if( options->convert_vector_to_scalar_flag )
         {
-            FREE( file->dim_names[file->n_file_dimensions-1] );
+            delete_string( file->dim_names[file->n_file_dimensions-1] );
             --file->n_file_dimensions;
         }
     }
@@ -356,7 +355,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
         if( no_volume_data_type )     /* --- use type of file */
         {
             if( miattgetstr( file->cdfid, file->img_var, MIsigntype,
-                             MAX_STRING_LENGTH, signed_flag ) != (char *) NULL )
+                             MI_MAX_ATTSTR_LEN, signed_flag ) != NULL )
             {
                 converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
             }
@@ -556,19 +555,23 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_input(
-    char                 filename[],
+    STRING               filename,
     Volume               volume,
     minc_input_options   *options )
 {
     Minc_file    file;
     int          minc_id;
+    STRING       expanded;
 
     ncopts = 0;
-    minc_id = miopen( filename, NC_NOWRITE );
+
+    expanded = expand_filename( filename );
+
+    minc_id = miopen( expanded, NC_NOWRITE );
 
     if( minc_id == MI_ERROR )
     {
-        print_error( "Error: opening MINC file \"%s\".\n", filename );
+        print_error( "Error: opening MINC file \"%s\".\n", expanded );
         return( (Minc_file) 0 );
     }
 
@@ -577,7 +580,9 @@ public  Minc_file  initialize_minc_input(
     if( file == (Minc_file) NULL )
         (void) miclose( minc_id );
     else
-        (void) strcpy( file->filename, filename );
+        file->filename = create_string( expanded );
+
+    delete_string( expanded );
 
     return( file );
 }
@@ -631,7 +636,9 @@ public  Status  close_minc_input(
     (void) miicv_free( file->minc_icv );
 
     for_less( d, 0, file->n_file_dimensions )
-        FREE( file->dim_names[d] );
+        delete_string( file->dim_names[d] );
+
+    delete_string( file->filename );
 
     delete_general_transform( &file->voxel_to_world_transform );
     FREE( file );
@@ -1119,9 +1126,9 @@ public  void  reset_input_volume(
 
 private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
-    char              *volume_dimension_names[],
+    STRING            volume_dimension_names[],
     int               n_file_dims,
-    char              *file_dimension_names[],
+    STRING            file_dimension_names[],
     int               to_volume_index[] )
 {
     int      i, j, iteration, n_matches, dummy;
@@ -1159,7 +1166,8 @@ private  BOOLEAN  match_dimension_names(
                                      file_dimension_names[j], &dummy );
                             break;
                         case 2:
-                            match = (strlen(volume_dimension_names[i]) == 0);
+                            match = (string_length(volume_dimension_names[i])
+                                     == 0);
                             break;
                         }
 

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.6 1995-09-19 18:23:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.7 1995-10-19 15:47:10 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

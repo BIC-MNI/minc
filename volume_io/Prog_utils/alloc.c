@@ -16,7 +16,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.18 1995-08-14 18:08:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.19 1995-10-19 15:46:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

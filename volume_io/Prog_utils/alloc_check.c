@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.18 1995-08-14 18:08:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.19 1995-10-19 15:46:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -42,7 +42,7 @@ typedef  struct skip_entry
 {
     void                    *ptr;
     size_t                  n_bytes;
-    char                    *source_file;
+    STRING                  source_file;
     int                     line_number;
     int                     sequence_number;
     struct  skip_entry      *forward[1];
@@ -194,7 +194,7 @@ private   void  insert_ptr_in_alloc_list(
     update_struct  *update,
     void           *ptr,
     size_t         n_bytes,
-    char           source_file[],
+    STRING         source_file,
     int            line_number,
     int            sequence_number )
 {
@@ -295,7 +295,7 @@ private  BOOLEAN  check_overlap(
 private   BOOLEAN  remove_ptr_from_alloc_list(
     alloc_struct   *alloc_list,
     void           *ptr,
-    char           *source_file[],
+    STRING         *source_file,
     int            *line_number,
     int            *sequence_number )
 {
@@ -481,9 +481,9 @@ private  void  update_total_memory(
 ---------------------------------------------------------------------------- */
 
 private  void  print_source_location(
-    char   source_file[],
-    int    line_number,
-    int    sequence_number )
+    STRING   source_file,
+    int      line_number,
+    int      sequence_number )
 {
     print_error( "%s:%d\t%d'th alloc",
                  source_file, line_number, sequence_number );
@@ -630,13 +630,13 @@ private  int  get_stop_sequence_number()
 {
     static   int   first = TRUE;
     static   int   stop_sequence_number = -1;
-    char           *str;
+    STRING         str;
 
     if( first )
     {
         first = FALSE;
         str = getenv( "STOP_ALLOC_AT" );
-        if( str == (char *) 0 ||
+        if( str == NULL ||
             sscanf( str, "%d", &stop_sequence_number ) != 1 )
             stop_sequence_number = -1;
     }
@@ -690,7 +690,7 @@ private  int  get_current_sequence_number()
 public  void  record_ptr_alloc_check(
     void      *ptr,
     size_t    n_bytes,
-    char      source_file[],
+    STRING    source_file,
     int       line_number )
 {
     update_struct  update_ptrs;
@@ -759,10 +759,10 @@ public  void  change_ptr_alloc_check(
     void      *old_ptr,
     void      *new_ptr,
     size_t    n_bytes,
-    char      source_file[],
+    STRING    source_file,
     int       line_number )
 {
-    char           *orig_source;
+    STRING         orig_source;
     int            orig_line;
     int            sequence_number;
     skip_entry     *entry;
@@ -826,12 +826,12 @@ public  void  change_ptr_alloc_check(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  unrecord_ptr_alloc_check(
-    void   *ptr,
-    char   source_file[],
-    int    line_number )
+    void     *ptr,
+    STRING   source_file,
+    int      line_number )
 {
     BOOLEAN  was_previously_alloced;
-    char     *orig_source;
+    STRING   orig_source;
     int      orig_line;
     int      sequence_number;
 
@@ -877,7 +877,7 @@ public  BOOLEAN  unrecord_ptr_alloc_check(
 ---------------------------------------------------------------------------- */
 
 public  void  output_alloc_to_file(
-    char   filename[] )
+    STRING   filename )
 {
     FILE     *file;
     STRING   date_str;
@@ -899,16 +899,18 @@ public  void  output_alloc_to_file(
                "Please report this file to the author of the program.\n" );
             print_error( "\n" );
 
-            if( filename != (char *) 0 && filename[0] != (char) 0 )
+            if( filename != NULL && filename[0] != NULL )
                 file = fopen( filename, "w" );
             else
                 file = stdout;
 
             if( file != (FILE *) 0 )
             {
-                get_date( date_str );
+                date_str = get_date();
 
                 (void) fprintf( file, "Alloc table at %s\n", date_str );
+
+                delete_string( date_str );
 
                 output_alloc_list( file, &alloc_list );
 
@@ -922,8 +924,8 @@ public  void  output_alloc_to_file(
 #ifndef  NO_DEBUG_ALLOC
 
 public  void  print_alloc_source_line(
-    char  filename[],
-    int   line_number )
+    STRING  filename,
+    int     line_number )
 {
     print_error( "    Source position: %s:%d\n", filename, line_number );
 }

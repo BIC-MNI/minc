@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.19 1995-07-31 13:44:55 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.20 1995-10-19 15:47:12 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -206,7 +206,7 @@ private  void  internal_create_grid_transform(
     BOOLEAN              copy_flag )
 {
     int       dim, sizes[MAX_DIMENSIONS], vector_dim;
-    char      **dim_names;
+    STRING    *dim_names;
     Volume    copy;
     BOOLEAN   volume_ok, dim_found[N_DIMENSIONS];
 
@@ -228,11 +228,11 @@ private  void  internal_create_grid_transform(
 
         for_less( dim, 0, 4 )
         {
-            if( strcmp( dim_names[dim], MIxspace ) == 0 )
+            if( equal_strings( dim_names[dim], MIxspace ) )
                 dim_found[X] = TRUE;
-            else if( strcmp( dim_names[dim], MIyspace ) == 0 )
+            else if( equal_strings( dim_names[dim], MIyspace ) )
                 dim_found[Y] = TRUE;
-            else if( strcmp( dim_names[dim], MIzspace ) == 0 )
+            else if( equal_strings( dim_names[dim], MIzspace ) )
                 dim_found[Z] = TRUE;
             else
             {
@@ -255,7 +255,7 @@ private  void  internal_create_grid_transform(
             volume_ok = FALSE;
         }
 
-        delete_dimension_names( dim_names );
+        delete_dimension_names( displacement_volume, dim_names );
     }
 
     if( !volume_ok )
@@ -274,12 +274,8 @@ private  void  internal_create_grid_transform(
 
     /* --- force 4th dimension to be vector dimension */
 
-    if( copy->dimension_names[vector_dim] != NULL )
-        FREE( copy->dimension_names[vector_dim] );
-
-    ALLOC( copy->dimension_names[vector_dim], strlen(MIvector_dimension)+1 );
-
-    (void) strcpy( copy->dimension_names[vector_dim], MIvector_dimension );
+    replace_string( &copy->dimension_names[vector_dim],
+                    create_string(MIvector_dimension) );
 
     transform->displacement_volume = (void *) copy;
 }

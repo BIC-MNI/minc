@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.11 1995-09-19 18:23:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.12 1995-10-19 15:47:10 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -232,15 +232,18 @@ public  void  initialize_volume_cache(
     cache->writing_to_temp_file = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
+    {
         cache->file_offset[dim] = 0;
+        cache->dimension_names[dim] = NULL;
+    }
 
     cache->hash_table = NULL;
 
     cache->head = NULL;
     cache->tail = NULL;
     cache->minc_file = NULL;
-    cache->input_filename[0] = (char) 0;
-    cache->output_filename[0] = (char) 0;
+    cache->input_filename = NULL;
+    cache->output_filename = NULL;
     cache->output_file_is_open = FALSE;
     cache->n_blocks = 0;
     cache->must_read_blocks_before_use = FALSE;
@@ -508,8 +511,12 @@ public  void  delete_volume_cache(
     n_dims = cache->n_dimensions;
     for_less( dim, 0, n_dims )
     {
+        delete_string( cache->dimension_names[dim] );
         FREE( cache->lookup[dim] );
     }
+
+    delete_string( cache->input_filename );
+    delete_string( cache->output_filename );
 
     /*--- close the file that cache was reading from or writing to */
 
@@ -541,15 +548,16 @@ public  void  delete_volume_cache(
 
 public  void  set_cache_volume_output_dimension_names(
     Volume      volume,
-    char        **dimension_names )
+    STRING      dimension_names[] )
 {
     int   dim;
 
     for_less( dim, 0, get_volume_n_dimensions(volume) )
     {
-        (void) strcpy( volume->cache.dimension_names[dim],
-                       dimension_names[dim] );
+        volume->cache.dimension_names[dim] =
+                                  create_string( dimension_names[dim] );
     }
+
     volume->cache.dim_names_set = TRUE;
 }
     
@@ -573,9 +581,9 @@ public  void  set_cache_volume_output_dimension_names(
 
 public  void  set_cache_volume_output_filename(
     Volume      volume,
-    char        filename[] )
+    STRING      filename )
 {
-    (void) strcpy( volume->cache.output_filename, filename );
+    volume->cache.output_filename = create_string( filename );
 }
     
 /* ----------------------------- MNI Header -----------------------------------
@@ -597,13 +605,12 @@ public  void  set_cache_volume_output_filename(
 public  void  open_cache_volume_input_file(
     volume_cache_struct   *cache,
     Volume                volume,
-    char                  filename[],
+    STRING                filename,
     minc_input_options    *options )
 {
-    (void) strcpy( cache->input_filename, filename );
+    cache->input_filename = create_string( filename );
 
-    cache->minc_file = initialize_minc_input( filename,
-                                              volume, options );
+    cache->minc_file = initialize_minc_input( filename, volume, options );
 
     cache->must_read_blocks_before_use = TRUE;
 }
@@ -634,23 +641,24 @@ private  void  open_cache_volume_output_file(
     nc_type    nc_data_type;
     Minc_file  out_minc_file;
     BOOLEAN    done[MAX_DIMENSIONS], signed_flag;
-    char       **vol_dim_names;
+    char       tmp_name[L_tmpnam+1];
+    STRING     *vol_dim_names;
     STRING     out_dim_names[MAX_DIMENSIONS], output_filename;
     minc_output_options  options;
 
     /*--- check if the output filename has been set */
 
-    if( strlen( cache->output_filename ) == 0 )
+    if( string_length( cache->output_filename ) == 0 )
     {
         cache->writing_to_temp_file = TRUE;
-        (void) tmpnam( output_filename );
-        (void) strcat( output_filename, "." );
-        (void) strcat( output_filename, MNC_ENDING );
+        (void) tmpnam( tmp_name );
+        output_filename = concat_strings( tmp_name, "." );
+        concat_to_string( &output_filename, MNC_ENDING );
     }
     else
     {
         cache->writing_to_temp_file = FALSE;
-        (void) strcpy( output_filename, cache->output_filename );
+        output_filename = create_string( cache->output_filename );
     }
 
     n_dims = get_volume_n_dimensions( volume );
@@ -660,12 +668,12 @@ private  void  open_cache_volume_output_file(
     if( cache->dim_names_set )
     {
         for_less( dim, 0, n_dims )
-            (void) strcpy( out_dim_names[dim], cache->dimension_names[dim] );
+            out_dim_names[dim] = create_string( cache->dimension_names[dim] );
     }
     else
     {
         for_less( dim, 0, n_dims )
-            (void) strcpy( out_dim_names[dim], vol_dim_names[dim] );
+            out_dim_names[dim] = create_string( vol_dim_names[dim] );
     }
 
     /*--- using the dimension names, create output sizes */
@@ -678,8 +686,7 @@ private  void  open_cache_volume_output_file(
     {
         for_less( j, 0, n_dims )
         {
-            if( !done[j] &&
-                strcmp( vol_dim_names[i], out_dim_names[j] ) == 0 )
+            if( !done[j] && equal_strings( vol_dim_names[i], out_dim_names[j] ))
             {
                 out_sizes[j] = vol_sizes[i];
                 ++n_found;
@@ -688,7 +695,7 @@ private  void  open_cache_volume_output_file(
         }
     }
 
-    delete_dimension_names( vol_dim_names );
+    delete_dimension_names( volume, vol_dim_names );
 
     if( n_found != n_dims )
     {
@@ -716,7 +723,7 @@ private  void  open_cache_volume_output_file(
 
     /*--- make temp file disappear when the volume is deleted */
 
-    if( strlen( cache->output_filename ) == 0 )
+    if( string_length( cache->output_filename ) == 0 )
         remove_file( output_filename );
 
     /*--- if the volume was previously reading a file, copy the volume to
@@ -734,6 +741,10 @@ private  void  open_cache_volume_output_file(
         check_minc_output_variables( out_minc_file );
 
     cache->minc_file = out_minc_file;
+
+    delete_string( output_filename );
+    for_less( dim, 0, n_dims )
+        delete_string( out_dim_names[dim] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

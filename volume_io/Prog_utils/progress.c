@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.6 1995-09-13 13:24:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.7 1995-10-19 15:46:47 david Exp $";
 #endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
@@ -66,13 +66,13 @@ public  void  initialize_progress_report(
     progress_struct   *progress,
     BOOLEAN           one_line_only,
     int               n_steps,
-    char              title[] )
+    STRING            title )
 {
     progress->force_one_line = one_line_only;
     progress->first_msg_displayed = FALSE;
     progress->one_line_flag = TRUE;
     progress->n_steps = n_steps;
-    (void) strcpy( progress->title, title );
+    progress->title = create_string( title );
     progress->start_time = current_realtime_seconds();
     progress->previous_time = progress->start_time;
     progress->last_check_time = progress->start_time;
@@ -83,7 +83,7 @@ public  void  initialize_progress_report(
     progress->sum_xy = 0.0;
     progress->sum_xx = 0.0;
     progress->n_dots_so_far = 0;
-    progress->total_n_dots = LINE_LENGTH - strlen( progress->title );
+    progress->total_n_dots = LINE_LENGTH - string_length( progress->title );
 
     if( progress->total_n_dots < 1 )
         progress->total_n_dots = 2;
@@ -258,13 +258,17 @@ private  void  show_multi_line_progress(
 
     time_remaining = est_total_time - time_so_far;
 
-    format_time( time_so_far_str, "%g %s", time_so_far );
-    format_time( est_total_time_str, "%g %s", est_total_time );
-    format_time( time_remaining_str, "%g %s", time_remaining );
+    time_so_far_str = format_time( "%g %s", time_so_far );
+    est_total_time_str = format_time( "%g %s", est_total_time );
+    time_remaining_str = format_time( "%g %s", time_remaining );
 
     print( "%s: %3d%% done. (%d/%d) (%s out of approx %s with %s remaining)\n",
            progress->title, percent_done, current_step, progress->n_steps,
            time_so_far_str, est_total_time_str, time_remaining_str );
+
+    delete_string( time_so_far_str );
+    delete_string( est_total_time_str );
+    delete_string( time_remaining_str );
 
     (void) flush_file( stdout );
 }
@@ -299,9 +303,13 @@ public  void  terminate_progress_report(
         {
             total_time = current_realtime_seconds() - progress->start_time;
 
-            format_time( time_str, "%g %s", total_time );
+            time_str = format_time( "%g %s", total_time );
 
             print( "%s: DONE in %s\n", progress->title, time_str );
+
+            delete_string( time_str );
         }
     }
+
+    delete_string( progress->title );
 }

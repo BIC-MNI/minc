@@ -18,11 +18,11 @@
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.27 1995-09-13 13:24:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.28 1995-10-19 15:46:44 david Exp $";
 #endif
 
-private  BOOLEAN  has_no_extension( char [] );
-private  char     *compressed_endings[] = { ".z", ".Z", ".gz" };
+private  BOOLEAN  has_no_extension( STRING );
+private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : real_is_double
@@ -57,23 +57,25 @@ public  BOOLEAN  real_is_double()
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  file_exists(
-    char        filename[] )
+    STRING        filename )
 {
     BOOLEAN  exists;
     FILE     *file;
     STRING   expanded;
 
-    expand_filename( filename, expanded );
+    expanded = expand_filename( filename );
 
     file = fopen( expanded, "r" );
 
-    if( file != (FILE *) 0 )
+    if( file != NULL )
     {
         (void) fclose( file );
         exists = TRUE;
     }
     else
         exists = FALSE;
+
+    delete_string( expanded );
 
     return( exists );
 }
@@ -93,16 +95,23 @@ public  BOOLEAN  file_exists(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  check_clobber_file(
-    char   filename[] )
+    STRING   filename )
 {
     char     ch;
     BOOLEAN  okay;
+    STRING   expanded;
 
     okay = TRUE;
 
     if( file_exists( filename ) )
     {
-        print( "File exists, do you wish to overwrite (y or n): " );
+        expanded = expand_filename( filename );
+
+        print( "File <%s> exists, do you wish to overwrite (y or n): ",
+               expanded );
+
+        delete_string( expanded );
+
         while( input_character( stdin, &ch ) == OK && ch != 'y' && ch != 'n' &&
                ch != 'N' && ch != 'Y' )
         {
@@ -135,20 +144,25 @@ public  BOOLEAN  check_clobber_file(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  check_clobber_file_default_suffix(
-    char   filename[],
-    char   default_suffix[] )
+    STRING   filename,
+    STRING   default_suffix )
 {
     STRING   expanded;
+    BOOLEAN  can_write;
 
-    expand_filename( filename, expanded );
+    expanded = expand_filename( filename );
 
     if( has_no_extension( expanded ) )
     {
-        (void) strcat( expanded, "." );
-        (void) strcat( expanded, default_suffix );
+        concat_to_string( &expanded, "." );
+        concat_to_string( &expanded, default_suffix );
     }
 
-    return( check_clobber_file( filename ) );
+    can_write = check_clobber_file( expanded );
+
+    delete_string( expanded );
+
+    return( can_write );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -165,10 +179,16 @@ public  BOOLEAN  check_clobber_file_default_suffix(
 ---------------------------------------------------------------------------- */
 
 public  void  remove_file(
-    char  filename[] )
+    STRING  filename )
 {
-    if( unlink( filename ) != 0 )
-        print_error( "Error removing %s\n", filename );
+    STRING   expanded;
+
+    expanded = expand_filename( filename );
+
+    if( unlink( expanded ) != 0 )
+        print_error( "Error removing %s\n", expanded );
+
+    delete_string( expanded );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -184,8 +204,8 @@ public  void  remove_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  char  *get_user_home_directory(
-    char   user_name[] )
+private  STRING  get_user_home_directory(
+    STRING   user_name )
 {
     struct   passwd  *p;
 
@@ -216,23 +236,27 @@ private  char  *get_user_home_directory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  expand_filename(
-    char  filename[],
-    char  expanded_filename[] )
+public  STRING  expand_filename(
+    STRING  filename )
 {
     int      i, new_i, dest, len, env_index;
     BOOLEAN  tilde_found, prev_was_backslash;
     char     *expand_value;
-    STRING   env;
+    int      n_alloced, n_env_alloced;
+    STRING   env, expanded;
 
     /* --- copy from filename to expanded_filename, changing environment
            variables and home directories */
 
-    len = strlen( filename );
+    len = string_length( filename );
 
     prev_was_backslash = FALSE;
     i = 0;
     dest = 0;
+
+    n_alloced = 0;
+
+    n_env_alloced = 0;
 
     while( i < len+1 )
     {
@@ -252,20 +276,22 @@ public  void  expand_filename(
             env_index = 0;
             while( filename[new_i] != '/' &&
                    filename[new_i] != '.' &&
-                   filename[new_i] != (char) 0 )
+                   filename[new_i] != END_OF_STRING )
             {
-                env[env_index] = filename[new_i];
-                ++env_index;
+                ADD_ELEMENT_TO_ARRAY_WITH_SIZE( env, n_env_alloced, env_index,
+                                                filename[new_i],
+                                                DEFAULT_CHUNK_SIZE );
                 ++new_i;
             }
 
-            env[env_index] = (char) 0;
+            ADD_ELEMENT_TO_ARRAY_WITH_SIZE( env, n_env_alloced, env_index,
+                                            END_OF_STRING, DEFAULT_CHUNK_SIZE );
 
             /* --- if expanding a '~', find the corresponding home directory */
 
             if( tilde_found )
             {
-                if( strlen( env ) == 0 )
+                if( string_length( env ) == 0 )
                     expand_value = getenv( "HOME" );
                 else
                     expand_value = get_user_home_directory( env );
@@ -275,15 +301,22 @@ public  void  expand_filename(
 
             /* --- if an expansion is found, copy it, otherwise just copy char*/
 
-            if( expand_value != (char *) NULL )
+            if( expand_value != NULL )
             {
-                (void) strcpy( &expanded_filename[dest], expand_value );
-                dest += strlen( expand_value );
+                SET_ARRAY_SIZE( expanded, n_alloced,
+                                n_alloced + string_length(expand_value),
+                                DEFAULT_CHUNK_SIZE );
+                n_alloced += string_length(expand_value);
+                (void) strcpy( &expanded[dest], expand_value );
+                dest += string_length( expand_value );
                 i = new_i;
             }
             else
             {
-                expanded_filename[dest] = filename[i];
+                SET_ARRAY_SIZE( expanded, n_alloced, n_alloced + 1,
+                                DEFAULT_CHUNK_SIZE );
+                ++n_alloced;
+                expanded[dest] = filename[i];
                 ++dest;
                 ++i;
             }
@@ -296,7 +329,10 @@ public  void  expand_filename(
 
             if( filename[i] != '\\' || prev_was_backslash )
             {
-                expanded_filename[dest] = filename[i];
+                SET_ARRAY_SIZE( expanded, n_alloced, n_alloced + 1,
+                                DEFAULT_CHUNK_SIZE );
+                ++n_alloced;
+                expanded[dest] = filename[i];
                 ++dest;
                 prev_was_backslash = FALSE;
             }
@@ -305,6 +341,11 @@ public  void  expand_filename(
             ++i;
         }
     }
+
+    if( n_env_alloced > 0 )
+        delete_string( env );
+
+    return( expanded );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -325,25 +366,34 @@ public  void  expand_filename(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  filename_extension_matches(
-    char   filename[],
-    char   extension[] )
+    STRING   filename,
+    STRING   extension )
 {
     int       len, i;
     STRING    filename_no_z, ending;
+    BOOLEAN   matches;
 
-    expand_filename( filename, filename_no_z );
+    filename_no_z = expand_filename( filename );
 
-    len = strlen( filename_no_z );
+    len = string_length( filename_no_z );
 
     for_less( i, 0, SIZEOF_STATIC_ARRAY(compressed_endings) )
     {
         if( string_ends_in( filename_no_z, compressed_endings[i] ) )
-            filename_no_z[len-strlen(compressed_endings[i])] = (char) 0;
+        {
+            filename_no_z[len-string_length(compressed_endings[i])] =
+                                   END_OF_STRING;
+        }
     }
 
-    (void) sprintf( ending, ".%s", extension );
+    ending = concat_strings( ".", extension );
 
-    return( string_ends_in( filename_no_z, ending ) );
+    matches = string_ends_in( filename_no_z, ending );
+
+    delete_string( filename_no_z );
+    delete_string( ending );
+
+    return( matches );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -361,23 +411,26 @@ public  BOOLEAN  filename_extension_matches(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  remove_directories_from_filename(
-    char  filename[],
-    char  filename_no_directories[] )
+public  STRING  remove_directories_from_filename(
+    STRING  filename )
 {
-    STRING   expanded;
+    STRING   expanded, no_directories;
     int      i;
 
-    expand_filename( filename, expanded );
+    expanded = expand_filename( filename );
 
-    i = strlen( expanded );
+    i = string_length( expanded );
 
     while( i >= 0 && expanded[i] != '/' )
         --i;
 
     ++i;
 
-    (void) strcpy( filename_no_directories, &expanded[i] );
+    no_directories = create_string( &expanded[i] );
+
+    delete_string( expanded );
+
+    return( no_directories );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -395,29 +448,37 @@ public  void  remove_directories_from_filename(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  file_exists_as_compressed(
-    char               filename[],
-    char               compressed_filename[] )
+    STRING       filename,
+    STRING       *compressed_filename )
 {
     int      i;
-    STRING   compressed;
+    STRING   compressed, expanded;
     BOOLEAN  gzipped;
 
     gzipped = FALSE;
+
+    expanded = expand_filename( filename );
 
     /* --- check to see if file.z or file.Z, etc, exists */
 
     for_less( i, 0, SIZEOF_STATIC_ARRAY( compressed_endings ) )
     {
-        (void) strcpy( compressed, filename );
-        (void) strcat( compressed, compressed_endings[i] );
+        compressed = concat_strings( expanded, compressed_endings[i] );
 
         if( file_exists( compressed ) )
         {
-            (void) strcpy( compressed_filename, compressed );
+            if( *compressed_filename == filename )
+                delete_string( filename );
+
+            *compressed_filename = compressed;
             gzipped = TRUE;
             break;
         }
+
+        delete_string( compressed );
     }
+
+    delete_string( expanded );
 
     return( gzipped );
 }
@@ -438,36 +499,38 @@ public  BOOLEAN  file_exists_as_compressed(
 ---------------------------------------------------------------------------- */
 
 public  Status  open_file(
-    char               filename[],
+    STRING             filename,
     IO_types           io_type,
     File_formats       file_format,
     FILE               **file )
 {
     Status   status;
     int      i;
-    STRING   access_str, expanded, tmp_name, command;
+    char     tmp_name[L_tmpnam+1];
+    char     command[EXTREMELY_LARGE_STRING_SIZE];
+    STRING   access_str, expanded;
     BOOLEAN  gzipped;
 
     /* --- determine what mode of file access */
 
     switch( io_type )
     {
-    case APPEND_FILE:   (void) strcpy( access_str, "a" );  break;
+    case APPEND_FILE:   access_str = create_string( "a" );  break;
 
-    case WRITE_FILE:    (void) strcpy( access_str, "w" );  break;
+    case WRITE_FILE:    access_str = create_string( "w" );  break;
 
     case READ_FILE:
-    default:            (void) strcpy( access_str, "r" );  break;
+    default:            access_str = create_string( "r" );  break;
     }
 
     /* --- check if ascii or binary */
 
     if( file_format == BINARY_FORMAT )
-        (void) strcat( access_str, "b" );
+        concat_to_string( &access_str, "b" );
 
     /* --- expand ~ and $ in filename */
 
-    expand_filename( filename, expanded );
+    expanded = expand_filename( filename );
 
     gzipped = FALSE;
 
@@ -491,10 +554,12 @@ public  Status  open_file(
                exists */
 
         if( !gzipped && !file_exists( expanded ) )
-            gzipped = file_exists_as_compressed( expanded, expanded );
+            gzipped = file_exists_as_compressed( expanded, &expanded );
     }
 
     /* --- if reading from a compressed file, decompress it to a temp file */
+
+    status = OK;
 
     if( gzipped )
     {
@@ -507,34 +572,31 @@ public  Status  open_file(
         {
             print_error( "Error uncompressing %s into %s using gunzip\n",
                          expanded, tmp_name );
-            return( ERROR );
+            status = ERROR;
         }
-
-        (void) strcpy( expanded, tmp_name );
+        else
+            replace_string( &expanded, create_string(tmp_name) );
     }
 
     /* --- finally, open the file */
 
-    *file = fopen( expanded, access_str );
-
-    /* --- if reading a decompressed temp file, unlink it, so that when
-           the program closes the file or dies, the file is removed */
-
-    if( gzipped && *file != (FILE *) NULL )
-        remove_file( expanded );
-
-    /* --- assign opening status and print error message if needed */
-
-    if( *file != (FILE *) 0 )
+    if( status == OK )
     {
-        status = OK;
+        *file = fopen( expanded, access_str );
+
+        if( *file == NULL )          /* --- print error message if needed */
+        {
+            print_error( "Error:  could not open file \"%s\".\n", expanded );
+            status = ERROR;
+        }
+        else if( gzipped )           /* if reading a decompressed temp file, */
+            remove_file( expanded ); /* unlink it, so that when the program  */
+                                     /* closes the file or dies, the file is */
+                                     /* removed                              */
     }
-    else
-    {
-        print_error( "Error:  could not open file \"%s\".\n", expanded );
-        *file = (FILE *) 0;
-        status = ERROR;
-    }
+
+    delete_string( access_str );
+    delete_string( expanded );
 
     return( status );
 }
@@ -559,16 +621,17 @@ public  Status  open_file(
 ---------------------------------------------------------------------------- */
 
 public  Status  open_file_with_default_suffix(
-    char               filename[],
-    char               default_suffix[],
+    STRING             filename,
+    STRING             default_suffix,
     IO_types           io_type,
     File_formats       file_format,
     FILE               **file )
 {
+    Status   status;
     BOOLEAN  suffix_added;
     STRING   used_filename, expanded;
 
-    expand_filename( filename, expanded );
+    expanded = expand_filename( filename );
 
     if( io_type == READ_FILE )
     {
@@ -576,20 +639,33 @@ public  Status  open_file_with_default_suffix(
 
         if( !file_exists(expanded) && has_no_extension( expanded ) )
         {
-            (void) sprintf( used_filename, "%s.%s", expanded, default_suffix );
+            used_filename = concat_strings( expanded, "." );
+            concat_to_string( &used_filename, default_suffix );
             if( file_exists( used_filename ) )
                 suffix_added = TRUE;
+            else
+                delete_string( used_filename );
         }
 
         if( !suffix_added )
-            (void) strcpy( used_filename, expanded );
+            used_filename = create_string( expanded );
     }
     else if( has_no_extension( expanded ) )
-        (void) sprintf( used_filename, "%s.%s", expanded, default_suffix );
+    {
+        used_filename = concat_strings( expanded, "." );
+        concat_to_string( &used_filename, default_suffix );
+    }
     else
-        (void) strcpy( used_filename, expanded );
+    {
+        used_filename = create_string( expanded );
+    }
 
-    return( open_file( used_filename, io_type, file_format, file ) );
+    status = open_file( used_filename, io_type, file_format, file );
+
+    delete_string( expanded );
+    delete_string( used_filename );
+
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -606,20 +682,18 @@ public  Status  open_file_with_default_suffix(
 ---------------------------------------------------------------------------- */
 
 private  BOOLEAN  has_no_extension(
-    char   filename[] )
+    STRING   filename )
 {
-    int   i;
+    STRING   base_name;
+    BOOLEAN  dot_found;
 
-    /* skip possible '/' */
+    base_name = remove_directories_from_filename( filename );
 
-    i = strlen( filename );
+    dot_found = (find_character( base_name, '.' ) >= 0);
 
-    while( i > 0 && filename[i] != '/' )
-    {
-        --i;
-    }
+    delete_string( base_name  );
 
-    return( strchr( &filename[i], '.' ) == (char *) 0 );
+    return( !dot_found );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -671,7 +745,7 @@ public  Status  set_file_position(
 public  Status  close_file(
     FILE     *file )
 {
-    if( file != (FILE *) NULL )
+    if( file != NULL )
     {
         (void) fclose( file );
         return( OK );
@@ -694,34 +768,39 @@ public  Status  close_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  extract_directory(
-    char    filename[],
-    char    directory[] )
+public  STRING  extract_directory(
+    STRING    filename )
 {
-    int   slash_index;
+    int     i, slash_index;
+    STRING  expanded, directory;
 
-    slash_index = strlen(filename) - 1;
+    expanded = expand_filename( filename );
 
-    while( slash_index > 0 && filename[slash_index] != '/' )
-    {
+    slash_index = string_length(expanded) - 1;
+
+    while( slash_index >= 0 && expanded[slash_index] != '/' )
         --slash_index;
-    }
 
-    if( slash_index < 0 )
-    {
-        slash_index = 0;
-    }
+    if( slash_index <= 0 )
+        ++slash_index;
 
-    (void) strncpy( directory, filename, slash_index );
+    directory = alloc_string( slash_index );
 
-    directory[slash_index] = (char) 0;
+    for_less( i, 0, slash_index )
+        directory[i] = expanded[i];
+
+    directory[slash_index] = END_OF_STRING;
+
+    delete_string( expanded );
+
+    return( directory );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_absolute_filename
 @INPUT      : filename
             : directory
-@OUTPUT     : abs_filename
+@OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Given a filename and a default directory, determines the correct
             : filename by checking if the filename is a relative or absolute
@@ -733,32 +812,34 @@ public  void  extract_directory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_absolute_filename(
-    char    filename[],
-    char    directory[],
-    char    abs_filename[] )
+public  STRING  get_absolute_filename(
+    STRING    filename,
+    STRING    directory )
 {
-    STRING  save_filename;
-
-    /* in case abs_filename and filename are same variable */
-
-    (void) strcpy( save_filename, filename );
+    STRING  abs_filename, expanded;
 
     /* if the directory is non-null and the filename is not already
        absolute (begins with '/'), then prefix the directory to the filename */
 
-    if( directory != (char *) 0 && (int) strlen( directory ) > 0 &&
-        filename[0] != '/' )
+    expanded = expand_filename( filename );
+
+    if( string_length( directory ) > 0 && expanded[0] != '/' )
     {
-        (void) strcpy( abs_filename, directory );
-        (void) strcat( abs_filename, "/" );
+        if( directory[string_length(directory)-1] == '/' )
+            abs_filename = create_string( directory );
+        else
+            abs_filename = concat_strings( directory, "/" );
     }
     else
     {
-        abs_filename[0] = (char) 0;
+        abs_filename = create_string( NULL );
     }
 
-    (void) strcat( abs_filename, save_filename );
+    concat_to_string( &abs_filename, expanded );
+
+    delete_string( expanded );
+
+    return( abs_filename );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -965,12 +1046,12 @@ public  Status   skip_input_until(
 ---------------------------------------------------------------------------- */
 
 public  Status  output_string(
-    FILE  *file,
-    char  str[] )
+    FILE    *file,
+    STRING  str )
 {
     Status   status;
 
-    if( fprintf( file, "%s", str ) == strlen(str) )
+    if( fprintf( file, "%s", str ) == string_length(str) )
         status = OK;
     else
     {
@@ -984,10 +1065,8 @@ public  Status  output_string(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_string
 @INPUT      : file
-            : str
-            : string_length         - size of string storage
             : termination_char
-@OUTPUT     : 
+@OUTPUT     : str 
 @RETURNS    : Status
 @DESCRIPTION: Inputs a string from the file.  First it skips white space, then
             : inputs all characters until the termination_char is found.
@@ -999,49 +1078,40 @@ public  Status  output_string(
 ---------------------------------------------------------------------------- */
 
 public  Status  input_string(
-    FILE  *file,
-    char  str[],
-    int   string_length,
-    char  termination_char )
+    FILE    *file,
+    STRING  *str,
+    char    termination_char )
 {
-    int     i;
     char    ch;
     Status  status;
 
     status = input_nonwhite_character( file, &ch );
 
-    i = 0;
+    *str = create_string( NULL );
 
     while( status == OK && ch != termination_char && ch != '\n' )
     {
-        str[i] = ch;
-        ++i;
+        concat_char_to_string( str, ch );
 
-        if( i >= string_length - 1 )
-        {
-            print_error( "Input string too long.\n" );
-            status = ERROR;
-        }
-        else
-        {
-            status = input_character( file, &ch );
-        }
+        status = input_character( file, &ch );
     }
 
     if( termination_char != '\n' && ch == '\n' )
         (void) unget_character( file, ch );
 
-    str[i] = (char) 0;
-    
+    if( status != OK )
+    {
+        delete_string( *str );
+        *str = NULL;
+    }
+
     return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_quoted_string
 @INPUT      : file
-            : str
-            : str_length    - size of string storage
-@OUTPUT     : 
+@OUTPUT     : str
 @RETURNS    : Status
 @DESCRIPTION: Skips to the next nonwhitespace character, checks if it is a
             : quotation mark, then reads characters into the string until the
@@ -1055,10 +1125,8 @@ public  Status  input_string(
 
 public  Status  input_quoted_string(
     FILE            *file,
-    char            str[],
-    int             str_length )
+    STRING          *str )
 {
-    int      i;
     char     ch;
     Status   status;
 
@@ -1070,16 +1138,20 @@ public  Status  input_quoted_string(
     if( status == OK )
         status = input_character( file, &ch );
 
-    i = 0;
+    *str = create_string( NULL );
 
-    while( status == OK && ch != '"' && i < str_length-1 )
+    while( status == OK && ch != '"' )
     {
-        str[i] = ch;
-        ++i;
+        concat_char_to_string( str, ch );
+
         status = input_character( file, &ch );
     }
 
-    str[i] = (char) 0;
+    if( status != OK )
+    {
+        delete_string( *str );
+        *str = NULL;
+    }
 
     return( status );
 }
@@ -1104,14 +1176,11 @@ public  Status  input_quoted_string(
 
 public  Status  input_possibly_quoted_string(
     FILE            *file,
-    char            str[],
-    int             str_length )
+    STRING          *str )
 {
-    int      i;
     BOOLEAN  quoted;
     char     ch;
     Status   status;
-
 
     status = input_nonwhite_character( file, &ch );
 
@@ -1126,21 +1195,26 @@ public  Status  input_possibly_quoted_string(
             quoted = FALSE;
     }
 
-    i = 0;
+    *str = create_string( NULL );
 
-    while( status == OK && i < str_length - 1 &&
+    while( status == OK &&
            (quoted && ch != '\"' ||
             !quoted && ch != ' ' && ch != '\t' && ch != '\n') )
     {
-        str[i] = ch;
-        ++i;
+        concat_char_to_string( str, ch );
+
         status = input_character( file, &ch );
     }
 
-    str[i] = (char) 0;
-
     if( !quoted && ch == '\n' )
         (void) unget_character( file, ch );
+
+
+    if( status != OK )
+    {
+        delete_string( *str );
+        *str = NULL;
+    }
 
     return( status );
 }
@@ -1161,7 +1235,7 @@ public  Status  input_possibly_quoted_string(
 
 public  Status  output_quoted_string(
     FILE            *file,
-    char            str[] )
+    STRING          str )
 {
     Status   status;
 
@@ -1268,7 +1342,7 @@ public  Status  input_newline(
 {
     Status   status;
 
-    status = skip_input_until( file, (char) '\n' );
+    status = skip_input_until( file, '\n' );
 
     if( status != OK )
     {
@@ -1324,26 +1398,27 @@ public  Status  output_newline(
 
 public  Status  input_line(
     FILE    *file,
-    char    line[],
-    int     str_length )
+    STRING  *line )
 {
     Status   status;
-    int      i;
     char     ch;
 
-    i = 0;
+    *line = create_string( NULL );
 
     status = input_character( file, &ch );
 
-    while( status == OK && ch != '\n' && i < str_length-1 )
+    while( status == OK && ch != '\n' )
     {
-        line[i] = ch;
-        ++i;
+        concat_char_to_string( line, ch );
 
         status = input_character( file, &ch );
     }
 
-    line[i] = (char) 0;
+    if( status != OK )
+    {
+        delete_string( *line );
+        *line = NULL;
+    }
 
     return( status );
 }
@@ -1402,7 +1477,7 @@ public  Status  output_boolean(
     BOOLEAN         b )
 {
     Status   status;
-    char     *str;
+    STRING   str;
 
     status = OK;
 
@@ -1871,8 +1946,7 @@ public  Status  io_quoted_string(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
-    char            str[],
-    int             str_length )
+    STRING          *str )
 {
     int      length;
     Status   status;
@@ -1882,36 +1956,31 @@ public  Status  io_quoted_string(
     if( format == ASCII_FORMAT )
     {
         if( io_flag == READ_FILE )
-            status = input_quoted_string( file, str, str_length );
+            status = input_quoted_string( file, str );
         else
-            status = output_quoted_string( file, str );
+            status = output_quoted_string( file, *str );
     }
     else
     {
         if( io_flag == WRITE_FILE )
-            length = strlen( str );
+            length = string_length( *str );
 
         status = io_int( file, io_flag, format, &length );
 
-        if( io_flag == READ_FILE && length >= str_length )
-        {
-            print_error( "STRING too large: " );
-            status = ERROR;
-        }
+        if( io_flag == READ_FILE )
+            *str = alloc_string( length );
 
         if( status == OK )
         {
             status = io_binary_data( file, io_flag, (void *) str,
-                                     sizeof(str[0]), length );
+                                     sizeof((*str)[0]), length );
         }
 
-        str[length] = (char) 0;
+        str[length] = END_OF_STRING;
     }
 
     if( status != OK )
-    {
         print_error( "Error in quoted string in file.\n" );
-    }
 
     return( status );
 }

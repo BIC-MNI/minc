@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.39 1995-09-26 14:25:09 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.40 1995-10-19 15:46:40 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -39,8 +39,8 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #include  <multidim.h>
 #include  <volume_cache.h>
 
-extern  char   *XYZ_dimension_names[];
-extern  char   *File_order_dimension_names[];
+extern  STRING   XYZ_dimension_names[];
+extern  STRING   File_order_dimension_names[];
 
 /* -------------------------- volume struct --------------------- */
 
@@ -53,7 +53,7 @@ typedef  struct
 
     multidim_array          array;
 
-    char                    *dimension_names[MAX_DIMENSIONS];
+    STRING                  dimension_names[MAX_DIMENSIONS];
     int                     spatial_axes[N_DIMENSIONS];
     nc_type                 nc_data_type;
     BOOLEAN                 signed_flag;
@@ -316,7 +316,7 @@ typedef  struct
     int                n_file_dimensions;
     int                sizes_in_file[MAX_VAR_DIMS];
     long               indices[MAX_VAR_DIMS];
-    char               *dim_names[MAX_VAR_DIMS];
+    STRING             dim_names[MAX_VAR_DIMS];
     Volume             volume;
     int                to_volume_index[MAX_VAR_DIMS];
     int                to_file_index[MAX_DIMENSIONS];

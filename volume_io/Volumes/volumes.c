@@ -17,13 +17,13 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.54 1995-09-21 19:00:54 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.55 1995-10-19 15:47:03 david Exp $";
 #endif
 
-char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
-char   *File_order_dimension_names[] = { "", "", "", "", "" };
+STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
+STRING   File_order_dimension_names[] = { "", "", "", "", "" };
 
-private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
+private  STRING  default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 {
     { MIxspace },
     { MIyspace, MIxspace },
@@ -46,7 +46,7 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  char  **get_default_dim_names(
+public  STRING  *get_default_dim_names(
     int    n_dimensions )
 {
     return( default_dimension_names[n_dimensions-1] );
@@ -65,7 +65,7 @@ public  char  **get_default_dim_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  char  *convert_spatial_axis_to_dim_name(
+private  STRING  convert_spatial_axis_to_dim_name(
     int   axis )
 {
     switch( axis )
@@ -95,16 +95,16 @@ private  char  *convert_spatial_axis_to_dim_name(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  convert_dim_name_to_spatial_axis(
-    char    name[],
+    STRING  name,
     int     *axis )
 {
     *axis = -1;
 
-    if( strcmp( name, MIxspace ) == 0 )
+    if( equal_strings( name, MIxspace ) )
         *axis = X;
-    else if( strcmp( name, MIyspace ) == 0 )
+    else if( equal_strings( name, MIyspace ) )
         *axis = Y;
-    else if( strcmp( name, MIzspace ) == 0 )
+    else if( equal_strings( name, MIzspace ) )
         *axis = Z;
 
     return( *axis >= 0 );
@@ -140,7 +140,7 @@ public  BOOLEAN  convert_dim_name_to_spatial_axis(
 
 public   Volume   create_volume(
     int         n_dimensions,
-    char        *dimension_names[],
+    STRING      dimension_names[],
     nc_type     nc_data_type,
     BOOLEAN     signed_flag,
     Real        voxel_min,
@@ -148,7 +148,7 @@ public   Volume   create_volume(
 {
     int             i, axis, sizes[MAX_DIMENSIONS];
     Status          status;
-    char            *name;
+    STRING          name;
     volume_struct   *volume;
     Transform       identity;
 
@@ -203,8 +203,7 @@ public   Volume   create_volume(
             volume->direction_cosines[i][axis] = 1.0;
         }
 
-        ALLOC( volume->dimension_names[i], strlen( name ) + 1 );
-        (void) strcpy( volume->dimension_names[i], name );
+        volume->dimension_names[i] = create_string( name );
     }
 
     create_empty_multidim_array( &volume->array, n_dimensions, NO_DATA_TYPE );
@@ -453,7 +452,7 @@ public  void  delete_volume(
     delete_general_transform( &volume->voxel_to_world_transform );
 
     for_less( d, 0, get_volume_n_dimensions(volume) )
-        FREE( volume->dimension_names[d] );
+        delete_string( volume->dimension_names[d] );
 
     FREE( volume );
 }
@@ -769,22 +768,25 @@ private  void  recompute_world_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  char  **get_volume_dimension_names(
+public  STRING  *get_volume_dimension_names(
     Volume   volume )
 {
-    int    i;
-    char   **names;
+    int      i;
+    STRING   *names;
 
-    ALLOC2D( names, get_volume_n_dimensions(volume), MAX_STRING_LENGTH+1 );
+    ALLOC( names, get_volume_n_dimensions(volume) );
 
     for_less( i, 0, get_volume_n_dimensions(volume) )
-        (void) strcpy( names[i], volume->dimension_names[i] );
+        names[i] = create_string( volume->dimension_names[i] );
 
     for_less( i, 0, N_DIMENSIONS )
     {
         if( volume->spatial_axes[i] >= 0 )
-            (void) strcpy( names[volume->spatial_axes[i]],
-                           convert_spatial_axis_to_dim_name( i ) );
+        {
+            replace_string( &names[volume->spatial_axes[i]],
+                            create_string(
+                                         convert_spatial_axis_to_dim_name(i)) );
+        }
     }
 
     return( names );
@@ -792,7 +794,8 @@ public  char  **get_volume_dimension_names(
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : delete_dimension_names
-@INPUT      : dimension_names
+@INPUT      : volume,
+              dimension_names
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Frees the memory allocated to the dimension names, which came
@@ -805,9 +808,15 @@ public  char  **get_volume_dimension_names(
 ---------------------------------------------------------------------------- */
 
 public  void  delete_dimension_names(
-    char   **dimension_names )
+    Volume   volume,
+    STRING   dimension_names[] )
 {
-    FREE2D( dimension_names );
+    int   i;
+
+    for_less( i, 0, get_volume_n_dimensions(volume) )
+        delete_string( dimension_names[i] );
+
+    FREE( dimension_names );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

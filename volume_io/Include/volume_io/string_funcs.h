@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char string_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.5 1995-07-31 13:44:32 david Exp $";
+static char string_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.6 1995-10-19 15:46:41 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -34,19 +34,12 @@ static char string_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 
 #include  <string.h>
 
-#define  EQUAL_STRINGS( str1, str2 )  ( strcmp(str1,str2) == 0 )
+#define  EXTREMELY_LARGE_STRING_SIZE  10000
 
-#define  IS_LOWER_CASE( ch )     ((ch) >= 'a' && (ch) <= 'z')
-#define  IS_UPPER_CASE( ch )     ((ch) >= 'A' && (ch) <= 'Z')
-
-#define  GET_LOWER_CASE( ch )  (IS_UPPER_CASE(ch) ? \
-                                (char) ((ch)+'a'-'A') : (ch))
-
-#define  GET_UPPER_CASE( ch )  (IS_LOWER_CASE(ch) ? \
-                                (char) ((ch)+'A'-'a') : (ch))
+#define  END_OF_STRING                  ((char) 0)
 
 #define  COPY_MEMORY( dest, src, n_items )                                  \
          (void) memcpy( (void *) (dest), (void *) (src),                    \
-                        (size_t) (n_items) * sizeof(src[0]) )
+                        (size_t) (n_items) * sizeof((src)[0]) )
 
 #endif

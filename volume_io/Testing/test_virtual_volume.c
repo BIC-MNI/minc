@@ -33,8 +33,8 @@ int  main(
     int                  sizes[N_DIMENSIONS];
     int                  x, y, z, n_errors;
     int                  true_voxel, test_voxel;
-    char                 *output_filename, *output_filename2;
-    static char          *dim_names[] = { MIxspace, MIzspace, MIyspace };
+    STRING               output_filename, output_filename2;
+    static STRING        dim_names[] = { MIxspace, MIzspace, MIyspace };
     static int           block_sizes[] = { BLOCK_SIZE,
                                            BLOCK_SIZE,
                                            BLOCK_SIZE,

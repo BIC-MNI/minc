@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.25 1995-08-19 18:57:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.26 1995-10-19 15:46:59 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -41,13 +41,12 @@ private  Status  input_slice(
 ---------------------------------------------------------------------------- */
 
 public  Status  initialize_free_format_input(
-    char                 filename[],
+    STRING               filename,
     Volume               volume,
     volume_input_struct  *volume_input )
 {
     Status         status, file_status;
-    STRING         volume_filename, abs_volume_filename;
-    STRING         slice_filename;
+    STRING         volume_filename, abs_volume_filename, slice_filename;
     int            slice, sizes[N_DIMENSIONS];
     int            c, volume_byte_offset;
     int            n_bytes_per_voxel, min_value, max_value, i;
@@ -70,6 +69,8 @@ public  Status  initialize_free_format_input(
                          READ_FILE, ASCII_FORMAT, &file );
 
     status = file_status;
+
+    abs_volume_filename = NULL;
 
     /* read the line containing: n_bytes_per_voxel
     */
@@ -196,20 +197,18 @@ public  Status  initialize_free_format_input(
         status = ERROR;
     }
 
-    extract_directory( filename, volume_input->directory );
+    volume_input->directory = extract_directory( filename );
 
     if( status == OK )
     if( volume_input->sizes_in_file[0] <= 0 )
     {
         n_slices = 0;
 
-        while( input_string( file, slice_filename, MAX_STRING_LENGTH,
-                             (char) ' ' )==OK)
+        while( input_string( file, &slice_filename, (char) ' ' )==OK)
         {
             SET_ARRAY_SIZE( volume_input->slice_filenames, n_slices, n_slices+1,
                             DEFAULT_CHUNK_SIZE );
-            (void) strcpy( volume_input->slice_filenames[n_slices],
-                           slice_filename );
+            volume_input->slice_filenames[n_slices] = slice_filename;
             SET_ARRAY_SIZE( volume_input->slice_byte_offsets,
                             n_slices, n_slices+1, DEFAULT_CHUNK_SIZE );
 
@@ -228,10 +227,10 @@ public  Status  initialize_free_format_input(
     else
     {
         volume_input->one_file_per_slice = FALSE;
-        status = input_string( file, volume_filename, MAX_STRING_LENGTH,
-                               (char) ' ' );
-        get_absolute_filename( volume_filename, volume_input->directory,
-                               abs_volume_filename );
+        status = input_string( file, &volume_filename, (char) ' ' );
+        abs_volume_filename = get_absolute_filename( volume_filename,
+                                                     volume_input->directory );
+        delete_string( volume_filename );
 
         if( input_int( file, &volume_byte_offset ) != OK )
             volume_byte_offset = 0;
@@ -334,16 +333,18 @@ public  Status  initialize_free_format_input(
 
     if( status == OK && !volume_input->one_file_per_slice )
     {
-        get_absolute_filename( volume_filename, volume_input->directory,
-                               abs_volume_filename );
         status = open_file( abs_volume_filename, READ_FILE, BINARY_FORMAT,
                             &volume_input->volume_file );
+
+        delete_string( abs_volume_filename );
 
         if( status == OK )
             status = set_file_position( file, (long) volume_byte_offset );
     }
 
     volume_input->slice_index = 0;
+
+    delete_string( abs_volume_filename );
 
     return( status );
 }
@@ -361,6 +362,8 @@ public  Status  initialize_free_format_input(
 public  void  delete_free_format_input(
     volume_input_struct   *volume_input )
 {
+    int   slice;
+
     if( volume_input->file_data_type == UNSIGNED_BYTE )
     {
         FREE( volume_input->byte_slice_buffer );
@@ -370,8 +373,13 @@ public  void  delete_free_format_input(
         FREE( volume_input->short_slice_buffer );
     }
 
+    delete_string( volume_input->directory );
+
     if( volume_input->one_file_per_slice )
     {
+        for_less( slice, 0, volume_input->sizes_in_file[0] )
+            delete_string( volume_input->slice_filenames[slice] );
+
         FREE( volume_input->slice_filenames );
         FREE( volume_input->slice_byte_offsets );
     }
@@ -405,11 +413,14 @@ private  Status  input_slice(
     {
         if( volume_input->one_file_per_slice )
         {
-            get_absolute_filename(
+            slice_filename = get_absolute_filename(
                    volume_input->slice_filenames[volume_input->slice_index],
-                   volume_input->directory, slice_filename );
+                   volume_input->directory );
             status = open_file( slice_filename, READ_FILE, BINARY_FORMAT,
                                 &file );
+
+            delete_string( slice_filename );
+
             if( status == OK )
                 status = set_file_position( file,
                            (long) (volume_input->slice_byte_offsets

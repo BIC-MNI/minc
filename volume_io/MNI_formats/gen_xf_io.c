@@ -15,26 +15,26 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.16 1995-07-31 13:44:57 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.17 1995-10-19 15:47:14 david Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
 
-static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
-static   const char      *TYPE_STRING = "Transform_Type";
-static   const char      *LINEAR_TRANSFORM_STRING = "Linear_Transform";
-static   const char      *LINEAR_TYPE = "Linear";
-static   const char      *THIN_PLATE_SPLINE_STRING =
+static   const STRING      TRANSFORM_FILE_HEADER = "MNI Transform File";
+static   const STRING      TYPE_STRING = "Transform_Type";
+static   const STRING      LINEAR_TRANSFORM_STRING = "Linear_Transform";
+static   const STRING      LINEAR_TYPE = "Linear";
+static   const STRING      THIN_PLATE_SPLINE_STRING =
                                               "Thin_Plate_Spline_Transform";
-static   const char      *INVERT_FLAG_STRING = "Invert_Flag";
-static   const char      *TRUE_STRING = "True";
-static   const char      *FALSE_STRING = "False";
-static   const char      *N_DIMENSIONS_STRING = "Number_Dimensions";
-static   const char      *POINTS_STRING = "Points";
-static   const char      *DISPLACEMENTS_STRING = "Displacements";
+static   const STRING      INVERT_FLAG_STRING = "Invert_Flag";
+static   const STRING      TRUE_STRING = "True";
+static   const STRING      FALSE_STRING = "False";
+static   const STRING      N_DIMENSIONS_STRING = "Number_Dimensions";
+static   const STRING      POINTS_STRING = "Points";
+static   const STRING      DISPLACEMENTS_STRING = "Displacements";
 
-static   const char      *GRID_TRANSFORM_STRING = "Grid_Transform";
-static   const char      *DISPLACEMENT_VOLUME = "Displacement_Volume";
+static   const STRING      GRID_TRANSFORM_STRING = "Grid_Transform";
+static   const STRING      DISPLACEMENT_VOLUME = "Displacement_Volume";
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_default_transform_file_suffix
@@ -49,7 +49,7 @@ static   const char      *DISPLACEMENT_VOLUME = "Displacement_Volume";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  char  *get_default_transform_file_suffix()
+public  STRING  get_default_transform_file_suffix()
 {
     return( "xfm" );
 }
@@ -73,7 +73,7 @@ public  char  *get_default_transform_file_suffix()
 
 private  void  output_one_transform(
     FILE                *file,
-    char                filename[],
+    STRING              filename,
     int                 *volume_count,
     BOOLEAN             invert,
     General_transform   *transform )
@@ -160,36 +160,41 @@ private  void  output_one_transform(
         /*--- the volume will be stored in a file of the same prefix as this
               transform, but ending in _grid.mnc */
 
-        if( filename == NULL || strlen(filename) == 0 )
-            (void) strcpy( prefix_filename, "grid" );
+        if( filename == NULL || string_length(filename) == 0 )
+            prefix_filename = create_string( "grid" );
         else
         {
-            (void) strcpy( prefix_filename, filename );
-            i = strlen( prefix_filename ) - 1;
+            prefix_filename = create_string( filename );
+            i = string_length( prefix_filename ) - 1;
             while( i > 0 && prefix_filename[i] != '.' &&
                    prefix_filename[i] != '/' )
                 --i;
             if( i >= 0 && prefix_filename[i] == '.' )
-                prefix_filename[i] = (char) 0;
+                prefix_filename[i] = END_OF_STRING;
         }
 
         /*--- write out the volume filename to the transform file */
 
+        volume_filename = alloc_string( string_length(prefix_filename) +
+                                        100 );
         (void) sprintf( volume_filename, "%s_grid_%d.mnc", prefix_filename,
                         *volume_count );
 
         /*--- decide where to write the volume file */
 
-        remove_directories_from_filename( volume_filename, base_filename );
+        base_filename = remove_directories_from_filename( volume_filename );
 
-        (void) fprintf( file, "%s = %s;\n", DISPLACEMENT_VOLUME,
-                        base_filename );
+        (void) fprintf( file, "%s = %s;\n", DISPLACEMENT_VOLUME, base_filename);
 
         /*--- write the volume file */
 
         (void) output_volume( volume_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
                               (Volume) transform->displacement_volume,
                               NULL, NULL );
+
+        delete_string( prefix_filename );
+        delete_string( volume_filename );
+        delete_string( base_filename );
 
         break;
 
@@ -248,18 +253,18 @@ private  void  output_one_transform(
 
 public  Status  output_transform(
     FILE                *file,
-    char                filename[],
+    STRING              filename,
     int                 *volume_count_ptr,
-    char                comments[],
+    STRING              comments,
     General_transform   *transform )
 {
     int    volume_count;
 
     /* --- parameter checking */
 
-    if( file == (FILE *) 0 )
+    if( file == NULL )
     {
-        print_error( "output_transform(): passed NULL FILE ptr.\n");
+        print_error( "output_transform(): passed NULL FILE ptr.\n" );
         return( ERROR );
     }
 
@@ -299,7 +304,7 @@ public  Status  output_transform(
 
 private  Status  input_one_transform(
     FILE                *file,
-    char                filename[],
+    STRING              filename,
     General_transform   *transform )
 {
     Status            status;
@@ -323,8 +328,7 @@ private  Status  input_one_transform(
     if( status != OK )
         return( status );
 
-    if( mni_input_string( file, type_name, MAX_STRING_LENGTH, (char) ';',
-                          (char) 0 ) != OK )
+    if( mni_input_string( file, &type_name, (char) ';', (char) 0 ) != OK )
     {
         print_error( "input_transform(): missing transform type.\n");
         return( ERROR );
@@ -332,59 +336,69 @@ private  Status  input_one_transform(
     if( mni_skip_expected_character( file, (char) ';' ) != OK )
         return( ERROR );
 
-    if( strcmp( type_name, LINEAR_TYPE ) == 0 )
+    if( equal_strings( type_name, LINEAR_TYPE ) )
         type = LINEAR;
-    else if( strcmp( type_name, THIN_PLATE_SPLINE_STRING ) == 0 )
+    else if( equal_strings( type_name, THIN_PLATE_SPLINE_STRING ) )
         type = THIN_PLATE_SPLINE;
-    else if( strcmp( type_name, GRID_TRANSFORM_STRING ) == 0 )
+    else if( equal_strings( type_name, GRID_TRANSFORM_STRING ) )
         type = GRID_TRANSFORM;
     else
     {
+        delete_string( type_name );
         print_error( "input_transform(): invalid transform type.\n");
         return( ERROR );
     }
 
+    delete_string( type_name );
+
     /* --- read the next string */
 
-    if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
-                          (char) 0 ) != OK )
+    if( mni_input_string( file, &str, (char) '=', (char) 0 ) != OK )
         return( ERROR );
 
-    if( strcmp( str, INVERT_FLAG_STRING ) == 0 )
+    if( equal_strings( str, INVERT_FLAG_STRING ) )
     {
+        delete_string( str );
+
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
-        if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) ';',
-                              (char) 0 ) != OK )
+        if( mni_input_string( file, &str, (char) ';', (char) 0 ) != OK )
             return( ERROR );
         if( mni_skip_expected_character( file, (char) ';' ) != OK )
-            return( ERROR );
-
-        if( strcmp( str, TRUE_STRING ) == 0 )
-            inverse_flag = TRUE;
-        else if( strcmp( str, FALSE_STRING ) == 0 )
-            inverse_flag = FALSE;
-        else
         {
-            print_error( "Expected %s or %s after %s =\n",
-                         TRUE_STRING, FALSE_STRING,
-                   INVERT_FLAG_STRING );
+            delete_string( str );
             return( ERROR );
         }
 
-        if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
-                              (char) 0 ) != OK )
+        if( equal_strings( str, TRUE_STRING ) )
+            inverse_flag = TRUE;
+        else if( equal_strings( str, FALSE_STRING ) )
+            inverse_flag = FALSE;
+        else
+        {
+            delete_string( str );
+            print_error( "Expected %s or %s after %s =\n",
+                         TRUE_STRING, FALSE_STRING, INVERT_FLAG_STRING );
+            return( ERROR );
+        }
+
+        delete_string( str );
+
+        if( mni_input_string( file, &str, (char) '=', (char) 0 ) != OK )
             return( ERROR );
     }
 
     switch( type )
     {
     case LINEAR:
-        if( strcmp( str, LINEAR_TRANSFORM_STRING ) != 0 )
+        if( !equal_strings( str, LINEAR_TRANSFORM_STRING ) )
         {
             print_error( "Expected %s =\n", LINEAR_TRANSFORM_STRING );
+            delete_string( str );
             return( ERROR );
         }
+
+        delete_string( str );
 
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
@@ -420,11 +434,15 @@ private  Status  input_one_transform(
 
         /* --- read Number_Dimensions = 3; */
 
-        if( strcmp( str, N_DIMENSIONS_STRING ) != 0 )
+        if( !equal_strings( str, N_DIMENSIONS_STRING ) )
         {
             print_error( "Expected %s =\n", N_DIMENSIONS_STRING );
+            delete_string( str );
             return( ERROR );
         }
+
+        delete_string( str );
+
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
         if( mni_input_int( file, &n_dimensions ) != OK )
@@ -458,6 +476,8 @@ private  Status  input_one_transform(
             }
         }
 
+        FREE( points_1d );
+
         /* --- allocate and input the displacements */
 
         ALLOC2D( displacements, n_points + n_dimensions + 1, n_dimensions );
@@ -484,39 +504,53 @@ private  Status  input_one_transform(
 
         create_thin_plate_transform_real( transform, n_dimensions,
                                           n_points, points, displacements );
+
+
+        FREE2D( points );
+        FREE2D( displacements );
+
         break;
 
     case GRID_TRANSFORM:
 
         /*--- read the displacement volume filename */
 
-        if( strcmp( str, DISPLACEMENT_VOLUME ) != 0 )
+        if( !equal_strings( str, DISPLACEMENT_VOLUME ) )
         {
             print_error( "Expected %s =\n", DISPLACEMENT_VOLUME );
+            delete_string( str );
             return( ERROR );
         }
+
+        delete_string( str );
+
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
 
-        if( mni_input_string( file, volume_filename, MAX_STRING_LENGTH,
+        if( mni_input_string( file, &volume_filename,
                               (char) ';', (char) 0 ) != OK )
             return( ERROR );
 
         if( mni_skip_expected_character( file, (char) ';' ) != OK )
+        {
+            delete_string( volume_filename );
             return( ERROR );
+        }
 
         /*--- if the volume filename is relative, add the required directory */
 
         if( volume_filename[0] != '/' && filename != NULL )
         {
-            extract_directory( filename, directory );
+            directory = extract_directory( filename );
 
-            if( strlen(directory) != 0 )
+            if( string_length(directory) > 0 )
             {
-                (void) strcpy( tmp_filename, volume_filename );
-                (void) sprintf( volume_filename, "%s/%s", directory,
-                                tmp_filename );
+                tmp_filename = concat_strings( directory, "/" );
+                concat_to_string( &tmp_filename, volume_filename );
+                replace_string( &volume_filename, tmp_filename );
             }
+
+            delete_string( directory );
         }
 
         /*--- input the displacement volume */
@@ -526,7 +560,12 @@ private  Status  input_one_transform(
 
         if( input_volume( volume_filename, 4, NULL, NC_UNSPECIFIED, FALSE,
                           0.0, 0.0, TRUE, &volume, &options ) != OK )
+        {
+            delete_string( volume_filename );
             return( ERROR );
+        }
+
+        delete_string( volume_filename );
 
         /*--- create the transform */
 
@@ -561,7 +600,7 @@ private  Status  input_one_transform(
 
 public  Status  input_transform(
     FILE                *file,
-    char                filename[],
+    STRING              filename,
     General_transform   *transform )
 {
     Status              status;
@@ -579,13 +618,21 @@ public  Status  input_transform(
 
     /* okay read the header */
 
-    if( mni_input_string( file, line, MAX_STRING_LENGTH, (char) 0, (char) 0 )
-            != OK ||
-        strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
+    if( mni_input_string( file, &line, (char) 0, (char) 0 ) != OK )
     {
+        delete_string( line );
+        print_error( "input_transform(): could not read header in file.\n");
+        return( ERROR );
+    }
+
+    if( !equal_strings( line, TRANSFORM_FILE_HEADER ) )
+    {
+        delete_string( line );
         print_error( "input_transform(): invalid header in file.\n");
         return( ERROR );
     }
+
+    delete_string( line );
 
     n_transforms = 0;
     while( (status = input_one_transform( file, filename, &next )) == OK )
@@ -632,8 +679,8 @@ public  Status  input_transform(
 ---------------------------------------------------------------------------- */
 
 public  Status  output_transform_file(
-    char                filename[],
-    char                comments[],
+    STRING              filename,
+    STRING              comments,
     General_transform   *transform )
 {
     Status  status;
@@ -670,7 +717,7 @@ public  Status  output_transform_file(
 ---------------------------------------------------------------------------- */
 
 public  Status  input_transform_file(
-    char                filename[],
+    STRING              filename,
     General_transform   *transform )
 {
     Status  status;

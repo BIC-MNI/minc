@@ -24,7 +24,7 @@ int  main()
     int                 i, n_volumes, n_tag_points;
     int                 *structure_ids, *patient_ids;
     Real                **tags1, **tags2, *weights;
-    char                **labels;
+    STRING              *labels;
     General_transform   transform;
 
     /*--- input the two volumes */

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.36 1995-09-26 14:25:12 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.37 1995-10-19 15:47:08 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -28,9 +28,9 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_m
 
 private  Status  get_dimension_ordering(
     int          n_vol_dims,
-    char         *vol_dim_names[],
+    STRING       vol_dim_names[],
     int          n_file_dims,
-    char         *file_dim_names[],
+    STRING       file_dim_names[],
     int          to_volume[],
     int          to_file[] );
 
@@ -99,7 +99,7 @@ private  BOOLEAN  is_default_direction_cosine(
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_output(
-    char                   filename[],
+    STRING                 filename,
     int                    n_dimensions,
     STRING                 dim_names[],
     int                    sizes[],
@@ -122,9 +122,8 @@ public  Minc_file  initialize_minc_output(
     Vector              axes[MAX_DIMENSIONS];
     static  STRING      default_dim_names[] = { { MIzspace }, { MIyspace },
                                                 { MIxspace } };
-    char                *file_dim_names[MAX_VAR_DIMS];
     Transform           transform, t, inverse;
-    char                **vol_dimension_names;
+    STRING              *vol_dimension_names;
     minc_output_options default_options;
 
     if( options == (minc_output_options *) NULL )
@@ -133,7 +132,7 @@ public  Minc_file  initialize_minc_output(
         options = &default_options;
     }
 
-    if( dim_names == (STRING *) NULL )
+    if( dim_names == NULL )
     {
         if( n_dimensions != 3 )
         {
@@ -181,9 +180,11 @@ public  Minc_file  initialize_minc_output(
     file->entire_file_written = FALSE;
     file->ignoring_because_cached = FALSE;
 
+    file->filename = expand_filename( filename );
+
     if( volume_to_attach->is_cached_volume &&
         volume_to_attach->cache.output_file_is_open &&
-        strcmp( volume_to_attach->cache.output_filename, filename ) == 0 )
+        equal_strings( volume_to_attach->cache.output_filename, file->filename))
     {
         file->ignoring_because_cached = TRUE;
         return( file );
@@ -194,24 +195,24 @@ public  Minc_file  initialize_minc_output(
     vol_dimension_names = get_volume_dimension_names( volume_to_attach );
 
     for_less( d, 0, n_dimensions )
-        file_dim_names[d] = dim_names[d];
+        dim_names[d] = dim_names[d];
 
     if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
-                                n_dimensions, file_dim_names,
+                                n_dimensions, dim_names,
                             file->to_volume_index, file->to_file_index ) != OK )
     {
         FREE( file );
         return( (Minc_file) NULL );
     }
 
-    delete_dimension_names( vol_dimension_names );
+    delete_dimension_names( volume_to_attach, vol_dimension_names );
 
     /*--- check if image range specified */
 
     if( options->global_image_range[0] >= options->global_image_range[1] )
     {
         n_range_dims = n_dimensions - 2;
-        if( strcmp( dim_names[n_dimensions-1], MIvector_dimension ) == 0 )
+        if( equal_strings( dim_names[n_dimensions-1], MIvector_dimension ) )
             --n_range_dims;
 
         for_less( d, n_range_dims, n_dimensions )
@@ -247,11 +248,12 @@ public  Minc_file  initialize_minc_output(
     /*--- create the file */
 
     ncopts = NC_VERBOSE;
-    file->cdfid =  micreate( filename, NC_CLOBBER );
+
+    file->cdfid =  micreate( file->filename, NC_CLOBBER );
 
     if( file->cdfid == MI_ERROR )
     {
-        print_error( "Error: opening MINC file \"%s\".\n", filename );
+        print_error( "Error: opening MINC file \"%s\".\n", file->filename );
         return( (Minc_file) 0 );
     }
 
@@ -314,8 +316,7 @@ public  Minc_file  initialize_minc_output(
     {
         file->sizes_in_file[d] = sizes[d];
         file->indices[d] = 0;
-        ALLOC( file->dim_names[d], strlen(dim_names[d]) + 1 );
-        (void) strcpy( file->dim_names[d], dim_names[d] );
+        file->dim_names[d] = create_string( dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
         if( convert_dim_name_to_spatial_axis( dim_names[d], &axis ) )
@@ -415,23 +416,29 @@ public  Minc_file  initialize_minc_output(
 
 public  Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
-    char        filename[],
-    char        history_string[] )
+    STRING      filename,
+    STRING      history_string )
 {
     Status  status;
     int     src_cdfid;
+    STRING  expanded;
 
     if( file->ignoring_because_cached )
         return( OK );
 
     ncopts = NC_VERBOSE;
-    src_cdfid =  miopen( filename, NC_NOWRITE );
+
+    expanded = expand_filename( filename );
+
+    src_cdfid =  miopen( expanded, NC_NOWRITE );
 
     if( src_cdfid == MI_ERROR )
     {
-        print_error( "Error opening %s\n", filename );
+        print_error( "Error opening %s\n", expanded );
         return( ERROR );
     }
+
+    delete_string( expanded );
 
     status = copy_auxiliary_data_from_open_minc_file( file, src_cdfid,
                                                       history_string );
@@ -462,7 +469,7 @@ public  Status  copy_auxiliary_data_from_minc_file(
 public  Status  copy_auxiliary_data_from_open_minc_file(
     Minc_file   file,
     int         src_cdfid,
-    char        history_string[] )
+    STRING      history_string )
 {
     int     src_img_var, varid, n_excluded, excluded_vars[10];
     int     src_min_id, src_max_id, src_root_id;
@@ -558,11 +565,11 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
 
 public  Status  add_minc_history(
     Minc_file   file,
-    char        history_string[] )
+    STRING      history_string )
 {
-    int      att_length;
+    int      new_att_length, old_att_length;
     nc_type  datatype;
-    char     *new_history;
+    STRING   new_history;
 
     if( file->ignoring_because_cached )
         return( OK );
@@ -575,31 +582,30 @@ public  Status  add_minc_history(
 
     ncopts = 0;
 
-    if( ncattinq(file->cdfid, NC_GLOBAL, MIhistory, &datatype, &att_length)
+    if( ncattinq(file->cdfid, NC_GLOBAL, MIhistory, &datatype, &old_att_length)
                                                           == MI_ERROR ||
         datatype != NC_CHAR )
     {
-        att_length = 0;
+        old_att_length = 0;
     }
 
-    att_length += strlen(history_string) + 1;
+    new_att_length = old_att_length + string_length(history_string);
 
     /* Allocate a string and get the old history */
 
-    ALLOC( new_history, att_length );
+    new_history = alloc_string( new_att_length );
 
-    new_history[0] = '\0';
-
-    (void) miattgetstr( file->cdfid, NC_GLOBAL, MIhistory, att_length,
+    (void) miattgetstr( file->cdfid, NC_GLOBAL, MIhistory, old_att_length+1,
                         new_history );
 
     /* Add the new command and put the new history. */
-    (void) strcat( new_history, history_string );
+
+    concat_to_string( &new_history, history_string );
 
     ncopts = NC_VERBOSE | NC_FATAL;
     (void) miattputstr( file->cdfid, NC_GLOBAL, MIhistory, new_history );
 
-    FREE( new_history );
+    delete_string( new_history );
 
     return( OK );
 }
@@ -624,9 +630,9 @@ public  Status  add_minc_history(
 
 private  Status  get_dimension_ordering(
     int          n_vol_dims,
-    char         *vol_dim_names[],
+    STRING       vol_dim_names[],
     int          n_file_dims,
-    char         *file_dim_names[],
+    STRING       file_dim_names[],
     int          to_volume[],
     int          to_file[] )
 {
@@ -1074,7 +1080,7 @@ private  Status  output_the_volume(
     long              file_indices[MAX_VAR_DIMS];
     long              count[MAX_VAR_DIMS];
     Real              real_min, real_max;
-    char              **vol_dimension_names;
+    STRING            *vol_dimension_names;
     BOOLEAN           increment;
     progress_struct   progress;
 
@@ -1100,7 +1106,7 @@ private  Status  output_the_volume(
                                      file->n_file_dimensions, file->dim_names,
                                      to_volume_index, to_file_index );
 
-    delete_dimension_names( vol_dimension_names );
+    delete_dimension_names( volume, vol_dimension_names );
 
     if( status != OK )
         return( ERROR );
@@ -1427,8 +1433,10 @@ public  Status  close_minc_output(
         (void) miicv_free( file->minc_icv );
 
         for_less( d, 0, file->n_file_dimensions )
-            FREE( file->dim_names[d] );
+            delete_string( file->dim_names[d] );
     }
+
+    delete_string( file->filename );
 
     FREE( file );
 
@@ -1454,9 +1462,31 @@ public  void  set_default_minc_output_options(
     int   i;
 
     for_less( i, 0, MAX_DIMENSIONS )
-        (void) strcpy( options->dimension_names[i], "" );
+        options->dimension_names[i] = NULL;
     options->global_image_range[0] = 0.0;
     options->global_image_range[1] = -1.0;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_minc_output_options
+@INPUT      : options
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes the minc output options.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  delete_default_minc_output_options(
+    minc_output_options  *options           )
+{
+    int   i;
+
+    for_less( i, 0, MAX_DIMENSIONS )
+        delete_string( options->dimension_names[i] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1483,7 +1513,10 @@ public  void  set_minc_output_dimensions_order(
     int   i;
 
     for_less( i, 0, n_dimensions )
-        (void) strcpy( options->dimension_names[i], dimension_names[i] );
+    {
+        replace_string( &options->dimension_names[i],
+                        create_string(dimension_names[i]) );
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------

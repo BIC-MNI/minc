@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.15 1995-08-19 18:57:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.16 1995-10-19 15:47:09 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -25,6 +25,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_v
 @OUTPUT     : dim_names
 @RETURNS    : OK or ERROR
 @DESCRIPTION: Gets the names of the dimensions from the specified file.
+              dim_names is an array of STRINGS, where the array has been
+              allocated, but not each string.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -33,17 +35,16 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_v
 ---------------------------------------------------------------------------- */
 
 public  Status   get_file_dimension_names(
-    char     filename[],
+    STRING   filename,
     int      n_dims,
     STRING   dim_names[] )
 {
-    static  char   *any_names[MAX_DIMENSIONS] = { "", "", "", "", "" };
     int                   i;
     Status                status;
     volume_input_struct   volume_input;
     Volume                tmp_volume;
 
-    status = start_volume_input( filename, n_dims, any_names,
+    status = start_volume_input( filename, n_dims, File_order_dimension_names,
                                  NC_UNSPECIFIED, FALSE, 0.0, 0.0,
                                  TRUE, &tmp_volume, (minc_input_options *) NULL,
                                  &volume_input );
@@ -51,7 +52,9 @@ public  Status   get_file_dimension_names(
     if( status == OK )
     {
         for_less( i, 0, n_dims )
-            (void) strcpy( dim_names[i], volume_input.minc_file->dim_names[i] );
+        {
+            dim_names[i] = create_string( volume_input.minc_file->dim_names[i]);
+        }
 
         delete_volume_input( &volume_input );
         delete_volume( tmp_volume );
@@ -88,14 +91,14 @@ public  Status   get_file_dimension_names(
 ---------------------------------------------------------------------------- */
 
 public  Status  output_modified_volume(
-    char                  filename[],
+    STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,
-    char                  original_filename[],
-    char                  history[],
+    STRING                original_filename,
+    STRING                history,
     minc_output_options   *options )
 {
     Status               status;
@@ -104,9 +107,10 @@ public  Status  output_modified_volume(
     int                  vol_sizes[MAX_DIMENSIONS];
     int                  i, j, n_found;
     Real                 real_min, real_max;
-    char                 **vol_dimension_names;
+    STRING               *vol_dimension_names;
     BOOLEAN              done[MAX_DIMENSIONS], copy_original_file_data;
     STRING               dim_names[MAX_DIMENSIONS];
+    STRING               full_filename, full_original_filename;
     minc_output_options  used_options;
 
     get_volume_sizes( volume, vol_sizes );
@@ -117,7 +121,7 @@ public  Status  output_modified_volume(
     /*--- either get the output dim name ordering from the original
           filename, the volume, or the options */
 
-    if( options == NULL || strlen( options->dimension_names[0] ) == 0 )
+    if( options == NULL || string_length( options->dimension_names[0] ) == 0 )
     {
         if( original_filename != NULL && file_exists(original_filename) )
         {
@@ -128,13 +132,13 @@ public  Status  output_modified_volume(
         else
         {
             for_less( i, 0, n_dims )
-                (void) strcpy( dim_names[i], vol_dimension_names[i] );
+                dim_names[i] = create_string( vol_dimension_names[i] );
         }
     }
     else
     {
         for_less( i, 0, n_dims )
-            (void) strcpy( dim_names[i], options->dimension_names[i] );
+            dim_names[i] = create_string( options->dimension_names[i] );
     }
 
     n_found = 0;
@@ -155,12 +159,16 @@ public  Status  output_modified_volume(
         }
     }
 
-    delete_dimension_names( vol_dimension_names );
+    delete_dimension_names( volume, vol_dimension_names );
 
     if( n_found != n_dims )
     {
         print_error(
                  "output_modified_volume: invalid dimension names option.\n" );
+
+        for_less( i, 0, n_dims )
+            delete_string( dim_names[i] );
+
         return( ERROR );
     }
 
@@ -192,16 +200,17 @@ public  Status  output_modified_volume(
 
     if( original_filename != NULL )
     {
-        STRING  full_filename, full_original_filename;
+        full_filename = expand_filename( filename );
+        full_original_filename = expand_filename( original_filename );
 
-        expand_filename( filename, full_filename );
-        expand_filename( original_filename, full_original_filename );
-
-        if( strcmp( full_filename, full_original_filename ) != 0 &&
+        if( !equal_strings( full_filename, full_original_filename ) &&
             file_exists( full_original_filename ) )
         {
             copy_original_file_data = TRUE;
         }
+
+        delete_string( full_filename );
+        delete_string( full_original_filename );
     }
 
     if( status == OK && copy_original_file_data )
@@ -210,7 +219,7 @@ public  Status  output_modified_volume(
                                                      original_filename,
                                                      history );
     }
-    else if( status == OK && history != (char *) NULL )
+    else if( status == OK && history != NULL )
         status = add_minc_history( minc_file, history );
 
     if( status == OK )
@@ -218,6 +227,9 @@ public  Status  output_modified_volume(
 
     if( status == OK )
         status = close_minc_output( minc_file );
+
+    for_less( i, 0, n_dims )
+        delete_string( dim_names[i] );
 
     return( status );
 }
@@ -244,17 +256,17 @@ public  Status  output_modified_volume(
 ---------------------------------------------------------------------------- */
 
 public  Status  output_volume(
-    char                  filename[],
+    STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,
-    char                  history[],
+    STRING                history,
     minc_output_options   *options )
 {
     return( output_modified_volume( filename, file_nc_data_type,
                                     file_signed_flag,
                                     file_voxel_min, file_voxel_max,
-                                    volume, (char *) NULL, history, options ) );
+                                    volume, NULL, history, options ) );
 }

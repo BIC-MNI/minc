@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.23 1995-07-31 13:44:33 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.24 1995-10-19 15:46:41 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -126,9 +126,7 @@ typedef  int             BOOLEAN;
 
 typedef  double          Real;
 
-#define  MAX_STRING_LENGTH    200
-
-typedef  char     STRING[MAX_STRING_LENGTH+1];
+typedef  char            *STRING;
 
 /* --------------- */
 

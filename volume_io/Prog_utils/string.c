@@ -15,8 +15,148 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.7 1995-07-31 13:44:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.8 1995-10-19 15:46:46 david Exp $";
 #endif
+
+private  const  STRING  empty_string = "";
+
+public  STRING  alloc_string(
+    int   length )
+{
+    STRING   str;
+
+    ALLOC( str, length+1 );
+
+    return( str );
+}
+
+public  STRING  create_string(
+    STRING    initial )
+{
+    STRING   str;
+
+    if( initial == NULL )
+        initial = empty_string;
+
+    str = alloc_string( string_length(initial) );
+
+    (void) strcpy( str, initial );
+
+    return( str );
+}
+
+public  void  delete_string(
+    STRING   string )
+{
+    if( string != NULL )
+        FREE( string );
+}
+
+public  STRING  concat_strings(
+    STRING   str1,
+    STRING   str2 )
+{
+    STRING  str;
+
+    if( str1 == NULL )
+        str1 = empty_string;
+
+    if( str2 == NULL )
+        str2 = empty_string;
+
+    ALLOC( str, string_length(str1) + string_length(str2) + 1 );
+
+    (void) strcpy( str, str1 );
+    (void) strcat( str, str2 );
+
+    return( str );
+}
+
+public  void  replace_string(
+    STRING   *string,
+    STRING   new_string )
+{
+    delete_string( *string );
+    *string = new_string;
+}
+
+public  void  concat_char_to_string(
+    STRING   *string,
+    char     ch )
+{
+    int  len;
+
+    len = string_length( *string );
+
+    if( *string == NULL )
+        *string = alloc_string( 1 );
+    else
+        SET_ARRAY_SIZE( *string, len+1, len+2, 1 );
+
+    (*string)[len] = ch;
+    (*string)[len+1] = END_OF_STRING;
+}
+
+public  void  concat_to_string(
+    STRING   *string,
+    STRING   str2 )
+{
+    STRING  new_string;
+
+    new_string = concat_strings( *string, str2 );
+    replace_string( string, new_string );
+}
+
+public  int  string_length(
+    STRING   string )
+{
+    if( string == NULL )
+        return( 0 );
+    else
+        return( (int) strlen( string ) );
+}
+
+public  BOOLEAN  equal_strings(
+    STRING   str1,
+    STRING   str2 )
+{
+    if( str1 == NULL )
+        str1 = empty_string;
+    if( str2 == NULL )
+        str2 = empty_string;
+
+    return( strcmp( str1, str2 ) == 0 );
+}
+
+public  BOOLEAN  is_lower_case(
+    char  ch )
+{
+    return( ch >= 'a' && ch <= 'z' );
+}
+
+public  BOOLEAN  is_upper_case(
+    char  ch )
+{
+    return( ch >= 'A' && ch <= 'Z' );
+}
+
+public  char  get_lower_case(
+    char   ch )
+{
+    if( is_upper_case( ch ) )
+        return( (char) ((ch)+'a'-'A') );
+    else
+        return( ch );
+}
+
+public  char  get_upper_case(
+    char   ch )
+{
+    if( is_lower_case( ch ) )
+        return( (char) ((ch)+'A'-'a') );
+    else
+        return( ch );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : string_ends_in
@@ -34,14 +174,14 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/strin
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  string_ends_in(
-    char   string[],
-    char   ending[] )
+    STRING   string,
+    STRING   ending )
 {
     int      len_string, len_ending;
     BOOLEAN  ending_present;
 
-    len_string = strlen( string );
-    len_ending = strlen( ending );
+    len_string = string_length( string );
+    len_ending = string_length( ending );
 
     if( len_ending > len_string )
         ending_present = FALSE;
@@ -66,13 +206,13 @@ public  BOOLEAN  string_ends_in(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public    void   strip_outer_blanks(
-    char  str[],
-    char  stripped[] )
+public    STRING   strip_outer_blanks(
+    STRING  str )
 {
+    STRING  stripped;
     int  i, first_non_blank, last_non_blank, len;
 
-    len = strlen( str );
+    len = string_length( str );
 
     /* --- skip leading blanks */
 
@@ -92,10 +232,17 @@ public    void   strip_outer_blanks(
 
     /* --- now copy string, without leading or trailing blanks */
 
+    if( first_non_blank > last_non_blank )
+        last_non_blank = first_non_blank - 1;
+
+    stripped = alloc_string( last_non_blank - first_non_blank + 1 );
+
     for_inclusive( i, first_non_blank, last_non_blank )
         stripped[i-first_non_blank] = str[i];
 
-    stripped[last_non_blank - first_non_blank + 1] = (char) 0;
+    stripped[last_non_blank - first_non_blank + 1] = END_OF_STRING;
+
+    return( stripped );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -113,16 +260,16 @@ public    void   strip_outer_blanks(
 ---------------------------------------------------------------------------- */
 
 public  int  find_character(
-    char    string[],
-    char    ch )
+    STRING    string,
+    char      ch )
 {
     int   i;
 
-    if( string == (char *) NULL )
+    if( string == NULL )
         return( -1 );
 
     i = 0;
-    while( string[i] != (char) 0 )
+    while( string[i] != END_OF_STRING )
     {
         if( string[i] == ch )
             return( i );
@@ -133,12 +280,11 @@ public  int  find_character(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_upper_case_string
+@NAME       : make_string_upper_case
 @INPUT      : string
-@OUTPUT     : upper_case
+@OUTPUT     : string
 @RETURNS    : 
-@DESCRIPTION: Converts every lower case character in string to upper case,
-            : with the result in "upper_case".
+@DESCRIPTION: Converts every lower case character in string to upper case.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -146,20 +292,17 @@ public  int  find_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_upper_case_string(
-    char    string[],
-    char    upper_case[] )
+public  void  make_string_upper_case(
+    STRING    string )
 {
     int   i, len;
 
-    len = strlen( string );
+    len = string_length( string );
 
     for_less( i, 0, len )
     {
-        upper_case[i] = GET_UPPER_CASE( string[i] );
+        string[i] = get_upper_case( string[i] );
     }
-
-    upper_case[i] = (char) 0;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -177,14 +320,17 @@ public  void  get_upper_case_string(
 ---------------------------------------------------------------------------- */
 
 public  BOOLEAN  blank_string(
-    char   string[] )
+    STRING   string )
 {
     int      i;
     BOOLEAN  blank;
 
+    if( string == NULL )
+        string = empty_string;
+
     blank = TRUE;
     i = 0;
-    while( string[i] != (char) 0 )
+    while( string[i] != END_OF_STRING )
     {
         if( string[i] != ' ' && string[i] != '\t' && string[i] != '\n' )
         {

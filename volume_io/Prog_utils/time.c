@@ -19,7 +19,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.15 1995-07-31 13:44:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.16 1995-10-19 15:46:46 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -155,16 +155,16 @@ public  Real  current_realtime_seconds( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  format_time(
-    char   str[],
-    char   format[],
-    Real   seconds )
+public  STRING  format_time(
+    STRING   format,
+    Real     seconds )
 {
-    int     i;
-    static  char   *units[] = { "us", "ms", "sec", "min", "hrs",
-                                "days", "years"
-                              };
-    static  Real   scales[] = { 1000.0, 1000.0, 60.0, 60.0, 24.0, 365.0 };
+    int      i;
+    static   char   *units[] = { "us", "ms", "sec", "min", "hrs",
+                                 "days", "years"
+                               };
+    static   Real   scales[] = { 1000.0, 1000.0, 60.0, 60.0, 24.0, 365.0 };
+    char     buffer[EXTREMELY_LARGE_STRING_SIZE];
     BOOLEAN  negative;
 
     negative = seconds < 0.0;
@@ -188,7 +188,9 @@ public  void  format_time(
 
     if( negative )  seconds = -seconds;
 
-    (void) sprintf( str, format, seconds, units[i] );
+    (void) sprintf( buffer, format, seconds, units[i] );
+
+    return( create_string( buffer ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -206,14 +208,16 @@ public  void  format_time(
 ---------------------------------------------------------------------------- */
 
 public  void  print_time(
-    char   format[],
-    Real   seconds )
+    STRING   format,
+    Real     seconds )
 {
     STRING  str;
 
-    format_time( str, format, seconds );
+    str = format_time( format, seconds );
 
     print( "%s", str );
+
+    delete_string( str );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -229,8 +233,7 @@ public  void  print_time(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_clock_time(
-    char  time_str[] )
+public  STRING  get_clock_time()
 {
     time_t           clock_time;
     struct  tm       *time_tm;
@@ -245,7 +248,7 @@ public  void  get_clock_time(
 
     str = asctime( time_tm );
 
-    (void) strcpy( time_str, str );
+    return( create_string( str ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -302,8 +305,7 @@ public  void  sleep_program( Real seconds )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_date(
-    char  date_str[] )
+public  STRING  get_date()
 {
     time_t           clock_time;
     struct  tm       *time_tm;
@@ -318,5 +320,5 @@ public  void  get_date(
 
     str = asctime( time_tm );
 
-    (void) strcpy( date_str, str );
+    return( create_string( str ) );
 }

@@ -16,12 +16,12 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.10 1995-07-31 13:44:41 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.11 1995-10-19 15:46:45 david Exp $";
 #endif
 
 #define  MAX_PRINT_STACK  100
 
-typedef  void (*print_function_type) ( char [] );
+typedef  void (*print_function_type) ( STRING );
 
 private  print_function_type  print_function[MAX_PRINT_STACK] = { NULL };
 private  int                  top_of_stack = 0;
@@ -46,7 +46,7 @@ private  int                  top_of_error_stack = 0;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_print_function( void  (*function) ( char [] ) )
+public  void  set_print_function( void  (*function) ( STRING ) )
 {
     print_function[top_of_stack] = function;
 }
@@ -113,10 +113,10 @@ public  void  pop_print_function()
 ---------------------------------------------------------------------------- */
 
 /* VARARGS */
-public  void  print( char format[], ... )
+public  void  print( STRING format, ... )
 {
     va_list  ap;
-    char     print_buffer[10000];
+    char     print_buffer[EXTREMELY_LARGE_STRING_SIZE];
 
     va_start( ap, format );
     (void) vsprintf( print_buffer, format, ap );
@@ -215,7 +215,7 @@ public  void  pop_print_error_function()
 public  void  print_error( char format[], ... )
 {
     va_list  ap;
-    char     print_buffer[10000];
+    char     print_buffer[EXTREMELY_LARGE_STRING_SIZE];
 
     va_start( ap, format );
     (void) vsprintf( print_buffer, format, ap );

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.38 1995-08-19 18:57:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.39 1995-10-19 15:47:02 david Exp $";
 #endif
 
 #include  <minc.h>
@@ -41,9 +41,9 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_vo
 ---------------------------------------------------------------------------- */
 
 public  Status  start_volume_input(
-    char                 filename[],
+    STRING               filename,
     int                  n_dimensions,
-    char                 *dim_names[],
+    STRING               dim_names[],
     nc_type              volume_nc_data_type,
     BOOLEAN              volume_signed_flag,
     Real                 volume_voxel_min,
@@ -55,9 +55,9 @@ public  Status  start_volume_input(
 {
     Status          status;
     int             d;
-    STRING          expanded_filename, minc_filename;
+    STRING          expanded_filename;
 
-    if( dim_names == (char **) NULL )
+    if( dim_names == (STRING *) NULL )
         dim_names = get_default_dim_names( n_dimensions );
 
     status = OK;
@@ -72,7 +72,7 @@ public  Status  start_volume_input(
              volume_is_alloced( *volume ) )
         free_volume_data( *volume );
 
-    expand_filename( filename, expanded_filename );
+    expanded_filename = expand_filename( filename );
 
     if( !filename_extension_matches( expanded_filename, FREE_ENDING ) )
         input_info->file_format = MNC_FORMAT;
@@ -82,12 +82,10 @@ public  Status  start_volume_input(
     switch( input_info->file_format )
     {
     case  MNC_FORMAT:
-        if( file_exists( expanded_filename ) )
-            (void) strcpy( minc_filename, expanded_filename );
-        else
+        if( !file_exists( expanded_filename ) )
         {
-            (void)  file_exists_as_compressed( expanded_filename,
-                                               expanded_filename );
+            (void) file_exists_as_compressed( expanded_filename,
+                                              &expanded_filename );
         }
 
         input_info->minc_file = initialize_minc_input( expanded_filename,
@@ -110,6 +108,8 @@ public  Status  start_volume_input(
 
     if( status != OK && create_volume_flag )
         delete_volume( *volume );
+
+    delete_string( expanded_filename );
 
     return( status );
 }
@@ -210,9 +210,9 @@ public  void  cancel_volume_input(
 ---------------------------------------------------------------------------- */
 
 public  Status  input_volume(
-    char                 filename[],
+    STRING               filename,
     int                  n_dimensions,
-    char                 *dim_names[],
+    STRING               dim_names[],
     nc_type              volume_nc_data_type,
     BOOLEAN              volume_signed_flag,
     Real                 volume_voxel_min,

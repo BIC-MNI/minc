@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.9 1995-07-31 13:44:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.10 1995-10-19 15:47:17 david Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -121,26 +121,28 @@ public  Status  mni_skip_expected_character(
 ---------------------------------------------------------------------------- */
 
 public  Status  mni_input_line(
-    FILE   *file,
-    char   string[],
-    int    max_length )
+    FILE     *file,
+    STRING   *string )
 {
     Status   status;
-    int      len;
     char     ch;
 
-    len = 0;
+    *string = create_string( NULL );
 
     status = input_character( file, &ch );
 
-    while( status == OK && len < max_length-1 && ch != '\n' )
+    while( status == OK && ch != '\n' )
     {
-        string[len] = ch;
-        ++len;
+        concat_char_to_string( string, ch );
+
         status = input_character( file, &ch );
     }
 
-    string[len] = (char) 0;
+    if( status != OK )
+    {
+        delete_string( *string );
+        *string = NULL;
+    }
 
     return( status );
 }
@@ -165,18 +167,17 @@ public  Status  mni_input_line(
 ---------------------------------------------------------------------------- */
 
 public  Status  mni_input_string(
-    FILE   *file,
-    char   string[],
-    int    max_length,
-    char   termination_char1,
-    char   termination_char2 )
+    FILE     *file,
+    STRING   *string,
+    char     termination_char1,
+    char     termination_char2 )
 {
     Status   status;
-    int      len;
     char     ch;
     BOOLEAN  quoted;
 
-    len = 0;
+    *string = create_string( NULL );
+
     status = mni_get_nonwhite_character( file, &ch );
 
     if( status == OK && ch == '"' )
@@ -190,21 +191,24 @@ public  Status  mni_input_string(
         quoted = FALSE;
 
     while( status == OK &&
-           len < max_length-1 &&
            ch != termination_char1 && ch != termination_char2 && ch != '\n' )
     {
-        string[len] = ch;
-        ++len;
+        concat_char_to_string( string, ch );
         status = input_character( file, &ch );
     }
 
     if( !quoted )
         (void) unget_character( file, ch );
 
-    while( len > 0 && string[len-1] == ' ' )
-        --len;
+    while( string_length(*string) > 0 &&
+           (*string)[string_length(*string)-1] == ' ' )
+        (*string)[string_length(*string)-1] = END_OF_STRING;
 
-    string[len] = (char) 0;
+    if( status != OK )
+    {
+        delete_string( *string );
+        *string = NULL;
+    }
 
     return( status );
 }
@@ -233,19 +237,20 @@ public  Status  mni_input_keyword_and_equal_sign(
     Status     status;
     STRING     str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
-                               (char) 0 );
+    status = mni_input_string( file, &str, (char) '=', (char) 0 );
 
     if( status == END_OF_FILE )
         return( status );
 
-    if( status != OK || strcmp( str, keyword ) != 0 ||
+    if( status != OK || !equal_strings( str, (STRING) keyword ) ||
         mni_skip_expected_character( file, (char) '=' ) != OK )
     {
         if( print_error_message )
             print_error( "Expected \"%s =\"\n", keyword );
         status = ERROR;
     }
+
+    delete_string( str );
 
     return( status );
 }
@@ -269,7 +274,7 @@ public  Status  mni_input_keyword_and_equal_sign(
 
 private  void  unget_string(
     FILE    *file,
-    char    str[] )
+    STRING  str )
 {
     int  len;
 
@@ -278,7 +283,7 @@ private  void  unget_string(
     while( str[len] == ' ' || str[len] == '\t' )
         ++len;
 
-    if( str[len] != (char) 0 )
+    if( str[len] != END_OF_STRING )
         (void) unget_character( file, str[len] );
 }
 
@@ -302,14 +307,15 @@ public  Status  mni_input_real(
     Status   status;
     STRING   str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH,
-                               (char) ' ', (char) ';' );
+    status = mni_input_string( file, &str, (char) ' ', (char) ';' );
 
     if( status == OK && sscanf( str, "%lf", d ) != 1 )
     {
         unget_string( file, str );
         status = ERROR;
     }
+
+    delete_string( str );
 
     return( status );
 }
@@ -366,14 +372,15 @@ public  Status  mni_input_int(
     Status   status;
     STRING   str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH, (char) ' ',
-                               (char) ';' );
+    status = mni_input_string( file, &str, (char) ' ', (char) ';' );
 
     if( status == OK && sscanf( str, "%d", i ) != 1 )
     {
         unget_string( file, str );
         status = ERROR;
     }
+
+    delete_string( str );
 
     return( status );
 }
@@ -396,14 +403,14 @@ public  Status  mni_input_int(
 ---------------------------------------------------------------------------- */
 
 public  void  output_comments(
-    FILE   *file,
-    char   comments[] )
+    FILE     *file,
+    STRING   comments )
 {
     int   i, len;
 
-    if( comments != (char *) NULL )
+    if( comments != NULL )
     {
-        len = strlen( comments );
+        len = string_length( comments );
 
         (void) output_character( file, COMMENT_CHAR1 );
         for( i = 0;  i < len;  ++i )

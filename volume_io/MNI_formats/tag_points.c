@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.17 1995-10-18 16:26:00 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.18 1995-10-19 15:47:13 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -41,6 +41,160 @@ public  STRING  get_default_tag_file_suffix()
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_tag_file_output
+@INPUT      : file
+              comments
+              n_volumes
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Writes the header and first part of a tag file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 19, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  initialize_tag_file_output(
+    FILE      *file,
+    STRING    comments,
+    int       n_volumes )
+{
+    Status   status;
+
+    /* parameter checking */
+
+    status = OK;
+
+    if( file == NULL )
+    {
+        print_error( "start_writing_tags(): passed NULL FILE ptr.\n");
+        status = ERROR;
+    }
+
+    if( n_volumes != 1 && n_volumes != 2 )
+    {
+        print_error( "output_tag_points():" );
+        print_error( " can only support 1 or 2 volumes;\n" );
+        print_error( "     you've supplied %d.\n", n_volumes );
+        status = ERROR;
+    }
+
+    if( status == OK )
+    {
+        /* okay write the file header and tag points header */
+
+        (void) fprintf( file, "%s\n", TAG_FILE_HEADER );
+        (void) fprintf( file, "%s = %d;\n", VOLUMES_STRING, n_volumes );
+        output_comments( file, comments );
+        (void) fprintf( file, "\n" );
+
+        (void) fprintf( file, "%s =", TAG_POINTS_STRING );
+    }
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_one_tag
+@INPUT      : file
+              n_volumes
+              tag_volume1
+              tag_volume2
+              weight        - NULL if not desired to specify
+              structure_id  - NULL if not desired to specify
+              patient_id    - NULL if not desired to specify
+              label         - NULL if not desired to specify
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Writes one tag to the output.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 19, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  output_one_tag(
+    FILE      *file,
+    int       n_volumes,
+    Real      tag_volume1[],
+    Real      tag_volume2[],
+    Real      *weight,
+    int       *structure_id,
+    int       *patient_id,
+    STRING    label )
+{
+    Status   status;
+    BOOLEAN  aux_present;
+
+    /* parameter checking */
+
+    status = OK;
+
+    (void) fprintf( file, "\n %.8g %.8g %.8g",
+                    tag_volume1[0],
+                    tag_volume1[1],
+                    tag_volume1[2] );
+
+    if( n_volumes >= 2 )
+    {
+        (void) fprintf( file, " %.8g %.8g %.8g",
+                        tag_volume2[0],
+                        tag_volume2[1],
+                        tag_volume2[2] );
+    }
+
+    /*--- decide whether to output the 3 numerical information */
+
+    aux_present = (weight != NULL ||
+                   structure_id != NULL ||
+                   patient_id != NULL);
+
+    if( aux_present )
+    {
+        if( weight != (Real *) NULL )
+            (void) fprintf( file, " %g", *weight );
+        else
+            (void) fprintf( file, " %g", 0.0 );
+
+        if( structure_id != NULL )
+            (void) fprintf( file, " %d", *structure_id );
+        else
+            (void) fprintf( file, " %d", -1 );
+
+        if( patient_id != NULL )
+            (void) fprintf( file, " %d", *patient_id );
+        else
+            (void) fprintf( file, " %d", -1 );
+    }
+
+    if( label != NULL )
+        (void) fprintf( file, " \"%s\"", label );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : terminate_tag_file_output
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Finishes writing the tag file, by placing the closing semicolon.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 19, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  terminate_tag_file_output(
+    FILE    *file )
+{
+    (void) fprintf( file, ";\n" );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_tag_points
 @INPUT      : file
               comments       - may be null
@@ -61,7 +215,7 @@ public  STRING  get_default_tag_file_suffix()
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Oct. 19, 1995   D. MacDonald, now calls the 1 at a time routine
 ---------------------------------------------------------------------------- */
 
 public  Status  output_tag_points(
@@ -78,198 +232,30 @@ public  Status  output_tag_points(
 {
     Status   status;
     int      i;
-    BOOLEAN  aux_present;
 
-    /* parameter checking */
+    status = initialize_tag_file_output( file, comments, n_volumes );
 
-    status = OK;
-
-    if( file == (FILE *) 0 )
+    if( status == OK )
     {
-        (void) fprintf( stderr, "output_tag_points(): passed NULL FILE ptr.\n");
-        status = ERROR;
-    }
-
-    if( n_volumes != 1 && n_volumes != 2 )
-    {
-        (void) fprintf( stderr, "output_tag_points():" );
-        (void) fprintf( stderr, " can only support 1 or 2 volumes;\n" );
-        (void) fprintf( stderr, "     you've supplied %d.\n", n_volumes );
-        status = ERROR;
-    }
-
-    if( n_tag_points < 0 )
-    {
-        (void) fprintf( stderr, "output_tag_points():" );
-        (void) fprintf( stderr, " n_tag_points must be greater than 0;\n" );
-        (void) fprintf( stderr, "     you've supplied %d.\n", n_tag_points );
-        status = ERROR;
-    }
-
-    if( status != OK )
-        return( status );
-
-    /* okay write the file */
-
-    (void) fprintf( file, "%s\n", TAG_FILE_HEADER );
-    (void) fprintf( file, "%s = %d;\n", VOLUMES_STRING, n_volumes );
-    output_comments( file, comments );
-    (void) fprintf( file, "\n" );
-
-    (void) fprintf( file, "%s =\n", TAG_POINTS_STRING );
-
-    aux_present = (weights != (Real *) NULL ||
-                   structure_ids != (int *) NULL ||
-                   patient_ids != (int *) NULL);
-
-    for( i = 0;  i < n_tag_points;  ++i )
-    {
-        (void) fprintf( file, " %.8g %.8g %.8g",
-                        tags_volume1[i][0],
-                        tags_volume1[i][1],
-                        tags_volume1[i][2] );
-
-        if( n_volumes >= 2 )
+        for( i = 0;  i < n_tag_points;  ++i )
         {
-            (void) fprintf( file, " %.8g %.8g %.8g",
-                            tags_volume2[i][0],
-                            tags_volume2[i][1],
-                            tags_volume2[i][2] );
+            status = output_one_tag( file, n_volumes,
+                            tags_volume1 == NULL ? NULL : tags_volume1[i],
+                            tags_volume2 == NULL ? NULL : tags_volume2[i],
+                            weights == NULL ? NULL : &weights[i],
+                            structure_ids == NULL ? NULL : &structure_ids[i],
+                            patient_ids == NULL ? NULL : &patient_ids[i],
+                            labels == NULL ? NULL : labels[i] );
+
+            if( status != OK )
+                break;
         }
-
-        if( aux_present )
-        {
-            if( weights != (Real *) NULL )
-                (void) fprintf( file, " %g", weights[i] );
-            else
-                (void) fprintf( file, " %g", 0.0 );
-
-            if( structure_ids != (int *) NULL )
-                (void) fprintf( file, " %d", structure_ids[i] );
-            else
-                (void) fprintf( file, " %d", -1 );
-
-            if( patient_ids != (int *) NULL )
-                (void) fprintf( file, " %d", patient_ids[i] );
-            else
-                (void) fprintf( file, " %d", -1 );
-        }
-
-        if( labels != (STRING *) NULL )
-            (void) fprintf( file, " \"%s\"", labels[i] );
-
-        if( i == n_tag_points - 1 )
-            (void) fprintf( file, ";" );
-        (void) fprintf( file, "\n" );
     }
 
-    if( n_tag_points == 0 )
-        (void) fprintf( file, ";\n" );
+    if( status == OK )
+        terminate_tag_file_output( file );
 
     return( status );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : add_tag_point
-@INPUT      : n_tag_points
-              x
-              y
-              z
-@OUTPUT     : tags
-@RETURNS    : 
-@DESCRIPTION: Adds the tag point to the tags, after increasing the size of the
-              array.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  add_tag_point(
-    Real    ***tags,
-    int     n_tag_points,
-    Real    x,
-    Real    y,
-    Real    z )
-{
-    SET_ARRAY_SIZE( *tags, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE );
-
-    ALLOC( (*tags)[n_tag_points], 3 );
-
-    (*tags)[n_tag_points][0] = x;
-    (*tags)[n_tag_points][1] = y;
-    (*tags)[n_tag_points][2] = z;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : add_tag_weight
-@INPUT      : n_tag_points
-              weight
-@OUTPUT     : weights
-@RETURNS    : 
-@DESCRIPTION: Adds the weight to the array, increasing size as needed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  add_tag_weight(
-    Real    **weights,
-    int     n_tag_points,
-    Real    weight )
-{
-    SET_ARRAY_SIZE( *weights, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
-    (*weights)[n_tag_points] = weight;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : add_tag_id
-@INPUT      : n_tag_points
-              id
-@OUTPUT     : ids
-@RETURNS    : 
-@DESCRIPTION: Adds the id to the array, increasing size as needed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  add_tag_id(
-    int  **ids,
-    int  n_tag_points,
-    int  id )
-{
-    SET_ARRAY_SIZE( *ids, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
-    (*ids)[n_tag_points] = id;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : add_tag_label
-@INPUT      : n_tag_points
-              label
-@OUTPUT     : labels
-@RETURNS    : 
-@DESCRIPTION: Adds the label to the array, increasing size as needed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  add_tag_label(
-    STRING  *labels[],
-    int     n_tag_points,
-    STRING  label )
-{
-    SET_ARRAY_SIZE( *labels, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
-
-    (*labels)[n_tag_points] = create_string( label );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -411,50 +397,29 @@ private  STRING  extract_label(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : input_tag_points
+@NAME       : initialize_tag_file_input
 @INPUT      : file
 @OUTPUT     : n_volumes
-              n_tag_points
-              tags_volume1
-              tags_volume2
-              weights
-              structure_ids
-              patient_ids
-              labels
 @RETURNS    : OK or ERROR
-@DESCRIPTION: Inputs the file and passes back the data.  The last four arguments
-              can each be set to NULL if the corresponding information is not
-              desired.
+@DESCRIPTION: Reads the tag file header and first part of file.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    : Oct. 19, 1995    David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_tag_points(
+public  Status  initialize_tag_file_input(
     FILE      *file,
-    int       *n_volumes,
-    int       *n_tag_points,
-    Real      ***tags_volume1,
-    Real      ***tags_volume2,
-    Real      **weights,
-    int       **structure_ids,
-    int       **patient_ids,
-    STRING    *labels[] )
+    int       *n_volumes )
 {
     STRING  line;
-    Real    weight;
-    BOOLEAN last_was_blank, in_quotes;
-    int     n_strings, structure_id, patient_id, pos, i;
-    Real    x1, y1, z1, x2, y2, z2;
-    STRING  label;
 
     /* parameter checking */
 
     if( file == NULL )
     {
-        (void) fprintf( stderr, "input_tag_points(): passed NULL FILE ptr.\n");
+        print_error( "initialize_tag_file_input(): passed NULL FILE ptr.\n");
         return( ERROR );
     }
 
@@ -463,7 +428,7 @@ public  Status  input_tag_points(
     if( mni_input_string( file, &line, (char) 0, (char) 0 ) != OK ||
         !equal_strings( line, (STRING) TAG_FILE_HEADER ) )
     {
-        (void) fprintf(stderr, "input_tag_points(): invalid header in file.\n");
+        print_error( "input_tag_points(): invalid header in file.\n");
         delete_string( line );
         return( ERROR );
     }
@@ -477,9 +442,8 @@ public  Status  input_tag_points(
 
     if( mni_input_int( file, n_volumes ) != OK )
     {
-        (void) fprintf( stderr,
-                 "input_tag_points(): expected # volumes after %s.\n",
-                 VOLUMES_STRING );
+        print_error( "input_tag_points(): expected # volumes after %s.\n",
+                     VOLUMES_STRING );
         return( ERROR );
     }
 
@@ -488,37 +452,95 @@ public  Status  input_tag_points(
 
     if( *n_volumes != 1 && *n_volumes != 2 )
     {
-        (void) fprintf( stderr, "input_tag_points(): invalid # volumes: %d \n",
+        print_error( "input_tag_points(): invalid # volumes: %d \n",
                         *n_volumes );
         return( ERROR );
     }
 
-    /* now read the tag points */
+    /* now read the tag points header */
 
     if( mni_input_keyword_and_equal_sign( file, TAG_POINTS_STRING, TRUE ) != OK)
         return( ERROR );
 
-    *n_tag_points = 0;
+    return( OK );
+}
 
-    while( mni_input_real( file, &x1 ) == OK )
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_one_tag
+@INPUT      : file
+              n_volumes
+@OUTPUT     : tags_volume1_ptr
+              tags_volume2_ptr
+              weight_ptr
+              structure_id_ptr
+              patient_id_ptr
+              label_ptr
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Inputs the file and passes back the data.  The last four arguments
+              can each be set to NULL if the corresponding information is not
+              desired.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  read_one_tag(
+    FILE      *file,
+    int       n_volumes,
+    Real      tags_volume1_ptr[],
+    Real      tags_volume2_ptr[],
+    Real      *weight_ptr,
+    int       *structure_id_ptr,
+    int       *patient_id_ptr,
+    STRING    *label_ptr )
+{
+    Status  status;
+    STRING  line;
+    BOOLEAN last_was_blank, in_quotes;
+    int     n_strings, pos, i;
+    Real    x1, y1, z1, x2, y2, z2;
+    int     structure_id, patient_id;
+    Real    weight;
+    STRING  label;
+
+    /* parameter checking */
+
+    if( file == NULL )
+    {
+        print_error( "read_one_tag(): passed NULL FILE ptr.\n");
+        return( ERROR );
+    }
+
+    status = mni_input_real( file, &x1 );
+
+    if( status == OK )
     {
         if( mni_input_real( file, &y1 ) != OK ||
             mni_input_real( file, &z1 ) != OK ||
-            (*n_volumes == 2 &&
+            (n_volumes == 2 &&
              (mni_input_real( file, &x2 ) != OK ||
               mni_input_real( file, &y2 ) != OK ||
               mni_input_real( file, &z2 ) != OK)) )
         {
-            (void) fprintf( stderr,
-                      "input_tag_points(): error reading tag point %d\n",
-                      *n_tag_points + 1 );
+            print_error( "read_one_tag(): error reading tag point\n" );
             return( ERROR );
         }
 
-        add_tag_point( tags_volume1, *n_tag_points, x1, y1, z1 );
+        if( tags_volume1_ptr != NULL )
+        {
+            tags_volume1_ptr[X] = x1;
+            tags_volume1_ptr[Y] = y1;
+            tags_volume1_ptr[Z] = z1;
+        }
 
-        if( *n_volumes == 2 && tags_volume2 != NULL )
-            add_tag_point( tags_volume2, *n_tag_points, x2, y2, z2 );
+        if( n_volumes == 2 && tags_volume2_ptr != NULL )
+        {
+            tags_volume2_ptr[X] = x2;
+            tags_volume2_ptr[Y] = y2;
+            tags_volume2_ptr[Z] = z2;
+        }
 
         label = NULL;
         weight = 0.0;
@@ -572,9 +594,7 @@ public  Status  input_tag_points(
                      sscanf( line, "%lf %d %d %n", &weight, &structure_id,
                              &patient_id, &pos ) != 3 )
             {
-                (void) fprintf( stderr,
-                      "input_tag_points(): error reading tag point %d\n",
-                      *n_tag_points + 1 );
+                print_error( "input_tag_points(): error reading tag point\n" );
                 return( ERROR );
             }
             else if( n_strings == 4 )
@@ -585,27 +605,30 @@ public  Status  input_tag_points(
 
         delete_string( line );
 
-        if( weights != (Real **) NULL )
-            add_tag_weight( weights, *n_tag_points, weight );
+        if( weight_ptr != NULL )
+            *weight_ptr = weight;
 
-        if( structure_ids != (int **) NULL )
-            add_tag_id( structure_ids, *n_tag_points, structure_id );
+        if( structure_id_ptr != NULL )
+            *structure_id_ptr = structure_id;
 
-        if( patient_ids != (int **) NULL )
-            add_tag_id( patient_ids, *n_tag_points, patient_id );
+        if( patient_id_ptr != NULL )
+            *patient_id_ptr = patient_id;
 
-        if( labels != (STRING **) NULL )
-            add_tag_label( labels, *n_tag_points, label );
-
-        delete_string( label );
-
-        ++(*n_tag_points);
+        if( label_ptr != NULL )
+            *label_ptr = label;
+        else
+            delete_string( label );
     }
 
-    if( mni_skip_expected_character( file, (char) ';' ) != OK )
-        return( ERROR );
+    if( status == ERROR )  /* --- found no more tag points, should now find ; */
+    {
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
+            status = ERROR;
+        else
+            status = OK;
+    }
 
-    return( OK );
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -627,7 +650,7 @@ public  Status  input_tag_points(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Oct. 19, 1995   D. MacDonald    - now calls the 1 at a time funcs
 ---------------------------------------------------------------------------- */
 
 public  Status  output_tag_file(
@@ -705,6 +728,158 @@ public  Status  input_tag_file(
 
     if( status == OK )
         status = close_file( file );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_one_tag
+@INPUT      : file
+              n_volumes
+@OUTPUT     : tag_volume1
+              tag_volume2
+              weight
+              structure_id
+              patient_id
+              label
+              status
+@RETURNS    : TRUE if successful.
+@DESCRIPTION: Reads one tag point line from the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 19, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  BOOLEAN  input_one_tag(
+    FILE      *file,
+    int       n_volumes,
+    Real      tag_volume1[],
+    Real      tag_volume2[],
+    Real      *weight,
+    int       *structure_id,
+    int       *patient_id,
+    STRING    *label,
+    Status    *status )
+{
+    BOOLEAN  read_one;
+    Status   read_status;
+
+    read_status = read_one_tag( file, n_volumes,
+                                tag_volume1, tag_volume2, weight,
+                                structure_id, patient_id, label );
+
+    read_one = (read_status == OK);
+
+    if( read_status == END_OF_FILE )
+        read_status = OK;
+
+    if( status != NULL )
+        *status = read_status;
+
+    return( read_one );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_tag_points
+@INPUT      : file
+@OUTPUT     : n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@RETURNS    : OR or ERROR
+@DESCRIPTION: Inputs an entire tag point file into a set of arrays.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 19, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  input_tag_points(
+    FILE      *file,
+    int       *n_volumes,
+    int       *n_tag_points,
+    Real      ***tags_volume1,
+    Real      ***tags_volume2,
+    Real      **weights,
+    int       **structure_ids,
+    int       **patient_ids,
+    STRING    *labels[] )
+{
+    Status   status;
+    Real     tags1[N_DIMENSIONS];
+    Real     tags2[N_DIMENSIONS];
+    Real     weight;
+    int      structure_id, patient_id;
+    STRING   label;
+
+    status = initialize_tag_file_input( file, n_volumes );
+
+    *n_tag_points = 0;
+
+    while( status == OK &&
+           input_one_tag( file, *n_volumes,
+                          tags1, tags2, &weight, &structure_id, &patient_id,
+                          &label, &status ) )
+    {
+        if( tags_volume1 != NULL )
+        {
+            SET_ARRAY_SIZE( *tags_volume1, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE );
+            ALLOC( (*tags_volume1)[*n_tag_points], 3 );
+            (*tags_volume1)[*n_tag_points][X] = tags1[X];
+            (*tags_volume1)[*n_tag_points][Y] = tags1[Y];
+            (*tags_volume1)[*n_tag_points][Z] = tags1[Z];
+        }
+
+        if( *n_volumes == 2 && tags_volume2 != NULL )
+        {
+            SET_ARRAY_SIZE( *tags_volume2, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE );
+            ALLOC( (*tags_volume2)[*n_tag_points], 3 );
+            (*tags_volume2)[*n_tag_points][X] = tags2[X];
+            (*tags_volume2)[*n_tag_points][Y] = tags2[Y];
+            (*tags_volume2)[*n_tag_points][Z] = tags2[Z];
+        }
+
+        if( weights != NULL )
+        {
+            SET_ARRAY_SIZE( *weights, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE);
+            (*weights)[*n_tag_points] = weight;
+        }
+
+        if( structure_ids != NULL )
+        {
+            SET_ARRAY_SIZE( *structure_ids, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE);
+            (*structure_ids)[*n_tag_points] = structure_id;
+        }
+
+        if( patient_ids != NULL )
+        {
+            SET_ARRAY_SIZE( *patient_ids, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE);
+            (*patient_ids)[*n_tag_points] = patient_id;
+        }
+
+        if( labels != NULL )
+        {
+            SET_ARRAY_SIZE( *labels, *n_tag_points, *n_tag_points+1,
+                            DEFAULT_CHUNK_SIZE);
+            (*labels)[*n_tag_points] = label;
+        }
+        else
+            delete_string( label );
+
+        ++(*n_tag_points);
+    }
 
     return( status );
 }

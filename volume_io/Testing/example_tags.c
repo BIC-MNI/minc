@@ -20,10 +20,10 @@ int  main(
 {
     int        i, n_volumes, n_tag_points, *structure_ids, *patient_ids;
     Real       **tags1, **tags2, *weights;
-    char       **labels;
+    STRING     *labels;
     int        new_n_tag_points, *new_structure_ids, *new_patient_ids;
     Real       **new_tags1, *new_weights;
-    char       **new_labels;
+    STRING     *new_labels;
 
     /*--- input the tag file */
 
@@ -56,7 +56,7 @@ int  main(
 
             SET_ARRAY_SIZE( new_labels, new_n_tag_points,
                             new_n_tag_points+1, 10 );
-            ALLOC( new_labels[new_n_tag_points], strlen(labels[i])+1 );
+            new_labels[new_n_tag_points] = create_string( labels[i] );
 
             /*--- copy from the input tags to the new tags */
 
@@ -66,7 +66,6 @@ int  main(
             new_weights[new_n_tag_points] = weights[i];
             new_structure_ids[new_n_tag_points] = structure_ids[i];
             new_patient_ids[new_n_tag_points] = patient_ids[i];
-            (void) strcpy( new_labels[new_n_tag_points], labels[i] );
 
             /*--- increment the number of new tags */
 
