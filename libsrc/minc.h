@@ -18,12 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.20 1993-02-01 10:51:20 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.21 1993-02-17 11:17:33 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.20 1993-02-01 10:51:20 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.21 1993-02-17 11:17:33 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -354,7 +354,7 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 public int micreate_group_variable(int cdfid, char *name);
 
 /* From image_conversion.c */
-public int miicv_create();
+public int miicv_create(void);
 public int miicv_free(int icvid);
 public int miicv_setdbl(int icvid, int icv_property, double value);
 public int miicv_setint(int icvid, int icv_property, int value);
