@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:31  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-10-04 19:05:25  neelin
+@MODIFIED   : Fixed default_min for signed long.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:31  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.3  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 3.0 1995-05-15 19:31:31 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 3.1 1995-10-04 19:05:25 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -74,7 +77,7 @@ double default_min[][2] = {
    0.0, SCHAR_MIN,
    0.0, 0.0,
    0.0, SHRT_MIN,
-   0.0, LONG_MAX,
+   0.0, LONG_MIN,
    0.0, 0.0,
    0.0, 0.0,
 };
