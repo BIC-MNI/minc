@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicomserver.c,v $
-@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-03-11 13:10:48  neelin
+@MODIFIED   : Working version of dicomserver.
 @MODIFIED   :
+ * Revision 1.1  1997/03/04  20:56:47  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -20,11 +23,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 1.1 1997-03-04 20:56:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 1.2 1997-03-11 13:10:48 neelin Exp $";
 #endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <unistd.h>
 #include <dicomserver.h>
 
@@ -54,6 +59,10 @@ static int Keep_files =
    TRUE;
 #endif
 
+/* Globals for handling connection timeouts */
+int Connection_timeout = FALSE;
+Acr_File *Alarmed_afp = NULL;
+
 int main(int argc, char *argv[])
 {
    char *pname;
@@ -82,6 +91,11 @@ int main(int argc, char *argv[])
    Acr_VR_encoding_type vr_encoding;
    int pres_context_id;
    long maximum_length;
+   pid_t server_pid, child_pid;
+   int statptr;
+
+   /* Get server process id */
+   server_pid = getpid();
 
    /* Change to tmp directory */
    (void) chdir("/usr/tmp");
@@ -128,6 +142,7 @@ int main(int argc, char *argv[])
 
    /* Create file prefix. Create the temporary file to avoid file name 
       clashes */
+   temp_dir = NULL;
    if (! Keep_files) {
       (void) tmpnam(file_prefix);
       if (mkdir(file_prefix, (mode_t) 0777)) {
@@ -152,8 +167,20 @@ int main(int argc, char *argv[])
    num_files = 0;
    while (continue_looping) {
 
+      /* Wait for any children that have finished */
+      while ((child_pid=wait3(&statptr, WNOHANG, NULL)) > 0) {}
+
+      /* If there are children, slow down the processing */
+      if (child_pid == 0) {
+         (void) sleep((unsigned int) SERVER_SLEEP_TIME);
+      }
+
       /* Read in the message */
+      Alarmed_afp = afpin;
+      (void) signal(SIGALRM, timeout_handler);
+      (void) alarm(CONNECTION_TIMEOUT);
       status=acr_input_dicom_message(afpin, &input_message);
+      (void) alarm(0);
 
       /* Check for error */
       if (status != ACR_OK) {
@@ -226,7 +253,7 @@ int main(int argc, char *argv[])
       case ACR_PDU_DATA_TF:
 
          /* Check command and state */
-         acr_command = acr_find_short(group_list, ACR_Command, ACR_C_STORE_RQ);
+         acr_command = acr_find_short(group_list, ACR_Command, -1);
          if ((state != WAITING_FOR_DATA) || 
              (acr_command != ACR_C_STORE_RQ)) {
             status = ACR_HIGH_LEVEL_ERROR;
@@ -238,12 +265,42 @@ int main(int argc, char *argv[])
          output_message = data_reply(input_message);
 
          /* Get rid of the command groups */
+         group_list = skip_command_groups(group_list);
          while ((group_list != NULL) &&
                 ((acr_get_group_group(group_list) == DCM_PDU_GRPID) ||
                  (acr_get_group_group(group_list) == ACR_MESSAGE_GID))) {
             group_list = acr_get_group_next(group_list);
          }
-         if (group_list == NULL) break;
+
+         /* Was the data attached to the command? If not, read in the next
+            message - it should contain the data */
+         if (group_list == NULL) {
+
+            /* Read the data and check the status */
+            Alarmed_afp = afpin;
+            (void) signal(SIGALRM, timeout_handler);
+            (void) alarm(CONNECTION_TIMEOUT);
+            status=acr_input_dicom_message(afpin, &input_message);
+            (void) alarm(0);
+            if (status != ACR_OK) {
+               state = DISCONNECTING;
+               break;
+            }
+
+            /* Check that we have a data PDU */
+            group_list = acr_get_message_group_list(input_message);
+            if (acr_find_short(group_list, DCM_PDU_Type, ACR_PDU_DATA_TF)
+                != ACR_PDU_DATA_TF) {
+               status = ACR_HIGH_LEVEL_ERROR;
+               state = DISCONNECTING;
+               break;
+            }
+
+            /* Skip command groups and check for no data */
+            group_list = skip_command_groups(group_list);
+            if (group_list == NULL) break;
+
+         }
 
          /* Extend file list if necessary */
          if (num_files >= num_files_alloc) {
@@ -304,17 +361,50 @@ int main(int argc, char *argv[])
          /* Check for file from next acquisition */
          if (have_extra_file) num_files--;
 
-         /* Do something with the files */
-         use_the_files(project_name, num_files, file_list, 
-                       file_info_list);
+         /* Fork child to process the files */
+         child_pid = fork();
+         if (child_pid > 0) {      /* Parent process */
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, 
+                              "Forked process to create minc files.\n");
+            }
+
+         }                         /* Error forking */
+         else if (child_pid < 0) {
+            (void) fprintf(stderr, 
+                           "Error forking child to create minc file\n");
+            return;
+         }
+         else {                    /* Child process */
+
+            /* Do something with the files */
+            use_the_files(project_name, num_files, file_list, 
+                          file_info_list);
+
+            /* Remove the temporary files */
+            cleanup_files(num_files, file_list);
+
+            /* Remove the temporary directory if the server has finished */
+            if ((temp_dir != NULL) && (kill(server_pid, 0) != 0)) {
+               cleanup_files(1, &temp_dir);
+            }
+
+            /* Print message about child finishing */
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "Minc creation process finished.\n");
+            }
+
+            /* Exit from child */
+            exit(EXIT_SUCCESS);
+
+         }         /* End of child process */
 
          /* Put blank line in log file */
          if (Do_logging >= LOW_LOGGING) {
             (void) fprintf(stderr, "\n");
          }
 
-         /* Remove the temporary files and reset the lists */
-         cleanup_files(num_files, file_list);
+         /* Reset the lists */
          free_list(num_files, file_list, file_info_list);
          if (have_extra_file) {
             file_list[0] = file_list[num_files];
@@ -332,7 +422,11 @@ int main(int argc, char *argv[])
       }
 
       /* Send reply */
+      Alarmed_afp = afpout;
+      (void) signal(SIGALRM, timeout_handler);
+      (void) alarm(CONNECTION_TIMEOUT);
       status = acr_output_dicom_message(afpout, output_message);
+      (void) alarm(0);
 
       /* Delete output message */
       acr_delete_message(output_message);
@@ -366,9 +460,14 @@ int main(int argc, char *argv[])
    FREE(file_list);
    FREE(file_info_list);
    
-   /* Remove the file prefix directory */
+   /* Remove the file prefix directory (this only happens if it is empty). */
    cleanup_files(1, &temp_dir);
    FREE(temp_dir);
+
+   /* Check for connection timeout */
+   if (Connection_timeout) {
+      (void) fprintf(stderr, "Connection timed out.\n");
+   }
 
    /* Print final message */
    switch (status) {
@@ -429,6 +528,51 @@ int main(int argc, char *argv[])
 
    exit(exit_status);
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : timeout_handler
+@INPUT      : 
+@OUTPUT     : (none)
+@RETURNS    : 
+@DESCRIPTION: Routine to handle connection timeouts.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 10, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+/* ARGSUSED */
+public void timeout_handler(int sig)
+{
+   Connection_timeout = TRUE;
+   if (Alarmed_afp != NULL) {
+      acr_dicom_set_eof(Alarmed_afp);
+   }
+   return;
+}
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : skip_command_groups
+@INPUT      : group_list
+@OUTPUT     : (none)
+@RETURNS    : Pointer to head of group list
+@DESCRIPTION: Skips over command groups in a group list, returning the rest
+              of the list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 7, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Group skip_command_groups(Acr_Group group_list)
+{
+   while ((group_list != NULL) &&
+          ((acr_get_group_group(group_list) == DCM_PDU_GRPID) ||
+           (acr_get_group_group(group_list) == ACR_MESSAGE_GID))) {
+      group_list = acr_get_group_next(group_list);
+   }
+
+   return group_list;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

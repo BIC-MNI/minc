@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicomserver.h,v $
-@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-03-11 13:10:48  neelin
+@MODIFIED   : Working version of dicomserver.
 @MODIFIED   :
+ * Revision 1.1  1997/03/04  20:56:47  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -52,6 +55,13 @@
 #endif
 
 #define FILE_ALLOC_INCREMENT 10
+
+/* Connection timeout length in seconds */
+#define CONNECTION_TIMEOUT (60*5)
+
+/* Time to sleep between image reads when a child process is running.
+   This prevents the server from outrunning its children. */
+#define SERVER_SLEEP_TIME 3
 
 /* Define logging constants */
 #define NO_LOGGING   0

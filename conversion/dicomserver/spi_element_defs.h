@@ -30,14 +30,14 @@
 #define SPI_CORONAL_ORIENTATION    3
 
 /* Element id's for SPI */
-GLOBAL_ELEMENT(SPI_Sequence_file_name                 , 0x0019, 0x1511);
-GLOBAL_ELEMENT(SPI_Image_position                     , 0x0021, 0x1160);
-GLOBAL_ELEMENT(SPI_Image_normal                       , 0x0021, 0x1161);
-GLOBAL_ELEMENT(SPI_Image_row                          , 0x0021, 0x116a);
-GLOBAL_ELEMENT(SPI_Image_column                       , 0x0021, 0x116b);
-GLOBAL_ELEMENT(SPI_Number_of_3D_raw_partitions_nominal, 0x0021, 0x1330);
-GLOBAL_ELEMENT(SPI_Actual_3D_partition_number         , 0x0021, 0x1336);
-GLOBAL_ELEMENT(SPI_Number_of_slices_nominal           , 0x0021, 0x1340);
-GLOBAL_ELEMENT(SPI_Current_slice_number               , 0x0021, 0x1342);
-GLOBAL_ELEMENT(SPI_Number_of_echoes                   , 0x0021, 0x1370);
+GLOBAL_ELEMENT(SPI_Sequence_file_name                 , 0x0019, 0x1511, LO);
+GLOBAL_ELEMENT(SPI_Image_position                     , 0x0021, 0x1160, DS);
+GLOBAL_ELEMENT(SPI_Image_normal                       , 0x0021, 0x1161, DS);
+GLOBAL_ELEMENT(SPI_Image_row                          , 0x0021, 0x116a, DS);
+GLOBAL_ELEMENT(SPI_Image_column                       , 0x0021, 0x116b, DS);
+GLOBAL_ELEMENT(SPI_Number_of_3D_raw_partitions_nominal, 0x0021, 0x1330, IS);
+GLOBAL_ELEMENT(SPI_Actual_3D_partition_number         , 0x0021, 0x1336, IS);
+GLOBAL_ELEMENT(SPI_Number_of_slices_nominal           , 0x0021, 0x1340, IS);
+GLOBAL_ELEMENT(SPI_Current_slice_number               , 0x0021, 0x1342, IS);
+GLOBAL_ELEMENT(SPI_Number_of_echoes                   , 0x0021, 0x1370, IS);
 

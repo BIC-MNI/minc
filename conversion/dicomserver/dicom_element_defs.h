@@ -57,63 +57,63 @@
 #define ACR_MODALITY_MR "MR"
 
 /* Element id's for DICOM */
-GLOBAL_ELEMENT(ACR_Affected_SOP_class_UID    , 0x0000, 0x0002);
-GLOBAL_ELEMENT(ACR_Command                   , 0x0000, 0x0100);
-GLOBAL_ELEMENT(ACR_Message_id                , 0x0000, 0x0110);
-GLOBAL_ELEMENT(ACR_Message_id_brt            , 0x0000, 0x0120);
-GLOBAL_ELEMENT(ACR_Priority                  , 0x0000, 0x0700);
-GLOBAL_ELEMENT(ACR_Dataset_type              , 0x0000, 0x0800);
-GLOBAL_ELEMENT(ACR_Status                    , 0x0000, 0x0900);
-GLOBAL_ELEMENT(ACR_Affected_SOP_instance_UID , 0x0000, 0x1000);
-GLOBAL_ELEMENT(ACR_Move_originator_AE_title  , 0x0000, 0x1031);
+GLOBAL_ELEMENT(ACR_Affected_SOP_class_UID    , 0x0000, 0x0002, UI);
+GLOBAL_ELEMENT(ACR_Command                   , 0x0000, 0x0100, US);
+GLOBAL_ELEMENT(ACR_Message_id                , 0x0000, 0x0110, US);
+GLOBAL_ELEMENT(ACR_Message_id_brt            , 0x0000, 0x0120, US);
+GLOBAL_ELEMENT(ACR_Priority                  , 0x0000, 0x0700, US);
+GLOBAL_ELEMENT(ACR_Dataset_type              , 0x0000, 0x0800, US);
+GLOBAL_ELEMENT(ACR_Status                    , 0x0000, 0x0900, US);
+GLOBAL_ELEMENT(ACR_Affected_SOP_instance_UID , 0x0000, 0x1000, UI);
+GLOBAL_ELEMENT(ACR_Move_originator_AE_title  , 0x0000, 0x1031, AE);
 
-GLOBAL_ELEMENT(ACR_Study_date            , 0x0008, 0x0020);
-GLOBAL_ELEMENT(ACR_Acquisition_date      , 0x0008, 0x0022);
-GLOBAL_ELEMENT(ACR_Study_time            , 0x0008, 0x0030);
-GLOBAL_ELEMENT(ACR_Acquisition_time      , 0x0008, 0x0032);
-GLOBAL_ELEMENT(ACR_Modality              , 0x0008, 0x0060);
-GLOBAL_ELEMENT(ACR_Manufacturer          , 0x0008, 0x0070);
-GLOBAL_ELEMENT(ACR_Institution_id        , 0x0008, 0x0080);
-GLOBAL_ELEMENT(ACR_Referring_physician   , 0x0008, 0x0090);
-GLOBAL_ELEMENT(ACR_Station_id            , 0x0008, 0x1010);
-GLOBAL_ELEMENT(ACR_Procedure_description , 0x0008, 0x1030);
-GLOBAL_ELEMENT(ACR_Manufacturer_model    , 0x0008, 0x1090);
+GLOBAL_ELEMENT(ACR_Study_date            , 0x0008, 0x0020, DA);
+GLOBAL_ELEMENT(ACR_Acquisition_date      , 0x0008, 0x0022, DA);
+GLOBAL_ELEMENT(ACR_Study_time            , 0x0008, 0x0030, TM);
+GLOBAL_ELEMENT(ACR_Acquisition_time      , 0x0008, 0x0032, TM);
+GLOBAL_ELEMENT(ACR_Modality              , 0x0008, 0x0060, CS);
+GLOBAL_ELEMENT(ACR_Manufacturer          , 0x0008, 0x0070, LO);
+GLOBAL_ELEMENT(ACR_Institution_id        , 0x0008, 0x0080, LO);
+GLOBAL_ELEMENT(ACR_Referring_physician   , 0x0008, 0x0090, PN);
+GLOBAL_ELEMENT(ACR_Station_id            , 0x0008, 0x1010, SH);
+GLOBAL_ELEMENT(ACR_Procedure_description , 0x0008, 0x1030, LO);
+GLOBAL_ELEMENT(ACR_Manufacturer_model    , 0x0008, 0x1090, LO);
 
-GLOBAL_ELEMENT(ACR_Patient_name          , 0x0010, 0x0010);
-GLOBAL_ELEMENT(ACR_Patient_identification, 0x0010, 0x0020);
-GLOBAL_ELEMENT(ACR_Patient_birth_date    , 0x0010, 0x0030);
-GLOBAL_ELEMENT(ACR_Patient_sex           , 0x0010, 0x0040);
-GLOBAL_ELEMENT(ACR_Patient_weight        , 0x0010, 0x1030);
+GLOBAL_ELEMENT(ACR_Patient_name          , 0x0010, 0x0010, PN);
+GLOBAL_ELEMENT(ACR_Patient_identification, 0x0010, 0x0020, LO);
+GLOBAL_ELEMENT(ACR_Patient_birth_date    , 0x0010, 0x0030, DA);
+GLOBAL_ELEMENT(ACR_Patient_sex           , 0x0010, 0x0040, CS);
+GLOBAL_ELEMENT(ACR_Patient_weight        , 0x0010, 0x1030, DS);
 
-GLOBAL_ELEMENT(ACR_Scanning_sequence     , 0x0018, 0x0020);
-GLOBAL_ELEMENT(ACR_Slice_thickness       , 0x0018, 0x0050);
-GLOBAL_ELEMENT(ACR_Repetition_time       , 0x0018, 0x0080);
-GLOBAL_ELEMENT(ACR_Echo_time             , 0x0018, 0x0081);
-GLOBAL_ELEMENT(ACR_Inversion_time        , 0x0018, 0x0082);
-GLOBAL_ELEMENT(ACR_Nr_of_averages        , 0x0018, 0x0083);
-GLOBAL_ELEMENT(ACR_Imaging_frequency     , 0x0018, 0x0084);
-GLOBAL_ELEMENT(ACR_Imaged_nucleus        , 0x0018, 0x0085);
-GLOBAL_ELEMENT(ACR_Echo_number           , 0x0018, 0x0086);
-GLOBAL_ELEMENT(ACR_Flip_angle            , 0x0018, 0x1314);
-GLOBAL_ELEMENT(ACR_Acq_comments          , 0x0018, 0x4000);
+GLOBAL_ELEMENT(ACR_Scanning_sequence     , 0x0018, 0x0020, CS);
+GLOBAL_ELEMENT(ACR_Slice_thickness       , 0x0018, 0x0050, DS);
+GLOBAL_ELEMENT(ACR_Repetition_time       , 0x0018, 0x0080, DS);
+GLOBAL_ELEMENT(ACR_Echo_time             , 0x0018, 0x0081, DS);
+GLOBAL_ELEMENT(ACR_Inversion_time        , 0x0018, 0x0082, DS);
+GLOBAL_ELEMENT(ACR_Nr_of_averages        , 0x0018, 0x0083, DS);
+GLOBAL_ELEMENT(ACR_Imaging_frequency     , 0x0018, 0x0084, DS);
+GLOBAL_ELEMENT(ACR_Imaged_nucleus        , 0x0018, 0x0085, SH);
+GLOBAL_ELEMENT(ACR_Echo_number           , 0x0018, 0x0086, IS);
+GLOBAL_ELEMENT(ACR_Flip_angle            , 0x0018, 0x1314, DS);
+GLOBAL_ELEMENT(ACR_Acq_comments          , 0x0018, 0x4000, LT);
 
-GLOBAL_ELEMENT(ACR_Study                 , 0x0020, 0x0010);
-GLOBAL_ELEMENT(ACR_Series                , 0x0020, 0x0011);
-GLOBAL_ELEMENT(ACR_Acquisition           , 0x0020, 0x0012);
-GLOBAL_ELEMENT(ACR_Image                 , 0x0020, 0x0013);
-GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001);
+GLOBAL_ELEMENT(ACR_Study                 , 0x0020, 0x0010, SH);
+GLOBAL_ELEMENT(ACR_Series                , 0x0020, 0x0011, IS);
+GLOBAL_ELEMENT(ACR_Acquisition           , 0x0020, 0x0012, IS);
+GLOBAL_ELEMENT(ACR_Image                 , 0x0020, 0x0013, IS);
+GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001, IS);
 
-GLOBAL_ELEMENT(ACR_Rows                  , 0x0028, 0x0010);
-GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011);
-GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030);
-GLOBAL_ELEMENT(ACR_Bits_allocated        , 0x0028, 0x0100);
-GLOBAL_ELEMENT(ACR_Bits_stored           , 0x0028, 0x0101);
-GLOBAL_ELEMENT(ACR_Smallest_pixel_value  , 0x0028, 0x0106);
-GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0107);
-GLOBAL_ELEMENT(ACR_Image_location        , 0x0028, 0x0200);
-GLOBAL_ELEMENT(ACR_Window_centre         , 0x0028, 0x1050);
-GLOBAL_ELEMENT(ACR_Window_width          , 0x0028, 0x1051);
+GLOBAL_ELEMENT(ACR_Rows                  , 0x0028, 0x0010, US);
+GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011, US);
+GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030, DS);
+GLOBAL_ELEMENT(ACR_Bits_allocated        , 0x0028, 0x0100, US);
+GLOBAL_ELEMENT(ACR_Bits_stored           , 0x0028, 0x0101, US);
+GLOBAL_ELEMENT(ACR_Smallest_pixel_value  , 0x0028, 0x0106, US);
+GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0107, US);
+GLOBAL_ELEMENT(ACR_Image_location        , 0x0028, 0x0200, US);
+GLOBAL_ELEMENT(ACR_Window_centre         , 0x0028, 0x1050, DS);
+GLOBAL_ELEMENT(ACR_Window_width          , 0x0028, 0x1051, DS);
 
-GLOBAL_ELEMENT(ACR_Image_data, ACR_ACTUAL_IMAGE_GID, 0x0010);
+GLOBAL_ELEMENT(ACR_Image_data, ACR_ACTUAL_IMAGE_GID, 0x0010, UNKNOWN);
 
 #include <spi_element_defs.h>

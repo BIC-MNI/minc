@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-03-11 13:10:48  neelin
+@MODIFIED   : Working version of dicomserver.
 @MODIFIED   :
+ * Revision 1.1  1997/03/04  20:56:47  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -43,7 +46,7 @@ int gethostname (char *name, int namelen);
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void use_the_files(char *project_name, 
+public void use_the_files(char *project_name,
                           int num_files, char *file_list[], 
                           Data_Object_Info *data_info[])
 {
@@ -179,5 +182,4 @@ public void use_the_files(char *project_name,
    FREE(acq_file_list);
    FREE(used_file);
 
-   return;
 }

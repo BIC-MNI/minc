@@ -1,3 +1,5 @@
+public void timeout_handler(int sig);
+public Acr_Group skip_command_groups(Acr_Group group_list);
 public void cleanup_files(int num_files, char *file_list[]);
 public void free_list(int num_files, char **file_list, 
                       Data_Object_Info **file_info_list);
@@ -60,6 +62,6 @@ public int search_list(int value, int list[], int list_length,
 public void sort_dimensions(General_Info *general_info);
 public int dimension_sort_function(const void *v1, const void *v2);
 public void string_to_filename(char *string, char *filename, int maxlen);
-public void use_the_files(char *project_name, 
+public void use_the_files(char *project_name,
                           int num_files, char *file_list[], 
                           Data_Object_Info *data_info[]);

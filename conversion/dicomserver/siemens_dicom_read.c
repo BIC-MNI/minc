@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-03-11 13:10:48  neelin
+@MODIFIED   : Working version of dicomserver.
 @MODIFIED   :
+ * Revision 1.1  1997/03/04  20:56:47  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -626,11 +629,9 @@ public void get_general_header_info(Acr_Group group_list,
       acr_find_string(group_list, ACR_Referring_physician, ""), maxlen);
    (void) strncpy(general_info->study.procedure, 
       acr_find_string(group_list, ACR_Procedure_description, ""), maxlen);
-   (void) sprintf(general_info->study.study_id, "%d",
-      acr_find_int(group_list, ACR_Study_date, 0));
+   (void) sprintf(general_info->study.study_id, "%d", general_info->study_id);
    (void) sprintf(general_info->study.acquisition_id, "%d_%d",
-      acr_find_int(group_list, ACR_Series, 0),
-      acr_find_int(group_list, ACR_Study_time, 0));
+      acr_find_int(group_list, ACR_Series, 0), general_info->acq_id);
 
    /* Get acquisition information */
    string = acr_find_string(group_list, SPI_Sequence_file_name, "");
