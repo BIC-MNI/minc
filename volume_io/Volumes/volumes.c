@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.41 1995-03-07 13:36:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.42 1995-03-08 17:00:26 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -1661,17 +1661,28 @@ public  Volume  copy_volume(
 {
     Volume   copy;
     Real     value, voxel;
-    int      v0, v1, v2, v3, v4;
+    void     *src, *dest;
+    int      d, n_voxels, sizes[MAX_DIMENSIONS];
 
     copy = copy_volume_definition( volume, NC_UNSPECIFIED, FALSE, 0.0, 0.0 );
 
-    BEGIN_ALL_VOXELS( volume, v0, v1, v2, v3, v4 )
+    /* --- find out how many voxels are in the volume */
 
-        GET_VALUE( value, volume, v0, v1, v2, v3, v4 );
-        voxel = CONVERT_VALUE_TO_VOXEL( copy, value );
-        SET_VOXEL( copy, v0, v1, v2, v3, v4, voxel );
+    get_volume_sizes( volume, sizes );
+    n_voxels = 1;
+    for_less( d, 0, get_volume_n_dimensions(volume) )
+        n_voxels *= sizes[d];
 
-    END_ALL_VOXELS
+    /* --- get a pointer to the beginning of the voxels */
+
+    GET_VOXEL_PTR( src, volume, 0, 0, 0, 0, 0 );
+    GET_VOXEL_PTR( dest, copy, 0, 0, 0, 0, 0 );
+
+    /* --- assuming voxels are contiguous, copy them in one chunk */
+
+    (void) memcpy( dest, src, (size_t) n_voxels *
+                              (size_t) get_type_size(
+                                         get_volume_data_type(volume)) );
 
     return( copy );
 }
