@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 1.2  1993-11-22 13:12:41  neelin
-@MODIFIED   : Changed to use new Acr_Element_Id stuff.
+@MODIFIED   : Revision 1.3  1993-11-24 11:26:38  neelin
+@MODIFIED   : Added group list stuff (dump and input).
 @MODIFIED   :
+ * Revision 1.2  93/11/22  13:12:41  neelin
+ * Changed to use new Acr_Element_Id stuff.
+ * 
  * Revision 1.1  93/11/19  12:50:32  neelin
  * Initial revision
  * 
@@ -50,5 +53,8 @@ public int acr_get_group_nelements(Acr_Group group);
 public Acr_Group acr_get_group_next(Acr_Group group);
 public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group);
 public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group);
+public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
+                                       int max_group_id);
 public Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid);
+public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list);
