@@ -1,3 +1,9 @@
+Wed Sep 13 11:38:49 EDT 2000
+   - added bzip support (patches from Steve Robbins)
+   - modified TMPDIR to look in /var/tmp, /usr/tmp, /tmp in scripts
+     mincdiff, mincheader, mincview and mincedit (Steve Robbins)
+   - converted mincheader and mincdiff to Bourne shell (Steve Robbins)
+
 Fri Jul  7 09:34:17 EDT 2000
    - added -filelist option to mincaverage, mincmath, mincconcat to read
      input file names from a file. This gets around command-line length
