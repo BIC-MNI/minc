@@ -1,4 +1,5 @@
 #include  <def_mni.h>
+#include  <def_splines.h>
 
 private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 {
@@ -73,6 +74,7 @@ public   Volume   create_volume(
     volume->max_value = max_value;
     volume->value_scale = 1.0;
     volume->value_translation = 0.0;
+    volume->fill_value = 0.0;
     volume->labels = (unsigned char ***) NULL;
 
     for_less( i, 0, n_dimensions )
@@ -619,6 +621,54 @@ public  Boolean  cube_is_within_volume(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_voxel_range
+@INPUT      : volume
+@OUTPUT     : min_value
+              max_value
+@RETURNS    : 
+@DESCRIPTION: Passes back the min and max voxel values stored in the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_volume_voxel_range(
+    Volume     volume,
+    Real       *min_value,
+    Real       *max_value )
+{
+    *min_value = volume->min_value;
+    *max_value = volume->max_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_range
+@INPUT      : volume
+@OUTPUT     : min_value
+              max_value
+@RETURNS    : 
+@DESCRIPTION: Passes back the minimum and maximum scaled values.  These are
+              the minimum and maximum stored voxel values scaled to the
+              real value domain.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_volume_range(
+    Volume     volume,
+    Real       *min_value,
+    Real       *max_value )
+{
+    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_value );
+    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_value );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : voxel_contains_value
 @INPUT      : volume
               indices
@@ -707,6 +757,7 @@ public  Boolean   evaluate_volume_in_world(
     Real           x,
     Real           y,
     Real           z,
+    int            degrees_continuity,
     Boolean        activity_if_mixed,
     Real           *value,
     Real           *deriv_x,
@@ -717,7 +768,8 @@ public  Boolean   evaluate_volume_in_world(
 
     convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
 
-    voxel_is_active = evaluate_volume( volume, x, y, z, activity_if_mixed,
+    voxel_is_active = evaluate_volume( volume, x, y, z, degrees_continuity,
+                                       activity_if_mixed,
                                        value, deriv_x, deriv_y, deriv_z );
 
     if( deriv_x != (Real *) 0 )
@@ -728,6 +780,539 @@ public  Boolean   evaluate_volume_in_world(
     }
 
     return( voxel_is_active );
+}
+
+typedef enum { NONE_ACTIVE, SOME_ACTIVE, ALL_ACTIVE } Group_activity;
+
+private  Group_activity   triconstant_interpolate_volume(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_z )
+{
+    Group_activity     activity;
+    int                i, j, k;
+    Real               prev, next, dx, dy, dz, voxel_value;
+    int                nx, ny, nz;
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    i = ROUND( x );
+    if( i == nx )
+        i = nx-1;
+    j = ROUND( y );
+    if( j == ny )
+        j = ny-1;
+    k = ROUND( z );
+    if( k == nz )
+        k = nz-1;
+
+    GET_VALUE_3D( voxel_value, volume, i, j, k );
+
+    if( value != (Real *) 0 )
+        *value = voxel_value;
+
+    if( get_voxel_activity_flag( volume, i, j, k ) )
+        activity = ALL_ACTIVE;
+    else
+        activity = NONE_ACTIVE;
+
+    if( deriv_x != (Real *) NULL )
+    {
+        /* --- get derivative wrt x */
+
+        dx = 0;
+        if( i == 0 )
+            prev = voxel_value;
+        else
+        {
+            GET_VALUE_3D( prev, volume, i-1, j, k );
+            ++dx;
+        }
+
+        if( i == nx-1 )
+            next = voxel_value;
+        else
+        {
+            GET_VALUE_3D( next, volume, i+1, j, k );
+            ++dx;
+        }
+
+        if( dx == 0 )
+            *deriv_x = 0.0;
+        else
+            *deriv_x = (next - prev) / (Real) dx;
+
+        /* --- get derivative wrt y */
+
+        dy = 0;
+        if( j == 0 )
+            prev = voxel_value;
+        else
+        {
+            GET_VALUE_3D( prev, volume, i, j-1, k );
+            ++dy;
+        }
+
+        if( j == ny-1 )
+            next = voxel_value;
+        else
+        {
+            GET_VALUE_3D( next, volume, i, j+1, k );
+            ++dy;
+        }
+
+        if( dy == 0 )
+            *deriv_y = 0.0;
+        else
+            *deriv_y = (next - prev) / (Real) dy;
+
+        /* --- get derivative wrt z */
+
+        dz = 0;
+        if( k == 0 )
+            prev = voxel_value;
+        else
+        {
+            GET_VALUE_3D( prev, volume, i, j, k-1 );
+            ++dz;
+        }
+
+        if( k == nz-1 )
+            next = voxel_value;
+        else
+        {
+            GET_VALUE_3D( next, volume, i, j, k+1 );
+            ++dz;
+        }
+
+        if( dz == 0 )
+            *deriv_z = 0.0;
+        else
+            *deriv_z = (next - prev) / (Real) dz;
+    }
+
+    return( activity );
+}
+
+private  Group_activity   trilinear_interpolate_volume(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_z )
+{
+    Group_activity     activity;
+    int                n_inactive;
+    int                i, j, k;
+    Real               u, v, w;
+    Real               c000, c001, c010, c011, c100, c101, c110, c111;
+    Real               c00, c01, c10, c11;
+    Real               c0, c1;
+    Real               du00, du01, du10, du11, du0, du1;
+    Real               dv0, dv1;
+    int                nx, ny, nz;
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    if( x == (Real) (nx-1) )
+    {
+        i = nx-2;
+        u = 1.0;
+    }
+    else
+    {
+        i = (int) x;
+        u = FRACTION( x );
+    }
+
+    if( y == (Real) (ny-1) )
+    {
+        j = ny-2;
+        v = 1.0;
+    }
+    else
+    {
+        j = (int) y;
+        v = FRACTION( y );
+    }
+
+    if( z == (Real) (nz-1) )
+    {
+        k = nz-2;
+        w = 1.0;
+    }
+    else
+    {
+        k = (int) z;
+        w = FRACTION( z );
+    }
+
+    n_inactive = 0;
+
+    GET_VALUE_3D( c000, volume, i,   j,   k );
+    GET_VALUE_3D( c001, volume, i,   j,   k+1 );
+    GET_VALUE_3D( c010, volume, i,   j+1, k );
+    GET_VALUE_3D( c011, volume, i,   j+1, k+1 );
+    GET_VALUE_3D( c100, volume, i+1, j,   k );
+    GET_VALUE_3D( c101, volume, i+1, j,   k+1 );
+    GET_VALUE_3D( c110, volume, i+1, j+1, k );
+    GET_VALUE_3D( c111, volume, i+1, j+1, k+1 );
+
+    if( !get_voxel_activity_flag( volume, i  , j  , k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j+1, k ) )
+            ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j+1, k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j  , k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j  , k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j+1, k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j+1, k+1 ) )
+        ++n_inactive;
+    
+    du00 = c100 - c000;
+    du01 = c101 - c001;
+    du10 = c110 - c010;
+    du11 = c111 - c011;
+
+    c00 = c000 + u * du00;
+    c01 = c001 + u * du01;
+    c10 = c010 + u * du10;
+    c11 = c011 + u * du11;
+
+    dv0 = c10 - c00;
+    dv1 = c11 - c01;
+
+    c0 = c00 + v * dv0;
+    c1 = c01 + v * dv1;
+
+    if( value != (Real *) 0 )
+        *value = INTERPOLATE( w, c0, c1 );
+
+    if( deriv_x != (Real *) 0 )
+    {
+        du0 = INTERPOLATE( v, du00, du10 );
+        du1 = INTERPOLATE( v, du01, du11 );
+
+        *deriv_x = INTERPOLATE( w, du0, du1 );
+        *deriv_y = INTERPOLATE( w, dv0, dv1 );
+        *deriv_z = (c1 - c0);
+    }
+
+    if( n_inactive == 0 )
+        activity = ALL_ACTIVE;
+    else if( n_inactive == 8 )
+        activity = NONE_ACTIVE;
+    else
+        activity = SOME_ACTIVE;
+
+    return( activity );
+}
+
+private  Group_activity   triquadratic_interpolate_volume(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_z )
+{
+    Group_activity     activity;
+    int                n_inactive;
+    int                i, j, k, di, dj, dk;
+    int                nx, ny, nz;
+    Real               tx, ty, tz, u, v, w;
+    Real               c000, c001, c002, c010, c011, c012, c020, c021, c022;
+    Real               c100, c101, c102, c110, c111, c112, c120, c121, c122;
+    Real               c200, c201, c202, c210, c211, c212, c220, c221, c222;
+
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    tx = x + 0.5;
+    ty = y + 0.5;
+    tz = z + 0.5;
+
+    if( x == (Real) nx - 1.5 )
+    {
+        i = nx-2;
+        u = 1.0;
+    }
+    else
+    {
+        i = (int) tx;
+        u = FRACTION( tx );
+    }
+
+    if( y == (Real) ny - 1.5 )
+    {
+        j = ny-2;
+        v = 1.0;
+    }
+    else
+    {
+        j = (int) ty;
+        v = FRACTION( ty );
+    }
+
+    if( z == (Real) nz - 1.5 )
+    {
+        k = nz-2;
+        w = 1.0;
+    }
+    else
+    {
+        k = (int) tz;
+        w = FRACTION( tz );
+    }
+
+    GET_VALUE_3D( c000, volume, i-1, j-1, k-1 );
+    GET_VALUE_3D( c001, volume, i-1, j-1, k+0 );
+    GET_VALUE_3D( c002, volume, i-1, j-1, k+1 );
+    GET_VALUE_3D( c010, volume, i-1, j+0, k-1 );
+    GET_VALUE_3D( c011, volume, i-1, j+0, k+0 );
+    GET_VALUE_3D( c012, volume, i-1, j+0, k+1 );
+    GET_VALUE_3D( c020, volume, i-1, j+1, k-1 );
+    GET_VALUE_3D( c021, volume, i-1, j+1, k+0 );
+    GET_VALUE_3D( c022, volume, i-1, j+1, k+1 );
+
+    GET_VALUE_3D( c100, volume, i+0, j-1, k-1 );
+    GET_VALUE_3D( c101, volume, i+0, j-1, k+0 );
+    GET_VALUE_3D( c102, volume, i+0, j-1, k+1 );
+    GET_VALUE_3D( c110, volume, i+0, j+0, k-1 );
+    GET_VALUE_3D( c111, volume, i+0, j+0, k+0 );
+    GET_VALUE_3D( c112, volume, i+0, j+0, k+1 );
+    GET_VALUE_3D( c120, volume, i+0, j+1, k-1 );
+    GET_VALUE_3D( c121, volume, i+0, j+1, k+0 );
+    GET_VALUE_3D( c122, volume, i+0, j+1, k+1 );
+
+    GET_VALUE_3D( c200, volume, i+1, j-1, k-1 );
+    GET_VALUE_3D( c201, volume, i+1, j-1, k+0 );
+    GET_VALUE_3D( c202, volume, i+1, j-1, k+1 );
+    GET_VALUE_3D( c210, volume, i+1, j+0, k-1 );
+    GET_VALUE_3D( c211, volume, i+1, j+0, k+0 );
+    GET_VALUE_3D( c212, volume, i+1, j+0, k+1 );
+    GET_VALUE_3D( c220, volume, i+1, j+1, k-1 );
+    GET_VALUE_3D( c221, volume, i+1, j+1, k+0 );
+    GET_VALUE_3D( c222, volume, i+1, j+1, k+1 );
+
+    n_inactive = 0;
+
+    for_inclusive( di, -1, 1 )
+    {
+        for_inclusive( dj, -1, 1 )
+        {
+            for_inclusive( dk, -1, 1 )
+            {
+                if( !get_voxel_activity_flag( volume, i+di, j+dj, k+dk ) )
+                    ++n_inactive;
+            }
+        }
+    }
+
+    if( value != (Real *) 0 )
+    {
+        QUADRATIC_TRIVAR( c, u, v, w, *value );
+    }
+
+    if( deriv_x != (Real *) 0 )
+    {
+        QUADRATIC_TRIVAR_DERIV( c, u, v, w, *deriv_x, *deriv_y, *deriv_z );
+    }
+
+    if( n_inactive == 0 )
+        activity = ALL_ACTIVE;
+    else if( n_inactive == 27 )
+        activity = NONE_ACTIVE;
+    else
+        activity = SOME_ACTIVE;
+
+    return( activity );
+}
+
+private  Group_activity   tricubic_interpolate_volume(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_z )
+{
+    Group_activity     activity;
+    int                n_inactive;
+    int                i, j, k, di, dj, dk;
+    int                nx, ny, nz;
+    Real               u, v, w;
+    Real               c000, c001, c002, c003, c010, c011, c012, c013;
+    Real               c020, c021, c022, c023, c030, c031, c032, c033;
+    Real               c100, c101, c102, c103, c110, c111, c112, c113;
+    Real               c120, c121, c122, c123, c130, c131, c132, c133;
+    Real               c200, c201, c202, c203, c210, c211, c212, c213;
+    Real               c220, c221, c222, c223, c230, c231, c232, c233;
+    Real               c300, c301, c302, c303, c310, c311, c312, c313;
+    Real               c320, c321, c322, c323, c330, c331, c332, c333;
+
+
+    nx = volume->sizes[X];
+    ny = volume->sizes[Y];
+    nz = volume->sizes[Z];
+
+    if( x == (Real) nx - 1.5 )
+    {
+        i = nx-2;
+        u = 1.0;
+    }
+    else
+    {
+        i = (int) x;
+        u = FRACTION( x );
+    }
+
+    if( y == (Real) ny - 1.5 )
+    {
+        j = ny-2;
+        v = 1.0;
+    }
+    else
+    {
+        j = (int) y;
+        v = FRACTION( y );
+    }
+
+    if( z == (Real) nz - 1.5 )
+    {
+        k = nz-2;
+        w = 1.0;
+    }
+    else
+    {
+        k = (int) z;
+        w = FRACTION( z );
+    }
+
+    GET_VALUE_3D( c000, volume, i-1, j-1, k-1 );
+    GET_VALUE_3D( c001, volume, i-1, j-1, k+0 );
+    GET_VALUE_3D( c002, volume, i-1, j-1, k+1 );
+    GET_VALUE_3D( c003, volume, i-1, j-1, k+2 );
+    GET_VALUE_3D( c010, volume, i-1, j+0, k-1 );
+    GET_VALUE_3D( c011, volume, i-1, j+0, k+0 );
+    GET_VALUE_3D( c012, volume, i-1, j+0, k+1 );
+    GET_VALUE_3D( c013, volume, i-1, j+0, k+2 );
+    GET_VALUE_3D( c020, volume, i-1, j+1, k-1 );
+    GET_VALUE_3D( c021, volume, i-1, j+1, k+0 );
+    GET_VALUE_3D( c022, volume, i-1, j+1, k+1 );
+    GET_VALUE_3D( c023, volume, i-1, j+1, k+2 );
+    GET_VALUE_3D( c030, volume, i-1, j+2, k-1 );
+    GET_VALUE_3D( c031, volume, i-1, j+2, k+0 );
+    GET_VALUE_3D( c032, volume, i-1, j+2, k+1 );
+    GET_VALUE_3D( c033, volume, i-1, j+2, k+2 );
+
+    GET_VALUE_3D( c100, volume, i+0, j-1, k-1 );
+    GET_VALUE_3D( c101, volume, i+0, j-1, k+0 );
+    GET_VALUE_3D( c102, volume, i+0, j-1, k+1 );
+    GET_VALUE_3D( c103, volume, i+0, j-1, k+2 );
+    GET_VALUE_3D( c110, volume, i+0, j+0, k-1 );
+    GET_VALUE_3D( c111, volume, i+0, j+0, k+0 );
+    GET_VALUE_3D( c112, volume, i+0, j+0, k+1 );
+    GET_VALUE_3D( c113, volume, i+0, j+0, k+2 );
+    GET_VALUE_3D( c120, volume, i+0, j+1, k-1 );
+    GET_VALUE_3D( c121, volume, i+0, j+1, k+0 );
+    GET_VALUE_3D( c122, volume, i+0, j+1, k+1 );
+    GET_VALUE_3D( c123, volume, i+0, j+1, k+2 );
+    GET_VALUE_3D( c130, volume, i+0, j+2, k-1 );
+    GET_VALUE_3D( c131, volume, i+0, j+2, k+0 );
+    GET_VALUE_3D( c132, volume, i+0, j+2, k+1 );
+    GET_VALUE_3D( c133, volume, i+0, j+2, k+2 );
+
+    GET_VALUE_3D( c200, volume, i+1, j-1, k-1 );
+    GET_VALUE_3D( c201, volume, i+1, j-1, k+0 );
+    GET_VALUE_3D( c202, volume, i+1, j-1, k+1 );
+    GET_VALUE_3D( c203, volume, i+1, j-1, k+2 );
+    GET_VALUE_3D( c210, volume, i+1, j+0, k-1 );
+    GET_VALUE_3D( c211, volume, i+1, j+0, k+0 );
+    GET_VALUE_3D( c212, volume, i+1, j+0, k+1 );
+    GET_VALUE_3D( c213, volume, i+1, j+0, k+2 );
+    GET_VALUE_3D( c220, volume, i+1, j+1, k-1 );
+    GET_VALUE_3D( c221, volume, i+1, j+1, k+0 );
+    GET_VALUE_3D( c222, volume, i+1, j+1, k+1 );
+    GET_VALUE_3D( c223, volume, i+1, j+1, k+2 );
+    GET_VALUE_3D( c230, volume, i+1, j+2, k-1 );
+    GET_VALUE_3D( c231, volume, i+1, j+2, k+0 );
+    GET_VALUE_3D( c232, volume, i+1, j+2, k+1 );
+    GET_VALUE_3D( c233, volume, i+1, j+2, k+2 );
+
+    GET_VALUE_3D( c300, volume, i+2, j-1, k-1 );
+    GET_VALUE_3D( c301, volume, i+2, j-1, k+0 );
+    GET_VALUE_3D( c302, volume, i+2, j-1, k+1 );
+    GET_VALUE_3D( c303, volume, i+2, j-1, k+2 );
+    GET_VALUE_3D( c310, volume, i+2, j+0, k-1 );
+    GET_VALUE_3D( c311, volume, i+2, j+0, k+0 );
+    GET_VALUE_3D( c312, volume, i+2, j+0, k+1 );
+    GET_VALUE_3D( c313, volume, i+2, j+0, k+2 );
+    GET_VALUE_3D( c320, volume, i+2, j+1, k-1 );
+    GET_VALUE_3D( c321, volume, i+2, j+1, k+0 );
+    GET_VALUE_3D( c322, volume, i+2, j+1, k+1 );
+    GET_VALUE_3D( c323, volume, i+2, j+1, k+2 );
+    GET_VALUE_3D( c330, volume, i+2, j+2, k-1 );
+    GET_VALUE_3D( c331, volume, i+2, j+2, k+0 );
+    GET_VALUE_3D( c332, volume, i+2, j+2, k+1 );
+    GET_VALUE_3D( c333, volume, i+2, j+2, k+2 );
+
+    n_inactive = 0;
+
+    for_inclusive( di, -1, 2 )
+    {
+        for_inclusive( dj, -1, 2 )
+        {
+            for_inclusive( dk, -1, 2 )
+            {
+                if( !get_voxel_activity_flag( volume, i+di, j+dj, k+dk ) )
+                    ++n_inactive;
+            }
+        }
+    }
+
+    if( value != (Real *) 0 )
+    {
+        CUBIC_TRIVAR( c, u, v, w, *value );
+    }
+
+    if( deriv_x != (Real *) 0 )
+    {
+        CUBIC_TRIVAR_DERIV( c, u, v, w, *deriv_x, *deriv_y, *deriv_z );
+    }
+
+    if( n_inactive == 0 )
+        activity = ALL_ACTIVE;
+    else if( n_inactive == 64 )
+        activity = NONE_ACTIVE;
+    else
+        activity = SOME_ACTIVE;
+
+    return( activity );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -757,264 +1342,77 @@ public  Boolean   evaluate_volume(
     Real           x,
     Real           y,
     Real           z,
+    int            degrees_continuity,
     Boolean        activity_if_mixed,
     Real           *value,
     Real           *deriv_x,
     Real           *deriv_y,
     Real           *deriv_z )
 {
-    Boolean voxel_is_active;
-    int     n_inactive;
-    int     i, j, k;
-    int     xi, yi, zi, x_voxel, y_voxel, z_voxel;
-    Real    u, v, w;
-    Real    val;
-    Real    c000, c001, c010, c011, c100, c101, c110, c111;
-    Real    c00, c01, c10, c11;
-    Real    c0, c1;
-    Real    du00, du01, du10, du11, du0, du1;
-    Real    dv0, dv1;
-    int     nx, ny, nz;
+    Group_activity   activity;
+    Boolean          voxel_is_active;
+    int              nx, ny, nz;
 
     nx = volume->sizes[X];
     ny = volume->sizes[Y];
     nz = volume->sizes[Z];
 
-    /* check if point is outside volume */
-
-    if( x < 0.0 || x > (Real) (nx-1) ||
-        y < 0.0 || y > (Real) (ny-1) ||
-        z < 0.0 || z > (Real) (nz-1) )
+    if( x < -0.5 || x > (Real) nx - 0.5 ||
+        y < -0.5 || y > (Real) ny - 0.5 ||
+        z < -0.5 || z > (Real) nz - 0.5 )
     {
-        *value = 0.0;
-        if( deriv_x != (Real *) 0 )
+        *value = volume->fill_value;
+        if( deriv_x != (Real *) NULL )
         {
             *deriv_x = 0.0;
             *deriv_y = 0.0;
             *deriv_z = 0.0;
         }
-
         return( FALSE );
     }
 
-    if( x < 0.0 )                /* for now, won't happen */
-        i = -1;
-    else if( x == (Real) (nx-1) )
+    if( x < (Real) degrees_continuity / 0.5 ||
+        x > (Real) (nx-1) - (Real) degrees_continuity / 0.5 ||
+        y < (Real) degrees_continuity / 0.5 ||
+        y > (Real) (ny-1) - (Real) degrees_continuity / 0.5 ||
+        z < (Real) degrees_continuity / 0.5 ||
+        z > (Real) (nz-1) - (Real) degrees_continuity / 0.5 )
     {
-        i = nx-2;
-        u = 1.0;
-    }
-    else
-    {
-        i = (int) x;
-        u = FRACTION( x );
+        degrees_continuity = -1;
     }
 
-    if( y < 0.0 )
-        j = -1;
-    else if( y == (Real) (ny-1) )
+    switch( degrees_continuity )
     {
-        j = ny-2;
-        v = 1.0;
-    }
-    else
-    {
-        j = (int) y;
-        v = FRACTION( y );
-    }
+    case -1:
+        activity = triconstant_interpolate_volume( volume, x, y, z, value,
+                                                   deriv_x, deriv_y, deriv_z );
+        break;
 
-    if( z < 0.0 )
-        k = -1;
-    else if( z == (Real) (nz-1) )
-    {
-        k = nz-2;
-        w = 1.0;
-    }
-    else
-    {
-        k = (int) z;
-        w = FRACTION( z );
-    }
+    case 0:
+        activity = trilinear_interpolate_volume( volume, x, y, z, value,
+                                                 deriv_x, deriv_y, deriv_z );
+        break;
 
-    n_inactive = 0;
+    case 1:
+        activity = triquadratic_interpolate_volume( volume, x, y, z, value,
+                                                    deriv_x, deriv_y, deriv_z );
+        break;
 
-    if( i >= 0 && i < nx-1 && j >= 0 && j < ny-1 && k >= 0 && k < nz-1 )
-    {
-        GET_VALUE_3D( c000, volume, i,   j,   k );
-        GET_VALUE_3D( c001, volume, i,   j,   k+1 );
-        GET_VALUE_3D( c010, volume, i,   j+1, k );
-        GET_VALUE_3D( c011, volume, i,   j+1, k+1 );
-        GET_VALUE_3D( c100, volume, i+1, j,   k );
-        GET_VALUE_3D( c101, volume, i+1, j,   k+1 );
-        GET_VALUE_3D( c110, volume, i+1, j+1, k );
-        GET_VALUE_3D( c111, volume, i+1, j+1, k+1 );
+    case 2:
+        activity = tricubic_interpolate_volume( volume, x, y, z, value,
+                                                deriv_x, deriv_y, deriv_z );
+        break;
 
-        if( !get_voxel_activity_flag( volume, i  , j  , k ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i  , j+1, k ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i  , j+1, k+1 ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i+1, j  , k ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i+1, j  , k+1 ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i+1, j+1, k ) )
-            ++n_inactive;
-        if( !get_voxel_activity_flag( volume, i+1, j+1, k+1 ) )
-            ++n_inactive;
-    }
-    else         /* for now, won't get to this case */
-    {
-        HANDLE_INTERNAL_ERROR( "evaluate_volume" );
-        for_less( xi, 0, 2 )
-        {
-            x_voxel = i + xi;
-            for_less( yi, 0, 2 )
-            {
-                y_voxel = j + yi;
-                for_less( zi, 0, 2 )
-                {
-                    z_voxel = k + zi;
-                    if( x_voxel >= 0 && x_voxel < nx &&
-                        y_voxel >= 0 && y_voxel < ny &&
-                        z_voxel >= 0 && z_voxel < nz )
-                    {
-                        GET_VALUE_3D( val, volume, x_voxel, y_voxel, z_voxel );
-
-                        if( !get_voxel_activity_flag( volume, x_voxel,
-                                                      y_voxel, z_voxel ) )
-                            ++n_inactive;
-                    }
-                    else
-                    {
-                        val = 0.0;
-                        ++n_inactive;
-                    }
-
-                    if( xi == 0 )
-                    {
-                        if( yi == 0 )
-                        {
-                            if( zi == 0 )
-                                c000 = val;
-                            else
-                                c001 = val;
-                        }
-                        else
-                        {
-                            if( zi == 0 )
-                                c010 = val;
-                            else
-                                c011 = val;
-                        }
-                    }
-                    else
-                    {
-                        if( yi == 0 )
-                        {
-                            if( zi == 0 )
-                                c100 = val;
-                            else
-                                c101 = val;
-                        }
-                        else
-                        {
-                            if( zi == 0 )
-                                c110 = val;
-                            else
-                                c111 = val;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    du00 = c100 - c000;
-    du01 = c101 - c001;
-    du10 = c110 - c010;
-    du11 = c111 - c011;
-
-    c00 = c000 + u * du00;
-    c01 = c001 + u * du01;
-    c10 = c010 + u * du10;
-    c11 = c011 + u * du11;
-
-    dv0 = c10 - c00;
-    dv1 = c11 - c01;
-
-    c0 = c00 + v * dv0;
-    c1 = c01 + v * dv1;
-
-    *value = INTERPOLATE( w, c0, c1 );
-
-    if( deriv_x != (Real *) 0 )
-    {
-        du0 = INTERPOLATE( v, du00, du10 );
-        du1 = INTERPOLATE( v, du01, du11 );
-
-        *deriv_x = INTERPOLATE( w, du0, du1 );
-        *deriv_y = INTERPOLATE( w, dv0, dv1 );
-        *deriv_z = (c1 - c0);
+    default:
+        HANDLE_INTERNAL_ERROR( "evaluate_volume: invalid continuity" );
     }
 
-    if( n_inactive == 0 )
+    if( activity == ALL_ACTIVE )
         voxel_is_active = TRUE;
-    else if( n_inactive == 8 )
+    else if( activity == NONE_ACTIVE )
         voxel_is_active = FALSE;
     else
         voxel_is_active = activity_if_mixed;
 
     return( voxel_is_active );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_volume_voxel_range
-@INPUT      : volume
-@OUTPUT     : min_value
-              max_value
-@RETURNS    : 
-@DESCRIPTION: Passes back the min and max voxel values stored in the volume.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  get_volume_voxel_range(
-    Volume     volume,
-    Real       *min_value,
-    Real       *max_value )
-{
-    *min_value = volume->min_value;
-    *max_value = volume->max_value;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_volume_range
-@INPUT      : volume
-@OUTPUT     : min_value
-              max_value
-@RETURNS    : 
-@DESCRIPTION: Passes back the minimum and maximum scaled values.  These are
-              the minimum and maximum stored voxel values scaled to the
-              real value domain.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  get_volume_range(
-    Volume     volume,
-    Real       *min_value,
-    Real       *max_value )
-{
-    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_value );
-    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_value );
 }
