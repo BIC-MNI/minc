@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 2.2  1995-02-09 14:05:51  neelin
-@MODIFIED   : Mods to make irix 5 lint happy.
+@MODIFIED   : Revision 2.3  1995-05-05 19:11:05  neelin
+@MODIFIED   : Modified call to input_transform.
 @MODIFIED   :
+ * Revision 2.2  1995/02/09  14:05:51  neelin
+ * Mods to make irix 5 lint happy.
+ *
  * Revision 2.1  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -77,7 +80,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.2 1995-02-09 14:05:51 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.3 1995-05-05 19:11:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1449,7 +1452,8 @@ public int get_transformation(char *dst, char *key, char *nextArg)
    rewind(fp);
 
    /* Read the file */
-   if (input_transform(fp, &input_transformation)!=OK) {
+   if (input_transform(fp, transform_info->file_name, 
+                       &input_transformation)!=OK) {
       (void) fprintf(stderr, "Error reading transformation file.\n");
       exit(EXIT_FAILURE);
    }
