@@ -10,8 +10,12 @@
                  miicv_free
                  miicv_setdbl
                  miicv_setint
-                 miicv_set
-                 miicv_inq
+                 miicv_setlong
+                 miicv_setstr
+                 miicv_inqdbl
+                 miicv_inqint
+                 miicv_inqlong
+                 miicv_inqstr
                  miicv_ndattach
                  miicv_detach
                  miicv_get
@@ -28,11 +32,15 @@
                  MI_icv_coords_tovar
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : 
+@MODIFIED   : January 22, 1993 (P.N.)
+                 - Modified handling of icv properties with miicv_set<type>.
+                   Removed routine miicv_set. Use routines miicv_setdbl,
+                   miicv_setint, miicv_setlong, miicv_setstr instead (this
+                   gives type checking at compile time).
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.8 1992-12-04 08:29:25 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.9 1993-01-22 11:37:35 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -163,6 +171,8 @@ public int miicv_free(int icvid)
 @OUTPUT     : (none)
 @RETURNS    : MI_ERROR if an error occurs
 @DESCRIPTION: Sets a property of an icv to a given double value
+              Properties cannot be modified while the icv is attached to a 
+              cdf file and variable (see miicv_attach and miicv_detach).
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -171,71 +181,10 @@ public int miicv_free(int icvid)
 ---------------------------------------------------------------------------- */
 public int miicv_setdbl(int icvid, int icv_property, double value)
 {
-   MI_SAVE_ROUTINE_NAME("miicv_setdbl");
-
-   MI_CHK_ERR(miicv_set(icvid, icv_property, &value));
-
-   MI_RETURN(MI_NOERROR);
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : miicv_setint
-@INPUT      : icvid        - icv id
-              icv_property - property of icv to set
-              value        - value to set it to
-@OUTPUT     : (none)
-@RETURNS    : MI_ERROR if an error occurs
-@DESCRIPTION: Sets a property of an icv to a given integer value. Note
-              that MI_ICV_ADIM_SIZE and MI_ICV_BDIM_SIZE are converted
-              to long.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : August 7, 1992 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public int miicv_setint(int icvid, int icv_property, int value)
-{
-   long lvalue;
-
-   MI_SAVE_ROUTINE_NAME("miicv_setint");
-
-   if ((icv_property==MI_ICV_ADIM_SIZE) || (icv_property==MI_ICV_BDIM_SIZE) ||
-       ((icv_property>=MI_ICV_DIM_SIZE) && 
-        (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS))) {
-      lvalue = (long) value;
-      MI_CHK_ERR(miicv_set(icvid, icv_property, &lvalue))
-   }
-   else
-      MI_CHK_ERR(miicv_set(icvid, icv_property, &value))
-
-   MI_RETURN(MI_NOERROR);
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : miicv_set
-@INPUT      : icvid        - icv id
-              icv_property - property of icv to set
-              value        - value to set it to (note that this is a pointer
-                 so that different types can be passed to the routine, no
-                 value is returned).
-@OUTPUT     : (none)
-@RETURNS    : MI_ERROR if an error occurs
-@DESCRIPTION: Sets a property of an icv to a given value. Properties cannot
-              be modified while the icv is attached to a cdf file and 
-              variable (see miicv_attach and miicv_detach).
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : August 7, 1992 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public int miicv_set(int icvid, int icv_property, void *value)
-{
    int ival, idim;
    mi_icv_type *icvp;
 
-   MI_SAVE_ROUTINE_NAME("miicv_set");
+   MI_SAVE_ROUTINE_NAME("miicv_setdbl");
 
    /* Check icv id */
    if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
@@ -250,55 +199,48 @@ public int miicv_set(int icvid, int icv_property, void *value)
    /* Set the property */
    switch (icv_property) {
    case MI_ICV_TYPE:
-      icvp->user_type   = *((nc_type *) value);
+      icvp->user_type   = value;
       icvp->user_typelen= nctypelen(icvp->user_type);
       icvp->user_vmax   = MI_get_default_range(MIvalid_max, icvp->user_type,
                                                icvp->user_sign);
       icvp->user_vmin   = MI_get_default_range(MIvalid_min, icvp->user_type,
                                                icvp->user_sign);
       break;
-   case MI_ICV_SIGN:
-      icvp->user_sign   = MI_get_sign_from_string(icvp->user_type, value);
-      icvp->user_vmax   = MI_get_default_range(MIvalid_max, icvp->user_type,
-                                               icvp->user_sign);
-      icvp->user_vmin   = MI_get_default_range(MIvalid_min, icvp->user_type,
-                                               icvp->user_sign);
-      break;
    case MI_ICV_DO_RANGE:
-      icvp->user_do_range = *((int *) value); break;
+      icvp->user_do_range = value; break;
    case MI_ICV_VALID_MAX:
-      icvp->user_vmax   = *((double *) value); break;
+      icvp->user_vmax   = value; break;
    case MI_ICV_VALID_MIN:
-      icvp->user_vmin   = *((double *) value); break;
+      icvp->user_vmin   = value; break;
    case MI_ICV_DO_NORM:
-      icvp->user_do_norm = *((int *) value); break;
+      icvp->user_do_norm = value; break;
    case MI_ICV_USER_NORM:
-      icvp->user_user_norm = *((int *) value); break;
+      icvp->user_user_norm = value; break;
    case MI_ICV_IMAGE_MAX:
-      icvp->user_imgmax = *((double *) value); break;
+      icvp->user_imgmax = value; break;
    case MI_ICV_IMAGE_MIN:
-      icvp->user_imgmin = *((double *) value); break;
+      icvp->user_imgmin = value; break;
    case MI_ICV_DO_DIM_CONV:
-      icvp->user_do_dimconv = *((int *) value); break;
+      icvp->user_do_dimconv = value; break;
    case MI_ICV_DO_SCALAR:
-      icvp->user_do_scalar = *((int *) value); break;
+      icvp->user_do_scalar = value; break;
    case MI_ICV_XDIM_DIR: 
-      ival = *((int *) value);
+      ival = value;
       icvp->user_xdim_dir = ((ival==MI_ICV_POSITIVE) || 
                              (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
       break;
    case MI_ICV_YDIM_DIR:
-      ival = *((int *) value);
+      ival = value;
       icvp->user_ydim_dir = ((ival==MI_ICV_POSITIVE) || 
                              (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
       break;
    case MI_ICV_ZDIM_DIR:
-      ival = *((int *) value);
+      ival = value;
       icvp->user_zdim_dir = ((ival==MI_ICV_POSITIVE) || 
                              (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
       break;
    case MI_ICV_NUM_IMGDIMS:
-      ival = *((int *) value);
+      ival = value;
       if ((ival<0) || (ival>MI_MAX_IMGDIMS)) {
          MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
                            "MI_ICV_NUM_IMGDIMS out of range");
@@ -307,17 +249,22 @@ public int miicv_set(int icvid, int icv_property, void *value)
       icvp->user_num_imgdims = ival;
       break;
    case MI_ICV_ADIM_SIZE:
-      icvp->user_dim_size[0] = *((long *) value); break;
+      icvp->user_dim_size[0] = value; break;
    case MI_ICV_BDIM_SIZE:
-      icvp->user_dim_size[1] = *((long *) value); break;
+      icvp->user_dim_size[1] = value; break;
    case MI_ICV_KEEP_ASPECT:
-      icvp->user_keep_aspect = *((int *) value); break;
+      icvp->user_keep_aspect = value; break;
+   case MI_ICV_SIGN:
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                        "Tried to set icv string property to a number");
+      MI_RETURN_ERROR(MI_ERROR);
+      break;
    default:
       /* Check for image dimension properties */
       if ((icv_property>=MI_ICV_DIM_SIZE) && 
           (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
          idim = icv_property - MI_ICV_DIM_SIZE;
-         icvp->user_dim_size[idim] = *((long *) value);
+         icvp->user_dim_size[idim] = value;
       }
       else {
          MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
@@ -331,7 +278,141 @@ public int miicv_set(int icvid, int icv_property, void *value)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : miicv_inq
+@NAME       : miicv_setint
+@INPUT      : icvid        - icv id
+              icv_property - property of icv to set
+              value        - value to set it to
+@OUTPUT     : (none)
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Sets a property of an icv to a given integer value.
+              Properties cannot be modified while the icv is attached to a 
+              cdf file and variable (see miicv_attach and miicv_detach).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 7, 1992 (Peter Neelin)
+@MODIFIED   : January 22, 1993 (P.N.)
+                 - modified handling of icv properties
+---------------------------------------------------------------------------- */
+public int miicv_setint(int icvid, int icv_property, int value)
+{
+
+   MI_SAVE_ROUTINE_NAME("miicv_setint");
+
+   {MI_CHK_ERR(miicv_setdbl(icvid, icv_property, (double) value))}
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_setlong
+@INPUT      : icvid        - icv id
+              icv_property - property of icv to set
+              value        - value to set it to
+@OUTPUT     : (none)
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Sets a property of an icv to a given long integer value.
+              Properties cannot be modified while the icv is attached to a 
+              cdf file and variable (see miicv_attach and miicv_detach).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miicv_setlong(int icvid, int icv_property, long value)
+{
+
+   MI_SAVE_ROUTINE_NAME("miicv_setlong");
+
+   {MI_CHK_ERR(miicv_setdbl(icvid, icv_property, (double) value))}
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_setstr
+@INPUT      : icvid        - icv id
+              icv_property - property of icv to set
+              value        - value to set it to
+@OUTPUT     : (none)
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Sets a property of an icv to a given string value. 
+              Properties cannot be modified while the icv is attached to a 
+              cdf file and variable (see miicv_attach and miicv_detach).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miicv_setstr(int icvid, int icv_property, char *value)
+{
+   mi_icv_type *icvp;
+
+   MI_SAVE_ROUTINE_NAME("miicv_setstr");
+
+   /* Check icv id */
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
+
+   /* Check that the icv is not attached to a file */
+   if (icvp->cdfid != MI_ERROR) {
+      MI_LOG_PKG_ERROR2(MI_ERR_ICVATTACHED, 
+         "Attempt to modify an attached image conversion variable");
+      MI_RETURN_ERROR(MI_ERROR);
+   }
+
+   /* Set the property */
+   switch (icv_property) {
+   case MI_ICV_SIGN:
+      icvp->user_sign   = MI_get_sign_from_string(icvp->user_type, value);
+      icvp->user_vmax   = MI_get_default_range(MIvalid_max, icvp->user_type,
+                                               icvp->user_sign);
+      icvp->user_vmin   = MI_get_default_range(MIvalid_min, icvp->user_type,
+                                               icvp->user_sign);
+      break;
+   case MI_ICV_TYPE:
+   case MI_ICV_DO_RANGE:
+   case MI_ICV_VALID_MAX:
+   case MI_ICV_VALID_MIN:
+   case MI_ICV_DO_NORM:
+   case MI_ICV_USER_NORM:
+   case MI_ICV_IMAGE_MAX:
+   case MI_ICV_IMAGE_MIN:
+   case MI_ICV_DO_DIM_CONV:
+   case MI_ICV_DO_SCALAR:
+   case MI_ICV_XDIM_DIR: 
+   case MI_ICV_YDIM_DIR:
+   case MI_ICV_ZDIM_DIR:
+   case MI_ICV_NUM_IMGDIMS:
+   case MI_ICV_ADIM_SIZE:
+   case MI_ICV_BDIM_SIZE:
+   case MI_ICV_KEEP_ASPECT:
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                        "Tried to set icv numeric property to a string");
+      MI_RETURN_ERROR(MI_ERROR);
+      break;
+   default:
+      /* Check for image dimension properties */
+      if ((icv_property>=MI_ICV_DIM_SIZE) && 
+          (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set icv numeric property to a string");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      else {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set unknown or illegal icv property");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      break;
+   }
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_inqdbl
 @INPUT      : icvid        - icv id
               icv_property - icv property to get
 @OUTPUT     : value        - value returned
@@ -340,15 +421,15 @@ public int miicv_set(int icvid, int icv_property, void *value)
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 
+@CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inq(int icvid, int icv_property, void *value)
+public int miicv_inqdbl(int icvid, int icv_property, double *value)
 {
    int idim;
    mi_icv_type *icvp;
 
-   MI_SAVE_ROUTINE_NAME("miicv_inq");
+   MI_SAVE_ROUTINE_NAME("miicv_inqdbl");
 
    /* Check icv id */
    if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
@@ -356,72 +437,205 @@ public int miicv_inq(int icvid, int icv_property, void *value)
    /* Set the property */
    switch (icv_property) {
    case MI_ICV_TYPE:
-      *((nc_type *) value) = icvp->user_type; break;
-   case MI_ICV_SIGN:
-      *((char **) value) = (icvp->user_sign==MI_PRIV_SIGNED)   ? MI_SIGNED :
-                           (icvp->user_sign==MI_PRIV_UNSIGNED) ? MI_UNSIGNED :
-                                                             MI_EMPTY_STRING;
-      break;
+      *value = icvp->user_type; break;
    case MI_ICV_DO_RANGE:
-      *((int *) value) = icvp->user_do_range; break;
+      *value = icvp->user_do_range; break;
    case MI_ICV_VALID_MAX:
-      *((double *) value) = icvp->user_vmax; break;
+      *value = icvp->user_vmax; break;
    case MI_ICV_VALID_MIN:
-      *((double *) value) = icvp->user_vmin; break;
+      *value = icvp->user_vmin; break;
    case MI_ICV_DO_NORM:
-      *((int *) value) = icvp->user_do_norm; break;
+      *value = icvp->user_do_norm; break;
    case MI_ICV_USER_NORM:
-      *((int *) value) = icvp->user_user_norm; break;
+      *value = icvp->user_user_norm; break;
    case MI_ICV_IMAGE_MAX:
-      *((double *) value) = icvp->user_imgmax; break;
+      *value = icvp->user_imgmax; break;
    case MI_ICV_IMAGE_MIN:
-      *((double *) value) = icvp->user_imgmin; break;
+      *value = icvp->user_imgmin; break;
    case MI_ICV_NORM_MAX:
-      *((double *) value) = icvp->derv_imgmax; break;
+      *value = icvp->derv_imgmax; break;
    case MI_ICV_NORM_MIN:
-      *((double *) value) = icvp->derv_imgmin; break;
+      *value = icvp->derv_imgmin; break;
    case MI_ICV_DO_DIM_CONV:
-      *((int *) value) = icvp->user_do_dimconv; break;
+      *value = icvp->user_do_dimconv; break;
    case MI_ICV_DO_SCALAR:
-      *((int *) value) = icvp->user_do_scalar; break;
+      *value = icvp->user_do_scalar; break;
    case MI_ICV_XDIM_DIR: 
-      *((int *) value) = icvp->user_xdim_dir; break;
+      *value = icvp->user_xdim_dir; break;
    case MI_ICV_YDIM_DIR:
-      *((int *) value) = icvp->user_ydim_dir; break;
+      *value = icvp->user_ydim_dir; break;
    case MI_ICV_ZDIM_DIR:
-      *((int *) value) = icvp->user_zdim_dir; break;
+      *value = icvp->user_zdim_dir; break;
    case MI_ICV_NUM_IMGDIMS:
-      *((int *) value) = icvp->user_num_imgdims; break;
+      *value = icvp->user_num_imgdims; break;
    case MI_ICV_ADIM_SIZE:
-      *((long *) value) = icvp->user_dim_size[0]; break;
+      *value = icvp->user_dim_size[0]; break;
    case MI_ICV_BDIM_SIZE:
-      *((long *) value) = icvp->user_dim_size[1]; break;
+      *value = icvp->user_dim_size[1]; break;
    case MI_ICV_ADIM_STEP:
-      *((double *) value) = icvp->derv_dim_step[0]; break;
+      *value = icvp->derv_dim_step[0]; break;
    case MI_ICV_BDIM_STEP:
-      *((double *) value) = icvp->derv_dim_step[1]; break;
+      *value = icvp->derv_dim_step[1]; break;
    case MI_ICV_ADIM_START:
-      *((double *) value) = icvp->derv_dim_start[0]; break;
+      *value = icvp->derv_dim_start[0]; break;
    case MI_ICV_BDIM_START:
-      *((double *) value) = icvp->derv_dim_start[1]; break;
+      *value = icvp->derv_dim_start[1]; break;
    case MI_ICV_KEEP_ASPECT:
-      *((int *) value) = icvp->user_keep_aspect; break;
+      *value = icvp->user_keep_aspect; break;
+   case MI_ICV_SIGN:
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                   "Tried to inquire about icv string property as a number");
+      MI_RETURN_ERROR(MI_ERROR);
+      break;
    default:
       /* Check for image dimension properties */
       if ((icv_property>=MI_ICV_DIM_SIZE) && 
           (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
          idim = icv_property - MI_ICV_DIM_SIZE;
-         *((long *) value) = icvp->user_dim_size[idim];
+         *value = icvp->user_dim_size[idim];
       }
       else if ((icv_property>=MI_ICV_DIM_STEP) && 
                (icv_property<MI_ICV_DIM_STEP+MI_MAX_IMGDIMS)) {
          idim = icv_property - MI_ICV_DIM_STEP;
-         *((double *) value) = icvp->derv_dim_step[idim];
+         *value = icvp->derv_dim_step[idim];
       }
       else if ((icv_property>=MI_ICV_DIM_START) && 
                (icv_property<MI_ICV_DIM_START+MI_MAX_IMGDIMS)) {
          idim = icv_property - MI_ICV_DIM_START;
-         *((double *) value) = icvp->derv_dim_start[idim];
+         *value = icvp->derv_dim_start[idim];
+      }
+      else {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to inquire about unknown icv property");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
+      break;
+   }
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_inqint
+@INPUT      : icvid        - icv id
+              icv_property - icv property to get
+@OUTPUT     : value        - value returned
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Gets the value of an icv property
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miicv_inqint(int icvid, int icv_property, int *value)
+{
+   double dvalue;
+
+   MI_SAVE_ROUTINE_NAME("miicv_inqint");
+
+   {MI_CHK_ERR(miicv_inqdbl(icvid, icv_property, &dvalue))}
+   *value = dvalue;
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_inqlong
+@INPUT      : icvid        - icv id
+              icv_property - icv property to get
+@OUTPUT     : value        - value returned
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Gets the value of an icv property
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miicv_inqlong(int icvid, int icv_property, long *value)
+{
+   double dvalue;
+
+   MI_SAVE_ROUTINE_NAME("miicv_inqlong");
+
+   {MI_CHK_ERR(miicv_inqdbl(icvid, icv_property, &dvalue))}
+   *value = dvalue;
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miicv_inqstr
+@INPUT      : icvid        - icv id
+              icv_property - icv property to get
+@OUTPUT     : value        - value returned. Caller must allocate enough 
+                 space for return string.
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Gets the value of an icv property
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miicv_inqstr(int icvid, int icv_property, char *value)
+{
+   mi_icv_type *icvp;
+
+   MI_SAVE_ROUTINE_NAME("miicv_inqstr");
+
+   /* Check icv id */
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
+
+   /* Set the property */
+   switch (icv_property) {
+   case MI_ICV_SIGN:
+      if (icvp->user_sign==MI_PRIV_SIGNED)
+         (void) strcpy(value, MI_SIGNED);
+      else if (icvp->user_sign==MI_PRIV_UNSIGNED)
+         (void) strcpy(value, MI_UNSIGNED);
+      else
+         (void) strcpy(value, MI_EMPTY_STRING);
+      break;
+   case MI_ICV_TYPE:
+   case MI_ICV_DO_RANGE:
+   case MI_ICV_VALID_MAX:
+   case MI_ICV_VALID_MIN:
+   case MI_ICV_DO_NORM:
+   case MI_ICV_USER_NORM:
+   case MI_ICV_IMAGE_MAX:
+   case MI_ICV_IMAGE_MIN:
+   case MI_ICV_NORM_MAX:
+   case MI_ICV_NORM_MIN:
+   case MI_ICV_DO_DIM_CONV:
+   case MI_ICV_DO_SCALAR:
+   case MI_ICV_XDIM_DIR: 
+   case MI_ICV_YDIM_DIR:
+   case MI_ICV_ZDIM_DIR:
+   case MI_ICV_NUM_IMGDIMS:
+   case MI_ICV_ADIM_SIZE:
+   case MI_ICV_BDIM_SIZE:
+   case MI_ICV_ADIM_STEP:
+   case MI_ICV_BDIM_STEP:
+   case MI_ICV_ADIM_START:
+   case MI_ICV_BDIM_START:
+   case MI_ICV_KEEP_ASPECT:
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                  "Tried to inquire about icv numeric property as a string");
+      MI_RETURN_ERROR(MI_ERROR);
+      break;
+   default:
+      /* Check for image dimension properties */
+      if (((icv_property>=MI_ICV_DIM_SIZE) && 
+           (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) ||
+          ((icv_property>=MI_ICV_DIM_STEP) && 
+           (icv_property<MI_ICV_DIM_STEP+MI_MAX_IMGDIMS)) ||
+          ((icv_property>=MI_ICV_DIM_START) && 
+           (icv_property<MI_ICV_DIM_START+MI_MAX_IMGDIMS))) {
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                  "Tried to inquire about icv numeric property as a string");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       else {
          MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
