@@ -517,7 +517,7 @@ private  BOOLEAN  alloc_checking_enabled( void )
 #else
     if( !enabled_initialized )
     {
-        set_alloc_checking( !ENV_EXISTS( "NO_DEBUG_ALLOC" ) );
+        set_alloc_checking( ENV_EXISTS( "DEBUG_ALLOC" ) );
     }
 
     return( checking_enabled );

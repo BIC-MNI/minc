@@ -697,3 +697,105 @@ public  Status  read_transform_file(
 
     return( status );
 }
+
+private  void  least_squares(
+    int     n,
+    Real    x_list[],
+    Real    y_list[],
+    Real    trans_list[],
+    Real    *a,
+    Real    *b,
+    Real    *c )
+{
+    int   i;
+    Real  x, y, xp;
+    Real  sumx, sumy, sumxx, sumyy, sumxy, sumxp, sumyxp, sumxxp;
+    Real  denom;
+
+    sumx = 0.0;
+    sumy = 0.0;
+    sumxx = 0.0;
+    sumxy = 0.0;
+    sumyy = 0.0;
+    sumxp = 0.0;
+    sumxxp = 0.0;
+    sumyxp = 0.0;
+
+    for_less( i, 0, n )
+    {
+        x = x_list[i];
+        y = y_list[i];
+        xp = trans_list[i];
+
+        sumx += x;
+        sumy += y;
+        sumxx += x * x;
+        sumxy += x * y;
+        sumyy += y * y;
+        sumxp += xp;
+        sumxxp += x * xp;
+        sumyxp += y * xp;
+    }
+
+    denom = n*sumxx*sumyy - n*sumxy*sumxy - sumx*sumx*sumyy +
+            2.0*sumxy*sumx*sumy - sumxx*sumy*sumy;
+
+    if( denom == 0.0 )
+    {
+        HANDLE_INTERNAL_ERROR( "least_squares_transform_2d: division by zero.");
+        *a = 0.0;
+        *b = 0.0;
+        *c = 0.0;
+        return;
+    }
+
+    *a = (n*sumxxp*sumyy - n*sumxy*sumyxp - sumxxp*sumy*sumy +
+          sumxy*sumy*sumxp + sumy*sumx*sumyxp - sumx*sumxp*sumyy) / denom;
+
+    *b = -(-sumxy*sumx*sumxp + sumx*sumx*sumyxp + n*sumxy*sumxxp -
+           n*sumxx*sumyxp - sumy*sumx*sumxxp + sumxx*sumy*sumxp) / denom;
+
+    *c = (-sumx*sumxxp*sumyy + sumx*sumxy*sumyxp + sumy*sumxy*sumxxp -
+           sumy*sumxx*sumyxp + sumxp*sumxx*sumyy - sumxp*sumxy*sumxy) / denom;
+}
+
+public  void  get_least_squares_transform_2d(
+    int           n_points,
+    Real          x[],
+    Real          y[],
+    Real          x_trans[],
+    Real          y_trans[],
+    Transform_2d  *transform_2d )
+{
+    Real  a, b, c;
+    
+    least_squares( n_points, x, y, x_trans, &a, &b, &c );
+    Transform_2d_elem( *transform_2d, 0, 0 ) = a;
+    Transform_2d_elem( *transform_2d, 0, 1 ) = b;
+    Transform_2d_elem( *transform_2d, 0, 2 ) = c;
+    
+    least_squares( n_points, x, y, y_trans, &a, &b, &c );
+    Transform_2d_elem( *transform_2d, 1, 0 ) = a;
+    Transform_2d_elem( *transform_2d, 1, 1 ) = b;
+    Transform_2d_elem( *transform_2d, 1, 2 ) = c;
+
+#ifdef DEBUG
+{
+    int  i;
+    Real xp, yp;
+    print( "%g %g %g\n", Transform_2d_elem(*transform_2d,0,0),
+                         Transform_2d_elem(*transform_2d,0,1),
+                         Transform_2d_elem(*transform_2d,0,2) );
+    print( "%g %g %g\n", Transform_2d_elem(*transform_2d,1,0),
+                         Transform_2d_elem(*transform_2d,1,1),
+                         Transform_2d_elem(*transform_2d,1,2) );
+    for_less( i, 0, n_points )
+    {
+        transform_point_2d( transform_2d, x[i], y[i], &xp, &yp );
+        print( "%g %g   %g %g\n", x_trans[i], y_trans[i], xp, yp );
+    }
+    print( "\n" );
+}
+#endif
+
+}

@@ -105,27 +105,32 @@ public  void  expand_filename(
     char  filename[],
     char  expanded_filename[] )
 {
-    int      i, dest, len, env_index;
-    BOOLEAN  use_home;
+    int      i, new_i, dest, len, env_index;
+    BOOLEAN  use_home, prev_was_backslash;
     char     *env_value;
     STRING   env;
 
     len = strlen( filename );
 
+    prev_was_backslash = FALSE;
     i = 0;
     dest = 0;
     while( i < len+1 )
     {
-        if( (i == 0 && filename[i] == '~') || filename[i] == '$' )
+        if( !prev_was_backslash &&
+            ((i == 0 && filename[i] == '~') || filename[i] == '$') )
         {
-            use_home = (filename[i] == '~');
-            ++i;
+            new_i = i;
+            use_home = (filename[new_i] == '~');
+            ++new_i;
             env_index = 0;
-            while( filename[i] != '/' && filename[i] != (char) 0 )
+            while( filename[new_i] != '/' &&
+                   filename[new_i] != '.' &&
+                   filename[new_i] != (char) 0 )
             {
-                env[env_index] = filename[i];
+                env[env_index] = filename[new_i];
                 ++env_index;
-                ++i;
+                ++new_i;
             }
 
             env[env_index] = (char) 0;
@@ -139,12 +144,27 @@ public  void  expand_filename(
             {
                 (void) strcpy( &expanded_filename[dest], env_value );
                 dest += strlen( env_value );
+                i = new_i;
             }
+            else
+            {
+                expanded_filename[dest] = filename[i];
+                ++dest;
+                ++i;
+            }
+
+            prev_was_backslash = FALSE;
         }
         else
         {
-            expanded_filename[dest] = filename[i];
-            ++dest;
+            if( prev_was_backslash || filename[i] != '\\' )
+            {
+                expanded_filename[dest] = filename[i];
+                ++dest;
+                prev_was_backslash = FALSE;
+            }
+            else
+                prev_was_backslash = TRUE;
             ++i;
         }
     }

@@ -1,7 +1,9 @@
 #ifndef  DEF_VOLUME
 #define  DEF_VOLUME
 
+#define  cmode  nc_cmode
 #include  <minc.h>
+#undef  cmode
 #include  <transforms.h>
 
 #define  MAX_DIMENSIONS     5

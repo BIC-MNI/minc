@@ -41,7 +41,9 @@ int  main(
         z_width /= ABS( separations[Z] );
     }
 
-    new_volume = create_box_filtered_volume( volume, x_width, y_width, z_width);
+    new_volume = create_box_filtered_volume( volume, NC_UNSPECIFIED, FALSE,
+                                             0.0, 0.0,
+                                             x_width, y_width, z_width );
 
     history = "box filtered";
 

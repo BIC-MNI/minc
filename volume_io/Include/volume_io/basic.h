@@ -96,9 +96,11 @@
 
 #ifdef USE_ANSI
 #define GLUE(x,y) x##y
+#define GLUE3(x,y,z) x##y##z
 #define CREATE_STRING(x) #x
 #else
 #define GLUE(x,y) x/**/y
+#define GLUE3(x,y,z) x/**/y/**/z
 #define CREATE_STRING(x) "x"
 #endif
 
