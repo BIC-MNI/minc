@@ -155,7 +155,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   props_handle->zlib_level = create_props->zlib_level;
   props_handle->edge_count = create_props->edge_count;
 
-  props_handle->edge_lengths = (int *)malloc(sizeof(create_props->max_lengths));
+  props_handle->edge_lengths = (int *)malloc(create_props->max_lengths*sizeof(int));
   for (i=0;i<create_props->max_lengths; i++) {
     props_handle->edge_lengths[i] = create_props->edge_lengths[i];
   }

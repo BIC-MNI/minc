@@ -70,7 +70,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   strcpy(handle->name, dim_ptr->name);
   handle->size = dim_ptr->size;
   if (dim_ptr->offsets != NULL) {
-    handle->offsets = (double *) malloc(sizeof(dim_ptr->size));
+    handle->offsets = (double *) malloc(dim_ptr->size*sizeof(double));
     for (i=0; i < dim_ptr->size; i++) {
       handle->offsets[i] = dim_ptr->offsets[i];
     }
@@ -92,7 +92,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   }
   handle->width = dim_ptr->width;
   if (dim_ptr->widths != NULL) {
-    handle->widths = (double *) malloc(sizeof(dim_ptr->size));
+    handle->widths = (double *) malloc(dim_ptr->size*sizeof(double));
     for (i=0; i < dim_ptr->size; i++) {
       handle->widths[i] = dim_ptr->widths[i];
     }
@@ -347,7 +347,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
   /* Allocated space for dimensions indices, if not already done.
    */
   if (volume->dim_indices == NULL){
-    volume->dim_indices = (int *)malloc(sizeof(volume->number_of_dims));
+    volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
     memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
   }
   for (i=0; i < volume->number_of_dims; i++) {
@@ -396,7 +396,7 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
   /* Allocated space for dimensions indices, if not already done.
    */
   if (volume->dim_indices == NULL) {
-    volume->dim_indices = (int *)malloc(sizeof(volume->number_of_dims));
+    volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
     memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
   }
   for (i=0; i < volume->number_of_dims; i++) {
@@ -708,7 +708,7 @@ miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   }
   /* Allocate enough space for offsets.
    */
-  offsets = (double *) malloc(sizeof(diff));
+  offsets = (double *) malloc(diff*sizeof(double));
   
   if (dimension->offsets == NULL) {
     for (i=start_position; i <= diff ; i++) {
@@ -751,7 +751,7 @@ miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   /* Allocate space for the offsets if not already done.
    */
   if (dimension->offsets == NULL) {
-    dimension->offsets = (double *) malloc(sizeof(dimension->size));
+    dimension->offsets = (double *) malloc(dimension->size*sizeof(double));
   }
   if (start_position == 0) {
     diff--;
@@ -841,7 +841,7 @@ miget_dimension_separations(const midimhandle_t dimensions[], mivoxel_order_t vo
   int i;
   /* Allocated space for the separations array.
    */
-  separations  = (double *) malloc(sizeof(array_length));
+  separations  = (double *) malloc(array_length*sizeof(double));
   for (i=0; i< array_length; i++) {
     miget_dimension_separation(dimensions[i], voxel_order, &separations[i]);
   }
@@ -902,7 +902,7 @@ miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
   int i;
   /* Allocated space for the sizes array.
    */
-  sizes  = (unsigned long *) malloc(sizeof(array_length));
+  sizes  = (unsigned long *) malloc(array_length*sizeof(unsigned long));
   for(i=0; i<array_length; i++) {
     miget_dimension_size(dimensions[i], &sizes[i]);
   }
@@ -957,7 +957,7 @@ miget_dimension_starts(const midimhandle_t dimensions[], mivoxel_order_t voxel_o
   int i;
   /* Allocated space for the starts array.
    */
-  starts  = (double *) malloc(sizeof(array_length));
+  starts  = (double *) malloc(array_length*sizeof(double));
   for (i=0; i < array_length; i++) {
     miget_dimension_start(dimensions[i], voxel_order, &starts[i]);
   }
@@ -1077,7 +1077,7 @@ miget_dimension_widths(midimhandle_t dimension, mivoxel_order_t voxel_order,
   }
   /* Allocate space for the widths array
    */
-  widths = (double *) malloc(sizeof(diff));
+  widths = (double *) malloc(diff*sizeof(double));
   /* Check to see whether the dimension is regularly sampled.
    */
   if (start_position == 0) {
@@ -1136,7 +1136,7 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   /* Allocate space for widths array if not already done
    */
   if (dimension->widths == NULL) {
-    dimension->widths = (double *) malloc(sizeof(dimension->size));
+    dimension->widths = (double *) malloc(dimension->size*sizeof(double));
   }
   if (start_position == 0) {
     diff--;

@@ -82,7 +82,7 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
       int i;
       handle = (volprops *)malloc(sizeof(*handle));
       handle->edge_count = H5Pget_chunk(hdf_plist, MI2_MAX_BLOCK_EDGES, dims);
-      handle->edge_lengths = (int *)malloc(sizeof(handle->edge_count));
+      handle->edge_lengths = (int *)malloc(handle->edge_count*sizeof(int));
       if (handle->edge_lengths == NULL) {
 	  return (MI_ERROR);
       }
@@ -264,7 +264,7 @@ miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_leng
   
   props->edge_count = edge_count;
   if (edge_count != 0) {
-      props->edge_lengths = (int *) malloc(sizeof(edge_count));
+      props->edge_lengths = (int *) malloc(edge_count*sizeof(int));
       if (props->edge_lengths == NULL) {
 	  return (MI_ERROR);
       }
@@ -298,7 +298,7 @@ miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
   if (max_lengths > props->edge_count) {
       max_lengths = props->edge_count;
   }
-  edge_lengths = (int *) malloc(sizeof(edge_count));
+  edge_lengths = (int *) malloc(max_lengths *sizeof(int));
   for (i=0; i< max_lengths; i++){
     edge_lengths[i] = props->edge_lengths[i];
   }
@@ -323,7 +323,7 @@ miset_props_uniform_record(mivolumeprops_t props, long record_length, char *reco
   }
   /* Explicitly allocate storage for name
    */
-  props->record_name =malloc(strlen(record_name));
+  props->record_name =malloc(strlen(record_name) + 1);
   strcpy(props->record_name, record_name);
   
   return (MI_NOERROR);
