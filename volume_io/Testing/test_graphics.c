@@ -1,6 +1,5 @@
 
-#include  <def_graphics.h>
-#include  <def_alloc.h>
+#include  <def_mni.h>
 
 #define  LIGHT_INDEX       0
 
@@ -12,20 +11,11 @@ main()
     lines_struct      lines;
     polygons_struct   polygons;
     pixels_struct     pixels;
-    static Surfprop   spr = { 0.3, 0.5, 0.5, 20.0, 1.0 };
+    static Surfprop   spr = { 0.2, 0.5, 0.5, 20.0, 1.0 };
     Point             point, centre_of_rotation;
     Vector            normal, light_direction;
     Event_types       event_type;
     Boolean           update_required, done;
-    Status            initialize_text();
-    Status            initialize_lines();
-    Status            initialize_polygons();
-    Status            initialize_pixels();
-    Status            delete_lines();
-    Status            delete_polygons();
-    Status            delete_pixels();
-    Status            start_new_polygon();
-    Status            add_point_to_polygon();
     int               key_pressed;
     int               mouse_x, mouse_y;
     int               current_mouse_x, current_mouse_y;
@@ -33,15 +23,11 @@ main()
     int               x_pixel, y_pixel;
     Boolean           in_rotation_mode;
     int               prev_rotation_mouse_x;
-    Real              angle_in_radians;
+    Real              angle_in_degrees;
     int               i, j, pixels_x_size, pixels_y_size;
     int               pixels_x_position, pixels_y_position;
     Real              x, y;
     Transform         modeling_transform, rotation_transform;
-    void              make_identity_transform();
-    void              make_rotation_transform();
-    void              concat_transforms();
-    void              make_transform_relative_to_point();
     static Point      origin = { 0.0, 0.0, 2.0 };
     static Vector     up_direction = { 0.0, 1.0, 0.0 };
     static Vector     line_of_sight = { 0.0, 0.0, -1.0 };
@@ -118,16 +104,13 @@ main()
     status = start_new_polygon( &polygons );
 
     fill_Point( point, -0.3, -0.3, 0.0 );
-    fill_Vector( normal, -0.3, -0.3, 1.0 );
+    fill_Vector( normal, 0.0, 0.0, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, -0.3, 0.0 );
-    fill_Vector( normal, 0.3, -0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, 0.3, 0.0 );
-    fill_Vector( normal, 0.3, 0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, -0.3, 0.3, 0.0 );
-    fill_Vector( normal, -0.3, 0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
 
     /* ------------ define lights ----------------- */
@@ -227,12 +210,12 @@ main()
 
         if( in_rotation_mode && current_mouse_x != prev_rotation_mouse_x )
         {
-            angle_in_radians = (prev_rotation_mouse_x - current_mouse_x);
+            angle_in_degrees = (prev_rotation_mouse_x - current_mouse_x);
 
-            make_rotation_transform( angle_in_radians * DEG_TO_RAD, Y,
+            make_rotation_transform( angle_in_degrees * DEG_TO_RAD, Y,
                                      &rotation_transform );
 
-            fill_Point( centre_of_rotation, 0.5, 0.5, 0.0 );
+            fill_Point( centre_of_rotation, 0.3, 0.0, 0.0 );
             make_transform_relative_to_point( &centre_of_rotation,
                                               &rotation_transform,
                                               &rotation_transform );
