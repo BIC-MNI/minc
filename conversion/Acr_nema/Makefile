@@ -3,7 +3,9 @@
 # MINC Makefile
 #
 
-ROOT = ../..
+ROOT = ../../minc
+ACR_LIB_DIR = .
+include $(ACR_LIB_DIR)/Make_acrdefs
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 

@@ -1,0 +1,4 @@
+# Acr-nema library
+ACR_LIB        = acrnema
+CC_ACR_LIB     = $(ACR_LIB_DIR)/lib$(ACR_LIB).a
+LINT_ACR_LIB   = $(ACR_LIB_DIR)/llib-l$(ACR_LIB).ln
