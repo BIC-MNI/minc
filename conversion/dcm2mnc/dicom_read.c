@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.4  2005-03-03 20:11:00  bert
+   * Revision 1.5  2005-03-13 19:37:42  bert
+   * Try to use slice location for coordinate when all else fails, also added one debugging message and a check for PET modality
+   *
+   * Revision 1.4  2005/03/03 20:11:00  bert
    * Consider patient_id and patient_name when sorting into series.  Fix handling of missing direction cosines
    *
    * Revision 1.3  2005/03/03 18:59:15  bert
@@ -495,7 +498,13 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 
             /* If it is not, then add it */
             if (index < 0) {
-	 
+                if (G.Debug >= HI_LOGGING) {
+                    printf("Need to add index %d to %s list, %d/%d\n",
+                           cur_index, Mri_Names[imri],
+                           gi_ptr->cur_size[imri],
+                           gi_ptr->max_size[imri]);
+                }
+
                 /* Check whether we can add a new index */
                 if (gi_ptr->cur_size[imri] >= gi_ptr->max_size[imri]) {
                     gi_ptr->max_size[imri]++;
@@ -1024,7 +1033,17 @@ get_coordinate_info(Acr_Group group_list,
     else {
         found_coordinate = TRUE;
     }
-     
+    /* Last gasp - try to interpret the slice location as our slice
+     * position.  It might work.
+     */
+    if (!found_coordinate) {
+        coordinate[volume_to_world[VSLICE]] = acr_find_double(group_list,
+                                                              ACR_Slice_location,
+                                                              1.0);
+
+        found_coordinate = TRUE;
+    }
+
     convert_dicom_coordinate(coordinate);
 
     /* Work out start positions in volume coordinates
@@ -1207,6 +1226,8 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     string = acr_find_string(group_list, ACR_Modality, "");
     if (strcmp(string, ACR_MODALITY_MR) == 0)
         strncpy(gi_ptr->study.modality, MI_MRI, STRING_T_LEN);
+    else if (strcmp(string, ACR_MODALITY_PT) == 0)
+        strncpy(gi_ptr->study.modality, MI_PET, STRING_T_LEN);
     get_string_field(gi_ptr->study.manufacturer, 
                      group_list, ACR_Manufacturer);
     get_string_field(gi_ptr->study.model, 
