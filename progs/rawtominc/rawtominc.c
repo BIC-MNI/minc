@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:25  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-29 12:22:46  neelin
+@MODIFIED   : Clarified argument error messages.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:25  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:26  neelin
  * Release of minc version 0.5
  *
@@ -91,7 +94,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.0 1997-09-12 13:23:25 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.1 1997-09-29 12:22:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -787,6 +790,8 @@ void parse_args(int argc, char *argv[])
    /* Check dimensions */
    ndims = argc - 2;
    if ((ndims<MIN_DIMS)||(ndims>MAX_DIMS)) {
+      (void) fprintf(stderr, 
+         "\nWrong number of arguments.\n");
       usage_error(pname);
    }
 
@@ -797,6 +802,13 @@ void parse_args(int argc, char *argv[])
    for (i=0; i<ndims; i++) {
       dimlength[i] = strtol(argv[2+i], &ptr, 0);
       if ((ptr==argv[2+i]) || (*ptr!=0)) {
+         if (ptr==argv[2+i]) {
+            (void) fprintf(stderr, "\nBad argument \"%s\".\n", ptr);
+         }
+         else {
+            (void) fprintf(stderr, 
+                           "\nDimension sizes must be integer values.\n");
+         }
          usage_error(pname);
       }
       dimname[i]=orientation_names[orientation][i+MAX_DIMS-ndims];
