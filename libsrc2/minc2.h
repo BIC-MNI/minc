@@ -242,6 +242,7 @@ extern int micreate_volume(const char *filename, int number_of_dimensions,
 			   miclass_t volume_class,
 			   mivolumeprops_t create_props,
 			   mihandle_t *volume);
+extern int micreate_volume_image(mihandle_t volume);
 extern int miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
 					midimattr_t attr, int *number_of_dimensions);
 
@@ -362,6 +363,11 @@ extern int miget_voxel_value(mihandle_t volume,
                              const unsigned long coords[],
                              int ndims,
                              double *voxel_ptr);
+
+extern int miset_voxel_value(mihandle_t volume,
+                             const unsigned long coords[],
+                             int ndims,
+                             double voxel);
 
 /* VALID functions */
 extern int miget_volume_valid_max(mihandle_t volume, double *valid_max);
