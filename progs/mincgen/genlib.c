@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.1 2004-06-15 20:14:40 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.2 2004-06-16 16:19:27 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -1494,10 +1494,7 @@ define_netcdf(
     } else {			/* construct name from CDL name */
 	filename = (char *) emalloc(strlen(netcdfname) + 5);
 	(void) strcpy(filename,netcdfname);
-	if (netcdf_flag == -1)
-	  (void) strcat(filename,".cdf"); /* old, deprecated extension */
-	else
-	  (void) strcat(filename,".nc"); /* new, favored extension */
+        (void) strcat(filename,".mnc");
     }
     if (netcdf_flag)
       gen_netcdf(filename);	/* create netcdf */
