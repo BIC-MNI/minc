@@ -33,9 +33,13 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 3.2  1997-04-10 19:22:18  neelin
-@MODIFIED   : Removed redefinition of NULL and added pointer casts in appropriate places.
+@MODIFIED   : Revision 3.3  1997-04-21 17:32:04  neelin
+@MODIFIED   : Fixed calculation of scale for icv so that values are not re-scaled
+@MODIFIED   : from real values to file floating-point values.
 @MODIFIED   :
+ * Revision 3.2  1997/04/10  19:22:18  neelin
+ * Removed redefinition of NULL and added pointer casts in appropriate places.
+ *
  * Revision 3.1  1997/04/10  18:14:50  neelin
  * Fixed handling of invalid data when icv scale is zero.
  *
@@ -89,7 +93,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.2 1997-04-10 19:22:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.3 1997-04-21 17:32:04 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1587,6 +1591,12 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
          {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgminid, mmcoords,
                                NC_DOUBLE, NULL, &var_imgmin))}
       }
+   }
+
+   /* Prevent scaling between file floats and real value */
+   if (icvp->derv_var_float) {
+      var_imgmax = var_vmax;
+      var_imgmin = var_vmin;
    }
 
    /* Get user valid range */
