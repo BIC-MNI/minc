@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.16 1994-11-25 14:19:39 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.17 1994-12-08 08:49:53 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -115,13 +115,14 @@ typedef  char     STRING[MAX_STRING_LENGTH+1];
 
 /* --------------- */
 
-#define  ROUND( x )     ( (x) < 0.0 ? (int) ((x) - 0.5)      \
-                                    : (int) ((x) + 0.5) )
-
 #define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
 
-#define  FLOOR( x )   (  (x < 0.0) ? ((IS_INT(x) ? (int) (x) : (int) (x) - 1)) \
+#define  FLOOR( x )   (((x) < 0.0) ? ((IS_INT(x) ? (int) (x) : (int) (x) - 1)) \
                                    : (int) (x) )
+
+#define  ROUND( x )     FLOOR( (x) + 0.5 )
+
+#define  POSITIVE_ROUND( x )     ((int)( (x) + 0.5 ))
 
 #define  CEILING( x )   (  IS_INT(x) ?                                      \
                                ((int) (x)) :                                \

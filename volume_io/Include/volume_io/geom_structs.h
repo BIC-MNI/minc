@@ -2,7 +2,7 @@
 #define  DEF_GEOM_STRUCTS
 
 #ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.12 1994-11-25 14:19:36 david Exp $";
+static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.13 1994-12-08 08:49:52 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -171,9 +171,9 @@ typedef  unsigned  long    Colour;
 /* --- converts a colour to a luminance (a gray scale intensity) */
 
 #define  get_Colour_luminance( c )                                            \
-            ROUND( 0.299 * (Real) get_Colour_r(c) +                           \
-                   0.587 * (Real) get_Colour_g(c) +                           \
-                   0.114 * (Real) get_Colour_b(c) )
+            POSITIVE_ROUND( 0.299 * (Real) get_Colour_r(c) +                  \
+                            0.587 * (Real) get_Colour_g(c) +                  \
+                            0.114 * (Real) get_Colour_b(c) )
 
 /* --- returns a colour which is the given colour multiplied by the factor */
 

@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.15 1994-11-25 14:19:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.16 1994-12-08 08:49:47 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

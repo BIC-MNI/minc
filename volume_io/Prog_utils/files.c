@@ -3,7 +3,7 @@
 #include  <pwd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.19 1994-11-25 14:19:59 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.20 1994-12-08 08:49:55 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -936,7 +936,7 @@ public  Status  input_string(
     }
 
     if( termination_char != '\n' && ch == '\n' )
-        (void) ungetc( ch, file );
+        (void) unget_character( file, ch );
 
     str[i] = (char) 0;
     
@@ -986,10 +986,68 @@ public  Status  input_quoted_string(
         status = input_character( file, &ch );
     }
 
-    if( status == OK && ch == '\n' )
-        (void) ungetc( ch, file );
+    str[i] = (char) 0;
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_possibly_quoted_string
+@INPUT      : file
+            : str
+            : str_length    - size of string storage
+@OUTPUT     : 
+@RETURNS    : Status
+@DESCRIPTION: Skips to the next nonwhitespace character, checks if it is a
+            : quotation mark, then reads characters into the string until the
+            : next quotation mark.  If it is not a quotation mark, reads to
+            : the next white space.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  input_possibly_quoted_string(
+    FILE            *file,
+    char            str[],
+    int             str_length )
+{
+    int      i;
+    BOOLEAN  quoted;
+    char     ch;
+    Status   status;
+
+
+    status = input_nonwhite_character( file, &ch );
+
+    if( status == OK )
+    {
+        if( ch == '\"' )
+        {
+            quoted = TRUE;
+            status = input_character( file, &ch );
+        }
+        else
+            quoted = FALSE;
+    }
+
+    i = 0;
+
+    while( status == OK && i < str_length - 1 &&
+           (quoted && ch != '\"' ||
+            !quoted && ch != ' ' && ch != '\t' && ch != '\n') )
+    {
+        str[i] = ch;
+        ++i;
+        status = input_character( file, &ch );
+    }
 
     str[i] = (char) 0;
+
+    if( !quoted && ch == '\n' )
+        (void) unget_character( file, ch );
 
     return( status );
 }

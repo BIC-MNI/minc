@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.8 1994-11-25 14:19:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.9 1994-12-08 08:49:46 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------@NAME       : create_noncolinear_vector
@@ -84,4 +84,6 @@ public  void  create_two_orthogonal_vectors(
     create_noncolinear_vector( v, v1 );
 
     create_orthogonal_vector( v, v1, v2 );
+
+    create_orthogonal_vector( v2, v, v1 );
 }

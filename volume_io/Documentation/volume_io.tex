@@ -431,8 +431,8 @@ public  BOOLEAN  filename_extension_matches(
 \desc{Returns \name{TRUE} if the file ends in the given extension, preceded
 by a period. e.g.,
 \name{filename\_extension\_matches( "volume.mnc" , "mnc" )} returns \name{TRUE}.
-Correctly handles compressed files, e.g.,
-\name{filename\_extension\_matches( "volume.mnc.Z" , "mnc" )} returns \name{TRUE}.}
+Correctly handles compressed files, e.g., passing the arguments,
+\name{"volume.mnc.Z"} and \name{"mnc"} returns \name{TRUE}.}
 
 {\bf\begin{verbatim}
 public  void  remove_directories_from_filename(
@@ -506,7 +506,7 @@ public  Status  open_file_with_default_suffix(
 in the last argument and a status of \name{OK} is returned.
 Otherwise, a null pointer is passed back, and a status of \name{ERROR}
 is returned.  Filename expansion is automatically performed.  The
-second function, \name{open\_file\_with\_default\_suffix()}, performs the
+second function performs the
 same task as \name{open\_file} with the addition that it automatically
 adds the specified suffix extension, if needed.  On input, if the
 specified file does not exist and the file does not have an extension,
@@ -1086,7 +1086,7 @@ public  BOOLEAN  string_ends_in(
 \end{verbatim}}
 
 \desc{Determines if the string ends in the specified \name{ending}.  For
-instance, \name{string\_ends\_in( "rainfall", "fall" )} returns
+instance, passing the arguments, \name{"rainfall"} and \name{"fall"} returns
 \name{TRUE}.}
 
 {\bf\begin{verbatim}
@@ -1289,17 +1289,18 @@ up with corresponding dimensions in the file and the dimension
 ordering of the volume array is reordered on input.  So, if the user
 wishes to represent the volume in X-Z-Y order, then the value passed
 as the \name{dim\_names} array should be the three strings,
-\name{MIxspace}, \name{MIzspace}, and \name{MIyspace}.}
+\name{MIxspace}, \name{MIzspace}, and \name{MIyspace}.  This choice of
+ordering is important, as it defines the order of any subsequent
+reference to voxel indices.}
 
-\desc{The four arguments, \name{volume\_nc\_data\_type},
-\name{volume\_signed\_flag}, \name{volume\_voxel\_min}, and
+\desc{The four arguments, \name{volume\_nc\_data\_type} through
 \name{volume\_voxel\_max} can be used to specified the desired storage
 type within the volume variable, automatically converted from the
 storage type in the file.  The \name{volume\_nc\_data\_type} is one of
-\name{NC\_UNSPECIFIED}, \name{NC\_BYTE}, \name{NC\_SHORT}, \name{NC\_LONG},
+\name{NC\_UNSPECIFIED}, \name{NC\_BYTE}, \name{NC\_SHORT}, \name{NC\-\_LONG},
 \name{NC\_FLOAT}, or \name{NC\_DOUBLE}.
 For the integer types, the
-\name{volume\_signed\_flag} is \name{TRUE} if a signed type is
+\name{volume\-\_signed\-\_flag} is \name{TRUE} if a signed type is
 desired, otherwise, it is \name{FALSE}.  The \name{volume\_voxel\_min}
 and \name{volume\_voxel\_max} specify the range of valid voxel values,
 and are usually set equal to indicate to use the full range of the
@@ -1713,7 +1714,7 @@ public   Volume   create_volume(
 
 \desc{Creates and returns a volume of the given type (for instance,
 \name{NC\_BYTE}, \name{signed\_flag} equal \name{FALSE}), and given
-valid voxel range.  The \name{dimension\_names} is used to describe
+valid voxel range.  The \name{dimension\-\_names} is used to describe
 each dimension of the volume and is currently only used when writing
 the volume to a file.}
 
@@ -1762,6 +1763,13 @@ public  void  set_voxel_to_world_transform(
 \end{verbatim}}
 
 \desc{Assigns the given transformation to the volume.}
+
+{\bf\begin{verbatim}
+public  General_transform  *get_voxel_to_world_transform(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Returns a pointer to the voxel to world transform of the volume.}
 
 {\bf\begin{verbatim}
 public  void  set_volume_separations(
@@ -1938,7 +1946,7 @@ public  BOOLEAN  input_more_minc_file(
 \end{verbatim}}
 
 \desc{Reads part of the MINC file to the volume specified in
-\name{initialize\_minc\_input}.  This function must be called until it
+\name{initialize\-\_minc\-\_input}.  This function must be called until it
 returns FALSE, at which point the volume has been fully read in.  In
 order to read the next volume in the file, if any, the following
 function must be called.}
@@ -2279,41 +2287,6 @@ public  void  make_identity_transform(
 \desc{Creates a four by four identity transform.}
 
 {\bf\begin{verbatim}
-public  void  make_scale_transform(
-    Real        sx,
-    Real        sy,
-    Real        sz,
-    Transform   *transform )
-\end{verbatim}}
-
-\desc{Creates a scaling transform with separate scaling in each
-dimension.  Transforming the point ( 1.0, 1.0, 1.0 ) by the resulting
-transform will result in the point (\name{sx}, \name{sy}, \name{sz}).}
-
-{\bf\begin{verbatim}
-public  void  make_translation_transform(
-    Real        x_trans,
-    Real        y_trans,
-    Real        z_trans,
-    Transform   *transform )
-\end{verbatim}}
-
-\desc{Creates a translation transform with separate translation in each
-dimension.  Transforming the point ( 0.0, 0.0, 0.0 ) by the resulting
-transform will result in the point (\name{x\_trans}, \name{y\_trans},
-\name{z\_trans}).}
-
-{\bf\begin{verbatim}
-public  void  make_rotation_transform(
-    Real       radians,
-    int        axis,
-    Transform  *transform )
-\end{verbatim}}
-
-\desc{Creates a transform which achieves a rotation about one of the
-three axes, (\name{X}, \name{Y}, or \name{Z}).}
-
-{\bf\begin{verbatim}
 public  void  transform_point(
     Transform  *transform,
     Real       x,
@@ -2380,26 +2353,17 @@ public  void   concat_transforms(
     Transform   *t2 )
 \end{verbatim}}
 
-\desc{Multiplies the two transforms \name{t1} and \name{t2}, storing the
+\desc{Multiplies the transform \name{t2} by the transform \name{t1}, storing the
 product in \name{result}.  Transforming a point by \name{result} is
 equivalent to transforming the point by \name{t1}, then transforming
 the result by \name{t2}.}
 
-{\bf\begin{verbatim}
-public  void   compute_inverse_of_orthogonal_transform(
-    Transform  *transform,
-    Transform  *inverse )
-\end{verbatim}}
-
-\desc{Given a transform that has no shear component (consists of
-scales, rotations, and translations), the inverse is computed.}
-
 \section{General Transforms}
 
-General transforms can represent linear transforms, non-linear
-(thin-plate splines) transforms, user defined transforms, and
+General transforms can represent linear transforms, non\--\-linear
+(via thin\--\-plate splines) transforms, user defined transforms, and
 concatenations of these.  All functions dealing with general
-transforms involve objects of type \name{General\_transform}.
+transforms involve objects of type \name{General\-\_transform}.
 
 {\bf\begin{verbatim}
 public  void  create_linear_transform(
@@ -2441,7 +2405,7 @@ values to achieve a thin-plate spline transformation.  The mapping
 will provide a smooth transformation of space such that each point in
 the \name{original\_points} array maps exactly to the corresponding point in
 the \name{transformed\_points} array.  These displacements are then
-fed into the function \name{create\_thin\_plane\_transform} to create
+fed into the function \name{create\-\_thin\-\_plane\-\_transform} to create
 the general transform.}
 
 {\bf\begin{verbatim}
@@ -2482,9 +2446,10 @@ public  Status  output_transform_file(
 
 \desc{These two functions write the general transform to a file, in the
 appropriate format.  The \name{comments} line is an arbitrary string which is
-stored in the file for documentation purposes.  The first form of the
-function assumes
-the file is already open
+stored in the file for documentation purposes.  Newline characters in the
+\name{comments} correctly result in a multi-line comment with a comment
+character inserted at the beginning of each line.  The first form of the
+function assumes the file is already open
 and will later be closed.  The second form opens the file, with a
 default extension of \name{.xfm}, writes the transform, then closes
 the file.  Both functions return \name{ERROR} or \name{OK}.}
