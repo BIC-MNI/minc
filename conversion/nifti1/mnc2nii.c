@@ -170,6 +170,8 @@ main(int argc, char **argv)
     long mnc_start[MAX_VAR_DIMS]; /* MINC data starts */
     long mnc_count[MAX_VAR_DIMS]; /* MINC data counts */
     int mnc_signed;             /* MINC if output voxels are signed */
+    double mnc_rrange[2];       /* MINC real range (min, max) */
+    double mnc_vrange[2];       /* MINC valid range (min, max) */
 
     /* Other stuff */
     char out_str[1024];         /* Big string for filename */
@@ -393,7 +395,18 @@ main(int argc, char **argv)
         return (-1);
     }
 
-    nii_ptr->ndim = mnc_ndims;  /* Total number of dimensions in file */
+    miget_image_range(mnc_fd, mnc_rrange); /* Get real range */
+    miget_valid_range(mnc_fd, mnc_vid, mnc_vrange); /* Get voxel range */
+
+    if (mnc_vrange[1] != mnc_vrange[0] && mnc_rrange[1] != mnc_rrange[0]) {
+        nii_ptr->scl_slope = ((mnc_rrange[1] - mnc_rrange[0]) / 
+                              (mnc_vrange[1] - mnc_vrange[0]));
+        nii_ptr->scl_inter = mnc_rrange[0] - (mnc_vrange[0] * nii_ptr->scl_slope);
+    }
+    else {
+        nii_ptr->scl_slope = 0.0;
+    }
+
     nii_ptr->nvox = 1;          /* Initial value for voxel count */
 
     /* Find all of the dimensions of the MINC file, in the order they 
@@ -404,26 +417,29 @@ main(int argc, char **argv)
     nii_ndims = 0;
     for (i = 0; i < MAX_NII_DIMS; i++) {
         if (dimnames[i] == NULL) {
-            nii_dimids[i] = -1;
+            nii_dimids[nii_ndims] = -1;
             continue;
         }
 
-        nii_dimids[i] = ncdimid(mnc_fd, dimnames[i]);
+        nii_dimids[nii_ndims] = ncdimid(mnc_fd, dimnames[i]);
+        if (nii_dimids[nii_ndims] == -1) {
+            continue;
+        }
 
         /* Make sure the dimension is actually used to define the image.
          */
         for (j = 0; j < mnc_ndims; j++) {
-            if (nii_dimids[i] == mnc_dimids[j]) {
-                nii_map[j] = nii_ndims;
+            if (nii_dimids[nii_ndims] == mnc_dimids[j]) {
+                nii_map[nii_ndims] = j;
                 break;
             }
         }
-        if (j == mnc_ndims) {
-            nii_dimids[i] = -1;
-        }
 
-        if (nii_dimids[i] >= 0) {
-            ncdiminq(mnc_fd, nii_dimids[i], NULL, &mnc_dlen);
+        if (j < mnc_ndims) {
+            mnc_dlen = 1;
+            mnc_dstep = 0;
+
+            ncdiminq(mnc_fd, nii_dimids[nii_ndims], NULL, &mnc_dlen);
             ncattget(mnc_fd, ncvarid(mnc_fd, dimnames[i]), MIstep, &mnc_dstep);
 
             if (mnc_dstep < 0) {
@@ -437,10 +453,6 @@ main(int argc, char **argv)
             nii_lens[nii_ndims] = mnc_dlen;
             nii_ndims++;
         }
-        else {
-            mnc_dlen = 1;
-            mnc_dstep = 0;
-        }
 
         nii_ptr->dim[dimmap[i]] = (int) mnc_dlen;
         nii_ptr->nvox *= mnc_dlen;
@@ -448,6 +460,7 @@ main(int argc, char **argv)
         nii_ptr->pixdim[dimmap[i]] = (float) mnc_dstep;
     }
 
+    nii_ptr->ndim = nii_ndims; /* Total number of dimensions in file */
     nii_ptr->nx = nii_ptr->dim[0];
     nii_ptr->ny = nii_ptr->dim[1];
     nii_ptr->nz = nii_ptr->dim[2];
@@ -481,7 +494,7 @@ main(int argc, char **argv)
         double start;
         double step;
         double dircos[MAX_SPACE_DIMS];
-        int length;
+        int tmp;
 
         if (id < 0) {
             continue;
@@ -493,13 +506,16 @@ main(int argc, char **argv)
         dircos[DIM_X] = dircos[DIM_Y] = dircos[DIM_Z] = 0.0;
         dircos[i] = 1.0;
 
-        miattget(mnc_fd, id, MIstart, NC_DOUBLE, 1, &start, &length);
-        miattget(mnc_fd, id, MIstep, NC_DOUBLE, 1, &step, &length);
+        miattget(mnc_fd, id, MIstart, NC_DOUBLE, 1, &start, &tmp);
+        miattget(mnc_fd, id, MIstep, NC_DOUBLE, 1, &step, &tmp);
         miattget(mnc_fd, id, MIdirection_cosines, NC_DOUBLE, MAX_SPACE_DIMS, 
-                 dircos, &length);
+                 dircos, &tmp);
+        ncdiminq(mnc_fd, ncdimid(mnc_fd, mnc_spatial_names[i]), NULL, 
+                 &mnc_dlen);
 
         if (step < 0) {
             step = -step;
+            start = start - step * (mnc_dlen - 1);
         }
 
         nii_ptr->sto_xyz.m[0][i] = step * dircos[0];
@@ -551,9 +567,12 @@ main(int argc, char **argv)
     if (!qflag) {
         fprintf(stderr, "MINC type %d signed %d\n", mnc_type, mnc_signed);
     }
+
     mnc_icv = miicv_create();
     miicv_setint(mnc_icv, MI_ICV_TYPE, mnc_type);
     miicv_setstr(mnc_icv, MI_ICV_SIGN, (mnc_signed) ? MI_SIGNED : MI_UNSIGNED);
+    miicv_setdbl(mnc_icv, MI_ICV_VALID_MAX, mnc_vrange[1]);
+    miicv_setdbl(mnc_icv, MI_ICV_VALID_MIN, mnc_vrange[0]);
     miicv_setint(mnc_icv, MI_ICV_DO_NORM, 1);
 
     miicv_attach(mnc_icv, mnc_fd, mnc_vid);
