@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 1.11  1993-10-06 10:14:17  neelin
-@MODIFIED   : Added include of string.h.
+@MODIFIED   : Revision 1.12  1994-05-05 10:31:53  neelin
+@MODIFIED   : Added -scan_range, -frame_time, -frame_width, -input, -attribute and 
+@MODIFIED   : modality options.
 @MODIFIED   :
+ * Revision 1.11  93/10/06  10:14:17  neelin
+ * Added include of string.h.
+ * 
  * Revision 1.10  93/08/11  15:25:05  neelin
  * Added RCS logging to source.
  * 
@@ -31,12 +35,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.11 1993-10-06 10:14:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.12 1994-05-05 10:31:53 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <minc.h>
 #include <float.h>
 #include <ParseArgv.h>
@@ -45,6 +50,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 
 /* Some constants */
 
+#define VECTOR_SEPARATOR ','
 #define NORMAL_STATUS 0
 #define ERROR_STATUS 1
 #define MIN_DIMS 2
@@ -71,6 +77,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 /* Function declarations */
 void parse_args(int argc, char *argv[]);
 void usage_error(char *pname);
+int get_attribute(char *dst, char *key, char *nextarg);
+int get_times(char *dst, char *key, char *nextarg);
 
 /* Structure containing information about orientation */
 char *orientation_names[][MAX_DIMS] = {
@@ -90,7 +98,7 @@ char *sign_names[][6] = {
 /* Argument variables */
 char *pname;
 char *filename;
-int clobber=TRUE;
+int clobber=FALSE;
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
@@ -108,6 +116,21 @@ int ovrange_set;
 double dimstep[3] = {DEF_STEP, DEF_STEP, DEF_STEP};
 double dimstart[3] = {DEF_START, DEF_START, DEF_START};
 int vector_dimsize = -1;
+char *modality = NULL;
+int attribute_list_size = 0;
+int attribute_list_alloc = 0;
+struct {
+   char *variable;
+   char *attribute;
+   char *value;
+   double double_value;
+} *attribute_list = NULL;
+int num_frame_times = 0;
+double *frame_times = NULL;
+int num_frame_widths = 0;
+double *frame_widths = NULL;
+char *inputfile = NULL;
+int do_minmax = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -172,11 +195,21 @@ ArgvInfo argTable[] = {
    {"-orange", ARGV_FLOAT, (char *) 2, (char *) ovalid_range, 
        "Valid range of output minc values."},
    {NULL, ARGV_HELP, NULL, NULL,
-       "Options for writing output file. Default = -clobber."},
+       "Options to specify whether integers are scanned for min and max."},
+   {"-scan_range", ARGV_CONSTANT, (char *) TRUE, (char *) &do_minmax, 
+       "Scan input for min and max."},
+   {"-noscan_range", ARGV_CONSTANT, (char *) FALSE, (char *) &do_minmax, 
+       "Do not scan input for min and max (default)."},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Options for writing output file. Default = -noclobber."},
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
        "Don't overwrite existing file"},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Option for specifying input raw data file."},
+   {"-input", ARGV_STRING, (char *) 1, (char *) &inputfile,
+       "Name of input file (default=stdin)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying spatial dimension coordinates."},
    {"-xstep", ARGV_FLOAT, (char *) 1, (char *) &dimstep[X],
@@ -191,6 +224,38 @@ ArgvInfo argTable[] = {
        "Starting coordinate for y dimension."},
    {"-zstart", ARGV_FLOAT, (char *) 1, (char *) &dimstart[Z],
        "Starting coordinate for z dimension."},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Options for specifying imaging modality. Default = -nomodality."},
+   {"-nomodality", ARGV_CONSTANT, NULL, (char *) &modality,
+       "Do not store modality type in file."},
+   {"-pet", ARGV_CONSTANT, MI_PET, (char *) &modality,
+       "PET data."},
+   {"-mri", ARGV_CONSTANT, MI_MRI, (char *) &modality,
+       "MRI data."},
+   {"-spect", ARGV_CONSTANT, MI_SPECT, (char *) &modality,
+       "SPECT data."},
+   {"-gamma", ARGV_CONSTANT, MI_GAMMA, (char *) &modality,
+       "Data from a gamma camera."},
+   {"-mrs", ARGV_CONSTANT, MI_MRS, (char *) &modality,
+       "MR spectroscopy data."},
+   {"-mra", ARGV_CONSTANT, MI_MRA, (char *) &modality,
+       "MR angiography data."},
+   {"-ct", ARGV_CONSTANT, MI_CT, (char *) &modality,
+       "CT data."},
+   {"-dsa", ARGV_CONSTANT, MI_DSA, (char *) &modality,
+       "DSA data"},
+   {"-dr", ARGV_CONSTANT, MI_DR, (char *) &modality,
+       "Digital radiography data."},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Option for specifying attribute values by name."},
+   {"-attribute", ARGV_FUNC, (char *) get_attribute, NULL,
+       "Set an attribute (<var>:<attr>=<value>)."},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Options for specifying time dimension coordinates."},
+   {"-frame_times", ARGV_FUNC, (char *) get_times, NULL,
+       "Specify the frame starting times (\"<t1>,<t2>,<t3>,...\")."},
+   {"-frame_widths", ARGV_FUNC, (char *) get_times, NULL,
+       "Specify the frame lengths (\"<w1>,<w2>,<w3>,...\")."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -198,7 +263,7 @@ ArgvInfo argTable[] = {
 
 main(int argc, char *argv[])
 {
-   int do_norm, do_vrange;
+   int do_vrange;
    int cdfid, imgid, maxid, minid, varid;
    int icv;
    long start[MAX_VAR_DIMS];
@@ -206,8 +271,6 @@ main(int argc, char *argv[])
    long end[MAX_VAR_DIMS];
    int dim[MAX_VAR_DIMS];
    void *image;
-   double *dimage;
-   float *fimage;
    double imgmax, imgmin, value;
    long image_size, image_pix, nread, fastdim;
    int pix_size;
@@ -216,6 +279,11 @@ main(int argc, char *argv[])
    int index;
    FILE *instream;
    char *tm_stamp;
+   int iatt;
+   long time_start, time_count;
+   int is_signed;
+   void *ptr;
+   int floating_type;
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -224,10 +292,11 @@ main(int argc, char *argv[])
    parse_args(argc, argv);
 
    /* Do normalization if input type is float */
-   do_norm = (( type==NC_FLOAT) || ( type==NC_DOUBLE));
+   floating_type = (( type==NC_FLOAT) || ( type==NC_DOUBLE));
+   do_minmax = do_minmax || floating_type;
 
    /* Find max and min for vrange if output type is float */
-   do_vrange = do_norm && (( otype==NC_FLOAT) || ( otype==NC_DOUBLE));
+   do_vrange = do_minmax && (( otype==NC_FLOAT) || ( otype==NC_DOUBLE));
    
    /* Create an icv */
    icv=miicv_create();
@@ -237,7 +306,7 @@ main(int argc, char *argv[])
       (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, valid_range[0]);
       (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, valid_range[1]);
    }
-   if (do_norm) {
+   if (floating_type) {
       (void) miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(icv, MI_ICV_USER_NORM, TRUE);
    }
@@ -256,7 +325,17 @@ main(int argc, char *argv[])
       dim[i] = ncdimdef(cdfid, dimname[i], dimlength[i]);
 
       /* Create the variable if needed */
-      if (!STR_EQ(dimname[i], MItime)) {
+      if (STR_EQ(dimname[i], MItime)) {
+         if (num_frame_times > 0) {
+            varid = micreate_std_variable(cdfid, MItime, 
+                                          NC_DOUBLE, 1, &dim[i]);
+         }
+         if (num_frame_widths > 0) {
+            varid = micreate_std_variable(cdfid, MItime_width,
+                                          NC_DOUBLE, 1, &dim[i]);
+         }
+      }
+      else {
          varid = micreate_std_variable(cdfid, dimname[i], 
                                        NC_LONG, 0, NULL);
 
@@ -295,15 +374,60 @@ main(int argc, char *argv[])
    (void) miattputstr(cdfid, imgid, MIsigntype, osign);
    if (ovrange_set) 
       (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
-   if (do_norm) {
+   if (do_minmax) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
                                     NC_DOUBLE, ndims-image_dims, dim);
       minid = micreate_std_variable(cdfid, MIimagemin, 
                                     NC_DOUBLE, ndims-image_dims, dim);
    }
 
+   /* Create the modality attribute */
+   if (modality != NULL) {
+      varid = micreate_group_variable(cdfid, MIstudy);
+      (void) miattputstr(cdfid, varid, MImodality, modality);
+   }
+
+   /* Create any special attributes */
+   ncopts = 0;
+   for (iatt=0; iatt < attribute_list_size; iatt++) {
+      varid = ncvarid(cdfid, attribute_list[iatt].variable);
+      if (varid == MI_ERROR) {
+         varid = micreate_group_variable(cdfid, attribute_list[iatt].variable);
+      }
+      if (varid == MI_ERROR) {
+         varid = ncvardef(cdfid, attribute_list[iatt].variable, NC_LONG,
+                          0, NULL);
+      }
+      if (varid == MI_ERROR) {
+         continue;
+      }
+      if (attribute_list[iatt].value != NULL) {
+         (void) miattputstr(cdfid, varid, attribute_list[iatt].attribute,
+                            attribute_list[iatt].value);
+      }
+      else {
+         (void) miattputdbl(cdfid, varid, attribute_list[iatt].attribute,
+                            attribute_list[iatt].double_value);
+      }
+   }
+   ncopts = NC_VERBOSE | NC_FATAL;
+
    /* End definition mode */
    (void) ncendef(cdfid);
+
+   /* Write out the frame times and widths */
+   time_start = 0;
+   time_count = num_frame_times;
+   if (num_frame_times > 0) {
+      (void) mivarput(cdfid, ncvarid(cdfid, MItime), 
+                      &time_start, &time_count,
+                      NC_DOUBLE, NULL, frame_times);
+   }
+   if (num_frame_widths > 0) {
+      (void) mivarput(cdfid, ncvarid(cdfid, MItime_width), 
+                      &time_start, &time_count,
+                      NC_DOUBLE, NULL, frame_widths);
+   }
 
    /* Attach the icv */
    (void) miicv_attach(icv, cdfid, imgid);
@@ -317,14 +441,18 @@ main(int argc, char *argv[])
    image=MALLOC(image_size);
 
    /* Loop through the images */
-   instream=stdin;
+   if (inputfile == NULL) {
+      instream=stdin;
+   }
+   else {
+      instream = fopen(inputfile, "r");
+   }
    fastdim=ndims-image_dims-1;
    if (fastdim<0) fastdim=0;
    if (do_vrange) {
       ovalid_range[0]=DBL_MAX;
       ovalid_range[1]=(-DBL_MAX);
    }
-   fimage = image; dimage = image;
 
    while (start[0] < end[0]) {
 
@@ -336,16 +464,38 @@ main(int argc, char *argv[])
       }
  
       /* Search for max and min for float and double */
-      if (do_norm) {
+      if (do_minmax) {
          imgmax=(-DBL_MAX);
          imgmin=DBL_MAX;
+         is_signed = (signtype == SIGNED);
          for (j=0; j<image_pix; j++) {
-            switch (type) {
-            case NC_DOUBLE:
-               value=dimage[j]; break;
-            case NC_FLOAT:
-               value=fimage[j]; break;
-            }
+            ptr = (char *) image + j * nctypelen(type);
+            switch (type) { 
+            case NC_BYTE : 
+               if (is_signed)
+                  value = (double) *((unsigned char *) ptr);
+               else
+                  value = (double) *((signed char *) ptr);
+               break; 
+            case NC_SHORT : 
+               if (is_signed)
+                  value = (double) *((unsigned short *) ptr);
+               else
+                  value = (double) *((signed short *) ptr);
+               break; 
+            case NC_LONG : 
+               if (is_signed)
+                  value = (double) *((unsigned long *) ptr); 
+               else
+                  value = (double) *((signed long *) ptr); 
+               break; 
+            case NC_FLOAT : 
+               value = (double) *((float *) ptr); 
+               break; 
+            case NC_DOUBLE : 
+               value = (double) *((double *) ptr); 
+               break; 
+            } 
             if (value<imgmin) imgmin=value;
             if (value>imgmax) imgmax=value;
          }
@@ -357,6 +507,14 @@ main(int argc, char *argv[])
          /* Write the image max and min */
          (void) mivarput1(cdfid, minid, start, NC_DOUBLE, NULL, &imgmin);
          (void) mivarput1(cdfid, maxid, start, NC_DOUBLE, NULL, &imgmax);
+      }
+
+      /* Change the valid range for integer types if needed */
+      if (do_minmax && !floating_type) {
+         (void) miicv_detach(icv);
+         (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, imgmin);
+         (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, imgmax);
+         (void) miicv_attach(icv, cdfid, imgid);
       }
 
       /* Write the image */
@@ -419,6 +577,7 @@ main(int argc, char *argv[])
 void parse_args(int argc, char *argv[])
 {
    char *ptr;
+   int time_size;
    int i;
 
    /* Parse the command line */
@@ -475,6 +634,23 @@ void parse_args(int argc, char *argv[])
       ovrange_set=TRUE;
    }
 
+   /* Check that time variables correspond to given dimension size */
+   if (strcmp(dimname[0], MItime) == 0) {
+      time_size = dimlength[0];
+   }
+   else if (strcmp(dimname[1], MItime) == 0) {
+      time_size = dimlength[1];
+   }
+   else {
+      time_size = 0;
+   }
+   if (((num_frame_times != time_size) && (num_frame_times > 0)) || 
+       ((num_frame_widths != time_size) && (num_frame_widths > 0))) {
+      (void) fprintf(stderr, 
+   "Number of frame times or widths does not match number of frames.\n");
+      exit(EXIT_FAILURE);
+   }
+
    return;
 }
 
@@ -492,9 +668,197 @@ void parse_args(int argc, char *argv[])
 ---------------------------------------------------------------------------- */
 void usage_error(char *progname)
 {
-   (void) fprintf(stderr, "\nUsage: %s [<options>] <filename> ", progname);
+   (void) fprintf(stderr, "\nUsage: %s [<options>] <output.mnc> ", 
+                  progname);
    (void) fprintf(stderr, "[[<size4>] <size3>] <size2> <size1>\n");
    (void) fprintf(stderr,   "       %s [-help]\n\n", progname);
 
    exit(ERROR_STATUS);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_attribute
+@INPUT      : dst - client data passed by ParseArgv
+              key - matching key in argv
+              nextarg - argument following key in argv
+@OUTPUT     : (none)
+@RETURNS    : TRUE since nextarg is used.
+@DESCRIPTION: Gets attributes from command line. Syntax for argument is
+              "<var>:<att>=<value>". Numeric values are converted to
+              double precision.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 3, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+int get_attribute(char *dst, char *key, char *nextarg)
+{           /* ARGSUSED */
+   char *variable;
+   char *attribute;
+   char *value;
+   char *end;
+   double dvalue;
+
+   /* Check for a following argument */
+   if (nextarg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get the variable name */
+   variable = nextarg;
+   attribute = strchr(variable, ':');
+   if (attribute == NULL) {
+      (void) fprintf(stderr, 
+                     "%s option requires argument <var>:<attr>=<val>\n", 
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   *attribute = '\0';
+   attribute++;
+
+   /* Get the value */
+   value = strchr(attribute, '=');
+   if (value == NULL) {
+      (void) fprintf(stderr, 
+                     "%s option requires argument <var>:<attr>=<val>\n", 
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   *value = '\0';
+   value++;
+
+   /* Save the information */
+   attribute_list_size++;
+   if (attribute_list_size > attribute_list_alloc) {
+      attribute_list_alloc += 10;
+      if (attribute_list == NULL) {
+         attribute_list = 
+            MALLOC(attribute_list_alloc * sizeof(*attribute_list));
+      }
+      else {
+         attribute_list = 
+            REALLOC(attribute_list, 
+                    attribute_list_alloc * sizeof(*attribute_list));
+      }
+   }
+   attribute_list[attribute_list_size-1].variable = variable;
+   attribute_list[attribute_list_size-1].attribute = attribute;
+   attribute_list[attribute_list_size-1].value = value;
+
+   /* Try to get a double precision value */
+   dvalue = strtod(value, &end);
+   if ((end != value) && (*end == '\0')) {
+      attribute_list[attribute_list_size-1].value = NULL;
+      attribute_list[attribute_list_size-1].double_value = dvalue;
+   }
+
+   return TRUE;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_times
+@INPUT      : dst - client data passed by ParseArgv
+              key - matching key in argv
+              nextarg - argument following key in argv
+@OUTPUT     : (none)
+@RETURNS    : TRUE since nextarg is used.
+@DESCRIPTION: Gets frame start times or frame lengths from next argument.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 3, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+int get_times(char *dst, char *key, char *nextarg)
+{           /* ARGSUSED */
+   int *num_elements_ptr;
+   double **time_list_ptr;
+   int num_elements;
+   int num_alloc;
+   double *time_list;
+   double dvalue;
+   char *cur, *end, *prev;
+
+   /* Check for a following argument */
+   if (nextarg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get pointers to global variables */
+   if (strcmp(key, "-frame_times") == 0) {
+      num_elements_ptr = &num_frame_times;
+      time_list_ptr = &frame_times;
+   }
+   else if (strcmp(key, "-frame_widths") == 0) {
+      num_elements_ptr = &num_frame_widths;
+      time_list_ptr = &frame_widths;
+   }
+   else {
+      (void) fprintf(stderr, "Unknown option \"%s\".\n", key);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Set up pointers to end of string and first non-space character */
+   end = nextarg + strlen(nextarg);
+   cur = nextarg;
+   while (isspace(*cur)) cur++;
+   num_elements = 0;
+   num_alloc = 0;
+   time_list = NULL;
+
+   /* Loop through string looking for doubles */
+   while (cur!=end) {
+
+      /* Get double */
+      prev = cur;
+      dvalue = strtod(prev, &cur);
+      if (cur == prev) {
+         (void) fprintf(stderr, 
+            "expected vector of doubles for \"%s\", but got \"%s\"\n", 
+                        key, nextarg);
+         exit(EXIT_FAILURE);
+      }
+
+      /* Add the value to the list */
+      num_elements++;
+      if (num_elements > num_alloc) {
+         num_alloc += 20;
+         if (time_list == NULL) {
+            time_list = 
+               MALLOC(num_alloc * sizeof(*time_list));
+         }
+         else {
+            time_list = 
+               REALLOC(time_list, num_alloc * sizeof(*time_list));
+         }
+      }
+      time_list[num_elements-1] = dvalue;
+
+      /* Skip any spaces */
+      while (isspace(*cur)) cur++;
+
+      /* Skip an optional comma */
+      if (*cur == VECTOR_SEPARATOR) cur++;
+
+   }
+
+   /* Update the global variables */
+   *num_elements_ptr = num_elements;
+   if (*time_list_ptr != NULL) {
+      FREE(*time_list_ptr);
+   }
+   *time_list_ptr = time_list;
+
+
+   
+
+   return TRUE;
 }
