@@ -16,7 +16,7 @@ private    void       record_free( void );
 @NAME       : alloc_memory
 @INPUT      : n_bytes
 @OUTPUT     : ptr
-@RETURNS    : Status
+@RETURNS    : 
 @DESCRIPTION: Allocates the specified number of bytes.
 @METHOD     : 
 @GLOBALS    : 
@@ -25,14 +25,10 @@ private    void       record_free( void );
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  alloc_memory(
+public  void  alloc_memory(
     void   **ptr,
     int    n_bytes )
 {
-    Status     status;
-
-    status = OK;
-
     if( n_bytes > 0 )
     {
         *ptr = (void *) malloc( (alloc_int) n_bytes );
@@ -40,7 +36,6 @@ public  Status  alloc_memory(
         if( *ptr == (void *) 0 )
         {
             print( "Error alloc_memory: out of memory, %d bytes.\n", n_bytes );
-            status = OUT_OF_MEMORY;
             abort_if_allowed();
         }
     }
@@ -48,8 +43,6 @@ public  Status  alloc_memory(
         *ptr = (void *) 0;
 
     record_alloc( n_bytes );
-
-    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -57,7 +50,7 @@ public  Status  alloc_memory(
 @INPUT      : ptr
             : n_bytes
 @OUTPUT     : 
-@RETURNS    : Status
+@RETURNS    : 
 @DESCRIPTION: Reallocates the ptr.
 @METHOD     : 
 @GLOBALS    : 
@@ -66,14 +59,10 @@ public  Status  alloc_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  realloc_memory(
+public  void  realloc_memory(
     void   **ptr,
     int    n_bytes )
 {
-    Status     status;
-
-    status = OK;
-
     if( n_bytes > 0 )
     {
         *ptr = (void *) realloc( (alloc_ptr) *ptr, (alloc_int) n_bytes );
@@ -82,14 +71,11 @@ public  Status  realloc_memory(
         {
             print( "Error realloc_memory: out of memory, %d bytes.\n",
                     n_bytes );
-            status = OUT_OF_MEMORY;
             abort_if_allowed();
         }
     }
 
     record_realloc( n_bytes );
-
-    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -105,7 +91,7 @@ public  Status  realloc_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  free_memory( void   **ptr )
+public  void  free_memory( void   **ptr )
 {
     record_free();
 
@@ -118,8 +104,6 @@ public  Status  free_memory( void   **ptr )
 #endif
         *ptr = (void *) 0;
     }
-
-    return( OK );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -141,6 +125,8 @@ public  void  abort_if_allowed( void )
 
     if( !ENV_EXISTS( "NO_ABORT" ) )
     {
+        set_print_function( 0 );
+
         print( "Do you wish to abort (y/n): " );
         do
         {
