@@ -5,12 +5,16 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.2  1998-03-10 17:05:30  neelin
-@MODIFIED   : Fixed handling of PDV control header last fragment bit (it should be
-@MODIFIED   : set for both command and data parts of the message). Re-organized code
-@MODIFIED   : to use watchpoints differently: put PDU watchpoint on real afp
-@MODIFIED   : everywhere and store PDV watchpoint in dicom io structure.
+@MODIFIED   : Revision 6.3  1998-03-23 20:16:16  neelin
+@MODIFIED   : Moved some general-purpose functions from dicom_client_routines and
+@MODIFIED   : added one for implementation uid.
 @MODIFIED   :
+ * Revision 6.2  1998/03/10  17:05:30  neelin
+ * Fixed handling of PDV control header last fragment bit (it should be
+ * set for both command and data parts of the message). Re-organized code
+ * to use watchpoints differently: put PDU watchpoint on real afp
+ * everywhere and store PDV watchpoint in dicom io structure.
+ *
  * Revision 6.1  1997/10/20  22:52:46  neelin
  * Added support for implementation user information in association request.
  *
@@ -181,6 +185,111 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes);
 #define COPY_UID(group, elid, buffer, length) \
    pdu_copy_uid(acr_find_string(group, elid, ""), (char *) buffer, length)
 
+
+/*****************************************************************************/
+/*************************** UTILITY ROUTINES ********************************/
+/*****************************************************************************/
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_uid_equal
+@INPUT      : uid1
+              uid2
+@OUTPUT     : (nothing)
+@RETURNS    : TRUE if uid's are equal, FALSE otherwise
+@DESCRIPTION: Responds to READYq message
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 21, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_uid_equal(char *uid1, char *uid2)
+{
+   int len1, len2, i;
+
+   /* Skip leading blanks */
+   while (isspace(*uid1)) {uid1++;}
+   while (isspace(*uid2)) {uid2++;}
+
+   /* Skip trailing blanks */
+   len1 = strlen(uid1);
+   for (i=len1-1; (i >= 0) && isspace(uid1[i]); i--) {}
+   if (isspace(uid1[i+1])) uid1[i+1] = '\0';
+   len2 = strlen(uid2);
+   for (i=len2-1; (i >= 0) && isspace(uid1[i]); i--) {}
+   if (isspace(uid1[i+1])) uid1[i+1] = '\0';
+
+   /* Compare the strings */
+   return (strcmp(uid1, uid2) == 0);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_create_uid
+@INPUT      : (none)
+@OUTPUT     : (none)
+@RETURNS    : pointer to internal buffer containing uid
+@DESCRIPTION: Routine to generate a unique uid. The string is returned in
+              an internal buffer space and will be overwritten by 
+              subsequent calls.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 25, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *acr_create_uid(void)
+{
+   static char uid[64];
+   time_t current_time;
+   int offset;
+   int maxlen;
+   union {
+      unsigned char ch[4];
+      int ul;
+   } host_id;
+   static int counter = 0;
+
+   /* Make up a new UID */
+   host_id.ul = gethostid();
+   current_time = time(NULL);
+   (void) sprintf(uid, "1.%d.%d.%d.%d.%d.%d.%d", 
+                  (int) 'I',(int) 'P',
+                  (int) host_id.ch[0], (int) host_id.ch[1], 
+                  (int) host_id.ch[2], (int) host_id.ch[3],
+                  (int) getpid());
+   offset = strlen(uid);
+   maxlen = sizeof(uid) - 1 - offset;
+   (void) strftime(&uid[offset], (size_t) maxlen, ".%Y%m%d%H%M%S", 
+                   localtime(&current_time));
+   (void) sprintf(&uid[strlen(uid)], ".%08d", counter++);
+
+   return uid;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_implementation_uid
+@INPUT      : (none)
+@OUTPUT     : (none)
+@RETURNS    : pointer to internal buffer containing uid
+@DESCRIPTION: Routine to generate a uid for this software implementation. 
+              The string is returned in an internal buffer space and will 
+              be overwritten by subsequent calls.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 23, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *acr_implementation_uid(void)
+{
+   static char uid[64];
+
+   /* Set the uid */
+   (void) sprintf(string, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
+                  (int) 'M', (int) 'N', (int) 'I');
+
+   return uid;
+}
 
 /*****************************************************************************/
 /*************************** INPUT ROUTINES **********************************/
