@@ -8,6 +8,7 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 LEX= flex
+YACC= bison -y
 YFLAGS= -d -t
 
 .PRECIOUS: gram.c
@@ -22,4 +23,11 @@ MANSECT  = 1
 MANPAGES = $(PROGS).$(MANSECT)
 
 include $(ROOT)/progs/Make_progs
+
+# Make sure that intermediate .c files get saved so that we can distribute
+# these. (Hopefully no need to have a adequate versions of flex and bison
+# installed when only compiling.)
+lex.o: lex.c
+
+gram.o: gram.c
 

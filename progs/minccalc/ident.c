@@ -48,6 +48,7 @@ int ident_is_scalar(ident_t id){
       if (i->id == id)
          return i->is_scalar;
    /* errx(1, "ident_is_scalar: no such ident %d", id); */
-   fprintf(stderr, "ident_is_scalar: no such ident %d", id);
+   fprintf(stderr, "ident_is_scalar: no such ident %d\n", id);
+   exit(1);
    return 0;
 }

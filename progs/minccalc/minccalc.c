@@ -19,14 +19,18 @@ Thu Oct  5 17:09:12 EST 2000 - First alpha version
 Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 
  * $Log: minccalc.c,v $
- * Revision 1.2  2001-04-24 18:17:09  neelin
+ * Revision 1.3  2001-04-26 19:12:39  neelin
+ * Finished up addition of operators and handling of invalid values.
+ * This version seems to work.
+ *
+ * Revision 1.2  2001/04/24 18:17:09  neelin
  * Added CVS logging.
  *
 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.2 2001-04-24 18:17:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.3 2001-04-26 19:12:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -312,10 +316,13 @@ public void do_math(void *caller_data, long num_voxels,
       }
       
       output_data[0][ivox] = eval_scalar(root, rootsym);
-         
-/*      if (debug) fprintf(stderr, "%e - %e = %e\n", value1, value2, output_data[0][ivox]); */
 
+      if (debug) {
+         (void) printf("Voxel result = %g\n", output_data[0][ivox]);
       }
+         
+
+   }
 
    return;
 }

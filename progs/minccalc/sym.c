@@ -46,20 +46,26 @@ static sym_t sym_lookup(ident_t id, sym_t sym){
 
 scalar_t sym_lookup_scalar(ident_t id, sym_t sym){
    sym_t s = sym_lookup(id, sym);
-   if (!s)
+   if (!s) {
       /* errx(1, "%s undefined", ident_str(id)); */
-      fprintf(stderr, "%s undefined", ident_str(id));
-   if (!s->is_scalar)
+      fprintf(stderr, "%s undefined\n", ident_str(id));
+      exit(1);
+   }
+   if (!s->is_scalar) {
       /* errx(1, "%s is not scalar (lowercase)", ident_str(id)); */
-      fprintf(stderr, "%s is not scalar (lowercase)", ident_str(id));
+      fprintf(stderr, "%s is not scalar (lowercase)\n", ident_str(id));
+      exit(1);
+   }
    return s->scalar;
 }
 
 vector_t sym_lookup_vector(ident_t id, sym_t sym){
    sym_t s = sym_lookup(id, sym);
-   if (!s)
+   if (!s) {
       /* errx(1, "%s undefined", ident_str(id)); */
-      fprintf(stderr, "%s undefined", ident_str(id));
+      fprintf(stderr, "%s undefined\n", ident_str(id));
+      exit(1);
+   }
    if (s->is_scalar)
       return NULL;
    return s->vector;

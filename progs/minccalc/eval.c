@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <limits.h>
+#include <float.h>
 #include "node.h"
 
 #ifndef TRUE
@@ -16,9 +18,12 @@
 
 scalar_t   eval_index(node_t, vector_t, scalar_t);
 scalar_t   eval_sum(node_t, vector_t);
+scalar_t   eval_max(node_t, vector_t, double);
 vector_t   eval_vector(node_t, sym_t);
 vector_t   gen_vector(node_t, sym_t);
 vector_t   gen_range(node_t, sym_t);
+
+extern int debug;
 
 void eval_error(node_t n, const char *msg){
    int pos = n->pos;
@@ -30,7 +35,7 @@ void show_error(int pos, const char *msg){
    const char *c;
 
    if (pos != -1) {
-      fprintf(stderr, "%s\n", expression);
+      fprintf(stderr, "\n%s\n", expression);
       for (c = expression; *c; c++) {
          if (pos-- == 0)
             break;
@@ -53,8 +58,8 @@ scalar_t eval_scalar(node_t n, sym_t sym){
    int iarg;
 
    /* Check special case where all arguments are scalar and we can test
-      them in a general way */
-   if (n->flags |= ALLARGS_SCALAR) {
+      for invalid values in a general way */
+   if (n->flags & ALLARGS_SCALAR) {
 
       /* Check that we don't have too many arguments */
       if (n->numargs > (int) sizeof(vals)/sizeof(vals[0])) {
@@ -69,6 +74,13 @@ scalar_t eval_scalar(node_t n, sym_t sym){
          if (vals[iarg] == INVALID_VALUE) {
             found_invalid = TRUE;
          }
+      }
+
+      if (debug) {
+         (void) printf("%s:", node_name(n));
+         for (iarg=0; iarg < n->numargs; iarg++)
+            (void) printf(" %g", vals[iarg]);
+         (void) printf("\n");
       }
 
       /* Check for an invalid value. If we are testing for them, 
@@ -112,11 +124,43 @@ scalar_t eval_scalar(node_t n, sym_t sym){
       case NODETYPE_NOT:
          return ( ! (int) vals[0] );
 
+      case NODETYPE_AND:
+         return vals[0] && vals[1];
+
+      case NODETYPE_OR:
+         return vals[0] || vals[1];
+
       case NODETYPE_ISNAN:
          return 0.0;      /* We only get here if the value is valid */
 
-      case NODETYPE_EXP:
+      case NODETYPE_POW:
          return pow(vals[0], vals[1]);
+
+      case NODETYPE_SQRT:
+         return sqrt(vals[0]);
+
+      case NODETYPE_ABS:
+         return fabs(vals[0]);
+
+      case NODETYPE_EXP:
+         return exp(vals[0]);
+
+      case NODETYPE_LOG:
+         return log(vals[0]);
+
+      case NODETYPE_SIN:
+         return sin(vals[0]);
+
+      case NODETYPE_COS:
+         return cos(vals[0]);
+
+      case NODETYPE_CLAMP:
+         if (vals[0] < vals[1]) return vals[1];
+         if (vals[0] > vals[2]) return vals[2];
+         return vals[0];
+
+      case NODETYPE_SEGMENT:
+         return ( (vals[0] >= vals[1] && vals[0] <= vals[2]) ? 1.0 : 0.0);
 
       }  /* switch on type */
 
@@ -152,6 +196,18 @@ scalar_t eval_scalar(node_t n, sym_t sym){
       vector_free(v);
       return s;
       
+   case NODETYPE_MAX:
+      v = eval_vector(n->expr[0], sym);
+      s = eval_max(n, v, 1.0);
+      vector_free(v);
+      return s;
+      
+   case NODETYPE_MIN:
+      v = eval_vector(n->expr[0], sym);
+      s = eval_max(n, v, -1.0);
+      vector_free(v);
+      return s;
+      
    case NODETYPE_IDENT:
       return sym_lookup_scalar(n->ident, sym);
       
@@ -184,7 +240,7 @@ scalar_t eval_scalar(node_t n, sym_t sym){
 /* Index into a vector */
 scalar_t eval_index(node_t n, vector_t v, scalar_t i){
    int idx = SCALAR_ROUND(i);
-   if (idx < 0 || idx > v->len)
+   if (idx < 0 || idx >= v->len)
       eval_error(n, "index out of bounds");
    return v->el[idx];
 }
@@ -203,6 +259,24 @@ scalar_t eval_sum(node_t n, vector_t v){
       else result += s;
    }
    return found_invalid ? INVALID_VALUE : result;
+}
+
+/* Find the maximum of a vector. Sign should be +1.0 for maxima search
+   and -1.0 for minima search */
+scalar_t eval_max(node_t n, vector_t v, double sign){
+   int i;
+   scalar_t result, s;
+
+   result = INVALID_VALUE;
+   for (i = 0; i < v->len; i++) {
+      s = eval_index(n, v, i);
+      if (s != INVALID_VALUE) {
+         if (result == INVALID_VALUE || (sign*(s-result) > 0.0)) {
+            result = s;
+         }
+      }
+   }
+   return result;
 }
 
 /* Evaluate an expression in a vector context */
