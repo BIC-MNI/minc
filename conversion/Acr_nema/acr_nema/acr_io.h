@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:50:15  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 11:26:22  neelin
+@MODIFIED   : Changed short to unsigned short.
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:50:15  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -31,9 +34,11 @@ typedef enum {
 
 /* Functions */
 public int acr_set_vax_byte_ordering(int has_vax_byte_ordering);
-public void acr_get_short(long nvals, void *input_value, short *mach_value);
+public void acr_get_short(long nvals, void *input_value, 
+                          unsigned short *mach_value);
 public void acr_get_long(long nvals, void *input_value, long *mach_value);
-public void acr_put_short(long nvals, short *mach_value, void *output_value);
+public void acr_put_short(long nvals, unsigned short *mach_value, 
+                          void *output_value);
 public void acr_put_long(long nvals, long *mach_value, void *output_value);
 public Acr_Status acr_read_one_element(Acr_File *afp,
                                        int *group_id, int *element_id,

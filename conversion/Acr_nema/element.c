@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.2  1993-11-22 13:11:34  neelin
-@MODIFIED   : Added Acr_Element_Id code.
+@MODIFIED   : Revision 1.3  1993-11-24 11:25:14  neelin
+@MODIFIED   : Changed short to unsigned short.
 @MODIFIED   :
+ * Revision 1.2  93/11/22  13:11:34  neelin
+ * Added Acr_Element_Id code.
+ * 
  * Revision 1.1  93/11/19  12:48:12  neelin
  * Initial revision
  * 
@@ -350,7 +353,7 @@ public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public Acr_Element acr_create_element_short(Acr_Element_Id elid,
-                                            short value)
+                                            unsigned short value)
 {
    long data_length;
    void *data;
@@ -458,9 +461,9 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public short acr_get_element_short(Acr_Element element)
+public unsigned short acr_get_element_short(Acr_Element element)
 {
-   short value;
+   unsigned short value;
 
    if (acr_get_element_length(element) != ACR_SIZEOF_SHORT) return 0;
 

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:47:35  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 11:24:48  neelin
+@MODIFIED   : Changed short to unsigned short.
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:47:35  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -102,7 +105,8 @@ private int acr_need_invert(void)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_get_short(long nvals, void *input_value, short *mach_value)
+public void acr_get_short(long nvals, void *input_value, 
+                          unsigned short *mach_value)
 {
    long i;
    char *ptr1, *ptr2, v0, v1;
@@ -122,7 +126,7 @@ public void acr_get_short(long nvals, void *input_value, short *mach_value)
    }
    else {
       (void) memcpy((void *) mach_value, input_value, 
-                    (size_t) (nvals*sizeof(short)));
+                    (size_t) (nvals*sizeof(unsigned short)));
    }
 
    return ;
@@ -184,7 +188,8 @@ public void acr_get_long(long nvals, void *input_value, long *mach_value)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_put_short(long nvals, short *mach_value, void *output_value)
+public void acr_put_short(long nvals, unsigned short *mach_value, 
+                          void *output_value)
 {
    long i;
    char *ptr1, *ptr2, v0, v1;
@@ -204,7 +209,7 @@ public void acr_put_short(long nvals, short *mach_value, void *output_value)
    }
    else {
       (void) memcpy(output_value, (void *) mach_value, 
-                    (size_t) (nvals*sizeof(short)));
+                    (size_t) (nvals*sizeof(unsigned short)));
    }
 
    return ;
@@ -276,7 +281,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
 {
    int ch, i, buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
-   short grpid, elid;
+   unsigned short grpid, elid;
    size_t size_allocated;
 
    buflen = sizeof(buffer)/sizeof(buffer[0]);
@@ -338,7 +343,7 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
 {
    int ch, i, buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
-   short grpid, elid;
+   unsigned short grpid, elid;
 
    buflen = sizeof(buffer)/sizeof(buffer[0]);
 

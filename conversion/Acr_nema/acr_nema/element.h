@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 1.3  1993-11-23 11:36:21  neelin
-@MODIFIED   : Changed GLOBAL_ELEMENT macro to allow definition or declaration of
-@MODIFIED   : global variables.
+@MODIFIED   : Revision 1.4  1993-11-24 11:26:35  neelin
+@MODIFIED   : Changed short to unsigned short.
 @MODIFIED   :
+ * Revision 1.3  93/11/23  11:36:21  neelin
+ * Changed GLOBAL_ELEMENT macro to allow definition or declaration of
+ * global variables.
+ * 
  * Revision 1.2  93/11/22  13:12:21  neelin
  * Added Acr_Element_Id code.
  * 
@@ -77,14 +80,14 @@ public Acr_Element acr_get_element_next(Acr_Element element);
 public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element);
 public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element);
 public Acr_Element acr_create_element_short(Acr_Element_Id elid,
-                                            short value);
+                                            unsigned short value);
 public Acr_Element acr_create_element_long(Acr_Element_Id elid,
                                            long value);
 public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
 public Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value);
-public short acr_get_element_short(Acr_Element element);
+public unsigned short acr_get_element_short(Acr_Element element);
 public long acr_get_element_long(Acr_Element element);
 public double acr_get_element_numeric(Acr_Element element);
 public char *acr_get_element_string(Acr_Element element);
