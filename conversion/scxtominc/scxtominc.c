@@ -10,7 +10,10 @@
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: scxtominc.c,v $
- * Revision 6.1  1999-10-29 17:52:07  neelin
+ * Revision 6.2  1999-11-09 13:34:48  neelin
+ * Year 2000 fix for date stored in minc file.
+ *
+ * Revision 6.1  1999/10/29 17:52:07  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:31  neelin
@@ -75,7 +78,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 6.1 1999-10-29 17:52:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 6.2 1999-11-09 13:34:48 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -681,6 +684,9 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
          if (scx_get_mnem(fp, SCX_DATY, 0,
                           &scx_general_info->start_year, NULL, NULL)) 
             return MI_ERROR;
+         scx_general_info->start_year += 1900;
+         if (scx_general_info->start_year < 1950)
+            scx_general_info->start_year += 100;
          if (scx_get_mnem(fp, SCX_DATM, 0,
                           &scx_general_info->start_month, NULL, NULL)) 
             return MI_ERROR;
@@ -705,7 +711,7 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
          (void) sprintf(scx_general_info->start_time, "%d-%s-%d %s",
                         (int) scx_general_info->start_day,
                         the_months[scx_general_info->start_month],
-                        (int) scx_general_info->start_year+1900,
+                        (int) scx_general_info->start_year,
                         svalue);
          if (scx_get_mnem(fp, SCX_CAR, 0,
                           NULL, NULL, scx_general_info->tracer)) 
