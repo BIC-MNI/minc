@@ -1,5 +1,33 @@
 #include  <volume_io.h>
 
+private  Status   get_file_dimension_names(
+    char     filename[],
+    int      n_dims,
+    STRING   dim_names[] )
+{
+    static  char   *any_names[MAX_DIMENSIONS] = { "", "", "", "", "" };
+    int                   i;
+    Status                status;
+    volume_input_struct   volume_input;
+    Volume                tmp_volume;
+
+    status = start_volume_input( filename, n_dims, any_names,
+                                 NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                                 TRUE, &tmp_volume, (minc_input_options *) NULL,
+                                 &volume_input );
+
+    if( status == OK )
+    {
+        for_less( i, 0, n_dims )
+            (void) strcpy( dim_names[i], volume_input.minc_file->dim_names[i] );
+
+        delete_volume_input( &volume_input );
+        delete_volume( tmp_volume );
+    }
+
+    return( status );
+}
+
 public  Status  output_modified_volume(
     char                  filename[],
     nc_type               file_nc_data_type,
@@ -13,9 +41,12 @@ public  Status  output_modified_volume(
 {
     Status       status;
     Minc_file    minc_file;
-    int          sizes[MAX_DIMENSIONS];
+    int          n_dims, sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
+    int          i, j, n_found;
     Real         min_value, max_value;
-    char         **dimension_names;
+    char         **vol_dimension_names;
+    BOOLEAN      done[MAX_DIMENSIONS];
+    STRING       dim_names[MAX_DIMENSIONS];
 
     if( file_nc_data_type == NC_UNSPECIFIED )
     {
@@ -25,20 +56,64 @@ public  Status  output_modified_volume(
     }
 
     get_volume_real_range( volume, &min_value, &max_value );
-    get_volume_sizes( volume, sizes );
+    get_volume_sizes( volume, vol_sizes );
 
-    dimension_names = get_volume_dimension_names( volume );
+    n_dims = get_volume_n_dimensions(volume);
+    vol_dimension_names = get_volume_dimension_names( volume );
+
+    if( options == NULL || strlen( options->dimension_names[0] ) == 0 )
+    {
+        if( original_filename == NULL )
+        {
+            if( get_file_dimension_names( original_filename, n_dims,
+                                          dim_names ) != OK )
+                return( ERROR );
+        }
+        else
+        {
+            for_less( i, 0, n_dims )
+                (void) strcpy( dim_names[i], vol_dimension_names[i] );
+        }
+    }
+    else
+    {
+        for_less( i, 0, n_dims )
+            (void) strcpy( dim_names[i], options->dimension_names[i] );
+    }
+
+    n_found = 0;
+    for_less( i, 0, n_dims )
+        done[i] = FALSE;
+
+    for_less( i, 0, n_dims )
+    {
+        for_less( j, 0, n_dims )
+        {
+            if( !done[j] &&
+                strcmp( vol_dimension_names[i], dim_names[j] ) == 0 )
+            {
+                sizes[j] = vol_sizes[i];
+                ++n_found;
+                done[j] = TRUE;
+            }
+        }
+    }
+
+    delete_dimension_names( vol_dimension_names );
+
+    if( n_found != n_dims )
+    {
+        print( "output_modified_volume: invalid dimension names option.\n");
+        return( ERROR );
+    }
 
     minc_file = initialize_minc_output( filename,
-                                        get_volume_n_dimensions(volume),
-                                        dimension_names, sizes,
+                                        n_dims, dim_names, sizes,
                                         file_nc_data_type, file_signed_flag,
                                         file_voxel_min, file_voxel_max,
                                         min_value, max_value,
                                         get_voxel_to_world_transform(volume),
                                         options );
-
-    delete_dimension_names( dimension_names );
 
     status = OK;
 
