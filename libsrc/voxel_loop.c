@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.2  2003-09-18 16:49:46  bert
+ * Use fabs instead of ABS
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -111,7 +114,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.1 2002-01-14 21:28:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.2 2003-09-18 16:49:46 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -138,9 +141,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.1 20
 
 /* Epsilon for coordinate comparisons */
 #define COORD_EPSILON FLT_EPSILON * 10.0
-
-/* Macros */
-#define ABS(x)  ( ((x) > (0)) ? (x) : (-(x)))
 
 /* Typedefs */
 typedef struct Loopfile_Info Loopfile_Info;
@@ -590,9 +590,9 @@ private void check_input_files(Loop_Options *loop_options,
                   dircos_diff = first_dircos[idim][jdim] - dircos[idim][jdim];
                   if (first_dircos[idim][jdim] != 0.0)
                      dircos_diff /= first_dircos[idim][jdim];
-                  dircos_cumdiff += ABS(dircos_diff);
+                  dircos_cumdiff += fabs(dircos_diff);
                }
-               if (ABS(start_diff) > COORD_EPSILON) {
+               if (fabs(start_diff) > COORD_EPSILON) {
                   (void) fprintf(stderr, 
                      "Files %s and %s have different start coordinates (%s)\n",
                                  get_input_filename(loopfile_info,ifile),
@@ -600,7 +600,7 @@ private void check_input_files(Loop_Options *loop_options,
                                  first_dimname[idim]);
                   exit(EXIT_FAILURE);
                }
-               if (ABS(step_diff) > COORD_EPSILON) {
+               if (fabs(step_diff) > COORD_EPSILON) {
                   (void) fprintf(stderr, 
                      "Files %s and %s have different step coordinates (%s)\n",
                                  get_input_filename(loopfile_info,ifile),
