@@ -4,11 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 1.5  1994-04-07 11:03:32  neelin
-@MODIFIED   : Changed error handling to be more explicit about errors.
-@MODIFIED   : When the server terminates due to an error, a message is printed to /dev/log.
-@MODIFIED   : Changed handling of file cleanup.
+@MODIFIED   : Revision 1.6  1994-05-18 08:55:17  neelin
+@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
 @MODIFIED   :
+ * Revision 1.5  94/04/07  11:03:32  neelin
+ * Changed error handling to be more explicit about errors.
+ * When the server terminates due to an error, a message is printed to /dev/log.
+ * Changed handling of file cleanup.
+ * 
  * Revision 1.4  93/11/30  14:42:32  neelin
  * Copies to minc format.
  * 
@@ -155,14 +158,14 @@ public Acr_Status spi_output_message(Acr_File *afp, Acr_Message message)
    for (i=0; i < length_of_eom; i++) {
       ch = acr_putc(end_of_message[i], afp);
       if (ch == EOF) {
-         status = ACR_OTHER_ERROR;
+         status = ACR_ABNORMAL_END_OF_OUTPUT;
          return status;
       }
    }
 
    /* Flush the buffer */
    if (acr_file_flush(afp) == EOF) {
-      status = ACR_OTHER_ERROR;
+      status = ACR_ABNORMAL_END_OF_OUTPUT;
       return status;
    }
 

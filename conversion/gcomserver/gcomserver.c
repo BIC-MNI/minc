@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.14  1994-04-08 10:35:36  neelin
-@MODIFIED   : Fixed handling of input trace (don't do trace while using the files).
+@MODIFIED   : Revision 1.15  1994-05-18 08:54:50  neelin
+@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
 @MODIFIED   :
+ * Revision 1.14  94/04/08  10:35:36  neelin
+ * Fixed handling of input trace (don't do trace while using the files).
+ * 
  * Revision 1.13  94/04/08  09:15:10  neelin
  * Added printing of filename to /dev/log on error.
  * 
@@ -370,6 +373,10 @@ int main(int argc, char *argv[])
    case ACR_ABNORMAL_END_OF_INPUT:
       exit_status = EXIT_FAILURE;
       exit_string = "Abnormal end of input. Disconnecting.";
+      break;
+   case ACR_ABNORMAL_END_OF_OUTPUT:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Abnormal end of output. Disconnecting.";
       break;
    case ACR_HIGH_LEVEL_ERROR:
       exit_status = EXIT_FAILURE;
