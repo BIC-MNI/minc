@@ -95,6 +95,7 @@ GLOBAL_ELEMENT(SPI_Off_center_lr           , 0x0019, 0x100b);
 GLOBAL_ELEMENT(SPI_Off_center_cc           , 0x0019, 0x100c);
 GLOBAL_ELEMENT(SPI_Off_center_ap           , 0x0019, 0x100d);
 GLOBAL_ELEMENT(SPI_Number_of_slices        , 0x0019, 0x100f);
+GLOBAL_ELEMENT(SPI_Flip_angle              , 0x0019, 0x101a);
 GLOBAL_ELEMENT(SPI_Number_of_dynamic_scans , 0x0019, 0x101b);
 GLOBAL_ELEMENT(SPI_dynamic_scan_begin_time , 0x0019, 0x1022);
 GLOBAL_ELEMENT(SPI_Number_of_phases        , 0x0019, 0x1069);

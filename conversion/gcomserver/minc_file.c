@@ -6,10 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.4  1994-01-14 11:37:24  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.5  1994-01-17 15:06:22  neelin
+@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
+@MODIFIED   : of scanning sequence.
 @MODIFIED   :
+ * Revision 1.4  94/01/14  11:37:24  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.3  93/12/14  16:37:18  neelin
  * Added MIcomplete attribute to image variable,.
  * 
@@ -334,6 +338,9 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (general_info->acq.inv_time != -DBL_MAX)
       (void) miattputdbl(mincid, varid, MIinversion_time, 
                          general_info->acq.inv_time);
+   if (general_info->acq.flip_angle != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, "flip_angle", 
+                         general_info->acq.flip_angle);
    if (general_info->acq.num_avg != -DBL_MAX)
       (void) miattputdbl(mincid, varid, MInum_averages, 
                          general_info->acq.num_avg);
@@ -341,7 +348,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
       (void) miattputdbl(mincid, varid, MIimaging_frequency, 
                          general_info->acq.imaging_freq);
    if (strlen(general_info->acq.imaged_nucl) > 0)
-      (void) miattputstr(mincid, varid, MIscanning_sequence, 
+      (void) miattputstr(mincid, varid, MIimaged_nucleus, 
                          general_info->acq.imaged_nucl);
 
    /* Create the spi info variable */

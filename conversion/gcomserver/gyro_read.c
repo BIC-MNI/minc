@@ -6,10 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.5  1994-01-14 11:37:18  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.6  1994-01-17 15:05:46  neelin
+@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
+@MODIFIED   : of scanning sequence.
 @MODIFIED   :
+ * Revision 1.5  94/01/14  11:37:18  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.4  94/01/06  14:18:44  neelin
  * Added image unpacking (3 bytes -> 2 pixels).
  * 
@@ -468,6 +472,8 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          find_double(group_list, ACR_Echo_time, -DBL_MAX);
       general_info->acq.inv_time = 
          find_double(group_list, ACR_Inversion_time, -DBL_MAX);
+      general_info->acq.flip_angle = 
+         find_double(group_list, SPI_Flip_angle, -DBL_MAX);
       general_info->acq.num_avg = 
          find_double(group_list, ACR_Nr_of_averages, -DBL_MAX);
       general_info->acq.imaging_freq = 

@@ -6,10 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.4  1994-01-14 11:37:42  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.5  1994-01-17 15:06:31  neelin
+@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
+@MODIFIED   : of scanning sequence.
 @MODIFIED   :
+ * Revision 1.4  94/01/14  11:37:42  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.3  93/12/14  16:37:48  neelin
  * Modified general_info structure a little bit.
  * 
@@ -114,6 +118,7 @@ typedef struct {
       double rep_time;
       double echo_time;
       double inv_time;
+      double flip_angle;
       double num_avg;
       double imaging_freq;
       Cstring imaged_nucl;
