@@ -4,7 +4,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : December 9, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: mnitominc.h,v $
+@MODIFIED   : Revision 1.8  1993-08-11 15:24:29  neelin
+@MODIFIED   : Added RCS logging to source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

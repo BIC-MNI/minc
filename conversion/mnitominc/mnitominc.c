@@ -8,7 +8,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : December 7, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: mnitominc.c,v $
+@MODIFIED   : Revision 1.12  1993-08-11 15:24:20  neelin
+@MODIFIED   : Added RCS logging to source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.11 1993-08-06 14:18:51 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.12 1993-08-11 15:24:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>

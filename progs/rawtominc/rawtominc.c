@@ -9,7 +9,11 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
-@MODIFIED   : December 2, 1992 (P.N.)
+@MODIFIED   : $Log: rawtominc.c,v $
+@MODIFIED   : Revision 1.10  1993-08-11 15:25:05  neelin
+@MODIFIED   : Added RCS logging to source.
+@MODIFIED   :
+              December 2, 1992 (P.N.)
                  - changed to parse argv with ParseArgv
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
@@ -24,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.9 1993-07-21 12:53:10 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.10 1993-08-11 15:25:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
