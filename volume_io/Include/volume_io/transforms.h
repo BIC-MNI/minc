@@ -1,7 +1,7 @@
 #ifndef  DEF_TAG_IO
 #define  DEF_TAG_IO
 
-typedef enum { LINEAR6, LINEAR7, LINEAR9, LINEAR12, BOOKSTEIN } Transform_types;
+typedef enum { LINEAR, THIN_PLATE_SPLINE } Transform_types;
 
 typedef  struct
 {
