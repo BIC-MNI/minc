@@ -916,6 +916,11 @@ public  void  set_volume_translation(
     Real    voxel[],
     Real    world_space_voxel_maps_to[] );
 
+public  void  get_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] );
+
 public  void  reorder_voxel_to_xyz(
     Volume   volume,
     Real     voxel[],

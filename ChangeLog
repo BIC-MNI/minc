@@ -1,3 +1,8 @@
+2002-12-05  Steve Robbins  <swmgr@shadow.bic.mni.mcgill.ca>
+
+	* volume_io/Include/vol_io_prototypes.h: Add prototype
+	for get_volume_translation().
+
 2002-11-05  Jason Lerch	      <jason@bic.mni.mcgill.ca>
 
 	* progs/mincresample/mincresample.{c,h}: changed the setting of
