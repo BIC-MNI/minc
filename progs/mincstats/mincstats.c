@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.14.2.1  2004-09-28 20:03:40  bert
+ * Revision 1.14.2.2  2004-10-18 15:02:13  bert
+ * Ported AJanke's biModalT fix to 1.X branch
+ *
+ * Revision 1.14.2.1  2004/09/28 20:03:40  bert
  * Minor portability changes for Windows
  *
  * Revision 1.14  2003/09/05 18:29:40  bert
@@ -223,7 +226,7 @@ static double hist_sep;
 static double hist_range[2] = { -DBL_MAX, DBL_MAX };
 static int discrete_histogram = FALSE;
 static int integer_histogram = FALSE;
-static int max_bins = 10000;
+static int max_bins = 65536;
 
 /* Global Variables to store info for stats */
 Stats_Info **stats_info = NULL;
@@ -527,7 +530,7 @@ int main(int argc, char *argv[])
 
       if((discrete_histogram || integer_histogram) && (hist_bins > max_bins)) {
          (void)fprintf(stderr,
-                       "Too many bins in histogram (%d) - please increase -max_bins if appropriate\n",
+                       "Too many bins in histogram (%d) - please increase -int_max_bins if appropriate\n",
                        hist_bins);
          exit(EXIT_FAILURE);
       }
@@ -641,10 +644,10 @@ int main(int argc, char *argv[])
                }
 
                /* BiModal Threshold */
-               if(c > 0) {
-                  zero_moment += pdf[c];
-                  first_moment += hist_centre[c] * pdf[c];
+               zero_moment += pdf[c];
+               first_moment += hist_centre[c] * pdf[c];
 
+               if(c > 0) {
                   var = SQR((stats->mean * zero_moment) - first_moment) /
                      (zero_moment * (1 - zero_moment));
 
