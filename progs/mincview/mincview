@@ -115,7 +115,7 @@ while ($slice < $nslices)
    endif
    set output_file = $workingdir/$slice
    echo "$pnm_code" >! $output_file
-   echo "$imgsize[1] $imgsize[2]" >> $output_file
+   echo "$imgsize[2] $imgsize[1]" >> $output_file
    echo "255" >> $output_file
    mincextract $filename -byte -start "$start" -count "$count" \
       -positive_direction |\
