@@ -35,7 +35,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.5  2001-04-17 18:40:14  neelin
+ * Revision 6.6  2001-04-24 14:49:39  neelin
+ * In execute_decompress_command, close all file handles in child after
+ * fork to avoid problems with buffer flushing.
+ *
+ * Revision 6.5  2001/04/17 18:40:14  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -122,7 +126,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.5 2001-04-17 18:40:14 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.6 2001-04-24 14:49:39 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -237,11 +241,26 @@ private int execute_decompress_command(char *command, char *infile,
          oldncopts = ncopts; ncopts = 0;
          processid = fork();
          if (!processid) {           /* Child */
+
+            /* Close all filehandles to avoid buffer flushing problems */
+            {
+               int f;
+               f=getdtablesize()-1; /* could use OPEN_MAX-1 instead */
+               if (f < 2) f = 2;    /* At least close 0,1,2 */
+               for (; f >= 0; f--) {
+                  (void) close(f);
+               }
+            }
+
+            /* Try the open */
             ncopts = NC_FATAL;
             status = ncopen(outfile, NC_NOWRITE);
             (void) ncclose(status);
             exit(0);
+
          }
+
+         /* Parent gets status from child */
          (void) waitpid(processid, &status, 0);
          if (status == 0) {
             successful_ncopen = TRUE;
