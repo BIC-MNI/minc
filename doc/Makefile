@@ -8,3 +8,6 @@ default : minc_reference.dvi minc_user.dvi
 
 .tex.dvi :
 	latex $<
+
+clean:
+	rm -f *.aux *.dvi *.log
