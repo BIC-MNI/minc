@@ -71,8 +71,13 @@ $(CC_MINC_LIB): $(JACKETS_OBJ)
 	$(RANLIB) $(CC_MINC_LIB)
 
 
+# Remove most derived files in this directory - leave jacket obj for library
+mostlyclean:
+	$(RM) $(RM_FLAGS) $(JACKETS_C) $(JACKETS_LN) \
+                     $(PROGS) $(PROG_OBJ)
+
 # Remove all derived files in this directory
-mostlyclean clean:
+clean:
 	$(RM) $(RM_FLAGS) $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) \
                      $(PROGS) $(PROG_OBJ)
 
