@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.43 1995-08-16 01:58:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.44 1995-08-19 18:57:05 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -52,7 +52,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     minc_input_options   *options )
 {
     minc_file_struct    *file;
-    int                 img_var, dim_vars[MAX_VAR_DIMS], n_vol_dims;
+    int                 dim_vars[MAX_VAR_DIMS], n_vol_dims;
     int                 i, slab_size, length, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
     BOOLEAN             different;
@@ -82,26 +82,29 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     minc_input_options  default_options;
     BOOLEAN             no_volume_data_type;
 
-    if( options == (minc_input_options *) NULL )
-    {
-        set_default_minc_input_options( &default_options );
-        options = &default_options;
-    }
-
     ALLOC( file, 1 );
 
     file->cdfid = minc_id;
     file->file_is_being_read = TRUE;
     file->volume = volume;
 
+    if( options == (minc_input_options *) NULL )
+    {
+        set_default_minc_input_options( &default_options );
+        set_default_minc_input_options( &file->original_input_options );
+        options = &default_options;
+    }
+    else
+        file->original_input_options = *options;
+
     get_volume_sizes( volume, prev_sizes );
     prev_nc_type = volume->nc_data_type;
 
     /* --- find the image variable */
 
-    img_var = ncvarid( file->cdfid, MIimage );
+    file->img_var = ncvarid( file->cdfid, MIimage );
 
-    ncvarinq( file->cdfid, img_var, (char *) NULL, &file_datatype,
+    ncvarinq( file->cdfid, file->img_var, (char *) NULL, &file_datatype,
               &file->n_file_dimensions, dim_vars, (int *) NULL );
 
     for_less( d, 0, file->n_file_dimensions )
@@ -352,7 +355,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
         no_volume_data_type = (get_volume_data_type(volume) == NO_DATA_TYPE);
         if( no_volume_data_type )     /* --- use type of file */
         {
-            if( miattgetstr( file->cdfid, img_var, MIsigntype,
+            if( miattgetstr( file->cdfid, file->img_var, MIsigntype,
                              MAX_STRING_LENGTH, signed_flag ) != (char *) NULL )
             {
                 converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
@@ -376,13 +379,13 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- create the image conversion variable */
 
-    file->icv = miicv_create();
+    file->input_icv = miicv_create();
 
-    (void) miicv_setint( file->icv, MI_ICV_TYPE, converted_type );
-    (void) miicv_setstr( file->icv, MI_ICV_SIGN,
+    (void) miicv_setint( file->input_icv, MI_ICV_TYPE, converted_type );
+    (void) miicv_setstr( file->input_icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
-    (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
-    (void) miicv_setint( file->icv, MI_ICV_DO_FILLVALUE, TRUE );
+    (void) miicv_setint( file->input_icv, MI_ICV_DO_NORM, TRUE );
+    (void) miicv_setint( file->input_icv, MI_ICV_DO_FILLVALUE, TRUE );
 
     get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
     range_specified = (valid_range[0] < valid_range[1]);
@@ -403,16 +406,16 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     }
     else if( no_volume_data_type )
     {
-        if( miattget( file->cdfid, img_var, MIvalid_range, NC_DOUBLE,
+        if( miattget( file->cdfid, file->img_var, MIvalid_range, NC_DOUBLE,
                          2, (void *) valid_range, &length ) == MI_ERROR ||
             length != 2 )
         {
-            if( miattget1( file->cdfid, img_var, MIvalid_min, NC_DOUBLE,
+            if( miattget1( file->cdfid, file->img_var, MIvalid_min, NC_DOUBLE,
                            (void *) &valid_range[0] ) != MI_ERROR )
             {
                 min_voxel_found = TRUE;
             }
-            if( miattget1( file->cdfid, img_var, MIvalid_max, NC_DOUBLE,
+            if( miattget1( file->cdfid, file->img_var, MIvalid_max, NC_DOUBLE,
                            (void *) &valid_range[1] ) != MI_ERROR )
             {
                 max_voxel_found = TRUE;
@@ -449,33 +452,33 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     {
         get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
 
-        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, valid_range[0] );
-        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, valid_range[1] );
+        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MIN, valid_range[0]);
+        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MAX, valid_range[1]);
     }
     else
     {
-        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, 0.0 );
-        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, 1.0 );
+        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MIN, 0.0 );
+        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MAX, 1.0 );
     }
 
     if( options->convert_vector_to_scalar_flag && !file->converting_to_colour )
     {
-        (void) miicv_setint( file->icv, MI_ICV_DO_DIM_CONV, TRUE );
-        (void) miicv_setint( file->icv, MI_ICV_DO_SCALAR, TRUE );
-        (void) miicv_setint( file->icv, MI_ICV_XDIM_DIR, FALSE );
-        (void) miicv_setint( file->icv, MI_ICV_YDIM_DIR, FALSE );
-        (void) miicv_setint( file->icv, MI_ICV_ZDIM_DIR, FALSE );
-        (void) miicv_setint( file->icv, MI_ICV_KEEP_ASPECT, FALSE );
+        (void) miicv_setint( file->input_icv, MI_ICV_DO_DIM_CONV, TRUE );
+        (void) miicv_setint( file->input_icv, MI_ICV_DO_SCALAR, TRUE );
+        (void) miicv_setint( file->input_icv, MI_ICV_XDIM_DIR, FALSE );
+        (void) miicv_setint( file->input_icv, MI_ICV_YDIM_DIR, FALSE );
+        (void) miicv_setint( file->input_icv, MI_ICV_ZDIM_DIR, FALSE );
+        (void) miicv_setint( file->input_icv, MI_ICV_KEEP_ASPECT, FALSE );
     }
 
-    (void) miicv_attach( file->icv, file->cdfid, img_var );
+    (void) miicv_attach( file->input_icv, file->cdfid, file->img_var );
 
     /* --- compute the mapping to real values */
 
     if( !file->converting_to_colour )
     {
-         (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
-         (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
+         (void) miicv_inqdbl( file->input_icv, MI_ICV_NORM_MIN, &real_min );
+         (void) miicv_inqdbl( file->input_icv, MI_ICV_NORM_MAX, &real_max );
 
          set_volume_real_range( volume, real_min, real_max );
     }
@@ -483,9 +486,9 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     if( options->promote_invalid_to_min_flag )
     {
         if( !file->converting_to_colour )
-            (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, valid_range[0] );
+            (void) miicv_setdbl( file->input_icv, MI_ICV_FILLVALUE, valid_range[0] );
         else
-            (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, 0.0 );
+            (void) miicv_setdbl( file->input_icv, MI_ICV_FILLVALUE, 0.0 );
     }
 
     for_less( d, 0, file->n_file_dimensions )
@@ -572,9 +575,9 @@ public  Minc_file  initialize_minc_input(
     file = initialize_minc_input_from_minc_id( minc_id, volume, options );
 
     if( file == (Minc_file) NULL )
-    {
         (void) miclose( minc_id );
-    }
+    else
+        (void) strcpy( file->filename, filename );
 
     return( file );
 }
@@ -625,7 +628,7 @@ public  Status  close_minc_input(
     }
 
     (void) miclose( file->cdfid );
-    (void) miicv_free( file->icv );
+    (void) miicv_free( file->input_icv );
 
     for_less( d, 0, file->n_file_dimensions )
         FREE( file->dim_names[d] );
@@ -742,7 +745,8 @@ public  Status  input_minc_hyperslab(
                       used_array_start[2], used_array_start[3],
                       used_array_start[4] );
 
-    if( miicv_get( file->icv, used_start, used_count, void_ptr ) == MI_ERROR )
+    if( miicv_get( file->input_icv, used_start, used_count, void_ptr ) ==
+                                 MI_ERROR )
     {
         status = ERROR;
         if( file->converting_to_colour )
@@ -889,64 +893,81 @@ public  BOOLEAN  input_more_minc_file(
     volume = file->volume;
 
     if( !volume_is_alloced( volume ) )
+    {
         alloc_volume_data( volume );
-
-    /* --- set the counts for reading, actually these will be the same
-           every time */
-
-    for_less( ind, 0, file->n_file_dimensions )
-        count[ind] = 1;
-
-    n_slab = 0;
-
-    for( d = file->n_file_dimensions-1;  d >= 0 && n_slab < file->n_slab_dims;
-         --d )
-    {
-        if( file->to_volume_index[d] != INVALID_AXIS )
+        if( volume->is_cached_volume )
         {
-            count[d] = file->sizes_in_file[d];
-            ++n_slab;
+            open_cache_volume_input_file( &volume->cache, volume,
+                                          file->filename,
+                                          &file->original_input_options );
         }
     }
 
-    input_slab( file, volume, file->to_volume_index, file->indices, count );
-
-    /* --- advance to next slab */
-
-    increment = TRUE;
-    n_slab = 0;
-    total = 1;
-    n_done = 0;
-
-    for( d = file->n_file_dimensions-1;  d >= 0;  --d )
-    {
-        if( n_slab >= file->n_slab_dims &&
-            file->to_volume_index[d] != INVALID_AXIS )
-        {
-            if( increment )
-            {
-                ++file->indices[d];
-                if( file->indices[d] < file->sizes_in_file[d] )
-                    increment = FALSE;
-                else
-                    file->indices[d] = 0;
-            }
-            n_done += total * file->indices[d];
-            total *= file->sizes_in_file[d];
-        }
-
-        if( file->to_volume_index[d] != INVALID_AXIS )
-            ++n_slab;
-    }
-
-    if( increment )
+    if( volume->is_cached_volume )
     {
         *fraction_done = 1.0;
         file->end_volume_flag = TRUE;
     }
     else
     {
-        *fraction_done = (Real) n_done / (Real) total;
+        /* --- set the counts for reading, actually these will be the same
+               every time */
+
+        for_less( ind, 0, file->n_file_dimensions )
+            count[ind] = 1;
+
+        n_slab = 0;
+
+        for( d = file->n_file_dimensions-1;
+             d >= 0 && n_slab < file->n_slab_dims;
+             --d )
+        {
+            if( file->to_volume_index[d] != INVALID_AXIS )
+            {
+                count[d] = file->sizes_in_file[d];
+                ++n_slab;
+            }
+        }
+
+        input_slab( file, volume, file->to_volume_index, file->indices, count );
+
+        /* --- advance to next slab */
+
+        increment = TRUE;
+        n_slab = 0;
+        total = 1;
+        n_done = 0;
+
+        for( d = file->n_file_dimensions-1;  d >= 0;  --d )
+        {
+            if( n_slab >= file->n_slab_dims &&
+                file->to_volume_index[d] != INVALID_AXIS )
+            {
+                if( increment )
+                {
+                    ++file->indices[d];
+                    if( file->indices[d] < file->sizes_in_file[d] )
+                        increment = FALSE;
+                    else
+                        file->indices[d] = 0;
+                }
+                n_done += total * file->indices[d];
+                total *= file->sizes_in_file[d];
+            }
+
+            if( file->to_volume_index[d] != INVALID_AXIS )
+                ++n_slab;
+        }
+
+        if( increment )
+        {
+            *fraction_done = 1.0;
+            file->end_volume_flag = TRUE;
+        }
+        else
+        {
+            *fraction_done = (Real) n_done / (Real) total;
+        }
     }
 
     return( !file->end_volume_flag );
@@ -1012,6 +1033,10 @@ public  BOOLEAN  advance_input_volume(
             voxel[c] = 0.0;
 
         set_volume_translation( file->volume, voxel, world_space );
+
+        if( file->volume->is_cached_volume )
+            set_cache_volume_file_offset( &file->volume->cache, file->volume,
+                                          file->indices );
     }
     else
         file->end_volume_flag = TRUE;
@@ -1041,6 +1066,9 @@ public  void  reset_input_volume(
     for_less( d, 0, file->n_file_dimensions )
         file->indices[d] = 0;
     file->end_volume_flag = FALSE;
+
+    set_cache_volume_file_offset( &file->volume->cache, file->volume,
+                                  file->indices );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

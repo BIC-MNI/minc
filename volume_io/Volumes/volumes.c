@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.50 1995-08-18 13:33:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.51 1995-08-19 18:57:06 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -383,8 +383,10 @@ public  void  alloc_volume_data(
 public  BOOLEAN  volume_is_alloced(
     Volume   volume )
 {
-    return( volume->is_cached_volume ||
-            multidim_array_is_alloced( &volume->array ) );
+    return( (volume->is_cached_volume &&
+             cached_volume_has_been_modified( &volume->cache )) ||
+            (!volume->is_cached_volume &&
+             multidim_array_is_alloced( &volume->array )) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -404,8 +406,8 @@ public  void  free_volume_data(
     Volume   volume )
 {
     if( volume->is_cached_volume )
-        delete_volume_cache( &volume->cache );
-    else
+        delete_volume_cache( &volume->cache, volume );
+    else if( volume_is_alloced( volume ) )
         delete_multidim_array( &volume->array );
 }
 

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.24 1995-08-16 01:58:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.25 1995-08-19 18:57:05 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"

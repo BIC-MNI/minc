@@ -15,12 +15,11 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.37 1995-08-16 01:58:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.38 1995-08-19 18:57:05 david Exp $";
 #endif
 
 #include  <minc.h>
 
-#define   MNC_ENDING   "mnc"
 #define   FREE_ENDING   "fre"
 
 /* ----------------------------- MNI Header -----------------------------------

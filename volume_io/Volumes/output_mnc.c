@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.30 1995-08-17 14:43:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.31 1995-08-19 18:57:06 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -179,6 +179,15 @@ public  Minc_file  initialize_minc_output(
     file->n_file_dimensions = n_dimensions;
     file->volume = volume_to_attach;
     file->entire_file_written = FALSE;
+    file->ignoring_because_cached = FALSE;
+
+    if( volume_to_attach->is_cached_volume &&
+        volume_to_attach->cache.has_been_modified &&
+        strcmp( volume_to_attach->cache.output_filename, filename ) == 0 )
+    {
+        file->ignoring_because_cached = TRUE;
+        return( file );
+    }
 
     /*--- find correspondence between volume dimensions and file dimensions */
 
@@ -412,6 +421,9 @@ public  Status  copy_auxiliary_data_from_minc_file(
     Status  status;
     int     src_cdfid;
 
+    if( file->ignoring_because_cached )
+        return( OK );
+
     ncopts = NC_VERBOSE;
     src_cdfid =  miopen( filename, NC_NOWRITE );
 
@@ -455,6 +467,9 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     int     src_img_var, varid, n_excluded, excluded_vars[10];
     int     src_min_id, src_max_id, src_root_id;
     Status  status;
+
+    if( file->ignoring_because_cached )
+        return( OK );
 
     if( file->end_def_done )
     {
@@ -548,6 +563,9 @@ public  Status  add_minc_history(
     int      att_length;
     nc_type  datatype;
     char     *new_history;
+
+    if( file->ignoring_because_cached )
+        return( OK );
 
     if( file->end_def_done )
     {
@@ -685,46 +703,46 @@ private  void  check_output_variables(
             }
         }
 
-        file->icv = miicv_create();
+        file->output_icv = miicv_create();
 
-        (void) miicv_setint( file->icv, MI_ICV_TYPE, volume->nc_data_type);
-        (void) miicv_setstr( file->icv, MI_ICV_SIGN,
+        (void) miicv_setint( file->output_icv, MI_ICV_TYPE, volume->nc_data_type);
+        (void) miicv_setstr( file->output_icv, MI_ICV_SIGN,
                              volume->signed_flag ? MI_SIGNED : MI_UNSIGNED );
-        (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
-        (void) miicv_setint( file->icv, MI_ICV_USER_NORM, TRUE );
+        (void) miicv_setint( file->output_icv, MI_ICV_DO_NORM, TRUE );
+        (void) miicv_setint( file->output_icv, MI_ICV_USER_NORM, TRUE );
 
         if( file->image_range[0] < file->image_range[1] )
         {
-            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN,
+            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MIN,
                                  file->image_range[0] );
-            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX,
+            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MAX,
                                  file->image_range[1] );
         }
         else
         {
             get_volume_real_range( volume, &real_min, &real_max );
-            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, real_min );
-            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, real_max );
+            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MIN, real_min );
+            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MAX, real_max );
         }
 
         get_volume_voxel_range( volume, &voxel_min, &voxel_max );
         if( voxel_min < voxel_max )
         {
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, voxel_min );
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, voxel_max );
+            (void) miicv_setdbl( file->output_icv, MI_ICV_VALID_MIN, voxel_min );
+            (void) miicv_setdbl( file->output_icv, MI_ICV_VALID_MAX, voxel_max );
         }
         else
             print_error( "Volume has invalid min and max voxel value\n" );
 
-        (void) miicv_attach( file->icv, file->cdfid, file->img_var_id );
+        (void) miicv_attach( file->output_icv, file->cdfid, file->img_var_id );
 
         start_index = 0;
 
         if( file->image_range[0] < file->image_range[1] )
         {
-            (void) mivarput1( file->icv, file->min_id, &start_index,
+            (void) mivarput1( file->output_icv, file->min_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
-            (void) mivarput1( file->icv, file->max_id, &start_index,
+            (void) mivarput1( file->output_icv, file->max_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
         }
         ncopts = NC_VERBOSE | NC_FATAL;
@@ -827,8 +845,8 @@ public  Status  output_minc_hyperslab(
         GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
     }
 
-    if( miicv_put( file->icv, long_file_start, long_file_count, void_ptr )
-                                                          == MI_ERROR )
+    if( miicv_put( file->output_icv, long_file_start, long_file_count,
+                   void_ptr ) == MI_ERROR )
         status = ERROR;
     else
         status = OK;
@@ -865,10 +883,18 @@ private  void  output_slab(
     long        file_start[],
     long        file_count[] )
 {
-    int      file_ind, ind;
-    int      volume_start[MAX_DIMENSIONS];
-    int      int_file_count[MAX_DIMENSIONS];
-    int      int_file_start[MAX_DIMENSIONS];
+    int               dim, file_ind, ind, n_slab_dims;
+    int               to_array[MAX_DIMENSIONS];
+    int               volume_start[MAX_DIMENSIONS];
+    int               array_start[MAX_DIMENSIONS];
+    int               int_file_count[MAX_DIMENSIONS];
+    int               int_file_start[MAX_DIMENSIONS];
+    int               array_to_volume[MAX_DIMENSIONS];
+    int               slab_sizes[MAX_DIMENSIONS];
+    int               v[MAX_DIMENSIONS];
+    int               size0, size1, size2, size3, size4;
+    Real              value;
+    multidim_array    array;
 
     for_less( file_ind, 0, file->n_file_dimensions )
     {
@@ -882,8 +908,68 @@ private  void  output_slab(
             volume_start[ind] = 0;
     }
 
-    (void) output_minc_hyperslab( file, &volume->array, volume_start,
-                                  to_volume, int_file_start, int_file_count );
+    if( volume->is_cached_volume )
+    {
+        n_slab_dims = 0;
+        for_less( file_ind, 0, file->n_file_dimensions )
+        {
+            ind = to_volume[file_ind];
+            if( ind != INVALID_AXIS )
+            {
+                to_array[file_ind] = n_slab_dims;
+                array_start[n_slab_dims] = 0;
+                slab_sizes[n_slab_dims] = file_count[file_ind];
+                array_to_volume[n_slab_dims] = ind;
+                ++n_slab_dims;
+            }
+            else
+            {
+                to_array[file_ind] = INVALID_AXIS;
+                slab_sizes[file_ind] = 1;
+            }
+        }
+
+        create_multidim_array( &array, n_slab_dims, slab_sizes,
+                               get_volume_data_type(volume) );
+
+        for_less( dim, n_slab_dims, MAX_DIMENSIONS )
+        {
+            slab_sizes[dim] = 1;
+            array_to_volume[dim] = 0;
+        }
+
+        size0 = slab_sizes[0];
+        size1 = slab_sizes[1];
+        size2 = slab_sizes[2];
+        size3 = slab_sizes[3];
+        size4 = slab_sizes[4];
+
+        for_less( v[4], 0, size4 )
+        for_less( v[3], 0, size3 )
+        for_less( v[2], 0, size2 )
+        for_less( v[1], 0, size1 )
+        for_less( v[0], 0, size0 )
+        {
+            value = get_volume_voxel_value( volume,
+                                            v[array_to_volume[0]],
+                                            v[array_to_volume[1]],
+                                            v[array_to_volume[2]],
+                                            v[array_to_volume[3]],
+                                            v[array_to_volume[4]] );
+
+            SET_MULTIDIM( array, v[0], v[1], v[2], v[3], v[4], value );
+        }
+
+        (void) output_minc_hyperslab( file, &array, array_start,
+                                      to_array, int_file_start,
+                                      int_file_count );
+        delete_multidim_array( &array );
+    }
+    else
+    {
+        (void) output_minc_hyperslab( file, &volume->array, volume_start,
+                                   to_volume, int_file_start, int_file_count );
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -920,6 +1006,8 @@ private  Status  output_the_volume(
     char              **vol_dimension_names;
     BOOLEAN           increment;
     progress_struct   progress;
+
+    check_output_variables( file );
 
     /* --- check if dimension name correspondence between volume and file */
 
@@ -1019,13 +1107,15 @@ private  Status  output_the_volume(
         for_less( i, 0, n_ranges )
             image_range[i] = real_min;
 
-        (void) mivarput( file->icv, file->min_id, range_start, range_count,
+        (void) mivarput( file->output_icv, file->min_id,
+                         range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
         for_less( i, 0, n_ranges )
             image_range[i] = real_max;
 
-        (void) mivarput( file->icv, file->max_id, range_start, range_count,
+        (void) mivarput( file->output_icv, file->max_id,
+                         range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
         FREE( image_range );
@@ -1150,6 +1240,9 @@ public  Status  output_volume_to_minc_file_position(
     int         volume_count[],
     long        file_start[] )
 {
+    if( file->ignoring_because_cached )
+        return( OK );
+
     file->outputting_in_order = FALSE;
 
     return( output_the_volume( file, volume, volume_count, file_start ) );
@@ -1173,6 +1266,9 @@ public  Status  output_minc_volume(
 {
     int        d, volume_count[MAX_DIMENSIONS];
     BOOLEAN    increment;
+
+    if( file->ignoring_because_cached )
+        return( OK );
 
     /*--- check number of volumes written */
 
@@ -1245,19 +1341,22 @@ public  Status  close_minc_output(
         return( ERROR );
     }
 
-    if( file->outputting_in_order && !file->entire_file_written )
+    if( !file->ignoring_because_cached )
     {
-        print_error( "Warning:  the MINC file has been " );
-        print_error( "closed without writing part of it.\n");
+        if( file->outputting_in_order && !file->entire_file_written )
+        {
+            print_error( "Warning:  the MINC file has been " );
+            print_error( "closed without writing part of it.\n");
+        }
+
+        (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_TRUE);
+
+        (void) miclose( file->cdfid );
+        (void) miicv_free( file->output_icv );
+
+        for_less( d, 0, file->n_file_dimensions )
+            FREE( file->dim_names[d] );
     }
-
-    (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_TRUE );
-
-    (void) miclose( file->cdfid );
-    (void) miicv_free( file->icv );
-
-    for_less( d, 0, file->n_file_dimensions )
-        FREE( file->dim_names[d] );
 
     FREE( file );
 

@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.35 1995-08-17 14:43:16 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.36 1995-08-19 18:57:03 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -37,6 +37,7 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #undef  cmode
 #include  <transforms.h>
 #include  <multidim.h>
+#include  <volume_cache.h>
 
 extern  char   *XYZ_dimension_names[];
 extern  char   *File_order_dimension_names[];
@@ -47,6 +48,9 @@ extern  char   *File_order_dimension_names[];
 
 typedef  struct
 {
+    BOOLEAN                 is_cached_volume;
+    volume_cache_struct     cache;
+
     multidim_array          array;
 
     char                    *dimension_names[MAX_DIMENSIONS];
@@ -104,46 +108,82 @@ typedef  volume_struct  *Volume;
 /* --- public macros to set the [x][y]... voxel of 'volume' to 'value' */
 
 #define  SET_VOXEL_1D( volume, x, value )       \
-           SET_MULTIDIM_1D( (volume)->array, x, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, 0, 0, 0, 0, (Real) value ); \
+           else \
+               SET_MULTIDIM_1D( (volume)->array, x, value )
 
 #define  SET_VOXEL_2D( volume, x, y, value )       \
-           SET_MULTIDIM_2D( (volume)->array, x, y, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, y, 0, 0, 0, (Real) value ); \
+           else \
+               SET_MULTIDIM_2D( (volume)->array, x, y, value )
 
 #define  SET_VOXEL_3D( volume, x, y, z, value )       \
-           SET_MULTIDIM_3D( (volume)->array, x, y, z, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, y, z, 0, 0, (Real) value ); \
+           else \
+               SET_MULTIDIM_3D( (volume)->array, x, y, z, value )
 
 #define  SET_VOXEL_4D( volume, x, y, z, t, value )       \
-           SET_MULTIDIM_4D( (volume)->array, x, y, z, t, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, y, z, t, 0, (Real) value ); \
+           else \
+               SET_MULTIDIM_4D( (volume)->array, x, y, z, t, value )
 
 #define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
-           SET_MULTIDIM_5D( (volume)->array, x, y, z, t, v, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
+           else \
+               SET_MULTIDIM_5D( (volume)->array, x, y, z, t, v, value )
 
 /* --- same as previous, but don't have to know dimensions of volume */
 
 #define  SET_VOXEL( volume, x, y, z, t, v, value )       \
-         SET_MULTIDIM( (volume)->array, x, y, z, t, v, value )
+           if( (volume)->is_cached_volume ) \
+               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
+           else \
+               SET_MULTIDIM( (volume)->array, x, y, z, t, v, value )
 
 /* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
 
 #define  GET_VOXEL_1D( value, volume, x )       \
-           GET_MULTIDIM_1D( value, (volume)->array, x )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, 0, 0, 0, 0 ); \
+           else \
+               GET_MULTIDIM_1D( value, (volume)->array, x )
 
 #define  GET_VOXEL_2D( value, volume, x, y )       \
-           GET_MULTIDIM_2D( value, (volume)->array, x, y )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, y, 0, 0, 0 ); \
+           else \
+               GET_MULTIDIM_2D( value, (volume)->array, x, y )
 
 #define  GET_VOXEL_3D( value, volume, x, y, z )       \
-           GET_MULTIDIM_3D( value, (volume)->array, x, y, z )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, y, z, 0, 0 ); \
+           else \
+               GET_MULTIDIM_3D( value, (volume)->array, x, y, z )
 
 #define  GET_VOXEL_4D( value, volume, x, y, z, t )       \
-           GET_MULTIDIM_4D( value, (volume)->array, x, y, z, t )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, y, z, t, 0 ); \
+           else \
+               GET_MULTIDIM_4D( value, (volume)->array, x, y, z, t )
 
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
-           GET_MULTIDIM_5D( value, (volume)->array, x, y, z, t, v )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
+           else \
+               GET_MULTIDIM_5D( value, (volume)->array, x, y, z, t, v )
 
 /* --- same as previous, but no need to know volume dimensions */
 
 #define  GET_VOXEL( value, volume, x, y, z, t, v )       \
-         GET_MULTIDIM( value, (volume)->array, x, y, z, t, v )
+           if( (volume)->is_cached_volume ) \
+               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
+           else \
+               GET_MULTIDIM( value, (volume)->array, x, y, z, t, v )
 
 /* ------------------------- get voxel ptr ------------------------ */
 
@@ -151,24 +191,42 @@ typedef  volume_struct  *Volume;
        'volume', and place it in 'ptr' */
 
 #define  GET_VOXEL_PTR_1D( ptr, volume, x )       \
-           GET_MULTIDIM_PTR_1D( ptr, (volume)->array, x )
+           if( (volume)->is_cached_volume ) \
+/*              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else */ \
+              GET_MULTIDIM_PTR_1D( ptr, (volume)->array, x )
 
 #define  GET_VOXEL_PTR_2D( ptr, volume, x, y )       \
-           GET_MULTIDIM_PTR_2D( ptr, (volume)->array, x, y )
+           if( (volume)->is_cached_volume ) \
+              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else \
+              GET_MULTIDIM_PTR_2D( ptr, (volume)->array, x, y )
 
 #define  GET_VOXEL_PTR_3D( ptr, volume, x, y, z )       \
-           GET_MULTIDIM_PTR_3D( ptr, (volume)->array, x, y, z )
+           if( (volume)->is_cached_volume ) \
+              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else \
+              GET_MULTIDIM_PTR_3D( ptr, (volume)->array, x, y, z )
 
 #define  GET_VOXEL_PTR_4D( ptr, volume, x, y, z, t )       \
-           GET_MULTIDIM_PTR_4D( ptr, (volume)->array, x, y, z, t )
+           if( (volume)->is_cached_volume ) \
+              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else \
+              GET_MULTIDIM_PTR_4D( ptr, (volume)->array, x, y, z, t )
 
 #define  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v )       \
-           GET_MULTIDIM_PTR_5D( ptr, (volume)->array, x, y, z, t, v )
+           if( (volume)->is_cached_volume ) \
+              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else \
+              GET_MULTIDIM_PTR_5D( ptr, (volume)->array, x, y, z, t, v )
 
 /* --- same as previous, but no need to know voxel dimensions */
 
 #define  GET_VOXEL_PTR( ptr, volume, x, y, z, t, v )       \
-           GET_MULTIDIM_PTR( ptr, (volume)->array, x, y, z, t, v )
+           if( (volume)->is_cached_volume ) \
+              handle_internal_error( "Cannot get pointer to cached Volume.\n");\
+           else \
+              GET_MULTIDIM_PTR( ptr, (volume)->array, x, y, z, t, v )
 
 /* --- returns the conversion of the 'voxel' value to a real value */
 
@@ -232,51 +290,6 @@ typedef  volume_struct  *Volume;
 
 typedef  struct
 {
-    BOOLEAN            file_is_being_read;
-
-    /* input and output */
-
-    int                cdfid;
-    int                icv;
-    int                n_file_dimensions;
-    int                sizes_in_file[MAX_VAR_DIMS];
-    long               indices[MAX_VAR_DIMS];
-    char               *dim_names[MAX_VAR_DIMS];
-    Volume             volume;
-    int                to_volume_index[MAX_VAR_DIMS];
-    int                to_file_index[MAX_DIMENSIONS];
-
-    /* input only */
-
-    BOOLEAN            end_volume_flag;
-    BOOLEAN            converting_to_colour;
-    int                rgba_indices[4];
-    int                n_volumes_in_file;
-
-    int                valid_file_axes[MAX_DIMENSIONS];
-
-    int                n_slab_dims;
-
-    int                spatial_axes[N_DIMENSIONS];
-    General_transform  voxel_to_world_transform;
-
-    /* output only */
-
-    int                img_var_id;
-    int                min_id;
-    int                max_id;
-    double             image_range[2];
-    BOOLEAN            end_def_done;
-    BOOLEAN            variables_written;
-    int                dim_ids[MAX_VAR_DIMS];
-    BOOLEAN            outputting_in_order;
-    BOOLEAN            entire_file_written;
-} minc_file_struct;
-
-typedef  minc_file_struct  *Minc_file;
-
-typedef  struct
-{
     int         arent_any_yet;
 } volume_creation_options;
 
@@ -294,6 +307,59 @@ typedef  struct
     Real     global_image_range[2];
     STRING   dimension_names[MAX_DIMENSIONS];
 } minc_output_options;
+
+
+typedef  struct
+{
+    BOOLEAN            file_is_being_read;
+
+    /* input and output */
+
+    int                cdfid;
+    int                img_var;
+    int                n_file_dimensions;
+    int                sizes_in_file[MAX_VAR_DIMS];
+    long               indices[MAX_VAR_DIMS];
+    char               *dim_names[MAX_VAR_DIMS];
+    Volume             volume;
+    int                to_volume_index[MAX_VAR_DIMS];
+    int                to_file_index[MAX_DIMENSIONS];
+    STRING             filename;
+
+    /* input only */
+
+    BOOLEAN            end_volume_flag;
+    BOOLEAN            converting_to_colour;
+    int                input_icv;
+    int                rgba_indices[4];
+    int                n_volumes_in_file;
+
+    int                valid_file_axes[MAX_DIMENSIONS];
+
+    int                n_slab_dims;
+
+    int                spatial_axes[N_DIMENSIONS];
+    General_transform  voxel_to_world_transform;
+    minc_input_options original_input_options;
+
+    /* output only */
+
+    int                img_var_id;
+    int                output_icv;
+    int                min_id;
+    int                max_id;
+    double             image_range[2];
+    BOOLEAN            end_def_done;
+    BOOLEAN            ignoring_because_cached;
+    BOOLEAN            variables_written;
+    int                dim_ids[MAX_VAR_DIMS];
+    BOOLEAN            outputting_in_order;
+    BOOLEAN            entire_file_written;
+} minc_file_struct;
+
+typedef  minc_file_struct  *Minc_file;
+
+#define   MNC_ENDING   "mnc"
 
 /* --- recognized file formats */
 

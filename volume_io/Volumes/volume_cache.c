@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.1 1995-08-18 13:33:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.2 1995-08-19 18:57:07 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -141,6 +141,7 @@ public  void  initialize_volume_cache(
     get_volume_sizes( volume, sizes );
     n_dims = get_volume_n_dimensions( volume );
     cache->n_dimensions = n_dims;
+    cache->dim_names_set = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
         cache->file_offset[dim] = 0;
@@ -162,8 +163,7 @@ public  void  initialize_volume_cache(
 
     cache->head = NULL;
     cache->tail = NULL;
-    cache->input_file = NULL;
-    cache->output_file = NULL;
+    cache->minc_file = NULL;
     cache->input_filename[0] = (char) 0;
     cache->output_filename[0] = (char) 0;
     cache->empty_flag = TRUE;
@@ -177,15 +177,81 @@ public  void  initialize_volume_cache(
         cache->max_blocks = 1;
 }
 
-private  void  free_cache_blocks(
-    volume_cache_struct   *cache )
+private  void  get_block_start(
+    volume_cache_struct  *cache,
+    int                  block_index,
+    int                  block_start[] )
 {
-    int                 block, total_blocks;
+    int    dim, block_i;
+
+    for_down( dim, cache->n_dimensions-1, 0 )
+    {
+        block_i = block_index % cache->blocks_per_dim[dim];
+        block_start[dim] = block_i * cache->block_sizes[dim];
+        block_index /= cache->blocks_per_dim[dim];
+    }
+}
+
+private  void  write_cache_block(
+    volume_cache_struct  *cache,
+    Volume               volume,
+    cache_block_struct   *block,
+    int                  block_start[] )
+{
+    Minc_file   minc_file;
+    int         dim, ind;
+    int         sizes[MAX_DIMENSIONS];
+    int         array_start[MAX_DIMENSIONS];
+    int         file_start[MAX_DIMENSIONS];
+    int         file_count[MAX_DIMENSIONS];
+
+    minc_file = (Minc_file) cache->minc_file;
+
+    get_volume_sizes( volume, sizes );
+
+    for_less( dim, 0, minc_file->n_file_dimensions )
+    {
+        ind = minc_file->to_volume_index[dim];
+        if( ind >= 0 )
+        {
+            array_start[ind] = 0;
+            file_start[dim] = cache->file_offset[dim] + block_start[ind];
+            file_count[dim] = MIN( cache->block_sizes[ind],
+                                   sizes[ind] - file_start[dim] );
+        }
+        else
+        {
+            file_start[dim] = cache->file_offset[dim];
+            file_count[dim] = 0;
+        }
+    }
+
+    (void) output_minc_hyperslab( (Minc_file) cache->minc_file,
+                                  &block->array,
+                                  array_start,
+                                  minc_file->to_volume_index,
+                                  file_start,
+                                  file_count );
+}
+
+private  void  free_cache_blocks(
+    volume_cache_struct   *cache,
+    Volume                volume )
+{
+    int                 block, total_blocks, block_index;
+    int                 block_start[MAX_DIMENSIONS];
     cache_block_struct  **this, **next;
 
     this = cache->head;
     while( this != NULL )
     {
+        if( cache->has_been_modified )
+        {
+            block_index = (int) (this - cache->blocks);
+            get_block_start( cache, block_index, block_start );
+            write_cache_block( cache, volume, *this, block_start );
+        }
+
         next = (*this)->next;
         delete_multidim_array( &(*this)->array );
         FREE( *this );
@@ -200,16 +266,46 @@ private  void  free_cache_blocks(
 }
 
 public  void  delete_volume_cache(
-    volume_cache_struct   *cache )
+    volume_cache_struct   *cache,
+    Volume                volume )
 {
-    free_cache_blocks( cache );
+    free_cache_blocks( cache, volume );
 
     FREE( cache->blocks );
 
-    if( cache->input_file != NULL )
-        (void) close_minc_input( (Minc_file) cache->input_file );
+    if( cache->minc_file != NULL )
+    {
+        if( cache->has_been_modified )
+        {
+            (void) miicv_free( ((Minc_file) cache->minc_file)->input_icv );
+            (void) close_minc_output( (Minc_file) cache->minc_file );
+        }
+        else
+            (void) close_minc_input( (Minc_file) cache->minc_file );
+    }
 }
 
+public  void  set_cache_volume_output_dimension_names(
+    Volume      volume,
+    char        **dimension_names )
+{
+    int   dim;
+
+    for_less( dim, 0, get_volume_n_dimensions(volume) )
+    {
+        (void) strcpy( volume->cache.dimension_names[dim],
+                       dimension_names[dim] );
+    }
+    volume->cache.dim_names_set = TRUE;
+}
+    
+public  void  set_cache_volume_output_filename(
+    Volume      volume,
+    char        filename[] )
+{
+    (void) strcpy( volume->cache.output_filename, filename );
+}
+    
 public  void  open_cache_volume_input_file(
     volume_cache_struct   *cache,
     Volume                volume,
@@ -218,12 +314,119 @@ public  void  open_cache_volume_input_file(
 {
     (void) strcpy( cache->input_filename, filename );
 
-    cache->input_file = initialize_minc_input( filename,
-                                               volume, options );
+    cache->minc_file = initialize_minc_input( filename,
+                                              volume, options );
+}
+
+private  void  open_cache_volume_output_file(
+    volume_cache_struct   *cache,
+    Volume                volume )
+{
+    int        dim, n_dims;
+    int        out_sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
+    int        i, j, n_found;
+    Real       voxel_min, voxel_max;
+    nc_type    nc_data_type;
+    Minc_file  out_minc_file;
+    BOOLEAN    done[MAX_DIMENSIONS], signed_flag;
+    char       **vol_dim_names;
+    STRING     out_dim_names[MAX_DIMENSIONS], output_filename;
+
+    if( strlen( cache->output_filename ) == 0 )
+    {
+        (void) tmpnam( output_filename );
+        (void) strcat( output_filename, "." );
+        (void) strcat( output_filename, MNC_ENDING );
+    }
+    else
+    {
+        (void) strcpy( output_filename, cache->output_filename );
+    }
+
+    n_dims = get_volume_n_dimensions( volume );
+    vol_dim_names = get_volume_dimension_names( volume );
+    get_volume_sizes( volume, vol_sizes );
+
+    if( cache->dim_names_set )
+    {
+        for_less( dim, 0, n_dims )
+            (void) strcpy( out_dim_names[dim], cache->dimension_names[dim] );
+    }
+    else
+    {
+        for_less( dim, 0, n_dims )
+            (void) strcpy( out_dim_names[dim], vol_dim_names[dim] );
+    }
+
+    n_found = 0;
+    for_less( i, 0, n_dims )
+        done[i] = FALSE;
+
+    for_less( i, 0, n_dims )
+    {
+        for_less( j, 0, n_dims )
+        {
+            if( !done[j] &&
+                strcmp( vol_dim_names[i], out_dim_names[j] ) == 0 )
+            {
+                out_sizes[j] = vol_sizes[i];
+                ++n_found;
+                done[j] = TRUE;
+            }
+        }
+    }
+
+    delete_dimension_names( vol_dim_names );
+
+    if( n_found != n_dims )
+    {
+        handle_internal_error(
+                    "Open_cache: Volume dimension name do not match.\n" );
+    }
+
+    nc_data_type = get_volume_nc_data_type( volume, &signed_flag );
+    get_volume_voxel_range( volume, &voxel_min, &voxel_max );
+
+    out_minc_file = initialize_minc_output( output_filename,
+                                        n_dims, out_dim_names, out_sizes,
+                                        nc_data_type, signed_flag,
+                                        voxel_min, voxel_max,
+                                        get_voxel_to_world_transform(volume),
+                                        volume, NULL );
+
+    out_minc_file->input_icv = miicv_create();
+
+    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_TYPE, nc_data_type );
+    (void) miicv_setstr( out_minc_file->input_icv, MI_ICV_SIGN,
+                         signed_flag ? MI_SIGNED : MI_UNSIGNED );
+    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_DO_NORM, TRUE );
+    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_DO_FILLVALUE, TRUE );
+    (void) miicv_setdbl( out_minc_file->input_icv, MI_ICV_VALID_MIN, voxel_min);
+    (void) miicv_setdbl( out_minc_file->input_icv, MI_ICV_VALID_MAX, voxel_max);
+
+    (void) miicv_attach( out_minc_file->input_icv, out_minc_file->cdfid,
+                         out_minc_file->img_var );
+
+    out_minc_file->converting_to_colour = FALSE;
+
+    /*--- make temp file disappear when the volume is deleted */
+
+    if( strlen( cache->output_filename ) == 0 )
+        remove_file( output_filename );
+
+    if( cache->minc_file != NULL )
+    {
+        (void) output_minc_volume( out_minc_file );
+
+        (void) close_minc_input( (Minc_file) cache->minc_file );
+    }
+
+    cache->minc_file = out_minc_file;
 }
 
 public  void  set_cache_volume_file_offset(
     volume_cache_struct   *cache,
+    Volume                volume,
     long                  file_offset[] )
 {
     BOOLEAN  changed;
@@ -240,7 +443,49 @@ public  void  set_cache_volume_file_offset(
     }
 
     if( changed )
-        free_cache_blocks( cache );
+        free_cache_blocks( cache, volume );
+}
+
+private  void  read_cache_block(
+    volume_cache_struct  *cache,
+    Volume               volume,
+    cache_block_struct   *block,
+    int                  block_start[] )
+{
+    Minc_file   minc_file;
+    int         dim, ind;
+    int         sizes[MAX_DIMENSIONS];
+    int         array_start[MAX_DIMENSIONS];
+    int         file_start[MAX_DIMENSIONS];
+    int         file_count[MAX_DIMENSIONS];
+
+    minc_file = (Minc_file) cache->minc_file;
+
+    get_volume_sizes( volume, sizes );
+
+    for_less( dim, 0, minc_file->n_file_dimensions )
+    {
+        ind = minc_file->to_volume_index[dim];
+        if( ind >= 0 )
+        {
+            array_start[ind] = 0;
+            file_start[dim] = cache->file_offset[dim] + block_start[ind];
+            file_count[dim] = MIN( cache->block_sizes[ind],
+                                   sizes[ind] - file_start[dim] );
+        }
+        else
+        {
+            file_start[dim] = cache->file_offset[dim];
+            file_count[dim] = 0;
+        }
+    }
+
+    (void) input_minc_hyperslab( (Minc_file) cache->minc_file,
+                                 &block->array,
+                                 array_start,
+                                 minc_file->to_volume_index,
+                                 file_start,
+                                 file_count );
 }
 
 private  void  get_cache_block(
@@ -248,6 +493,8 @@ private  void  get_cache_block(
     Volume               volume,
     cache_block_struct   **block )
 {
+    int    block_index, block_start[MAX_DIMENSIONS];
+
     if( cache->n_blocks < cache->max_blocks )
     {
         ALLOC( *block, 1 );
@@ -274,6 +521,13 @@ private  void  get_cache_block(
     }
     else
     {
+        if( cache->has_been_modified )
+        {
+            block_index = (int) (cache->tail - cache->blocks);
+            get_block_start( cache, block_index, block_start );
+            write_cache_block( cache, volume, *cache->tail, block_start );
+        }
+
         if( cache->head == cache->tail )
             cache->head = block;
         else
@@ -284,48 +538,6 @@ private  void  get_cache_block(
     }
     
     cache->tail = block;
-}
-
-private  void  read_cache_block(
-    volume_cache_struct  *cache,
-    Volume               volume,
-    cache_block_struct   *block,
-    int                  block_start[] )
-{
-    Minc_file   minc_file;
-    int         dim, ind;
-    int         sizes[MAX_DIMENSIONS];
-    int         array_start[MAX_DIMENSIONS];
-    int         file_start[MAX_DIMENSIONS];
-    int         file_count[MAX_DIMENSIONS];
-
-    minc_file = (Minc_file) cache->input_file;
-
-    get_volume_sizes( volume, sizes );
-
-    for_less( dim, 0, minc_file->n_file_dimensions )
-    {
-        ind = minc_file->to_volume_index[dim];
-        if( ind >= 0 )
-        {
-            array_start[ind] = 0;
-            file_start[dim] = cache->file_offset[dim] + block_start[ind];
-            file_count[dim] = MIN( cache->block_sizes[ind],
-                                   sizes[ind] - file_start[dim] );
-        }
-        else
-        {
-            file_start[dim] = cache->file_offset[dim];
-            file_count[dim] = 0;
-        }
-    }
-
-    (void) input_minc_hyperslab( (Minc_file) cache->input_file,
-                                 &block->array,
-                                 array_start,
-                                 minc_file->to_volume_index,
-                                 file_start,
-                                 file_count );
 }
 
 private  int   get_block_index(
@@ -360,16 +572,16 @@ private  int   get_block_index(
     return( block_index );
 }
 
-public  Real  get_cached_volume_voxel(
+private  cache_block_struct  *get_cache_block_for_voxel(
     Volume   volume,
     int      x,
     int      y,
     int      z,
     int      t,
-    int      v )
+    int      v,
+    int      block_indices[] )
 {
     cache_block_struct   **save_next, **save_prev, **block;
-    Real                 value;
     int                  block_index, block_start[MAX_DIMENSIONS];
 
     block_index = get_block_index( &volume->cache,
@@ -404,12 +616,38 @@ public  Real  get_cached_volume_voxel(
         volume->cache.head = block;
     }
 
-    GET_MULTIDIM( value, (*block)->array,
-                  x - block_start[0],
-                  y - block_start[1],
-                  z - block_start[2],
-                  t - block_start[3],
-                  v - block_start[4] );
+    block_indices[0] = x - block_start[0];
+    block_indices[1] = y - block_start[1];
+    block_indices[2] = z - block_start[2];
+    block_indices[3] = t - block_start[3];
+    block_indices[4] = v - block_start[4];
+
+    return( *block );
+}
+
+public  Real  get_cached_volume_voxel(
+    Volume   volume,
+    int      x,
+    int      y,
+    int      z,
+    int      t,
+    int      v )
+{
+    Real                 value;
+    cache_block_struct   *block;
+    int                  block_index[MAX_DIMENSIONS];
+
+    if( volume->cache.minc_file == NULL )
+        return( get_volume_voxel_min( volume ) );
+
+    block = get_cache_block_for_voxel( volume, x, y, z, t, v, block_index );
+
+    GET_MULTIDIM( value, block->array,
+                  block_index[0],
+                  block_index[1],
+                  block_index[2],
+                  block_index[3],
+                  block_index[4] );
 
     return( value );
 }
@@ -423,4 +661,27 @@ public  void  set_cached_volume_voxel(
     int      v,
     Real     value )
 {
+    cache_block_struct   *block;
+    int                  block_index[MAX_DIMENSIONS];
+
+    if( !volume->cache.has_been_modified )
+    {
+        open_cache_volume_output_file( &volume->cache, volume );
+        volume->cache.has_been_modified = TRUE;
+    }
+
+    block = get_cache_block_for_voxel( volume, x, y, z, t, v, block_index );
+
+    SET_MULTIDIM( block->array,
+                  block_index[0],
+                  block_index[1],
+                  block_index[2],
+                  block_index[3],
+                  block_index[4], value );
+}
+
+public  BOOLEAN  cached_volume_has_been_modified(
+    volume_cache_struct  *cache )
+{
+    return( cache->minc_file != NULL );
 }
