@@ -105,6 +105,9 @@ struct volumehandle_struct {
   int mode;                     /* Open mode */
   hid_t type_id;                /* Type ID if record or label type. */
   hid_t plist_id;               /* Image property list */
+  hid_t image_id;               /* Dataset for image */
+  hid_t imax_id;                /* Dataset for image-max */
+  hid_t imin_id;                /* Dataset for image-max */
   double scale_min;             /* Global minimum */
   double scale_max;             /* Global maximum */
 };
