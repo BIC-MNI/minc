@@ -575,21 +575,13 @@ public  int   evaluate_volume(
 
         for_less( v, 0, n_values * n_coefs )
             coefs[v] = outside_value;
-
-        /*--- adjust the inc stride for stepping through coefs to account
-              for the additions of the inner loops */
-
-        for_less( d, 0, n_dims-1 )
-            inc[d] -= inc[d+1] * (end[d+1] - start[d+1]);
     }
-    else
-    {
-        /*--- adjust the inc stride for stepping through coefs to account
-              for the additions of the inner loops */
 
-        for_less( d, 0, n_dims-1 )
-            inc[d] -= inc[d+1] * spline_degree;
-    }
+    /*--- adjust the inc stride for stepping through coefs to account
+          for the additions of the inner loops */
+
+    for_less( d, 0, n_dims-1 )
+        inc[d] -= inc[d+1] * (end[d+1] - start[d+1]);
 
     /*--- for speed, use non-array variables for the loops */
 
