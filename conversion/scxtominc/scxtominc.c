@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 2.1  1995-01-09 15:17:37  neelin
-@MODIFIED   : Added code to check for generic reconstructions.
+@MODIFIED   : Revision 2.2  1995-01-23 08:57:37  neelin
+@MODIFIED   : Changed nccreate to micreate.
 @MODIFIED   :
+ * Revision 2.1  95/01/09  15:17:37  neelin
+ * Added code to check for generic reconstructions.
+ * 
  * Revision 2.0  94/09/28  10:33:50  neelin
  * Release of minc version 0.2
  * 
@@ -44,7 +47,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.1 1995-01-09 15:17:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.2 1995-01-23 08:57:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -335,7 +338,7 @@ int main(int argc, char *argv[])
       count[0]=scx_general_info->num_scx_slices;
    }
    count[ndims-1] = count[ndims-2] = scx_general_info->max_size;
-   mincid = nccreate(mincfile, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   mincid = micreate(mincfile, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, tm_stamp);
    icvid=setup_minc_file(mincid, write_byte_data, copy_all_header,
                          ndims, count, num_scx_files,
