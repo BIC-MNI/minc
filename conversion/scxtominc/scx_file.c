@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.5  1993-08-31 12:08:28  neelin
-@MODIFIED   : Added conditional definition of SEEK_SET.
+@MODIFIED   : Revision 1.6  1993-09-22 14:50:32  neelin
+@MODIFIED   : Added DTYP = 2 for short values in scx_get_image (this isn't documented,
+@MODIFIED   : but seems to occur for version 6 files sometimes).
 @MODIFIED   :
+ * Revision 1.5  93/08/31  12:08:28  neelin
+ * Added conditional definition of SEEK_SET.
+ * 
  * Revision 1.4  93/08/11  15:27:42  neelin
  * Added RCS logging in source.
  * 
@@ -23,7 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.5 1993-08-31 12:08:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.6 1993-09-22 14:50:32 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -402,6 +406,7 @@ public int scx_get_image(scx_file *file, int image_num, short *image)
    switch (data_type) {
    case 0: pix_size=2; break;
    case 1: pix_size=1; break;
+   case 2: pix_size=2; break;
    default: return TRUE;
    }
 
