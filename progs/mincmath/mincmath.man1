@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.0 1995-05-15 19:32:42 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.1 1995-12-13 16:22:24 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -104,6 +104,13 @@ is 4 MB.
 <dimname>:
 Specify a dimension along which we wish to perform a cumulative
 operation.
+.P
+.I -check_dimensions:
+Check that all input files have matching sampling in world 
+dimensions (default).
+.P
+.I -nocheck_dimensions:
+Ignore any differences in world dimensions sampling for input files .
 .P
 .I -propagate_nan:
 Invalid data (Not-A-Number or NaN) at a voxel in any of the input

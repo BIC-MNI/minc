@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:42  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-12-13 16:22:24  neelin
+@MODIFIED   : Added -check_dimensions and -nocheck_dimensions options.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:42  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.2  1995/05/03  16:13:46  neelin
  * Changed default for -copy/-nocopy to depend on number of input files.
  *
@@ -21,7 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.0 1995-05-15 19:32:42 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.1 1995-12-13 16:22:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -135,6 +138,7 @@ double constant2[2] = {DEFAULT_DBL, DEFAULT_DBL};
 Operation operation = UNSPECIFIED_OP;
 int propagate_nan = TRUE;
 int use_nan_for_illegal_values = TRUE;
+int check_dim_info = TRUE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -179,6 +183,12 @@ ArgvInfo argTable[] = {
        "Specify the maximum size of the internal buffers (in kbytes)."},
    {"-dimension", ARGV_STRING, (char *) 1, (char *) &loop_dimension,
        "Specify a dimension along which we wish to perform a calculation."},
+   {"-check_dimensions", ARGV_CONSTANT, (char *) TRUE, 
+       (char *) &check_dim_info,
+       "Check that files have matching dimensions (default)."},
+   {"-nocheck_dimensions", ARGV_CONSTANT, (char *) FALSE, 
+       (char *) &check_dim_info,
+       "Do not check that files have matching dimensions."},
    {"-ignore_nan", ARGV_CONSTANT, (char *) FALSE, (char *) &propagate_nan,
        "Ignore invalid data (NaN) for accumulations."},
    {"-propagate_nan", ARGV_CONSTANT, (char *) TRUE, (char *) &propagate_nan,
@@ -358,6 +368,7 @@ public int main(int argc, char *argv[])
    set_loop_copy_all_header(loop_options, copy_all_header);
    set_loop_dimension(loop_options, loop_dimension);
    set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
+   set_loop_check_dim_info(loop_options, check_dim_info);
    voxel_loop(nfiles, infiles, nout, outfiles, arg_string, loop_options,
               math_function, (void *) &math_data);
    free_loop_options(loop_options);
