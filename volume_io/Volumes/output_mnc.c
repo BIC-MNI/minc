@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.50 1997-08-13 13:21:34 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.51 1998-02-20 14:59:37 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -308,6 +308,7 @@ public  Minc_file  initialize_minc_output(
     file->file_is_being_read = FALSE;
     file->n_file_dimensions = n_dimensions;
     file->volume = volume_to_attach;
+    file->outputting_in_order = TRUE;
     file->entire_file_written = FALSE;
     file->ignoring_because_cached = FALSE;
 
@@ -651,7 +652,7 @@ public  Status  add_minc_history(
     Minc_file   file,
     STRING      history_string )
 {
-    int      new_att_length, old_att_length;
+    int      old_att_length;
     nc_type  datatype;
     STRING   new_history;
 
@@ -673,14 +674,22 @@ public  Status  add_minc_history(
         old_att_length = 0;
     }
 
-    new_att_length = old_att_length + string_length(history_string);
-
     /* Allocate a string and get the old history */
 
-    new_history = alloc_string( new_att_length );
+    new_history = alloc_string( old_att_length );
 
     (void) miattgetstr( file->cdfid, NC_GLOBAL, MIhistory, old_att_length+1,
                         new_history );
+
+/*
+    if( new_history[old_att_length] != (char) 0 )
+    {
+        print( "old_att_length %d  %d\n", old_att_length,
+                new_history[old_att_length] );
+        new_history[old_att_length] = (char) 0;
+        print( "string: %d\n", new_history );
+    }
+*/
 
     /* Add the new command and put the new history. */
 

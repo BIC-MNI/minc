@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.31 1996-05-17 19:36:19 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.32 1998-02-20 14:59:36 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -953,6 +953,12 @@ public  int   evaluate_volume(
     else
     {
         /*--- get the necessary coeficients from the volume */
+
+        for_less( d, n_dims, MAX_DIMENSIONS )
+        {
+            start[d] = 0;
+            end[d] = 0;
+        }
 
         get_volume_value_hyperslab( volume,
                          start[0], start[1], start[2], start[3], start[4],

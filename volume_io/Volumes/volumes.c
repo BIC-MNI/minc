@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.67 1998-02-17 21:30:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.68 1998-02-20 14:59:36 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -279,11 +279,12 @@ public  void  set_volume_type(
         }
 
         set_multidim_data_type( &volume->array, data_type );
-        volume->nc_data_type = nc_data_type;
         volume->signed_flag = signed_flag;
 
         set_volume_voxel_range( volume, voxel_min, voxel_max );
     }
+
+    volume->nc_data_type = nc_data_type;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

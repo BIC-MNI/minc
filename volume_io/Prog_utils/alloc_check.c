@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.21 1996-05-17 19:36:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.22 1998-02-20 14:59:34 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -156,7 +156,7 @@ private  BOOLEAN  find_pointer_position(
 
     for( i = alloc_list->level-1;  i >= 0;  --i )
     {
-        while( x->forward[i] != (skip_entry *) 0 && x->forward[i]->ptr < ptr )
+        while( x->forward[i] != NULL && (void *) x->forward[i]->ptr < ptr )
         {
             x = x->forward[i];
         }
@@ -165,7 +165,7 @@ private  BOOLEAN  find_pointer_position(
 
     x = update->update[0]->forward[0];
 
-    found = (x != (skip_entry *) 0) && (x->ptr == ptr);
+    found = (x != NULL) && (x->ptr == ptr);
 
     return( found );
 }
