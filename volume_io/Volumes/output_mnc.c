@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.34 1995-09-19 14:44:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.35 1995-09-19 18:23:46 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -666,6 +666,21 @@ private  Status  get_dimension_ordering(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_minc_output_variables
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Checks if the file variables has been put into data mode,
+              and does so if necessary.  Then it checks if the variables have
+              been written, and does so if necessary.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  check_minc_output_variables(
     Minc_file   file )
 {
@@ -749,32 +764,51 @@ public  void  check_minc_output_variables(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_minc_hyperslab
+@INPUT      : file
+              data_type
+              n_array_dims
+              array_sizes
+              array_data_ptr
+              to_array
+              file_start
+              file_count
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs a hyperslab from an array to the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  output_minc_hyperslab(
     Minc_file           file,
-    BOOLEAN             one_d_array_flag,
-    multidim_array      *array,
-    int                 array_start[],
+    Data_types          data_type,
+    int                 n_array_dims,
+    int                 array_sizes[],
+    void                *array_data_ptr,
     int                 to_array[],
     int                 file_start[],
     int                 file_count[] )
 {
-    int              ind, expected_ind, n_array_dims, file_ind, dim;
+    int              ind, expected_ind, file_ind, dim;
     int              n_file_dims, n_tmp_dims;
     long             long_file_start[MAX_DIMENSIONS];
     long             long_file_count[MAX_DIMENSIONS];
     void             *void_ptr;
-    BOOLEAN          direct_to_array, non_full_size_found;
+    BOOLEAN          direct_from_array, non_full_size_found;
     int              tmp_ind, tmp_sizes[MAX_DIMENSIONS];
     int              array_indices[MAX_DIMENSIONS];
     int              array_counts[MAX_VAR_DIMS];
     int              zero[MAX_VAR_DIMS];
-    Data_types       data_type;
     Status           status;
     multidim_array   buffer_array;
 
     check_minc_output_variables( file );
 
-    n_array_dims = get_multidim_n_dimensions( array );
     n_file_dims = file->n_file_dimensions;
     expected_ind = n_array_dims-1;
     tmp_ind = n_file_dims-1;
@@ -786,14 +820,17 @@ public  Status  output_minc_hyperslab(
         array_counts[ind] = 1;
     }
 
-    direct_to_array = TRUE;
+    direct_from_array = TRUE;
+
+    /*--- determine if the hyperslab represents a consecutive chunk of
+          memory in the array */
 
     for( file_ind = n_file_dims-1;  file_ind >= 0;  --file_ind )
     {
         long_file_start[file_ind] = (long) file_start[file_ind];
         long_file_count[file_ind] = (long) file_count[file_ind];
         ind = to_array[file_ind];
-        if( !one_d_array_flag && ind != INVALID_AXIS )
+        if( ind != INVALID_AXIS )
         {
             array_counts[ind] = file_count[file_ind];
 
@@ -801,10 +838,10 @@ public  Status  output_minc_hyperslab(
                 file_count[file_ind] < file->sizes_in_file[file_ind] )
                 non_full_size_found = TRUE;
             else if( non_full_size_found && file_count[file_ind] > 1 )
-                direct_to_array = FALSE;
+                direct_from_array = FALSE;
 
             if( file_count[file_ind] > 1 && ind != expected_ind )
-                direct_to_array = FALSE;
+                direct_from_array = FALSE;
 
             if( file_count[file_ind] != 1 ||
                 file->sizes_in_file[file_ind] == 1 )
@@ -818,13 +855,15 @@ public  Status  output_minc_hyperslab(
         }
     }
 
-    if( direct_to_array )        /* file is same order as array */
+    if( direct_from_array )     /* hyperslab is consecutive chunk of memory */
     {
-        GET_MULTIDIM_PTR( void_ptr, *array, array_start[0], array_start[1],
-                          array_start[2], array_start[3], array_start[4] );
+        void_ptr = array_data_ptr;
     }
     else
     {
+        /*--- create a temporary array to copy hyperslab to, so that
+              we have a consecutive chunk of memory to write from */
+
         n_tmp_dims = n_file_dims - tmp_ind - 1;
 
         for_less( dim, 0, n_tmp_dims )
@@ -836,15 +875,21 @@ public  Status  output_minc_hyperslab(
         for_less( dim, 0, n_array_dims )
             array_indices[dim] -= tmp_ind + 1;
 
-        data_type = get_multidim_data_type( array );
-
         create_multidim_array( &buffer_array, n_tmp_dims, tmp_sizes, data_type);
 
-        copy_multidim_reordered( &buffer_array, zero, array,
-                                 array_start, array_counts, array_indices );
+        GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
+
+        /*--- copy from the array argument to the temporary array */
+
+        copy_multidim_data_reordered( get_type_size(data_type),
+                                      void_ptr, n_tmp_dims, tmp_sizes,
+                                      array_data_ptr, n_array_dims, array_sizes,
+                                      array_counts, array_indices );
 
         GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
     }
+
+    /*--- output the data to the file */
 
     if( miicv_put( file->minc_icv, long_file_start, long_file_count,
                    void_ptr ) == MI_ERROR )
@@ -852,7 +897,7 @@ public  Status  output_minc_hyperslab(
     else
         status = OK;
 
-    if( !direct_to_array )
+    if( !direct_from_array )
         delete_multidim_array( &buffer_array );
 
     return( status );
@@ -874,7 +919,7 @@ public  Status  output_minc_hyperslab(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Sep  1, 1995    D. MacDonald - added cached volumes.
 ---------------------------------------------------------------------------- */
 
 private  void  output_slab(
@@ -896,6 +941,7 @@ private  void  output_slab(
     int               v[MAX_DIMENSIONS];
     int               size0, size1, size2, size3, size4;
     Real              value;
+    void              *array_data_ptr;
     multidim_array    array;
 
     for_less( file_ind, 0, file->n_file_dimensions )
@@ -912,6 +958,8 @@ private  void  output_slab(
 
     if( volume->is_cached_volume )
     {
+        /*--- must make a temporary hyperslab array to contain the volume */
+
         for_less( dim, 0, get_volume_n_dimensions(volume) )
             volume_sizes[dim] = 1;
 
@@ -944,6 +992,8 @@ private  void  output_slab(
         create_multidim_array( &array, n_slab_dims, slab_sizes,
                                get_volume_data_type(volume) );
 
+        /*--- copy from the cached volume to the temporary array */
+
         size0 = volume_sizes[0];
         size1 = volume_sizes[1];
         size2 = volume_sizes[2];
@@ -970,15 +1020,25 @@ private  void  output_slab(
                                  v[volume_to_array[4]], value );
         }
 
-        (void) output_minc_hyperslab( file, FALSE, &array, array_start,
-                                      to_array, int_file_start,
-                                      int_file_count );
+        /*--- output the temporary array */
+
+        GET_MULTIDIM_PTR( array_data_ptr, array, 0, 0, 0, 0, 0 );
+        (void) output_minc_hyperslab( file, get_volume_data_type(volume),
+                                      n_slab_dims, slab_sizes, array_data_ptr,
+                                      to_array, int_file_start, int_file_count);
         delete_multidim_array( &array );
     }
     else
     {
-        (void) output_minc_hyperslab( file, FALSE, &volume->array, volume_start,
-                                   to_volume, int_file_start, int_file_count );
+        GET_MULTIDIM_PTR( array_data_ptr, volume->array,
+                          volume_start[0], volume_start[1], volume_start[2],
+                          volume_start[3], volume_start[4] );
+        get_volume_sizes( volume, volume_sizes );
+
+        (void) output_minc_hyperslab( file, get_volume_data_type(volume),
+                                      get_volume_n_dimensions(volume),
+                                      volume_sizes, array_data_ptr,
+                                      to_array, int_file_start, int_file_count);
     }
 }
 
@@ -1290,7 +1350,8 @@ public  Status  output_minc_volume(
     if( d < file->n_file_dimensions &&
         file->indices[d] >= file->sizes_in_file[d] )
     {
-        print_error( "output_minc_volume: attempted to write too many subvolumes.\n");
+        print_error(
+             "output_minc_volume: attempted to write too many subvolumes.\n");
         return( ERROR );
     }
 

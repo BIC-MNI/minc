@@ -17,8 +17,22 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.5 1995-08-21 04:36:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.6 1995-09-19 18:23:47 david Exp $";
 #endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_empty_multidim_array
+@INPUT      : n_dimensions
+              data_type
+@OUTPUT     : array
+@RETURNS    : 
+@DESCRIPTION: Creates a multidimensional array, without allocating its data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public   void   create_empty_multidim_array(
     multidim_array  *array,
@@ -28,7 +42,7 @@ public   void   create_empty_multidim_array(
     if( n_dimensions < 1 || n_dimensions > MAX_DIMENSIONS )
     {
         print_error(
-"create_empty_multidim_array(): n_dimensions (%d) not in range 1 to %d.\n",
+     "create_empty_multidim_array(): n_dimensions (%d) not in range 1 to %d.\n",
                n_dimensions, MAX_DIMENSIONS );
     }
 
@@ -37,11 +51,38 @@ public   void   create_empty_multidim_array(
     array->data = (void *) NULL;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_multidim_data_type
+@INPUT      : array
+@OUTPUT     : 
+@RETURNS    : data type
+@DESCRIPTION: Returns the data type of the multidimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Data_types  get_multidim_data_type(
     multidim_array       *array )
 {
     return( array->data_type );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_multidim_data_type
+@INPUT      : array
+              data_type
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the data type of the array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_multidim_data_type(
     multidim_array       *array,
@@ -83,6 +124,20 @@ public  int  get_type_size(
     return( size );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_multidim_sizes
+@INPUT      : array
+              sizes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the sizes of the array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_multidim_sizes(
     multidim_array   *array,
     int              sizes[] )
@@ -93,11 +148,60 @@ public  void  set_multidim_sizes(
         array->sizes[dim] = sizes[dim];
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_multidim_sizes
+@INPUT      : array
+@OUTPUT     : sizes
+@RETURNS    : 
+@DESCRIPTION: Passes back the sizes of the multidimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_multidim_sizes(
+    multidim_array   *array,
+    int              sizes[] )
+{
+    int   i;
+
+    for_less( i, 0, array->n_dimensions )
+        sizes[i] = array->sizes[i];
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : multidim_array_is_alloced
+@INPUT      : array
+@OUTPUT     : 
+@RETURNS    : TRUE if array is allocated
+@DESCRIPTION: 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  BOOLEAN  multidim_array_is_alloced(
     multidim_array   *array )
 {
     return( array->data != NULL );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_multidim_array
+@INPUT      : array
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Allocates the data for the multidimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  alloc_multidim_array(
     multidim_array   *array )
@@ -148,6 +252,22 @@ public  void  alloc_multidim_array(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_multidim_array
+@INPUT      : array
+              n_dimensions
+              sizes
+              data_type
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Creates a multidimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public   void   create_multidim_array(
     multidim_array  *array,
     int             n_dimensions,
@@ -158,6 +278,19 @@ public   void   create_multidim_array(
     set_multidim_sizes( array, sizes );
     alloc_multidim_array( array );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_multidim_array
+@INPUT      : array
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes the multidimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  delete_multidim_array(
     multidim_array   *array )
@@ -202,57 +335,63 @@ public  int  get_multidim_n_dimensions(
     return( array->n_dimensions );
 }
 
-public  void  get_multidim_sizes(
-    multidim_array   *array,
-    int              sizes[] )
-{
-    int   i;
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_multidim_data_reordered
+@INPUT      : type_size
+              void_dest_ptr
+              n_dest_dims
+              dest_sizes
+              void_src_ptr
+              n_src_dims
+              src_sizes
+              counts
+              to_dest_index
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Copies any type of multidimensional data from the src array
+              to the destination array.  to_dest_index is a lookup that
+              converts src indices to destination indices, to allow arbitrary
+              reordering of array data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
-    for_less( i, 0, array->n_dimensions )
-        sizes[i] = array->sizes[i];
-}
-
-public  void  copy_multidim_reordered(
-    multidim_array      *dest,
-    int                 dest_ind[],
-    multidim_array      *src,
-    int                 src_ind[],
+public  void  copy_multidim_data_reordered(
+    int                 type_size,
+    void                *void_dest_ptr,
+    int                 n_dest_dims,
+    int                 dest_sizes[],
+    void                *void_src_ptr,
+    int                 n_src_dims,
+    int                 src_sizes[],
     int                 counts[],
     int                 to_dest_index[] )
 {
-    int       d, n_src_dims, n_dest_dims;
-    int       type_size, src_sizes[MAX_DIMENSIONS];
+    char      *src_ptr, *dest_ptr;
+    int       d;
     int       dest_offsets[MAX_DIMENSIONS], src_offsets[MAX_DIMENSIONS];
     int       dest_steps[MAX_DIMENSIONS], src_steps[MAX_DIMENSIONS];
-    int       dest_sizes[MAX_DIMENSIONS], dest_index;
+    int       dest_index;
     int       n_transfer_dims;
     int       src_axis[MAX_DIMENSIONS], dest_axis[MAX_DIMENSIONS];
     int       transfer_counts[MAX_DIMENSIONS];
     int       v0, v1, v2, v3, v4;
     int       size0, size1, size2, size3, size4;
-    char      *dest_ptr, *src_ptr;
     BOOLEAN   full_count_used;
-
-    type_size = get_type_size( get_multidim_data_type(dest) );
 
     /*--- initialize dest */
 
-    n_dest_dims = get_multidim_n_dimensions( dest );
-    get_multidim_sizes( dest, dest_sizes );
-    GET_MULTIDIM_PTR( dest_ptr, *dest, dest_ind[0], dest_ind[1], dest_ind[2],
-                      dest_ind[3], dest_ind[4] );
-
+    dest_ptr = (char *) void_dest_ptr;
     dest_steps[n_dest_dims-1] = type_size;
     for_down( d, n_dest_dims-2, 0 )
         dest_steps[d] = dest_steps[d+1] * dest_sizes[d+1];
 
     /*--- initialize src */
 
-    n_src_dims = get_multidim_n_dimensions( src );
-    get_multidim_sizes( src, src_sizes );
-    GET_MULTIDIM_PTR( src_ptr, *src, src_ind[0], src_ind[1], src_ind[2],
-                      src_ind[3], src_ind[4] );
-
+    src_ptr = (char *) void_src_ptr;
     src_steps[n_src_dims-1] = type_size;
     for_down( d, n_src_dims-2, 0 )
         src_steps[d] = src_steps[d+1] * src_sizes[d+1];
@@ -337,4 +476,57 @@ public  void  copy_multidim_reordered(
         src_ptr += src_offsets[4];
         dest_ptr += dest_offsets[4];
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_multidim_reordered
+@INPUT      : dest
+              dest_ind
+              src
+              src_ind
+              counts
+              to_dest_index
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Copies data from src array to dest array, with dimension
+              translation given by to_dest_index[].
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  copy_multidim_reordered(
+    multidim_array      *dest,
+    int                 dest_ind[],
+    multidim_array      *src,
+    int                 src_ind[],
+    int                 counts[],
+    int                 to_dest_index[] )
+{
+    int       n_src_dims, n_dest_dims, type_size;
+    int       src_sizes[MAX_DIMENSIONS], dest_sizes[MAX_DIMENSIONS];
+    char      *dest_ptr, *src_ptr;
+
+    type_size = get_type_size( get_multidim_data_type(dest) );
+
+    /*--- initialize dest */
+
+    n_dest_dims = get_multidim_n_dimensions( dest );
+    get_multidim_sizes( dest, dest_sizes );
+    GET_MULTIDIM_PTR( dest_ptr, *dest, dest_ind[0], dest_ind[1], dest_ind[2],
+                      dest_ind[3], dest_ind[4] );
+
+    /*--- initialize src */
+
+    n_src_dims = get_multidim_n_dimensions( src );
+    get_multidim_sizes( src, src_sizes );
+    GET_MULTIDIM_PTR( src_ptr, *src, src_ind[0], src_ind[1], src_ind[2],
+                      src_ind[3], src_ind[4] );
+
+    copy_multidim_data_reordered( type_size,
+                                  dest_ptr, n_dest_dims, dest_sizes,
+                                  src_ptr, n_src_dims, src_sizes,
+                                  counts, to_dest_index  );
 }

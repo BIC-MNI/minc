@@ -1444,8 +1444,8 @@ function.}
 
 \section{Volume Manipulation}
 
-Once a volume has been created and allocated, there are many macros
-and functions for manipulating the volume.  Note that associated with
+Once a volume has been created and allocated, there are many
+functions for manipulating the volume.  Note that associated with
 each volume is a valid voxel range indicating the range of values
 actually stored in the volume, for instance, zero to 200 is one
 possible range for an unsigned byte volume.  There is a second range,
@@ -1456,80 +1456,81 @@ dealing with volumes, one is generally interested in the \name{real}
 range.
 
 {\bf\begin{verbatim}
-GET_VOXEL( value, volume, v1, v2, v3, v4, v5 )
+public  Real  get_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 )
 \end{verbatim}}
 
 \desc{Given a volume and from one to five voxel indices, depending on
-the volume dimensions, stores the corresponding voxel value
-in the variable \name{value}, which may be of any type.  For instance,
-if the volume is three
+the volume dimensions, returns the corresponding voxel value.
+For instance, if the volume is three
 dimensional, then the final two arguments are ignored.}
 
 {\bf\begin{verbatim}
-GET_VOXEL_1D( value, volume, v1 )
-GET_VOXEL_2D( value, volume, v1, v2 )
-GET_VOXEL_3D( value, volume, v1, v2, v3 )
-GET_VOXEL_4D( value, volume, v1, v2, v3, v4 )
-GET_VOXEL_5D( value, volume, v1, v2, v3, v4, v5 )
-\end{verbatim}}
-
-\desc{More convenient versions of \name{GET\_VOXEL}.  Given a volume and
-the required number of voxel indices for the
-volume, assigns the corresponding voxel value to the argument
-\name{value}.  This is more efficient than \name{GET\_VOXEL} because the
-macro does not look up the number of dimensions in the volume.}
-
-{\bf\begin{verbatim}
-CONVERT_VOXEL_TO_VALUE( volume, voxel )
+value = CONVERT_VOXEL_TO_VALUE( volume, voxel );
 \end{verbatim}}
 
 \desc{Given a volume and a voxel value, converts this to a value in
 the real range, and returns it.}
 
 {\bf\begin{verbatim}
-CONVERT_VALUE_TO_VOXEL( volume, value )
+voxel = CONVERT_VALUE_TO_VOXEL( volume, value )
 \end{verbatim}}
 
 \desc{Given a volume and a real value, converts this to a voxel value in
 the valid voxel range, and returns it.}
 
 {\bf\begin{verbatim}
-GET_VALUE( value, volume, v1, v2, v3, v4, v5 )
+public  Real  get_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 )
 \end{verbatim}}
 
 \desc{Given a volume and from one to five voxel indices, depending on
-the volume dimensions, stores the corresponding real value in the
-variable \name{value},
-which may be of any type.  For instance, if the volume is three
-dimensional, then the final two arguments are ignored.  This macro just
-performs the two macros \name{GET\_VOXEL} and
-\name{CONVERT\_VOXEL\_TO\_VALUE}.}
+the volume dimensions, returns the corresponding real value.
+For instance, if the volume is three
+dimensional, then the final two arguments are ignored.}
 
 {\bf\begin{verbatim}
-GET_VALUE_1D( value, volume, v1 )
-GET_VALUE_2D( value, volume, v1, v2 )
-GET_VALUE_3D( value, volume, v1, v2, v3 )
-GET_VALUE_4D( value, volume, v1, v2, v3, v4 )
-GET_VALUE_5D( value, volume, v1, v2, v3, v4, v5 )
-\end{verbatim}}
-
-\desc{More convenient versions of \name{GET\_VALUE}.
-Given a volume and the required number of voxel indices for the
-volume, assigns the corresponding real value to the argument
-\name{value}.  This just performs one of the \name{GET\_VOXEL\_?D}
-macros, then a \name{CONVERT\_VOXEL\_TO\_VALUE}.
-Typically, the \name{GET\_VALUE\_3D} macro is used for
-many applications.}
-
-{\bf\begin{verbatim}
-SET_VOXEL( volume, v1, v2, v3, v4, v5, value )
+public  void  set_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     voxel )
 \end{verbatim}}
 
 \desc{Given a volume, one to five voxel indices, and a \name{voxel}
 value, assigns this value to the corresponding voxel in the volume.
 Note that no conversion from the valid real range to the valid voxel
 range is performed, so the user may need to use the
-\name{CONVERT\_VALUE\_TO\_VOXEL} macro first.}
+\name{CONVERT\_VALUE\_TO\_VOXEL} macro first or use the
+\name{set\_volume\_real\_value} function.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     value )
+\end{verbatim}}
+
+\desc{Given a volume, one to five voxel indices, and a \name{value},
+assigns this value to the corresponding voxel in the volume, after converting
+to a voxel value.}
 
 {\bf\begin{verbatim}
 public  void  delete_volume(

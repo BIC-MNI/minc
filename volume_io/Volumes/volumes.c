@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.52 1995-08-21 04:36:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.53 1995-09-19 18:23:45 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -369,7 +369,8 @@ public  void  alloc_volume_data(
     data_size = get_volume_total_n_voxels( volume ) *
                 get_type_size( get_volume_data_type( volume ) );
 
-    if( data_size > get_n_bytes_cache_threshold() )
+    if( data_size > get_n_bytes_cache_threshold() &&
+        get_n_bytes_cache_threshold() >= 0 )
     {
         volume->is_cached_volume = TRUE;
         initialize_volume_cache( &volume->cache, volume );
@@ -379,6 +380,19 @@ public  void  alloc_volume_data(
         alloc_multidim_array( &volume->array );
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : volume_is_alloced
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : TRUE if the volume is allocated
+@DESCRIPTION: Checks if the volume data has been allocated.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  volume_is_alloced(
     Volume   volume )

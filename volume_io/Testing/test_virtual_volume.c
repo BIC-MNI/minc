@@ -1,25 +1,29 @@
 #include  <internal_volume_io.h>
 
+#define  MAX_ERRORS 1
+
 private  int  compute_voxel(
     int    x,
     int    y,
     int    z,
     Real   factor );
 
-#define   TESTING_IO
 #undef    TESTING_IO
+#define   TESTING_IO
 
 #define  CACHE_THRESHOLD  1
 
 #ifdef  TESTING_IO
-#define  CACHE_SIZE       50000
+#define  CACHE_SIZE       1000000
 #else
 #define  CACHE_SIZE       1000000000
 #endif
 
-#define  X_SIZE  200
-#define  Y_SIZE  200
-#define  Z_SIZE  200
+#define  X_SIZE  100
+#define  Y_SIZE  100
+#define  Z_SIZE  100
+
+#define  BLOCK_SIZE  8
 
 int  main(
     int   argc,
@@ -31,6 +35,11 @@ int  main(
     int                  true_voxel, test_voxel;
     char                 *output_filename, *output_filename2;
     static char          *dim_names[] = { MIxspace, MIzspace, MIyspace };
+    static int           block_sizes[] = { BLOCK_SIZE,
+                                           BLOCK_SIZE,
+                                           BLOCK_SIZE,
+                                           BLOCK_SIZE,
+                                           BLOCK_SIZE };
 
     if( argc < 3 )
     {
@@ -43,6 +52,7 @@ int  main(
 
     set_n_bytes_cache_threshold( CACHE_THRESHOLD );
     set_max_bytes_in_cache( CACHE_SIZE );
+    set_volume_cache_block_sizes( block_sizes );
 
     volume = create_volume( N_DIMENSIONS, dim_names, NC_BYTE, FALSE,
                             0.0, 0.0 );
@@ -76,7 +86,7 @@ int  main(
         if( true_voxel != test_voxel )
         {
             ++n_errors;
-            if( n_errors < 400 )
+            if( n_errors <= MAX_ERRORS )
                 print( "Error: %d %d\n", true_voxel, test_voxel );
         }
     }
@@ -113,7 +123,7 @@ int  main(
         if( true_voxel != test_voxel )
         {
             ++n_errors;
-            if( n_errors < 400 )
+            if( n_errors <= MAX_ERRORS )
                 print( "Error: %d %d %d: %d %d\n", x, y, z, true_voxel, test_voxel );
         }
     }
@@ -142,7 +152,7 @@ int  main(
         if( true_voxel != test_voxel )
         {
             ++n_errors;
-            if( n_errors < 400 )
+            if( n_errors <= MAX_ERRORS )
                 print( "Error: %d %d %d: %d %d\n", x, y, z, true_voxel, test_voxel);
         }
     }
@@ -168,8 +178,7 @@ private  int  compute_voxel(
 {
     int   value;
 
-    value = (x + y + z) % 256;
-    value = value * factor;
+    value = ((int) (factor * (Real) (x + y + z))) % 256;
 
     return( value );
 }

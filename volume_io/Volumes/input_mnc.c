@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.46 1995-09-19 13:45:35 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.47 1995-09-19 18:23:44 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -639,43 +639,60 @@ public  Status  close_minc_input(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_minc_hyperslab
+@INPUT      : file
+              data_type
+              n_array_dims
+              array_sizes
+              array_data_ptr
+              to_array
+              start
+              count
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Inputs a hyperslab from the file into the array pointer.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  input_minc_hyperslab(
     Minc_file        file,
-    BOOLEAN          one_d_array_flag,
-    multidim_array   *array,
-    int              array_start[],
+    Data_types       data_type,
+    int              n_array_dims,
+    int              array_sizes[],
+    void             *array_data_ptr,
     int              to_array[],
     int              start[],
     int              count[] )
 {
     Status           status;
-    int              ind, expected_ind, n_array_dims, file_ind, d, i, dim;
+    int              ind, expected_ind, file_ind, d, i, dim;
     int              size0, size1, size2, size3, size4;
-    int              used_array_start[MAX_DIMENSIONS];
     int              n_tmp_dims, n_file_dims;
     void             *void_ptr;
     BOOLEAN          direct_to_array, non_full_size_found;
     int              tmp_ind, tmp_sizes[MAX_VAR_DIMS];
     int              vol1_indices[MAX_DIMENSIONS];
-    int              zero[MAX_VAR_DIMS];
     int              v[MAX_DIMENSIONS], voxel[MAX_DIMENSIONS];
     long             used_start[MAX_VAR_DIMS], used_count[MAX_VAR_DIMS];
     Real             rgb[4];
     Colour           colour;
-    multidim_array   buffer_array, rgb_array, *array_to_read;
-    Data_types       data_type;
+    multidim_array   buffer_array, rgb_array;
 
-    n_array_dims = get_multidim_n_dimensions( array );
     n_file_dims = file->n_file_dimensions;
-
     direct_to_array = TRUE;
-
     expected_ind = n_array_dims-1;
     tmp_ind = n_file_dims-1;
     non_full_size_found = FALSE;
 
     for_less( ind, 0, n_array_dims )
         vol1_indices[ind] = -1;
+
+    /*--- check if the hyperslab is a continuous chunk of memory in the array */
 
     for( file_ind = n_file_dims-1;  file_ind >= 0;  --file_ind )
     {
@@ -684,7 +701,7 @@ public  Status  input_minc_hyperslab(
 
         ind = to_array[file_ind];
 
-        if( !one_d_array_flag && ind != INVALID_AXIS )
+        if( ind != INVALID_AXIS )
         {
             if( !non_full_size_found &&
                 count[file_ind] < file->sizes_in_file[file_ind] )
@@ -708,25 +725,16 @@ public  Status  input_minc_hyperslab(
 
     if( !direct_to_array || file->converting_to_colour )
     {
-        if( one_d_array_flag )
+        /*--- make a temporary buffer array, so that there is a continuous
+              chunk */
+
+        n_tmp_dims = n_file_dims - tmp_ind - 1;
+        for_less( dim, 0, n_tmp_dims )
         {
-            n_tmp_dims = 1;
-            get_multidim_sizes( array, tmp_sizes );
-            vol1_indices[0] = 0;
-            zero[0] = 0;
-        }
-        else
-        {
-            n_tmp_dims = n_file_dims - tmp_ind - 1;
-            for_less( dim, 0, n_tmp_dims )
-            {
-                tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
-                vol1_indices[dim] = vol1_indices[dim+tmp_ind+1];
-                zero[dim] = 0;
-            }
+            tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
+            vol1_indices[dim] = vol1_indices[dim+tmp_ind+1];
         }
 
-        data_type = get_multidim_data_type( array );
         create_multidim_array( &buffer_array, n_tmp_dims, tmp_sizes, data_type);
 
         if( file->converting_to_colour )
@@ -737,28 +745,20 @@ public  Status  input_minc_hyperslab(
 
             create_multidim_array( &rgb_array, n_tmp_dims+1, tmp_sizes, FLOAT );
 
-            array_to_read = &rgb_array;
+            GET_MULTIDIM_PTR( void_ptr, rgb_array, 0, 0, 0, 0, 0 );
         }
         else
-            array_to_read = &buffer_array;
-
-        for_less( dim, 0, n_tmp_dims+1 )
-            used_array_start[dim] = 0;
+        {
+            GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
+        }
     }
     else
     {
-        array_to_read = array;
-        for_less( dim, 0, n_array_dims )
-            used_array_start[dim] = array_start[dim];
+        void_ptr = array_data_ptr;
     }
 
-    GET_MULTIDIM_PTR( void_ptr, *array_to_read,
-                      used_array_start[0], used_array_start[1],
-                      used_array_start[2], used_array_start[3],
-                      used_array_start[4] );
-
     if( miicv_get( file->minc_icv, used_start, used_count, void_ptr ) ==
-                                 MI_ERROR )
+                                                                 MI_ERROR )
     {
         status = ERROR;
         if( file->converting_to_colour )
@@ -818,8 +818,11 @@ public  Status  input_minc_hyperslab(
             delete_multidim_array( &rgb_array );
         }
 
-        copy_multidim_reordered( array, array_start,
-                                 &buffer_array, zero, tmp_sizes, vol1_indices );
+        GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
+        copy_multidim_data_reordered( get_type_size(data_type),
+                                      array_data_ptr, n_array_dims, array_sizes,
+                                      void_ptr, n_tmp_dims, tmp_sizes,
+                                      tmp_sizes, vol1_indices );
 
         delete_multidim_array( &buffer_array );
     }
@@ -855,6 +858,8 @@ private  void  input_slab(
     int      volume_start[MAX_VAR_DIMS];
     int      file_start[MAX_DIMENSIONS];
     int      file_count[MAX_DIMENSIONS];
+    int      array_sizes[MAX_DIMENSIONS];
+    void     *array_data_ptr;
 
     for_less( file_ind, 0, file->n_file_dimensions )
     {
@@ -868,8 +873,15 @@ private  void  input_slab(
             volume_start[ind] = 0;
     }
 
-    (void) input_minc_hyperslab( file, FALSE,
-                                 &volume->array, volume_start, to_volume,
+    get_multidim_sizes( &volume->array, array_sizes );
+    GET_MULTIDIM_PTR( array_data_ptr, volume->array,
+                      volume_start[0], volume_start[1], volume_start[2],
+                      volume_start[3], volume_start[4] );
+
+    (void) input_minc_hyperslab( file,
+                                 get_multidim_data_type(&volume->array),
+                                 get_multidim_n_dimensions(&volume->array),
+                                 array_sizes, array_data_ptr, to_volume,
                                  file_start, file_count );
 }
 

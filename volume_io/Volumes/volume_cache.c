@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.10 1995-09-19 14:28:24 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.11 1995-09-19 18:23:47 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -232,9 +232,7 @@ public  void  initialize_volume_cache(
     cache->writing_to_temp_file = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
-    {
         cache->file_offset[dim] = 0;
-    }
 
     cache->hash_table = NULL;
 
@@ -247,6 +245,19 @@ public  void  initialize_volume_cache(
     cache->n_blocks = 0;
     cache->must_read_blocks_before_use = FALSE;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cache_is_alloced
+@INPUT      : cache
+@OUTPUT     : 
+@RETURNS    : TRUE or FALSE
+@DESCRIPTION: Checks if the cache has been allocated yet.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep 15, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  BOOLEAN  cache_is_alloced(
     volume_cache_struct  *cache )
@@ -380,25 +391,14 @@ private  void  write_cache_block(
 {
     Minc_file        minc_file;
     int              dim, ind, n_dims;
-    int              sizes[MAX_DIMENSIONS], tmp_sizes[MAX_DIMENSIONS];
-    int              array_start[MAX_DIMENSIONS];
     int              file_start[MAX_DIMENSIONS];
     int              file_count[MAX_DIMENSIONS];
-    int              strides[MAX_DIMENSIONS];
-    int              size0, size1, size2, size3, size4;
-    int              stride, stride0, stride1, stride2, stride3, stride4;
-    int              v0, v1, v2, v3, v4;
-    Real             value;
-    Data_types       data_type;
-    BOOLEAN          full_block;
-    multidim_array   buffer_array;
+    int              volume_sizes[MAX_DIMENSIONS];
+    void             *array_data_ptr;
 
     minc_file = (Minc_file) cache->minc_file;
 
-    get_volume_sizes( volume, sizes );
-    n_dims = cache->n_dimensions;
-
-    full_block = TRUE;
+    get_volume_sizes( volume, volume_sizes );
 
     for_less( dim, 0, minc_file->n_file_dimensions )
     {
@@ -406,13 +406,8 @@ private  void  write_cache_block(
         if( ind >= 0 )
         {
             file_start[dim] = cache->file_offset[dim] + block_start[ind];
-            file_count[dim] = sizes[ind] - file_start[dim];
-            if( file_count[dim] >= cache->block_sizes[ind] )
-                file_count[dim] = cache->block_sizes[ind];
-            else
-                full_block = FALSE;
-            tmp_sizes[ind] = file_count[dim];
-            array_start[ind] = 0;
+            file_count[dim] = MIN( volume_sizes[ind] - file_start[dim],
+                                   cache->block_sizes[ind] );
         }
         else
         {
@@ -421,78 +416,14 @@ private  void  write_cache_block(
         }
     }
 
-    if( full_block )
-    {
-        (void) output_minc_hyperslab( (Minc_file) cache->minc_file,
-                                      TRUE, &block->array, array_start,
-                                      minc_file->to_volume_index,
-                                      file_start, file_count );
-    }
-    else
-    {
-        data_type = get_volume_data_type( volume );
+    GET_MULTIDIM_PTR( array_data_ptr, block->array, 0, 0, 0, 0, 0 );
+    n_dims = cache->n_dimensions;
 
-        stride = 1;
-        for_down( dim, n_dims-1, 0 )
-        {
-            strides[dim] = stride;
-            stride *= cache->block_sizes[dim];
-        }
-
-        for_down( dim, n_dims-1, 1 )
-            strides[dim] -= strides[dim-1] * tmp_sizes[dim-1];
-
-        create_multidim_array( &buffer_array, n_dims, tmp_sizes, data_type );
-
-        for_less( dim, n_dims, MAX_DIMENSIONS )
-        {
-            tmp_sizes[dim] = 1;
-            strides[dim] = 0;
-        }
-
-        size0 = tmp_sizes[0];
-        size1 = tmp_sizes[1];
-        size2 = tmp_sizes[2];
-        size3 = tmp_sizes[3];
-        size4 = tmp_sizes[4];
-        stride0 = strides[0];
-        stride1 = strides[1];
-        stride2 = strides[2];
-        stride3 = strides[3];
-        stride4 = strides[4];
-
-        ind = 0;
-
-        for_less( v4, 0, size4 )
-        {
-          for_less( v3, 0, size3 )
-          {
-            for_less( v2, 0, size2 )
-            {
-              for_less( v1, 0, size1 )
-              {
-                for_less( v0, 0, size0 )
-                {
-                  GET_MULTIDIM_1D( value, block->array, ind );
-                  SET_MULTIDIM( buffer_array, v0, v1, v2, v3, v4, value );
-                  ind += stride0;
-                }
-                ind += stride1;
-              }
-              ind += stride2;
-            }
-            ind += stride3;
-          }
-          ind += stride4;
-        }
-
-        (void) output_minc_hyperslab( (Minc_file) cache->minc_file,
-                                      FALSE, &buffer_array, array_start,
-                                      minc_file->to_volume_index,
-                                      file_start, file_count );
-
-        delete_multidim_array( &buffer_array );
-    }
+    (void) output_minc_hyperslab( (Minc_file) cache->minc_file,
+                                  get_multidim_data_type(&block->array),
+                                  n_dims, cache->block_sizes, array_data_ptr,
+                                  minc_file->to_volume_index,
+                                  file_start, file_count );
 
     cache->must_read_blocks_before_use = TRUE;
 }
@@ -868,25 +799,13 @@ private  void  read_cache_block(
     Minc_file        minc_file;
     int              dim, ind, n_dims;
     int              sizes[MAX_DIMENSIONS];
-    int              array_start[MAX_DIMENSIONS];
     int              file_start[MAX_DIMENSIONS];
     int              file_count[MAX_DIMENSIONS];
-    int              tmp_sizes[MAX_DIMENSIONS];
-    int              strides[MAX_DIMENSIONS];
-    int              size0, size1, size2, size3, size4;
-    int              stride, stride0, stride1, stride2, stride3, stride4;
-    int              v0, v1, v2, v3, v4;
-    Real             value;
-    Data_types       data_type;
-    BOOLEAN          full_block;
-    multidim_array   buffer_array;
+    void             *array_data_ptr;
 
     minc_file = (Minc_file) cache->minc_file;
 
     get_volume_sizes( volume, sizes );
-    n_dims = cache->n_dimensions;
-
-    full_block = TRUE;
 
     for_less( dim, 0, minc_file->n_file_dimensions )
     {
@@ -894,13 +813,8 @@ private  void  read_cache_block(
         if( ind >= 0 )
         {
             file_start[dim] = cache->file_offset[dim] + block_start[ind];
-            file_count[dim] = sizes[ind] - file_start[dim];
-            if( file_count[dim] >= cache->block_sizes[ind] )
-                file_count[dim] = cache->block_sizes[ind];
-            else
-                full_block = FALSE;
-            tmp_sizes[ind] = file_count[dim];
-            array_start[ind] = 0;
+            file_count[dim] = MIN( sizes[ind] - file_start[dim],
+                                   cache->block_sizes[ind] );
         }
         else
         {
@@ -909,77 +823,14 @@ private  void  read_cache_block(
         }
     }
 
-    if( full_block )
-    {
-        (void) input_minc_hyperslab( (Minc_file) cache->minc_file,
-                                     TRUE, &block->array, array_start,
-                                     minc_file->to_volume_index,
-                                     file_start, file_count );
-    }
-    else
-    {
-        data_type = get_volume_data_type( volume );
+    n_dims = cache->n_dimensions;
+    GET_MULTIDIM_PTR( array_data_ptr, block->array, 0, 0, 0, 0, 0 );
 
-        stride = 1;
-        for_down( dim, n_dims-1, 0 )
-        {
-            strides[dim] = stride;
-            stride *= cache->block_sizes[dim];
-        }
-
-        for_down( dim, n_dims-1, 1 )
-            strides[dim] -= strides[dim-1] * tmp_sizes[dim-1];
-
-        create_multidim_array( &buffer_array, n_dims, tmp_sizes, data_type );
-
-        (void) input_minc_hyperslab( (Minc_file) cache->minc_file,
-                                     FALSE, &buffer_array, array_start,
-                                     minc_file->to_volume_index,
-                                     file_start, file_count );
-
-        for_less( dim, n_dims, MAX_DIMENSIONS )
-        {
-            tmp_sizes[dim] = 1;
-            strides[dim] = 0;
-        }
-
-        size0 = tmp_sizes[0];
-        size1 = tmp_sizes[1];
-        size2 = tmp_sizes[2];
-        size3 = tmp_sizes[3];
-        size4 = tmp_sizes[4];
-        stride0 = strides[0];
-        stride1 = strides[1];
-        stride2 = strides[2];
-        stride3 = strides[3];
-        stride4 = strides[4];
-
-        ind = 0;
-        for_less( v4, 0, size4 )
-        {
-          for_less( v3, 0, size3 )
-          {
-            for_less( v2, 0, size2 )
-            {
-              for_less( v1, 0, size1 )
-              {
-                for_less( v0, 0, size0 )
-                {
-                  GET_MULTIDIM( value, buffer_array, v0, v1, v2, v3, v4 );
-                  SET_MULTIDIM_1D( block->array, ind, value );
-                  ind += stride0;
-                }
-                ind += stride1;
-              }
-              ind += stride2;
-            }
-            ind += stride3;
-          }
-          ind += stride4;
-        }
-
-        delete_multidim_array( &buffer_array );
-    }
+    (void) input_minc_hyperslab( (Minc_file) cache->minc_file,
+                                 get_multidim_data_type(&block->array),
+                                 n_dims, cache->block_sizes, array_data_ptr,
+                                 minc_file->to_volume_index,
+                                 file_start, file_count );
 
     block->modified_flag = FALSE;
 }
@@ -1029,14 +880,15 @@ private  cache_block_struct  *appropriate_a_cache_block(
 
         /*--- remove from used list */
 
-        if( block != cache->head )
-        {
+        if( block->prev_used == NULL )
+            cache->head = block->next_used;
+        else
             block->prev_used->next_used = block->next_used;
-            if( block->next_used != NULL )
-                block->next_used->prev_used = block->prev_used;
-            else
-                cache->tail = block->prev_used;
-        }
+
+        if( block->next_used == NULL )
+            cache->tail = block->prev_used;
+        else
+            block->next_used->prev_used = block->prev_used;
 
         /*--- remove from hash table */
 
@@ -1045,21 +897,23 @@ private  cache_block_struct  *appropriate_a_cache_block(
             block->next_hash->prev_hash = block->prev_hash;
     }
 
-    if( block != cache->head )
-    {
-        block->prev_used = NULL;
-        block->next_used = cache->head;
-
-        if( cache->head == NULL )
-            cache->tail = block;
-        else
-            cache->head->prev_used = block;
-
-        cache->head = block;
-    }
-
     return( block );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : hash_block_index
+@INPUT      : key
+              table_size
+@OUTPUT     : 
+@RETURNS    : hash address
+@DESCRIPTION: Hashes a block index key into a table index, using 
+              multiplicative hashing.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  int  hash_block_index(
     int  key,
@@ -1075,21 +929,6 @@ private  int  hash_block_index(
     return( index );
 }
 
-private  void  check_consistency(
-    Volume  volume )
-{
-    cache_block_struct  *ptr;
-
-    ptr = volume->cache.head;
-
-    while( ptr != NULL )
-    {
-        if( ptr->array.n_dimensions != 1 )
-            handle_internal_error( "check_consistency" );
-        ptr = ptr->next_used;
-    }
-}
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_cache_block_for_voxel
 @INPUT      : volume
@@ -1098,10 +937,13 @@ private  void  check_consistency(
               z
               t
               v
-@OUTPUT     : 
+@OUTPUT     : offset
 @RETURNS    : pointer to cache block
 @DESCRIPTION: Finds the cache block corresponding to a given voxel, and
-              modifies the voxel indices to be block indices.
+              modifies the voxel indices to be block indices.  This function
+              gets called for every set or get voxel value, so it must be
+              efficient.  On return, offset contains the integer offset
+              of the voxel within the cache block.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -1121,11 +963,9 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     cache_block_struct   *block;
     cache_lookup_struct  *lookup0, *lookup1, *lookup2, *lookup3, *lookup4;
     int                  block_index;
-    int                  indices[MAX_DIMENSIONS];
     int                  block_start[MAX_DIMENSIONS];
-    int                  dim, n_dims, hash_index;
+    int                  n_dims, hash_index;
     volume_cache_struct  *cache;
-    BOOLEAN              same;
 
     cache = &volume->cache;
     n_dims = cache->n_dimensions;
@@ -1193,8 +1033,13 @@ private  cache_block_struct  *get_cache_block_for_voxel(
         break;
     }
 
+    /*--- if this is the same as the last access, just return the last
+          block accessed */
+
     if( block_index == cache->previous_block_index )
         return( cache->previous_block );
+
+    /*--- search the hash table for the block index */
 
     hash_index = hash_block_index( block_index, cache->hash_table_size );
 
@@ -1205,27 +1050,46 @@ private  cache_block_struct  *get_cache_block_for_voxel(
         block = block->next_hash;
     }
 
+    /*--- check if it was found in the hash table */
+
     if( block == NULL )
     {
+        /*--- find a block to use */
+
         block = appropriate_a_cache_block( cache, volume );
         block->block_index = block_index;
+
+        /*--- check if the block must be initialized from a file */
+
         if( cache->must_read_blocks_before_use )
         {
             get_block_start( cache, block_index, block_start );
             read_cache_block( cache, volume, block, block_start );
         }
 
-        /*--- insert in cache */
+        /*--- insert the block in cache hash table */
 
         block->next_hash = cache->hash_table[hash_index];
         if( block->next_hash != NULL )
             block->next_hash->prev_hash = &block->next_hash;
         block->prev_hash = &cache->hash_table[hash_index];
         *block->prev_hash = block;
+
+        /*--- insert the block at the head of the used list */
+
+        block->prev_used = NULL;
+        block->next_used = cache->head;
+
+        if( cache->head == NULL )
+            cache->tail = block;
+        else
+            cache->head->prev_used = block;
+
+        cache->head = block;
     }
-    else
+    else   /*--- block was found in hash table */
     {
-        /*--- move to head of used list */
+        /*--- move block to head of used list */
 
         if( block != cache->head )
         {
@@ -1241,7 +1105,8 @@ private  cache_block_struct  *get_cache_block_for_voxel(
             cache->head = block;
         }
 
-        /*--- move to beginning of hash chain */
+        /*--- move block to beginning of hash chain, so if next access to
+              this block, we will save some time */
 
         if( cache->hash_table[hash_index] != block )
         {
@@ -1260,6 +1125,8 @@ private  cache_block_struct  *get_cache_block_for_voxel(
             *block->prev_hash = block;
         }
     }
+
+    /*--- record so if next access is to same block, we save some time */
 
     cache->previous_block = block;
     cache->previous_block_index = block_index;
