@@ -51,7 +51,7 @@ sub smv_read_file_info {
    local($filename, *file_info, *specific_file_info) = @_;
 
    # Constant
-   local($min_header_length) = 6144;
+   local($imageoffset) = 6144;
 
    # Get header
    local($header);
@@ -59,12 +59,11 @@ sub smv_read_file_info {
       return 1;
    }
 
-   # Get image size and offset
-   local($imagewidth) = 256;
+   # Get image size
    local($pixelsize) = 2;
+   local($imagewidth) = 
+      int(sqrt(((-s $filename) - $imageoffset) / $pixelsize));
    local($imagesize) = $imagewidth * $imagewidth * $pixelsize;
-   local($imageoffset) = (-s $filename) - $imagesize;
-   $imageoffset = $min_header_length if ($imageoffset < $min_header_length);
 
    # Get interesting values
    $file_info{'numechos'} = 100;
