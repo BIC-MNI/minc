@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.13  2003-08-20 05:52:55  rotor
+ * Revision 1.14  2003-09-05 18:29:40  bert
+ * Avoid passing NULL to fprintf when no mask file is specified, to avoid seg. faults reported by Richard Boyes.
+ *
+ * Revision 1.13  2003/08/20 05:52:55  rotor
  * * INDENTATION changes only (merging my and peter neelins code!)
  *
  * Revision 1.12  2003/08/20 05:45:10  rotor
@@ -675,7 +678,8 @@ int main(int argc, char *argv[])
             if(hist_file != NULL) {
 
                (void)fprintf(FP, "# histogram for: %s\n", infiles[0]);
-               (void)fprintf(FP, "#  mask file:    %s\n", infiles[1]);
+	       (void)fprintf(FP, "#  mask file:    %s\n", 
+			     (infiles[1] != NULL) ? infiles[1] : "(null)");
                if(stats->vol_range[0] != -DBL_MAX || stats->vol_range[1] != DBL_MAX) {
                   (void)fprintf(FP, "#  volume range: %g  %g\n", stats->vol_range[0],
                                 stats->vol_range[1]);
@@ -739,7 +743,8 @@ int main(int argc, char *argv[])
             (void)fprintf(stdout, "File:              %s\n", infiles[0]);
          }
          if(All && !quiet) {
-            (void)fprintf(stdout, "Mask file:         %s\n", infiles[1]);
+            (void)fprintf(stdout, "Mask file:         %s\n", 
+			  (infiles[1] != NULL) ? infiles[1] : "(null)");
          }
          if(All && !quiet) {
             print_result("Total voxels:      ", nvoxels);
