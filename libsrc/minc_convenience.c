@@ -25,7 +25,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.6  2001-08-20 13:19:14  neelin
+ * Revision 6.7  2001-09-18 15:44:27  neelin
+ * When output type is NC_BYTE, valid_range attribute should have type NC_SHORT.
+ *
+ * Revision 6.6  2001/08/20 13:19:14  neelin
  * Added function miattget_with_sign to allow the caller to specify the sign
  * of the input attribute since this information is ambiguous. This is
  * necessary for the valid_range attribute which should have the same sign
@@ -92,7 +95,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.6 2001-08-20 13:19:14 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.7 2001-09-18 15:44:27 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -349,8 +352,6 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    int is_signed;
    int status;
    char *attname;
-   unsigned char ubval[2];
-   signed char sbval[2];
    unsigned short usval[2];
    short ssval[2];
    unsigned int uival[2];
@@ -367,27 +368,16 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    attname = MIvalid_range;
    switch (datatype) {
    case NC_BYTE:
-      if (is_signed) {
-         sbval[0] = valid_range[0];
-         sbval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) sbval);
-      }
-      else {
-         ubval[0] = valid_range[0];
-         ubval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) ubval);
-      }
-      break;
    case NC_SHORT:
       if (is_signed) {
          ssval[0] = valid_range[0];
          ssval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) ssval);
+         status = ncattput(cdfid, imgid, attname, NC_SHORT, 2, (void *) ssval);
       }
       else {
          usval[0] = valid_range[0];
          usval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) usval);
+         status = ncattput(cdfid, imgid, attname, NC_SHORT, 2, (void *) usval);
       }
       break;
    case NC_INT:
