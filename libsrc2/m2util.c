@@ -155,32 +155,14 @@ miget_voxel_count(int mincid)
     return (nvoxels);
 }
 
-/** Set an attribute from a minc file */
 int
-miset_attribute(mihandle_t volume, const char *path, const char *name, 
-                mitype_t data_type, int length, const void *values)
+miset_attr_at_loc(hid_t hdf_loc, const char *name, mitype_t data_type, 
+                  int length, const void *values)
 {
-    hid_t hdf_file;
-    hid_t hdf_loc;
     hid_t hdf_type;
     hid_t hdf_space;
     hid_t hdf_attr;
     hsize_t hdf_len;
-    hsize_t hdf_max;
-
-    /* Get a handle to the actual HDF file 
-     */
-    hdf_file = volume->hdf_id;
-    if (hdf_file < 0) {
-	return (MI_ERROR);
-    }
-
-    /* Search through the path, descending into each group encountered.
-     */
-    hdf_loc = midescend_path(hdf_file, path);
-    if (hdf_loc < 0) {
-	return (MI_ERROR);
-    }
 
     H5E_BEGIN_TRY {
       hdf_attr = H5Aopen_name(hdf_loc, name);
@@ -210,10 +192,15 @@ miset_attribute(mihandle_t volume, const char *path, const char *name,
 	return (MI_ERROR);
     }
 
-    hdf_len = (hsize_t) length;
-    hdf_space = H5Screate_simple(1, &hdf_len, NULL);
+    if (length == 1) {
+        hdf_space = H5Screate(H5S_SCALAR);
+    }
+    else {
+        hdf_len = (hsize_t) length;
+        hdf_space = H5Screate_simple(1, &hdf_len, NULL);
+    }
     if (hdf_space < 0) {
-	return (MI_ERROR);
+        return (MI_ERROR);
     }
     
     hdf_attr = H5Acreate(hdf_loc, name, hdf_type, hdf_space, H5P_DEFAULT);
@@ -226,6 +213,32 @@ miset_attribute(mihandle_t volume, const char *path, const char *name,
     H5Aclose(hdf_attr);
     H5Tclose(hdf_type);
     H5Sclose(hdf_space);
+    return (MI_NOERROR);
+}
+
+/** Set an attribute from a minc file */
+int
+miset_attribute(mihandle_t volume, const char *path, const char *name, 
+                mitype_t data_type, int length, const void *values)
+{
+    hid_t hdf_file;
+    hid_t hdf_loc;
+
+    /* Get a handle to the actual HDF file 
+     */
+    hdf_file = volume->hdf_id;
+    if (hdf_file < 0) {
+	return (MI_ERROR);
+    }
+
+    /* Search through the path, descending into each group encountered.
+     */
+    hdf_loc = midescend_path(hdf_file, path);
+    if (hdf_loc < 0) {
+	return (MI_ERROR);
+    }
+
+    miset_attr_at_loc(hdf_loc, name, data_type, length, values);
 
     /* The hdf_loc identifier could be a group or a dataset.
      */
@@ -765,7 +778,9 @@ mi2_dbl_to_int(hid_t src_id,
     return (0);
 }
 
-/** Initialize some critical pieces of the library.
+
+/** Initialize some critical pieces of the library.  For now all this does
+ is install the double-to-integer and integer-to-double conversion functions.
  */
 void
 miinit(void)
@@ -777,6 +792,49 @@ miinit(void)
                 mi2_dbl_to_int);
 }
 
+/** HDF5 type conversion function for converting an arbitrary integer type to
+ * an arbitrary enumerated type.  The beauty part of this is that it is
+ * not necessary to actually perform any real conversion!
+ */
+herr_t mi2_null_conv(hid_t src_id,
+                     hid_t dst_id,
+                     H5T_cdata_t *cdata,
+                     hsize_t nelements,
+                     size_t buf_stride,
+                     size_t bkg_stride,
+                     void *buf_ptr,
+                     void *bkg_ptr,
+                     hid_t dset_xfer_plist)
+{
+    switch (cdata->command) {
+    case H5T_CONV_INIT:
+    case H5T_CONV_CONV:
+    case H5T_CONV_FREE:
+	break;
+
+    default:
+	/* Unknown command */
+	return (-1);
+    }
+    return (0);
+}
+
+/** 
+ This function should be called when a labeled volume is created or opened
+ in order to facilitate conversions from the integer to the enumerated type.
+ */
+void
+miinit_enum(hid_t type_id)
+{
+    H5Tregister(H5T_PERS_SOFT, "i2e", H5T_NATIVE_INT, type_id,
+                mi2_null_conv);
+    H5Tregister(H5T_PERS_SOFT, "e2i", type_id, H5T_NATIVE_INT,
+                mi2_null_conv);
+    H5Tregister(H5T_PERS_SOFT, "d2e", H5T_NATIVE_DOUBLE, type_id,
+                mi2_dbl_to_int);
+    H5Tregister(H5T_PERS_SOFT, "e2d", type_id, H5T_NATIVE_DOUBLE,
+                mi2_int_to_dbl);
+}
 
 int
 minc_create_thumbnail(hid_t file_id, int grp)
