@@ -1,3 +1,11 @@
+Tue Apr 24 12:21:42 EDT 2001
+   - Fixed bug in execute_decompress_command in libsrc/netcdf_convenience.c
+     that caused multiple stdio buffer flushing when opening compressed files 
+     (particularly with mincinfo).
+   - Moved volume_io documentation build from doc directory to
+     volume_io/Documentation, and added install-docs target to
+     top-level Makefile.
+
 Tue Apr 24 09:43:38 EDT 2001
    - Replaced NC_NAT by MI_ORIGINAL_TYPE since NC_NAT is not defined for
      NetCDF 3.1-3.4. Because NC_NAT and NC_UNSPECIFIED are defined through
