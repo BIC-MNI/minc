@@ -58,7 +58,6 @@ noinst_HEADERS = \
 	libsrc/type_limits.h \
 	progs/Proglib/convert_origin_to_start.h \
 	progs/Proglib/minc_def.h \
-	progs/Proglib/vax_conversions.h \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
 	progs/minccalc/y.tab.h \
@@ -112,7 +111,9 @@ noinst_PROGRAMS = \
 
 LDADD = libvolume_io.la libminc.la
 
-EXTRA_DIST = GETTING_STARTED $(m4_files) libsrc/strdup.c
+EXTRA_DIST = GETTING_STARTED $(m4_files) \
+	libsrc/strdup.c \
+	progs/Get_image_offset/get_image_offset.c
 
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \
@@ -277,5 +278,7 @@ dist_man1_MANS = \
 	progs/xfm/transformtags.man1 \
 	progs/xfm/xfmconcat.man1 \
 	progs/xfm/xfminvert.man1
+
+dist_man3_MANS = libsrc/ParseArgv.man3
 
 

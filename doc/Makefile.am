@@ -2,8 +2,8 @@ EXTRA_DIST = prog_guide.tex  prog_ref.tex
 
 SUFFIXES = .tex .dvi .ps
 
-.PHONY: doc
-doc: prog_ref.ps prog_guide.ps
+.PHONY: docs
+docs: prog_ref.ps prog_guide.ps
 
 
 .tex.dvi:

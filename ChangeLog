@@ -1,5 +1,9 @@
 2003-01-09  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+	* Makefile.am (dist_man3_MANS): Distribute and install ParseArgv(3).
+	(EXTRA_DIST): Distribute get_image_offset.c (not built).
+	(noinst_HEADERS): Remove vax_conversions.h (not used).
+
 	* doc/Makefile: Removed.
 	* doc/Makefile.am: New.
 
