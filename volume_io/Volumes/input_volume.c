@@ -120,6 +120,7 @@ public  Boolean  input_more_of_volume(
     volume_input_struct   *input_info,
     Real                  *fraction_done )
 {
+    int           x, y, z, value, min_value, max_value;
     Boolean       more_to_do;
 
     switch( input_info->file_type )
@@ -134,6 +135,29 @@ public  Boolean  input_more_of_volume(
         more_to_do = input_more_free_format_file( volume, input_info,
                                                   fraction_done );
         break;
+    }
+
+    if( !more_to_do )
+    {
+        min_value = GET_VOLUME_DATA( *volume, 0, 0, 0 );
+        max_value = min_value;
+        for_less( x, 0, volume->sizes[X] )
+        {
+            for_less( y, 0, volume->sizes[Y] )
+            {
+                for_less( z, 0, volume->sizes[Z] )
+                {
+                    value = GET_VOLUME_DATA( *volume, x, y, z );
+                    if( value < min_value )
+                        min_value = value;
+                    else if( value > max_value )
+                        max_value = value;
+                }
+            }
+        }
+
+        volume->min_value = min_value;
+        volume->max_value = max_value;
     }
 
     return( more_to_do );
@@ -177,11 +201,22 @@ public  Status  input_volume(
     Status               status;
     Real                 amount_done;
     volume_input_struct  input_info;
+    progress_struct      progress;
+    static const int     FACTOR = 1000;
 
     status = start_volume_input( filename, FALSE, volume, &input_info );
 
-    while( input_more_of_volume( volume, &input_info, &amount_done ) )
+    if( status == OK )
     {
+        initialize_progress_report( &progress, FALSE, FACTOR, "Reading Volume");
+
+        while( input_more_of_volume( volume, &input_info, &amount_done ) )
+        {
+            update_progress_report( &progress,
+                                    ROUND( (Real) FACTOR * amount_done));
+        }
+
+        terminate_progress_report( &progress );
     }
 
     return( status );

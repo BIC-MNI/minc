@@ -2,7 +2,7 @@
 #define  DEF_IO
 
 #include  <stdio.h>
-#include  <def_mni.h>
+#include  <def_basic.h>
 
 typedef  enum  { ASCII_FORMAT, BINARY_FORMAT }          File_formats;
 

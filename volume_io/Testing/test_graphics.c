@@ -45,36 +45,34 @@ main()
     /* ------- define text to be drawn (text.string filled in later ----- */
 
     fill_Point( point, 10.0, 10.0, 0.0 );
-    status = initialize_text( &text, &point, make_Colour(255,0,255),
-                              SIZED_FONT, 14.0 );
+    initialize_text( &text, &point, make_Colour(255,0,255), SIZED_FONT, 14.0 );
     text.string[0] = (char) 0;
 
     /* ------------ define line to be drawn  ------------- */
 
-    status = initialize_lines( &lines, make_Colour(255,255,0) );
+    initialize_lines( &lines, make_Colour(255,255,0) );
 
     lines.n_points = 4;
-    ALLOC( status, lines.points, 4 );
+    ALLOC( lines.points, 4 );
     fill_Point( lines.points[0], 0.0, 0.0, 0.0 );
     fill_Point( lines.points[1], 1.0, 1.0, 0.0 );
     fill_Point( lines.points[2], -0.3, 1.0, -1.0 );
-    fill_Point( lines.points[3], 0.3, 1.0, 1.0 );
+    fill_Point( lines.points[3], 0.5, 0.4, 0.0 );
 
     lines.n_items = 3;
-    ALLOC( status, lines.end_indices, lines.n_items );
+    ALLOC( lines.end_indices, lines.n_items );
     lines.end_indices[0] = 2;
     lines.end_indices[1] = 4;
-    lines.end_indices[2] = 6;
+    lines.end_indices[2] = 5;
 
-    ALLOC( status, lines.indices, lines.end_indices[lines.n_items-1] );
+    ALLOC( lines.indices, lines.end_indices[lines.n_items-1] );
     lines.indices[0] = 0;
     lines.indices[1] = 1;
 
     lines.indices[2] = 0;
     lines.indices[3] = 2;
 
-    lines.indices[4] = 0;
-    lines.indices[5] = 3;
+    lines.indices[4] = 3;
 
     /* ------------ define pixels to be drawn  ------------- */
 
@@ -83,8 +81,8 @@ main()
 
     x_position = 10;
     y_position = 10;
-    status = initialize_pixels( &pixels, x_position, y_position,
-                                pixels_x_size, pixels_y_size, RGB_PIXEL );
+    initialize_pixels( &pixels, x_position, y_position,
+                       pixels_x_size, pixels_y_size, RGB_PIXEL );
 
     for_less( i, 0, pixels_x_size )
     {
@@ -96,19 +94,19 @@ main()
 
     /* ------------ define polygons to be drawn  ------------- */
 
-    status = initialize_polygons( &polygons, make_Colour(0,255,255), &spr );
+    initialize_polygons( &polygons, make_Colour(0,255,255), &spr );
 
-    status = start_new_polygon( &polygons );
+    start_new_polygon( &polygons );
 
     fill_Point( point, -0.3, -0.3, 0.0 );
     fill_Vector( normal, 0.0, 0.0, 1.0 );
-    status = add_point_to_polygon( &polygons, &point, &normal );
+    add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, -0.3, 0.0 );
-    status = add_point_to_polygon( &polygons, &point, &normal );
+    add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, 0.3, 0.0 );
-    status = add_point_to_polygon( &polygons, &point, &normal );
+    add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, -0.3, 0.3, 0.0 );
-    status = add_point_to_polygon( &polygons, &point, &normal );
+    add_point_to_polygon( &polygons, &point, &normal );
 
     /* ------------ define lights ----------------- */
 
@@ -149,8 +147,12 @@ main()
             {
                 switch( event_type )
                 {
-                case KEYBOARD_EVENT:
-                    print( "Key pressed: \"%c\"\n", key_pressed );
+                case KEY_DOWN_EVENT:
+                    print( "Key pressed down: \"%c\"\n", key_pressed );
+                    break;
+
+                case KEY_UP_EVENT:
+                    print( "Key released: \"%c\"\n", key_pressed );
                     break;
 
                 case LEFT_MOUSE_DOWN_EVENT:
@@ -267,11 +269,11 @@ main()
 
     /* delete drawing objects and window (text does not need to be deleted */
 
-    status = delete_lines( &lines );
+    delete_lines( &lines );
 
-    status = delete_polygons( &polygons );
+    delete_polygons( &polygons );
 
-    status = delete_pixels( &pixels );
+    delete_pixels( &pixels );
 
     status = G_delete_window( window );
 

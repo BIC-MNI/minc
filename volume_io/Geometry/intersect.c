@@ -1,20 +1,32 @@
 
-#include  <def_objects.h>
-#include  <def_files.h>
+#include  <def_mni.h>
+#include  <def_module.h>
 
 #define  MAX_POINTS    30
 
-static  Boolean  point_within_polygon();
-static  Boolean  point_within_triangle_2d();
-static  Boolean  point_within_polygon_2d();
+private  Boolean  point_within_polygon(
+    Point   *pt,
+    int     n_points,
+    Point   points[],
+    Vector  *polygon_normal );
+private  Boolean  point_within_triangle_2d(
+    Point   *pt,
+    int     i1,
+    int     i2,
+    Point   points[] );
+private  Boolean  point_within_polygon_2d(
+    Point   *pt,
+    int     i1,
+    int     i2,
+    int     n_points,
+    Point   points[] );
 
-public  Boolean   intersect_ray_polygon( ray_origin, ray_direction,
-                                         dist, polygons, poly_index )
-    Point            *ray_origin;
-    Vector           *ray_direction;
-    Real             *dist;
-    polygons_struct  *polygons;
-    int              poly_index;
+public  Boolean   intersect_ray_polygon(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    Real             *dist,
+    polygons_struct  *polygons,
+    int              poly_index )
 {
     Boolean  intersects;
     Point    points[MAX_POINTS];
@@ -22,8 +34,6 @@ public  Boolean   intersect_ray_polygon( ray_origin, ray_direction,
     Real     n_dot_d, t, plane_const;
     Point    centroid, pt;
     int      ind, p, start_index, end_index, size;
-    void     find_polygon_normal();
-    void     get_points_centroid();
 
     intersects = FALSE;
 
@@ -37,7 +47,7 @@ public  Boolean   intersect_ray_polygon( ray_origin, ray_direction,
 
         if( size > MAX_POINTS )
         {
-            PRINT( "Warning: awfully big polygon, size = %d\n", size );
+            print( "Warning: awfully big polygon, size = %d\n", size );
             size = MAX_POINTS;
             end_index = start_index + size - 1;
         }
@@ -76,11 +86,11 @@ public  Boolean   intersect_ray_polygon( ray_origin, ray_direction,
     return( intersects );
 }
 
-private  Boolean  point_within_polygon( pt, n_points, points, polygon_normal )
-    Point   *pt;
-    int     n_points;
-    Point   points[];
-    Vector  *polygon_normal;
+private  Boolean  point_within_polygon(
+    Point   *pt,
+    int     n_points,
+    Point   points[],
+    Vector  *polygon_normal )
 {
     Boolean  intersects;
     Real     nx, ny, nz, max_val;
@@ -120,10 +130,11 @@ private  Boolean  point_within_polygon( pt, n_points, points, polygon_normal )
     return( intersects );
 }
 
-private  Boolean  point_within_triangle_2d( pt, i1, i2, points )
-    Point   *pt;
-    int     i1, i2;
-    Point   points[];
+private  Boolean  point_within_triangle_2d(
+    Point   *pt,
+    int     i1,
+    int     i2,
+    Point   points[] )
 {
     Boolean  intersects;
     Real     alpha, beta, u0, u1, u2, v0, v1, v2, bottom;
@@ -171,11 +182,12 @@ private  Boolean  point_within_triangle_2d( pt, i1, i2, points )
     return( intersects );
 }
 
-private  Boolean  point_within_polygon_2d( pt, i1, i2, n_points, points )
-    Point   *pt;
-    int     i1, i2;
-    int     n_points;
-    Point   points[];
+private  Boolean  point_within_polygon_2d(
+    Point   *pt,
+    int     i1,
+    int     i2,
+    int     n_points,
+    Point   points[] )
 {
     Boolean  intersects;
     Real     x, y, x1, y1, x2, y2, x_inter, dy;

@@ -1,7 +1,7 @@
 #ifndef  DEF_GEOMETRY
 #define  DEF_GEOMETRY
 
-#include  <def_mni.h>
+#include  <def_basic.h>
 #include  <def_geom_structs.h>
 #include  <def_math.h>
 

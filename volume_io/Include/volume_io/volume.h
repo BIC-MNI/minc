@@ -1,7 +1,8 @@
 #ifndef  DEF_VOLUME
 #define  DEF_VOLUME
 
-#include  <def_mni.h>
+#include  <def_basic.h>
+#include  <def_geom_structs.h>
 
 /* recognized file formats */
 
@@ -21,6 +22,8 @@ typedef  struct
     unsigned char   ***byte_data;                /* only one of these is used */
     unsigned short  ***short_data;               /* at a time (could be union)*/
 
+    int             min_value;                   /* minimum value in file */
+    int             max_value;                   /* maximum value in file */
     Real            value_scale;                 /* if values scaled on input,*/
     Real            value_translation;           /* orig = new * scale + trans*/
     int             sizes[N_DIMENSIONS];         /* n voxels in 3 directions */

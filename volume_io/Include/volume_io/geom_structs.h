@@ -68,6 +68,36 @@ typedef  unsigned  long    Colour;
                        get_Colour_g(col) * factor,    \
                        get_Colour_b(col) * factor )
 
+#define  MULT_COLOURS( prod, c1, c2 )                  \
+        { \
+            Real r, g, b, r1, g1, b1, r2, g2, b2; \
+            r1 = get_Colour_r_0_1(c1); \
+            g1 = get_Colour_g_0_1(c1); \
+            b1 = get_Colour_b_0_1(c1); \
+            r2 = get_Colour_r_0_1(c2); \
+            g2 = get_Colour_g_0_1(c2); \
+            b2 = get_Colour_b_0_1(c2); \
+            r = r1 * r2; \
+            g = g1 * g2; \
+            b = b1 * b2; \
+            (prod) = make_Colour( r, g, b ); \
+        }
+
+#define  ADD_COLOURS( sum, c1, c2 )                  \
+        { \
+            int r, g, b, r1, g1, b1, r2, g2, b2; \
+            r1 = get_Colour_r(c1); \
+            g1 = get_Colour_g(c1); \
+            b1 = get_Colour_b(c1); \
+            r2 = get_Colour_r(c2); \
+            g2 = get_Colour_g(c2); \
+            b2 = get_Colour_b(c2); \
+            r = r1 + r2; \
+            g = g1 + g2; \
+            b = b1 + b2; \
+            (sum) = make_Colour( r, g, b ); \
+        }
+
 typedef  struct
 {
     float   a, d, s;

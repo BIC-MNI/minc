@@ -20,7 +20,7 @@
 
 #ifndef NO_DEBUG_ALLOC
 
-#include  <def_mni.h>
+#include  <def_basic.h>
 
 void      record_ptr( void *, int, char [], int );
 void      change_ptr( void *, void *, int, char [], int );

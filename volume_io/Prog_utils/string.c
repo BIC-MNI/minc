@@ -145,3 +145,24 @@ public  void  get_upper_case_string(
 
     upper_case[i] = (char) 0;
 }
+
+public  Boolean  blank_string(
+    char   string[] )
+{
+    int      i;
+    Boolean  blank;
+
+    blank = TRUE;
+    i = 0;
+    while( string[i] != (char) 0 )
+    {
+        if( string[i] != ' ' && string[i] != '\t' && string[i] != '\n' )
+        {
+            blank = FALSE;
+            break;
+        }
+        ++i;
+    }
+
+    return( blank );
+}

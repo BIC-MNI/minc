@@ -146,14 +146,16 @@ typedef  char     String[MAX_STRING_LENGTH+1];
 typedef enum { 
                OK,
                ERROR,
-               INTERNAL_ERROR
+               INTERNAL_ERROR,
+               QUIT
              } Status;
 
 #define  HANDLE_INTERNAL_ERROR( X )                                           \
          {                                                                    \
-             set_print_function( NULL );                                      \
+             push_print_function();                                      \
              print( "Internal error:  %s\n", X );                             \
              abort_if_allowed();                                              \
+             pop_print_function();                                      \
          }
 
 #endif

@@ -21,6 +21,30 @@ public  void  make_identity_transform( Transform   *transform )
     Transform_elem( *transform, 3, 3 ) = 1.0;
 }
 
+public  Boolean  close_to_identity(
+    Transform   *transform )
+{
+    Boolean    close;
+    Transform  identity;
+    int        i, j;
+
+    make_identity_transform( &identity );
+
+    close = TRUE;
+
+    for_less( i, 0, 4 )
+    {
+        for_less( j, 0, 4 )
+        {
+            if( !numerically_close(Transform_elem(identity,i,j),
+                                   Transform_elem(*transform,i,j), 1.0e-3) )
+                close = FALSE;
+        }
+    }
+
+    return( close );
+}
+
 public  void  make_scale_transform( 
     Real        sx,
     Real        sy,
@@ -220,6 +244,51 @@ public  void   make_change_from_bases_transform(
     Transform_elem( *transform, 3, 1 ) = 0.0;
     Transform_elem( *transform, 3, 2 ) = 0.0;
     Transform_elem( *transform, 3, 3 ) = 1.0;
+}
+
+public  void   compute_inverse_of_orthogonal_transform(
+    Transform  *transform,
+    Transform  *inverse )
+{
+    Real   x_trans, y_trans, z_trans;
+
+    x_trans = -Transform_elem( *transform, 0, 0 ) *
+               Transform_elem( *transform, 0, 3 ) -
+               Transform_elem( *transform, 0, 1 ) *
+               Transform_elem( *transform, 1, 3 ) -
+               Transform_elem( *transform, 0, 2 ) *
+               Transform_elem( *transform, 2, 3 );
+
+    y_trans = -Transform_elem( *transform, 1, 0 ) *
+               Transform_elem( *transform, 0, 3 ) -
+               Transform_elem( *transform, 1, 1 ) *
+               Transform_elem( *transform, 1, 3 ) -
+               Transform_elem( *transform, 1, 2 ) *
+               Transform_elem( *transform, 2, 3 );
+
+    z_trans = -Transform_elem( *transform, 2, 0 ) *
+               Transform_elem( *transform, 0, 3 ) -
+               Transform_elem( *transform, 2, 1 ) *
+               Transform_elem( *transform, 1, 3 ) -
+               Transform_elem( *transform, 2, 2 ) *
+               Transform_elem( *transform, 2, 3 );
+
+    Transform_elem( *inverse, 0, 0 ) = Transform_elem( *transform, 0, 0 );
+    Transform_elem( *inverse, 0, 1 ) = Transform_elem( *transform, 1, 0 );
+    Transform_elem( *inverse, 0, 2 ) = Transform_elem( *transform, 2, 0 );
+    Transform_elem( *inverse, 0, 3 ) = x_trans;
+    Transform_elem( *inverse, 1, 0 ) = Transform_elem( *transform, 0, 1 );
+    Transform_elem( *inverse, 1, 1 ) = Transform_elem( *transform, 1, 1 );
+    Transform_elem( *inverse, 1, 2 ) = Transform_elem( *transform, 2, 1 );
+    Transform_elem( *inverse, 1, 3 ) = y_trans;
+    Transform_elem( *inverse, 2, 0 ) = Transform_elem( *transform, 0, 2 );
+    Transform_elem( *inverse, 2, 1 ) = Transform_elem( *transform, 1, 2 );
+    Transform_elem( *inverse, 2, 2 ) = Transform_elem( *transform, 2, 2 );
+    Transform_elem( *inverse, 2, 3 ) = z_trans;
+    Transform_elem( *inverse, 3, 0 ) = 0.0;
+    Transform_elem( *inverse, 3, 1 ) = 0.0;
+    Transform_elem( *inverse, 3, 2 ) = 0.0;
+    Transform_elem( *inverse, 3, 3 ) = 1.0;
 }
 
 public  void   concat_transforms(

@@ -1,7 +1,7 @@
 #ifndef  DEF_PROGRESS
 #define  DEF_PROGRESS
 
-#include  <def_mni.h>
+#include  <def_basic.h>
 
 typedef  struct
 {

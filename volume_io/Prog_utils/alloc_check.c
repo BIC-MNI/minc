@@ -23,32 +23,32 @@
 
 #define  MEMORY_DIFFERENCE  1000000
 
-typedef  struct skip_struct
+typedef  struct skip_entry
 {
     void                    *ptr;
     int                     n_bytes;
     char                    *source_file;
     int                     line_number;
     Real                    time_of_alloc;
-    struct  skip_struct     *forward[1];
-} skip_struct;
+    struct  skip_entry      *forward[1];
+} skip_entry;
 
 typedef  struct
 {
     int            next_memory_threshold;
     int            total_memory_allocated;
-    skip_struct    *header;
+    skip_entry     *header;
     int            level;
 } alloc_struct;
 
 typedef  struct
 {
-    skip_struct   *update[MAX_SKIP_LEVELS];
+    skip_entry   *update[MAX_SKIP_LEVELS];
 } update_struct;
 
 private  void     update_total_memory( alloc_struct *, int );
 private  int      get_random_level( void );
-private  void     output_entry( FILE *, skip_struct * );
+private  void     output_entry( FILE *, skip_entry * );
 private  Boolean  size_display_enabled( void );
 
 #ifdef sgi
@@ -60,8 +60,8 @@ typedef  char      *alloc_ptr;
 #endif
 
 #define  ALLOC_SKIP_STRUCT( ptr, n_level )                                    \
-     (ptr) = (skip_struct *) malloc( (alloc_int)                              \
-                 (sizeof(skip_struct)+((n_level)-1) * sizeof(skip_struct *)) );
+     (ptr) = (skip_entry *) malloc( (alloc_int)                              \
+                 (sizeof(skip_entry)+((n_level)-1) * sizeof(skip_entry *)) );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_alloc_list
@@ -88,7 +88,7 @@ private   void  initialize_alloc_list(
     alloc_list->level = 1;
 
     for_less( i, 0, MAX_SKIP_LEVELS )
-        alloc_list->header->forward[i] = (skip_struct *) 0;
+        alloc_list->header->forward[i] = (skip_entry *) 0;
 }
 
 private  void  check_initialized_alloc_list(
@@ -124,14 +124,14 @@ private  Boolean  find_pointer_position(
     update_struct   *update )
 {
     int           i;
-    skip_struct   *x;
+    skip_entry    *x;
     Boolean       found;
 
     x = alloc_list->header;
 
     for( i = alloc_list->level-1;  i >= 0;  --i )
     {
-        while( x->forward[i] != (skip_struct *) 0 && x->forward[i]->ptr < ptr )
+        while( x->forward[i] != (skip_entry *) 0 && x->forward[i]->ptr < ptr )
         {
             x = x->forward[i];
         }
@@ -140,7 +140,7 @@ private  Boolean  find_pointer_position(
 
     x = update->update[0]->forward[0];
 
-    found = (x != (skip_struct *) 0) && (x->ptr == ptr);
+    found = (x != (skip_entry *) 0) && (x->ptr == ptr);
 
     return( found );
 }
@@ -174,7 +174,7 @@ private   void  insert_ptr_in_alloc_list(
     Real           time_of_alloc )
 {
     int           i, new_level;
-    skip_struct   *x;
+    skip_entry    *x;
 
     new_level = get_random_level();
 
@@ -223,7 +223,7 @@ private  Boolean  check_overlap(
     update_struct      *update,
     void               *ptr,
     int                n_bytes,
-    skip_struct        **entry )
+    skip_entry         **entry )
 {
     Boolean      overlap;
 
@@ -231,14 +231,14 @@ private  Boolean  check_overlap(
 
     *entry = update->update[0];
 
-    if( *entry != alloc_list->header && *entry != (skip_struct *) 0 )
+    if( *entry != alloc_list->header && *entry != (skip_entry *) 0 )
     {
         if( (void *) ((char *) (*entry)->ptr + (*entry)->n_bytes) > ptr )
              overlap = TRUE;
         else
         {
             (*entry) = (*entry)->forward[0];
-            if( *entry != (skip_struct *) 0 &&
+            if( *entry != (skip_entry *) 0 &&
                 (void *) ((char*)ptr + n_bytes) > (*entry)->ptr )
                 overlap = TRUE;
         }
@@ -274,7 +274,7 @@ private   Boolean  remove_ptr_from_alloc_list(
 {
     int           i;
     Boolean       found;
-    skip_struct   *x;
+    skip_entry    *x;
     update_struct update;
 
     found = find_pointer_position( alloc_list, ptr, &update );
@@ -300,7 +300,7 @@ private   Boolean  remove_ptr_from_alloc_list(
 
         while( alloc_list->level > 1 &&
                alloc_list->header->forward[alloc_list->level-1] ==
-                    (skip_struct *) 0 )
+                    (skip_entry *) 0 )
         {
             --alloc_list->level;
         }
@@ -340,11 +340,11 @@ private   void  delete_alloc_list(
     alloc_struct  *alloc_list )
 
 {
-    skip_struct   *ptr, *deleting;
+    skip_entry    *ptr, *deleting;
 
     ptr = alloc_list->header;
 
-    while( ptr != (skip_struct *) 0 )
+    while( ptr != (skip_entry *) 0 )
     {
         deleting = ptr;
         ptr = ptr->forward[0];
@@ -371,11 +371,11 @@ private  void  output_alloc_list(
     FILE          *file,
     alloc_struct  *alloc_list )
 {
-    skip_struct  *ptr;
+    skip_entry  *ptr;
 
     ptr = alloc_list->header->forward[0];
 
-    while( ptr != (skip_struct *) 0 )
+    while( ptr != (skip_entry *) 0 )
     {
         output_entry( file, ptr );
         ptr = ptr->forward[0];
@@ -452,7 +452,7 @@ private  void  print_source_location(
 
 private  void  output_entry(
     FILE          *file,
-    skip_struct   *entry )
+    skip_entry    *entry )
 {
     (void) fprintf( file, "%s:%d\t%g seconds\n",
                     entry->source_file,
@@ -585,7 +585,7 @@ public  void  record_ptr(
 {
     Real           current_time;
     update_struct  update_ptrs;
-    skip_struct    *entry;
+    skip_entry     *entry;
 
     if( alloc_checking_enabled() )
     {
@@ -657,7 +657,7 @@ public  void  change_ptr(
     char           *orig_source;
     int            orig_line;
     Real           time_of_alloc;
-    skip_struct    *entry;
+    skip_entry     *entry;
     update_struct  update_ptrs;
 
     if( alloc_checking_enabled() )

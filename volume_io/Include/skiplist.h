@@ -15,7 +15,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <def_mni.h>
+#include  <def_basic.h>
 
 typedef  struct  skip_struct
 {

@@ -35,6 +35,7 @@ public  void  alloc_memory(
 
         if( *ptr == (void *) 0 )
         {
+            set_print_function( NULL );
             print( "Error alloc_memory: out of memory, %d bytes.\n", n_bytes );
             abort_if_allowed();
         }
@@ -69,6 +70,7 @@ public  void  realloc_memory(
 
         if( *ptr == (void *) 0 )
         {
+            set_print_function( NULL );
             print( "Error realloc_memory: out of memory, %d bytes.\n",
                     n_bytes );
             abort_if_allowed();
@@ -125,7 +127,7 @@ public  void  abort_if_allowed( void )
 
     if( !ENV_EXISTS( "NO_ABORT" ) )
     {
-        set_print_function( 0 );
+        set_print_function( NULL );
 
         print( "Do you wish to abort (y/n): " );
         do

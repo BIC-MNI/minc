@@ -1,11 +1,23 @@
 #include  <def_mni.h>
 #include  <stdarg.h>
 
+private  void  (*saved_print_function) ( char [] );
 private  void  (*print_function) ( char [] );
 
 public  void  set_print_function( void (*function) ( char [] ) )
 {
     print_function = function;
+}
+
+public  void  push_print_function()
+{
+    saved_print_function = print_function;
+    print_function = 0;
+}
+
+public  void  pop_print_function()
+{
+    print_function = saved_print_function;
 }
 
 /* VARARGS */

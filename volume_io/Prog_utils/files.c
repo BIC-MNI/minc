@@ -115,6 +115,25 @@ public  void  expand_filename(
     }
 }
 
+public  void  remove_directories_from_filename(
+    char  input_filename[],
+    char  output_filename[] )
+{
+    int   i;
+
+    i = strlen( input_filename );
+
+    while( i > 0 && input_filename[i] != '/' )
+    {
+        --i;
+    }
+
+    if( input_filename[i] == '/' )
+        ++i;
+
+    (void) strcpy( output_filename, &input_filename[i] );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : open_file
 @INPUT      : filename
@@ -239,14 +258,18 @@ public  Status  open_file_with_default_suffix(
 private  Boolean  has_no_extension(
     char   filename[] )
 {
-    char  *str;
+    int   i;
 
-    /* skip possible .. at beginning */
+    /* skip possible '/' */
 
-    str = filename;
-    while( *str == '.' ) ++str;
+    i = strlen( filename );
 
-    return( strchr( str, '.' ) == (char *) 0 );
+    while( i > 0 && filename[i] != '/' )
+    {
+        --i;
+    }
+
+    return( strchr( &filename[i], '.' ) == (char *) 0 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

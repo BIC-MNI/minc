@@ -42,17 +42,17 @@ main()
     G_set_background_colour( window, BACKGROUND_INDEX );
 
 /*
-    G_set_colour_map_entry( window, NORMAL_PLANES, BACKGROUND_INDEX,
+    G_set_colour_map_entry( window, BACKGROUND_INDEX,
                             make_Colour(60,60,60) );
 */
 
     for_less( i, 0, 256 )
-        G_set_colour_map_entry( window, NORMAL_PLANES,
+        G_set_colour_map_entry( window,
                                 i + COLOUR_MAP_INDEX_OFFSET,
                                 make_Colour(i,i,i) );
 
-    status = initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
-                                pixel_type );
+    initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
+                       pixel_type );
 
     start = current_realtime_seconds();
 
@@ -75,8 +75,8 @@ main()
     print( "%g seconds\n", (end - start) / (Real) N_ITER );
 
 #else
-    status = initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
-                                RGB_PIXEL );
+    initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
+                       RGB_PIXEL );
 
     for_less( i, 0, 256 )
     {
@@ -111,7 +111,7 @@ main()
 
     (void) getchar();
 
-    status = delete_pixels( &pixels );
+    delete_pixels( &pixels );
 
     status = G_delete_window( window );
 

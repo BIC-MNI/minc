@@ -32,7 +32,6 @@ public  Status  initialize_mnc_input(
     double            slice_separation[N_DIMENSIONS];
     double            start_position[N_DIMENSIONS];
     double            direction_cosines[N_DIMENSIONS][N_DIMENSIONS];
-    Real              axis_spacing[N_DIMENSIONS];
     Point             origin;
     Vector            axes[N_DIMENSIONS];
     Vector            x_offset, y_offset, z_offset, start_offset;
@@ -51,6 +50,7 @@ public  Status  initialize_mnc_input(
     (void) miicv_setstr( input_info->icv, MI_ICV_SIGN, MI_UNSIGNED );
     (void) miicv_setdbl( input_info->icv, MI_ICV_VALID_MAX, 255.0 );
     (void) miicv_setdbl( input_info->icv, MI_ICV_VALID_MIN, 0.0 );
+    (void) miicv_setint( input_info->icv, MI_ICV_DO_NORM, TRUE );
 
     ncopts = 0;
     input_info->cdfid = ncopen( volume->filename, NC_NOWRITE );
@@ -137,14 +137,8 @@ public  Status  initialize_mnc_input(
 
     for_less( axis, 0, N_DIMENSIONS )
     {
-        axis_spacing[volume->axis_index_from_file[axis]] =
-                                   (Real) slice_separation[axis];
-
         volume->thickness[volume->axis_index_from_file[axis]] =
-                                   ABS( (Real) slice_separation[axis] );
-
-        volume->flip_axis[volume->axis_index_from_file[axis]] =
-                                   (slice_separation[axis] < 0.0);
+                                   (Real) slice_separation[axis];
 
         volume->sizes[volume->axis_index_from_file[axis]] =
                                    input_info->sizes_in_file[axis];
@@ -174,7 +168,7 @@ public  Status  initialize_mnc_input(
 
     CONVERT_VECTOR_TO_POINT( origin, start_offset );
 
-    create_world_transform( &origin, axes, axis_spacing,
+    create_world_transform( &origin, axes, volume->thickness,
                             &volume->voxel_to_world_transform );
 
     ALLOC( input_info->byte_slice_buffer, input_info->sizes_in_file[1] *

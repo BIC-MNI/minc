@@ -147,3 +147,17 @@ public  void  get_points_centroid(
     Point_y(*centroid) /= (Real) n_points;
     Point_z(*centroid) /= (Real) n_points;
 }
+
+public   void     reverse_vectors(
+    int       n_vectors,
+    Vector    vectors[] )
+{
+    int     i;
+
+    for_less( i, 0, n_vectors )
+    {
+        Vector_x(vectors[i]) = -Vector_x(vectors[i]);
+        Vector_y(vectors[i]) = -Vector_y(vectors[i]);
+        Vector_z(vectors[i]) = -Vector_z(vectors[i]);
+    }
+}

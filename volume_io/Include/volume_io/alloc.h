@@ -16,7 +16,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <def_mni.h>
+#include  <def_basic.h>
 #include  <def_alloc_check.h>
 
 void   alloc_memory( void **, int );

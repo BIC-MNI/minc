@@ -37,10 +37,9 @@ public  Status  initialize_free_format_input(
     char           ch;
     Real           thickness[N_DIMENSIONS];
     Point          origin;
-    Real           trans[N_DIMENSIONS], scale_axis[N_DIMENSIONS];
-    Real           x_translation, y_translation, z_translation;
+    Real           trans[N_DIMENSIONS];
     FILE           *file;
-    Boolean        flip_axis[N_DIMENSIONS], axis_valid;
+    Boolean        axis_valid;
     int            axis;
 
     status = OK;
@@ -60,9 +59,9 @@ public  Status  initialize_free_format_input(
     /* input the 3 translation values used for the voxel_to_world_transform */
 
     if( status == OK &&
-        (input_real( file, &x_translation ) != OK ||
-         input_real( file, &y_translation ) != OK ||
-         input_real( file, &z_translation ) != OK) )
+        (input_real( file, &trans[X] ) != OK ||
+         input_real( file, &trans[Y] ) != OK ||
+         input_real( file, &trans[Z] ) != OK) )
     {
         print( "Error reading x,y,z translations from %s.\n",
                volume->filename );
@@ -93,11 +92,11 @@ public  Status  initialize_free_format_input(
 
     /* read 3 lines, 1 for each axis:
 
-            number_voxels   voxel_thickness  [+-] x|y|z
+            number_voxels   +/-voxel_thickness  x|y|z
 
        where the x, y, or z is used to indicate the ordering of the axes
              within the file, with the 3rd one being the fastest varying index.
-             `-' indicates to flip the axis.
+             negative voxel thickness means flip on display 
     */
 
     if( status == OK )
@@ -113,12 +112,6 @@ public  Status  initialize_free_format_input(
 
         if( input_nonwhite_character( file, &ch ) != OK )
             break;
-
-        flip_axis[axis] = (ch == '-');
-
-        if( ch == '-' || ch == '+' )
-            if( input_nonwhite_character( file, &ch ) != OK )
-                break;
 
         axis_valid = TRUE;
 
@@ -205,31 +198,22 @@ public  Status  initialize_free_format_input(
                                  volume_input->sizes_in_file[axis];
             volume->thickness[volume->axis_index_from_file[axis]] =
                                                      thickness[axis];
-            volume->flip_axis[volume->axis_index_from_file[axis]] =
-                                                     flip_axis[axis];
         }
 
         for_less( axis, 0, N_DIMENSIONS )
         {
-            if( volume->flip_axis[axis] )
+            if( volume->thickness[axis] < 0.0 )
             {
-                scale_axis[axis] = -volume->thickness[axis];
-                trans[axis] = volume->thickness[axis] *
-                                  (Real) (volume->sizes[axis]-1);
-            }
-            else
-            {
-                scale_axis[axis] = volume->thickness[axis];
-                trans[axis] = 0.0;
+                trans[axis] += -volume->thickness[axis] *
+                               (Real) (volume->sizes[axis]-1);
             }
         }
 
-        make_scale_transform( scale_axis[X],
-                              scale_axis[Y],
-                              scale_axis[Z],
+        make_scale_transform( volume->thickness[X],
+                              volume->thickness[Y],
+                              volume->thickness[Z],
                               &volume->voxel_to_world_transform );
-        fill_Point( origin, trans[X] + x_translation,
-                      trans[Y] + y_translation, trans[Z] + z_translation );
+        fill_Point( origin, trans[X], trans[Y], trans[Z] );
         set_transform_origin( &volume->voxel_to_world_transform, &origin );
     }
 
