@@ -29,11 +29,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char files_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.6 1995-07-31 13:44:33 david Exp $";
+static char files_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.7 2000-01-20 20:22:26 neelin Exp $";
 #endif
 
 #include  <stdio.h>
-#include  <basic.h>
+#include  <volume_io/basic.h>
 
 typedef  enum  { ASCII_FORMAT, BINARY_FORMAT }          File_formats;
 

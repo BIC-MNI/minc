@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.49 1997-08-13 13:21:29 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.50 2000-01-20 20:22:27 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -35,8 +35,8 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #define  cmode  nc_cmode
 #include  <minc.h>
 #undef  cmode
-#include  <transforms.h>
-#include  <multidim.h>
+#include  <volume_io/transforms.h>
+#include  <volume_io/multidim.h>
 
 typedef  struct
 {
@@ -46,7 +46,7 @@ typedef  struct
     BOOLEAN  use_volume_starts_and_steps;
 } minc_output_options;
 
-#include  <volume_cache.h>
+#include  <volume_io/volume_cache.h>
 
 extern  STRING   XYZ_dimension_names[];
 extern  STRING   File_order_dimension_names[];

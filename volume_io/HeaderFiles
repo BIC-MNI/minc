@@ -1,4 +1,9 @@
-HEADERS = \
+# The master header gets installed into $(INSTALL_INCDIR), while the
+# rest go into a subdirectory, $(INSTALL_INCDIR)/volume_io
+
+MASTER_HEADER = Include/volume_io.h
+
+VOLIO_HEADERS = \
    Include/alloc.h \
    Include/arrays.h \
    Include/basic.h \
@@ -14,5 +19,4 @@ HEADERS = \
    Include/transforms.h \
    Include/vol_io_prototypes.h \
    Include/volume.h \
-   Include/volume_cache.h \
-   Include/volume_io.h
+   Include/volume_cache.h

@@ -28,10 +28,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.10 1998-11-03 15:39:07 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.11 2000-01-20 20:22:25 neelin Exp $";
 #endif
 
-#include  <alloc.h>
+#include  <volume_io/alloc.h>
 
 #define  DEFAULT_CHUNK_SIZE    100
 

@@ -17,7 +17,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.9 1998-11-03 16:22:23 david Exp $";
+static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.10 2000-01-20 20:22:27 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,22 +33,22 @@ static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Includ
 @MODIFIED   :  
 ---------------------------------------------------------------------------- */
 
-#include  <basic.h>
-#include  <string_funcs.h>
-#include  <files.h>
-#include  <arrays.h>
-#include  <geom_structs.h>
-#include  <progress.h>
-#include  <geometry.h>
-#include  <volume.h>
-#include  <transforms.h>
+#include  <volume_io/basic.h>
+#include  <volume_io/string_funcs.h>
+#include  <volume_io/files.h>
+#include  <volume_io/arrays.h>
+#include  <volume_io/geom_structs.h>
+#include  <volume_io/progress.h>
+#include  <volume_io/geometry.h>
+#include  <volume_io/volume.h>
+#include  <volume_io/transforms.h>
 
 #ifndef  public
 #define       public   extern
 #define       public_was_defined_here
 #endif
 
-#include  <vol_io_prototypes.h>
+#include  <volume_io/vol_io_prototypes.h>
 
 #ifdef  public_was_defined_here
 #undef       public

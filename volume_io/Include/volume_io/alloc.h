@@ -29,10 +29,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.15 1997-08-13 13:21:30 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.16 2000-01-20 20:22:25 neelin Exp $";
 #endif
 
-#include  <basic.h>
+#include  <volume_io/basic.h>
 #include  <stdlib.h>
 
 #ifdef NO_DEBUG_ALLOC

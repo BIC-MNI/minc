@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.30 1997-08-13 13:21:30 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.31 2000-01-20 20:22:25 neelin Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -41,8 +41,8 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 #include  <memory.h>     /* --- for memcpy, etc. */
 #endif
 
-#include  <def_math.h>
-#include  <system_dependent.h>
+#include  <volume_io/def_math.h>
+#include  <volume_io/system_dependent.h>
 
 /* --------- define  TRUE and FALSE ------------------------ */
 

@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.7 1996-02-28 16:03:53 david Exp $";
+static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.8 2000-01-20 20:22:27 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,7 +33,7 @@ static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Inc
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <multidim.h>
+#include  <volume_io/multidim.h>
 
 typedef  enum  { SLICE_ACCESS, RANDOM_VOLUME_ACCESS }
                Cache_block_size_hints;

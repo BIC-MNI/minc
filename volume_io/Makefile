@@ -45,6 +45,11 @@ build: $(CC_VOLIO_LIB) $(PROGS)
 #Dependency on Makefile
 $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 
+# Make a symlink so that we can include <volume_io/foo.h>
+$(OBJS): Include/volume_io
+Include/volume_io:
+	ln -s . Include/volume_io
+
 .c.ln:#                                   defines the rule for creating .ln
 	$(LINT) $(LINTFLAGS) -c $<
 	@if [ "`echo $@ | sed -e 's/.*\///'`" != "$@" ]; \
@@ -84,6 +89,7 @@ mostlyclean:
 
 install: $(CC_VOLIO_LIB)
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
-	$(CP) $(CP_FLAGS) $(HEADERS) $(INSTALL_VOLIO_INCDIR)
+	$(CP) $(CP_FLAGS) Include/volume_io.h $(INSTALL_INCDIR)
+	$(CP) $(CP_FLAGS) $(VOLIO_HEADERS) $(INSTALL_VOLIO_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) \
-	      `echo $(HEADERS) | sed 's+Include/+$(INSTALL_VOLIO_INCDIR)/+g'`
+	      `echo $(VOLIO_HEADERS) | sed 's+Include/+$(INSTALL_VOLIO_INCDIR)/+g'`

@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.8 1996-05-17 19:36:12 david Exp $";
+static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.9 2000-01-20 20:22:26 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,8 +33,8 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <basic.h>
-#include  <geom_structs.h>
+#include  <volume_io/basic.h>
+#include  <volume_io/geom_structs.h>
 
 #define  _P(x) ((Point_coord_type) (x))
 #define  _R(x) ((Real) (x))

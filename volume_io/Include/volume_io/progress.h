@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.6 1995-09-13 13:24:43 david Exp $";
+static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.7 2000-01-20 20:22:26 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -32,7 +32,7 @@ static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#include  <basic.h>
+#include  <volume_io/basic.h>
 
 typedef  struct
 {
