@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.8  2004-05-25 21:33:51  bert
+ * Revision 6.9  2004-06-11 15:19:34  bert
+ * Fix attribute append operation
+ *
+ * Revision 6.8  2004/05/25 21:33:51  bert
  * Add -dappend and -sappend
  *
  * Revision 6.7  2004/02/02 18:27:06  bert
@@ -72,7 +75,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.8 2004-05-25 21:33:51 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.9 2004-06-11 15:19:34 bert Exp $";
 #endif
 
 #include "config.h"
@@ -295,12 +298,20 @@ int main(int argc, char *argv[])
              }
 
              new_type = attribute_type;
-             new_length += attribute_length;
-             tmp_value = malloc(new_length * nctypelen(new_type));
+             tmp_value = malloc((attribute_length + new_length) * nctypelen(new_type));
              ncattget(mincid, varid, attribute_name, tmp_value);
+
+             /* For string attributes, remove any trailing null
+              * character before appending.
+              */
+             if (new_type == NC_CHAR && tmp_value[attribute_length-1] == 0) {
+                 attribute_length--;
+             }
+
              memcpy(tmp_value + attribute_length * nctypelen(new_type),
                     new_value,
                     new_length * nctypelen(new_type));
+             new_length += attribute_length;
              new_value = (void *) tmp_value;
          }
 
