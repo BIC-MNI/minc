@@ -86,8 +86,9 @@ public int miicv_attach(int icvid, int cdfid, int varid)
          size_diff = icvp->user_dim_size[idim] -
                      icvp->var_dim_size[idim] * icvp->derv_dim_scale[idim];
       else
-         size_diff = icvp->user_dim_size[idim] * icvp->derv_dim_scale[idim] -
-                     icvp->var_dim_size[idim];
+         size_diff = icvp->user_dim_size[idim] - 1 -
+                     (icvp->var_dim_size[idim] - 1)
+                        / icvp->derv_dim_scale[idim];
       if ((icvp->derv_dim_off[idim]!=0) || (size_diff!=0))
          icvp->derv_do_zero = TRUE;
    }
@@ -153,6 +154,8 @@ private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
 
    /* Get dimension variable ids */
    for (idim=0; idim < MI_PRIV_IMGDIMS; idim++) {
+      {MI_CHK_ERR(ncdiminq(cdfid, icvp->var_dim[subsc[idim]], dimname, 
+                       &(icvp->var_dim_size[idim])))};
       oldncopts = ncopts; ncopts = 0;
       dimvid[idim] = ncvarid(cdfid, dimname);
       ncopts = oldncopts;
@@ -208,7 +211,7 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
 
       /* Get name of the dimension */
       {MI_CHK_ERR(ncdiminq(cdfid, icvp->var_dim[subsc[idim]], dimname, 
-                           &(icvp->var_dim_size[idim])))}
+                           NULL))}
 
       /* Should we look for dimension flipping? */
       icvp->derv_dim_flip[idim]=FALSE;
@@ -302,9 +305,8 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
             the external variable must fit completely in the user's array */
          else {
 
-            icvp->derv_dim_scale[idim] = 
-               (icvp->var_dim_size[idim] + icvp->user_dim_size[idim] - 1) 
-                      / icvp->user_dim_size[idim];
+            icvp->derv_dim_scale[idim] = 1 +
+               (icvp->var_dim_size[idim] - 1) / icvp->user_dim_size[idim];
          }
       }           /* if user wants resizing */
 
@@ -317,7 +319,7 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
          dim_grow  = icvp->derv_dim_grow[idim];
          dim_scale = icvp->derv_dim_scale[idim];
          /* Check for one of three conditions :
-               (1) smallest yet is growing, but this dim is shrinking
+               (1) smallest so far is growing, but this dim is shrinking
                (2) both are growing and this dim has smaller scale
                (3) both are shrinking and this dim has larger scale */
          if ((min_grow && !dim_grow) ||
@@ -350,7 +352,7 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
          /* Calculate remainder and split it in half */
          icvp->derv_dim_off[idim] = 
             ( icvp->user_dim_size[idim] -
-             icvp->derv_dim_grow[idim] * icvp->derv_dim_scale[idim] )
+             icvp->var_dim_size[idim] * icvp->derv_dim_scale[idim] )
                                       / 2;
       }
       /* Otherwise, shrinking. Things are complicated by the fact that
@@ -358,8 +360,8 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
       else {
          /* Calculate remainder and split it in half */
          icvp->derv_dim_off[idim] = 
-            ( icvp->user_dim_size[idim] -
-             (icvp->var_dim_size[idim] + icvp->user_dim_size[idim] - 1) 
+            ( icvp->user_dim_size[idim] - 1 -
+             (icvp->var_dim_size[idim] - 1) 
                               / icvp->derv_dim_scale[idim] ) / 2 ;
       }
 
@@ -373,7 +375,7 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
          icvp->derv_dim_step[idim] = icvp->derv_dim_grow[idim] ?
             dimstep / icvp->derv_dim_scale[idim] :
             dimstep * icvp->derv_dim_scale[idim];
-         /* Get start position for user's image - if not MIstart for
+         /* Get start position for user's image - if no MIstart for
             dimension, then assume 0.0 */
          if (miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstart)
                              == MI_ERROR)
@@ -381,6 +383,13 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
          icvp->derv_dim_start[idim] = dimstart + 
             (icvp->derv_dim_step[idim] - dimstep) / 2.0 -
                icvp->derv_dim_off[idim] * icvp->derv_dim_step[idim];
+         /* Check for flipping */
+         if (icvp->derv_dim_flip[idim]) {
+            icvp->derv_dim_step[idim] *= (-1);
+            icvp->derv_dim_start[idim] += icvp->derv_dim_step[idim] *
+               ((icvp->user_dim_size[idim]>0) ? 
+                   icvp->user_dim_size[idim] : icvp->var_dim_size[idim]);
+         }
       }             /* if found MIstep */
       ncopts = oldncopts;
 
@@ -528,7 +537,7 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    void *ovecptr[MAX_VAR_DIMS];
    long *end;                   /* Pointer to array of dimension ends */
    int fastdim;                 /* Dimension that varies fastest */
-   long i;                      /* Buffer subscript */
+   long ipix;                   /* Buffer subscript */
    int idim;                    /* Dimension subscript */
    int notmodified;             /* First dimension not reset */
 
@@ -554,7 +563,7 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
 
    /* Loop through data */
 
-   while (counter[0] < dcp->end[0]) {
+   while (counter[0] < end[0]) {
 
       /* Compress data by averaging if needed */
       if (!dcp->do_compress) {
@@ -563,8 +572,8 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
       else {
          sum1 = 0.0;
          sum0 = 0.0;
-         for (i=0; i<dcp->in_pix_num; i++) {
-            ptr=(void *) ((char *)iptr + dcp->in_pix_off[i]);
+         for (ipix=0; ipix<dcp->in_pix_num; ipix++) {
+            ptr=(void *) ((char *)iptr + dcp->in_pix_off[ipix]);
 
             /* Check if we are outside the buffer.
                If we are looking before the buffer, then we need to
@@ -579,11 +588,11 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
                }
             }
             else if (ptr>dcp->in_pix_last) {
-               break;
+               continue;
             }
             else {
                {MI_TO_DOUBLE(dvalue, dcp->intype, dcp->insign, ptr)}
-            }    /* If out of buffer */
+            }
 
             /* Add in the value */
             sum1 += dvalue;
@@ -607,22 +616,19 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
          {MI_FROM_DOUBLE(dvalue, dcp->outtype, dcp->outsign, optr)}
       }
       else {
-         for (i=0; i<dcp->out_pix_num; i++) {
-            ptr=(void *) ((char *)optr + dcp->out_pix_off[i]);
+         for (ipix=0; ipix<dcp->out_pix_num; ipix++) {
+            ptr=(void *) ((char *)optr + dcp->out_pix_off[ipix]);
 
             /* Check if we are outside the buffer. */
-            if (ptr>dcp->out_pix_last) {
-               break;
-            }
-            else if (ptr>=dcp->out_pix_first) {
+            if ((ptr>=dcp->out_pix_first) && (ptr<=dcp->out_pix_last)) {
                {MI_FROM_DOUBLE(dvalue, dcp->outtype, dcp->outsign, ptr)}
-            }    /* If out of buffer */
+            }
 
          }         /* Foreach pixel to expand */
       }         /* if expand */
 
       /* Increment the counter and the pointers */
-      if ((++counter[fastdim]) < dcp->end[fastdim]) {
+      if ((++counter[fastdim]) < end[fastdim]) {
          optr = (void *) ((char *) optr + dcp->ostep[fastdim]);
          iptr = (void *) ((char *) iptr + dcp->istep[fastdim]);
       }
@@ -712,12 +718,17 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
 
    fastdim = icvp->derv_dimconv_fastdim;
 
+   /* Get the indices of high and low image dimensions */
+   imgdim_high=icvp->var_ndims-1;
+   if (icvp->var_is_vector) imgdim_high--;
+   imgdim_low = imgdim_high - MI_PRIV_IMGDIMS + 1;
+
    /* Get the buffer sizes */
    buffer_len = icvp->var_typelen;
    values_len = icvp->user_typelen;
    for (idim=0; idim < icvp->var_ndims; idim++) {
       buffer_len *= bufcount[idim];
-      if (idim<=dcp->fastdim)
+      if (idim<=fastdim)
          values_len *= count[idim];
    }
 
@@ -731,12 +742,15 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
       dcp->usr_step[idim] = dcp->usr_step[idim+1] * count[idim+1];
    }
 
+   /* Set sign of buffer steps for flipping, if needed */
+   for (idim=imgdim_low; idim < imgdim_high; idim++) {
+      if (icvp->derv_dim_flip[imgdim_high-idim])
+         dcp->buf_step[idim] *= (-1);
+   }
+
    /* Get the pointers to the start of buffers and the number of pixels
       in each dimension (count a pixel as one expansion/compression -
       one time through the loop below) */
-   imgdim_high=icvp->var_ndims-1;
-   if (icvp->var_is_vector && icvp->user_do_scalar) imgdim_high--;
-   imgdim_low = imgdim_high - MI_PRIV_IMGDIMS;
    buffer_off = 0;
    values_off = 0;
    for (idim=0; idim <= fastdim; idim++) {
@@ -746,19 +760,24 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
          values_index = bufstart[idim] - start[idim];
       }
       else {
-         scale = icvp->derv_dim_scale[idim];
-         offset = icvp->derv_dim_off[idim];
-         if (icvp->derv_dim_grow[idim]) {
+         jdim = imgdim_high - idim;
+         scale = icvp->derv_dim_scale[jdim];
+         offset = icvp->derv_dim_off[jdim];
+         if (icvp->derv_dim_grow[jdim]) {
             dcp->end[idim] = bufcount[idim];
             buffer_index = 0;
             values_index = bufstart[idim]*scale - start[idim] + offset;
          }
          else {
-            dcp->end[idim] = (bufcount[idim] + scale - 1 + 
-                              bufstart[idim]%scale); 
+            dcp->end[idim] = (bufcount[idim] - 1 + bufstart[idim]%scale) 
+                                     / scale + 1; 
             buffer_index = -(bufstart[idim] % scale);
             values_index = bufstart[idim]/scale - start[idim] + offset;
          }
+         /* Change index for flipping, if needed. Note that buf_step will
+            be negative if flipping is needed. */
+         if (icvp->derv_dim_flip[jdim])
+            buffer_index -= (bufcount[idim]-1);
       }
       buffer_off += buffer_index * dcp->buf_step[idim];
       values_off += values_index * dcp->usr_step[idim];
@@ -774,23 +793,23 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
          var_dcount[var_fd]=0;
          var_dend[var_fd]=icvp->var_vector_size;
       }
-      for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
-         jdim=MI_PRIV_IMGDIMS - idim - 1;
-         var_dcount[jdim] = 0;
-         usr_dcount[jdim] = 0;
-         var_dend[jdim] = (icvp->derv_dim_grow[idim] ?
-                           1 : icvp->derv_dim_scale[idim]);
-         usr_dend[jdim] = (icvp->derv_dim_grow[idim] ?
-                           icvp->derv_dim_scale[idim] : 1);
+      for (jdim=0; jdim<MI_PRIV_IMGDIMS; jdim++) {
+         idim=MI_PRIV_IMGDIMS - jdim - 1;
+         var_dcount[idim] = 0;
+         usr_dcount[idim] = 0;
+         var_dend[idim] = (icvp->derv_dim_grow[jdim] ?
+                           1 : icvp->derv_dim_scale[jdim]);
+         usr_dend[idim] = (icvp->derv_dim_grow[jdim] ?
+                           icvp->derv_dim_scale[jdim] : 1);
       }
 
       /* Loop through variable buffer pixels */
       pixcount=0;
-      dshift = icvp->var_ndims - var_fd - 1;
+      dshift = imgdim_low;
       for (ipix=0; ipix<icvp->derv_var_pix_num; ipix++) {
          icvp->derv_var_pix_off[ipix] = pixcount;
          pixcount += dcp->buf_step[var_fd+dshift];
-         if ((var_dcount[var_fd]++) > var_dend[var_fd]) {
+         if ((++var_dcount[var_fd]) >= var_dend[var_fd]) {
             idim=var_fd;
             while ((idim>0) && (var_dcount[idim]>=var_dend[idim])) {
                var_dcount[idim]=0;
@@ -803,11 +822,11 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
 
       /* Loop through user buffer pixels */
       pixcount=0;
-      dshift = icvp->var_ndims - usr_fd - 1;
+      dshift = imgdim_low;
       for (ipix=0; ipix<icvp->derv_usr_pix_num; ipix++) {
          icvp->derv_usr_pix_off[ipix] = pixcount;
          pixcount += dcp->usr_step[usr_fd+dshift];
-         if ((++usr_dcount[usr_fd]) > usr_dend[usr_fd]) {
+         if ((++usr_dcount[usr_fd]) >= usr_dend[usr_fd]) {
             idim=usr_fd;
             while ((idim>0) && (usr_dcount[idim]>=usr_dend[idim])) {
                usr_dcount[idim]=0;
@@ -825,11 +844,11 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
       dcp->in_pix_num = icvp->derv_var_pix_num;
       dcp->in_pix_off = icvp->derv_var_pix_off;
       dcp->in_pix_first = buffer;
-      dcp->in_pix_last = (void *) ((char *)buffer + buffer_len);
+      dcp->in_pix_last = (void *) ((char *)buffer + buffer_len - 1);
       dcp->out_pix_num = icvp->derv_usr_pix_num;
       dcp->out_pix_off = icvp->derv_usr_pix_off;
       dcp->out_pix_first = values;
-      dcp->out_pix_last = (void *) ((char *)values + values_len);
+      dcp->out_pix_last = (void *) ((char *)values + values_len - 1);
       dcp->intype = icvp->var_type;
       dcp->insign = icvp->var_sign;
       dcp->outtype = icvp->user_type;
@@ -843,11 +862,11 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
       dcp->out_pix_num = icvp->derv_var_pix_num;
       dcp->out_pix_off = icvp->derv_var_pix_off;
       dcp->out_pix_first = buffer;
-      dcp->out_pix_last = (void *) ((char *)buffer + buffer_len);
+      dcp->out_pix_last = (void *) ((char *)buffer + buffer_len - 1);
       dcp->in_pix_num = icvp->derv_usr_pix_num;
       dcp->in_pix_off = icvp->derv_usr_pix_off;
       dcp->in_pix_first = values;
-      dcp->in_pix_last = (void *) ((char *)values + values_len);
+      dcp->in_pix_last = (void *) ((char *)values + values_len - 1);
       dcp->outtype = icvp->var_type;
       dcp->outsign = icvp->var_sign;
       dcp->intype = icvp->user_type;

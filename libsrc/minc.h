@@ -154,6 +154,9 @@
 /* Constants for image conversion variable (icv) properties */
 /* Maximum number of icv's allowed */
 #define MI_MAX_NUM_ICV MAX_NC_OPEN
+/* Default max and min for normalization */
+#define MI_DEFAULT_MAX 1.0
+#define MI_DEFAULT_MIN 0.0
 /* For converting data type */
 #define MI_ICV_TYPE             1
 #define MI_ICV_SIGN             2
@@ -165,23 +168,26 @@
 #define MI_ICV_USER_NORM        7
 #define MI_ICV_IMAGE_MAX        8
 #define MI_ICV_IMAGE_MIN        9
+/* Values actually used in normalization - read-only */
+#define MI_ICV_NORM_MAX        10
+#define MI_ICV_NORM_MIN        11
 /* For doing dimension conversions */
-#define MI_ICV_DO_DIM_CONV     10
+#define MI_ICV_DO_DIM_CONV     12
 /* For converting vector fields to scalar */
-#define MI_ICV_DO_SCALAR       11
+#define MI_ICV_DO_SCALAR       13
 /* For flipping axis direction */
-#define MI_ICV_XDIM_DIR        12
-#define MI_ICV_YDIM_DIR        13
-#define MI_ICV_ZDIM_DIR        14
+#define MI_ICV_XDIM_DIR        14
+#define MI_ICV_YDIM_DIR        15
+#define MI_ICV_ZDIM_DIR        16
 /* For changing size of first two dimensions (excluding MIvector_dimension) */
-#define MI_ICV_ADIM_SIZE       15
-#define MI_ICV_BDIM_SIZE       16
+#define MI_ICV_ADIM_SIZE       17
+#define MI_ICV_BDIM_SIZE       18
+#define MI_ICV_KEEP_ASPECT     19
 /* The pixel size and location of first two dimensions (these are readonly) */
-#define MI_ICV_ADIM_STEP       17
-#define MI_ICV_BDIM_STEP       18
-#define MI_ICV_ADIM_START      19
-#define MI_ICV_BDIM_START      20
-#define MI_ICV_KEEP_ASPECT     21
+#define MI_ICV_ADIM_STEP       20
+#define MI_ICV_BDIM_STEP       21
+#define MI_ICV_ADIM_START      22
+#define MI_ICV_BDIM_START      23
 /* Constants that can be used as values for the above properties. */
 /* Possible values for MI_ICV_?DIM_DIR */
 #define MI_ICV_POSITIVE         1

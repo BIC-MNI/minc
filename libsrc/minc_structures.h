@@ -75,6 +75,8 @@ struct mi_icv_struct {
                                              variable */
 
    /* Fields derived from user values and variable values */
+   int     derv_usr_float; /* Are user or variable values floating point? */
+   int     derv_var_float;
    double  derv_imgmax;    /* Range for normalization */
    double  derv_imgmin;
    int     derv_firstdim;  /* First dimension (counting from fastest, ie.
@@ -135,7 +137,6 @@ typedef struct {
 
 /* Structure for passing values for MI_icv_dimconvert */
 typedef struct {
-   int fastdim;                 /* Fastest varying dimension */
    int do_compress, do_expand;
    long end[MAX_VAR_DIMS];
    long in_pix_num,     out_pix_num; /* Variables for compressing/expanding */

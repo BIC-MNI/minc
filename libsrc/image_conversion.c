@@ -21,8 +21,12 @@
               private :
                  MI_icv_get_type
                  MI_icv_get_vrange
-                 MI_icv_get_norm
                  MI_get_default_range
+                 MI_icv_get_norm
+                 MI_icv_access
+                 MI_icv_zero_buffer
+                 MI_icv_coords_tovar
+                 MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
@@ -89,8 +93,8 @@ public int miicv_create()
                                             icvp->user_sign);
    icvp->user_do_norm = FALSE;
    icvp->user_user_norm = FALSE;
-   icvp->user_imgmax = 1.0;
-   icvp->user_imgmin = 0.0;
+   icvp->user_imgmax = MI_DEFAULT_MAX;
+   icvp->user_imgmin = MI_DEFAULT_MIN;
    icvp->user_do_dimconv = FALSE;
    icvp->user_do_scalar = TRUE;
    icvp->user_xdim_dir = MI_ICV_POSITIVE;
@@ -106,6 +110,8 @@ public int miicv_create()
    icvp->varid = MI_ERROR;            /* unattached icv */
 
    /* Values that can be read by user */
+   icvp->derv_imgmax = MI_DEFAULT_MAX;
+   icvp->derv_imgmin = MI_DEFAULT_MIN;
    for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
       icvp->derv_dim_step[idim] = 0.0;
       icvp->derv_dim_start[idim] = 0.0;
@@ -274,7 +280,7 @@ public int miicv_set(int icvid, int icv_property, void *value)
    case MI_ICV_ZDIM_DIR: ip = &(icvp->user_zdim_dir);
       ival = *((int *) value);
       *ip = ((ival==MI_ICV_POSITIVE) || (ival==MI_ICV_NEGATIVE)) ?
-                   ival : MI_ICV_ANYSIZE;
+                   ival : MI_ICV_ANYDIR;
       break;
    case MI_ICV_ADIM_SIZE:
       icvp->user_dim_size[0] = *((long *) value); break;
@@ -337,6 +343,10 @@ public int miicv_inq(int icvid, int icv_property, void *value)
       *((double *) value) = icvp->user_imgmax; break;
    case MI_ICV_IMAGE_MIN:
       *((double *) value) = icvp->user_imgmin; break;
+   case MI_ICV_NORM_MAX:
+      *((double *) value) = icvp->derv_imgmax; break;
+   case MI_ICV_NORM_MIN:
+      *((double *) value) = icvp->derv_imgmin; break;
    case MI_ICV_DO_DIM_CONV:
       *((int *) value) = icvp->user_do_dimconv; break;
    case MI_ICV_DO_SCALAR:
@@ -393,7 +403,7 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    mi_icv_type *icvp;         /* Pointer to icv structure */
    int idim;
 
-   MI_SAVE_ROUTINE_NAME("miicv_attach");
+   MI_SAVE_ROUTINE_NAME("miicv_ndattach");
 
    /* Check icv id */
    if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
@@ -405,11 +415,19 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    /* Inquire about the variable's type, sign and number of dimensions */
    {MI_CHK_ERR(MI_icv_get_type(icvp, cdfid, varid))}
 
-   /* Get valid range */
-   {MI_CHK_ERR(MI_icv_get_vrange(icvp, cdfid, varid))}
+   /* If not doing range calculations, just set derv_firstdim for
+      MI_icv_access, otherwise, call routines to calculate range and 
+      normalization */
+   if (!icvp->user_do_range) {
+      icvp->derv_firstdim = -1;
+   }
+   else {
+      /* Get valid range */
+      {MI_CHK_ERR(MI_icv_get_vrange(icvp, cdfid, varid))}
           
-   /* Get normalization info */
-   {MI_CHK_ERR(MI_icv_get_norm(icvp, cdfid, varid))}
+      /* Get normalization info */
+      {MI_CHK_ERR(MI_icv_get_norm(icvp, cdfid, varid))}
+   }
 
    /* Set other fields to defaults */
    icvp->var_is_vector = FALSE;
@@ -571,7 +589,7 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
       case NC_BYTE:
          limit = (sign == MI_PRIV_SIGNED) ? SCHAR_MAX : UCHAR_MAX; break;
       default:
-         limit = 1.0; break;
+         limit = MI_DEFAULT_MAX; break;
       }
    }
    else if (STRINGS_EQUAL(what, MIvalid_min)) {
@@ -583,13 +601,13 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
       case NC_BYTE:
          limit = (sign == MI_PRIV_SIGNED) ? SCHAR_MIN : 0; break;
       default:
-         limit = 0.0; break;
+         limit = MI_DEFAULT_MIN; break;
       }
    }
    else {
       ncopts = NC_VERBOSE | NC_FATAL;
       MI_LOG_PKG_ERROR2(-1,"MINC bug - this line should never be printed");
-      limit = 0.0;
+      limit = MI_DEFAULT_MIN;
    }
 
    MI_RETURN(limit);
@@ -626,6 +644,13 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 
    MI_SAVE_ROUTINE_NAME("MI_icv_get_norm");
 
+   /* Check for floating point or double precision values for user or
+      in variable - set flag to not do normalization if needed */
+   icvp->derv_var_float = ((icvp->var_type == NC_DOUBLE) ||
+                           (icvp->var_type == NC_FLOAT));
+   icvp->derv_usr_float = ((icvp->user_type == NC_DOUBLE) ||
+                           (icvp->user_type == NC_FLOAT));
+
    /* Initialize first dimension over which MIimagemax or MIimagemin
       vary - assume that they don't vary at all */
    icvp->derv_firstdim=(-1);
@@ -640,8 +665,8 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 
    /* Check to see if normalization to variable max, min should be done */
    if (!icvp->user_do_norm) {
-      icvp->derv_imgmax = 1.0;
-      icvp->derv_imgmin = 0.0;
+      icvp->derv_imgmax = MI_DEFAULT_MAX;
+      icvp->derv_imgmin = MI_DEFAULT_MIN;
    }
    else if (icvp->user_user_norm) {
       icvp->derv_imgmax = icvp->user_imgmax;
@@ -655,17 +680,8 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       /* No max/min variables, so use valid_range values for float/double
          and 0, 1 for integer types */
       if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
-         switch (icvp->var_type) {
-         case NC_DOUBLE:
-         case NC_FLOAT:
-            icvp->derv_imgmax = icvp->var_vmax;
-            icvp->derv_imgmin = icvp->var_vmin;
-            break;
-         default:
-            icvp->derv_imgmax = 1.0;
-            icvp->derv_imgmin = 0.0;
-            break;
-         }
+         icvp->derv_imgmax = icvp->var_vmax;
+         icvp->derv_imgmin = icvp->var_vmin;
       }
 
       /* If the variables are there then get the max and min */
@@ -735,6 +751,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 public int miicv_detach(int icvid)
 {
    mi_icv_type *icvp;
+   int idim;
 
    MI_SAVE_ROUTINE_NAME("miicv_detach");
 
@@ -744,6 +761,14 @@ public int miicv_detach(int icvid)
    /* Free the pixel offset arrays */
    if (icvp->derv_var_pix_off != NULL) FREE(icvp->derv_var_pix_off);
    if (icvp->derv_usr_pix_off != NULL) FREE(icvp->derv_usr_pix_off);
+
+   /* Reset values that are read-only (and set when attached) */
+   icvp->derv_imgmax = MI_DEFAULT_MAX;
+   icvp->derv_imgmin = MI_DEFAULT_MIN;
+   for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
+      icvp->derv_dim_step[idim] = 0.0;
+      icvp->derv_dim_start[idim] = 0.0;
+   }
 
    /* Set cdfid field to MI_ERROR to indicate that icv is detached */
    minc_icv_list[icvid]->cdfid = MI_ERROR;
@@ -868,13 +893,14 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       we can get in one call is determined by the subscripts of MIimagemax
       and MIimagemin. These must be constant over the chunk that we get if
       we are doing normalization. */
-   (void) miset_coords(icvp->var_ndims, 0L, chunk_start);
-   for (idim=0; idim<icvp->var_ndims; idim++)
+   for (idim=0; idim<icvp->var_ndims; idim++) {
+      chunk_start[idim] = var_start[idim];
       var_end[idim]=var_start[idim]+var_count[idim];
+   }
    (void) miset_coords(icvp->var_ndims, 1L, chunk_count);
    for (idim=MAX(icvp->derv_firstdim+1,0); idim < icvp->var_ndims; idim++)
       chunk_count[idim]=var_count[idim];
-   firstdim= (icvp->user_do_norm) ? MAX(icvp->derv_firstdim, 0) : 0;
+   firstdim = MAX(icvp->derv_firstdim, 0);
 
    /* Loop through variable */
    while (chunk_start[0] < var_end[0]) {
@@ -996,12 +1022,11 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
          coord = icv_start[i];
          if (icvp->derv_dim_flip[j])
             coord = icvp->var_dim_size[j]-1-coord;
+         coord -= icvp->derv_dim_off[j];
          if (icvp->derv_dim_grow[j])
-            var_start[i] = coord*icvp->derv_dim_scale[j] + 
-                                    icvp->derv_dim_off[j];
+            var_start[i] = coord*icvp->derv_dim_scale[j];
          else
-            var_start[i] = coord/icvp->derv_dim_scale[j] +
-                                    icvp->derv_dim_off[j];
+            var_start[i] = coord/icvp->derv_dim_scale[j];
       }
       if (icvp->var_is_vector) {
          var_start[icvp->var_ndims-1] = (icvp->user_do_scalar ?
@@ -1050,24 +1075,56 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 ---------------------------------------------------------------------------- */
 private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 {
+   long mmcoords[MAX_VAR_DIMS];   /* Coordinates for max/min variable */
    double usr_imgmax, usr_imgmin;
    double var_imgmax, var_imgmin;
+   double usr_vmax, usr_vmin;
+   double var_vmax, var_vmin;
    double usr_scale;
    double denom;
 
    MI_SAVE_ROUTINE_NAME("MI_icv_calc_scale");
 
-   usr_imgmax=icvp->derv_imgmax;
-   usr_imgmin=icvp->derv_imgmin;
-   if ((icvp->imgmaxid==MI_ERROR) || (icvp->imgminid==MI_ERROR)) {
-      var_imgmax = icvp->var_vmax;
-      var_imgmin = icvp->var_vmin;
+   /* Set variable valid range */
+   var_vmax = icvp->var_vmax;
+   var_vmin = icvp->var_vmin;
+
+   /* Set image max/min for user and variable values depending on whether
+      normalization should be done or not */
+   if (!icvp->user_do_norm) {
+      usr_imgmax = var_imgmax = MI_DEFAULT_MAX;
+      usr_imgmin = var_imgmin = MI_DEFAULT_MIN;
    }
    else {
-      MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgmaxid, coords,
-                           NC_DOUBLE, NULL, &var_imgmax))
-      MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgminid, coords,
-                           NC_DOUBLE, NULL, &var_imgmin))
+      usr_imgmax = icvp->derv_imgmax;
+      usr_imgmin = icvp->derv_imgmin;
+      if (icvp->derv_var_float || 
+          (icvp->imgmaxid==MI_ERROR) || (icvp->imgminid==MI_ERROR)) {
+         var_imgmax = var_vmax;
+         var_imgmin = var_vmin;
+      }
+      else {
+         if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
+                                icvp->imgmaxid, mmcoords) == NULL)
+            MI_RETURN_ERROR(MI_ERROR);
+         {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgmaxid, mmcoords,
+                               NC_DOUBLE, NULL, &var_imgmax))}
+         if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
+                                icvp->imgminid, mmcoords) == NULL)
+            MI_RETURN_ERROR(MI_ERROR);
+         {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgminid, mmcoords,
+                               NC_DOUBLE, NULL, &var_imgmin))}
+      }
+   }
+
+   /* Get user valid range */
+   if (icvp->derv_usr_float) {
+      usr_vmax = usr_imgmax;
+      usr_vmin = usr_imgmin;
+   }
+   else {
+      usr_vmax = icvp->user_vmax;
+      usr_vmin = icvp->user_vmin;
    }
 
    /* Calculate scale and offset for MI_PRIV_GET */
@@ -1075,17 +1132,17 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
    /* Scale */
    denom = usr_imgmax - usr_imgmin;
    if (denom!=0.0)
-      usr_scale=(icvp->user_vmax - icvp->user_vmin) / denom;
+      usr_scale=(usr_vmax - usr_vmin) / denom;
    else
       usr_scale=0.0;
-   denom = icvp->var_vmax - icvp->var_vmin;
+   denom = var_vmax - var_vmin;
    if (denom!=0.0)
       icvp->scale = usr_scale * (var_imgmax - var_imgmin) / denom;
    else
       icvp->scale = 0.0;
 
    /* Offset */
-   icvp->offset = icvp->user_vmin - icvp->scale * icvp->var_vmin
+   icvp->offset = usr_vmin - icvp->scale * var_vmin
                 + usr_scale * (var_imgmin - usr_imgmin);
 
    /* If we want a MI_PRIV_PUT, invert */
@@ -1095,7 +1152,7 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
          icvp->scale  = 1.0/icvp->scale;
       }
       else {
-         icvp->offset = icvp->user_vmin;
+         icvp->offset = usr_vmin;
          icvp->scale  = 0.0;
       }
    }
