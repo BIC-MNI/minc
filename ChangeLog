@@ -1,4 +1,17 @@
 MINC 2:
+2004-06-08 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Avoid printing HDF5 errors on excessively long attributes.  Still
+	have to decide how best to deal with this situations - truncate, 
+	drop, or somehow convert the attribute into a dataset?  Right now
+	we will drop.
+	
+2004-06-07 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix setting of length in hdf_vardef/hdf_dimdef
+	* Handle zero-length character strings properly.  There is actually
+	a minor bug in "ncdump" which makes zero-length strings appear to
+	have length one (the bogus character will appear to match the first 
+	character in the preceding string).
+	
 2004-06-01 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fixed endian-ness issues in MINC 2.0 format.
 	
