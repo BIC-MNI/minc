@@ -13,7 +13,7 @@ main()
     text_struct       text;
     lines_struct      lines;
     polygons_struct   polygons;
-    static Surfprop   spr = { 0.4, 0.5, 0.5, 40.0, 1.0 };
+    static Surfprop   spr = { 0.4, 0.5, 0.0, 20.0, 1.0 };
     Point             point;
     Vector            normal, light_direction;
     Event_types       event_type;
@@ -36,6 +36,12 @@ main()
     Real              current_time, end_event_processing, previous_event_time;
     Real              current_realtime_seconds();
     void              sleep_program();
+    Transform         modeling_transform;
+    Transform         rotate_clockwise_transform;
+    Transform         rotate_counter_clockwise_transform;
+    void              make_identity_transform();
+    void              make_rotation_transform();
+    void              concat_transforms();
 
     status = G_create_window( "Test Window", -1, -1, -1, -1, &window );
 
@@ -92,6 +98,11 @@ main()
     /* ------------ do main loop ------------- */
     /* --------------------------------------- */
 
+    make_identity_transform( &modeling_transform );
+    make_rotation_transform( 5.0 * DEG_TO_RAD, Y, &rotate_clockwise_transform );
+    make_rotation_transform( -5.0 * DEG_TO_RAD, Y,
+                             &rotate_counter_clockwise_transform );
+
     update_required = TRUE;
     done = FALSE;
 
@@ -132,6 +143,10 @@ main()
 
                 case LEFT_MOUSE_DOWN_EVENT:
                     (void) printf( "Left mouse DOWN\n" );
+                    concat_transforms( &modeling_transform, &modeling_transform,
+                                       &rotate_clockwise_transform );
+                    G_set_modeling_transform( window, &modeling_transform );
+                    update_required = TRUE;
                     break;
 
                 case LEFT_MOUSE_UP_EVENT:
@@ -140,6 +155,10 @@ main()
 
                 case RIGHT_MOUSE_DOWN_EVENT:
                     (void) printf( "Right mouse DOWN\n" );
+                    concat_transforms( &modeling_transform, &modeling_transform,
+                                       &rotate_counter_clockwise_transform );
+                    G_set_modeling_transform( window, &modeling_transform );
+                    update_required = TRUE;
                     break;
 
                 case RIGHT_MOUSE_UP_EVENT:
