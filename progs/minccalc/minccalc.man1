@@ -244,23 +244,23 @@ For loops can be created to loop over a vector, assigning each value
 to a symbol and then evaluating an expression. This is done with
 expressions of the form
 
-   sum=0; for {i in [0:len(A))} sum=sum+A[i]; sum
+   total=0; for{i in [0:len(A))} total=total+A[i]; total
 
 which is equivalent to sum(A). Note that this is similar to using
 
-   sum=0; len{ i in [0:len(A)) | sum=sum+A[i]}; sum
+   total=0; len{i in [0:len(A)) | total=total+A[i]}; total
 
 since the for construct is actually an operator (although it is
 usually only used for changing symbol values). Note also that without 
-the final "sum", the expression would not be very useful since it would 
-only return the length of the vector. 
+the final "total", the expression would not be very useful since it would 
+only return the length of the vector.
 
 As in C, a list of expressions can be specified in curlies:
 
-   sum=sum2=0; 
+   total=total2 = 0; 
    for {i in [0:len(A))} {
-      sum=sum+A[i]; 
-      sum2=sum2+A[i]^2
+      total  = total  + A[i]; 
+      total2 = total2 + A[i]^2
    }
 
 There are also a few forms of the if-then-else construct:
@@ -279,7 +279,7 @@ The principal oddity with the for and if constructs is that unlike C,
 they must be separated from the next expression by a semicolon, even
 when an expression list in curlies is used:
 
-   for i in [0:len(A)) {sum=sum+A[i]} ; sum/len(A)
+   for i in [0:len(A)) {total=total+A[i]} ; total/len(A)
    if (A[i]>0) {result=2;} else {result=1} ; result*5
 
 An alternative way to introduce symbol names is through let-expressions. 
@@ -355,6 +355,9 @@ And using the expression file (with yet another form of if expression):
 A few things you should remember...
 
 Vector variables must start with an uppercase letter.
+
+Vector variable names must not be one of the function keywords,
+ sum, len, prod, ... etc
 
 For loops and if expressions always need to be separated from the next
 expression by a semicolon.
