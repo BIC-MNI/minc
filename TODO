@@ -1,0 +1,6 @@
+* manpage updates:
+  - rawtominc (-skip)
+  - mincstats (-max_bins -> -int_max_bins)
+  - minccalc (new functions)
+
+* check addition in rev 1.72 of volume_io/Volumes/volumes.c

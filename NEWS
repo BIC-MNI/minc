@@ -1,10 +1,13 @@
-Sun Aug  4 20:55:18 EDT 2002
-   - Added code from Colin Holmes (somewhat modified) to rawtominc to
-     support -skip option.
+		New in Release 1.1
+		------------------
 
-Mon Apr  8 16:46:34 EST 2002
-   - fixed mincstats segmentation fault when trying to close a NULL 
-     file pointer (John Sled)
+* Rawtominc has new "-skip" option, to allow skipping header information.
+
+* Mincstats option "-max_bins" renamed to "-int_max_bins", to avoid clash
+  with "-max".
+
+* Minccalc has new functions: tan, asin, acos, and atan.
+
 
 ************************************************************************
 
