@@ -3,16 +3,21 @@
 @INPUT      : argc, argv - command line arguments
 @OUTPUT     : (none)
 @RETURNS    : status
-@DESCRIPTION: Example program to copy a transverse minc volume into a byte
-              volume and ensure positive orientation for image axes.
+@DESCRIPTION: Example program to load a minc file and then save it.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincexample1.c,v $
-@MODIFIED   : Revision 1.3  1993-08-26 12:31:17  neelin
-@MODIFIED   : Added define so that minc_def.h is optionally included.
+@MODIFIED   : Revision 1.4  1993-08-30 11:00:55  neelin
+@MODIFIED   : Added reading of dimension step and start.
+@MODIFIED   : Added printing of volume information in main program.
+@MODIFIED   : Put icv setup stuff in separate routine.
+@MODIFIED   : Broke up save_volume into smaller routines.
 @MODIFIED   :
+ * Revision 1.3  93/08/26  12:31:17  neelin
+ * Added define so that minc_def.h is optionally included.
+ * 
  * Revision 1.2  93/08/26  11:57:00  neelin
  * Removed include of ParseArgv stuff and added MALLOC and FREE definitions
  * from minc_def.h so that it is not always needed.
@@ -20,20 +25,10 @@
  * Revision 1.1  93/08/26  11:45:49  neelin
  * Initial revision
  * 
-@COPYRIGHT  :
-              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
-              Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.3 1993-08-26 12:31:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.4 1993-08-30 11:00:55 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,13 +38,17 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexampl
 #include <time_stamp.h>
 
 /* Include the standard minc definitions for cross-platform compilation
-   if we are compiling the package, otherwise, just define MALLOC and
-   FREE */
+   if we are compiling the package, otherwise, just define MALLOC,
+   FREE, EXIT_SUCCESS and EXIT_FAILURE */
 #ifdef COMPILING_MINC_PACKAGE
 #  include <minc_def.h>
 #else
 #  define MALLOC(size) ((void *) malloc(size))
 #  define FREE(ptr) free(ptr)
+#  ifndef EXIT_SUCCESS
+#    define EXIT_SUCCESS 0
+#    define EXIT_FAILURE 1
+#  endif
 #endif
 
 /* Constants */
@@ -59,7 +58,13 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexampl
 #  define FALSE 0
 #endif
 
-#define NUMBER_OF_DIMENSIONS 3
+/* Definitions for accessing information on each dimension */
+#define NUMBER_OF_DIMENSIONS 3      /* Number of dimensions of volume */
+#define SLICE 0                     /* Index for slice information */
+#define ROW 1                       /* Index for row information */
+#define COLUMN 2                    /* Index for column information */
+
+/* Default ncopts values for error handling */
 #define NC_OPTS_VAL NC_VERBOSE | NC_FATAL
 
 /* Types */
@@ -67,24 +72,27 @@ typedef struct {
    long nslices;             /* Number of slices */
    long nrows;               /* Number of rows in image */
    long ncolumns;            /* Number of columns in image */
-   char dimension_names[NUMBER_OF_DIMENSIONS][MAX_NC_NAME];
-                             /* Dimension names */
    unsigned char *data;      /* Pointer to volume data */
    double maximum;           /* Volume maximum */
    double minimum;           /* Volume minimum */
+   double step[NUMBER_OF_DIMENSIONS];     /* Step sizes for dimensions */
+   double start[NUMBER_OF_DIMENSIONS];    /* Start positions for dimensions */
+   char dimension_names[NUMBER_OF_DIMENSIONS][MAX_NC_NAME];
+                             /* Dimension names */
 } Volume;
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
 public void load_volume(char *infile, Volume *volume);
-public void get_dimension_info(char *infile, int mincid, int imgid, 
-                               Volume *volume);
+public void get_dimension_info(char *infile, int icvid, Volume *volume);
 public void setup_icv(int icvid);
 public void read_volume_data(int icvid, Volume *volume);
 public void save_volume(char *infile, char *outfile, char *arg_string, 
                         Volume *volume);
 public void setup_variables(int inmincid, int mincid, Volume *volume, 
                             char *arg_string);
+public void setup_image_variables(int inmincid, int mincid, 
+                                  int ndims, int dim[]);
+public void update_history(int mincid, char *arg_string);
 public void write_volume_data(int icvid, Volume *volume);
 
 /* Main program */
@@ -110,6 +118,20 @@ public int main(int argc, char *argv[])
    /* Read in input volume */
    load_volume(infile, &volume);
 
+   /* Print out volume information */
+   (void) printf("File %s:\n", infile);
+   (void) printf("  maximum = %10g, minimum = %10g\n",
+                 volume.maximum, volume.minimum);
+   (void) printf("  slices  = %10s: n=%3d, step=%10g, start=%10g\n",
+                 volume.dimension_names[SLICE], (int) volume.nslices,
+                 volume.step[SLICE], volume.start[SLICE]);
+   (void) printf("  rows    = %10s: n=%3d, step=%10g, start=%10g\n",
+                 volume.dimension_names[ROW], (int) volume.nrows,
+                 volume.step[ROW], volume.start[ROW]);
+   (void) printf("  columns = %10s: n=%3d, step=%10g, start=%10g\n",
+                 volume.dimension_names[COLUMN], (int) volume.ncolumns,
+                 volume.step[COLUMN], volume.start[COLUMN]);
+
    /* Save the volume, copying information from input file */
    save_volume(infile, outfile, arg_string, &volume);
 
@@ -131,23 +153,20 @@ public int main(int argc, char *argv[])
 ---------------------------------------------------------------------------- */
 public void load_volume(char *infile, Volume *volume)
 {
-   int icvid, mincid, imgid;
-
-   /* Open the image file */
-   mincid = ncopen(infile, NC_NOWRITE);
-
-   /* Get id of image variable */
-   imgid = ncvarid(mincid, MIimage);
-
-   /* Get dimension information */
-   get_dimension_info(infile, mincid, imgid, volume);
+   int icvid, mincid;
 
    /* Create and set up icv for input */
    icvid = miicv_create();
    setup_icv(icvid);
 
+   /* Open the image file */
+   mincid = ncopen(infile, NC_NOWRITE);
+
    /* Attach the icv to the file */
-   (void) miicv_attach(icvid, mincid, imgid);
+   (void) miicv_attach(icvid, mincid, ncvarid(mincid, MIimage));
+
+   /* Get dimension information */
+   get_dimension_info(infile, icvid, volume);
 
    /* Read in volume data */
    read_volume_data(icvid, volume);
@@ -155,56 +174,6 @@ public void load_volume(char *infile, Volume *volume)
    /* Close the file and free the icv */
    (void) ncclose(mincid);
    (void) miicv_free(icvid);
-
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_dimension_info
-@INPUT      : infile - name of input file
-              mincid - id of minc file
-              imgid - id of image variable
-@OUTPUT     : volume - input volume data
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to get dimension information from an input file.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : August 26, 1993 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public void get_dimension_info(char *infile, int mincid, int imgid, 
-                               Volume *volume)
-{
-   int idim, ndims;
-   int dim[MAX_VAR_DIMS];
-   long *dimlength;
-
-   /* Get the list of dimensions subscripting the image variable */
-   (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
-
-   /* Check that we only have three dimensions */
-   if (ndims != NUMBER_OF_DIMENSIONS) {
-      (void) fprintf(stderr, 
-                     "File %s does not have exactly %d dimensions\n",
-                     infile, NUMBER_OF_DIMENSIONS);
-      exit(EXIT_FAILURE);
-   }
-
-   /* Loop through dimensions, checking them and getting their sizes */
-   for (idim=0; idim<ndims; idim++) {
-
-      /* Get a pointer to the appropriate dimension size */
-      switch (idim) {
-      case 0: dimlength = &(volume->nslices) ; break;
-      case 1: dimlength = &(volume->nrows) ; break;
-      case 2: dimlength = &(volume->ncolumns) ; break;
-      }
-
-      /* Get dimension name and size */
-      (void) ncdiminq(mincid, dim[idim], volume->dimension_names[idim], 
-                      dimlength);
-
-   }
 
 }
 
@@ -245,6 +214,87 @@ public void setup_icv(int icvid)
    (void) miicv_setint(icvid, MI_ICV_XDIM_DIR, MI_ICV_POSITIVE);
    (void) miicv_setint(icvid, MI_ICV_YDIM_DIR, MI_ICV_POSITIVE);
    (void) miicv_setint(icvid, MI_ICV_ZDIM_DIR, MI_ICV_POSITIVE);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_dimension_info
+@INPUT      : infile - name of input file
+              icvid - id of the image conversion variable
+@OUTPUT     : volume - input volume data
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to get dimension information from an input file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_dimension_info(char *infile, int icvid, Volume *volume)
+{
+   int mincid, imgid, varid;
+   int idim, ndims;
+   int dim[MAX_VAR_DIMS];
+   long *dimlength;
+   char *dimname;
+
+   /* Get the minc file id and the image variable id */
+   (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+   (void) miicv_inqint(icvid, MI_ICV_VARID, &imgid);
+   if ((mincid == MI_ERROR) || (imgid == MI_ERROR)) {
+      (void) fprintf(stderr, "File %s is not attached to an icv!\n",
+                     infile);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get the list of dimensions subscripting the image variable */
+   (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
+
+   /* Check that we only have three dimensions */
+   if (ndims != NUMBER_OF_DIMENSIONS) {
+      (void) fprintf(stderr, 
+                     "File %s does not have exactly %d dimensions\n",
+                     infile, NUMBER_OF_DIMENSIONS);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Loop through dimensions, checking them and getting their sizes */
+   for (idim=0; idim<ndims; idim++) {
+
+      /* Get a pointer to the appropriate dimension size */
+      switch (idim) {
+      case 0: dimlength = &(volume->nslices) ; break;
+      case 1: dimlength = &(volume->nrows) ; break;
+      case 2: dimlength = &(volume->ncolumns) ; break;
+      }
+
+      /* Get dimension name and size */
+      dimname = volume->dimension_names[idim];
+      (void) ncdiminq(mincid, dim[idim], dimname, dimlength);
+
+   }
+
+   /* Get dimension step and start (defaults = 1 and 0). For slices,
+      we read straight from the variable, but for image dimensions, we
+      get the step and start from the icv. If we didn't have 
+      MI_ICV_DO_DIM_CONV set to TRUE, then we would have to get the image 
+      dimension step and start straight from the variables. */
+   for (idim=0; idim<ndims; idim++) {
+      volume->step[idim] = 1.0;
+      volume->start[idim] = 0.0;
+   }
+   ncopts = 0;
+   (void) miicv_inqdbl(icvid, MI_ICV_ADIM_STEP, &volume->step[COLUMN]);
+   (void) miicv_inqdbl(icvid, MI_ICV_ADIM_START, &volume->start[COLUMN]);
+   (void) miicv_inqdbl(icvid, MI_ICV_BDIM_STEP, &volume->step[ROW]);
+   (void) miicv_inqdbl(icvid, MI_ICV_BDIM_START, &volume->start[ROW]);
+   if ((varid=ncvarid(mincid, volume->dimension_names[SLICE])) != MI_ERROR) {
+      (void) miattget1(mincid, varid, MIstep, NC_DOUBLE, 
+                       &volume->step[SLICE]);
+      (void) miattget1(mincid, varid, MIstart, NC_DOUBLE,
+                       &volume->start[SLICE]);
+   }
+   ncopts = NC_OPTS_VAL;
 
 }
 
@@ -339,6 +389,7 @@ public void save_volume(char *infile, char *outfile, char *arg_string,
    (void) miicv_free(icvid);
 
 }
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : setup_variables
 @INPUT      : inmincid - id of input minc file (MI_ERROR if no file)
@@ -357,13 +408,8 @@ public void save_volume(char *infile, char *outfile, char *arg_string,
 public void setup_variables(int inmincid, int mincid, Volume *volume, 
                             char *arg_string)
 {
-   int dim[MAX_VAR_DIMS], ndims;
-   int imgid, maxid, minid;
+   int dim[MAX_VAR_DIMS], ndims, idim, varid;
    int excluded_vars[10], nexcluded;
-   nc_type datatype;
-   int att_length;
-   char *string;
-   static double valid_range[2] = {0.0, 255.0};
 
    /* Create the dimensions */
    ndims = NUMBER_OF_DIMENSIONS;
@@ -390,6 +436,61 @@ public void setup_variables(int inmincid, int mincid, Volume *volume,
 
    }
 
+   /* If the input file is not given, then we have to create the dimension
+      variables. Put step and start attributes in the variables. If the
+      dimensions are not standard, then no variable is created. */
+   else {
+      for (idim=0; idim < ndims; idim++) {
+         ncopts = 0;
+         varid = micreate_std_variable(mincid, volume->dimension_names[idim],
+                                       NC_LONG, 0, NULL);
+         ncopts = NC_OPTS_VAL;
+         if (varid != MI_ERROR) {
+            (void) miattputdbl(mincid, varid, MIstep, volume->step[idim]);
+            (void) miattputdbl(mincid, varid, MIstart, volume->start[idim]);
+         }
+      }
+   }
+
+   /* Create the image, image-max and image-min variables */
+   setup_image_variables(inmincid, mincid, ndims, dim);
+
+   /* Add the time stamp to the history */
+   update_history(mincid, arg_string);
+
+   /* Put the file in data mode */
+   (void) ncendef(mincid);
+
+   /* Copy over variable values */
+   if (inmincid != MI_ERROR) {
+      (void) micopy_all_var_values(inmincid, mincid,
+                                   nexcluded, excluded_vars);
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : setup_image_variables
+@INPUT      : inmincid - id of input minc file (MI_ERROR if no file)
+              mincid - id of output minc file
+              ndims - number of dimensions
+              dim - list of dimension ids
+@OUTPUT     : (nothing)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to set up image, image-max and image-min variables 
+              in the output minc file
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void setup_image_variables(int inmincid, int mincid, 
+                                  int ndims, int dim[])
+{
+   int imgid, maxid, minid;
+   static double valid_range[2] = {0.0, 255.0};
+
    /* Create the image variable, copy attributes, set the signtype attribute,
       set the valid range attribute and delete valid max/min attributes */
    imgid = micreate_std_variable(mincid, MIimage, NC_BYTE, ndims, dim);
@@ -414,29 +515,47 @@ public void setup_variables(int inmincid, int mincid, Volume *volume,
                              mincid, minid);
    }
 
-   /* Add the time stamp (get the history attribute length, allocate a string,
-      get the old history, add the new command and put the new history). */
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : update_history
+@INPUT      : mincid - id of output minc file
+              arg_string - string giving list of arguments
+@OUTPUT     : (nothing)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to update the history global variable in the output 
+              minc file
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void update_history(int mincid, char *arg_string)
+{
+   nc_type datatype;
+   int att_length;
+   char *string;
+
+   /* Get the history attribute length */
    ncopts=0;
    if ((ncattinq(mincid, NC_GLOBAL, MIhistory, &datatype,
                  &att_length) == MI_ERROR) ||
        (datatype != NC_CHAR))
       att_length = 0;
    att_length += strlen(arg_string) + 1;
+
+   /* Allocate a string and get the old history */
    string = MALLOC(att_length);
    string[0] = '\0';
    (void) miattgetstr(mincid, NC_GLOBAL, MIhistory, att_length, 
                       string);
    ncopts = NC_OPTS_VAL;
+
+   /* Add the new command and put the new history. */
    (void) strcat(string, arg_string);
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, string);
    FREE(string);
-
-   /* Put the file in data mode */
-   (void) ncendef(mincid);
-
-   /* Copy over variable values */
-   (void) micopy_all_var_values(inmincid, mincid,
-                                nexcluded, excluded_vars);
 
 }
 
