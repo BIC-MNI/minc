@@ -18,6 +18,23 @@ private  int  match_dimension_names(
     String            *file_dimension_names,
     int               axis_index_in_file[] );
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_minc_input
+@INPUT      : filename
+              volume
+@OUTPUT     : 
+@RETURNS    : Minc_file
+@DESCRIPTION: Initializes the input of a MINC file, passing back a MINC
+              file pointer.  It assumes that the volume has been created,
+              with the desired type, or NC_UNSPECIFIED type if it is desired
+              to use whatever type is in the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Minc_file  initialize_minc_input(
     char       filename[],
     Volume     volume )
@@ -50,7 +67,9 @@ public  Minc_file  initialize_minc_input(
     file->file_is_being_read = TRUE;
     file->volume = volume;
 
-    ncopts = NC_VERBOSE;
+    /* --- open the file */
+
+    ncopts = 0;
     file->cdfid =  ncopen( filename, NC_NOWRITE );
 
     if( file->cdfid == MI_ERROR )
@@ -58,6 +77,8 @@ public  Minc_file  initialize_minc_input(
         print( "Error: opening MINC file \"%s\".\n", filename );
         return( (Minc_file) 0 );
     }
+
+    /* --- find the image variable */
 
     img_var = ncvarid( file->cdfid, MIimage );
 
@@ -84,6 +105,8 @@ public  Minc_file  initialize_minc_input(
         file->sizes_in_file[d] = long_size;
     }
 
+    /* --- match the dimension names of the volume with those in the file */
+
     if( !match_dimension_names( volume->n_dimensions, volume->dimension_names,
                                 file->n_file_dimensions, dim_names,
                                 file->axis_index_in_file ) )
@@ -102,6 +125,9 @@ public  Minc_file  initialize_minc_input(
     }
 
     file->n_volumes_in_file = 1;
+
+    /* --- find the spatial axes (x,y,z) */
+
     which_valid_axis = 0;
 
     for_less( d, 0, file->n_file_dimensions )
@@ -124,7 +150,8 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
-    ncopts = 0;
+    /* --- get the spatial axis info, slice separation, start pos, etc. */
+
     for_less( d, 0, file->n_file_dimensions )
     {
         separation[d] = 1.0;
@@ -164,7 +191,8 @@ public  Minc_file  initialize_minc_input(
             volume->separation[file->axis_index_in_file[d]] = separation[d];
         }
     }
-    ncopts = NC_VERBOSE;
+
+    /* --- create the world transform from slice separation, cosines, etc. */
 
     fill_Vector( axes[X], 1.0, 0.0, 0.0 );
     fill_Vector( axes[Y], 0.0, 1.0, 0.0 );
@@ -200,7 +228,9 @@ public  Minc_file  initialize_minc_input(
     compute_transform_inverse( &volume->voxel_to_world_transform,
                                &volume->world_to_voxel_transform );
 
-    if( volume->data_type == NO_DATA_TYPE )
+    /* --- decide on type conversion */
+
+    if( volume->data_type == NO_DATA_TYPE )     /* --- use type of file */
     {
         (void) ncattget( file->cdfid, img_var, MIsigntype,
                          (void *) signed_flag );
@@ -208,7 +238,7 @@ public  Minc_file  initialize_minc_input(
 
         converted_type = file_datatype;
     }
-    else
+    else                                        /* --- use specified type */
     {
         converted_type = volume->nc_data_type;
         converted_sign = volume->signed_flag;
@@ -218,6 +248,8 @@ public  Minc_file  initialize_minc_input(
 
     for_less( d, 0, file->n_file_dimensions )
         mindex[d] = 0;
+
+    /* --- get the fill value */
 
     fill_id = ncvarid( file->cdfid, MI_FillValue );
     if( fill_id != MI_ERROR )
@@ -229,6 +261,8 @@ public  Minc_file  initialize_minc_input(
     else
         volume->fill_value = 0.0;
 
+    /* --- create the image conversion variable */
+
     file->icv = miicv_create();
 
     (void) miicv_setint( file->icv, MI_ICV_TYPE, converted_type );
@@ -236,6 +270,8 @@ public  Minc_file  initialize_minc_input(
     (void) miicv_setstr( file->icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
     (void) miicv_attach( file->icv, file->cdfid, img_var );
+
+    /* --- compute the mapping to real values */
 
     (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
     (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
@@ -260,6 +296,8 @@ public  Minc_file  initialize_minc_input(
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
+    /* --- decide how many dimensions to read in at a time */
+
     file->n_slab_dims = 0;
     slab_size = 1;
     
@@ -280,15 +318,39 @@ public  Minc_file  initialize_minc_input(
     return( file );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_n_input_volumes
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : number of input volumes
+@DESCRIPTION: After initializing the file input with a specified volume,
+              the user calls this function to decide how many volumes are
+              stored in the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  int  get_n_input_volumes(
     Minc_file  file )
 {
     return( file->n_volumes_in_file );
 }
 
-public  int  get_minc_input_dimensions()
-{
-}
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : close_minc_input
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Closes the minc input file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  close_minc_input(
     Minc_file   file )
@@ -296,7 +358,7 @@ public  Status  close_minc_input(
     if( file == (Minc_file) NULL )
     {
         print( "close_minc_input(): NULL file.\n" );
-        return( MI_ERROR );
+        return( ERROR );
     }
 
     (void) ncclose( file->cdfid );
@@ -306,6 +368,23 @@ public  Status  close_minc_input(
 
     return( OK );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_slab
+@INPUT      : file
+              volume
+              start
+              count
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Inputs a multidimensional slab from the file and copies it
+              into the appropriate part of the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  input_slab(
     Minc_file   file,
@@ -355,7 +434,7 @@ private  void  input_slab(
         iv[file->axis_index_in_file[file_ind]] = start[file_ind];
     }
 
-    if( direct_to_volume )
+    if( direct_to_volume )        /* file is same order as volume */
     {
         GET_VOXEL_PTR( void_ptr, volume, iv[0], iv[1], iv[2], iv[3], iv[4] );
         (void) miicv_get( file->icv, start, count, void_ptr );
@@ -433,6 +512,21 @@ private  void  input_slab(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_more_minc_file
+@INPUT      : file
+@OUTPUT     : fraction_done        - amount of file read
+@RETURNS    : TRUE if volume has more left to read
+@DESCRIPTION: Reads another chunk from the input file, passes back the
+              total fraction read so far, and returns FALSE when the whole
+              volume has been read.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done )
@@ -449,6 +543,9 @@ public  Boolean  input_more_minc_file(
     if( volume->data == (void *) NULL )
         alloc_volume_data( volume );
 
+    /* --- set the counts for reading, actually these will be the same
+           every time */
+
     for_less( ind, 0, file->n_file_dimensions )
     {
         count[ind] = 1;
@@ -463,7 +560,7 @@ public  Boolean  input_more_minc_file(
 
     input_slab( file, volume, file->indices, count );
 
-    /* advance to next slab */
+    /* --- advance to next slab */
 
     ind = volume->n_dimensions-file->n_slab_dims-1;
 
@@ -479,6 +576,8 @@ public  Boolean  input_more_minc_file(
         --ind;
     }
 
+    /* --- check if done */
+
     if( ind < 0 )
     {
         *fraction_done = 1.0;
@@ -486,7 +585,7 @@ public  Boolean  input_more_minc_file(
     }
     else
     {
-        n_done = 0;
+        n_done = 0;             /* --- compute fraction done */
         total = 1;
         for_less( ind, 0, volume->n_dimensions - file->n_slab_dims )
         {

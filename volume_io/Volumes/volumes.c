@@ -12,10 +12,38 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
     { "", MItime, MIzspace, MIyspace, MIxspace }
 };
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_volume
+@INPUT      : n_dimensions      - number of dimensions (1-5)
+              dimension_names   - name of dimensions for use when reading file
+              data_type         - type of the data, e.g. NC_BYTE
+              signed_flag       - type is signed?
+              min_value         - min and max value to be stored
+              max_value
+@OUTPUT     : 
+@RETURNS    : Volume
+@DESCRIPTION: Creates a Volume structure, and initializes it.  In order to 
+              later use the volume, you must call either set_volume_sizes()
+              and alloc_volume_data(), or one of the input volume routines,
+              which in turn calls these two.
+              The dimension_names are used when inputting
+              MINC files, in order to match with the dimension names in the
+              file.  Typically, use dimension names
+              { MIzspace, MIyspace, MIxspace } to read the volume from the
+              file in the order it is stored, or
+              { MIxspace, MIyspace, MIzspace } to read it so you can subcript
+              the volume in x, y, z order.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public   Volume   create_volume(
     int         n_dimensions,
     String      dimension_names[],
-    nc_type     data_type,
+    nc_type     nc_data_type,
     Boolean     signed_flag,
     Real        min_value,
     Real        max_value )
@@ -63,13 +91,30 @@ public   Volume   create_volume(
     }
 
     volume->data_type = NO_DATA_TYPE;
-    set_volume_size( volume, data_type, signed_flag, sizes );
+    set_volume_size( volume, nc_data_type, signed_flag, sizes );
 
     make_identity_transform( &volume->world_to_voxel_transform );
     make_identity_transform( &volume->voxel_to_world_transform );
 
     return( volume );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_size
+@INPUT      : volume
+              nc_data_type
+              signed_flag
+              sizes[]        - sizes per dimension
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the sizes of the dimensions of the volume, and if specified,
+              the data type also.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_volume_size(
     Volume       volume,
@@ -122,9 +167,57 @@ public  void  set_volume_size(
         volume->sizes[i] = sizes[i];
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_type_size
+@INPUT      : type
+@OUTPUT     : 
+@RETURNS    : size of the type
+@DESCRIPTION: Returns the size of the given type.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  int  get_type_size(
+    Data_types   type )
+{
+    int   size;
+
+    switch( type )
+    {
+    case  UNSIGNED_BYTE:    size = sizeof( unsigned char );   break;
+    case  SIGNED_BYTE:      size = sizeof( signed   char );   break;
+    case  UNSIGNED_SHORT:   size = sizeof( unsigned short );  break;
+    case  SIGNED_SHORT:     size = sizeof( signed   short );  break;
+    case  UNSIGNED_LONG:    size = sizeof( unsigned long );   break;
+    case  SIGNED_LONG:      size = sizeof( signed   long );   break;
+    case  FLOAT:            size = sizeof( float );           break;
+    case  DOUBLE:           size = sizeof( double );          break;
+    }
+
+    return( size );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : ALLOCATE_DATA   - private macro for allocation
+@INPUT      : n_dimensions
+              type
+              sizes
+@OUTPUT     : ptr
+@RETURNS    : Macro to allocate multidimensional data given the type.
+@DESCRIPTION: 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 #define  ALLOCATE_DATA( ptr, n_dimensions, type, sizes ) \
-    switch( n_dimensions ) \
-    { \
+switch( n_dimensions ) \
+{ \
     type  *_p1, **_p2, ***_p3, ****_p4, *****_p5; \
  \
     case  1:  ALLOC( _p1, (sizes)[0] ); \
@@ -142,34 +235,21 @@ public  void  set_volume_size(
     case  5:  ALLOC5D( _p5, (sizes)[0], (sizes)[1], (sizes)[2], (sizes)[3], (sizes)[4] ); \
               (ptr) = (void *) _p5; \
               break; \
-    }
-
-public  int  get_type_size(
-    Data_types   type )
-{
-    int   size;
-
-    switch( type )
-    {
-    case  UNSIGNED_BYTE:
-    case  SIGNED_BYTE:
-        size = 1;  break;
-
-    case  UNSIGNED_SHORT:
-    case  SIGNED_SHORT:
-        size = 2;  break;
-
-    case  UNSIGNED_LONG:
-    case  SIGNED_LONG:
-    case  FLOAT:
-        size = 4;  break;
-
-    case  DOUBLE:
-        size = 8;  break;
-    }
-
-    return( size );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_volume_data
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Allocates the memory for the volume.  Assumes that the
+              volume type and sizes have been set.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  alloc_volume_data(
     Volume   volume )
@@ -217,7 +297,20 @@ public  void  alloc_volume_data(
     volume->data = ptr;
 }
 
-public  void  free_volume_data(
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_volume_data
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the memory associated with the volume multidimensional data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  free_volume_data(
     Volume   volume )
 {
     void   *ptr, **ptr2, ***ptr3, ****ptr4, *****ptr5;
@@ -250,6 +343,19 @@ public  void  free_volume_data(
     volume->data = (void *) NULL;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees all memory from the volume and the volume struct itself.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  delete_volume(
     Volume   volume )
 {
@@ -267,11 +373,38 @@ public  void  delete_volume(
     FREE( volume );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_n_dimensions
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : number of dimensions
+@DESCRIPTION: Returns the number of dimensions of the volume
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  int  get_volume_n_dimensions(
     Volume   volume )
 {
     return( volume->n_dimensions );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_sizes
+@INPUT      : volume
+@OUTPUT     : sizes
+@RETURNS    : 
+@DESCRIPTION: Passes back the sizes of each of the dimensions.  Assumes sizes
+              has enough room for n_dimensions integers.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  get_volume_sizes(
     Volume   volume,
@@ -282,6 +415,20 @@ public  void  get_volume_sizes(
     for_less( i, 0, volume->n_dimensions )
         sizes[i] = volume->sizes[i];
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_separations
+@INPUT      : volume
+@OUTPUT     : separations
+@RETURNS    : 
+@DESCRIPTION: Passes back the slice separations for each dimensions.  Assumes
+              separations contains enough room for n_dimensions Reals.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  get_volume_separations(
     Volume   volume,
@@ -323,6 +470,8 @@ public  void  convert_voxel_to_world(
 
     fill_Point( voxel, x_voxel, y_voxel, z_voxel );
 
+    /* apply linear transform */
+
     transform_point( &volume->voxel_to_world_transform,
                      &voxel, &world );
 
@@ -332,7 +481,7 @@ public  void  convert_voxel_to_world(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : convert_voxel_vector_to_world
+@NAME       : convert_voxel_normal_vector_to_world
 @INPUT      : volume
               x_voxel
               y_voxel
@@ -342,13 +491,13 @@ public  void  convert_voxel_to_world(
               z_world
 @RETURNS    : 
 @DESCRIPTION: Converts a voxel vector to world coordinates.  Assumes the
-              vector is a normal vector, so transforms by transpose of inverse
-              transform.
+              vector is a normal vector (ie. a derivative), so transforms by
+              transpose of inverse transform.
 @CREATED    : Mar   1993           David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_voxel_vector_to_world(
+public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
     Real            x_voxel,
     Real            y_voxel,
@@ -927,8 +1076,9 @@ public  Boolean   evaluate_volume_in_world(
 
     if( deriv_x != (Real *) 0 )
     {
-        convert_voxel_vector_to_world( volume, *deriv_x, *deriv_y, *deriv_z,
-                                       deriv_x, deriv_y, deriv_z );
+        convert_voxel_normal_vector_to_world( volume,
+                                              *deriv_x, *deriv_y, *deriv_z,
+                                              deriv_x, deriv_y, deriv_z );
     }
 
     return( voxel_is_active );
@@ -984,6 +1134,8 @@ public  Boolean   evaluate_volume(
     ny = volume->sizes[Y];
     nz = volume->sizes[Z];
 
+    /* check if point is outside volume */
+
     if( x < 0.0 || x > (Real) (nx-1) ||
         y < 0.0 || y > (Real) (ny-1) ||
         z < 0.0 || z > (Real) (nz-1) )
@@ -999,7 +1151,7 @@ public  Boolean   evaluate_volume(
         return( FALSE );
     }
 
-    if( x < 0.0 )
+    if( x < 0.0 )                /* for now, won't happen */
         i = -1;
     else if( x == (Real) (nx-1) )
     {
@@ -1173,14 +1325,19 @@ public  Boolean   evaluate_volume(
     return( voxel_is_active );
 }
 
-public  void  get_volume_range(
-    Volume     volume,
-    Real       *min_value,
-    Real       *max_value )
-{
-    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_value );
-    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_value );
-}
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_voxel_range
+@INPUT      : volume
+@OUTPUT     : min_value
+              max_value
+@RETURNS    : 
+@DESCRIPTION: Passes back the min and max voxel values stored in the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  get_volume_voxel_range(
     Volume     volume,
@@ -1189,4 +1346,29 @@ public  void  get_volume_voxel_range(
 {
     *min_value = volume->min_value;
     *max_value = volume->max_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_range
+@INPUT      : volume
+@OUTPUT     : min_value
+              max_value
+@RETURNS    : 
+@DESCRIPTION: Passes back the minimum and maximum scaled values.  These are
+              the minimum and maximum stored voxel values scaled to the
+              real value domain.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_volume_range(
+    Volume     volume,
+    Real       *min_value,
+    Real       *max_value )
+{
+    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_value );
+    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_value );
 }

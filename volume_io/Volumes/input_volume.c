@@ -6,6 +6,14 @@
 #endif
 
 #define   FREE_ENDING   ".fre"
+#define   MNI_ENDING    ".mni"
+
+private  void  setup_input_mni_as_free_format(
+    char   filename[] );
+private  void  get_mni_scaling(
+    char   filename[],
+    Real   *scale,
+    Real   *translation );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : start_volume_input
@@ -31,9 +39,18 @@ public  Status  start_volume_input(
     volume_input_struct  *input_info )
 {
     Status          status;
+    int             len;
+    Real            mni_scale, mni_translation;
+    Boolean         mni_format;
     nc_type         data_type;
     static String   dim_names[N_DIMENSIONS] = { MIxspace, MIyspace, MIzspace };
-    String          expanded_filename;
+    String          expanded_filename, filename_no_z;
+
+    (void) strcpy( filename_no_z, filename );
+    len = strlen( filename );
+
+    if( filename[len-2] == '.' && filename[len-1] == 'Z' )
+        filename_no_z[len-2] = (char) 0;
 
     status = OK;
 
@@ -45,10 +62,18 @@ public  Status  start_volume_input(
     *volume = create_volume( 3, dim_names, data_type, FALSE,
                              0.0, 0.0 );
 
-    expand_filename( filename, expanded_filename );
+    expand_filename( filename_no_z, expanded_filename );
+    mni_format = FALSE;
 
 #ifndef  NO_MNC_FILES
-    if( !string_ends_in( expanded_filename, FREE_ENDING ) )
+    if( string_ends_in( expanded_filename, MNI_ENDING ) )
+    {
+        get_mni_scaling( expanded_filename, &mni_scale, &mni_translation );
+        setup_input_mni_as_free_format( expanded_filename );
+        input_info->file_format = FREE_FORMAT;
+        mni_format = TRUE;
+    }
+    else if( !string_ends_in( expanded_filename, FREE_ENDING ) )
         input_info->file_format = MNC_FORMAT;
     else
 #endif
@@ -69,6 +94,12 @@ public  Status  start_volume_input(
         status = initialize_free_format_input( expanded_filename,
                                                *volume, input_info );
         break;
+    }
+
+    if( mni_format )
+    {
+        (*volume)->value_scale = mni_scale;
+        (*volume)->value_translation = - mni_scale * mni_translation;
     }
 
     return( status );
@@ -197,4 +228,114 @@ public  Status  input_volume(
     }
 
     return( status );
+}
+
+#define  MNI_NX            256
+#define  MNI_NY            256
+#define  MNI_NZ            80
+#define  MNI_BYTE_OFFSET   1536
+
+private  void  setup_input_mni_as_free_format(
+    char   filename[] )
+{
+    Status  status;
+    FILE    *file;
+    String  tmp_name;
+
+    (void) tmpnam( tmp_name );
+
+    status = open_file( tmp_name, WRITE_FILE, ASCII_FORMAT, &file );
+
+    status = output_string( file, "1\n" );
+    status = output_string( file, "-86.095 -110.510 -37.5\n" );
+    status = output_string( file, "80   1.5    z\n" );
+    status = output_string( file, "256  0.86   y\n" );
+    status = output_string( file, "256  0.67   x\n" );
+    status = output_string( file, filename );
+    status = output_int( file, MNI_BYTE_OFFSET );
+    status = output_string( file, "\n" );
+
+    status = close_file( file );
+
+    if( status ) {}
+
+    (void) strcpy( filename, tmp_name );
+}
+
+private  Status  input_vax_real(
+    FILE    *file,
+    Real    *real )
+{
+    char    *byte_ptr, tmp;
+    Status  status;
+
+    byte_ptr = (char *) (void *) real;
+
+    status = io_binary_data( file, READ_FILE, (void *) byte_ptr,
+                             sizeof(char), 4 );
+
+    if( status == OK )
+    {
+        tmp = byte_ptr[0];
+        byte_ptr[0] = byte_ptr[1];
+        byte_ptr[1] = tmp;
+        tmp = byte_ptr[2];
+        byte_ptr[2] = byte_ptr[3];
+        byte_ptr[3] = tmp;
+        *real /= 4.0;
+    }
+
+    return( status );
+}
+
+private  Status  input_vax_short(
+    FILE      *file,
+    short     *s )
+{
+    char    *byte_ptr, tmp;
+    Status  status;
+
+    byte_ptr = (char *) (void *) s;
+
+    status = io_binary_data( file, READ_FILE, (void *) byte_ptr,
+                             sizeof(char), 2 );
+
+    if( status == OK )
+    {
+        tmp = byte_ptr[0];
+        byte_ptr[0] = byte_ptr[1];
+        byte_ptr[1] = tmp;
+    }
+
+    return( status );
+}
+
+private  void  get_mni_scaling(
+    char   filename[],
+    Real   *scale_factor,
+    Real   *trans_factor )
+{
+    Status  status;
+    short   short_trans_factor;
+    FILE    *file;
+
+    status = open_file( filename, READ_FILE, BINARY_FORMAT, &file );
+
+    status = set_file_position( file, (long) MNI_BYTE_OFFSET );
+
+    if( status == OK )
+        status = input_vax_real( file, scale_factor );
+
+    if( status == OK )
+    {
+        status = set_file_position( file, (long) MNI_BYTE_OFFSET + MNI_NX + 4 );
+    }
+
+    if( status == OK )
+        status = input_vax_short( file, &short_trans_factor );
+
+    if( status == OK )
+        *trans_factor = (Real) short_trans_factor;
+
+    status = close_file( file );
 }

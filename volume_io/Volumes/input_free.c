@@ -6,7 +6,6 @@
 #define  NUM_BYTE_VALUES      256
 
 private  Status  input_slice(
-    volume_struct         *volume,
     volume_input_struct   *volume_input );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -24,19 +23,21 @@ private  Status  input_slice(
 ---------------------------------------------------------------------------- */
 
 public  Status  initialize_free_format_input(
-    volume_struct        *volume,
+    char                 filename[],
+    Volume               volume,
     volume_input_struct  *volume_input )
 {
     Status         status, file_status;
-    String         volume_filename, abs_volume_filename, directory;
+    String         volume_filename, abs_volume_filename;
     String         slice_filename;
-    int            slice;
+    int            slice, sizes[N_DIMENSIONS];
     int            volume_byte_offset;
     int            n_bytes_per_voxel, min_value, max_value, i;
     int            n_slices, n_voxels_in_slice;
+    nc_type        desired_data_type;
     unsigned short value;
     char           ch;
-    Real           thickness[N_DIMENSIONS];
+    Real           separation[N_DIMENSIONS];
     Point          origin;
     Real           trans[N_DIMENSIONS];
     FILE           *file;
@@ -46,7 +47,7 @@ public  Status  initialize_free_format_input(
     status = OK;
 
     file_status = open_file_with_default_suffix(
-                         volume->filename, DEFAULT_SUFFIX,
+                         filename, DEFAULT_SUFFIX,
                          READ_FILE, ASCII_FORMAT, &file );
 
     status = file_status;
@@ -64,8 +65,7 @@ public  Status  initialize_free_format_input(
          input_real( file, &trans[Y] ) != OK ||
          input_real( file, &trans[Z] ) != OK) )
     {
-        print( "Error reading x,y,z translations from %s.\n",
-               volume->filename );
+        print( "Error reading x,y,z translations from %s.\n", filename );
         status = ERROR;
     }
 
@@ -85,19 +85,19 @@ public  Status  initialize_free_format_input(
 
         /* decide how to store data in memory */
 
-        if( volume_input->convert_to_byte )
-            volume->data_type = UNSIGNED_BYTE;
+        if( volume->data_type == NO_DATA_TYPE )
+            desired_data_type = volume_input->file_data_type;
         else
-            volume->data_type = volume_input->file_data_type;
+            desired_data_type = volume->nc_data_type;
     }
 
     /* read 3 lines, 1 for each axis:
 
-            number_voxels   +/-voxel_thickness  x|y|z
+            number_voxels   +/-voxel_separation  x|y|z
 
        where the x, y, or z is used to indicate the ordering of the axes
              within the file, with the 3rd one being the fastest varying index.
-             negative voxel thickness means flip on display 
+             negative voxel separation means flip on display 
     */
 
     if( status == OK )
@@ -108,7 +108,7 @@ public  Status  initialize_free_format_input(
         if( input_int( file, &volume_input->sizes_in_file[axis] ) != OK )
             break;
 
-        if( input_real( file, &thickness[axis] ) != OK )
+        if( input_real( file, &separation[axis] ) != OK )
             break;
 
         if( input_nonwhite_character( file, &ch ) != OK )
@@ -119,15 +119,15 @@ public  Status  initialize_free_format_input(
         switch( ch )
         {
         case 'x':
-        case 'X':  volume->axis_index_from_file[axis] = X;
+        case 'X':  volume_input->axis_index_from_file[axis] = X;
                    break;
 
         case 'y':
-        case 'Y':  volume->axis_index_from_file[axis] = Y;
+        case 'Y':  volume_input->axis_index_from_file[axis] = Y;
                    break;
 
         case 'z':
-        case 'Z':  volume->axis_index_from_file[axis] = Z;
+        case 'Z':  volume_input->axis_index_from_file[axis] = Z;
                    break;
 
         default:   axis_valid = FALSE;    break;
@@ -143,13 +143,18 @@ public  Status  initialize_free_format_input(
     }
 
     if( status == OK &&
-        (volume->axis_index_from_file[X] == volume->axis_index_from_file[Y] ||
-         volume->axis_index_from_file[X] == volume->axis_index_from_file[Z] ||
-         volume->axis_index_from_file[Y] == volume->axis_index_from_file[Z]) )
+        (volume_input->axis_index_from_file[X] ==
+         volume_input->axis_index_from_file[Y] ||
+         volume_input->axis_index_from_file[X] ==
+         volume_input->axis_index_from_file[Z] ||
+         volume_input->axis_index_from_file[Y] ==
+         volume_input->axis_index_from_file[Z]) )
     {
         print( "Two axis indices are equal.\n" );
         status = ERROR;
     }
+
+    extract_directory( filename, volume_input->directory );
 
     if( status == OK )
     if( volume_input->sizes_in_file[0] <= 0 )
@@ -181,8 +186,7 @@ public  Status  initialize_free_format_input(
     {
         volume_input->one_file_per_slice = FALSE;
         status = input_string( file, volume_filename, MAX_STRING_LENGTH, ' ' );
-        extract_directory( volume->filename, directory );
-        get_absolute_filename( volume_filename, directory,
+        get_absolute_filename( volume_filename, volume_input->directory,
                                abs_volume_filename );
 
         if( input_int( file, &volume_byte_offset ) != OK )
@@ -199,28 +203,33 @@ public  Status  initialize_free_format_input(
     {
         for_less( axis, 0, N_DIMENSIONS )
         {
-            volume->sizes[volume->axis_index_from_file[axis]] =
+            sizes[volume_input->axis_index_from_file[axis]] =
                                  volume_input->sizes_in_file[axis];
-            volume->thickness[volume->axis_index_from_file[axis]] =
-                                                     thickness[axis];
+            volume->separation[volume_input->axis_index_from_file[axis]] =
+                                                     separation[axis];
         }
 
         for_less( axis, 0, N_DIMENSIONS )
         {
-            if( volume->thickness[axis] < 0.0 )
+            if( volume->separation[axis] < 0.0 )
             {
-                trans[axis] += -volume->thickness[axis] *
-                               (Real) (volume->sizes[axis]-1);
+                trans[axis] += -volume->separation[axis] *
+                               (Real) (sizes[axis]-1);
             }
         }
 
-        make_scale_transform( volume->thickness[X],
-                              volume->thickness[Y],
-                              volume->thickness[Z],
+        make_scale_transform( volume->separation[X],
+                              volume->separation[Y],
+                              volume->separation[Z],
                               &volume->voxel_to_world_transform );
         fill_Point( origin, trans[X], trans[Y], trans[Z] );
         set_transform_origin( &volume->voxel_to_world_transform, &origin );
+
+        compute_transform_inverse( &volume->voxel_to_world_transform,
+                                   &volume->world_to_voxel_transform );
     }
+
+    set_volume_size( volume, desired_data_type, FALSE, sizes );
 
     /* allocate the slice buffer */
 
@@ -247,8 +256,7 @@ public  Status  initialize_free_format_input(
        to find the max and min values, and set the value_scale and
        value_translation */
 
-    if( status == OK && volume_input->convert_to_byte &&
-        volume_input->file_data_type != UNSIGNED_BYTE )
+    if( status == OK && volume->data_type != volume_input->file_data_type )
     {
         if( status == OK && !volume_input->one_file_per_slice )
         {
@@ -266,7 +274,7 @@ public  Status  initialize_free_format_input(
 
         for_less( slice, 0, volume_input->sizes_in_file[0] )
         {
-            (void) input_slice( volume, volume_input );
+            (void) input_slice( volume_input );
 
             for_less( i, 0, n_voxels_in_slice )
             {
@@ -302,8 +310,7 @@ public  Status  initialize_free_format_input(
 
     if( status == OK && !volume_input->one_file_per_slice )
     {
-        extract_directory( volume->filename, directory );
-        get_absolute_filename( volume_filename, directory,
+        get_absolute_filename( volume_filename, volume_input->directory,
                                abs_volume_filename );
         status = open_file( abs_volume_filename, READ_FILE, BINARY_FORMAT,
                             &volume_input->volume_file );
@@ -362,12 +369,11 @@ public  void  delete_free_format_input(
 ---------------------------------------------------------------------------- */
 
 private  Status  input_slice(
-    volume_struct         *volume,
     volume_input_struct   *volume_input )
 {
     Status           status;
     FILE             *file;
-    String           directory, slice_filename;
+    String           slice_filename;
 
     status = OK;
 
@@ -375,10 +381,9 @@ private  Status  input_slice(
     {
         if( volume_input->one_file_per_slice )
         {
-            extract_directory( volume->filename, directory );
             get_absolute_filename(
                    volume_input->slice_filenames[volume_input->slice_index],
-                   directory, slice_filename );
+                   volume_input->directory, slice_filename );
             status = open_file( slice_filename, READ_FILE, BINARY_FORMAT,
                                 &file );
             if( status == OK )
@@ -438,26 +443,32 @@ private  Status  input_slice(
 ---------------------------------------------------------------------------- */
 
 public  Boolean  input_more_free_format_file(
-    volume_struct         *volume,
+    Volume                volume,
     volume_input_struct   *volume_input,
     Real                  *fraction_done )
 {
+    int             min_value, max_value;
+    int             x, y, z, sizes[N_DIMENSIONS];
     Status          status;
     Boolean         more_to_do, scaling_flag;
-    int             *inner_index, value, i, indices[N_DIMENSIONS];
+    int             *inner_index, i, value, indices[N_DIMENSIONS];
     unsigned char   *byte_buffer_ptr;
     unsigned short  *short_buffer_ptr;
 
     if( volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
-        status = input_slice( volume, volume_input );
+        if( volume->data == (void *) NULL )
+            alloc_volume_data( volume );
+
+        status = input_slice( volume_input );
 
         scaling_flag = (volume->value_scale != 1.0 ||
                         volume->value_translation != 0.0);
 
-        inner_index = &indices[volume->axis_index_from_file[2]];
+        inner_index = &indices[volume_input->axis_index_from_file[2]];
 
-        indices[volume->axis_index_from_file[0]] = volume_input->slice_index-1;
+        indices[volume_input->axis_index_from_file[0]] =
+                                         volume_input->slice_index-1;
 
         if( status == OK )
         switch( volume_input->file_data_type )
@@ -466,7 +477,7 @@ public  Boolean  input_more_free_format_file(
             byte_buffer_ptr = volume_input->byte_slice_buffer;
             for_less( i, 0, volume_input->sizes_in_file[1] )
             {
-                indices[volume->axis_index_from_file[1]] = i;
+                indices[volume_input->axis_index_from_file[1]] = i;
                 for_less( *inner_index, 0, volume_input->sizes_in_file[2] )
                 {
                     if( scaling_flag )
@@ -476,10 +487,10 @@ public  Boolean  input_more_free_format_file(
                          volume->value_translation) / volume->value_scale );
                     }
                     else
-                        value = (int) *byte_buffer_ptr;
+                        value = (int) (*byte_buffer_ptr);
 
-                    ASSIGN_VOLUME_DATA( *volume,
-                         indices[X], indices[Y], indices[Z], value );
+                    SET_VOXEL_3D( volume, indices[X], indices[Y], indices[Z],
+                                  value );
 
                     ++byte_buffer_ptr;
                 }
@@ -490,7 +501,7 @@ public  Boolean  input_more_free_format_file(
             short_buffer_ptr = volume_input->short_slice_buffer;
             for_less( i, 0, volume_input->sizes_in_file[1] )
             {
-                indices[volume->axis_index_from_file[1]] = i;
+                indices[volume_input->axis_index_from_file[1]] = i;
                 for_less( *inner_index, 0, volume_input->sizes_in_file[2] )
                 {
                     if( scaling_flag )
@@ -500,10 +511,10 @@ public  Boolean  input_more_free_format_file(
                          volume->value_translation) / volume->value_scale );
                     }
                     else
-                        value = (int) *short_buffer_ptr;
+                        value = (int) (*short_buffer_ptr);
 
-                    ASSIGN_VOLUME_DATA( *volume,
-                         indices[X], indices[Y], indices[Z], value );
+                    SET_VOXEL_3D( volume, indices[X], indices[Y], indices[Z],
+                                  value );
 
                     ++short_buffer_ptr;
                 }
@@ -517,15 +528,36 @@ public  Boolean  input_more_free_format_file(
     }
 
     *fraction_done = (Real) volume_input->slice_index /
-                     (Real) volume->sizes[volume->axis_index_from_file[0]];
+                   (Real) volume->sizes[volume_input->axis_index_from_file[0]];
 
     more_to_do = TRUE;
 
     if( volume_input->slice_index ==
-        volume->sizes[volume->axis_index_from_file[0]] )
+        volume->sizes[volume_input->axis_index_from_file[0]] )
     {
         more_to_do = FALSE;
         delete_volume_input( volume_input );
+
+        GET_VOXEL_3D( min_value, volume, 0, 0, 0 );
+        get_volume_sizes( volume, sizes );
+        max_value = min_value;
+        for_less( x, 0, sizes[X] )
+        {
+            for_less( y, 0, sizes[Y] )
+            {
+                for_less( z, 0, sizes[Z] )
+                {
+                    GET_VOXEL_3D( value, volume, x, y, z );
+                    if( value < min_value )
+                        min_value = value;
+                    else if( value > max_value )
+                        max_value = value;
+                }
+            }
+        }
+
+        volume->min_value = (Real) min_value;
+        volume->max_value = (Real) max_value;
     }
 
     return( more_to_do );
