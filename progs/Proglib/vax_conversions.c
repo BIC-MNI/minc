@@ -6,7 +6,10 @@
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: vax_conversions.c,v $
- * Revision 6.1  1999-10-19 14:45:15  neelin
+ * Revision 6.2  1999-10-19 15:57:18  neelin
+ * Fixed log message containing log substitution
+ *
+ * Revision 6.1  1999/10/19 14:45:15  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:41  neelin
@@ -28,29 +31,8 @@
  * Pre-release
  * 
  * Revision 1.4  93/08/04  13:04:01  neelin
- * Added RCS $Log: vax_conversions.c,v $
- * Added RCS Revision 6.1  1999-10-19 14:45:15  neelin
- * Added RCS Fixed Log subsitutions for CVS
- * Added RCS
- * Added RCS Revision 6.0  1997/09/12 13:23:41  neelin
- * Added RCS Release of minc version 0.6
- * Added RCS
- * Revision 5.0  1997/08/21  13:24:41  neelin
- * Release of minc version 0.5
+ * Added RCS Log to keep track of modifications in source
  *
- * Revision 4.0  1997/05/07  20:00:50  neelin
- * Release of minc version 0.4
- *
- * Revision 3.0  1995/05/15  19:31:35  neelin
- * Release of minc version 0.3
- *
- * Revision 2.0  1994/09/28  10:34:32  neelin
- * Release of minc version 0.2
- *
- * Revision 1.5  94/09/28  10:34:18  neelin
- * Pre-release
- *  to keep track of modifications in source.
- * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -64,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 6.1 1999-10-19 14:45:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 6.2 1999-10-19 15:57:18 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

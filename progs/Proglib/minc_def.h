@@ -6,7 +6,10 @@
 @CREATED    : July 7, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_def.h,v $
- * Revision 6.1  1999-10-19 14:45:13  neelin
+ * Revision 6.2  1999-10-19 15:57:17  neelin
+ * Fixed log message containing log substitution
+ *
+ * Revision 6.1  1999/10/19 14:45:13  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:41  neelin
@@ -37,38 +40,8 @@
  * Added macros ROUND and STR_EQ.
  * 
  * Revision 1.3  93/08/04  13:03:30  neelin
- * Added RCS $Log: minc_def.h,v $
- * Added RCS Revision 6.1  1999-10-19 14:45:13  neelin
- * Added RCS Fixed Log subsitutions for CVS
- * Added RCS
- * Added RCS Revision 6.0  1997/09/12 13:23:41  neelin
- * Added RCS Release of minc version 0.6
- * Added RCS
- * Revision 5.0  1997/08/21  13:24:41  neelin
- * Release of minc version 0.5
+ * Added RCS Log to keep track of modifications in source
  *
- * Revision 4.0  1997/05/07  20:00:50  neelin
- * Release of minc version 0.4
- *
- * Revision 3.0  1995/05/15  19:31:35  neelin
- * Release of minc version 0.3
- *
- * Revision 2.1  1994/12/02  09:03:05  neelin
- * Added definitions of public and private.
- *
- * Revision 2.0  94/09/28  10:34:30  neelin
- * Release of minc version 0.2
- * 
- * Revision 1.6  94/09/28  10:34:22  neelin
- * Pre-release
- * 
- * Revision 1.5  93/08/11  13:23:31  neelin
- * Modified ROUND macro to cast to (long)
- * 
- * Revision 1.4  93/08/11  13:21:51  neelin
- * Added macros ROUND and STR_EQ.
- *  to keep track of modifications in source.
- * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
