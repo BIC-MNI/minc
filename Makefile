@@ -71,7 +71,7 @@ install-doc-dirs:
 	if test ! -d $(INSTALL_DOCDIR) ; \
       then echo Creating directory $(INSTALL_DOCDIR) ; \
            mkdir -p $(INSTALL_DOCDIR); \
-      fi; done
+      fi
 
 distclean : clean configclean
 
