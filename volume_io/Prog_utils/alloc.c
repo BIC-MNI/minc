@@ -16,7 +16,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.19 1995-10-19 15:46:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.20 1996-04-16 14:26:56 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -45,7 +45,7 @@ private  void  set_up_array_pointers_2D(
     size_t   i;
 
     for_less( i, 1, n1 )
-        ptr[i] = (void *) ((long) ptr[i-1] + n2 * type_size);
+        ptr[i] = (void *) ((long) ptr[i-1] + (long) n2* (long) type_size);
 }
 
 /* ----------------------------- MNI Header -----------------------------------

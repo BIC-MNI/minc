@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.11 1995-08-14 18:08:22 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.12 1996-04-16 14:27:57 david Exp $";
 #endif
 
 #include  <basic.h>
@@ -139,9 +139,9 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC_VAR_SIZED_STRUCT( ptr, element_type, n_elements )              \
-             alloc_memory_in_bytes( (void **) &(ptr),                         \
-             (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type))\
-             _ALLOC_SOURCE_LINE )
+  alloc_memory_in_bytes( (void **) &(ptr),                                    \
+  (size_t) (sizeof(*(ptr))+((size_t)(n_elements)-1) * sizeof(element_type))   \
+  _ALLOC_SOURCE_LINE )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC2D
