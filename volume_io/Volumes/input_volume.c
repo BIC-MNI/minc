@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.33 1995-05-24 17:24:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.34 1995-06-20 13:22:15 david Exp $";
 #endif
 
 #include  <minc.h>
@@ -232,4 +232,24 @@ public  Status  input_volume(
     }
 
     return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_input_minc_file
+@INPUT      : volume_input
+@OUTPUT     : 
+@RETURNS    : Minc_file
+@DESCRIPTION: Returns the minc file attached to a particular volume
+              input structure.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 15, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Minc_file   get_volume_input_minc_file(
+    volume_input_struct   *volume_input )
+{
+    return( volume_input->minc_file );
 }
