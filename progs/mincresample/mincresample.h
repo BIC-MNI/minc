@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 1.7  1993-08-11 14:31:50  neelin
-@MODIFIED   : Changed prototype for check_imageminmax.
+@MODIFIED   : Revision 1.8  1993-10-20 14:05:42  neelin
+@MODIFIED   : Added VOXEL_COORD_EPS - an epsilon for doing voxel coordinate comparisons.
 @MODIFIED   :
+ * Revision 1.7  93/08/11  14:31:50  neelin
+ * Changed prototype for check_imageminmax.
+ * 
  * Revision 1.6  93/08/11  13:34:20  neelin
  * Converted to use Dave MacDonald's General_transform code.
  * Fixed bug in get_slice - for non-linear transformations coord was
@@ -64,6 +67,7 @@
 #define DEFAULT_MIN 0.0
 #define FILL_DEFAULT DBL_MAX   /* Fillvalue indicating -nofill */
 #define SMALL_VALUE (100.0*FLT_MIN)   /* A small floating-point value */
+#define VOXEL_COORD_EPS (100.0*FLT_EPSILON)  /* Epsilon for voxel coords */
 #define TRANSFORM_BUFFER_INCREMENT 256
 #define PROCESSING_VAR "processing"
 #define TEMP_IMAGE_VAR "mincresample-temporary-image"
