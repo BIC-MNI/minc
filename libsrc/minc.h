@@ -19,12 +19,22 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : July 15, 1993 (P.N.)
                  - added MI_ICV_DO_FILLVALUE and MI_FILLVALUE
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.24 1993-07-15 14:00:06 neelin Exp $ MINC (MNI)
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.25 1993-07-20 12:16:12 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.24 1993-07-15 14:00:06 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.25 1993-07-20 12:16:12 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -321,63 +331,100 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.2
 #endif
 
 /* From netcdf_convenience.c */
-public int miattget(int cdfid, int varid, char *name, nc_type datatype,
-                    int max_length, void *value, int *att_length);
-public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
-                    void *value);
-public char *miattgetstr(int cdfid, int varid, char *name, 
-                         int maxlen, char *value);
-public int miattputint(int cdfid, int varid, char *name, int value);
-public int miattputdbl(int cdfid, int varid, char *name, double value);
-public int miattputstr(int cdfid, int varid, char *name, char *value);
-public int mivarget(int cdfid, int varid, long start[], long count[],
-                    nc_type datatype, char *sign, void *values);
-public int mivarget1(int cdfid, int varid, long mindex[],
-                     nc_type datatype, char *sign, void *value);
-public int mivarput(int cdfid, int varid, long start[], long count[],
-                    nc_type datatype, char *sign, void *values);
-public int mivarput1(int cdfid, int varid, long mindex[],
-                     nc_type datatype, char *sign, void *value);
-public long *miset_coords(int nvals, long value, long coords[]);
-public long *mitranslate_coords(int cdfid, 
-                                int invar,  long incoords[],
-                                int outvar, long outcoords[]);
-public int micopy_all_atts(int incdfid, int invarid, 
-                           int outcdfid, int outvarid);
-public int micopy_var_def(int incdfid, int invarid, int outcdfid);
-public int micopy_var_values(int incdfid, int invarid, 
-                             int outcdfid, int outvarid);
-public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
-                               int excluded_vars[]);
-public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
-                                 int excluded_vars[]);
+public int miattget  
+   PROTO((int cdfid, int varid, char *name, nc_type datatype,
+          int max_length, void *value, int *att_length));
+public int miattget1
+   PROTO((int cdfid, int varid, char *name, nc_type datatype,
+          void *value));
+public char *miattgetstr
+   PROTO((int cdfid, int varid, char *name, 
+          int maxlen, char *value));
+public int miattputint
+   PROTO((int cdfid, int varid, char *name, int value));
+public int miattputdbl
+   PROTO((int cdfid, int varid, char *name, double value));
+public int miattputstr
+   PROTO((int cdfid, int varid, char *name, char *value));
+public int mivarget
+   PROTO((int cdfid, int varid, long start[], long count[],
+          nc_type datatype, char *sign, void *values));
+public int mivarget1
+   PROTO((int cdfid, int varid, long mindex[],
+          nc_type datatype, char *sign, void *value));
+public int mivarput
+   PROTO((int cdfid, int varid, long start[], long count[],
+          nc_type datatype, char *sign, void *values));
+public int mivarput1
+   PROTO((int cdfid, int varid, long mindex[],
+                     nc_type datatype, char *sign, void *value));
+public long *miset_coords
+   PROTO((int nvals, long value, long coords[]));
+public long *mitranslate_coords
+   PROTO((int cdfid, 
+          int invar,  long incoords[],
+          int outvar, long outcoords[]));
+public int micopy_all_atts
+   PROTO((int incdfid, int invarid, 
+          int outcdfid, int outvarid));
+public int micopy_var_def
+   PROTO((int incdfid, int invarid, int outcdfid));
+public int micopy_var_values
+   PROTO((int incdfid, int invarid, 
+          int outcdfid, int outvarid));
+public int micopy_all_var_defs
+   PROTO((int incdfid, int outcdfid, int nexclude,
+          int excluded_vars[]));
+public int micopy_all_var_values
+   PROTO((int incdfid, int outcdfid, int nexclude,
+          int excluded_vars[]));
 
 /* From minc_convenience.c */
-public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);
-public int miattget_pointer(int cdfid, int varid, char *name);
-public int miadd_child(int cdfid, int parent_varid, int child_varid);
-public int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
-                                 int ndims, int dim[]);
-public int micreate_group_variable(int cdfid, char *name);
+public int miattput_pointer
+   PROTO((int cdfid, int varid, char *name, int ptrvarid));
+public int miattget_pointer
+   PROTO((int cdfid, int varid, char *name));
+public int miadd_child
+   PROTO((int cdfid, int parent_varid, int child_varid));
+public int micreate_std_variable
+   PROTO((int cdfid, char *name, nc_type datatype, 
+          int ndims, int dim[]));
+public int micreate_group_variable
+   PROTO((int cdfid, char *name));
 
 /* From image_conversion.c */
-public int miicv_create(void);
-public int miicv_free(int icvid);
-public int miicv_setdbl(int icvid, int icv_property, double value);
-public int miicv_setint(int icvid, int icv_property, int value);
-public int miicv_setlong(int icvid, int icv_property, long value);
-public int miicv_setstr(int icvid, int icv_property, char *value);
-public int miicv_inqdbl(int icvid, int icv_property, double *value);
-public int miicv_inqint(int icvid, int icv_property, int *value);
-public int miicv_inqlong(int icvid, int icv_property, long *value);
-public int miicv_inqstr(int icvid, int icv_property, char *value);
-public int miicv_ndattach(int icvid, int cdfid, int varid);
-public int miicv_detach(int icvid);
-public int miicv_get(int icvid, long start[], long count[], void *values);
-public int miicv_put(int icvid, long start[], long count[], void *values);
+public int miicv_create
+   PROTO((void));
+public int miicv_free
+   PROTO((int icvid));
+public int miicv_setdbl
+   PROTO((int icvid, int icv_property, double value));
+public int miicv_setint
+   PROTO((int icvid, int icv_property, int value));
+public int miicv_setlong
+   PROTO((int icvid, int icv_property, long value));
+public int miicv_setstr
+   PROTO((int icvid, int icv_property, char *value));
+public int miicv_inqdbl
+   PROTO((int icvid, int icv_property, double *value));
+public int miicv_inqint
+   PROTO((int icvid, int icv_property, int *value));
+public int miicv_inqlong
+   PROTO((int icvid, int icv_property, long *value));
+public int miicv_inqstr
+   PROTO((int icvid, int icv_property, char *value));
+public int miicv_ndattach
+   PROTO((int icvid, int cdfid, int varid));
+public int miicv_detach
+   PROTO((int icvid));
+public int miicv_get
+   PROTO((int icvid, long start[], long count[], void *values));
+public int miicv_put
+   PROTO((int icvid, long start[], long count[], void *values));
 
 /* From dim_conversion.c */
-public int miicv_attach(int icvid, int cdfid, int varid);
+public int miicv_attach
+   PROTO((int icvid, int cdfid, int varid));
 
 
 /* End ifndef MINC_HEADER_FILE */
