@@ -1,15 +1,22 @@
 #! /bin/csh -f
 
 # Modifications: $Log: mincheader,v $
-# Modifications: Revision 1.3  1993-08-11 15:20:55  neelin
-# Modifications: Added RCS logging in source.
+# Modifications: Revision 1.4  1993-08-25 11:24:20  neelin
+# Modifications: Added checking for -h or -help options.
 # Modifications:
+# Revision 1.3  93/08/11  15:20:55  neelin
+# Added RCS logging in source.
+# 
 #
 
 # Check arguments
 
 if ($#argv != 1) then
    echo "Usage: $0 <minc file>
+   exit
+endif
+if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
+   echo "Usage: $0 <minc file>"
    exit
 endif
 set file = $1

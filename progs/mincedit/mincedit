@@ -5,9 +5,12 @@
 # Usage: mincedit <minc file> [<editor>]
 #
 # Modifications: $Log: mincedit,v $
-# Modifications: Revision 1.4  1993-08-11 15:19:09  neelin
-# Modifications: Added RCS logging in source.
+# Modifications: Revision 1.5  1993-08-25 11:24:48  neelin
+# Modifications: Added checking for -h or -help options.
 # Modifications:
+# Revision 1.4  93/08/11  15:19:09  neelin
+# Added RCS logging in source.
+# 
 #
 #
 # Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
@@ -29,6 +32,10 @@ set editor = emacs
 # Check arguments
 switch ("$#argv")
 case 1:
+   if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
+      echo "Usage: $0 <minc file> [<editor>]"
+      exit
+   endif
    if ($?EDITOR) then
       set editor = $EDITOR
    endif
