@@ -622,8 +622,12 @@ public int micopy_var_def(int incdfid, int invarid, int outcdfid)
       ncopts=oldncopts;
       if (outdim[i]!=MI_ERROR) {
          if ( (ncdiminq(outcdfid, outdim[i], NULL, &outsize)==MI_ERROR) ||
-              (outsize != insize) )
+             ((insize!=0) && (outsize!=0) && (insize != outsize)) ) {
+            if ((insize!=0) && (outsize!=0) && (insize != outsize))
+               MI_LOG_PKG_ERROR2(MI_ERR_DIMSIZE, 
+                  "Variable already has dimension of different size");
             MI_RETURN_ERROR(MI_ERROR);
+         }
       }
       /* Otherwise create it */
       else {
@@ -634,7 +638,7 @@ public int micopy_var_def(int incdfid, int invarid, int outcdfid)
             outdim[i]=ncdimdef(outcdfid, dimname, NC_UNLIMITED);
             ncopts=oldncopts;
          }
-         /* If its not meant to be unlimited, or if we cannot create it
+         /* If it's not meant to be unlimited, or if we cannot create it
             unlimited, then create it with the current size */
          if ((indim[i]!=recdim) || (outdim[i]==MI_ERROR)) {
             MI_CHK_ERR(outdim[i]=ncdimdef(outcdfid, dimname, MAX(1,insize)))
@@ -697,7 +701,10 @@ public int micopy_var_values(int incdfid, int invarid,
    for (i=0; i<inndims; i++) {
       if ((ncdiminq(incdfid, indim[i], NULL, &insize[i]) == MI_ERROR) ||
           (ncdiminq(outcdfid, outdim[i], NULL, &outsize) == MI_ERROR) ||
-          (insize[i] != outsize)) {
+          ((insize[i]!=0) && (outsize!=0) && (insize[i] != outsize))) {
+         if ((insize[i]!=0) && (outsize!=0) && (insize[i] != outsize))
+            MI_LOG_PKG_ERROR2(MI_ERR_DIMSIZE, 
+               "Variables have dimensions of different size");
          MI_RETURN_ERROR(MI_ERROR);
       }
    }
