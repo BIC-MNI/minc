@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.27 1996-05-17 19:36:20 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.28 1997-08-13 13:21:32 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -37,7 +37,7 @@ private  Status  input_slice(
               in volume_input, then the file is converted to bytes on input.
               This function assumes that volume->filename has been assigned.
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald  - now uses volume starts
 ---------------------------------------------------------------------------- */
 
 public  Status  initialize_free_format_input(
@@ -57,7 +57,6 @@ public  Status  initialize_free_format_input(
     char           ch;
     Real           file_separations[MAX_DIMENSIONS];
     Real           volume_separations[MAX_DIMENSIONS];
-    Real           origin_voxel[MAX_DIMENSIONS];
     Real           trans[N_DIMENSIONS];
     FILE           *file;
     BOOLEAN        axis_valid;
@@ -261,11 +260,8 @@ public  Status  initialize_free_format_input(
             }
         }
 
-        for_less( axis, 0, N_DIMENSIONS )
-            origin_voxel[axis] = 0.0;
-
         set_volume_separations( volume, volume_separations );
-        set_volume_translation( volume, origin_voxel, trans );
+        set_volume_starts( volume, trans );
     }
 
     set_volume_type( volume, desired_data_type, FALSE, 0.0, 0.0 );

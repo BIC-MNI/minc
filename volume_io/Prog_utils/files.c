@@ -19,7 +19,7 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.35 1997-06-29 19:00:21 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.36 1997-08-13 13:21:31 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );

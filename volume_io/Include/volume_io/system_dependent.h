@@ -14,6 +14,13 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#ifdef sun
+#ifndef __GNUC__
+#define  NO_DBL_MAX             /*--- sun os does not define DBL_MAX */
+#endif
+#define  NO_STRERROR            /*--- sun os does not define strerror */
+#endif
+
 #ifdef NO_DBL_MAX
 #ifndef DBL_MAX
 #include <values.h>

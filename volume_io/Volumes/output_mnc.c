@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.49 1997-04-17 17:26:02 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.50 1997-08-13 13:21:34 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -84,103 +84,124 @@ private  BOOLEAN  is_default_direction_cosine(
 @CALLS      : 
 @CREATED    : Oct. 24, 1995    David MacDonald
 @MODIFIED   : Nov. 15, 1996    D. MacDonald  - added handling of space type
+@MODIFIED   : May. 20, 1997    D. MacDonald  - removed float arithmetic
+@MODIFIED   : May  22, 1997   D. MacDonald - added use_volume_starts_and_steps
 ---------------------------------------------------------------------------- */
 
 private  Status  output_world_transform(
     Minc_file              file,
     STRING                 space_type,
-    General_transform      *voxel_to_world_transform )
+    General_transform      *voxel_to_world_transform,
+    BOOLEAN                use_volume_starts_and_steps_flag )
 {
-    double              separation[MAX_VAR_DIMS];
+    double              step[MAX_VAR_DIMS];
     Real                start[MAX_VAR_DIMS];
-    double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    int                 i, j, d, axis;
-    Point               origin;
-    Vector              axes[MAX_DIMENSIONS];
-    Transform           transform, t, inverse;
+    double              dir_cosines[MAX_DIMENSIONS][N_DIMENSIONS];
+    int                 dim, axis, spatial_axes[N_DIMENSIONS];
 
-    if( voxel_to_world_transform == (General_transform *) NULL )
+    /*--- set all starts/steps/dir_cosines to default */
+
+    for_less( dim, 0, file->n_file_dimensions )
     {
-        make_identity_transform( &transform );
-    }
-    else if( get_transform_type( voxel_to_world_transform ) == LINEAR )
-    {
-        transform = *(get_linear_transform_ptr( voxel_to_world_transform ));
-    }
-    else
-    {
-        print_error( "Cannot output non-linear transforms.  Using identity.\n");
-        make_identity_transform( &transform );
+        start[dim] = 0.0;
+        step[dim] = 1.0;
+        dir_cosines[dim][X] = 0.0;
+        dir_cosines[dim][Y] = 0.0;
+        dir_cosines[dim][Z] = 0.0;
     }
 
-    get_transform_origin( &transform, &origin );
-    get_transform_x_axis( &transform, &axes[X] );
-    get_transform_y_axis( &transform, &axes[Y] );
-    get_transform_z_axis( &transform, &axes[Z] );
+    /*--- if must use the volume's starts and steps */
 
-    separation[X] = MAGNITUDE( axes[X] );
-    separation[Y] = MAGNITUDE( axes[Y] );
-    separation[Z] = MAGNITUDE( axes[Z] );
-    SCALE_VECTOR( axes[X], axes[X], 1.0 / separation[X] );
-    SCALE_VECTOR( axes[Y], axes[Y], 1.0 / separation[Y] );
-    SCALE_VECTOR( axes[Z], axes[Z], 1.0 / separation[Z] );
-
-    for_less( i, 0, 3 )
+    if( use_volume_starts_and_steps_flag )
     {
-        if( Vector_coord(axes[i],i) < 0.0f )
+        for_less( dim, 0, file->n_file_dimensions )
         {
-            SCALE_VECTOR( axes[i], axes[i], -1.0 );
-            separation[i] *= -1.0;
+            if( convert_dim_name_to_spatial_axis( file->dim_names[dim], &axis ))
+            {
+                if( file->to_volume_index[dim] == INVALID_AXIS )
+                    dir_cosines[dim][axis] = 1.0;    /*--- default */
+                else
+                {
+                    start[dim] =
+                          file->volume->starts[file->to_volume_index[dim]];
+                    step[dim] =
+                          file->volume->separations[file->to_volume_index[dim]];
+                    dir_cosines[dim][X] = file->volume->direction_cosines
+                                       [file->to_volume_index[dim]][X];
+                    dir_cosines[dim][Y] = file->volume->direction_cosines
+                                       [file->to_volume_index[dim]][Y];
+                    dir_cosines[dim][Z] = file->volume->direction_cosines
+                                       [file->to_volume_index[dim]][Z];
+                }
+            }
         }
     }
-
-    for_less( i, 0, 3 )
+    else  /*--- convert the linear transform to starts/steps/dir cosines */
     {
-        for_less( j, 0, 3 )
-            dir_cosines[i][j] = (Real) Vector_coord(axes[i],j);
-    }
-
-    make_identity_transform( &t );
-    set_transform_x_axis( &t, &axes[X] );
-    set_transform_y_axis( &t, &axes[Y] );
-    set_transform_z_axis( &t, &axes[Z] );
-
-    (void) compute_transform_inverse( &t, &inverse );
-
-    transform_point( &inverse,
-                     (Real) Point_x(origin), (Real) Point_y(origin),
-                     (Real) Point_z(origin),
-                     &start[X], &start[Y], &start[Z] );
-
-    for_less( d, 0, file->n_file_dimensions )
-    {
-        if( convert_dim_name_to_spatial_axis( file->dim_names[d], &axis ) )
+        if( voxel_to_world_transform == NULL ||
+            get_transform_type( voxel_to_world_transform ) != LINEAR )
         {
-            file->dim_ids[d] = micreate_std_variable( file->cdfid,
-                                      file->dim_names[d], NC_DOUBLE, 0, NULL);
+            print_error(
+             "Cannot output null or non-linear transforms.  Using identity.\n");
 
-            if( file->dim_ids[d] < 0 )
-                return( ERROR );
-
-            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
-                                separation[axis]);
-            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
-                                start[axis]);
-            if( !is_default_direction_cosine( axis, dir_cosines[axis] ) )
+            for_less( dim, 0, file->n_file_dimensions )
             {
-                (void) ncattput( file->cdfid, file->dim_ids[d],
-                                 MIdirection_cosines,
-                                 NC_DOUBLE, N_DIMENSIONS, dir_cosines[axis]);
-            }
-            (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
-            if( !equal_strings( space_type, MI_UNKNOWN_SPACE ) )
-            {
-                (void) miattputstr( file->cdfid, file->dim_ids[d], MIspacetype,
-                                    space_type );
+                if( convert_dim_name_to_spatial_axis( file->dim_names[dim],
+                                                      &axis ))
+                    dir_cosines[dim][axis] = 1.0;
             }
         }
         else
-            file->dim_ids[d] = -1;
+        {
+            spatial_axes[0] = INVALID_AXIS;
+            spatial_axes[1] = INVALID_AXIS;
+            spatial_axes[2] = INVALID_AXIS;
+
+            for_less( dim, 0, file->n_file_dimensions )
+            {
+                if( convert_dim_name_to_spatial_axis( file->dim_names[dim],
+                                                      &axis ))
+                    spatial_axes[axis] = dim;
+            }
+
+            convert_transform_to_starts_and_steps( voxel_to_world_transform,
+                                                   file->n_file_dimensions,
+                                                   NULL, spatial_axes,
+                                                   start, step,
+                                                   dir_cosines );
+        }
+    }
+
+    for_less( dim, 0, file->n_file_dimensions )
+    {
+        if( convert_dim_name_to_spatial_axis( file->dim_names[dim], &axis ) )
+        {
+            file->dim_ids[dim] = micreate_std_variable( file->cdfid,
+                                      file->dim_names[dim], NC_DOUBLE, 0, NULL);
+
+            if( file->dim_ids[dim] < 0 )
+                return( ERROR );
+
+            (void) miattputdbl( file->cdfid, file->dim_ids[dim], MIstep,
+                                step[dim]);
+            (void) miattputdbl( file->cdfid, file->dim_ids[dim], MIstart,
+                                start[dim]);
+            if( !is_default_direction_cosine( axis, dir_cosines[dim] ) )
+            {
+                (void) ncattput( file->cdfid, file->dim_ids[dim],
+                                 MIdirection_cosines,
+                                 NC_DOUBLE, N_DIMENSIONS, dir_cosines[dim]);
+            }
+            (void) miattputstr( file->cdfid, file->dim_ids[dim], MIunits,
+                                UNITS );
+            if( !equal_strings( space_type, MI_UNKNOWN_SPACE ) )
+            {
+                (void) miattputstr( file->cdfid, file->dim_ids[dim],
+                                    MIspacetype, space_type );
+            }
+        }
+        else
+            file->dim_ids[dim] = -1;
     }
 
     return( OK );
@@ -375,7 +396,8 @@ public  Minc_file  initialize_minc_output(
     }
 
     if( output_world_transform( file, volume_to_attach->coordinate_system_name,
-                                voxel_to_world_transform ) != OK )
+                                voxel_to_world_transform,
+                                options->use_volume_starts_and_steps ) != OK )
     {
         FREE( file );
         return( NULL );
@@ -1556,7 +1578,7 @@ public  Status  close_minc_output(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - added use_volume_starts_and_steps
 ---------------------------------------------------------------------------- */
 
 public  void  set_default_minc_output_options(
@@ -1569,6 +1591,9 @@ public  void  set_default_minc_output_options(
 
     options->global_image_range[0] = 0.0;
     options->global_image_range[1] = -1.0;
+
+    options->use_volume_starts_and_steps = FALSE;
+    options->use_starts_set = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1679,4 +1704,29 @@ public  void  set_minc_output_real_range(
 {
     options->global_image_range[0] = real_min;
     options->global_image_range[1] = real_max;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_output_use_volume_starts_and_steps_flag
+@INPUT      : options
+              flag
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Tells MINC output to use the exact starts and steps stored in
+              the volume, not the voxel-to-world-transform.  This avoids
+              round-off errors in converting to transform on input, then
+              from transform on output.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : May. 22, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_output_use_volume_starts_and_steps_flag(
+    minc_output_options  *options,
+    BOOLEAN              flag )
+{
+    options->use_volume_starts_and_steps = flag;
+    options->use_starts_set = TRUE;
 }

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.65 1996-12-09 20:20:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.66 1997-08-13 13:21:33 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -136,6 +136,7 @@ public  BOOLEAN  convert_dim_name_to_spatial_axis(
 @CALLS      : 
 @CREATED    : June, 1993       David MacDonald
 @MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
+@MODIFIED   : May  22, 1996    D. MacDonald    - now stores starts/steps
 ---------------------------------------------------------------------------- */
 
 public   Volume   create_volume(
@@ -177,14 +178,11 @@ public   Volume   create_volume(
     volume->real_value_translation = 0.0;
 
     for_less( i, 0, N_DIMENSIONS )
-    {
-        volume->world_space_for_translation_voxel[i] = 0.0;
         volume->spatial_axes[i] = -1;
-    }
 
     for_less( i, 0, n_dimensions )
     {
-        volume->translation_voxel[i] = 0.0;
+        volume->starts[i] = 0.0;
         volume->separations[i] = 1.0;
         volume->direction_cosines[i][X] = 0.0;
         volume->direction_cosines[i][Y] = 0.0;
@@ -213,6 +211,7 @@ public   Volume   create_volume(
 
     make_identity_transform( &identity );
     create_linear_transform( &volume->voxel_to_world_transform, &identity );
+    volume->voxel_to_world_transform_uptodate = TRUE;
 
     volume->coordinate_system_name = create_string( MI_UNKNOWN_SPACE );
 
@@ -571,76 +570,122 @@ public  unsigned int  get_volume_total_n_voxels(
 
     get_volume_sizes( volume, sizes );
 
-    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
+    for_less( i, 0, get_volume_n_dimensions( volume ) )
         n *= (unsigned int) sizes[i];
 
     return( n );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_voxel_to_world_transform
+@NAME       : assign_voxel_to_world_transform
 @INPUT      : volume
               transform
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Sets the volume's transformation from voxel to world coords.
+@DESCRIPTION: Updates the volume's transformation from voxel to world coords.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    : May  20, 1997    D. MacDonald - created from
+                                          set_voxel_to_world_transform
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_voxel_to_world_transform(
+private  void  assign_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform )
 {
-    Real        sign;
-    int         c, axis;
-    Vector      axes[N_DIMENSIONS];
-    Transform   *linear_transform;
-
     delete_general_transform( &volume->voxel_to_world_transform );
 
     volume->voxel_to_world_transform = *transform;
-
-    if( get_transform_type( transform ) == LINEAR )
-    {
-        linear_transform = get_linear_transform_ptr( transform );
-        get_transform_x_axis( linear_transform, &axes[X] );
-        get_transform_y_axis( linear_transform, &axes[Y] );
-        get_transform_z_axis( linear_transform, &axes[Z] );
-
-        for_less( c, 0, N_DIMENSIONS )
-        {
-            axis = volume->spatial_axes[c];
-            if( volume->separations[axis] < 0.0 )
-                sign = -1.0;
-            else
-                sign = 1.0;
-            if( axis >= 0 )
-                volume->separations[axis] = sign * MAGNITUDE( axes[c] );
-        }
-    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_voxel_to_world_transform
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : transform
-@DESCRIPTION: Returns a pointer to the voxel to world transform of the volume.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@NAME       : dot_vectors
+@INPUT      : n
+              v1
+              v2
+@OUTPUT     :
+@RETURNS    : Dot product
+@DESCRIPTION: Computes the dot product of 2 n-dimensional vectors.
+              This function should be moved to some vector routines.
+@METHOD     :
+@GLOBALS    :
+@CALLS      :
+@CREATED    :         1993    David MacDonald
+@MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-public  General_transform  *get_voxel_to_world_transform(
-    Volume   volume )
+private  Real   dot_vectors(
+    int    n,
+    Real   v1[],
+    Real   v2[] )
 {
-    return( &volume->voxel_to_world_transform );
+    int   i;
+    Real  d;
+
+    d = 0.0;
+    for_less( i, 0, n )
+        d += v1[i] * v2[i];
+
+    return( d );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cross_3D_vector
+@INPUT      : v1
+              v2
+@OUTPUT     : cross
+@RETURNS    : 
+@DESCRIPTION: Computes the cross product of 2 n-dimensional vectors.
+              This function should be moved to some vector routines.
+@METHOD     :
+@GLOBALS    :
+@CALLS      :
+@CREATED    :         1993    David MacDonald
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+
+private  void   cross_3D_vector(
+    Real   v1[],
+    Real   v2[],
+    Real   cross[] )
+{
+    cross[0] = v1[1] * v2[2] - v1[2] * v2[1];
+    cross[1] = v1[2] * v2[0] - v1[0] * v2[2];
+    cross[2] = v1[0] * v2[1] - v1[1] * v2[0];
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : normalize_vector
+@INPUT      : n
+              v1
+@OUTPUT     : v1_normalized
+@RETURNS    : 
+@DESCRIPTION: Normalizes the length of v1 to 1, placing result in
+              v1_normalized
+@METHOD     :
+@GLOBALS    :
+@CALLS      :
+@CREATED    : May  22, 1997   D. MacDonald
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+
+private  void   normalize_vector(
+    Real   v1[],
+    Real   v1_normalized[] )
+{
+    int    d;
+    Real   mag;
+
+    mag = dot_vectors( N_DIMENSIONS, v1, v1 );
+    if( mag <= 0.0 )
+        mag = 1.0;
+
+    mag = sqrt( mag );
+
+    for_less( d, 0, N_DIMENSIONS )
+        v1_normalized[d] = v1[d] / mag;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -660,24 +705,26 @@ public  General_transform  *get_voxel_to_world_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - now uses starts/steps
 ---------------------------------------------------------------------------- */
 
 public  void  compute_world_transform(
     int                 spatial_axes[N_DIMENSIONS],
     Real                separations[],
-    Real                translation_voxel[],
-    Real                world_space_for_translation_voxel[N_DIMENSIONS],
     Real                direction_cosines[][N_DIMENSIONS],
+    Real                starts[],
     General_transform   *world_transform )
 {
     Transform                transform;
     Real                     separations_3D[N_DIMENSIONS];
-    Vector                   directions[N_DIMENSIONS];
-    Point                    point;
-    Real                     x_trans, y_trans, z_trans;
-    Real                     voxel[N_DIMENSIONS];
-    int                      c, axis, n_axes, axis_list[N_DIMENSIONS];
+    Real                     directions[N_DIMENSIONS][N_DIMENSIONS];
+    Real                     starts_3D[N_DIMENSIONS];
+    Real                     normal[N_DIMENSIONS];
+    int                      dim, c, a1, a2, axis, n_axes;
+    int                      axis_list[N_DIMENSIONS];
+
+    /*--- find how many direction cosines are specified, and set the
+          3d separations and starts */
 
     n_axes = 0;
 
@@ -687,19 +734,17 @@ public  void  compute_world_transform(
         if( axis >= 0 )
         {
             separations_3D[c] = separations[axis];
-            voxel[c] = translation_voxel[axis];
-            fill_Vector( directions[c],
-                         direction_cosines[axis][X],
-                         direction_cosines[axis][Y],
-                         direction_cosines[axis][Z]);
-
+            starts_3D[c] = starts[axis];
+            directions[c][X] = direction_cosines[axis][X];
+            directions[c][Y] = direction_cosines[axis][Y];
+            directions[c][Z] = direction_cosines[axis][Z];
             axis_list[n_axes] = c;
             ++n_axes;
         }
         else
         {
             separations_3D[c] = 1.0;
-            voxel[c] = 0.0;
+            starts_3D[c] = 0.0;
         }
     }
 
@@ -709,55 +754,81 @@ public  void  compute_world_transform(
         return;
     }
 
+    /*--- convert 1 or 2 axes to 3 axes */
+
     if( n_axes == 1 )
     {
-        create_two_orthogonal_vectors( &directions[axis_list[0]],
-                            &directions[(axis_list[0]+1) % N_DIMENSIONS],
-                            &directions[(axis_list[0]+2) % N_DIMENSIONS] );
+        a1 = (axis_list[0] + 1) % N_DIMENSIONS;
+        a2 = (axis_list[0] + 2) % N_DIMENSIONS;
+
+        /*--- create an orthogonal vector */
+
+        directions[a1][X] = directions[axis_list[0]][Y] +
+                            directions[axis_list[0]][Z];
+        directions[a1][Y] = -directions[axis_list[0]][X] -
+                            directions[axis_list[0]][Z];
+        directions[a1][Z] = directions[axis_list[0]][Y] -
+                            directions[axis_list[0]][X];
+
+        cross_3D_vector( directions[axis_list[0]], directions[a1],
+                         directions[a2] );
+        normalize_vector( directions[a1], directions[a1] );
+        normalize_vector( directions[a2], directions[a2] );
     }
     else if( n_axes == 2 )
     {
-        axis = N_DIMENSIONS - axis_list[0] - axis_list[1];
+        a2 = N_DIMENSIONS - axis_list[0] - axis_list[1];
 
-        CROSS_VECTORS( directions[axis],
-                       directions[(axis+1) % N_DIMENSIONS],
-                       directions[(axis+2) % N_DIMENSIONS] );
+        cross_3D_vector( directions[axis_list[0]], directions[axis_list[1]],
+               directions[a2] );
+
+        normalize_vector( directions[a2], directions[a2] );
     }
 
-    if( EQUAL_VECTORS( directions[0], directions[1] ) ||
-        EQUAL_VECTORS( directions[1], directions[2] ) ||
-        EQUAL_VECTORS( directions[2], directions[0] ) )
+    /*--- check to make sure that 3 axes are not a singular system */
+
+    for_less( dim, 0, N_DIMENSIONS )
     {
-        fill_Vector( directions[0], 1.0, 0.0, 0.0 );
-        fill_Vector( directions[1], 0.0, 1.0, 0.0 );
-        fill_Vector( directions[2], 0.0, 0.0, 1.0 );
+        cross_3D_vector( directions[dim], directions[(dim+1)%N_DIMENSIONS],
+                         normal );
+        if( normal[0] == 0.0 && normal[1] == 0.0 && normal[2] == 0.0 )
+            break;
     }
+
+    if( dim < N_DIMENSIONS )
+    {
+        directions[0][0] = 1.0;
+        directions[0][1] = 0.0;
+        directions[0][2] = 0.0;
+        directions[1][0] = 0.0;
+        directions[1][1] = 1.0;
+        directions[1][2] = 0.0;
+        directions[2][0] = 0.0;
+        directions[2][1] = 0.0;
+        directions[2][2] = 1.0;
+    }
+
+    /*--- make the linear transformation */
+
+    make_identity_transform( &transform );
 
     for_less( c, 0, N_DIMENSIONS )
     {
-        NORMALIZE_VECTOR( directions[c], directions[c] );
-        SCALE_VECTOR( directions[c], directions[c], separations_3D[c] );
+        for_less( dim, 0, N_DIMENSIONS )
+        {
+            Transform_elem(transform,dim,c) = directions[c][dim] *
+                                              separations_3D[c];
+
+            Transform_elem(transform,dim,3) += directions[c][dim] *
+                                               starts_3D[c];
+        }
     }
-
-    fill_Point( point, 0.0, 0.0, 0.0 );
-
-    make_change_to_bases_transform( &point,
-              &directions[X], &directions[Y], &directions[Z], &transform );
-
-    transform_point( &transform, voxel[X], voxel[Y], voxel[Z],
-                     &x_trans, &y_trans, &z_trans );
-
-    fill_Point( point, world_space_for_translation_voxel[X] - x_trans,
-                       world_space_for_translation_voxel[Y] - y_trans,
-                       world_space_for_translation_voxel[Z] - z_trans );
-
-    set_transform_origin( &transform, &point );
 
     create_linear_transform( world_transform, &transform );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : recompute_world_transform
+@NAME       : check_recompute_world_transform
 @INPUT      : volume
 @OUTPUT     : 
 @RETURNS    : 
@@ -767,24 +838,277 @@ public  void  compute_world_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  20, 1997   D. MacDonald - now checks update flag
 ---------------------------------------------------------------------------- */
 
-private  void  recompute_world_transform(
+private  void  check_recompute_world_transform(
     Volume  volume )
 {
     General_transform        world_transform;
-    Real                     separations[MAX_DIMENSIONS];
 
-    get_volume_separations( volume, separations );
+    if( !volume->voxel_to_world_transform_uptodate )
+    {
+        volume->voxel_to_world_transform_uptodate = TRUE;
 
-    compute_world_transform( volume->spatial_axes, separations,
-                             volume->translation_voxel,
-                             volume->world_space_for_translation_voxel,
-                             volume->direction_cosines,
-                             &world_transform );
+        compute_world_transform( volume->spatial_axes,
+                                 volume->separations,
+                                 volume->direction_cosines,
+                                 volume->starts,
+                                 &world_transform );
 
-    set_voxel_to_world_transform( volume, &world_transform );
+        assign_voxel_to_world_transform( volume, &world_transform );
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_transform_origin_to_starts
+@INPUT      : origin
+              n_volume_dimensions
+              spatial_axes
+              dir_cosines
+@OUTPUT     : starts
+@RETURNS    : 
+@DESCRIPTION: Converts a transform origin into starts (multiples of the
+              dir_cosines).  dir_cosines need not be mutually orthogonal
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : May. 22, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  convert_transform_origin_to_starts(
+    Real               origin[],
+    int                n_volume_dimensions,
+    int                spatial_axes[],
+    Real               dir_cosines[][N_DIMENSIONS],
+    Real               starts[] )
+{
+    int         axis, dim, which[N_DIMENSIONS], n_axes, i, j;
+    Real        o_dot_c, c_dot_c;
+    Real        x_dot_x, x_dot_y, x_dot_v, y_dot_y, y_dot_v, bottom;
+    Real        **matrix, solution[N_DIMENSIONS];
+
+    for_less( dim, 0, n_volume_dimensions )
+        starts[dim] = 0.0;
+
+    /*--- get the list of valid axes (which) */
+
+    n_axes = 0;
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        axis = spatial_axes[dim];
+        if( axis >= 0 )
+        {
+            which[n_axes] = axis;
+            ++n_axes;
+        }
+    }
+
+    /*--- get the starts: computed differently for 1, 2, or 3 axes */
+
+    if( n_axes == 1 )
+    {
+        o_dot_c = dot_vectors( N_DIMENSIONS, origin, dir_cosines[which[0]] );
+        c_dot_c = dot_vectors( N_DIMENSIONS, dir_cosines[which[0]],
+                                     dir_cosines[which[0]] );
+
+        if( c_dot_c != 0.0 )
+            starts[which[0]] = o_dot_c / c_dot_c;
+    }
+    else if( n_axes == 2 )
+    {
+        x_dot_x = dot_vectors( N_DIMENSIONS, dir_cosines[which[0]],
+                                     dir_cosines[which[0]] );
+        x_dot_v = dot_vectors( N_DIMENSIONS, dir_cosines[which[0]], origin );
+        x_dot_y = dot_vectors( N_DIMENSIONS, dir_cosines[which[0]],
+                                     dir_cosines[which[1]] );
+        y_dot_y = dot_vectors( N_DIMENSIONS, dir_cosines[which[1]],
+                                     dir_cosines[which[1]] );
+        y_dot_v = dot_vectors( N_DIMENSIONS, dir_cosines[which[1]], origin );
+
+        bottom = x_dot_x * y_dot_y - x_dot_y * x_dot_y;
+
+        if( bottom != 0.0 )
+        {
+            starts[which[0]] = (x_dot_v * y_dot_y - x_dot_y * y_dot_v) / bottom;
+            starts[which[1]] = (y_dot_v * x_dot_x - x_dot_y * x_dot_v) / bottom;
+        }
+    }
+    else if( n_axes == 3 )
+    {
+        /*--- this is the usual case, solve the equations to find what
+              starts give the desired origin */
+
+        ALLOC2D( matrix, N_DIMENSIONS, N_DIMENSIONS );
+
+        for_less( i, 0, N_DIMENSIONS )
+        for_less( j, 0, N_DIMENSIONS )
+        {
+            matrix[i][j] = dir_cosines[which[j]][i];
+        }
+
+        if( solve_linear_system( N_DIMENSIONS, matrix, origin, solution ) )
+        {
+            starts[which[0]] = solution[0];
+            starts[which[1]] = solution[1];
+            starts[which[2]] = solution[2];
+        }
+
+        FREE2D( matrix );
+    }
+    else
+    {
+        print_error(
+          "Invalid number of axes in convert_transform_origin_to_starts\n");
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_transform_to_starts_and_steps
+@INPUT      : transform
+              separation_signs
+@OUTPUT     : starts
+              steps
+              dir_cosines
+              spatial_axes
+@RETURNS    : 
+@DESCRIPTION: Converts a linear transform to a set of 3 starts, 3 steps,
+              and 3 direction cosines.  The separation signs determine
+              the desired signs of each of the separations.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : May. 20, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  convert_transform_to_starts_and_steps(
+    General_transform  *transform,
+    int                n_volume_dimensions,
+    Real               step_signs[],
+    int                spatial_axes[],
+    Real               starts[],
+    Real               steps[],
+    Real               dir_cosines[][N_DIMENSIONS] )
+{
+    Real        sign, mag;
+    int         axis, dim;
+    Real        axes[N_DIMENSIONS][N_DIMENSIONS];
+    Real        origin[N_DIMENSIONS];
+    Transform   *linear_transform;
+
+    if( get_transform_type( transform ) != LINEAR )
+    {
+        print_error( "convert_transform_to_starts_and_steps(): non-linear transform found.\n" );
+        return;
+    }
+
+    linear_transform = get_linear_transform_ptr( transform );
+
+    get_transform_origin_real( linear_transform, origin );
+    get_transform_x_axis_real( linear_transform, &axes[X][0] );
+    get_transform_y_axis_real( linear_transform, &axes[Y][0] );
+    get_transform_z_axis_real( linear_transform, &axes[Z][0] );
+
+    /*--- assign default steps */
+
+    for_less( dim, 0, n_volume_dimensions )
+        steps[dim] = 1.0;
+
+    /*--- assign the steps and dir_cosines for the spatial axes */
+
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        axis = spatial_axes[dim];
+        if( axis >= 0 )
+        {
+            mag = dot_vectors( N_DIMENSIONS, axes[dim], axes[dim] );
+
+            if( mag <= 0.0 )
+                mag = 1.0;
+            mag = sqrt( mag );
+
+            if( step_signs == NULL )
+            {
+                if( axes[dim][dim] < 0.0 )
+                    sign = -1.0;
+                else
+                    sign = 1.0;
+            }
+            else  /*--- make the sign of steps match the step_signs passed in */
+            {
+                if( step_signs[axis] < 0.0 )
+                    sign = -1.0;
+                else
+                    sign = 1.0;
+            }
+
+            steps[axis] = sign * mag;
+            dir_cosines[axis][X] = axes[dim][X] / steps[axis];
+            dir_cosines[axis][Y] = axes[dim][Y] / steps[axis];
+            dir_cosines[axis][Z] = axes[dim][Z] / steps[axis];
+        }
+    }
+
+    /*--- finally, get the starts */
+
+    convert_transform_origin_to_starts( origin, n_volume_dimensions,
+                                        spatial_axes, dir_cosines, starts );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_voxel_to_world_transform
+@INPUT      : volume
+              transform
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the volume's transformation from voxel to world coords.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : May  22, 1997   D. MacDonald - recomputes the starts/steps
+---------------------------------------------------------------------------- */
+
+public  void  set_voxel_to_world_transform(
+    Volume             volume,
+    General_transform  *transform )
+{
+    assign_voxel_to_world_transform( volume, transform );
+    volume->voxel_to_world_transform_uptodate = TRUE;
+
+    if( get_transform_type( transform ) == LINEAR )
+    {
+        convert_transform_to_starts_and_steps( transform,
+                                               get_volume_n_dimensions(volume),
+                                               volume->separations,
+                                               volume->spatial_axes,
+                                               volume->starts,
+                                               volume->separations,
+                                               volume->direction_cosines );
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_voxel_to_world_transform
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : transform
+@DESCRIPTION: Returns a pointer to the voxel to world transform of the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
+---------------------------------------------------------------------------- */
+
+public  General_transform  *get_voxel_to_world_transform(
+    Volume   volume )
+{
+    check_recompute_world_transform( volume );
+
+    return( &volume->voxel_to_world_transform );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -917,7 +1241,7 @@ public  void  get_volume_separations(
 {
     int   i;
 
-    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
+    for_less( i, 0, get_volume_n_dimensions( volume ) )
         separations[i] = volume->separations[i];
 }
 
@@ -932,7 +1256,7 @@ public  void  get_volume_separations(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
 ---------------------------------------------------------------------------- */
 
 public  void  set_volume_separations(
@@ -941,74 +1265,108 @@ public  void  set_volume_separations(
 {
     int   i;
 
-    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
+    for_less( i, 0, get_volume_n_dimensions( volume ) )
         volume->separations[i] = separations[i];
 
-    recompute_world_transform( volume );
+    volume->voxel_to_world_transform_uptodate = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_volume_translation
+@NAME       : set_volume_starts
 @INPUT      : volume
-              voxel
-              world_space_voxel_maps_to
+              starts[]
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Sets the translation portion of the voxel to world transform,
-              by specifying a point in voxel space (voxel), and a point
-              in world space (world_space_voxel_maps_to).
+              by specifying the start vector, as specified by the MINC format.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@CREATED    : May  20, 1997   David MacDonald
+@MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_translation(
+public  void  set_volume_starts(
     Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] )
+    Real    starts[] )
 {
     int  c;
 
-    for_less( c, 0, get_multidim_n_dimensions( &volume->array ) )
-        volume->translation_voxel[c] = voxel[c];
+    for_less( c, 0, get_volume_n_dimensions( volume ) )
+        volume->starts[c] = starts[c];
 
-    for_less( c, 0, N_DIMENSIONS )
-        volume->world_space_for_translation_voxel[c] =
-                               world_space_voxel_maps_to[c];
-
-    recompute_world_transform( volume );
+    volume->voxel_to_world_transform_uptodate = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_volume_translation
+@NAME       : get_volume_starts
 @INPUT      : volume
-@OUTPUT     : voxel
-              world_space_voxel_maps_to
+@OUTPUT     : starts
 @RETURNS    : 
-@DESCRIPTION: Passes back the translation portion of the voxel to world
-              transform of the volume.
+@DESCRIPTION: Passes back the start vector of the volume.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    : May  20, 1997   David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_translation(
+public  void  get_volume_starts(
     Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] )
+    Real    starts[] )
 {
     int  c;
 
-    for_less( c, 0, get_multidim_n_dimensions( &volume->array ) )
-        voxel[c] = volume->translation_voxel[c];
+    for_less( c, 0, get_volume_n_dimensions( volume ) )
+        starts[c] = volume->starts[c];
+}
 
-    for_less( c, 0, N_DIMENSIONS )
-        world_space_voxel_maps_to[c] =
-                 volume->world_space_for_translation_voxel[c];
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_direction_unit_cosine
+@INPUT      : volume
+              axis
+              dir
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the direction cosine for one axis, assumed to be unit
+              length.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May  20, 1997     David MacDonald
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_direction_unit_cosine(
+    Volume   volume,
+    int      axis,
+    Real     dir[] )
+{
+    int    dim;
+
+    if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
+    {
+        print_error(
+         "set_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
+          axis );
+        return;
+    }
+
+    /*--- check if this is a spatial axis */
+
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        if( volume->spatial_axes[dim] == axis )
+            break;
+    }
+
+    if( dim == N_DIMENSIONS )   /* this is not a spatial axis, ignore the dir */
+        return;
+
+    volume->direction_cosines[axis][X] = dir[X];
+    volume->direction_cosines[axis][Y] = dir[Y];
+    volume->direction_cosines[axis][Z] = dir[Z];
+
+    volume->voxel_to_world_transform_uptodate = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1023,7 +1381,8 @@ public  void  get_volume_translation(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  20, 1997   D. MacDonald    - split into
+                                            set_volume_direction_unit_cosine
 ---------------------------------------------------------------------------- */
 
 public  void  set_volume_direction_cosine(
@@ -1031,29 +1390,7 @@ public  void  set_volume_direction_cosine(
     int      axis,
     Real     dir[] )
 {
-    int    d;
-    Real   len;
-
-    if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
-    {
-        print_error(
-         "set_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
-          axis );
-        return;
-    }
-
-    for_less( d, 0, N_DIMENSIONS )
-    {
-        if( volume->spatial_axes[d] == axis )
-            break;
-    }
-
-    if( d == N_DIMENSIONS )   /* this is not a spatial axis, ignore the dir */
-        return;
-
-    volume->direction_cosines[axis][X] = dir[X];
-    volume->direction_cosines[axis][Y] = dir[Y];
-    volume->direction_cosines[axis][Z] = dir[Z];
+    Real   len, unit_vector[N_DIMENSIONS];
 
     len = dir[X] * dir[X] + dir[Y] * dir[Y] + dir[Z] * dir[Z];
 
@@ -1063,15 +1400,16 @@ public  void  set_volume_direction_cosine(
         return;
     }
 
-    if( len != 1.0 )
-    {
-        len = sqrt( len );
-        volume->direction_cosines[axis][X] /= len;
-        volume->direction_cosines[axis][Y] /= len;
-        volume->direction_cosines[axis][Z] /= len;
-    }
+    if( len <= 0.0 )
+        len = 1.0;
 
-    recompute_world_transform( volume );
+    len = sqrt( len );
+
+    unit_vector[X] = dir[X] / len;
+    unit_vector[Y] = dir[Y] / len;
+    unit_vector[Z] = dir[Z] / len;
+
+    set_volume_direction_unit_cosine( volume, axis, unit_vector );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1111,11 +1449,17 @@ public  void  get_volume_direction_cosine(
     }
 
     if( d == N_DIMENSIONS )   /* this is not a spatial axis, ignore the dir */
-        return;
-
-    dir[X] = volume->direction_cosines[axis][X];
-    dir[Y] = volume->direction_cosines[axis][Y];
-    dir[Z] = volume->direction_cosines[axis][Z];
+    {
+        dir[X] = 0.0;
+        dir[Y] = 0.0;
+        dir[Z] = 0.0;
+    }
+    else
+    {
+        dir[X] = volume->direction_cosines[axis][X];
+        dir[Y] = volume->direction_cosines[axis][Y];
+        dir[Z] = volume->direction_cosines[axis][Z];
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1198,7 +1542,7 @@ public  void  reorder_xyz_to_voxel(
               Note that centre of first voxel corresponds to (0.0,0.0,0.0) in
               voxel coordinates.
 @CREATED    : Mar   1993           David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
 public  void  convert_voxel_to_world(
@@ -1209,6 +1553,8 @@ public  void  convert_voxel_to_world(
     Real     *z_world )
 {
     Real   xyz[N_DIMENSIONS];
+
+    check_recompute_world_transform( volume );
 
     reorder_voxel_to_xyz( volume, voxel, xyz );
 
@@ -1275,7 +1621,7 @@ public  void  convert_3D_voxel_to_world(
               vector is a normal vector (ie. a derivative), so transforms by
               transpose of inverse transform.
 @CREATED    : Mar   1993           David MacDonald
-@MODIFIED   :
+@MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
 public  void  convert_voxel_normal_vector_to_world(
@@ -1288,7 +1634,7 @@ public  void  convert_voxel_normal_vector_to_world(
     Real        xyz[N_DIMENSIONS];
     Transform   *inverse;
 
-    reorder_voxel_to_xyz( volume, voxel_vector, xyz );
+    check_recompute_world_transform( volume );
 
     if( get_transform_type( &volume->voxel_to_world_transform ) != LINEAR )
         handle_internal_error( "Cannot get normal vector of nonlinear xforms.");
@@ -1297,6 +1643,8 @@ public  void  convert_voxel_normal_vector_to_world(
                                       &volume->voxel_to_world_transform );
 
     /* transform vector by transpose of inverse transformation */
+
+    reorder_voxel_to_xyz( volume, voxel_vector, xyz );
 
     *x_world = Transform_elem(*inverse,0,0) * xyz[X] +
                Transform_elem(*inverse,1,0) * xyz[Y] +
@@ -1386,7 +1734,7 @@ public  void  convert_world_vector_to_voxel(
 @RETURNS    : 
 @DESCRIPTION: Converts from world coordinates to voxel coordinates.
 @CREATED    : Mar   1993           David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
 public  void  convert_world_to_voxel(
@@ -1398,7 +1746,7 @@ public  void  convert_world_to_voxel(
 {
     Real   xyz[N_DIMENSIONS];
 
-    /* apply linear transform */
+    check_recompute_world_transform( volume );
 
     general_inverse_transform_point( &volume->voxel_to_world_transform,
                                      x_world, y_world, z_world,
@@ -1738,11 +2086,9 @@ public  Volume   copy_volume_definition_no_alloc(
 {
     int                c, sizes[MAX_DIMENSIONS];
     Real               separations[MAX_DIMENSIONS];
+    Real               starts[MAX_DIMENSIONS];
+    Real               dir_cosine[N_DIMENSIONS];
     Volume             copy;
-    General_transform  transform;
-
-    get_volume_sizes( volume, sizes );
-    get_volume_separations( volume, separations );
 
     if( nc_data_type == NC_UNSPECIFIED )
     {
@@ -1754,7 +2100,6 @@ public  Volume   copy_volume_definition_no_alloc(
     copy = create_volume( get_volume_n_dimensions(volume),
                           volume->dimension_names, nc_data_type, signed_flag,
                           voxel_min, voxel_max );
-    set_volume_sizes( copy, sizes );
 
     for_less( c, 0, N_DIMENSIONS )
         copy->spatial_axes[c] = volume->spatial_axes[c];
@@ -1763,15 +2108,20 @@ public  Volume   copy_volume_definition_no_alloc(
                            get_volume_real_min(volume),
                            get_volume_real_max(volume) );
 
+    get_volume_sizes( volume, sizes );
+    set_volume_sizes( copy, sizes );
+
+    get_volume_separations( volume, separations );
     set_volume_separations( copy, separations );
 
+    get_volume_starts( volume, starts );
+    set_volume_starts( copy, starts );
+
     for_less( c, 0, get_volume_n_dimensions(volume) )
-        set_volume_direction_cosine( copy, c, volume->direction_cosines[c] );
-
-    copy_general_transform( get_voxel_to_world_transform(volume),
-                            &transform );
-
-    set_voxel_to_world_transform( copy, &transform );
+    {
+        get_volume_direction_cosine( volume, c, dir_cosine );
+        set_volume_direction_unit_cosine( copy, c, dir_cosine );
+    }
 
     set_volume_space_type( copy, volume->coordinate_system_name );
 

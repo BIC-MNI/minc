@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.19 1995-11-17 20:25:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.20 1997-08-13 13:21:34 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -292,7 +292,8 @@ public  Status   copy_volume_auxiliary_and_history(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : May  22, 1997   D. MacDonald - now sets
+                                            use_volume_starts_and_steps flag
 ---------------------------------------------------------------------------- */
 
 public  Status  output_modified_volume(
@@ -321,7 +322,7 @@ public  Status  output_modified_volume(
 
     n_dims = get_volume_n_dimensions(volume);
 
-    if( options == (minc_output_options *) NULL )
+    if( options == NULL )
         set_default_minc_output_options( &used_options );
     else
         used_options = *options;
@@ -333,6 +334,17 @@ public  Status  output_modified_volume(
         set_minc_output_real_range( &used_options, real_min, real_max );
     }
 
+    /*--- if the user has not explicitly set the use_volume_starts_and_steps
+          flag, let's set it if the transform is linear, to output the
+          same starts as was input, and avoid round-off error */
+
+    if( !used_options.use_starts_set &&
+        !used_options.use_volume_starts_and_steps &&
+        get_transform_type(get_voxel_to_world_transform(volume)) == LINEAR )
+    {
+        set_minc_output_use_volume_starts_and_steps_flag( &used_options, TRUE );
+    }
+
     minc_file = initialize_minc_output( filename,
                                         n_dims, dim_names, sizes,
                                         file_nc_data_type, file_signed_flag,
@@ -340,7 +352,7 @@ public  Status  output_modified_volume(
                                         get_voxel_to_world_transform(volume),
                                         volume, &used_options );
 
-    if( minc_file == (Minc_file) NULL )
+    if( minc_file == NULL )
         return( ERROR );
 
     status = copy_volume_auxiliary_and_history( minc_file, filename,

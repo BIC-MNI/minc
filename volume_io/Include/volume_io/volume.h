@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.48 1996-12-09 20:20:23 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.49 1997-08-13 13:21:29 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -42,6 +42,8 @@ typedef  struct
 {
     Real     global_image_range[2];
     STRING   dimension_names[MAX_DIMENSIONS];
+    BOOLEAN  use_starts_set;
+    BOOLEAN  use_volume_starts_and_steps;
 } minc_output_options;
 
 #include  <volume_cache.h>
@@ -75,11 +77,10 @@ typedef  struct
     Real                    real_value_translation;
 
     Real                    separations[MAX_DIMENSIONS];
-    Real                    translation_voxel[MAX_DIMENSIONS];
+    Real                    starts[MAX_DIMENSIONS];
     Real                    direction_cosines[MAX_DIMENSIONS][N_DIMENSIONS];
 
-    Real                    world_space_for_translation_voxel[N_DIMENSIONS];
-
+    BOOLEAN                 voxel_to_world_transform_uptodate;
     General_transform       voxel_to_world_transform;
 
     STRING                  coordinate_system_name;

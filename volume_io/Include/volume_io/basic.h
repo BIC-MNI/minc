@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.29 1997-03-23 21:11:29 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.30 1997-08-13 13:21:30 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -89,14 +89,14 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 #endif
 #define  MAX( x, y )  ( ((x) >= (y)) ? (x) : (y) )
 
-#define  MAX3( x, y, z )  MAX( x, MAX(y,z) )
+#define  MAX3( x, y, z )  ( ((x) >= (y)) ? MAX( x, z ) : MAX( y, z ) )
 
 #ifdef   MIN
 #undef   MIN
 #endif
 #define  MIN( x, y )  ( ((x) <= (y)) ? (x) : (y) )
 
-#define  MIN3( x, y, z )  MIN( x, MIN(y,z) )
+#define  MIN3( x, y, z )  ( ((x) <= (y)) ? MIN( x, z ) : MIN( y, z ) )
 
 /* --------- gets the address of a 2-d array element in a 1-d array ----- */
 

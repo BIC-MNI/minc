@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.14 1996-11-15 16:09:43 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.15 1997-08-13 13:21:30 david Exp $";
 #endif
 
 #include  <basic.h>
@@ -275,7 +275,7 @@ static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC5D( ptr, n1, n2, n3, n4, n5 )                                   \
-     ASSIGN(ptr) = alloc_memory_5d( (size_t) (n1), (size_t) (n2),             \
+     ASSIGN_PTR(ptr) = alloc_memory_5d( (size_t) (n1), (size_t) (n2),         \
                           (size_t) (n3), (size_t) (n4), (size_t) (n5),        \
                           sizeof(*****(ptr)) _ALLOC_SOURCE_LINE )
 

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.57 1997-04-17 17:25:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.58 1997-08-13 13:21:33 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -92,6 +92,9 @@ public  int   get_minc_file_n_dimensions(
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : Nov. 15, 1996   D. MacDonald - added handling of space type
+@MODIFIED   : May  20, 1997   D. MacDonald - removed float arithmetic in
+                                             transformations and made volumes
+                                             store starts/steps/dircos
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_input_from_minc_id(
@@ -117,16 +120,13 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
     Real                volume_separations[MI_NUM_SPACE_DIMS];
+    Real                volume_starts[MI_NUM_SPACE_DIMS];
     Real                default_voxel_min, default_voxel_max;
-    Real                world_space[N_DIMENSIONS], voxel_zero;
+    Real                voxel_zero;
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     double              tmp_cosines[MI_NUM_SPACE_DIMS];
     BOOLEAN             spatial_dim_flags[MAX_VAR_DIMS];
-    Vector              offset;
-    Point               origin;
-    Real                zero_voxel[MAX_DIMENSIONS];
-    Vector              spatial_axis;
     double              real_min, real_max;
     int                 d, dimvar, which_valid_axis, axis;
     int                 spatial_axis_indices[MAX_VAR_DIMS];
@@ -356,66 +356,29 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             sizes[file->to_volume_index[d]] = (int) file->sizes_in_file[d];
             volume_separations[file->to_volume_index[d]] =
                                           file_separations[d];
+
+            if( file->to_volume_index[d] != INVALID_AXIS )
+            {
+                volume_starts[file->to_volume_index[d]] = start_position[d];
+                set_volume_direction_unit_cosine( volume,
+                                file->to_volume_index[d], dir_cosines[d] );
+            }
         }
     }
+
+    /* --- create the world transform stored in the volume */
+
+    set_volume_separations( volume, volume_separations );
+    set_volume_starts( volume, volume_starts );
 
     if( space_type_consensus )
         set_volume_space_type( volume, prev_space_type );
 
     /* --- create the file world transform */
 
-    fill_Point( origin, 0.0, 0.0, 0.0 );
-
-    for_less( d, 0, MAX_DIMENSIONS )
-        zero_voxel[d] = 0.0;
-
-    for_less( d, 0, N_DIMENSIONS )
-    {
-        axis = file->spatial_axes[d];
-        if( axis != INVALID_AXIS )
-        {
-            fill_Vector( spatial_axis,
-                         dir_cosines[axis][0],
-                         dir_cosines[axis][1],
-                         dir_cosines[axis][2] );
-            NORMALIZE_VECTOR( spatial_axis, spatial_axis );
-            
-            SCALE_VECTOR( offset, spatial_axis, start_position[axis] );
-            ADD_POINT_VECTOR( origin, origin, offset );
-        }
-    }
-
-    world_space[X] = (Real) Point_x(origin);
-    world_space[Y] = (Real) Point_y(origin);
-    world_space[Z] = (Real) Point_z(origin);
-
     compute_world_transform( file->spatial_axes, file_separations,
-                             zero_voxel, world_space, dir_cosines,
+                             dir_cosines, start_position,
                              &file->voxel_to_world_transform );
-
-    /* --- create the world transform stored in the volume */
-
-    fill_Point( origin, 0.0, 0.0, 0.0 );
-
-    for_less( d, 0, file->n_file_dimensions )
-    {
-        if( file->to_volume_index[d] != INVALID_AXIS )
-        {
-            set_volume_direction_cosine( volume,
-                                         file->to_volume_index[d],
-                                         dir_cosines[d] );
-        }
-    }
-
-    general_transform_point( &file->voxel_to_world_transform,
-                             0.0, 0.0, 0.0,
-                             &world_space[X], &world_space[Y], &world_space[Z]);
-
-    for_less( d, 0, N_DIMENSIONS )
-        zero_voxel[d] = 0.0;
-
-    set_volume_translation( volume, zero_voxel, world_space );
-    set_volume_separations( volume, volume_separations );
 
     /* --- decide on type conversion */
 
@@ -1114,8 +1077,11 @@ public  BOOLEAN  input_more_minc_file(
 public  BOOLEAN  advance_input_volume(
     Minc_file   file )
 {
-    int   ind, c, axis;
-    Real  voxel[MAX_DIMENSIONS], world_space[N_DIMENSIONS];
+    int                 ind, c, axis;
+    Real                voxel[MAX_DIMENSIONS], world_space[N_DIMENSIONS];
+    Real                vol_world_space[N_DIMENSIONS];
+    Transform           offset;
+    General_transform   offset_transform, new_transform;
 
     ind = file->n_file_dimensions-1;
 
@@ -1139,6 +1105,8 @@ public  BOOLEAN  advance_input_volume(
         for_less( ind, 0, get_volume_n_dimensions( file->volume ) )
             file->indices[file->valid_file_axes[ind]] = 0;
 
+        /*--- update the volume's voxel-to-world transform */
+
         for_less( c, 0, N_DIMENSIONS )
         {
             axis = file->spatial_axes[c];
@@ -1155,8 +1123,21 @@ public  BOOLEAN  advance_input_volume(
 
         for_less( c, 0, get_volume_n_dimensions(file->volume) )
             voxel[c] = 0.0;
+        
+        convert_voxel_to_world( file->volume, voxel,
+                                &vol_world_space[X], &vol_world_space[Y],
+                                &vol_world_space[Z]);
 
-        set_volume_translation( file->volume, voxel, world_space );
+        make_identity_transform( &offset );
+        for_less( c, 0, N_DIMENSIONS )
+            Transform_elem(offset,c,3) = world_space[c] - vol_world_space[c];
+        create_linear_transform( &offset_transform, &offset );
+        concat_general_transforms( get_voxel_to_world_transform(file->volume),
+                                   &offset_transform, &new_transform );
+        set_voxel_to_world_transform( file->volume, &new_transform );
+        delete_general_transform( &offset_transform );
+
+        /*--- update the volume if it is cached */
 
         if( file->volume->is_cached_volume )
             set_cache_volume_file_offset( &file->volume->cache, file->volume,

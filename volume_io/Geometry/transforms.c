@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.18 1996-05-17 19:36:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.19 1997-08-13 13:21:28 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -142,6 +142,29 @@ public  void  set_transform_origin(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_transform_origin_real
+@INPUT      : transform
+@OUTPUT     : origin
+@RETURNS    : 
+@DESCRIPTION: Passes back the origin of the transform, i.e., where the 
+              point (0,0,0) would be transformed to.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_transform_origin_real(
+    Transform   *transform,
+    Real        origin[] )
+{
+    origin[X] = Transform_elem(*transform,0,3);
+    origin[Y] = Transform_elem(*transform,1,3);
+    origin[Z] = Transform_elem(*transform,2,3);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_transform_x_axis
 @INPUT      : transform
 @OUTPUT     : x_axis
@@ -166,6 +189,29 @@ public  void  get_transform_x_axis(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_transform_x_axis_real
+@INPUT      : transform
+@OUTPUT     : x_axis
+@RETURNS    : 
+@DESCRIPTION: Passes back the x axis of the transform, i.e., the vector
+              to which the vector (1,0,0) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_transform_x_axis_real(
+    Transform   *transform,
+    Real        x_axis[] )
+{
+    x_axis[X] = Transform_elem(*transform,0,0);
+    x_axis[Y] = Transform_elem(*transform,1,0);
+    x_axis[Z] = Transform_elem(*transform,2,0);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_transform_x_axis
 @INPUT      : x_axis
 @OUTPUT     : transform
@@ -186,6 +232,29 @@ public  void  set_transform_x_axis(
     Transform_elem(*transform,0,0) = (Transform_elem_type) Vector_x(*x_axis);
     Transform_elem(*transform,1,0) = (Transform_elem_type) Vector_y(*x_axis);
     Transform_elem(*transform,2,0) = (Transform_elem_type) Vector_z(*x_axis);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_transform_x_axis_real
+@INPUT      : x_axis
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Sets the x axis of the transform, i.e., the vector
+              to which the vector (1,0,0) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_transform_x_axis_real(
+    Transform   *transform,
+    Real        x_axis[] )
+{
+    Transform_elem(*transform,0,0) = (Transform_elem_type) x_axis[X];
+    Transform_elem(*transform,1,0) = (Transform_elem_type) x_axis[Y];
+    Transform_elem(*transform,2,0) = (Transform_elem_type) x_axis[Z];
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -213,6 +282,29 @@ public  void  get_transform_y_axis(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_transform_y_axis_real
+@INPUT      : transform
+@OUTPUT     : y_axis
+@RETURNS    : 
+@DESCRIPTION: Passes back the y axis of the transform, i.e., the vector
+              to which the vector (0,1,0) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_transform_y_axis_real(
+    Transform   *transform,
+    Real        y_axis[] )
+{
+    y_axis[X] = Transform_elem(*transform,0,1);
+    y_axis[Y] = Transform_elem(*transform,1,1);
+    y_axis[Z] = Transform_elem(*transform,2,1);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_transform_y_axis
 @INPUT      : y_axis
 @OUTPUT     : transform
@@ -233,6 +325,29 @@ public  void  set_transform_y_axis(
     Transform_elem(*transform,0,1) = (Transform_elem_type) Vector_x(*y_axis);
     Transform_elem(*transform,1,1) = (Transform_elem_type) Vector_y(*y_axis);
     Transform_elem(*transform,2,1) = (Transform_elem_type) Vector_z(*y_axis);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_transform_y_axis_real
+@INPUT      : y_axis
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Sets the y axis of the transform, i.e., the vector
+              to which the vector (0,1,0) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_transform_y_axis_real(
+    Transform   *transform,
+    Real        y_axis[] )
+{
+    Transform_elem(*transform,0,1) = (Transform_elem_type) y_axis[X];
+    Transform_elem(*transform,1,1) = (Transform_elem_type) y_axis[Y];
+    Transform_elem(*transform,2,1) = (Transform_elem_type) y_axis[Z];
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -260,6 +375,29 @@ public  void  get_transform_z_axis(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_transform_z_axis_real
+@INPUT      : transform
+@OUTPUT     : z_axis
+@RETURNS    : 
+@DESCRIPTION: Passes back the z axis of the transform, i.e., the vector
+              to which the vector (0,0,1) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_transform_z_axis_real(
+    Transform   *transform,
+    Real        z_axis[] )
+{
+    z_axis[X] = Transform_elem(*transform,0,2);
+    z_axis[Y] = Transform_elem(*transform,1,2);
+    z_axis[Z] = Transform_elem(*transform,2,2);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_transform_z_axis
 @INPUT      : z_axis
 @OUTPUT     : transform
@@ -280,6 +418,29 @@ public  void  set_transform_z_axis(
     Transform_elem(*transform,0,2) = (Transform_elem_type) Vector_x(*z_axis);
     Transform_elem(*transform,1,2) = (Transform_elem_type) Vector_y(*z_axis);
     Transform_elem(*transform,2,2) = (Transform_elem_type) Vector_z(*z_axis);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_transform_z_axis_real
+@INPUT      : z_axis
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Sets the z axis of the transform, i.e., the vector
+              to which the vector (0,0,1) would be transformed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 20, 1997            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_transform_z_axis_real(
+    Transform   *transform,
+    Real        z_axis[] )
+{
+    Transform_elem(*transform,0,2) = (Transform_elem_type) z_axis[X];
+    Transform_elem(*transform,1,2) = (Transform_elem_type) z_axis[Y];
+    Transform_elem(*transform,2,2) = (Transform_elem_type) z_axis[Z];
 }
 
 /* ----------------------------- MNI Header -----------------------------------
