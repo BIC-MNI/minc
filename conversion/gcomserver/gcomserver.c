@@ -4,11 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.11  1994-04-07 11:02:17  neelin
-@MODIFIED   : Changed error handling to be more explicit about errors.
-@MODIFIED   : When the server terminates due to an error, a message is printed to /dev/log.
-@MODIFIED   : Changed handling of file cleanup.
+@MODIFIED   : Revision 1.12  1994-04-07 16:18:54  neelin
+@MODIFIED   : Fixed bug in setting of state when input error or end-of-file occurs.
 @MODIFIED   :
+ * Revision 1.11  94/04/07  11:02:17  neelin
+ * Changed error handling to be more explicit about errors.
+ * When the server terminates due to an error, a message is printed to /dev/log.
+ * Changed handling of file cleanup.
+ * 
  * Revision 1.10  94/04/06  11:12:01  neelin
  * Added switch to increase logging on debug.
  * 
@@ -147,7 +150,7 @@ int main(int argc, char *argv[])
       /* Check for error */
       if (status != ACR_OK) {
          continue_looping = FALSE;
-         status = TERMINATING;
+         state = TERMINATING;
          break;
       }
 
@@ -230,6 +233,8 @@ int main(int argc, char *argv[])
                state = DISCONNECTING;
                break;
             }
+            /* Create the output message */
+            output_message = gcend_reply(input_message);
             /* Print message */
             if (Do_logging >= LOW_LOGGING) {
                (void) fprintf(stderr, "\nFinished group copy.\n");
@@ -240,12 +245,7 @@ int main(int argc, char *argv[])
             cleanup_files(num_files, file_list);
             free_list(num_files, file_list, file_info_list);
             num_files = 0;
-            /* Create the output message */
-            output_message = gcend_reply(input_message);
             state = WAITING_FOR_GROUP;
-            if (Do_logging >= LOW_LOGGING) {
-               (void) fprintf(stderr, "\nFinished group copy.\n");
-            }
             break;
 
             /* Unknown command */
