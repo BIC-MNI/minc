@@ -31,6 +31,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.4 1992-12-01 14:03:59 neelin Exp $ MINC (MNI)";
+#endif
+
 #include <minc_private.h>
 
 

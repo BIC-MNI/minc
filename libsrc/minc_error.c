@@ -8,6 +8,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 1.3 1992-12-01 14:03:54 neelin Exp $ MINC (MNI)";
+#endif
+
 #include <minc_private.h>
 
 /* NetCDF error handling routines */

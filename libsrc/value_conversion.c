@@ -15,6 +15,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.2 1992-12-01 14:04:04 neelin Exp $ MINC (MNI)";
+#endif
+
 #include <type_limits.h>
 #include <minc_private.h>
 

@@ -6,6 +6,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 1.2 1992-12-01 14:03:57 neelin Exp $ MINC (MNI)";
+#endif
+
 /* Variable for storing the name of the current routine */
 char *minc_routine_name = "MINC";
 int minc_call_depth;
