@@ -27,7 +27,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.11  2004-02-02 18:22:46  bert
+ * Revision 6.12  2004-03-24 20:53:48  bert
+ * Increase att_length by one in miappend_history() in order to read the entire attribute
+ *
+ * Revision 6.11  2004/02/02 18:22:46  bert
  * Added miget_version() and miappend_history()
  *
  * Revision 6.10  2001/12/06 14:09:07  neelin
@@ -113,7 +116,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.11 2004-02-02 18:22:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.12 2004-03-24 20:53:48 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"
@@ -1336,6 +1339,16 @@ miappend_history(int fd, const char *tm_stamp)
         att_length = 0;
     }
 
+    /* For some reason, miattgetstr() needs to receive a value
+     * one larger than the value returned by ncattinq() in order
+     * to account for the terminating null character.
+     */
+    att_length++;
+
+    /* Allocate enough bytes for the existing attribute, the string which 
+     * will be appended, a terminating null character, and a possible
+     * additional newline.
+     */
     att_value = malloc(att_length + strlen(tm_stamp) + 1);
     if (att_value == NULL) {
         return (MI_ERROR);
