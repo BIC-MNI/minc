@@ -5,15 +5,12 @@
 
 private  BOOLEAN  point_within_triangle_2d(
     Point   *pt,
-    int     i1,
-    int     i2,
     Point   points[] );
 private  BOOLEAN  point_within_polygon_2d(
     Point   *pt,
-    int     i1,
-    int     i2,
     int     n_points,
-    Point   points[] );
+    Point   points[],
+    Vector  *polygon_normal );
 
 public  BOOLEAN   intersect_ray_polygon(
     Point            *ray_origin,
@@ -104,8 +101,58 @@ public  BOOLEAN  point_within_polygon(
     Vector  *polygon_normal )
 {
     BOOLEAN  intersects;
+
+    if( n_points == 3 )
+        intersects = point_within_triangle_2d( pt, points );
+    else
+        intersects = point_within_polygon_2d( pt, n_points, points,
+                                              polygon_normal );
+
+    return( intersects );
+}
+
+private  BOOLEAN  point_within_triangle_2d(
+    Point   *pt,
+    Point   points[] )
+{
+    BOOLEAN  inside;
+    int      i;
+    Vector   edges[3];
+    Vector   normal, offset, edge_normal;
+
+    SUB_VECTORS( edges[0], points[1], points[0] );
+    SUB_VECTORS( edges[1], points[2], points[1] );
+    SUB_VECTORS( edges[2], points[0], points[2] );
+    CROSS_VECTORS( normal, edges[2], edges[0] );
+
+    inside = TRUE;
+
+    for_less( i, 0, 3 )
+    {
+        SUB_POINTS( offset, *pt, points[i] );
+        CROSS_VECTORS( edge_normal, edges[i], normal );
+        if( DOT_VECTORS( offset, edge_normal ) > 0.0 )
+        {
+            inside = FALSE;
+            break;
+        }
+    }
+
+    return( inside );
+}
+
+private  BOOLEAN  point_within_polygon_2d(
+    Point   *pt,
+    int     n_points,
+    Point   points[],
+    Vector  *polygon_normal )
+{
+    BOOLEAN  intersects;
+    Real     x, y, x1, y1, x2, y2, x_inter, dy;
     Real     nx, ny, nz, max_val;
     int      i1, i2;
+    int      i;
+    BOOLEAN  cross;
 
     nx = ABS( Vector_x(*polygon_normal) );
     ny = ABS( Vector_y(*polygon_normal) );
@@ -128,84 +175,6 @@ public  BOOLEAN  point_within_polygon(
         i1 = X;
         i2 = Y;
     }
-
-#ifdef DO_I_TRUST_THE_TRIANGLE_CODE
-    if( n_points == 3 )
-    {
-        intersects = point_within_triangle_2d( pt, i1, i2, points );
-    }
-    else
-#endif
-    {
-        intersects = point_within_polygon_2d( pt, i1, i2, n_points, points );
-    }
-
-    return( intersects );
-}
-
-private  BOOLEAN  point_within_triangle_2d(
-    Point   *pt,
-    int     i1,
-    int     i2,
-    Point   points[] )
-{
-    BOOLEAN  intersects;
-    Real     alpha, beta, u0, u1, u2, v0, v1, v2, bottom;
-
-    intersects = FALSE;
-
-    u0 = Point_coord(*pt,i1) - Point_coord(points[0],i1);
-    v0 = Point_coord(*pt,i2) - Point_coord(points[0],i2);
-
-    u1 = Point_coord(points[1],i1) - Point_coord(points[0],i1);
-    u2 = Point_coord(points[2],i1) - Point_coord(points[0],i1);
-
-    v1 = Point_coord(points[1],i2) - Point_coord(points[0],i2);
-    v2 = Point_coord(points[2],i2) - Point_coord(points[0],i2);
-
-    if( u1 == 0.0 )
-    {
-        if( u2 != 0.0 )
-        {
-            beta = u0 / u2;
-
-            if( 0.0 <= beta && beta <= 1.0 && v1 != 0.0 )
-            {
-                alpha = (v0 - beta * v2) / v1;
-                intersects = ( (alpha >= 0.0) && ((alpha + beta) <= 1.0) );
-            }
-        }
-    }
-    else
-    {
-        bottom = v2 * u1 - u2 * v1;
-
-        if( bottom != 0.0 )
-        {
-            beta = (v0 * u1 - u0 * v1) / bottom;
-
-            if( 0.0 <= beta && beta <= 1.0 && u1 != 0.0 )
-            {
-                alpha = (u0 - beta * u2) / u1;
-                intersects = ( (alpha >= 0.0) && ((alpha+beta) <= 1.0) );
-            }
-        }
-    }
-
-    return( intersects );
-}
-
-private  BOOLEAN  point_within_polygon_2d(
-    Point   *pt,
-    int     i1,
-    int     i2,
-    int     n_points,
-    Point   points[] )
-{
-    BOOLEAN  intersects;
-    Real     x, y, x1, y1, x2, y2, x_inter, dy;
-    int      i;
-    BOOLEAN  cross;
 
     x = Point_coord( *pt, i1 );
     y = Point_coord( *pt, i2 );
