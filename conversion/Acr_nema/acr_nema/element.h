@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-08-22 15:08:34  neelin
+@MODIFIED   : Added routine acr_string_pad_char to set character used for padding
+@MODIFIED   : strings to an even number of bytes.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *
@@ -164,6 +168,7 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
 public Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value);
+public int acr_string_pad_char(int pad_character);
 public Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
                                                Acr_Element itemlist);
 public unsigned short acr_get_element_short(Acr_Element element);

@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-08-22 15:08:34  neelin
+@MODIFIED   : Added routine acr_string_pad_char to set character used for padding
+@MODIFIED   : strings to an even number of bytes.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/05/13  22:46:25  neelin
  * Modified behaviour of acr_create_element_string (and numeric) so that
  * the VR type is taken from the elid if it is specified there.
@@ -1190,7 +1194,7 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
 
    /* Pad the end with a blank if needed */
    if (pad) {
-      data[data_length - 1] = ' ';
+      data[data_length - 1] = (char) acr_string_pad_char(EOF);
       data[data_length] = '\0';
    }
 
@@ -1199,6 +1203,34 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
 
    return acr_create_element(elid->group_id, elid->element_id, 
                              vr_code, data_length, data);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_string_pad_char
+@INPUT      : pad_character - character for padding newly created strings.
+                 If set to EOF, then the pad character is not changed.
+@OUTPUT     : (none)
+@RETURNS    : Previous setting for pad character
+@DESCRIPTION: Sets the character that is used for padding newly created
+              strings. The previous value is returned. If the input
+              character is EOF, then the pad character is not changed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 22, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_string_pad_char(int pad_character)
+{
+   int old_pad_character;
+   static int current_pad_character = ' ';
+
+   old_pad_character = current_pad_character;
+
+   if (pad_character != EOF) {
+      current_pad_character = pad_character;
+   }
+   return old_pad_character;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
