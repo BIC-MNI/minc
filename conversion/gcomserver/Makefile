@@ -58,7 +58,11 @@ install_gyrotominc: gyrotominc
 	$(CP) $(CP_FLAGS) gyrotominc $(INSTALL_BINDIR)/.
 	$(CHMOD) $(CHMOD_XFLAGS) $(INSTALL_BINDIR)/gyrotominc
 
-install: install_gyrotominc
+install_gcomtodicom: gcomtodicom
+	$(CP) $(CP_FLAGS) gcomtodicom $(INSTALL_BINDIR)/.
+	$(CHMOD) $(CHMOD_XFLAGS) $(INSTALL_BINDIR)/gcomtodicom
+
+install: install_gyrotominc install_gcomtodicom
 
 mostlyclean clean: clean_gyrotominc clean_gcomtodicom
 
