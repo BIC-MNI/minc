@@ -1,14 +1,11 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.32 1994-11-25 14:20:13 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.33 1995-05-24 17:24:23 david Exp $";
 #endif
 
-#ifndef  NO_MNC_FILES
 #include  <minc.h>
 #define   MNC_ENDING   "mnc"
-#endif
-
 #define   FREE_ENDING   "fre"
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -44,7 +41,7 @@ public  Status  start_volume_input(
 {
     Status          status;
     int             d;
-    STRING          expanded_filename;
+    STRING          expanded_filename, minc_filename;
 
     if( dim_names == (char **) NULL )
         dim_names = get_default_dim_names( n_dimensions );
@@ -63,17 +60,22 @@ public  Status  start_volume_input(
 
     expand_filename( filename, expanded_filename );
 
-#ifndef  NO_MNC_FILES
     if( !filename_extension_matches( expanded_filename, FREE_ENDING ) )
         input_info->file_format = MNC_FORMAT;
     else
-#endif
         input_info->file_format = FREE_FORMAT;
 
     switch( input_info->file_format )
     {
-#ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
+        if( file_exists( expanded_filename ) )
+            (void) strcpy( minc_filename, expanded_filename );
+        else
+        {
+            (void)  file_exists_as_compressed( expanded_filename,
+                                               expanded_filename );
+        }
+
         input_info->minc_file = initialize_minc_input( expanded_filename,
                                                        *volume, options );
         if( input_info->minc_file == (Minc_file) NULL )
@@ -85,7 +87,6 @@ public  Status  start_volume_input(
         }
 
         break;
-#endif
 
     case  FREE_FORMAT:
         status = initialize_free_format_input( expanded_filename,
@@ -112,11 +113,9 @@ public  void  delete_volume_input(
 {
     switch( input_info->file_format )
     {
-#ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
         (void) close_minc_input( input_info->minc_file );
         break;
-#endif
 
     case  FREE_FORMAT:
         delete_free_format_input( input_info );
@@ -146,12 +145,10 @@ public  BOOLEAN  input_more_of_volume(
 
     switch( input_info->file_format )
     {
-#ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
         more_to_do = input_more_minc_file( input_info->minc_file,
                                            fraction_done );
         break;
-#endif
 
     case  FREE_FORMAT:
         more_to_do = input_more_free_format_file( volume, input_info,

@@ -2,12 +2,13 @@
 #include  <sys/times.h>
 #include  <sys/time.h>
 #include  <sys/param.h>
+#include  <sys/resource.h>
 #include  <limits.h>
 #include  <unistd.h>
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.11 1995-05-08 15:09:35 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.12 1995-05-24 17:24:10 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -25,12 +26,22 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.
 
 public  Real  current_cpu_seconds( void )
 {
+    Real            cpu_time;
+
+#ifdef OLD
     struct  tms  buffer;
-    Real         cpu_time;
 
     (void) times( &buffer );
 
     cpu_time = (Real) buffer.tms_utime / (Real) CLK_TCK;
+#else
+    struct  rusage  buffer;
+
+    (void) getrusage( RUSAGE_SELF, &buffer );
+
+    cpu_time = (Real) buffer.ru_utime.tv_sec +
+               (Real) buffer.ru_utime.tv_usec / 1.0e6;
+#endif
 
     return( cpu_time );
 }

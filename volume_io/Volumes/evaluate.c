@@ -432,7 +432,8 @@ public  int   evaluate_volume(
             {
                 while( degrees_continuity >= 0 &&
                        (voxel[d] < bound  ||
-                        voxel[d] > (Real) sizes[d] - 1.0 - bound) )
+                        voxel[d] > (Real) sizes[d] - 1.0 - bound  ||
+                        bound == (Real) sizes[d] - 1.0 - bound ) )
                 {
                     --degrees_continuity;
                     if( degrees_continuity == 1 )

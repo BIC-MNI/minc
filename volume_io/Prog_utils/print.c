@@ -2,7 +2,7 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.7 1995-04-28 18:32:54 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.8 1995-05-24 17:24:09 david Exp $";
 #endif
 
 private  void  (*saved_print_function) ( char [] );
@@ -152,7 +152,7 @@ public  void  abort_if_allowed( void )
 {
     char  ch;
 
-    if( !ENV_EXISTS( "NO_ABORT" ) )
+    if( ENV_EXISTS( "ABORT_FLAG" ) )
     {
         set_print_function( NULL );
 

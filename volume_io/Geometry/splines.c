@@ -131,13 +131,15 @@ public  void  evaluate_interpolating_spline(
 
     if( degree < 1 || degree > 4 )
     {
-        print( "evaluate_interpolating_spline: invalid degree: %d\n", degree );
+        print_error( "evaluate_interpolating_spline: invalid degree: %d\n",
+                     degree );
         return;
     }
 
     if( n_dims < 1 || n_dims > MAX_DIMS )
     {
-        print( "evaluate_interpolating_spline: invalid n dims: %d\n", n_dims );
+        print_error( "evaluate_interpolating_spline: invalid n dims: %d\n",
+                     n_dims );
         return;
     }
 

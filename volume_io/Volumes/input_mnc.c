@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.38 1995-04-28 18:33:01 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.39 1995-05-24 17:24:20 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -113,7 +113,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                 if( options->rgba_indices[i] >=
                     options->dimension_size_for_colour_data )
                 {
-                    print( "Error: rgba indices out of range.\n" );
+                    print_error( "Error: rgba indices out of range.\n" );
                     FREE( file );
                     return( (Minc_file) 0 );
                 }
@@ -137,14 +137,14 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     if( file->n_file_dimensions < n_vol_dims )
     {
-        print( "Error: MINC file has only %d dims, volume requires %d.\n",
+        print_error( "Error: MINC file has only %d dims, volume requires %d.\n",
                file->n_file_dimensions, n_vol_dims );
         FREE( file );
         return( (Minc_file) 0 );
     }
     else if( file->n_file_dimensions > MAX_VAR_DIMS )
     {
-        print( "Error: MINC file has %d dims, can only handle %d.\n",
+        print_error( "Error: MINC file has %d dims, can only handle %d.\n",
                file->n_file_dimensions, MAX_VAR_DIMS );
         FREE( file );
         return( (Minc_file) NULL );
@@ -157,17 +157,17 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                                 file->n_file_dimensions, file->dim_names,
                                 file->to_volume_index ) )
     {
-        print( "Error:  dimension names did not match: \n" );
+        print_error( "Error:  dimension names did not match: \n" );
         
-        print( "\n" );
-        print( "Requested:\n" );
+        print_error( "\n" );
+        print_error( "Requested:\n" );
         for_less( d, 0, n_vol_dims )
-            print( "%d: %s\n", d+1, volume->dimension_names[d] );
+            print_error( "%d: %s\n", d+1, volume->dimension_names[d] );
 
-        print( "\n" );
-        print( "In File:\n" );
+        print_error( "\n" );
+        print_error( "In File:\n" );
         for_less( d, 0, file->n_file_dimensions )
-            print( "%d: %s\n", d+1, file->dim_names[d] );
+            print_error( "%d: %s\n", d+1, file->dim_names[d] );
 
         FREE( file );
         return( (Minc_file) NULL );
@@ -551,7 +551,7 @@ public  Minc_file  initialize_minc_input(
 
     if( minc_id == MI_ERROR )
     {
-        print( "Error: opening MINC file \"%s\".\n", filename );
+        print_error( "Error: opening MINC file \"%s\".\n", filename );
         return( (Minc_file) 0 );
     }
 
@@ -606,7 +606,7 @@ public  Status  close_minc_input(
 
     if( file == (Minc_file) NULL )
     {
-        print( "close_minc_input(): NULL file.\n" );
+        print_error( "close_minc_input(): NULL file.\n" );
         return( ERROR );
     }
 
@@ -948,7 +948,7 @@ public  BOOLEAN  input_more_minc_file(
 
     if( file->end_volume_flag )
     {
-        print( "End of file in input_more_minc_file()\n" );
+        print_error( "End of file in input_more_minc_file()\n" );
         return( FALSE );
     }
 
@@ -1321,8 +1321,8 @@ public  void  set_minc_input_colour_dimension_size(
         options->dimension_size_for_colour_data = size;
     else
     {
-        print( "Warning: set_minc_input_colour_dimension_size:\n" );
-        print( "         illegal size: %d\n", size );
+        print_error( "Warning: set_minc_input_colour_dimension_size:\n" );
+        print_error( "         illegal size: %d\n", size );
     }
 }
 

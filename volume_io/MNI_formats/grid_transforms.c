@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.6 1995-05-24 17:00:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.7 1995-05-24 17:24:39 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -352,7 +352,8 @@ private  void   evaluate_grid_volume(
         {
             while( degrees_continuity >= -1 &&
                    (voxel[d] < bound  ||
-                    voxel[d] > (Real) sizes[d] - 1.0 - bound) )
+                    voxel[d] > (Real) sizes[d] - 1.0 - bound ||
+                    bound == (Real) sizes[d] - 1.0 - bound ) )
             {
                 --degrees_continuity;
                 if( degrees_continuity == 1 )

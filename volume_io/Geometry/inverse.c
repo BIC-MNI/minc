@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.6 1995-03-21 19:01:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.7 1995-05-24 17:23:50 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -61,7 +61,7 @@ public  BOOLEAN   compute_transform_inverse(
 
         if( !close_to_identity(&ident) )
         {
-            print( "Error in compute_transform_inverse\n" );
+            print_error( "Error in compute_transform_inverse\n" );
         }
     }
     else

@@ -3,7 +3,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.14 1995-04-28 18:32:51 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.15 1995-05-24 17:24:05 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -473,7 +473,8 @@ private  void  print_source_location(
     int    line_number,
     int    sequence_number )
 {
-    print( "%s:%d\t%d'th alloc", source_file, line_number, sequence_number );
+    print_error( "%s:%d\t%d'th alloc",
+                 source_file, line_number, sequence_number );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -690,13 +691,13 @@ public  void  record_ptr(
         if( n_bytes == 0 )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Alloc called with zero size.\n" );
+            print_error( ": Alloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( ptr == (void *) 0 )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Alloc returned a NIL pointer.\n" );
+            print_error( ": Alloc returned a NIL pointer.\n" );
             abort_if_allowed();
         }
         else
@@ -706,12 +707,12 @@ public  void  record_ptr(
             if( check_overlap( &alloc_list, &update_ptrs, ptr, n_bytes, &entry))
             {
                 print_source_location( source_file, line_number, -1 );
-                print( 
+                print_error( 
                  ": Alloc returned a pointer overlapping an existing block:\n"
                  );
                 print_source_location( entry->source_file, entry->line_number,
                                        entry->sequence_number );
-                print( "\n" );
+                print_error( "\n" );
                 abort_if_allowed();
             }
             else
@@ -762,14 +763,14 @@ public  void  change_ptr(
         if( n_bytes == 0 )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Realloc called with zero size.\n" );
+            print_error( ": Realloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( !remove_ptr_from_alloc_list( &alloc_list, old_ptr,
                       &orig_source, &orig_line, &sequence_number ) )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Tried to realloc a pointer not already alloced.\n");
+            print_error( ": Tried to realloc a pointer not already alloced.\n");
             abort_if_allowed();
         }
         else
@@ -780,11 +781,11 @@ public  void  change_ptr(
                                &entry ) )
             {
                 print_source_location( source_file, line_number, -1 );
-                print( 
+                print_error( 
                ": Realloc returned a pointer overlapping an existing block:\n");
                 print_source_location( entry->source_file, entry->line_number,
                                        entry->sequence_number );
-                print( "\n" );
+                print_error( "\n" );
                 abort_if_allowed();
             }
             else
@@ -831,7 +832,7 @@ public  BOOLEAN  unrecord_ptr(
         if( ptr == (void *) 0 )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Tried to free a NIL pointer.\n" );
+            print_error( ": Tried to free a NIL pointer.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;
         }
@@ -839,7 +840,7 @@ public  BOOLEAN  unrecord_ptr(
                                               &orig_line, &sequence_number ) )
         {
             print_source_location( source_file, line_number, -1 );
-            print( ": Tried to free a pointer not alloced.\n" );
+            print_error( ": Tried to free a pointer not alloced.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;
         }
@@ -875,14 +876,16 @@ public  void  output_alloc_to_file(
 
         if( memory_still_alloced( &alloc_list ) )
         {
-            print( "\n" );
-            print( "\n" );
-            print( "A memory leak was found in this program.\n" );
+            print_error( "\n" );
+            print_error( "\n" );
+            print_error( "A memory leak was found in this program.\n" );
             if( filename != NULL )
-                print( "A description has been recorded in the file %s.\n",
+                print_error(
+                    "A description has been recorded in the file %s.\n",
                        filename );
-            print( "Please report this file to the author of the program.\n" );
-            print( "\n" );
+            print_error(
+               "Please report this file to the author of the program.\n" );
+            print_error( "\n" );
 
             if( filename != (char *) 0 && filename[0] != (char) 0 )
                 file = fopen( filename, "w" );

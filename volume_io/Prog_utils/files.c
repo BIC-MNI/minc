@@ -4,7 +4,7 @@
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.24 1995-05-23 15:19:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.25 1995-05-24 17:24:06 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -1603,7 +1603,6 @@ public  Status  input_float(
         status = OK;
     else
     {
-        print_error( "Error inputting float.\n" );
         status = ERROR;
     }
 
@@ -1664,7 +1663,6 @@ public  Status  input_double(
         status = OK;
     else
     {
-        print_error( "Error inputting double.\n" );
         status = ERROR;
     }
 

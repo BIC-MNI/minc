@@ -2555,12 +2555,14 @@ the McConnell Brain Imaging Centre, and usually have a filename
 extension of \name{.xfm}.  The input and output functions are:
 
 {\bf\begin{verbatim}
-public  Status  output_transform(
-    FILE                *file,
-    char                comments[],
-    General_transform   *transform )
 public  Status  output_transform_file(
     char                filename[],
+    char                comments[],
+    General_transform   *transform )
+public  Status  output_transform(
+    FILE                *file,
+    char                filename[],
+    int                 *volume_count_ptr,
     char                comments[],
     General_transform   *transform )
 \end{verbatim}}
@@ -2569,11 +2571,18 @@ public  Status  output_transform_file(
 appropriate format.  The \name{comments} line is an arbitrary string which is
 stored in the file for documentation purposes.  Newline characters in the
 \name{comments} correctly result in a multi-line comment with a comment
-character inserted at the beginning of each line.  The first form of the
-function assumes the file is already open
-and will later be closed.  The second form opens the file, with a
+character inserted at the beginning of each line.
+The first form opens the file, with a
 default extension of \name{.xfm}, writes the transform, then closes
-the file.  Both functions return \name{ERROR} or \name{OK}.}
+the file.
+The second form of the function assumes the file is already open
+and will later be closed.  Because the transform may contain pointers to
+MINC files that define the transform, the name of the file must be passed
+in to this function, to be used to create the name of the MINC files.  The
+volume\_count\_ptr must point to an integer that has been initialized.  Each
+time an auxiliary MINC file of the transform is created, the integer is used
+to create a unique filename, and then the volume\_count\_ptr is incremented.
+Both functions return \name{ERROR} or \name{OK}.}
 
 {\bf\begin{verbatim}
 public  Status  input_transform(

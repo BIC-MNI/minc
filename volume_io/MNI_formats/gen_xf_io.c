@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.13 1995-05-12 14:28:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.14 1995-05-24 17:24:34 david Exp $";
 #endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
@@ -511,7 +511,8 @@ private  Status  input_one_transform(
 
         /*--- create the transform */
 
-        create_grid_transform( transform, volume );
+        create_grid_transform_no_copy( transform, volume );
+
         break;
     }
 

@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.16 1995-05-12 14:33:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.17 1995-05-24 17:24:32 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -190,13 +190,16 @@ private  void  internal_create_grid_transform(
     transform->inverse_flag = FALSE;
 
     if( copy_flag )
-    {
         copy = copy_volume( displacement_volume );
-
-        /* --- force 4th dimension to be vector dimension */
-    }
     else
         copy = displacement_volume;
+
+    /* --- force 4th dimension to be vector dimension */
+
+    if( copy->dimension_names[vector_dim] != NULL )
+        FREE( copy->dimension_names[vector_dim] );
+
+    ALLOC( copy->dimension_names[vector_dim], strlen(MIvector_dimension)+1 );
 
     (void) strcpy( copy->dimension_names[vector_dim], MIvector_dimension );
 

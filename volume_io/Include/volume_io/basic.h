@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.21 1995-04-28 18:32:48 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.22 1995-05-24 17:24:01 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -23,6 +23,7 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 #include  <stdio.h>
 #include  <memory.h>     /* --- for memcpy, etc. */
 #include  <def_math.h>
+#include  <system_dependent.h>
 
 /* --------- define  TRUE and FALSE ------------------------ */
 

@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.43 1995-03-21 19:02:01 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.44 1995-05-24 17:24:24 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -141,7 +141,8 @@ public   Volume   create_volume(
 
     if( n_dimensions < 1 || n_dimensions > MAX_DIMENSIONS )
     {
-        print( "create_volume(): n_dimensions (%d) not in range 1 to %d.\n",
+        print_error(
+            "create_volume(): n_dimensions (%d) not in range 1 to %d.\n",
                n_dimensions, MAX_DIMENSIONS );
         status = ERROR;
     }
@@ -378,7 +379,8 @@ public  void  alloc_volume_data(
 
     if( volume->data_type == NO_DATA_TYPE )
     {
-        print( "Error: cannot allocate volume data until size specified.\n" );
+        print_error(
+           "Error: cannot allocate volume data until size specified.\n" );
         return;
     }
 
@@ -432,7 +434,7 @@ public  void  free_volume_data(
 
     if( volume->data == (void *) NULL )
     {
-        print( "Warning: cannot free NULL volume data.\n" );
+        print_error( "Warning: cannot free NULL volume data.\n" );
         return;
     }
 
@@ -478,7 +480,7 @@ public  void  delete_volume(
 
     if( volume == (Volume) NULL )
     {
-        print( "delete_volume():  cannot delete a null volume.\n" );
+        print_error( "delete_volume():  cannot delete a null volume.\n" );
         return;
     }
 
@@ -692,7 +694,7 @@ public  void  compute_world_transform(
 
     if( n_axes == 0 )
     {
-        print( "error compute_world_transform:  no axes.\n" );
+        print_error( "error compute_world_transform:  no axes.\n" );
         return;
     }
 
@@ -969,7 +971,7 @@ public  void  set_volume_direction_cosine(
 
     if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
     {
-        print(
+        print_error(
          "set_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
           axis );
         return;
@@ -992,7 +994,7 @@ public  void  set_volume_direction_cosine(
 
     if( len == 0.0 )
     {
-        print( "Warning: zero length direction cosine in set_volume_direction_cosine()\n" );
+        print_error( "Warning: zero length direction cosine in set_volume_direction_cosine()\n" );
         return;
     }
 
@@ -1110,7 +1112,7 @@ public  void  convert_3D_voxel_to_world(
 
     if( get_volume_n_dimensions(volume) != 3 )
     {
-        print( "convert_3D_voxel_to_world:  Volume must be 3D.\n" );
+        print_error( "convert_3D_voxel_to_world:  Volume must be 3D.\n" );
         return;
     }
 
@@ -1297,7 +1299,7 @@ public  void  convert_3D_world_to_voxel(
 
     if( get_volume_n_dimensions(volume) != 3 )
     {
-        print( "convert_3D_world_to_voxel:  Volume must be 3D.\n" );
+        print_error( "convert_3D_world_to_voxel:  Volume must be 3D.\n" );
         return;
     }
 

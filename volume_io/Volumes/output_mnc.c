@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.26 1995-04-28 18:33:02 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.27 1995-05-24 17:24:27 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -123,8 +123,9 @@ public  Minc_file  initialize_minc_output(
     {
         if( n_dimensions != 3 )
         {
-            print( "initialize_minc_output: " );
-            print( "can't use NULL dim_names except with 3 dimensions.\n" );
+            print_error( "initialize_minc_output: " );
+            print_error(
+                "can't use NULL dim_names except with 3 dimensions.\n" );
             return( (Minc_file) NULL );
         }
 
@@ -137,9 +138,9 @@ public  Minc_file  initialize_minc_output(
 
     if( n_volume_dims > n_dimensions )
     {
-        print( "initialize_minc_output:" );
-        print( " volume (%d) has more dimensions than file (%d).\n",
-               n_volume_dims, n_dimensions );
+        print_error( "initialize_minc_output:" );
+        print_error( " volume (%d) has more dimensions than file (%d).\n",
+                     n_volume_dims, n_dimensions );
         return( (Minc_file) NULL );
     }
 
@@ -179,9 +180,9 @@ public  Minc_file  initialize_minc_output(
         {
             if( file->to_volume_index[d] == INVALID_AXIS )
             {
-                print( "initialize_minc_output: " );
-                print( "if outputting volumes which don't contain all image\n");
-                print( "dimensions, then must specify global image range.\n" );
+                print_error( "initialize_minc_output: " );
+                print_error( "if outputting volumes which don't contain all image\n");
+                print_error( "dimensions, then must specify global image range.\n" );
                 FREE( file );
                 return( (Minc_file) NULL );
             }
@@ -198,8 +199,8 @@ public  Minc_file  initialize_minc_output(
 
         if( vol_index >= 0 && volume_sizes[vol_index] != sizes[d] )
         {
-            print( "initialize_minc_output: " );
-            print( "volume size[%d]=%d does not match file[%d]=%d.\n",
+            print_error( "initialize_minc_output: " );
+            print_error( "volume size[%d]=%d does not match file[%d]=%d.\n",
                    vol_index, volume_sizes[vol_index], d, sizes[d] );
             return( (Minc_file) NULL );
         }
@@ -212,7 +213,7 @@ public  Minc_file  initialize_minc_output(
 
     if( file->cdfid == MI_ERROR )
     {
-        print( "Error: opening MINC file \"%s\".\n", filename );
+        print_error( "Error: opening MINC file \"%s\".\n", filename );
         return( (Minc_file) 0 );
     }
 
@@ -226,7 +227,7 @@ public  Minc_file  initialize_minc_output(
     }
     else
     {
-        print( "Cannot output non-linear transforms.  Using identity.\n" );
+        print_error( "Cannot output non-linear transforms.  Using identity.\n" );
         make_identity_transform( &transform );
     }
 
@@ -387,7 +388,7 @@ public  Status  copy_auxiliary_data_from_minc_file(
 
     if( src_cdfid == MI_ERROR )
     {
-        print( "Error opening %s\n", filename );
+        print_error( "Error opening %s\n", filename );
         return( ERROR );
     }
 
@@ -428,7 +429,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
 
     if( file->end_def_done )
     {
-        print( "Cannot call copy_auxiliary_data_from_open_minc_file when not in define mode\n" );
+        print_error( "Cannot call copy_auxiliary_data_from_open_minc_file when not in define mode\n" );
         return( ERROR );
     }
 
@@ -521,7 +522,7 @@ public  Status  add_minc_history(
 
     if( file->end_def_done )
     {
-        print( "Cannot call add_minc_history when not in define mode\n" );
+        print_error( "Cannot call add_minc_history when not in define mode\n" );
         return( ERROR );
     }
 
@@ -609,7 +610,7 @@ private  Status  get_dimension_ordering(
 
     if( n_found != n_vol_dims )
     {
-        print( "Unsuccessful matching of volume and output dimension names.\n");
+        print_error( "Unsuccessful matching of volume and output dimension names.\n");
         status = ERROR;
     }
     else
@@ -809,7 +810,7 @@ private  Status  output_the_volume(
             (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, voxel_max );
         }
         else
-            print( "Volume has invalid min and max voxel value\n" );
+            print_error( "Volume has invalid min and max voxel value\n" );
 
         (void) miicv_attach( file->icv, file->cdfid, file->img_var_id );
 
@@ -831,9 +832,9 @@ private  Status  output_the_volume(
 
     if( n_volume_dims > file->n_file_dimensions )
     {
-        print( "output_volume_to_minc_file_position:" );
-        print( " volume (%d) has more dimensions than file (%d).\n",
-               n_volume_dims, file->n_file_dimensions );
+        print_error( "output_volume_to_minc_file_position:" );
+        print_error( " volume (%d) has more dimensions than file (%d).\n",
+                     n_volume_dims, file->n_file_dimensions );
         return( ERROR );
     }
 
@@ -863,8 +864,8 @@ private  Status  output_the_volume(
             if( volume_count[vol_index] < 0 ||
                 volume_count[vol_index] > sizes[vol_index] )
             {
-                print( "output_the_volume: invalid volume count.\n" );
-                print( "    count[%d] = %d\n",
+                print_error( "output_the_volume: invalid volume count.\n" );
+                print_error( "    count[%d] = %d\n",
                        vol_index, volume_count[vol_index] );
                 return( ERROR );
             }
@@ -879,8 +880,8 @@ private  Status  output_the_volume(
         if( file_start[d] < 0 || file_start[d] + this_count >
             file->sizes_in_file[d] )
         {
-            print( "output_the_volume:  invalid minc file position.\n" );
-            print( "    start[%d] = %d     count[%d] = %d\n", d, file_start[d],
+            print_error( "output_the_volume:  invalid minc file position.\n" );
+            print_error( "    start[%d] = %d     count[%d] = %d\n", d, file_start[d],
                       d, this_count );
             return( ERROR );
         }
@@ -1088,7 +1089,7 @@ public  Status  output_minc_volume(
     if( d < file->n_file_dimensions &&
         file->indices[d] >= file->sizes_in_file[d] )
     {
-        print( "output_minc_volume: attempted to write too many subvolumes.\n");
+        print_error( "output_minc_volume: attempted to write too many subvolumes.\n");
         return( ERROR );
     }
 
@@ -1145,14 +1146,14 @@ public  Status  close_minc_output(
 
     if( file == (Minc_file) NULL )
     {
-        print( "close_minc_output(): NULL file.\n" );
+        print_error( "close_minc_output(): NULL file.\n" );
         return( ERROR );
     }
 
     if( file->outputting_in_order && !file->entire_file_written )
     {
-        print( "Warning:  the MINC file has been " );
-        print( "closed without writing part of it.\n");
+        print_error( "Warning:  the MINC file has been " );
+        print_error( "closed without writing part of it.\n");
     }
 
     (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_TRUE );

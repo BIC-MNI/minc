@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.8 1995-04-28 18:33:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.9 1995-05-24 17:24:29 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -152,7 +152,8 @@ public  Status  output_modified_volume(
 
     if( n_found != n_dims )
     {
-        print( "output_modified_volume: invalid dimension names option.\n");
+        print_error(
+                 "output_modified_volume: invalid dimension names option.\n" );
         return( ERROR );
     }
 

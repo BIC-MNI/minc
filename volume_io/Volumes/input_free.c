@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.21 1995-04-28 18:32:59 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.22 1995-05-24 17:24:18 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -70,7 +70,7 @@ public  Status  initialize_free_format_input(
          input_real( file, &trans[Y] ) != OK ||
          input_real( file, &trans[Z] ) != OK) )
     {
-        print( "Error reading x,y,z translations from %s.\n", filename );
+        print_error( "Error reading x,y,z translations from %s.\n", filename );
         status = ERROR;
     }
 
@@ -84,7 +84,7 @@ public  Status  initialize_free_format_input(
             volume_input->file_data_type = UNSIGNED_SHORT;
         else
         {
-            print( "Must be either 1 or 2 bytes per voxel.\n" );
+            print_error( "Must be either 1 or 2 bytes per voxel.\n" );
             status = ERROR;
         }
 
@@ -109,7 +109,7 @@ public  Status  initialize_free_format_input(
         volume->spatial_axes[Y] < 0 ||
         volume->spatial_axes[Z] < 0 )
     {
-        print(
+        print_error(
          "warning initialize_free_format_input: setting spatial axes to XYZ.\n");
         volume->spatial_axes[X] = 0;
         volume->spatial_axes[Y] = 1;
@@ -154,7 +154,7 @@ public  Status  initialize_free_format_input(
 
         if( !axis_valid )
         {
-            print( "Invalid axis.\n" );
+            print_error( "Invalid axis.\n" );
             break;
         }
 
@@ -178,7 +178,7 @@ public  Status  initialize_free_format_input(
          volume_input->axis_index_from_file[Y] ==
          volume_input->axis_index_from_file[Z]) )
     {
-        print( "Two axis indices are equal.\n" );
+        print_error( "Two axis indices are equal.\n" );
         status = ERROR;
     }
 

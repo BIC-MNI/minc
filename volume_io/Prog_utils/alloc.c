@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.12 1995-04-28 18:32:51 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.13 1995-05-24 17:24:04 david Exp $";
 #endif
 
 typedef  void      *alloc_ptr;
@@ -33,8 +33,8 @@ public  void  alloc_memory(
 
         if( *ptr == (void *) 0 )
         {
-            set_print_function( NULL );
-            print( "Error alloc_memory: out of memory, %d bytes.\n", n_bytes );
+            print_error( "Error alloc_memory: out of memory, %d bytes.\n",
+                         n_bytes );
             abort();
         }
     }
@@ -68,9 +68,8 @@ public  void  realloc_memory(
 
         if( *ptr == (void *) 0 )
         {
-            set_print_function( NULL );
-            print( "Error realloc_memory: out of memory, %d bytes.\n",
-                    n_bytes );
+            print_error( "Error realloc_memory: out of memory, %d bytes.\n",
+                         n_bytes );
             abort_if_allowed();
         }
     }

@@ -118,8 +118,9 @@ public  void  spline_tensor_product(
     {
         if( degrees[d] < 2  )
         {
-            print( "spline_tensor_product: Degree %d must be greater than 1.\n",
-                   degrees[d] );
+            print_error(
+                  "spline_tensor_product: Degree %d must be greater than 1.\n",
+                  degrees[d] );
             return;
         }
         if( degrees[d] > max_degree )

@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.6 1995-04-28 18:33:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.7 1995-05-24 17:24:37 david Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -79,13 +79,13 @@ public  Status  mni_skip_expected_character(
     {
         if( ch != expected_ch )
         {
-            print( "Expected '%c', found '%c'.\n", expected_ch, ch );
+            print_error( "Expected '%c', found '%c'.\n", expected_ch, ch );
             status = ERROR;
         }
     }
     else
     {
-        print( "Expected '%c', found end of file.\n", expected_ch );
+        print_error( "Expected '%c', found end of file.\n", expected_ch );
     }
 
     return( status );
@@ -229,7 +229,7 @@ public  Status  mni_input_keyword_and_equal_sign(
         mni_skip_expected_character( file, (char) '=' ) != OK )
     {
         if( print_error_message )
-            print( "Expected \"%s =\"\n", keyword );
+            print_error( "Expected \"%s =\"\n", keyword );
         status = ERROR;
     }
 

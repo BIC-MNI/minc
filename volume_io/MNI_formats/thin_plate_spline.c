@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.7 1995-03-21 19:02:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.8 1995-05-24 17:24:38 david Exp $";
 #endif
 
 #include <internal_volume_io.h>
@@ -79,7 +79,7 @@ private  Real  thin_plate_spline_U_deriv(
               Louis Collins
 ---------------------------------------------------------------------------- */
 
-private  void  evaluate_thin_plate_spline(
+public  void  evaluate_thin_plate_spline(
     int     n_dims,
     int     n_values,
     int     n_points,
@@ -353,9 +353,9 @@ private  void   newton_function(
 ---------------------------------------------------------------------------- */
 
 public  Real  thin_plate_spline_U(
-   Real   pos[],
-   Real   landmark[],
-   int    n_dims )
+    Real   pos[],
+    Real   landmark[],
+    int    n_dims )
 {
     Real r, fu, dx, dy, dz;
 

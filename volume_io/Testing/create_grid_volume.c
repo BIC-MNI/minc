@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #define  X_SIZE   50
-#define  Y_SIZE   50
+#define  Y_SIZE   1
 #define  Z_SIZE   50
 
 #define  N_ITERATIONS  10000
