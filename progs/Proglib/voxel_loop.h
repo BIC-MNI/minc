@@ -5,7 +5,12 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.2  2000-09-19 14:36:05  neelin
+ * Revision 6.3  2001-11-28 18:39:17  neelin
+ * Added get_info_vxoel_index to allow users to get the full multi-dimensional
+ * file index of the current voxel.
+ * Modifications to allow arg_string to be NULL.
+ *
+ * Revision 6.2  2000/09/19 14:36:05  neelin
  * Added ability for caller to specify functions for allocating and freeing
  * voxel buffers used in loop. This is particularly useful for embedding
  * the voxel_loop code in other programs, such as Python, which manage memory
@@ -275,10 +280,11 @@ public void set_loop_accumulate(Loop_Options *loop_options,
                                 VoxelStartFunction start_function,
                                 VoxelFinishFunction finish_function);
 public void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
-                         AllocateBufferFunction allocate_buffer_function)
-;
+                         AllocateBufferFunction allocate_buffer_function);
 public void get_info_shape(Loop_Info *loop_info, int ndims,
                            long start[], long count[]);
+public void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
+                                 int ndims, long index[]);
 public int get_info_current_file(Loop_Info *loop_info);
 public int get_info_current_mincid(Loop_Info *loop_info);
 public int get_info_current_index(Loop_Info *loop_info);

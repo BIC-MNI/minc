@@ -7,7 +7,12 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.7  2001-09-18 15:32:27  neelin
+ * Revision 6.8  2001-11-28 18:39:16  neelin
+ * Added get_info_vxoel_index to allow users to get the full multi-dimensional
+ * file index of the current voxel.
+ * Modifications to allow arg_string to be NULL.
+ *
+ * Revision 6.7  2001/09/18 15:32:27  neelin
  * Create image variable last to allow big images and to fix compatibility
  * problems with 2.3 and 3.x.
  *
@@ -98,7 +103,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.7 2001-09-18 15:32:27 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.8 2001-11-28 18:39:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -133,6 +138,8 @@ struct Loop_Info {
    int current_index;
    long start[MAX_VAR_DIMS];
    long count[MAX_VAR_DIMS];
+   long dimvoxels[MAX_VAR_DIMS];   /* Number of voxels skipped by a step
+                                      of one in each dimension */
    Loopfile_Info *loopfile_info;
 };
 
@@ -1104,6 +1111,8 @@ private void update_history(int mincid, char *arg_string)
    int att_length;
    char *string;
 
+   if (arg_string == NULL) return;
+
    /* Get the history attribute length */
    ncopts=0;
    if ((ncattinq(mincid, NC_GLOBAL, MIhistory, &datatype,
@@ -1235,6 +1244,22 @@ private void do_voxel_loop(Loop_Options *loop_options,
    else
       output_vector_length = 1;
    modify_vector_count = (input_vector_length != output_vector_length);
+
+   /* Initialize all of the counters to reasonable values */
+   (void) miset_coords(MAX_VAR_DIMS, 0, block_start);
+   (void) miset_coords(MAX_VAR_DIMS, 0, block_end);
+   (void) miset_coords(MAX_VAR_DIMS, 0, block_incr);
+   (void) miset_coords(MAX_VAR_DIMS, 0, block_cur);
+   (void) miset_coords(MAX_VAR_DIMS, 0, block_curcount);
+   (void) miset_coords(MAX_VAR_DIMS, 0, chunk_start);
+   (void) miset_coords(MAX_VAR_DIMS, 0, chunk_end);
+   (void) miset_coords(MAX_VAR_DIMS, 0, chunk_incr);
+   (void) miset_coords(MAX_VAR_DIMS, 0, chunk_cur);
+   (void) miset_coords(MAX_VAR_DIMS, 0, chunk_curcount);
+   (void) miset_coords(MAX_VAR_DIMS, 0, input_cur);
+   (void) miset_coords(MAX_VAR_DIMS, 0, input_curcount);
+   (void) miset_coords(MAX_VAR_DIMS, 0, firstfile_cur);
+   (void) miset_coords(MAX_VAR_DIMS, 0, firstfile_curcount);
 
    /* Get block and chunk looping information */
    setup_looping(loop_options, loopfile_info, &ndims,
@@ -3135,11 +3160,23 @@ private void free_loop_info(Loop_Info *loop_info)
 private void set_info_shape(Loop_Info *loop_info, long start[], long count[])
 {
    int idim;
+   long size;
 
+   /* Save the shape of the current chunk */
    for (idim=0; idim < MAX_VAR_DIMS; idim++) {
       loop_info->start[idim] = start[idim];
       loop_info->count[idim] = count[idim];
    }
+
+   /* Figure out how many voxels will be skipped by a step of one 
+      in each dimension */
+   loop_info->dimvoxels[MAX_VAR_DIMS-1] = 1;
+   for (idim=MAX_VAR_DIMS-2; idim >= 0; idim--) {
+      size = loop_info->count[idim+1];
+      if (size <= 0) size = 1;
+      loop_info->dimvoxels[idim] = size * loop_info->dimvoxels[idim+1];
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -3167,6 +3204,40 @@ public void get_info_shape(Loop_Info *loop_info, int ndims,
    for (idim=0; idim < ndims; idim++) {
       start[idim] = loop_info->start[idim];
       count[idim] = loop_info->count[idim];
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_voxel_index
+@INPUT      : loop_info - info structure pointer
+              subscript - 1-D voxel index into data buffers of voxel function
+              ndims - number of dimensions in index array (uses MAX_VAR_DIMS
+                 if ndims == 0)
+@OUTPUT     : index - multi-dimensional voxel index into file
+@RETURNS    : (none)
+@DESCRIPTION: Routine to get the current voxel index.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 28, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
+                                 int ndims, long index[])
+{
+   int idim;
+   long this_index;
+
+   /* Check the array size */
+   if ((ndims <= 0) || (ndims > MAX_VAR_DIMS))
+      ndims = MAX_VAR_DIMS;
+
+   /* Convert the 1-D subscript into a multi-dim index and add it to
+      the start index of the chunk */
+   for (idim=0; idim < ndims; idim++) {
+      this_index = subscript / loop_info->dimvoxels[idim];
+      index[idim] = loop_info->start[idim] + this_index;
+      subscript -= this_index * loop_info->dimvoxels[idim];
    }
 }
 
