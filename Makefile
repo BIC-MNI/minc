@@ -13,8 +13,6 @@ TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
 
 # --------------------------------------------------------------------
 
-.PRECIOUS : $(SUBDIRS)
-
 default : build runtest
 
 all build clean:
