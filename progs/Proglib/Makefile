@@ -20,12 +20,14 @@ LINT_OBJS = $(OBJS:.o=.ln)
 
 # --------------------------------------------------------------------
 
-default: $(CC_PROG_LIB)
+default: build
+
+all: build lint
+
+build: $(CC_PROG_LIB)
 
 #Dependency on Makefile
 $(OBJS) $(LINT_OBJS) : Makefile
-
-all: $(CC_PROG_LIB) lint
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@

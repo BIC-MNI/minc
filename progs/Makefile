@@ -11,29 +11,17 @@ include $(ROOT)/Makefile_configuration
 
 default : build
 
-all : build
+all build clean : 
+	@TARGET=$@; export TARGET; $(MAKE) subdirs
 
-build : $(CC_PROG_LIB)
-	@for dir in [a-z]*; \
+subdirs : 
+	@for dir in $(PROG_LIB_DIR) [a-z]*; \
 	   do if [ -d $$dir -a $$dir != RCS ]; \
 	   then \
 	      cd $$dir; \
-	      echo Doing make in $$dir; \
-	      $(MAKE); \
+	      echo Making $(TARGET) in $$dir; \
+	      $(MAKE) $(TARGET); \
 	      cd ..; \
 	   fi; \
 	 done
 
-$(CC_PROG_LIB):
-	cd $(PROG_LIB_DIR) ; $(MAKE)
-
-clean : 
-	@for dir in *; \
-	   do if [ -d $$dir -a $$dir != RCS ]; \
-	   then \
-	      cd $$dir; \
-	      echo Doing make clean in $$dir; \
-	      $(MAKE) clean; \
-	      cd ..; \
-	   fi; \
-	 done

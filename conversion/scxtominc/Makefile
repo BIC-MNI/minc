@@ -26,14 +26,14 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 # --------------------------------------------------------------------
 
-.SUFFIXES: .ln
+default: build
 
-default: $(PROGS)
+all: build lint
+
+build: $(PROGS)
 
 #Dependency on Makefile
 $(PROG_OBJ) $(EXTRA_OBJS) $(LINT_LIST) $(LINT_EXTRA) : Makefile
-
-all: $(PROGS) lint
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@

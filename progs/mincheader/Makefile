@@ -12,9 +12,11 @@ PROGS    = mincheader
 
 # --------------------------------------------------------------------
 
-default: all
+default: build
 
-all:
+all: build
+
+build:
 	@echo $(PROGS) is up to date
 
 clean:
