@@ -16,13 +16,14 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.c,v 1.1 1993-01-08 09:47:37 neelin Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.c,v 1.2 1993-09-01 15:52:47 neelin Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ParseArgv.h>
 
 #define TRUE  1
