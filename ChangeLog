@@ -1,4 +1,31 @@
 MINC 2:
+2004-08-11 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix minc.h for netCDF 3.5.1
+	
+2004-08-03 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Added new test cases to dimension-test.c
+	* Fix bug(s) in volume.c
+	* Correctly implement some of the conversion functions
+	
+2004-06-21 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Updated mincgen man page
+	* "Improve" Doxygen documentation 
+	
+2004-06-16 Bert Vincent <bert@bic.mni.mcgill.ca>	
+	* Fixes and improvements for mincgen/mincdump
+	* Emulate a vector_dimension for MINC 2.0 files with a compound
+	datatype.
+	* Move libsrc2 (MINC 2.0 API) files under the MINC hierarchy in CVS
+	* Fix ordering of world coordinate values in miconvert_world_to_voxel
+	and miconvert_voxel_to_world
+	
+2004-06-11 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix issue with minc_modify_header's new -sappend and -dappend
+	options.
+	* Add "mincgen" based upon "ncgen" for "mincedit"
+	* Fix nasty minccalc bug.  Minccalc would fail to work properly 
+	on any file with a vector_dimension of length greater than 1.
+	
 2004-06-09 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Add netcdf and HDF5 versions to the -version list.
 	
