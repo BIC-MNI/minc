@@ -32,7 +32,7 @@ man: $(MANPAGES)
 clean:
 	$(RM) $(RM_FLAGS) $(MANPAGES)
 
-install:
+install: build
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 	$(CP) $(CP_FLAGS) $(MANPAGES) $(INSTALL_MANDIR)$(MANSECT)
 

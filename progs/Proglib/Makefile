@@ -8,13 +8,7 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Object names
-OBJS     = ParseArgv.o vax_conversions.o time_stamp.o \
-	   nrutil.o ludcmp.o lubksb.o \
-	   gen_transforms.o gen_transform_io.o thin_plate_spline.o \
-      tag_points.o mni_io.o\
-	   transforms.o inverse.o \
-	   alloc.o alloc_check.o print.o numerical.o files.o random.o time.o \
-      string.o 
+OBJS     = ParseArgv.o vax_conversions.o time_stamp.o
 CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
@@ -58,3 +52,5 @@ $(LINT_PROG_LIB) : $(LINT_OBJS)
 clean:
 	$(RM) $(RM_FLAGS) $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
 
+install: build
+	@echo Nothing to install

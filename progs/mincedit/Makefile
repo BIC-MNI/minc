@@ -16,12 +16,15 @@ default: build
 
 all: build
 
-build:
-	@echo $(PROGS) is up to date
+build: $(PROGS)
+
+$(PROGS):
+	@echo Cannot create $(PROGS)
+	@false
 
 clean:
 	@echo $(PROGS) : nothing to remove
 
-install:
+install: build
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 

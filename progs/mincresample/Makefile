@@ -61,6 +61,6 @@ clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
 	            $(EXTRA_OBJS) $(LINT_EXTRA)
 
-install:
+install: build
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 
