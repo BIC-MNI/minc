@@ -596,6 +596,21 @@ minc.h.
 
 \begin{itemize}
 
+\item \code{miexpand\_file} : Routine to expand a minc file that has
+been compressed with compress, pack, gzip or zip (using gunzip, zcat
+or pcat). The name of the temporary minc file is returned --- this
+string must be freed by the caller. If the file specified by
+\code{path} is not compressed, then its name is returned.
+\code{*create\_tempfile} is set to TRUE if a temporary file is
+created (and the caller needs to delete the file), FALSE if the
+original file name is returned. If 
+\code{header\_only} is TRUE, then the routine will expand
+only enough of the file to read the header.
+\begin{verbatim}
+public char *miexpand_file(char *path, int header_only, 
+                           int *created_tempfile);
+\end{verbatim}
+
 \item \code{miopen} : Like \code{ncopen}, but will temporarily
 uncompress files (compress, pack, gzip, zip) opened with mode 
 \code{NC\_NOWRITE}.
