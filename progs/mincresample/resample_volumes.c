@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.12  1993-11-02 11:23:52  neelin
-@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
+@MODIFIED   : Revision 1.13  1994-03-01 14:33:48  neelin
+@MODIFIED   : Fixed error in calculating valid minimum for float volumes.
 @MODIFIED   :
+ * Revision 1.12  93/11/02  11:23:52  neelin
+ * Handle imagemax/min potentially varying over slices (for vector data, etc.)
+ * 
  * Revision 1.11  93/10/20  14:06:36  neelin
  * Modified tri-linear interpolation to allow volumes to extend epsilon
  * beyond the first voxel.
@@ -48,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.12 1993-11-02 11:23:52 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.13 1994-03-01 14:33:48 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -170,7 +173,7 @@ public void resample_volumes(Program_Flags *program_flags,
 
          /* Update global max and min */
          if (maximum > valid_range[1]) valid_range[1] = maximum;
-         if (minimum > valid_range[0]) valid_range[0] = minimum;
+         if (minimum < valid_range[0]) valid_range[0] = minimum;
 
          /* Write the max, min and slice */
          (void) mivarput1(ofp->mincid, ofp->maxid, 
