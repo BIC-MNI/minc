@@ -13,15 +13,15 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.1 1993-05-14 11:23:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.2 1993-07-13 13:26:06 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <minc.h>
 #include <ParseArgv.h>
+#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
    }
 
    /* Allocate space */
-   data = malloc(size);
+   data = MALLOC(size);
 
    /* Set up image conversion */
    if (!copy_pixel_values) {
