@@ -1,4 +1,4 @@
-#! /bin/csh -fa
+#! /bin/csh -f
 
 # Check arguments
 
@@ -6,6 +6,11 @@ if ($#argv != 1) then
    echo "Usage: $0 <minc file>
    exit
 endif
+set file = $1
 
-ncdump -e image $*
+# Get variables names (excluding image): remove leading "image", remove word 
+# "image", collapse multiple blanks to one, remove leading blanks, remove
+# trailing blanks, replace blanks with commas
+set vars = `mincinfo -varnames $file | sed -e 's/^image //g' -e 's/ image / /g' -e 's/  */ /g' -e 's/^ //' -e 's/ $//' -e 's/ /,/g'`
 
+ncdump -v "$vars" $1

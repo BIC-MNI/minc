@@ -36,7 +36,7 @@ set cdl_edit = $working_dir/${cdl_prefix}-edit.cdl
 onintr cleanup
 
 # Dump the file
-ncdump -e image $filename > $cdl_orig
+mincheader $filename > $cdl_orig
 if ($status) then
    echo "${0}: Error reading file '$filename'"
    goto cleanup
