@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 1.7  1993-08-11 15:20:02  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.8  1993-08-11 15:44:54  neelin
+@MODIFIED   : Functions called by ParseArgv must check that nextArg is not NULL.
 @MODIFIED   :
+ * Revision 1.7  93/08/11  15:20:02  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.7 1993-08-11 15:20:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.8 1993-08-11 15:44:54 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -320,7 +323,7 @@ int main(int argc, char *argv[])
               nextArg - string from which vector should be read
 @OUTPUT     : dst - pointer to vector of longs into which values should
                  be written (padded with LONG_MIN)
-@RETURNS    : TRUE, since nextArg is used
+@RETURNS    : TRUE, since nextArg is used (unless it is NULL)
 @DESCRIPTION: Parses a command-line argument into a vector of longs. The
               string should contain at most MAX_VAR_DIMS comma separated 
               integer values (spaces are skipped).
@@ -336,6 +339,14 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
    long *vector;
    int nvals, i;
    char *cur, *end, *prev;
+
+   /* Check for following argument */
+   if (nextArg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      return FALSE;
+   }
 
    /* Get pointer to vector of longs */
    vector = (long *) dst;

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 1.8  1993-08-11 15:22:19  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.9  1993-08-11 15:45:53  neelin
+@MODIFIED   : Functions called by ParseArgv must check that nextArg is not NULL.
 @MODIFIED   :
+ * Revision 1.8  93/08/11  15:22:19  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.8 1993-08-11 15:22:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.9 1993-08-11 15:45:53 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -328,6 +331,13 @@ public int get_option(char *dst, char *key, char *nextarg)
       return_value = FALSE;
    }
    else {
+      /* Check for following argument */
+      if (nextarg == NULL) {
+         (void) fprintf(stderr, 
+                        "\"%s\" option requires an additional argument\n",
+                        key);
+         return FALSE;
+      }
       option_list[length_option_list].value = nextarg;
       return_value = TRUE;
    }
