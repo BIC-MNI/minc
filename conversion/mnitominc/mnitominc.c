@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.1 1993-01-08 09:46:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.2 1993-01-22 12:08:46 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -24,6 +24,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitomi
 #include <math.h>
 #include <ParseArgv.h>
 #include "mnitominc.h"
+#include <vax_conversions.h>
 
 
 /* Main program */
