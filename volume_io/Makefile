@@ -33,7 +33,8 @@ HEADERS  = \
    Include/basic.h Include/string_funcs.h Include/files.h \
    Include/arrays.h Include/geom_structs.h Include/progress.h \
    Include/geometry.h Include/volume.h Include/transforms.h \
-   Include/alloc.h Include/alloc_check.h Include/def_math.h
+   Include/alloc.h Include/alloc_check.h Include/def_math.h \
+   Include/system_dependent.h
 
 DOCDIR = Documentation
 DOCS = $(DOCDIR)/volume_io.ps
