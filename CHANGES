@@ -1,3 +1,11 @@
+Thu Aug 13 15:35:15 EDT 1998
+   - Modified mincconcat so that the coordinate variable corresponding
+     to the concatenation dimension is always created, subscripted
+     with by the dimension (like an irregularly-spaced
+     dimension). This is required by some programs that want all of
+     the time points (in particular) to be stored even for a
+     regularly-spaced dimension.
+
 Mon Jun 22 10:06:29 EDT 1998
    - Fixed bug in rawtominc in handling of default types and signs. This
      bug showed up when options -short and -scan_range were used with data 
