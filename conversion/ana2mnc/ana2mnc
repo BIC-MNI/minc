@@ -133,6 +133,9 @@ if($#ARGV != $#files){ die $Usage; }
 chomp($history = `date`);
 $history .= '>>>> ' . join(' ', $me, @ARGV) . "\n";
 
+# Set to 1 if byte-swapping is needed.
+my $bs = 0;
+
 # then do whatever we are supposed to be doing
 if($me eq "ana2mnc"){
    ($anabase, $mncfile) = @ARGV[0..1];
@@ -469,7 +472,7 @@ sub read_analyze_header{
    read(HDR, my($his_s), 200);
    close(HDR);
    
-   my($bs, $extents, $c, $h) = 0;
+   my($extents, $c, $h) = 0;
    
    # check if we need to byteswap
    $h->{sizeof_hdr} = destruct(\$hdr_s, 0,'i', 0);
@@ -736,6 +739,9 @@ sub write_minc{
    my(@args) = ('rawtominc');
    if($clobber){ push(@args, '-clobber'); }
    
+   # Swap bytes?
+   if($bs){ push(@args, '-swap_bytes'); }
+
    # datatype and ranges
    push(@args, @{$gen_hdr->{datatype}});
    push(@args, '-range', $gen_hdr->{voxel_min}, $gen_hdr->{voxel_max});
