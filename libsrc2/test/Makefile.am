@@ -13,8 +13,8 @@ TESTS =	\
 	slice-test \
 	valid-test \
 	volprops-test \
-	multires-test
-#	convert-test
+	multires-test \
+	convert-test
 
 check_PROGRAMS = $(TESTS)
 
