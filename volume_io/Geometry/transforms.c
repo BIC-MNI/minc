@@ -153,21 +153,23 @@ public  void  set_transform_x_and_z_axes(
 }
 
 public  void  make_translation_transform(
-    Vector      *trans,
+    Real        x_trans,
+    Real        y_trans,
+    Real        z_trans,
     Transform   *transform )
 {
     Transform_elem( *transform, 0, 0 ) = 1.0;
     Transform_elem( *transform, 0, 1 ) = 0.0;
     Transform_elem( *transform, 0, 2 ) = 0.0;
-    Transform_elem( *transform, 0, 3 ) = Vector_x(*trans);
+    Transform_elem( *transform, 0, 3 ) = x_trans;
     Transform_elem( *transform, 1, 0 ) = 0.0;
     Transform_elem( *transform, 1, 1 ) = 1.0;
     Transform_elem( *transform, 1, 2 ) = 0.0;
-    Transform_elem( *transform, 1, 3 ) = Vector_y(*trans);
+    Transform_elem( *transform, 1, 3 ) = y_trans;
     Transform_elem( *transform, 2, 0 ) = 0.0;
     Transform_elem( *transform, 2, 1 ) = 0.0;
     Transform_elem( *transform, 2, 2 ) = 1.0;
-    Transform_elem( *transform, 2, 3 ) = Vector_z(*trans);
+    Transform_elem( *transform, 2, 3 ) = z_trans;
     Transform_elem( *transform, 3, 0 ) = 0.0;
     Transform_elem( *transform, 3, 1 ) = 0.0;
     Transform_elem( *transform, 3, 2 ) = 0.0;
@@ -359,16 +361,13 @@ public  void  make_transform_relative_to_point(
     Transform  *transform,
     Transform  *rel_transform )
 {
-    Vector     vect;
     Transform  to_origin, to_point;
 
-    fill_Vector( vect, Point_x(*point), Point_y(*point), Point_z(*point) );
+    make_translation_transform( Point_x(*point), Point_y(*point),
+                                Point_z(*point), &to_point );
 
-    make_translation_transform( &vect, &to_point );
-
-    SCALE_VECTOR( vect, vect, -1.0 );
-
-    make_translation_transform( &vect, &to_origin );
+    make_translation_transform( -Point_x(*point), -Point_y(*point),
+                                -Point_z(*point), &to_origin );
 
     concat_transforms( rel_transform, &to_origin, transform );
     concat_transforms( rel_transform, rel_transform, &to_point );
