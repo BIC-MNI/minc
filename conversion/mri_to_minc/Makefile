@@ -11,6 +11,9 @@ OPT      = -O -prototypes#                     # compiler options
 LDOPT    = -L/usr/local/lib -lsun -lm -lc_s# ld options
 INCLUDES = -I/usr/local/include -I.#           # include directories
 
+PERL_PROGS = ge4_to_minc ge5_to_minc
+PERL_INCLUDE = mri_to_minc.pl
+
 # --------------------------------------------------------------------
 
 .SUFFIXES: .ln
@@ -18,9 +21,9 @@ INCLUDES = -I/usr/local/include -I.#           # include directories
 CFLAGS    = $(INCLUDES) $(OPT)#           # CFLAGS and LINTFLAGS should
 LINTFLAGS = $(INCLUDES)#                  # be same, except for -g/-O
 
-default : $(PROG)
+default : $(PROG) $(PERL_PROGS)
 
-all : $(PROG) lint_$(PROG)
+all : $(PROG) lint_$(PROG) $(PERL_PROGS)
 
 .c.ln:#                                   # defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
@@ -40,5 +43,9 @@ $(PROG): $(PROG_OBJ)
 lint_$(PROG): $(LINT_LIST)
 	lint -u $(LINTFLAGS) $(LINT_LIST)
 
+# How to create perl programs from multiple source files
+$(PERL_PROGS): $$@.pl $(PERL_INCLUDE) Makefile
+	cat $(PERL_INCLUDE) $@.pl > $@; chmod +x $@
+
 clean:
-	\rm -f   $(PROG_OBJ)  $(LINT_LIST)
+	\rm -f   $(PROG_OBJ)  $(LINT_LIST) $(PERL_PROGS)
