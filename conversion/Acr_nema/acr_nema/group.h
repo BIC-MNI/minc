@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.h,v $
- * Revision 6.4  2005-03-04 00:08:08  bert
+ * Revision 6.5  2005-03-11 22:05:29  bert
+ * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
+ *
+ * Revision 6.4  2005/03/04 00:08:08  bert
  * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
  *
  * Revision 6.3  2001/11/08 14:17:06  neelin
@@ -144,5 +147,9 @@ extern Acr_Status acr_insert_sequence(Acr_Group *group_list,
                                       Acr_Element_Id elid, 
                                       Acr_Element itemlist);
 extern Acr_Status acr_test_dicom_file(Acr_File *afp);
+
+typedef char *(*acr_name_proc_t)(unsigned int grp_id, unsigned int el_id);
+
+extern acr_name_proc_t _acr_name_proc;
 
 #endif /* _ACR_GROUP_H_ */

@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.5  2005-03-04 00:25:54  bert
+ * Revision 6.6  2005-03-11 22:05:29  bert
+ * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
+ *
+ * Revision 6.5  2005/03/04 00:25:54  bert
  * Avoid memory leak by freeing unused elements in a sequence.  Fix order of initialization in acr_create_element() to set variable length property correctly. Don't change VR encoding when parsing a sequence, rely on the new handling of 0xfffe group items by the acr_io functions
  *
  * Revision 6.4  2004/10/29 13:08:41  rotor
@@ -1565,10 +1568,22 @@ void acr_dump_element_list(FILE *file_pointer,
 
       /* Print the element id */
       (void) fprintf(file_pointer, 
-                     "0x%04x  0x%04x  length = %d :",
+                     "0x%04x  0x%04x  length = %d ",
                      acr_get_element_group(cur_element),
                      acr_get_element_element(cur_element),
                      (int) acr_get_element_length(cur_element));
+
+      if (_acr_name_proc != NULL) {
+          char *name_ptr;
+
+          name_ptr = (*_acr_name_proc)(acr_get_element_group(cur_element),
+                                       acr_get_element_element(cur_element));
+
+          if (name_ptr != NULL) {
+              fprintf(file_pointer, "(%s)", name_ptr);
+          }
+      }
+      fprintf(file_pointer, ":");
 
       /* Print value if needed */
       vr_code = acr_get_element_vr(cur_element);

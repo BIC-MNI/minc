@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.8  2005-03-04 17:09:11  bert
+ * Revision 6.9  2005-03-11 22:05:29  bert
+ * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
+ *
+ * Revision 6.8  2005/03/04 17:09:11  bert
  * Change several functions to return Acr_Status instead of void; lose public and private; Make insert_element() check the return value of acr_get_element_total_length()
  *
  * Revision 6.7  2004/10/29 13:08:42  rotor
@@ -135,6 +138,8 @@ static void update_group_length_element(Acr_Group group,
                                         Acr_VR_encoding_type vr_encoding);
 static Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group, 
                                            int max_group_id);
+
+acr_name_proc_t _acr_name_proc = NULL;
 
 
 /* ----------------------------- MNI Header -----------------------------------
