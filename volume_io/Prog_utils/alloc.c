@@ -16,8 +16,39 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.22 1998-04-27 14:59:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.23 1998-04-27 19:54:39 david Exp $";
 #endif
+
+private  void  * (*malloc_ptr) ( size_t )          = NULL;
+private  void  * (*realloc_ptr) ( void *, size_t ) = NULL;
+private  void  (*free_ptr) ( void * )            = NULL;
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : install_malloc_functions
+@INPUT      : malloc_function
+              realloc_function
+              free_function
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Allows installation of memory allocation functions.  For
+              instance, this would allow a multiprocessing program to
+              put locks around calls to the UNIX library malloc().
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Apr. 27, 1998    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  install_malloc_functions(
+void  * (*malloc_function)  ( size_t ),
+void  * (*realloc_function) ( void *, size_t ),
+void  (*free_function)    ( void * ) )
+{
+    malloc_ptr  = malloc_function;
+    realloc_ptr = realloc_function;
+    free_ptr    = free_function;
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : private_alloc_memory
@@ -38,7 +69,10 @@ private  Status  private_alloc_memory(
 {
     if( n_bytes != 0 )
     {
-        *ptr = (void *) malloc( n_bytes );
+        if( malloc_ptr == NULL )
+            *ptr = (void *) malloc( n_bytes );
+        else
+            *ptr = (*malloc_ptr) ( n_bytes );
 
         if( *ptr == NULL )
             return( ERROR );
@@ -78,7 +112,10 @@ public  void  realloc_memory(
 
     if( n_elements != 0 )
     {
-        *ptr = (void *) realloc( *ptr, n_elements * type_size );
+        if( realloc_ptr == NULL )
+            *ptr = (void *) realloc( *ptr, n_elements * type_size );
+        else
+            *ptr = (*realloc_ptr)( *ptr, n_elements * type_size );
 
         if( *ptr == NULL )
         {
@@ -119,7 +156,10 @@ private  void  private_free_memory_1d(
 {
     if( *ptr != NULL )
     {
-        free( *ptr );
+        if( free_ptr == NULL )
+            free( *ptr );
+        else
+            (*free_ptr)( *ptr );
 
         *ptr = NULL;
     }
@@ -258,9 +298,11 @@ public  void  *alloc_memory_2d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    void   **ptr;
+    void   **ptr, ***ptr_to_alloc;
 
-    if( private_alloc_memory( (void **) &ptr,
+    ptr_to_alloc = &ptr;
+
+    if( private_alloc_memory( (void **) ptr_to_alloc,
                               n1 * sizeof(void *) +
                               n1 *  n2 * type_size ) != OK )
     {
@@ -308,9 +350,11 @@ public  void  *alloc_memory_3d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    void         ***ptr;
+    void         ***ptr, ****ptr_to_alloc;
 
-    if( private_alloc_memory( (void **) &ptr,
+    ptr_to_alloc = &ptr;
+
+    if( private_alloc_memory( (void **) ptr_to_alloc,
                               n1 *           sizeof(void **) +
                               n1 * n2 *      sizeof(void *) +
                               n1 * n2 * n3 * type_size ) != OK )
@@ -365,9 +409,11 @@ public  void  *alloc_memory_4d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    void         ****ptr;
+    void         ****ptr, *****ptr_to_alloc;
 
-    if( private_alloc_memory( (void **) &ptr,
+    ptr_to_alloc = &ptr;
+
+    if( private_alloc_memory( (void **) ptr_to_alloc,
                               n1 * sizeof(void ***) +
                               n1 * n2 * sizeof(void **) +
                               n1 * n2 * n3 * sizeof( void * ) +
@@ -427,9 +473,11 @@ public  void  *alloc_memory_5d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    void         *****ptr;
+    void         *****ptr, ******ptr_to_alloc;
 
-    if( private_alloc_memory( (void **) &ptr,
+    ptr_to_alloc = &ptr;
+
+    if( private_alloc_memory( (void **) ptr_to_alloc,
                               n1 * sizeof(void ****) +
                               n1 * n2 * sizeof(void ***) +
                               n1 * n2 * n3 * sizeof( void ** ) +
