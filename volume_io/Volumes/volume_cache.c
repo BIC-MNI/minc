@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.5 1995-08-21 04:36:31 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.6 1995-08-21 14:04:58 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -143,10 +143,13 @@ public  void  initialize_volume_cache(
     cache->n_dimensions = n_dims;
     cache->dim_names_set = FALSE;
 
-    for_less( dim, 0, MAX_DIMENSIONS )
-        cache->file_offset[dim] = 0;
-
     get_volume_cache_block_sizes( cache->block_sizes );
+
+    for_less( dim, 0, MAX_DIMENSIONS )
+    {
+        cache->previous_block_start[dim] = -cache->block_sizes[dim];
+        cache->file_offset[dim] = 0;
+    }
 
     for_less( dim, 0, n_dims )
     {
@@ -543,48 +546,103 @@ private  int   get_block_index(
     int                   *v,
     int                   block_start[] )
 {
-    int      block_index, block_i;
+    int      block_index, block0, block1, block2, block3, block4;
     int      n_dims;
 
     n_dims = cache->n_dimensions;
-    block_index = 0;
 
-    block_i = *x / cache->block_sizes[0];
-    block_index = block_index * cache->blocks_per_dim[0] + block_i;
-    block_start[0] = block_i * cache->block_sizes[0];
+    if( cache->previous_block_start[0] <= *x &&
+        *x < cache->previous_block_start[0] + cache->block_sizes[0] &&
+        (n_dims <= 1 || cache->previous_block_start[1] <= *y &&
+         *y < cache->previous_block_start[1] + cache->block_sizes[1]) &&
+        (n_dims <= 2 || cache->previous_block_start[2] <= *z &&
+         *z < cache->previous_block_start[2] + cache->block_sizes[2]) &&
+        (n_dims <= 3 || cache->previous_block_start[3] <= *t &&
+         *t < cache->previous_block_start[3] + cache->block_sizes[3]) &&
+        (n_dims <= 4 || cache->previous_block_start[4] <= *v &&
+         *v < cache->previous_block_start[4] + cache->block_sizes[4]) )
+    {
+        block_start[0] = cache->previous_block_start[0];
+        *x -= block_start[0];
+        if( n_dims == 1 )
+            return( cache->previous_block_index );
+
+        block_start[1] = cache->previous_block_start[1];
+        *y -= block_start[1];
+        if( n_dims == 2 )
+            return( cache->previous_block_index );
+
+        block_start[2] = cache->previous_block_start[2];
+        *z -= block_start[2];
+        if( n_dims == 3 )
+            return( cache->previous_block_index );
+
+        *t -= block_start[3];
+        block_start[3] = cache->previous_block_start[3];
+        if( n_dims == 4 )
+            return( cache->previous_block_index );
+
+        *v -= block_start[4];
+        block_start[4] = cache->previous_block_start[4];
+        if( n_dims == 5 )
+            return( cache->previous_block_index );
+    }
+
+    block0 = *x / cache->block_sizes[0];
+    block_index = block0;
+    block_start[0] = block0 * cache->block_sizes[0];
+    cache->previous_block_start[0] = block_start[0];
     *x -= block_start[0];
 
     if( n_dims == 1 )
+    {
+        cache->previous_block_index = block_index;
         return( block_index );
+    }
 
-    block_i = *y / cache->block_sizes[1];
-    block_index = block_index * cache->blocks_per_dim[1] + block_i;
-    block_start[1] = block_i * cache->block_sizes[1];
+    block1 = *y / cache->block_sizes[1];
+    block_index = block_index * cache->blocks_per_dim[1] + block1;
+    block_start[1] = block1 * cache->block_sizes[1];
+    cache->previous_block_start[1] = block_start[1];
     *y -= block_start[1];
 
     if( n_dims == 2 )
+    {
+        cache->previous_block_index = block_index;
         return( block_index );
+    }
 
-    block_i = *z / cache->block_sizes[2];
-    block_index = block_index * cache->blocks_per_dim[2] + block_i;
-    block_start[2] = block_i * cache->block_sizes[2];
+    block2 = *z / cache->block_sizes[2];
+    block_index = block_index * cache->blocks_per_dim[2] + block2;
+    block_start[2] = block2 * cache->block_sizes[2];
+    cache->previous_block_start[2] = block_start[2];
     *z -= block_start[2];
 
     if( n_dims == 3 )
+    {
+        cache->previous_block_index = block_index;
         return( block_index );
+    }
 
-    block_i = *t / cache->block_sizes[3];
-    block_index = block_index * cache->blocks_per_dim[3] + block_i;
-    block_start[3] = block_i * cache->block_sizes[3];
+    block3 = *t / cache->block_sizes[3];
+    block_index = block_index * cache->blocks_per_dim[3] + block3;
+    block_start[3] = block3 * cache->block_sizes[3];
+    cache->previous_block_start[3] = block_start[3];
     *t -= block_start[3];
 
     if( n_dims == 4 )
+    {
+        cache->previous_block_index = block_index;
         return( block_index );
+    }
 
-    block_i = *v / cache->block_sizes[4];
-    block_index = block_index * cache->blocks_per_dim[4] + block_i;
-    block_start[4] = block_i * cache->block_sizes[4];
+    block4 = *v / cache->block_sizes[4];
+    block_index = block_index * cache->blocks_per_dim[4] + block4;
+    block_start[4] = block4 * cache->block_sizes[4];
+    cache->previous_block_start[4] = block_start[4];
     *v -= block_start[4];
+
+    cache->previous_block_index = block_index;
 
     return( block_index );
 }
