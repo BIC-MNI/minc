@@ -144,6 +144,17 @@ extern int minc_create_thumbnail(mihandle_t volume, int grp);
 extern int minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp);
 extern int minc_update_thumbnails(mihandle_t volume);
 
+extern int scaled_maximal_pivoting_gaussian_elimination(int   n,
+                                                        int   row[],
+                                                        double **a,
+                                                        int   n_values,
+                                                        double **solution );
+
+extern int scaled_maximal_pivoting_gaussian_elimination_real(int n,
+                                                             double **coefs,
+                                                             int n_values,
+                                                             double **values );
+
 /* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 
                                         const unsigned long start[], 
