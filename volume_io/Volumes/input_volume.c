@@ -268,7 +268,7 @@ private  void  setup_input_mni_as_free_format(
     status = open_file( tmp_name, WRITE_FILE, ASCII_FORMAT, &file );
 
     status = output_string( file, "1\n" );
-    status = output_string( file, "-86.095 -110.510 -37.5\n" );
+    status = output_string( file, "-86.095 -126.510 -37.5\n" );
     status = output_string( file, "80   1.5    z\n" );
     status = output_string( file, "256  0.86   y\n" );
     status = output_string( file, "256  0.67   x\n" );
