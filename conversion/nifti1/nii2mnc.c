@@ -35,7 +35,7 @@ static int usage(void)
         "nii2mnc: Convert NIfTI-1 files to MINC format\n"
         "usage: nii2mnc [-q -r] [datatype] filename.nii [filename.mnc]\n"
         "-q: quiet operation\n"
-        "-r: scan data to determine valid range\n"
+        "-r: don't scan data to determine valid range\n"
         "Datatype specifies the voxel type of the output MINC file.  The\n"
         "default is the same as the voxel type of the input NIfTI-1 file.\n"
         " -f32: 32-bit floating point output\n"
@@ -120,15 +120,23 @@ main(int argc, char **argv)
     int mnc_vsign;            /* MINC !0 if signed data */
     int mnc_ndims;              /* MINC image dimension count */
     int mnc_dimids[MAX_VAR_DIMS]; /* MINC image dimension identifiers */
-    long mnc_dlen;              /* MINC dimension length value */
-    double mnc_dstep;           /* MINC dimension step value */
     int mnc_icv;                /* MINC image conversion variable */
-    int mnc_vid;                /* MINC Image variable ID */
+    int mnc_iid;                /* MINC Image variable ID */
     long mnc_start[MAX_VAR_DIMS]; /* MINC data starts */
     long mnc_count[MAX_VAR_DIMS]; /* MINC data counts */
     char *mnc_hist;             /* MINC history */
     double mnc_vrange[2];       /* MINC valid min/max */
     double mnc_srange[2];       /* MINC image min/max */
+    double mnc_time_step;
+    double mnc_time_start;
+    int mnc_spatial_axes[MAX_NII_DIMS];
+    double mnc_starts[MAX_SPACE_DIMS];
+    double mnc_steps[MAX_SPACE_DIMS];
+    double mnc_dircos[MAX_SPACE_DIMS][MAX_SPACE_DIMS];
+    Transform mnc_xform;
+    General_transform mnc_linear_xform;
+    int mnc_did;                /* Dimension variable id */
+
 
     /* Other stuff */
     char out_str[1024];         /* Big string for filename */
@@ -138,7 +146,7 @@ main(int argc, char **argv)
     char *str_ptr;              /* Generic ASCIZ string pointer */
     int r;                      /* Result code. */
     int qflag = 0;              /* Quiet flag (default is non-quiet) */
-    int rflag = 0;              /* Scan range flag */
+    int rflag = 1;              /* Scan range flag */
 
     ncopts = 0;                 /* Clear global netCDF error reporting flag */
 
@@ -157,7 +165,7 @@ main(int argc, char **argv)
                 qflag++;
                 break;
             case 'r':
-                rflag++;
+                rflag = 0;
                 break;
             case 'i':
                 mnc_vsign = 1;
@@ -297,7 +305,27 @@ main(int argc, char **argv)
         mnc_ndims++;
 
         r = micreate_std_variable(mnc_fd, MItime, NC_INT, 0, NULL);
-        miattputdbl(mnc_fd, r, MIstep, nii_ptr->dt);
+        switch (nii_ptr->time_units) {
+        case NIFTI_UNITS_UNKNOWN:
+        case NIFTI_UNITS_SEC:
+            mnc_time_step = nii_ptr->dt;
+            mnc_time_start = nii_ptr->toffset;
+            break;
+        case NIFTI_UNITS_MSEC:
+            mnc_time_step = nii_ptr->dt / 1000;
+            mnc_time_start = nii_ptr->toffset / 1000;
+            break;
+        case NIFTI_UNITS_USEC:
+            mnc_time_step = nii_ptr->dt / 1000000;
+            mnc_time_start = nii_ptr->toffset / 1000000;
+            break;
+        default:
+            fprintf(stderr, "Unknown time units value %d\n", 
+                    nii_ptr->time_units);
+            break;
+        }
+        miattputdbl(mnc_fd, r, MIstart, mnc_time_start);
+        miattputdbl(mnc_fd, r, MIstep, mnc_time_step);
         miattputstr(mnc_fd, r, MIunits, "s");
     }
 
@@ -350,72 +378,104 @@ main(int argc, char **argv)
     /* Create the MINC image variable.  If we can't, there is no
      * further processing possible...
      */
-    mnc_vid = micreate_std_variable(mnc_fd, MIimage, mnc_vtype, mnc_ndims, 
+    mnc_iid = micreate_std_variable(mnc_fd, MIimage, mnc_vtype, mnc_ndims, 
                                     mnc_dimids);
-    if (mnc_vid < 0) {
+    if (mnc_iid < 0) {
         fprintf(stderr, "Can't create the image variable\n");
         return (-1);
     }
 
-    miattputstr(mnc_fd, mnc_vid, MIsigntype, 
+    miattputstr(mnc_fd, mnc_iid, MIsigntype, 
                 (mnc_vsign) ? MI_SIGNED : MI_UNSIGNED);
 
-    
+
+    /* Calculate the starts, steps, and direction cosines. */
+
+    make_identity_transform(&mnc_xform);
+
     if (nii_ptr->sform_code != NIFTI_XFORM_UNKNOWN) {
-        int spatial_axes[MAX_NII_DIMS];
-        double starts[MAX_SPACE_DIMS];
-        double steps[MAX_SPACE_DIMS];
-        double dircos[MAX_SPACE_DIMS][MAX_SPACE_DIMS];
-        Transform transform;
-        General_transform linear_transform;
-        int id;
-
-        make_identity_transform(&transform);
-
+        if (!qflag) {
+            printf("Using s-form transform:\n");
+        }
         for (i = 0; i < 4; i++) {
             for (j = 0; j < 4; j++) {
-                Transform_elem(transform, i, j) = nii_ptr->sto_xyz.m[i][j];
-                printf("%f, ", nii_ptr->sto_xyz.m[i][j]);
+                Transform_elem(mnc_xform, i, j) = nii_ptr->sto_xyz.m[i][j];
+                if (!qflag) {
+                    printf("%8.4f, ", nii_ptr->sto_xyz.m[i][j]);
+                }
             }
-            printf("\n");
+            if (!qflag) {
+                printf("\n");
+            }
         }
+    }
+    else if (nii_ptr->qform_code != NIFTI_XFORM_UNKNOWN) {
+        if (!qflag) {
+            printf("Using q-form transform:\n");
+        }
+        for (i = 0; i < 4; i++) {
+            for (j = 0; j < 4; j++) {
+                Transform_elem(mnc_xform, i, j) = nii_ptr->qto_xyz.m[i][j];
+                if (!qflag) {
+                    printf("%8.4f, ", nii_ptr->qto_xyz.m[i][j]);
+                }
+            }
+            if (!qflag) {
+                printf("\n");
+            }
+        }
+    }
 
-        create_linear_transform(&linear_transform, &transform);
+    create_linear_transform(&mnc_linear_xform, &mnc_xform);
 
-        /* Hrm??? */
-        spatial_axes[0] = 0;
-        spatial_axes[1] = 1;
-        spatial_axes[2] = 2;
+    /* Hmm??? Not sure this is "right", but it works. */
+    for (i = 0; i < MAX_SPACE_DIMS; i++) {
+        mnc_spatial_axes[i] = i;
+    }
         
-        convert_transform_to_starts_and_steps(&linear_transform,
-                                              3,
-                                              NULL,
-                                              spatial_axes,
-                                              starts,
-                                              steps,
-                                              dircos);
+    convert_transform_to_starts_and_steps(&mnc_linear_xform,
+                                          MAX_SPACE_DIMS,
+                                          NULL,
+                                          mnc_spatial_axes,
+                                          mnc_starts,
+                                          mnc_steps,
+                                          mnc_dircos);
 
-        for (i = 0; i < 3; i++) {
-            printf("%f %f %f %f %f\n", starts[i], steps[i],
-                   dircos[i][0],
-                   dircos[i][1],
-                   dircos[i][2]);
+    switch (nii_ptr->xyz_units) {
+    case NIFTI_UNITS_METER:
+        for (i = 0; i < MAX_SPACE_DIMS; i++) {
+            mnc_starts[i] *= 1000;
+            mnc_steps[i] *= 1000;
         }
+        break;
+    case NIFTI_UNITS_MM:
+        break;
+    case NIFTI_UNITS_MICRON:
+        for (i = 0; i < MAX_SPACE_DIMS; i++) {
+            mnc_starts[i] /= 1000;
+            mnc_steps[i] /= 1000;
+        }
+        break;
+    default:
+        fprintf(stderr, "Unknown XYZ units %d\n", nii_ptr->xyz_units);
+        break;
+    }
 
-        id = ncvarid(mnc_fd, MIxspace);
-        miattputdbl(mnc_fd, id, MIstart, starts[0]);
-        miattputdbl(mnc_fd, id, MIstep, steps[0]);
-        ncattput(mnc_fd, id, MIdirection_cosines, NC_DOUBLE, 3, dircos[0]);
-
-        id = ncvarid(mnc_fd, MIyspace);
-        miattputdbl(mnc_fd, id, MIstart, starts[1]);
-        miattputdbl(mnc_fd, id, MIstep, steps[1]);
-        ncattput(mnc_fd, id, MIdirection_cosines, NC_DOUBLE, 3, dircos[1]);
-
-        id = ncvarid(mnc_fd, MIzspace);
-        miattputdbl(mnc_fd, id, MIstart, starts[2]);
-        miattputdbl(mnc_fd, id, MIstep, steps[2]);
-        ncattput(mnc_fd, id, MIdirection_cosines, NC_DOUBLE, 3, dircos[2]);
+    for (i = 0; i < MAX_SPACE_DIMS; i++) {
+        if (!qflag) {
+            printf("%s start: %8.4f step: %8.4f cosines: %8.4f %8.4f %8.4f\n", 
+                   mnc_spatial_names[i],
+                   mnc_starts[i],
+                   mnc_steps[i],
+                   mnc_dircos[i][DIM_X],
+                   mnc_dircos[i][DIM_Y],
+                   mnc_dircos[i][DIM_Z]);
+        }
+        mnc_did = ncvarid(mnc_fd, mnc_spatial_names[i]);
+        miattputdbl(mnc_fd, mnc_did, MIstart, mnc_starts[i]);
+        miattputdbl(mnc_fd, mnc_did, MIstep, mnc_steps[i]);
+        ncattput(mnc_fd, mnc_did, MIdirection_cosines, NC_DOUBLE, 
+                 MAX_SPACE_DIMS, mnc_dircos[i]);
     }
 
     /* Find the valid minimum and maximum of the data */
@@ -437,7 +497,7 @@ main(int argc, char **argv)
         mnc_srange[1] = mnc_vrange[1];
     }
 
-    ncattput(mnc_fd, mnc_vid, MIvalid_range, NC_DOUBLE, 2, mnc_vrange);
+    ncattput(mnc_fd, mnc_iid, MIvalid_range, NC_DOUBLE, 2, mnc_vrange);
     miattputstr(mnc_fd, NC_GLOBAL, MIhistory, mnc_hist);
    
     ncendef(mnc_fd);
@@ -448,7 +508,7 @@ main(int argc, char **argv)
     mivarput1(mnc_fd, ncvarid(mnc_fd, MIimagemax), mnc_start, NC_DOUBLE,
               MI_SIGNED, &mnc_srange[1]);
 
-    mivarput(mnc_fd, mnc_vid, mnc_start, mnc_count, mnc_mtype, 
+    mivarput(mnc_fd, mnc_iid, mnc_start, mnc_count, mnc_mtype, 
              (mnc_msign) ? MI_SIGNED : MI_UNSIGNED, nii_ptr->data);
 
     miclose(mnc_fd);
