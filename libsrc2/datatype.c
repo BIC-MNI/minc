@@ -1,5 +1,5 @@
-/************************************************************************
- * MINC 2 DATA TYPE/SPACE FUNCTIONS
+/** \file datatype.c
+ * \brief MINC 2.0 data type/space functions
  ************************************************************************/
 
 #include <stdlib.h>
@@ -7,6 +7,8 @@
 #include "minc2.h"
 #include "minc2_private.h"
 
+/** Return the data class of a volume (See miclass_t).
+ */
 int
 miget_data_class(mihandle_t volume, miclass_t *volume_class)
 {
@@ -15,6 +17,8 @@ miget_data_class(mihandle_t volume, miclass_t *volume_class)
     return (MI_NOERROR);
 }
 
+/** Return the data type of a volume (See mitype_t).
+ */
 int
 miget_data_type(mihandle_t volume, mitype_t *data_type)
 {

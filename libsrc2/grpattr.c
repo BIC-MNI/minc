@@ -1,5 +1,5 @@
-/************************************************************************
- * MINC 2.0 "GROUP/ATTRIBUTE" FUNCTIONS
+/** \file grpattr.c
+ * \brief MINC 2.0 group/attribute functions
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
