@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "minc2.h"
 
 #define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
