@@ -7,11 +7,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 2.1  1994-10-20 13:50:12  neelin
-@MODIFIED   : Write out direction cosines to support rotated volumes.
-@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
-@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
+@MODIFIED   : Revision 2.2  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.1  1994/10/20  13:50:12  neelin
+ * Write out direction cosines to support rotated volumes.
+ * Store single slices as 1-slice volumes (3D instead of 2D).
+ * Changed storing of minc history (get args for gyrotominc).
+ *
  * Revision 2.0  94/09/28  10:35:28  neelin
  * Release of minc version 0.2
  * 
@@ -194,7 +197,8 @@ public int gyro_to_minc(int num_files, char *file_list[],
 ---------------------------------------------------------------------------- */
 public void free_info(General_Info *general_info, File_Info *file_info, 
                       int num_files)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    Mri_Index imri;
 
    /* Free the general info pointers */

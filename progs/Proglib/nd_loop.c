@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.c,v $
-@MODIFIED   : Revision 1.2  1994-12-02 09:19:59  neelin
-@MODIFIED   : Added comments to clarify use of routines.
+@MODIFIED   : Revision 1.3  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 1.2  1994/12/02  09:19:59  neelin
+ * Added comments to clarify use of routines.
+ *
  * Revision 1.1  94/12/02  08:40:12  neelin
  * Initial revision
  * 
@@ -24,7 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 1.2 1994-12-02 09:19:59 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 1.3 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -71,7 +74,8 @@ public void nd_begin_looping(long start[], long current[], int ndims)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int nd_end_of_loop(long current[], long end[], int ndims)
-{ /* ARGSUSED */
+     /* ARGSUSED */
+{
    return (current[0] >= end[0]);
 }
 

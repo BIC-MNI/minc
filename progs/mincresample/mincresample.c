@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:32:46  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:32:46  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.16  94/09/28  10:32:33  neelin
  * Pre-release
  * 
@@ -71,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.0 1994-09-28 10:32:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.1 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1381,7 +1384,8 @@ public void finish_up(VVolume *in_vol, VVolume *out_vol)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_transformation(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    Transform_Info *transform_info;
    General_transform *transformation;
    General_transform input_transformation;
@@ -1473,7 +1477,8 @@ public int get_transformation(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_model_file(char *dst, char *key, char *nextArg)
-{      /* ARGSUSED */
+     /* ARGSUSED */
+{
    Volume_Definition *volume_def;
    File_Info file;
 
@@ -1512,7 +1517,8 @@ public int get_model_file(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_axis_order(char *dst, char *key, char *nextArg)
-{      /* ARGSUSED */
+     /* ARGSUSED */
+{
    Volume_Definition *volume_def;
 
    /* Get pointer to client data */
@@ -1553,7 +1559,8 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_fillvalue(char *dst, char *key, char *nextArg)
-{      /* ARGSUSED */
+     /* ARGSUSED */
+{
    double *dptr;
 
    /* Get pointer to client data */

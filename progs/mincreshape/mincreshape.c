@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 1.4  1994-11-23 11:47:05  neelin
-@MODIFIED   : Handle image-min/max properly when using icv for normalization.
+@MODIFIED   : Revision 1.5  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 1.4  1994/11/23  11:47:05  neelin
+ * Handle image-min/max properly when using icv for normalization.
+ *
  * Revision 1.3  94/11/22  08:46:09  neelin
  * Fixed handling of normalization for number of image dimensions > 2.
  * Added appropriate default values of image-max and image-min.
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.4 1994-11-23 11:47:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.5 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -394,7 +397,8 @@ public void get_arginfo(int argc, char *argv[],
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_fillvalue(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    double *dptr;
 
    /* Get pointer to client data */
@@ -428,7 +432,8 @@ public int get_fillvalue(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_dimsize(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    Dimsize_list *dimsize_list;
    char *size_string;
    int ientry;
@@ -504,7 +509,8 @@ public int get_dimsize(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_axis_order(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    char **axis_order;
    char *cur;
    int ndims;
@@ -593,7 +599,8 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_axis_range(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
    Axis_ranges *axis_ranges;
    int ientry;
    char *num_string, *cur;
@@ -682,7 +689,8 @@ public int get_axis_range(char *dst, char *key, char *nextArg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_arg_vector(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
 
    long *vector;
    int nvals, i;

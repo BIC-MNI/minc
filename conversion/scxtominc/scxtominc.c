@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 2.3  1995-01-23 09:21:13  neelin
-@MODIFIED   : Changed ncclose to miclose
+@MODIFIED   : Revision 2.4  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.3  1995/01/23  09:21:13  neelin
+ * Changed ncclose to miclose
+ *
  * Revision 2.2  95/01/23  08:57:37  neelin
  * Changed nccreate to micreate.
  * 
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.3 1995-01-23 09:21:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.4 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1140,7 +1143,8 @@ int get_scx_slice(scx_file *scx_fp, int slice_num,
                   long *pixel_max, float *image_max, short *image, 
                   scx_file_info_type *scx_file_info,
                   scx_general_info_type *scx_general_info)
-{       /* ARGSUSED */
+     /* ARGSUSED */
+{
    long npix, ix, iy, y_offset, off1, off2;
    short temp;
 

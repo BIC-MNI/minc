@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 2.1  1994-12-14 10:20:23  neelin
-@MODIFIED   : Changed to use standard (Proglib) voxel_loop routines.
+@MODIFIED   : Revision 2.2  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.1  1994/12/14  10:20:23  neelin
+ * Changed to use standard (Proglib) voxel_loop routines.
+ *
  * Revision 2.0  94/09/28  10:36:27  neelin
  * Release of minc version 0.2
  * 
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.1 1994-12-14 10:20:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.2 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -154,13 +157,13 @@ public int main(int argc, char *argv[])
 @CREATED    : January 11, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-/* ARGSUSED */
 public void do_window(void *caller_data, long num_voxels, 
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[],
                       long start[], long count[])
+     /* ARGSUSED */
 {
    Window_Data *window_data;
    long ivox;

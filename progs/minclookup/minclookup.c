@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.3  1994-12-14 09:22:30  neelin
-@MODIFIED   : Removed debugging code.
+@MODIFIED   : Revision 1.4  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 1.3  1994/12/14  09:22:30  neelin
+ * Removed debugging code.
+ *
  * Revision 1.2  94/12/13  16:34:02  neelin
  * Added sorting of lookup file.
  * 
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.3 1994-12-14 09:22:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.4 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -652,12 +655,12 @@ public void get_full_range(int mincid, double range[2])
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-/* ARGSUSED */
 public void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[], long start[], long count[])
+     /* ARGSUSED */
 {
    Lookup_Data *lookup_data;
    long ivoxel;

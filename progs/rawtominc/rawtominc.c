@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.4  1995-01-23 09:07:46  neelin
-@MODIFIED   : changed ncclose to miclose.
+@MODIFIED   : Revision 2.5  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.4  1995/01/23  09:07:46  neelin
+ * changed ncclose to miclose.
+ *
  * Revision 2.3  95/01/23  08:59:31  neelin
  * Changed nccreate to micreate
  * 
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.4 1995-01-23 09:07:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.5 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -793,7 +796,8 @@ void usage_error(char *progname)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 int get_attribute(char *dst, char *key, char *nextarg)
-{           /* ARGSUSED */
+     /* ARGSUSED */
+{
    char *variable;
    char *attribute;
    char *value;
@@ -875,7 +879,8 @@ int get_attribute(char *dst, char *key, char *nextarg)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 int get_times(char *dst, char *key, char *nextarg)
-{           /* ARGSUSED */
+     /* ARGSUSED */
+{
    int *num_elements_ptr;
    double **time_list_ptr;
    int num_elements;

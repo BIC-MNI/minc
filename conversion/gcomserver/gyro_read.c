@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.4  1994-12-12 09:05:57  neelin
-@MODIFIED   : Changed comment in calculate_slice_start (code is the same)
+@MODIFIED   : Revision 2.5  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.4  1994/12/12  09:05:57  neelin
+ * Changed comment in calculate_slice_start (code is the same)
+ *
  * Revision 2.3  94/12/07  08:20:22  neelin
  * Fixed some lint messages.
  * 
@@ -1016,7 +1019,8 @@ public void calculate_slice_start(World_Index slice_world,
                                   double step[WORLD_NDIMS],
                                   double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                   double start[WORLD_NDIMS])
-{   /* ARGSUSED */
+     /* ARGSUSED */
+{
    World_Index iworld;
    double offset[WORLD_NDIMS];
 

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 2.1  1995-01-23 12:32:52  neelin
-@MODIFIED   : Changed ncopen, ncclose to miopen, miclose.
+@MODIFIED   : Revision 2.2  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.1  1995/01/23  12:32:52  neelin
+ * Changed ncopen, ncclose to miopen, miclose.
+ *
  * Revision 2.0  94/09/28  10:34:16  neelin
  * Release of minc version 0.2
  * 
@@ -49,7 +52,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 2.1 1995-01-23 12:32:52 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 2.2 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -438,7 +441,8 @@ int main(int argc, char *argv[])
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_arg_vector(char *dst, char *key, char *nextArg)
-{     /* ARGSUSED */
+     /* ARGSUSED */
+{
 
    long *vector;
    int nvals, i;

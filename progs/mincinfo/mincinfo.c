@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 2.2  1995-02-01 15:29:31  neelin
-@MODIFIED   : Fixed call of miexpand_file.
+@MODIFIED   : Revision 2.3  1995-02-08 19:31:47  neelin
+@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.2  1995/02/01  15:29:31  neelin
+ * Fixed call of miexpand_file.
+ *
  * Revision 2.1  95/01/23  13:47:46  neelin
  * Changed ncopen, ncclose to miopen, miclose. Added miexpand_file to get
  * header only when appropriate.
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.2 1995-02-01 15:29:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.3 1995-02-08 19:31:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -347,7 +350,8 @@ public int main(int argc, char *argv[])
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int get_option(char *dst, char *key, char *nextarg)
-{           /* ARGSUSED */
+     /* ARGSUSED */
+{
    Option_code code;
    int return_value;
 
