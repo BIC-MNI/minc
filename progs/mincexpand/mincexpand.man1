@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 6.0 1997-09-12 13:24:16 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 6.1 2004-05-20 21:52:08 bert Exp $
 .\"
-.TH MINCEXPAND 1
+.TH MINCEXPAND 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincexpand - expands a compressed minc file, if necessary.
@@ -20,31 +21,33 @@ mincexpand - expands a compressed minc file, if necessary.
 [<options>] <infile> [<outfile>]
 
 .SH DESCRIPTION 
-.I Mincexpand 
-expands a compressed, packed, gzipped or zipped minc file into a
-temporary file using gunzip (or zcat or pcat) and prints out the name
-of the new file. If the input file is not compressed, then nothing
-is done and the original file name is printed. A second line is
-printed, indicating whether the name is that of a new temporary file
-("Temporary") or that of the original file ("Original"). If no output
+\fIMincexpand\fR expands a compressed, packed, gzipped or zipped minc 
+file into a temporary file using gunzip (or zcat or pcat) and prints 
+out the name of the new file. If the input file is not compressed, 
+then nothing is done and the original file name is printed. A second 
+line is printed, indicating whether the name is that of a new temporary 
+file ("Temporary") or that of the original file ("Original"). If no output
 file name is given, then the program generates its own.
 
 .SH OPTIONS
-
-.I -header_only:
+.TP
+\fB\-header_only\fR
 Expand only enough of the file to be able to read the header.
-
-.P
-.I -all_data:
+.TP
+\fB\-all_data\fR
 Expand the whole file (default).
-
-.P
-.I -name_only:
+.TP
+\fB\-name_only\fR
 Print out only the file name, not the status (Temporary or Original).
+.TP
+\fB-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
 .SH AUTHOR
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1995 by Peter Neelin
+Copyright \(co 1995 by Peter Neelin

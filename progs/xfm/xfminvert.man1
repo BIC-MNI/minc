@@ -1,18 +1,27 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH XFMINVERT 1
+.TH XFMINVERT 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 .SH NAME
 xfminvert \- invert an MNI transform file
 
 .SH SYNOPSIS
-.B xfminvert
-.BI input.xfm
-.BI result.xfm
+\fBxfminvert\fR\ \fIinput.xfm\fR\ \fIresult.xfm\fR
 
 .SH DESCRIPTION
+\fIxfminvert\fR creates the file \fIresult.xfm\fR containing the 
+inverse transformation of \fIinput.xfm\fR.
 
-.B xfminvert
-creates the file
-.I result.xfm
-containing the inverse transformation of
-.I input.xfm.
+.SH OPTIONS
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+Copyright \(co 1993 Peter Neelin
+
 

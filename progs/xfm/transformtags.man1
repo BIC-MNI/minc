@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH TRANSFORMTAGS 1
+.TH TRANSFORMTAGS 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 .SH NAME
 transformtags \- apply MNI transform to a tag file
 
@@ -13,13 +13,35 @@ transformtags \- apply MNI transform to a tag file
 
 .SH DESCRIPTION
 
-.B transformtags
-applies the specified transformation to one of the two
-sets of tags in the tag file.  The default is to apply
-the transformation to the tags of the second volume.
-Use -vol1 to transform the first volume's tag.
-Only one volume at a time may be transformed.
+\fBtransformtags\fR applies the specified transformation to one of the
+two sets of tags in the tag file.  The default is to apply the
+transformation to the tags of the second volume.  Use \fB\-vol1\fR to
+transform the first volume's tag.  Only one volume at a time may be
+transformed.
 
-The transformation must be specified using
-the -transformation option.
+The transformation must be specified using the \fB-transformation\fR option.
+
+.SH OPTIONS
+.TP
+\fB\-vol1\fR
+Transform tags for volume 1.
+.TP
+\fB\-vol2\fR
+Transform tags for volume 2 (default).
+.TP
+\fB\-transformation\fR\ \fIfilename.xfm\fR
+Name of transformation file (default is internal identity transform).
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+Copyright \(co 1993 Peter Neelin
+
 

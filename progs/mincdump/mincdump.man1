@@ -1,11 +1,12 @@
-.\" $Header: /private-cvsroot/minc/progs/mincdump/mincdump.man1,v 1.1 2004-04-27 15:35:15 bert Exp $
-.TH NCDUMP 1 "$Date: 2004-04-27 15:35:15 $" "Printed: \n(yr-\n(mo-\n(dy" "UNIDATA UTILITIES"
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" $Header: /private-cvsroot/minc/progs/mincdump/mincdump.man1,v 1.2 2004-05-20 21:52:08 bert Exp $
+.TH MINCDUMP 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
 .SH NAME
-ncdump \- Convert netCDF files to ASCII form (CDL)
+mincdump \- Convert minc files to ASCII form (CDL)
 .SH SYNOPSIS
 .ft B
 .HP
-ncdump
+mincdump
 .nh
 \%[-c]
 \%[-h]
@@ -19,18 +20,24 @@ ncdump
 .hy
 .ft
 .SH DESCRIPTION
-\fBncdump\fP generates an ASCII representation of a specified netCDF file on
+\fBmincdump\fP is based upon the netCDF tool \fBncdump\fR, modified to 
+work with both MINC 1 (netCDF) and MINC 2 (HDF5) format files.  It is intended
+for use primarily with scripts such as \fBmincdiff\fR and \fBmincheader\fR.
+Since it was not created at the Montreal Neurological Insititute it does not
+follow the usual conventions for MINC programs.
+
+\fBmincdump\fP generates an ASCII representation of a specified minc file on
 standard output.  The ASCII representation is in a form called CDL
 (``network Common Data form Language'') that can be viewed, edited, or serve
 as input to \fBncgen\fP.  \fBncgen\fP is a companion program that can
-generate a binary netCDF file from a CDL file.  Hence \fBncgen\fP and
-\fBncdump\fP can be used as inverses to transform the data representation
+generate a binary minc file from a CDL file.  Hence \fBncgen\fP and
+\fBmincdump\fP can be used as inverses to transform the data representation
 between binary and ASCII representations.  See \fBncgen\fP for a description
 of CDL and netCDF representations.
 .LP
-\fBncdump\fP defines a default format used for each type of netCDF data, but
+\fBmincdump\fP defines a default format used for each type of netCDF data, but
 this can be changed if a `C_format' attribute is defined for a netCDF
-variable.  In this case, \fBncdump\fP will use the `C_format' attribute to
+variable.  In this case, \fBmincdump\fP will use the `C_format' attribute to
 format each value.  For example, if floating-point data for the netCDF
 variable `Z' is known to be accurate to only three significant digits, it
 would be appropriate to use the variable attribute
@@ -39,12 +46,12 @@ would be appropriate to use the variable attribute
 Z:C_format = "%.3g"
 .RE
 .LP
-\fBncdump\fP may also be used as a simple browser for netCDF data
+\fBmincdump\fP may also be used as a simple browser for netCDF data
 files, to display the dimension names and sizes; variable names, types,
 and shapes; attribute names and values; and optionally, the values of
 data for all variables or selected variables in a netCDF file.
 .LP
-\fBncdump\fP uses `_' to represent data values that are equal to the
+\fBmincdump\fP uses `_' to represent data values that are equal to the
 `_FillValue' attribute for a variable, intended to represent data that
 has not yet been written.  If a variable has no `_FillValue' attribute, the
 default fill value for the variable type is used if the variable is not of
@@ -98,13 +105,13 @@ Changes the default maximum line length (80) used in formatting lists of
 non-character data values.
 .IP "\fB-n\fP \fIname\fP"
 CDL requires a name for a netCDF data set, for use by \fBncgen -b\fP in
-generating a default netCDF file name.  By default, \fIncdump\fP constructs
+generating a default netCDF file name.  By default, \fImincdump\fP constructs
 this name from the last component of the pathname of the input netCDF file
 by stripping off any extension it has.  Use the \fB-n\fP option to specify a
 different name.  Although the output file name used by \fBncgen -b\fP can be
-specified, it may be wise to have \fIncdump\fP change the default name to
+specified, it may be wise to have \fImincdump\fP change the default name to
 avoid inadvertantly overwriting a valuable netCDF file when using
-\fBncdump\fP, editing the resulting CDL file, and using \fBncgen -b\fP to
+\fBmincdump\fP, editing the resulting CDL file, and using \fBncgen -b\fP to
 generate a new netCDF file from the edited CDL file.
 .IP "\fB-p\fP \fIfloat_digits[,double_digits]\fP"
 Specifies default precision (number of significant digits) to use in displaying
@@ -127,25 +134,25 @@ paper listed under REFERENCES).
 
 .SH EXAMPLES
 .LP
-Look at the structure of the data in the netCDF file `\fBfoo.nc\fP':
+Look at the structure of the data in the netCDF file `\fBfoo.mnc\fP':
 .RS
 .HP
-ncdump -c foo.nc
+mincdump -c foo.mnc
 .RE
 .LP
 Produce an annotated CDL version of the structure and data in the
-netCDF file `\fBfoo.nc\fP', using C-style indexing for the annotations:
+netCDF file `\fBfoo.mnc\fP', using C-style indexing for the annotations:
 .RS
 .HP
-ncdump -b c foo.nc > foo.cdl
+mincdump -b c foo.mnc > foo.cdl
 .RE
 .LP
 Output data for only the variables `uwind' and `vwind' from the netCDF file
-`\fBfoo.nc\fP', and show the floating-point data with only three significant
+`\fBfoo.mnc\fP', and show the floating-point data with only three significant
 digits of precision:
 .RS
 .HP
-ncdump -v uwind,vwind -p 3 foo.nc
+mincdump -v uwind,vwind -p 3 foo.mnc
 .RE
 .LP
 Produce a fully-annotated (one data value per line) listing of the data for
@@ -153,8 +160,17 @@ the variable `omega', using Fortran conventions for indices, and changing the
 netCDF dataset name in the resulting CDL file to `omega':
 .RS
 .HP
-ncdump -v omega -f fortran -n omega foo.nc > Z.cdl
+mincdump -v omega -f fortran -n omega foo.mnc > Z.cdl
 .RE
+.SH AUTHOR
+Originally written by members of the Unidata Program at the University 
+Corporation for Atmospheric Research.
+
+Modified by Bert Vincent (bert@bic.mni.mcgill.ca) for use with both 
+netCDF and HDF5 files.
+
+.SH COPYRIGHTS
+Copyright \(co University Corporation for Atmospheric Research
 .SH REFERENCES
  \fIWhat
 Every Computer Scientist should Know About Floating-Point Arithmetic\fP, D.
@@ -162,6 +178,7 @@ Goldberg, \fBACM Computing Surveys, Vol. 23, No. 1\fP, March 1991, pp. 5-48.
 
 .SH "SEE ALSO"
 .LP
+.BR ncdump (1),
 .BR ncgen (1),
 .BR netcdf (3)
 .SH BUGS

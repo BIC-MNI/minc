@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.2 2001-02-13 13:25:27 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.3 2004-05-20 21:52:07 bert Exp $
 .\"
-.TH MINC_MODIFY_HEADER 1
+.TH MINC_MODIFY_HEADER 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
 
 .SH NAME
 minc_modify_header - modify the attributes in the header of a minc file
@@ -20,14 +21,14 @@ minc_modify_header - modify the attributes in the header of a minc file
 [<options>] <file>.mnc
 
 .SH DESCRIPTION
-.I Minc_modify_header
-allows the modification, insertion or deletion of attributes in a minc
-file. If possible, the file is modified in place, without copying the
-data. This will happen when inserting (modifying) an attribute that
-already exists and that ends up being the same length or shorter in
-the new file. If an attribute is deleted or lengthened, then a complete
-copy of the data is made, resulting in a completely new file that
-replaces the original.
+
+\fIMinc_modify_header\fR allows the modification, insertion or
+deletion of attributes in a minc file. If possible, the file is
+modified in place, without copying the data. This will happen when
+inserting (modifying) an attribute that already exists and that ends
+up being the same length or shorter in the new file. If an attribute
+is deleted or lengthened, then a complete copy of the data is made,
+resulting in a completely new file that replaces the original.
 
 If the file is compressed, then it is first decompressed into a file
 whose name is either the same as that of the original file up to the
@@ -42,52 +43,48 @@ removed from the file.
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
-.P
-.I -sinsert
-<var>:<attr>=<value> :
+.TP
+\fB\-sinsert\fR \fIvar:attr=value\fR
 Insert a string attribute into the header. If the attribute does not
 exist or the new string is longer than the existing one, then all data
 in the file will be copied.
-.P
-.I -dinsert
-<var>:<attr>=<value>(,...) :
+.TP
+\fB\-dinsert\fR \fIvar:attr=value(,...)\fR
 Insert a double precision attribute into the header. If the attribute
 does not exist or the new attribute is longer than the existing one,
 then all data in the file will be copied. A comma-separated array of
 values can be specified.
-.P
-.I -delete
-<var>:<attr> :
+.TP
+\fB-delete\fR \fIvar:attr\fR
 Delete an attribute from the header. USE OF THIS OPTION WILL FORCE A
-COMPLETE COPY OF ALL DATA TO BE MADE. Use "-sinsert" with an empty
+COMPLETE COPY OF ALL DATA TO BE MADE. Use \fB-sinsert\fR with an empty
 string to delete information without copying data (the attribute will
 continue to exist).
-.P
-.I -help:
-Print summary of command-line options and abort.
+.TP
+\fB-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
 .SH EXAMPLES:
-
+.PP
 To replace the patient name with an identifier string:
-
-   minc_modify_header file.mnc \\
-      -sinsert 'patient:full_name=C02-F0023'
-
+.IP
+minc_modify_header file.mnc -sinsert 'patient:full_name=C02-F0023'
+.PP
 To delete the patient name completely (forcing a copy of all data):
-
-   minc_modify_header file.mnc \\
-      -delete 'patient:full_name'
-
+.IP
+minc_modify_header file.mnc -delete 'patient:full_name'
+.PP
 To hide the patient name without copying data, assuming that we know
 that the attribute exists (the attribute will remain in the file, but
 it will be empty):
-
-   minc_modify_header file.mnc \\
-      -sinsert 'patient:full_name='
+.IP
+minc_modify_header file.mnc -sinsert 'patient:full_name='
 
 .SH AUTHOR
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1995 by Peter Neelin
+Copyright \(co 1995 by Peter Neelin

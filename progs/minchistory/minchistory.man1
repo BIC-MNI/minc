@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
 .\"
-.TH MINCHISTORY 1 "$Date: 2004-05-13 23:04:04 $" "" "MINC User's Guide"
+.TH MINCHISTORY 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 minchistory - prints out history information for a minc file
@@ -22,6 +22,11 @@ For each file, \fIminchistory\fR prints a title line of the format:
 Followed by a series of lines which list the history information for
 that file.
 
+\fBminchistory\fR is essentially an alias for the following command:
+.IP
+mincinfo -attvalue :history \fIfilename.mnc\fR
+.PP
+
 .SH OPTIONS
 There are no options.
 
@@ -30,3 +35,8 @@ Andrew Janke
 
 .SH COPYRIGHTS
 Copyright \(co 2000 by Andrew Janke
+
+.SH "SEE ALSO"
+.LP
+.BR mincinfo (1)
+

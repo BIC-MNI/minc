@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,22 +9,22 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.4 2003-10-29 17:50:18 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.5 2004-05-20 21:52:09 bert Exp $
 .\"
-.TH RAWTOMINC 1
+.TH RAWTOMINC 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 
 .SH NAME
 rawtominc - converts a stream of binary image data to a minc format file
 
 .SH SYNOPSIS 
 .B rawtominc 
-[<opts>] <output.mnc> [[<sz4>] <sz3>] <sz2> <sz1>
+[\fIoptions\fR] \fIoutput.mnc\fR [[\fIsz4\fR] \fIsz3\fR] \fIsz2\fR \fIsz1\fR
 
 .SH DESCRIPTION
 .I Rawtominc
 reads a stream of binary data (byte, short, long, float or double) from
-standard input (unless the -input option is used) and
-writes it into the minc format file <output.mnc>. The user specifies the
+standard input (unless the \fB\-input\fR option is used) and
+writes it into the minc format file \fIoutput.mnc\fR. The user specifies the
 dimension sizes from slowest varying to fastest varying. At least two
 dimensions must be given (an image) but there can be up to four.
 Options give the user control over dimension names, data types and
@@ -36,8 +37,8 @@ integer). They are also characterized by a range of legal values. For
 example, many scanners produce images stored with short integer pixel
 values. Some have values in the range 0 to 4095, others 0 to 32000,
 others -32768 to 32767. This range is the valid range, specified by
-the -range option (for floating point values, the valid range is the
-maximum and minimum of the whole dataset). Rawtominc allows the user
+the \fB\-range\fR option (for floating point values, the valid range is the
+maximum and minimum of the whole dataset). \fIRawtominc\fR allows the user
 to specify both the input type, sign and range as well as the output
 type, sign and range (read short values, store byte values, for
 example).
@@ -47,10 +48,11 @@ be simply scaled pixel representations of real (meaningful) physical
 values. Floating point values are taken to be the real value itself.
 Thus floating point values are scanned for the maximum and minimum,
 since they could be anything (they are stored in the MINC variables
-image-max and image-min). Integer values, however, are not scanned by
-default, since their range can be given by an option. To force scanning of
-integer values when the maximum and minimum are not known (some
-scanners produce files with variable ranges), use the option -scan_range.
+\fBimage-max\fR and \fBimage-min\fR). Integer values, however, are not 
+scanned by default, since their range can be given by an option. To 
+force scanning of integer values when the maximum and minimum are not 
+known (some scanners produce files with variable ranges), use the 
+option \fB\-scan_range\fR.
 
 .SH WORLD COORDINATES
 World coordinates refer to millimetric coordinates relative to some physical
@@ -60,18 +62,19 @@ It is worth describing briefly how MINC coordinate conversions work
 since this will affect how successful the new MINC file will be. 
 
 Each dimension of MINC image is specified by name - the spatial
-dimensions are xspace, yspace and zspace. The convention is that
-positive xspace coordinates run from the patient's left side to right
-side, positive yspace coordinates run from patient posterior to
-anterior and positive zspace coordinates run from inferior to
-superior. For each of these spatial dimensions, the world coordinate
-conversion is specified by a pair of attributes: step and start. The
-xspace world coordinate, for example, is calculated using x = v*step +
-start, where x is the x world coordinate and v is the voxel count
-(starting at zero).  Thus the magnitude of the step attribute
-specifies the distance between voxels and the sign of the step
-attribute specifies the orientation of the axis. Programs will use
-this information to display images with the correct aspect ratio and
+dimensions are \fIxspace\fR, \fIyspace\fR and \fIzspace\fR. The
+convention is that positive \fIxspace\fR coordinates run from the
+patient's left side to right side, positive \fIyspace\fR coordinates
+run from patient posterior to anterior and positive \fIzspace\fR
+coordinates run from inferior to superior. For each of these spatial
+dimensions, the world coordinate conversion is specified by a pair of
+attributes: \fIstep\fR and \fIstart\fR.  The \fIxspace\fR world
+coordinate, for example, is calculated using x = v*step + start, where
+x is the x world coordinate and v is the voxel count (starting at
+zero).  Thus the magnitude of the \fIstep\fR attribute specifies the
+distance between voxels and the sign of the \fIstep\fR attribute
+specifies the orientation of the axis. Programs will use this
+information to display images with the correct aspect ratio and
 orientation, so make sure that you get it right. Many scanners store
 transverse images with the first pixel at the patient's anterior/right
 side, so it would be necessary to give negative x and y step values.
@@ -83,153 +86,150 @@ superior, so z step is negative.
 The image axes do not have to be aligned with the world coordinate
 axes. The axis directions are recorded in the file as direction
 cosines - unit vectors - one for each spatial axis. In this case, the
-step and start attributes described in the previous paragraph refer to
-distances along the axis, not to coordinates of the first voxel. This
-makes them invariant under a change of axis direction (the whole
-coordinate system can in fact be rotated just by changing the
-direction cosines). If the coordinate of the first voxel is known,
-then it can be converted (projected) to a set of start values by using
-the -origin option.
+\fIstep\fR and \fIstart\fR attributes described in the previous
+paragraph refer to distances along the axis, not to coordinates of the
+first voxel. This makes them invariant under a change of axis
+direction (the whole coordinate system can in fact be rotated just by
+changing the direction cosines). If the coordinate of the first voxel
+is known, then it can be converted (projected) to a set of start
+values by using the \fB\-origin\fR option.
 
 .SH OPTIONS
 
 .SH Dimension ordering
-.P
-.I -transverse:
+.TP
+\fB\-transverse\fR
 Transverse images   : [[time] z] y x (Default)
-.P
-.I -sagittal:
+.TP
+\fB\-sagittal\fR
 Sagittal images     : [[time] x] z y
-.P
-.I -coronal:
+.TP
+\fB\-coronal\fR
 Coronal images      : [[time] y] z x
-.P
-.I -time:
+.TP
+\fB\-time\fR
 Time ordered images : [[z] time] y x
-.P
-.I -xyz:
+.TP
+\fB\-xyz\fR
 Dimension order     : [[time] x] y z
-.P
-.I -xzy:
+.TP
+\fB\-xzy\fR
 Dimension order     : [[time] x] z y
-.P
-.I -yxz:
+.TP
+\fB\-yxz\fR
 Dimension order     : [[time] y] x z
-.P
-.I -yzx:
+.TP
+\fB\-yzx\fR
 Dimension order     : [[time] y] z x
-.P
-.I -zxy:
+.TP
+\fB\-zxy\fR
 Dimension order     : [[time] z] x y
-.P
-.I -zyx:
+.TP
+\fB\-zyx\fR
 Dimension order     : [[time] z] y x
-.P
-.I -dimorder
-<dim1>,<dim2>[,<dim3>[,<dim4>]]
+.TP
+\fB\-dimorder\fR\ \fIdim1\fR,\fIdim2\fR[,\fIdim3\fR[,\fIdim4\fR]]
 Specify an arbitrary dimension order, given by an comma-separated list
 of between 2 and 4 dimension names.
-.P
-.I -vector:
+.TP
+\fB\-vector\fR\ \fIsize\fR
 Gives the size of a vector dimension (always the fastest varying
 dimension). Default is no vector dimension.
 
 .SH Input data type and range
-.P
-.I -byte:
-Byte values (default).
-.P
-.I -short:
-Short integer values.
-.P
-.I -int:
+.TP
+\fB-byte\fR
+8-bit integer values (default).
+.TP
+\fB\-short\fR
+16-bit integer values.
+.TP
+\fB\-int\fR
 32-bit integer values.
-.P
-.I -long:
-Superseded by -int.
-.P
-.I -float:
+.TP
+\fB\-long\fR
+Superseded by \fB\-int\fR.
+.TP
+\fB\-float\fR
 Single-precision floating point values.
-.P
-.I -double:
+.TP
+\fB\-double\fR
 Double-precision floating point values.
-.P
-.I -signed:
+.TP
+\fB\-signed\fR
 Values are signed integers (default for short and long). Ignored for
 floating point types.
-.P
-.I -unsigned:
+.TP
+\fB\-unsigned\fR
 Values are unsigned integers (default for byte). Ignored for
 floating point types.
-.P
-.I -range 
-<min> <max>:
+.TP
+\fB\-range\fR\ \fImin\fR \fImax\fR
 specifies the valid range of pixel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values.
-.P
-.I -real_range 
-<min> <max>:
+.TP
+\fB\-real_range\fR\ \fImin\fR \fImax\fR
 specifies the real range of image values that corresponds to the pixel
-values of option -range. Default is to not store the real image
-minimum and maximum. If -scan_range is used, then the image minimum
+values of option \fB\-range\fR. Default is to not store the real image
+minimum and maximum. If \fB\-scan_range\fR is used, then the image minimum
 and maximum corresponding to the scanned pixel minimum and maximum are
 calculated and stored. This option is ignored for floating point values.
-.P
-.I -swap_bytes:
-Input values (either -short or -int) need to be converted between
+.TP
+\fB\-swap_bytes\fR
+Input values (either \fB\-short\fR or \fB\-int\fR) need to be converted 
+between
 Motorola (big-endian) and Intel (little-endian) data format.  If
 "short" input is specified, adjacent bytes are swapped.  If "int"
 input is specified, inner and outer byte pairs are swapped.  This
 option has no effect with other input types.
 
 .SH Output data type and range
-.P
-.I -obyte:
-Byte values (default is input type).
-.P
-.I -oshort:
-Short integer values (default is input type).
-.P
-.I -oint:
-32-bit integer values (default is input type).
-.P
-.I -olong:
-Superseded by -oint.
-.P
-.I -ofloat:
+.TP
+\fB\-obyte\fR
+Store 8-bit integer values (default is input type).
+.TP
+\fB\-oshort\fR
+Store 16-bit integer values (default is input type).
+.TP
+\fB\-oint\fR
+Store 32-bit integer values (default is input type).
+.TP
+\fB\-olong\fR
+Superseded by \fB\-oint\fR.
+.TP
+\fB\-ofloat\fR
 Single-precision floating point values (default is input type).
-.P
-.I -odouble:
+.TP
+\fB\-odouble\fR
 Double-precision floating point values (default is input type).
-.P
-.I -osigned:
+.TP
+\fB\-osigned\fR
 Values are signed integers (default for short and long). Ignored for
 floating point types. If output type is not specified, then default
 is input sign type.
-.P
-.I -ounsigned:
+.TP
+\fB\-ounsigned\fR
 Values are unsigned integers (default for byte). Ignored for
 floating point types. If output type is not specified, then default
 is input sign type.
-.P
-.I -orange 
-<min> <max>:
+.TP
+\fB\-orange\fR\ \fImin\fR \fImax\fR
 specifies the valid range of pixel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values. If output type and sign are not specified, then the default
 is the input range.
 
 .SH Scanning integers for range
-.P
-.I -noscan_range:
+.TP
+\fB\-noscan_range\fR
 Do not scan integer values for their minimum and maximum - assume that
 the -range option gives the appropriate range of pixel values (default). 
 No rescaling of pixel values is done (unless the output type differs
 from the input type) and the created images are assumed to have a real
 (not pixel value) minimum and maximum of zero and one.
-.P
-.I -scan_range:
+.TP
+\fB\-scan_range\fR
 Integer values are scanned for their minimum and maximum. Pixel values
 are rescaled to give the full range of pixel values and the real
 minimum and maximum are set to the pixel minimum and maximum (unless
@@ -238,68 +238,57 @@ input to a floating point type and reading it in with -float -oshort
 (for example) assuming that -real_range is not used.
 
 .SH Writing output file
-.P
-.I -clobber:
+.TP
+\fB\-2\fR
+Create MINC 2.0 format output files.
+.TP
+\fB\-clobber\fR
 Overwrite existing minc file (default).
-.P
-.I -noclobber:
+.TP
+\fB-noclobber\fR
 Don't overwrite existing minc file.
 
 .SH Reading from input file
-.P
-.I -input
-<inputfile>:
-Read input data from <inputfile> instead of standard input.
-.P
-.I -skip
-<length>:
-Skip the first 
-.B length
-bytes of the input.
+.TP
+\fB\-input\fR\ \fIinputfile\fR
+Read input data from \fIinputfile\fR instead of standard input.
+.TP
+\fB\-skip\fR\ \fIlength\fR
+Skip the first \fIlength\fR bytes of the input.
 
 .SH World coordinate conversion
-.P
-.I -xstep
-<xstep>:
+.TP
+\fB\-xstep\fR\ \fIxstep\fR
 Step size for x dimension (default = none).
-.P
-.I -ystep
-<ystep>:
+.TP
+\fB\-ystep\fR\ \fIystep\fR
 Step size for y dimension (default = none).
-.P
-.I -zstep
-<zstep>:
+.TP
+\fB\-zstep\fR\ \fIzstep\fR
 Step size for z dimension (default = none).
-.P
-.I -xstart
-<xstart>:
+.TP
+\fB\-xstart\fR\ \fIxstart\fR
 Starting coordinate for x dimension (default = none). This is a
 distance parallel to the axis.
-.P
-.I -ystart
-<ystart>:
+.TP
+\fB\-ystart\fR\ \fIystart\fR
 Starting coordinate for y dimension (default = none). This is a
 distance parallel to the axis.
-.P
-.I -zstart
-<zstart>:
+.TP
+\fB\-zstart\fR\ \fIzstart\fR
 Starting coordinate for z dimension (default = none). This is a
 distance parallel to the axis.
-.P
-.I -xdircos
-<x1> <x2> <x3>:
+.TP
+\fB\-xdircos\fR\ \fIx1\fR\ \fIx2\fR\ \fIx3\fR
 Direction cosines for x dimension (default = none).
-.P
-.I -ydircos
-<y1> <y2> <y3>:
+.TP
+\fB\-ydircos\fR\ \fIy1\fR\ \fIy2\fR\ \fIy3\fR
 Direction cosines for y dimension (default = none).
-.P
-.I -zdircos
-<z1> <z2> <z3>:
+.TP
+\fB\-zdircos\fR\ \fIz1\fR \fIz2\fR\ \fIz3\fR
 Direction cosines for z dimension (default = none).
-.P
-.I -origin
-<o1> <o2> <o3>:
+.TP
+\fB\-origin\fR \fIo1\fR\ \fIo2\fR\ \fIo3\fR
 Specify the spatial coordinates of the first voxel. If the direction
 cosines are not given or are the default ones, this option will
 give the same results as using the -start options. Otherwise, the
@@ -307,79 +296,78 @@ coordinate is projected parallel to the axes to determine the
 appropriate start values.
 
 .SH Frame time and length specification
-.P
-.I -frame_times
-<t1>,<t2>,<t3>,... :
+.TP
+\fB\-frame_times\fR \fIt1\fR,\fIt2\fR,\fIt3\fR,...
 Specify the start of each time frame. The number of values given must
 be equal to the length of the time dimension specified on the command
 line. All of the values given must be in one argument (no spaces
 between them, or the string must be quoted). Separation by spaces
 instead of commas is permitted.
-.P
-.I -frame_widths
-<w1>,<w2>,<w3>,... :
-Specify the length of each time frame. The comments for -frame_times
+.TP
+\fB\-frame_widths\fR\ \fIw1\fR,\fIw2\fR,\fIw3\fR,...
+Specify the length of each time frame. The comments for \fI-frame_times\fR
 apply here as well.
 
 .SH Imaging modality
-.P
-.I -nomodality:
+.TP
+\fB-nomodality\fR
 Do not store modality type in file (default).
-.P
-.I -pet:
+.TP
+\fB\-pet\fR
 PET data.
-.P
-.I -mri:
+.TP
+\fB\-mri\fR
 MRI data.
-.P
-.I -spect:
+.TP
+\fB\-spect\fR
 SPECT data.
-.P
-.I -gamma:
+.TP
+\fB\-gamma\fR
 Data from a gamma camera.
-.P
-.I -mrs:
+.TP
+\fB\-mrs\fR
 MR spectroscopy data.
-.P
-.I -mra:
+.TP
+\fB\-mra\fR
 MR angiography data.
-.P
-.I -ct:
+.TP
+\fB\-ct\fR
 CT data.
-.P
-.I -dsa:
+.TP
+\fB-dsa\fR
 DSA data
-.P
-.I -dr:
+.TP
+\fB\-dr\fR
 Digital radiography data.
 
 .SH Attribute specification
-.P
-.I -sattribute
-<variable>:<attribute>=<value> :
-Specify that <variable> should be created with string <attribute> set to
-<value>. The complete specification, including <variable>, <attribute> and
-<value>, should be contained in only one argument to the program -
-quoting may be needed for strings containing blanks.
-.P
-.I -dattribute
-<variable>:<attribute>=<value> :
-Like -sattribute, but for specifying double-precision attribute values.
-.P
-.I -attribute
-<variable>:<attribute>=<value> :
-Like -sattribute or -dattribute, except that the type is chosen
-by first trying to interpret the value as double precision -
-if that fails, then the value is assumed to be a string.
+.TP
+\fB\-sattribute\fR \fIvariable\fR:\fIattribute\fR=\fIvalue\fR
+Specify that \fIvariable\fR should be created with string
+\fIattribute\fR set to \fIvalue\fR. The complete specification,
+including \fIvariable\fR, \fIattribute\fR and \fIvalue\fR, should be
+contained in only one argument to the program - quoting may be needed
+for strings containing blanks.
+.TP
+\fB\-dattribute\fR\ \fIvariable\fR:\fIattribute\fR=\fIvalue\fR :
+Like \fB\-sattribute\fR, but for specifying double-precision attribute 
+values.
+.TP
+\fB\-attribute\fR\ \fIvariable\fR:\fIattribute\fR=\fIvalue\fR
+Like \fB\-sattribute\fR or \fB\-dattribute\fR, except that the type is
+chosen by first trying to interpret the value as double precision - if
+that fails, then the value is assumed to be a string.
 
 .SH Generic options
-.P
-.I -help:
-Print summary of command-line options and abort.
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
 .SH AUTHOR
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1993 by Peter Neelin
+Copyright \(co 1993 by Peter Neelin

@@ -1,22 +1,29 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH XFMCONCAT 1
+.TH XFMCONCAT 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 .SH NAME
 xfmconcat \- concatenate MNI transform files
 
 .SH SYNOPSIS
-.B xfmconcat
-.BI input1.xfm
-.BI [ " input2.xfm ... " ]
-.BI result.xfm
+\fBxfmconcat\fR\ \fIinput1.xfm\fR [ \fIinput2.xfm\fR... ] \fIresult.xfm\fR
 
 .SH DESCRIPTION
 
-.B xfmconcat
-concatenates a number of transforms together.
-The resulting transformation will have the effect
-of applying transformation
-.I input1.xfm
-then
-.I input2.xfm,
-etc, in that order.
+\fIxfmconcat\fR concatenates a number of transforms together.  The
+resulting transformation will have the effect of applying
+transformation \fIinput1.xfm\fR then \fIinput2.xfm\fR, etc., in that
+order.
+
+.SH OPTIONS
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+Copyright \(co 1993 Peter Neelin
 

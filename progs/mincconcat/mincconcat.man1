@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.2 2001-04-17 18:40:18 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.3 2004-05-20 21:52:07 bert Exp $
 .\"
-.TH MINCCONCAT 1
+.TH MINCCONCAT 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
 
 .SH NAME
 mincconcat - concatenate minc files along a specific dimension
@@ -20,143 +21,139 @@ mincconcat - concatenate minc files along a specific dimension
 [<options>] <infile1>.mnc [<infile2>.mnc ...] <outfile>.mnc
 
 .SH DESCRIPTION
-.I Mincconcat
-will concatenate a number of minc files together, producing a single
-output file. The concatenation is done along a specified dimension,
-with the slices being sorted into ascending order. The concatenation
-dimension can either be a dimension in the file, in which case
-coordinates for sorting are taken directly from the input files, or it
-can be a new dimension and the coordinates are specified with a
-command-line option.
+\fIMincconcat\fR will concatenate a number of minc files together, 
+producing a single output file. The concatenation is done along a 
+specified dimension, with the slices being sorted into ascending order. 
+The concatenation dimension can either be a dimension in the file, in 
+which case coordinates for sorting are taken directly from the input 
+files, or it can be a new dimension and the coordinates are specified 
+with a command-line option.
 
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 
 .SH General options
-.P
-.I -clobber:
+.TP
+\fB\-2\fR
+Create a MINC 2.0 format output file.
+.TP
+\fB\-clobber\fR
 Overwrite an existing file.
-.P
-.I -noclobber:
+.TP
+\fB\-noclobber\fR
 Don't overwrite an existing file (default).
-.P
-.I -verbose:
-Print out progress information for each chunk of data copied
-(default).
-.P
-.I -quiet:
+.TP
+\fB\-verbose\fR
+Print out progress information for each chunk of data copied (default).
+.TP
+\fB\-quiet\fR
 Do not print out progress information.
-.P
-.I -max_chunk_size_in_kb:
+.TP
+\fB\-max_chunk_size_in_kb\fR \fIsize\fR
 Specify the maximum size of the copy buffer (in kbytes). Default is
 4096 kbytes.
-.P
-.I -filelist:
+.TP
+\fB\-filelist\fR \fIfilename\fR
 Specify a file containing a list of input file names. If "-" is given, then
 file names are read from stdin. If this option is given, then there should be
 no input file names specified on the command line. Empty lines in the input
 file are ignored.
 
 .SH Output type options
-.P
-.I -filetype:
+.TP
+\fB\-filetype\fR
 Don't do any type conversion (default).
-.P
-.I -byte:
-Write out bytes values.
-.P
-.I -short:
-Write out short integer values.
-.P
-.I -int:
-Write out 32-bit integer values.
-.P
-.I -long:
+.TP
+\fB\-byte\fR
+Write out 8-bit integer voxels.
+.TP
+\fB\-short\fR
+Write out 16-bit integer voxels.
+.TP
+\fB-int\fR
+Write out 32-bit integer voxels.
+.TP
+\fB\-long\fR
 Superseded by -int.
-.P
-.I -float:
+.TP
+\fB\-float\fR
 Write out single-precision floating point values.
-.P
-.I -double:
+.TP
+\fB\-double\fR
 Write out double-precision floating point values.
-.P
-.I -signed:
+.TP
+\fB\-signed\fR
 Write out values as signed integers (default for short and long). Ignored for
 floating point types.
-.P
-.I -unsigned:
+.TP
+\fB\-unsigned\fR
 Write out values as unsigned integers (default for byte). Ignored for
 floating point types.
-.P
-.I -valid_range 
-<min> <max>:
-specifies the valid range of output voxel values in their integer
-representation. Default is the full range
-for the type and sign. This option is ignored for floating point
-values.
+.TP
+\fB\-valid_range\fR \fImin max\fR
+Specifies the valid range of output voxel values in their integer
+representation. Default is the full range for the type and sign. 
+This option is ignored for floating point values.
 
 .SH Concatenation options
-.P
-.I -concat_dimension
-<name>:
-specifies the name of concatenation dimension. If the dimension exists
+.TP
+\fB\-concat_dimension\fR \fIname\fR
+Specifies the name of concatenation dimension. If the dimension exists
 in the input files, then coordinates are taken from those files. If
 not, then a new dimension is created and the coordinate for each input
 file is taken from command-line options. The default is to use the
 slowest varying dimension of the first file.
-.P
-.I -start
-<start>:
-specifies the starting coordinate for the new dimension (default = 0.0).
-.P
-.I -step
-<step>:
-specifies the separation between voxels for the new dimension 
+.TP
+\fB\-start\fR \fIstart\fR
+Specifies the starting coordinate for the new dimension (default = 0.0).
+.TP
+\fB\-step\fR \fIstep\fR
+Specifies the separation between voxels for the new dimension 
 (default = 1.0).
-.P
-.I -width
-<width>:
-specifies the (constant) width of each sample along the new dimension 
+.TP
+\fB\-width\fR \fIwidth\fR
+Specifies the (constant) width of each sample along the new dimension 
 (default = none).
-.P
-.I -coordlist
-<c1>,<c2>,...:
-specifies a comma-separated list of coordinates along the new dimension.
-.P
-.I -widthlist
-<w1>,<w2>,...:
-specifies a comma-separated list of widths along the new dimension.
-.P
-.I -check_dimensions:
+.TP
+\fB\-coordlist\fR \fIc1,c2,...\fR
+Specifies a comma-separated list of coordinates along the new dimension.
+.TP
+\fB\-widthlist\fR \fIw1,w2,...\fR
+Specifies a comma-separated list of widths along the new dimension.
+.TP
+\fB\-check_dimensions\fR
 Check that all input files have matching sampling in world dimensions
 (default).
-.P
-.I -nocheck_dimensions:
+.TP
+\fB\-nocheck_dimensions\fR
 Ignore any differences between input files in world dimensions
 sampling.
-.P
-.I -ascending:
+.TP
+\fB\-ascending\fR
 Sort coordinates in ascending order (default).
-.P
-.I -descending:
+.TP
+\fB\-descending\fR
 Sort coordinates in descending order.
-.P
-.I -interleaved:
+.TP
+\fB\-interleaved\fR
 Sort slabs by their dimension coordinate, interleaving if necessary
 (default).
-.P
-.I -sequential:
+.TP
+\fB\-sequential\fR
 Don't sort slabs, just concatenate them together. WARNING - this will
 destroy the dimension information along the concatenating dimension,
 replacing the start and step with zero and one.
 
 .SH Generic options for all commands:
-.P
-.I -help:
-Print summary of command-line options and abort.
+.TP
+\fB-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
-.SH EXAMPLES:
+.SH EXAMPLES
 
 To concatenate two volumes with dimensions zspace, yspace, xspace,
 having interleaved slices along zspace, we can simply use
@@ -174,5 +171,4 @@ to concatenate into an evenly spaced volume, then we can type
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1995 by Peter Neelin
+Copyright \(co 1995 by Peter Neelin

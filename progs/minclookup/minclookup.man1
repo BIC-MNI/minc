@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1996 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 6.1 2001-04-17 18:40:20 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 6.2 2004-05-20 21:52:08 bert Exp $
 .\"
-.TH MINCLOOKUP 1
+.TH MINCLOOKUP 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 minclookup - perform lookup table conversions on minc files
@@ -20,7 +21,7 @@ minclookup - perform lookup table conversions on minc files
 [<options>] <in1>.mnc <out>.mnc
 
 .SH DESCRIPTION 
-.I Minclookup
+\fIMinclookup\fR
 will perform a lookup table operation on each voxel of a minc file. A
 lookup table consists of a list of input values with matching output
 values. Each voxel of the input file is found in the lookup table and
@@ -29,12 +30,13 @@ be either scalar or vector values so, for example, a colour lookup
 table would have four columns: one column for input values and one
 column for each of red, green and blue output values.
 
-Lookup tables can take one of two forms: A continuous lookup table is
-for treating voxel values as continuous (real) values and converting
-values by doing interpolation between the values given in the lookup
-table. A discrete lookup table treats input values as integers and
-deals with them as completely independent entries, doing no
-interpolation.
+Lookup tables can take one of two forms: \fIcontinuous\fR or \fIdiscrete\fR.
+
+A continuous lookup table is for treating voxel values as continuous
+(real) values and converting values by doing interpolation between the
+values given in the lookup table. A discrete lookup table treats input
+values as integers and deals with them as completely independent
+entries, doing no interpolation.
 
 The most common use of continuous lookup tables is for converting
 intensity values into RGB colours. To make the lookup tables simpler,
@@ -63,140 +65,138 @@ Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 
 .SH General options
-.P
-.I -clobber:
+.TP
+\fB\-2\fR
+Create a MINC 2.0 format output file.
+.TP
+\fB\-clobber\fR
 Overwrite an existing file.
-.P
-.I -noclobber:
+.TP
+\fB\-noclobber\fR
 Don't overwrite an existing file (default).
-.P
-.I -no_clobber:
-Synonym for -noclobber.
-.P
-.I -verbose:
+.TP
+\fB\-no_clobber\fR
+Synonym for \fB-noclobber\fR.
+.TP
+\fB-verbose\fR
 Print out progress information for each chunk of data copied (default).
-.P
-.I -quiet:
+.TP
+\fB\-quiet\fR
 Do not print out progress information.
-.P
-.P
-.I -buffer_size
-<size>:
+.TP
+\fB\-buffer_size\fR\ \fIsize\fR
 Specify the maximum size of the internal buffers (in kbytes). Default
 is 10 MB.
-.P
-.I -filetype:
+.TP
+\fB\-filetype\fR
 Create an output file with the same type as the first input file
 (default).
-.P
-.I -byte:
-Create an output file of type byte.
-.P
-.I -short:
-Create an output file of type short.
-.P
-.I -int:
-Create an output file of type int.
-.P
-.I -long:
-Superseded by -int.
-.P
-.I -float:
-Create an output file of type float.
-.P
-.I -double:
-Create an output file of type double.
-.P
-.I -signed:
-Create an output file with data stored in a signed type. This only
-has an effect if the one of the -byte, -short or -long options is
-specified.
-.P
-.I -unsigned:
-Create an output file with data stored in an unsigned type. This only
-has an effect if the one of the -byte, -short or -long options is
-specified.
-.P
-.I -valid_range
-<min> <max>:
-Create an output file with integer data stored in the specified
-valid range. This only has an effect if the one of the -byte, -short
-or -long options is specified.
+.TP
+\fB\-byte\fR
+Store each voxel as an 8-bit integer.
+.TP
+\fB\-short\fR
+Store each voxel as a 16-bit integer.
+.TP
+\fB\-int\fR
+Store each voxel as a 32-bit integer.
+.TP
+\fB\-long\fR
+Superseded by \fB\-int\fR.
+.TP
+\fB\-float\fR
+Store each voxel in 32-bit floating point format.
+.TP
+\fB-double\fR
+Store each voxel in 64-bit floating point format.
+.TP
+\fB\-signed\fR
+Create an output file with data stored in a signed type. This 
+option is meaningless when used with floating point data formats, which are
+always signed.
+.TP
+\fB\-unsigned\fR
+Create an output file with data stored in an unsigned type. This
+option is meaningless when used with floating point data formats.
+.TP
+\fB\-valid_range\fR\ \fImin\ max\fR
+Scale integer voxel values to fall between the values \fImin\fR and
+\fImax\fR.  By default integer voxel values will be scaled to use the
+entire range of the base type.  This option is meaningless when used
+with floating point data formats.
 
 .SH Lookup table options
-.P
-.I -gray:
+.TP
+\fB\-gray\fR
 Use a gray lookup table to write out RGB values (default).
-.P
-.I -grey:
-Synonym for -gray.
-.P
-.I -hotmetal:
+.TP
+\fB\-grey\fR
+Synonym for \fB-gray\fR.
+.TP
+\fB\-hotmetal\fR
 Use a hot-metal lookup table to write out RGB values.
-.P
-.I -spectral:
+.TP
+\fB\-spectral\fR
 Use a spectral (rainbow) lookup table to write out RGB values.
-.P
-.I -invert:
+.TP
+\fB\-invert\fR
 Invert the lookup table so that the maximum value maps to zero and the
-minimum value maps to one.
-.P
-.I -noinvert:
-Do not invert the lookup table --- the minimum maps to zero and the
+minimum value maps to one.  Applies only to continuous lookup tables.
+.TP
+\fB\-noinvert\fR
+Do not invert the lookup table - the minimum maps to zero and the
 maximum maps to one (default).
-.P
-.I -range
-<min> <max>:
-Specify the range of values that should map to the zero to one range
+.TP
+\fB\-range\fR\ \fImin\ max\fR
+Specify the range of values that should map to the range
 of the lookup table (default is the full range of the input file).
-.P
-.I -minimum
-<min>:
-Specify the minimum value that maps to zero in the lookup table.
-.P
-.I -maximum
-<max>:
-Specify the maximum value that maps to one in the lookup table.
-.P
-.I -lookup_table
-<file|->:
-Specify the name of a file containing the lookup table. If - is given,
-then the lookup table is read from stdin. The file consists of at
-least two columns. The first column gives the input values and the
+.TP
+\fB\-minimum\fR\ \fImin\fR
+Specify the input value that maps to the minimum value in the lookup table.
+.TP
+\fB\-maximum\fR\ \fImax\fR
+Specify the input value that maps to the maximum value in the lookup table.
+.TP
+\fB\-lookup_table\fR [\fIfile\fR | \fB-\fR]
+Specify the name of a file containing the lookup table. If \fB-\fR is given,
+the lookup table is read from the standard input. The file must have at
+least two columns: The first column gives the input values; the
 other columns give the corresponding output values. For a continuous
-lookup table, the first column should contain values between zero and
-one inclusive (entries for both zero and one should usually be
-given). For a discrete lookup table, the first column should contain
+lookup table, the first column should contain a value between zero and
+one inclusive Explicit entries for both zero and one should usually be
+given. For a discrete lookup table, the first column should contain
 integer values. If more than one output column is given, then the
-output file will have the dimension vector_dimension with a length
-that matches the number of output columns. The lines of the table are
-sorted so that the first column is in ascending order.
-.P
-.I -lut_string
-<lookup table string>:
-Specify the complete lookup table in a single string. The character
-";" is used to separate lines.
-.P
-.I -continuous:
+output file will have the dimension \fBvector_dimension\fR with a length
+equal to the number of output columns. The lines of the table will be
+sorted if necessary so that the first column is in ascending order.
+.TP
+\fB\-lut_string\fR\ \fIlookup-table-string\fR
+Specify the complete lookup table as a single string. The semicolon 
+character ";" is used to separate lines.
+.TP
+\fB\-continuous\fR
 The lookup table is continuous (see description above): Input values
 are treated as continuous (real) values and are rescaled to the range
 zero to one before being looked up; interpolation is done between
 values in the table. This is the default behaviour.
-.P
-.I -discrete:
+.TP
+\fB\-discrete\fR
 The lookup table is discrete (see description above): Input values are
 treated as integers and no interpolation is done between input values.
-.P
-.I -null_value:
+.TP
+\fB\-null_value\fR\ \fInull-value-string\fR
 Specify a null value to be used with discrete lookup tables when a
 value is not found in the lookup table. This value must be specified
 as a comma-separated list of values, with the same number of values as
 output columns in the lookup table.
 
 .SH Generic options for all commands:
-.P
-.I -help:
-Print summary of command-line options and abort.
+.TP
+\fB-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
 .SH EXAMPLES
 
@@ -245,5 +245,4 @@ To invert a scalar image, you could use minclookup:
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1995 by Peter Neelin
+Copyright \(co 1995 by Peter Neelin

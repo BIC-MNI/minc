@@ -1,3 +1,4 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1994 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -8,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.man1,v 6.1 2001-04-17 18:40:24 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.man1,v 6.2 2004-05-20 21:52:09 bert Exp $
 .\"
-.TH MINCRESHAPE 1
+.TH MINCRESHAPE 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 
 .SH NAME
 mincreshape - cuts a hyperslab out of a minc file (with dimension re-ordering)
@@ -20,7 +21,7 @@ mincreshape - cuts a hyperslab out of a minc file (with dimension re-ordering)
 [<options>] <infile>.mnc <outfile>.mnc
 
 .SH DESCRIPTION 
-.I Mincreshape's
+\fIMincreshape's\fR
 main job is to chop a hyperslab out of a minc file and put it into a
 new minc file. "What is a hyperslab?", you ask. It is simply a
 multi-dimensional box specified with a starting index (a vector giving
@@ -29,41 +30,36 @@ axis). A single slice out of a volume is a hyperslab (with a count of
 1 in the slice direction), a small block pulled out of a large volume
 is a hyperslab, a single echo volume out of a multi-echo MRI dataset
 is a hyperslab, one time point out of a dynamic acquisition is a
-hyperslab - you get the idea.  Check out the -start, -count and
--dimrange options for more details on how to do this (and look at the
+hyperslab - you get the idea.  Check out the \fB-start\fR, \fB-count\fR and
+\fB-dimrange\fR options for more details on how to do this (and look at the
 examples!). If you are pulling out only one point along a dimension,
-you have the option of making the dimension disappear, so mincreshape
+you have the option of making the dimension disappear, so \fImincreshape\fR
 gives you the ability to reduce the dimensionality of a minc file. As
 well, you aren't constrained to specify a hyperslab that is only
 within the input file, you can extend beyond the bounds of the
 dimensions in the input file, and furthermore you can give a count
 that will flip the data along a dimension.
 
-As if all that is not enough
-.I mincreshape
-has the ability to re-order dimensions. The most obvious case is
-converting a transverse image into a coronal image. But you can
-type a list of dimension names to get an arbitrary order of
-dimensions.
+As if all that is not enough, \fImincreshape\fR has the ability to
+re-order dimensions. The most obvious case is converting a transverse
+image into a coronal image. But you can type a list of dimension names
+to get an arbitrary order of dimensions.
 
-You want more!?! Okay, okay.
-.I Mincreshape
-makes all of the minc library icv conversions available on the command
-line. For those who like things defined, an icv is an image
-conversion variable (don't ask me why I called it that) which
-basically lets you tell the data what it's going to look like. In
-other words, it does a bunch of conversions for you. These conversions
-include changing type, range and normalization of the pixel 
-values, expanding or contracting images (by pixel duplication or
-averaging) to give a specified image size, and converting vector
-images to scalar.
+You want more!?! Okay, okay. \fIMincreshape\fR makes all of the minc
+library ICV operations available on the command line. For those who
+like things defined, an ICV is an image conversion variable (don't ask
+me why I called it that) which basically lets you tell the data what
+it's going to look like. In other words, it does a bunch of
+conversions for you. These conversions include changing type, range
+and normalization of the voxel values, expanding or contracting images
+(by voxel duplication or averaging) to give a specified image size,
+and converting vector images to scalar.
 
 Just so you don't get confused let me tell you clearly here:
-.I Mincreshape
-does all of the icv conversions first and then the hyperslab and
-dimension re-ordering stuff is applied to the result of that. So if
-you want to mix them together (like -imgsize, -start, -count), get it
-clear in your head first.
+\fImincreshape\fR does all of the ICV conversions first and then the
+hyperslab and dimension re-ordering stuff is applied to the result of
+that. So if you want to mix them together (like \fB-imgsize\fR, 
+\fB-start\fR, \fB-count\fR), get it clear in your head first.
 
 Okay, hold on to your seat: here's a list of options.
 
@@ -72,168 +68,164 @@ Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 
 .SH General options
-.P
-.I -clobber:
+.TP
+\fB\-2\fR
+Create MINC 2.0 format output files.
+.TP
+\fB\-clobber\fR
 Overwrite an existing file.
-.P
-.I -noclobber:
+.TP
+\fB\-noclobber\fR
 Don't overwrite an existing file (default).
-.P
-.I -verbose:
+.TP
+\fB-verbose\fR
 Print out progress information for each chunk of data copied
 (default). A chunk varies in size depending mostly on whether you're
 re-ordering dimensions or not and how big the internal buffer is
 allowed to be.
-.P
-.I -quiet:
+.TP
+\fB\-quiet\fR
 Do not print out progress information.
-.P
-.I -max_chunk_size_in_kb:
+.TP
+\fB\-max_chunk_size_in_kb\fR\ \fIsize\fR
 Specify the maximum size of the copy buffer (in kbytes). Default is
-4096 kbytes.
+4096 kbytes (4meg).
 
 .SH Image conversion options (pixel type and range):
 The default for type, sign and valid range is to use those of the input
 file. If type is specified, then both sign and valid range are set to
 the default for that type. If sign is specified, then valid range is
 set to the default for the type and sign.
-.P
-.I -filetype:
+.TP
+\fB\-filetype\fR
 Don't do any type conversion (default).
-.P
-.I -byte:
-Write out bytes values.
-.P
-.I -short:
-Write out short integer values.
-.P
-.I -int:
-Write out 32-bit integer values.
-.P
-.I -long:
-Superseded by -int.
-.P
-.I -float:
-Write out single-precision floating point values.
-.P
-.I -double:
-Write out double-precision floating point values.
-.P
-.I -signed:
+.TP
+\fB\-byte\fR
+Store output voxels in 8-bit integer format.
+.TP
+\fB\-short\fR
+Store output voxels in 16-bit integer format.
+.TP
+\fB\-int\fR
+Store output voxels in 32-bit integer format.
+.TP
+\fB\-long\fR
+Superseded by \fB\-int\fR.
+.TP
+\fB-float\fR
+Store output voxels in 32-bit floating point format.
+.TP
+\fB-double\fR
+Store output voxels in 64-bit floating point format.
+.TP
+\fB\-signed\fR
 Write out values as signed integers (default for short and long). Ignored for
 floating point types.
-.P
-.I -unsigned:
+.TP
+\fB\-unsigned\fR
 Write out values as unsigned integers (default for byte). Ignored for
 floating point types.
-.P
-.I -valid_range 
-<min> <max>:
+.TP
+\fB\-valid_range\fR\ \fImin\ max\fR
 specifies the valid range of output voxel values in their integer
-representation. Default is the full range
-for the type and sign. This option is ignored for floating point
-values.
-.P
-.I -image_range:
-<min> <max>
+representation. Default is the full range for the type and sign. This
+option is ignored for floating point values.
+.TP
+\fB\-image_range\fR\ \fImin\ max\fR
 Normalize images to a given minimum and maximum real value (not voxel
 value).
-.P
-.I -normalize:
+.TP
+\fB\-normalize\fR
 Normalize images to real minimum and maximum for the entire input
 file.
-.P
-.I -nonormalize:
+.TP
+\fB\-nonormalize\fR
 Do not normalize images (default).
-.P
-.I -nopixfill:
+.TP
+\fB\-nopixfill\fR
 Do not convert out-of-range values in input file, just copy them
 through.
-.P
-.I -pixfill:
+.TP
+\fB\-pixfill\fR
 Replace out-of-range values in input file by the smallest possible
 value (default). 
-.P
-.I -pixfillvalue
-<value>:
+.TP
+\fB\-pixfillvalue\fR\ \fIvalue\fR
 Specify a new pixel value to replace out-of-range values in the input
 file.
 
 .SH Image conversion options (dimension direction and size):
-.P
-.I -scalar:
+.TP
+\fB\-scalar\fR
 Convert vector images to scalar images (a vector image is one with
-vector_dimension as the fastest varying dimension). The vector
+\fIvector_dimension\fR as the fastest varying dimension). The vector
 dimension is removed and values are averaged.
-.P
-.I -noscalar:
+.TP
+\fB\-noscalar\fR
 Do not convert vector images to scalar images (default).
-.P
-.I +direction:
+.TP
+\fB\+direction\fR
 Flip images to give positive step value for spatial axes.
 Note that the flipping of spatial axes only applies to "image
 dimensions". These are the two fastest varying (non-vector) dimensions
 in the file. If you want to flip a non-image dimension, you can
-convert it to an image dimension with -dimsize <dimname>=-1 (the -1
+convert it to an image dimension with 
+\fB\-dimsize\fR \fIdimname\fR\fB=\-1\fR (the \-1
 means don't really change the size). Check out the examples.
-.P
-.I -direction:
+.TP
+\fB\-direction\fR
 Flip images to give negative step value for spatial axes.
-.P
-.I -anydirection:
+.TP
+\fB-anydirection\fR
 Don't flip images along spatial axes (default).
-.P
-.I +xdirection:
+.TP
+\fB+xdirection\fR
 Flip images to give positive xspace:step value (left-to-right).
-.P
-.I -xdirection:
+.TP
+\fB\-xdirection\fR
 Flip images to give negative xspace:step value (right-to-left).
-.P
-.I -xanydirection:
+.TP
+\fB\-xanydirection\fR
 Don't flip images along x-axis.
-.P
-.I +ydirection:
+.TP
+\fB\+ydirection\fR
 Flip images to give positive yspace:step value (posterior-to-anterior).
-.P
-.I -ydirection:
+.TP
+\fB\-ydirection\fR
 Flip images to give negative yspace:step value (anterior-to-posterior).
-.P
-.I -yanydirection:
+.TP
+\fB\-yanydirection\fR
 Don't flip images along y-axis.
-.P
-.I +zdirection:
+.TP
+\fB\+zdirection\fR
 Flip images to give positive zspace:step value (inferior-to-superior).
-.P
-.I -zdirection:
+.TP
+\fB\-zdirection\fR
 Flip images to give negative zspace:step value (superior-to-inferior).
-.P
-.I -zanydirection:
+.TP
+\fB\-zanydirection\fR
 Don't flip images along z-axis.
-.P
-.I -keepaspect:
+.TP
+\fB\-keepaspect\fR
 Preserve aspect ratio when resizing images. This means that voxels are
 replicated (or averaged) the same number of times along each image
 dimension.
-.P
-.I -nokeepaspect:
+.TP
+\fB\-nokeepaspect\fR
 Do not force preservation of aspect ratio when resizing images (default).
-.P
-.I -imgsize
-<size>:
-Specify the desired image size (used if -rowsize or -colsize not
+.TP
+\fB\-imgsize\fR\ \fIsize\fR
+Specify the desired image size (used if \fB\-rowsize\fR or \fB\-colsize\fR not
 given).
-.P
-.I -rowsize
-<size>:
+.TP
+\fB\-rowsize\fR\ \fIsize\fR
 Specify the desired number of rows in the image.
-.P
-.I -colsize
-<size>:
+.TP
+\fB\-colsize\fR\ \fIsize\fR
 Specify the desired number of columns in the image.
-.P
-.I -dimsize
-<dimension>=<size>
-Specify the size of a named dimension (<dimension>=<size>). Note that
+.TP
+\fB\-dimsize\fR\ \fIdimension\fR=\fIsize\fR
+Specify the size of a named dimension (\fIdimension\fR=\fIsize\fR). Note that
 the resizing only applies to "image dimensions" - usually the two
 fastest-varying (non-vector) dimensions. To do dimension resizing, all
 fastest-varying dimensions up to the named dimension are turned into
@@ -243,74 +235,74 @@ argument, so if you use spaces (which is okay), remember to use quotes
 to hide them from the shell.
 
 .SH Reshaping options:
-.P
-.I -transverse:
+.TP
+\fB\-transverse\fR
 Write out transverse slices.
-.P
-.I -sagittal:
+.TP
+\fB\-sagittal\fR
 Write out sagittal slices.
-.P
-.I -coronal:
+.TP
+\fB-coronal\fR
 Write out coronal slices.
-.P
-.I -dimorder
-<dim1>,<dim2>,<dim3>,...:
-Specify dimension order, where <dim?> are the names of the dimensions.
+.TP
+\fB\-dimorder\fR\ \fIdim1\fR,\fIdim2\fR,\fIdim3\fR,...
+Specify dimension order, where \fIdim?\fR are the names of the dimensions.
 You can give fewer dimensions than exist in the file: they are assumed
 to be the fastest varying dimensions in the output file (so
--transverse is exactly equivalent to -dimorder zspace,yspace,xspace).
+\fB\-transverse\fR is exactly equivalent to \fB-dimorder zspace,yspace,xspace\fR).
 Again, spaces are allowed between names, but remember to hide them
 from the shell with quotes.
-.P
-.I -dimrange
-<dim>=<start>[,<count>]:
-Specify the range of dimension subscripts for dimension <dim>. If
-<count> is missing or 0, then it is taken to mean 1, but remove the
+.TP
+\fB\-dimrange\fR\ \fIdim\fR=\fIstart\fR[,\fIcount\fR]
+Specify the range of dimension subscripts for dimension \fIdim\fR. If
+\fIcount\fR is missing or 0, then it is taken to mean 1, but remove the
 dimension from the output file (a count of 1 will keep a dimension of
-size 1). A negative <count> means flip the data along that dimension -
-in this case <start> specifies the highest voxel coordinate for the
-dimension (-dimrange xspace=3,-3 gives a flipped version of -dimrange
-xspace=1,3). The options -start and -count provide an alternative way
-to specify the same information.
-.P
-.I -start
-<coord0>,<coord1>,<coord2>,...:
+size 1). A negative \fIcount\fR means flip the data along that dimension -
+in this case \fIstart\fR specifies the highest voxel coordinate for the
+dimension (\fB\-dimrange\ xspace=3,\-3\fR gives a flipped version of 
+\fB\-dimrange\ xspace=1,3\fR). The options \fB\-start\fR and \fB\-count\fR 
+provide an alternative way to specify the same information.
+.TP
+\fB\-start\fR\ \fIcoord0\fR,\fIcoord1\fR,\fIcoord2\fR,...
+
 Specifies the starting corner of the hyperslab (coordinates go from
-slowest varying dimension to fastest). If fewer coordinates are given than
-dimensions exist in the file, then they are assumed to apply
-to the slowest varying dimensions and the remaining coordinates are
-set to 0. See -dimrange for more details. Both -start and -count give
-vectors that correspond to input file dimensions after the image
-conversion (icv) options have been applied.
-.P
-.I -count
-<size0>,<size1>,<size2>,...:
+slowest varying dimension to fastest). If fewer coordinates are given
+than dimensions exist in the file, then they are assumed to apply to
+the slowest varying dimensions and the remaining coordinates are set
+to 0. See \fB\-dimrange\fR for more details. Both \fB\-start\fR and 
+\fB\-count\fR give vectors that correspond to input file dimensions 
+after the image conversion (ICV) options have been applied.
+
+.TP
+\fB\-count\fR\ \fIsize0\fR,\fIsize1\fR,\fIsize2\fR,...
 Specifies edge lengths of hyperslab to read (coordinates go from
 slowest varying dimension to fastest). If fewer sizes are given than 
 dimensions exist in the file, then they are assumed to apply to the
 slowest varying dimensions and the remaining sizes are set to the full
-size of the dimension. See -dimrange for more details. Both -start and
--count give vectors that correspond to input file dimensions after the
-image conversion (icv) options have been applied.
+size of the dimension. See \fB\-dimrange\fR for more details. Both 
+\fB\-start\fR and \fB-count\fR give vectors that correspond to input file
+dimensions after the image conversion (ICV) options have been applied.
 
 .SH Missing data options:
-.P
-.I -nofill:
+.TP
+\fB\-nofill\fR
 Use value zero for points outside of the input volume (default).
-.P
-.I -fill:
+.TP
+\fB\-fill\fR
 Use a fill value for points outside of input volume (minimum possible
 value).
-.P
-.I -fillvalue
-<fillvalue>:
+.TP
+\fB\-fillvalue\fR\ \fIvalue\fR
 Specify a fill value for points outside of the input volume (this is a
 real value, not a pixel value).
 
 .SH Generic options for all commands:
-.P
-.I -help:
-Print summary of command-line options and abort.
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
 
 .SH EXAMPLES:
 
@@ -319,23 +311,19 @@ Assume that we have a volume with dimensions zspace, yspace, xspace
 out of it (keeping the coordinate information for the zspace
 dimension), then we can use 
 
-   mincreshape original.mnc new.mnc \\
-      -dimrange zspace=40,1
+   mincreshape original.mnc new.mnc -dimrange zspace=40,1
 
 Alternatively, we could use
 
-   mincreshape original.mnc new.mnc \\
-      -start 40,0,0 -count 1,256,256
+   mincreshape original.mnc new.mnc -start 40,0,0 -count 1,256,256
 
 Or simply
 
-   mincreshape original.mnc new.mnc \\
-      -start 40 -count 1
+   mincreshape original.mnc new.mnc -start 40 -count 1
 
 If we wanted to get rid of the zspace dimension, we could use
 
-   mincreshape original.mnc new.mnc \\
-      -dimrange zspace=40,0
+   mincreshape original.mnc new.mnc -dimrange zspace=40,0
 
 Let's get a block out of the middle and flip it along xspace:
 
@@ -354,30 +342,30 @@ If you want a sagittal volume, use this:
 How about some sideways heads - flip x and y. And convert to byte to
 save space while we're at it:
 
-   mincreshape original.mnc new.mnc \\
-      -dimorder xspace,yspace -byte
+   mincreshape original.mnc new.mnc -dimorder xspace,yspace -byte
 
 You like to store volumes in x,y,z order (that's z varying fastest! I
 know some people who do it!)? Okay.
 
-   mincreshape original.mnc new.mnc \\
-      -dimorder xspace,yspace,zspace
+   mincreshape original.mnc new.mnc -dimorder xspace,yspace,zspace
 
 But you're a minimalist (and don't mind taking a chance). Here's the
 same thing (but it might break for another file):
 
-   mincreshape original.mnc new.mnc \\
-      -dimorder zspace
+   mincreshape original.mnc new.mnc -dimorder zspace
 
 Let's make sure that all dimensions have a negative step attribute
 (see option +direction for some details):
 
-   mincreshape original.mnc new.mnc \\
-      -direction -dimsize zspace=-1
+   mincreshape original.mnc new.mnc -direction -dimsize zspace=-1
 
 .SH AUTHOR
 Peter Neelin
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 1994 by Peter Neelin
+Copyright \(co 1994 by Peter Neelin
+
+.SH "SEE ALSO"
+.LP
+.BR mincresample (1)
+

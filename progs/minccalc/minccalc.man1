@@ -1,5 +1,6 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 2000 Andrew Janke
-.TH MINCCALC 1
+.TH MINCCALC 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
 
 .SH NAME
 minccalc - perform complex math operations on minc files
@@ -9,133 +10,135 @@ minccalc - perform complex math operations on minc files
 [<options>] <in1>.mnc [<in2>.mnc...] <out>.mnc
 
 .SH DESCRIPTION
-.I Minccalc
-will perform complex, voxel-by-voxel math operations, on one or more
-minc files of the same shape and having the same coordinate sampling,
-producing a single output file. The operations to be performed are
-input using the -expression argument (see EXPRESSIONS). By default,
-the output file is the last non-option argument. However, if the -outfile 
-option is used, then all non-option arguments are considered input files
-and the output file names come from the -outfile options, of which there
-can be more than one.
+
+\fIMinccalc\fR will perform complex, voxel-by-voxel math operations,
+on one or more minc files of the same shape and having the same
+coordinate sampling, producing a single output file. The operations to
+be performed are input using the \fB\-expression\fR argument (see
+\fBEXPRESSIONS\fR). By default, the output file is the last non-option
+argument. However, if the \fB-outfile\fR option is used, then all
+non-option arguments are considered input files and the output file
+names come from the \fB-outfile\fR options, of which there can be more
+than one.
 
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
-
-.SH General options
-.P
-.I -clobber:
+.TP
+\fB\-2\fR
+Create MINC 2.0 format output files.
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+.TP
+\fB\-clobber\fR
 Overwrite an existing file.
-.P
-.I -noclobber:
+.TP
+\fB\-noclobber\fR
 Don't overwrite an existing file (default).
-.P
-.I -no_clobber:
+.TP
+\fB\-no_clobber\fR
 Synonym for -noclobber.
-.P
-.I -verbose:
+.TP
+\fB\-verbose\fR
 Print out progress information for each chunk of data copied (default).
-.P
-.I -quiet:
+.TP
+\fB\-quiet\fR
 Do not print out progress information.
-.P
-.I -debug:
+.TP
+\fB\-debug\fR
 Print out debugging information.
-.P
-.I -copy_header:
+.TP
+\fB\-copy_header\fR
 Copy all of the header information from the first input file (default for 
 one input file).
-.P
-.I -nocopy_header:
+.TP
+\fB\-nocopy_header\fR
 Do not copy all of the header from the first input file; copy only
 coordinate information (default for more than one input file).
-.P
-.I -filetype:
+.TP
+\fB\-filetype\fR
 Create an output file with the same type as the first input file
 (default).
-.P
-.I -byte:
-Create an output file of type byte.
-.P
-.I -short:
-Create an output file of type short.
-.P
-.I -int:
-Create an output file of type int.
-.P
-.I -long:
-Superseded by -int.
-.P
-.I -float:
-Create an output file of type float.
-.P
-.I -double:
-Create an output file of type double.
-.P
-.I -signed:
-Create an output file with data stored in a signed type. This only
-has an effect if the one of the -byte, -short or -long options is
+.TP
+\fB\-byte\fR
+Store output voxels in 8-bit integer format.
+.TP
+\fB\-short\fR
+Store output voxels in 16-bit integer format.
+.TP
+\fB\-int\fR
+Store output voxels in 32-bit integer format.
+.TP
+\fB\-long\fR
+Superseded by \fB\-int\fR.
+.TP
+\fB-float\fR
+Store output voxels in 32-bit floating point format.
+.TP
+\fB-double\fR
+Store output voxels in 64-bit floating point format.
+.TP
+\fB\-signed\fR
+Use signed, two's complement integer format. Applies only
+if the output voxel type is specified to be an integer type
+(one of \fB\-byte\fR, \fB\-short\fR, \fB\-int\fR or \fB-long\fR).
+.TP
+\fB\-unsigned\fR
+Use unsigned integer format. Applies only
+if the output voxel type is specified to be an integer type
+(one of \fB\-byte\fR, \fB\-short\fR, \fB\-int\fR or \fB-long\fR).
+.TP
+\fB\-range\fR \fImin max\fR
+Restrict the valid range of integer data.  Applies only if one
+of the \fB-byte\fR, \fB-short\fR, \fB-int\fR or \fB\-long\fR options is
 specified.
-.P
-.I -unsigned:
-Create an output file with data stored in an unsigned type. This only
-has an effect if the one of the -byte, -short or -long options is
-specified.
-.P
-.I -range
-<min> <max>:
-Create an output file with integer data stored in the specified
-valid range. This only has an effect if the one of the -byte, -short
-or -long options is specified.
-.P
-.I -max_buffer_size_in_kb
-<size>:
+.TP
+\fB\-max_buffer_size_in_kb\fR \fIsize\fR
 Specify the maximum size of the internal buffers (in kbytes). Default
-is 4 MB.
-.P
-.I -dimension
-<dimname>:
+is 4096 (4MB).
+.TP
+\fB\-dimension\fR\ \fIdimname\fR
 Specify a dimension along which we wish to perform a cumulative
 operation.
-.P
-.I -check_dimensions:
+.TP
+\fB\-check_dimensions\fR
 Check that all input files have matching sampling in world 
 dimensions (default).
-.P
-.I -nocheck_dimensions:
-Ignore any differences in world dimensions sampling for input files .
-.P
-.I -propagate_nan:
-For cumulative vector operations (sum, prod and avg), invalid data 
-(Not-A-Number or NaN) in any element of the vector will produce
-invalid data in the result (default).
-.P
-.I -ignore_nan:
-For cumulative operations, invalid data (NaN) in the vector is
+.TP
+\fB\-nocheck_dimensions\fR
+Ignore any differences in world dimensions sampling for input files.
+.TP
+\fB\-propagate_nan\fR
+For cumulative vector operations (\fBsum\fR, \fBprod\fR and \fBavg\fR),
+invalid data  (Not-A-Number or NaN) in any element of the vector will 
+produce invalid data in the result (default).
+.TP
+\fB\-ignore_nan\fR
+For cumulative vector operations, invalid data (NaN) in the vector is
 ignored, ie. treated as though it is not present.
-.P
-.I -nan:
+.TP
+\fB\-nan\fR
 When an illegal operation is attempted at a voxel (such as divide by
 zero), the result is invalid data (NaN) (default). Having 
 no valid input data for a cumulative operation is also considered an 
-illegal operation when -ignore_nan is used.
-.P
-.I -zero:
+illegal operation when \fB-ignore_nan\fR is used.
+.TP
+\fB\-zero\fR
 When an illegal operation is attempted at a voxel (such as divide by
 zero), the result is value zero.
-.P
-.I -illegal_value
-<value>:
+.TP
+\fB\-illegal_value\fR\ \fIvalue\fR
 When an illegal operation is attempted at a voxel (such as divide by
 zero), the result is the value specified by this option.
-.P
-.I -expression
-<string>:
+.TP
+\fB\-expression\fR \fIstring\fR
 Specify the expression to evaluate at each voxel (see EXPRESSIONS).
-.P
-.I -expfile
-<filename>:
+.TP
+\fB\-expfile\fR \fIfilename\fR
 Specify a file containing an expression to evaluate at each voxel
 (see EXPRESSIONS). If filename ``-'' is given, then the expression is read
 from stdin. The only difference from command-line expressions is that 
@@ -145,23 +148,20 @@ can be created by setting the first line to
 
    #! /usr/local/mni/bin/minccalc -expfile
 
-.P
-.I -outfile
-<symbol> <output file>:
-Specify that output should be written to the specified file, taking values
-from the symbol which should be created in the expression (see the EXAMPLES
-section). If this option is given, then all non-option arguments are
-taken as input files. This option can be used multiple times for multiple
-output files.
-.P
-.I -eval-width
-<value>:
+.TP
+\fB\-outfile\fR \fIsymbol output-file\fR
+Specify that output should be written to the specified file, taking
+values from the symbol which should be created in the expression (see
+the \fBEXAMPLES\fR section). If this option is given, then all
+non-option arguments are taken as input files. This option can be used
+multiple times for multiple output files.  
+.TP
+\fB\-eval_width\fR \fIvalue\fR 
 Specify the number of voxels to process in parallel. Default is 200.
 
 .SH EXPRESSIONS
-.P
-The
-.I -expression
+.PP
+The \fB\-expression\fR
 argument is a single string that describes the function to evaluate.
 The function expression is typically written in terms of the vector A.
 
@@ -179,7 +179,7 @@ C-like:
 
 An expression list in curly brackets is a valid expression and returns
 the value of last expression in the list. This is particularly useful
-in for and if expressions (see below).
+in \fBfor\fR and \fBif\fR expressions (see below).
 
 There are two types of values in the language: vectors and scalars.
 Scalars literals are floating point numbers or may appear as symbols
@@ -189,9 +189,10 @@ Besides normal scalar operators such as +, -, * and /, the expression
 language also supports the infix exponentiation operator ^ and the
 usual boolean operators <, <=, >, >=, ==, != as well as && (and), ||
 (or) and ! (not). Note that the && and || boolean operators always
-evaluate both operands, unlike C. Mathematical operations include abs,
-sqrt, exp, log, sin, cos, tan, asin, acos and atan. There are also some
-specialized functions:
+evaluate both operands, unlike C. Scalar mathematical functions include
+\fBabs\fR, \fBsqrt\fR, \fBexp\fR, \fBlog\fR, \fBsin\fR, \fBcos\fR, \fBtan\fR,
+\fBasin\fR, \fBacos\fR and \fBatan\fR. There are also some specialized 
+functions:
 
    isnan(v) - 1 if v is invalid and 0 otherwise
    clamp(v1,v2,v3) - v1 bounded by [v2, v3]
@@ -250,7 +251,7 @@ which is equivalent to sum(A). Note that this is similar to using
 
    total=0; len{i in [0:len(A)) | total=total+A[i]}; total
 
-since the for construct is actually an operator (although it is
+since the \fBfor\fR construct is actually an operator (although it is
 usually only used for changing symbol values). Note also that without 
 the final "total", the expression would not be very useful since it would 
 only return the length of the vector.
@@ -263,26 +264,26 @@ As in C, a list of expressions can be specified in curlies:
       total2 = total2 + A[i]^2
    }
 
-There are also a few forms of the if-then-else construct:
+There are also a few forms of the \fBif-then-else\fR construct:
 
    A[0]<0 ? 0 : A[0]
 
    if (A[0]<0) result=0 else result=A[0]
 
-The else is optional. Again, the if construct is an operator, and the 
-then or else expressions can be expression lists in curlies, in which 
-case the value of the last expression is returned. If the else 
+The \fBelse\fR is optional. Again, the if construct is an operator, and the 
+\fBthen\fR or \fBelse\fR expressions can be expression lists in curlies, 
+in which  case the value of the last expression is returned. If the \fBelse\fR
 expression is missing, then the value 0 is returned when the test 
 expression is 0 (false).
 
-The principal oddity with the for and if constructs is that unlike C,
-they must be separated from the next expression by a semicolon, even
-when an expression list in curlies is used:
+The principal oddity with the \fBfor\fR and \fBif\fR constructs is that 
+unlike C statements, they must be separated from the next expression by a 
+semicolon even when an expression list in curlies is used:
 
    for i in [0:len(A)) {total=total+A[i]} ; total/len(A)
    if (A[i]>0) {result=2;} else {result=1} ; result*5
 
-An alternative way to introduce symbol names is through let-expressions. 
+An alternative way to introduce symbol names is through \fBlet\fR-expressions. 
 For example, the following expression will always evaluate to 3:
 
    let a = 1, b = 2 in a + b
@@ -325,8 +326,8 @@ and the else
      else
         NaN
 
-If we want both the mean and the standard deviation, we can use the -outfile
-option, invoking the command with
+If we want both the mean and the standard deviation, we can use the 
+\fB\-outfile\fR option, invoking the command with
 
      minccalc -expfile stdev \\
         -outfile mean mean.mnc \\
@@ -368,9 +369,9 @@ Boolean operators && and || always evaluate both operands.
 
 A note on parallelism: For efficiency reasons, evaluations are done on many 
 voxels at once (the number of voxels is referred to as the width of the 
-evaluation and is changed with the -eval_width option). An odd consequence 
-of this is that both sides of an if-else statement are always evaluated 
-(unless all voxels give the same test result), but statements within
+evaluation and is changed with the \fB-eval_width\fR option). An odd 
+consequence  of this is that both sides of an if-else statement are always
+evaluated  (unless all voxels give the same test result), but statements within
 each consequent are only evaluated on the appropriate voxels. In particular, 
 entries in the symbol table are only modified according to a voxel mask. 
 A side-effect of this is that any vector symbol set in an if-else consequent
@@ -383,7 +384,8 @@ program will complain if it is not happy.
 Andrew Janke - rotor@cmr.uq.edu.au
 
 .SH COPYRIGHTS
-.ps 18
-Copyright 2000 by Andrew Janke
- 
+Copyright \(co 2000 by Andrew Janke
 
+.SH "SEE ALSO"
+.LP
+.BR mincmath (1)

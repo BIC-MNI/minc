@@ -1,23 +1,21 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCVIEW 1
+.TH MINCVIEW 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
 
 .SH NAME
 mincview \- view a MINC file
 
 .SH SYNOPSIS
-.B mincview
-.BI mincfile
-.BI [slicenumber]
+\fBmincview\ \fImincfile [slicenumber]\fR
 
 .SH DESCRIPTION
-.B mincview
+\fImincview\fR
 converts the image into PNM format and loads one or all of the
-slices into 
-.BI xv.  
+slices into \fIxv\fR. 
 This is a very primitive tool, mostly useful for debugging.
 The programs Display or register are more suited for typical use.
 
 .SH "SEE ALSO"
-.BR xv(1),
-.BR Display(1),
-.BR register(1).
+.LP
+.BR xv (1),
+.BR Display (1),
+.BR register (1).

@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCDIFF 1
+.TH MINCDIFF 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
 .SH NAME
 mincdiff \- report differences between minc files
 .SH SYNOPSIS
@@ -10,17 +10,30 @@ mincdiff \- report differences between minc files
 .BI file1
 .BI file2
 .SH DESCRIPTION
-.B mincdiff
-runs diff(1) on the headers of the two minc files, and cmp(1)
-on the image variable.  You can view only the header
-differences using
-.BI -header
-or only the body (image variable) differences using
-.BI -body.
-Any diff options (e.g. -u) are passed along to the header diff.
-The option
-.BI -l
-is passed on to cmp of the image variable.
+
+The \fImincdiff\fR shell script compares two minc files by running
+\fBdiff(1)\fR on the headers of the two minc files, and \fBcmp(1)\fR
+on the image variable.  You can view only the header differences using
+\fB\-header\fR or only the body (image variable) differences using
+\fB\-body\fR.  The option \fB\-l\fR is passed on to \fBcmp\fR of the
+image variable.  Any unrecognized options (e.g. -u) are passed
+verbatim to the \fBdiff\fR of the headers.
+
+.SH OPTIONS
+.TP
+\fB\-header\fR Compare only the headers of the two files.
+.TP
+\fB\-body\fR Compare only the image data of the two files.
+.TP
+\fB\-l\fR Print the byte offset in decimal and the byte value in octal
+for each difference encountered in the image variable.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+Copyright \(co 1993 by Peter Neelin
+
 .SH "SEE ALSO"
 .IR diff (1),
 .IR cmp (1).
