@@ -155,7 +155,7 @@ void   free_memory( void ** );
              ALLOC( ptr, n1 );                                                \
              ALLOC( (ptr)[0], (n1) * (n2) );                                  \
                                                                               \
-             for( _i2_ = 1;  _i2_ < (n1);  ++_i2_ )                           \
+             for_less( _i2_, 1, n1 )                                          \
                  ((ptr)[_i2_]) = ((ptr)[_i2_-1] + (n2));                      \
          }
 
@@ -202,11 +202,11 @@ void   free_memory( void ** );
                                                                               \
              ALLOC( (ptr)[0][0], (n1) * (n2) * (n3) );                        \
                                                                               \
-             for( _i3_ = 0;  _i3_ < (n1);  ++_i3_ )                           \
+             for_less( _i3_, 0, n1 )                                          \
              {                                                                \
                  if( _i3_ > 0 )                                               \
                       (ptr)[_i3_][0] = (ptr)[_i3_-1][0] + (n2) * (n3);        \
-                 for( _j3_ = 1;  _j3_ < (n2);  ++_j3_ )                       \
+                 for_less( _j3_, 1, n2 )                                      \
                       (ptr)[_i3_][_j3_] = (ptr)[_i3_][_j3_-1] + (n3);         \
              }                                                                \
          }
@@ -228,6 +228,138 @@ void   free_memory( void ** );
          {                                                                    \
              FREE( (ptr)[0][0] );                                             \
              FREE2D( (ptr) );                                                 \
+         }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : ALLOC4D
+@INPUT      : n1
+            : n2
+            : n3
+            : n4
+@OUTPUT     : 
+            : ptr
+@RETURNS    : 
+@DESCRIPTION: Macro to allocate an n1 by n2 by n3 by n4 array, assigning : ptr.
+@METHOD     : Similar to ALLOC2D, this requires only 4 mallocs.
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+#define  ALLOC4D( ptr, n1, n2, n3, n4 )                                       \
+         {                                                                    \
+             int  _i4_, _j4_, _k4_;                                           \
+                                                                              \
+             ALLOC3D( ptr, n1, n2, n3 );                                      \
+                                                                              \
+             ALLOC( (ptr)[0][0][0], (n1) * (n2) * (n3) * (n4) );              \
+                                                                              \
+             for_less( _i4_, 0, n1 )                                          \
+             {                                                                \
+                 if( _i4_ > 0 )                                               \
+                     (ptr)[_i4_][0][0] = (ptr)[_i4_-1][0][0] + (n2)*(n3)*(n4);\
+                 for_less( _j4_, 0, n2 )                                      \
+                 {                                                            \
+                     if( _j4_ > 0 )                                           \
+                         (ptr)[_i4_][_j4_][0] = (ptr)[_i4_][_j4_-1][0] +      \
+                                                (n3)*(n4);                    \
+                     for_less( _k4_, 1, n3 )                                  \
+                     {                                                        \
+                         (ptr)[_i4_][_j4_][_k4_] = (ptr)[_i4_][_j4_][_k4_-1] +\
+                                                   (n4);                      \
+                     }                                                        \
+                 }                                                            \
+             }                                                                \
+         }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : FREE4D
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees a 4 dimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+#define  FREE4D( ptr )                                                        \
+         {                                                                    \
+             FREE( (ptr)[0][0][0] );                                          \
+             FREE3D( (ptr) );                                                 \
+         }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : ALLOC5D
+@INPUT      : n1
+            : n2
+            : n3
+            : n4
+            : n5
+@OUTPUT     : 
+            : ptr
+@RETURNS    : 
+@DESCRIPTION: Macro to allocate an n1 by n2 by n3 by n4 by n5 array, assigning
+            : ptr.
+@METHOD     : Similar to ALLOC2D, this requires only 5 mallocs.
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+#define  ALLOC5D( ptr, n1, n2, n3, n4, n5 )                                   \
+         {                                                                    \
+             int  _i5_, _j5_, _k5_, _l5_;                                     \
+                                                                              \
+             ALLOC4D( ptr, n1, n2, n3, n4 );                                  \
+                                                                              \
+             ALLOC( (ptr)[0][0][0][0], (n1) * (n2) * (n3) * (n4) * (n5) );    \
+                                                                              \
+             for_less( _i5_, 0, n1 )                                          \
+             {                                                                \
+                 if( _i5_ > 0 )                                               \
+                     (ptr)[_i5_][0][0][0] = (ptr)[_i5_-1][0][0][0] +          \
+                                            (n2)*(n3)*(n4)*(n5);              \
+                 for_less( _j5_, 0, n2 )                                      \
+                 {                                                            \
+                     if( _j5_ > 0 )                                           \
+                         (ptr)[_i5_][_j5_][0][0] = (ptr)[_i5_][_j5_-1][0][0] +\
+                                                    (n3)*(n4)*(n5);           \
+                     for_less( _k5_, 0, n3 )                                  \
+                     {                                                        \
+                         if( _k5_ > 0 )                                       \
+                             (ptr)[_i5_][_j5_][_k5_][0] =                     \
+                             (ptr)[_i5_][_j5_][_k5_-1][0] + (n4)*(n5);        \
+                                                                              \
+                         for_less( _l5_, 1, (n4) )                            \
+                             (ptr)[_i5_][_j5_][_k5_][_l5_] =                  \
+                             (ptr)[_i5_][_j5_][_k5_][_l5_-1] + (n5);          \
+                     }                                                        \
+                 }                                                            \
+             }                                                                \
+         }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : FREE5D
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees a 5 dimensional array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+#define  FREE5D( ptr )                                                        \
+         {                                                                    \
+             FREE( (ptr)[0][0][0][0] );                                       \
+             FREE4D( (ptr) );                                                 \
          }
 
 #endif

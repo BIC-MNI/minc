@@ -1001,3 +1001,12 @@ public  Boolean   evaluate_volume(
 
     return( voxel_is_active );
 }
+
+public  void  get_volume_range(
+    volume_struct  *volume,
+    Real           *min_value,
+    Real           *max_value )
+{
+    *min_value = CONVERT_VOXEL_TO_VALUE( *volume, volume->min_value );
+    *max_value = CONVERT_VOXEL_TO_VALUE( *volume, volume->max_value );
+}

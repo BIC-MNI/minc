@@ -131,11 +131,13 @@ typedef  char     String[MAX_STRING_LENGTH+1];
 
 /* for loops */
 
-#define  for_less( i, start, end )  for( i = start;  i < end;  ++i )
+#define  for_less( i, start, end )  for( (i) = (start);  (i) < (end);  ++(i) )
 
-#define  for_inclusive( i, start, end )  for( i = start;  i <= end;  ++i )
+#define  for_inclusive( i, start, end )  \
+                   for( (i) = (start);  (i) <= (end);  ++(i) )
 
-#define  for_enum( e, max, type )  for( e = (type) 0;  e < max;  e = (type) ((int) e + 1) )
+#define  for_enum( e, max, type )  \
+                for( (e) = (type) 0;  (e) < (max);  (e) = (type) ((int) (e)+1) )
 
 #define  CONVERT_INTEGER_RANGE( x1, min1, max1, min2, max2 )                  \
               ((min2) + (2 * (x1) + 1 - 2 * (min1)) * ((max2) - (min2) + 1) / \

@@ -32,6 +32,7 @@ public  Status  initialize_mnc_input(
     double            slice_separation[N_DIMENSIONS];
     double            start_position[N_DIMENSIONS];
     double            direction_cosines[N_DIMENSIONS][N_DIMENSIONS];
+    double            real_min, real_max;
     Point             origin;
     Vector            axes[N_DIMENSIONS];
     Vector            x_offset, y_offset, z_offset, start_offset;
@@ -64,6 +65,12 @@ public  Status  initialize_mnc_input(
 
     img = ncvarid( input_info->cdfid, MIimage );
     (void) miicv_attach( input_info->icv, input_info->cdfid, img );
+
+    (void) miicv_inqdbl( input_info->icv, MI_ICV_NORM_MIN, &real_min );
+    (void) miicv_inqdbl( input_info->icv, MI_ICV_NORM_MAX, &real_max );
+
+    volume->value_scale = (real_max - real_min) / 255.0;
+    volume->value_translation = real_min;
 
     (void) ncvarinq( input_info->cdfid, img, (char *) 0, (nc_type *) 0,
                      &ndims, dim, (int *) 0 );
@@ -174,9 +181,6 @@ public  Status  initialize_mnc_input(
     ALLOC( input_info->byte_slice_buffer, input_info->sizes_in_file[1] *
                                           input_info->sizes_in_file[2] );
     input_info->slice_index = 0;
-
-    volume->value_scale = 1.0;
-    volume->value_translation = 0.0;
 
     return( status );
 }
@@ -319,5 +323,3 @@ private  void  create_world_transform(
     make_change_to_bases_transform( origin, &x_axis, &y_axis, &z_axis,
                                     transform );
 }
-
-#endif
