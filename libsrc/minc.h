@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.11  2004-04-15 21:13:21  bert
+ * Revision 6.12  2004-04-27 15:44:04  bert
+ * Add MINC 2.0 specific stuff
+ *
+ * Revision 6.11  2004/04/15 21:13:21  bert
  * Add C++ linkage specifier
  *
  * Revision 6.10  2004/02/02 18:22:34  bert
@@ -119,10 +122,15 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.11 2004-04-15 21:13:21 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.12 2004-04-27 15:44:04 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
+
+#ifdef MINC2
+#include <hdf5.h>
+#include "minc_compat.h"
+#endif /* MINC2 defined */
 
 #ifdef __cplusplus
 extern "C" {
@@ -514,11 +522,48 @@ public int miicv_put(int icvid, long start[], long count[], void *values);
 /* From dim_conversion.c */
 public int miicv_attach(int icvid, int cdfid, int varid);
 
+/* From minc_error.c */
+public void milog_init(const char *);
+public int milog_set_verbosity(int);
+
 /* Undefine public if needed */
 #ifdef MINC_NEED_TO_UNDEF_PUBLIC
 #undef public
 #undef MINC_NEED_TO_UNDEF_PUBLIC
 #endif
+
+#ifdef MINC2
+
+/* New functions, not directly part of compatibility layer. */
+extern int MI2varsize(int fd, int varid, long *size_ptr);
+
+#define MI2_GRPNAME "/minc-2.0"
+/* These must not interfere with any NC_ flags we might have to support. */
+#define MI2_CREATE_V2 0x1000    /* Force V2 format */
+#define MI2_CREATE_V1 0x2000    /* Force V1 format */
+
+/* Possible compression type values. */
+#define MI2_COMP_UNKNOWN (-1)
+#define MI2_COMP_NONE 0
+#define MI2_COMP_ZLIB 1
+
+#define MI2_CHUNK_UNKNOWN (-1)
+#define MI2_CHUNK_OFF 0
+#define MI2_CHUNK_ON 1
+
+#define MI2_OPTS_V1 1
+
+struct mi2opts {
+    int struct_version;
+    int comp_type;
+    int comp_param;
+    int chunk_type;
+    int chunk_param;
+};
+
+#define MI2_ISH5OBJ(x) (H5Iget_type(x) > 0)
+
+#endif /* MINC2 defined */
 
 #ifdef __cplusplus
 }
