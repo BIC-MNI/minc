@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.1  2005-02-17 16:38:11  bert
+@MODIFIED   : Revision 1.2  2005-03-02 20:06:23  bert
+@MODIFIED   : Update conversions to reflect simplified header structures and types
+@MODIFIED   :
+@MODIFIED   : Revision 1.1  2005/02/17 16:38:11  bert
 @MODIFIED   : Initial checkin, revised DICOM to MINC converter
 @MODIFIED   :
 @MODIFIED   : Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -36,55 +39,36 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.1 2005-02-17 16:38:11 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.2 2005-03-02 20:06:23 bert Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "dcm2mnc.h"
 #include "siemens_header_defs.h"
 
 /* Constants */
 
-#define SIEMENS_IMAGE_OFFSET (6*1024)
+#define SIEMENS_IMAGE_OFFSET 6144 /* From dclunie.com */
 
 #define IMAGE_NDIMS 2
 
 /* Conversion functions that are not defined */
-#define create_calculation_mode_t_element NULL
 #define create_compression_code_t_element NULL
 #define create_contrast_t_element NULL
-#define create_data_object_subtype_t_element NULL
-#define create_data_set_subtype_t_element NULL
 #define create_field_of_view_t_element NULL
-#define create_filter_parameter_t_element NULL
-#define create_filter_type_image_t_element NULL
-#define create_filter_type_t_element NULL
-#define create_gate_phase_t_element NULL
 #define create_geometry_t_element NULL
-#define create_gradient_delay_time_t_element NULL
 #define create_image_format_t_element NULL
-#define create_laterality_t_element NULL
-#define create_measurement_mode_t_element NULL
 #define create_object_orientation_t_element NULL
-#define create_object_threshold_t_element NULL
 #define create_patient_orientation_t_element NULL
-#define create_patient_phase_t_element NULL
 #define create_patient_position_t_element NULL
-#define create_patient_region_t_element NULL
-#define create_pixel_quality_code_t_element NULL
-#define create_pixel_quality_value_t_element NULL
 #define create_rest_direction_t_element NULL
 #define create_rotation_direction_t_element NULL
-#define create_sar_sed_t_element NULL
-#define create_save_code_t_element NULL
-#define create_storage_mode_t_element NULL
-#define create_target_point_t_element NULL
 #define create_view_direction_t_element NULL
-#define create_window_style_t_element NULL
-#define create_study_type_t_element NULL
+#define create_data_set_subtype_t_element NULL
 
 /* Types */
 #define ELEMENT_FUNC_ARGS \
@@ -104,55 +88,9 @@ typedef struct {
     void *data;
     Create_Element_Function function;
     int length;
-} Siemens_header_entry;
+} Siemens_hdr_entry;
 
 /* Functions */
-
-#if 0
-DEFINE_ELEMENT_FUNC(create_data_set_subtype_t_element)
-{
-    int i;
-
-    fprintf(stderr, "create_data_set_subtype_t_element(");
-
-    fprintf(stderr, "grp_id %#x elm_id %#x data %#x length %d)\n",
-            grp_id, elm_id, data, length);
-
-    length *= sizeof (data_set_subtype_t);
-    for (i = 0; i < length; i++) {
-        fprintf(stderr, "%02x", *((unsigned char *)data + i));
-    }
-    fprintf(stderr, " | ");
-    for (i = 0; i < length; i++) {
-        int c = *((unsigned char *)data + i);
-        fprintf(stderr, "%c", isprint(c) ? c : '.');
-    }
-    fprintf(stderr, "\n");
-    return (0);
-}
-
-DEFINE_ELEMENT_FUNC(create_contrast_t_element)
-{
-    int i;
-
-    fprintf(stderr, "create_contrast_t_element(");
-
-    fprintf(stderr, "grp_id %#x elm_id %#x data %#x length %d)\n",
-            grp_id, elm_id, data, length);
-
-    length *= sizeof (contrast_t);
-    for (i = 0; i < length; i++) {
-        fprintf(stderr, "%02x", *((unsigned char *)data + i));
-    }
-    fprintf(stderr, " | ");
-    for (i = 0; i < length; i++) {
-        int c = *((unsigned char *)data + i);
-        fprintf(stderr, "%c", isprint(c) ? c : '.');
-    }
-    fprintf(stderr, "\n");
-    return (0);
-}
-#endif
 
 static Acr_Element_Id get_elid(int grp_id, int elm_id, Acr_VR_Type vr_code);
 
@@ -160,17 +98,19 @@ DECLARE_ELEMENT_FUNC(create_char_element);
 DECLARE_ELEMENT_FUNC(create_long_element);
 DECLARE_ELEMENT_FUNC(create_short_element);
 DECLARE_ELEMENT_FUNC(create_double_element);
-DECLARE_ELEMENT_FUNC(create_ds_date_t_element);
-DECLARE_ELEMENT_FUNC(create_ds_time_t_element);
-DECLARE_ELEMENT_FUNC(create_modality_t_element);
-DECLARE_ELEMENT_FUNC(create_sex_t_element);
+DECLARE_ELEMENT_FUNC(create_ima_date_t_element);
+DECLARE_ELEMENT_FUNC(create_ima_time_t_element);
+DECLARE_ELEMENT_FUNC(create_modality_element);
+DECLARE_ELEMENT_FUNC(create_sex_element);
+DECLARE_ELEMENT_FUNC(create_age_element);
 DECLARE_ELEMENT_FUNC(create_order_of_slices_t_element);
 DECLARE_ELEMENT_FUNC(create_pixel_size_t_element);
 DECLARE_ELEMENT_FUNC(create_windows_t_element);
-DECLARE_ELEMENT_FUNC(create_image_location_t_element);
+DECLARE_ELEMENT_FUNC(create_ima_vector_t_element);
+DECLARE_ELEMENT_FUNC(create_laterality_element);
 
 /* Define the table of header values */
-siemens_header_t Siemens_header; /* Must define this first */
+siemens_header_t Siemens_hdr; /* Must define this first */
 #include "siemens_header_table.h" /* Now include the table */
 
 /* flag to print offset table, useful in debugging byte pad issues
@@ -197,15 +137,13 @@ Acr_Group
 siemens_to_dicom(const char *filename, int read_image)
 {
     FILE *fp;
-    Siemens_header_entry *entry;
+    Siemens_hdr_entry *entry;
     Acr_Group group_list;
     Acr_Element element;
     long image_size;
     long pixel_size;
     void *image;
     double flip_angle;
-    short rows_in;
-    short cols_in;
     short rows;
     short cols;
 
@@ -215,6 +153,19 @@ siemens_to_dicom(const char *filename, int read_image)
     long offset;                /* debug junk */
 #endif
 
+    /* Check the structure offsets */
+    assert(((char *)&Siemens_hdr.G08-(char *)&Siemens_hdr) == 0x0000);
+    assert(((char *)&Siemens_hdr.G10-(char *)&Siemens_hdr) == 0x0300);
+    assert(((char *)&Siemens_hdr.G18-(char *)&Siemens_hdr) == 0x0600);
+    assert(((char *)&Siemens_hdr.G19-(char *)&Siemens_hdr) == 0x0780);
+    assert(((char *)&Siemens_hdr.G20-(char *)&Siemens_hdr) == 0x0C80);
+    assert(((char *)&Siemens_hdr.G21-(char *)&Siemens_hdr) == 0x0E80);
+    assert(((char *)&Siemens_hdr.G28-(char *)&Siemens_hdr) == 0x1380);
+
+    if (G.Debug > 1) {
+        printf("siemens_to_dicom(%s, %d)\n", filename, read_image);
+    }
+
     /* Open the file */
     if ((fp = fopen(filename, "rb")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", filename);
@@ -222,7 +173,7 @@ siemens_to_dicom(const char *filename, int read_image)
     }
 
     /* Read in the header */
-    if (fread(&Siemens_header, sizeof(Siemens_header), 1, fp) != 1) {
+    if (fread(&Siemens_hdr, sizeof(Siemens_hdr), 1, fp) != 1) {
         fprintf(stderr, "Error reading header in %s\n", filename);
         fclose(fp);
         return NULL;
@@ -234,13 +185,10 @@ siemens_to_dicom(const char *filename, int read_image)
         /* Figure out how much space we need for the image */
         pixel_size = 2;         /* Apparently this never changes?? */
 
-        /* need to byte swap row/col values if needed */
-
-        rows_in = Siemens_header.G28.Pre.Rows;
-        acr_get_short(ACR_BIG_ENDIAN, 1, &rows_in, &rows);
-        cols_in = Siemens_header.G28.Pre.Columns;
-        acr_get_short(ACR_BIG_ENDIAN, 1, &cols_in, &cols);
-
+        /* Need to byte swap row/col values if needed 
+         */
+        acr_get_short(ACR_BIG_ENDIAN, 1, &Siemens_hdr.G28.Rows, &rows);
+        acr_get_short(ACR_BIG_ENDIAN, 1, &Siemens_hdr.G28.Columns, &cols);
 
         image_size = rows * cols;
 
@@ -266,11 +214,11 @@ siemens_to_dicom(const char *filename, int read_image)
 
     /* Loop through the header table, creating a header */
     group_list = NULL;
-    for (entry = Siemens_header_table; entry->data != NULL; entry++) {
+    for (entry = Siemens_hdr_table; entry->data != NULL; entry++) {
 
 #ifdef PRINT_OFFSET_TABLE
         data_ptr = entry->data;
-        header_ptr = &Siemens_header;
+        header_ptr = &Siemens_hdr;
         offset = (long) data_ptr - (long) header_ptr;
         printf("DEBUG:  group = 0x%x, element = 0x%x, offset = 0x%lx, length = 0x%x\n",
                entry->grp_id, entry->elm_id, offset, entry->length);
@@ -372,54 +320,93 @@ void
 update_coordinate_info(Acr_Group group_list)
 {
     Acr_Element element;
-    int nrows, ncolumns, idim;
-    double coord[WORLD_NDIMS], row[WORLD_NDIMS], column[WORLD_NDIMS];
+    int nrows, ncolumns;
+    int i;
+    double coord[WORLD_NDIMS];
+    double row[WORLD_NDIMS];
+    double column[WORLD_NDIMS];
+    double normal[WORLD_NDIMS];
     double pixel_spacing[IMAGE_NDIMS];
-    char string[256];
+    string_t string;
+    int n_slices;
 
-    /* Look for the row vector */
+    if (G.Debug > 1) {
+        printf("update_coordinate_info(%lx)\n", (unsigned long) group_list);
+    }
+
+    /* Look for the normal vector 
+     */
+    element = acr_find_group_element(group_list, SPI_Image_normal);
+    if ((element == NULL) ||
+        (acr_get_element_numeric_array(element, WORLD_NDIMS, normal)
+         != WORLD_NDIMS)) {
+        normal[XCOORD] = 0.0;
+        normal[YCOORD] = 0.0;
+        normal[ZCOORD] = 1.0;
+    }
+
+    /* Look for the row vector.
+     */
     element = acr_find_group_element(group_list, SPI_Image_row);
     if ((element == NULL) ||
         (acr_get_element_numeric_array(element, WORLD_NDIMS, row) 
          != WORLD_NDIMS)) {
-        row[0] = 1.0; 
-        row[1] = 0.0; 
-        row[2] = 0.0;
+        row[XCOORD] = 1.0; 
+        row[YCOORD] = 0.0; 
+        row[ZCOORD] = 0.0;
     }
 
-    /* Look for the column vector */
+    /* Look for the column vector 
+     */
     element = acr_find_group_element(group_list, SPI_Image_column);
     if ((element == NULL) ||
         (acr_get_element_numeric_array(element, WORLD_NDIMS, column) 
          != WORLD_NDIMS)) {
-        column[0] = 0.0; 
-        column[1] = 1.0; 
-        column[2] = 0.0;
+        column[XCOORD] = 0.0; 
+        column[YCOORD] = 1.0; 
+        column[ZCOORD] = 0.0;
     }
 
-    /* Put in the dicom orientation (patient) field */
+    if (G.Debug > 1) {
+        printf("R %.3f %.3f %.3f C %.3f %.3f %.3f N %.3f %.3f %.3f\n",
+               row[0], row[1], row[2],
+               column[0], column[1], column[2],
+               normal[0], normal[1], normal[2]);
+    }
+
+    /* Put in the dicom orientation (patient) field 
+     */
     sprintf(string, "%.15g\\%.15g\\%.15g\\%.15g\\%.15g\\%.15g",
-            row[0], -row[1], -row[2], 
-            column[0], -column[1], -column[2]);
+            row[XCOORD], -row[YCOORD], -row[ZCOORD], 
+            column[XCOORD], -column[YCOORD], -column[ZCOORD]);
     acr_insert_string(&group_list, ACR_Image_orientation_patient, string);
-    
-    /* Look for the position */
+
+    /* Look for the position.
+     */
     element = acr_find_group_element(group_list, SPI_Image_position);
     if ((element == NULL) ||
         (acr_get_element_numeric_array(element, WORLD_NDIMS, coord) 
          != WORLD_NDIMS)) {
-        coord[0] = 0.0; 
-        coord[1] = 0.0; 
-        coord[2] = 0.0;
+        coord[XCOORD] = 0.0; 
+        coord[YCOORD] = 0.0; 
+        coord[ZCOORD] = 0.0;
+    }
+    else {
+        if (G.Debug > 1) {
+            printf(" old %.3f %.3f %.3f, ", coord[0], coord[1], coord[2]);
+        }
     }
 
-    /* Get the number of rows and columns */
+    /* Get the number of rows and columns.
+     */
+
     nrows = acr_find_int(group_list, ACR_Rows, 0);
     ncolumns = acr_find_int(group_list, ACR_Columns, 0);
     if ((nrows <= 0) || (ncolumns <= 0)) {
         fprintf(stderr, "Illegal image size in Siemens file\n");
         exit(1);
     }
+
 
     /* Get the pixel size */
     element = acr_find_group_element(group_list, ACR_Pixel_size);
@@ -429,17 +416,45 @@ update_coordinate_info(Acr_Group group_list)
         pixel_spacing[0] = pixel_spacing[1] = 1.0;
     }
 
-    /* Calculate the position of the first pixel. This coordinate is still in 
-       the Siemens space, not dicom space and will need to be flipped. Note 
-       that ncolumns is used with row, since they are the size and unit 
-       vector of the same dimension. */
-    for (idim = 0; idim < WORLD_NDIMS; idim++) {
-        coord[idim] -= 
-            pixel_spacing[0] * ((double) ncolumns - 1.0) / 2.0 * row[idim] +
-            pixel_spacing[1] * ((double) nrows - 1.0) / 2.0 * column[idim];
+    /* Calculate the position of the first pixel. This coordinate
+     * is still in the Siemens space, not dicom space and will
+     * need to be flipped. Note that ncolumns is used with row,
+     * since they are the size and unit vector of the same
+     * dimension.
+     */
+    for (i = 0; i < WORLD_NDIMS; i++) {
+        coord[i] -= 
+            pixel_spacing[0] * ((double) ncolumns - 1.0) / 2.0 * row[i] +
+            pixel_spacing[1] * ((double) nrows - 1.0) / 2.0 * column[i];
     }
     sprintf(string, "%.15g\\%.15g\\%.15g", coord[0], -coord[1], -coord[2]);
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
+    if (G.Debug > 1) {
+        printf("new %.3f %.3f %.3f\n", coord[0], -coord[1], -coord[2]);
+    }
+
+    /* If this is a Mosaic image, we need to adjust the pixel spacing
+     * to reflect the ratio between the number of mosaic columns
+     * divided the number of image columns.
+     */
+    n_slices = acr_find_int(group_list, EXT_Slices_in_file, 1);
+    if (n_slices != 1) {
+        int acq_cols = acr_find_short(group_list, SPI_Acquisition_columns, 
+                                      ncolumns);
+        if (G.Debug > 1) {
+            printf("Hmmm... This appears to be a mosaic image %d %d\n",
+                   acq_cols, ncolumns);
+        }
+
+        /* Mosaic images in IMA format appear to need to have their
+         * pixel spacing scaled up.  I don't fully understand why this
+         * should be necessary, but there it is...
+         */
+        pixel_spacing[0] *= (double) nrows / (double) acq_cols;
+        pixel_spacing[1] *= (double) ncolumns / (double) acq_cols;
+        sprintf(string, "%.15g\\%.15g", pixel_spacing[0], pixel_spacing[1]);
+        acr_insert_string(&group_list, ACR_Pixel_size, string);
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -478,18 +493,20 @@ DEFINE_ELEMENT_FUNC(create_char_element)
     old = (char *) data;
 
     /* Figure out the length of the new string up to the first NUL. Make 
-       sure that there is a room for an additional NUL if necessary */
-    for (i=0; (i < length-1) && (old[i] != '\0'); i++) 
+     * sure that there is a room for an additional NUL if necessary 
+     */
+    for (i = 0; (i < length - 1) && (old[i] != '\0'); i++) 
         ;
-    newsize = ((old[i] == '\0') ? i+1 : length + 1);
+    newsize = ((old[i] == '\0') ? i + 1 : length + 1);
     oldsize = newsize - 1;
-    if ((newsize % 2) != 1) 
+    if ((newsize % 2) != 1) {   /* Assure even length overall */
         newsize++;
+    }
 
     /* Copy the string, making sure that there is a NUL on the end */
     new = malloc(newsize);
     CHKMEM(new);
-    for (i=0; i < newsize-1; i++) {
+    for (i = 0; i < newsize-1; i++) {
         if (i < oldsize)
             new[i] = old[i];
         else
@@ -509,7 +526,7 @@ DEFINE_ELEMENT_FUNC(create_long_element)
     acr_get_long(ACR_BIG_ENDIAN, 1, data, &data_out);
 
     return acr_create_element_numeric(get_elid(grp_id, elm_id, ACR_VR_IS), 
-                                      (long) data_out); 
+                                      data_out); 
 }
 
 DEFINE_ELEMENT_FUNC(create_short_element)
@@ -519,7 +536,7 @@ DEFINE_ELEMENT_FUNC(create_short_element)
     acr_get_short(ACR_BIG_ENDIAN, 1, data, &data_out);
 
     return acr_create_element_short(get_elid(grp_id, elm_id, ACR_VR_US), 
-                                    (unsigned short) data_out);
+                                    data_out);
 }
 
 DEFINE_ELEMENT_FUNC(create_double_element)
@@ -529,32 +546,22 @@ DEFINE_ELEMENT_FUNC(create_double_element)
     acr_get_double(ACR_BIG_ENDIAN, 1, data, &data_out);
 
     return acr_create_element_numeric(get_elid(grp_id, elm_id, ACR_VR_DS),
-                                      (double) data_out);
+                                      data_out);
 }
 
-DEFINE_ELEMENT_FUNC(create_ds_date_t_element)
+DEFINE_ELEMENT_FUNC(create_ima_date_t_element)
 {
-    char string[20];
-    ds_date_t *ptr;
-
+    string_t string;
+    ima_date_t *ptr;
     long year;
     long month;
     long day;
 
-    long year_in;
-    long month_in;
-    long day_in;
+    ptr = (ima_date_t *) data;
 
-    ptr = (ds_date_t *) data;
-
-    year_in = ptr->Year;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &year_in, &year); 
-	
-    month_in = ptr->Month;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &month_in, &month);
-	
-    day_in = ptr->Day;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &day_in, &day);
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Year, &year); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Month, &month);
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Day, &day);
 
     if ((year < 0) || (year > 9999)) 
         return NULL;
@@ -569,30 +576,21 @@ DEFINE_ELEMENT_FUNC(create_ds_date_t_element)
                                     string);
 }
 
-DEFINE_ELEMENT_FUNC(create_ds_time_t_element)
+DEFINE_ELEMENT_FUNC(create_ima_time_t_element)
 {
-    char string[20];
-    ds_time_t *ptr;
-
+    string_t string;
+    ima_time_t *ptr;
     long hour;
     long minute;
     long second;
     long fraction;
 
-    long hour_in;
-    long minute_in;
-    long second_in;
-    long fraction_in;
+    ptr = (ima_time_t *) data;
 
-    ptr = (ds_time_t *) data;
-    hour_in = ptr->Hour;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &hour_in, &hour); 
-    minute_in = ptr->Minute;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &minute_in, &minute); 
-    second_in = ptr->Second;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &second_in, &second); 
-    fraction_in = ptr->Fraction;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &fraction_in, &fraction); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Hour, &hour); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Minute, &minute); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Second, &second); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Fraction, &fraction); 
 
     if ((hour < 0) || (hour > 24)) 
         return NULL;
@@ -609,22 +607,19 @@ DEFINE_ELEMENT_FUNC(create_ds_time_t_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_modality_t_element)
+DEFINE_ELEMENT_FUNC(create_modality_element)
 {
     char *string;
-    modality_t *ptr_in;
-    modality_t modality;
+    int32_t modality;
 
     /* Get the appropriate string */
 
-    ptr_in = (modality_t *) data;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) ptr_in, (long *) &modality); 
-
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &modality); 
     switch (modality) {
-    case Modality_CT:
+    case 1:
         string = "CT";
         break;
-    case Modality_MR:
+    case 2:
         string = "MR";
         break;
     default:
@@ -636,23 +631,21 @@ DEFINE_ELEMENT_FUNC(create_modality_t_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_sex_t_element)
+DEFINE_ELEMENT_FUNC(create_sex_element)
 {
     char *string;
-    sex_t *ptr_in;
-    sex_t sex;
+    int32_t sex;
 
     /* Get the appropriate string */
-    ptr_in = (sex_t *) data;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) ptr_in, (long *) &sex); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &sex); 
     switch (sex) {
-    case Sex_F:
+    case 1:
         string = "F ";
         break;
-    case Sex_M:
+    case 2:
         string = "M ";
         break;
-    case Sex_O:
+    case 3:
         string = "O ";
         break;
     default:
@@ -664,15 +657,45 @@ DEFINE_ELEMENT_FUNC(create_sex_t_element)
                                      string);
 }
 
+DEFINE_ELEMENT_FUNC(create_age_element)
+{
+    string_t string;
+    int i;
+    int is_ok;
+
+    is_ok = 1;
+
+    /* The age string has a fixed length of 4 */
+    memcpy(string, data, 4);
+    string[4] = '\0';
+
+    for (i = 0; i < 3; i++) {
+        if (string[i] < '0' || string[i] > '9') {
+            is_ok = 0;
+        }
+    }
+    if (string[3] != 'Y' &&
+        string[3] != 'M' && 
+        string[3] != 'W' &&
+        string[3] != 'D') {
+        is_ok = 0;
+    }
+    if (!is_ok) {
+        printf("WARNING: Invalid age field '%s'\n", string);
+        return NULL;
+    }
+
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_AS), 
+                                     string);
+}
+
 DEFINE_ELEMENT_FUNC(create_order_of_slices_t_element)
 {
     char *string;
-    order_of_slices_t *ptr_in;
     order_of_slices_t order_of_slices;
 
     /* Get the appropriate string */
-    ptr_in = (order_of_slices_t *) data;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) ptr_in, (long *) &order_of_slices); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &order_of_slices); 
     switch (order_of_slices) {
     case Slice_Order_ASCENDING:
         string = "ASCENDING ";
@@ -686,11 +709,9 @@ DEFINE_ELEMENT_FUNC(create_order_of_slices_t_element)
     case Slice_Order_NONE:
         string = "NONE ";
         break;
-    case Slice_Order_UNDEFINED:
+    default:
         string = "UNDEFINED ";
         break;
-    default:
-        return NULL;
     }
 
     /* Return a new element */
@@ -701,21 +722,15 @@ DEFINE_ELEMENT_FUNC(create_order_of_slices_t_element)
 DEFINE_ELEMENT_FUNC(create_pixel_size_t_element)
 {
     pixel_size_t *ptr;
-    char string[64];
-
-    double row_in;
-    double col_in;
-
+    string_t string;
     double row;
     double col;
 
     /* Get the pixel sizes */
     ptr = (pixel_size_t *) data;
 
-    row_in = ptr->Row;
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &row_in, &row); 
-    col_in = ptr->Col;
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &col_in, &col); 
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Row, &row); 
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Col, &col); 
 
     sprintf(string, "%.15g\\%.15g", row, col);
     
@@ -726,21 +741,14 @@ DEFINE_ELEMENT_FUNC(create_pixel_size_t_element)
 DEFINE_ELEMENT_FUNC(create_windows_t_element)
 {
     windows_t *ptr;
-    char string[64];
-
-    long x_in;
-    long y_in;
-
+    string_t string;
     long x;
     long y;
 
-    /* Get the window info */
-    ptr = (windows_t *) data;
+    ptr = (windows_t *) data;   /* Get the window info */
 
-    x_in = ptr->X;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &x_in, &x); 
-    y_in = ptr->Y;
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &y_in, &y); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->X, &x); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Y, &y); 
     
     sprintf(string, "%ld\\%ld", x, y);
 
@@ -748,36 +756,43 @@ DEFINE_ELEMENT_FUNC(create_windows_t_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_image_location_t_element)
+DEFINE_ELEMENT_FUNC(create_ima_vector_t_element)
 {
-    image_location_t *ptr;
-    char string[64];
-
-    double sag;
-    double cor;
-    double tra;
-
-    double sag_in;
-    double cor_in;
-    double tra_in;
+    ima_vector_t *ptr;
+    string_t string;
+    double x, y, z;
 
     /* Get the coordinate */
-    ptr = (image_location_t *) data;
+    ptr = (ima_vector_t *) data;
    
-    sag_in = ptr->Sag;
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &sag_in, &sag);
-    cor_in = ptr->Cor;
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &cor_in, &cor);
-    tra_in = ptr->Tra;
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &tra_in, &tra);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->X, &x);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Y, &y);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Z, &z);
 
-    sprintf(string, "%.15g\\%.15g\\%.15g", sag, cor, tra);
+    sprintf(string, "%.15g\\%.15g\\%.15g", x, y, z);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DS),
                                      string);
 }
 
+DEFINE_ELEMENT_FUNC(create_laterality_element)
+{
+    long laterality;
+    char *string;
 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, &laterality);
 
+    switch (laterality) {
+    case 1:
+        string = "L "; break;
+    case 2:
+        string = ""; break;
+    case 3:
+        string = "R "; break;
+    default:
+        return NULL;
+    }
 
-
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS), 
+                                     string);
+}
