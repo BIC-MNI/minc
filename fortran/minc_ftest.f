@@ -145,7 +145,7 @@ C
 C
 C     Close input file
 C
-      call miclos(mincid)
+      call miclos(mincid, rcode)
 
 C
 C     Test copy routines
