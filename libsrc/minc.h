@@ -18,9 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 1.26  1993-08-11 12:06:34  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.27  1993-11-03 12:29:11  neelin
+@MODIFIED   : Added error code for failure to uncompress a file.
 @MODIFIED   :
+ * Revision 1.26  93/08/11  12:06:34  neelin
+ * Added RCS logging in source.
+ * 
               July 15, 1993 (P.N.)
                  - added MI_ICV_DO_FILLVALUE and MI_FILLVALUE
 @COPYRIGHT  :
@@ -33,12 +36,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.26 1993-08-11 12:06:34 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.27 1993-11-03 12:29:11 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.26 1993-08-11 12:06:34 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.27 1993-11-03 12:29:11 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -327,6 +330,7 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.2
 #define MI_ERR_BADMATCH         1347  /* Variables do not match for copy */
 #define MI_ERR_MAXMIN_DIMS      1348  /* Imagemax/min variables vary over
                                          image dimensions */
+#define MI_ERR_UNCOMPRESS       1349  /* Not able to uncompress file */
 
 /* MINC public functions */
 /* Define public constant */
