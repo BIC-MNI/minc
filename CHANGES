@@ -1,3 +1,7 @@
+************************************************************************
+
+Tue Mar 21 10:03:15 EST 2000 *** RELEASE OF MINC 0.7
+
 Wed Feb  2 13:43:43 EST 2000
    - modified miexpand_file in library so that fclose is not called with a
      NULL fp when the file does not exist. This would cause a seg fault with
@@ -69,6 +73,10 @@ Mon Sep 29 08:24:20 EDT 1997
 Wed Sep 17 09:24:32 EDT 1997
    - Modified gcomserver to do conversions to dicom and retransmit data
      to a dicom server.
+
+************************************************************************
+
+Fri Sep 12 13:24:48 EDT 1997 *** RELEASE OF MINC 0.6
 
 Thu Sep 11 10:54:41 EDT 1997
    - Copied in new version of volume_io. The version released with minc 0.5
