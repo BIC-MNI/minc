@@ -1,8 +1,29 @@
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : time_stamp.c
+@DESCRIPTION: File containing routine to create a time stamp string.
+@METHOD     : 
+@CREATED    : February 1, 1993 (Peter Neelin)
+@MODIFIED   : 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include <time_stamp.h>
+
+#ifndef lint
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/time_stamp.c,v 1.2 1993-07-21 09:41:19 neelin Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : time_stamp

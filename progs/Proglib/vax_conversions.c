@@ -5,10 +5,20 @@
 @METHOD     : 
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.2 1993-02-01 15:55:44 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.3 1993-07-21 09:41:40 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
