@@ -481,6 +481,13 @@ the real maximum and minimum of the variable (the maximum of
 \verb+MI_ICV_USER_NORM+ is true then the values of \verb+MI_ICV_IMAGE_MAX+
 and \verb+MI_ICV_IMAGE_MIN+ are used (defaulting to 1.0 and 0.0).
 
+When either \verb+MI_ICV_TYPE+ or the file type is floating-point,
+then the conversion to and from real values is always done using the
+real image maximum and minimum information. If the internal type is
+integer and \verb+MI_ICV_DO_NORM+ is \verb+FALSE+, then the rescaling
+is done so that the slice maximum maps to the valid range of the
+internal values.
+
 Note that when converting to integer types, values are rounded to the
 nearest integer and limited to be within the legal range for the data
 type.
@@ -504,28 +511,28 @@ pixel values: Input values are scaled to real values by
 values by \verb+usr_imgrange+ to \verb+usr_vrange+.
 
 If either of the \verb+vrange+ variables are not specified, they default to
-maximum possible range for integer types and to 0.0 to 1.0 for
-floating point. If the user type is floating point, then \verb+usr_vrange+ is
-set equal to \verb+usr_imgrange+ (ie. no conversion of real values).
+maximum possible range for integer types. For floating
+point types, \verb+usr_vrange+ is set equal to \verb+usr_imgrange+
+so that no conversion of real values is done. 
 
-If normalization is not being done, then \verb+var_imgrange+ and
-\verb+usr_imgrange+ are set to [0,1] (scale down to [0,1] and
-scale up again).  Otherwise, \verb+usr_imgrange+ is set to either the
-full range of the variable ([0,1] if not found) or the user's
-requested range. If the variable values are floating point, then
-\verb+var_imgrange+ is set to \verb+var_vrange+ (no scaling to real
-values), otherwise \verb+var_imgrange+ is read for each image (again,
-[0,1] if not found).
+If normalization is not being done, then for integer types
+\verb+var_imgrange+ and \verb+usr_imgrange+ are set to [0,1] (scale
+down to [0,1] and scale up again).  When normalizibng,
+\verb+usr_imgrange+ is set to either the full range of the variable
+([0,1] if not found) or the user's requested range. If the variable
+values are floating point, then \verb+var_imgrange+ is set to
+\verb+var_vrange+ (no scaling to real values), otherwise
+\verb+var_imgrange+ is read for each image (again, [0,1] if not
+found).
 
 What this means for reading and writing images is discussed below.
 
 \subsubsection{Reading with pixel conversion}
 
-When reading integers, things behave as expected. Without
-normalization, each image is scaled to full range, with normalization
-they are scaled to the specified range. Reading in floating point,
-however, will give values between [0,1] with no normalization and
-appropriate real values with normalization.
+When reading into internal floating point values, normalization has no
+effect. When reading integers without normalization, each image is
+scaled to full range. With normalization they are scaled to the
+specified range and slices can be compared.
 
 When the input file is missing either
 \verb+MIimagemax+/\verb+MIimagemin+ (\verb+var_imgrange+ information)
