@@ -19,10 +19,14 @@ TEST_SUBDIRS = testdir $(FORTRAN_SUBDIR)
 
 # --------------------------------------------------------------------
 
-default : build runtest
+default : build
 
-all build clean mostlyclean install:
+all build install:
 	$(MAKE) 'TARGET=$@' 'SUBDIRS=$(BUILD_SUBDIRS)' subdirs
+
+clean mostlyclean:
+	$(MAKE) 'TARGET=$@' \
+	   'SUBDIRS=$(BUILD_SUBDIRS) $(DOC_SUBDIRS) $(TEST_SUBDIRS)' subdirs
 
 libs:
 	$(MAKE) 'TARGET=build' 'SUBDIRS=$(LIB_SUBDIRS)' subdirs
