@@ -6,7 +6,11 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.17  2000-09-29 15:06:47  neelin
+ * Revision 6.18  2000-10-03 14:01:24  neelin
+ * Changed inclusion of bstring.h to happen only on SGIs, since linux also has
+ * bcopy, etc. in string.h.
+ *
+ * Revision 6.17  2000/09/29 15:06:47  neelin
  * Fixed conversion of port string to number so that it is in network byte
  * order even on little-endian machines (linux PC).
  *
@@ -102,7 +106,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.17 2000-09-29 15:06:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.18 2000-10-03 14:01:24 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -117,7 +121,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <netdb.h>
 #include <signal.h>
 #include <sys/time.h>
-#ifndef sun
+#ifdef sgi
 #include <bstring.h>
 #endif
 #include <string.h>
