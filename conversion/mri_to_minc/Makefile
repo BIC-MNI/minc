@@ -11,7 +11,8 @@ OPT      = -O -prototypes#                     # compiler options
 LDOPT    = -L/usr/local/lib -lsun -lm -lc_s# ld options
 INCLUDES = -I/usr/local/include -I.#           # include directories
 
-PERL_PROGS = ge4_to_minc ge5_to_minc siemens_to_minc dicom_to_minc
+PERL_PROGS = ge4_to_minc ge5_to_minc siemens_to_minc dicom_to_minc \
+   siemens_magnetom_vision_to_minc
 PERL_INCLUDE = mri_to_minc.pl
 
 # --------------------------------------------------------------------
