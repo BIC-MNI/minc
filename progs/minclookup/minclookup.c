@@ -11,8 +11,8 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.4  2004-05-20 21:52:08  bert
- * Revised man pages
+ * Revision 6.3.2.1  2004-09-28 20:08:14  bert
+ * Minor portability fix for Windows
  *
  * Revision 6.3  2001/04/24 13:38:43  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
@@ -66,9 +66,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.4 2004-05-20 21:52:08 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.3.2.1 2004-09-28 20:08:14 bert Exp $";
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -208,16 +209,9 @@ double lookup_min = DEFAULT_RANGE;
 double lookup_max = DEFAULT_RANGE;
 int discrete_lookup = FALSE;
 char *null_value_string = NULL;
-#ifdef MINC2
-int minc2_format = FALSE;
-#endif /* MINC2 defined */
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
-    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
-     "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -345,9 +339,6 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
-#ifdef MINC2
-   set_loop_v2format(loop_options, minc2_format);
-#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_convert_input_to_scalar(loop_options, TRUE);
