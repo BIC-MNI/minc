@@ -15,7 +15,7 @@ all build clean install :
 	$(MAKE) 'TARGET=$@' subdirs
 
 subdirs : 
-	@for dir in $(PROG_LIB_DIR) [a-z]*; \
+	@for dir in $(PROG_LIB_DIR) $(ACR_LIB_DIR) [a-z]*; \
 	   do if [ -d $$dir -a $$dir != RCS ]; \
 	   then \
 	      cd $$dir; \
