@@ -62,6 +62,9 @@ $(PROG_OBJ) $(EXTRA_OBJS) : $(HEADERS)
 
 $(LINT_LIST) $(LINT_EXTRA) : $(HEADERS)
 
+# Dependency of debug object file on gcomserver.c
+gcomserver-debug.o gcomserver-debug.ln : gcomserver.c
+
 # How to make executables
 $(PROGS) : $$@.o $(EXTRA_OBJS) $(CC_ACR_LIB) $(CC_PROG_LIB) $(CC_MINC_LIB)
 	$(CC) -o $@ $@.o $(EXTRA_OBJS) $(LDOPT)
