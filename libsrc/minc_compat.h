@@ -53,6 +53,10 @@ extern int MI2varputg(int fd, int varid, const long *startp,
 extern int MI2attcopy(int infd, int invarid, const char *name, int outfd, 
 		      int outvarid);
 
+extern int MI2redef(int fd);
+extern int MI2sync(int fd);
+extern int MI2setfill(int fd, int fillmode);
+
 #ifndef _MI2_FORCE_NETCDF_
 #define nctypelen MI2typelen
 #define ncvarname MI2varname
@@ -78,11 +82,11 @@ extern int MI2attcopy(int infd, int invarid, const char *name, int outfd,
 #define ncattcopy MI2attcopy
 #define ncendef MI2endef
 #define ncattget MI2attget
+#define ncredef MI2redef
+#define ncsync MI2sync
+#define ncsetfill MI2setfill
 
 #ifndef NC_NOFILL
 #define NC_NOFILL 0x100
 #endif
-#define ncsetfill(x,y) MI_NOERROR
-#define ncredef(x) MI_NOERROR
-#define ncsync(x) MI_NOERROR
 #endif /* _MI2_FORCE_NETCDF_ not defined */
