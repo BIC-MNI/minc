@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.3 1995-03-16 14:01:57 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.4 1995-03-17 15:05:05 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -9,13 +9,16 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid
 
 #define   N_COMPONENTS   3        /* displacement vector has 3 components */
 
+#define   FOUR_DIMS      4
+
 #define   INVERSE_FUNCTION_TOLERANCE     0.01
 #define   INVERSE_DELTA_TOLERANCE        1.0e-5
 #define   MAX_INVERSE_ITERATIONS         20
 
-private  void   tricubic_evaluate_grid_volume(
+private  void   evaluate_grid_volume(
     Volume         volume,
     Real           voxel[],
+    int            degrees_continuity,
     Real           values[] );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -53,26 +56,11 @@ public  void  grid_transform_point(
            so evaluate the volume at the given position and add the
            resulting offset to the given position */
 
-    /*--- if the volume has the vector dimension last, then we can do a
-          faster evaluate, otherwise, use the slower evaluate_in_world */
-
     volume = (Volume) transform->displacement_volume;
 
-    if( volume->spatial_axes[0] != N_DIMENSIONS &&
-        volume->spatial_axes[1] != N_DIMENSIONS &&
-        volume->spatial_axes[2] != N_DIMENSIONS )
-    {
-        convert_world_to_voxel( volume, x, y, z, voxel );
+    convert_world_to_voxel( volume, x, y, z, voxel );
 
-        tricubic_evaluate_grid_volume( volume, voxel, displacements );
-    }
-    else
-    {
-        evaluate_volume_in_world( volume,
-                                  x, y, z, DEGREES_CONTINUITY, TRUE, 0.0,
-                                  displacements, NULL, NULL, NULL,
-                                  NULL, NULL, NULL, NULL, NULL, NULL );
-    }
+    evaluate_grid_volume( volume, voxel, DEGREES_CONTINUITY, displacements );
 
     *x_transformed = x + displacements[X];
     *y_transformed = y + displacements[Y];
@@ -296,65 +284,74 @@ public  void  grid_inverse_transform_point(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : evaluate_volume
+@NAME       : evaluate_grid_volume
 @INPUT      : volume
-              x
-              y
-              z
+              voxel
+              degrees_continuity
 @OUTPUT     : value
-              deriv_x
-              deriv_y
-              deriv_z
 @RETURNS    : 
 @DESCRIPTION: Takes a voxel space position and evaluates the value within
               the volume by nearest_neighbour, linear, quadratic, or
               cubic interpolation.
-              If first_deriv is not a null pointer, then the first derivatives
-              are passed back.  Similarly for the second_deriv.
-@CREATED    : Mar   1993           David MacDonald
+@CREATED    : Mar. 16, 1995           David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void   tricubic_evaluate_grid_volume(
+private  void   evaluate_grid_volume(
     Volume         volume,
     Real           voxel[],
+    int            degrees_continuity,
     Real           values[] )
 {
-    int      inc0, inc1, inc2, inc[MAX_DIMENSIONS];
-    int      ind0, ind1, ind2, ind3;
-    int      start0, start1, start2;
-    int      end0, end1, end2;
+    int      inc0, inc1, inc2, inc3, inc[MAX_DIMENSIONS];
+    int      ind0, vector_dim;
+    int      start0, start1, start2, start3, inc_so_far;
+    int      end0, end1, end2, end3;
     int      v0, v1, v2, v3;
-    int      v, d, sizes[MAX_DIMENSIONS], n_dims;
+    int      v, d, id, sizes[MAX_DIMENSIONS];
     int      start[MAX_DIMENSIONS];
     int      end[MAX_DIMENSIONS];
     Real     fraction[MAX_DIMENSIONS], bound, pos;
     Real     coefs[SPLINE_DEGREE*SPLINE_DEGREE*SPLINE_DEGREE*N_COMPONENTS];
-    BOOLEAN  fully_inside, fully_outside;
 
-    n_dims = get_volume_n_dimensions(volume);
-    get_volume_sizes( volume, sizes );
+    if( get_volume_n_dimensions(volume) != FOUR_DIMS )
+        handle_internal_error( "evaluate_grid_volume" );
 
-    bound = (Real) DEGREES_CONTINUITY / 2.0;
+    /*--- find which of 4 dimensions is the vector dimension */
 
-    fully_inside = TRUE;
-    fully_outside = TRUE;
-
-    for_less( d, 0, N_DIMENSIONS )
+    for_less( vector_dim, 0, FOUR_DIMS )
     {
-        pos = voxel[d] - bound;
-        start[d] =       FLOOR( pos );
-        fraction[d] = pos - start[d];
-        end[d] = start[d] + DEGREES_CONTINUITY + 2;
+        for_less( d, 0, N_DIMENSIONS )
+        {
+            if( volume->spatial_axes[d] == vector_dim )
+                break;
+        }
 
-        if( start[d] < 0 || end[d] > sizes[d] )
-            fully_inside = FALSE;
-
-        if( start[d] < sizes[d] && end[d] > 0 )
-            fully_outside = FALSE;
+        if( d == N_DIMENSIONS )
+            break;
     }
 
-    if( fully_outside )
+    get_volume_sizes( volume, sizes );
+
+    bound = (Real) degrees_continuity / 2.0;
+
+    for_less( d, 0, FOUR_DIMS )
+    {
+        if( d != vector_dim )
+        {
+            while( degrees_continuity >= -1 &&
+                   (voxel[d] < bound  ||
+                    voxel[d] > (Real) sizes[d] - 1.0 - bound) )
+            {
+                --degrees_continuity;
+                if( degrees_continuity == 1 )
+                    degrees_continuity = 0;
+                bound = (Real) degrees_continuity / 2.0;
+            }
+        }
+    }
+
+    if( degrees_continuity == -2 )
     {
         for_less( v, 0, N_COMPONENTS )
             values[v] = 0.0;
@@ -362,66 +359,78 @@ private  void   tricubic_evaluate_grid_volume(
         return;
     }
 
-    start[N_DIMENSIONS] = 0;
-    end[N_DIMENSIONS] = N_COMPONENTS;
-
-    inc[n_dims-1] = 1;
-    for_down( d, n_dims-2, 0 )
-        inc[d] = inc[d+1] * (end[d+1] - start[d+1]);
-
-    ind0 = 0;
-
-    if( !fully_inside )
+    id = 0;
+    for_less( d, 0, FOUR_DIMS )
     {
-        for_less( d, 0, n_dims )
+        if( d != vector_dim )
         {
-            if( start[d] < 0 )
-            {
-                ind0 += -start[d] * inc[d];
-                start[d] = 0;
-            }
-
-            if( end[d] > sizes[d] )
-                end[d] = sizes[d];
+            pos = voxel[d] - bound;
+            start[d] =       FLOOR( pos );
+            fraction[id] = pos - start[d];
+            end[d] = start[d] + degrees_continuity + 2;
+            ++id;
         }
-
-        for_less( v, 0, N_COMPONENTS*SPLINE_DEGREE*SPLINE_DEGREE*SPLINE_DEGREE )
-            coefs[v] = 0.0;
     }
+
+    start[vector_dim] = 0;
+    end[vector_dim] = N_COMPONENTS;
+
+    inc_so_far = N_COMPONENTS;
+    for_down( d, FOUR_DIMS-1, 0 )
+    {
+        if( d != vector_dim )
+        {
+            inc[d] = inc_so_far;
+            inc_so_far *= degrees_continuity + 2;
+        }
+    }
+
+    inc[vector_dim] = 1;
 
     start0 = start[0];
     start1 = start[1];
     start2 = start[2];
+    start3 = start[3];
 
     end0 = end[0];
     end1 = end[1];
     end2 = end[2];
+    end3 = end[3];
 
-    inc0 = inc[0];
-    inc1 = inc[1];
-    inc2 = inc[2];
+    inc0 = inc[0] - inc[1] * (end1 - start1);
+    inc1 = inc[1] - inc[2] * (end2 - start2);
+    inc2 = inc[2] - inc[3] * (end3 - start3);
+    inc3 = inc[3];
+
+    ind0 = 0;
 
     for_less( v0, start0, end0 )
     {
-        ind1 = ind0;
         for_less( v1, start1, end1 )
         {
-            ind2 = ind1;
             for_less( v2, start2, end2 )
             {
-                ind3 = ind2;
-                for_less( v3, 0, N_COMPONENTS )
+                for_less( v3, start3, end3 )
                 {
-                    GET_VALUE_4D( coefs[ind3], volume, v0, v1, v2, v3 );
-                    ++ind3;
+                    GET_VALUE_4D( coefs[ind0], volume, v0, v1, v2, v3 );
+                    ind0 += inc3;
                 }
-                ind2 += inc2;
+                ind0 += inc2;
             }
-            ind1 += inc1;
+            ind0 += inc1;
         }
         ind0 += inc0;
     }
 
-    evaluate_interpolating_spline( N_DIMENSIONS, fraction, SPLINE_DEGREE, 
-                                   N_COMPONENTS, coefs, 0, values );
+    if( degrees_continuity == -1 )
+    {
+        for_less( v, 0, N_COMPONENTS )
+            values[v] = coefs[v];
+    }
+    else
+    {
+        evaluate_interpolating_spline( N_DIMENSIONS, fraction,
+                                       degrees_continuity + 2, 
+                                       N_COMPONENTS, coefs, 0, values );
+    }
 }
