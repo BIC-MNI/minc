@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.5 1993-07-13 15:57:45 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.6 1993-07-13 16:29:27 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -228,7 +228,7 @@ public int main(int argc, char *argv[])
                if (((ival+1) % row_length) == 0)
                   (void) putchar((int)'\n');
             }
-            free(cdata);
+            FREE(cdata);
          }
          else {
             ddata = MALLOC(var_length*sizeof(double));
@@ -237,7 +237,7 @@ public int main(int argc, char *argv[])
             for (ival=0; ival<var_length; ival++) {
                (void) printf("%.20g\n", ddata[ival]);
             }
-            free(ddata);
+            FREE(ddata);
          }
          break;
       case ATTTYPE:
@@ -253,6 +253,7 @@ public int main(int argc, char *argv[])
             if (miattgetstr(mincid, varid, name, att_length+1, cdata)==NULL)
                {REPORT_ERROR;}
             (void) printf("%s\n", cdata);
+            FREE(cdata);
          }
          else {
             ddata = MALLOC(att_length * sizeof(double));
@@ -262,6 +263,7 @@ public int main(int argc, char *argv[])
                (void) printf("%.20g ", ddata[iatt]);
             }
             (void) printf("\n");
+            FREE(ddata);
          }
          break;
       default:
