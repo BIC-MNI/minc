@@ -10,7 +10,10 @@
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincextract.c,v $
- * Revision 6.3  2001-08-16 16:41:35  neelin
+ * Revision 6.4  2003-10-28 20:31:19  bert
+ * Remove two unused variables
+ *
+ * Revision 6.3  2001/08/16 16:41:35  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -82,7 +85,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.3 2001-08-16 16:41:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.4 2003-10-28 20:31:19 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -224,8 +227,6 @@ int main(int argc, char *argv[])
    int idim;
    int nstart, ncount;
    void *data;
-   char the_sign[MI_MAX_ATTSTR_LEN];
-   int length;
    double temp;
    long nelements, ielement;
    double *dbl_data;
