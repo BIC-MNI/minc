@@ -428,7 +428,7 @@ sub mri_to_minc {
         # last file
         if ((scalar(keys(%file_list)) > 0) &&
             (!$keep_looping || 
-             ($mincinfo{'exam'} != $cur_exam) || 
+             ($mincinfo{'exam'} ne $cur_exam) || 
              ($mincinfo{'series'} != $cur_series))) {
 
             # Loop through echos
