@@ -28,7 +28,7 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 default: all
 
-all: $(PROGS)
+all: $(PROGS) test
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
@@ -38,14 +38,18 @@ all: $(PROGS)
 
 
 # How to make executables
-$(PROGS) : $$@.o  $(MINC_LIB_DIR)/$(CC_MINC_LIB) Makefile
+$(PROGS) : $$@.o  $(CC_MINC_LIB) Makefile
 	$(CC) $@.o -o $@ $(CFLAGS) $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(MINC_LIB_DIR)/$(LINT_MINC_LIB)
-	lint -u $(LINTFLAGS) $@ln $(MINC_LIB_DIR)/$(LINT_MINC_LIB)
+$(LINT_LIST_EXE) : $$@ln $(LINT_MINC_LIB)
+	lint -u $(LINTFLAGS) $@ln $(LINT_MINC_LIB)
+
+# Run tests
+test: $(PROGS)
+	run_tests.csh
 
 # Remove all derived files in this directory
 clean:
