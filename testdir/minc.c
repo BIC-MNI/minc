@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <minc.h>
 
-main()
+int main()
 {
    int cdf, cdf2;
    int img, img2;

@@ -10,7 +10,7 @@
 #define MAX_MAX 2
 #define MAX_VAL 2
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    int icv, cdfid, img, max, min;
    static char *typenm[]={"short", "double"};

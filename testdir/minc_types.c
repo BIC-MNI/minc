@@ -30,7 +30,7 @@ struct {
            NC_DOUBLE, MI_SIGNED,   "double"};
 int ntypes = sizeof(types)/sizeof(types[0]);
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    int cdf;
    int img, img2;

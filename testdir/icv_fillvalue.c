@@ -7,7 +7,7 @@
 #define TRUE 1
 #define FALSE 0
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    int icv, mincid, img, i;
    static int dim[MAX_VAR_DIMS];

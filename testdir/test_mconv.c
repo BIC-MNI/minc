@@ -4,7 +4,7 @@
 #  define NULL ((void *) 0)
 #endif
 
-main()
+int main()
 {
    char *file = "test.mnc";
    int cdfid;

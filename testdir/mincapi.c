@@ -1,8 +1,13 @@
+#define _GNU_SOURCE 1
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <minc.h>
 #include <limits.h>
 #include <float.h>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #define FUNC_ERROR(x) (fprintf(stderr, "On line %d, function %s failed unexpectedly\n", __LINE__, x), ++errors)
 
