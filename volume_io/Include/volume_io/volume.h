@@ -3,6 +3,7 @@
 
 #include  <netcdf.h>
 #include  <minc.h>
+#include  <def_transforms.h>
 
 #define  MAX_DIMENSIONS     5
 
@@ -28,25 +29,27 @@ typedef  enum  { NO_DATA_TYPE,
 
 typedef  struct
 {
-    int             n_dimensions;
-    String          dimension_names[MAX_DIMENSIONS];
-    Data_types      data_type;
-    nc_type         nc_data_type;
-    Boolean         signed_flag;
+    int                     n_dimensions;
+    String                  dimension_names[MAX_DIMENSIONS];
+    Data_types              data_type;
+    nc_type                 nc_data_type;
+    Boolean                 signed_flag;
 
-    void            *data;
+    void                    *data;
 
-    Real            min_voxel;
-    Real            max_voxel;
-    Real            value_scale;
-    Real            value_translation;
-    int             sizes[MAX_DIMENSIONS];
-    Real            separation[MAX_DIMENSIONS];
+    Real                    min_voxel;
+    Real                    max_voxel;
+    Boolean                 real_range_set;
+    Real                    real_value_scale;
+    Real                    real_value_translation;
+    int                     sizes[MAX_DIMENSIONS];
+    Real                    separations[MAX_DIMENSIONS];
+    Real                    translation_voxel[N_DIMENSIONS];
+    Real                    world_space_for_translation_voxel[N_DIMENSIONS];
 
-    Transform       world_to_voxel_transform;
-    Transform       voxel_to_world_transform;
+    General_transform       voxel_to_world_transform;
 
-    unsigned char   ***labels;
+    unsigned char           ***labels;
 } volume_struct;
 
 typedef  volume_struct  *Volume;
@@ -219,11 +222,14 @@ typedef  volume_struct  *Volume;
          }
 
 #define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
-            ((volume)->value_scale * (Real) (voxel) + \
-             (volume)->value_translation)
+            ( (volume)->real_range_set ? \
+                ((volume)->real_value_scale * (Real) (voxel) + \
+                 (volume)->real_value_translation) : (voxel) )
 
 #define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
-          (((Real) value - (volume)->value_translation) / (volume)->value_scale)
+            ( (volume)->real_range_set ? \
+              (((Real) value - (volume)->real_value_translation) / \
+               (volume)->real_value_scale) : (value) )
 
 #define  GET_VALUE_1D( value, volume, x )       \
          { \
@@ -339,10 +345,10 @@ typedef struct
 
 typedef struct
 {
-    int            x, y;
-    Volume         src_volume;
-    Volume         dest_volume;
-    Transform      transform;
+    int                    x, y;
+    Volume                 src_volume;
+    Volume                 dest_volume;
+    General_transform      transform;
 } resample_struct;
 
 /* --------------------- filter types -------------------------------- */
