@@ -1051,15 +1051,6 @@ public  void  grid_inverse_transform_point(
     Real                *y_transformed,
     Real                *z_transformed );
 
-public  void  grid_inverse_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed );
-
 public  Status  mni_get_nonwhite_character(
     FILE   *file,
     char   *ch );
