@@ -11,6 +11,7 @@
                  miattget
                  miattget1
                  miattgetstr
+                 miattputint
                  miattputdbl
                  miattputstr
                  mivarget
@@ -232,6 +233,34 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    /* Return a pointer to the string */
    MI_RETURN(value);
 
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miattputint
+@INPUT      : cdfid    - cdf file id
+              varid    - variable id
+              name     - name of attribute
+              value    - integer value for attribute
+@OUTPUT     : (none)
+@RETURNS    : MI_ERROR (=-1) if an error occurs
+@DESCRIPTION: Convenience routine for calling ncattput with integers (stored
+              as long integers).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines.
+@CREATED    : November 25, 1992 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miattputint(int cdfid, int varid, char *name, int value)
+{
+   long lvalue;
+
+   MI_SAVE_ROUTINE_NAME("miattputint");
+
+   lvalue = value;
+   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_LONG, 1, (void *) &lvalue))
+   MI_RETURN(MI_NOERROR);
 }
 
 
