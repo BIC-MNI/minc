@@ -6,7 +6,10 @@
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: message.c,v $
- * Revision 6.4  1999-10-29 17:51:53  neelin
+ * Revision 6.5  2002-11-13 03:00:27  neelin
+ * Fixed an unterminated comment
+ *
+ * Revision 6.4  1999/10/29 17:51:53  neelin
  * Fixed Log keyword
  *
  * Revision 6.3  1998/03/10 17:06:29  neelin
@@ -478,7 +481,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
          break;
       }
 
-      /* If we reach the end of a fragment and PDU, but we need more data
+      /* If we reach the end of a fragment and PDU, but we need more data */
 
       /* Read in the next group and check for an error */
       status = acr_input_group(afp, &group);
