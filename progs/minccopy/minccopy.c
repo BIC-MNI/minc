@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.3 1993-07-13 15:22:12 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.4 1993-07-13 16:19:56 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -165,6 +165,7 @@ int main(int argc, char *argv[])
       (void) miicv_free(outicv);
       (void) miicv_free(inicv);
    }
+   FREE(data);
 
    exit(EXIT_SUCCESS);
 }
