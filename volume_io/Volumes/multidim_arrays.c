@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.8 1995-11-10 20:23:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.9 1996-02-27 14:51:31 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -314,6 +314,8 @@ public  void  delete_multidim_array(
     case  5:  free_memory_5d( (void ******) &array->data _ALLOC_SOURCE_LINE );
               break;
     }
+
+    array->data = NULL;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
