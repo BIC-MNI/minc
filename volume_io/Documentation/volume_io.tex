@@ -5,6 +5,7 @@
 
 \newcommand{\path}{{\bf\tt /nil/david/Release/MNI\_lib}}
 \newcommand{\name}[1]{{\bf\tt #1}}
+\newcommand{\savelength}{}
 
 \begin{document}
 
@@ -50,23 +51,24 @@ libraries called by Volume IO, \name{MINC}, \name{netcdf}, and
 \name{recipes}.  The path for these is most likely \name{/usr/local/include},
 which is automatically in the search path, so the compile line would look like:
 \begin{verbatim}
-    cc -prototypes -I/nil/david/Release/MNI_lib/Include \
-       -c test_volume_io.c
+        cc -prototypes -I/nil/david/Release/MNI_lib/Include \
+           -c test_volume_io.c
 \end{verbatim}
 
 Source files making calls to Volume IO functions must have the
 following line at the top, to include the relevent type definitions and
 prototypes:
+
 \begin{verbatim}
-    #include  <volume_io.h>
+        #include  <volume_io.h>
 \end{verbatim}
 
 In order to link with Volume IO, the relevant libraries must be
 specified:
 \begin{verbatim}
-    cc test_volume_io.o  -o test_volume_io \
-       -L/nil/david/Release/MNI_lib -lmni \
-       -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
+        cc test_volume_io.o  -o test_volume_io \
+           -L/nil/david/Release/MNI_lib -lmni \
+           -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
 \end{verbatim}
 The three libraries are usually in /usr/local/lib, which is
 automatically in the search path.  The \name{-lm} option includes the
@@ -83,45 +85,51 @@ word \name{public} or \name{private}, which indicates whether the
 function is accessible from outside the file in which it resides.
 They are defined as follows:
 \begin{verbatim}
-#define  public
-#define  private   static
+        #define  public
+        #define  private   static
 \end{verbatim}
 
 A type for logical values is defined:
 \begin{verbatim}
-typedef  int    BOOLEAN
-#define  FALSE  0
-#define  TRUE   1
-#define  OFF    FALSE
-#define  ON     TRUE
+        typedef  int    BOOLEAN
+        #define  FALSE  0
+        #define  TRUE   1
+        #define  OFF    FALSE
+        #define  ON     TRUE
 \end{verbatim}
 
 Other useful types defined include:
 \begin{verbatim}
-typedef  double               Real;
-#define  MAX_STRING_LENGTH    200
-typedef  char                 STRING[MAX_STRING_LENGTH+1];
-typedef  enum 
-        { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT } Status;
-typedef  char                 Smallest_int;
+        typedef  double               Real;
+        #define  MAX_STRING_LENGTH    200
+        typedef  char                 STRING[MAX_STRING_LENGTH+1];
+        typedef  enum 
+                { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT } Status;
+        typedef  char                 Smallest_int;
 \end{verbatim}
+
+\newcommand{\definemacro}[2]{
+\noindent
+{\bf\tt #1}
+#2}
 
 Some macros useful for general programming include:
+\break
 
-\name{SIZEOF\_STATIC\_ARRAY( array )}:
-returns the number of elements in a staticly allocated array,
+\definemacro{SIZEOF\_STATIC\_ARRAY( array )}
+{returns the number of elements in a statically allocated array},
 \begin{verbatim}
-{
-    int  size;
-    int  array[] = { 1, 2, 3 };
+        {
+            int  size;
+            int  array[] = { 1, 2, 3 };
 
-    size = SIZEOF_STATIC_ARRAY( array );     /* == 3 */
-}
+            size = SIZEOF_STATIC_ARRAY( array );     /* == 3 */
+        }
 \end{verbatim}
 
-\name{ABS( x )}:  returns the absolute value of an integer or real.
+\definemacro{ABS( x )}{returns the absolute value of an integer or real}.
 
-\name{MAX( x, y )}:  returns the maximum of two integers or reals.
+\definemacro{MAX( x, y )}{returns the maximum of two integers or reals}.
 
 \section{Programming Utilities}
 
