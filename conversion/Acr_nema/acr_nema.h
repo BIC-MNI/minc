@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-08 21:53:14  neelin
+@MODIFIED   : Added dicom_client_routines.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *
@@ -72,3 +75,4 @@
 #include <group.h>
 #include <message.h>
 #include <dicom_network.h>
+#include <dicom_client_routines.h>

@@ -8,9 +8,10 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 # Executable names
-PROGS    = acr_test dump_acr_nema extract_acr_nema read_acr_nema dicom_test
+PROGS    = acr_test dump_acr_nema extract_acr_nema read_acr_nema dicom_test \
+	        sample_dicom_client
 OBJS     = file_io.o acr_io.o element.o value_repr.o group.o message.o \
-	        dicom_network.o
+	        dicom_network.o dicom_client_routines.o
 EXTRA_OBJS = globals.o
 HEADERS  = $(OBJS:.o=.h) acr_nema.h
 CDEFINES = -DDEBUG#                        cpp defines
