@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecat_file.h,v $
-@MODIFIED   : Revision 1.1  1996-01-18 14:52:14  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1996-03-26 15:58:18  neelin
+@MODIFIED   : Added some more header values.
 @MODIFIED   :
+ * Revision 1.1  1996/01/18  14:52:14  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1996 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -118,12 +121,12 @@ typedef enum {
    ECAT_Gate_Duration,
    ECAT_R_Wave_Offset,
    ECAT_Num_Accepted_Beats,
-   ECAT_Filter_Cutoff_Frequence,
+   ECAT_Filter_Cutoff_Frequency,
    ECAT_Filter_Dc_Component,
    ECAT_Filter_Ramp_Slope,
    ECAT_Filter_Order,
    ECAT_Filter_Scatter_Fraction,
-   ECAT_Filetr_Scatter_Slope,
+   ECAT_Filter_Scatter_Slope,
    ECAT_Annotation,
    ECAT_Da_X_Rotation_Angle,
    ECAT_Da_Y_Rotation_Angle,
@@ -134,6 +137,14 @@ typedef enum {
    ECAT_Da_X_Scale_Factor,
    ECAT_Da_Y_Scale_Factor,
    ECAT_Da_Z_Scale_Factor,
+   ECAT_Rfilter_Cutoff,
+   ECAT_Rfilter_Resolution,
+   ECAT_Rfilter_Code,
+   ECAT_Rfilter_Order,
+   ECAT_Zfilter_Cutoff,
+   ECAT_Zfilter_Resolution,
+   ECAT_Zfilter_Code,
+   ECAT_Zfilter_Order,
    ECAT_Scan_Start_Day,
    ECAT_Scan_Start_Month,
    ECAT_Scan_Start_Year,

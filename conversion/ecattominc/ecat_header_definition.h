@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecat_header_definition.h,v $
-@MODIFIED   : Revision 1.1  1996-01-18 14:52:14  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1996-03-26 15:58:18  neelin
+@MODIFIED   : Added some more header values.
 @MODIFIED   :
+ * Revision 1.1  1996/01/18  14:52:14  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1996 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -82,7 +85,9 @@ static Ecat_field_description_type version_7_main_list[] =
    {ECAT_Branching_Fraction, 450, 1, ecat_float, "Branching_Fraction"},
    {ECAT_Dose_Start_Time, 454, 1, ecat_long, "Dose_Start_Time"},
    {ECAT_Dosage, 458, 1, ecat_float, "Dosage"},
-   {ECAT_Well_Counter_Corr_Factor, 462, 1, ecat_float, "Well_Counter_Corr_Factor"}
+   {ECAT_Well_Counter_Corr_Factor, 462, 1, ecat_float, "Well_Counter_Corr_Factor"},
+   {ECAT_Data_Units, 466, 32, ecat_char, "Data_Units"},
+   {ECAT_Septa_State, 498, 1, ecat_short, "Septa_State"}
 };
 
 static Ecat_field_description_type version_7_subhdr_list[] =
@@ -92,9 +97,9 @@ static Ecat_field_description_type version_7_subhdr_list[] =
    {ECAT_X_Dimension, 4, 1, ecat_short, "X_Dimension"},
    {ECAT_Y_Dimension, 6, 1, ecat_short, "Y_Dimension"},
    {ECAT_Z_Dimension, 8, 1, ecat_short, "Z_Dimension"},
-   {ECAT_X_Offset, 10, 1, ecat_float, "X_Offset"},
-   {ECAT_Y_Offset, 14, 1, ecat_float, "Y_Offset"},
-   {ECAT_Z_Offset, 18, 1, ecat_float, "Z_Offset"},
+   {ECAT_X_Offset, 14, 1, ecat_float, "X_Offset"},
+   {ECAT_Y_Offset, 18, 1, ecat_float, "Y_Offset"},
+   {ECAT_Z_Offset, 10, 1, ecat_float, "Z_Offset"},
    {ECAT_Recon_Zoom, 22, 1, ecat_float, "Recon_Zoom"},
    {ECAT_Scale_Factor, 26, 1, ecat_float, "Scale_Factor"},
    {ECAT_Image_Min, 30, 1, ecat_short, "Image_Min"},
@@ -116,12 +121,12 @@ static Ecat_field_description_type version_7_subhdr_list[] =
    {ECAT_Gate_Duration, 88, 1, ecat_long, "Gate_Duration"},
    {ECAT_R_Wave_Offset, 92, 1, ecat_long, "R_Wave_Offset"},
    {ECAT_Num_Accepted_Beats, 96, 1, ecat_long, "Num_Accepted_Beats"},
-   {ECAT_Filter_Cutoff_Frequence, 100, 1, ecat_float, "Filter_Cutoff_Frequence"},
+   {ECAT_Filter_Cutoff_Frequency, 100, 1, ecat_float, "Filter_Cutoff_Frequency"},
    {ECAT_Filter_Dc_Component, 104, 1, ecat_float, "Filter_Dc_Component"},
    {ECAT_Filter_Ramp_Slope, 108, 1, ecat_float, "Filter_Ramp_Slope"},
    {ECAT_Filter_Order, 112, 1, ecat_short, "Filter_Order"},
    {ECAT_Filter_Scatter_Fraction, 114, 1, ecat_float, "Filter_Scatter_Fraction"},
-   {ECAT_Filetr_Scatter_Slope, 118, 1, ecat_float, "Filetr_Scatter_Slope"},
+   {ECAT_Filter_Scatter_Slope, 118, 1, ecat_float, "Filter_Scatter_Slope"},
    {ECAT_Annotation, 122, 40, ecat_char, "Annotation"},
    {ECAT_Da_X_Rotation_Angle, 162, 1, ecat_float, "Da_X_Rotation_Angle"},
    {ECAT_Da_Y_Rotation_Angle, 166, 1, ecat_float, "Da_Y_Rotation_Angle"},
@@ -131,7 +136,15 @@ static Ecat_field_description_type version_7_subhdr_list[] =
    {ECAT_Da_Z_Translation, 182, 1, ecat_float, "Da_Z_Translation"},
    {ECAT_Da_X_Scale_Factor, 186, 1, ecat_float, "Da_X_Scale_Factor"},
    {ECAT_Da_Y_Scale_Factor, 190, 1, ecat_float, "Da_Y_Scale_Factor"},
-   {ECAT_Da_Z_Scale_Factor, 194, 1, ecat_float, "Da_Z_Scale_Factor"}
+   {ECAT_Da_Z_Scale_Factor, 194, 1, ecat_float, "Da_Z_Scale_Factor"},
+   {ECAT_Rfilter_Cutoff, 198, 1, ecat_float, "Rfilter_Cutoff"},
+   {ECAT_Rfilter_Resolution, 202, 1, ecat_float, "Rfilter_Resolution"},
+   {ECAT_Rfilter_Code, 206, 1, ecat_short, "Rfilter_Code"},
+   {ECAT_Rfilter_Order, 208, 1, ecat_short, "Rfilter_Order"},
+   {ECAT_Zfilter_Cutoff, 210, 1, ecat_float, "Zfilter_Cutoff"},
+   {ECAT_Zfilter_Resolution, 214, 1, ecat_float, "Zfilter_Resolution"},
+   {ECAT_Zfilter_Code, 218, 1, ecat_short, "Zfilter_Code"},
+   {ECAT_Zfilter_Order, 220, 1, ecat_short, "Zfilter_Order"}
 };
 
 static Ecat_header_table_type 
@@ -225,6 +238,10 @@ static Ecat_field_description_type version_pre7_subhdr_list[] =
    {ECAT_Filter_Code, 236, 1, ecat_short, "Filter_Code"},
    {ECAT_Z_Rotation_Angle, 296, 1, ecat_float, "Z_Rotation_Angle"},
    {ECAT_Decay_Corr_Fctr, 304, 1, ecat_float, "Decay_Corr_Fctr"},
+   {ECAT_Calibration_Factor, 388, 1, ecat_float, "Calibration_Factor"},
+   {ECAT_Filter_Cutoff_Frequency, 396, 1, ecat_float, "Filter_Cutoff_Frequency"},
+   {ECAT_Filter_Dc_Component, 400, 1, ecat_float, "Filter_Dc_Component"},
+   {ECAT_Filter_Ramp_Slope, 404, 1, ecat_float, "Filter_Ramp_Slope"},
    {ECAT_Annotation, 420, 40, ecat_char, "Annotation"}
 };
 
