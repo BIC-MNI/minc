@@ -428,7 +428,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
   for (i=0; i < volume->number_of_dims; i++) {
     for (j=0; j < array_length; j++) {
       if (volume->dim_handles[i] == dimensions[j]) {
-	volume->dim_indices[j+diff] = i;
+	volume->dim_indices[j+diff] = i;  
 	break;
       }
       if (j == (array_length-1)) {
@@ -436,6 +436,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
       }
     }
   }
+  
   return (MI_NOERROR);
 }
 
@@ -490,14 +491,12 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
    */
   if (volume->dim_indices == NULL) {
       volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
-      for (i = 0; i < volume->number_of_dims; i++) {
-          volume->dim_indices[i] = -1;
-      }
+      memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
   }
   for (i = 0; i < volume->number_of_dims; i++) {
       for (j = 0; j < array_length; j++) {
           if (!strcmp(volume->dim_handles[i]->name, names[j])) {
-              volume->dim_indices[i+diff] = j;
+              volume->dim_indices[j+diff] = i;
               break;
           }
       }

@@ -10,14 +10,14 @@ static int error_cnt = 0;
 #define CZ 41
 #define CY 410
 #define CX 530
-#define CT 8
 #define NDIMS 4
 
 int main(int argc, char **argv)
 {
     mihandle_t vol;
-    int r;
+    int r = 0;
     midimhandle_t dim[NDIMS];
+    unsigned long lengths[NDIMS];
     midimhandle_t copy_dim[NDIMS];
     int n;
     unsigned long coords[NDIMS];
@@ -26,64 +26,80 @@ int main(int argc, char **argv)
     double offset;
     unsigned int voxel;
     unsigned char * Atmp;
-    
     midimclass_t dimension_class;
-    r =0;
+    int ndims;
     Atmp = ( unsigned char *) malloc(CX * CY * CZ * sizeof(unsigned char));
-    r = miopen_volume(*++argv, MI2_OPEN_READ, &vol);
+
+    printf(" \n");
+    printf("This test uses the vector_dimension file in test directory\n");
+    printf(" \n");
+
+    r = miopen_volume("example_vector2.mnc", MI2_OPEN_READ, &vol);
+    
     if (r < 0) {
-	TESTRPT("failed to open volume", r);
+	TESTRPT("failed to open vector_dimension volume", r);
+    }
+
+    r = miget_volume_dimension_count(vol, MI_DIMCLASS_ANY, MI_DIMATTR_REGULARLY_SAMPLED, &ndims);
+    if (r < 0) {
+	TESTRPT("failed to get number of dimensions", r);
+    
+    }
+   
+    printf("Total number of dimensions : %d \n", ndims);
+
+    r = miget_volume_dimensions(vol, MI_DIMCLASS_ANY, MI_DIMATTR_REGULARLY_SAMPLED, MI_DIMORDER_FILE, NDIMS, dim);
+
+    if (r < 0) {
+      TESTRPT("Could not get dimension handles from volume", r);
+	
     }
     
-    r = miget_volume_dimensions(vol, MI_DIMCLASS_ANY, MI_DIMATTR_ALL,MI_DIMORDER_FILE , 4, dim);
+    r = miget_dimension_sizes(dim, NDIMS, lengths);
     if (r < 0) {
-      TESTRPT("failed to get dimensions", r);
+      TESTRPT(" more trouble", r);
+	  
     }
-    r = miget_dimension_class(dim[0],&dimension_class);
-    if (r < 0) {
-      TESTRPT("failed to get dimensions", r);
+    printf( "Dimension Size in file order : ");
+    for(i=0; i < NDIMS; i++) {
+      printf( " %d ", lengths[i]);
     }
-    printf(" class is %d \n", dimension_class);
-    r = miget_dimension_class(dim[1],&dimension_class);
-    if (r < 0) {
-      TESTRPT("failed to get dimensions", r);
+    printf(" \n");
+    
+    for( i=0; i < NDIMS; i++) {
+	r = miget_dimension_class(dim[i],&dimension_class);
+	if (r < 0) {
+	  TESTRPT("failed to get dimension class", r);
+	}
+	if (dimension_class == MI_DIMCLASS_RECORD) {
+	  printf("Dim class RECORD present check dim name for *vector_dimension*\n");
+	}
     }
-    printf(" class is %d \n", dimension_class);
-    r = miget_dimension_class(dim[2],&dimension_class);
-    if (r < 0) {
-      TESTRPT("failed to get dimensions", r);
-    }
-    printf(" class is %d \n", dimension_class);
-    r = miget_dimension_class(dim[3],&dimension_class);
-    if (r < 0) {
-      TESTRPT("failed to get dimensions", r);
-    }
-    printf(" class is %d \n", dimension_class);
-
-    /*
-    //coords[0]=coords[1]=coords[2]=coords[3]=0;
+    
+    printf("Let's get the first 10 data values of each vector component (file order) \n");
+    
     coords[0]=coords[1]=coords[2]=0;
-    coords[3]=2;
-    count[0]=41;
-    count[1]=410;
-    count[2]=530;
+    
+    count[0]=CZ;
+    count[1]=CY;
+    count[2]=CX;
     count[3]=1;
-    r = miget_voxel_value_hyperslab(vol, MI_TYPE_UBYTE, coords, count,Atmp);
-    for (j=0; j < 20; j++)
-      {
-	printf( " This is my data %u \n", Atmp[j]);
+    printf(" FILE ORDER --> zspace, yspace, xspace, vector_dimension \n");
+    for (i=0; i < 3; i++) {
+      printf("Vector Componenet %d \n", i+1);
+      coords[3]=i;
+      r = miget_voxel_value_hyperslab(vol, MI_TYPE_UBYTE, coords, count,Atmp);
+      if (r < 0) {
+      TESTRPT("Failed to operate hyperslab function", r);
       }
-    */
-    
-    miflipping_t flip;
-    miflipping_t sign;
-
-    r = miget_dimension_apparent_voxel_order(dim[3],&flip, &sign);
-     if (r < 0) {
-      TESTRPT("failed to get voxel order", r);
+     
+      for (j=0; j < 10; j++) {
+	printf( " %u ", Atmp[j]);
+      }
+      printf(" \n");
     }
+    printf("APPARENT ORDER --> vector_dimension, zspace, yspace, xspace\n");
     
-     printf(" voxel order is %d %d \n", flip, sign);
     // Set the apparent dimension order 
     
     copy_dim[0] = dim[3];
@@ -91,31 +107,33 @@ int main(int argc, char **argv)
     copy_dim[2] = dim[1];
     copy_dim[3] = dim[2];
 
-    r = miset_apparent_dimension_order(vol, 4, copy_dim);
+    r = miset_apparent_dimension_order(vol, NDIMS, copy_dim);
     if (r < 0) {
       TESTRPT("failed to set apparent order", r);
     }
     
-    coords[0]=2;  //vector-dimension
     coords[1]=coords[2]=coords[3]=0;
     
-    
     count[0]=1; //must always be one
-    count[1]=41;
-    count[2]=410;
-    count[3]=530;
-
-    r = miget_voxel_value_hyperslab(vol, MI_TYPE_UBYTE, coords, count,Atmp);
-    for (j=0; j < 20; j++)
-      {
-	printf( " This is my data %u \n", Atmp[j]);
-      }
-   
-    if (r < 0) {
-      TESTRPT("failed to do hyperslb", r);
-    }
+    count[1]=CZ;
+    count[2]=CY;
+    count[3]=CZ;
     
-      
+    printf("APPARENT ORDER SET \n");
+    for (i=0; i < 3; i++) {
+      printf("Vector Componenet %d \n", i+1);
+      coords[0]=i;
+      r = miget_voxel_value_hyperslab(vol, MI_TYPE_UBYTE, coords, count,Atmp);
+      if (r < 0) {
+      TESTRPT("Failed to operate hyperslab function", r);
+      }
+     
+      for (j=0; j < 10; j++) {
+	printf( " %u ", Atmp[j]);
+      }
+      printf(" \n");
+    }
+
     if (error_cnt != 0) {
         fprintf(stderr, "%d error%s reported\n", 
                 error_cnt, (error_cnt == 1) ? "" : "s");

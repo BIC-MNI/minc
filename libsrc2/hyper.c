@@ -172,7 +172,7 @@ restructure_array(int ndims,    /* Dimension count */
                 for (i = 0; i < ndims; i++) {
                     if (dir[i] < 0) {
 		      // index[i] = lengths[i] - index_perm[map[i]] - 1;
-		      index[map[i]] = lengths[i] - index_perm[i] - 1;
+		      index[map[i]] = lengths[map[i]] - index_perm[i] - 1;
                     }
                     else {
 		      //index[i] = index_perm[map[i]];
@@ -313,7 +313,8 @@ mitranslate_hyperslab_origin(mihandle_t volume,
             user_i = file_i;
         }
 
-        hdim = volume->dim_handles[file_i];
+        hdim = volume->dim_handles[user_i];
+	//hdim = volume->dim_handles[file_i];
         switch (hdim->flipping_order) {
         case MI_FILE_ORDER:
 	  //hdf_start[file_i] = start[user_i];
@@ -356,6 +357,8 @@ mitranslate_hyperslab_origin(mihandle_t volume,
 	
 	//hdf_count[file_i] = count[user_i];
 	hdf_count[user_i] = count[file_i];
+
+	
 	
     }
     return (n_different);
@@ -463,9 +466,15 @@ mirw_hyperslab_raw(int opcode,
 
             /* Invert before calling */
             for (i = 0; i < ndims; i++) {
-                icount[i] = count[volume->dim_indices[i]];
-                idir[i] = dir[volume->dim_indices[i]];
-                imap[volume->dim_indices[i]] = i;
+	      //icount[i] = count[volume->dim_indices[i]];
+	      icount[volume->dim_indices[i]] = count[i];
+
+	      //idir[i] = dir[volume->dim_indices[i]];
+	      idir[volume->dim_indices[i]] = dir[i];
+
+	      // this one was correct the original way
+	      imap[volume->dim_indices[i]] = i;
+	      
             }
 
             restructure_array(ndims, buffer, icount, H5Tget_size(type_id), 
