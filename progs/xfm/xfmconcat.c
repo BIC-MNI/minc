@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: xfmconcat.c,v $
-@MODIFIED   : Revision 1.2  1993-09-01 15:58:49  neelin
-@MODIFIED   : Cast return of fclose to (void).
+@MODIFIED   : Revision 1.3  1993-09-16 09:40:21  neelin
+@MODIFIED   : Use dave's open_file_with_default_suffix and input_transform_file and
+@MODIFIED   : output_transform_file to add suffixes to file names.
 @MODIFIED   :
+ * Revision 1.2  93/09/01  15:58:49  neelin
+ * Cast return of fclose to (void).
+ * 
  * Revision 1.1  93/08/13  15:27:18  neelin
  * Initial revision
  * 
@@ -28,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 1.2 1993-09-01 15:58:49 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 1.3 1993-09-16 09:40:21 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -51,7 +55,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 1.2 
 
 int main(int argc, char *argv[])
 {
-   FILE *fp;
    General_transform trans1, trans2, trans3;
    General_transform *new_result, *old_result, *input, *temp_result;
    int iarg, first_arg, last_arg, output_arg;
@@ -77,13 +80,11 @@ int main(int argc, char *argv[])
    for (iarg=first_arg; iarg <= last_arg; iarg++) {
 
       /* Read in file to concatenate */
-      if (((fp=fopen(argv[iarg],"r")) == NULL) ||
-          (input_transform(fp, input) != OK)) {
+      if (input_transform_file(argv[iarg], input) != OK) {
          (void) fprintf(stderr, "%s: Error reading transform file %s\n",
                         argv[0], argv[iarg]);
          exit(EXIT_FAILURE);
       }
-      (void) fclose(fp);
 
       /* Concatenate the transform */
       temp_result = new_result;
@@ -101,13 +102,11 @@ int main(int argc, char *argv[])
    }     /* End of loop through arguments */
 
    /* Write out the transform */
-   if (((fp=fopen(argv[output_arg],"w")) == NULL) ||
-       (output_transform(fp, NULL, new_result) != OK)) {
+   if (output_transform_file(argv[output_arg], NULL, new_result) != OK) {
       (void) fprintf(stderr, "%s: Error writing transform file %s\n",
                      argv[0], argv[output_arg]);
       exit(EXIT_FAILURE);
    }
-   (void) fclose(fp);
 
    exit(EXIT_SUCCESS);
 }

@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: xfminvert.c,v $
-@MODIFIED   : Revision 1.2  1993-09-01 15:59:05  neelin
-@MODIFIED   : Cast return of fclose to (void).
+@MODIFIED   : Revision 1.3  1993-09-16 09:40:24  neelin
+@MODIFIED   : Use dave's open_file_with_default_suffix and input_transform_file and
+@MODIFIED   : output_transform_file to add suffixes to file names.
 @MODIFIED   :
+ * Revision 1.2  93/09/01  15:59:05  neelin
+ * Cast return of fclose to (void).
+ * 
  * Revision 1.1  93/08/13  15:26:53  neelin
  * Initial revision
  * 
@@ -28,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 1.2 1993-09-01 15:59:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 1.3 1993-09-16 09:40:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -51,7 +55,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 1.2 
 
 int main(int argc, char *argv[])
 {
-   FILE *fp;
    General_transform transform, inverse;
 
    /* Check arguments */
@@ -62,25 +65,21 @@ int main(int argc, char *argv[])
    }
 
    /* Read in file to invert */
-   if (((fp=fopen(argv[1],"r")) == NULL) ||
-       (input_transform(fp, &transform) != OK)) {
+   if (input_transform_file(argv[1], &transform) != OK) {
       (void) fprintf(stderr, "%s: Error reading transform file %s\n",
                      argv[0], argv[1]);
       exit(EXIT_FAILURE);
    }
-   (void) fclose(fp);
 
    /* Invert the transform */
    create_inverse_general_transform(&transform, &inverse);
 
    /* Write out the transform */
-   if (((fp=fopen(argv[2],"w")) == NULL) ||
-       (output_transform(fp, NULL, &inverse) != OK)) {
+   if (output_transform_file(argv[2], NULL, &inverse) != OK) {
       (void) fprintf(stderr, "%s: Error writing transform file %s\n",
                      argv[0], argv[2]);
       exit(EXIT_FAILURE);
    }
-   (void) fclose(fp);
 
    exit(EXIT_SUCCESS);
 }
