@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.4  1996-01-30 14:10:24  neelin
-@MODIFIED   : Added check for -transformation without -like, -tfm_input_sampling or
-@MODIFIED   : -use_input_sampling because of change in behaviour.
+@MODIFIED   : Revision 3.5  1996-01-31 15:22:02  neelin
+@MODIFIED   : Fixed bug in transformation of input sampling.
 @MODIFIED   :
+ * Revision 3.4  1996/01/30  14:10:24  neelin
+ * Added check for -transformation without -like, -tfm_input_sampling or
+ * -use_input_sampling because of change in behaviour.
+ *
  * Revision 3.3  1995/12/12  19:15:35  neelin
  * Added -spacetype, -talairach and -units options.
  *
@@ -102,7 +105,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.4 1996-01-30 14:10:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.5 1996-01-31 15:22:02 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -383,6 +386,9 @@ public void get_arginfo(int argc, char *argv[],
                      "Use -like, -tfm_input_sampling or "
                      "-use_input_sampling with -transformation\n");
       exit(EXIT_FAILURE);
+   }
+   if (transform_input_sampling == SAMPLING_ACTION_NOT_SET) {
+      transform_input_sampling = TRUE;
    }
 #endif
 
@@ -981,7 +987,9 @@ public void transform_volume_def(Transform_Info *transform_info,
 
          /* Make sure that direction cosines point the right way */
          if (transformed_volume_def->dircos[idim][idim] < 0.0) {
-            transformed_volume_def->dircos[idim][idim] *= -1.0;
+            VECTOR_SCALAR_MULT(transformed_volume_def->dircos[idim],
+                               transformed_volume_def->dircos[idim],
+                               -1.0);
             transformed_volume_def->step[idim] *= -1.0;
          }
       }

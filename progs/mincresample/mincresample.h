@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 3.3  1995-12-12 19:15:35  neelin
-@MODIFIED   : Added -spacetype, -talairach and -units options.
+@MODIFIED   : Revision 3.4  1996-01-31 15:22:02  neelin
+@MODIFIED   : Fixed bug in transformation of input sampling.
 @MODIFIED   :
+ * Revision 3.3  1995/12/12  19:15:35  neelin
+ * Added -spacetype, -talairach and -units options.
+ *
  * Revision 3.2  1995/11/21  14:13:20  neelin
  * Transform input sampling with transformation and use this as default.
  * Added -tfm_input_sampling to specify above option.
@@ -245,9 +248,9 @@ typedef struct {
 }
 
 #define VECTOR_SCALAR_MULT(result, vector, scalar) { \
-   result[XCOORD] = vector[XCOORD] * scalar; \
-   result[YCOORD] = vector[YCOORD] * scalar; \
-   result[ZCOORD] = vector[ZCOORD] * scalar; \
+   result[XCOORD] = vector[XCOORD] * (scalar); \
+   result[YCOORD] = vector[YCOORD] * (scalar); \
+   result[ZCOORD] = vector[ZCOORD] * (scalar); \
 }
 
 #ifdef INTERPOLATE
