@@ -5,7 +5,13 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.1  1999-10-29 17:51:55  neelin
+ * Revision 6.2  2000-05-17 20:25:51  neelin
+ * Added ability for server to suspend itself. This allows debugging even when
+ * the server is invoked through inetd. Also added code to close file
+ * descriptors after a fork to avoid problems with buffer flushing when
+ * the child exits. Only STDERR is left open, and it should be line-buffered.
+ *
+ * Revision 6.1  1999/10/29 17:51:55  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:27  neelin
@@ -42,7 +48,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.1 1999-10-29 17:51:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.2 2000-05-17 20:25:51 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -68,6 +74,14 @@ int Do_logging =
    LOW_LOGGING;
 #else
    HIGH_LOGGING;
+#endif
+
+/* Do we suspend ourselves? */
+int Do_self_suspend =
+#ifndef DO_SELF_SUSPEND
+   FALSE;
+#else
+   TRUE;
 #endif
 
 /* Do we keep files or are they temporary? */
@@ -116,6 +130,11 @@ int main(int argc, char *argv[])
    /* Get server process id */
    server_pid = getpid();
 
+   /* Suspend ourselves for debugging */
+   if (Do_self_suspend) {
+      (void) kill(server_pid, SIGSTOP);
+   }
+
    /* Change to tmp directory */
    (void) chdir("/usr/tmp");
 
@@ -157,6 +176,7 @@ int main(int argc, char *argv[])
 #ifdef DO_INPUT_TRACING
    /* Enable input tracing */
    acr_dicom_enable_trace(afpin);
+   acr_dicom_enable_trace(afpout);
 #endif
 
    /* Create file prefix. Create the temporary file to avoid file name 
@@ -406,6 +426,18 @@ int main(int argc, char *argv[])
             return;
          }
          else {                    /* Child process */
+
+            /* Close file descriptors to avoid buffering problems.
+               STDERR is left open, since it is line buffered and may
+               be needed. */
+            {
+               int fd;
+               for (fd=getdtablesize()-1; fd >= 0; fd--) {
+                  if (fd != 2) {   /* Leave stderr open */
+                     (void) close(fd);
+                  }
+               }
+            }
 
             /* Do something with the files */
             use_the_files(project_name, num_files, file_list, 

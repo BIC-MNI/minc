@@ -1,8 +1,12 @@
 #if 0
+#  define DO_SELF_SUSPEND
+#endif
+
+#if 0
 #  define DO_INPUT_TRACING
 #endif
 
-#if 1
+#if 0
 #  define KEEP_FILES
 #endif
 
