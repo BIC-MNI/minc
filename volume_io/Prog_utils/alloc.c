@@ -108,45 +108,6 @@ public  void  free_memory( void   **ptr )
     }
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : abort_if_allowed
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Checks if the user wants to abort.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  abort_if_allowed( void )
-{
-    char  ch;
-
-    if( !ENV_EXISTS( "NO_ABORT" ) )
-    {
-        set_print_function( NULL );
-
-        print( "Do you wish to abort (y/n): " );
-        do
-        {
-            ch = getchar();
-        }
-        while( ch != 'y' && ch != 'n' );
-
-        while( getchar() != '\n' )
-        {
-        }
-
-        if( ch == 'y' )
-        {
-            abort();
-        }
-    }
-}
-
 #include  <stdio.h>
 
 private  FILE  *file;

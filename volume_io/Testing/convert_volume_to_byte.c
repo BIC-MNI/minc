@@ -13,7 +13,8 @@ int  main(
 
     if( argc < 3 )
     {
-        print( "Usage: %s  input_volume output_volume  [min max new_value]\n" );
+        print( "Usage: %s  input_volume output_volume  [min max new_value]\n",
+               argv[0] );
         return( 1 );
     }
 

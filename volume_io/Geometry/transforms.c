@@ -571,6 +571,8 @@ public  void  convert_2d_transform_to_rotation_translation(
 
 public  Real  compute_clockwise_rotation( Real x, Real y )
 {
+    Real   radians;
+
     if( x == 0.0 )
     {
         if( y < 0.0 )
@@ -588,7 +590,14 @@ public  Real  compute_clockwise_rotation( Real x, Real y )
             return( PI );
     }
     else
-        return( - (Real) atan2( (double) y, (double) x ) );
+    {
+        radians = - (Real) atan2( (double) y, (double) x );
+
+        if( radians < 0.0 )
+            radians += 2.0 * PI;
+
+        return( radians );
+    }
 }
 
 public  void  make_identity_transform_2d( Transform_2d *transform )

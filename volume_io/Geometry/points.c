@@ -179,3 +179,30 @@ public   void     reverse_vectors(
         Vector_z(vectors[i]) = -Vector_z(vectors[i]);
     }
 }
+
+public  Real  get_angle_between_points(
+    Point  *prev,
+    Point  *this,
+    Point  *next )
+{
+    Real    angle, x, y;
+    Vector  v1, v2, x_axis, y_axis;
+
+    SUB_POINTS( v1, *prev, *this );
+    SUB_POINTS( v2, *next, *this );
+
+    NORMALIZE_VECTOR( v1, v1 );
+    NORMALIZE_VECTOR( v2, v2 );
+
+    x = DOT_VECTORS( v1, v2 );
+
+    SCALE_VECTOR( x_axis, v1, x );
+
+    SUB_VECTORS( y_axis, v2, x_axis );
+
+    y = MAGNITUDE( y_axis );
+
+    angle = compute_clockwise_rotation( x, y );
+
+    return( angle );
+}

@@ -162,11 +162,6 @@ typedef enum {
              } Status;
 
 #define  HANDLE_INTERNAL_ERROR( X )                                           \
-         {                                                                    \
-             push_print_function();                                      \
-             print( "Internal error:  %s\n", X );                             \
-             abort_if_allowed();                                              \
-             pop_print_function();                                      \
-         }
+         handle_internal_error( X )
 
 #endif

@@ -94,3 +94,50 @@ public  void  print( char format[], ... )
     else
         (*print_function) ( print_buffer );
 }
+
+public  void   handle_internal_error( char  str[] )
+{
+    push_print_function();
+    print( "Internal error:  %s\n", str );
+    abort_if_allowed();
+    pop_print_function();
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : abort_if_allowed
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Checks if the user wants to abort.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  abort_if_allowed( void )
+{
+    char  ch;
+
+    if( !ENV_EXISTS( "NO_ABORT" ) )
+    {
+        set_print_function( NULL );
+
+        print( "Do you wish to abort (y/n): " );
+        do
+        {
+            ch = getchar();
+        }
+        while( ch != 'y' && ch != 'n' );
+
+        while( getchar() != '\n' )
+        {
+        }
+
+        if( ch == 'y' )
+        {
+            abort();
+        }
+    }
+}
