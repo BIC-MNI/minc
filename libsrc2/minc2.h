@@ -374,14 +374,14 @@ extern int miget_hyperslab_normalized(mihandle_t volume,
 
 /* CONVERT FUNCTIONS */
 extern int miconvert_real_to_voxel(mihandle_t volume,
-                                   const unsigned long location[],
-                                   int ndims,
+                                   const unsigned long coords[],
+                                   int ncoords,
                                    double real_value,
                                    double *voxel_value_ptr);
 
 extern int miconvert_voxel_to_real(mihandle_t volume,
-                                   const unsigned long voxel_coords[],
-                                   int ndims,
+                                   const unsigned long coords[],
+                                   int ncoords,
                                    double voxel_value,
                                    double *real_value_ptr);
 

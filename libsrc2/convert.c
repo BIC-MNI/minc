@@ -21,8 +21,8 @@
  */
 int
 miconvert_real_to_voxel(mihandle_t volume,
-                        const unsigned long location[],
-                        int ndims,
+                        const unsigned long coords[],
+                        int ncoords,
                         double real_value,
                         double *voxel_value_ptr
                         )
@@ -39,7 +39,7 @@ miconvert_real_to_voxel(mihandle_t volume,
     
     /* get image min/max 
      */
-    miget_slice_range(volume, location, ndims, &slice_max, &slice_min);
+    miget_slice_range(volume, coords, ncoords, &slice_max, &slice_min);
     
     /* Calculate the actual conversion.
      */
@@ -62,8 +62,8 @@ miconvert_real_to_voxel(mihandle_t volume,
  */
 int
 miconvert_voxel_to_real(mihandle_t volume,
-                        const unsigned long voxel_coords[],
-                        int ndims,
+                        const unsigned long coords[],
+                        int ncoords,
                         double voxel_value,
                         double *real_value_ptr)
 {
@@ -79,7 +79,7 @@ miconvert_voxel_to_real(mihandle_t volume,
     
     /* get image min/max 
      */
-    miget_slice_range(volume, voxel_coords, ndims, &slice_max, &slice_min);
+    miget_slice_range(volume, coords, ncoords, &slice_max, &slice_min);
 
     /* Calculate the actual conversion.
      */
