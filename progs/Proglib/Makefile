@@ -4,10 +4,10 @@
 #
 
 # Object names
-OBJS     = ParseArgv.o vax_conversions.o
+OBJS     = ParseArgv.o vax_conversions.o time_stamp.o
 PROG_LIB  = mincprog
 CDEFINES = #                        cpp defines
-OPT      = -g#                             compiler options
+OPT      = -O#                             compiler options
 INCLUDES = -I. # include directories
 
 # Options for creating library
