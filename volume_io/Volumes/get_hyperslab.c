@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.3 1996-08-21 13:20:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.4 1996-08-21 15:31:30 david Exp $";
 #endif
 
 public  void  convert_voxels_to_values(
@@ -226,6 +226,9 @@ private  void  check_real_conversion_lookup(
     long_max = (long) max_value;
 
     ALLOC( *ptr, long_max - long_min + 1 );
+#ifndef  NO_DEBUG_ALLOC
+    (void) unrecord_ptr_alloc_check( *ptr, __FILE__, __LINE__ );
+#endif
 
     (*ptr) -= long_min;
 
