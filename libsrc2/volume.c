@@ -182,6 +182,17 @@ micreate_volume(const char *filename, int number_of_dimensions,
   if (handle == NULL) {
     return (MI_ERROR);
   }
+  /* Initialize some of the variables associated with the volume handle.
+   */
+  handle->is_dirty = FALSE;     /* No writes yet. */
+  handle->mode = MI2_OPEN_RDWR;
+  handle->has_slice_scaling = FALSE;
+  handle->scale_min = -1.0;
+  handle->scale_max = 1.0;
+  handle->number_of_dims = number_of_dimensions;
+  handle->image_id = -1;
+  handle->imax_id = -1;
+  handle->imin_id = -1;
 
   /* convert minc type to hdf type
    */
@@ -324,7 +335,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   // must add some code to make sure that the res level is possible
   if (create_props != NULL && create_props->depth > 0) {
     for (i=0; i < create_props->depth ; i++) {
-      if (minc_create_thumbnail(file_id, i+1) < 0) {
+      if (minc_create_thumbnail(handle, i+1) < 0) {
 	return (MI_ERROR);
       }
     }
@@ -506,16 +517,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
    */
   H5Gclose(grp_id);
 
-  /* Initialize some of the variables associated with the volume handle.
-   */
-  handle->mode = MI2_OPEN_RDWR;
-  handle->has_slice_scaling = FALSE;
-  handle->scale_min = -1.0;
-  handle->scale_max = 1.0;
-  handle->number_of_dims = number_of_dimensions;
-  handle->image_id = -1;
-  handle->imax_id = -1;
-  handle->imin_id = -1;
   /* Allocate space for all the dimension handles
      Note, each volume handle is associated with an array of
      dimension handles in the order that they were create (i.e, file order)
@@ -1084,6 +1085,11 @@ miclose_volume(mihandle_t volume)
 {
     if (volume == NULL) {
         return (MI_ERROR);
+    }
+
+    if (volume->is_dirty) {
+        minc_update_thumbnails(volume);
+        volume->is_dirty = FALSE;
     }
 
     miflush_volume(volume);
