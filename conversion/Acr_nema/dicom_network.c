@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.1  1997-10-20 22:52:46  neelin
-@MODIFIED   : Added support for implementation user information in association request.
+@MODIFIED   : Revision 6.2  1998-03-10 17:05:30  neelin
+@MODIFIED   : Fixed handling of PDV control header last fragment bit (it should be
+@MODIFIED   : set for both command and data parts of the message). Re-organized code
+@MODIFIED   : to use watchpoints differently: put PDU watchpoint on real afp
+@MODIFIED   : everywhere and store PDV watchpoint in dicom io structure.
 @MODIFIED   :
+ * Revision 6.1  1997/10/20  22:52:46  neelin
+ * Added support for implementation user information in association request.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *
@@ -86,8 +92,9 @@ typedef struct {
    Acr_File *virtual_afp;        /* Pointer to message stream to which this
                                     io data is attached */
    int presentation_context_id;
-   long pdu_watchpoint;          /* Distance from current watchpoint to
-                                    PDU watchpoint for input stream */
+   long pdv_watchpoint;          /* Distance from end of current PDV 
+                                    to PDU watchpoint on real input stream.
+                                    This should be a positive number. */
    long maximum_length;          /* Maximum PDU length (excluding header) */
    int writing_command;          /* True if writing command portion */
    long data_length;             /* Length of data portion of message */
@@ -147,8 +154,8 @@ private Acr_File *initialize_dicom_stream(void *io_data, int maxlength,
                                           Dicom_IO_stream_type stream_type);
 private Acr_Dicom_IO *get_dicom_io_pointer(Acr_File *afp);
 private Acr_File *get_dicom_real_afp(Acr_File *afp);
-private long get_dicom_pdu_watchpoint(Acr_File *afp);
-private void set_dicom_pdu_watchpoint(Acr_File *afp, long pdu_watchpoint);
+private long get_dicom_pdv_watchpoint(Acr_File *afp);
+private void set_dicom_pdv_watchpoint(Acr_File *afp, long pdv_watchpoint);
 private void dicom_reset(Acr_File *afp);
 private void dicom_setup_output(Acr_File *afp, 
                                 long command_length, long data_length);
@@ -432,7 +439,6 @@ private Acr_Status read_data_tf(Acr_File *dicom_afp, Acr_Group group)
    Acr_Message message;
    Acr_Group cur, new;
    Acr_File *real_afp;
-   long pdu_watchpoint;
 
    /* Reset the virtual input stream */
    dicom_reset(dicom_afp);
@@ -450,11 +456,8 @@ private Acr_Status read_data_tf(Acr_File *dicom_afp, Acr_Group group)
       exit(EXIT_FAILURE);
    }
 
-   /* Save the PDU watchpoint and set a watchpoint to force the read 
-      routine to look for a PDV header */
-   pdu_watchpoint = acr_get_io_watchpoint(real_afp);
-   acr_set_io_watchpoint(real_afp, (long) 0);
-   set_dicom_pdu_watchpoint(dicom_afp, pdu_watchpoint);
+   /* Set a watchpoint to force the read routine to look for a PDV header */
+   set_dicom_pdv_watchpoint(dicom_afp, (long) 0);
 
    /* Read in the message */
    status = acr_input_message(dicom_afp, &message);
@@ -484,9 +487,6 @@ private Acr_Status read_data_tf(Acr_File *dicom_afp, Acr_Group group)
          status = ACR_ABNORMAL_END_OF_INPUT; break;
       }
    }
-
-   /* Restore the PDU watchpoint */
-   acr_set_io_watchpoint(real_afp, get_dicom_pdu_watchpoint(dicom_afp));
 
    return status;
 }
@@ -1427,6 +1427,7 @@ private Acr_Status write_data_tf(Acr_File *dicom_afp, Acr_Message message)
 
    /* Look for the pdu group, the command group and the first data group */
    pdu_group = acr_get_message_group_list(message);
+   if (pdu_group == NULL) return ACR_PROTOCOL_ERROR;
    if (acr_get_group_group(pdu_group) == DCM_PDU_GRPID) {
       command_group = acr_get_group_next(pdu_group);
    }
@@ -2050,7 +2051,7 @@ private Acr_File *initialize_dicom_stream(void *io_data, int maxlength,
    stream_data->stream_type = stream_type;
    stream_data->real_afp = real_afp;
    stream_data->presentation_context_id = 0;
-   stream_data->pdu_watchpoint = ACR_NO_WATCHPOINT;
+   stream_data->pdv_watchpoint = ACR_NO_WATCHPOINT;
    stream_data->maximum_length = LONG_MAX;
    stream_data->writing_command = FALSE;
    stream_data->data_length = 0;
@@ -2121,11 +2122,11 @@ private Acr_File *get_dicom_real_afp(Acr_File *afp)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_dicom_pdu_watchpoint
+@NAME       : get_dicom_pdv_watchpoint
 @INPUT      : afp
 @OUTPUT     : (none)
-@RETURNS    : Distance from current position to pdu watchpoint on real stream
-@DESCRIPTION: Returns the distance to the PDU watchpoint on the real i/o 
+@RETURNS    : Distance from current position to pdv watchpoint on real stream
+@DESCRIPTION: Returns the distance to the PDV watchpoint on the real i/o 
               stream.
 @METHOD     : 
 @GLOBALS    : 
@@ -2133,7 +2134,7 @@ private Acr_File *get_dicom_real_afp(Acr_File *afp)
 @CREATED    : February 18, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private long get_dicom_pdu_watchpoint(Acr_File *afp)
+private long get_dicom_pdv_watchpoint(Acr_File *afp)
 {
    Acr_Dicom_IO *stream_data;
    long current_watchpoint;
@@ -2142,29 +2143,29 @@ private long get_dicom_pdu_watchpoint(Acr_File *afp)
    if (stream_data == NULL) return ACR_NO_WATCHPOINT;
 
    current_watchpoint = acr_get_io_watchpoint(stream_data->real_afp);
-   if ((stream_data->pdu_watchpoint == ACR_NO_WATCHPOINT) ||
+   if ((stream_data->pdv_watchpoint == ACR_NO_WATCHPOINT) ||
        (current_watchpoint == ACR_NO_WATCHPOINT)) {
       return ACR_NO_WATCHPOINT;
    }
    else {
-      return stream_data->pdu_watchpoint + current_watchpoint;
+      return current_watchpoint - stream_data->pdv_watchpoint;
    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_dicom_pdu_watchpoint
+@NAME       : set_dicom_pdv_watchpoint
 @INPUT      : afp
-              pdu_watchpoint - distance to pdu watchpoint
+              pdv_watchpoint - distance to pdu watchpoint
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
-@DESCRIPTION: Sets the watchpoint for the PDU relative to the current position.
+@DESCRIPTION: Sets the watchpoint for the PDV relative to the current position.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 18, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_dicom_pdu_watchpoint(Acr_File *afp, long pdu_watchpoint)
+private void set_dicom_pdv_watchpoint(Acr_File *afp, long pdv_watchpoint)
 {
    Acr_Dicom_IO *stream_data;
    long current_watchpoint;
@@ -2173,12 +2174,15 @@ private void set_dicom_pdu_watchpoint(Acr_File *afp, long pdu_watchpoint)
    if (stream_data == NULL) return;
 
    current_watchpoint = acr_get_io_watchpoint(stream_data->real_afp);
-   if (current_watchpoint == ACR_NO_WATCHPOINT) {
-      acr_set_io_watchpoint(stream_data->real_afp, pdu_watchpoint);
-      stream_data->pdu_watchpoint = 0;
+   if (pdv_watchpoint == ACR_NO_WATCHPOINT) {
+      stream_data->pdv_watchpoint = ACR_NO_WATCHPOINT;
+   }
+   else if (current_watchpoint == ACR_NO_WATCHPOINT) {
+      acr_set_io_watchpoint(stream_data->real_afp, pdv_watchpoint);
+      stream_data->pdv_watchpoint = 0;
    }
    else {
-      stream_data->pdu_watchpoint = pdu_watchpoint - current_watchpoint;
+      stream_data->pdv_watchpoint = current_watchpoint - pdv_watchpoint;
    }
 }
 
@@ -2188,7 +2192,9 @@ private void set_dicom_pdu_watchpoint(Acr_File *afp, long pdu_watchpoint)
               maximum_length - if <= 0, then a very large value is used
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
-@DESCRIPTION: Sets the maximum PDU length for a dicom stream
+@DESCRIPTION: Sets the maximum PDU length for a dicom stream. If the length
+              is unreasonably small (<= PDV header length) then a more
+              reasonable value is set.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -2207,6 +2213,8 @@ public void acr_set_dicom_maximum_length(Acr_File *afp,
    /* Set the maximum length */
    if (maximum_length <= 0)
       maximum_length = LONG_MAX;
+   else if (maximum_length <= DATA_TF_LEN)
+      maximum_length = DATA_TF_LEN * 2;
    stream_data->maximum_length = maximum_length;
 }
 
@@ -2282,7 +2290,7 @@ private void dicom_reset(Acr_File *afp)
 
    /* Do the reset and mark this as the first time */
    acr_file_reset(afp);
-   stream_data->pdu_watchpoint = ACR_NO_WATCHPOINT;
+   set_dicom_pdv_watchpoint(afp, ACR_NO_WATCHPOINT);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -2312,8 +2320,8 @@ private void dicom_setup_output(Acr_File *afp,
    if (stream_data == NULL) return;
 
    /* Set real afp watchpoint to zero to force a PDU header right away */
-   stream_data->pdu_watchpoint = 0;
    acr_set_io_watchpoint(stream_data->real_afp, 0);
+   set_dicom_pdv_watchpoint(afp, 0);
 
    /* Figure out whether we are starting with a command or data, save the
       data length and set the watchpoint so that we can figure out when 
@@ -2340,10 +2348,10 @@ private void dicom_setup_output(Acr_File *afp,
 @DESCRIPTION: Dicom input routine for reading from a real input stream
               into a virtual input stream.
 @METHOD     : We use three watchpoints. One on the real stream to mark the
-              end of the PDV. One in stream data structure to mark the end
-              of the PDU (this is relative to the end of the PDV watchpoint). 
-              One is set on the virtual stream when we find the last fragment 
-              of a message to mark the end of the message data.
+              end of the PDU. One in stream data structure to mark the end
+              of the PDV. One is set on the virtual (dicom) stream when we 
+              find the last fragment of a message to mark the end of the 
+              message data.
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 18, 1997 (Peter Neelin)
@@ -2356,35 +2364,35 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
    long nread;
    int pdu_type;
    long pdu_length, pdv_length;
-   long watchpoint_distance;
+   long pdv_watchpoint;
    Acr_Status status;
    int presentation_context_id, control_header;
-   Acr_File *real_afp;
+   Acr_File *real_afp, *dicom_afp;
 
    /* Get file pointer */
    if (io_data == NULL) return 0;
    stream_data = (Acr_Dicom_IO *) io_data;
    real_afp = stream_data->real_afp;
+   dicom_afp = stream_data->virtual_afp;
 
    /* Get distance to next watchpoint on real stream */
-   watchpoint_distance = acr_get_io_watchpoint(real_afp);
+   pdv_watchpoint = get_dicom_pdv_watchpoint(dicom_afp);
 
    /* Check whether we need to read in some more headers */
-   if (watchpoint_distance <= 0) {
+   if (pdv_watchpoint <= 0) {
 
       /* Do we need to read in a PDU header? */
-      if (stream_data->pdu_watchpoint <= 0) {
+      if (acr_get_io_watchpoint(real_afp) <= 0) {
          acr_set_io_watchpoint(real_afp, 
                                PDU_HEADER_LEN + sizeof(header_buffer));
          status = read_pdu_header(real_afp, &pdu_type, &pdu_length);
          if ((status != ACR_OK) || (pdu_type != ACR_PDU_DATA_TF)) {
             return -1;
          }
-         stream_data->pdu_watchpoint = pdu_length;
+         acr_set_io_watchpoint(real_afp, pdu_length);
       }
 
       /* Read in the PDV header */
-      acr_set_io_watchpoint(real_afp, sizeof(header_buffer));
       status = acr_read_buffer(real_afp, header_buffer, 
                                sizeof(header_buffer), NULL);
       if (status != ACR_OK) return -1;
@@ -2393,26 +2401,29 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
       presentation_context_id = (int) header_buffer[ACR_SIZEOF_LONG];
       control_header = (int) header_buffer[ACR_SIZEOF_LONG+1];
 
+      /* Check for a bad PDV length compared to PDU length */
+      if (pdv_length > acr_get_io_watchpoint(real_afp)) {
+         return -1;
+      }
+
       /* Set the watchpoint for this PDV */
-      acr_set_io_watchpoint(real_afp, pdv_length);
-      watchpoint_distance = pdv_length;
-      stream_data->pdu_watchpoint -= pdv_length + sizeof(header_buffer);
-      if (stream_data->pdu_watchpoint < 0) return -1;
+      set_dicom_pdv_watchpoint(dicom_afp, pdv_length);
+      pdv_watchpoint = pdv_length;
 
       /* Save the presentation context id */
-      acr_set_dicom_pres_context_id(stream_data->virtual_afp, 
-                                    presentation_context_id);
+      acr_set_dicom_pres_context_id(dicom_afp, presentation_context_id);
 
       /* Check whether this is the last fragment. If it is, set the
          watchpoint. */
-      if (control_header & PDV_LAST_FRAGMENT_MASK) {
-         acr_set_io_watchpoint(stream_data->virtual_afp, pdv_length);
+      if ((control_header & PDV_LAST_FRAGMENT_MASK) &&
+          (pdv_length == acr_get_io_watchpoint(real_afp))) {
+         acr_set_io_watchpoint(dicom_afp, pdv_length);
       }
    }
 
    /* Make sure that we don't read too far */
-   if (nbytes > watchpoint_distance) {
-      nbytes = watchpoint_distance;
+   if (nbytes > pdv_watchpoint) {
+      nbytes = pdv_watchpoint;
    }
 
    /* Read the data into the buffer */
@@ -2434,6 +2445,10 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
               indicate the end of the PDU (this is relative to the end of 
               the PDV watchpoint). One on the virtual stream to mark
               the end of the command or of the data.
+@METHOD     : We use three watchpoints. One on the real stream to mark the
+              end of the PDU. One in stream data structure to mark the end
+              of the PDV. One is set on the virtual (dicom) stream to mark 
+              the end of the command or data.
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 18, 1997 (Peter Neelin)
@@ -2444,9 +2459,9 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
    unsigned char pdu_buffer[PDU_HEADER_LEN];
    unsigned char header_buffer[DATA_TF_LEN];
    Acr_Dicom_IO *stream_data;
-   Acr_File *real_afp, *virtual_afp;
+   Acr_File *real_afp, *dicom_afp;
    long pdu_length, pdv_length;
-   long virtual_watchpoint, real_watchpoint, data_length;
+   long message_watchpoint, pdv_watchpoint, data_length, pdu_watchpoint;
    long nwritten;
    int total_written, bytes_to_write;
    Acr_Status status;
@@ -2456,14 +2471,14 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
    if (io_data == NULL) return 0;
    stream_data = (Acr_Dicom_IO *) io_data;
    real_afp = stream_data->real_afp;
-   virtual_afp = stream_data->virtual_afp;
+   dicom_afp = stream_data->virtual_afp;
 
    /* Get distances to watchpoints */
-   real_watchpoint = acr_get_io_watchpoint(real_afp);
-   virtual_watchpoint = acr_get_io_watchpoint(virtual_afp);
+   pdv_watchpoint = get_dicom_pdv_watchpoint(dicom_afp);
+   message_watchpoint = acr_get_io_watchpoint(dicom_afp);
 
    /* Make sure that we have not gone too far */
-   if (virtual_watchpoint < 0) {
+   if (message_watchpoint < 0) {
       return -1;
    }
 
@@ -2472,10 +2487,11 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
    while (nbytes > 0) {
 
       /* Check whether we need to write out more headers */
-      if (real_watchpoint <= 0) {
+      if (pdv_watchpoint <= 0) {
 
-         /* Do we need to write out a PDU header? */
-         if (stream_data->pdu_watchpoint <= 0) {
+         /* If the PDU watchpoint is <= 0, then we need to write out a 
+            PDU header. */
+         if (acr_get_io_watchpoint(real_afp) <= 0) {
 
             /* Figure out pdu length */
             pdu_length = 0;
@@ -2483,12 +2499,12 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
             /* Get data length */
             data_length = (stream_data->writing_command ? 
                            stream_data->data_length : 
-                           virtual_watchpoint + nbytes);
+                           message_watchpoint + nbytes);
 
             /* Add in command length if needed */
             if (stream_data->writing_command) {
                pdu_length += sizeof(header_buffer) + 
-                  virtual_watchpoint + nbytes;
+                  message_watchpoint + nbytes;
             }
 
             /* Add in data length if needed, making sure that we can
@@ -2503,8 +2519,8 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
                pdu_length = stream_data->maximum_length;
             }
 
-            /* Unset the watchpoint while we write the PDU header */
-            acr_set_io_watchpoint(real_afp, ACR_NO_WATCHPOINT);
+            /* Set the PDU watchpoint */
+            acr_set_io_watchpoint(real_afp, pdu_length + sizeof(pdu_buffer));
 
             /* Write out the buffer */
             pdu_buffer[0] = ACR_PDU_DATA_TF;
@@ -2514,10 +2530,7 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
                                       sizeof(pdu_buffer), NULL);
             if (status != ACR_OK) return total_written;
 
-            /* Keep track of the pdu watchpoint */
-            stream_data->pdu_watchpoint = pdu_length;
-
-         }      /* If pdu_watchpoint <= 0 */
+         }      /* If PDU watchpoint <= 0 */
 
          /* Get info for PDV header */
          message_control_header = 0;
@@ -2526,13 +2539,12 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
          }
 
          /* Get length of PDV, making sure that it will fit in the PDU */
-         pdv_length = virtual_watchpoint + nbytes;
-         if ((pdv_length + sizeof(header_buffer)) > 
-             stream_data->pdu_watchpoint) {
-            pdv_length = stream_data->pdu_watchpoint - sizeof(header_buffer);
+         pdv_length = message_watchpoint + nbytes;
+         pdu_watchpoint = acr_get_io_watchpoint(real_afp);
+         if ((pdv_length + sizeof(header_buffer)) > pdu_watchpoint) {
+            pdv_length = pdu_watchpoint - sizeof(header_buffer);
          }
-         else if (!stream_data->writing_command || 
-                  (stream_data->data_length <= 0)) {
+         else {
             message_control_header |= PDV_LAST_FRAGMENT_MASK;
          }
          pdv_length += 2;
@@ -2548,33 +2560,31 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
 
          /* Set the watchpoint for this PDV */
          pdv_length -= 2;
-         acr_set_io_watchpoint(real_afp, pdv_length);
-         real_watchpoint = pdv_length;
-         stream_data->pdu_watchpoint -= pdv_length + sizeof(header_buffer);
-         if (stream_data->pdu_watchpoint < 0) return total_written;
+         if ((pdv_length <= 0) || 
+             (pdv_length > acr_get_io_watchpoint(real_afp)))
+            return total_written;
+         set_dicom_pdv_watchpoint(dicom_afp, pdv_length);
+         pdv_watchpoint = pdv_length;
 
-         /* Check for a mistake */
-         if (real_watchpoint <= 0) return total_written;
-
-      }         /* If real_watchpoint <= 0 */
+      }         /* If pdv_watchpoint <= 0 */
 
       /* Write out data */
       bytes_to_write = nbytes;
-      if (nbytes >= real_watchpoint) {
-         bytes_to_write = real_watchpoint;
+      if (nbytes >= pdv_watchpoint) {
+         bytes_to_write = pdv_watchpoint;
       }
       status = acr_write_buffer(real_afp, buffer, bytes_to_write, &nwritten);
       total_written += nwritten;
       if (nwritten < bytes_to_write) return total_written;
       nbytes -= bytes_to_write;
       buffer = (void *) ((char *) buffer + bytes_to_write);
-      real_watchpoint -= bytes_to_write;
+      pdv_watchpoint -= bytes_to_write;
 
    }           /* While nbytes > 0 */
 
    /* Check for end of command part */
-   if (stream_data->writing_command && (virtual_watchpoint == 0)) {
-      acr_set_io_watchpoint(virtual_afp, stream_data->data_length);
+   if (stream_data->writing_command && (message_watchpoint == 0)) {
+      acr_set_io_watchpoint(dicom_afp, stream_data->data_length);
       stream_data->writing_command = FALSE;
    }
 
