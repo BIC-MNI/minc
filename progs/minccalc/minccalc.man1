@@ -137,7 +137,14 @@ Specify the expression to evaluate at each voxel (see EXPRESSIONS).
 .I -expfile
 <filename>:
 Specify a file containing an expression to evaluate at each voxel
-(see EXPRESSIONS).
+(see EXPRESSIONS). If filename ``-'' is given, then the expression is read
+from stdin. The only difference from command-line expressions is that 
+comments can be given in the file. A comment line is specified by placing
+a ``#'' as the first non-whitespace character of the line. Minccalc scripts
+can be created by setting the first line to
+
+   #! /usr/local/mni/bin/minccalc -expfile
+
 .P
 .I -outfile
 <symbol> <output file>:
