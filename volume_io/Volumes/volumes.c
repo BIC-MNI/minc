@@ -1114,7 +1114,7 @@ public  void  set_volume_real_range(
     }
 }
 
-public  Volume   copy_volume_definition(
+public  Volume   copy_volume_definition_no_alloc(
     Volume   volume,
     nc_type  nc_data_type,
     BOOLEAN  signed_flag,
@@ -1140,7 +1140,6 @@ public  Volume   copy_volume_definition(
                           volume->dimension_names, nc_data_type, signed_flag,
                           voxel_min, voxel_max );
     set_volume_sizes( copy, sizes );
-    alloc_volume_data( copy );
 
     for_less( c, 0, N_DIMENSIONS )
         copy->spatial_axes[c] = volume->spatial_axes[c];
@@ -1158,6 +1157,23 @@ public  Volume   copy_volume_definition(
                             &transform );
 
     set_voxel_to_world_transform( copy, &transform );
+
+    return( copy );
+}
+
+public  Volume   copy_volume_definition(
+    Volume   volume,
+    nc_type  nc_data_type,
+    BOOLEAN  signed_flag,
+    Real     voxel_min,
+    Real     voxel_max )
+{
+    Volume   copy;
+
+    copy = copy_volume_definition_no_alloc( volume,
+                                            nc_data_type, signed_flag,
+                                            voxel_min, voxel_max );
+    alloc_volume_data( copy );
 
     return( copy );
 }

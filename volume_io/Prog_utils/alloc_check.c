@@ -360,6 +360,26 @@ private   void  delete_alloc_list(
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : memory_still_alloced
+@INPUT      : alloc_list
+@OUTPUT     : 
+@RETURNS    : TRUE or FALSE
+@DESCRIPTION: Decides if any memory is still alloced, thus checking for 
+              memory leaks.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  BOOLEAN  memory_still_alloced(
+    alloc_struct  *alloc_list )
+{
+    return( alloc_list->header->forward[0] != (skip_entry *) NULL );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_alloc_list
 @INPUT      : file
             : alloc_list
@@ -807,21 +827,33 @@ public  void  output_alloc_to_file(
     {
         check_initialized_alloc_list( &alloc_list );
 
-        if( filename != (char *) 0 && filename[0] != (char) 0 )
-            file = fopen( filename, "w" );
-        else
-            file = stdout;
-
-        if( file != (FILE *) 0 )
+        if( memory_still_alloced( &alloc_list ) )
         {
-            get_date( date_str );
+            print( "\n" );
+            print( "\n" );
+            print( "A memory leak was found in this program.\n" );
+            if( filename != NULL )
+                print( "A description has been recorded in the file %s.\n",
+                       filename );
+            print( "Please report this file to the author of the program.\n" );
+            print( "\n" );
 
-            (void) fprintf( file, "Alloc table at %s\n", date_str );
+            if( filename != (char *) 0 && filename[0] != (char) 0 )
+                file = fopen( filename, "w" );
+            else
+                file = stdout;
 
-            output_alloc_list( file, &alloc_list );
+            if( file != (FILE *) 0 )
+            {
+                get_date( date_str );
 
-            if( file != stdout )
-                (void) fclose( file );
+                (void) fprintf( file, "Alloc table at %s\n", date_str );
+
+                output_alloc_list( file, &alloc_list );
+
+                if( file != stdout )
+                    (void) fclose( file );
+            }
         }
     }
 }
