@@ -1,3 +1,8 @@
+2002-12-11  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* progs/minccalc/gram.y: Insert missing semicolon at end
+	of "exprlist" production.
+
 2002-12-05  Steve Robbins  <swmgr@shadow.bic.mni.mcgill.ca>
 
 	* volume_io/Include/vol_io_prototypes.h: Add prototype

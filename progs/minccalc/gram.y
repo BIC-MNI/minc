@@ -66,6 +66,7 @@ exprlist : expr ';' exprlist
 
    |   expr
       { $$ = $1; }
+   ;
 
 expr   :   '(' expr ')'
       { $$ = $2; }
