@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-11-06 19:41:06  neelin
+@MODIFIED   : Added functions acr_group_steal_element and acr_find_group.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -91,6 +94,8 @@
 #include <acr_nema.h>
 
 /* Private functions */
+private void steal_element(Acr_Group group, Acr_Element element, 
+                           Acr_Element previous);
 private void remove_element(Acr_Group group, Acr_Element element, 
                             Acr_Element previous);
 private void insert_element(Acr_Group group, Acr_Element element, 
@@ -258,22 +263,23 @@ public Acr_Group acr_copy_group_list(Acr_Group group_list)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : remove_element
+@NAME       : steal_element
 @INPUT      : group
               element - element to remove
               previous - pointer to previous element or NULL if beginning
                  of group element list
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
-@DESCRIPTION: Remove an element from a group. 
+@DESCRIPTION: Steal an element from a group (remove it without deleting it).
+              The caller must free the element themselves.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : June 17, 1997 (Peter Neelin)
+@CREATED    : November 6, 1998 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void remove_element(Acr_Group group, Acr_Element element, 
-                            Acr_Element previous)
+private void steal_element(Acr_Group group, Acr_Element element, 
+                           Acr_Element previous)
 {
    Acr_Element next;
 
@@ -300,6 +306,30 @@ private void remove_element(Acr_Group group, Acr_Element element,
    /* Update the group length element */
    update_group_length_element(group, 
                                acr_get_element_vr_encoding(group->list_head));
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : remove_element
+@INPUT      : group
+              element - element to remove
+              previous - pointer to previous element or NULL if beginning
+                 of group element list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Remove an element from a group. 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void remove_element(Acr_Group group, Acr_Element element, 
+                            Acr_Element previous)
+{
+
+   /* Get rid of the old element from the group */
+   steal_element(group, element, previous);
 
    /* Delete the old element */
    acr_delete_element(element);
@@ -492,6 +522,48 @@ public void acr_group_remove_element(Acr_Group group, int element_id)
 
       /* Set pointers and get rid of the old element */
       remove_element(group, next_element, prev_element);
+
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_group_steal_element
+@INPUT      : group
+              element - the caller must pass an element so that we
+                 know that they have a handle to it.
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Remove an element from a group without deleting it.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 6, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_group_steal_element(Acr_Group group, Acr_Element element)
+{
+   int element_id;
+   Acr_Element next_element, prev_element;
+
+   /* Get element id from element */
+   element_id = acr_get_element_element(element);
+
+   /* Search for the appropriate location */
+   prev_element = NULL;
+   next_element = group->list_head;
+   while ((next_element != NULL) && 
+          (acr_get_element_element(next_element) != element_id)) {
+      prev_element = next_element;
+      next_element = acr_get_element_next(next_element);
+   }
+
+   /* Check for an existing element and get rid of it */
+   if ((next_element != NULL) &&
+       (acr_get_element_element(next_element) == element_id)) {
+
+      /* Set pointers and get rid of the old element */
+      steal_element(group, next_element, prev_element);
 
    }
 
@@ -898,6 +970,40 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_find_group
+@INPUT      : group_list
+              group_id
+@OUTPUT     : (none)
+@RETURNS    : gropu pointer
+@DESCRIPTION: Find a group in a group list
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 6, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Group acr_find_group(Acr_Group group_list, int group_id)
+{
+   Acr_Group group;
+   int next_id;
+
+   /* Search through groups for group id */
+   group = group_list;
+   if (group != NULL)
+      next_id = acr_get_group_group(group);
+   else 
+      next_id = 0;
+   while ((next_id != group_id) && (group != NULL)) {
+      group = acr_get_group_next(group);
+      if (group != NULL)
+         next_id = acr_get_group_group(group);
+   }
+
+   return group;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_find_group_element
 @INPUT      : group_list
               elid
@@ -914,22 +1020,9 @@ public Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid)
 {
    Acr_Group group;
-   int next_id, group_id;
 
-   /* Get group and element id */
-   group_id = elid->group_id;
-
-   /* Search through groups for group id */
-   group = group_list;
-   if (group != NULL)
-      next_id = acr_get_group_group(group);
-   else 
-      next_id = 0;
-   while ((next_id != group_id) && (group != NULL)) {
-      group = acr_get_group_next(group);
-      if (group != NULL)
-         next_id = acr_get_group_group(group);
-   }
+   /* Find the group */
+   group = acr_find_group(group_list, elid->group_id);
 
    /* If not found return NULL */
    if (group == NULL) return NULL;

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-11-06 19:41:06  neelin
+@MODIFIED   : Added functions acr_group_steal_element and acr_find_group.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -83,6 +86,7 @@ public void acr_group_insert_element(Acr_Group group,
                                      Acr_Element element);
 public void acr_group_add_element(Acr_Group group, Acr_Element element);
 public void acr_group_remove_element(Acr_Group group, int element_id);
+public void acr_group_steal_element(Acr_Group group, Acr_Element element);
 public void acr_set_group_next(Acr_Group group, Acr_Group next);
 public int acr_get_group_group(Acr_Group group);
 public Acr_Element acr_get_group_element_list(Acr_Group group);
@@ -94,6 +98,7 @@ public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group);
 public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group);
 public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
                                        int max_group_id);
+public Acr_Group acr_find_group(Acr_Group group_list, int group_id);
 public Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid);
 public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list);
