@@ -19,11 +19,27 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.34 1997-03-23 21:11:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.35 1997-06-29 19:00:21 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
 private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
+
+#ifdef NO_STRERROR
+private char *strerror(int errnum)
+{
+    extern int  sys_nerr;
+    extern char *sys_errlist[];
+
+    if( errnum < 0 || errnum >= sys_nerr )
+    {
+       return( "" );
+    }
+
+    return( sys_errlist[errnum] );
+}
+#endif
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : print_system_error
