@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:36  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-10-03 13:34:14  neelin
+@MODIFIED   : Fixed bug in truncate_input_vectors - was not handling out-of-range
+@MODIFIED   : start values properly.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:36  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.5  1995/03/20  13:32:03  neelin
  * Fixed -normalize option.
  *
@@ -37,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 3.0 1995-05-15 19:32:36 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 3.1 1995-10-03 13:34:14 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -479,9 +483,9 @@ public void get_block_min_and_max(Reshape_info *reshape_info,
 @OUTPUT     : input_start  - start of input hyperslab (or NULL)
               input_count  - count for input hyperslab
 @RETURNS    : (nothing)
-@DESCRIPTION: Input_start and input_count are truncated to specify a legal hyperslab for 
-              the input file (if not specified, input_start is assumed to be
-              [0,0,...]).
+@DESCRIPTION: Input_start and input_count are truncated to specify a 
+              legal hyperslab for the input file (if not specified, 
+              input_start is assumed to be [0,0,...]).
 @METHOD     :
 @GLOBALS    :
 @CALLS      :
@@ -493,7 +497,7 @@ public void truncate_input_vectors(Reshape_info *reshape_info,
                                    long *input_count)
 {
    int idim;
-   long first, last;
+   long first, last;        /* last is actually last_index+1 */
 
    /* Check for NULL vectors */
    if (input_count == NULL) return;
@@ -503,14 +507,16 @@ public void truncate_input_vectors(Reshape_info *reshape_info,
       first = ( (input_start != NULL) ? input_start[idim] : 0 );
       last = first + input_count[idim];
       if (first < 0)
-         input_start[idim] = 0;
+         first = 0;
       else if (first >= reshape_info->input_size[idim])
-         input_start[idim] = reshape_info->input_size[idim] - 1;
+         first = reshape_info->input_size[idim] - 1;
       if (last < 0)
-         input_count[idim] = 0;
+         last = 0;
       else if (last >= reshape_info->input_size[idim])
-         input_count[idim] = reshape_info->input_size[idim] - 
-            input_start[idim];
+         last = reshape_info->input_size[idim];
+      if (input_start != NULL)
+         input_start[idim] = first;
+      input_count[idim] = last - first;
    }
 
 }
