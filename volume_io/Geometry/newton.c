@@ -1,6 +1,6 @@
 #include  <internal_volume_io.h>
 
-public  BOOLEAN  newton_function_inversion(
+public  BOOLEAN  newton_root_find(
     int    n_dimensions,
     void   (*function) ( void *function_data,
                          Real parameters[],  Real values[], Real **derivatives),
@@ -8,11 +8,13 @@ public  BOOLEAN  newton_function_inversion(
     Real   initial_guess[],
     Real   desired_values[],
     Real   solution[],
-    Real   tolerance,
+    Real   function_tolerance,
+    Real   delta_tolerance,
     int    max_iterations )
 {
-    int    iter, dim;
-    Real   *values, **derivatives, *delta, error;
+    int       iter, dim;
+    Real      *values, **derivatives, *delta, error;
+    BOOLEAN   success;
 
     ALLOC( values, n_dimensions );
     ALLOC( delta, n_dimensions );
@@ -22,7 +24,7 @@ public  BOOLEAN  newton_function_inversion(
         solution[dim] = initial_guess[dim];
 
     iter = 0;
-    error = tolerance;
+    success = FALSE;
 
     while( max_iterations < 0 || iter < max_iterations )
     {
@@ -37,19 +39,32 @@ public  BOOLEAN  newton_function_inversion(
             error += ABS( values[dim] );
         }
 
-        if( error < tolerance )
+        if( error < function_tolerance )
+        {
+            success = TRUE;
             break;
+        }
 
         if( !solve_linear_system( n_dimensions, derivatives, values, delta ) )
             break;
 
+        error = 0.0;
         for_less( dim, 0, n_dimensions )
+        {
             solution[dim] += delta[dim];
+            error += ABS( delta[dim] );
+        }
+
+        if( error < delta_tolerance )
+        {
+            success = TRUE;
+            break;
+        }
     }
 
     FREE( values );
     FREE( delta );
     FREE2D( derivatives );
 
-    return( error < tolerance );
+    return( success );
 }
