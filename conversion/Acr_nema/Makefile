@@ -8,7 +8,7 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = acr_nema_test dump_acr_nema extract_acr_nema
+PROGS    = acr_nema_test dump_acr_nema extract_acr_nema read_acr_nema
 OBJS     = file_io.o acr_nema_io.o element.o group.o message.o
 HEADERS  = $(OBJS:.o=.h) acr_nema.h
 CDEFINES = -DDEBUG#                        cpp defines
