@@ -92,7 +92,9 @@ void sym_set_scalar(int width, int *eval_flags,
    }
 
    /* Create a new scalar if needed */
-   if (newsym->type == SYM_UNKNOWN) {
+   if (newsym->type == SYM_UNKNOWN || newsym->scalar->width < width) {
+      if (newsym->type == SYM_SCALAR)
+         scalar_free(newsym->scalar);
       newsym->type = SYM_SCALAR;
       newsym->scalar = new_scalar(width);
    }
@@ -124,13 +126,14 @@ void sym_set_vector(int width, int *eval_flags,
    }
 
    /* Create a new vector if needed - either it does not exist or the
-      length is changing */
-   if (newsym->type == SYM_UNKNOWN || newsym->vector->len != v->len) {
+      length is changing or the width is increasing*/
+   if (newsym->type == SYM_UNKNOWN || newsym->vector->len != v->len ||
+      (newsym->vector->len > 0 && newsym->vector->el[0]->width < width) ) {
 
       /* Free an existing vector. If eval_flags is set, then we cannot
          change the length of the vector */
       if (newsym->type == SYM_VECTOR) {
-         if (eval_flags != NULL) {
+         if (eval_flags != NULL && newsym->vector->len != v->len) {
             /* errx(1, "assigned vector must match length of %s in if", 
                     ident_str(id)); */
             fprintf(stderr, "assigned vector must match length of %s in if", 
