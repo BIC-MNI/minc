@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.2 1996-05-17 19:36:25 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.3 1996-08-21 13:20:03 david Exp $";
 #endif
 
 public  void  convert_voxels_to_values(
@@ -198,6 +198,41 @@ private  void  slow_get_volume_voxel_hyperslab(
     }
 }
 
+private  Real  *unsigned_byte_to_real = NULL;
+private  Real  *signed_byte_to_real = NULL;
+private  Real  *unsigned_short_to_real = NULL;
+private  Real  *signed_short_to_real = NULL;
+
+private  void  check_real_conversion_lookup(
+    Data_types  data_type )
+{
+    Real   min_value, max_value, **ptr;
+    long   i, long_min, long_max;
+
+    switch( data_type )
+    {
+    case  UNSIGNED_BYTE:   ptr = &unsigned_byte_to_real;  break;
+    case  SIGNED_BYTE:     ptr = &signed_byte_to_real;  break;
+    case  UNSIGNED_SHORT:  ptr = &unsigned_short_to_real;  break;
+    case  SIGNED_SHORT:    ptr = &signed_short_to_real;  break;
+    default:               return;
+    }
+
+    if( *ptr != NULL )
+        return;
+
+    get_type_range( data_type, &min_value, &max_value );
+    long_min = (long) min_value;
+    long_max = (long) max_value;
+
+    ALLOC( *ptr, long_max - long_min + 1 );
+
+    (*ptr) -= long_min;
+
+    for_inclusive( i, long_min, long_max )
+        (*ptr)[i] = (Real) i;
+}
+
 public  void  get_voxel_values_5d(
     Data_types  data_type,
     void        *void_ptr,
@@ -232,6 +267,8 @@ public  void  get_voxel_values_5d(
     step2 -= n3 * step3;
     step3 -= n4 * step4;
 
+    check_real_conversion_lookup( data_type );
+
     switch( data_type )
     {
     case UNSIGNED_BYTE:
@@ -246,7 +283,8 @@ public  void  get_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *values = (Real) *unsigned_byte_ptr;
+                            *values = unsigned_byte_to_real[
+                                                (long) *unsigned_byte_ptr];
                             ++values;
                             unsigned_byte_ptr += step4;
                         }
@@ -272,7 +310,8 @@ public  void  get_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *values = (Real) *signed_byte_ptr;
+                            *values = signed_byte_to_real[
+                                                (long) *signed_byte_ptr];
                             ++values;
                             signed_byte_ptr += step4;
                         }
@@ -298,7 +337,8 @@ public  void  get_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *values = (Real) *unsigned_short_ptr;
+                            *values = unsigned_short_to_real[
+                                               (long) *unsigned_short_ptr];
                             ++values;
                             unsigned_short_ptr += step4;
                         }
@@ -324,7 +364,8 @@ public  void  get_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *values = (Real) *signed_short_ptr;
+                            *values = signed_short_to_real[
+                                                (long) *signed_short_ptr];
                             ++values;
                             signed_short_ptr += step4;
                         }
@@ -474,6 +515,7 @@ public  void  get_voxel_values_4d(
     step0 -= n1 * step1;
     step1 -= n2 * step2;
     step2 -= n3 * step3;
+    check_real_conversion_lookup( data_type );
 
     switch( data_type )
     {
@@ -487,7 +529,8 @@ public  void  get_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *values = (Real) *unsigned_byte_ptr;
+                        *values = unsigned_byte_to_real[
+                                                (long) *unsigned_byte_ptr];
                         ++values;
                         unsigned_byte_ptr += step3;
                     }
@@ -509,7 +552,7 @@ public  void  get_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *values = (Real) *signed_byte_ptr;
+                        *values = signed_byte_to_real[(long) *signed_byte_ptr];
                         ++values;
                         signed_byte_ptr += step3;
                     }
@@ -531,7 +574,8 @@ public  void  get_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *values = (Real) *unsigned_short_ptr;
+                        *values = unsigned_short_to_real[
+                                                (long) *unsigned_short_ptr];
                         ++values;
                         unsigned_short_ptr += step3;
                     }
@@ -553,7 +597,8 @@ public  void  get_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *values = (Real) *signed_short_ptr;
+                        *values = signed_short_to_real[
+                                                (long) *signed_short_ptr];
                         ++values;
                         signed_short_ptr += step3;
                     }
@@ -682,6 +727,7 @@ public  void  get_voxel_values_3d(
     step2 = steps[2];
     step0 -= n1 * step1;
     step1 -= n2 * step2;
+    check_real_conversion_lookup( data_type );
 
     switch( data_type )
     {
@@ -693,7 +739,7 @@ public  void  get_voxel_values_3d(
             {
                 for_less( i2, 0, n2 )
                 {
-                    *values = (Real) *unsigned_byte_ptr;
+                    *values = unsigned_byte_to_real[(long) *unsigned_byte_ptr];
                     ++values;
                     unsigned_byte_ptr += step2;
                 }
@@ -711,7 +757,7 @@ public  void  get_voxel_values_3d(
             {
                 for_less( i2, 0, n2 )
                 {
-                    *values = (Real) *signed_byte_ptr;
+                    *values = signed_byte_to_real[(long) *signed_byte_ptr];
                     ++values;
                     signed_byte_ptr += step2;
                 }
@@ -729,7 +775,7 @@ public  void  get_voxel_values_3d(
             {
                 for_less( i2, 0, n2 )
                 {
-                    *values = (Real) *unsigned_short_ptr;
+                    *values = unsigned_short_to_real[(long) *unsigned_short_ptr];
                     ++values;
                     unsigned_short_ptr += step2;
                 }
@@ -747,7 +793,7 @@ public  void  get_voxel_values_3d(
             {
                 for_less( i2, 0, n2 )
                 {
-                    *values = (Real) *signed_short_ptr;
+                    *values = signed_short_to_real[(long) *signed_short_ptr];
                     ++values;
                     signed_short_ptr += step2;
                 }
@@ -855,6 +901,7 @@ public  void  get_voxel_values_2d(
     step0 = steps[0];
     step1 = steps[1];
     step0 -= n1 * step1;
+    check_real_conversion_lookup( data_type );
 
     switch( data_type )
     {
@@ -864,7 +911,7 @@ public  void  get_voxel_values_2d(
         {
             for_less( i1, 0, n1 )
             {
-                *values = (Real) *unsigned_byte_ptr;
+                *values = unsigned_byte_to_real[(long) *unsigned_byte_ptr];
                 ++values;
                 unsigned_byte_ptr += step1;
             }
@@ -878,7 +925,7 @@ public  void  get_voxel_values_2d(
         {
             for_less( i1, 0, n1 )
             {
-                *values = (Real) *signed_byte_ptr;
+                *values = signed_byte_to_real[(long) *signed_byte_ptr];
                 ++values;
                 signed_byte_ptr += step1;
             }
@@ -892,7 +939,7 @@ public  void  get_voxel_values_2d(
         {
             for_less( i1, 0, n1 )
             {
-                *values = (Real) *unsigned_short_ptr;
+                *values = unsigned_short_to_real[(long) *unsigned_short_ptr];
                 ++values;
                 unsigned_short_ptr += step1;
             }
@@ -906,7 +953,7 @@ public  void  get_voxel_values_2d(
         {
             for_less( i1, 0, n1 )
             {
-                *values = (Real) *signed_short_ptr;
+                *values = signed_short_to_real[(long) *signed_short_ptr];
                 ++values;
                 signed_short_ptr += step1;
             }
@@ -989,13 +1036,15 @@ public  void  get_voxel_values_1d(
     float            *float_ptr;
     double           *double_ptr;
 
+    check_real_conversion_lookup( data_type );
+
     switch( data_type )
     {
     case UNSIGNED_BYTE:
         unsigned_byte_ptr = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *values = (Real) *unsigned_byte_ptr;
+            *values = unsigned_byte_to_real[(long) *unsigned_byte_ptr];
             ++values;
             unsigned_byte_ptr += step0;
         }
@@ -1005,7 +1054,7 @@ public  void  get_voxel_values_1d(
         signed_byte_ptr = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *values = (Real) *signed_byte_ptr;
+            *values = signed_byte_to_real[(long) *signed_byte_ptr];
             ++values;
             signed_byte_ptr += step0;
         }
@@ -1015,7 +1064,7 @@ public  void  get_voxel_values_1d(
         unsigned_short_ptr = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *values = (Real) *unsigned_short_ptr;
+            *values = unsigned_short_to_real[(long) *unsigned_short_ptr];
             ++values;
             unsigned_short_ptr += step0;
         }
@@ -1025,7 +1074,7 @@ public  void  get_voxel_values_1d(
         signed_short_ptr = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *values = (Real) *signed_short_ptr;
+            *values = signed_short_to_real[(long) *signed_short_ptr];
             ++values;
             signed_short_ptr += step0;
         }
