@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.2 1996-01-16 13:29:31 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.3 1996-01-17 21:24:06 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -166,6 +166,16 @@ Calculate the square root of a volume.
 .P
 .I -square:
 Calculate the square of a volume.
+.P
+.I -exp:
+Calculate c2*exp(c1*x) at each voxel of a volume, where x is the 
+voxel value and c1 and c2 are constants specified by -constant c1 or
+-const2 c1 c2. The default value for these constants is 1.0.
+.P
+.I -log:
+Calculate log(x/c2)/c1 for each voxel of a volume, where x is the
+voxel value and c1 and c2 are constants specified by -constant c1 or
+-const2 c1 c2. The default value for these constants is 1.0.
 .P
 .I -scale:
 Scale a volume either by multiplying by a single constant (use

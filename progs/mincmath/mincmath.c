@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 3.2  1996-01-16 13:29:31  neelin
-@MODIFIED   : Added -invert option.
+@MODIFIED   : Revision 3.3  1996-01-17 21:24:06  neelin
+@MODIFIED   : Added -exp and -log options.
 @MODIFIED   :
+ * Revision 3.2  1996/01/16  13:29:31  neelin
+ * Added -invert option.
+ *
  * Revision 3.1  1995/12/13  16:22:24  neelin
  * Added -check_dimensions and -nocheck_dimensions options.
  *
@@ -27,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.2 1996-01-16 13:29:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.3 1996-01-17 21:24:06 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -61,7 +64,7 @@ typedef enum {
 UNSPECIFIED_OP = 0, ADD_OP, SUB_OP, MULT_OP, DIV_OP, SQRT_OP, SQUARE_OP,
 SCALE_OP, CLAMP_OP, SEGMENT_OP, NSEGMENT_OP, PERCENTDIFF_OP, 
 EQ_OP, NE_OP, GT_OP, GE_OP, LT_OP, LE_OP, AND_OP, OR_OP, NOT_OP, 
-ISNAN_OP, NISNAN_OP, INVERT_OP
+ISNAN_OP, NISNAN_OP, INVERT_OP, EXP_OP, LOG_OP
 } Operation;
 
 typedef enum {
@@ -95,6 +98,8 @@ Num_Operands OperandTable[][3] = {
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ISNAN_OP */
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* NISNAN_OP */
    UNARY_NUMOP,   UNARY_NUMOP,   ILLEGAL_NUMOP,       /* INVERT_OP */
+   UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* EXP_OP */
+   UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* LOG_OP */
    ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP        /* nothing */
 };
 
@@ -227,6 +232,10 @@ ArgvInfo argTable[] = {
        "Take square root of a volume."},
    {"-square", ARGV_CONSTANT, (char *) SQUARE_OP, (char *) &operation,
        "Take square of a volume."},
+   {"-exp", ARGV_CONSTANT, (char *) EXP_OP, (char *) &operation,
+       "Calculate c2*exp(c1*x). The constants c1 and c2 default to 1."},
+   {"-log", ARGV_CONSTANT, (char *) LOG_OP, (char *) &operation,
+       "Calculate log(x/c2)/c1. The constants c1 and c2 default to 1."},
    {"-scale", ARGV_CONSTANT, (char *) SCALE_OP, (char *) &operation,
        "Scale a volume: volume * c1 + c2."},
    {"-clamp", ARGV_CONSTANT, (char *) CLAMP_OP, (char *) &operation,
@@ -426,7 +435,9 @@ public void do_math(void *caller_data, long num_voxels,
    for (iconst=0; iconst < sizeof(constants)/sizeof(constants[0]); iconst++) {
       if (iconst < num_constants)
          constants[iconst] = math_data->constants[iconst];
-      else if (operation == INVERT_OP)
+      else if ((operation == INVERT_OP) ||
+               (operation == EXP_OP) ||
+               (operation == LOG_OP))
          constants[iconst] = 1.0;
       else
          constants[iconst] = 0.0;
@@ -482,6 +493,16 @@ public void do_math(void *caller_data, long num_voxels,
             break;
          case SQUARE_OP:
             output_data[0][ivox] = value1 * value1; break;
+         case EXP_OP:
+            output_data[0][ivox] = constants[1] * exp(value1 * constants[0]);
+            break;
+         case LOG_OP:
+            if ((value1 <= 0.0) || (constants[1] <= 0.0) || 
+                (constants[0] == 0.0))
+               output_data[0][ivox] = illegal_value;
+            else
+               output_data[0][ivox] = log(value1/constants[1])/constants[0];
+            break;
          case SCALE_OP:
             output_data[0][ivox] = value1 * constants[0] + constants[1]; break;
          case CLAMP_OP:
