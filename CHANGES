@@ -2,6 +2,10 @@ Wed Nov 28 10:36:13 EST 2001
    - Removed limit on number of icv's that can exist at one time.
      The definition of MI_MAX_NUM_ICV remains, but it is no longer
      enforced.
+   - Added function set_minc_input_user_real_range to allow users
+     to set the scaling for input to integers. This forces the Volume
+     real range to a particular pair of values, rather than using the full 
+     range of the file.
 
 Tue Nov 13 16:04:36 EST 2001
    - Modified icv normalization handling in minc library. When the icv
