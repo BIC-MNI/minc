@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.2  1997-10-20 21:46:02  neelin
-@MODIFIED   : Delete answering message when making association.
+@MODIFIED   : Revision 6.3  1997-10-20 22:52:46  neelin
+@MODIFIED   : Added support for implementation user information in association request.
 @MODIFIED   :
+ * Revision 6.2  1997/10/20  21:46:02  neelin
+ * Delete answering message when making association.
+ *
  * Revision 6.1  1997/09/15  16:50:59  neelin
  * Separated out connection timeouts from i/o timeouts and added functions
  * to change them.
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.2 1997-10-20 21:46:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.3 1997-10-20 22:52:46 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -459,6 +462,7 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
    char **syntax_list;
    int iabstract, itransfer, num_syntax;
    int cur_presentation_context_id;
+   char string[64];
    static char *standard_transfer_syntax[] = {
       ACR_IMPLICIT_VR_LITTLE_END_UID,
       ACR_EXPLICIT_VR_LITTLE_END_UID,
@@ -542,6 +546,11 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
    /* Add the user information */
    acr_group_add_element(group, 
                          acr_create_element_long(DCM_PDU_Maximum_length, 0L));
+   (void) sprintf(string, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
+                  (int) 'M', (int) 'N', (int) 'I');
+   acr_group_add_element(group, 
+      acr_create_element_string(DCM_PDU_Implementation_class_uid,
+                                string));
 
    /* Make a message and add this group */
    message = acr_create_message();

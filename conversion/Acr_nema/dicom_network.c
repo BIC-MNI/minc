@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-10-20 22:52:46  neelin
+@MODIFIED   : Added support for implementation user information in association request.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -61,13 +64,15 @@
 #define DICOM_NETWORK_BYTE_ORDER ACR_BIG_ENDIAN
 
 /* PDU item types */
-#define PDU_ITEM_APPLICATION_CONTEXT  0x10
-#define PDU_ITEM_PRESENTATION_CONTEXT 0x20
-#define PDU_ITEM_PRES_CONTEXT_REPLY   0x21
-#define PDU_ITEM_ABSTRACT_SYNTAX      0x30
-#define PDU_ITEM_TRANSFER_SYNTAX      0x40
-#define PDU_ITEM_USER_INFORMATION     0x50
-#define PDU_ITEM_MAXIMUM_LENGTH       0x51
+#define PDU_ITEM_APPLICATION_CONTEXT         0x10
+#define PDU_ITEM_PRESENTATION_CONTEXT        0x20
+#define PDU_ITEM_PRES_CONTEXT_REPLY          0x21
+#define PDU_ITEM_ABSTRACT_SYNTAX             0x30
+#define PDU_ITEM_TRANSFER_SYNTAX             0x40
+#define PDU_ITEM_USER_INFORMATION            0x50
+#define PDU_ITEM_MAXIMUM_LENGTH              0x51
+#define PDU_ITEM_IMPLEMENTATION_CLASS_UID    0x52
+#define PDU_ITEM_IMPLEMENTATION_VERSION_NAME 0x55
 
 /* Mask for getting info out of PDV message control header */
 #define PDV_COMMAND_PDV_MASK 0x1
@@ -650,6 +655,12 @@ private Acr_Status read_pdu_item(Acr_File *afp, Acr_Element *item)
       break;
    case PDU_ITEM_MAXIMUM_LENGTH:
       status = read_long_item(afp, DCM_PDU_Maximum_length, item);
+      break;
+   case PDU_ITEM_IMPLEMENTATION_CLASS_UID:
+      status = read_uid_item(afp, DCM_PDU_Implementation_class_uid, item);
+      break;
+   case PDU_ITEM_IMPLEMENTATION_VERSION_NAME:
+      status = read_uid_item(afp, DCM_PDU_Implementation_version_name, item);
       break;
    default:
       status = read_unknown_item(afp, item_type, item);
@@ -1704,6 +1715,23 @@ private Acr_Status write_user_info_item(Acr_File *afp, Acr_Group group,
    }
    else {
       *length += sizeof(buffer);
+   }
+
+   /* Write out implementation information */
+   element = acr_find_group_element(group, DCM_PDU_Implementation_class_uid);
+   if (element != NULL) {
+      status = write_unknown_item(afp, PDU_ITEM_IMPLEMENTATION_CLASS_UID, 
+                                  acr_get_element_length(element),
+                                  acr_get_element_data(element), length);
+      if (status != ACR_OK) return status;
+   }
+   element = acr_find_group_element(group, 
+                                    DCM_PDU_Implementation_version_name);
+   if (element != NULL) {
+      status = write_unknown_item(afp, PDU_ITEM_IMPLEMENTATION_VERSION_NAME, 
+                                  acr_get_element_length(element),
+                                  acr_get_element_data(element), length);
+      if (status != ACR_OK) return status;
    }
 
    /* Write any unknown items with an item type > PDU_ITEM_USER_INFORMATION */

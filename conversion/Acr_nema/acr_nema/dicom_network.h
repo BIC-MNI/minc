@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-10-20 22:52:46  neelin
+@MODIFIED   : Added support for implementation user information in association request.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -66,6 +69,8 @@ DCM_PDU_ELEMENT(DCM_PDU_Presentation_context_id,         0x0100, US);
 DCM_PDU_ELEMENT(DCM_PDU_Abstract_syntax,                 0x0120, UI);
 DCM_PDU_ELEMENT(DCM_PDU_Transfer_syntax,                 0x0130, UI);
 DCM_PDU_ELEMENT(DCM_PDU_Maximum_length,                  0x0140, UL);
+DCM_PDU_ELEMENT(DCM_PDU_Implementation_class_uid,        0x0141, UI);
+DCM_PDU_ELEMENT(DCM_PDU_Implementation_version_name,     0x0142, UI);
 DCM_PDU_ELEMENT(DCM_PDU_Result,                          0x0150, US);
 DCM_PDU_ELEMENT(DCM_PDU_Source,                          0x0160, US);
 DCM_PDU_ELEMENT(DCM_PDU_Reason,                          0x0170, US);
