@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.h,v $
-@MODIFIED   : Revision 1.1  1993-11-10 10:33:33  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-25 10:37:43  neelin
+@MODIFIED   : Added file free and ungetc and trace.
 @MODIFIED   :
+ * Revision 1.1  93/11/10  10:33:33  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -41,6 +44,7 @@ typedef struct {
    unsigned char *end;
    unsigned char *ptr;
    int length;
+   int stream_type;
 } Acr_File;
 
 /* Macros for getting and putting a character */
@@ -55,6 +59,10 @@ typedef struct {
 
 /* Function definitions */
 
+public void acr_enable_input_trace(void);
+public void acr_disable_input_trace(void);
+public void acr_enable_output_trace(void);
+public void acr_disable_output_trace(void);
 public Acr_File *acr_file_initialize(void *user_data,
                                      int maxlength,
                                      Acr_Io_Routine io_routine);
@@ -62,6 +70,7 @@ public void acr_file_free(Acr_File *afp);
 public int acr_file_read_more(Acr_File *afp);
 public int acr_file_write_more(Acr_File *afp, int character);
 public int acr_file_flush(Acr_File *afp);
+public int acr_ungetc(int c, Acr_File *afp);
 public int acr_stdio_read(void *user_data, void *buffer, int nbytes);
 public int acr_stdio_write(void *user_data, void *buffer, int nbytes);
 
