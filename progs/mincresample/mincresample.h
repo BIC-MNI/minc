@@ -20,7 +20,9 @@
 #define Z 2
 #define DEFAULT_MAX 1.0
 #define DEFAULT_MIN 0.0
+#define FILL_DEFAULT DBL_MAX   /* Fillvalue indicating -nofill */
 #define PROCESSING_VAR "processing"
+#define TEMP_IMAGE_VAR "mincresample-temporary-image"
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
@@ -75,6 +77,8 @@ typedef int (*Interpolating_Function)
 struct Volume_Data_Struct {
    nc_type datatype;         /* Type of data in volume */
    int is_signed;            /* Sign of data (TRUE if signed) */
+   int use_fill;             /* TRUE if fill values should be used in
+                                calculation of output image max/min */
    double fillvalue;         /* Value to return when out of bounds */
    int size[VOL_NDIMS];      /* Size of each dimension */
    void *data;               /* Pointer to volume data */
@@ -154,7 +158,7 @@ typedef struct {
 { \
    long offset; \
  \
-   offset = (ind0*volume->size[1] + ind1)*volume->size[2] + ind2; \
+   offset = ((ind0)*volume->size[1] + (ind1))*volume->size[2] + (ind2); \
    switch (volume->datatype) { \
    case NC_BYTE: \
       if (volume->is_signed) \

@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.1 1993-03-02 12:01:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.2 1993-03-03 14:15:19 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -230,7 +230,7 @@ public void load_volume(File_Info *file, long start[], long count[],
       /* If the variables type is floating point, then don't scale */
       if ((volume->datatype==NC_FLOAT) || (volume->datatype==NC_DOUBLE)) {
          volume->scale[islice] = 1.0;
-         volume->scale[islice] = 0.0;
+         volume->offset[islice] = 0.0;
       }
 
       /* Otherwise, calculate scale and offset */
@@ -370,7 +370,7 @@ public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol,
          }
 
          /* Do interpolation */
-         if (INTERPOLATE(volume, &coord, dptr)) {
+         if (INTERPOLATE(volume, &coord, dptr) || volume->use_fill) {
             if (*dptr > *maximum) *maximum = *dptr;
             if (*dptr < *minimum) *minimum = *dptr;
          }
@@ -642,9 +642,9 @@ public int tricubic_interpolant(Volume_Data *volume,
    ind2--;
 
    /* Check for edges - do linear interpolation at edges */
-   if ((ind0 >= max0-3) || (ind0 <= 0) ||
-       (ind1 >= max1-3) || (ind1 <= 0) ||
-       (ind2 >= max2-3) || (ind2 <= 0)) {
+   if ((ind0 > max0-3) || (ind0 < 0) ||
+       (ind1 > max1-3) || (ind1 < 0) ||
+       (ind2 > max2-3) || (ind2 < 0)) {
       return trilinear_interpolant(volume, coord, result);
    }
    index[0]=ind0; index[1]=ind1; index[2]=ind2;
@@ -766,9 +766,9 @@ public int nearest_neighbour_interpolant(Volume_Data *volume,
    }
 
    /* Get the whole part of the coordinate */
-   ind0 = (long) coord->x + 0.5;
-   ind1 = (long) coord->y + 0.5;
-   ind2 = (long) coord->z + 0.5;
+   ind0 = (long) (coord->x + 0.5);
+   ind1 = (long) (coord->y + 0.5);
+   ind2 = (long) (coord->z + 0.5);
 
    /* Get the value */
    VOLUME_VALUE(volume, ind0  , ind1  , ind2  , *result);

@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.1 1993-03-02 12:00:48 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.2 1993-03-03 14:15:07 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ public void get_arginfo(int argc, char *argv[],
       NC_SHORT,               /* Type will be modified anyway */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
-      0.0,                    /* Fillvalue */
+      FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
       {TRUE},                 /* Verbose */
       trilinear_interpolant,
       {TRUE, NULL, NULL},     /* Set the default transformation later */
@@ -228,7 +228,8 @@ public void get_arginfo(int argc, char *argv[],
    /* Other variables */
    int save_argc, iarg, idim, index, ivar, varid;
    int ndims, dim[MAX_VAR_DIMS], imgdim[MAX_VAR_DIMS];
-   int in_index, out_index;
+   int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
+   int in_findex, out_findex;  /* File indices (0 to ndims-1) */
    long size, total_size;
    char **save_argv, *infile, *outfile;
    File_Info *fp;
@@ -273,7 +274,14 @@ public void get_arginfo(int argc, char *argv[],
    in_vol->volume = MALLOC(sizeof(Volume_Data));
    in_vol->volume->datatype = in_vol->file->datatype;
    in_vol->volume->is_signed = in_vol->file->is_signed;
-   in_vol->volume->fillvalue = args.fillvalue;
+   if (args.fillvalue == FILL_DEFAULT) {
+      in_vol->volume->fillvalue = 0.0;
+      in_vol->volume->use_fill = TRUE;
+   }
+   else {
+      in_vol->volume->fillvalue = args.fillvalue;
+      in_vol->volume->use_fill = FALSE;
+   }
    in_vol->volume->interpolant = args.interpolant;
 
    /* Get space for volume data */
@@ -345,7 +353,7 @@ public void get_arginfo(int argc, char *argv[],
       if (args.datatype == in_vol->file->datatype)
          args.is_signed = in_vol->file->is_signed;
       else
-         args.is_signed = (in_vol->file->datatype != NC_BYTE);
+         args.is_signed = (args.datatype != NC_BYTE);
    }
    if (args.vrange[0] == -DBL_MAX) {
       if ((args.datatype == in_vol->file->datatype) &&
@@ -382,20 +390,21 @@ public void get_arginfo(int argc, char *argv[],
    for (idim=0; idim < WORLD_NDIMS; idim++) {
       
       /* Get the index for input and output volumes */
-      in_index = in_vol->file->axes[idim];       /* 0, 1 or 2 */
-      out_index = args.volume_def.axes[idim];    /* 0, 1 or 2 */
-      index = in_vol->file->indices[in_index];   /* 0 to ndims-1 */
+      in_vindex = in_vol->file->axes[idim];       /* 0, 1 or 2 */
+      out_vindex = args.volume_def.axes[idim];    /* 0, 1 or 2 */
+      in_findex = in_vol->file->indices[in_vindex];     /* 0 to ndims-1 */
+      out_findex = in_vol->file->indices[out_vindex];   /* 0 to ndims-1 */
       size = args.volume_def.nelements[idim];
 
       /* Update output axes and indices and nelements */
-      out_vol->file->nelements[index] = size;
-      out_vol->file->world_axes[index] = idim;
-      out_vol->file->axes[idim] = out_index;
-      out_vol->file->indices[out_index] = index;
+      out_vol->file->nelements[out_findex] = size;
+      out_vol->file->world_axes[out_findex] = idim;
+      out_vol->file->axes[idim] = out_vindex;
+      out_vol->file->indices[out_vindex] = out_findex;
 
       /* Update slice size */
-      if (out_index != 0) {
-         out_vol->slice->size[out_index-1] = size;
+      if (out_vindex != 0) {
+         out_vol->slice->size[out_vindex-1] = size;
          total_size *= size;
       }
    }
@@ -772,18 +781,42 @@ public void create_output_file(char *filename, int clobber,
       no easy way around it, except to fix it when finishing up) */
    cur_dim = out_file->indices[1];
    for (idim=out_file->indices[1]+1; idim<ndims; idim++) {
-      if (idim != out_file->indices[0]) {
+      if (idim != out_file->indices[2]) {
          out_dims[cur_dim] = out_dims[idim];
          cur_dim++;
       }
    }
+   /* To commit our subterfuge, we check for an error creating the variable
+      (it is illegal). If there is an error, we rename MIimage, create the
+      variable, restore MIimage and add the pointer */
+   ncopts = 0;
    out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
                                            NC_DOUBLE, ndims-2, out_dims);
+   ncopts = NC_VERBOSE | NC_FATAL;
+   if (out_file->maxid == MI_ERROR) {
+      (void) ncvarrename(out_file->mincid, out_file->imgid, TEMP_IMAGE_VAR);
+      out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
+                                              NC_DOUBLE, ndims-2, out_dims);
+      (void) ncvarrename(out_file->mincid, out_file->imgid, MIimage);
+      (void) miattput_pointer(out_file->mincid, out_file->imgid, 
+                              MIimagemax, out_file->maxid);
+   }
    if (in_file->maxid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->maxid,
                              out_file->mincid, out_file->maxid);
+   /* Repeat for min variable */
+   ncopts = 0;
    out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
                                            NC_DOUBLE, ndims-2, out_dims);
+   ncopts = NC_VERBOSE | NC_FATAL;
+   if (out_file->minid == MI_ERROR) {
+      (void) ncvarrename(out_file->mincid, out_file->imgid, TEMP_IMAGE_VAR);
+      out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
+                                              NC_DOUBLE, ndims-2, out_dims);
+      (void) ncvarrename(out_file->mincid, out_file->imgid, MIimage);
+      (void) miattput_pointer(out_file->mincid, out_file->imgid, 
+                              MIimagemin, out_file->minid);
+   }
    if (in_file->minid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->minid,
                              out_file->mincid, out_file->minid);
@@ -796,6 +829,8 @@ public void create_output_file(char *filename, int clobber,
    varid = ncvarid(out_file->mincid, PROCESSING_VAR);
    if (varid == MI_ERROR) {
       varid = ncvardef(out_file->mincid, PROCESSING_VAR, NC_LONG, 0, NULL);
+      (void) miadd_child(out_file->mincid, 
+                         ncvarid(out_file->mincid, MIrootvariable), varid);
    }
 
    /* Look for an unused transformation attribute */
@@ -816,7 +851,8 @@ public void create_output_file(char *filename, int clobber,
       (void) miattputstr(out_file->mincid, varid, string, "linear");
       (void) sprintf(string, "transformation%d-description", itrans);
       (void) miattputstr(out_file->mincid, varid, string,
-         "Linear transformation (3x4 matrix, columns vary fastest)");
+                         "Linear transformation from new space to old space "
+                         "(3x4 matrix, columns vary fastest)");
       (void) sprintf(string, "transformation%d-data", itrans);
       matrx = (Linear_Transformation *) transformation->trans_data;
       (void) ncattput(out_file->mincid, varid, string, NC_DOUBLE,
@@ -1153,7 +1189,7 @@ public int get_fillvalue(char *dst, char *key, char *nextArg)
       *dptr = -FILL_DOUBLE;
    }
    else if (strcmp(key, "-nofill") == 0) {
-      *dptr = 0.0;
+      *dptr = FILL_DEFAULT;
    }
 
    return FALSE;
