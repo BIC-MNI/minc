@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.3 1993-05-03 10:47:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.4 1993-05-05 12:55:50 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -126,6 +126,8 @@ int main(int argc, char *argv[])
       else
          is_signed = (datatype != NC_BYTE);
    }
+   else
+      is_signed = (datatype != NC_BYTE);
    ncopts = NC_VERBOSE | NC_FATAL;
    if (output_signed == INT_MAX) {
       if (output_datatype == datatype)
