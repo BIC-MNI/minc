@@ -1,0 +1,193 @@
+#! /usr/bin/env perl
+#
+# Andrew Janke - rotor@cmr.uq.edu.au
+# Center for Magnetic Resonance
+# The University of Queensland
+# http://www.cmr.uq.edu.au/~rotor
+#
+# Copyright Andrew Janke, The University of Queensland.
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies.  The
+# author and the University of Queensland make no representations about the
+# suitability of this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
+#
+# Script for dumping a miff file from a minc file to STDOUT.
+#
+# Andrew Janke - rotor@cmr.uq.edu.au
+# Thu Jun  1 17:46:19 EST 2000 - major rewrite to speed things
+#                                  also added transverse/coronal/sagital
+# Fri Jun  2 19:05:59 EST 2000 - removed pnm code and now use convert
+#                                  to get "right" size images
+# Wed Jun 21 20:45:33 EST 2000 - added correct flipping and floping of
+#                                  output images as per the radiological
+#                                  convention (-ve z dimension)
+# Mon Jul  3 12:39:50 EST 2000 - added multiple dimension output
+# Fri Sep  1 12:46:13 EST 2000 - added -axial option
+# Tue Nov 21 16:14:07 EST 2000 - added strict and multiple image type output
+# Thu Feb 22 15:52:27 EST 2001 - changed to mincextract for range stuff
+# Thu Nov 22 14:05:11 EST 2001 - added -depth 8 to convert args
+
+use warnings "all";
+use strict;
+use Getopt::Tabular;
+$SIG{__DIE__} =  sub { &cleanup; die $_[0]; };
+
+my($Help, $Usage, $me, @opt_table);
+
+my $DBL_MAX = 1.79769e+302;
+
+chomp($me = `basename $0`);
+my $tmpfile = "/tmp/$me-$$.mnc";
+my $CODE = "GRAY";
+my $infile;
+my $outfile = "MIFF:-";
+my $xspace = 100; my $yspace = 100; my $zspace = 100; my $vec_dim = 100;
+my $slice = -1;
+my $scale = 2;
+my @range = (-$DBL_MAX, $DBL_MAX);
+my @image_range = (-$DBL_MAX, $DBL_MAX);
+my @dirs;
+my $verbose = 0;
+
+@opt_table = (
+              ["-slice",       "integer", 1,  \$slice,       "slice number to output"   ],
+              ["-scale",       "integer", 1,  \$scale,       "image scaling factor"     ], 
+              ["-range",       "float",   2,  \@range,       "range of output values"   ],
+              ["-image_range", "float",   2,  \@image_range, "range of image values"    ],
+              ["-transverse",  "arrayconst", ['t'], \@dirs,  "get a transverse slice"   ],
+              ["-axial",       "arrayconst", ['t'], \@dirs,  "synonym for transverse"   ],
+              ["-sagittal",    "arrayconst", ['s'], \@dirs,  "get a sagital slice"      ],
+              ["-coronal",     "arrayconst", ['c'], \@dirs,  "get a coronal slice"      ],
+              ["-allthree",    "arrayconst", ['t','s','c'], 
+	                                            \@dirs,  "get all three dimensions" ],
+              ["-verbose",     "boolean", 0,  \$verbose,     "print lotsa stuff"        ],
+              );
+
+$Usage = "Usage: $me [options] <filename.mnc> [<image.type>]\n".
+         "$me -help to list options\n";
+
+$Help = <<HELP;
+mincpik - generates image files from MINC volumes using the Imagemagick
+convert utility. For the list of file types available view the convert
+man pages.
+
+It can be called as such:
+   To display a default view, transverse slicing, middle slice
+   using display. (display is part of the Imagemagick package)
+
+   mincpik infile.mnc MIFF:- | display -
+   
+   To generate a PNG file of the 15th coronal slice
+   
+   mincpik -slice 15 -coronal infile.mnc outfile.png
+   
+HELP
+
+# Check arguments
+&Getopt::Tabular::SetHelp ($Help, $Usage);
+&GetOptions (\@opt_table, \@ARGV) || exit 1;
+if($#ARGV < 0){ die $Usage; }
+
+# set up file names
+$infile = $ARGV[0];
+if($#ARGV == 1){ $outfile = $ARGV[1]; }
+
+die "$me: Couldn't find $infile\n" if (!-e $infile);
+
+# set the default
+if ($#dirs == -1){
+   @dirs = ('t');
+   }
+
+my @info = `mincinfo -image_info $infile | tail +6`;
+if($#info < 1){ die "$me No image found in file $infile\n";}
+
+# 0=dim name, 1=length, 2=step
+my $i=0; my @dim; 
+foreach (@info){
+   ($dim[$i][0], $dim[$i][1], $dim[$i][2], undef) = split;
+   
+   # hack hack hack - get indexes.
+   if ($dim[$i][0] eq "zspace"){           $zspace  = $i; }
+   if ($dim[$i][0] eq "yspace"){           $yspace  = $i; }
+   if ($dim[$i][0] eq "xspace"){           $xspace  = $i; }
+   if ($dim[$i][0] eq "vector_dimension"){ $vec_dim = $i; }
+   $i ++;
+   }
+
+my (@dim_o, $img_x, $img_y, $img_z, $img_length_x, $img_length_y);
+my ($s_arg, $c_arg, $dim_prefix);
+$dim_prefix = '';
+
+foreach (@dirs){
+   # set up dimorder
+   if (/t/){ @dim_o = ($zspace, $yspace, $xspace); }
+   if (/s/){ @dim_o = ($xspace, $zspace, $yspace); }
+   if (/c/){ @dim_o = ($yspace, $zspace, $xspace); }
+
+   $img_z = $dim[$dim_o[0]][1];
+   $img_y = $dim[$dim_o[1]][1];
+   $img_x = $dim[$dim_o[2]][1];
+   $img_length_y = abs(int($dim[$dim_o[1]][2] * $img_y * $scale));
+   $img_length_x = abs(int($dim[$dim_o[2]][2] * $img_x * $scale));
+
+   if ($slice == -1){ $slice = int($img_z/2);}
+   if ($slice >= $img_z){ print STDERR "Slice $slice out of range (0-$img_z)\n"; exit 1; }
+
+   # set up count and start arguments
+   $s_arg = "";
+   $c_arg = "";
+   for ($i = 0; $i <= $#dim; $i ++){
+      if ($i == $vec_dim){
+         $dim_prefix = ",$dim[$vec_dim][0]";
+         $s_arg .= "0,";
+      
+         if ($dim[$vec_dim][1] == 3){ $c_arg .= "3,"; $CODE = 'RGB'; }
+         else{                        $c_arg .= "1,";}
+         }
+   
+      else { 
+         if ($i == $dim_o[0]){ $c_arg .= "1,";            $s_arg .= $slice.","; }
+         else {                $c_arg .= $dim[$i][1].","; $s_arg .= "0,";       }
+         }
+      }
+   # remove trailing comma's
+   chop $c_arg; chop $s_arg;
+
+   my $reshape_args = " -clobber -quiet -byte -normalize".
+                      " -dimorder $dim[$dim_o[0]][0],$dim[$dim_o[1]][0],$dim[$dim_o[2]][0]".
+	    	                  $dim_prefix.
+                      " -start $s_arg -count $c_arg".
+	                   " $infile $tmpfile";
+	
+   if ($verbose){ print STDERR  "mincreshape $reshape_args\n"; }
+   system("mincreshape $reshape_args\n") == 0 or die;
+
+   # set up flipping and flopping as per step direction
+   # a flip is 'normal' due to the talairach/radiological convention
+   my $ff = "";
+   if ($dim[$dim_o[1]][2] > 0){ $ff  = " -flip"; }
+   if ($dim[$dim_o[2]][2] < 0){ $ff .= " -flop"; }   
+
+   my $convert_args = " convert".
+                      " -size $img_x"."x".$img_y.
+                      " -geometry $img_length_x"."x".$img_length_y."!".
+                      " -depth 8 $ff $CODE:- $outfile";
+   
+   my $extract_args = "mincextract -byte -normalize".
+                      (($range[0] != -$DBL_MAX) ? " -range $range[0] $range[1]" : " ").
+                      (($image_range[0] != -$DBL_MAX) ? " -image_range $image_range[0] $image_range[1]" : " " ).
+                      " $tmpfile";
+                      
+   if ($verbose){ print STDERR  "$extract_args | $convert_args\n"; }
+   system("$extract_args | $convert_args") == 0 or die;
+   }
+&cleanup;
+
+sub cleanup {
+   if ($verbose){ print STDERR "Cleaning up ......\n"; }
+   my @args = ('rm', '-f', "$tmpfile");
+   system @args;
+   }
