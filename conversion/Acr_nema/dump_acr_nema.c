@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:36:09  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-06 14:12:55  neelin
+@MODIFIED   : Added argument to specify maximum group id to dump.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:36:09  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.6  94/09/28  10:35:53  neelin
  * Pre-release
  * 
@@ -54,17 +57,19 @@ int main(int argc, char *argv[])
    Acr_Group group_list;
    Acr_Status status;
    char *status_string;
+   int maxid;
+   char *string, *ptr;
 
    /* Check arguments */
    pname = argv[0];
-   if ((argc > 2) || 
+   if ((argc > 3) || 
        ((argc == 2) && (strncmp(argv[1], "-h", (size_t) 2) == 0))) {
-      (void) fprintf(stderr, "Usage: %s [<file>]\n", pname);
+      (void) fprintf(stderr, "Usage: %s [<file> [<max group>]]\n", pname);
       exit(EXIT_FAILURE);
    }
 
    /* Open input file */
-   if (argc == 2) {
+   if ((argc >= 2) && (strcmp(argv[1],"-") != 0)) {
       fp = fopen(argv[1], "r");
       if (fp == NULL) {
          (void) fprintf(stderr, "%s: Error opening file %s\n",
@@ -76,12 +81,26 @@ int main(int argc, char *argv[])
       fp = stdin;
    }
 
+   /* Look for max group id */
+   if (argc >= 3) {
+      string = argv[2];
+      maxid = strtol(string, &ptr, 0);
+      if (ptr == string) {
+         (void) fprintf(stderr, "%s: Error in max group id (%s)\n", 
+                        pname, string);
+         exit(EXIT_FAILURE);
+      }
+   }
+   else {
+      maxid = 0;
+   }
+
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
    (void) acr_test_byte_ordering(afp);
 
    /* Read in group list */
-   status = acr_input_group_list(afp, &group_list, 0);
+   status = acr_input_group_list(afp, &group_list, maxid);
 
    /* Free the afp */
    acr_file_free(afp);
@@ -90,7 +109,7 @@ int main(int argc, char *argv[])
    acr_dump_group_list(stdout, group_list);
 
    /* Print status information */
-   if (status != ACR_END_OF_INPUT) {
+   if ((status != ACR_END_OF_INPUT) && (status != ACR_OK)) {
       switch (status) {
       case ACR_OK:
          status_string = "No error"; break;
