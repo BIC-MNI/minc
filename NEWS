@@ -13,6 +13,9 @@ files with a "vector_dimension"
 
 * New functions in the library - miappend_history(), miget_version().
 
+* Incorporated some changes to volume_io library to simplify building on
+Windows (thanks for Gibby Koldenhof for some of these patches).
+
 
 	        New in Release 1.2
         	------------------
