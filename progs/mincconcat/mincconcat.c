@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:15  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-08-13 19:34:37  neelin
+@MODIFIED   : Always create concatenation coordinate variable subscription by
+@MODIFIED   : dimension.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:24:15  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:13  neelin
  * Release of minc version 0.5
  *
@@ -54,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.0 1997-09-12 13:24:15 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.1 1998-08-13 19:34:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -878,13 +882,11 @@ public void do_concat(void *caller_data, long num_voxels,
    mindex = concat_info->file_to_dim_order[ifile][icoord];
    outimgid = ncvarid(output_mincid, MIimage);
 
-   /* Write out the coordinates info, if needed */
-   if (!concat_info->regular_spacing) {
-      varid = ncvarid(output_mincid, concat_info->dimension_name);
-      (void) mivarput1(output_mincid, varid, &mindex, NC_DOUBLE, NULL,
-                       &concat_info->file_coords[ifile][icoord]);
-   }
-   if (concat_info->have_widths && !concat_info->constant_width) {
+   /* Write out the coordinates info */
+   varid = ncvarid(output_mincid, concat_info->dimension_name);
+   (void) mivarput1(output_mincid, varid, &mindex, NC_DOUBLE, NULL,
+                    &concat_info->file_coords[ifile][icoord]);
+   if (concat_info->have_widths) {
       (void) strcat(strcpy(dimname, concat_info->dimension_name), 
                     DIM_WIDTH_SUFFIX);
       varid = ncvarid(output_mincid, dimname);
@@ -1135,14 +1137,11 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
                                 (long) concat_info->concat_dimension_length);
    ncopts = 0;
    coordid = micreate_std_variable(outmincid, concat_info->dimension_name,
-                                   NC_DOUBLE, 
-                                   (concat_info->regular_spacing ? 0 : 1),
-                                   &outdim[out_ndims]);
+                                   NC_DOUBLE, 1, &outdim[out_ndims]);
    ncopts = NC_OPTS_VAL;
    if (coordid == MI_ERROR)
       coordid = ncvardef(outmincid, concat_info->dimension_name,
-                         NC_DOUBLE, (concat_info->regular_spacing ? 0 : 1),
-                         &outdim[out_ndims]);
+                         NC_DOUBLE, 1, &outdim[out_ndims]);
    ncopts = 0;
    invarid = ncvarid(inmincid, concat_info->dimension_name);
    if (invarid != MI_ERROR)
@@ -1158,14 +1157,11 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
                     DIM_WIDTH_SUFFIX);
       ncopts = 0;
       widthid = micreate_std_variable(outmincid, dimname,
-                                      NC_DOUBLE, 
-                                      (concat_info->constant_width ? 0 : 1),
-                                      &outdim[out_ndims]);
+                                      NC_DOUBLE, 1, &outdim[out_ndims]);
       ncopts = NC_OPTS_VAL;
       if (widthid == MI_ERROR) 
          widthid = ncvardef(outmincid, dimname,
-                            NC_DOUBLE, (concat_info->constant_width ? 0 : 1),
-                            &outdim[out_ndims]);
+                            NC_DOUBLE, 1, &outdim[out_ndims]);
       ncopts = 0;
       invarid = ncvarid(inmincid, dimname);
       if (invarid != MI_ERROR)
