@@ -16,7 +16,7 @@ private  int  match_dimension_names(
     char              *volume_dimension_names[],
     int               n_file_dims,
     char              *file_dimension_names[],
-    int               axis_index_in_file[] );
+    int               to_volume_index[] );
 
 public  Minc_file  initialize_minc_input_from_minc_id(
     int                  minc_id,
@@ -63,7 +63,6 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     ALLOC( file, 1 );
 
     file->cdfid = minc_id;
-
     file->file_is_being_read = TRUE;
     file->volume = volume;
 
@@ -116,7 +115,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     if( !match_dimension_names( get_volume_n_dimensions(volume),
                                 volume->dimension_names,
                                 file->n_file_dimensions, file->dim_names,
-                                file->axis_index_in_file ) )
+                                file->to_volume_index ) )
     {
         print( "Error:  dimension names did not match: \n" );
         
@@ -139,8 +138,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
-            file->to_file_index[file->axis_index_in_file[d]] = d;
+        if( file->to_volume_index[d] != INVALID_AXIS )
+            file->to_file_index[file->to_volume_index[d]] = d;
     }
 
     file->n_volumes_in_file = 1;
@@ -167,14 +166,14 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
         spatial_dim_flags[d] = (spatial_axis_indices[d] != INVALID_AXIS);
 
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
         {
             file->valid_file_axes[which_valid_axis] = d;
 
             if( spatial_dim_flags[d] )
             {
                 volume->spatial_axes[spatial_axis_indices[d]] =
-                                        file->axis_index_in_file[d];
+                                        file->to_volume_index[d];
             }
 
             ++which_valid_axis;
@@ -220,14 +219,14 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             }
         }
 
-        if( file->axis_index_in_file[d] == INVALID_AXIS )
+        if( file->to_volume_index[d] == INVALID_AXIS )
         {
             file->n_volumes_in_file *= file->sizes_in_file[d];
         }
         else
         {
-            sizes[file->axis_index_in_file[d]] = file->sizes_in_file[d];
-            volume_separations[file->axis_index_in_file[d]] =
+            sizes[file->to_volume_index[d]] = file->sizes_in_file[d];
+            volume_separations[file->to_volume_index[d]] =
                                           file_separations[d];
         }
     }
@@ -269,10 +268,10 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
         {
             set_volume_direction_cosine( volume,
-                                         file->axis_index_in_file[d],
+                                         file->to_volume_index[d],
                                          dir_cosines[d] );
         }
     }
@@ -420,7 +419,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     
     do
     {
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
         {
             ++file->n_slab_dims;
             slab_size *= file->sizes_in_file[d];
@@ -474,9 +473,10 @@ public  Minc_file  initialize_minc_input(
     Volume               volume,
     minc_input_options   *options )
 {
-    Minc_file    *file;
+    Minc_file    file;
     int          minc_id;
 
+    ncopts = 0;
     minc_id = miopen( filename, NC_NOWRITE );
 
     if( minc_id == MI_ERROR )
@@ -705,12 +705,12 @@ private  void  input_slab(
     long        count[] )
 {
     int      ind, expected_ind, n_vol_dims, file_ind;
-    int      iv[MAX_DIMENSIONS];
+    int      iv[MAX_VAR_DIMS];
     void     *void_ptr;
     BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
     Volume   tmp_volume;
     int      tmp_ind, tmp_sizes[MAX_DIMENSIONS], vol1_indices[MAX_DIMENSIONS];
-    int      zero[MAX_DIMENSIONS];
+    int      zero[MAX_VAR_DIMS];
     nc_type  data_type;
 
     direct_to_volume = TRUE;
@@ -822,14 +822,14 @@ public  BOOLEAN  input_more_minc_file(
     for( d = file->n_file_dimensions-1;  d >= 0 && n_slab < file->n_slab_dims;
          --d )
     {
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
         {
             count[d] = file->sizes_in_file[d];
             ++n_slab;
         }
     }
 
-    input_slab( file, volume, file->axis_index_in_file, file->indices, count );
+    input_slab( file, volume, file->to_volume_index, file->indices, count );
 
     /* --- advance to next slab */
 
@@ -841,7 +841,7 @@ public  BOOLEAN  input_more_minc_file(
     for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
         if( n_slab >= file->n_slab_dims &&
-            file->axis_index_in_file[d] != INVALID_AXIS )
+            file->to_volume_index[d] != INVALID_AXIS )
         {
             if( increment )
             {
@@ -855,7 +855,7 @@ public  BOOLEAN  input_more_minc_file(
             total *= file->sizes_in_file[d];
         }
 
-        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
             ++n_slab;
     }
 
@@ -882,7 +882,7 @@ public  BOOLEAN  advance_input_volume(
 
     while( ind >= 0 )
     {
-        if( file->axis_index_in_file[ind] == INVALID_AXIS )
+        if( file->to_volume_index[ind] == INVALID_AXIS )
         {
             ++file->indices[ind];
             if( file->indices[ind] < file->sizes_in_file[ind] )
@@ -963,7 +963,7 @@ private  int  match_dimension_names(
     char              *volume_dimension_names[],
     int               n_file_dims,
     char              *file_dimension_names[],
-    int               axis_index_in_file[] )
+    int               to_volume_index[] )
 {
     int      i, j, iteration, n_matches, dummy;
     BOOLEAN  match;
@@ -972,7 +972,7 @@ private  int  match_dimension_names(
     n_matches = 0;
 
     for_less( i, 0, n_file_dims )
-        axis_index_in_file[i] = INVALID_AXIS;
+        to_volume_index[i] = INVALID_AXIS;
 
     for_less( i, 0, n_volume_dims )
         volume_dim_found[i] = FALSE;
@@ -985,7 +985,7 @@ private  int  match_dimension_names(
             {
                 for( j = n_file_dims-1;  j >= 0;  --j )
                 {
-                    if( axis_index_in_file[j] == INVALID_AXIS )
+                    if( to_volume_index[j] == INVALID_AXIS )
                     {
                         switch( iteration )
                         {
@@ -1006,7 +1006,7 @@ private  int  match_dimension_names(
 
                         if( match )
                         {
-                            axis_index_in_file[j] = i;
+                            to_volume_index[j] = i;
                             volume_dim_found[i] = TRUE;
                             ++n_matches;
                             break;

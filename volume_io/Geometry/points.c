@@ -2,19 +2,19 @@
 #include  <volume_io.h>
 
 public  BOOLEAN  null_Point(
-    Point   *point )
+    Point   *p )
 {
-    return( Point_x(*point) == 0.0 &&
-            Point_y(*point) == 0.0 &&
-            Point_z(*point) == 0.0 );
+    return( Point_x(*p) == 0.0 &&
+            Point_y(*p) == 0.0 &&
+            Point_z(*p) == 0.0 );
 }
 
 public  BOOLEAN  null_Vector(
-    Vector   *vector )
+    Vector   *v )
 {
-    return( Vector_x(*vector) == 0.0 &&
-            Vector_y(*vector) == 0.0 &&
-            Vector_z(*vector) == 0.0 );
+    return( Vector_x(*v) == 0.0 &&
+            Vector_y(*v) == 0.0 &&
+            Vector_z(*v) == 0.0 );
 }
 
 public  Real  distance_between_points(

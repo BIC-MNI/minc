@@ -1,4 +1,4 @@
-#include  <mni.h>
+#include  <volume_io.h>
 
 private  void  get_random_point_on_sphere(
     Point      *centre,

@@ -1,5 +1,5 @@
-#include  <def_mni.h>
-#include  <def_splines.h>
+#include  <volume_io.h>
+#include  <splines.h>
 
 static   Real   coefs[4][4][4];
 

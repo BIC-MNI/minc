@@ -1248,10 +1248,10 @@ A volume has an associated number of dimensions, which must be in the range
 from one to five, but typically is three.  The volume is thought of as
 a multi-dimensional array of any of a variety of types, including all
 sizes of integer and real types.  Even though a volume may be
-stored in a 1 byte type, with values from zero to 255, there is an
-optional real value mapping, which provides a mapping to any arbitrary
-real range.  In this way, the real range may be any valid real
-interval and is independent of the particular storage type.
+stored in say, a 1 byte type, with values from zero to 255, there is a
+real value range which provides mapping a mapping from voxel values 
+to any arbitrary real range.  In this way, the real range may be any
+valid real interval and is independent of the particular storage type.
 
 Since most volumes will be created by reading from a MINC file, this
 method will be presented first, followed by a description of how to
@@ -1403,6 +1403,17 @@ one may have input the volume in \name{(x, y, z)} order.
 To get it output in \name{(z, y, x)} order, set \name{dimension\_names} to
 the three strings \name{MIzspace},
 \name{MIyspace}, and \name{MIxspace}.}
+
+{\bf\begin{verbatim}
+public  void  set_minc_output_real_range(
+    minc_output_options  *options,
+    Real                 real_min,
+    Real                 real_max )
+\end{verbatim}}
+
+\desc{Defines the image range that will appear in the file.  By
+default, none is specified, and \name{output\_volume} uses the real
+minimum and maximum of the volume.}
 
 If the volume is a modification of another volume currently stored in
 a file, then it is more appropriate to use the following function to
@@ -1968,9 +1979,8 @@ public  Minc_file  initialize_minc_output(
     BOOLEAN                file_signed_flag,
     Real                   file_voxel_min,
     Real                   file_voxel_max,
-    Real                   real_min,
-    Real                   real_max,
     General_transform      *voxel_to_world_transform,
+    Volume                 volume,
     minc_output_options    *options )
 \end{verbatim}}
 
@@ -1979,11 +1989,18 @@ number of dimensions and the names of each dimension, as well as the
 sizes in each dimensions.  The type of the file is controlled by the
 four parameters, \name{file\_nc\_data\_type},
 \name{file\_signed\_flag}, \name{file\_voxel\_min}, and
-\name{file\_voxel\_max}.  The mapping of voxels to real values is
-specified by \name{real\_min} and \name{real\_max}.  The
+\name{file\_voxel\_max}.  The
 transformation to world coordinates is specified by the
-\name{voxel\_to\_world\_transform} argument.  The \name{options} are
-as specified for the \name{output\_volume} function.}
+\name{voxel\_to\_world\_transform} argument.  The \name{volume} is
+attached to file for output.
+The volume must have
+no more dimensions than the file and the names of each dimension must match
+with one of the dimensions in the file.
+The \name{options} are
+as specified for the \name{output\_volume} function.  Note that,
+unlike the \name{output\_volume} function, if the
+image minimum and maximum are not specified, then the output file will have
+a separate image minimum and maximum for each image.}
 
 {\bf\begin{verbatim}
 public  int  get_minc_file_id(
@@ -2005,14 +2022,25 @@ the \name{filename} argument to the open MINC \name{file}.}
 
 {\bf\begin{verbatim}
 public  Status  output_minc_volume(
-    Minc_file   file,
-    Volume      volume )
+    Minc_file   file )
 \end{verbatim}}
 
-\desc{Outputs a volume to the MINC file.  The volume must have no more
-dimensions than the file and the names of each dimension must match
-with one of the dimensions in the file (specified by
-\name{initialize\_minc\_output}).}
+\desc{Outputs the attached volume to the MINC file in the current file
+position.  The file position is advanced by the size of the volume.}
+
+{\bf\begin{verbatim}
+public  Status  output_volume_to_minc_file_position(
+    Minc_file   file,
+    Volume      volume,
+    long        file_start[] )
+\end{verbatim}}
+
+\desc{More general routine to output the specified volume to the MINC
+file in the specified
+position.  Since this routine does not update the file position, it
+does not interfere with normal volume output using the function
+\name{output\_minc\_volume}.  The entire volume is written to the file
+starting at the given file position.}
 
 {\bf\begin{verbatim}
 public  Status  close_minc_output(

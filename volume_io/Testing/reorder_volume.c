@@ -10,6 +10,7 @@ int  main(
     char                *in_dim_names[MAX_DIMENSIONS];
     char                *out_dim_names[MAX_DIMENSIONS];
     Real                amount_done, value;
+    Real                real_min, real_max;
     STRING              dim_names[MAX_DIMENSIONS];
     Volume              volume;
     General_transform   transform;
@@ -103,12 +104,15 @@ int  main(
                             0.0, 0.0 );
 
     in_file = initialize_minc_input( input_filename, volume,
-                                    (minc_input_options *) NULL );
+                                     (minc_input_options *) NULL );
 
     n_volumes = get_n_input_volumes( in_file );
     set_default_minc_output_options( &options );
     set_minc_output_dimensions_order( &options, get_volume_n_dimensions(volume),
                                       dim_names );
+
+    get_volume_real_range( volume, &real_min, &real_max );
+    set_minc_output_real_range( &options, real_min, real_max );
 
     data_type = get_volume_nc_data_type( volume, &signed_flag );
 
@@ -116,10 +120,7 @@ int  main(
                                        sizes, data_type, signed_flag,
                                        get_volume_voxel_min(volume),
                                        get_volume_voxel_max(volume),
-                                       get_volume_real_min(volume),
-                                       get_volume_real_max(volume),
-                                       &transform,
-                                       (minc_output_options *) NULL );
+                                       &transform, volume, &options );
 
     (void) copy_auxiliary_data_from_minc_file( out_file, input_filename,
                                                "Axes reordered." );
@@ -131,13 +132,8 @@ int  main(
 
         (void) advance_input_volume( in_file );
 
-        if( output_minc_volume( out_file, volume ) != OK )
+        if( output_minc_volume( out_file ) != OK )
             return( 1 );
-
-/*
-        get_volume_sizes( volume, sizes_2d );
-        GET_VALUE_2D( value, volume, sizes_2d[0] / 2, sizes_2d[1] / 2 );
-        print( "Slice[%d]:  center value %g\n", v+1, value ); */
 
         if( n_volumes > 0 && (v+1) % 10 == 0 )
             print( "Done %d out of %d\n", v+1, n_volumes );

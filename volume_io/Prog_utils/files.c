@@ -19,7 +19,8 @@ private  BOOLEAN  has_no_extension( char [] );
 
 public  BOOLEAN  real_is_double()
 {
-    return( sizeof(Real) == 8 );
+    static  const  int constant_8 = 8;
+    return( sizeof(Real) == constant_8 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -283,8 +284,10 @@ public  Status  open_file(
     FILE               **file )
 {
     Status   status;
-    STRING   access_str, expanded, tmp_name, command;
+    int      i;
+    STRING   access_str, expanded, tmp_name, command, compressed;
     BOOLEAN  gzipped;
+    static   char   *endings[] = { ".z", ".Z", ".gz" };
 
     switch( io_type )
     {
@@ -303,13 +306,36 @@ public  Status  open_file(
 
     gzipped = FALSE;
 
-    if( io_type == READ_FILE &&
-        (string_ends_in( expanded, ".z" ) ||
-         string_ends_in( expanded, ".Z" ) ||
-         string_ends_in( expanded, ".gz" )) )
+    if( io_type == READ_FILE )
     {
-        gzipped = TRUE;
+        for_less( i, 0, SIZEOF_STATIC_ARRAY( endings ) )
+        {
+            if( string_ends_in( expanded, endings[i] ) )
+            {
+                gzipped = TRUE;
+                break;
+            }
+        }
 
+        if( !gzipped && !file_exists( expanded ) )
+        {
+            for_less( i, 0, SIZEOF_STATIC_ARRAY( endings ) )
+            {
+                (void) strcpy( compressed, expanded );
+                (void) strcat( compressed, endings[i] );
+                if( file_exists( compressed ) )
+                {
+                    (void) strcpy( expanded, compressed );
+                    gzipped = TRUE;
+                    break;
+                }
+            }
+        }
+
+    }
+
+    if( gzipped )
+    {
         /* --- uncompress to a temporary file */
 
         (void) tmpnam( tmp_name );

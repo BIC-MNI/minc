@@ -295,15 +295,15 @@ typedef  struct
     int                sizes_in_file[MAX_VAR_DIMS];
     long               indices[MAX_VAR_DIMS];
     char               *dim_names[MAX_VAR_DIMS];
+    Volume             volume;
+    int                to_volume_index[MAX_VAR_DIMS];
+    int                to_file_index[MAX_DIMENSIONS];
 
     /* input only */
 
     BOOLEAN            end_volume_flag;
     int                n_volumes_in_file;
-    Volume             volume;
 
-    int                axis_index_in_file[MAX_VAR_DIMS];
-    int                to_file_index[MAX_DIMENSIONS];
     int                valid_file_axes[MAX_DIMENSIONS];
 
     int                n_slab_dims;
@@ -320,6 +320,8 @@ typedef  struct
     BOOLEAN            end_def_done;
     BOOLEAN            variables_written;
     int                dim_ids[MAX_VAR_DIMS];
+    BOOLEAN            outputting_in_order;
+    BOOLEAN            entire_file_written;
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;
@@ -337,6 +339,7 @@ typedef  struct
 
 typedef  struct
 {
+    Real     global_image_range[2];
     STRING   dimension_names[MAX_DIMENSIONS];
 } minc_output_options;
 

@@ -1,6 +1,4 @@
-#include <mni.h>
-
-
+#include <volume_io.h>
 
 main (int argc, char *argv[] )
 {   

@@ -39,14 +39,16 @@ public  Status  output_modified_volume(
     char                  history[],
     minc_output_options   *options )
 {
-    Status       status;
-    Minc_file    minc_file;
-    int          n_dims, sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
-    int          i, j, n_found;
-    Real         min_value, max_value;
-    char         **vol_dimension_names;
-    BOOLEAN      done[MAX_DIMENSIONS];
-    STRING       dim_names[MAX_DIMENSIONS];
+    Status               status;
+    Minc_file            minc_file;
+    int                  n_dims, sizes[MAX_DIMENSIONS];
+    int                  vol_sizes[MAX_DIMENSIONS];
+    int                  i, j, n_found;
+    Real                 real_min, real_max;
+    char                 **vol_dimension_names;
+    BOOLEAN              done[MAX_DIMENSIONS];
+    STRING               dim_names[MAX_DIMENSIONS];
+    minc_output_options  used_options;
 
     if( file_nc_data_type == NC_UNSPECIFIED )
     {
@@ -55,7 +57,6 @@ public  Status  output_modified_volume(
         get_volume_voxel_range( volume, &file_voxel_min, &file_voxel_max );
     }
 
-    get_volume_real_range( volume, &min_value, &max_value );
     get_volume_sizes( volume, vol_sizes );
 
     n_dims = get_volume_n_dimensions(volume);
@@ -110,13 +111,24 @@ public  Status  output_modified_volume(
         return( ERROR );
     }
 
+    if( options == (minc_output_options *) NULL )
+        set_default_minc_output_options( &used_options );
+    else
+        used_options = *options;
+
+    if( used_options.global_image_range[0] >=
+        used_options.global_image_range[1] )
+    {
+        get_volume_real_range( volume, &real_min, &real_max );
+        set_minc_output_real_range( &used_options, real_min, real_max );
+    }
+
     minc_file = initialize_minc_output( filename,
                                         n_dims, dim_names, sizes,
                                         file_nc_data_type, file_signed_flag,
                                         file_voxel_min, file_voxel_max,
-                                        min_value, max_value,
                                         get_voxel_to_world_transform(volume),
-                                        options );
+                                        volume, &used_options );
 
     status = OK;
 
@@ -132,7 +144,7 @@ public  Status  output_modified_volume(
         status = add_minc_history( minc_file, history );
 
     if( status == OK )
-        status = output_minc_volume( minc_file, volume );
+        status = output_minc_volume( minc_file );
 
     if( status == OK )
         status = close_minc_output( minc_file );

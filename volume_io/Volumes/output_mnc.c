@@ -578,7 +578,6 @@ private  void  output_slab(
 private  Status  output_the_volume(
     Minc_file   file,
     Volume      volume,
-    long        volume_count[],
     long        file_start[] )
 {
     Status            status;
@@ -710,17 +709,7 @@ private  Status  output_the_volume(
                 return( ERROR );
             }
 
-            /* --- check that we are outputting valid part of volume */
-
-            if( volume_count[vol_index] > sizes[vol_index] ||
-                volume_count[vol_index] < 0 )
-            {
-                print( "output_volume_to_minc_file_position: " );
-                print( "invalid start and count for volume.\n" );
-                return( ERROR );
-            }
-
-            this_count = volume_count[vol_index];
+            this_count = sizes[vol_index];
         }
         else
             this_count = 1;
@@ -794,7 +783,7 @@ private  Status  output_the_volume(
         if( to_volume_index[d] != INVALID_AXIS )
         {
             ++file->n_slab_dims;
-            slab_size *= volume_count[to_volume_index[d]];
+            slab_size *= file->sizes_in_file[d];
         }
         --d;
     }
@@ -811,7 +800,7 @@ private  Status  output_the_volume(
     for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
         if( to_volume_index[d] != INVALID_AXIS && n_slab >= file->n_slab_dims )
-            n_steps *= volume_count[to_volume_index[d]];
+            n_steps *= file->sizes_in_file[d];
         if( to_volume_index[d] != INVALID_AXIS )
             ++n_slab;
         file_indices[d] = file_start[d];
@@ -833,7 +822,7 @@ private  Status  output_the_volume(
                 n_slab >= file->n_slab_dims )
                 count[d] = 1;
             else
-                count[d] = volume_count[to_volume_index[d]];
+                count[d] = file->sizes_in_file[d];
 
             if( to_volume_index[d] != INVALID_AXIS )
                 ++n_slab;
@@ -880,19 +869,17 @@ private  Status  output_the_volume(
 public  Status  output_volume_to_minc_file_position(
     Minc_file   file,
     Volume      volume,
-    long        volume_count[],
     long        file_start[] )
 {
     file->outputting_in_order = FALSE;
 
-    return( output_the_volume( file, volume, volume_count, file_start ) );
+    return( output_the_volume( file, volume, file_start ) );
 }
 
 public  Status  output_minc_volume(
     Minc_file   file )
 {
-    int        d, sizes[MAX_DIMENSIONS];
-    long       volume_count[MAX_DIMENSIONS];
+    int        d;
     BOOLEAN    increment;
 
     /*--- check number of volumes written */
@@ -909,13 +896,7 @@ public  Status  output_minc_volume(
         return( ERROR );
     }
 
-    get_volume_sizes( file->volume, sizes );
-
-    for_less( d, 0, get_volume_n_dimensions(file->volume) )
-        volume_count[d] = sizes[d];
-
-    if( output_the_volume( file, file->volume, volume_count,
-                           file->indices ) != OK )
+    if( output_the_volume( file, file->volume, file->indices ) != OK )
         return( ERROR );
 
     /*--- increment the file index dimensions which do not

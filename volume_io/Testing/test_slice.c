@@ -1,4 +1,4 @@
-#include  <mni.h>
+#include  <volume_io.h>
 
 private  void  check(
     Volume   volume,

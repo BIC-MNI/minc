@@ -1,5 +1,4 @@
-#include  <mni.h>
-
+#include  <volume_io.h>
 
 int  main()
 {

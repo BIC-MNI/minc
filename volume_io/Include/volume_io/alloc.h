@@ -23,6 +23,109 @@ void   alloc_memory( void **, int );
 void   realloc_memory( void **, int );
 void   free_memory( void ** );
 
+#define  ALLOC_private( ptr, size, n_items )                                  \
+         {                                                                    \
+             alloc_memory( (void **) &(ptr),                                  \
+                           (long) ((n_items) * (size)) );                     \
+             RECORD_PTR( ptr, (long) ((n_items) * (size)) );                  \
+         }
+
+#define  ALLOC2D_private( ptr, size, n1, n2 )                                 \
+         {                                                                    \
+             long  _i2_;                                                      \
+                                                                              \
+             ALLOC_private( ptr, sizeof(*(ptr)), n1 );                        \
+             ALLOC_private( (ptr)[0], size, (n1) * (n2) );                    \
+                                                                              \
+             for_less( _i2_, 1, n1 )                                          \
+                 ((ptr)[_i2_]) = (void *) ((long) ((ptr)[_i2_-1]) +           \
+                                                (n2) * (size));               \
+         }
+
+#define  ALLOC3D_private( ptr, size, n1, n2, n3 )                             \
+         {                                                                    \
+             long  _i3_, _j3_;                                                \
+                                                                              \
+             ALLOC2D_private( ptr, sizeof(**(ptr)), n1, n2 );                 \
+                                                                              \
+             ALLOC_private( (ptr)[0][0], size, (n1) * (n2) * (n3) );          \
+                                                                              \
+             for_less( _i3_, 0, n1 )                                          \
+             {                                                                \
+                 if( _i3_ > 0 )                                               \
+                      (ptr)[_i3_][0] = (void *) ((long) ((ptr)[_i3_-1][0]) +  \
+                                            (n2) * (n3) * (size));            \
+                 for_less( _j3_, 1, n2 )                                      \
+                      (ptr)[_i3_][_j3_] = (void *) ((long)                    \
+                               ((ptr)[_i3_][_j3_-1]) + (n3) * (size));        \
+             }                                                                \
+         }
+
+#define  ALLOC4D_private( ptr, size, n1, n2, n3, n4 )                         \
+         {                                                                    \
+             long  _i4_, _j4_, _k4_;                                          \
+                                                                              \
+             ALLOC3D_private( ptr, sizeof(***(ptr)), n1, n2, n3 );            \
+                                                                              \
+             ALLOC_private( (ptr)[0][0][0], size, (n1) * (n2) * (n3) * (n4) );\
+                                                                              \
+             for_less( _i4_, 0, n1 )                                          \
+             {                                                                \
+                 if( _i4_ > 0 )                                               \
+                     (ptr)[_i4_][0][0] = (void *) ((long) ((ptr)[_i4_-1][0][0])\
+                                            + (n2)*(n3)*(n4)*(size));         \
+                 for_less( _j4_, 0, n2 )                                      \
+                 {                                                            \
+                     if( _j4_ > 0 )                                           \
+                         (ptr)[_i4_][_j4_][0] =                               \
+                                   (void *) ((long)((ptr)[_i4_][_j4_-1][0]) + \
+                                                (n3)*(n4) * (size));          \
+                     for_less( _k4_, 1, n3 )                                  \
+                     {                                                        \
+                         (ptr)[_i4_][_j4_][_k4_] = (void *) (                 \
+                                   (long) ((ptr)[_i4_][_j4_][_k4_-1]) +       \
+                                                   (n4) * (size));            \
+                     }                                                        \
+                 }                                                            \
+             }                                                                \
+         }
+
+#define  ALLOC5D_private( ptr, size, n1, n2, n3, n4, n5 )                     \
+         {                                                                    \
+             long  _i5_, _j5_, _k5_, _l5_;                                    \
+                                                                              \
+             ALLOC4D_private( ptr, sizeof(****(ptr)), n1, n2, n3, n4 );       \
+                                                                              \
+             ALLOC_private( (ptr)[0][0][0][0], size, (n1) * (n2) * (n3) * (n4) * (n5) );    \
+                                                                              \
+             for_less( _i5_, 0, n1 )                                          \
+             {                                                                \
+                 if( _i5_ > 0 )                                               \
+                     (ptr)[_i5_][0][0][0] = (void *)                          \
+                            ((long) ((ptr)[_i5_-1][0][0][0]) +                \
+                                            (n2)*(n3)*(n4)*(n5)*(size));      \
+                 for_less( _j5_, 0, n2 )                                      \
+                 {                                                            \
+                     if( _j5_ > 0 )                                           \
+                         (ptr)[_i5_][_j5_][0][0] = (void *)                   \
+                                       ((long) ((ptr)[_i5_][_j5_-1][0][0]) +  \
+                                                    (n3)*(n4)*(n5)*(size));   \
+                     for_less( _k5_, 0, n3 )                                  \
+                     {                                                        \
+                         if( _k5_ > 0 )                                       \
+                             (ptr)[_i5_][_j5_][_k5_][0] = (void *) ((long)    \
+                                 ((ptr)[_i5_][_j5_][_k5_-1][0]) +             \
+                                                    (n4)*(n5)*(size));        \
+                                                                              \
+                         for_less( _l5_, 1, (n4) )                            \
+                             (ptr)[_i5_][_j5_][_k5_][_l5_] = (void *)(        \
+                             (long) ((ptr)[_i5_][_j5_][_k5_][_l5_-1]) +       \
+                                                     (n5) * (size));          \
+                     }                                                        \
+                 }                                                            \
+             }                                                                \
+         }
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC
 @INPUT      : n_items
@@ -38,11 +141,7 @@ void   free_memory( void ** );
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC( ptr, n_items )                                                \
-         {                                                                    \
-             alloc_memory( (void **) &(ptr),                                  \
-                           (int) ((n_items) * sizeof((ptr)[0])) );            \
-             RECORD_PTR( ptr, (int) ((n_items) * sizeof((ptr)[0])) );         \
-         }
+             ALLOC_private( ptr, sizeof(*(ptr)), n_items )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE
@@ -149,15 +248,7 @@ void   free_memory( void ** );
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC2D( ptr, n1, n2 )                                               \
-         {                                                                    \
-             int  _i2_;                                                       \
-                                                                              \
-             ALLOC( ptr, n1 );                                                \
-             ALLOC( (ptr)[0], (n1) * (n2) );                                  \
-                                                                              \
-             for_less( _i2_, 1, n1 )                                          \
-                 ((ptr)[_i2_]) = ((ptr)[_i2_-1] + (n2));                      \
-         }
+         ALLOC2D_private( ptr, sizeof(**(ptr)), n1, n2 )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE2D
@@ -195,21 +286,7 @@ void   free_memory( void ** );
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC3D( ptr, n1, n2, n3 )                                           \
-         {                                                                    \
-             int  _i3_, _j3_;                                                 \
-                                                                              \
-             ALLOC2D( ptr, n1, n2 );                                          \
-                                                                              \
-             ALLOC( (ptr)[0][0], (n1) * (n2) * (n3) );                        \
-                                                                              \
-             for_less( _i3_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i3_ > 0 )                                               \
-                      (ptr)[_i3_][0] = (ptr)[_i3_-1][0] + (n2) * (n3);        \
-                 for_less( _j3_, 1, n2 )                                      \
-                      (ptr)[_i3_][_j3_] = (ptr)[_i3_][_j3_-1] + (n3);         \
-             }                                                                \
-         }
+         ALLOC3D_private( ptr, sizeof(***(ptr)), n1, n2, n3 )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE3D
@@ -248,30 +325,7 @@ void   free_memory( void ** );
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC4D( ptr, n1, n2, n3, n4 )                                       \
-         {                                                                    \
-             int  _i4_, _j4_, _k4_;                                           \
-                                                                              \
-             ALLOC3D( ptr, n1, n2, n3 );                                      \
-                                                                              \
-             ALLOC( (ptr)[0][0][0], (n1) * (n2) * (n3) * (n4) );              \
-                                                                              \
-             for_less( _i4_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i4_ > 0 )                                               \
-                     (ptr)[_i4_][0][0] = (ptr)[_i4_-1][0][0] + (n2)*(n3)*(n4);\
-                 for_less( _j4_, 0, n2 )                                      \
-                 {                                                            \
-                     if( _j4_ > 0 )                                           \
-                         (ptr)[_i4_][_j4_][0] = (ptr)[_i4_][_j4_-1][0] +      \
-                                                (n3)*(n4);                    \
-                     for_less( _k4_, 1, n3 )                                  \
-                     {                                                        \
-                         (ptr)[_i4_][_j4_][_k4_] = (ptr)[_i4_][_j4_][_k4_-1] +\
-                                                   (n4);                      \
-                     }                                                        \
-                 }                                                            \
-             }                                                                \
-         }
+         ALLOC4D_private( ptr, sizeof(****(ptr)), n1, n2, n3, n4 )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE4D
@@ -312,36 +366,7 @@ void   free_memory( void ** );
 ---------------------------------------------------------------------------- */
 
 #define  ALLOC5D( ptr, n1, n2, n3, n4, n5 )                                   \
-         {                                                                    \
-             int  _i5_, _j5_, _k5_, _l5_;                                     \
-                                                                              \
-             ALLOC4D( ptr, n1, n2, n3, n4 );                                  \
-                                                                              \
-             ALLOC( (ptr)[0][0][0][0], (n1) * (n2) * (n3) * (n4) * (n5) );    \
-                                                                              \
-             for_less( _i5_, 0, n1 )                                          \
-             {                                                                \
-                 if( _i5_ > 0 )                                               \
-                     (ptr)[_i5_][0][0][0] = (ptr)[_i5_-1][0][0][0] +          \
-                                            (n2)*(n3)*(n4)*(n5);              \
-                 for_less( _j5_, 0, n2 )                                      \
-                 {                                                            \
-                     if( _j5_ > 0 )                                           \
-                         (ptr)[_i5_][_j5_][0][0] = (ptr)[_i5_][_j5_-1][0][0] +\
-                                                    (n3)*(n4)*(n5);           \
-                     for_less( _k5_, 0, n3 )                                  \
-                     {                                                        \
-                         if( _k5_ > 0 )                                       \
-                             (ptr)[_i5_][_j5_][_k5_][0] =                     \
-                             (ptr)[_i5_][_j5_][_k5_-1][0] + (n4)*(n5);        \
-                                                                              \
-                         for_less( _l5_, 1, (n4) )                            \
-                             (ptr)[_i5_][_j5_][_k5_][_l5_] =                  \
-                             (ptr)[_i5_][_j5_][_k5_][_l5_-1] + (n5);          \
-                     }                                                        \
-                 }                                                            \
-             }                                                                \
-         }
+         ALLOC5D_private( ptr, sizeof(*****(ptr)), n1, n2, n3, n4, n5 )
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : FREE5D

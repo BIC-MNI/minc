@@ -1,8 +1,6 @@
 #include  <volume_io.h>
 
-int  main(
-    int   argc,
-    char  *argv[] )
+int  main()
 {
     int                 v1, v2, v3, sizes[MAX_DIMENSIONS];
     Real                x_world2, y_world2, z_world2;

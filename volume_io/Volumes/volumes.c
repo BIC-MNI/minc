@@ -260,43 +260,6 @@ public  int  get_type_size(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : ALLOCATE_DATA   - private macro for allocation
-@INPUT      : n_dimensions
-              type
-              sizes
-@OUTPUT     : ptr
-@RETURNS    : Macro to allocate multidimensional data given the type.
-@DESCRIPTION: 
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-#define  ALLOCATE_DATA( ptr, n_dimensions, type, sizes ) \
-switch( n_dimensions ) \
-{ \
-    type  *_p1, **_p2, ***_p3, ****_p4, *****_p5; \
- \
-    case  1:  ALLOC( _p1, (sizes)[0] ); \
-              (ptr) = (void *) _p1; \
-              break; \
-    case  2:  ALLOC2D( _p2, (sizes)[0], (sizes)[1] ); \
-              (ptr) = (void *) _p2; \
-              break; \
-    case  3:  ALLOC3D( _p3, (sizes)[0], (sizes)[1], (sizes)[2] ); \
-              (ptr) = (void *) _p3; \
-              break; \
-    case  4:  ALLOC4D( _p4, (sizes)[0], (sizes)[1], (sizes)[2], (sizes)[3] ); \
-              (ptr) = (void *) _p4; \
-              break; \
-    case  5:  ALLOC5D( _p5, (sizes)[0], (sizes)[1], (sizes)[2], (sizes)[3], (sizes)[4] ); \
-              (ptr) = (void *) _p5; \
-              break; \
-}
-
-/* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_volume_data
 @INPUT      : volume
 @OUTPUT     : 
@@ -313,8 +276,8 @@ switch( n_dimensions ) \
 public  void  alloc_volume_data(
     Volume   volume )
 {
-    int    *sizes, n_dimensions;
-    void   *ptr;
+    int    type_size, *sizes;
+    void   *p1, **p2, ***p3, ****p4, *****p5;
 
     if( volume->data != (void *) NULL )
         free_volume_data( volume );
@@ -325,38 +288,34 @@ public  void  alloc_volume_data(
         return;
     }
 
-    n_dimensions = volume->n_dimensions;
     sizes = volume->sizes;
+    type_size = get_type_size( volume->data_type );
 
-    switch( volume->data_type )
+    switch( volume->n_dimensions )
     {
-    case  UNSIGNED_BYTE:
-        ALLOCATE_DATA( ptr, n_dimensions, unsigned char, sizes );
+    case  1:
+        ALLOC_private( p1, type_size, sizes[0] );
+        volume->data = (void *) p1;
         break;
-    case  SIGNED_BYTE:
-        ALLOCATE_DATA( ptr, n_dimensions, char, sizes );
+    case  2:
+        ALLOC2D_private( p2, type_size, sizes[0], sizes[1] );
+        volume->data = (void *) p2;
         break;
-    case  UNSIGNED_SHORT:
-        ALLOCATE_DATA( ptr, n_dimensions, unsigned short, sizes );
+    case  3:
+        ALLOC3D_private( p3, type_size, sizes[0], sizes[1], sizes[2] );
+        volume->data = (void *) p3;
         break;
-    case  SIGNED_SHORT:
-        ALLOCATE_DATA( ptr, n_dimensions, short, sizes );
+    case  4:
+        ALLOC4D_private( p4, type_size, sizes[0], sizes[1],
+                         sizes[2], sizes[3] );
+        volume->data = (void *) p4;
         break;
-    case  UNSIGNED_LONG:
-        ALLOCATE_DATA( ptr, n_dimensions, unsigned long, sizes );
-        break;
-    case  SIGNED_LONG:
-        ALLOCATE_DATA( ptr, n_dimensions, long, sizes );
-        break;
-    case  FLOAT:
-        ALLOCATE_DATA( ptr, n_dimensions, float, sizes );
-        break;
-    case  DOUBLE:
-        ALLOCATE_DATA( ptr, n_dimensions, double, sizes );
+    case  5:
+        ALLOC5D_private( p5, type_size, sizes[0], sizes[1],
+                         sizes[2], sizes[3], sizes[4] );
+        volume->data = (void *) p5;
         break;
     }
-
-    volume->data = ptr;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
