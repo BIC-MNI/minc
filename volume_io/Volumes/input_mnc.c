@@ -23,7 +23,7 @@ public  Minc_file  initialize_minc_input(
     Volume     volume )
 {
     minc_file_struct    *file;
-    int                 img_var, min_var_id, max_var_id, dim_vars[MAX_VAR_DIMS];
+    int                 img_var, dim_vars[MAX_VAR_DIMS];
     int                 slab_size, fill_id;
     double              fill_value;
     long                long_size, mindex[MAX_VAR_DIMS];
@@ -237,29 +237,14 @@ public  Minc_file  initialize_minc_input(
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
     (void) miicv_attach( file->icv, file->cdfid, img_var );
 
-(void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &min_value );
-(void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &max_value );
-print( "Norm min max %g %g\n", min_value, max_value );
+    (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
+    (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
 
     (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &min_value );
     (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &max_value );
 
-print( "Valid min max %g %g\n", min_value, max_value );
-
     volume->min_value = min_value;
     volume->max_value = max_value;
-
-    min_var_id = ncvarid( file->cdfid, MIimagemin );
-    max_var_id = ncvarid( file->cdfid, MIimagemax );
-
-    if( mivarget1( file->cdfid, min_var_id, mindex, NC_DOUBLE, MI_SIGNED,
-                      (void *) (&real_min) ) == MI_ERROR )
-        real_min = 0.0;
-    if( mivarget1( file->cdfid, max_var_id, mindex, NC_DOUBLE, MI_SIGNED,
-                      (void *) (&real_max) ) )
-        real_max = 1.0;
-
-print( "Real min max %g %g\n", real_min, real_max );
 
     if( real_min == real_max )
         volume->value_scale = 1.0;
