@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minccopy.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:54  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-23 12:42:00  neelin
+@MODIFIED   : Change ncopen, ncclose to miopen, miclose.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:33:54  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.7  94/09/28  10:33:51  neelin
  * Pre-release
  * 
@@ -32,7 +35,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 2.0 1994-09-28 10:33:54 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 2.1 1995-01-23 12:42:00 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -85,8 +88,8 @@ int main(int argc, char *argv[])
    outfilename = argv[2];
 
    /* Open the files */
-   inminc = ncopen(infilename, NC_NOWRITE);
-   outminc = ncopen(outfilename, NC_WRITE);
+   inminc = miopen(infilename, NC_NOWRITE);
+   outminc = miopen(outfilename, NC_WRITE);
 
    /* Inquire about the image variables */
    inimg = ncvarid(inminc, MIimage);
@@ -178,8 +181,8 @@ int main(int argc, char *argv[])
    }       /* End loop over slices */
 
    /* Clean up */
-   (void) ncclose(outminc);
-   (void) ncclose(inminc);
+   (void) miclose(outminc);
+   (void) miclose(inminc);
    if (!copy_pixel_values) {
       (void) miicv_free(outicv);
       (void) miicv_free(inicv);
