@@ -1,3 +1,6 @@
+2003-10-31  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Added -dimorder and -swap_bytes options to rawtominc
+	
 2003-06-01  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* testdir/Makefile.am (script_tests): 

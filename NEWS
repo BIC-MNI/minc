@@ -3,6 +3,8 @@
 
 * Add ability to easily create binary packages.
 
+* Added -dimorder and -swap_bytes options to rawtominc
+
 
 		New in Release 1.1
 		------------------
