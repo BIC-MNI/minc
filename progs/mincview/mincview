@@ -2,6 +2,8 @@
 # Script for viewing a minc file.
 # Requires a pnm file viewer such as xv or display from ImageMagick,
 # as wells as the filter invert_raw_image.
+#
+# Displays images with patient left on left side of the screen.
 
 # Constants
 set xv_visual = `xdpyinfo | awk '/class.*TrueColor/{found=1};END{if (found) print "-visual TrueColor"}'`
@@ -82,8 +84,8 @@ endif
 
 # Check for inverting images to get standard orientation
 set imgstep = `mincinfo $filename -attvalue ${dims[$ind2]}:step -attvalue ${dims[$ind3]}:step -error 1`
-set rows = `echo $imgstep[1] $imgsize[1] | nawk '{if ($1<0) print $2; else print -$2;}'`
-set cols = `echo $imgstep[2] $imgsize[2] | nawk '{if ($1<0) print -$2; else print $2;}'`
+set rows = `echo $imgstep[1] $imgsize[1] | awk '{if ($1<0) print $2; else print -$2;}'`
+set cols = `echo $imgstep[2] $imgsize[2] | awk '{if ($1<0) print -$2; else print $2;}'`
 
 # Loop through slices, if needed
 onintr cleanup
@@ -98,10 +100,13 @@ while ($slice < $nslices)
       set start = "0,0 $start_suffix"
       set count = "$imgsize[1],$imgsize[2] $count_suffix"
    endif
+   set output_file = $workingdir/$slice
+   echo "$pnm_code" > $output_file
+   echo "$imgsize[1] $imgsize[2]" >> $output_file
+   echo 255 >> $output_file
    mincextract $filename -byte -start "$start" -count "$count" |\
-      invert_raw_image $cols $rows $bytes_per_pixel | \
-      (echo "$pnm_code\n$imgsize[1] $imgsize[2]\n255";cat) \
-         > $workingdir/$slice
+      invert_raw_image $cols $rows $bytes_per_pixel \
+         >> $output_file
    @ slice++
 end
 echo Done
