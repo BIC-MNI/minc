@@ -13,6 +13,47 @@ static int error_cnt = 0;
 #define CX 530
 #define NDIMS 4
 
+int create_test_file(void)
+{
+    int r;
+    midimhandle_t hdim[NDIMS];
+    mihandle_t hvol;
+    unsigned char *buf = malloc(CZ*CX*CY*3);
+    int i;
+    long count[NDIMS];
+    long start[NDIMS];
+
+    r = micreate_dimension("zspace", MI_DIMCLASS_SPATIAL, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &hdim[0]);
+    
+    r = micreate_dimension("yspace", MI_DIMCLASS_SPATIAL, 
+                                MI_DIMATTR_REGULARLY_SAMPLED, CY, &hdim[1]);
+    
+    r = micreate_dimension("xspace", MI_DIMCLASS_SPATIAL, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &hdim[2]);
+
+    r = micreate_dimension("vector_dimension", MI_DIMCLASS_RECORD, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, 3, &hdim[3]);
+
+    micreate_volume("example_vector2.mnc", NDIMS, hdim, MI_TYPE_BYTE, 
+                    MI_CLASS_INT, NULL, &hvol);
+
+    micreate_volume_image(hvol);
+
+    for (i = 0; i < CZ*CY*CX*3; i++) {
+        buf[i] = (unsigned char) i;
+    }
+    
+    start[0] = start[1] = start[2] = start[3] = 0;
+    count[0] = CZ;
+    count[1] = CY;
+    count[2] = CX;
+    count[3] = 3;
+    miset_voxel_value_hyperslab(hvol, MI_TYPE_BYTE, start, count, buf);
+
+    miclose_volume(hvol);
+}
+
 int main(int argc, char **argv)
 {
     mihandle_t vol;
@@ -30,6 +71,8 @@ int main(int argc, char **argv)
     midimclass_t dimension_class;
     int ndims;
     Atmp = ( unsigned char *) malloc(CX * CY * CZ * sizeof(unsigned char));
+
+    create_test_file();
 
     printf(" \n");
     printf("This test uses the vector_dimension file in test directory\n");
