@@ -6,7 +6,12 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: extract_acr_nema.c,v $
- * Revision 6.1  1999-10-29 17:51:52  neelin
+ * Revision 6.2  2000-04-28 15:02:01  neelin
+ * Added more general argument processing (but not with ParseArgv).
+ * Added support for ignoring non-fatal protocol errors.
+ * Added support for user-specified byte-order.
+ *
+ * Revision 6.1  1999/10/29 17:51:52  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -59,46 +64,91 @@
 
 int main(int argc, char *argv[])
 {
-   char *pname, *filename;
+   char *pname;
+   char *filename = NULL;
+   char *grpstr = NULL;
+   char *elemstr = NULL;
+   int ignore_errors = FALSE;
+   Acr_byte_order byte_order = ACR_UNKNOWN_ENDIAN;
    FILE *fp;
    Acr_File *afp;
    Acr_Group group_list;
    Acr_Element element;
    long element_length;
-   char *string, *ptr;
+   char *ptr;
    Acr_Element_Id element_id;
+   int iarg, argcounter;
+   char *arg;
+   char *usage = 
+      "Usage: %s [-h] [-i] [-b] [-l] [<file>] <group id> <element id>\n";
 
    /* Check arguments */
    pname = argv[0];
-   if ((argc > 4) || (argc < 3)) {
-      (void) fprintf(stderr, "Usage: %s [<file>] <group id> <element id>\n", 
-                     pname);
-      exit(EXIT_FAILURE);
+   argcounter = 0;
+   for (iarg=1; iarg < argc; iarg++) {
+      arg = argv[iarg];
+      if ((arg[0] == '-') && (arg[1] != '\0')) {
+         if (arg[2] != '\0') {
+            (void) fprintf(stderr, "Unrecognized option %s\n", arg);
+            exit(EXIT_FAILURE);
+         }
+         switch (arg[1]) {
+         case 'h':
+            (void) fprintf(stderr, "Options:\n");
+            (void) fprintf(stderr, "   -h:\tPrint this message\n");
+            (void) fprintf(stderr, "   -i:\tIgnore protocol errors\n");
+            (void) fprintf(stderr, "   -b:\tAssume big-endian data\n");
+            (void) fprintf(stderr, "   -l:\tAssume little-endian data\n\n");
+            (void) fprintf(stderr, usage, pname);
+            exit(EXIT_FAILURE);
+         case 'i':
+            ignore_errors = TRUE;
+            break;
+         case 'l':
+            byte_order = ACR_LITTLE_ENDIAN;
+            break;
+         case 'b':
+            byte_order = ACR_BIG_ENDIAN;
+            break;
+         default:
+            (void) fprintf(stderr, "Unrecognized option %s\n", arg);
+            exit(EXIT_FAILURE);
+         }
+      }
+      else {
+         switch (argcounter) {
+         case 0:
+            grpstr = arg; break;
+         case 1:
+            elemstr = arg; break;
+         case 2:
+            filename = grpstr;
+            grpstr = elemstr;
+            elemstr = arg;
+            break;
+         default:
+            (void) fprintf(stderr, usage, pname);
+            exit(EXIT_FAILURE);
+         }
+         argcounter++;
+      }
    }
-
-   /* Get file name */
-   if (argc == 4)
-      filename = argv[1];
-   else 
-      filename = NULL;
 
    /* Get element id (group and element) */
    element_id = MALLOC(sizeof(*element_id));
-   string = argv[argc-2];
-   element_id->group_id = strtol(string, &ptr, 0);
-   if (ptr == string) {
-      (void) fprintf(stderr, "%s: Error in group id (%s)\n", pname, string);
+   element_id->group_id = strtol(grpstr, &ptr, 0);
+   if (ptr == grpstr) {
+      (void) fprintf(stderr, "%s: Error in group id (%s)\n", pname, grpstr);
       exit(EXIT_FAILURE);
    }
-   string = argv[argc-1];
-   element_id->element_id = strtol(string, &ptr, 0);
-   if (ptr == string) {
-      (void) fprintf(stderr, "%s: Error in element id (%s)\n", pname, string);
+   element_id->element_id = strtol(elemstr, &ptr, 0);
+   if (ptr == elemstr) {
+      (void) fprintf(stderr, "%s: Error in element id (%s)\n", pname, elemstr);
       exit(EXIT_FAILURE);
    }
 
    /* Open input file */
-   if (filename != NULL) {
+   if ((filename != NULL) && (strcmp(filename,"-") != 0))  {
       fp = fopen(filename, "r");
       if (fp == NULL) {
          (void) fprintf(stderr, "%s: Error opening file %s\n",
@@ -112,7 +162,13 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_order(afp);
+   acr_set_ignore_errors(afp, ignore_errors);
+   if (byte_order == ACR_UNKNOWN_ENDIAN) {
+      (void) acr_test_byte_order(afp);
+   }
+   else {
+      acr_set_byte_order(afp, byte_order);
+   }
 
    /* Read in group list up to group */
    (void) acr_input_group_list(afp, &group_list, element_id->group_id);

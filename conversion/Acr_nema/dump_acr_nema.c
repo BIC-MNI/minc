@@ -6,7 +6,12 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_acr_nema.c,v $
- * Revision 6.1  1999-10-29 17:51:51  neelin
+ * Revision 6.2  2000-04-28 15:02:01  neelin
+ * Added more general argument processing (but not with ParseArgv).
+ * Added support for ignoring non-fatal protocol errors.
+ * Added support for user-specified byte-order.
+ *
+ * Revision 6.1  1999/10/29 17:51:51  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -74,28 +79,74 @@
 int main(int argc, char *argv[])
 {
    char *pname;
+   char *file = NULL;
+   char *maxidstr = NULL;
+   int ignore_errors = FALSE;
+   Acr_byte_order byte_order = ACR_UNKNOWN_ENDIAN;
    FILE *fp;
    Acr_File *afp;
    Acr_Group group_list;
    Acr_Status status;
    char *status_string;
    int maxid;
-   char *string, *ptr;
+   char *ptr;
+   int iarg, argcounter;
+   char *arg;
+   char *usage = "Usage: %s [-h] [-i] [-b] [-l] [<file> [<max group>]]\n";
 
    /* Check arguments */
    pname = argv[0];
-   if ((argc > 3) || 
-       ((argc == 2) && (strncmp(argv[1], "-h", (size_t) 2) == 0))) {
-      (void) fprintf(stderr, "Usage: %s [<file> [<max group>]]\n", pname);
-      exit(EXIT_FAILURE);
+   argcounter = 0;
+   for (iarg=1; iarg < argc; iarg++) {
+      arg = argv[iarg];
+      if ((arg[0] == '-') && (arg[1] != '\0')) {
+         if (arg[2] != '\0') {
+            (void) fprintf(stderr, "Unrecognized option %s\n", arg);
+            exit(EXIT_FAILURE);
+         }
+         switch (arg[1]) {
+         case 'h':
+            (void) fprintf(stderr, "Options:\n");
+            (void) fprintf(stderr, "   -h:\tPrint this message\n");
+            (void) fprintf(stderr, "   -i:\tIgnore protocol errors\n");
+            (void) fprintf(stderr, "   -b:\tAssume big-endian data\n");
+            (void) fprintf(stderr, "   -l:\tAssume little-endian data\n\n");
+            (void) fprintf(stderr, usage, pname);
+            exit(EXIT_FAILURE);
+         case 'i':
+            ignore_errors = TRUE;
+            break;
+         case 'l':
+            byte_order = ACR_LITTLE_ENDIAN;
+            break;
+         case 'b':
+            byte_order = ACR_BIG_ENDIAN;
+            break;
+         default:
+            (void) fprintf(stderr, "Unrecognized option %s\n", arg);
+            exit(EXIT_FAILURE);
+         }
+      }
+      else {
+         switch (argcounter) {
+         case 0:
+            file = arg; break;
+         case 1:
+            maxidstr = arg; break;
+         default:
+            (void) fprintf(stderr, usage, pname);
+            exit(EXIT_FAILURE);
+         }
+         argcounter++;
+      }
    }
 
    /* Open input file */
-   if ((argc >= 2) && (strcmp(argv[1],"-") != 0)) {
-      fp = fopen(argv[1], "r");
+   if ((file != NULL) && (strcmp(file, "-") != 0)) {
+      fp = fopen(file, "r");
       if (fp == NULL) {
          (void) fprintf(stderr, "%s: Error opening file %s\n",
-                        pname, argv[1]);
+                        pname, file);
          exit(EXIT_FAILURE);
       }
    }
@@ -104,12 +155,11 @@ int main(int argc, char *argv[])
    }
 
    /* Look for max group id */
-   if (argc >= 3) {
-      string = argv[2];
-      maxid = strtol(string, &ptr, 0);
-      if (ptr == string) {
+   if (maxidstr != NULL) {
+      maxid = strtol(maxidstr, &ptr, 0);
+      if (ptr == maxidstr) {
          (void) fprintf(stderr, "%s: Error in max group id (%s)\n", 
-                        pname, string);
+                        pname, maxidstr);
          exit(EXIT_FAILURE);
       }
    }
@@ -119,7 +169,13 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_order(afp);
+   acr_set_ignore_errors(afp, ignore_errors);
+   if (byte_order == ACR_UNKNOWN_ENDIAN) {
+      (void) acr_test_byte_order(afp);
+   }
+   else {
+      acr_set_byte_order(afp, byte_order);
+   }
 
    /* Read in group list */
    status = acr_input_group_list(afp, &group_list, maxid);
