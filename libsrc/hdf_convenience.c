@@ -19,6 +19,7 @@ struct m2_var {
     char path[NC_MAX_NAME];
     int id;
     int ndims;
+    int is_cmpd;                /* Is compound? */
     hsize_t *dims;
     hid_t dset_id;
     hid_t ftyp_id;              /* File type */
@@ -30,12 +31,14 @@ struct m2_dim {
     struct m2_dim *link;
     int id;
     long length;
+    int is_fake;                /* TRUE if "emulated" vector dimension. */
     char name[NC_MAX_NAME];
 };
 
 struct m2_file {
     struct m2_file *link;
     hid_t fd;
+    int wr_ok;                  /* non-zero if write OK */
     int resolution;		/* Resolution setting. */
     int nvars;
     int ndims;
@@ -175,6 +178,7 @@ hdf_var_add(struct m2_file *file, const char *name, const char *path,
         new->id = file->nvars++;
 	strncpy(new->name, name, NC_MAX_NAME - 1);
 	strncpy(new->path, path, NC_MAX_NAME - 1);
+        new->is_cmpd = 0;
         new->dset_id = H5Dopen(file->fd, path);
         new->ftyp_id = H5Dget_type(new->dset_id);
         new->mtyp_id = H5Tget_native_type(new->ftyp_id, H5T_DIR_ASCEND);
@@ -243,6 +247,7 @@ hdf_dim_add(struct m2_file *file, const char *name, long length)
     if (new != NULL) {
         new->id = file->ndims++;
 	new->length = length;
+        new->is_fake = 0;
 	strncpy(new->name, name, NC_MAX_NAME - 1);
 	file->dims[new->id] = new;
     }
@@ -326,10 +331,11 @@ nc_to_hdf5_type(nc_type dtype, int is_signed)
     return (-1);
 }
 
-private void
+static void
 hdf_get_diminfo(hid_t dst_id, int *ndims, hsize_t dims[])
 {
     hid_t spc_id;
+
     spc_id = H5Dget_space(dst_id);
     if (spc_id < 0) {
         milog_message(MI_MSG_SNH);
@@ -340,9 +346,10 @@ hdf_get_diminfo(hid_t dst_id, int *ndims, hsize_t dims[])
 	    H5Sget_simple_extent_dims(spc_id, dims, NULL);
 	}
     }
+
 }
 
-private int
+static int
 hdf_size(hid_t spc_id, hid_t typ_id)
 {
     int typ_size = H5Tget_size(typ_id);
@@ -358,7 +365,7 @@ hdf_size(hid_t spc_id, hid_t typ_id)
 /** Given a numeric variable ID, get the text name of a MINC/HDF5 variable.
  * Equivalent of ncvarname()
  */
-public int
+int
 hdf_varname(int fd, int varid, char *varnm)
 {
     struct m2_file *file;
@@ -382,7 +389,7 @@ hdf_varname(int fd, int varid, char *varnm)
 /** Given a text name, get the numeric ID of a MINC/HDF5 variable. 
  * Equivalent of ncvarid().
  */
-public int
+int
 hdf_varid(int fd, const char *varnm)
 {
     struct m2_file *file;
@@ -405,7 +412,7 @@ hdf_varid(int fd, const char *varnm)
 /** Given a variable ID and attribute number return the attribute's text
  * name.  The variable ID may be NC_GLOBAL.  Equivalent to ncattname().
  */
-public int
+int
 hdf_attname(int fd, int varid, int attnum, char *name)
 {
     hid_t loc_id;
@@ -456,7 +463,7 @@ hdf_attname(int fd, int varid, int attnum, char *name)
  * is part of netCDF.  Unlike a number of netCDF functions, this 
  * function is expected to return 1 on success, rather than zero.
  */
-public int 
+int 
 hdf_attinq(int fd, int varid, const char *attnm, nc_type *type_ptr, 
 	   int *length_ptr)
 {
@@ -574,7 +581,7 @@ hdf_attinq(int fd, int varid, const char *attnm, nc_type *type_ptr,
   return (status);
 }
 
-private int
+static int
 hdf_put_dimorder(struct m2_file *file, int dst_id, int ndims, 
 		 const int *dims_ptr)
 {
@@ -617,7 +624,7 @@ hdf_put_dimorder(struct m2_file *file, int dst_id, int ndims,
     return (MI_NOERROR);
 }
 
-private int 
+static int 
 hdf_get_dimorder(struct m2_file *file, int dst_id, int ndims, int *dims_ptr)
 {
     char *str_ptr;
@@ -683,10 +690,23 @@ hdf_get_dimorder(struct m2_file *file, int dst_id, int ndims, int *dims_ptr)
 	str_ptr = tmp_ptr;
     }
 
+#ifndef NO_EMULATE_VECTOR_DIMENSION
+    typ_id = H5Dget_type(dst_id);
+    if (typ_id >= 0) {
+        if (H5Tget_class(typ_id) == H5T_COMPOUND) {
+            dim = hdf_dim_byname(file, MIvector_dimension);
+            if (dim != NULL) {
+                dims_ptr[n++] = dim->id;
+            }
+        }
+        H5Tclose(typ_id);
+    }
+#endif /* NO_EMULATE_VECTOR_DIMENSION */
+
     return (MI_NOERROR);
 }
 
-public int
+int
 hdf_inquire(int fd, int *ndims_ptr, int *nvars_ptr, int *natts_ptr,
 	    int *unlimdim_ptr)
 {
@@ -716,7 +736,7 @@ hdf_inquire(int fd, int *ndims_ptr, int *nvars_ptr, int *natts_ptr,
     return (MI_NOERROR);
 }
 
-public int 
+int 
 hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr, 
 	   int *ndims_ptr, int *dims_ptr, int *natts_ptr)
 {
@@ -759,6 +779,14 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
     size = H5Tget_size(typ_id);
 
     if (type_ptr != NULL) {
+#ifndef NO_EMULATE_VECTOR_DIMENSION
+        if (class == H5T_COMPOUND) {
+            hid_t subtype_id = H5Tget_member_type(typ_id, 0);
+            class = H5Tget_class(subtype_id);
+            size = H5Tget_size(subtype_id);
+            H5Tclose(subtype_id);
+        }
+#endif /* NO_EMULATE_VECTOR_DIMENSION */
 	if (class == H5T_INTEGER) {
 	    if (size == 1)
 		*type_ptr = NC_BYTE;
@@ -812,7 +840,8 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
 
         /* Emulate the signtype attribute for the image variable.
          */
-        if (!strcmp(var->name, MIimage)) {
+        if (!strcmp(var->name, MIimage) &&
+            H5Tget_class(var->ftyp_id) == H5T_INTEGER) {
             natts++;
         }
 
@@ -826,14 +855,14 @@ hdf_varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
     return (MI_NOERROR);
 }
 
-public int
+int
 hdf_dimrename(int fd, int dimid, const char *new_name)
 {
     milog_message(MI_MSG_NOTIMPL, "dimrename");
     return (MI_NOERROR);
 }
 
-public int
+int
 hdf_dimid(int fd, const char *dimnm)
 {
     struct m2_file *file;
@@ -850,7 +879,7 @@ hdf_dimid(int fd, const char *dimnm)
 }
 
 	
-public int
+int
 hdf_diminq(int fd, int dimid, char *dimnm_ptr, long *len_ptr)
 {
     struct m2_file *file;
@@ -877,7 +906,7 @@ hdf_diminq(int fd, int dimid, char *dimnm_ptr, long *len_ptr)
     return (MI_NOERROR);
 }
 
-private void
+static void
 hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
 {
     hid_t att_id;
@@ -895,7 +924,7 @@ hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
     }
 }
 
-public int
+int
 hdf_dimdef(int fd, const char *dimnm, long length)
 {
     int status = MI_ERROR;
@@ -916,7 +945,7 @@ hdf_dimdef(int fd, const char *dimnm, long length)
 /** Like hdf_attinq, this function must return one for success, not
  * zero!
  */
-public int
+int
 hdf_attget(int fd, int varid, const char *attnm, void *value)
 {
     hid_t att_id;
@@ -985,7 +1014,7 @@ hdf_attget(int fd, int varid, const char *attnm, void *value)
     return (status);
 }
 
-public int
+int
 hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ, 
 	   int val_len, void *val_ptr)
 {
@@ -1177,16 +1206,17 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
  * in a file, and if a dimension variable has not yet been saved to the 
  * file, it creates one here.
  */
-private void
+static void
 hdf_dim_commit(int fd)
 {
     struct m2_file *file;
     struct m2_dim *dim;
     int i;
 
-    if ((file = hdf_id_check(fd)) != NULL) {
+    if ((file = hdf_id_check(fd)) != NULL && file->wr_ok) {
         for (i = 0; i < file->ndims; i++) {
-            if ((dim = hdf_dim_byid(file, i)) != NULL) {
+            if ((dim = hdf_dim_byid(file, i)) != NULL &&
+                !dim->is_fake) {
                 if (hdf_var_byname(file, dim->name) == NULL) {
                     hdf_vardef(fd, dim->name, NC_INT, 0, NULL);
                 }
@@ -1201,7 +1231,7 @@ hdf_dim_commit(int fd)
  * time to make certain all of the dimension variables have actually
  * been defined.
  */
-public void
+void
 hdf_enddef(int fd)
 {
     hdf_dim_commit(fd);         /* Make sure all dimensions were saved. */
@@ -1210,7 +1240,7 @@ hdf_enddef(int fd)
 
 /** This function provides the HDF5 emulation of the function ncvardef
  */
-public int
+int
 hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims, 
            const int *dimids)
 {
@@ -1361,7 +1391,7 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
 
 /**
  */
-public int
+int
 hdf_var_declare(int fd, char *varnm, char *varpath, int ndims, hsize_t *sizes)
 {
     struct m2_file *file;
@@ -1374,7 +1404,7 @@ hdf_var_declare(int fd, char *varnm, char *varpath, int ndims, hsize_t *sizes)
     return (MI_NOERROR);
 }
 
-public int
+int
 hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
 	   void *val_ptr)
 {
@@ -1411,6 +1441,22 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
 
   ndims = var->ndims;
 
+#ifndef NO_EMULATE_VECTOR_DIMENSION
+  /* If it is a compound variable, we cannot actually pick and choose the
+   * length of the hyperslab along the emulated vector_dimension, so we
+   * just reduce the dimensionality by 1
+   */
+  if (var->is_cmpd) {
+      struct m2_dim *dim = hdf_dim_byname(file, MIvector_dimension);
+      if (dim != NULL && length_ptr[ndims - 1] != dim->length) {
+          fprintf(stderr, 
+                  "ERROR: can't read subset of emulated vector dimension\n");
+          return (MI_ERROR);
+      }
+      ndims--;
+  }
+#endif /* NO_EMULATE_VECTOR_DIMENSION */
+
   if (ndims == 0) {
       mspc_id = H5Screate(H5S_SCALAR);
   }
@@ -1446,7 +1492,7 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   return (status);
 }
 
-public int 
+int 
 hdf_varputg(int fd, int varid, const long *start, 
             const long *edges, const long *stride, 
             const long *map, const void *value)
@@ -1633,7 +1679,7 @@ hdf_varputg(int fd, int varid, const long *start,
     return (status);
 }
 
-public int 
+int 
 hdf_vargetg(int fd, int varid, const long *start, 
             const long *edges, const long *stride, 
             const long *map, void *value)
@@ -1792,7 +1838,7 @@ hdf_vargetg(int fd, int varid, const long *start,
     return (status);
 }
 
-public int
+int
 hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
 	   const void *val_ptr)
 {
@@ -1862,7 +1908,7 @@ hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
   return (status);
 }
 
-public int
+int
 hdf_varput1(int fd, int varid, const long *mindex_ptr, const void *val_ptr)
 {
   long length[MAX_VAR_DIMS];
@@ -1881,7 +1927,7 @@ hdf_varput1(int fd, int varid, const long *mindex_ptr, const void *val_ptr)
 /** Emulates ncattdel().  Like many of the netCDF attribute functions,
  * success here is indicated by a return value of one.
  */
-public int
+int
 hdf_attdel(int fd, int varid, const char *attnm)
 {
     hid_t loc_id;
@@ -1911,7 +1957,7 @@ hdf_attdel(int fd, int varid, const char *attnm)
  * and can be independent, rather than set by a file-wide "dimension"
  * object.
  */
-public int
+int
 hdf_varsize(int fd, int varid, long *size_ptr)
 {
     int i;
@@ -1945,7 +1991,7 @@ hdf_varsize(int fd, int varid, long *size_ptr)
     return (MI_NOERROR);
 }
 
-public herr_t
+herr_t
 hdf_copy_attr(hid_t in_id, const char *attr_name, void *op_data)
 {
    hid_t out_id = (hid_t) op_data;
@@ -2084,9 +2130,20 @@ hdf_open(const char *path, int mode)
     struct m2_file *file;
     hsize_t dims[MAX_NC_DIMS];
     int ndims;
+    struct m2_var *var;
 
     H5E_BEGIN_TRY {
-        fd = H5Fopen(path, mode, H5P_DEFAULT);
+        if (mode & 0x8000) {
+            hid_t prp_id;
+
+            prp_id = H5Pcreate(H5P_FILE_ACCESS);
+            H5Pset_fapl_mmap(prp_id, 8192, 1);
+            fd = H5Fopen(path, mode & 0x7FFF, prp_id);
+            H5Pclose(prp_id);
+        }
+        else {
+            fd = H5Fopen(path, mode, H5P_DEFAULT);
+        }
     } H5E_END_TRY;
 
     if (fd < 0) {
@@ -2094,15 +2151,39 @@ hdf_open(const char *path, int mode)
     }
 
     file = hdf_id_add(fd);	/* Add it to the list */
+    file->wr_ok = (mode & H5F_ACC_RDWR) != 0;
 
     /* Open the image variables.
      */
     H5E_BEGIN_TRY {
         dset_id = H5Dopen(fd, "/minc-2.0/image/0/image");
         if (dset_id >= 0) {
+            hid_t type_id;
+            int is_compound = 0;
+
             hdf_get_diminfo(dset_id, &ndims, dims);
-            hdf_var_add(file, MIimage, "/minc-2.0/image/0/image", 
-                        ndims, dims);
+
+#ifndef NO_EMULATE_VECTOR_DIMENSION
+            /* See if a vector_dimension needs to be emulated.
+             */
+            type_id = H5Dget_type(dset_id);
+            if (type_id >= 0) {
+                if (H5Tget_class(type_id) == H5T_COMPOUND) {
+                    /* OK, it's compound type. */
+                    struct m2_dim *dim = hdf_dim_add(file, MIvector_dimension, 
+                                                     H5Tget_nmembers(type_id));
+                    dim->is_fake = 1;
+                    dims[ndims++] = H5Tget_nmembers(type_id);
+                    is_compound = 1;
+                }
+                H5Tclose(type_id);
+            }
+#endif /* NO_EMULATE_VECTOR_DIMENSION */
+
+            var = hdf_var_add(file, MIimage, "/minc-2.0/image/0/image", 
+                              ndims, dims);
+            var->is_cmpd = is_compound;
+
             H5Dclose(dset_id);
         }
     
@@ -2195,6 +2276,8 @@ hdf_create(const char *path, int cmode, struct mi2opts *opts_ptr)
     if (file == NULL) {
         return (MI_ERROR);      /* Should not happen?? */
     }
+
+    file->wr_ok = 1;
 
     if (opts_ptr != NULL && opts_ptr->struct_version == MI2_OPTS_V1) {
         file->comp_type = opts_ptr->comp_type;
