@@ -11,10 +11,18 @@ David Leonard - leonard@csee.uq.edu.au
 Department of Computer Science
 University of Queensland
 
+Modifications by Peter Neelin - neelin@bic.mni.mcgill.ca
+McConnell Brain Imaging Centre
+Montreal Neurological Institute
+McGill University
+
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.7  2001-05-04 15:40:33  neelin
+ * Revision 1.8  2001-05-24 15:08:40  neelin
+ * Added support for comments so that minccalc scripts can be created.
+ *
+ * Revision 1.7  2001/05/04 15:40:33  neelin
  * Added -outfile option.
  * Changed syntax of for to use curlies around first part.
  * Changed syntax of for and if to evaluate an expression in the body, rather
@@ -55,7 +63,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.7 2001-05-04 15:40:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.8 2001-05-24 15:08:40 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -63,6 +71,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <ctype.h>
 #include <float.h>
 #include <limits.h>
 #include <math.h>
@@ -553,40 +562,86 @@ public char *read_expression_file(char *filename)
    size_t size;
    FILE *fp;
    char *expression;
+   int ichar;
+   int beginning_of_line, in_comment;
+   int ch;
 
-   /* Get the size of the file */
-   if (stat(filename, &statbuf) < 0) {
-      (void) fprintf(stderr, "Unable to stat expression file \"%s\"\n",
-                     filename);
-      exit(EXIT_FAILURE);
+#define ALLOC_SIZE 1024
+
+   /* Set the default allocation size - zero means allocate as we go */
+   size = 0;
+
+   /* Check for reading from stdin */
+   if (strcmp(filename, "-") == 0) {
+      fp = stdin;
    }
-   size = statbuf.st_size;
-   if (size == 0) {
-      (void) fprintf(stderr, "Zero-size expression file \"%s\"\n",
-                     filename);
-      exit(EXIT_FAILURE);
+
+   /* Otherwise read from file. Get allocation size from file size. */
+   else {
+
+      /* Get the file size */
+      if (stat(filename, &statbuf) >= 0) {
+         size = statbuf.st_size + 1;
+      }
+
+      /* Open the file */
+      if ((fp=fopen(filename, "r")) == NULL) {
+         (void) fprintf(stderr, "Unable to open expression file \"%s\"\n",
+                        filename);
+         exit(EXIT_FAILURE);
+      }
+      
    }
+
+   /* Make sure that we are going to allocate something */
+   if (size == 0) size = ALLOC_SIZE;
 
    /* Get space */
-   expression = MALLOC(size+1);
-
-   /* Open the file */
-   if ((fp=fopen(filename, "r")) == NULL) {
-      (void) fprintf(stderr, "Unable to open expression file \"%s\"\n",
-                     filename);
-      exit(EXIT_FAILURE);
-   }
+   expression = MALLOC(size * sizeof(*expression));
 
    /* Read the expression */
-   if (fread(expression, (size_t) 1, size, fp) != size) {
-      (void) fprintf(stderr, "Error reading expression file \"%s\"\n",
-                     filename);
-      exit(EXIT_FAILURE);
+   ichar = 0;
+   beginning_of_line = TRUE;
+   in_comment = FALSE;
+   while ((ch = getc(fp)) != EOF) {
+
+      /* Check for newline to end comments */
+      if (ch == '\n') {
+         beginning_of_line = TRUE;
+         in_comment = FALSE;
+      }
+
+      /* Check for comment character as first non-whitespace char of line */
+      else if (beginning_of_line && (ch == '#')) {
+         in_comment = TRUE;
+         beginning_of_line = FALSE;
+      }
+
+      /* Check for first non-whitespace char of line */
+      else if (!isspace(ch)) {
+         beginning_of_line = FALSE;
+      }
+
+      /* If not in a comment, then save the character */
+      if (!in_comment) {
+
+         /* Check whether we need more space */
+         if (ichar >= size-1) {
+            size += ALLOC_SIZE;
+            expression = REALLOC(expression, size * sizeof(expression));
+         }
+
+         /* Save the character */
+         expression[ichar] = (char) ch;
+         ichar++;
+      }
    }
-   expression[size] = '\0';
+   expression[ichar] = '\0';
 
    /* Close the file */
-   (void) fclose(fp);
+   if (fp != stdin) {
+      (void) fclose(fp);
+   }
 
    /* Return the expression */
    return expression;
