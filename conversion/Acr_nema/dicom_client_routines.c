@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.12  1998-11-13 15:55:27  neelin
-@MODIFIED   : Modifications to support asynchronous transfers.
+@MODIFIED   : Revision 6.13  1998-11-16 19:35:51  neelin
+@MODIFIED   : Added include for compilation under SunOS.
 @MODIFIED   :
+ * Revision 6.12  1998/11/13  15:55:27  neelin
+ * Modifications to support asynchronous transfers.
+ *
  * Revision 6.11  1998/04/01  20:56:58  neelin
  * Added code to set socket buffer size so that things will go faster
  * under SunOS.
@@ -78,7 +81,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.12 1998-11-13 15:55:27 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.13 1998-11-16 19:35:51 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -92,6 +95,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
+#include <sys/time.h>
 #ifndef sun
 #include <bstring.h>
 #endif
