@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.5 2004-05-20 21:52:09 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.6 2005-02-09 19:27:18 bert Exp $
 .\"
-.TH RAWTOMINC 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH RAWTOMINC 1 "$Date: 2005-02-09 19:27:18 $" "" "MINC User's Guide"
 
 .SH NAME
 rawtominc - converts a stream of binary image data to a minc format file
@@ -307,6 +307,13 @@ instead of commas is permitted.
 \fB\-frame_widths\fR\ \fIw1\fR,\fIw2\fR,\fIw3\fR,...
 Specify the length of each time frame. The comments for \fI-frame_times\fR
 apply here as well.
+
+.P
+To set the start and step values for a functional file with a constant
+frame times, use the \fI\-dattribute\fR\ flag described below 
+as follows:
+
+    -dattribute time:step=1 -dattribute time:start=0
 
 .SH Imaging modality
 .TP
