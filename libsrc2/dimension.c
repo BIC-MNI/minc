@@ -134,9 +134,6 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
    */
   handle->comments = NULL;  
   switch (class) {
-  case MI_DIMCLASS_ANY:
-    handle->class  = MI_DIMCLASS_ANY;
-    break;
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
     if (strcmp(name, "xspace") == 0) {
@@ -199,6 +196,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   case MI_DIMCLASS_RECORD:
     handle->class  = MI_DIMCLASS_RECORD;
     break;
+  case MI_DIMCLASS_ANY:
   default:
     return (MI_ERROR);
   }
@@ -249,23 +247,28 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
   if (dim_ptr == NULL) {
     return (MI_ERROR);
   }
-  free(dim_ptr->name);
-  //if (dim_ptr->offsets != NULL) {
+  if (dim_ptr->name != NULL) {
+      free(dim_ptr->name);
+  }
+  if (dim_ptr->offsets != NULL) {
     free(dim_ptr->offsets);
-    //}
-  free(dim_ptr->units);
-  //if (dim_ptr->widths !=NULL) {
+  }
+  if (dim_ptr->units != NULL) {
+      free(dim_ptr->units);
+  }
+  if (dim_ptr->widths !=NULL) {
     free(dim_ptr->widths);
-    // }
+  }
   free(dim_ptr);
   
   return (MI_NOERROR);
 }
 
-/*! Retrieve the list of dimensions defined in a MINC volume, 
-    with the same class and attribute as given.
+/** Retrieve the list of dimensions defined in a MINC volume, 
+ *  with the same class \a class and attribute \a attr.
+ * \retval The number of dimensions returned.
+ * \retval MI_ERROR on failure.
  */
-
 int 
 miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 			miorder_t order, int array_length, 
@@ -275,7 +278,8 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   // THIS FUNCTION. MUST FIGURE OUT WHAT TO DO WITH IT
   
   hsize_t number_of_dims; 
-  int i=0, j=0, max_dims;
+  int i=0, max_dims;
+  int num_ret_dims = 0;
   
   if (volume == NULL) {
     return (MI_ERROR);
@@ -297,12 +301,11 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
       midimhandle_t hdim = volume->dim_handles[i];
       if (class == MI_DIMCLASS_ANY || class == hdim->class) {
           if (hdim->attr == attr || attr ==  MI_DIMATTR_ALL) {
-              dimensions[j] = hdim;
-              j++;
+              dimensions[num_ret_dims++] = hdim;
           }
       }
   }
-  return (MI_NOERROR);
+  return (num_ret_dims);
 }
 
 /*! Set apparent dimension order.
@@ -356,14 +359,24 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
   int diff;
   int i=0, j=0, k=0;
 
-  if (volume == NULL || array_length <= 0 ) {
+  if (volume == NULL) {
     return (MI_ERROR);
   }
+
+  if (names == NULL || array_length <= 0) {
+      /* Reset the dimension ordering */
+      if (volume->dim_indices != NULL) {
+          free(volume->dim_indices);
+          volume->dim_indices = NULL;
+      }
+      return (MI_NOERROR);
+  }
+
   /* Note that all dimension names must be different or an error occurs.
    */
-  for (i=0;i<array_length;i++) {
-    for (j=i+1;j<array_length;j++) {
-      if (strcmp(names[i],names[j]) == 0) {
+  for (i = 0; i < array_length; i++) {
+    for (j = i + 1; j < array_length; j++) {
+      if (strcmp(names[i], names[j]) == 0) {
 	return (MI_ERROR);
       }
     }
@@ -373,26 +386,26 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
    */ 
   diff = volume->number_of_dims - array_length;
   if (diff < 0) {
-    diff = 0;
+      diff = 0;
   }
   /* Allocated space for dimensions indices, if not already done.
    */
   if (volume->dim_indices == NULL) {
-    volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
-    for (i = 0; i < volume->number_of_dims; i++) {
-        volume->dim_indices[i] = -1;
-    }
+      volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
+      for (i = 0; i < volume->number_of_dims; i++) {
+          volume->dim_indices[i] = -1;
+      }
   }
-  for (i=0; i < volume->number_of_dims; i++) {
-    for (j=0; j < array_length; j++) {
-      if (!strcmp(volume->dim_handles[i]->name,names[j])) {
-          volume->dim_indices[i+diff] = j;
-	break;
+  for (i = 0; i < volume->number_of_dims; i++) {
+      for (j = 0; j < array_length; j++) {
+          if (!strcmp(volume->dim_handles[i]->name, names[j])) {
+              volume->dim_indices[i+diff] = j;
+              break;
+          }
       }
       if (j == (array_length-1)) {
-	volume->dim_indices[k++] = i;
+          volume->dim_indices[k++] = i;
       }
-    }
   }
   return (MI_NOERROR);
 }
