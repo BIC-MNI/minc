@@ -13,28 +13,35 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.13 1995-10-24 14:09:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.14 1995-10-25 14:27:43 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
 
-#define   HASH_FUNCTION_CONSTANT  0.6180339887498948482
-#define   HASH_TABLE_SIZE_FACTOR  3
-#define   DEFAULT_BLOCK_SIZE      8
+#define   HASH_FUNCTION_CONSTANT          0.6180339887498948482
+#define   HASH_TABLE_SIZE_FACTOR          3
 
-private  int  volume_block_sizes[MAX_DIMENSIONS] = { DEFAULT_BLOCK_SIZE,
+#define   DEFAULT_BLOCK_SIZE              8
+#define   DEFAULT_CACHE_THRESHOLD         80000000
+#define   DEFAULT_MAX_BYTES_IN_CACHE      80000000
+
+static  BOOLEAN  n_bytes_cache_threshold_set = FALSE;
+static  int      n_bytes_cache_threshold = DEFAULT_CACHE_THRESHOLD;
+
+static  BOOLEAN  default_cache_size_set = FALSE;
+static  int      default_cache_size = DEFAULT_MAX_BYTES_IN_CACHE;
+
+static  BOOLEAN  default_block_sizes_set = FALSE;
+static  int      default_block_sizes[MAX_DIMENSIONS] = {
+                                                     DEFAULT_BLOCK_SIZE,
                                                      DEFAULT_BLOCK_SIZE,
                                                      DEFAULT_BLOCK_SIZE,
                                                      DEFAULT_BLOCK_SIZE,
                                                      DEFAULT_BLOCK_SIZE };
 
-private  BOOLEAN  volume_block_sizes_set = FALSE;
-
-private  int  n_bytes_cache_threshold = 80000000;
-private  BOOLEAN  n_bytes_cache_threshold_set = FALSE;
-
-private  int  max_bytes_in_cache = 80000000;
-private  BOOLEAN  max_bytes_in_cache_set = FALSE;
+private  void  alloc_volume_cache(
+    volume_cache_struct   *cache,
+    Volume                volume );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_n_bytes_cache_threshold
@@ -91,28 +98,28 @@ public  int  get_n_bytes_cache_threshold()
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_max_bytes_in_cache
-@INPUT      : n_bytes
+@NAME       : set_default_max_bytes_in_cache
+@INPUT      : max_bytes 
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Sets the maximum number of bytes to be used for a single
-              volume's cache.
+@DESCRIPTION: Sets the default value for the maximum amount of memory
+              in a single volume's cache.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : Sep. 1, 1995    David MacDonald
+@CREATED    : Oct. 19, 1995    David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_max_bytes_in_cache(
-    int  n_bytes )
+public  void  set_default_max_bytes_in_cache(
+    int   max_bytes )
 {
-    max_bytes_in_cache = n_bytes;
-    max_bytes_in_cache_set = TRUE;
+    default_cache_size_set = TRUE;
+    default_cache_size = max_bytes;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_max_bytes_in_cache
+@NAME       : get_default_max_bytes_in_cache
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : number of bytes
@@ -125,52 +132,55 @@ public  void  set_max_bytes_in_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_max_bytes_in_cache()
+private  int  get_default_max_bytes_in_cache()
 {
     int   n_bytes;
 
-    if( !max_bytes_in_cache_set )
+    if( !default_cache_size_set )
     {
         if( getenv( "VOLUME_CACHE_SIZE" ) != NULL &&
             sscanf( getenv( "VOLUME_CACHE_SIZE" ), "%d", &n_bytes ) == 1 )
         {
-            max_bytes_in_cache = n_bytes;
+            default_cache_size = n_bytes;
         }
-        max_bytes_in_cache_set = TRUE;
+
+        default_cache_size_set = TRUE;
     }
 
-    return( max_bytes_in_cache );
+    return( default_cache_size );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_volume_cache_block_sizes
-@INPUT      : block_sizes[]
+@NAME       : set_default_cache_block_sizes
+@INPUT      : block_sizes
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Sets the size (in voxels) of each dimension of a cache block.
+@DESCRIPTION: Sets the default values for the volume cache block sizes.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : Sep. 1, 1995    David MacDonald
+@CREATED    : Oct. 19, 1995    David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_cache_block_sizes(
-    int   block_sizes[] )
+public  void  set_default_cache_block_sizes(
+    int    block_sizes[] )
 {
     int   dim;
 
     for_less( dim, 0, MAX_DIMENSIONS )
     {
         if( block_sizes[dim] >= 1 )
-            volume_block_sizes[dim] = block_sizes[dim];
+            default_block_sizes[dim] = block_sizes[dim];
+        else
+            print( "Invalid block size in set_default_cache_block_sizes()\n" );
     }
 
-    volume_block_sizes_set = TRUE;
+    default_block_sizes_set = TRUE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_volume_cache_block_sizes
+@NAME       : get_default_cache_block_sizes
 @INPUT      : 
 @OUTPUT     : block_sizes[]
 @RETURNS    : 
@@ -184,25 +194,26 @@ public  void  set_volume_cache_block_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  get_volume_cache_block_sizes(
+private  void  get_default_cache_block_sizes(
     int    block_sizes[] )
 {
     int   dim, block_size;
 
-    if( !volume_block_sizes_set )
+    if( !default_block_sizes_set )
     {
         if( getenv( "VOLUME_CACHE_BLOCK_SIZE" ) != NULL &&
             sscanf( getenv( "VOLUME_CACHE_BLOCK_SIZE" ), "%d", &block_size )
                     == 1 && block_size >= 1 )
         {
             for_less( dim, 0, MAX_DIMENSIONS )
-                volume_block_sizes[dim] = block_size;
+                default_block_sizes[dim] = block_size;
         }
-        volume_block_sizes_set = TRUE;
+
+        default_block_sizes_set = TRUE;
     }
 
     for_less( dim, 0, MAX_DIMENSIONS )
-        block_sizes[dim] = volume_block_sizes[dim];
+        block_sizes[dim] = default_block_sizes[dim];
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -228,7 +239,6 @@ public  void  initialize_volume_cache(
     n_dims = get_volume_n_dimensions( volume );
     cache->n_dimensions = n_dims;
     cache->dim_names_set = FALSE;
-    cache->previous_block_index = -1;
     cache->writing_to_temp_file = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
@@ -237,48 +247,27 @@ public  void  initialize_volume_cache(
         cache->dimension_names[dim] = NULL;
     }
 
-    cache->hash_table = NULL;
-
-    cache->head = NULL;
-    cache->tail = NULL;
     cache->minc_file = NULL;
     cache->input_filename = NULL;
     cache->output_filename = NULL;
     cache->output_file_is_open = FALSE;
-    cache->n_blocks = 0;
     cache->must_read_blocks_before_use = FALSE;
+
+    get_default_cache_block_sizes( cache->block_sizes );
+    cache->max_cache_bytes = get_default_max_bytes_in_cache();
+
+    alloc_volume_cache( cache, volume );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : cache_is_alloced
-@INPUT      : cache
-@OUTPUT     : 
-@RETURNS    : TRUE or FALSE
-@DESCRIPTION: Checks if the cache has been allocated yet.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Sep 15, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  BOOLEAN  cache_is_alloced(
-    volume_cache_struct  *cache )
-{
-    return( cache->hash_table != NULL );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : check_alloc_volume_cache
+@NAME       : alloc_volume_cache
 @INPUT      : cache
               volume
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Ensures that the volume cache has been allocated.  This is
-              delayed, i.e., not performed on volume cache initialization,
-              so that block sizes and cache parameters may be set before it
-              is allocated but after a volume cache has been initialized,
-              i.e., a large volume file opened for reading.
+@DESCRIPTION: Allocates the volume cache.  Uses the current value of the
+              volumes max cache size and block sizes to decide how much to
+              allocate.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -286,20 +275,15 @@ private  BOOLEAN  cache_is_alloced(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  check_alloc_volume_cache(
+private  void  alloc_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
     int    dim, n_dims, sizes[MAX_DIMENSIONS], block, block_size;
     int    x, block_stride, remainder, block_index;
 
-    if( cache_is_alloced( cache ) )
-        return;
-
     get_volume_sizes( volume, sizes );
     n_dims = get_volume_n_dimensions( volume );
-
-    get_volume_cache_block_sizes( cache->block_sizes );
 
     /*--- count number of blocks needed per dimension */
 
@@ -326,11 +310,13 @@ private  void  check_alloc_volume_cache(
     }
 
     cache->total_block_size = block_size;
-    cache->max_blocks = get_max_bytes_in_cache() / block_size /
+    cache->max_blocks = cache->max_cache_bytes / block_size /
                         get_type_size(get_volume_data_type(volume));
 
     if( cache->max_blocks < 1 )
         cache->max_blocks = 1;
+
+    /*--- create and initialize an empty hash table */
 
     cache->hash_table_size = cache->max_blocks * HASH_TABLE_SIZE_FACTOR;
 
@@ -338,6 +324,13 @@ private  void  check_alloc_volume_cache(
 
     for_less( block, 0, cache->hash_table_size )
         cache->hash_table[block] = NULL;
+
+    /*--- set up the initial pointers */
+
+    cache->previous_block_index = -1;
+    cache->head = NULL;
+    cache->tail = NULL;
+    cache->n_blocks = 0;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -432,9 +425,10 @@ private  void  write_cache_block(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : free_cache_blocks
+@NAME       : flush_cache_blocks
 @INPUT      : cache
               volume
+              deleting_volume_flag  - TRUE if deleting the volume
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Deletes all cache blocks, writing out all blocks, if the volume
@@ -446,23 +440,22 @@ private  void  write_cache_block(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  free_cache_blocks(
+private  void  flush_cache_blocks(
     volume_cache_struct   *cache,
-    Volume                volume )
+    Volume                volume,
+    BOOLEAN               deleting_volume_flag )
 {
     int                 block, block_index;
     int                 block_start[MAX_DIMENSIONS];
     cache_block_struct  *this, *next;
-
-    if( !cache_is_alloced( cache ) )
-        return;
 
     /*--- step through linked list, freeing blocks */
 
     this = cache->head;
     while( this != NULL )
     {
-        if( this->modified_flag && !cache->writing_to_temp_file )
+        if( this->modified_flag &&
+            (!cache->writing_to_temp_file|| !deleting_volume_flag) )
         {
             block_index = this->block_index;
             get_block_start( cache, block_index, block_start );
@@ -479,6 +472,10 @@ private  void  free_cache_blocks(
 
     for_less( block, 0, cache->hash_table_size )
         cache->hash_table[block] = NULL;
+
+    cache->previous_block_index = -1;
+    cache->head = NULL;
+    cache->tail = NULL;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -501,10 +498,7 @@ public  void  delete_volume_cache(
 {
     int   dim, n_dims;
 
-    if( !cache_is_alloced( cache ) )
-        return;
-
-    free_cache_blocks( cache, volume );
+    flush_cache_blocks( cache, volume, TRUE );
 
     FREE( cache->hash_table );
 
@@ -529,6 +523,120 @@ public  void  delete_volume_cache(
         else
             (void) close_minc_input( (Minc_file) cache->minc_file );
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_cache_block_sizes
+@INPUT      : volume
+              block_sizes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Changes the sizes of the cache blocks for the volume,
+              if it is a cached volume.  This flushes the cache blocks,
+              since they have changed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 24, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_cache_block_sizes(
+    Volume    volume,
+    int       block_sizes[] )
+{
+    volume_cache_struct   *cache;
+    int                   d, dim;
+    BOOLEAN               changed;
+
+    if( !volume->is_cached_volume )
+        return;
+
+    cache = &volume->cache;
+
+    changed = FALSE;
+
+    for_less( d, 0, get_volume_n_dimensions(volume) )
+    {
+        if( block_sizes[d] >= 1 )
+        {
+            if( cache->block_sizes[d] != block_sizes[d] )
+                changed = TRUE;
+        }
+        else
+        {
+            print_error(
+                  "Invalid block sizes in set_volume_cache_block_sizes()\n" );
+            return;
+        }
+    }
+
+    /*--- if the block sizes have not changed, do nothing */
+
+    if( !changed )
+        return;
+
+    flush_cache_blocks( cache, volume, FALSE );
+
+    FREE( cache->hash_table );
+
+    for_less( dim, 0, get_volume_n_dimensions( volume ) )
+    {
+        FREE( cache->lookup[dim] );
+    }
+
+    for_less( d, 0, get_volume_n_dimensions(volume) )
+    {
+        if( block_sizes[d] >= 1 )
+            cache->block_sizes[d] = block_sizes[d];
+        else
+            print_error(
+                  "Invalid block sizes in set_volume_cache_block_sizes()\n" );
+    }
+
+    alloc_volume_cache( cache, volume );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_cache_size
+@INPUT      : volume
+              max_memory_bytes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Changes the maximum amount of memory in the cache for this
+              volume, if it is a cached volume.  This flushes the cache,
+              in order to reallocate the hash table to a new size.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 24, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_cache_size(
+    Volume    volume,
+    int       max_memory_bytes )
+{
+    int                   dim;
+    volume_cache_struct   *cache;
+
+    if( !volume->is_cached_volume )
+        return;
+
+    cache = &volume->cache;
+
+    flush_cache_blocks( cache, volume, FALSE );
+
+    FREE( cache->hash_table );
+
+    for_less( dim, 0, get_volume_n_dimensions( volume ) )
+    {
+        FREE( cache->lookup[dim] );
+    }
+
+    cache->max_cache_bytes = max_memory_bytes;
+
+    alloc_volume_cache( cache, volume );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -782,7 +890,7 @@ public  void  set_cache_volume_file_offset(
     }
 
     if( changed )
-        free_cache_blocks( cache, volume );
+        flush_cache_blocks( cache, volume, FALSE );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1178,8 +1286,6 @@ public  Real  get_cached_volume_voxel(
     if( volume->cache.minc_file == NULL )
         return( get_volume_voxel_min( volume ) );
 
-    check_alloc_volume_cache( &volume->cache, volume );
-
     block = get_cache_block_for_voxel( volume, x, y, z, t, v, &offset );
 
     GET_MULTIDIM_1D( value, block->array, offset );
@@ -1220,7 +1326,6 @@ public  void  set_cached_volume_voxel(
 
     if( !volume->cache.output_file_is_open )
     {
-        check_alloc_volume_cache( &volume->cache, volume );
         open_cache_volume_output_file( &volume->cache, volume );
         volume->cache.output_file_is_open = TRUE;
     }
