@@ -19,7 +19,7 @@ public  void ludcmp(
 		big=0.0;
 		for (j=1;j<=n;j++)
 			if ((temp=fabs((double) a[i][j])) > big) big=temp;
-		if (big == 0.0) print("Singular matrix in routine LUDCMP");
+		if (big == 0.0) print("Singular matrix in routine LUDCMP\n");
 		vv[i]=1.0/big;
 	}
 	for (j=1;j<=n;j++) {
