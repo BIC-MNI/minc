@@ -1,3 +1,7 @@
+Wed Apr  5 09:02:55 EDT 2000
+   - fixed bug in mincresample to properly handle valid fillvalues in slices
+     containing no original data.
+
 ************************************************************************
 
 Tue Mar 21 10:03:15 EST 2000 *** RELEASE OF MINC 0.7
