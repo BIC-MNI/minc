@@ -24,7 +24,8 @@ public  Minc_file  initialize_minc_input(
 {
     minc_file_struct    *file;
     int                 img_var, min_var_id, max_var_id, dim_vars[MAX_VAR_DIMS];
-    int                 slab_size;
+    int                 slab_size, fill_id;
+    double              fill_value;
     long                long_size, mindex[MAX_VAR_DIMS];
     Boolean             converted_sign;
     nc_type             converted_type;
@@ -215,14 +216,35 @@ public  Minc_file  initialize_minc_input(
 
     set_volume_size( volume, converted_type, converted_sign, sizes );
 
+    for_less( d, 0, file->n_file_dimensions )
+        mindex[d] = 0;
+
+    fill_id = ncvarid( file->cdfid, MI_FillValue );
+    if( fill_id != MI_ERROR )
+    {
+        (void) mivarget1( file->cdfid, fill_id, mindex,
+                          NC_DOUBLE, MI_SIGNED, &fill_value );
+        volume->fill_value = fill_value;
+    }
+    else
+        volume->fill_value = 0.0;
+
     file->icv = miicv_create();
 
     (void) miicv_setint( file->icv, MI_ICV_TYPE, converted_type );
+    (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
     (void) miicv_setstr( file->icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
     (void) miicv_attach( file->icv, file->cdfid, img_var );
+
+(void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &min_value );
+(void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &max_value );
+print( "Norm min max %g %g\n", min_value, max_value );
+
     (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &min_value );
     (void) miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &max_value );
+
+print( "Valid min max %g %g\n", min_value, max_value );
 
     volume->min_value = min_value;
     volume->max_value = max_value;
@@ -230,15 +252,14 @@ public  Minc_file  initialize_minc_input(
     min_var_id = ncvarid( file->cdfid, MIimagemin );
     max_var_id = ncvarid( file->cdfid, MIimagemax );
 
-    for_less( d, 0, file->n_file_dimensions )
-        mindex[d] = 0;
-
     if( mivarget1( file->cdfid, min_var_id, mindex, NC_DOUBLE, MI_SIGNED,
                       (void *) (&real_min) ) == MI_ERROR )
         real_min = 0.0;
     if( mivarget1( file->cdfid, max_var_id, mindex, NC_DOUBLE, MI_SIGNED,
                       (void *) (&real_max) ) )
         real_max = 1.0;
+
+print( "Real min max %g %g\n", real_min, real_max );
 
     if( real_min == real_max )
         volume->value_scale = 1.0;
@@ -248,7 +269,7 @@ public  Minc_file  initialize_minc_input(
     volume->value_translation = real_min - min_value * volume->value_scale;
 
     for_less( d, 0, file->n_file_dimensions )
-        file->input_indices[d] = 0;
+        file->indices[d] = 0;
 
     file->end_volume_flag = FALSE;
 
@@ -284,7 +305,7 @@ public  int  get_minc_input_dimensions()
 {
 }
 
-public  int  close_minc_input(
+public  Status  close_minc_input(
     Minc_file   file )
 {
     if( file == (Minc_file) NULL )
@@ -298,7 +319,7 @@ public  int  close_minc_input(
 
     FREE( file );
 
-    return( MI_NOERROR );
+    return( OK );
 }
 
 private  void  input_slab(
@@ -427,7 +448,7 @@ private  void  input_slab(
     }
 }
 
-public  int  input_more_minc_file(
+public  Boolean  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done )
 {
@@ -455,7 +476,7 @@ public  int  input_more_minc_file(
         count[file_ind] = file->sizes_in_file[file_ind];
     }
 
-    input_slab( file, volume, file->input_indices, count );
+    input_slab( file, volume, file->indices, count );
 
     /* advance to next slab */
 
@@ -465,11 +486,11 @@ public  int  input_more_minc_file(
     {
         file_ind = file->valid_file_axes[ind];
 
-        ++file->input_indices[file_ind];
-        if( file->input_indices[file_ind] < file->sizes_in_file[file_ind] )
+        ++file->indices[file_ind];
+        if( file->indices[file_ind] < file->sizes_in_file[file_ind] )
             break;
 
-        file->input_indices[file_ind] = 0;
+        file->indices[file_ind] = 0;
         --ind;
     }
 
@@ -485,7 +506,7 @@ public  int  input_more_minc_file(
         for_less( ind, 0, volume->n_dimensions - file->n_slab_dims )
         {
             n_done = n_done * file->sizes_in_file[file->valid_file_axes[ind]] +
-                     file->input_indices[ind];
+                     file->indices[ind];
             total *= file->sizes_in_file[file->valid_file_axes[ind]];
         }
 
@@ -495,7 +516,7 @@ public  int  input_more_minc_file(
     return( !file->end_volume_flag );
 }
 
-public  int  advance_volume(
+public  Boolean  advance_volume(
     Minc_file   file )
 {
     int   ind;
@@ -506,11 +527,11 @@ public  int  advance_volume(
     {
         if( file->axis_index_in_file[ind] == INVALID_AXIS )
         {
-            ++file->input_indices[ind];
-            if( file->input_indices[ind] < file->sizes_in_file[ind] )
+            ++file->indices[ind];
+            if( file->indices[ind] < file->sizes_in_file[ind] )
                 break;
 
-            file->input_indices[ind] = 0;
+            file->indices[ind] = 0;
         }
         --ind;
     }
@@ -521,7 +542,7 @@ public  int  advance_volume(
 
         for_less( ind, 0, file->volume->n_dimensions )
         {
-            file->input_indices[file->valid_file_axes[ind]] = 0;
+            file->indices[file->valid_file_axes[ind]] = 0;
         }
 
     }
@@ -566,12 +587,27 @@ private  void  create_world_transform(
                                     transform );
 }
 
-private  Boolean  is_spatial_dimension(
-    char   dimension_name[] )
+public  Boolean  is_spatial_dimension(
+    char   dimension_name[],
+    int    *axis )
 {
-    return( strcmp(dimension_name,MIxspace) == 0 ||
-            strcmp(dimension_name,MIyspace) == 0 ||
-            strcmp(dimension_name,MIzspace) == 0 );
+    if( strcmp(dimension_name,MIxspace) == 0 )
+    {
+        *axis = X;
+        return( TRUE );
+    }
+    else if( strcmp(dimension_name,MIyspace) == 0 )
+    {
+        *axis = Y;
+        return( TRUE );
+    }
+    else if( strcmp(dimension_name,MIzspace) == 0 )
+    {
+        *axis = Z;
+        return( TRUE );
+    }
+    else
+        return( FALSE );
 }
 
 private  int  match_dimension_names(
@@ -581,7 +617,7 @@ private  int  match_dimension_names(
     String            *file_dimension_names,
     int               axis_index_in_file[] )
 {
-    int      i, j, iteration, n_matches;
+    int      i, j, iteration, n_matches, dummy;
     Boolean  match;
     Boolean  volume_dim_found[MAX_DIMENSIONS];
 
@@ -612,7 +648,8 @@ private  int  match_dimension_names(
                         case 1:
                             match = (strcmp( volume_dimension_names[i],
                                             ANY_SPATIAL_DIMENSION ) == 0) &&
-                                is_spatial_dimension( file_dimension_names[j] );
+                                is_spatial_dimension( file_dimension_names[j],
+                                                      &dummy );
                             break;
                         case 2:
                             match = (strlen(volume_dimension_names[i]) == 0);
