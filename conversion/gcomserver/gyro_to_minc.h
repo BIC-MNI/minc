@@ -6,11 +6,16 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 2.1  1994-10-20 13:50:16  neelin
-@MODIFIED   : Write out direction cosines to support rotated volumes.
-@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
-@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
+@MODIFIED   : Revision 2.2  1994-11-21 08:08:03  neelin
+@MODIFIED   : Modified code to properly calculate start from centre locations, then
+@MODIFIED   : changed calculation back to old way because it worked.
+@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
 @MODIFIED   :
+ * Revision 2.1  94/10/20  13:50:16  neelin
+ * Write out direction cosines to support rotated volumes.
+ * Store single slices as 1-slice volumes (3D instead of 2D).
+ * Changed storing of minc history (get args for gyrotominc).
+ * 
  * Revision 2.0  94/09/28  10:35:29  neelin
  * Release of minc version 0.2
  * 
@@ -106,6 +111,7 @@ typedef struct {
    double step[WORLD_NDIMS];
    double start[WORLD_NDIMS];
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
+   double centre[WORLD_NDIMS];
    double slice_step;
    double slice_start;
    double slicepos_first;

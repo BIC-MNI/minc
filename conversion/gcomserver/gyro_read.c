@@ -6,11 +6,16 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.1  1994-10-20 13:50:11  neelin
-@MODIFIED   : Write out direction cosines to support rotated volumes.
-@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
-@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
+@MODIFIED   : Revision 2.2  1994-11-21 08:07:59  neelin
+@MODIFIED   : Modified code to properly calculate start from centre locations, then
+@MODIFIED   : changed calculation back to old way because it worked.
+@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
 @MODIFIED   :
+ * Revision 2.1  94/10/20  13:50:11  neelin
+ * Write out direction cosines to support rotated volumes.
+ * Store single slices as 1-slice volumes (3D instead of 2D).
+ * Changed storing of minc history (get args for gyrotominc).
+ * 
  * Revision 2.0  94/09/28  10:35:27  neelin
  * Release of minc version 0.2
  * 
@@ -385,26 +390,36 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          }
       }
 
-      /* Get start information */
-      general_info->start[XCOORD] = 
+      /* Get centre information (start info is calculated farther down) */
+      general_info->centre[XCOORD] = 
          find_double(group_list, SPI_Off_center_lr, 0.0);
-      general_info->start[YCOORD] = 
+      general_info->centre[YCOORD] = 
          find_double(group_list, SPI_Off_center_ap, 0.0);
-      general_info->start[ZCOORD] = 
+      general_info->centre[ZCOORD] = 
          find_double(group_list, SPI_Off_center_cc, 0.0);
+      calculate_slice_start(general_info->slice_world,
+                            general_info->row_world,
+                            general_info->column_world,
+                            general_info->nrows,
+                            general_info->ncolumns,
+                            general_info->centre,
+                            general_info->step,
+                            general_info->dircos,
+                            general_info->start);
 
-      /* Adjust row and column start values */
-      iworld = general_info->row_world;
-      jworld = general_info->column_world;
-      general_info->start[iworld] -= 
-         general_info->step[iworld] * (general_info->nrows - 1.0) / 2.0;
-      general_info->start[jworld] -= 
-         general_info->step[jworld] * (general_info->ncolumns - 1.0) / 2.0;
-      
+      /* Keep track of range of slices */
+      general_info->slicepos_first = 
+         general_info->centre[general_info->slice_world];
+      general_info->slicepos_last = 
+         general_info->centre[general_info->slice_world];
+      general_info->sliceindex_first = file_info->index[SLICE];
+      general_info->sliceindex_last = file_info->index[SLICE];
+
       /* Save slice step info */
       iworld = general_info->slice_world;
-      general_info->slice_start = general_info->start[iworld];
       general_info->slice_step = general_info->step[iworld];
+      general_info->slice_start = general_info->centre[iworld] -
+         file_info->index[SLICE] * general_info->slice_step;
 
       /* Set data type and range */
       if (file_info->bits_alloc <= 8)
@@ -419,14 +434,6 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       /* Save display window info */
       general_info->window_min = file_info->window_min;
       general_info->window_max = file_info->window_max;
-
-      /* Keep track of range of slices */
-      general_info->slicepos_first = 
-         general_info->start[general_info->slice_world];
-      general_info->slicepos_last = 
-         general_info->start[general_info->slice_world];
-      general_info->sliceindex_first = file_info->index[SLICE];
-      general_info->sliceindex_last = file_info->index[SLICE];
 
       /* Maximum length for strings */
       maxlen = sizeof(Cstring) - 1;
@@ -613,10 +620,24 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    file_info->echo_time = 
       find_double(group_list, ACR_Echo_time, 0.0) / 1000.0;
 
-   /* Update slice position information for general_info */
+   /* Update slice position information for general_info. If we have a new
+      first slice, then update centre and start information */
    if (file_info->index[SLICE] < general_info->sliceindex_first) {
       general_info->sliceindex_first = file_info->index[SLICE];
       general_info->slicepos_first = file_info->slice_position;
+
+      /* Update slice centre and start info */
+      general_info->centre[general_info->slice_world] = 
+         general_info->slicepos_first;
+      calculate_slice_start(general_info->slice_world,
+                            general_info->row_world,
+                            general_info->column_world,
+                            general_info->nrows,
+                            general_info->ncolumns,
+                            general_info->centre,
+                            general_info->step,
+                            general_info->dircos,
+                            general_info->start);
    }
    if (file_info->index[SLICE] > general_info->sliceindex_last) {
       general_info->sliceindex_last = file_info->index[SLICE];
@@ -627,8 +648,6 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          (general_info->slicepos_last - general_info->slicepos_first) /
             (general_info->size[SLICE] - 1);
    }
-   general_info->start[general_info->slice_world] = 
-      general_info->slicepos_first;
 
    /* If we get to here, then we have a valid file */
    file_info->valid = TRUE;
@@ -963,6 +982,63 @@ public World_Index get_nearest_world_axis(double dircos[WORLD_NDIMS])
    return nearest_axis;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : calculate_start_from_centre
+@INPUT      : slice_world - world index for slices
+              row_world - world index for rows
+              column_world - world index for columns
+              nrows - number of rows in slice
+              ncolumns - number of columns in slice
+              centre - coordinate of centre of slice
+              step - vector of steps (pixel separations)
+              dircos - direction cosines for axes
+@OUTPUT     : start - calculated start coordinate for slice
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to calculate the start coordinate for a slice given
+              its centre, step and direction cosines.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 18, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void calculate_slice_start(World_Index slice_world,
+                                  World_Index row_world,
+                                  World_Index column_world,
+                                  int nrows, int ncolumns,
+                                  double centre[WORLD_NDIMS],
+                                  double step[WORLD_NDIMS],
+                                  double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                  double start[WORLD_NDIMS])
+{
+   World_Index iworld;
+   double offset[WORLD_NDIMS];
+
+   /* Get offsets along each axis */
+   offset[slice_world] = 0.0;
+   offset[row_world] = (-step[row_world]) * (nrows - 1.0) / 2.0;
+   offset[column_world] = (-step[column_world]) * (ncolumns - 1.0) / 2.0;
+
+#if 1
+   /* Transform offsets but don't use direction cosines since these files
+      seem to give offsets along the rotated axes, not along real axes.
+      But should this work? Who cares - it does! */
+   for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
+      start[iworld] = centre[iworld] + offset[iworld];
+   }
+#else
+   /* Transform offsets using direction cosines */
+   for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
+      World_Index jworld;
+      start[iworld] = centre[iworld];
+      for (jworld=0; jworld < WORLD_NDIMS; jworld++) {
+         start[iworld] += offset[jworld] * dircos[jworld][iworld];
+      }
+   }
+#endif
+
+}
+      
 public int find_short(Acr_Group group_list, Acr_Element_Id elid, 
                       int default_value)
 {

@@ -36,6 +36,14 @@ public void get_orientation_info(Orientation orientation,
 public void swap_dircos(double dircos1[WORLD_NDIMS],
                         double dircos2[WORLD_NDIMS]);
 public World_Index get_nearest_world_axis(double dircos[WORLD_NDIMS]);
+public void calculate_slice_start(World_Index slice_world,
+                                  World_Index row_world,
+                                  World_Index column_world,
+                                  int nrows, int ncolumns,
+                                  double centre[WORLD_NDIMS],
+                                  double step[WORLD_NDIMS],
+                                  double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                  double start[WORLD_NDIMS]);
 public int find_short(Acr_Group group_list, Acr_Element_Id elid, 
                       int default_value);
 public int find_int(Acr_Group group_list, Acr_Element_Id elid, 

@@ -6,11 +6,16 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 2.1  1994-10-20 13:50:15  neelin
-@MODIFIED   : Write out direction cosines to support rotated volumes.
-@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
-@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
+@MODIFIED   : Revision 2.2  1994-11-21 08:08:01  neelin
+@MODIFIED   : Modified code to properly calculate start from centre locations, then
+@MODIFIED   : changed calculation back to old way because it worked.
+@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
 @MODIFIED   :
+ * Revision 2.1  94/10/20  13:50:15  neelin
+ * Write out direction cosines to support rotated volumes.
+ * Store single slices as 1-slice volumes (3D instead of 2D).
+ * Changed storing of minc history (get args for gyrotominc).
+ * 
  * Revision 2.0  94/09/28  10:35:30  neelin
  * Release of minc version 0.2
  * 
@@ -174,6 +179,7 @@ public int create_minc_file(char *minc_file, int clobber,
    setup_minc_variables(mincid, general_info);
 
    /* Put the file in data mode */
+   (void) ncsetfill(mincid, NC_NOFILL);
    if (ncendef(mincid) == MI_ERROR) {
       return MI_ERROR;
    }
