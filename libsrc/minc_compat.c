@@ -51,6 +51,7 @@ MI2attinq(int fd, int varid, const char *attnm, nc_type *type_ptr,
         int oldncopts = ncopts;
         ncopts = 0;
         status = ncattinq(fd, varid, attnm, type_ptr, length_ptr);
+
         ncopts = oldncopts;
         if (status != 1 && oldncopts != 0) {
             fprintf(stderr,
@@ -288,14 +289,29 @@ MI2attcopy(int infd, int invarid, const char *name, int outfd,
             return (MI_ERROR);
         }
 
-        val_ptr = malloc(MI2typelen(att_type) * att_length);
-        if (val_ptr == NULL) {
-            return (MI_ERROR);
+        /* Special case for att_type == NC_CHAR && att_length == 0 
+         */
+        if (att_type == NC_CHAR && att_length == 0) {
+            val_ptr = malloc(1);
+            if (val_ptr == NULL) {
+                return (MI_ERROR);
+            }
+            *(char *)val_ptr = '\0';
+            att_length = 1;
+            status = MI_NOERROR;
+        }
+        else {
+            val_ptr = malloc(MI2typelen(att_type) * att_length);
+            if (val_ptr == NULL) {
+                return (MI_ERROR);
+            }
+
+            status = MI2attget(infd, invarid, name, val_ptr);
         }
 
-        status = MI2attget(infd, invarid, name, val_ptr);
         if (status != MI_ERROR) {
-            status = MI2attput(outfd, outvarid, name, att_type, att_length, val_ptr);
+            status = MI2attput(outfd, outvarid, name, att_type, att_length,
+                               val_ptr);
         }
     
         free(val_ptr);
