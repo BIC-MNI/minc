@@ -72,8 +72,8 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
                           long count[], void *values);
 private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
 private int MI_icv_coords_tovar(mi_icv_type *icvp, 
-                                long *icv_start, long *icv_count,
-                                long *var_start, long *var_count);
+                                long icv_start[], long icv_count[],
+                                long var_start[], long var_count[]);
 private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 semiprivate mi_icv_type *MI_icv_chkid(int icvid);
 

@@ -276,6 +276,5 @@ public int miicv_put(int icvid, long start[], long count[], void *values);
 public int miicv_attach(int icvid, int cdfid, int varid);
 
 
-
 /* End ifndef MINC_HEADER_FILE */
 #endif

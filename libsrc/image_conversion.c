@@ -225,7 +225,7 @@ public int miicv_setint(int icvid, int icv_property, int value)
 ---------------------------------------------------------------------------- */
 public int miicv_set(int icvid, int icv_property, void *value)
 {
-   int *ip, ival;
+   int ival;
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_set");
@@ -275,12 +275,20 @@ public int miicv_set(int icvid, int icv_property, void *value)
       icvp->user_do_dimconv = *((int *) value); break;
    case MI_ICV_DO_SCALAR:
       icvp->user_do_scalar = *((int *) value); break;
-   case MI_ICV_XDIM_DIR: ip = &(icvp->user_xdim_dir);
-   case MI_ICV_YDIM_DIR: ip = &(icvp->user_ydim_dir);
-   case MI_ICV_ZDIM_DIR: ip = &(icvp->user_zdim_dir);
+   case MI_ICV_XDIM_DIR: 
       ival = *((int *) value);
-      *ip = ((ival==MI_ICV_POSITIVE) || (ival==MI_ICV_NEGATIVE)) ?
-                   ival : MI_ICV_ANYDIR;
+      icvp->user_xdim_dir = ((ival==MI_ICV_POSITIVE) || 
+                             (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
+      break;
+   case MI_ICV_YDIM_DIR:
+      ival = *((int *) value);
+      icvp->user_ydim_dir = ((ival==MI_ICV_POSITIVE) || 
+                             (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
+      break;
+   case MI_ICV_ZDIM_DIR:
+      ival = *((int *) value);
+      icvp->user_zdim_dir = ((ival==MI_ICV_POSITIVE) || 
+                             (ival==MI_ICV_NEGATIVE)) ? ival : MI_ICV_ANYDIR;
       break;
    case MI_ICV_ADIM_SIZE:
       icvp->user_dim_size[0] = *((long *) value); break;
@@ -312,7 +320,6 @@ public int miicv_set(int icvid, int icv_property, void *value)
 ---------------------------------------------------------------------------- */
 public int miicv_inq(int icvid, int icv_property, void *value)
 {
-   int *ip;
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_inq");
@@ -351,11 +358,12 @@ public int miicv_inq(int icvid, int icv_property, void *value)
       *((int *) value) = icvp->user_do_dimconv; break;
    case MI_ICV_DO_SCALAR:
       *((int *) value) = icvp->user_do_scalar; break;
-   case MI_ICV_XDIM_DIR: ip = &(icvp->user_xdim_dir);
-   case MI_ICV_YDIM_DIR: ip = &(icvp->user_ydim_dir);
-   case MI_ICV_ZDIM_DIR: ip = &(icvp->user_zdim_dir);
-      *((int *) value) = *ip;
-      break;
+   case MI_ICV_XDIM_DIR: 
+      *((int *) value) = icvp->user_xdim_dir; break;
+   case MI_ICV_YDIM_DIR:
+      *((int *) value) = icvp->user_ydim_dir; break;
+   case MI_ICV_ZDIM_DIR:
+      *((int *) value) = icvp->user_zdim_dir; break;
    case MI_ICV_ADIM_SIZE:
       *((long *) value) = icvp->user_dim_size[0]; break;
    case MI_ICV_BDIM_SIZE:
@@ -437,7 +445,6 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    icvp->derv_var_pix_off = NULL;
    icvp->derv_usr_pix_off = NULL;
    for (idim=0; idim<MI_PRIV_IMGDIMS; idim++) {
-      icvp->var_dim_size[idim] = -1;
       icvp->derv_dim_flip[idim] = FALSE;
       icvp->derv_dim_grow[idim] = TRUE;
       icvp->derv_dim_scale[idim] = 1;
@@ -1020,6 +1027,16 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 
    MI_SAVE_ROUTINE_NAME("MI_icv_coords_tovar");
 
+   /* Do we have to worry about dimension conversions? If not, then
+      just copy the vectors and return. */
+   if (!icvp->do_dimconvert) {
+      for (i=0; i < icvp->var_ndims; i++) {
+         var_count[i] = icv_count[i];
+         var_start[i] = icv_start[i];
+      }
+      MI_RETURN(MI_NOERROR);
+   }
+
    /* Get the number of non image dimensions */
    num_non_img_dims=icvp->var_ndims-MI_PRIV_IMGDIMS;
    if (icvp->var_is_vector)
@@ -1034,15 +1051,13 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
    /* Go through image dimensions */
    for (i=num_non_img_dims, j=MI_PRIV_IMGDIMS-1; 
         i < num_non_img_dims+MI_PRIV_IMGDIMS; i++, j--) {
-      /* Check coordinates. We use icvp->var_dim_size[]<0 to flag
-         that no dimension conversions are being done */
+      /* Check coordinates. */
       icv_dim_size = (icvp->user_dim_size[j] > 0) ?
             icvp->user_dim_size[j] : icvp->var_dim_size[j];
       last_coord = icv_start[i] + icv_count[i] - 1;
-      if ((icvp->var_dim_size[j]>=0) && 
-          ((icv_start[i]<0) || (icv_start[i]>=icv_dim_size) ||
+      if ((icv_start[i]<0) || (icv_start[i]>=icv_dim_size) ||
           (last_coord<0) || (last_coord>=icv_dim_size) ||
-          (icv_count[i]<0))) {
+          (icv_count[i]<0)) {
          MI_LOG_PKG_ERROR2(MI_ERR_ICV_INVCOORDS,
                            "Invalid icv coordinates");
          MI_RETURN_ERROR(MI_ERROR);
@@ -1066,8 +1081,7 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
       var_start[i] = coord;
       /* Check for indices out of variable bounds (but in icv bounds) */
       last_coord = var_start[i] + var_count[i];
-      if ((icvp->var_dim_size[j]>=0) &&
-          ((var_start[i]<0) || (last_coord>=icvp->var_dim_size[j]))) {
+      if ((var_start[i]<0) || (last_coord>=icvp->var_dim_size[j])) {
          if (var_start[i]<0) var_start[i] = 0;
          if (last_coord>=icvp->var_dim_size[j]) 
             last_coord = icvp->var_dim_size[j] - 1;
@@ -1077,11 +1091,14 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 
    /* Check for vector dimension */
    if (icvp->var_is_vector) {
-      var_count[icvp->var_ndims-1] = (icvp->user_do_scalar ?
-                                      icvp->var_vector_size : 
-                                      icv_count[icvp->var_ndims-1]);
-      var_start[icvp->var_ndims-1] = (icvp->user_do_scalar ?
-                                      0 : icv_start[icvp->var_ndims-1]);
+      if (icvp->user_do_scalar) {
+         var_count[icvp->var_ndims-1] = icvp->var_vector_size;
+         var_start[icvp->var_ndims-1] = 0;
+      }
+      else {
+         var_count[icvp->var_ndims-1] = icv_count[icvp->var_ndims-1];
+         var_start[icvp->var_ndims-1] = icv_start[icvp->var_ndims-1];
+      }
    }
 
    MI_RETURN(MI_NOERROR);

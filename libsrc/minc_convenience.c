@@ -13,10 +13,9 @@
                  MI_create_dimwidth_variable
                  MI_create_image_variable
                  MI_create_imaxmin_variable
+                 MI_verify_maxmin_dims
                  MI_create_root_variable
-                 MI_create_patient_variable
-                 MI_create_study_variable
-                 MI_create_acq_variable
+                 MI_create_simple_variable
                  MI_add_stdgroup
                  MI_is_in_list
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)

@@ -247,7 +247,6 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
 
    }                           /* for each dimension */
 
-
    MI_RETURN(MI_NOERROR);
 }
 
@@ -377,6 +376,9 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
       oldncopts = ncopts; ncopts = 0;
       if (miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep) 
                           != MI_ERROR) {
+         /* Flip dimstep if needed */
+         if (icvp->derv_dim_flip[idim]) 
+            dimstep *= (-1);
          /* Get step size for user's image */
          icvp->derv_dim_step[idim] = icvp->derv_dim_grow[idim] ?
             dimstep / icvp->derv_dim_scale[idim] :
@@ -386,15 +388,13 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
          if (miattget1(cdfid, dimvid[idim], MIstart, NC_DOUBLE, &dimstart)
                              == MI_ERROR)
             dimstart=0.0;
+         /* Flip dimstart if needed */
+         if (icvp->derv_dim_flip[idim])
+            dimstart -= dimstep * (icvp->var_dim_size[idim]-1);
+         /* Calculate start position */
          icvp->derv_dim_start[idim] = dimstart + 
             (icvp->derv_dim_step[idim] - dimstep) / 2.0 -
                icvp->derv_dim_off[idim] * icvp->derv_dim_step[idim];
-         /* Check for flipping */
-         if (icvp->derv_dim_flip[idim]) {
-            icvp->derv_dim_step[idim] *= (-1);
-            icvp->derv_dim_start[idim] -= icvp->derv_dim_step[idim] *
-               (user_dim_size-1);
-         }
       }             /* if found MIstep */
       ncopts = oldncopts;
 
@@ -694,7 +694,7 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               mi_icv_dimconv_type *dcp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer)
-{
+{   /* ARGSUSED */
    long buffer_len, values_len; /* Buffer lengths, offsets and indices */
    long buffer_off, values_off;
    long buffer_index, values_index;
