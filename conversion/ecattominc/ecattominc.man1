@@ -1,0 +1,65 @@
+.TH "ecattominc" "1" "" "" ""
+.SH "NAME"
+ecattominc \- convert an ecat format file (version 6.x or 7.x) to a minc format file
+.SH "SYNOPSIS"
+\fBecattominc [<options>] <infile> <outfile.mnc>\fR
+
+\fBecattominc [\-help]\fR
+.SH "DESCRIPTION"
+\fIecattominc\fR will convert an ecat data file (version 6.x or 7.x) to a minc file format Unless the \fB\-small_header\fR option is specified, \fBecattominc\fR will conserve the maximum informations from the ecat header and subheader fields which will be respectively stored as attributes of the ecat\-main and ecat\-subhdr minc variables. 
+By default the whole 3D or 4D volume is converted, however, \fBecattominc\fR allows for the selection of slice and frame ranges to be copied.
+The voxel values of the generated minc file are decay corrected, unless the \fBnodecay_correct\fR flag is specified. 
+Finally, blood data file can be inserted within the minc file with the \fB\-bloodfile\fR option.
+.SH "OPTIONS"
+Note that options can be specified in abbreviated form (as long as they are unique) and can be given anywhere on the command line.
+.SH "General options"
+.TP 
+\fI\-byte:\fR Write out data as bytes (default).
+.TP 
+\fI\-short:\fR Write out data as short integers.
+.TP 
+\fI\-clobber:\fR Overwrite existing file.
+.TP 
+\fI\-noclobber:\fR Don't overwrite existing file (default).
+.TP 
+\fI\-verbose:\fR List files as they are converted (default)
+.TP 
+\fI\-quiet:\fR Do not list files as they are converted.
+.SH "Command specific options"
+\fI\-decay_correct:\fR Do decay correction on images (default).
+.TP  
+\fI\-nodecay_correct:\fR Don't do decay correction.
+.TP  
+\fI\-slices:\fRRange of slices to copy (counting from 0).
+ Default value: \-2147483648 \-2147483648
+.TP  
+\fI\-frames:\fR Range of frames to copy (counting from 0).
+ Default value: \-2147483648 \-2147483648
+.TP 
+\fI\-frame:\fR Single frame to copy (counting from 0).
+ Default value: \-2147483648
+.TP 
+\fI\-small_header:\fR Copy only basic header information.
+.TP 
+\fI\-all_header:\fR Copy all header information (default).
+.TP 
+\fI\-bloodfile:\fR Insert blood data from this file.
+
+
+
+
+
+
+
+
+.SH "Generic options for all commands"
+.TP 	
+\fI\-help:\fR Print summary of command\-line options and abort
+.SH "KNOWN BUGS"
+No bug listed so far :=)
+.SH "SEE ALSO"
+minctoecat(1), rawtominc(1), minctoraw(1), dicomtominc(1)
+.SH "AUTHOR"
+Peter Neelin and Anthonin Reilhac (anthonin.reilhac@cermep.fr)
+.SH "COPYRIGHTS"
+Copyrights 2005 by Peter Neelin
