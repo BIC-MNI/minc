@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.11  2003-11-03 19:43:18  bert
+ * Revision 6.12  2003-11-14 16:52:24  stever
+ * More last-minute fixes.
+ *
+ * Revision 6.11  2003/11/03 19:43:18  bert
  * Handle unspecified dimension order correctly
  *
  * Revision 6.10  2003/10/29 17:50:18  bert
@@ -134,7 +137,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.11 2003-11-03 19:43:18 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.12 2003-11-14 16:52:24 stever Exp $";
 #endif
 
 #include <stdlib.h>
@@ -144,6 +147,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <minc.h>
 #include <float.h>
 #include <math.h>
+#include <unistd.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <convert_origin_to_start.h>
@@ -421,7 +425,7 @@ ArgvInfo argTable[] = {
 
 /* Main program */
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    int do_vrange;
    int cdfid, imgid, maxid, minid, varid;
@@ -758,12 +762,10 @@ main(int argc, char *argv[])
                   exit(ERROR_STATUS);
               }
               else {
-                  unsigned char *img_ptr;
-                  unsigned char *img_end;
+                  unsigned char *img_ptr = image;
+                  unsigned char *img_end = (unsigned char*)image + image_size;
 
-                  for (img_ptr = image, img_end = image + image_size;
-                       img_ptr < img_end;
-                       img_ptr += 4) {
+                  for ( ; img_ptr < img_end; img_ptr += 4) {
                       unsigned char tmp;
 
                       /* Swap the inner 2 bytes 

@@ -25,7 +25,7 @@
 #define ERROR_STATUS -1
 #define NORMAL_STATUS 0
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    int i,j,k,oi,image_size,offset,bytes_per_pixel,row_size,nread;
    int xsize,ysize,xstart,ystart,xstop,ystop,xstep,ystep;

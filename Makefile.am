@@ -205,7 +205,7 @@ xfmconcat_SOURCES = progs/xfm/xfmconcat.c
 
 xfminvert_SOURCES = progs/xfm/xfminvert.c
 
-libminc_la_LDFLAGS = -version-info 0:0:0
+libminc_la_LDFLAGS = -version-info 1:0:1
 libminc_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/dim_conversion.c \
@@ -219,7 +219,7 @@ libminc_la_SOURCES = \
 	libsrc/value_conversion.c \
 	libsrc/voxel_loop.c
 
-libvolume_io_la_LDFLAGS = -version-info 0:0:0
+libvolume_io_la_LDFLAGS = -version-info 0:1:0
 libvolume_io_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \

@@ -14,7 +14,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.3  2003-09-18 16:17:23  bert
+ * Revision 6.4  2003-11-14 16:52:24  stever
+ * More last-minute fixes.
+ *
+ * Revision 6.3  2003/09/18 16:17:23  bert
  * Use fabs instead of ABS
  *
  * Revision 6.2  2001/04/17 18:40:14  neelin
@@ -79,9 +82,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.3 2003-09-18 16:17:23 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.4 2003-11-14 16:52:24 stever Exp $ MINC (MNI)";
 #endif
 
+#include <math.h>
 #include <type_limits.h>
 #include <minc_private.h>
 

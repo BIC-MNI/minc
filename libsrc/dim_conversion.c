@@ -18,7 +18,10 @@
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
  * $Log: dim_conversion.c,v $
- * Revision 6.2  2003-09-18 16:16:15  bert
+ * Revision 6.3  2003-11-14 16:52:24  stever
+ * More last-minute fixes.
+ *
+ * Revision 6.2  2003/09/18 16:16:15  bert
  * Use standard labs() and fabs() instead of our private macros
  *
  * Revision 6.1  1999/10/19 14:45:07  neelin
@@ -77,9 +80,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.2 2003-09-18 16:16:15 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.3 2003-11-14 16:52:24 stever Exp $ MINC (MNI)";
 #endif
 
+#include <math.h>
 #include <type_limits.h>
 #include <minc_private.h>
 

@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.5  2001-04-17 18:40:16  neelin
+ * Revision 6.6  2003-11-14 16:52:24  stever
+ * More last-minute fixes.
+ *
+ * Revision 6.5  2001/04/17 18:40:16  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.5 2001-04-17 18:40:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.6 2003-11-14 16:52:24 stever Exp $";
 #endif
 
 #include <stdlib.h>
@@ -123,7 +126,7 @@ ArgvInfo argTable[] = {
 
 /* Main program */
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    char *pname;
    char *filename, *tempfile, *newfile;

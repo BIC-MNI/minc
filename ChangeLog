@@ -1,3 +1,20 @@
+2003-11-14  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* Makefile.am (libvolume_io_la_LDFLAGS): 
+	(libminc_la_LDFLAGS): Update version-info.
+
+	* progs/rawtominc/rawtominc.c: Include <unistd.h> for declaration
+	of swab().  Cast void pointer "image" to unsigned char before
+	adding integer size; otherwise IRIX CC fails.
+
+	* progs/mincview/invert_raw_image.c (main): 
+	* progs/minc_modify_header/minc_modify_header.c (main): Specify
+	return type.
+
+	* libsrc/voxel_loop.c: 
+	* libsrc/value_conversion.c: 
+	* libsrc/dim_conversion.c: Include <math.h> for declaration of fabs().
+
 2003-11-13  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* progs/minchistory:

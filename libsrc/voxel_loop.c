@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.2  2003-09-18 16:49:46  bert
+ * Revision 6.3  2003-11-14 16:52:24  stever
+ * More last-minute fixes.
+ *
+ * Revision 6.2  2003/09/18 16:49:46  bert
  * Use fabs instead of ABS
  *
  * Revision 6.1  2002/01/14 21:28:26  neelin
@@ -114,13 +117,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.2 2003-09-18 16:49:46 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.3 2003-11-14 16:52:24 stever Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
+#include <math.h>
 #include <minc.h>
 #include <minc_def.h>
 #include <voxel_loop.h>
