@@ -1,4 +1,5 @@
 
+
 /************************************************************************
  * MINC 2.0 "DIMENSION" FUNCTIONS
  ************************************************************************/
@@ -644,6 +645,22 @@ miset_dimension_cosines(midimhandle_t dimension, const double direction_cosines[
   return (MI_NOERROR);
 }
 
+/*! Get the comments attribute for a given dimension.
+ */
+
+int
+miget_dimension_description(midimhandle_t dimension, char **comments_ptr)
+{
+
+  if (dimension == NULL) {
+    return (MI_ERROR);
+  }
+ 
+  *comments_ptr = strdup(dimension->comments);
+  
+  return (MI_NOERROR); 
+}
+
 /*! Set the comments attribute for a given dimension.
  */
 
@@ -664,21 +681,7 @@ miset_dimension_description(midimhandle_t dimension, const char *comments)
     
   return (MI_NOERROR); 
 }
-/*! Get the comments attribute for a given dimension.
- */
 
-int
-miget_dimension_description(midimhandle_t dimension, char **comments_ptr)
-{
-
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
- 
-  *comments_ptr = strdup(dimension->comments);
-  
-  return (MI_NOERROR); 
-}
 
 /*! Get the identifier (name) of a MINC dimension.
  */
@@ -1236,6 +1239,7 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  
   offsets[0]=1.5;
   offsets[1]=2.5;
   offsets[2]=3.5;
@@ -1259,6 +1263,11 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  r = micreate_volume_image(vol);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  
   r =miset_dimension_description(dimh3, "this is funny");
   if ( r < 0) {
     TESTRPT("failed", r);
@@ -1281,15 +1290,15 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   }
   printf( " N is %d \n", n);
-  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
+ 
   r = miclose_volume(vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  
+  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
   if (error_cnt != 0) {
     fprintf(stderr, "%d error%s reported\n", 
 	    error_cnt, (error_cnt == 1) ? "" : "s");
