@@ -83,6 +83,36 @@ sub dc3_pixel_data {return ("0x7fe0", "0x10");}
 
 # DICOM 3 ROUTINES
 
+# Get a list of all dicom element numbers
+sub acr_get_element_numbers {
+   if (scalar(@_) != 1) {
+      die "Argument error in acr_get_element_numbers";
+   }
+   local(*header) = @_;
+
+   local(@keys) = grep(/string$/, keys(%header));
+   local(@elements) = ();
+   local($key);
+   foreach $key (@keys) {
+      local(@fields) = split($;, $key);
+      local($newkey) = $fields[0] . $; . $fields[1];
+      push(@elements, $newkey)
+   }
+   @elements = sort(@elements);
+
+   return @elements;
+}
+
+# Routine to get a string from the header given group and element as strings
+sub acr_find_string_with_string {
+   if (scalar(@_) != 3) {
+      die "Argument error in acr_find_string_with_string";
+   }
+   local(*header, $grstr, $elstr) = @_;
+
+   return $header{$grstr, $elstr, 'string'};
+}
+
 # Routine to get a string from the header
 sub acr_find_string { 
    if (scalar(@_) != 3) {
@@ -367,6 +397,18 @@ sub dicom3_read_file_info {
     ($study_date = &acr_find_string(*header, &dc3_study_date)) =~ s/\./-/g;
     $study_time = &acr_find_string(*header, &dc3_study_time);
     $file_info{'start_time'} = "$study_date $study_time";
+
+    # Get dicom element info - only even numbered groups
+    local(@elements) = &acr_get_element_numbers(*header);
+    local($element);
+    foreach $element (@elements) {
+       local($group,$element) = split($;, $element);
+       if (hex($group) % 2 != 0) {next;}
+       local($value) = &acr_find_string_with_string(*header, $group, $element);
+       if (defined($value) && length($value) > 0) {
+          $file_info{"dicom_$group:el_$element"} = $value;
+       }
+    }
 
     # Get specific file info
     local($compression_code) = &acr_find_string(*header, 0x28, 0x60);
