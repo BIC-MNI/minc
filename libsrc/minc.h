@@ -18,8 +18,14 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.14 1992-12-01 14:04:07 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.15 1992-12-01 16:30:55 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
+
+#ifndef MINC_PRIVATE_HEADER_FILE
+#ifndef lint
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.15 1992-12-01 16:30:55 neelin Exp $ MINC (MNI)";
+#endif
+#endif
 
 #include <netcdf.h>
 
