@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:35  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:35:35  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.7  94/09/28  10:34:53  neelin
  * Pre-release
  * 

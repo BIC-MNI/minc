@@ -9,16 +9,19 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 1.2  1995-05-03 16:13:46  neelin
-@MODIFIED   : Changed default for -copy/-nocopy to depend on number of input files.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:42  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.2  1995/05/03  16:13:46  neelin
+ * Changed default for -copy/-nocopy to depend on number of input files.
+ *
  * Revision 1.1  1995/05/03  13:19:56  neelin
  * Initial revision
  *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 1.2 1995-05-03 16:13:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.0 1995-05-15 19:32:42 neelin Rel $";
 #endif
 
 #include <stdlib.h>

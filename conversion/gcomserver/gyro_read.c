@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.7  1995-03-21 15:43:19  neelin
-@MODIFIED   : Corrected setting of default image type.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.7  1995/03/21  15:43:19  neelin
+ * Corrected setting of default image type.
+ *
  * Revision 2.6  1995/02/14  18:12:26  neelin
  * Added project names and defaults files (using volume name).
  * Added process id to log file name.

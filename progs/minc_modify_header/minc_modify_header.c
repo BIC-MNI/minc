@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : $Log: minc_modify_header.c,v $
-@MODIFIED   : Revision 1.2  1995-04-04 19:10:56  neelin
-@MODIFIED   : Fixed handling of compressed files.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:21  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.2  1995/04/04  19:10:56  neelin
+ * Fixed handling of compressed files.
+ *
  * Revision 1.1  1995/04/04  15:51:42  neelin
  * Initial revision
  *
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 1.2 1995-04-04 19:10:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 3.0 1995-05-15 19:32:21 neelin Rel $";
 #endif
 
 #include <stdlib.h>

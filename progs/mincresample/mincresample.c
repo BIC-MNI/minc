@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 2.3  1995-05-05 19:11:05  neelin
-@MODIFIED   : Modified call to input_transform.
+@MODIFIED   : Revision 3.0  1995-05-15 19:30:57  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.3  1995/05/05  19:11:05  neelin
+ * Modified call to input_transform.
+ *
  * Revision 2.2  1995/02/09  14:05:51  neelin
  * Mods to make irix 5 lint happy.
  *
@@ -80,7 +83,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.3 1995-05-05 19:11:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.0 1995-05-15 19:30:57 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 1.4 1995-03-29 15:34:23 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 3.0 1995-05-15 19:32:41 neelin Rel $
 .\"
 .TH MINCEXPAND 1
 

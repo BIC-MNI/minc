@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincexpand.c,v $
-@MODIFIED   : Revision 1.3  1995-01-24 09:06:19  neelin
-@MODIFIED   : Added -name_only option.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:41  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.3  1995/01/24  09:06:19  neelin
+ * Added -name_only option.
+ *
  * Revision 1.2  95/01/24  08:48:57  neelin
  * Added optional output file argument.
  * 
@@ -34,7 +37,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 1.3 1995-01-24 09:06:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 3.0 1995-05-15 19:32:41 neelin Rel $";
 #endif
 
 #include <stdlib.h>

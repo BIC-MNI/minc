@@ -5,9 +5,12 @@
 @CALLS      : 
 @CREATED    : December 9, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:18  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:02  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:33:18  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.11  94/09/28  10:33:13  neelin
  * Pre-release
  * 

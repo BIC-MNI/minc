@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 1.1  1995-05-11 12:35:53  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:40  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.1  1995/05/11  12:35:53  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -26,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 1.1 1995-05-11 12:35:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.0 1995-05-15 19:32:40 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 2.2  1994-11-21 08:08:03  neelin
-@MODIFIED   : Modified code to properly calculate start from centre locations, then
-@MODIFIED   : changed calculation back to old way because it worked.
-@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.2  1994/11/21  08:08:03  neelin
+ * Modified code to properly calculate start from centre locations, then
+ * changed calculation back to old way because it worked.
+ * Added a ncsetfill(mincid, NC_NOFILL).
+ *
  * Revision 2.1  94/10/20  13:50:16  neelin
  * Write out direction cosines to support rotated volumes.
  * Store single slices as 1-slice volumes (3D instead of 2D).

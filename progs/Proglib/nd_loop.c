@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.c,v $
-@MODIFIED   : Revision 1.3  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:35  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.3  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 1.2  1994/12/02  09:19:59  neelin
  * Added comments to clarify use of routines.
  *
@@ -27,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 1.3 1995-02-08 19:31:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 3.0 1995-05-15 19:31:35 neelin Rel $";
 #endif
 
 #include <stdlib.h>

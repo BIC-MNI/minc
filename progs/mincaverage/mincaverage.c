@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.6  1995-05-05 18:08:17  neelin
-@MODIFIED   : Removed debugging line for sd calculation.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.6  1995/05/05  18:08:17  neelin
+ * Removed debugging line for sd calculation.
+ *
  * Revision 1.5  1995/05/02  16:08:17  neelin
  * Added -check, -nocheck options.
  *
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.6 1995-05-05 18:08:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.0 1995-05-15 19:32:44 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 2.2  1995-02-08 21:16:06  neelin
-@MODIFIED   : Changes to make irix 5 lint happy.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.2  1995/02/08  21:16:06  neelin
+ * Changes to make irix 5 lint happy.
+ *
  * Revision 2.1  1995/01/04  08:10:16  neelin
  * Improved string printing in dump function (longer strings and replace
  * carriage returns, linefeeds and formfeeds by spaces).

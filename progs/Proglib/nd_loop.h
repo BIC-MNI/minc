@@ -18,9 +18,12 @@
 @GLOBALS    : 
 @CREATED    : December 2, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.h,v $
-@MODIFIED   : Revision 1.3  1994-12-02 09:40:37  neelin
-@MODIFIED   : Fixed arguments to nd_end_of_loop.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:35  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.3  1994/12/02  09:40:37  neelin
+ * Fixed arguments to nd_end_of_loop.
+ *
  * Revision 1.2  94/12/02  09:20:17  neelin
  * Added comments to clarify use of routines.
  * 

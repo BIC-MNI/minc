@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 2.5  1995-02-09 14:11:43  neelin
-@MODIFIED   : Mods to make irix 5 lint happy.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:05  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.5  1995/02/09  14:11:43  neelin
+ * Mods to make irix 5 lint happy.
+ *
  * Revision 2.4  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -56,7 +59,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.5 1995-02-09 14:11:43 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 3.0 1995-05-15 19:31:05 neelin Rel $";
 #endif
 
 #include <stdlib.h>

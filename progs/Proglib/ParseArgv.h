@@ -15,7 +15,7 @@
  *
  * This file has been modified to be used only for argv parsing without
  * reference to tk, tcl or X11. Base on tk.h from tk2.3
- * $Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.h,v 2.0 1994-09-28 10:34:29 neelin Exp $ SPRITE (Berkeley)
+ * $Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.h,v 3.0 1995-05-15 19:31:35 neelin Rel $ SPRITE (Berkeley)
  */
 
 /*

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : December 7, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.c,v $
-@MODIFIED   : Revision 2.2  1995-01-23 09:06:40  neelin
-@MODIFIED   : changed ncclose to miclose
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:02  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.2  1995/01/23  09:06:40  neelin
+ * changed ncclose to miclose
+ *
  * Revision 2.1  95/01/23  09:01:40  neelin
  * Changed nccreate to micreate.
  * 
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 2.2 1995-01-23 09:06:40 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 3.0 1995-05-15 19:31:02 neelin Rel $";
 #endif
 
 #include <stdlib.h>

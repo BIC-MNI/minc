@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:32:48  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 3.0  1995-05-15 19:30:57  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:32:48  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.11  94/09/28  10:32:40  neelin
  * Pre-release
  * 

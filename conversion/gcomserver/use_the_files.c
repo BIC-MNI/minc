@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 2.1  1995-02-14 18:12:26  neelin
-@MODIFIED   : Added project names and defaults files (using volume name).
-@MODIFIED   : Added process id to log file name.
-@MODIFIED   : Moved temporary files to subdirectory.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.1  1995/02/14  18:12:26  neelin
+ * Added project names and defaults files (using volume name).
+ * Added process id to log file name.
+ * Moved temporary files to subdirectory.
+ *
  * Revision 2.0  1994/09/28  10:35:37  neelin
  * Release of minc version 0.2
  *

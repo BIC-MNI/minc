@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 2.3  1995-02-08 19:14:44  neelin
-@MODIFIED   : More changes for irix 5 lint.
+@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.3  1995/02/08  19:14:44  neelin
+ * More changes for irix 5 lint.
+ *
  * Revision 2.2  1995/02/08  19:01:06  neelin
  * Moved private function declarations from minc_routines.h to appropriate file.
  *
@@ -80,7 +83,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.3 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.6  1995-05-11 12:31:29  neelin
-@MODIFIED   : Removed error messages from ncattdel.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:35  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.6  1995/05/11  12:31:29  neelin
+ * Removed error messages from ncattdel.
+ *
  * Revision 1.5  1995/05/02  16:05:32  neelin
  * Fixed bug in handling more than 30 files (needed to detach from icv).
  * Added more checking of dimensions.
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.6 1995-05-11 12:31:29 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 3.0 1995-05-15 19:31:35 neelin Rel $";
 #endif
 
 #include <stdlib.h>

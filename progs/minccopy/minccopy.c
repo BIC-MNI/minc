@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minccopy.c,v $
-@MODIFIED   : Revision 2.1  1995-01-23 12:42:00  neelin
-@MODIFIED   : Change ncopen, ncclose to miopen, miclose.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:08  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.1  1995/01/23  12:42:00  neelin
+ * Change ncopen, ncclose to miopen, miclose.
+ *
  * Revision 2.0  94/09/28  10:33:54  neelin
  * Release of minc version 0.2
  * 
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 2.1 1995-01-23 12:42:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 3.0 1995-05-15 19:31:08 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 2.3  1995-02-09 13:51:26  neelin
-@MODIFIED   : Mods for irix 5 lint.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.3  1995/02/09  13:51:26  neelin
+ * Mods for irix 5 lint.
+ *
  * Revision 2.2  1994/11/21  08:08:01  neelin
  * Modified code to properly calculate start from centre locations, then
  * changed calculation back to old way because it worked.

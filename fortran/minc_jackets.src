@@ -58,9 +58,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1993
 @MODIFIED   : $Log: minc_jackets.src,v $
-@MODIFIED   : Revision 2.1  1995-02-08 14:07:58  neelin
-@MODIFIED   : Removed declaration of miicv_put function.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:47  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+Revision 2.1  1995/02/08  14:07:58  neelin
+Removed declaration of miicv_put function.
+
 Revision 2.0  1994/09/28  10:38:47  neelin
 Release of minc version 0.2
 
@@ -83,7 +86,7 @@ Added RCS logging in sources code.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 2.1 1995-02-08 14:07:58 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 3.0 1995-05-15 19:32:47 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <ctype.h>

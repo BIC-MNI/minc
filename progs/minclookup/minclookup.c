@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.6  1995-03-21 14:26:42  neelin
-@MODIFIED   : changed usage message.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:39  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.6  1995/03/21  14:26:42  neelin
+ * changed usage message.
+ *
  * Revision 1.5  1995/03/21  14:00:10  neelin
  * Changed calls to voxel_loop routines.
  *
@@ -31,7 +34,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.6 1995-03-21 14:26:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.0 1995-05-15 19:32:39 neelin Rel $";
 #endif
 
 #include <stdlib.h>

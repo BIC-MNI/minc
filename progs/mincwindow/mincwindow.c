@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 2.4  1995-03-21 14:35:25  neelin
-@MODIFIED   : Changed usage message and handle vector volumes properly.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:20  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.4  1995/03/21  14:35:25  neelin
+ * Changed usage message and handle vector volumes properly.
+ *
  * Revision 2.3  1995/03/21  14:05:00  neelin
  * Modified calls to voxel_loop routines.
  *
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.4 1995-03-21 14:35:25 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 3.0 1995-05-15 19:32:20 neelin Rel $";
 #endif
 
 #include <stdlib.h>

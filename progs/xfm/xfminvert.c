@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: xfminvert.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:26  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:03  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:33:26  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.5  94/09/28  10:33:20  neelin
  * Pre-release
  * 
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 2.0 1994-09-28 10:33:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 3.0 1995-05-15 19:31:03 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -16,7 +16,7 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.c,v 2.1 1995-02-08 21:32:02 neelin Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.c,v 3.0 1995-05-15 19:31:35 neelin Rel $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */

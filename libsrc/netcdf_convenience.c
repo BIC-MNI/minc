@@ -34,10 +34,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.6  1995-03-14 14:36:35  neelin
-@MODIFIED   : Got rid of broken pipe messages from miexpand_file by using exec
-@MODIFIED   : in system call.
+@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.6  1995/03/14  14:36:35  neelin
+ * Got rid of broken pipe messages from miexpand_file by using exec
+ * in system call.
+ *
  * Revision 2.5  1995/02/08  19:14:44  neelin
  * More changes for irix 5 lint.
  *
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.6 1995-03-14 14:36:35 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

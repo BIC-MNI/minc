@@ -18,9 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 2.4  1995-01-24 08:34:30  neelin
-@MODIFIED   : Added optional tempfile argument to miexpand_file.
+@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.4  1995/01/24  08:34:30  neelin
+ * Added optional tempfile argument to miexpand_file.
+ *
  * Revision 2.3  95/01/23  08:28:31  neelin
  * Changed name of midecompress_file to miexpand_file.
  * 
@@ -58,12 +61,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 2.4 1995-01-24 08:34:30 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.4 1995-01-24 08:34:30 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
 #endif
 #endif
 

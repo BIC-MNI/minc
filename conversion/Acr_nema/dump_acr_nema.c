@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 2.1  1995-02-06 14:12:55  neelin
-@MODIFIED   : Added argument to specify maximum group id to dump.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.1  1995/02/06  14:12:55  neelin
+ * Added argument to specify maximum group id to dump.
+ *
  * Revision 2.0  94/09/28  10:36:09  neelin
  * Release of minc version 0.2
  * 

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.h,v $
-@MODIFIED   : Revision 1.3  1994-12-02 09:08:57  neelin
-@MODIFIED   : Moved nd_loop to proglib.
+@MODIFIED   : Revision 3.0  1995-05-15 19:32:36  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.3  1994/12/02  09:08:57  neelin
+ * Moved nd_loop to proglib.
+ *
  * Revision 1.2  94/11/23  11:47:08  neelin
  * Handle image-min/max properly when using icv for normalization.
  * 

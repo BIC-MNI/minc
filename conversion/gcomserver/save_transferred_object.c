@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 2.1  1995-02-09 13:51:26  neelin
-@MODIFIED   : Mods for irix 5 lint.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.1  1995/02/09  13:51:26  neelin
+ * Mods for irix 5 lint.
+ *
  * Revision 2.0  1994/09/28  10:35:33  neelin
  * Release of minc version 0.2
  *

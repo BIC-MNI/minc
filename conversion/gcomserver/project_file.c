@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : $Log: project_file.c,v $
-@MODIFIED   : Revision 1.1  1995-02-14 18:12:26  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 1.1  1995/02/14  18:12:26  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

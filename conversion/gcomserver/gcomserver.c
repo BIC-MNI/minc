@@ -4,11 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 2.3  1995-02-14 18:12:26  neelin
-@MODIFIED   : Added project names and defaults files (using volume name).
-@MODIFIED   : Added process id to log file name.
-@MODIFIED   : Moved temporary files to subdirectory.
+@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
+@MODIFIED   : Release of minc version 0.3
 @MODIFIED   :
+ * Revision 2.3  1995/02/14  18:12:26  neelin
+ * Added project names and defaults files (using volume name).
+ * Added process id to log file name.
+ * Moved temporary files to subdirectory.
+ *
  * Revision 2.2  1995/02/09  13:51:26  neelin
  * Mods for irix 5 lint.
  *
@@ -87,7 +90,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.3 1995-02-14 18:12:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 3.0 1995-05-15 19:31:44 neelin Rel $";
 #endif
 
 #include <sys/types.h>
