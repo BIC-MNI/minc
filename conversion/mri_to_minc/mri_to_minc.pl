@@ -191,6 +191,42 @@ sub unpack_value {
     return unpack("x$offset $type", $string);
 }
 
+# Subroutine to take the absolute values of an array
+sub abs {
+    local(@vals) = @_;
+    foreach $val (@vals) {
+        if ($val < 0) {$val = -$val;}
+    }
+    return @vals;
+}
+
+# Subroutine to get a direction cosine from a vector, correcting for
+# magnitude and direction if needed (the direction cosine should point
+# along the positive direction of the nearest axis)
+sub get_dircos {
+    if (scalar(@_) != 3) {
+        die "Argument error in get_dircos\n";
+    }
+    local($xcos, $ycos, $zcos) = @_;
+
+    # Get magnitude
+    local($mag) = sqrt($xcos**2 + $ycos**2 + $zcos**2);
+    if ($mag <= 0) {$mag = 1};
+
+    # Make sure that direction cosine is pointing along positive axis
+    local($max) = $xcos;
+    if (&abs($ycos) > &abs($max)) {$max= $ycos;}
+    if (&abs($zcos) > &abs($max)) {$max= $zcos;}
+    if ($max < 0) {$mag *= -1;}
+
+    # Correct components
+    $xcos /= $mag;
+    $ycos /= $mag;
+    $zcos /= $mag;
+
+    return ($xcos, $ycos, $zcos);
+}
+
 # Subroutine to add an optional attribute to an array
 sub add_optional_attribute {
     if (scalar(@_) != 3) {
@@ -223,7 +259,7 @@ sub create_mincfile {
     @positions = sort(numeric_order @positions);
 
     # Get smallest step size and get nslices and ordered list of images
-    local(@image_list, $slicestep, $nslices, $slicestart);
+    local(@image_list, $slicestep, $nslices, $slicestart, $slicerange);
     if (scalar(@positions) > 1) {
         $slicestep = $positions[1] - $positions[0];
         foreach $i (2..$#positions) {
@@ -241,9 +277,11 @@ sub create_mincfile {
             local($first_image, $last_image);
             $first_image = $pos_to_image{$positions[0]};
             $last_image = $pos_to_image{$positions[$#positions]};
-            $nslices = 
-                int(($mincinfo{$last_image, 'slicepos'} -
-                     $mincinfo{$first_image, 'slicepos'}) / $slicestep + 1.5);
+            $slicerange = $mincinfo{$last_image, 'slicepos'} -
+                $mincinfo{$first_image, 'slicepos'};
+            $nslices = int($slicerange / $slicestep + 1.5);
+            # Improve accuracy of $slicestep
+            $slicestep = $slicerange / ($nslices - 1);
             foreach $i (0..$nslices) {
                 $image_list[$i] = '';
             }
@@ -281,33 +319,49 @@ sub create_mincfile {
     # Dimension info
     local($nrows, $ncols, $orientation, $pixel_size);
     local($xstep, $ystep, $zstep);
+    local($colstart, $rowstart);
     $pixel_size = $mincinfo{'pixel_size'};
     $nrows = $mincinfo{'height'};
     $ncols = $mincinfo{'width'};
     $xstep = $mincinfo{'colstep'};
     $ystep = $mincinfo{'rowstep'};
     $zstep = $slicestep;
+    $colstart = $mincinfo{'colstart'}+0;
+    $rowstart = $mincinfo{'rowstart'}+0;
 
     # Orientation
     local($xstart, $ystart, $zstart);
+    local(%world_axes);
     local($orient_flag) = $mincinfo{'orientation'};
     if ($orient_flag eq 'sagittal') {    # Sagittal
         ($ystep, $zstep, $xstep) = 
             ($mincinfo{'colstep'}, $mincinfo{'rowstep'}, $slicestep);
-        ($ystart, $zstart, $xstart) = (0, 0, $slicestart);
+        ($ystart, $zstart, $xstart) = ($colstart, $rowstart, $slicestart);
         $orientation = "-sagittal";
+        %world_axes = ('col', 'y', 'row', 'z', 'slc', 'x');
     }
     elsif ($orient_flag eq 'coronal') { # Coronal
         ($xstep, $zstep, $ystep) = 
             ($mincinfo{'colstep'}, $mincinfo{'rowstep'}, $slicestep);
-        ($xstart, $zstart, $ystart) = (0, 0, $slicestart);
+        ($xstart, $zstart, $ystart) = ($colstart, $rowstart, $slicestart);
         $orientation = "-coronal";
+        %world_axes = ('col', 'x', 'row', 'z', 'slc', 'y');
     }
     else {                      # Transverse
         ($xstep, $ystep, $zstep) = 
             ($mincinfo{'colstep'}, $mincinfo{'rowstep'}, $slicestep);
-        ($xstart, $ystart, $zstart) = (0, 0, $slicestart);
+        ($xstart, $ystart, $zstart) = ($colstart, $rowstart, $slicestart);
         $orientation = "-transverse";
+        %world_axes = ('col', 'x', 'row', 'y', 'slc', 'z');
+    }
+    local(@dircos_options) = ();
+    foreach $axis ('col', 'row', 'slc') {
+        if (defined($mincinfo{"${axis}_dircos_x"})) {
+            push(@dircos_options,"-${world_axes{$axis}}dircos");
+            foreach $component ('x', 'y', 'z') {
+                push(@dircos_options, $mincinfo{"${axis}_dircos_$component"});
+            }
+        }
     }
 
     # Optional attributes
@@ -356,6 +410,7 @@ sub create_mincfile {
          "-scan_range", "-short", "-range", "0", "4095", $orientation,
          "-xstep", $xstep, "-ystep", $ystep, "-zstep", $zstep,
          "-xstart", $xstart, "-ystart", $ystart, "-zstart", $zstart,
+         @dircos_options,
          "-mri", 
          "-attribute", "patient:full_name=".$mincinfo{'patient_name'},
          @optional_attributes,
@@ -667,8 +722,6 @@ sub mri_to_minc {
             $mincinfo{'pixel_size'} = $file_info{'pixel_size'};
             $mincinfo{'patient_name'} = $file_info{'patient_name'};
             $mincinfo{'orientation'} = $file_info{'orientation'};
-            $mincinfo{'colstep'} = $file_info{'colstep'};
-            $mincinfo{'rowstep'} = $file_info{'rowstep'};
             $mincinfo{'tr'} = $file_info{'tr'};
             $mincinfo{'ti'} = $file_info{'ti'};
             $mincinfo{'mr_flip'} = $file_info{'mr_flip'};
@@ -681,6 +734,19 @@ sub mri_to_minc {
             $mincinfo{'patient_age'} = $file_info{'patient_age'};
             $mincinfo{'patient_sex'} = $file_info{'patient_sex'};
             $mincinfo{'patient_id'} = $file_info{'patient_id'};
+            $mincinfo{'colstep'} = $file_info{'colstep'};
+            $mincinfo{'rowstep'} = $file_info{'rowstep'};
+            $mincinfo{'colstart'} = $file_info{'colstart'};
+            $mincinfo{'rowstart'} = $file_info{'rowstart'};
+            $mincinfo{'col_dircos_x'} = $file_info{'col_dircos_x'};
+            $mincinfo{'col_dircos_y'} = $file_info{'col_dircos_y'};
+            $mincinfo{'col_dircos_z'} = $file_info{'col_dircos_z'};
+            $mincinfo{'row_dircos_x'} = $file_info{'row_dircos_x'};
+            $mincinfo{'row_dircos_y'} = $file_info{'row_dircos_y'};
+            $mincinfo{'row_dircos_z'} = $file_info{'row_dircos_z'};
+            $mincinfo{'slc_dircos_x'} = $file_info{'slc_dircos_x'};
+            $mincinfo{'slc_dircos_y'} = $file_info{'slc_dircos_y'};
+            $mincinfo{'slc_dircos_z'} = $file_info{'slc_dircos_z'};
         }
         else {
             if (($cur_width != $mincinfo{'width'}) || # 

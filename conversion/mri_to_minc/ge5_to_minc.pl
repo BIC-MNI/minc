@@ -126,7 +126,6 @@ sub ge5_read_file_info {
     $file_info{'width'} = &unpack_value(*pixel_hdr, 8, 'i');
     $file_info{'height'} = &unpack_value(*pixel_hdr, 12, 'i');
     $file_info{'pixel_size'} = 2;
-    $file_info{'slicepos'} = &unpack_value(*image_hdr, 126, 'f');
     $file_info{'patient_name'} = &unpack_value(*exam_hdr, 97, "A25");
     local($orient_flag) = &unpack_value(*image_hdr, 114, 's');
     if ($orient_flag == 2) {    # Transverse
@@ -158,11 +157,50 @@ sub ge5_read_file_info {
         $file_info{'orientation'} = 'transverse';
     }
 
+    # Get coordinate information
     $fovx = &unpack_value(*image_hdr, 34, 'f');
     $fovy = &unpack_value(*image_hdr, 38, 'f');
+    if ($fovy == 0) {$fovy = $fovx};
     $file_info{'colstep'} = -$fovx / $file_info{'width'};
-    $file_info{'rowstep'} = 
-        -(($fovy != 0) ? $fovy : $fovx) / $file_info{'height'};
+    $file_info{'rowstep'} = -$fovy / $file_info{'height'};
+    local($xcentre, $ycentre, $zcentre) = 
+        &unpack_value(*image_hdr, 130, 'f3');
+    local($xnorm, $ynorm, $znorm) = 
+        &unpack_value(*image_hdr, 142, 'f3');
+    local($xtoplh, $ytoplh, $ztoplh) = 
+        &unpack_value(*image_hdr, 154, 'f3');
+    local($xtoprh, $ytoprh, $ztoprh) = 
+        &unpack_value(*image_hdr, 166, 'f3');
+    local($xbotrh, $ybotrh, $zbotrh) = 
+        &unpack_value(*image_hdr, 178, 'f3');
+    local($xnorm, $ynorm, $znorm) = &get_dircos($xnorm, $ynorm, $znorm);
+    local($x_col_dircos, $y_col_dircos, $z_col_dircos) =
+        &get_dircos($xtoprh - $xtoplh, $ytoprh - $ytoplh, $ztoprh - $ztoplh);
+    local($x_row_dircos, $y_row_dircos, $z_row_dircos) =
+        &get_dircos($xbotrh - $xtoprh, $ybotrh - $ytoprh, $zbotrh - $ztoprh);
+    $file_info{'slicepos'} = 
+        $xcentre * $xnorm + $ycentre * $ynorm + $zcentre * $znorm;
+    $file_info{'colstart'} = 
+        ($xcentre * $x_col_dircos + 
+         $ycentre * $y_col_dircos + 
+         $zcentre * $z_col_dircos) - 
+             $file_info{'colstep'} * ($file_info{'width'} - 1) / 2;
+    $file_info{'rowstart'} = 
+        ($xcentre * $x_row_dircos + 
+         $ycentre * $y_row_dircos + 
+         $zcentre * $z_row_dircos) -
+             $file_info{'rowstep'} * ($file_info{'height'} - 1) / 2;
+    $file_info{'col_dircos_x'} = $x_col_dircos;
+    $file_info{'col_dircos_y'} = $y_col_dircos;
+    $file_info{'col_dircos_z'} = $z_col_dircos;
+    $file_info{'row_dircos_x'} = $x_row_dircos;
+    $file_info{'row_dircos_y'} = $y_row_dircos;
+    $file_info{'row_dircos_z'} = $z_row_dircos;
+    $file_info{'slc_dircos_x'} = $xnorm;
+    $file_info{'slc_dircos_y'} = $ynorm;
+    $file_info{'slc_dircos_z'} = $znorm;
+
+    # Get other info
     $file_info{'tr'} = &unpack_value(*image_hdr, 194, 'i')/1000000;
     $file_info{'te'} = &unpack_value(*image_hdr, 202, 'i')/1000000;
     $file_info{'ti'} = &unpack_value(*image_hdr, 198, 'i')/1000000;
