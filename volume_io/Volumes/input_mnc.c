@@ -18,25 +18,8 @@ private  int  match_dimension_names(
     char              *file_dimension_names[],
     int               axis_index_in_file[] );
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : initialize_minc_input
-@INPUT      : filename
-              volume
-@OUTPUT     : 
-@RETURNS    : Minc_file
-@DESCRIPTION: Initializes the input of a MINC file, passing back a MINC
-              file pointer.  It assumes that the volume has been created,
-              with the desired type, or NC_UNSPECIFIED type if it is desired
-              to use whatever type is in the file.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  Minc_file  initialize_minc_input(
-    char                 filename[],
+public  Minc_file  initialize_minc_input_from_minc_id(
+    int                  minc_id,
     Volume               volume,
     minc_input_options   *options )
 {
@@ -79,23 +62,13 @@ public  Minc_file  initialize_minc_input(
 
     ALLOC( file, 1 );
 
+    file->cdfid = minc_id;
+
     file->file_is_being_read = TRUE;
     file->volume = volume;
 
     get_volume_sizes( volume, prev_sizes );
     prev_nc_type = volume->nc_data_type;
-
-    /* --- open the file */
-
-    ncopts = 0;
-    file->cdfid =  miopen( filename, NC_NOWRITE );
-
-    if( file->cdfid == MI_ERROR )
-    {
-        print( "Error: opening MINC file \"%s\".\n", filename );
-        FREE( file );
-        return( (Minc_file) 0 );
-    }
 
     /* --- find the image variable */
 
@@ -118,7 +91,6 @@ public  Minc_file  initialize_minc_input(
     {
         print( "Error: MINC file has only %d dims, volume requires %d.\n",
                file->n_file_dimensions, n_vol_dims );
-        (void) miclose( file->cdfid );
         FREE( file );
         return( (Minc_file) 0 );
     }
@@ -126,7 +98,6 @@ public  Minc_file  initialize_minc_input(
     {
         print( "Error: MINC file has %d dims, can only handle %d.\n",
                file->n_file_dimensions, MAX_VAR_DIMS );
-        (void) miclose( file->cdfid );
         FREE( file );
         return( (Minc_file) NULL );
     }
@@ -159,7 +130,6 @@ public  Minc_file  initialize_minc_input(
         for_less( d, 0, file->n_file_dimensions )
             print( "%d: %s\n", d+1, file->dim_names[d] );
 
-        (void) miclose( file->cdfid );
         FREE( file );
         return( (Minc_file) NULL );
     }
@@ -478,6 +448,49 @@ public  Minc_file  initialize_minc_input(
 
     if( different && volume->data != (char *) NULL )
         free_volume_data( volume );
+
+    return( file );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_minc_input
+@INPUT      : filename
+              volume
+@OUTPUT     : 
+@RETURNS    : Minc_file
+@DESCRIPTION: Initializes the input of a MINC file, passing back a MINC
+              file pointer.  It assumes that the volume has been created,
+              with the desired type, or NC_UNSPECIFIED type if it is desired
+              to use whatever type is in the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June, 1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Minc_file  initialize_minc_input(
+    char                 filename[],
+    Volume               volume,
+    minc_input_options   *options )
+{
+    Minc_file    *file;
+    int          minc_id;
+
+    minc_id = miopen( filename, NC_NOWRITE );
+
+    if( minc_id == MI_ERROR )
+    {
+        print( "Error: opening MINC file \"%s\".\n", filename );
+        return( (Minc_file) 0 );
+    }
+
+    file = initialize_minc_input_from_minc_id( minc_id, volume, options );
+
+    if( file == (Minc_file) NULL )
+    {
+        (void) miclose( minc_id );
+    }
 
     return( file );
 }
