@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.26 1995-11-29 21:36:41 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.27 1996-01-12 19:23:18 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -213,10 +213,9 @@ public  void  set_volume_real_value(
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : trilinear_interpolate
-@INPUT      : u              0 to 1 pos
-              v              0 to 1 pos
-              w              0 to 1 pos
-              coefs          8 coeficients
+@INPUT      : volume
+              voxel
+              outside_value
 @OUTPUT     : value    
               derivs
 @RETURNS    : 
@@ -228,33 +227,94 @@ public  void  set_volume_real_value(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Mar. 20, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Jan.  8, 1996    D. MacDonald - now check for outside volume is
+                                              done inside this procedure
 ---------------------------------------------------------------------------- */
 
 private  void    trilinear_interpolate(
-    Real     u,
-    Real     v,
-    Real     w,
-    Real     coefs[],
+    Volume   volume,
+    Real     voxel[],
+    Real     outside_value,
     Real     *value,
     Real     derivs[] )
 {
+    int    i, j, k, sizes[N_DIMENSIONS], dx, dy, dz;
+    Real   x, y, z, u, v, w;
+    Real   coefs[2][2][2];
+    Real   c000, c001, c010, c011, c100, c101, c110, c111;
     Real   du00, du01, du10, du11, c00, c01, c10, c11, c0, c1, du0, du1;
     Real   dv0, dv1, dw;
 
+    get_volume_sizes( volume, sizes );
+
+    x = voxel[0];
+    y = voxel[1];
+    z = voxel[2];
+
+    if( x >= 0.0 && x < (Real) sizes[0]-1.0 &&
+        y >= 0.0 && y < (Real) sizes[1]-1.0 &&
+        z >= 0.0 && z < (Real) sizes[2]-1.0 )
+    {
+        i = (int) x;
+        j = (int) y;
+        k = (int) z;
+
+        GET_VALUE_3D( c000, volume, i  , j  , k );
+        GET_VALUE_3D( c001, volume, i  , j  , k+1 );
+        GET_VALUE_3D( c010, volume, i  , j+1, k );
+        GET_VALUE_3D( c011, volume, i  , j+1, k+1 );
+        GET_VALUE_3D( c100, volume, i+1, j  , k );
+        GET_VALUE_3D( c101, volume, i+1, j  , k+1 );
+        GET_VALUE_3D( c110, volume, i+1, j+1, k );
+        GET_VALUE_3D( c111, volume, i+1, j+1, k+1 );
+    }
+    else
+    {
+        i = FLOOR( x );
+        j = FLOOR( y );
+        k = FLOOR( z );
+
+        for_less( dx, 0, 2 )
+        for_less( dy, 0, 2 )
+        for_less( dz, 0, 2 )
+        {
+            if( i + dx >= 0 && i + dx < sizes[0] &&
+                j + dy >= 0 && j + dy < sizes[1] &&
+                k + dz >= 0 && k + dz < sizes[2] )
+            {
+                GET_VALUE_3D( coefs[dx][dy][dz], volume, i+dx, j+dy, k+dz );
+            }
+            else
+                coefs[dx][dy][dz] = outside_value;
+        }
+
+        c000 = coefs[0][0][0];
+        c001 = coefs[0][0][1];
+        c010 = coefs[0][1][0];
+        c011 = coefs[0][1][1];
+        c100 = coefs[1][0][0];
+        c101 = coefs[1][0][1];
+        c110 = coefs[1][1][0];
+        c111 = coefs[1][1][1];
+    }
+
+    u = x - (Real) i;
+    v = y - (Real) j;
+    w = z - (Real) k;
+
     /*--- get the 4 differences in the u direction */
 
-    du00 = coefs[4] - coefs[0];
-    du01 = coefs[5] - coefs[1];
-    du10 = coefs[6] - coefs[2];
-    du11 = coefs[7] - coefs[3];
+    du00 = c100 - c000;
+    du01 = c101 - c001;
+    du10 = c110 - c010;
+    du11 = c111 - c011;
 
     /*--- reduce to a 2D problem, by interpolating in the u direction */
 
-    c00 = coefs[0] + u * du00;
-    c01 = coefs[1] + u * du01;
-    c10 = coefs[2] + u * du10;
-    c11 = coefs[3] + u * du11;
+    c00 = c000 + u * du00;
+    c01 = c001 + u * du01;
+    c10 = c010 + u * du10;
+    c11 = c011 + u * du11;
 
     /*--- get the 2 differences in the v direction for the 2D problem */
 
@@ -640,6 +700,29 @@ public  int   evaluate_volume(
     Real     fixed_size_coefs[MAX_COEF_SPACE];
     BOOLEAN  fully_inside, fully_outside;
 
+    n_dims = get_volume_n_dimensions(volume);
+
+    /*--- check for the common case trilinear interpolation of 1 value */
+
+    if( n_dims == 3 && degrees_continuity == 0 &&
+        (interpolating_dimensions == NULL ||
+         interpolating_dimensions[0] &&
+         interpolating_dimensions[1] &&
+         interpolating_dimensions[2]) )
+    {
+        Real   *deriv;
+
+        if( first_deriv == NULL )
+            deriv = NULL;
+        else
+            deriv = first_deriv[0];
+
+        trilinear_interpolate( volume, voxel, outside_value, &values[0],
+                               deriv );
+
+        return( 1 );
+    }
+
     /*--- check if the degrees continuity is between nearest neighbour
           and cubic */
 
@@ -650,7 +733,6 @@ public  int   evaluate_volume(
         degrees_continuity = 0;
     }
 
-    n_dims = get_volume_n_dimensions(volume);
     get_volume_sizes( volume, sizes );
 
     bound = (Real) degrees_continuity / 2.0;
@@ -833,27 +915,9 @@ public  int   evaluate_volume(
     case 0:
     case 1:
     case 2:
-        /*--- check for the common case trilinear interpolation of 1 value */
-
-        if( degrees_continuity == 0 && n_interp_dims == 3 && n_values == 1 )
-        {
-            Real   *deriv;
-
-            if( first_deriv == NULL )
-                deriv = NULL;
-            else
-                deriv = first_deriv[0];
-
-            trilinear_interpolate( fraction[0], fraction[1], fraction[2],
-                                   coefs, values, deriv );
-        }
-        else
-        {
-            interpolate_volume( n_interp_dims, fraction, n_values,
-                                spline_degree, coefs,
-                                values, first_deriv, second_deriv );
-        }
-
+        interpolate_volume( n_interp_dims, fraction, n_values,
+                            spline_degree, coefs,
+                            values, first_deriv, second_deriv );
         break;
     }
 
