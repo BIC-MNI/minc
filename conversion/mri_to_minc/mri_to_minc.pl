@@ -158,7 +158,9 @@ sub read_next_file {
     # Get next value from list if no tape drive
     if (length($tapedrive) == 0) {
         local($filename) = shift(@input_list);
-        print "Reading header for file $filename\n";
+        if (length($filename) > 0) {
+           print "Reading header for file $filename\n";
+        }
         return $filename;
     }
 
@@ -677,7 +679,7 @@ sub mri_to_minc {
         # Get next file
         if ($keep_looping) {
             $nextfile = &read_next_file($tapedrive, *input_list);
-            if ($nextfile eq "") {
+            if (length($nextfile) <= 0) {
                 $keep_looping = 0;
             }
         }
