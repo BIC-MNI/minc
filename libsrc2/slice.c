@@ -40,7 +40,7 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     hid_t dset_id;
     hid_t fspc_id;
     hid_t mspc_id;
-    hssize_t coords[3][1];
+    hssize_t coords[MI2_MAX_VAR_DIMS][1];
     int ndims;
     int i;
     int result;
