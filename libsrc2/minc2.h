@@ -226,10 +226,10 @@ extern int miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipp
 extern int miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipping_order);
 extern int miget_dimension_class(midimhandle_t dimension, midimclass_t *dimclass);
 extern int miset_dimension_class(midimhandle_t dimension, midimclass_t dimclass);
-extern int miget_dimension_direction_cosines(midimhandle_t dimension, 
-					     double direction_cosines[3]);
-extern int miset_dimension_direction_cosines(midimhandle_t dimension, 
-					     const double direction_cosines[3]);
+extern int miget_dimension_cosines(midimhandle_t dimension, 
+                                   double direction_cosines[3]);
+extern int miset_dimension_cosines(midimhandle_t dimension, 
+                                   const double direction_cosines[3]);
 extern int miset_dimension_description(midimhandle_t dimension, const char *comments);
 extern int miget_dimension_description(midimhandle_t dimension, char **comments_ptr);
 extern int miget_dimension_name(midimhandle_t dimension, char **name_ptr);
@@ -298,7 +298,7 @@ extern int miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_fl
 extern int miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
 				int *depth);
 extern int miselect_resolution(mihandle_t volume, int depth);
-extern int flush_from_resolution(mihandle_t volume, int depth);
+extern int miflush_from_resolution(mihandle_t volume, int depth);
 extern int miset_props_compression_type(mivolumeprops_t props, micompression_t compression_type);
 extern int miget_props_compression_type(mivolumeprops_t props, micompression_t *compression_type);
 extern int miset_props_zlib_compression(mivolumeprops_t props, int zlib_level);
