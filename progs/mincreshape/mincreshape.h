@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.h,v $
-@MODIFIED   : Revision 1.1  1994-11-02 16:22:00  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-11-23 11:47:08  neelin
+@MODIFIED   : Handle image-min/max properly when using icv for normalization.
 @MODIFIED   :
+ * Revision 1.1  94/11/02  16:22:00  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -55,6 +58,7 @@ typedef struct {
    double fillvalue;                 /* Value to fill with (FILL_DEFAULT
                                         means fill with real value zero) */
    int do_block_normalization;       /* Normalize slices to block max/min */
+   int do_icv_normalization;         /* Use icv for normalization */
 
    /* Note that a block is a hyperslab of the output volume in which all
       values are normalized the same way. A chunk is a hyperslab that is
@@ -118,6 +122,12 @@ public void handle_normalization(Reshape_info *reshape_info,
                                  long *block_count,
                                  double *minmax_buffer,
                                  double *fillvalue);
+public void get_block_min_and_max(Reshape_info *reshape_info,
+                                  long *block_start,
+                                  long *block_count,
+                                  double *minmax_buffer,
+                                  double *minimum,
+                                  double *maximum);
 public void truncate_input_vectors(Reshape_info *reshape_info,
                                    long *input_start,
                                    long *input_count);

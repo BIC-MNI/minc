@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 1.2  1994-11-22 08:45:11  neelin
-@MODIFIED   : Fixed handling of normalization for number of image dimensions > 2.
-@MODIFIED   : Added appropriate default values of image-max and image-min.
+@MODIFIED   : Revision 1.3  1994-11-23 11:46:38  neelin
+@MODIFIED   : Handle image-min/max properly when using icv for normalization.
 @MODIFIED   :
+ * Revision 1.2  94/11/22  08:45:11  neelin
+ * Fixed handling of normalization for number of image dimensions > 2.
+ * Added appropriate default values of image-max and image-min.
+ * 
  * Revision 1.1  94/11/02  16:21:09  neelin
  * Initial revision
  * 
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.2 1994-11-22 08:45:11 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.3 1994-11-23 11:46:38 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -199,6 +202,13 @@ public void get_num_minmax_values(Reshape_info *reshape_info,
    long input_block_count[MAX_VAR_DIMS];
    long *num_values;
 
+   /* Check for icv normalization */
+   if (reshape_info->do_icv_normalization) {
+      *num_min_values = 0;
+      *num_max_values = 0;
+      return;
+   }
+
    /* Translate output block count to input count */
    translate_output_to_input(reshape_info, block_start, block_count, 
                              input_block_start, input_block_count);
@@ -271,78 +281,19 @@ public void handle_normalization(Reshape_info *reshape_info,
                                  double *fillvalue)
 {
    int iloop;
-   long num_min_values, num_max_values, ivalue;
    int inmincid, inimgid, varid, icvid;
-   long minmax_start[MAX_VAR_DIMS], minmax_count[MAX_VAR_DIMS];
-   long input_block_start[MAX_VAR_DIMS], input_block_count[MAX_VAR_DIMS];
+   long minmax_start[MAX_VAR_DIMS];
    double minimum, maximum, *extreme, valid_min, valid_max, denom;
-   long num_values;
    char *varname;
-   double sign, default_extreme;
 
    /* Get input minc id, image id and icv id*/
    inmincid = reshape_info->inmincid;
    inimgid = ncvarid(inmincid, MIimage);
    icvid = reshape_info->icvid;
 
-   /* Translate output block count to input count */
-   translate_output_to_input(reshape_info, block_start, block_count,
-                             input_block_start, input_block_count);
-   truncate_input_vectors(reshape_info, input_block_start, input_block_count);
-
-   /* Get number of min and max values */
-   get_num_minmax_values(reshape_info, block_start, block_count, 
-                         &num_min_values, &num_max_values);
-
-   /* Loop over image-min and image-max getting block min and max */
-
-   for (iloop=0; iloop < 2; iloop++) {
-
-      /* Get varid and pointer to min or max value */
-      switch (iloop) {
-      case 0: 
-         num_values = num_min_values;
-         varname = MIimagemin;
-         extreme = &minimum;
-         sign = -1.0;
-         default_extreme = 0.0;
-         break;
-      case 1: 
-         num_values = num_max_values;
-         varname = MIimagemax;
-         extreme = &maximum;
-         sign = +1.0;
-         default_extreme = 1.0;
-         break;
-      }
-
-      /* Get values from file */
-      if (num_values > 0) {
-         varid = ncvarid(inmincid, varname);
-         (void) mitranslate_coords(inmincid,
-                                   inimgid, input_block_start,
-                                   varid, minmax_start);
-         (void) mitranslate_coords(inmincid,
-                                   inimgid, input_block_count,
-                                   varid, minmax_count);
-         (void) mivarget(reshape_info->inmincid, varid, 
-                         minmax_start, minmax_count, 
-                         NC_DOUBLE, NULL, minmax_buffer);
-         *extreme = minmax_buffer[0];
-         for (ivalue=1; ivalue < num_values; ivalue++) {
-            if ((minmax_buffer[ivalue] * sign) > (*extreme * sign))
-               *extreme = minmax_buffer[ivalue];
-         }
-      }
-      else {
-         *extreme = default_extreme;
-      }
-      if (reshape_info->need_fillvalue && 
-          (reshape_info->fillvalue == NOFILL) && 
-          (0.0 > (*extreme * sign)))
-         *extreme = 0.0;
-      
-   }
+   /* Get input min and max for block */
+   get_block_min_and_max(reshape_info, block_start, block_count,
+                         minmax_buffer, &minimum, &maximum);
 
    /* Modify the icv if necessary */
    if (reshape_info->do_block_normalization) {
@@ -401,6 +352,113 @@ public void handle_normalization(Reshape_info *reshape_info,
    }
 
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_block_min_and_max
+@INPUT      : reshape_info - information for reshaping volume
+              block_start - start of current block
+              block_count - count for current block
+              minmax_buffer - buffer space for getting min and max
+                 values
+@OUTPUT     : minimum - input minimum for block
+              maximum - input maximum for block
+@RETURNS    : (none)
+@DESCRIPTION: Gets the min and max for the input file for a given output
+              block.
+@METHOD     :
+@GLOBALS    :
+@CALLS      :
+@CREATED    : October 25, 1994 (Peter Neelin)
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+public void get_block_min_and_max(Reshape_info *reshape_info,
+                                  long *block_start,
+                                  long *block_count,
+                                  double *minmax_buffer,
+                                  double *minimum,
+                                  double *maximum)
+{
+   int iloop;
+   long num_min_values, num_max_values, ivalue;
+   int inmincid, inimgid, varid, icvid;
+   long minmax_start[MAX_VAR_DIMS], minmax_count[MAX_VAR_DIMS];
+   long input_block_start[MAX_VAR_DIMS], input_block_count[MAX_VAR_DIMS];
+   double *extreme;
+   long num_values;
+   char *varname;
+   double sign, default_extreme;
+
+   /* Get input minc id, image id and icv id*/
+   inmincid = reshape_info->inmincid;
+   inimgid = ncvarid(inmincid, MIimage);
+   icvid = reshape_info->icvid;
+
+   /* Is the icv doing the normalization? */
+   if (reshape_info->do_icv_normalization) {
+      (void) miicv_inqdbl(icvid, MI_ICV_IMAGE_MIN, minimum);
+      (void) miicv_inqdbl(icvid, MI_ICV_IMAGE_MAX, maximum);
+      return;
+   }
+
+   /* Translate output block count to input count */
+   translate_output_to_input(reshape_info, block_start, block_count,
+                             input_block_start, input_block_count);
+   truncate_input_vectors(reshape_info, input_block_start, input_block_count);
+
+   /* Get number of min and max values */
+   get_num_minmax_values(reshape_info, block_start, block_count, 
+                         &num_min_values, &num_max_values);
+
+   /* Loop over image-min and image-max getting block min and max */
+
+   for (iloop=0; iloop < 2; iloop++) {
+
+      /* Get varid and pointer to min or max value */
+      switch (iloop) {
+      case 0: 
+         num_values = num_min_values;
+         varname = MIimagemin;
+         extreme = minimum;
+         sign = -1.0;
+         default_extreme = 0.0;
+         break;
+      case 1: 
+         num_values = num_max_values;
+         varname = MIimagemax;
+         extreme = maximum;
+         sign = +1.0;
+         default_extreme = 1.0;
+         break;
+      }
+
+      /* Get values from file */
+      if (num_values > 0) {
+         varid = ncvarid(inmincid, varname);
+         (void) mitranslate_coords(inmincid,
+                                   inimgid, input_block_start,
+                                   varid, minmax_start);
+         (void) mitranslate_coords(inmincid,
+                                   inimgid, input_block_count,
+                                   varid, minmax_count);
+         (void) mivarget(reshape_info->inmincid, varid, 
+                         minmax_start, minmax_count, 
+                         NC_DOUBLE, NULL, minmax_buffer);
+         *extreme = minmax_buffer[0];
+         for (ivalue=1; ivalue < num_values; ivalue++) {
+            if ((minmax_buffer[ivalue] * sign) > (*extreme * sign))
+               *extreme = minmax_buffer[ivalue];
+         }
+      }
+      else {
+         *extreme = default_extreme;
+      }
+      if (reshape_info->need_fillvalue && 
+          (reshape_info->fillvalue == NOFILL) && 
+          (0.0 > (*extreme * sign)))
+         *extreme = 0.0;
+      
+   }
 }
 
 /* ----------------------------- MNI Header -----------------------------------

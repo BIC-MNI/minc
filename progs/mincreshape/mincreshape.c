@@ -12,10 +12,13 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 1.3  1994-11-22 08:46:09  neelin
-@MODIFIED   : Fixed handling of normalization for number of image dimensions > 2.
-@MODIFIED   : Added appropriate default values of image-max and image-min.
+@MODIFIED   : Revision 1.4  1994-11-23 11:47:05  neelin
+@MODIFIED   : Handle image-min/max properly when using icv for normalization.
 @MODIFIED   :
+ * Revision 1.3  94/11/22  08:46:09  neelin
+ * Fixed handling of normalization for number of image dimensions > 2.
+ * Added appropriate default values of image-max and image-min.
+ * 
  * Revision 1.2  94/11/03  08:48:20  neelin
  * Allow chunk_count to have sizes less than full block size.
  * 
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.3 1994-11-22 08:46:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.4 1994-11-23 11:47:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1125,11 +1128,22 @@ public void setup_reshaping_info(int icvid, int mincid,
    for (iloop=2; iloop < num_imgdims; iloop++) {
       idim = fastest_input_img_dim - iloop;
       if (idim >= 0)
+         reshape_info->dim_used_in_block[o2i[idim]] = TRUE;
+   }
+
+   /* If we are doing icv normalization, then all dimensions are used in the
+      block */
+   if (do_norm) {
+      for (idim=0; idim < output_ndims; idim++) {
          reshape_info->dim_used_in_block[idim] = TRUE;
+      }
    }
 
    /* Save fillvalue */
    reshape_info->fillvalue = fillvalue;
+
+   /* Are we doing normalization through the icv? */
+   reshape_info->do_icv_normalization = do_norm;
 
    /* Do we need to normalize to slices to a block min and max? */
    if (do_norm) {
