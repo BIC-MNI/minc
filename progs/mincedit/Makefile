@@ -25,6 +25,6 @@ $(PROGS):
 clean:
 	@echo $(PROGS) : nothing to remove
 
-install: $(PROGS)
+install:
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 

@@ -72,7 +72,7 @@ clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
 	            $(EXTRA_OBJS) $(LINT_EXTRA) $(MANPAGES)
 
-install: $(PROGS) $(MANPAGES)
+install:
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 	$(CP) $(CP_FLAGS) $(MANPAGES) $(INSTALL_MANDIR)$(MANSECT)
 

@@ -63,7 +63,7 @@ clean:
 	$(RM) $(RM_FLAGS)  $(OBJS) $(LINT_LIST) $(CC_MINC_LIB) $(LINT_MINC_LIB)
 
 # Copy files to installation directories
-install: $(CC_MINC_LIB) minc.h
+install:
 	$(CP) $(CP_FLAGS) $(CC_MINC_LIB) $(INSTALL_LIBDIR)
 	$(CP) $(CP_FLAGS) minc.h $(INSTALL_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_INCDIR)/minc.h
