@@ -62,8 +62,11 @@ $(LINT_MINC_LIB) : $(LINT_LIST)
 	$(LINT) -o $(MINC_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_LIST)
 
 # Remove all derived files
-clean:
-	$(RM) $(RM_FLAGS)  $(OBJS) $(LINT_LIST) $(CC_MINC_LIB) $(LINT_MINC_LIB)
+clean: mostlyclean
+	$(RM) $(RM_FLAGS) $(CC_MINC_LIB) $(LINT_MINC_LIB)
+
+mostlyclean:
+	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_LIST)
 
 # Copy files to installation directories
 install:

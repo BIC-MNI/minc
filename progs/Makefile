@@ -14,7 +14,7 @@ default : build
 all build install : 
 	@$(MAKE) 'TARGET=$@' 'SUBDIRS=$(PROG_LIB_DIR) $(ACR_LIB_DIR) [a-z]*' subdirs
 
-clean :
+clean mostlyclean :
 	@$(MAKE) 'TARGET=$@' 'SUBDIRS=*' subdirs
 
 subdirs : 

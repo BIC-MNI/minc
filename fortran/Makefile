@@ -35,7 +35,7 @@ build : $(PROGS) library
 $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -72,7 +72,7 @@ $(CC_MINC_LIB): $(JACKETS_OBJ)
 
 
 # Remove all derived files in this directory
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) \
                      $(PROGS) $(PROG_OBJ)
 

@@ -31,7 +31,7 @@ all: build test
 build: $(PROGS)
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -45,14 +45,14 @@ $(PROGS) : $(TARGET_IN_DEPENDENCY).o  $(CC_MINC_LIB) Makefile
 lint: $(LINT_LIST_EXE)
 
 $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_MINC_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_MINC_LIB)
+	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln $(LINT_MINC_LIB)
 
 # Run tests
 test: $(PROGS)
 	run_tests.csh
 
 # Remove all derived files in this directory
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(PROG_OBJ)  $(LINT_LIST) $(PROGS)
 
 install:

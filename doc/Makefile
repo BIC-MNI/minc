@@ -21,8 +21,11 @@ $(DOCS) : $(DOCS:.ps=.dvi)
 .dvi.ps :
 	-dvips $< -o $@
 
-clean:
+clean: mostlyclean
 	$(RM) $(RM_FLAGS) *.aux *.dvi *.log *.toc
+
+mostlyclean:
+	$(RM) $(RM_FLAGS) *.dvi
 
 install:
 	@echo Nothing to install

@@ -104,10 +104,12 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 	      $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
-clean:
-	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
-	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST) \
-	         $(DOCDIR)/*.dvi $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
+clean: mostlyclean
+	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) $(DOCDIR)/*.dvi
+
+mostlyclean:
+	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST) \
+	         $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
 
 install:
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
