@@ -6,17 +6,20 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 1.6  1993-08-11 13:34:20  neelin
-@MODIFIED   : Converted to use Dave MacDonald's General_transform code.
-@MODIFIED   : Fixed bug in get_slice - for non-linear transformations coord was
-@MODIFIED   : transformed, then used again as a starting coordinate.
-@MODIFIED   : Handle files that have image-max/min that doesn't vary over slices.
-@MODIFIED   : Handle files that have image-max/min varying over row/cols.
-@MODIFIED   : Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
-@MODIFIED   : Handle out-of-range values (-fill values from a previous mincresample, for
-@MODIFIED   : example).
-@MODIFIED   : Save transformation file as a string attribute to processing variable.
+@MODIFIED   : Revision 1.7  1993-08-11 14:31:50  neelin
+@MODIFIED   : Changed prototype for check_imageminmax.
 @MODIFIED   :
+ * Revision 1.6  93/08/11  13:34:20  neelin
+ * Converted to use Dave MacDonald's General_transform code.
+ * Fixed bug in get_slice - for non-linear transformations coord was
+ * transformed, then used again as a starting coordinate.
+ * Handle files that have image-max/min that doesn't vary over slices.
+ * Handle files that have image-max/min varying over row/cols.
+ * Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
+ * Handle out-of-range values (-fill values from a previous mincresample, for
+ * example).
+ * Save transformation file as a string attribute to processing variable.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -232,7 +235,7 @@ public void get_arginfo(int argc, char *argv[],
                         Program_Flags *program_flags,
                         VVolume *in_vol, VVolume *out_vol, 
                         General_transform *transformation);
-public void check_imageminmax(File_Info *fp);
+public void check_imageminmax(File_Info *fp, Volume_Data *volume);
 public void get_file_info(char *filename, 
                           Volume_Definition *volume_def,
                           File_Info *file_info);
