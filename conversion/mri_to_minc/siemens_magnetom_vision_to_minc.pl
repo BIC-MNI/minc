@@ -73,7 +73,7 @@ sub smv_read_file_info {
                                 &unpack_value(*header, 12, 'I3'),
                                 &unpack_value(*header, 52, 'I3'));
    $file_info{'series'} = &unpack_value(*header, 5943, 'A2')+0;
-   $file_info{'image'} = &unpack_value(*header, 5546, 'A3')+0;
+   $file_info{'image'} = &unpack_value(*header, 5546, 'A4')+0;
 
    $file_info{'echo'} = &unpack_value(*header, 5752, 'A1')+0;
    $file_info{'pixel_size'} = $pixelsize;
