@@ -15,7 +15,7 @@ build : prog_ref.dvi prog_guide.dvi
 	latex $<
 
 clean:
-	$(RM) $(RM_FLAGS) *.aux *.dvi *.log
+	$(RM) $(RM_FLAGS) *.aux *.dvi *.log *.toc
 
 install:
 	@echo Nothing to install
