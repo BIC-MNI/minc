@@ -10,7 +10,10 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.6  2001-08-16 16:41:36  neelin
+ * Revision 6.7  2003-10-28 20:32:09  bert
+ * Get rid of a few compiler warnings
+ *
+ * Revision 6.6  2001/08/16 16:41:36  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -76,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.6 2001-08-16 16:41:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.7 2003-10-28 20:32:09 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -96,7 +99,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #define BOOLEAN_DEFAULT -1
 
 /* Variables used for argument parsing */
-nc_type output_datatype = INT_MAX;
+int output_datatype = INT_MAX;
 int output_signed = INT_MAX;
 double valid_range[2] = {DBL_MAX, DBL_MAX};
 int normalize_output = BOOLEAN_DEFAULT;
@@ -140,8 +143,6 @@ int main(int argc, char *argv[])
    long size;
    int idim;
    void *data;
-   char the_sign[MI_MAX_ATTSTR_LEN];
-   int length;
    double temp;
 
    /* Check arguments */
