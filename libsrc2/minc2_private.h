@@ -110,6 +110,7 @@ struct volumehandle_struct {
   hid_t imin_id;                /* Dataset for image-max */
   double scale_min;             /* Global minimum */
   double scale_max;             /* Global maximum */
+  BOOLEAN is_dirty;             /* TRUE if data has been modified. */
 };
 
 /**
@@ -144,9 +145,9 @@ extern void miinit_enum(hid_t);
 extern int miget_scalar(hid_t loc_id, hid_t type_id, const char *path, 
                         void *data);
 
-extern int minc_create_thumbnail(hid_t file_id, int grp);
-extern int minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp);
-extern int minc_update_thumbnails(hid_t file_id);
+extern int minc_create_thumbnail(mihandle_t volume, int grp);
+extern int minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp);
+extern int minc_update_thumbnails(mihandle_t volume);
 
 /* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 
