@@ -36,7 +36,11 @@
  */
 typedef double mi_lin_xfm_t[MI2_LIN_XFM_SIZE][MI2_LIN_XFM_SIZE];
 
+#ifdef _WIN32
+typedef __int64 mi_i64_t;
+#else //_WIN32
 typedef long long mi_i64_t;
+#endif //_WIN32
 
 /** The fixed path to the dimension 
  */
