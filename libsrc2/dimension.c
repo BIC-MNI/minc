@@ -764,7 +764,8 @@ miset_dimension_cosines(midimhandle_t dimension,
                         const double direction_cosines[3])
 {
   
-  if (dimension == NULL || dimension->class != MI_DIMCLASS_SPATIAL) {
+  if (dimension == NULL || (dimension->class != MI_DIMCLASS_SPATIAL &&
+                            dimension->class != MI_DIMCLASS_SFREQUENCY)) {
     return (MI_ERROR);
   }
   
@@ -1027,9 +1028,11 @@ miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
     }
     if (sampling_flag) {
         dimension->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
+        dimension->attr &= ~MI_DIMATTR_REGULARLY_SAMPLED;
     }
     else {
         dimension->attr &= ~MI_DIMATTR_NOT_REGULARLY_SAMPLED;
+        dimension->attr |= MI_DIMATTR_REGULARLY_SAMPLED;
     }
     return (MI_NOERROR);
 }
