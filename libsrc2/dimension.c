@@ -273,7 +273,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 {
 
   //LEFT THE DIMENSION ORDERING "miorder_t order"
-  //UNTIL ICV FUNCTIONS ARE COMPLETED!
+
   
   dimension *handle;
   hid_t hdf_file;	
