@@ -9,9 +9,15 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 1.9  1993-08-11 15:49:49  neelin
-@MODIFIED   : get_arg_vector must return a value (TRUE if all goes well).
+@MODIFIED   : Revision 1.10  1994-04-11 16:12:42  neelin
+@MODIFIED   : Added -image_range, -image_minimum, -image_maximum.
+@MODIFIED   : Changed default to -normalize.
+@MODIFIED   : Changed behaviour so that -byte gives default range and sign even if
+@MODIFIED   : file is of type byte (must use -filetype to preserve range and sign).
 @MODIFIED   :
+ * Revision 1.9  93/08/11  15:49:49  neelin
+ * get_arg_vector must return a value (TRUE if all goes well).
+ * 
  * Revision 1.8  93/08/11  15:44:54  neelin
  * Functions called by ParseArgv must check that nextArg is not NULL.
  * 
@@ -31,7 +37,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.9 1993-08-11 15:49:49 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.10 1994-04-11 16:12:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,7 +97,8 @@ int arg_odatatype = TYPE_ASCII;
 nc_type output_datatype = NC_DOUBLE;
 int output_signed = INT_MAX;
 double valid_range[2] = {DBL_MAX, DBL_MAX};
-int normalize_output = FALSE;
+int normalize_output = TRUE;
+double image_range[2] = {DBL_MAX, DBL_MAX};
 long hs_start[MAX_VAR_DIMS] = {LONG_MIN};
 long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
 
@@ -118,9 +125,15 @@ ArgvInfo argTable[] = {
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
        "Specify the range of output values"},
    {"-normalize", ARGV_CONSTANT, (char *) TRUE, (char *) &normalize_output,
-       "Normalize integer pixel values to file max and min"},
+       "Normalize integer pixel values to file max and min (Default)"},
    {"-nonormalize", ARGV_CONSTANT, (char *) FALSE, (char *) &normalize_output,
-       "Turn off pixel normalization (Default)"},
+       "Turn off pixel normalization"},
+   {"-image_range", ARGV_FLOAT, (char *) 2, (char *) image_range,
+       "Specify the range of real image values for normalization"},
+   {"-image_minimum", ARGV_FLOAT, (char *) 1, (char *) &image_range[0],
+       "Specify the minimum real image value for normalization"},
+   {"-image_maximum", ARGV_FLOAT, (char *) 1, (char *) &image_range[1],
+       "Specify the maximum real image value for normalization"},
    {"-start", ARGV_FUNC, (char *) get_arg_vector, (char *) hs_start,
        "Specifies corner of hyperslab (C conventions for indices)"},
    {"-count", ARGV_FUNC, (char *) get_arg_vector, (char *) hs_count,
@@ -147,6 +160,7 @@ int main(int argc, char *argv[])
    double temp;
    long nelements, ielement;
    double *dbl_data;
+   int user_normalization;
 
    /* Check arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
@@ -155,6 +169,13 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
    filename = argv[1];
+
+   /* Set normalization if image_range specified */
+   user_normalization = FALSE;
+   if ((image_range[0] != DBL_MAX) || (image_range[1] != DBL_MAX)) {
+      user_normalization = TRUE;
+      normalize_output = TRUE;
+   }
 
    /* Open the file */
    mincid = ncopen(filename, NC_NOWRITE);
@@ -196,7 +217,7 @@ int main(int argc, char *argv[])
       is_signed = (datatype != NC_BYTE);
    ncopts = NC_VERBOSE | NC_FATAL;
    if (output_signed == INT_MAX) {
-      if (output_datatype == datatype)
+      if (arg_odatatype == TYPE_FILE)
          output_signed = is_signed;
       else 
          output_signed = (output_datatype != NC_BYTE);
@@ -204,7 +225,7 @@ int main(int argc, char *argv[])
 
    /* Get output range */
    if (valid_range[0] == DBL_MAX) {
-      if ((output_datatype == datatype) && (output_signed == is_signed)) {
+      if (arg_odatatype == TYPE_FILE) {
          ncopts = 0;
          if ((miattget(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, 
                        valid_range, &length) == MI_ERROR) || (length!=2)) {
@@ -241,6 +262,19 @@ int main(int argc, char *argv[])
    }
    else if (normalize_output) {
       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
+      if (user_normalization) {
+         (void) miicv_attach(icvid, mincid, imgid);
+         if (image_range[0] == DBL_MAX) {
+            (void) miicv_inqdbl(icvid, MI_ICV_NORM_MIN, &image_range[0]);
+         }
+         if (image_range[1] == DBL_MAX) {
+            (void) miicv_inqdbl(icvid, MI_ICV_NORM_MAX, &image_range[1]);
+         }
+         (void) miicv_detach(icvid);
+         (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);
+         (void) miicv_setdbl(icvid, MI_ICV_IMAGE_MIN, image_range[0]);
+         (void) miicv_setdbl(icvid, MI_ICV_IMAGE_MAX, image_range[1]);
+      }
    }
    (void) miicv_attach(icvid, mincid, imgid);
 
