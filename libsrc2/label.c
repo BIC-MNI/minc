@@ -159,6 +159,9 @@ miget_label_value(mihandle_t volume, const char *name, int *value_ptr)
     return (MI_NOERROR);
 }
 
+/**
+This function returns the numebr of defined labels, if any, or zero.
+*/
 int
 miget_number_of_defined_labels(mihandle_t volume, int *number_of_labels)
 {
