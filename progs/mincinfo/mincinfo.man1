@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 2.0 1994-09-28 10:34:05 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 2.1 1994-10-25 14:45:49 neelin Exp $
 .\"
 .TH MINCINFO 1 "MINC Image File Format"
 
@@ -32,7 +32,10 @@ Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 Dimensions, variables and attributes are all specified by name.
 Attributes are specified by <variable>:<attribute> where <variable>
-can be omitted to specify global attributes.
+can be omitted to specify global attributes. More than one option can
+be specified, in which case the return value from each option is
+printed on a separate line (-image_info prints on many lines) in the
+order of the options on the command line.
 
 .I -image_info:
 Print out the default general information about the file. This
@@ -96,6 +99,13 @@ Print out contents of global history attribute.
 Print out step value for x dimension, setting the default value
 to 1.
      mincinfo file.mnc -attvalue xspace:step -error 1
+
+Print out the step values for x, y and z, setting the default value to
+1.
+     mincinfo file.mnc -error 1 \\
+          -attvalue xspace:step \\
+          -attvalue yspace:step \\
+          -attvalue zspace:step
 
 Print out the names of the dimensions subscripting the image variable.
      mincinfo file.mnc -vardims image
