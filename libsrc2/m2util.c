@@ -16,60 +16,121 @@
  * of the datatype, so the returned value must be explicitly freed with a
  * call to H5Tclose().
  * \param mitype The MINC 2 data type to convert
+ * \param is_native Convert to native type if TRUE
  */
 hid_t
-mitype_to_hdftype(mitype_t mitype)
+mitype_to_hdftype(mitype_t mitype, int is_native)
 {
     hid_t type_id;
 
-    switch (mitype) {
-    case MI_TYPE_BYTE:
-	type_id = H5Tcopy(H5T_NATIVE_SCHAR);
-	break;
-    case MI_TYPE_SHORT:
-	type_id = H5Tcopy(H5T_NATIVE_SHORT);
-	break;
-    case MI_TYPE_INT:
-	type_id = H5Tcopy(H5T_NATIVE_INT);
-	break;
-    case MI_TYPE_FLOAT:
-	type_id = H5Tcopy(H5T_NATIVE_FLOAT);
-	break;
-    case MI_TYPE_DOUBLE:
-	type_id = H5Tcopy(H5T_NATIVE_DOUBLE);
-	break;
-    case MI_TYPE_UBYTE:
-	type_id = H5Tcopy(H5T_NATIVE_UCHAR);
-	break;
-    case MI_TYPE_USHORT:
-	type_id = H5Tcopy(H5T_NATIVE_USHORT);
-	break;
-    case MI_TYPE_UINT:
-	type_id = H5Tcopy(H5T_NATIVE_UINT);
-	break;
-    case MI_TYPE_SCOMPLEX:
-        type_id = H5Tcreate(H5T_COMPOUND, 4);
-        H5Tinsert(type_id, "real", 0, H5T_NATIVE_SHORT);
-        H5Tinsert(type_id, "imag", 2, H5T_NATIVE_SHORT);
-        break;
-    case MI_TYPE_ICOMPLEX:
-        type_id = H5Tcreate(H5T_COMPOUND, 8);
-        H5Tinsert(type_id, "real", 0, H5T_NATIVE_INT);
-        H5Tinsert(type_id, "imag", 4, H5T_NATIVE_INT);
-        break;
-    case MI_TYPE_FCOMPLEX:
-        type_id = H5Tcreate(H5T_COMPOUND, 8);
-        H5Tinsert(type_id, "real", 0, H5T_NATIVE_FLOAT);
-        H5Tinsert(type_id, "imag", 4, H5T_NATIVE_FLOAT);
-        break;
-    case MI_TYPE_DCOMPLEX:
-        type_id = H5Tcreate(H5T_COMPOUND, 16);
-        H5Tinsert(type_id, "real", 0, H5T_NATIVE_DOUBLE);
-        H5Tinsert(type_id, "imag", 8, H5T_NATIVE_DOUBLE);
-        break;
-    default:
-        type_id = H5Tcopy(mitype); /* Else it is a standard HDF type handle */
-	break;
+    if (is_native) {
+        /* Native types are in the byte-ordering of the native system.
+         * They are appropriate for the "in-memory" types for data.
+         */
+        switch (mitype) {
+        case MI_TYPE_BYTE:
+            type_id = H5Tcopy(H5T_NATIVE_SCHAR);
+            break;
+        case MI_TYPE_SHORT:
+            type_id = H5Tcopy(H5T_NATIVE_SHORT);
+            break;
+        case MI_TYPE_INT:
+            type_id = H5Tcopy(H5T_NATIVE_INT);
+            break;
+        case MI_TYPE_FLOAT:
+            type_id = H5Tcopy(H5T_NATIVE_FLOAT);
+            break;
+        case MI_TYPE_DOUBLE:
+            type_id = H5Tcopy(H5T_NATIVE_DOUBLE);
+            break;
+        case MI_TYPE_UBYTE:
+            type_id = H5Tcopy(H5T_NATIVE_UCHAR);
+            break;
+        case MI_TYPE_USHORT:
+            type_id = H5Tcopy(H5T_NATIVE_USHORT);
+            break;
+        case MI_TYPE_UINT:
+            type_id = H5Tcopy(H5T_NATIVE_UINT);
+            break;
+        case MI_TYPE_SCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 4);
+            H5Tinsert(type_id, "real", 0, H5T_NATIVE_SHORT);
+            H5Tinsert(type_id, "imag", 2, H5T_NATIVE_SHORT);
+            break;
+        case MI_TYPE_ICOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 8);
+            H5Tinsert(type_id, "real", 0, H5T_NATIVE_INT);
+            H5Tinsert(type_id, "imag", 4, H5T_NATIVE_INT);
+            break;
+        case MI_TYPE_FCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 8);
+            H5Tinsert(type_id, "real", 0, H5T_NATIVE_FLOAT);
+            H5Tinsert(type_id, "imag", 4, H5T_NATIVE_FLOAT);
+            break;
+        case MI_TYPE_DCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 16);
+            H5Tinsert(type_id, "real", 0, H5T_NATIVE_DOUBLE);
+            H5Tinsert(type_id, "imag", 8, H5T_NATIVE_DOUBLE);
+            break;
+        default:
+            type_id = H5Tcopy(mitype); /* It is a standard HDF type handle? */
+            break;
+        }
+    }
+    else {
+        /* The non-native types are standardized to be in
+         * "little-endian" form.  That's an arbitrary decision which
+         * could certainly be debated.
+         */
+        switch (mitype) {
+        case MI_TYPE_BYTE:
+            type_id = H5Tcopy(H5T_STD_I8LE);
+            break;
+        case MI_TYPE_SHORT:
+            type_id = H5Tcopy(H5T_STD_I16LE);
+            break;
+        case MI_TYPE_INT:
+            type_id = H5Tcopy(H5T_STD_I32LE);
+            break;
+        case MI_TYPE_FLOAT:
+            type_id = H5Tcopy(H5T_IEEE_F32LE);
+            break;
+        case MI_TYPE_DOUBLE:
+            type_id = H5Tcopy(H5T_IEEE_F64LE);
+            break;
+        case MI_TYPE_UBYTE:
+            type_id = H5Tcopy(H5T_STD_U8LE);
+            break;
+        case MI_TYPE_USHORT:
+            type_id = H5Tcopy(H5T_STD_U16LE);
+            break;
+        case MI_TYPE_UINT:
+            type_id = H5Tcopy(H5T_STD_U32LE);
+            break;
+        case MI_TYPE_SCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 4);
+            H5Tinsert(type_id, "real", 0, H5T_STD_I16LE);
+            H5Tinsert(type_id, "imag", 2, H5T_STD_I16LE);
+            break;
+        case MI_TYPE_ICOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 8);
+            H5Tinsert(type_id, "real", 0, H5T_STD_I32LE);
+            H5Tinsert(type_id, "imag", 4, H5T_STD_I32LE);
+            break;
+        case MI_TYPE_FCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 8);
+            H5Tinsert(type_id, "real", 0, H5T_IEEE_F32LE);
+            H5Tinsert(type_id, "imag", 4, H5T_IEEE_F32LE);
+            break;
+        case MI_TYPE_DCOMPLEX:
+            type_id = H5Tcreate(H5T_COMPOUND, 16);
+            H5Tinsert(type_id, "real", 0, H5T_IEEE_F64LE);
+            H5Tinsert(type_id, "imag", 8, H5T_IEEE_F64LE);
+            break;
+        default:
+            type_id = H5Tcopy(mitype); /* It is a standard HDF type handle? */
+            break;
+        }
     }
     return (type_id);
 }
@@ -179,33 +240,34 @@ int
 miset_attr_at_loc(hid_t hdf_loc, const char *name, mitype_t data_type, 
                   int length, const void *values)
 {
-    hid_t hdf_type;
-    hid_t hdf_space;
+    hid_t ftyp_id;
+    hid_t mtyp_id;
+    hid_t spc_id;
     hid_t hdf_attr;
     hsize_t hdf_len;
 
     H5E_BEGIN_TRY {
-      hdf_attr = H5Aopen_name(hdf_loc, name);
-    } H5E_END_TRY;
-
-    /* Delete the existing attribute. */
-    if (hdf_attr >= 0) {
+        /* Delete attribute if it already exists. */
         H5Adelete(hdf_loc, name);
-    }
+    } H5E_END_TRY;
 
     switch (data_type) {
     case MI_TYPE_INT:
-	hdf_type = H5Tcopy(H5T_NATIVE_INT);
+	ftyp_id = H5Tcopy(H5T_STD_I32LE);
+        mtyp_id = H5Tcopy(H5T_NATIVE_INT);
 	break;
     case MI_TYPE_FLOAT:
-	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
+	ftyp_id = H5Tcopy(H5T_IEEE_F32LE);
+        mtyp_id = H5Tcopy(H5T_NATIVE_FLOAT);
 	break;
     case MI_TYPE_DOUBLE:
-	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
+	ftyp_id = H5Tcopy(H5T_IEEE_F64LE);
+        mtyp_id = H5Tcopy(H5T_NATIVE_DOUBLE);
 	break;
     case MI_TYPE_STRING:
-	hdf_type = H5Tcopy(H5T_C_S1);
-	H5Tset_size(hdf_type, length);
+	ftyp_id = H5Tcopy(H5T_C_S1);
+	H5Tset_size(ftyp_id, length);
+        mtyp_id = H5Tcopy(ftyp_id);
         length = 1;             /* Apparent length is one. */
 	break;
     default:
@@ -213,26 +275,27 @@ miset_attr_at_loc(hid_t hdf_loc, const char *name, mitype_t data_type,
     }
 
     if (length == 1) {
-        hdf_space = H5Screate(H5S_SCALAR);
+        spc_id = H5Screate(H5S_SCALAR);
     }
     else {
         hdf_len = (hsize_t) length;
-        hdf_space = H5Screate_simple(1, &hdf_len, NULL);
+        spc_id = H5Screate_simple(1, &hdf_len, NULL);
     }
-    if (hdf_space < 0) {
+    if (spc_id < 0) {
         return (MI_ERROR);
     }
     
-    hdf_attr = H5Acreate(hdf_loc, name, hdf_type, hdf_space, H5P_DEFAULT);
+    hdf_attr = H5Acreate(hdf_loc, name, ftyp_id, spc_id, H5P_DEFAULT);
     if (hdf_attr < 0) {
 	return (MI_ERROR);
     }
 
-    H5Awrite(hdf_attr, hdf_type, values);
+    H5Awrite(hdf_attr, mtyp_id, values);
 
     H5Aclose(hdf_attr);
-    H5Tclose(hdf_type);
-    H5Sclose(hdf_space);
+    H5Tclose(ftyp_id);
+    H5Tclose(mtyp_id);
+    H5Sclose(spc_id);
     return (MI_NOERROR);
 }
 
@@ -278,8 +341,8 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 {
     hid_t hdf_file;
     hid_t hdf_loc;
-    hid_t hdf_type;             /* Parameter type */
-    hid_t hdf_space;
+    hid_t mtyp_id;             /* Parameter type */
+    hid_t spc_id;
     hid_t hdf_attr;
     int status;
 
@@ -306,43 +369,43 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 
     switch (data_type) {
     case MI_TYPE_INT:
-	hdf_type = H5Tcopy(H5T_NATIVE_INT);
+	mtyp_id = H5Tcopy(H5T_NATIVE_INT);
 	break;
     case MI_TYPE_UINT:
-        hdf_type = H5Tcopy(H5T_NATIVE_ULONG);
+        mtyp_id = H5Tcopy(H5T_NATIVE_UINT);
         break;
     case MI_TYPE_FLOAT:
-	hdf_type = H5Tcopy(H5T_NATIVE_FLOAT);
+	mtyp_id = H5Tcopy(H5T_NATIVE_FLOAT);
 	break;
     case MI_TYPE_DOUBLE:
-	hdf_type = H5Tcopy(H5T_NATIVE_DOUBLE);
+	mtyp_id = H5Tcopy(H5T_NATIVE_DOUBLE);
 	break;
     case MI_TYPE_STRING:
-	hdf_type = H5Tcopy(H5T_C_S1);
-	H5Tset_size(hdf_type, length);
+	mtyp_id = H5Tcopy(H5T_C_S1);
+	H5Tset_size(mtyp_id, length);
 	break;
     default:
 	return (MI_ERROR);
     }
 
-    hdf_space = H5Aget_space(hdf_attr);
-    if (hdf_space < 0) {
+    spc_id = H5Aget_space(hdf_attr);
+    if (spc_id < 0) {
 	return (MI_ERROR);
     }
 
     /* If we're retrieving a vector, make certain the length passed into this
      * function is sufficient.
      */
-    if (H5Sget_simple_extent_ndims(hdf_space) == 1) {
+    if (H5Sget_simple_extent_ndims(spc_id) == 1) {
 	hsize_t hdf_dims[1];
 
-	H5Sget_simple_extent_dims(hdf_space, hdf_dims, NULL);
+	H5Sget_simple_extent_dims(spc_id, hdf_dims, NULL);
 	if (length < hdf_dims[0]) {
 	    return (MI_ERROR);
 	}
     }
     
-    status = H5Aread(hdf_attr, hdf_type, values);
+    status = H5Aread(hdf_attr, mtyp_id, values);
     if (status < 0) {
         return (MI_ERROR);
     }
@@ -362,8 +425,8 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
     }
 
     H5Aclose(hdf_attr);
-    H5Tclose(hdf_type);
-    H5Sclose(hdf_space);
+    H5Tclose(mtyp_id);
+    H5Sclose(spc_id);
 
     /* The hdf_loc identifier could be a group or a dataset.
      */
@@ -429,14 +492,10 @@ miget_voxel_to_world(mihandle_t volume, mi_lin_xfm_t voxel_to_world)
 {
     int i;
     int j;
+    int k;
     double dircos[MI2_3D];
     double step;
     double start;
-
-    static char *dimensions[] = { 
-        "/minc-2.0/dimensions/" MIxspace, 
-        "/minc-2.0/dimensions/" MIyspace, 
-        "/minc-2.0/dimensions/" MIzspace };
 
     /* Zero the matrix */
     for (i = 0; i < MI2_LIN_XFM_SIZE; i++) {
@@ -446,28 +505,32 @@ miget_voxel_to_world(mihandle_t volume, mi_lin_xfm_t voxel_to_world)
         voxel_to_world[i][i] = 1.0;
     }
 
-    for (j = 0; j < MI2_3D; j++) {
-        /* Set default values */
-        step = 1.0;
-        start = 0.0;
-        for (i = 0; i < MI2_3D; i++)
-            dircos[i] = 0.0;
-        dircos[j] = 1.0;
+    for (j = 0; j < volume->number_of_dims; j++) {
 
-        /* Get the attributes */
-        H5E_BEGIN_TRY {
-            miget_attribute(volume, dimensions[j], MIstart, 
-                            MI_TYPE_DOUBLE, 1, &start);
-            miget_attribute(volume, dimensions[j], MIstep, 
-                            MI_TYPE_DOUBLE, 1, &step);
-            miget_attribute(volume, dimensions[j], MIdirection_cosines,
-                            MI_TYPE_DOUBLE, MI2_3D, dircos);
-        } H5E_END_TRY;
+        if (!strcmp(volume->dim_handles[j]->name, "xspace")) {
+            k = MI2_X;
+        }
+        else if (!strcmp(volume->dim_handles[j]->name, "yspace")) {
+            k = MI2_Y;
+        }
+        else if (!strcmp(volume->dim_handles[j]->name, "zspace")) {
+            k = MI2_Z;
+        }
+        else {
+            continue;
+        }
+
+        start = volume->dim_handles[j]->start;
+        step = volume->dim_handles[j]->step;
+        dircos[0] = volume->dim_handles[j]->direction_cosines[0];
+        dircos[1] = volume->dim_handles[j]->direction_cosines[1];
+        dircos[2] = volume->dim_handles[j]->direction_cosines[2];
+
         minormalize_vector(dircos);
 
         /* Put them in the matrix */
         for (i = 0; i < MI2_3D; i++) {
-            voxel_to_world[i][j] = step * dircos[i];
+            voxel_to_world[i][k] = step * dircos[i];
             voxel_to_world[i][MI2_3D] += start * dircos[i];
         }
     }
@@ -529,6 +592,49 @@ mitransform_coord(double out_coord[],
  */
 static int rounding_enabled = FALSE;
 
+static void miswap8(unsigned char *tmp_ptr)
+{
+    unsigned char x;
+
+    x = tmp_ptr[0];
+    tmp_ptr[0] = tmp_ptr[7];
+    tmp_ptr[7] = x;
+
+    x = tmp_ptr[1];
+    tmp_ptr[1] = tmp_ptr[6];
+    tmp_ptr[6] = x;
+
+    x = tmp_ptr[2];
+    tmp_ptr[2] = tmp_ptr[5];
+    tmp_ptr[5] = x;
+
+    x = tmp_ptr[3];
+    tmp_ptr[3] = tmp_ptr[4];
+    tmp_ptr[4] = x;
+}
+
+static void miswap4(unsigned char *tmp_ptr)
+{
+    unsigned char x;
+
+    x = tmp_ptr[0];
+    tmp_ptr[0] = tmp_ptr[3];
+    tmp_ptr[3] = x;
+
+    x = tmp_ptr[1];
+    tmp_ptr[1] = tmp_ptr[2];
+    tmp_ptr[2] = x;
+}
+
+static void miswap2(unsigned char *tmp_ptr)
+{
+    unsigned char x;
+
+    x = tmp_ptr[0];
+    tmp_ptr[0] = tmp_ptr[1];
+    tmp_ptr[1] = x;
+}
+
 /** Generic HDF5 integer-to-double converter.
  */
 
@@ -551,6 +657,8 @@ mi2_int_to_dbl(hid_t src_id,
     double t;
     int dst_cnt;
     int src_cnt;
+    int src_swap;
+    int dst_swap;
 
     switch (cdata->command) {
     case H5T_CONV_INIT:
@@ -583,20 +691,46 @@ mi2_int_to_dbl(hid_t src_id,
         dst_ptr = ((unsigned char *) buf_ptr) + ((nelements - 1) * dst_nb);
 	src_ptr = ((unsigned char *) buf_ptr) + ((nelements - 1) * src_nb);
 
+        if (H5Tget_order(H5T_NATIVE_INT) != H5Tget_order(src_id)) {
+            src_swap = 1;
+        }
+        else {
+            src_swap = 0;
+        }
+
+        if (H5Tget_order(H5T_NATIVE_DOUBLE) != H5Tget_order(dst_id)) {
+            dst_swap = 1;
+        }
+        else {
+            dst_swap = 0;
+        }
+
 	if (src_sg == H5T_SGN_2) {
             switch (src_nb) {
             case 4:
                 while (nelements-- > 0) {
+                    if (src_swap) {
+                        miswap4(src_ptr);
+                    }
 		    t = *(int *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
 		}
                 break;
             case 2:
                 while (nelements-- > 0) {
+                    if (src_swap) {
+                        miswap2(src_ptr);
+                    }
 		    t = *(short *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
 		}
@@ -605,6 +739,9 @@ mi2_int_to_dbl(hid_t src_id,
                 while (nelements-- > 0) {
 		    t = *(char *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
                 }
@@ -618,16 +755,28 @@ mi2_int_to_dbl(hid_t src_id,
             switch (src_nb) {
             case 4:
                 while (nelements-- > 0) {
+                    if (src_swap) {
+                        miswap4(src_ptr);
+                    }
 		    t = *(unsigned int *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
 		}
                 break;
             case 2:
                 while (nelements-- > 0) {
+                    if (src_swap) {
+                        miswap2(src_ptr);
+                    }
 		    t = *(unsigned short *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
 		}
@@ -636,6 +785,9 @@ mi2_int_to_dbl(hid_t src_id,
                 while (nelements-- > 0) {
 		    t = *(unsigned char *)src_ptr;
                     *(double *)dst_ptr = t;
+                    if (dst_swap) {
+                        miswap8(dst_ptr);
+                    }
                     src_ptr -= src_cnt;
                     dst_ptr -= dst_cnt;
                 }
@@ -678,6 +830,8 @@ mi2_dbl_to_int(hid_t src_id,
     double t;
     int dst_cnt;
     int src_cnt;
+    int src_swap;
+    int dst_swap;
 
     switch (cdata->command) {
     case H5T_CONV_INIT:
@@ -700,6 +854,21 @@ mi2_dbl_to_int(hid_t src_id,
         src_nb = H5Tget_size(src_id);
 	dst_ptr = (unsigned char *) buf_ptr;
 	src_ptr = (unsigned char *) buf_ptr;
+        
+        if (H5Tget_order(H5T_NATIVE_DOUBLE) != H5Tget_order(src_id)) {
+            src_swap = 1;
+        }
+        else {
+            src_swap = 0;
+        }
+
+        if (H5Tget_order(H5T_NATIVE_INT) != H5Tget_order(dst_id)) {
+            dst_swap = 1;
+        }
+        else {
+            dst_swap = 0;
+        }
+
         /* The logic of HDF5 seems to be that if a stride is specified,
          * both the source and destination pointers should advance by that
          * amount.  This seems wrong to me, but I've examined the HDF5 sources
@@ -718,6 +887,9 @@ mi2_dbl_to_int(hid_t src_id,
                 switch (dst_nb) {
                 case 4:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *) src_ptr);
                         if (t > INT_MAX) {
                             t = INT_MAX; 
@@ -726,12 +898,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = INT_MIN;
                         }
                         *((int *)dst_ptr) = (int) t;
+                        if (dst_swap) {
+                            miswap4(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 2:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *) src_ptr);
                         if (t > SHRT_MAX) {
                             t = SHRT_MAX;
@@ -740,12 +918,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = SHRT_MIN;
                         }
                         *((short *)dst_ptr) = (short) t;
+                        if (dst_swap) {
+                            miswap2(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 1:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *) src_ptr);
                         if (t > CHAR_MAX) {
                             t = CHAR_MAX;
@@ -767,6 +951,9 @@ mi2_dbl_to_int(hid_t src_id,
                 switch (dst_nb) {
                 case 4:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *)src_ptr);
                         if (t > UINT_MAX) {
                             t = UINT_MAX;
@@ -775,6 +962,9 @@ mi2_dbl_to_int(hid_t src_id,
                             t = 0;
                         }
                         *((unsigned int *)dst_ptr) = (unsigned int) t;
+                        if (dst_swap) {
+                            miswap4(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
@@ -782,6 +972,9 @@ mi2_dbl_to_int(hid_t src_id,
 
                 case 2:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *)src_ptr);
                         if (t > USHRT_MAX) {
                             t = USHRT_MAX;
@@ -790,12 +983,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = 0;
                         }
                         *((unsigned short *)dst_ptr) = (unsigned short) t;
+                        if (dst_swap) {
+                            miswap2(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 1:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = rint(*(double *)src_ptr);
                         if (t > UCHAR_MAX) {
                             t = UCHAR_MAX;
@@ -819,6 +1018,9 @@ mi2_dbl_to_int(hid_t src_id,
                 switch (dst_nb) {
                 case 4:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *) src_ptr);
                         if (t > INT_MAX) {
                             t = INT_MAX; 
@@ -827,12 +1029,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = INT_MIN;
                         }
                         *((int *)dst_ptr) = (int) t;
+                        if (dst_swap) {
+                            miswap4(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 2:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *) src_ptr);
                         if (t > SHRT_MAX) {
                             t = SHRT_MAX;
@@ -841,12 +1049,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = SHRT_MIN;
                         }
                         *((short *)dst_ptr) = (short) t;
+                        if (dst_swap) {
+                            miswap4(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 1:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *) src_ptr);
                         if (t > CHAR_MAX) {
                             t = CHAR_MAX;
@@ -868,6 +1082,9 @@ mi2_dbl_to_int(hid_t src_id,
                 switch (dst_nb) {
                 case 4:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *)src_ptr);
                         if (t > UINT_MAX) {
                             t = UINT_MAX;
@@ -876,6 +1093,9 @@ mi2_dbl_to_int(hid_t src_id,
                             t = 0;
                         }
                         *((unsigned int *)dst_ptr) = (unsigned int) t;
+                        if (dst_swap) {
+                            miswap4(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
@@ -883,6 +1103,9 @@ mi2_dbl_to_int(hid_t src_id,
 
                 case 2:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *)src_ptr);
                         if (t > USHRT_MAX) {
                             t = USHRT_MAX;
@@ -891,12 +1114,18 @@ mi2_dbl_to_int(hid_t src_id,
                             t = 0;
                         }
                         *((unsigned short *)dst_ptr) = (unsigned short) t;
+                        if (dst_swap) {
+                            miswap2(dst_ptr);
+                        }
                         dst_ptr += dst_cnt;
                         src_ptr += src_cnt;
                     }
                     break;
                 case 1:
                     while (nelements-- > 0) {
+                        if (src_swap) {
+                            miswap8(src_ptr);
+                        }
                         t = (int)(*(double *)src_ptr);
                         if (t > UCHAR_MAX) {
                             t = UCHAR_MAX;
@@ -957,7 +1186,9 @@ herr_t mi2_null_conv(hid_t src_id,
 {
     switch (cdata->command) {
     case H5T_CONV_INIT:
+        break;
     case H5T_CONV_CONV:
+        break;
     case H5T_CONV_FREE:
 	break;
 
@@ -1292,7 +1523,7 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 
         sprintf(path, "%d/image-max", ogrp);
         H5E_BEGIN_TRY {
-            omax_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
+            omax_id = H5Dcreate(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
                                 H5P_DEFAULT);
         } H5E_END_TRY;
         if (omax_id < 0) {
@@ -1301,7 +1532,7 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 
         sprintf(path, "%d/image-min", ogrp);
         H5E_BEGIN_TRY {
-            omin_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
+            omin_id = H5Dcreate(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
                                 H5P_DEFAULT);
         } H5E_END_TRY;
         if (omin_id < 0) {
