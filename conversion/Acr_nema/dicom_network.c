@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-09 17:38:55  neelin
+@MODIFIED   : Added function acr_dicom_get_io_data.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -1881,6 +1884,30 @@ public void acr_close_dicom_file(Acr_File *afp)
    /* Free the virtual stream */
    acr_file_free(afp);
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_dicom_get_io_data
+@INPUT      : afp 
+@OUTPUT     : (none)
+@RETURNS    : pointer to io data
+@DESCRIPTION: Gets back pointer that was passed in to 
+              acr_initialize_dicom_{input,output}.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 18, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void *acr_dicom_get_io_data(Acr_File *afp)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get the structure pointer */
+   stream_data = get_dicom_io_pointer(afp);
+
+   /* Get the io pointer for the real stream */
+   return acr_file_get_io_data(stream_data->real_afp);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
