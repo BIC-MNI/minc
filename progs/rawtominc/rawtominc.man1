@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.2 1995-03-29 15:34:23 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.3 1995-05-15 16:18:50 neelin Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -309,14 +309,22 @@ Digital radiography data.
 
 .SH Attribute specification
 .P
+.I -sattribute
+<variable>:<attribute>=<value> :
+Specify that <variable> should be created with string <attribute> set to
+<value>. The complete specification, including <variable>, <attribute> and
+<value>, should be contained in only one argument to the program -
+quoting may be needed for strings containing blanks.
+.P
+.I -dattribute
+<variable>:<attribute>=<value> :
+Like -sattribute, but for specifying double-precision attribute values.
+.P
 .I -attribute
 <variable>:<attribute>=<value> :
-Specify that <variable> should be created with <attribute> set to
-<value>. If <value> can be interpreted as a double precision value, it
-is (no trailing blanks), otherwise it is treated as a string (note
-that the complete specification, include <variable>, <attribute> and
-<value>, should be contained in only one argument to the program -
-quoting may be needed for strings containing blanks).
+Like -sattribute or -dattribute, except that the type is chosen
+by first trying to interpret the value as double precision -
+if that fails, then the value is assumed to be a string.
 
 .SH Generic options
 .P
