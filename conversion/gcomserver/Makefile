@@ -47,3 +47,8 @@ install_gyrotominc: gyrotominc
 	$(CHMOD) $(CHMOD_XFLAGS) $(INSTALL_BINDIR)/gyrotominc
 
 install: install_gyrotominc
+
+mostlyclean clean: clean_gyrotominc
+
+clean_gyrotominc:
+	$(RM) $(RM_FLAGS) gyrotominc gyrotominc.o gyrotominc.ln
