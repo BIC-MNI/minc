@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.4  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 1.5  1995-03-21 14:00:10  neelin
+@MODIFIED   : Changed calls to voxel_loop routines.
 @MODIFIED   :
+ * Revision 1.4  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 1.3  1994/12/14  09:22:30  neelin
  * Removed debugging code.
  *
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.4 1995-02-08 19:31:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.5 1995-03-21 14:00:10 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -88,7 +91,7 @@ public void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
-                      double *output_data[], long start[], long count[]);
+                      double *output_data[], Loop_Info *loop_info);
 public void lookup_in_table(double index, Lookup_Table *lookup_table,
                             int discrete_values, double null_value[],
                             double output_value[]);
@@ -207,7 +210,7 @@ int main(int argc, char *argv[])
 {
    char *infile, *outfile;
    char *arg_string;
-   Loop_Options loop_options;
+   Loop_Options *loop_options;
    int inmincid;
    Lookup_Data lookup_data;
 
@@ -259,17 +262,17 @@ int main(int argc, char *argv[])
    lookup_data.discrete = discrete_lookup;
 
    /* Set up looping options */
-   initialize_loop_options(&loop_options);
-   set_loop_clobber(&loop_options, clobber);
-   set_loop_verbose(&loop_options, verbose);
-   set_loop_convert_input_to_scalar(&loop_options, TRUE);
-   set_loop_output_vector_size(&loop_options, 
+   loop_options = create_loop_options();
+   set_loop_clobber(loop_options, clobber);
+   set_loop_verbose(loop_options, verbose);
+   set_loop_convert_input_to_scalar(loop_options, TRUE);
+   set_loop_output_vector_size(loop_options, 
                                lookup_data.lookup_table->vector_length);
-   set_loop_buffer_size(&loop_options, (long) buffer_size * 1024);
-   set_loop_first_input_mincid(&loop_options, inmincid);
+   set_loop_buffer_size(loop_options, (long) buffer_size * 1024);
+   set_loop_first_input_mincid(loop_options, inmincid);
 
    /* Do loop */
-   voxel_loop(1, &infile, 1, &outfile, arg_string, &loop_options,
+   voxel_loop(1, &infile, 1, &outfile, arg_string, loop_options,
               do_lookup, (void *) &lookup_data);
 
    /* Free stuff */
@@ -659,7 +662,7 @@ public void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
-                      double *output_data[], long start[], long count[])
+                      double *output_data[], Loop_Info *loop_info)
      /* ARGSUSED */
 {
    Lookup_Data *lookup_data;
