@@ -647,7 +647,7 @@ sub numaris3_read_file_info {
     ($file_info{'exam'} = &acr_find_string(*header, 0x8, 0x22) . "_" .
                           substr(&acr_find_string(*header, 0x8, 0x32),0,8))
        =~ s/\W//g;
-    if (defined(&acr_find_numeric(*header, 0x20, 0x11))) {
+    if (length(&acr_find_string(*header, 0x20, 0x11)) > 0) {
        $file_info{'series'} = &acr_find_numeric(*header, 0x20, 0x11);
     }
     else {
