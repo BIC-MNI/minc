@@ -4,8 +4,8 @@
 #
 
 ROOT = ..
-include $(ROOT)/Makefile_machine_specific
-include $(ROOT)/Makefile_configuration
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = minc_test test_mconv minc_test_types test_icv test_icv_range \

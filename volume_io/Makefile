@@ -4,8 +4,8 @@
 #
 
 ROOT = ..
-include $(ROOT)/Makefile_machine_specific
-include $(ROOT)/Makefile_configuration
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
 # Example program
 PROGS = example/convert_volume_to_byte
@@ -32,8 +32,7 @@ HEADERS  = \
    Include/basic.h Include/string_funcs.h Include/files.h \
    Include/arrays.h Include/geom_structs.h Include/progress.h \
    Include/geometry.h Include/volume.h Include/transforms.h \
-   Include/alloc.h Include/alloc_check.h Include/def_math.h \
-   Include/compute_xfm.h
+   Include/alloc.h Include/alloc_check.h Include/def_math.h
 
 CDEFINES = #                        cpp defines
 

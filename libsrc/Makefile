@@ -4,8 +4,8 @@
 #
 
 ROOT = ..
-include $(ROOT)/Makefile_machine_specific
-include $(ROOT)/Makefile_configuration
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
 # Object files, header files and library archive
 OBJS = minc_globdef.o minc_error.o value_conversion.o netcdf_convenience.o \

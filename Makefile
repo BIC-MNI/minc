@@ -4,8 +4,8 @@
 #
 
 ROOT = .
-include $(ROOT)/Makefile_machine_specific
-include $(ROOT)/Makefile_configuration
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
 BUILD_SUBDIRS = src $(FORTRAN_SUBDIR) test doc volume_io progs
 

@@ -1,6 +1,6 @@
 ROOT = ..
-include $(ROOT)/Makefile_machine_specific
-include $(ROOT)/Makefile_configuration
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
 .SUFFIXES: .tex .dvi
 
