@@ -49,6 +49,7 @@ private  void     update_total_memory( alloc_struct *, int );
 private  int      get_random_level( void );
 private  void     output_entry( FILE *, skip_entry * );
 private  BOOLEAN  size_display_enabled( void );
+private  int      skip_alloc_size = 0;
 
 #ifdef sgi
 typedef  size_t    alloc_int;
@@ -84,6 +85,8 @@ private   void  initialize_alloc_list(
     alloc_list->total_memory_allocated = 0;
 
     ALLOC_SKIP_STRUCT( alloc_list->header, MAX_SKIP_LEVELS );
+    skip_alloc_size += sizeof(skip_entry)+(MAX_SKIP_LEVELS-1) *
+                       sizeof(skip_entry *);
     alloc_list->level = 1;
 
     for_less( i, 0, MAX_SKIP_LEVELS )
@@ -186,6 +189,8 @@ private   void  insert_ptr_in_alloc_list(
     }
 
     ALLOC_SKIP_STRUCT( x, new_level );
+    skip_alloc_size += sizeof(skip_entry)+(new_level-1) *
+                       sizeof(skip_entry *);
 
     x->ptr = ptr;
     x->n_bytes = n_bytes;
@@ -294,6 +299,8 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
                 break;
             update.update[i]->forward[i] = x->forward[i];
         }
+
+        skip_alloc_size -= sizeof(skip_entry) + (i-1) * sizeof(skip_entry *);
 
         free( (alloc_ptr) x );
 
@@ -434,8 +441,9 @@ private  void  update_total_memory(
     {
         alloc_list->next_memory_threshold = MEMORY_DIFFERENCE *
                 (alloc_list->total_memory_allocated / MEMORY_DIFFERENCE + 1);
-        print( "Memory allocated =%5.1f Megabytes\n",
-                (Real) alloc_list->total_memory_allocated / 1000000.0 );
+        print( "Memory allocated =%5.1f Megabytes  (Overhead = %5.1f Mb)\n",
+                (Real) alloc_list->total_memory_allocated / 1000000.0,
+                (Real) skip_alloc_size / 1000000.0 );
     }
 }
 
