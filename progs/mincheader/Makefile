@@ -16,3 +16,7 @@ default: all
 
 all:
 	echo $(PROGS) is up to date
+
+clean:
+	echo $(PROGS) : nothing to remove
+
