@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 3.1  1995-11-20 14:24:47  neelin
-@MODIFIED   : Added -weights option.
+@MODIFIED   : Revision 3.2  1996-04-02 20:16:09  neelin
+@MODIFIED   : Added -width_weighted option. Allow -weights with -avgdim option.
 @MODIFIED   :
+ * Revision 3.1  1995/11/20  14:24:47  neelin
+ * Added -weights option.
+ *
  * Revision 3.0  1995/05/15  19:32:44  neelin
  * Release of minc version 0.3
  *
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.1 1995-11-20 14:24:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.2 1996-04-02 20:16:09 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -64,6 +67,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverag
 
 #define THRESH_FRACTION (1/50.0)
 
+#define WIDTH_SUFFIX "-width"
+
+#define DEFAULT_BOOLEAN -1
+
 /* Double_Array structure */
 typedef struct {
    int numvalues;
@@ -76,6 +83,8 @@ typedef struct {
    int need_sd;
    double binrange[2];
    double *norm_factor;
+   int averaging_over_dimension;
+   int num_weights;
    double *weights;
 } Average_Data;
 
@@ -115,7 +124,6 @@ int clobber = FALSE;
 int verbose = TRUE;
 int debug = FALSE;
 int check_dimensions = TRUE;
-#define NO_DEFAULT_NORM
 #ifdef NO_DEFAULT_NORM
 int normalize = -1;
 #else
@@ -125,13 +133,14 @@ char *sdfile = NULL;
 nc_type datatype = NC_UNSPECIFIED;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
-int copy_all_header = FALSE;
+int copy_all_header = DEFAULT_BOOLEAN;
 char *averaging_dimension = NULL;
 int max_buffer_size_in_kb = 4 * 1024;
 int binarize = FALSE;
 double binrange[2] = {DBL_MAX, -DBL_MAX};
 double binvalue = -DBL_MAX;
 Double_Array weights = {0, NULL};
+int width_weighted = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -179,9 +188,9 @@ ArgvInfo argTable[] = {
    {"-sdfile", ARGV_STRING, (char *) 1, (char *) &sdfile,
        "Specify an output sd file (default=none)."},
    {"-copy_header", ARGV_CONSTANT, (char *) TRUE, (char *) &copy_all_header,
-       "Copy all of the header from the first file."},
+       "Copy all of the header from the first file (default for one file)."},
    {"-nocopy_header", ARGV_CONSTANT, (char *) FALSE, (char *) &copy_all_header,
-       "Do not copy all of the header from the first file (default)."},
+       "Do not copy all of the header from the first file (default for many files))."},
    {"-avgdim", ARGV_STRING, (char *) 1, (char *) &averaging_dimension,
        "Specify a dimension along which we wish to average."},
    {"-binarize", ARGV_CONSTANT, (char *) TRUE, (char *) &binarize,
@@ -193,6 +202,8 @@ ArgvInfo argTable[] = {
    {"-weights", ARGV_FUNC, (char *) get_double_list, 
        (char *) &weights,
        "Specify weights for averaging (\"<w1>,<w2>,...\")."},
+   {"-width_weighted", ARGV_CONSTANT, (char *) TRUE, (char *) &width_weighted,
+       "Weight by dimension widths when -avgdim is used."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -207,8 +218,14 @@ public int main(int argc, char *argv[])
    Average_Data average_data;
    Loop_Options *loop_options;
    double *vol_mean, vol_total, nvols, global_mean, total_weight;
-   int ifile;
+   int ifile, iweight;
    int weights_specified;
+   int first_mincid, dimid, varid, dim[MAX_VAR_DIMS];
+   int ndims;
+   long start, count;
+   int old_ncopts;
+   int strlength;
+   char dimname[MAX_NC_NAME];
 
    /* Save time stamp and args */
    arg_string = time_stamp(argc, argv);
@@ -227,38 +244,135 @@ public int main(int argc, char *argv[])
    outfiles[0] = argv[argc-1];
    outfiles[1] = sdfile;
    nout = ((sdfile == NULL) ? 1 : 2);
+   first_mincid = MI_ERROR;
 
-   /* Check for weights */
+   /* Set default value of copy_all_header */
+   if (copy_all_header == DEFAULT_BOOLEAN) {
+      copy_all_header = (nfiles <= 1);
+   }
+
+   /* Are we averaging over a dimension? */
+   average_data.averaging_over_dimension = (averaging_dimension != NULL);
+
+   /* Check for weights and width-weighting */
    weights_specified = weights.numvalues > 0;
-   if (weights_specified) {
-      if (averaging_dimension != NULL) {
-         (void) fprintf(stderr, 
-            "%s: Sorry, you cannot use weights to average over a dimension.\n",
-                        argv[0]);
-         exit(EXIT_FAILURE);
-      }
-      if (weights.numvalues != nfiles) {
-         (void) fprintf(stderr, 
-            "%s: Number of weights does not match number of files.\n",
-                        argv[0]);
-         exit(EXIT_FAILURE);
-      }
-   }
-
-   /* Save weights */
-   average_data.weights = MALLOC(sizeof(*average_data.weights) * nfiles);
-   total_weight = 0.0;
-   for (ifile=0; ifile < nfiles; ifile++) {
-      average_data.weights[ifile] = 
-         (weights_specified ? weights.values[ifile] : 1.0);
-      total_weight += average_data.weights[ifile];
-   }
-   if (total_weight == 0.0) {
-      (void) fprintf(stderr, "%s: Weights sum to zero.\n", argv[0]);
+   if (weights_specified && width_weighted) {
+      (void) fprintf(stderr, 
+         "%s: Please do not specify weights and width-weighting.\n",
+                     argv[0]);
       exit(EXIT_FAILURE);
    }
+
+   /* Default is no weighting */
+   average_data.num_weights = 0;
+   average_data.weights = NULL;
+
+   /* Check for weights */
    if (weights_specified) {
+      if (averaging_dimension == NULL) {
+         if (weights.numvalues != nfiles) {
+            (void) fprintf(stderr, 
+               "%s: Number of weights does not match number of files.\n",
+                           argv[0]);
+            exit(EXIT_FAILURE);
+         }
+      }
+      else {
+         if (nfiles > 1) {
+            (void) fprintf(stderr,
+               "%s: Only one input file allowed with -weights and -avgdim.\n",
+                           argv[0]);
+            exit(EXIT_FAILURE);
+         }
+
+         /* Check that the dimension size matches the number of weights */
+         first_mincid = miopen(infiles[0], NC_NOWRITE);
+         dimid = ncdimid(first_mincid, averaging_dimension);
+         (void) ncdiminq(first_mincid, dimid, NULL, &count);
+         if (weights.numvalues != count) {
+            (void) fprintf(stderr,
+               "%s: Number of weights does not match size of dimension.\n",
+                           argv[0]);
+         }
+      }
+
+      /* Save the weights */
+      average_data.num_weights = weights.numvalues;
+      average_data.weights = 
+         MALLOC(sizeof(*average_data.weights) * average_data.num_weights);
+      for (iweight=0; iweight < average_data.num_weights; iweight++) {
+         average_data.weights[iweight] = weights.values[iweight];
+      }
+
       FREE(weights.values);
+   }
+
+   /* Check for width weighting */
+   if (width_weighted) {
+
+      /* Check for errors */
+      if (averaging_dimension == NULL) {
+         (void) fprintf(stderr, 
+                        "%s: Please specify -avgdim with -width_weighted.\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+      if (nfiles > 1) {
+         (void) fprintf(stderr,
+                        "%s: Use -width_weighted with only one input file.\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+
+      /* Open the file */
+      first_mincid = miopen(infiles[0], NC_NOWRITE);
+
+      /* Get the dimension id */
+      dimid = ncdimid(first_mincid, averaging_dimension);
+
+      /* Look for the width variable */
+      strlength = MAX_NC_NAME - strlen(WIDTH_SUFFIX) - 1;
+      (void) strncpy(dimname, averaging_dimension, strlength);
+      dimname[strlength] = '\0';
+      (void) strcat(dimname, WIDTH_SUFFIX);
+      old_ncopts = ncopts; ncopts = 0;
+      varid = ncvarid(first_mincid, dimname);
+      (void) ncvarinq(first_mincid, varid, NULL, NULL, &ndims, dim, NULL);
+      ncopts = old_ncopts;
+      if (varid != MI_ERROR) {
+
+         /* Check that things match up */
+         if ((ndims != 1) || (dim[0] != dimid)) {
+            (void) fprintf(stderr,
+                "%s: Dimension width variable does not match avgdim.\n",
+                           argv[0]);
+         }
+
+         /* Get the size of the dimension */
+         (void) ncdiminq(first_mincid, dim[0], NULL, &count);
+         average_data.num_weights = count;
+         average_data.weights = 
+            MALLOC(sizeof(*average_data.weights) * average_data.num_weights);
+
+         /* Read in the widths */
+         start = 0;
+         (void) mivarget(first_mincid, varid, &start, &count, NC_DOUBLE, NULL,
+                         average_data.weights);
+
+      }
+   }    /* If width_weighted */
+
+   /* Check that weights sum to non-zero. We don't need to normalize them,
+      since a running sum is done in the averaging. */
+   if (average_data.num_weights > 0) {
+      total_weight = 0.0;
+      for (iweight=0; iweight < average_data.num_weights; iweight++) {
+         total_weight += average_data.weights[iweight];
+      }
+      if (total_weight == 0.0) {
+         (void) fprintf(stderr, "%s: Weights sum to zero.\n", argv[0]);
+         exit(EXIT_FAILURE);
+      }
    }
 
    /* Check for binarization */
@@ -324,6 +438,10 @@ public int main(int argc, char *argv[])
             (void) fprintf(stderr, ".");
             (void) fflush(stderr);
          }
+         if (first_mincid != MI_ERROR) {
+            set_loop_first_input_mincid(loop_options, first_mincid);
+            first_mincid = MI_ERROR;
+         }
          voxel_loop(1, &infiles[ifile], 0, NULL, NULL, loop_options,
                     do_normalization, (void *) &norm_data);
          if (norm_data.sum0 > 0.0) {
@@ -369,6 +487,10 @@ public int main(int argc, char *argv[])
    /* Do averaging */
    average_data.need_sd = (sdfile != NULL);
    loop_options = create_loop_options();
+   if (first_mincid != MI_ERROR) {
+      set_loop_first_input_mincid(loop_options, first_mincid);
+      first_mincid = MI_ERROR;
+   }
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
    set_loop_datatype(loop_options, datatype, is_signed, 
@@ -542,7 +664,7 @@ public void do_average(void *caller_data, long num_voxels,
    Average_Data *average_data;
    long ivox;
    double value;
-   int curfile;
+   int curfile, curindex;
    int num_out;
    double norm_factor, binmin, binmax, weight;
    int binarize;
@@ -560,8 +682,27 @@ public void do_average(void *caller_data, long num_voxels,
 
    /* Get the normalization factor and binarization range */
    curfile = get_info_current_file(loop_info);
+   curindex = get_info_current_index(loop_info);
    norm_factor = average_data->norm_factor[curfile];
-   weight = average_data->weights[curfile];
+   if ((average_data->num_weights <= 0) || (average_data->weights == NULL)) {
+      weight = 1.0;
+   }
+   else {
+      if (average_data->averaging_over_dimension) {
+         if (curindex >= average_data->num_weights) {
+            (void) fprintf(stderr, "Internal error in index!\n");
+            exit(EXIT_FAILURE);
+         }
+         weight = average_data->weights[curindex];
+      }
+      else {
+         if (curfile >= average_data->num_weights) {
+            (void) fprintf(stderr, "Internal error in file number!\n");
+            exit(EXIT_FAILURE);
+         }
+         weight = average_data->weights[curfile];
+      }
+   }
    binarize = average_data->binarize;
    binmin = average_data->binrange[0];
    binmax = average_data->binrange[1];

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 3.1 1995-11-20 14:24:47 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 3.2 1996-04-02 20:16:09 neelin Exp $
 .\"
 .TH MINCAVERAGE 1
 
@@ -104,10 +104,10 @@ calculated in addition the mean that is normally calculated.
 .P
 .I -copy_header:
 Copy all of the additional header information from the first input
-file.
+file (default for one input file).
 .P
 .I -nocopy_header:
-Do not copy additional header information (default).
+Do not copy additional header information (default for many input files).
 .P
 .I -avgdim
 <dimname>:
@@ -137,8 +137,16 @@ of input values.
 Specify a series of weights for averaging. The number of weighting
 values must match the number of input files and the values must be
 provided as a single argument with commas or spaces as
-separators. The sum of the weights must be non-zero and weights cannot
-be used with an averaging dimension.
+separators. The sum of the weights must be non-zero. If weights are
+used with an averaging dimension, then only one input file can be
+specified.
+.P
+.I -width_weighted:
+This option can only be used when averaging across a dimension
+(-avgdim option). It specifies that weighting should be done using the
+width variable that corresponds to the averaging dimension. For
+example, using -width_weighted with -avgdim time will use the
+time-width variable to weight the values.
 
 .SH Generic options for all commands:
 .P
