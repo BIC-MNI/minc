@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.6  2005-03-14 22:51:33  bert
+ * Revision 1.7  2005-03-15 17:03:34  bert
+ * Yet another directory expansion fix (sigh)
+ *
+ * Revision 1.6  2005/03/14 22:51:33  bert
  * Actually get the directory expansion working properly...
  *
  * Revision 1.5  2005/03/14 22:25:41  bert
@@ -62,7 +65,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.6 2005-03-14 22:51:33 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.7 2005-03-15 17:03:34 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -215,10 +218,10 @@ main(int argc, char *argv[])
                     tmp_str = malloc(length + strlen(np->d_name) + 2);
                     strcpy(tmp_str, argv[ifile + 1]);
                     if (tmp_str[length-1] != '/') {
-                        tmp_str[length++] = '/';
+                        tmp_str[length] = '/';
+                        tmp_str[length+1] = '\0';
                     }
-                    strcpy(&tmp_str[length], np->d_name);
-
+                    strcat(&tmp_str[length], np->d_name);
                     if (stat(tmp_str, &st) == 0 && S_ISREG(st.st_mode)) {
                         file_list = realloc(file_list,
                                             (num_files + 1) * sizeof(char *));
