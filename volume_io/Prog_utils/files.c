@@ -13,19 +13,21 @@
 ---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
+#if HAVE_PWD_H
 #include  <pwd.h>
+#endif /* HAVE_PWD_H */
 #include  <stdlib.h>
 #include  <unistd.h>
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.38 2003-03-17 16:22:33 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.39 2004-03-23 21:17:40 bert Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
 private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
 
-#ifdef NO_STRERROR
+#if !HAVE_STRERROR
 private char *strerror(int errnum)
 {
     extern int  sys_nerr;
@@ -38,7 +40,7 @@ private char *strerror(int errnum)
 
     return( sys_errlist[errnum] );
 }
-#endif
+#endif /* !HAVE_STRERROR */
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -525,6 +527,7 @@ public  Status  move_file(
 private  STRING  get_user_home_directory(
     STRING   user_name )
 {
+#if HAVE_GETPWNAM
     struct   passwd  *p;
 
     p = getpwnam( user_name );
@@ -533,6 +536,9 @@ private  STRING  get_user_home_directory(
         return( NULL );
     else
         return( p->pw_dir );
+#else
+    return (".");
+#endif /* HAVE_GETPWNAM */
 }
 
 /* ----------------------------- MNI Header -----------------------------------
