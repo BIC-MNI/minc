@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.25 1996-05-17 19:36:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.26 2003-03-17 16:21:44 bert Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -860,7 +860,6 @@ private  Status  open_cache_volume_output_file(
     int        out_sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
     Real       min_value, max_value;
     Minc_file  out_minc_file;
-    char       tmp_name[L_tmpnam+1];
     STRING     *vol_dim_names;
     STRING     *out_dim_names, output_filename;
 
@@ -871,9 +870,7 @@ private  Status  open_cache_volume_output_file(
     if( string_length( cache->output_filename ) == 0 )
     {
         cache->writing_to_temp_file = TRUE;
-        (void) tmpnam( tmp_name );
-        output_filename = concat_strings( tmp_name, "." );
-        concat_to_string( &output_filename, MNC_ENDING );
+        output_filename = get_temporary_filename();
 
         cache->file_nc_data_type = get_volume_nc_data_type( volume,
                                           &cache->file_signed_flag );
