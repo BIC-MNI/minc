@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 1.9  1993-11-17 12:21:55  neelin
-@MODIFIED   : Changed default to -noclobber.
+@MODIFIED   : Revision 1.10  1994-05-31 07:56:42  neelin
+@MODIFIED   : Added insertblood.c to optionally insert blood data into minc file.
 @MODIFIED   :
+ * Revision 1.9  93/11/17  12:21:55  neelin
+ * Changed default to -noclobber.
+ * 
  * Revision 1.8  93/08/11  15:27:34  neelin
  * Added RCS logging in source.
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.9 1993-11-17 12:21:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.10 1994-05-31 07:56:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -126,7 +129,8 @@ int sortcmp(const void *val1, const void *val2);
 int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
                     int ndims, long count[], int num_scx_files,
                     scx_file_info_type *scx_file_info,
-                    scx_general_info_type *scx_general_info);
+                    scx_general_info_type *scx_general_info,
+                    char *blood_file);
 int write_minc_slice(double scale, int write_byte_data,
                      int mincid, int icvid, 
                      int ndims,long start[], long count[], 
@@ -139,6 +143,8 @@ int get_scx_slice(scx_file *scx_fp, int slice_num,
                   scx_general_info_type *scx_general_info);
 double decay_correction(double scan_time, double measure_time, 
                         double start_time, double half_life);
+void CreateBloodStructures (int mincHandle, int bloodHandle);
+void FillBloodStructures (int mincHandle, int bloodHandle);
 
 /* Constants */
 #define TRUE 1
@@ -196,6 +202,7 @@ int main(int argc, char *argv[])
    static int decay_correct=TRUE;
    static int slice_range[2]={0, 9999};
    static int copy_all_header=FALSE;
+   static char *blood_file = NULL;
 
    /* Argument option table */
    static ArgvInfo argTable[] = {
@@ -226,6 +233,8 @@ int main(int argc, char *argv[])
           "Copy all scanditronix header information."},
       {"-slices", ARGV_INT, (char *) 2, (char *) slice_range,
           "Range of slices to copy."},
+      {"-bloodfile", ARGV_STRING, (char *) 1, (char *) &blood_file,
+          "Insert blood data from this file."},
       {NULL, ARGV_END, NULL, NULL, NULL}
    };
 
@@ -314,7 +323,7 @@ int main(int argc, char *argv[])
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, tm_stamp);
    icvid=setup_minc_file(mincid, write_byte_data, copy_all_header,
                          ndims, count, num_scx_files,
-                         scx_file_info, scx_general_info);
+                         scx_file_info, scx_general_info, blood_file);
    if (icvid==MI_ERROR) {
       (void) fprintf(stderr, 
                      "%s: Error setting up minc file %s from scx file %s.\n",
@@ -877,6 +886,7 @@ int sortcmp(const void *val1, const void *val2)
               num_scx_files - number of scanditronix files.
               scx_file_info - array of information on scanditronix files.
               scx_general_info - general information about scx files
+              blood_file - name of blood file containing data to include
 @OUTPUT     : (nothing)
 @RETURNS    : Image conversion variable id or MI_ERROR if an error occurs.
 @DESCRIPTION: Initializes the header of the minc file using information from
@@ -890,7 +900,8 @@ int sortcmp(const void *val1, const void *val2)
 int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
                     int ndims, long count[], int num_scx_files,
                     scx_file_info_type *scx_file_info,
-                    scx_general_info_type *scx_general_info)
+                    scx_general_info_type *scx_general_info,
+                    char *blood_file)
 {
    static char *dim_names_array[]={MItime, MIzspace, MIyspace, MIxspace};
    char **dim_names;
@@ -900,6 +911,7 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    int dim[MAX_DIMS];
    int img, imgmax, imgmin, dimvarid, widvarid, icv, varid, scx_var;
    int idim, imnem;
+   int bloodid;
    double vrange[2];
 
    /* Create the dimensions */
@@ -1048,9 +1060,21 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       } /* Loop through mnemonics */
    }   /* If copy_all_header */
 
+   /* Open the blood file and create the variables if needed */
+   if (blood_file != NULL) {
+      bloodid = ncopen(blood_file, NC_NOWRITE);
+      CreateBloodStructures(mincid, bloodid);
+   }
+
    /* Attach the icv */
    (void) ncendef(mincid);
    (void) miicv_attach(icv, mincid, img);
+
+   /* Copy the blood data */
+   if (blood_file != NULL) {
+      FillBloodStructures(mincid, bloodid);
+      ncclose(bloodid);
+   }
 
    return icv;
 }

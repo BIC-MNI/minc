@@ -8,8 +8,8 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = scxtominc
-EXTRA_OBJS = scx_file.o
+PROGS    = scxtominc scxmnem
+EXTRA_OBJS = scx_file.o insertblood.o
 HEADERS  = scx_file.h
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(PROG_LDOPT)
