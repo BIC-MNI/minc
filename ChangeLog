@@ -1,5 +1,12 @@
 MINC 2:
-
+2004-04-30  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Further reduce compiler issues for IRIX MIPSpro compiler.
+	* Tagged version 2.0.06
+	
+2004-04-29  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix compiler compatibility problem against IRIX MIPSpro compiler
+	in netcdf_convenience.c
+	
 2004-04-22  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Expanded test cases
 	
