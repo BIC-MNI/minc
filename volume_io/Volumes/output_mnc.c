@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.39 1995-11-02 21:20:13 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.40 1995-11-09 19:17:58 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -472,8 +472,19 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     STRING      history_string )
 {
     int     src_img_var, varid, n_excluded, excluded_vars[10];
-    int     src_min_id, src_max_id, src_root_id;
+    int     i, src_min_id, src_max_id, src_root_id;
     Status  status;
+    STRING  excluded_list[] = {
+                                  MIxspace,
+                                  MIyspace,
+                                  MIzspace,
+                                  MItime,
+                                  MItfrequency,
+                                  MIxfrequency,
+                                  MIyfrequency,
+                                  MIzfrequency,
+                                  MIvector_dimension
+                               };
 
     if( file->ignoring_because_cached )
         return( OK );
@@ -484,15 +495,16 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
         return( ERROR );
     }
 
-    ncopts = NC_VERBOSE;
+    ncopts = 0;
 
     n_excluded = 0;
-    if( (varid = ncvarid(src_cdfid, MIxspace )) != MI_ERROR )
-        excluded_vars[n_excluded++] = varid;
-    if( (varid = ncvarid(src_cdfid, MIyspace )) != MI_ERROR )
-        excluded_vars[n_excluded++] = varid;
-    if( (varid = ncvarid(src_cdfid, MIzspace )) != MI_ERROR )
-        excluded_vars[n_excluded++] = varid;
+
+    for_less( i, 0, SIZEOF_STATIC_ARRAY( excluded_list ) )
+    {
+        if( (varid = ncvarid(src_cdfid, excluded_list[i] )) != MI_ERROR )
+            excluded_vars[n_excluded++] = varid;
+    }
+
     if( (src_img_var = ncvarid(src_cdfid, MIimage )) != MI_ERROR )
         excluded_vars[n_excluded++] = src_img_var;
     if( (src_max_id = ncvarid(src_cdfid, MIimagemax )) != MI_ERROR )
@@ -501,6 +513,8 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
         excluded_vars[n_excluded++] = src_min_id;
     if( (src_root_id = ncvarid(src_cdfid, MIrootvariable )) != MI_ERROR )
         excluded_vars[n_excluded++] = src_root_id;
+
+    ncopts = NC_VERBOSE;
 
     (void) micopy_all_var_defs( src_cdfid, file->cdfid, n_excluded,
                                 excluded_vars );

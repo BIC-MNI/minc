@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.16 1995-10-19 15:47:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.17 1995-11-09 19:17:58 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -150,7 +150,7 @@ public  Status  output_modified_volume(
         for_less( j, 0, n_dims )
         {
             if( !done[j] &&
-                strcmp( vol_dimension_names[i], dim_names[j] ) == 0 )
+                equal_strings( vol_dimension_names[i], dim_names[j] ) )
             {
                 sizes[j] = vol_sizes[i];
                 ++n_found;
