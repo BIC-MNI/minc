@@ -11,7 +11,10 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.5  2004-11-01 22:38:38  bert
+ * Revision 6.6  2004-12-03 21:57:08  bert
+ * Include config.h
+ *
+ * Revision 6.5  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.4  2004/05/20 21:52:08  bert
@@ -69,9 +72,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.6 2004-12-03 21:57:08 bert Exp $";
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

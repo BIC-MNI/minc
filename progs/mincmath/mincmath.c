@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.7  2004-11-01 22:38:39  bert
+ * Revision 6.8  2004-12-03 21:56:51  bert
+ * Include config.h
+ *
+ * Revision 6.7  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.6  2004/04/27 15:31:45  bert
@@ -72,9 +75,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.7 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.8 2004-12-03 21:56:51 bert Exp $";
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
