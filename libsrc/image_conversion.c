@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.12 1993-03-01 15:16:57 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.13 1993-05-13 16:48:38 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -983,10 +983,17 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       vid[0]=icvp->imgmaxid;
       vid[1]=icvp->imgminid;
 
-      /* No max/min variables, so use valid_range values */
+      /* No max/min variables, so use valid_range values for floats and
+         defaults for integers */
       if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
-         icvp->derv_imgmax = icvp->var_vmax;
-         icvp->derv_imgmin = icvp->var_vmin;
+         if (icvp->derv_var_float) {
+            icvp->derv_imgmax = icvp->var_vmax;
+            icvp->derv_imgmin = icvp->var_vmin;
+         }
+         else {
+            icvp->derv_imgmax = MI_DEFAULT_MAX;
+            icvp->derv_imgmin = MI_DEFAULT_MIN;
+         }
       }
 
       /* If the variables are there then get the max and min and fastest 
@@ -1452,10 +1459,13 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
    else {
       usr_imgmax = icvp->derv_imgmax;
       usr_imgmin = icvp->derv_imgmin;
-      if (icvp->derv_var_float || 
-          (icvp->imgmaxid==MI_ERROR) || (icvp->imgminid==MI_ERROR)) {
+      if (icvp->derv_var_float) {
          var_imgmax = var_vmax;
          var_imgmin = var_vmin;
+      }
+      else if ((icvp->imgmaxid==MI_ERROR) || (icvp->imgminid==MI_ERROR)) {
+         var_imgmax = MI_DEFAULT_MAX;
+         var_imgmin = MI_DEFAULT_MIN;
       }
       else {
          if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
