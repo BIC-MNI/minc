@@ -11,7 +11,11 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.2  1999-10-19 14:45:27  neelin
+ * Revision 6.3  2000-04-05 13:00:32  neelin
+ * Fixed bug in use of -fillvalue in which output slices containing only
+ * fill values data did not have the correct range calculated.
+ *
+ * Revision 6.2  1999/10/19 14:45:27  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.1  1998/02/19 15:04:24  neelin
@@ -124,7 +128,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.2 1999-10-19 14:45:27 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.3 2000-04-05 13:00:32 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -476,7 +480,7 @@ public void get_arginfo(int argc, char *argv[],
    }
    else {
       in_vol->volume->fillvalue = args.fillvalue;
-      in_vol->volume->use_fill = FALSE;
+      in_vol->volume->use_fill = (args.fillvalue != -DBL_MAX);
    }
    in_vol->volume->interpolant = args.interpolant;
 
