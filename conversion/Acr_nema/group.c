@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-17 23:49:08  neelin
+@MODIFIED   : Added routines for inserting elements into a group list.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -79,6 +82,10 @@
 #include <acr_nema.h>
 
 /* Private functions */
+private void remove_element(Acr_Group group, Acr_Element element, 
+                            Acr_Element previous);
+private void insert_element(Acr_Group group, Acr_Element element, 
+                            Acr_Element previous);
 private void update_group_length_element(Acr_Group group, 
                                          Acr_VR_encoding_type vr_encoding);
 private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group, 
@@ -242,6 +249,178 @@ public Acr_Group acr_copy_group_list(Acr_Group group_list)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : remove_element
+@INPUT      : group
+              element - element to remove
+              previous - pointer to previous element or NULL if beginning
+                 of group element list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Remove an element from a group. 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void remove_element(Acr_Group group, Acr_Element element, 
+                            Acr_Element previous)
+{
+   Acr_Element next;
+
+   /* Get pointer to next element */
+   next = acr_get_element_next(element);
+
+   /* Update the previous element or list head */
+   if (previous != NULL)
+      acr_set_element_next(previous, next);
+   else
+      group->list_head = next;
+
+   /* Check for an element at the tail */
+   if (next == NULL)
+      group->list_tail = previous;
+
+   /* Update the group fields */
+   group->nelements--;
+   group->implicit_total_length -= 
+      acr_get_element_total_length(element, ACR_IMPLICIT_VR);
+   group->explicit_total_length -= 
+      acr_get_element_total_length(element, ACR_EXPLICIT_VR);
+
+   /* Update the group length element */
+   update_group_length_element(group, 
+                               acr_get_element_vr_encoding(group->list_head));
+
+   /* Delete the old element */
+   acr_delete_element(element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : insert_element
+@INPUT      : group
+              element - element to insert
+              previous - pointer to previous element or NULL if beginning
+                 of group element list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Insert an element into a group. 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void insert_element(Acr_Group group, Acr_Element element, 
+                            Acr_Element previous)
+{
+   Acr_Element next;
+
+   /* Update the pointers */
+   if (previous != NULL) {        /* Middle or tail of list */
+      next = acr_get_element_next(previous);
+      acr_set_element_next(previous, element);
+   }
+   else {                         /* Head of list */
+      next = group->list_head;
+      group->list_head = element;
+   }
+   acr_set_element_next(element, next);
+
+   /* Check for the tail */
+   if (next == NULL) {
+      group->list_tail = element;
+   }
+
+   /* Update the group fields */
+   group->nelements++;
+   group->implicit_total_length += 
+      acr_get_element_total_length(element, ACR_IMPLICIT_VR);
+   group->explicit_total_length += 
+      acr_get_element_total_length(element, ACR_EXPLICIT_VR);
+
+   /* Update the length element */
+   update_group_length_element(group, 
+                               acr_get_element_vr_encoding(group->list_head));
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_group_insert_element
+@INPUT      : group
+              element
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Insert an element into a group. If an element of the same 
+              id already exists in the list, it is removed and deleted.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_group_insert_element(Acr_Group group,
+                                     Acr_Element element)
+{
+   Acr_Element next_element, prev_element, cur_element;
+   int element_id;
+
+   /* Check that the element belongs in this group */
+   if (group->group_id != acr_get_element_group(element)) {
+      (void) fprintf(stderr, 
+          "ACR error: Cannot add element %d (group %d) to group %d\n",
+                     acr_get_element_element(element),
+                     acr_get_element_group(element),
+                     group->group_id);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get element id */
+   element_id = acr_get_element_element(element);
+
+   /* Check that new element has id > group length element id */
+   if (element_id < ACR_EID_GRPLEN) {
+      (void) fprintf(stderr, 
+      "ACR error: Cannot add element id %d <= length id (%d) to group %d\n",
+                     element_id, ACR_EID_GRPLEN, group->group_id);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Check whether the the element should be added after the last element */
+   if (acr_get_element_element(group->list_tail) < element_id) {
+      prev_element = group->list_tail;
+      next_element = NULL;
+   }
+
+   /* Otherwise, search for the appropriate location */
+   else {
+      prev_element = NULL;
+      next_element = group->list_head;
+      while ((next_element != NULL) && 
+             (acr_get_element_element(next_element) < element_id)) {
+         prev_element = next_element;
+         next_element = acr_get_element_next(next_element);
+      }
+   }
+
+   /* Check for an existing element and get rid of it */
+   if ((next_element != NULL) &&
+       (acr_get_element_element(next_element) == element_id)) {
+
+      /* Set pointers and get rid of the old element */
+      cur_element = next_element;
+      next_element = acr_get_element_next(cur_element);
+      remove_element(group, cur_element, prev_element);
+
+   }
+
+   /* Insert the new element */
+   insert_element(group, element, prev_element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_group_add_element
 @INPUT      : group
               element
@@ -266,18 +445,8 @@ public void acr_group_add_element(Acr_Group group, Acr_Element element)
       exit(EXIT_FAILURE);
    }
 
-   /* Update the group structure */
-   acr_set_element_next(group->list_tail, element);
-   group->list_tail = element;
-   group->nelements++;
-   group->implicit_total_length += 
-      acr_get_element_total_length(element, ACR_IMPLICIT_VR);
-   group->explicit_total_length += 
-      acr_get_element_total_length(element, ACR_EXPLICIT_VR);
-
-   /* Update the length element */
-   update_group_length_element(group, 
-                               acr_get_element_vr_encoding(group->list_head));
+   /* Insert the element at the tail */
+   insert_element(group, element, group->list_tail);
 
    return;
 }
@@ -305,6 +474,7 @@ private void update_group_length_element(Acr_Group group,
    /* Get the element */
    length_element = group->list_head;
    if (length_element == NULL) return;
+   if (acr_get_element_element(length_element) != ACR_EID_GRPLEN) return;
 
    /* Calculate the appropriate length */
    if (vr_encoding == ACR_IMPLICIT_VR) {
@@ -682,7 +852,7 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_find_element_in_group_list
+@NAME       : acr_find_group_element
 @INPUT      : group_list
               elid
 @OUTPUT     : (none)
@@ -905,5 +1075,189 @@ public char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid,
       return acr_get_element_string(element);
    else
       return default_value;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_element_into_group_list
+@INPUT      : group_list - list in which element should be inserted 
+                 (can be NULL)
+              element - element to insert
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Insert an element into a group list. If the group_list is NULL,
+              then it is created. Note that the element is not copied, it is
+              just inserted into the list, so it should not be modified after
+              insertion into the list. If an element of the same id already 
+              exists in the list, it is removed and deleted.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_element_into_group_list(Acr_Group *group_list,
+                                               Acr_Element element)
+{
+   Acr_Group group, next_group, prev_group;
+   int group_id;
+
+   /* Get group and element id */
+   group_id = acr_get_element_group(element);
+
+   /* Search for the appropriate group */
+   prev_group = NULL;
+   next_group = *group_list;
+   while ((next_group != NULL) && 
+          (acr_get_group_group(next_group) < group_id)) {
+      prev_group = next_group;
+      next_group = acr_get_group_next(next_group);
+   }
+
+   /* Check if we have the right group */
+   if ((next_group != NULL) && 
+       (acr_get_group_group(next_group) == group_id)) {
+      group = next_group;
+   }
+
+   /* If not, create a new group and insert it in the list */
+   else {
+
+      /* Create a group */
+      group = acr_create_group(group_id);
+
+      /* Insert it in the list */
+      acr_set_group_next(group, next_group);
+      if (prev_group != NULL) {
+         acr_set_group_next(prev_group, group);
+      }
+      else {
+         *group_list = group;
+      }
+
+   }
+
+   /* Insert the element into the appropriate group */
+   acr_group_insert_element(group, element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_short
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              value
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
+                             int value)
+{
+   Acr_Element element;
+
+   element = acr_create_element_short(elid, value);
+   acr_insert_element_into_group_list(group_list, element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_long
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              value
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
+                            long value)
+{
+   Acr_Element element;
+
+   element = acr_create_element_long(elid, value);
+   acr_insert_element_into_group_list(group_list, element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_numeric
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              value
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_numeric(Acr_Group *group_list, Acr_Element_Id elid, 
+                               double value)
+{
+   Acr_Element element;
+
+   element = acr_create_element_numeric(elid, value);
+   acr_insert_element_into_group_list(group_list, element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_string
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              value
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_string(Acr_Group *group_list, Acr_Element_Id elid, 
+                              char *value)
+{
+   Acr_Element element;
+
+   element = acr_create_element_string(elid, value);
+   acr_insert_element_into_group_list(group_list, element);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_sequence
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              itemlist
+@OUTPUT     : group_list - modified group list
+@RETURNS    : (nothing)
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : June 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_insert_sequence(Acr_Group *group_list, Acr_Element_Id elid, 
+                                Acr_Element itemlist)
+{
+   Acr_Element element;
+
+   element = acr_create_element_sequence(elid, itemlist);
+   acr_insert_element_into_group_list(group_list, element);
+
 }
 

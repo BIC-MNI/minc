@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-17 23:49:08  neelin
+@MODIFIED   : Added routines for inserting elements into a group list.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -67,6 +70,8 @@ public void acr_delete_group(Acr_Group group);
 public void acr_delete_group_list(Acr_Group group_list);
 public Acr_Group acr_copy_group(Acr_Group group);
 public Acr_Group acr_copy_group_list(Acr_Group group_list);
+public void acr_group_insert_element(Acr_Group group,
+                                     Acr_Element element);
 public void acr_group_add_element(Acr_Group group, Acr_Element element);
 public void acr_set_group_next(Acr_Group group, Acr_Group next);
 public int acr_get_group_group(Acr_Group group);
@@ -92,3 +97,15 @@ public double acr_find_double(Acr_Group group_list, Acr_Element_Id elid,
                               double default_value);
 public char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
                              char *default_value);
+public void acr_insert_element_into_group_list(Acr_Group *group_list,
+                                               Acr_Element element);
+public void acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
+                             int value);
+public void acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
+                            long value);
+public void acr_insert_numeric(Acr_Group *group_list, Acr_Element_Id elid, 
+                               double value);
+public void acr_insert_string(Acr_Group *group_list, Acr_Element_Id elid, 
+                              char *value);
+public void acr_insert_sequence(Acr_Group *group_list, Acr_Element_Id elid, 
+                                Acr_Element itemlist);
