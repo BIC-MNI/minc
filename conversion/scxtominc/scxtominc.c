@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 1.10  1994-05-31 07:56:42  neelin
-@MODIFIED   : Added insertblood.c to optionally insert blood data into minc file.
+@MODIFIED   : Revision 1.11  1994-09-28 08:23:58  neelin
+@MODIFIED   : Find max and min pixel values for both bytes and shorts.
+@MODIFIED   : (Shorts are rescaled to full range).
 @MODIFIED   :
+ * Revision 1.10  94/05/31  07:56:42  neelin
+ * Added insertblood.c to optionally insert blood data into minc file.
+ * 
  * Revision 1.9  93/11/17  12:21:55  neelin
  * Changed default to -noclobber.
  * 
@@ -31,7 +35,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.10 1994-05-31 07:56:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.11 1994-09-28 08:23:58 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1168,34 +1172,25 @@ int write_minc_slice(double scale, int write_byte_data,
    long ipix, npix;
    double maximum, minimum;
 
-   /* If converting to byte data, look for pixel max/min */
-   if (write_byte_data) {
-
-      /* Search for pixel max and min */
-      npix = image_size * image_size;
-      pixmin = pixmax = image[0];
-      for (ipix=1; ipix<npix; ipix++) {
-         if (image[ipix]>pixmax) pixmax = image[ipix];
-         if (image[ipix]<pixmin) pixmin = image[ipix];
-      }
-
-      /* Get image max and min */
-      maximum = image_max * pixmax / (double) pixel_max;
-      minimum = image_max * pixmin / (double)pixel_max;
-
-      /* Change valid range on icv */
-      (void) miicv_detach(icvid);
-      (void) miicv_setdbl(icvid, MI_ICV_VALID_MAX, (double) pixmax);
-      (void) miicv_setdbl(icvid, MI_ICV_VALID_MIN, (double) pixmin);
-      (void) miicv_attach(icvid, mincid, ncvarid(mincid, MIimage));
-      
+   /* Search for pixel max and min */
+   npix = image_size * image_size;
+   pixmin = pixmax = image[0];
+   for (ipix=1; ipix<npix; ipix++) {
+      if (image[ipix]>pixmax) pixmax = image[ipix];
+      if (image[ipix]<pixmin) pixmin = image[ipix];
    }
 
-   /* Not converting data to bytes */
-   else {
-      maximum = image_max;
-      minimum = -image_max;
-   }
+   /* Get image max and min */
+   maximum = image_max * pixmax / (double) pixel_max;
+   minimum = image_max * pixmin / (double)pixel_max;
+
+   /* Change valid range on icv */
+   (void) miicv_detach(icvid);
+   (void) miicv_setdbl(icvid, MI_ICV_VALID_MAX, (double) pixmax);
+   (void) miicv_setdbl(icvid, MI_ICV_VALID_MIN, (double) pixmin);
+   (void) miicv_attach(icvid, mincid, ncvarid(mincid, MIimage));
+
+   /* Calculate real max and min */
    maximum = maximum * scale;
    minimum = minimum * scale;
 
