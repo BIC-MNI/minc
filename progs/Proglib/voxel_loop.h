@@ -5,7 +5,13 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.1  1999-10-19 14:45:16  neelin
+ * Revision 6.2  2000-09-19 14:36:05  neelin
+ * Added ability for caller to specify functions for allocating and freeing
+ * voxel buffers used in loop. This is particularly useful for embedding
+ * the voxel_loop code in other programs, such as Python, which manage memory
+ * in their own way.
+ *
+ * Revision 6.1  1999/10/19 14:45:16  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:41  neelin
@@ -78,13 +84,13 @@ typedef struct Loop_Options Loop_Options;
               num_voxels - number of voxels to process. Note that the
                  total number of input values is 
                  num_voxels * input_vector_length.
-              input_num_buffers - number of input buffers to handle
+              num_input_buffers - number of input buffers to handle
                  on this call - either total number of input files or 1 
                  (for accumulating over files).
               input_vector_length - length of input vector.
               input_data - array of pointers to input buffers (1 for
                  each input file, unless we are accumulating).
-              output_num_buffers - number of output buffers to handle
+              num_output_buffers - number of output buffers to handle
                  on this call - will be the total number of output files
                  unless we are accumulating over files (see 
                  set_loop_accumulate).
@@ -102,8 +108,8 @@ typedef struct Loop_Options Loop_Options;
 ---------------------------------------------------------------------------- */
 typedef void (*VoxelFunction) 
      (void *caller_data, long num_voxels, 
-      int input_num_buffers, int input_vector_length, double *input_data[],
-      int output_num_buffers, int output_vector_length, double *output_data[],
+      int num_input_buffers, int input_vector_length, double *input_data[],
+      int num_output_buffers, int output_vector_length, double *output_data[],
       Loop_Info *loop_info);
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -188,6 +194,43 @@ typedef void (*VoxelFinishFunction)
       int output_num_buffers, int output_vector_length, double *output_data[],
       Loop_Info *loop_info);
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : AllocateBufferFunction
+@INPUT      : caller_data - pointer to client data.
+              do_allocations - if TRUE, allocate data, if FALSE, free data
+              num_input_buffers - number of input buffers to allocate
+              num_input_voxels - number of voxels in each input buffer
+              input_vector_length - number of values per input voxel
+              num_output_buffers - number of output buffers to allocate
+              num_output_voxels - number of voxels in each output buffer
+              output_vector_length - number of values per output voxel
+              num_extra_buffers - number of working buffers to allocate
+              num_extra_voxels - number of voxels in each extra buffer
+              extra_vector_length - number of values per extra voxel
+              loop_info - pointer that can be passed to functions returning
+                 looping information
+              input_buffers, output_buffers, extra_buffers - if do_allocation 
+                 is FALSE, then arrays of pointers to buffers that need
+                 to be freed. The pointer arrays should also be freed.
+@OUTPUT     : input_buffers, output_buffers, extra_buffers - if do_allocation 
+                 is TRUE, then these arrays of buffers should be allocated
+                 (both the array of pointers and the buffers). The pointer 
+                 array should have length num_xxx_buffers and each buffer
+                 should have length num_xxx_voxels*xxx_vector_length and be
+                 of type double.
+@RETURNS    : (nothing)
+@DESCRIPTION: Typedef for function called by voxel_loop to allocate and
+              free buffers.
+---------------------------------------------------------------------------- */
+typedef void (*AllocateBufferFunction) 
+     (void *caller_data, int do_allocation,
+      int num_input_buffers, int num_input_voxels, int input_vector_length, 
+      double ***input_buffers,
+      int num_output_buffers, int num_output_voxels, int output_vector_length, 
+      double ***output_buffers,
+      int num_extra_buffers, int num_extra_voxels, int extra_vector_length, 
+      double ***extra_buffers,
+      Loop_Info *loop_info);
 
 /* Function declarations */
 public void voxel_loop(int num_input_files, char *input_files[], 
@@ -231,6 +274,9 @@ public void set_loop_accumulate(Loop_Options *loop_options,
                                 int num_extra_buffers,
                                 VoxelStartFunction start_function,
                                 VoxelFinishFunction finish_function);
+public void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
+                         AllocateBufferFunction allocate_buffer_function)
+;
 public void get_info_shape(Loop_Info *loop_info, int ndims,
                            long start[], long count[]);
 public int get_info_current_file(Loop_Info *loop_info);

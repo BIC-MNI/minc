@@ -7,7 +7,13 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.1  1999-10-19 14:45:15  neelin
+ * Revision 6.2  2000-09-19 14:36:05  neelin
+ * Added ability for caller to specify functions for allocating and freeing
+ * voxel buffers used in loop. This is particularly useful for embedding
+ * the voxel_loop code in other programs, such as Python, which manage memory
+ * in their own way.
+ *
+ * Revision 6.1  1999/10/19 14:45:15  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:41  neelin
@@ -67,7 +73,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.1 1999-10-19 14:45:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.2 2000-09-19 14:36:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -130,6 +136,7 @@ struct Loop_Options {
    void *caller_data;
    Loop_Info *loop_info;
    int is_floating_type;
+   AllocateBufferFunction allocate_buffer_function;
 };
 
 struct Loopfile_Info {
@@ -1209,36 +1216,60 @@ private void do_voxel_loop(Loop_Options *loop_options,
                  chunk_incr, &chunk_num_voxels);
 
    /* Allocate space for buffers */
-   input_buffers = MALLOC(sizeof(*input_buffers) * num_input_buffers);
-   for (ibuff=0; ibuff < num_input_buffers; ibuff++) {
-      input_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
-                                    input_vector_length);
+
+   if (loop_options->allocate_buffer_function != NULL) {
+      loop_options->allocate_buffer_function
+         (loop_options->caller_data, TRUE, 
+          num_input_buffers, chunk_num_voxels, input_vector_length, 
+          &input_buffers, 
+          num_output_files, block_num_voxels, output_vector_length, 
+          &output_buffers, 
+          num_extra_buffers, chunk_num_voxels, output_vector_length, 
+          &extra_buffers, 
+          loop_options->loop_info);
+      
    }
+   else {
+
+      /* Allocate input buffers */
+      input_buffers = MALLOC(sizeof(*input_buffers) * num_input_buffers);
+      for (ibuff=0; ibuff < num_input_buffers; ibuff++) {
+         input_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
+                                       input_vector_length);
+      }
+
+      /* Allocate output buffers */
+      if (num_output_files > 0) {
+         output_buffers = MALLOC(sizeof(*output_buffers) * num_output_files);
+         for (ibuff=0; ibuff < num_output_files; ibuff++) {
+            output_buffers[ibuff] = MALLOC(sizeof(double) * block_num_voxels *
+                                           output_vector_length);
+         }
+      }
+
+      /* Allocate extra buffers */
+      if (num_extra_buffers > 0) {
+         extra_buffers = MALLOC(sizeof(*extra_buffers) * num_extra_buffers);
+         for (ibuff=0; ibuff < num_extra_buffers; ibuff++) {
+            extra_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
+                                          output_vector_length);
+         }
+      }
+
+   }
+
+   /* Set up the results pointers */
    if (num_output_buffers > 0) {
       results_buffers = MALLOC(sizeof(*results_buffers) * num_output_buffers);
-   }
-   else
-      results_buffers = NULL;
-   if (num_output_files > 0) {
-      output_buffers = MALLOC(sizeof(output_buffers) * num_output_files);
-      for (ibuff=0; ibuff < num_output_files; ibuff++) {
-         output_buffers[ibuff] = MALLOC(sizeof(double) * block_num_voxels *
-                                        output_vector_length);
-         results_buffers[ibuff] = output_buffers[ibuff];
+      for (ibuff=0; ibuff < num_output_buffers; ibuff++) {
+         if (ibuff < num_output_files) {
+            results_buffers[ibuff] = output_buffers[ibuff];
+         }
+         else {
+            results_buffers[ibuff] = extra_buffers[ibuff-num_output_files];
+         }
       }
    }
-   else
-      output_buffers = NULL;
-   if (num_extra_buffers > 0) {
-      extra_buffers = MALLOC(sizeof(extra_buffers) * num_extra_buffers);
-      for (ibuff=0; ibuff < num_extra_buffers; ibuff++) {
-         extra_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
-                                       output_vector_length);
-         results_buffers[ibuff+num_output_files] = extra_buffers[ibuff];
-      }
-   }
-   else
-      extra_buffers = NULL;
 
    /* Initialize global min and max */
    if (num_output_files > 0) {
@@ -1507,26 +1538,51 @@ private void do_voxel_loop(Loop_Options *loop_options,
       (void) fflush(stderr);
    }
 
-   /* Free buffers */
-   for (ibuff=0; ibuff < num_input_buffers; ibuff++) {
-      FREE(input_buffers[ibuff]);
-   }
-   FREE(input_buffers);
-   if (num_output_files > 0) {
-      for (ibuff=0; ibuff < num_output_files; ibuff++) {
-         FREE(output_buffers[ibuff]);
-      }
-      FREE(output_buffers);
-   }
-   if (num_extra_buffers > 0) {
-      for (ibuff=0; ibuff < num_extra_buffers; ibuff++) {
-         FREE(extra_buffers[ibuff]);
-      }
-      FREE(extra_buffers);
-   }
+   /* Free results pointer array, but not its buffers, since these
+      were allocate as output_buffers and extra_buffers */
    if (num_output_buffers > 0) {
       FREE(results_buffers);
    }
+
+   /* Free the buffers */
+   if (loop_options->allocate_buffer_function != NULL) {
+      loop_options->allocate_buffer_function
+         (loop_options->caller_data, FALSE, 
+          num_input_buffers, chunk_num_voxels, input_vector_length, 
+          &input_buffers, 
+          num_output_files, block_num_voxels, output_vector_length, 
+          &output_buffers, 
+          num_extra_buffers, chunk_num_voxels, output_vector_length, 
+          &extra_buffers, 
+          loop_options->loop_info);
+   }
+   else {
+
+      /* Free input buffers */
+      for (ibuff=0; ibuff < num_input_buffers; ibuff++) {
+         FREE(input_buffers[ibuff]);
+      }
+      FREE(input_buffers);
+
+      /* Free output buffers */
+      if (num_output_files > 0) {
+         for (ibuff=0; ibuff < num_output_files; ibuff++) {
+            FREE(output_buffers[ibuff]);
+         }
+         FREE(output_buffers);
+      }
+
+      /* Free extra buffers */
+      if (num_extra_buffers > 0) {
+         for (ibuff=0; ibuff < num_extra_buffers; ibuff++) {
+            FREE(extra_buffers[ibuff]);
+         }
+         FREE(extra_buffers);
+      }
+
+   }
+
+   /* Free max and min arrays */
    if (num_output_files > 0) {
       FREE(global_minimum);
       FREE(global_maximum);
@@ -2549,6 +2605,8 @@ public Loop_Options *create_loop_options(void)
    loop_options->caller_data = NULL;
    loop_options->loop_info = create_loop_info();
 
+   loop_options->allocate_buffer_function = NULL;
+
    /* Return the structure pointer */
    return loop_options;
 }
@@ -2930,6 +2988,27 @@ public void set_loop_accumulate(Loop_Options *loop_options,
       loop_options->finish_function = finish_function;
    }
    
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_allocate_buffer_function
+@INPUT      : loop_options - user options for looping
+              allocate_buffer_function - user function that allocates and frees
+                 input_data
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to set the function that allocates and frees input_data
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug 29, 2000 (J. Taylor)
+@MODIFIED   : Sept. 19, 2000 (P. Neelin)
+---------------------------------------------------------------------------- */
+public void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
+                         AllocateBufferFunction allocate_buffer_function)
+
+{
+   loop_options->allocate_buffer_function = allocate_buffer_function;
 }
 
 /* ------------ Routines to set and get loop info ------------ */
