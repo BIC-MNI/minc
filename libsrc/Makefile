@@ -16,6 +16,7 @@ HEADERS = $(INSTALLED_HEADERS) minc_routines.h minc_varlists.h minc_basic.h \
 	       minc_structures.h minc_private.h minc_useful.h type_limits.h
 
 # Man pages
+MANSECT  = 3
 MANPAGES = ParseArgv.3
 
 # Compiler and loader options
@@ -87,3 +88,10 @@ install: $(CC_MINC_LIB)
       $(CP) $(CP_FLAGS) $$file $(INSTALL_INCDIR)/. ; \
 	   $(CHMOD) $(CHMOD_FLAGS) $(INSTALL_INCDIR)/$$file; \
    done
+	@for manpage in $(MANPAGES) DUMMY; do \
+	   if test -r $$manpage ; then \
+	      cmd="$(CP) $(CP_FLAGS) $$manpage $(INSTALL_MANDIR)$(MANSECT)/."; \
+	      echo "$$cmd"; \
+	      $$cmd; \
+	   fi; \
+	done
