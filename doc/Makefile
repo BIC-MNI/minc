@@ -12,8 +12,6 @@ all : build
 
 build : $(DOCS)
 
-$(DOCS) : $(DOCS:.ps=.dvi)
-
 .tex.dvi :
 	-latex $<
 	-latex $<

@@ -6,7 +6,13 @@
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: copy_data.c,v $
- * Revision 6.2  1999-10-19 14:45:28  neelin
+ * Revision 6.3  2001-04-17 18:40:24  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.2  1999/10/19 14:45:28  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.1  1998/08/19 13:05:28  neelin
@@ -57,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.2 1999-10-19 14:45:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.3 2001-04-17 18:40:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -795,16 +801,16 @@ public void convert_value_from_double(double dvalue,
          *((signed short *) ptr) = ROUND(dvalue);
       }
       break;
-   case NC_LONG :
+   case NC_INT :
       if (!is_signed) {
          dvalue = MAX(0, dvalue);
-         dvalue = MIN(ULONG_MAX, dvalue);
-         *((unsigned long *) ptr) = ROUND(dvalue);
+         dvalue = MIN(UINT_MAX, dvalue);
+         *((unsigned int *) ptr) = ROUND(dvalue);
       }
       else {
-         dvalue = MAX(LONG_MIN, dvalue);
-         dvalue = MIN(LONG_MAX, dvalue);
-         *((signed long *) ptr) = ROUND(dvalue);
+         dvalue = MAX(INT_MIN, dvalue);
+         dvalue = MIN(INT_MAX, dvalue);
+         *((signed int *) ptr) = ROUND(dvalue);
       }
       break;
    case NC_FLOAT :

@@ -34,7 +34,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.1  1999-10-19 14:45:07  neelin
+ * Revision 6.2  2001-04-17 18:40:12  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:07  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -106,7 +112,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.1 1999-10-19 14:45:07 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.2 2001-04-17 18:40:12 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -988,8 +994,8 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
 
    if (STRINGS_EQUAL(what, MIvalid_max)) {
       switch (datatype) {
-      case NC_LONG:
-         limit = (sign == MI_PRIV_SIGNED) ? LONG_MAX : ULONG_MAX; break;
+      case NC_INT:
+         limit = (sign == MI_PRIV_SIGNED) ? INT_MAX : UINT_MAX; break;
       case NC_SHORT:
          limit = (sign == MI_PRIV_SIGNED) ? SHRT_MAX : USHRT_MAX; break;
       case NC_BYTE:
@@ -1000,8 +1006,8 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
    }
    else if (STRINGS_EQUAL(what, MIvalid_min)) {
       switch (datatype) {
-      case NC_LONG:
-         limit = (sign == MI_PRIV_SIGNED) ? LONG_MIN : 0; break;
+      case NC_INT:
+         limit = (sign == MI_PRIV_SIGNED) ? INT_MIN : 0; break;
       case NC_SHORT:
          limit = (sign == MI_PRIV_SIGNED) ? SHRT_MIN : 0; break;
       case NC_BYTE:

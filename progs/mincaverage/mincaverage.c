@@ -10,7 +10,13 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.2  2000-07-07 13:19:12  neelin
+ * Revision 6.3  2001-04-17 18:40:17  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.2  2000/07/07 13:19:12  neelin
  * Added option -filelist to read file names from a file. This gets around
  * command-line length limits.
  *
@@ -56,7 +62,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.2 2000-07-07 13:19:12 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.3 2001-04-17 18:40:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -149,7 +155,7 @@ int normalize = -1;
 int normalize = FALSE;
 #endif
 char *sdfile = NULL;
-nc_type datatype = NC_UNSPECIFIED;
+nc_type datatype = NC_NAT;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int copy_all_header = DEFAULT_BOOLEAN;
@@ -185,14 +191,16 @@ ArgvInfo argTable[] = {
    {"-max_buffer_size_in_kb", ARGV_INT, (char *) 1, 
        (char *) &max_buffer_size_in_kb,
        "Specify the maximum size of the internal buffers (in kbytes)."},
-   {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
+   {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
        "Write out byte data."},
    {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &datatype,
        "Write out short integer data."},
-   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &datatype,
-       "Write out long integer data."},
+   {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+       "Write out 32-bit integer data."},
+   {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+       "Superseded by -int."},
    {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &datatype,
        "Write out single-precision floating-point data."},
    {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &datatype,

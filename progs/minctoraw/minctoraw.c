@@ -10,7 +10,13 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.1  1999-10-19 14:45:30  neelin
+ * Revision 6.2  2001-04-17 18:40:25  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:30  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:26  neelin
@@ -53,7 +59,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.1 1999-10-19 14:45:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.2 2001-04-17 18:40:25 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -101,8 +107,10 @@ ArgvInfo argTable[] = {
        "Write out data as bytes"},
    {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &output_datatype,
        "Write out data as short integers"},
-   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &output_datatype,
-       "Write out data as long integers"},
+   {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &output_datatype,
+       "Write out data as 32-bit integers"},
+   {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &output_datatype,
+       "Superseded by -int"},
    {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &output_datatype,
        "Write out data as single precision floating-point values"},
    {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &output_datatype,

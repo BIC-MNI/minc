@@ -7,7 +7,13 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_error.c,v $
- * Revision 6.1  1999-10-19 14:45:09  neelin
+ * Revision 6.2  2001-04-17 18:40:13  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:09  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -44,15 +50,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 6.1 1999-10-19 14:45:09 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 6.2 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)";
 #endif
 
+#include <errno.h>
 #include <minc_private.h>
-
-/* NetCDF error handling routines */
-void nc_serror(char *fmt, ...) ;
-void NCadvise(int err, char *fmt,...) ;
-
 
 semiprivate int MI_save_routine_name(char *name)
 {
@@ -73,19 +75,58 @@ semiprivate int MI_return_error(void)
    return(TRUE);
 }
 semiprivate void MI_log_pkg_error2(int p1, char *p2)
-{ 
-   MI_NC_ROUTINE_VAR = MI_ROUTINE_VAR; 
-   NCadvise(p1,p2); 
+{
+   ncerr = p1;
+   if (ncopts & NC_VERBOSE) {
+      (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
+      (void) fprintf(stderr, p2);
+      (void) fputc('\n', stderr);
+      (void) fflush(stderr);
+   }
+   if ((ncopts & NC_FATAL) && (ncerr != NC_NOERR)) {
+      exit(ncopts);
+   }
    return;
 }
 semiprivate void MI_log_pkg_error3(int p1, char *p2, char *p3)
 { 
-   MI_NC_ROUTINE_VAR = MI_ROUTINE_VAR; 
-   NCadvise(p1,p2,p3); 
+   ncerr = p1;
+   if (ncopts & NC_VERBOSE) {
+      (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
+      (void) fprintf(stderr, p2, p3);
+      (void) fputc('\n', stderr);
+      (void) fflush(stderr);
+   }
+   if ((ncopts & NC_FATAL) && (ncerr != NC_NOERR)) {
+      exit(ncopts);
+   }
+   return;
 }
 semiprivate void MI_log_sys_error1(char *p1)
-{ 
-   MI_NC_ROUTINE_VAR = MI_ROUTINE_VAR; 
-   nc_serror(p1); 
+{
+   char *message;
+   int errnum = errno;
+
+   if (ncopts & NC_VERBOSE) {
+      (void) fprintf(stderr, "%s", MI_ROUTINE_VAR);
+      (void) fprintf(stderr, p1);
+      if (errnum == 0) {
+         ncerr = NC_NOERR;
+         (void) fputc('\n', stderr);
+      }
+      else {
+         ncerr = NC_SYSERR;
+         message = strerror(errnum);
+         if (message == NULL) message = "Unknown error";
+         (void) fprintf(stderr, ": %s\n", message);
+      }
+      (void) fflush(stderr);
+   }
+
+   if (ncopts & NC_FATAL) {
+      exit(ncopts);
+   }
+
+   return;
 }
 

@@ -21,7 +21,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.1  1999-10-19 14:45:09  neelin
+ * Revision 6.2  2001-04-17 18:40:13  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:09  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -61,7 +67,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.1 1999-10-19 14:45:09 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.2 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -593,7 +599,7 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
    int index;
    static char fill_b[]={0,1};
    static short fill_s[]={0,1};
-   static long fill_l[]={0,1};
+   static int fill_i[]={0,1};
    static float fill_f[]={0.0,1.0};
    static double fill_d[]={0.0,1.0};
 
@@ -623,7 +629,7 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
    index = STRINGS_EQUAL(name, MIimagemax) ? 1 : 0;
    fillp = ((datatype==NC_BYTE) ?   (void *) &fill_b[index] :
             (datatype==NC_SHORT) ?  (void *) &fill_s[index] :
-            (datatype==NC_LONG) ?   (void *) &fill_l[index] :
+            (datatype==NC_INT) ?    (void *) &fill_i[index] :
             (datatype==NC_FLOAT) ?  (void *) &fill_f[index] :
             (datatype==NC_DOUBLE) ? (void *) &fill_d[index] :
                                     (void *) NULL);
@@ -711,7 +717,7 @@ private int MI_create_root_variable(int cdfid, char *name)
    MI_SAVE_ROUTINE_NAME("MI_create_root_variable");
 
    /* Create the variable */
-   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_LONG, 0, NULL))
+   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_INT, 0, NULL))
 
    /* Standard attributes */
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
@@ -746,7 +752,7 @@ private int MI_create_simple_variable(int cdfid, char *name)
    MI_SAVE_ROUTINE_NAME("MI_create_simple_variable");
 
    /* Create the variable */
-   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_LONG, 0, NULL))
+   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_INT, 0, NULL))
 
    /* Standard attributes */
    MI_CHK_ERR(MI_add_stdgroup(cdfid, varid))
@@ -819,7 +825,7 @@ public int micreate_group_variable(int cdfid, char *name)
 
    MI_SAVE_ROUTINE_NAME("micreate_group_variable");
 
-   MI_CHK_ERR(varid=micreate_std_variable(cdfid, name, NC_LONG, 0, NULL))
+   MI_CHK_ERR(varid=micreate_std_variable(cdfid, name, NC_INT, 0, NULL))
 
    MI_RETURN(varid);
 }

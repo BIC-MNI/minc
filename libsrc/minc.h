@@ -19,7 +19,13 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.2  2001-04-10 22:05:30  neelin
+ * Revision 6.3  2001-04-17 18:40:13  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.2  2001/04/10 22:05:30  neelin
  * Start of modifications to get minc working with netcdf 3.5.
  *
  * Revision 6.1  1999/10/19 14:45:08  neelin
@@ -80,10 +86,26 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.2 2001-04-10 22:05:30 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.3 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
+
+/* For forwards and backwards compatibility between NetCDF 2.x and 
+   3.x and beyond. NC_NAT (not-a-type) replaces NC_UNSPECIFIED, 
+   and NC_INT replaces NC_LONG. 
+   Since NC_UNSPECIFIED and NC_NAT are defined in enums, and there is 
+   no version flag, we use NC_FILL_INT as a flag for NetCDF 3.x and beyond. 
+   Note that the NC_UNSPECIFIED definition can conflicts with an internal 
+   NetCDF 3.x definition in nc.h, but this should not matter since minc 
+   programs should not include nc.h and NetCDF internals should not 
+   include minc.h. */
+#ifdef NC_FILL_INT
+#  define NC_UNSPECIFIED NC_NAT
+#else
+#  define NC_NAT NC_UNSPECIFIED
+#  define NC_INT NC_LONG
+#endif
 
 /* Some useful constants */
 #define MI_EMPTY_STRING ""

@@ -29,12 +29,12 @@ int  main()
 
     /*--- input the two volumes */
 
-    if( input_volume( "volume1.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+    if( input_volume( "volume1.mnc", 3, NULL, NC_NAT, FALSE,
             0.0, 0.0, TRUE, &volume1,
             (minc_input_options *) NULL ) != OK )
         return( 1 );
 
-    if( input_volume( "volume2.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+    if( input_volume( "volume2.mnc", 3, NULL, NC_NAT, FALSE,
             0.0, 0.0, TRUE, &volume2,
             (minc_input_options *) NULL ) != OK )
         return( 1 );

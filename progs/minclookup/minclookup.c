@@ -11,7 +11,13 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.1  1999-10-19 14:45:24  neelin
+ * Revision 6.2  2001-04-17 18:40:20  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:24  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:13  neelin
@@ -54,7 +60,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.1 1999-10-19 14:45:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.2 2001-04-17 18:40:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -183,7 +189,7 @@ static Lookup_Table hotmetal_lookup = {
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
-nc_type datatype = NC_UNSPECIFIED;
+nc_type datatype = NC_NAT;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int buffer_size = 10 * 1024;
@@ -209,14 +215,16 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-buffer_size", ARGV_INT, (char *) 1, (char *) &buffer_size,
        "Set the internal buffer size (in kb)."},
-   {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
+   {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
        "Write out byte data."},
    {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &datatype,
        "Write out short integer data."},
-   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &datatype,
-       "Write out long integer data."},
+   {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+       "Write out 32-bit integer data."},
+   {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+       "Superseded by -int."},
    {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &datatype,
        "Write out single-precision floating-point data."},
    {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &datatype,

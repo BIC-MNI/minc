@@ -10,7 +10,13 @@
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexample1.c,v $
- * Revision 6.1  1999-10-19 14:45:21  neelin
+ * Revision 6.2  2001-04-17 18:40:18  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:21  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:45  neelin
@@ -54,7 +60,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 6.1 1999-10-19 14:45:21 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 6.2 2001-04-17 18:40:18 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -472,7 +478,7 @@ public void setup_variables(int inmincid, int mincid, Volume *volume,
       if (varid == MI_ERROR) {
          varid = micreate_std_variable(mincid, 
                                        volume->dimension_names[idim],
-                                       NC_LONG, 0, NULL);
+                                       NC_INT, 0, NULL);
       }
       ncopts = NC_OPTS_VAL;
       if (varid != MI_ERROR) {

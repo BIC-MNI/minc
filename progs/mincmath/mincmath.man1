@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 6.1 2000-07-07 13:19:55 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 6.2 2001-04-17 18:40:22 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -76,8 +76,11 @@ Create an output file of type byte.
 .I -short:
 Create an output file of type short.
 .P
+.I -int:
+Create an output file of type int.
+.P
 .I -long:
-Create an output file of type long.
+Superseded by -int.
 .P
 .I -float:
 Create an output file of type float.

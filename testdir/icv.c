@@ -41,7 +41,7 @@ main()
       miattputdbl(cdfid, dimvar, MIstart, 22.0);
    }
    
-   img=micreate_std_variable(cdfid, MIimage, NC_LONG,
+   img=micreate_std_variable(cdfid, MIimage, NC_INT,
                              numdims, dim);
    (void) miattputdbl(cdfid, img, MIvalid_max, 32767.0);
    (void) miattputdbl(cdfid, img, MIvalid_min, -32768.0);

@@ -56,7 +56,14 @@ void minc_test(void *ptr, enum_type enum_arg)
 #------------------------------------------------------------------------
 AC_MSG_CHECKING(for netcdf package)
 ROOT=.
-latest_netcdf=`find .. -name 'netcdf-*' -type d -prune -print |sort |tail -1`
+latest_netcdf=''
+for file in `ls -d ../netcdf-* 2> /dev/null | sort`
+do
+   if test -d "$file"
+   then
+      latest_netcdf="$file"
+   fi
+done
 if test "x$latest_netcdf" != x
 then
    latest_netcdf='${ROOT}/'"$latest_netcdf"

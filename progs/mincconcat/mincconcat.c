@@ -11,7 +11,13 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.3  2000-07-07 13:33:34  neelin
+ * Revision 6.4  2001-04-17 18:40:17  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.3  2000/07/07 13:33:34  neelin
  * Added option -filelist to read file names from a file. This gets around
  * command-line length limits.
  *
@@ -66,7 +72,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.3 2000-07-07 13:33:34 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.4 2001-04-17 18:40:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -262,7 +268,7 @@ public void get_arginfo(int argc, char *argv[],
    /* Argument variables */
    static int clobber = FALSE;
    static int verbose = TRUE;
-   static nc_type datatype = NC_UNSPECIFIED;
+   static nc_type datatype = NC_NAT;
    static int is_signed = INT_MIN;
    static double valid_range[2] = {0.0, 0.0};
    static char *dimension_name = NULL;
@@ -295,14 +301,16 @@ public void get_arginfo(int argc, char *argv[],
 
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "Output type options:"},
-      {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
+      {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
           "Don't do any type conversion (default)."},
       {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
           "Convert to  byte data"},
       {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &datatype,
           "Convert to short integer data"},
-      {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &datatype,
-          "Convert to long integer data"},
+      {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+          "Convert to 32-bit integer data"},
+      {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+          "Superseded by -int"},
       {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &datatype,
           "Convert to single-precision floating-point data"},
       {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &datatype,
@@ -1258,7 +1266,7 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
    update_history(outmincid, concat_info->history);
  
    /* Create the image and image-min/max variables */
-   if (concat_info->output_datatype != NC_UNSPECIFIED) {
+   if (concat_info->output_datatype != NC_NAT) {
       datatype = concat_info->output_datatype;
    }
    concat_info->is_floating_type = 
@@ -1275,7 +1283,7 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
       (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
                       (void *) valid_range);
    }
-   if (concat_info->output_datatype != NC_UNSPECIFIED) {
+   if (concat_info->output_datatype != NC_NAT) {
       if (concat_info->output_is_signed)
          (void) miattputstr(outmincid, outimgid, MIsigntype, MI_SIGNED);
       else

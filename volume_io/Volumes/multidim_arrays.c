@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.14 1996-11-15 16:09:48 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.15 2001-04-17 18:40:30 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -115,8 +115,8 @@ public  int  get_type_size(
     case  SIGNED_BYTE:      size = sizeof( signed   char );   break;
     case  UNSIGNED_SHORT:   size = sizeof( unsigned short );  break;
     case  SIGNED_SHORT:     size = sizeof( signed   short );  break;
-    case  UNSIGNED_LONG:    size = sizeof( unsigned long );   break;
-    case  SIGNED_LONG:      size = sizeof( signed   long );   break;
+    case  UNSIGNED_INT:     size = sizeof( unsigned int );    break;
+    case  SIGNED_INT:       size = sizeof( signed   int );    break;
     case  FLOAT:            size = sizeof( float );           break;
     case  DOUBLE:           size = sizeof( double );          break;
     }
@@ -143,12 +143,12 @@ public  void  get_type_range(
     case SIGNED_SHORT:
         *min_value = (Real) SHRT_MIN;
         *max_value = (Real) SHRT_MAX;      break;
-    case UNSIGNED_LONG:
+    case UNSIGNED_INT:
         *min_value = 0.0;
-        *max_value = (Real) ULONG_MAX;     break;
-    case SIGNED_LONG:
-        *min_value = (Real) LONG_MIN;
-        *max_value = (Real) LONG_MAX;      break;
+        *max_value = (Real) UINT_MAX;     break;
+    case SIGNED_INT:
+        *min_value = (Real) INT_MIN;
+        *max_value = (Real) INT_MAX;      break;
     case FLOAT:
         *min_value = (Real) -FLT_MAX;
         *max_value = (Real) FLT_MAX;       break;

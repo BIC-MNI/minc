@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.3 1996-05-17 19:36:13 david Exp $";
+static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.4 2001-04-17 18:40:28 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -41,8 +41,8 @@ typedef  enum  { NO_DATA_TYPE,
                  SIGNED_BYTE,
                  UNSIGNED_SHORT,
                  SIGNED_SHORT,
-                 UNSIGNED_LONG,
-                 SIGNED_LONG,
+                 UNSIGNED_INT,
+                 SIGNED_INT,
                  FLOAT,
                  DOUBLE,
                  MAX_DATA_TYPE }   Data_types;
@@ -77,11 +77,11 @@ typedef  struct
          case SIGNED_SHORT:  \
              SET_ONE( array, signed short, asterisks, subscripts, value);\
              break;  \
-         case UNSIGNED_LONG:  \
-             SET_ONE( array, unsigned long, asterisks, subscripts, value);\
+         case UNSIGNED_INT:  \
+             SET_ONE( array, unsigned int, asterisks, subscripts, value);\
              break;  \
-         case SIGNED_LONG:  \
-             SET_ONE( array, signed long, asterisks, subscripts, value);\
+         case SIGNED_INT:  \
+             SET_ONE( array, signed int, asterisks, subscripts, value);\
              break;  \
          case FLOAT:  \
              SET_ONE( array, float, asterisks, subscripts, value);\
@@ -172,11 +172,11 @@ typedef  struct
          case SIGNED_SHORT:  \
              GET_ONE( value, vtype, array, signed short, asterisks, subscripts );\
              break;  \
-         case UNSIGNED_LONG:  \
-             GET_ONE( value, vtype, array, unsigned long, asterisks, subscripts );\
+         case UNSIGNED_INT:  \
+             GET_ONE( value, vtype, array, unsigned int, asterisks, subscripts );\
              break;  \
-         case SIGNED_LONG:  \
-             GET_ONE( value, vtype, array, signed long, asterisks, subscripts );\
+         case SIGNED_INT:  \
+             GET_ONE( value, vtype, array, signed int, asterisks, subscripts );\
              break;  \
          case FLOAT:  \
              GET_ONE( value, vtype, array, float, asterisks, subscripts );\
@@ -237,11 +237,11 @@ typedef  struct
          case SIGNED_SHORT:  \
              GET_ONE_PTR( ptr, array, signed short, asterisks, subscripts );\
              break;  \
-         case UNSIGNED_LONG:  \
-             GET_ONE_PTR( ptr, array, unsigned long, asterisks, subscripts );\
+         case UNSIGNED_INT:  \
+             GET_ONE_PTR( ptr, array, unsigned int, asterisks, subscripts );\
              break;  \
-         case SIGNED_LONG:  \
-             GET_ONE_PTR( ptr, array, signed long, asterisks, subscripts );\
+         case SIGNED_INT:  \
+             GET_ONE_PTR( ptr, array, signed int, asterisks, subscripts );\
              break;  \
          case FLOAT:  \
              GET_ONE_PTR( ptr, array, float, asterisks, subscripts );\

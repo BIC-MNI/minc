@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.0 1997-09-12 13:23:25 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.1 2001-04-17 18:40:26 neelin Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -137,8 +137,11 @@ Byte values (default).
 .I -short:
 Short integer values.
 .P
+.I -int:
+32-bit integer values.
+.P
 .I -long:
-Long integer values.
+Superseded by -int.
 .P
 .I -float:
 Single-precision floating point values.
@@ -176,8 +179,11 @@ Byte values (default is input type).
 .I -oshort:
 Short integer values (default is input type).
 .P
+.I -oint:
+32-bit integer values (default is input type).
+.P
 .I -olong:
-Long integer values (default is input type).
+Superseded by -oint.
 .P
 .I -ofloat:
 Single-precision floating point values (default is input type).

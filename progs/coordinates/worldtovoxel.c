@@ -10,7 +10,13 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: worldtovoxel.c,v $
- * Revision 6.1  1999-10-19 14:45:17  neelin
+ * Revision 6.2  2001-04-17 18:40:16  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:17  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:08  neelin
@@ -50,7 +56,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.1 1999-10-19 14:45:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.2 2001-04-17 18:40:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -101,7 +107,7 @@ int main(int argc, char *argv[])
 
    /* Open the image file */
    set_print_function(print_to_stderr);
-   if (start_volume_input(filename, 3, dim_names, NC_UNSPECIFIED, TRUE,
+   if (start_volume_input(filename, 3, dim_names, NC_NAT, TRUE,
                           0.0, 0.0, TRUE, &volume, NULL, &input_info) != OK) {
       (void) fprintf(stderr, "Error opening file %s for input.\n",
                      filename);

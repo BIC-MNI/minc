@@ -11,7 +11,13 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.3  1999-10-19 14:45:31  neelin
+ * Revision 6.4  2001-04-17 18:40:25  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.3  1999/10/19 14:45:31  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.2  1998/06/22 14:06:01  neelin
@@ -101,7 +107,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.3 1999-10-19 14:45:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.4 2001-04-17 18:40:25 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -136,7 +142,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define DEF_TYPE 0
 #define BYTE_TYPE 1
 #define SHORT_TYPE 2
-#define LONG_TYPE 3
+#define INT_TYPE 3
 #define FLOAT_TYPE 4
 #define DOUBLE_TYPE 5
 #define DEF_SIGN 0
@@ -187,14 +193,14 @@ char *sign_names[][6] = {
 };
 
 /* Array containing default signs subscripted by [type] (default, byte, 
-   short, long, float, double) */
+   short, int, float, double) */
 int default_signs[] = {
    SIGNED, UNSIGNED, SIGNED, SIGNED, SIGNED, SIGNED
 };
 
 /* Information converting types for argument processing to NetCDF types */
 nc_type convert_types[] = {
-   NC_UNSPECIFIED, NC_BYTE, NC_SHORT, NC_LONG, NC_FLOAT, NC_DOUBLE
+   NC_NAT, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE
 };
 
 /* Argument variables */
@@ -277,8 +283,10 @@ ArgvInfo argTable[] = {
        "Byte values"},
    {"-short", ARGV_CONSTANT, (char *) SHORT_TYPE, (char *) &type,
        "Short integer values"},
-   {"-long", ARGV_CONSTANT, (char *) LONG_TYPE, (char *) &type,
-       "Long integer values"},
+   {"-int", ARGV_CONSTANT, (char *) INT_TYPE, (char *) &type,
+       "32-bit integer values"},
+   {"-long", ARGV_CONSTANT, (char *) INT_TYPE, (char *) &type,
+       "Superseded by -int"},
    {"-float", ARGV_CONSTANT, (char *) FLOAT_TYPE, (char *) &type,
        "Single-precision floating point values"},
    {"-double", ARGV_CONSTANT, (char *) DOUBLE_TYPE, (char *) &type,
@@ -301,8 +309,10 @@ ArgvInfo argTable[] = {
        "Byte values"},
    {"-oshort", ARGV_CONSTANT, (char *) SHORT_TYPE, (char *) &otype,
        "Short integer values"},
-   {"-olong", ARGV_CONSTANT, (char *) LONG_TYPE, (char *) &otype,
-       "Long integer values"},
+   {"-oint", ARGV_CONSTANT, (char *) INT_TYPE, (char *) &otype,
+       "32-bit integer values"},
+   {"-olong", ARGV_CONSTANT, (char *) INT_TYPE, (char *) &otype,
+       "Superseded by -oint"},
    {"-ofloat", ARGV_CONSTANT, (char *) FLOAT_TYPE, (char *) &otype,
        "Single-precision floating point values"},
    {"-odouble", ARGV_CONSTANT, (char *) DOUBLE_TYPE, (char *) &otype,
@@ -553,7 +563,7 @@ main(int argc, char *argv[])
       }
       else {
          varid = micreate_std_variable(cdfid, dimname[i], 
-                                       NC_LONG, 0, NULL);
+                                       NC_INT, 0, NULL);
 
          /* Write out step and start and direction cosine */
          if (STR_EQ(dimname[i], MIxspace)) index = X;
@@ -620,7 +630,7 @@ main(int argc, char *argv[])
                                             attribute_list[iatt].variable);
          }
          if (varid == MI_ERROR) {
-            varid = ncvardef(cdfid, attribute_list[iatt].variable, NC_LONG,
+            varid = ncvardef(cdfid, attribute_list[iatt].variable, NC_INT,
                              0, NULL);
          }
          if (varid == MI_ERROR) {
@@ -703,11 +713,11 @@ main(int argc, char *argv[])
                else
                   value = (double) *((unsigned short *) ptr);
                break; 
-            case NC_LONG : 
+            case NC_INT : 
                if (is_signed)
-                  value = (double) *((signed long *) ptr); 
+                  value = (double) *((signed int *) ptr); 
                else
-                  value = (double) *((unsigned long *) ptr); 
+                  value = (double) *((unsigned int *) ptr); 
                break; 
             case NC_FLOAT : 
                value = (double) *((float *) ptr); 

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.1 2001-04-02 14:58:10 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.2 2001-04-17 18:40:23 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1
 
@@ -247,8 +247,11 @@ Write out bytes values.
 .I -short:
 Write out short integer values.
 .P
+.I -int:
+Write out 32-bit integer values.
+.P
 .I -long:
-Write out long integer values.
+Superseded by -int.
 .P
 .I -float:
 Write out single-precision floating point values.

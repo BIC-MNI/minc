@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.19 1996-11-15 16:09:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.20 2001-04-17 18:40:28 neelin Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
@@ -188,7 +188,7 @@ private  void  output_one_transform(
 
         /*--- write the volume file */
 
-        (void) output_volume( volume_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+        (void) output_volume( volume_filename, NC_NAT, FALSE, 0.0, 0.0,
                               (Volume) transform->displacement_volume,
                               NULL, NULL );
 
@@ -558,7 +558,7 @@ private  Status  input_one_transform(
         set_default_minc_input_options( &options );
         set_minc_input_vector_to_scalar_flag( &options, FALSE );
 
-        if( input_volume( volume_filename, 4, NULL, NC_UNSPECIFIED, FALSE,
+        if( input_volume( volume_filename, 4, NULL, NC_NAT, FALSE,
                           0.0, 0.0, TRUE, &volume, &options ) != OK )
         {
             delete_string( volume_filename );

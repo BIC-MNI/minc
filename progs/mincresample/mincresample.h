@@ -7,7 +7,13 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.2  2001-04-02 14:58:09  neelin
+ * Revision 6.3  2001-04-17 18:40:23  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.2  2001/04/02 14:58:09  neelin
  * Added -keep_real_range option to prevent rescaling of slices on output
  *
  * Revision 6.1  1999/10/19 14:45:27  neelin
@@ -302,11 +308,11 @@ typedef struct {
       else \
          value = *((unsigned short *) volume->data + offset); \
       break; \
-   case NC_LONG: \
+   case NC_INT: \
       if (volume->is_signed) \
-         value = *((signed long *) volume->data + offset); \
+         value = *((signed int *) volume->data + offset); \
       else \
-         value = *((unsigned long *) volume->data + offset); \
+         value = *((unsigned int *) volume->data + offset); \
       break; \
    case NC_FLOAT: \
       value = *((float *) volume->data + offset); \

@@ -24,7 +24,7 @@ int  main(
 
     /*--- input the volume */
 
-    if( input_volume( "volume.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+    if( input_volume( "volume.mnc", 3, NULL, NC_NAT, FALSE,
             0.0, 0.0, TRUE, &volume,
             (minc_input_options *) NULL ) != OK )
         return( 1 );
@@ -49,7 +49,7 @@ int  main(
 
     /*--- output the modified volume */
 
-    if( output_modified_volume( "output.mnc", NC_UNSPECIFIED,
+    if( output_modified_volume( "output.mnc", NC_NAT,
              FALSE, 0.0, 0.0, volume, "volume.mnc",
              "Modified by clamping to 100",
              (minc_output_options *) NULL ) != OK )

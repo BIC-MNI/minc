@@ -14,7 +14,13 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.1  1999-10-19 14:45:08  neelin
+ * Revision 6.2  2001-04-17 18:40:13  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:08  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -51,7 +57,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.1 1999-10-19 14:45:08 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.2 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */
@@ -133,12 +139,12 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
          dvalue = (double) *((signed short *) ptr); break; \
       } \
       break; \
-   case NC_LONG : \
+   case NC_INT : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
-         dvalue = (double) *((unsigned long *) ptr); break; \
+         dvalue = (double) *((unsigned int *) ptr); break; \
       case MI_PRIV_SIGNED : \
-         dvalue = (double) *((signed long *) ptr); break; \
+         dvalue = (double) *((signed int  *) ptr); break; \
       } \
       break; \
    case NC_FLOAT : \
@@ -179,17 +185,17 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
          break; \
       } \
       break; \
-   case NC_LONG : \
+   case NC_INT : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
          dvalue = MAX(0, dvalue); \
-         dvalue = MIN(ULONG_MAX, dvalue); \
-         *((unsigned long *) ptr) = ROUND(dvalue); \
+         dvalue = MIN(UINT_MAX, dvalue); \
+         *((unsigned int *) ptr) = ROUND(dvalue); \
          break; \
       case MI_PRIV_SIGNED : \
-         dvalue = MAX(LONG_MIN, dvalue); \
-         dvalue = MIN(LONG_MAX, dvalue); \
-         *((signed long *) ptr) = ROUND(dvalue); \
+         dvalue = MAX(INT_MIN, dvalue); \
+         dvalue = MIN(INT_MAX, dvalue); \
+         *((signed int *) ptr) = ROUND(dvalue); \
          break; \
       } \
       break; \

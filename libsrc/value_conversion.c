@@ -14,7 +14,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.1  1999-10-19 14:45:12  neelin
+ * Revision 6.2  2001-04-17 18:40:14  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:12  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -70,7 +76,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.1 1999-10-19 14:45:12 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.2 2001-04-17 18:40:14 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -478,7 +484,7 @@ semiprivate int MI_get_sign_from_string(nc_type datatype, char *sign)
               as is. The default signs are
                  byte   : unsigned
                  short  : signed
-                 long   : signed
+                 int    : signed
                  float  : signed
                  double : signed
 @METHOD     : 
@@ -497,7 +503,7 @@ private int MI_get_sign(nc_type datatype, int sign)
                   (sign==MI_PRIV_UNSIGNED))     ? sign :
                (datatype==NC_BYTE)              ? MI_PRIV_UNSIGNED :
                (datatype==NC_SHORT)             ? MI_PRIV_SIGNED :
-               (datatype==NC_LONG)              ? MI_PRIV_SIGNED : 
+               (datatype==NC_INT)               ? MI_PRIV_SIGNED : 
                                                   MI_PRIV_SIGNED );
 }
 
@@ -529,7 +535,7 @@ private int MI_get_sign(nc_type datatype, int sign)
               used (from MI_get_sign) :
                  byte  : unsigned
                  short : signed
-                 long  : signed
+                 int   : signed
               Note that if a conversion must take place, then all input 
               values are converted to double. Values can be scaled through
               icvp->scale and icvp->offset by setting icvp->do_scale to TRUE.

@@ -24,8 +24,8 @@ struct {
            NC_BYTE,   MI_SIGNED,   "byte",
            NC_SHORT,  MI_UNSIGNED, "short",
            NC_SHORT,  MI_SIGNED,   "short",
-           NC_LONG,   MI_UNSIGNED, "long",
-           NC_LONG,   MI_SIGNED,   "long",
+           NC_INT,    MI_UNSIGNED, "int",
+           NC_INT,    MI_SIGNED,   "int",
            NC_FLOAT,  MI_SIGNED,   "float",
            NC_DOUBLE, MI_SIGNED,   "double"};
 int ntypes = sizeof(types)/sizeof(types[0]);

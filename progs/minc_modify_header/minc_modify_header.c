@@ -10,7 +10,13 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.4  2000-12-13 16:19:37  neelin
+ * Revision 6.5  2001-04-17 18:40:16  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.4  2000/12/13 16:19:37  neelin
  * Removed debugging statements
  *
  * Revision 6.3  2000/11/03 16:35:40  neelin
@@ -57,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.4 2000-12-13 16:19:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.5 2001-04-17 18:40:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -275,7 +281,7 @@ main(int argc, char *argv[])
             varid = micreate_group_variable(mincid, variable_name);
             ncopts = old_ncopts;
             if (varid == MI_ERROR) {
-               varid = ncvardef(mincid, variable_name, NC_LONG,
+               varid = ncvardef(mincid, variable_name, NC_INT,
                                 0, NULL);
             }
             variable_exists = (varid != MI_ERROR);

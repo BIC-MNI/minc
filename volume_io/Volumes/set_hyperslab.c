@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/set_hyperslab.c,v 1.1 1998-06-29 13:10:59 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/set_hyperslab.c,v 1.2 2001-04-17 18:40:31 neelin Exp $";
 #endif
 
 public  void  convert_values_to_voxels(
@@ -250,8 +250,8 @@ private  void  set_voxel_values_5d(
     signed  char     *signed_byte_ptr;
     unsigned  short  *unsigned_short_ptr;
     signed  short    *signed_short_ptr;
-    unsigned  long   *unsigned_long_ptr;
-    signed  long     *signed_long_ptr;
+    unsigned  int    *unsigned_int_ptr;
+    signed  int     *signed_int_ptr;
     float            *float_ptr;
     double           *double_ptr;
 
@@ -380,8 +380,8 @@ private  void  set_voxel_values_5d(
         }
         break;
 
-    case UNSIGNED_LONG:
-        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
+    case UNSIGNED_INT:
+        ASSIGN_PTR(unsigned_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -392,23 +392,23 @@ private  void  set_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *unsigned_long_ptr = (unsigned long)
+                            *unsigned_int_ptr = (unsigned int)
                                                    floor( *values + 0.5 );
                             ++values;
-                            unsigned_long_ptr += step4;
+                            unsigned_int_ptr += step4;
                         }
-                        unsigned_long_ptr += step3;
+                        unsigned_int_ptr += step3;
                     }
-                    unsigned_long_ptr += step2;
+                    unsigned_int_ptr += step2;
                 }
-                unsigned_long_ptr += step1;
+                unsigned_int_ptr += step1;
             }
-            unsigned_long_ptr += step0;
+            unsigned_int_ptr += step0;
         }
         break;
 
-    case SIGNED_LONG:
-        ASSIGN_PTR(signed_long_ptr) = void_ptr;
+    case SIGNED_INT:
+        ASSIGN_PTR(signed_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -419,18 +419,18 @@ private  void  set_voxel_values_5d(
                     {
                         for_less( i4, 0, n4 )
                         {
-                            *signed_long_ptr = (signed long)
+                            *signed_int_ptr = (signed int)
                                                    floor( *values + 0.5 );
                             ++values;
-                            signed_long_ptr += step4;
+                            signed_int_ptr += step4;
                         }
-                        signed_long_ptr += step3;
+                        signed_int_ptr += step3;
                     }
-                    signed_long_ptr += step2;
+                    signed_int_ptr += step2;
                 }
-                signed_long_ptr += step1;
+                signed_int_ptr += step1;
             }
-            signed_long_ptr += step0;
+            signed_int_ptr += step0;
         }
         break;
 
@@ -502,8 +502,8 @@ private  void  set_voxel_values_4d(
     signed  char     *signed_byte_ptr;
     unsigned  short  *unsigned_short_ptr;
     signed  short    *signed_short_ptr;
-    unsigned  long   *unsigned_long_ptr;
-    signed  long     *signed_long_ptr;
+    unsigned  int    *unsigned_int_ptr;
+    signed  int      *signed_int_ptr;
     float            *float_ptr;
     double           *double_ptr;
 
@@ -612,8 +612,8 @@ private  void  set_voxel_values_4d(
         }
         break;
 
-    case UNSIGNED_LONG:
-        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
+    case UNSIGNED_INT:
+        ASSIGN_PTR(unsigned_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -622,21 +622,21 @@ private  void  set_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *unsigned_long_ptr = (unsigned long)
+                        *unsigned_int_ptr = (unsigned int)
                                                floor( *values + 0.5 );
                         ++values;
-                        unsigned_long_ptr += step3;
+                        unsigned_int_ptr += step3;
                     }
-                    unsigned_long_ptr += step2;
+                    unsigned_int_ptr += step2;
                 }
-                unsigned_long_ptr += step1;
+                unsigned_int_ptr += step1;
             }
-            unsigned_long_ptr += step0;
+            unsigned_int_ptr += step0;
         }
         break;
 
-    case SIGNED_LONG:
-        ASSIGN_PTR(signed_long_ptr) = void_ptr;
+    case SIGNED_INT:
+        ASSIGN_PTR(signed_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
@@ -645,15 +645,15 @@ private  void  set_voxel_values_4d(
                 {
                     for_less( i3, 0, n3 )
                     {
-                        *signed_long_ptr = (signed long) floor( *values + 0.5 );
+                        *signed_int_ptr = (signed int) floor( *values + 0.5 );
                         ++values;
-                        signed_long_ptr += step3;
+                        signed_int_ptr += step3;
                     }
-                    signed_long_ptr += step2;
+                    signed_int_ptr += step2;
                 }
-                signed_long_ptr += step1;
+                signed_int_ptr += step1;
             }
-            signed_long_ptr += step0;
+            signed_int_ptr += step0;
         }
         break;
 
@@ -717,8 +717,8 @@ private  void  set_voxel_values_3d(
     signed  char     *signed_byte_ptr;
     unsigned  short  *unsigned_short_ptr;
     signed  short    *signed_short_ptr;
-    unsigned  long   *unsigned_long_ptr;
-    signed  long     *signed_long_ptr;
+    unsigned  int    *unsigned_int_ptr;
+    signed  int      *signed_int_ptr;
     float            *float_ptr;
     double           *double_ptr;
 
@@ -806,39 +806,39 @@ private  void  set_voxel_values_3d(
         }
         break;
 
-    case UNSIGNED_LONG:
-        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
+    case UNSIGNED_INT:
+        ASSIGN_PTR(unsigned_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
             {
                 for_less( i2, 0, n2 )
                 {
-                    *unsigned_long_ptr = (unsigned long) floor( *values + 0.5 );
+                    *unsigned_int_ptr = (unsigned int) floor( *values + 0.5 );
                     ++values;
-                    unsigned_long_ptr += step2;
+                    unsigned_int_ptr += step2;
                 }
-                unsigned_long_ptr += step1;
+                unsigned_int_ptr += step1;
             }
-            unsigned_long_ptr += step0;
+            unsigned_int_ptr += step0;
         }
         break;
 
-    case SIGNED_LONG:
-        ASSIGN_PTR(signed_long_ptr) = void_ptr;
+    case SIGNED_INT:
+        ASSIGN_PTR(signed_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
             {
                 for_less( i2, 0, n2 )
                 {
-                    *signed_long_ptr = (signed long) floor( *values + 0.5 );
+                    *signed_int_ptr = (signed long) floor( *values + 0.5 );
                     ++values;
-                    signed_long_ptr += step2;
+                    signed_int_ptr += step2;
                 }
-                signed_long_ptr += step1;
+                signed_int_ptr += step1;
             }
-            signed_long_ptr += step0;
+            signed_int_ptr += step0;
         }
         break;
 
@@ -894,8 +894,8 @@ private  void  set_voxel_values_2d(
     signed  char     *signed_byte_ptr;
     unsigned  short  *unsigned_short_ptr;
     signed  short    *signed_short_ptr;
-    unsigned  long   *unsigned_long_ptr;
-    signed  long     *signed_long_ptr;
+    unsigned  int    *unsigned_int_ptr;
+    signed  int      *signed_int_ptr;
     float            *float_ptr;
     double           *double_ptr;
 
@@ -963,31 +963,31 @@ private  void  set_voxel_values_2d(
         }
         break;
 
-    case UNSIGNED_LONG:
-        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
+    case UNSIGNED_INT:
+        ASSIGN_PTR(unsigned_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
             {
-                *unsigned_long_ptr = (unsigned long) floor( *values + 0.5 );
+                *unsigned_int_ptr = (unsigned int) floor( *values + 0.5 );
                 ++values;
-                unsigned_long_ptr += step1;
+                unsigned_int_ptr += step1;
             }
-            unsigned_long_ptr += step0;
+            unsigned_int_ptr += step0;
         }
         break;
 
-    case SIGNED_LONG:
-        ASSIGN_PTR(signed_long_ptr) = void_ptr;
+    case SIGNED_INT:
+        ASSIGN_PTR(signed_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
             for_less( i1, 0, n1 )
             {
-                *signed_long_ptr = (signed long) floor( *values + 0.5 );
+                *signed_int_ptr = (signed int) floor( *values + 0.5 );
                 ++values;
-                signed_long_ptr += step1;
+                signed_int_ptr += step1;
             }
-            signed_long_ptr += step0;
+            signed_int_ptr += step0;
         }
         break;
 
@@ -1033,8 +1033,8 @@ private  void  set_voxel_values_1d(
     signed  char     *signed_byte_ptr;
     unsigned  short  *unsigned_short_ptr;
     signed  short    *signed_short_ptr;
-    unsigned  long   *unsigned_long_ptr;
-    signed  long     *signed_long_ptr;
+    unsigned  int    *unsigned_int_ptr;
+    signed  int      *signed_int_ptr;
     float            *float_ptr;
     double           *double_ptr;
 
@@ -1080,23 +1080,23 @@ private  void  set_voxel_values_1d(
         }
         break;
 
-    case UNSIGNED_LONG:
-        ASSIGN_PTR(unsigned_long_ptr) = void_ptr;
+    case UNSIGNED_INT:
+        ASSIGN_PTR(unsigned_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *unsigned_long_ptr = (unsigned long) floor( *values + 0.5 );
+            *unsigned_int_ptr = (unsigned int) floor( *values + 0.5 );
             ++values;
-            unsigned_long_ptr += step0;
+            unsigned_int_ptr += step0;
         }
         break;
 
-    case SIGNED_LONG:
-        ASSIGN_PTR(signed_long_ptr) = void_ptr;
+    case SIGNED_INT:
+        ASSIGN_PTR(signed_int_ptr) = void_ptr;
         for_less( i0, 0, n0 )
         {
-            *signed_long_ptr = (signed long) floor( *values + 0.5 );
+            *signed_int_ptr = (signed int) floor( *values + 0.5 );
             ++values;
-            signed_long_ptr += step0;
+            signed_int_ptr += step0;
         }
         break;
 

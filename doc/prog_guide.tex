@@ -105,7 +105,7 @@ Variables are the next thing defined in the cdl file. Each variable
 has a name, data type and a shape specified by a list of dimensions
 (up to a maximum of \verb+MAX_VAR_DIMS+ = 32 dimensions per variable).
 The data types are \verb+NC_CHAR+, \verb+NC_BYTE+, \verb+NC_SHORT+,
-\verb+NC_LONG+, \verb+NC_FLOAT+ and \verb+NC_DOUBLE+. Information
+\verb+NC_INT+, \verb+NC_FLOAT+ and \verb+NC_DOUBLE+. Information
 about each variable is stored in attributes.  The attribute
 ``\verb+long_name+'' gives a character string describing the variable
 ``\verb+image+''. Attributes are either scalars or vectors of one of
@@ -335,7 +335,7 @@ offset associated with each image or image volume. The MINC standard
 indicates how pixel values should be interpreted. 
 
 Image data in the \verb+MIimage+ variable can be stored as bytes, shorts,
-longs, floats or doubles. NetCDF conventions use the attributes
+ints (32-bit), floats or doubles. NetCDF conventions use the attributes
 \verb+MIvalid_range+ or \verb+MIvalid_max+ and \verb+MIvalid_min+ to
 indicate the range of values that can be found in the variable. For
 short values, for example, we might have a valid range of 0 to 32000.
@@ -355,7 +355,7 @@ dimensions of \verb+MIimage+.
 MINC provides a number of convenience functions that have nothing to
 do with medical imaging, but that make the use of NetCDF files a
 little easier. One of the drawbacks of the NetCDF format is that data
-can come in any form (byte, short, long, float, double) and the
+can come in any form (byte, short, int, float, double) and the
 calling program must handle the general case. Rather than restrict
 this, MINC provides functions to convert types.
 

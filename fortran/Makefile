@@ -52,9 +52,11 @@ $(PROGS) : $(TARGET_IN_DEPENDENCY).o $(CC_MINC_LIB)
 test: $(PROGS)
 	minc_ftest
 
-$(JACKETS_C): $(JACKETS_SRC) 
-	$(NETCDF_FORTRAN_DIR)/fortc -L $(NETCDF_FORTRAN_DIR) -O $(OS_TYPE) \
-	              $(JACKETS_SRC) > $@.new && mv $@.new $@
+# We no longer derive the C code from the .src file since the 
+# m4 interface is not used by NetCDF 3.x and beyond
+#$(JACKETS_C): $(JACKETS_SRC) 
+#	$(NETCDF_FORTRAN_DIR)/fortc -L $(NETCDF_FORTRAN_DIR) -O $(OS_TYPE) \
+#	              $(JACKETS_SRC) > $@.new && mv $@.new $@
 
 #  how to lint the executable source
 lint: $(JACKETS_LN)
@@ -70,12 +72,12 @@ $(CC_MINC_LIB): $(JACKETS_OBJ)
 
 # Remove most derived files in this directory - leave jacket obj for library
 mostlyclean:
-	$(RM) $(RM_FLAGS) $(JACKETS_C) $(JACKETS_LN) \
+	$(RM) $(RM_FLAGS) $(JACKETS_LN) \
                      $(PROGS) $(PROG_OBJ)
 
 # Remove all derived files in this directory
 clean:
-	$(RM) $(RM_FLAGS) $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) \
+	$(RM) $(RM_FLAGS) $(JACKETS_OBJ) $(JACKETS_LN) \
                      $(PROGS) $(PROG_OBJ)
 
 install:

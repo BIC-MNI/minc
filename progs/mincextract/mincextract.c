@@ -10,7 +10,13 @@
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincextract.c,v $
- * Revision 6.1  1999-10-19 14:45:23  neelin
+ * Revision 6.2  2001-04-17 18:40:19  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.1  1999/10/19 14:45:23  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:38  neelin
@@ -68,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.1 1999-10-19 14:45:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.2 2001-04-17 18:40:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -94,19 +100,19 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextrac
 #define TYPE_ASCII  0
 #define TYPE_BYTE   1
 #define TYPE_SHORT  2
-#define TYPE_LONG   3
+#define TYPE_INT    3
 #define TYPE_FLOAT  4
 #define TYPE_DOUBLE 5
 #define TYPE_FILE   6
 static nc_type nc_type_list[8] = {
-   NC_DOUBLE, NC_BYTE, NC_SHORT, NC_LONG, NC_FLOAT, NC_DOUBLE, NC_DOUBLE
+   NC_DOUBLE, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_DOUBLE
 };
 static double default_max[][2] = {
    0.0, 0.0,
    UCHAR_MAX, SCHAR_MAX,
    0.0, 0.0,
    USHRT_MAX, SHRT_MAX,
-   ULONG_MAX, LONG_MAX,
+   UINT_MAX, INT_MAX,
    1.0, 1.0,
    1.0, 1.0
 };
@@ -115,7 +121,7 @@ static double default_min[][2] = {
    0.0, SCHAR_MIN,
    0.0, 0.0,
    0.0, SHRT_MIN,
-   0.0, LONG_MIN,
+   0.0, INT_MIN,
    0.0, 0.0,
    0.0, 0.0
 };
@@ -145,8 +151,10 @@ ArgvInfo argTable[] = {
        "Write out data as bytes"},
    {"-short", ARGV_CONSTANT, (char *) TYPE_SHORT, (char *) &arg_odatatype,
        "Write out data as short integers"},
-   {"-long", ARGV_CONSTANT, (char *) TYPE_LONG, (char *) &arg_odatatype,
-       "Write out data as long integers"},
+   {"-int", ARGV_CONSTANT, (char *) TYPE_INT, (char *) &arg_odatatype,
+       "Write out data as 32-bit integers"},
+   {"-long", ARGV_CONSTANT, (char *) TYPE_INT, (char *) &arg_odatatype,
+       "Superseded by -int"},
    {"-float", ARGV_CONSTANT, (char *) TYPE_FLOAT, (char *) &arg_odatatype,
        "Write out data as single precision floating-point values"},
    {"-double", ARGV_CONSTANT, (char *) TYPE_DOUBLE, (char *) &arg_odatatype,

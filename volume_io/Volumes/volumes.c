@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.69 1998-06-29 13:11:34 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.70 2001-04-17 18:40:31 neelin Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -244,7 +244,7 @@ public  void  set_volume_type(
 {
     Data_types      data_type;
 
-    if( nc_data_type != NC_UNSPECIFIED )
+    if( nc_data_type != NC_NAT )
     {
         switch( nc_data_type )
         {
@@ -262,11 +262,11 @@ public  void  set_volume_type(
                 data_type = UNSIGNED_SHORT;
             break;
 
-        case  NC_LONG:
+        case  NC_INT:
             if( signed_flag )
-                data_type = SIGNED_LONG;
+                data_type = SIGNED_INT;
             else
-                data_type = UNSIGNED_LONG;
+                data_type = UNSIGNED_INT;
             break;
 
         case  NC_FLOAT:
@@ -349,7 +349,7 @@ public  void  set_rgb_volume_flag(
     Volume   volume,
     BOOLEAN  flag )
 {
-    if( !flag || get_volume_data_type(volume) == UNSIGNED_LONG )
+    if( !flag || get_volume_data_type(volume) == UNSIGNED_INT )
         volume->is_rgba_data = flag;
 }
 
@@ -2108,12 +2108,12 @@ public  void  set_volume_voxel_range(
         case SIGNED_SHORT:
             voxel_min = (Real) SHRT_MIN;
             voxel_max = (Real) SHRT_MAX;      break;
-        case UNSIGNED_LONG:
+        case UNSIGNED_INT:
             voxel_min = 0.0;
-            voxel_max = (Real) ULONG_MAX;     break;
-        case SIGNED_LONG:
-            voxel_min = (Real) LONG_MIN;
-            voxel_max = (Real) LONG_MAX;      break;
+            voxel_max = (Real) UINT_MAX;     break;
+        case SIGNED_INT:
+            voxel_min = (Real) INT_MIN;
+            voxel_max = (Real) INT_MAX;      break;
         case FLOAT:
             voxel_min = (Real) -FLT_MAX;
             voxel_max = (Real) FLT_MAX;       break;
@@ -2276,7 +2276,7 @@ public  void  set_volume_real_range(
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Copies the volume to a new volume, optionally changing type
-              (if nc_data_type is not NC_UNSPECIFIED), but not allocating
+              (if nc_data_type is not NC_NAT), but not allocating
               the volume voxel data (alloc_volume_data() must subsequently
               be called).
 @METHOD     : 
@@ -2299,7 +2299,7 @@ public  Volume   copy_volume_definition_no_alloc(
     Real               dir_cosine[N_DIMENSIONS];
     Volume             copy;
 
-    if( nc_data_type == NC_UNSPECIFIED )
+    if( nc_data_type == NC_NAT )
     {
         nc_data_type = volume->nc_data_type;
         signed_flag = volume->signed_flag;
@@ -2347,7 +2347,7 @@ public  Volume   copy_volume_definition_no_alloc(
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Copies the volume to a new volume, optionally changing type
-              (if nc_data_type is not NC_UNSPECIFIED), allocating
+              (if nc_data_type is not NC_NAT), allocating
               the volume voxel data, but not initializing the data.
 @METHOD     : 
 @GLOBALS    : 
@@ -2401,7 +2401,7 @@ public  Volume  copy_volume(
         return( NULL );
     }
 
-    copy = copy_volume_definition( volume, NC_UNSPECIFIED, FALSE, 0.0, 0.0 );
+    copy = copy_volume_definition( volume, NC_NAT, FALSE, 0.0, 0.0 );
 
     /* --- find out how many voxels are in the volume */
 

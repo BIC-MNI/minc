@@ -13,7 +13,13 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.3  1999-10-19 14:45:29  neelin
+ * Revision 6.4  2001-04-17 18:40:24  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.3  1999/10/19 14:45:29  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.2  1998/08/19 13:57:23  neelin
@@ -65,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.3 1999-10-19 14:45:29 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.4 2001-04-17 18:40:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -122,7 +128,7 @@ public void get_arginfo(int argc, char *argv[],
    /* Argument variables */
    static int clobber = FALSE;
    static int verbose = TRUE;
-   static nc_type datatype = NC_UNSPECIFIED;
+   static nc_type datatype = NC_NAT;
    static int is_signed = INT_MIN;
    static double valid_range[2] = {DBL_MAX,DBL_MAX};
    static double image_range[2] = {DBL_MAX,DBL_MAX};
@@ -163,14 +169,16 @@ public void get_arginfo(int argc, char *argv[],
 
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "Image conversion options (pixel type and range):"},
-      {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
+      {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
           "Don't do any type conversion (default)."},
       {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
           "Convert to  byte data"},
       {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &datatype,
           "Convert to short integer data"},
-      {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &datatype,
-          "Convert to long integer data"},
+      {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+          "Convert to 32-bit integer data"},
+      {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &datatype,
+          "Superseded by -int"},
       {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &datatype,
           "Convert to single-precision floating-point data"},
       {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &datatype,
@@ -798,7 +806,7 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
               valid_range - DBL_MAX if not known
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to get the datatype info from a file. If datatype
-              is not NC_UNSPECIFIED, then is_signed only is set to its 
+              is not NC_NAT, then is_signed only is set to its 
               default. Otherwise, is_signed is only modified if it is set 
               to INT_MIN and valid_range is only modified if it is set to 
               DBL_MAX.
@@ -821,7 +829,7 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
    imgid = ncvarid(mincid, MIimage);
 
    /* Check that datatype is not specified */
-   if (*datatype != NC_UNSPECIFIED) {
+   if (*datatype != NC_NAT) {
       if (*is_signed == INT_MIN) {
          *is_signed = ((*datatype == NC_BYTE) ? FALSE : TRUE);
       }

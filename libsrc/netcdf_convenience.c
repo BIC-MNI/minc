@@ -35,7 +35,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.4  2000-09-13 14:02:00  neelin
+ * Revision 6.5  2001-04-17 18:40:14  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.4  2000/09/13 14:02:00  neelin
  * Added support for bzip files. (Modified patch from Steve Robbins)
  *
  * Revision 6.3  2000/02/02 18:43:29  neelin
@@ -116,7 +122,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.4 2000-09-13 14:02:00 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.5 2001-04-17 18:40:14 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -758,8 +764,7 @@ public char *miattgetstr(int cdfid, int varid, char *name,
               value    - integer value for attribute
 @OUTPUT     : (none)
 @RETURNS    : MI_ERROR (=-1) if an error occurs
-@DESCRIPTION: Convenience routine for calling ncattput with integers (stored
-              as long integers).
+@DESCRIPTION: Convenience routine for calling ncattput with integers.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : NetCDF routines.
@@ -768,12 +773,12 @@ public char *miattgetstr(int cdfid, int varid, char *name,
 ---------------------------------------------------------------------------- */
 public int miattputint(int cdfid, int varid, char *name, int value)
 {
-   long lvalue;
+   int lvalue;
 
    MI_SAVE_ROUTINE_NAME("miattputint");
 
    lvalue = value;
-   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_LONG, 1, (void *) &lvalue))
+   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_INT, 1, (void *) &lvalue))
    MI_RETURN(MI_NOERROR);
 }
 

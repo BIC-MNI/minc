@@ -35,7 +35,7 @@ Image 2 : signed__ short
    image[5] = 0
    image[6] = 0
 Image 1 : unsigned byte
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 255
@@ -44,7 +44,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : unsigned byte
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = 0
    image[2] = 255
@@ -107,7 +107,7 @@ Image 2 : signed__ short
    image[5] = -3
    image[6] = -4
 Image 1 : signed__ byte
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 127
@@ -116,7 +116,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : signed__ byte
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = -128
    image[2] = 127
@@ -179,7 +179,7 @@ Image 2 : signed__ short
    image[5] = 0
    image[6] = 0
 Image 1 : unsigned short
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 65535
@@ -188,7 +188,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : unsigned short
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = 0
    image[2] = 65535
@@ -251,7 +251,7 @@ Image 2 : signed__ short
    image[5] = -3
    image[6] = -4
 Image 1 : signed__ short
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 32767
@@ -260,7 +260,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : signed__ short
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = -32768
    image[2] = 32767
@@ -286,7 +286,7 @@ Image 2 : signed__ double
    image[4] = 4
    image[5] = -3
    image[6] = -4
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : unsigned byte
    image[0] = 10
    image[1] = 0
@@ -295,7 +295,7 @@ Image 2 : unsigned byte
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : signed__ byte
    image[0] = 10
    image[1] = 0
@@ -304,7 +304,7 @@ Image 2 : signed__ byte
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : unsigned short
    image[0] = 10
    image[1] = 0
@@ -313,7 +313,7 @@ Image 2 : unsigned short
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : signed__ short
    image[0] = 10
    image[1] = 0
@@ -322,8 +322,8 @@ Image 2 : signed__ short
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
-Image 2 : unsigned long
+Image 1 : unsigned int
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 4.29497e+09
@@ -331,8 +331,8 @@ Image 2 : unsigned long
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
-Image 2 : signed__ long
+Image 1 : unsigned int
+Image 2 : signed__ int
    image[0] = 10
    image[1] = 0
    image[2] = 2.14748e+09
@@ -340,7 +340,7 @@ Image 2 : signed__ long
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : signed__ float
    image[0] = 10
    image[1] = 0
@@ -349,7 +349,7 @@ Image 2 : signed__ float
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : unsigned long
+Image 1 : unsigned int
 Image 2 : signed__ double
    image[0] = 10
    image[1] = 0
@@ -358,7 +358,7 @@ Image 2 : signed__ double
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : signed__ long
+Image 1 : signed__ int
 Image 2 : unsigned byte
    image[0] = 10
    image[1] = 0
@@ -367,79 +367,7 @@ Image 2 : unsigned byte
    image[4] = 4
    image[5] = 0
    image[6] = 0
-Image 1 : signed__ long
-Image 2 : signed__ byte
-   image[0] = 10
-   image[1] = -128
-   image[2] = 127
-   image[3] = 3
-   image[4] = 4
-   image[5] = -3
-   image[6] = -4
-Image 1 : signed__ long
-Image 2 : unsigned short
-   image[0] = 10
-   image[1] = 0
-   image[2] = 65535
-   image[3] = 3
-   image[4] = 4
-   image[5] = 0
-   image[6] = 0
-Image 1 : signed__ long
-Image 2 : signed__ short
-   image[0] = 10
-   image[1] = -32768
-   image[2] = 32767
-   image[3] = 3
-   image[4] = 4
-   image[5] = -3
-   image[6] = -4
-Image 1 : signed__ long
-Image 2 : unsigned long
-   image[0] = 10
-   image[1] = 0
-   image[2] = 2.14748e+09
-   image[3] = 3
-   image[4] = 4
-   image[5] = 0
-   image[6] = 0
-Image 1 : signed__ long
-Image 2 : signed__ long
-   image[0] = 10
-   image[1] = -2.14748e+09
-   image[2] = 2.14748e+09
-   image[3] = 3
-   image[4] = 4
-   image[5] = -3
-   image[6] = -4
-Image 1 : signed__ long
-Image 2 : signed__ float
-   image[0] = 10
-   image[1] = -2.14748e+09
-   image[2] = 2.14748e+09
-   image[3] = 3
-   image[4] = 4
-   image[5] = -3
-   image[6] = -4
-Image 1 : signed__ long
-Image 2 : signed__ double
-   image[0] = 10
-   image[1] = -2.14748e+09
-   image[2] = 2.14748e+09
-   image[3] = 3
-   image[4] = 4
-   image[5] = -3
-   image[6] = -4
-Image 1 : signed__ float
-Image 2 : unsigned byte
-   image[0] = 10
-   image[1] = 0
-   image[2] = 255
-   image[3] = 3
-   image[4] = 4
-   image[5] = 0
-   image[6] = 0
-Image 1 : signed__ float
+Image 1 : signed__ int
 Image 2 : signed__ byte
    image[0] = 10
    image[1] = -128
@@ -448,6 +376,78 @@ Image 2 : signed__ byte
    image[4] = 4
    image[5] = -3
    image[6] = -4
+Image 1 : signed__ int
+Image 2 : unsigned short
+   image[0] = 10
+   image[1] = 0
+   image[2] = 65535
+   image[3] = 3
+   image[4] = 4
+   image[5] = 0
+   image[6] = 0
+Image 1 : signed__ int
+Image 2 : signed__ short
+   image[0] = 10
+   image[1] = -32768
+   image[2] = 32767
+   image[3] = 3
+   image[4] = 4
+   image[5] = -3
+   image[6] = -4
+Image 1 : signed__ int
+Image 2 : unsigned int
+   image[0] = 10
+   image[1] = 0
+   image[2] = 2.14748e+09
+   image[3] = 3
+   image[4] = 4
+   image[5] = 0
+   image[6] = 0
+Image 1 : signed__ int
+Image 2 : signed__ int
+   image[0] = 10
+   image[1] = -2.14748e+09
+   image[2] = 2.14748e+09
+   image[3] = 3
+   image[4] = 4
+   image[5] = -3
+   image[6] = -4
+Image 1 : signed__ int
+Image 2 : signed__ float
+   image[0] = 10
+   image[1] = -2.14748e+09
+   image[2] = 2.14748e+09
+   image[3] = 3
+   image[4] = 4
+   image[5] = -3
+   image[6] = -4
+Image 1 : signed__ int
+Image 2 : signed__ double
+   image[0] = 10
+   image[1] = -2.14748e+09
+   image[2] = 2.14748e+09
+   image[3] = 3
+   image[4] = 4
+   image[5] = -3
+   image[6] = -4
+Image 1 : signed__ float
+Image 2 : unsigned byte
+   image[0] = 10
+   image[1] = 0
+   image[2] = 255
+   image[3] = 3
+   image[4] = 4
+   image[5] = 0
+   image[6] = 0
+Image 1 : signed__ float
+Image 2 : signed__ byte
+   image[0] = 10
+   image[1] = -128
+   image[2] = 127
+   image[3] = 3
+   image[4] = 4
+   image[5] = -3
+   image[6] = -4
 Image 1 : signed__ float
 Image 2 : unsigned short
    image[0] = 10
@@ -467,7 +467,7 @@ Image 2 : signed__ short
    image[5] = -3
    image[6] = -4
 Image 1 : signed__ float
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 4.29497e+09
@@ -476,7 +476,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : signed__ float
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = -2.14748e+09
    image[2] = 2.14748e+09
@@ -539,7 +539,7 @@ Image 2 : signed__ short
    image[5] = -3
    image[6] = -4
 Image 1 : signed__ double
-Image 2 : unsigned long
+Image 2 : unsigned int
    image[0] = 10
    image[1] = 0
    image[2] = 4.29497e+09
@@ -548,7 +548,7 @@ Image 2 : unsigned long
    image[5] = 0
    image[6] = 0
 Image 1 : signed__ double
-Image 2 : signed__ long
+Image 2 : signed__ int
    image[0] = 10
    image[1] = -2.14748e+09
    image[2] = 2.14748e+09

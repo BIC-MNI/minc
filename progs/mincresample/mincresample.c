@@ -11,7 +11,13 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.5  2001-04-10 12:44:34  neelin
+ * Revision 6.6  2001-04-17 18:40:22  neelin
+ * Modifications to work with NetCDF 3.x
+ * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
+ * Changed NC_UNSPECIFIED to NC_NAT.
+ * A few fixes to the configure script.
+ *
+ * Revision 6.5  2001/04/10 12:44:34  neelin
  * Re-introduced fix for fillvalues that was lost with last version
  *
  * Revision 6.4  2001/04/02 14:58:09  neelin
@@ -130,7 +136,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.5 2001-04-10 12:44:34 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.6 2001-04-17 18:40:22 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -209,7 +215,7 @@ public void get_arginfo(int argc, char *argv[],
    static Arg_Data args={
       FALSE,                  /* Clobber */
       FALSE,                  /* Keep scale */
-      NC_UNSPECIFIED,         /* Flag that type not set */
+      NC_NAT,         /* Flag that type not set */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
@@ -339,8 +345,10 @@ public void get_arginfo(int argc, char *argv[],
           "Write out byte data"},
       {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &args.datatype,
           "Write out short integer data"},
-      {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &args.datatype,
-          "Write out long integer data"},
+      {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *) &args.datatype,
+          "Write out 32-bit integer data"},
+      {"-long", ARGV_CONSTANT, (char *) NC_INT, (char *) &args.datatype,
+          "Superseded by -int"},
       {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &args.datatype,
           "Write out single-precision floating-point data"},
       {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &args.datatype,
@@ -522,7 +530,7 @@ public void get_arginfo(int argc, char *argv[],
    *program_flags = args.flags;
 
    /* Set the default output file datatype */
-   if (args.datatype == NC_UNSPECIFIED)
+   if (args.datatype == NC_NAT)
       args.datatype = in_vol->file->datatype;
 
    /* Explicitly force output files to have regular spacing */
@@ -1343,7 +1351,7 @@ public void create_output_file(char *filename, int clobber,
       /* Get id of processing variable (create it if needed) */
       varid = ncvarid(out_file->mincid, PROCESSING_VAR);
       if (varid == MI_ERROR) {
-         varid = ncvardef(out_file->mincid, PROCESSING_VAR, NC_LONG, 0, NULL);
+         varid = ncvardef(out_file->mincid, PROCESSING_VAR, NC_INT, 0, NULL);
          (void) miadd_child(out_file->mincid, 
                             ncvarid(out_file->mincid, MIrootvariable), varid);
       }
@@ -1681,7 +1689,7 @@ public double get_default_range(char *what, nc_type datatype, int is_signed)
 
    if (strcmp(what, MIvalid_max)==0) {
       switch (datatype) {
-      case NC_LONG:  limit = (is_signed) ? LONG_MAX : ULONG_MAX; break;
+      case NC_INT:   limit = (is_signed) ? INT_MAX : UINT_MAX; break;
       case NC_SHORT: limit = (is_signed) ? SHRT_MAX : USHRT_MAX; break;
       case NC_BYTE:  limit = (is_signed) ? SCHAR_MAX : UCHAR_MAX; break;
       default: limit = DEFAULT_MAX; break;
@@ -1689,7 +1697,7 @@ public double get_default_range(char *what, nc_type datatype, int is_signed)
    }
    else if (strcmp(what, MIvalid_min)==0) {
       switch (datatype) {
-      case NC_LONG:  limit = (is_signed) ? LONG_MIN : 0; break;
+      case NC_INT:  limit = (is_signed) ? INT_MIN : 0; break;
       case NC_SHORT: limit = (is_signed) ? SHRT_MIN : 0; break;
       case NC_BYTE:  limit = (is_signed) ? SCHAR_MIN : 0; break;
       default: limit = DEFAULT_MIN; break;

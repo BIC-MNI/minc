@@ -39,7 +39,7 @@ attributes should be ignored.
 
 A word on attribute conventions. All numeric values should be stored
 in one of the numeric types (\code{NC\_BYTE}, \code{NC\_SHORT},
-\code{NC\_LONG}, \code{NC\_FLOAT} or \code{NC\_DOUBLE}). Some numeric
+\code{NC\_INT}, \code{NC\_FLOAT} or \code{NC\_DOUBLE}). Some numeric
 attributes must be specified in a definite unit --- time attributes
 (such as \code{MIrepetition\_time} and \code{MIradionuclide\_halflife}) 
 are given in seconds. Other attributes have an associated attribute that
@@ -817,7 +817,7 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 
 \item \code{micreate\_group\_variable} : Like
 \code{micreate\_std\_variable}, but \code{ndims} is always set to zero
-and the datatype is \code{NC\_LONG}. The id of the newly created
+and the datatype is \code{NC\_INT}. The id of the newly created
 variable is returned.
 \begin{verbatim}
 public int micreate_group_variable(int cdfid, char *name);

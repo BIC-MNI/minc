@@ -1,6 +1,8 @@
 #include <minc.h>
 
-#define NULL ((void *) 0)
+#ifndef NULL
+#  define NULL ((void *) 0)
+#endif
 
 main()
 {

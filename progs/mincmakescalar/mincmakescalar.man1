@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 6.0 1997-09-12 13:24:20 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 6.1 2001-04-17 18:40:21 neelin Exp $
 .\"
 .TH MINCMAKESCALAR 1
 
@@ -79,8 +79,11 @@ Create an output file of type byte.
 .I -short:
 Create an output file of type short.
 .P
+.I -int:
+Create an output file of type int.
+.P
 .I -long:
-Create an output file of type long.
+Superseded by -int.
 .P
 .I -float:
 Create an output file of type float.
