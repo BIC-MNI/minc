@@ -1,5 +1,5 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : tagtransform.c
+@NAME       : transformtags.c
 @INPUT      : argc, argv - command line arguments
 @OUTPUT     : (none)
 @RETURNS    : status
@@ -9,13 +9,16 @@
 @CALLS      : 
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: transformtags.c,v $
-@MODIFIED   : Revision 1.1  1993-09-13 16:16:55  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-09-14 09:50:20  neelin
+@MODIFIED   : changed name to from tagtransform to transformtags
 @MODIFIED   :
+ * Revision 1.1  93/09/13  16:16:55  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 1.1 1993-09-13 16:16:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 1.2 1993-09-14 09:50:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>
