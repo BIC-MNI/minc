@@ -3,27 +3,37 @@
 
 #define public
 
-public long get_image_offset(int cdfid);
+public long get_var_offset(int cdfid, char *variable);
 
 int main(int argc, char *argv[])
 {
    int cdfid;
    long offset;
+   char *file;
+   char *variable = MIimage;
 
    /* Check arguments */
-   if (argc != 2) {
-      (void) fprintf(stderr, "Usage: %s <filename.mnc>\n", argv[0]);
+   if (argc < 2 || argc > 3) {
+      (void) fprintf(stderr, "Usage: %s [<varname>] <filename.mnc>\n", 
+                     argv[0]);
       return -1;
+   }
+   else if (argc == 2) {
+      file = argv[1];
+   }
+   else {
+      variable = argv[1];
+      file = argv[2];
    }
 
    /* Open minc file */
-   cdfid = ncopen(argv[1], NC_NOWRITE);
+   cdfid = ncopen(file, NC_NOWRITE);
 
    /* Get the offset */
-   offset = get_image_offset(cdfid);
+   offset = get_var_offset(cdfid, variable);
    if (offset == -1) {
-      (void) fprintf(stderr, "Error getting offset to image in file %s\n",
-                     argv[1]);
+      (void) fprintf(stderr, "Error getting offset to %s in file %s\n",
+                     variable, file);
       return -1;
    }
 
@@ -33,10 +43,11 @@ int main(int argc, char *argv[])
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_image_offset
+@NAME       : get_var_offset
 @INPUT      : path - name of minc file
+              variable - name of variable to locate
 @OUTPUT     : (none)
-@RETURNS    : offset to image data in minc file or MI_ERROR (-1) if an
+@RETURNS    : offset to variable data in minc file or MI_ERROR (-1) if an
               error occurs.
 @DESCRIPTION: Function to return the offset to the image data in a minc file.
               WARNING: This function may be hazardous to your health since
@@ -46,15 +57,16 @@ int main(int argc, char *argv[])
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : September 9, 1994 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : August 23, 2001 (P.N.)
+                 - allow use with other variables
 ---------------------------------------------------------------------------- */
-public long get_image_offset(int cdfid)
+public long get_var_offset(int cdfid, char *variable)
 {
    int imgid;
    NC *handle;
    NC_var *vp;
 
-   imgid = ncvarid(cdfid, MIimage);
+   imgid = ncvarid(cdfid, variable);
    if (imgid == MI_ERROR) return MI_ERROR;
 
    handle = NC_check_id(cdfid);
