@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.1  2005-02-17 16:38:10  bert
+   * Revision 1.2  2005-03-02 20:16:24  bert
+   * Latest changes and cleanup
+   *
+   * Revision 1.1  2005/02/17 16:38:10  bert
    * Initial checkin, revised DICOM to MINC converter
    *
    * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -115,17 +118,13 @@
    ---------------------------------------------------------------------------- */
 
 #include "dcm2mnc.h"
+#include <math.h>
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
+const char *Volume_Names[VOL_NDIMS] = { "Slice", "Row", "Column" };
+const char *Mri_Names[MRI_NDIMS] = {"Slice", "Echo", "Time", "Phase", "ChmSh"};
 
 /* Private structure definitions. */
-
-typedef enum {
-    MOSAIC_SEQ_UNKNOWN,
-    MOSAIC_SEQ_INTERLEAVED,
-    MOSAIC_SEQ_ASCENDING,
-    MOSAIC_SEQ_DESCENDING
-} mosaic_seq_t;
 
 /* multi-image (mosaic) info */
 typedef struct {
@@ -139,10 +138,10 @@ typedef struct {
     Acr_Element small_image;
     int sub_images;
     int slice_count;
-    double normal[3];
-    double step[3];
-    double position[3];
-} Multi_Image;
+    double normal[WORLD_NDIMS];
+    double step[WORLD_NDIMS];
+    double position[WORLD_NDIMS];
+} Mosaic_Info;
 
 /* Structure for sorting dimensions */
 typedef struct {
@@ -152,14 +151,14 @@ typedef struct {
 } Sort_Element;
 
 /* Private function definitions */
-static int multi_image_init(Acr_Group, Multi_Image *, int);
-static void multi_image_cleanup(Acr_Group, Multi_Image *);
-static int multi_image_modify_group_list(Acr_Group, Multi_Image *, int, int);
+static int mosaic_init(Acr_Group, Mosaic_Info *, int);
+static void mosaic_cleanup(Acr_Group, Mosaic_Info *);
+static int mosaic_modify_group_list(Acr_Group, Mosaic_Info *, int, int);
 
-static void free_info(General_Info *general_info, File_Info *file_info, 
+static void free_info(General_Info *gi_ptr, File_Info *fi_ptr, 
                       int num_files);
 static int dimension_sort_function(const void *v1, const void *v2);
-static void sort_dimensions(General_Info *general_info);
+static void sort_dimensions(General_Info *gi_ptr);
 static int prot_find_string(Acr_Element Protocol, const char *name,
                             char *value);
 static char *dump_protocol_text(Acr_Element Protocol);
@@ -194,25 +193,26 @@ dicom_to_minc(int num_files,
               const char *file_prefix, 
               char **output_file_name)
 {
-    Acr_Group group_list;       /* List of ACR/NEMA groups & elements */
-    File_Info *file_info;       /* Array of per-file information */
-    General_Info general_info;  /* General (common) DICOM file information */
+    Acr_Group group_list;     /* List of ACR/NEMA groups & elements */
+    File_Info *fi_ptr;          /* Array of per-file information */
+    General_Info gi;     /* General (common) DICOM file information */
     int max_group;              /* Maximum group number to read */
     Image_Data image;           /* Actual image data */
     int icvid;                  /* MINC Image Conversion Variable */
     int ifile;                  /* File index */
     Mri_Index imri;             /* MRI axis index */
-    char *out_file_name;
-    int isep;
-    Loop_Type loop_type = NONE;
+    char *out_file_name;        /* Output MINC filename */
+    int isep;                   /* Loop counter */
+    const Loop_Type loop_type = NONE; /* MINC loop type always none for now */
     int subimage;               /* Loop counter for MOSAIC images per file */
     int iimage;                 /* Loop counter for all files/images */
-    int num_images_allocated;
-    Multi_Image multi_image;
+    int num_images_allocated;   /* Total number of slices (>= # files) */
+    Mosaic_Info mi;             /* Mosaic (multi-image) information */
+    int n_slices_in_file;
 
     /* Allocate space for the file information */
-    file_info = malloc(num_files * sizeof(*file_info));
-    CHKMEM(file_info);
+    fi_ptr = malloc(num_files * sizeof(*fi_ptr));
+    CHKMEM(fi_ptr);
 
     num_images_allocated = num_files;
 
@@ -228,11 +228,11 @@ dicom_to_minc(int num_files,
     }
 
     /* Initialize some values for general info */
-    general_info.initialized = FALSE;
-    general_info.group_list = NULL;
+    gi.initialized = FALSE;
+    gi.group_list = NULL;
     for (imri = 0; imri < MRI_NDIMS; imri++) {
-        general_info.indices[imri] = NULL;
-        general_info.coordinates[imri] = NULL;
+        gi.indices[imri] = NULL;
+        gi.coordinates[imri] = NULL;
     }
 
     /* Loop through file list getting information
@@ -246,7 +246,6 @@ dicom_to_minc(int num_files,
     iimage = 0;
 
     for (ifile = 0; ifile < num_files; ifile++) {
-        int n_slices_in_file;
 
         if (!G.Debug) {
             progress(ifile, num_files, "-Parsing series info");
@@ -267,19 +266,23 @@ dicom_to_minc(int num_files,
             exit(-1);
         }
 
-        n_slices_in_file = acr_find_int(group_list, EXT_Slices_in_file, 1);
+        if (G.opts & OPTS_NO_MOSAIC) {
+            n_slices_in_file = 1;
+        }
+        else {
+            n_slices_in_file = acr_find_int(group_list, EXT_Slices_in_file, 1);
+        }
 
         /* initialize big and small images, if mosaic
          */
         if (n_slices_in_file > 1) {
 
-            multi_image_init(group_list, &multi_image, FALSE);
+            mosaic_init(group_list, &mi, FALSE);
 
             num_images_allocated += n_slices_in_file - 1;
 
-            file_info = realloc(file_info, 
-                                num_images_allocated * sizeof(*file_info));
-            CHKMEM(file_info);
+            fi_ptr = realloc(fi_ptr, num_images_allocated * sizeof(*fi_ptr));
+            CHKMEM(fi_ptr);
         }
 
         /* loop over subimages in mosaic
@@ -289,13 +292,12 @@ dicom_to_minc(int num_files,
             /* Modify the group list for this image if mosaic
              */
             if (n_slices_in_file > 1) {
-                multi_image_modify_group_list(group_list, &multi_image,
-                                              subimage, FALSE);
+                mosaic_modify_group_list(group_list, &mi, subimage, FALSE);
             }
 
             /* Get file-specific information
              */
-            get_file_info(group_list, &file_info[iimage], &general_info);
+            get_file_info(group_list, &fi_ptr[iimage], &gi);
 
             /* increment iimage here
              */
@@ -306,22 +308,22 @@ dicom_to_minc(int num_files,
          */
         acr_delete_group_list(group_list);
 
-        /* cleanup multi_image struct if used
+        /* cleanup mosaic struct if used
          */
-        if (general_info.num_slices_in_file > 1) {
-            multi_image_cleanup(group_list, &multi_image);
+        if (n_slices_in_file > 1) {
+            mosaic_cleanup(group_list, &mi);
         }
     }
 
     /* Sort the dimensions */
-    sort_dimensions(&general_info);
+    sort_dimensions(&gi);
 
     /* Create the output file
      */
-    if (general_info.initialized) {
+    if (gi.initialized) {
         icvid = create_minc_file(minc_file,
                                  clobber,
-                                 &general_info,
+                                 &gi,
                                  file_prefix,
                                  &out_file_name,
                                  loop_type);
@@ -333,12 +335,12 @@ dicom_to_minc(int num_files,
     /* Check that we found the general info and that the minc file was
      * created okay
      */
-    if ((!general_info.initialized) || (icvid == MI_ERROR)) {
-        if (general_info.initialized) {
+    if ((!gi.initialized) || (icvid == MI_ERROR)) {
+        if (gi.initialized) {
             fprintf(stderr, "Error creating MINC file %s.\n", out_file_name);
         }
-        free_info(&general_info, file_info, num_files);
-        free(file_info);
+        free_info(&gi, fi_ptr, num_files);
+        free(fi_ptr);
         return EXIT_FAILURE;
     }
 
@@ -348,7 +350,7 @@ dicom_to_minc(int num_files,
 
     /* Last group needed for second pass
      * we now have to read up to and including the image, 
-     * since image pointers are needed in multi_image_init
+     * since image pointers are needed in mosaic_init
      */
     max_group = ACR_IMAGE_GID;
 
@@ -363,7 +365,7 @@ dicom_to_minc(int num_files,
 
         /* Check that we have a valid file 
          */
-        if (!file_info[ifile].valid) {
+        if (!fi_ptr[ifile].valid) {
             printf("WARNING: file %s was marked invalid\n", 
                    file_list[ifile]);
             continue;
@@ -386,19 +388,18 @@ dicom_to_minc(int num_files,
 
         /* initialize big and small images, if mosaic
          */
-        if (general_info.num_slices_in_file > 1) {
-            multi_image_init(group_list, &multi_image, TRUE);
+        if (n_slices_in_file > 1) {
+            mosaic_init(group_list, &mi, TRUE);
         }
 
         /* loop over subimages in mosaic
          */
-        for (subimage = 0; subimage < general_info.num_slices_in_file; 
-             subimage++) {
+        for (subimage = 0; subimage < n_slices_in_file; subimage++) {
 
             /* Modify the group list for this image if mosaic
              */
-            if (general_info.num_slices_in_file > 1) {
-                multi_image_modify_group_list(group_list, &multi_image, 
+            if (n_slices_in_file > 1) {
+                mosaic_modify_group_list(group_list, &mi, 
                                               subimage, TRUE);
             }
        
@@ -408,7 +409,7 @@ dicom_to_minc(int num_files,
        
             /* Save the image and any other information
              */
-            save_minc_image(icvid, &general_info, &file_info[iimage], &image);
+            save_minc_image(icvid, &gi, &fi_ptr[iimage], &image);
 
             /* increment image counter
              */
@@ -419,10 +420,10 @@ dicom_to_minc(int num_files,
          */
         acr_delete_group_list(group_list);
 
-        /* cleanup multi_image struct if used
+        /* cleanup mosaic struct if used
          */
-        if (general_info.num_slices_in_file > 1) {
-            multi_image_cleanup(group_list, &multi_image);
+        if (n_slices_in_file > 1) {
+            mosaic_cleanup(group_list, &mi);
         }
      
         /* Free the image data */
@@ -434,9 +435,9 @@ dicom_to_minc(int num_files,
     /* Close the output file */
     close_minc_file(icvid);
 
-    /* Free the general_info and file_info stuff */
-    free_info(&general_info, file_info, num_files);
-    free(file_info);
+    /* Free the gi and fi_ptr stuff */
+    free_info(&gi, fi_ptr, num_files);
+    free(fi_ptr);
 
     return EXIT_SUCCESS;
 }
@@ -804,8 +805,8 @@ read_numa4_dicom(const char *filename, int max_group)
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : free_info
-   @INPUT      : general_info
-   file_info
+   @INPUT      : gi_ptr
+   fi_ptr
    num_files
    @OUTPUT     : (none)
    @RETURNS    : (nothing)
@@ -818,23 +819,23 @@ read_numa4_dicom(const char *filename, int max_group)
    ---------------------------------------------------------------------------- */
 
 static void
-free_info(General_Info *general_info, File_Info *file_info, int num_files)
+free_info(General_Info *gi_ptr, File_Info *fi_ptr, int num_files)
 {
     Mri_Index imri;
 
     /* Free the general info pointers */
-    for (imri=0; imri < MRI_NDIMS; imri++) {
-        if (general_info->indices[imri] != NULL) {
-            free(general_info->indices[imri]);
+    for (imri = 0; imri < MRI_NDIMS; imri++) {
+        if (gi_ptr->indices[imri] != NULL) {
+            free(gi_ptr->indices[imri]);
         }
-        if (general_info->coordinates[imri] != NULL) {
-            free(general_info->coordinates[imri]);
+        if (gi_ptr->coordinates[imri] != NULL) {
+            free(gi_ptr->coordinates[imri]);
         }
     }
 
     /* Free the group list */
-    if (general_info->group_list != NULL) {
-        acr_delete_group_list(general_info->group_list);
+    if (gi_ptr->group_list != NULL) {
+        acr_delete_group_list(gi_ptr->group_list);
     }
 
     return;
@@ -890,8 +891,8 @@ search_list(int value, const int *list_ptr, int list_length, int start_index)
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : sort_dimensions
-   @INPUT      : general_info
-   @OUTPUT     : general_info
+   @INPUT      : gi_ptr
+   @OUTPUT     : gi_ptr
    @RETURNS    : (nothing)
    @DESCRIPTION: Routine to sort the MRI dimensions according to their 
    coordinates. It also fills in the step and start values for 
@@ -903,83 +904,133 @@ search_list(int value, const int *list_ptr, int list_length, int start_index)
    @MODIFIED   : 
    ---------------------------------------------------------------------------- */
 static void
-sort_dimensions(General_Info *general_info)
+sort_dimensions(General_Info *gi_ptr)
 {
     Mri_Index imri;
     Sort_Element *sort_array;
-    int nvalues, ival, jval;
-    int reverse_array;
+    int nvalues;
+    int i, j;
+    int is_reversed;
 
-    /* Sort the dimensions, if needed */
+    /* Sort the dimensions, if needed.
+     */
     for (imri = 0; imri < MRI_NDIMS; imri++) {
-        if (general_info->cur_size[imri] > 1 &&
-            !((G.file_type == N4DCM) && // don't sort on time for N4 mosaics!
-              (imri == TIME) && 
-              (general_info->num_slices_in_file > 0))) { // also fails on 1 slice
-
-            /* Set up the array for sorting */
-            nvalues = general_info->cur_size[imri];
-            sort_array = malloc(nvalues * sizeof(*sort_array));
-            CHKMEM(sort_array);
-            for (ival=0; ival < nvalues; ival++) {
-                sort_array[ival].identifier = general_info->indices[imri][ival];
-                sort_array[ival].original_index = ival;
-                sort_array[ival].value = general_info->coordinates[imri][ival];
+        /* Sort each dimension iff the size is greater than 1 and it is not
+         * a time dimension in an N4 mosaic.
+         */
+        if (gi_ptr->cur_size[imri] <= 1 ||
+            /* Don't sort on time for N4 mosaics (TODO: Why not??)
+             */
+            ((G.file_type == N4DCM) &&
+             (imri == TIME) && 
+             (gi_ptr->num_slices_in_file > 0))) { /* also fails on 1 slice */
+            if (G.Debug > 1) {
+                printf("Not sorting %s dimension\n", Mri_Names[imri]);
             }
+            continue;
+        }
+            
+        if (G.Debug > 1) {
+            printf("Sorting %s dimension\n", Mri_Names[imri]);
+        }
 
-            /* Sort the array */
-            qsort((void *) sort_array, (size_t) nvalues, sizeof(*sort_array), 
-                  dimension_sort_function);
+        /* Set up the array for sorting.
+         */
+        nvalues = gi_ptr->cur_size[imri];
+        sort_array = malloc(nvalues * sizeof(*sort_array));
+        CHKMEM(sort_array);
+        for (i = 0; i < nvalues; i++) {
+            sort_array[i].identifier = gi_ptr->indices[imri][i];
+            sort_array[i].original_index = i;
+            sort_array[i].value = gi_ptr->coordinates[imri][i];
+        }
 
-            /* Figure out if we should reverse the array to keep something 
-               similar to the original ordering */
-            reverse_array = (sort_array[0].original_index > 
-                             sort_array[nvalues-1].original_index);
+        /* Sort the array.
+         */
+        qsort((void *) sort_array, (size_t) nvalues, sizeof(*sort_array), 
+              dimension_sort_function);
 
-            /* Copy the information back into the appropriate arrays */
-            for (ival=0; ival < nvalues; ival++) {
-                jval = (reverse_array ? nvalues - ival - 1 : ival);
-                general_info->indices[imri][ival] = sort_array[jval].identifier;
-                general_info->coordinates[imri][ival] = sort_array[jval].value;
+        /* Figure out if we should reverse the array to keep something 
+         * similar to the original ordering.
+         * TODO: Why is this needed?
+         */
+        is_reversed = (sort_array[0].original_index > 
+                       sort_array[nvalues - 1].original_index);
+
+        /* Copy the information back into the appropriate arrays 
+         */
+        for (i = 0; i < nvalues; i++) {
+            j = (is_reversed ? nvalues - i - 1 : i);
+            gi_ptr->indices[imri][i] = sort_array[j].identifier;
+            gi_ptr->coordinates[imri][i] = sort_array[j].value;
+        }
+
+        if (G.Debug > 1) {
+            printf(" is_reversed %d nvalues %d min %f max %f\n",
+                   is_reversed, nvalues, 
+                   gi_ptr->coordinates[imri][0],
+                   gi_ptr->coordinates[imri][nvalues - 1]);
+        }
+        
+        /* Free the temporary array we used to sort the coordinate axis.
+         */
+        free(sort_array);
+
+        /* Now verify that the coordinate array looks sane.  TODO:
+         * This may be valid and important only for the SLICE
+         * dimension.
+         */
+        if (nvalues >= 2) {
+            double delta = (gi_ptr->coordinates[imri][1] - 
+                            gi_ptr->coordinates[imri][0]);
+
+            for (i = 1; i < nvalues; i++) {
+                if (!NEARLY_EQUAL(delta, (gi_ptr->coordinates[imri][i] - 
+                                          gi_ptr->coordinates[imri][i - 1]))) {
+                    printf("WARNING: Missing data for %s dimension\n",
+                           Mri_Names[imri]);
+                }
             }
+        }
 
-            /* Free the array */
-            free(sort_array);
+        /* Update slice step and start.
+         */
+        if (imri == SLICE) {
+            if (gi_ptr->coordinates[imri][0] != 
+                gi_ptr->coordinates[imri][nvalues-1]) {
+                double dbl_tmp1;
+                double dbl_tmp2;
 
-            /* Update slice step and start */
-            if (imri == SLICE) {
-                if (general_info->coordinates[imri][0] != 
-                    general_info->coordinates[imri][nvalues-1]) {
-                    double dbl_tmp1;
-                    double dbl_tmp2;
+                dbl_tmp1 = gi_ptr->step[gi_ptr->slice_world];
+                dbl_tmp2 = (gi_ptr->coordinates[imri][nvalues - 1] -
+                            gi_ptr->coordinates[imri][0]) / 
+                    ((double) gi_ptr->cur_size[imri] - 1.0);
 
-                    dbl_tmp1 = general_info->step[general_info->slice_world];
-                    dbl_tmp2 = 
-                        (general_info->coordinates[imri][nvalues-1] -
-                         general_info->coordinates[imri][0]) / 
-                        ((double) general_info->cur_size[imri] - 1.0);
-
-                    if (dbl_tmp1 != dbl_tmp2) {
-                        printf("WARNING: calculated slice width (%f) disagrees with file's slice width (%f)\n", dbl_tmp2, dbl_tmp1);
-                        if (dbl_tmp1 == 1.0) {
-                            general_info->step[general_info->slice_world] = dbl_tmp2;
-                        }
+                /* OK, so now we have to figure out who wins the great
+                 * battle to become the slice step value.  If the value
+                 * we have been assuming up until now is the same as the
+                 * calculated value with only a sign change, or if the
+                 * assumed value is the default (1.0), we adopt the 
+                 * calculated value.
+                 */
+                if (!NEARLY_EQUAL(dbl_tmp1, dbl_tmp2)) {
+                    printf("WARNING: calculated slice width (%.10f) disagrees with file's slice width (%.10f)\n", dbl_tmp2, dbl_tmp1);
+                    if (dbl_tmp1 == 1.0 ||
+                        (is_reversed && NEARLY_EQUAL(dbl_tmp1, -dbl_tmp2))) {
+                        gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
                     }
-
                 }
-                general_info->start[general_info->slice_world] =
-                    general_info->coordinates[imri][0];
-                if (G.Debug > 1) {
-                    printf("Set slice %d step to %f, start to %f\n",
-                           general_info->slice_world,
-                           general_info->step[general_info->slice_world],
-                           general_info->start[general_info->slice_world]);
-                }
+                
             }
-
-        }       /* If size > 1 */
-    }          /* Loop over dimensions */
-
+            gi_ptr->start[gi_ptr->slice_world] = gi_ptr->coordinates[imri][0];
+            if (G.Debug > 1) {
+                printf("Set slice %d step to %f, start to %f\n",
+                       gi_ptr->slice_world,
+                       gi_ptr->step[gi_ptr->slice_world],
+                       gi_ptr->start[gi_ptr->slice_world]);
+            }
+        } /* If slice dimension */
+    } /* for all mri dimensions */
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1102,206 +1153,247 @@ dump_protocol_text(Acr_Element elem_ptr)
 }
 
 static int 
-multi_image_init(Acr_Group group_list, Multi_Image *multi_image, 
-                 int load_image)
+mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
 {
     int group_id, element_id;
     int grid_size;
     long new_image_size;
     void *data;
     Acr_Element element;
-    string_t string;
-    int idim;
+    int i;
     double pixel_spacing[2];
     double separation;
     double RowColVec[6];
     double dircos[VOL_NDIMS][WORLD_NDIMS];
     char *str_tmp;
 
+    if (G.Debug > 1) {
+        printf("mosaic_init(%lx, %lx, %d)\n",
+               (unsigned long) group_list, (unsigned long) mi_ptr,
+               load_image);
+    }
+
     str_tmp = acr_find_string(group_list, SPI_Order_of_slices, "");
     if (!strncmp(str_tmp, "INTERLEAVED", 11)) {
-        multi_image->mosaic_seq = MOSAIC_SEQ_INTERLEAVED;
+        mi_ptr->mosaic_seq = MOSAIC_SEQ_INTERLEAVED;
     }
     else if (!strncmp(str_tmp, "ASCENDING", 9)) {
-        multi_image->mosaic_seq = MOSAIC_SEQ_ASCENDING;
+        mi_ptr->mosaic_seq = MOSAIC_SEQ_ASCENDING;
     }
     else if (!strncmp(str_tmp, "DESCENDING", 10)) {
-        multi_image->mosaic_seq = MOSAIC_SEQ_DESCENDING;
+        mi_ptr->mosaic_seq = MOSAIC_SEQ_DESCENDING;
     }
     else {
-        multi_image->mosaic_seq = MOSAIC_SEQ_UNKNOWN;
+        mi_ptr->mosaic_seq = G.mosaic_seq;
     }
 
-    // Get some basic image information
-    // (big[0/1] is number of columns/rows in whole mosaic)
-    multi_image->big[0] = acr_find_int(group_list, ACR_Columns, 1);
-    multi_image->big[1] = acr_find_int(group_list, ACR_Rows, 1);
-    multi_image->pixel_size = 
+    if (G.Debug > 1) {
+        printf(" ordering is %s\n", str_tmp);
+    }
+
+    /* Get some basic image information.
+     * big[0/1] is number of columns/rows in whole mosaic.
+     */
+    mi_ptr->big[0] = acr_find_int(group_list, ACR_Columns, 1);
+    mi_ptr->big[1] = acr_find_int(group_list, ACR_Rows, 1);
+    mi_ptr->pixel_size = 
         (acr_find_int(group_list, ACR_Bits_allocated, 16) - 1) / 8 + 1;
 
-    // Get the image size
-    // (size[0/1] is number of columns/rows in a single slice)
-    multi_image->size[0] = acr_find_short(group_list, EXT_Sub_image_columns, 1);
-    multi_image->size[1] = acr_find_short(group_list, EXT_Sub_image_rows, 1);
+    /* Get the image size
+     * (size[0/1] is number of columns/rows in a single slice)
+     */
+    mi_ptr->size[0] = acr_find_short(group_list, EXT_Sub_image_columns, 1);
+    mi_ptr->size[1] = acr_find_short(group_list, EXT_Sub_image_rows, 1);
 
     // Get the grid shape, checking that it is not too big if specified
-    multi_image->grid[0] = multi_image->big[0] / multi_image->size[0];
-    multi_image->grid[1] = multi_image->big[1] / multi_image->size[1];
-    if ((multi_image->grid[0] < 1) || (multi_image->grid[0] < 1)) {
+    mi_ptr->grid[0] = mi_ptr->big[0] / mi_ptr->size[0];
+    mi_ptr->grid[1] = mi_ptr->big[1] / mi_ptr->size[1];
+    if ((mi_ptr->grid[0] < 1) || (mi_ptr->grid[0] < 1)) {
         fprintf(stderr, "Grid too small: %d x %d\n",
-                multi_image->grid[0], multi_image->grid[1]);
+                mi_ptr->grid[0], mi_ptr->grid[1]);
         exit(EXIT_FAILURE);
     }
 
     // Check whether we need to do anything (1x1 grid may be the whole image)
-    grid_size = multi_image->grid[0] * multi_image->grid[1];
+    grid_size = mi_ptr->grid[0] * mi_ptr->grid[1];
     if ((grid_size == 1) &&
-        (multi_image->size[0] == multi_image->big[0]) &&
-        (multi_image->size[1] == multi_image->big[1])) {
+        (mi_ptr->size[0] == mi_ptr->big[0]) &&
+        (mi_ptr->size[1] == mi_ptr->big[1])) {
         /* had to remove this as now ANY images acquired with 
            the mosaic sequence need special treatment */
-        multi_image->packed = FALSE;
+        mi_ptr->packed = FALSE;
         return 1;
     }
 
-    // Update the number of image rows and columns
-    acr_insert_short(&group_list, ACR_Rows, multi_image->size[1]);
-    acr_insert_short(&group_list, ACR_Columns, multi_image->size[0]);
+    /* Update the number of image rows and columns
+     */
+    acr_insert_short(&group_list, ACR_Rows, mi_ptr->size[1]);
+    acr_insert_short(&group_list, ACR_Columns, mi_ptr->size[0]);
 
-    // Get image image index info (number of slices in file)
-    multi_image->slice_count = acr_find_int(group_list, EXT_Slices_in_file, 1);
+    /* Get image image index info (number of slices in file)
+     */
+    mi_ptr->slice_count = acr_find_int(group_list, EXT_Slices_in_file, 1);
 
-    // sub_images is now just the number of mosaic elements, even if
-    // they don't all contain slices 
-    multi_image->sub_images = multi_image->grid[0] * multi_image->grid[1];
+    /* sub_images is now just the number of mosaic elements, even if
+     * they don't all contain slices 
+     */
+    mi_ptr->sub_images = mi_ptr->grid[0] * mi_ptr->grid[1];
 
 
-    // get the pixel size
+    /* get the pixel size
+     */
     element = acr_find_group_element(group_list, ACR_Pixel_size);
-    if ((element != NULL) &&
-        (acr_get_element_numeric_array(element, 2, pixel_spacing) == 2)) {
-     
-        // adjust pixel size for old Numaris 3.5 data
-        if (G.file_type == IMA || G.file_type == N3DCM) {
-       
-            pixel_spacing[0] *= 
-                (double) multi_image->big[0] / (double) multi_image->size[0];
-            pixel_spacing[1] *= 
-                (double) multi_image->big[1] / (double) multi_image->size[1];
-            sprintf(string, "%.15g\\%.15g", 
-                    pixel_spacing[0], pixel_spacing[1]);
-            acr_insert_string(&group_list, ACR_Pixel_size, string);
+    if ((element == NULL) ||
+        (acr_get_element_numeric_array(element, 2, pixel_spacing) != 2)) {
+        if (G.Debug) {
+            printf("WARNING: Can't get pixel size element\n");
         }
     }
 
-    // Get step between slices
-    separation = acr_find_double(group_list, ACR_Spacing_between_slices, 1.0);
-
-    // get image normal vector
-    // (need to compute based on dicom field, which gives
-    //  unit vectors for row and column direction)
-    element = acr_find_group_element(group_list, ACR_Image_orientation_patient);
-    acr_get_element_numeric_array(element, 6, RowColVec);
-   
-    memcpy(dircos[VCOLUMN], RowColVec, sizeof(RowColVec[0]) * 3);
-    memcpy(dircos[VROW], &RowColVec[3], sizeof(RowColVec[0]) * 3);
-   
-    // compute slice normal as cross product of row/column unit vectors
-    // (should check for unit length?)
-    multi_image->normal[0] = 
-        dircos[VCOLUMN][1] * dircos[VROW][2] -
-        dircos[VCOLUMN][2] * dircos[VROW][1];
-   
-    multi_image->normal[1] = 
-        dircos[VCOLUMN][2] * dircos[VROW][0] -
-        dircos[VCOLUMN][0] * dircos[VROW][2];
-   
-    multi_image->normal[2] = 
-        dircos[VCOLUMN][0] * dircos[VROW][1] -
-        dircos[VCOLUMN][1] * dircos[VROW][0];
-
-    // compute slice-to-slice step vector
-    for (idim=0; idim < 3; idim++) {
-        multi_image->step[idim] = separation * multi_image->normal[idim];
+    /* Get step between slices
+     */
+    separation = acr_find_double(group_list, ACR_Slice_thickness, 0.0);
+    if (separation == 0.0) {
+        separation = acr_find_double(group_list, ACR_Spacing_between_slices, 
+                                     1.0);
     }
 
-    // Get position and correct to first slice
-    element = acr_find_group_element(group_list, ACR_Image_position_patient);
-    acr_get_element_numeric_array(element, WORLD_NDIMS,multi_image->position);
-
-    if (G.file_type == IMA || G.file_type == N3DCM) {
-        // Numaris 3.5 style correction:
-        // (position in file is for last slice, we want first)
-        for (idim=0; idim < 3; idim++) {
-            multi_image->position[idim] -= 
-                (double) (multi_image->sub_images-1) * multi_image->step[idim];
-        } 
-    } 
+    /* get image normal vector
+     * (need to compute based on dicom field, which gives
+     *  unit vectors for row and column direction)
+     * TODO: This code (and other code in this function) could probably
+     * be broken out and made redundant with other code in the converter.
+     */
+    element = acr_find_group_element(group_list, ACR_Image_orientation_patient);
+    if (element != NULL) {
+        acr_get_element_numeric_array(element, WORLD_NDIMS * 2, RowColVec);
+   
+        memcpy(dircos[VCOLUMN], RowColVec, sizeof(RowColVec[0]) * WORLD_NDIMS);
+        memcpy(dircos[VROW], &RowColVec[3], sizeof(RowColVec[0]) * WORLD_NDIMS);
+   
+        /* compute slice normal as cross product of row/column unit vectors
+         * (should check for unit length?)
+         */
+        mi_ptr->normal[XCOORD] = 
+            dircos[VCOLUMN][YCOORD] * dircos[VROW][ZCOORD] -
+            dircos[VCOLUMN][ZCOORD] * dircos[VROW][YCOORD];
+   
+        mi_ptr->normal[YCOORD] = 
+            dircos[VCOLUMN][ZCOORD] * dircos[VROW][XCOORD] -
+            dircos[VCOLUMN][XCOORD] * dircos[VROW][ZCOORD];
+   
+        mi_ptr->normal[ZCOORD] = 
+            dircos[VCOLUMN][XCOORD] * dircos[VROW][YCOORD] -
+            dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
+    }
     else {
-        // Numaris 4 mosaic correction:
-        // - position given is edge of huge slice constructed as if 
-        //   real slice was at center of mosaic
-        // - multi_image->big[0,1] are number of columns and rows of mosaic
-        // - multi_image->size[0,1] are number of columns and rows of sub-image
+        if (G.Debug) {
+            printf("WARNING: No image orientation found\n");
+        }
+    }
 
-        for (idim=0; idim < 3; idim++) {
+    /* compute slice-to-slice step vector
+     */
+    for (i = 0; i < WORLD_NDIMS; i++) {
+        mi_ptr->step[i] = separation * mi_ptr->normal[i];
+    }
 
-            // correct offset from mosaic Center
-            multi_image->position[idim] += (double)
-                ((dircos[VCOLUMN][idim]*multi_image->big[0]*pixel_spacing[0]/2.0) +
-                 (dircos[VROW][idim] * multi_image->big[1] * pixel_spacing[1]/2));
+    /* Get position and correct to first slice
+     */
+    element = acr_find_group_element(group_list, ACR_Image_position_patient);
+    if (element != NULL) {
+        acr_get_element_numeric_array(element, WORLD_NDIMS, 
+                                      mi_ptr->position);
+    }
+    else {
+        if (G.Debug) {
+            printf("WARNING: No image position found\n");
+        }
+        mi_ptr->position[XCOORD] = mi_ptr->position[YCOORD] = 
+            mi_ptr->position[ZCOORD] = 0.0;
+    }
 
-            // move from center to corner of slice
-            multi_image->position[idim] -= 
-                dircos[VCOLUMN][idim] * multi_image->size[0] * pixel_spacing[0]/2.0 +
-                dircos[VROW][idim] * multi_image->size[1] * pixel_spacing[1]/2.0;
-	 
-        } 
+    if (G.Debug > 1) {
+        printf(" step %.3f %.3f %.3f position %.3f %.3f %.3f\n",
+               mi_ptr->step[0],
+               mi_ptr->step[1],
+               mi_ptr->step[2],
+               mi_ptr->position[0],
+               mi_ptr->position[1],
+               mi_ptr->position[2]);
+    }
 
+    if (mi_ptr->mosaic_seq != MOSAIC_SEQ_INTERLEAVED) {
+        /* Numaris 4 mosaic correction:
+         * - position given is edge of huge slice constructed as if 
+         *   real slice was at center of mosaic
+         * - mi_ptr->big[0,1] are number of columns and rows of mosaic
+         * - mi_ptr->size[0,1] are number of columns and rows of sub-image
+         */
+
+        for (i = 0; i < WORLD_NDIMS; i++) {
+            /* Correct offset from mosaic Center
+             */
+            mi_ptr->position[i] += (double)
+                ((dircos[VCOLUMN][i] * mi_ptr->big[0] * pixel_spacing[0]/2.0) +
+                 (dircos[VROW][i] * mi_ptr->big[1] * pixel_spacing[1]/2));
+            
+            /* Move from center to corner of slice
+             */
+            mi_ptr->position[i] -= 
+                ((dircos[VCOLUMN][i] * mi_ptr->size[0] * pixel_spacing[0]/2.0) +
+                 (dircos[VROW][i] * mi_ptr->size[1] * pixel_spacing[1]/2.0));
+        }
+    }
+
+    if (G.Debug > 1) {
+        printf(" corrected position %.3f %.3f %.3f\n",
+               mi_ptr->position[0],
+               mi_ptr->position[1],
+               mi_ptr->position[2]);
     }
 
     if (load_image) {
 
-        // Steal the image element from the group list
-        multi_image->big_image = acr_find_group_element(group_list,
-                                                        ACR_Pixel_data);
-        if (multi_image->big_image == NULL) {
+        /* Steal the image element from the group list
+         */
+        mi_ptr->big_image = acr_find_group_element(group_list, ACR_Pixel_data);
+        if (mi_ptr->big_image == NULL) {
             fprintf(stderr, "Couldn't find an image\n");
             exit(EXIT_FAILURE);
         }
-        group_id = acr_get_element_group(multi_image->big_image);
-        element_id = acr_get_element_element(multi_image->big_image);
+        group_id = acr_get_element_group(mi_ptr->big_image);
+        element_id = acr_get_element_element(mi_ptr->big_image);
         acr_group_steal_element(acr_find_group(group_list, group_id),
-                                multi_image->big_image);
+                                mi_ptr->big_image);
         
-        // Add a small image
+        /* Add a small image
+         */
         new_image_size = 
-            multi_image->size[0] * multi_image->size[1] * multi_image->pixel_size;
+            mi_ptr->size[0] * mi_ptr->size[1] * mi_ptr->pixel_size;
         data = malloc(new_image_size);
         CHKMEM(data);
-        multi_image->small_image = acr_create_element(group_id, element_id,
-                                                      acr_get_element_vr(multi_image->big_image),
-                                                      new_image_size, data);
-        acr_set_element_vr(multi_image->small_image,
-                           acr_get_element_vr(multi_image->big_image));
-        acr_set_element_byte_order(multi_image->small_image,
-                                   acr_get_element_byte_order(multi_image->big_image));
-        acr_set_element_vr_encoding(multi_image->small_image,
-                                    acr_get_element_vr_encoding(multi_image->big_image));
-        acr_insert_element_into_group_list(&group_list, 
-                                           multi_image->small_image);
+        mi_ptr->small_image = acr_create_element(group_id, element_id,
+                                                 acr_get_element_vr(mi_ptr->big_image),
+                                                 new_image_size, data);
+        acr_set_element_vr(mi_ptr->small_image,
+                           acr_get_element_vr(mi_ptr->big_image));
+        acr_set_element_byte_order(mi_ptr->small_image,
+                                   acr_get_element_byte_order(mi_ptr->big_image));
+        acr_set_element_vr_encoding(mi_ptr->small_image,
+                                    acr_get_element_vr_encoding(mi_ptr->big_image));
+        acr_insert_element_into_group_list(&group_list, mi_ptr->small_image);
     }
 
     /* Return number of sub-images in this image */
-    return multi_image->sub_images;
+    return mi_ptr->sub_images;
 }
 
 static int 
-multi_image_modify_group_list(Acr_Group group_list, Multi_Image *multi_image,
-                              int iimage, int load_image)
+mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
+                         int iimage, int load_image)
 {
     int irow;
-    int ibyte;
     int idim;
     int nbyte;
     int isub;
@@ -1310,92 +1402,114 @@ multi_image_modify_group_list(Acr_Group group_list, Multi_Image *multi_image,
     char *old;
     long old_offset;
     long new_offset;
-    double position[3];
+    double position[WORLD_NDIMS];
     string_t string;
     int islice;
 
-    /* For interleaved sequences, we have to map the odd slices to the 
-     * range slice_count/2..slice_count-1 and the even slices from
-     * zero to slice_count/2-1
+    if (G.Debug > 1) {
+        printf("mosaic_modify_group_list(%lx, %lx, %d, %d)\n",
+               (unsigned long)group_list, (unsigned long)mi_ptr,
+               iimage, load_image);
+    }
+
+    /* Figure out what to do based upon the mosaic sequencing.
      */
-    if (multi_image->mosaic_seq == MOSAIC_SEQ_INTERLEAVED) {
+    switch (mi_ptr->mosaic_seq) {
+    case MOSAIC_SEQ_INTERLEAVED:
+        /* For interleaved sequences, we have to map the odd slices to
+         * the range slice_count/2..slice_count-1 and the even slices
+         * from zero to slice_count/2-1
+         */
         if (iimage & 1) {       /* Odd?? */
-            islice = (multi_image->slice_count / 2) + (iimage / 2);
+            islice = (mi_ptr->slice_count / 2) + (iimage / 2);
         }
         else {
             islice = iimage / 2;
         }
-    }
-    else {
+        break;
+
+    case MOSAIC_SEQ_DESCENDING:
+        /* For descending sequences, simply reverse the order in which 
+         * the slices are collected from the mosaic.
+         */
+        islice = mi_ptr->slice_count - iimage;
+        break;
+
+    default:
+        /* Otherwise, just use the image number without modification for
+         * ascending or unknown slice ordering.
+         */
         islice = iimage;
+        break;
     }
 
-    // Check the image number 
-    if ((iimage < 0) || (iimage > multi_image->sub_images)) {
+    /* Check the image number 
+     */
+    if ((iimage < 0) || (iimage > mi_ptr->sub_images)) {
         fprintf(stderr, "Invalid image number to send: %d of %d\n",
-                iimage, multi_image->sub_images);
+                iimage, mi_ptr->sub_images);
         exit(EXIT_FAILURE);
     }
 
-    // Update the index
-    acr_insert_numeric(&group_list, SPI_Current_slice_number, 
-                       (double) iimage);
+    /* Update the index
+     */
+    acr_insert_numeric(&group_list, SPI_Current_slice_number, (double) iimage);
 
-    // Update the position
-
-    for (idim = 0; idim < 3; idim++) {
-        position[idim] = multi_image->position[idim] + 
-            (double) iimage * multi_image->step[idim];
+    /* Update the position
+     */
+    for (idim = 0; idim < WORLD_NDIMS; idim++) {
+        position[idim] = mi_ptr->position[idim] + 
+            (double) iimage * mi_ptr->step[idim];
     }
 
-    sprintf(string, "%.15g\\%.15g\\%.15g",
-            position[0], position[1], position[2]);
+    sprintf(string, "%.15g\\%.15g\\%.15g", 
+            position[XCOORD], position[YCOORD], position[ZCOORD]);
     acr_insert_string(&group_list, SPI_Image_position, string);
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
 
-    if (G.file_type == IMA || G.file_type == N3DCM) {
-        // this will convert Siemens SPI info into dicom compliant info
-        // not needed for Numaris 4
-        update_coordinate_info(group_list);
+    if (G.Debug > 1) {
+        printf(" position %s\n", string);
     }
 
     if (load_image) {
-        // Figure out the sub-image indices 
-        isub = islice % multi_image->grid[0];
-        jsub = islice / multi_image->grid[0];
+        /* Figure out the sub-image indices 
+         */
+        isub = islice % mi_ptr->grid[0];
+        jsub = islice / mi_ptr->grid[0];
 
-        // Get pointers
-        old = acr_get_element_data(multi_image->big_image);
-        new = acr_get_element_data(multi_image->small_image);
+        /* Get pointers
+         */
+        old = acr_get_element_data(mi_ptr->big_image);
+        new = acr_get_element_data(mi_ptr->small_image);
 
-        // Copy the image
-        nbyte = multi_image->size[0] * multi_image->pixel_size;
-        for (irow=0; irow < multi_image->size[1]; irow++) {
-            old_offset = isub * multi_image->size[0] +
-                (jsub * multi_image->size[1] + irow) * multi_image->big[0];
-            old_offset *= multi_image->pixel_size;
-            new_offset = (irow * multi_image->size[0]) * multi_image->pixel_size;
-            for (ibyte=0; ibyte < nbyte; ibyte++) {
-                new[new_offset + ibyte] = old[old_offset + ibyte];
-            }
+        /* Copy the image
+         */
+        nbyte = mi_ptr->size[0] * mi_ptr->pixel_size;
+        for (irow = 0; irow < mi_ptr->size[1]; irow++) {
+            old_offset = isub * mi_ptr->size[0] +
+                (jsub * mi_ptr->size[1] + irow) * mi_ptr->big[0];
+            old_offset *= mi_ptr->pixel_size;
+            new_offset = (irow * mi_ptr->size[0]) * mi_ptr->pixel_size;
+            memcpy(&new[new_offset], &old[old_offset], nbyte);
         }
 
-        // Reset the byte order and VR encoding. This will be modified on each
-        // send according to what the connection needs.
-        acr_set_element_byte_order(multi_image->small_image,
-                                   acr_get_element_byte_order(multi_image->big_image));
-        acr_set_element_vr_encoding(multi_image->small_image,
-                                    acr_get_element_vr_encoding(multi_image->big_image));
+        /* Reset the byte order and VR encoding. This will be modified on each
+         * send according to what the connection needs.
+         */
+        acr_set_element_byte_order(mi_ptr->small_image,
+                                   acr_get_element_byte_order(mi_ptr->big_image));
+        acr_set_element_vr_encoding(mi_ptr->small_image,
+                                    acr_get_element_vr_encoding(mi_ptr->big_image));
     }
     return 1;
 
 }
 
 static void 
-multi_image_cleanup(Acr_Group group_list, Multi_Image *multi_image)
+mosaic_cleanup(Acr_Group group_list, Mosaic_Info *mi_ptr)
 {
-    if (multi_image->packed && multi_image->big_image != NULL) {
-        acr_delete_element(multi_image->big_image);
+    if (mi_ptr->packed && mi_ptr->big_image != NULL) {
+        acr_delete_element(mi_ptr->big_image);
     }
 }
 
