@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.2 1993-01-22 12:12:04 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.3 1993-02-01 16:00:23 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -23,6 +23,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <minc.h>
 #include <float.h>
 #include <ParseArgv.h>
+#include <time_stamp.h>
 
 /* Some constants */
 
@@ -170,6 +171,10 @@ main(int argc, char *argv[])
    int pix_size;
    int i, j;
    FILE *instream;
+   char *tm_stamp;
+
+   /* Save time stamp and args */
+   tm_stamp = time_stamp(argc, argv);
 
    /* Parse arguments */
    parse_args(argc, argv);
@@ -193,8 +198,9 @@ main(int argc, char *argv[])
       (void) miicv_setint(icv, MI_ICV_USER_NORM, TRUE);
    }
 
-   /* Create the file */
+   /* Create the file and save the time stamp */
    cdfid=nccreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Create the dimensions */
    for (i=0; i<ndims; i++) {
