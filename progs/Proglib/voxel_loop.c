@@ -6,10 +6,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.2  1995-03-21 14:06:39  neelin
-@MODIFIED   : Improved interface and added lots of functionality (much for the benefit
-@MODIFIED   : of mincconcat).
+@MODIFIED   : Revision 1.3  1995-03-21 15:33:07  neelin
+@MODIFIED   : Changed call to voxel_function to always use proper vector length and
+@MODIFIED   : set num_voxels to the number of voxels, not multiplying by vector length.
 @MODIFIED   :
+ * Revision 1.2  1995/03/21  14:06:39  neelin
+ * Improved interface and added lots of functionality (much for the benefit
+ * of mincconcat).
+ *
  * Revision 1.1  94/12/14  10:17:19  neelin
  * Initial revision
  * 
@@ -26,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.2 1995-03-21 14:06:39 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.3 1995-03-21 15:33:07 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1180,6 +1184,7 @@ private void do_voxel_loop(Loop_Options *loop_options,
             chunk_num_voxels = 1;
             for (idim=0; idim < ndims; idim++)
                chunk_num_voxels *= chunk_curcount[idim];
+            chunk_num_voxels /= input_vector_length;
 
             /* Translate start and count for file and save in loop_info */
             if (outer_file_loop)

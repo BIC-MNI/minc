@@ -4,10 +4,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.h,v $
-@MODIFIED   : Revision 1.2  1995-03-21 14:06:39  neelin
-@MODIFIED   : Improved interface and added lots of functionality (much for the benefit
-@MODIFIED   : of mincconcat).
+@MODIFIED   : Revision 1.3  1995-03-21 15:33:07  neelin
+@MODIFIED   : Changed call to voxel_function to always use proper vector length and
+@MODIFIED   : set num_voxels to the number of voxels, not multiplying by vector length.
 @MODIFIED   :
+ * Revision 1.2  1995/03/21  14:06:39  neelin
+ * Improved interface and added lots of functionality (much for the benefit
+ * of mincconcat).
+ *
  * Revision 1.1  94/12/14  10:18:21  neelin
  * Initial revision
  * 
@@ -55,22 +59,22 @@ typedef struct Loop_Options Loop_Options;
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : VoxelFunction
 @INPUT      : caller_data - pointer to client data.
-              num_voxels - number of voxels to process.
+              num_voxels - number of voxels to process. Note that the
+                 total number of input values is 
+                 num_voxels * input_vector_length.
               input_num_buffers - number of input buffers to handle
                  on this call - either total number of input files or 1 
                  (for accumulating over files).
-              input_vector_length - length of input vector. This will be
-                 1 unless the output vector size is set to something > 0
-                 and the input consists of vector volumes (and we're not
-                 converting to scalar). See set_loop_output_vector_size.
+              input_vector_length - length of input vector.
               input_data - array of pointers to input buffers (1 for
                  each input file, unless we are accumulating).
               output_num_buffers - number of output buffers to handle
                  on this call - will be the total number of output files
                  unless we are accumulating over files (see 
                  set_loop_accumulate).
-              output_vector_length - length of output vector = 1 or as set
-                 by set_loop_output_vector_size.
+              output_vector_length - length of output vector 
+                 == input_vector_length or as set by 
+                 set_loop_output_vector_size.
               loop_info - pointer that can be passed to functions returning
                  looping information
 @OUTPUT     : output_data - array of pointers to output buffers. Set values 
