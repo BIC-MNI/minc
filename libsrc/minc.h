@@ -18,6 +18,7 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.14 1992-12-01 14:04:07 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -31,6 +32,8 @@
 #define MI_MAX_ATTSTR_LEN  64
 /* Number of spatial dimensions */
 #define MI_NUM_SPACE_DIMS 3
+/* Maximum number of image dimensions for image conversion */
+#define MI_MAX_IMGDIMS MAX_VAR_DIMS
 
 /* NetCDF standard attributes */
 #define MIunits       "units"
@@ -247,6 +250,14 @@
 #define MI_ICV_BDIM_STEP       21
 #define MI_ICV_ADIM_START      22
 #define MI_ICV_BDIM_START      23
+/* Number of image dimensions for dimension conversion */
+#define MI_ICV_NUM_IMGDIMS     24
+/* Image dimension properties. For each dimension, add the dimension 
+   number (counting from fastest to slowest). */
+#define MI_ICV_DIM_SIZE        1000
+#define MI_ICV_DIM_STEP        1100
+#define MI_ICV_DIM_START       1200
+
 /* Constants that can be used as values for the above properties. */
 /* Possible values for MI_ICV_?DIM_DIR */
 #define MI_ICV_POSITIVE         1
