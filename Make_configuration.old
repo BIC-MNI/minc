@@ -20,6 +20,8 @@
 #    INSTALL_MANDIR = directory into which man files should be copied. The
 #        appropriate digit is appended (1 for user commands, 3 for 
 #        library functions). The directories must exist already.
+#    INSTALL_VOLIO_INCDIR = directory into which volume_io include files 
+#        should be copied. The directory must exist.
 #
 NETCDF_LIB_DIR = /usr/local/lib
 NETCDF_INCLUDE_DIR = /usr/local/include
@@ -30,6 +32,7 @@ INSTALL_BINDIR = $(ROOT)/bin
 INSTALL_LIBDIR = $(ROOT)/lib
 INSTALL_INCDIR = $(ROOT)/include
 INSTALL_MANDIR = $(ROOT)/man/cat
+INSTALL_VOLIO_INCDIR = $(INSTALL_INCDIR)/volume_io
 
 # ------------------------------------------------------------
 # You probably shouldn't modify things beyond here
