@@ -35,10 +35,10 @@ minc volumes and doing point tagging) and postf (display minc images).
 A man page exists for register and postf has -help option (for
 options) and a -describe option for some details. These are available from
 the Montreal Neurological Institute on request (contact 
-alan@pet.mni.mcgill.ca).
+Peter Neelin <neelin@pet.mni.mcgill.ca>).
 
-The include file for minc is in minc/include (just include <minc.h>,
+The include file for minc is in ../include (just include <minc.h>,
 netcdf.h will automatically be included).  Volume_io includes are in
-minc/include/volume_io (just include <volume_io.h>). Library
-files are in minc/lib.
+../include/volume_io (just include <volume_io.h>). Library
+files are in ../lib.
 
