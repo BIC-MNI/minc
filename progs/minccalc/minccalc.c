@@ -19,7 +19,11 @@ Thu Oct  5 17:09:12 EST 2000 - First alpha version
 Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 
  * $Log: minccalc.c,v $
- * Revision 1.3  2001-04-26 19:12:39  neelin
+ * Revision 1.4  2001-04-30 19:16:43  neelin
+ * Added assignment operator, made symbol table global, added expression lists,
+ * for loops, if operators and changed range operator to colon.
+ *
+ * Revision 1.3  2001/04/26 19:12:39  neelin
  * Finished up addition of operators and handling of invalid values.
  * This version seems to work.
  *
@@ -30,7 +34,7 @@ Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.3 2001-04-26 19:12:39 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.4 2001-04-30 19:16:43 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -97,7 +101,8 @@ double   constant2[2] =                {DEFAULT_DBL, DEFAULT_DBL};
 double   value_for_illegal_operations = DEFAULT_DBL;
 nc_type  datatype =                    MI_ORIGINAL_TYPE;
 char     *filelist =                   NULL;
-const char    *expression = NULL;
+char     *expr_file =                  NULL;
+char     *expression =                 NULL;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -165,6 +170,8 @@ ArgvInfo argTable[] = {
        "Value to write out when an illegal operation is done."},
    {"-expression",  ARGV_STRING,  (char*)1,    (char*) &expression,
           "Expression to use in calculations."},  
+   {"-expfile",  ARGV_STRING,  (char*)1,    (char*) &expr_file,
+          "Name of file containing expression."},  
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -181,6 +188,7 @@ public int main(int argc, char *argv[]){
    Loop_Options *loop_options;
    char *pname;
    int i;
+   ident_t ident;
       
 
    /* Save time stamp and args */
@@ -227,12 +235,46 @@ public int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
    }
 
-   /* Parse expression argument */
-   if (expression == NULL) { 
+   /* Get the expression from the file if needed */
+   if ((expression == NULL) && (expr_file == NULL)) { 
       (void) fprintf(stderr, 
                      "An expression must be specified on the command line\n");
       exit(EXIT_FAILURE);
    }
+   else if (expression == NULL) {
+      struct stat statbuf;
+      size_t size;
+      FILE *fp;
+
+      if (stat(expr_file, &statbuf) < 0) {
+         (void) fprintf(stderr, "Unable to stat expression file \"%s\"\n",
+                        expr_file);
+         exit(EXIT_FAILURE);
+      }
+      size = statbuf.st_size;
+      if (size <= 0) {
+         (void) fprintf(stderr, "Zero-size expression file \"%s\"\n",
+                        expr_file);
+         exit(EXIT_FAILURE);
+      }
+      else {
+         expression = MALLOC(size+1);
+         if ((fp=fopen(expr_file, "r")) == NULL) {
+            (void) fprintf(stderr, "Unable to open expression file \"%s\"\n",
+                           expr_file);
+            exit(EXIT_FAILURE);
+         }
+         if (fread(expression, (size_t) 1, size, fp) != size) {
+            (void) fprintf(stderr, "Error reading expression file \"%s\"\n",
+                           expr_file);
+            exit(EXIT_FAILURE);
+         }
+         fclose(fp);
+         expression[size] = '\0';
+      }
+   }
+
+   /* Parse expression argument */
    if (debug) fprintf(stderr, "Feeding in expression %s\n", expression);
    lex_init(expression);
    if (debug) yydebug = 1; else yydebug = 0; 
@@ -250,7 +292,9 @@ public int main(int argc, char *argv[]){
       }
       
    /* Construct initial symbol table from the A vector */
-   rootsym = sym_enter_vector(A, new_ident("A"), NULL);
+   rootsym = sym_enter_scope(NULL);
+   ident = new_ident("A");
+   sym_set_vector(A, ident, rootsym);
    
    /* Set default copy_all_header according to number of input files */
    if (copy_all_header == DEFAULT_BOOL)
@@ -277,7 +321,7 @@ public int main(int argc, char *argv[]){
 
    
    /* Clean up */
-   sym_leave(rootsym);
+   sym_leave_scope(rootsym);
    exit(EXIT_SUCCESS);
 }
 
@@ -313,6 +357,10 @@ public void do_math(void *caller_data, long num_voxels,
       
       for (i=0; i < input_num_buffers; i++){
          A->el[i] = input_data[i][ivox];
+      }
+
+      if (debug) {
+         (void) fprintf(stderr, "\n===New voxel===\n");
       }
       
       output_data[0][ivox] = eval_scalar(root, rootsym);

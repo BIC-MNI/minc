@@ -11,6 +11,7 @@ int lexpos = 0;
 
 avg            setpos(); return AVG;
 sum            setpos(); return SUM;
+prod           setpos(); return PROD;
 let            setpos(); return LET;
 len            setpos(); return LEN;
 isnan          setpos(); return ISNAN;
@@ -26,6 +27,9 @@ clamp          setpos(); return CLAMP;
 segment        setpos(); return SEGMENT;
 in             setpos(); return IN;
 to             setpos(); return TO;
+if             setpos(); return IF;
+else           setpos(); return ELSE;
+for            setpos(); return FOR;
 \<             setpos(); return LT;
 \<=            setpos(); return LE;
 \>             setpos(); return GT;

@@ -27,6 +27,7 @@ enum nodetype {
    NODETYPE_POW, 
    NODETYPE_INDEX, 
    NODETYPE_SUM, 
+   NODETYPE_PROD, 
    NODETYPE_AVG, 
    NODETYPE_LEN, 
    NODETYPE_MAX, 
@@ -55,12 +56,17 @@ enum nodetype {
    NODETYPE_SIN,
    NODETYPE_COS,
    NODETYPE_CLAMP,
-   NODETYPE_SEGMENT
+   NODETYPE_SEGMENT,
+   NODETYPE_EXPRLIST,
+   NODETYPE_ASSIGN,
+   NODETYPE_IFELSE,
+   NODETYPE_FOR
 };
 
 #define RANGE_EXACT_UPPER   1
 #define RANGE_EXACT_LOWER   2
 #define ALLARGS_SCALAR      4
+#define NODE_IS_SCALAR      8
 
 struct node {
    enum nodetype type;
@@ -76,19 +82,24 @@ ident_t       new_ident(const char *);
 const char    *ident_str(ident_t);
 int           ident_is_scalar(ident_t);
 
-node_t      new_node(int numargs);
+node_t      new_node(int, int);
+node_t      new_scalar_node(int);
+node_t      new_vector_node(int);
 const char *   node_name(node_t);
+int         node_is_scalar(node_t);
 node_t      optimize(node_t);
 
 vector_t    new_vector(void);
 void        vector_append(vector_t, scalar_t);
 void        vector_free(vector_t);
 
-sym_t       sym_enter_scalar(scalar_t, ident_t, sym_t);
-sym_t       sym_enter_vector(vector_t, ident_t, sym_t);
-sym_t       sym_leave(sym_t);
-scalar_t    sym_lookup_scalar(ident_t, sym_t);
-vector_t    sym_lookup_vector(ident_t, sym_t);
+sym_t sym_enter_scope(sym_t sym);
+void sym_leave_scope(sym_t sym);
+void sym_declare_ident(ident_t id, sym_t sym);
+void sym_set_scalar(scalar_t sc, ident_t id, sym_t sym);
+void sym_set_vector(vector_t v, ident_t id, sym_t sym);
+scalar_t sym_lookup_scalar(ident_t id, sym_t sym);
+vector_t sym_lookup_vector(ident_t id, sym_t sym);
 
 void       lex_init(const char *);
 void       lex_finalize(void);

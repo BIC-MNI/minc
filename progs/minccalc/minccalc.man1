@@ -131,67 +131,120 @@ zero), the specified value is stored in the output file.
 The
 .I -expression
 argument is a single string that describes the function to evaluate.
-The function expression is typically written in terms of the vector A
+The function expression is typically written in terms of the vector A.
 
 For example, the following expression will sum the first two input files
 together:
 
    A[0] + A[1]
    
-Besides normal scalar operators such as +, -, * and /,
-the expression language also supports the infix exponentiation 
-operator ^ .
+Multiple expressions can be given separated by semicolons, in which
+case only the value of the last expression is used. These expression 
+lists can be used with assignment expressions to make the syntax very
+C-like:
+
+   ratio = A[0]/A[1]; A[2]*exp(-ratio)
 
 There are two types of values in the language: vectors and scalars.
 Scalars literals are floating point numbers or may appear as symbols
 whose name starts with a lowercase letter.
 
+Besides normal scalar operators such as +, -, * and /,
+the expression language also supports the infix exponentiation 
+operator ^ and the usual boolean operators <, <=, >, >=, ==, != as
+well as && (and), || (or) and ! (not). Mathematical operations include
+abs, sqrt, exp, log, sin, and cos. There are also some specialized
+functions: 
+
+   isnan(value) - 1 if value is invalid and 0 otherwise
+   clamp(val1, val2, val3) - val1 bounded by [val2, val3]
+   segment(val1, val2, val3) - tests if val1 is in [val2, val3]
+
 Vectors can be written in the following `extensional' form
 
-   { value1, value2, ... }
+   [ value1, value2, ... ]
 
 or by using the following range-generating notations:
 
-   [ a , b ]     generates {a, a+1, ..., b-1, b}
-   [ a , b )     generates {a, a+1, ..., b-1}
-   ( a , b ]     generates {a+1, ..., b-1, b}
-   ( a , b )     generates {a+1, ..., b-1}
+   [ a : b ]     generates {a, a+1, ..., b-1, b}
+   [ a : b )     generates {a, a+1, ..., b-1}
+   ( a : b ]     generates {a+1, ..., b-1, b}
+   ( a : b )     generates {a+1, ..., b-1}
 
-or be generated, by `intension'.
+or be generated, by `intension'. The following intension expression 
+generates the vector {3,2,1}:
 
-For example, the following intension expression generates the vector {3,2,1}:
+   { i in [1:3] | 4 - i }
 
-   { i in [1,3] | 4 - i }
-
-Vectors may also appear as symbols whose name starts with an uppercase letter.
-
-Symbol names are introduced with let-expressions. 
-For example, the following expression will always evaluate to 3:
-
-   let a = 1, b = 2 in a + b
+Vectors may also appear as symbols whose name starts with an uppercase
+letter.
 
 In addition to the scalar operators, the following vector operators are
-supplied.
+supplied:
 
    avg  - the average value of the scalars in vector
    len  - the length of
    sum  - the sum of the elements of
    prod - the product of the elements of
+   max  - the maximum value of
+   min  - the minimum value of
    V[s] - the s'th element of vector V with origin 0.
+
+Symbol names are introduced into a global symbol table by assignment
+expressions of the form
+
+   a = A[2] * log(2)
+
+Symbols starting with a lowercase letter represent scalars while those
+starting with an uppercase letter represent vectors. Since = is an
+operator, its result can be used in an expression (as in C).
+
+A few control constructs are provided:
+
+For loops can be created to loop over a vector, assigning each value 
+to a symbol and then evaluating an expression list. This is done with
+expressions of the form
+
+   sum=0; for i in [0:len(A)) {sum=sum+A[i]}
+
+which is equivalent to sum(A). Note that this is similar to using
+
+   sum=0; len{ i in [0:len(A)) | sum=sum+A[i]}
+
+since the for construct is actually an operator (although it is
+usually used for changing symbol values).
+
+There are also a few forms of the if-then-else construct:
+
+   A[0]<0 ? 0 : A[0]
+
+   if (A[0]<0) {result=0} else {result=A[0]}
+
+The else is optional. Again, the if construct is an operator,
+returning the last value of the expression list that was evaluated. If
+the else expression list is missing, then the value 0 is used when the
+test expression is 0 (false).
+
+The principal oddity with the for and if constructs is that unlike C,
+they must be separated from the next expression by a semicolon:
+
+   for i in [0:len(A)) {sum=sum+A[i]} ; sum/len(A)
+   if (A[i]>0) {result=2;} else {result=1} ; result*5
+
+An alternative way to introduce symbol names is through let-expressions. 
+For example, the following expression will always evaluate to 3:
+
+   let a = 1, b = 2 in a + b
 
 .SH CAVEATS
 A few things you should remember...
 
 Vector variables must start with an uppercase letter.
 
-As optimisation of the tree is not inculded in this release it'd be 
-advantageous if you made use of let-expressions to speed your calculations.
+For loops and if expressions always need to be separated from the next
+expression by a semicolon.
 
-   "(avg[A] - 1) * (avg[A] + 1)"
-   
-   is less efficient written as
-   
-   "let avg_a = avg[A] in (avg_a - 1) * (avg_a + 1)"
+The symbol table is global.
 
 .SH AUTHOR
 Andrew Janke - rotor@cmr.uq.edu.au

@@ -12,6 +12,7 @@ nodenames[] = {
         { NODETYPE_POW,      "pow" },
         { NODETYPE_INDEX,    "index" },
         { NODETYPE_SUM,      "sum" },
+        { NODETYPE_PROD,     "prod" },
         { NODETYPE_AVG,      "avg" },
         { NODETYPE_LEN,      "len" },
         { NODETYPE_MAX,      "max" },
@@ -41,15 +42,30 @@ nodenames[] = {
         { NODETYPE_COS,      "cos" },
         { NODETYPE_CLAMP,    "clamp" },
         { NODETYPE_SEGMENT,  "segment" },
+        { NODETYPE_EXPRLIST, "exprlist" },
+        { NODETYPE_ASSIGN,   "assign" },
+        { NODETYPE_IFELSE,   "ifelse" },
+        { NODETYPE_FOR,      "for" },
         { 0, NULL }
 };
 
-node_t new_node(int numargs){
+node_t new_node(int numargs, int is_scalar) {
    node_t n;
    n = malloc(sizeof *n);
    n->numargs = numargs;
    n->flags = 0;
+   if (is_scalar) {
+      n->flags |= NODE_IS_SCALAR;
+   }
    return n;
+}
+
+node_t new_scalar_node(int numargs) {
+   return new_node(numargs, 1);
+}
+
+node_t new_vector_node(int numargs) {
+   return new_node(numargs, 0);
 }
 
 const char *node_name(node_t n){
@@ -59,4 +75,8 @@ const char *node_name(node_t n){
       if (p->type == n->type)
          return p->name;
    return "unknown";
+}
+
+int node_is_scalar(node_t n) {
+   return (n->flags & NODE_IS_SCALAR);
 }

@@ -1,5 +1,6 @@
 /* Copyright David Leonard and Andrew Janke, 2000. All rights reserved. */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "node.h"
 
@@ -25,6 +26,10 @@ void vector_append(vector_t v, scalar_t s){
 }
 
 void vector_free(vector_t v){
+   if (v->refcnt <= 0) {
+      (void) fprintf(stderr, "Internal error: vector freed too often\n");
+      exit(1);
+   }
    if (--v->refcnt == 0) {
       free(v->el);
       v->el = NULL;
