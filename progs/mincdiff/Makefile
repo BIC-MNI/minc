@@ -27,4 +27,4 @@ clean:
 
 install:
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
-
+	$(CD) $(INSTALL_BINDIR); $(CHMOD) $(CHMOD_FLAGS) $(PROGS)
