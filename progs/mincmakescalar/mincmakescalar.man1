@@ -1,0 +1,155 @@
+.\" Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 1.1 1997-08-07 16:42:36 neelin Exp $
+.\"
+.TH MINCMAKESCALAR 1
+
+.SH NAME
+mincmakescalar - convert vector minc files to scalar
+
+.SH SYNOPSIS
+.B mincmakescalar
+[<options>] <in>.mnc <out>.mnc
+
+.SH DESCRIPTION 
+.I Mincmakescalar
+converts vector minc files to scalar minc files. A vector minc file is
+one that contains the dimension 
+.I vector_dimension
+as the fastest varying dimension of the image data and represents vector
+data at each voxel such as RGB images or gradient volumes. A scalar
+minc file does not contain the vector dimension and represents
+grayscale or intensity data.
+
+A variety of conversion schemes are possible. The simplest is an
+average of the components of the vector. The magnitude of the vector
+at each voxel can also be computed. RGB volumes can be converted to
+greyscale by a standard linear combination. Finally, the user can
+supply a list of coefficients for a linear combination of vector
+components. 
+
+Some options will require a specific number of components on the input
+vectors (RGB data should have 3 components and the number of
+coefficients supplied for the linear combination should match the
+number of components on the input vectors), but the program will also
+accept input scalar data and will copy it through without modification.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -no_clobber:
+Synonym for -noclobber.
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied (default).
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.P
+.I -buffer_size
+<size>:
+Specify the maximum size of the internal buffers (in kbytes). Default
+is 10 MB.
+.P
+.I -filetype:
+Create an output file with the same type as the first input file
+(default).
+.P
+.I -byte:
+Create an output file of type byte.
+.P
+.I -short:
+Create an output file of type short.
+.P
+.I -long:
+Create an output file of type long.
+.P
+.I -float:
+Create an output file of type float.
+.P
+.I -double:
+Create an output file of type double.
+.P
+.I -signed:
+Create an output file with data stored in a signed type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -unsigned:
+Create an output file with data stored in an unsigned type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -valid_range
+<min> <max>:
+Create an output file with integer data stored in the specified
+valid range. This only has an effect if the one of the -byte, -short
+or -long options is specified.
+
+.SH Conversion options
+.P
+.I -magnitude:
+Compute the magnitude of each vector (default).
+.P
+.I -average:
+Compute the average of the components of each vector.
+.P
+.I -rgbtogrey:
+Convert RGB (3-component) files to greyscale using a linear
+combination with standard set of weighting coefficients.
+.P
+.I -rgbtogray:
+Synonym for -rgbtogrey.
+.P
+.I -linear
+<c1>,<c2>,<c3>,...:
+Compute a linear combination of the components of each vector using
+the specified coefficients (these weights must be given as a comma or
+space-separated list of numbers in a single command-line
+argument). The number of coefficients must match the number of
+components on the input vectors.
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH EXAMPLES
+
+To convert an RGB file to an grayscale file:
+
+   mincmakescalar -rgbtogrey rgb.mnc gray.mnc
+
+To compute the gradient magnitude from a gradient volume
+
+   mincmakescalar -magnitude gradient.mnc magnitude.mnc
+
+To convert an RGB file to a grayscale file using a different set of
+weighting factors for red, green and blue:
+
+   mincmakescalar -linear '0.2,0.5,0.3' rgb.mnc gray.mnc
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 1997 by Peter Neelin
