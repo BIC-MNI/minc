@@ -7,7 +7,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.4  2000-05-01 17:54:02  neelin
+ * Revision 6.5  2000-08-16 15:53:46  neelin
+ * Added VR type UN (unknown) which has a length field similar to OB.
+ *
+ * Revision 6.4  2000/05/01 17:54:02  neelin
  * Improved testing of input stream to figure out byte order for both
  * implicit and expicit VR.
  *
@@ -167,7 +170,7 @@ private int is_sequence_vr(char vr_to_test[2])
 
 private int is_special_vr(char vr_to_test[2])
 {
-   static char *special_vrs[] = {"OB", "OW", "SQ", NULL};
+   static char *special_vrs[] = {"OB", "OW", "SQ", "UN", NULL};
    return test_vr(vr_to_test, special_vrs);
 }
 

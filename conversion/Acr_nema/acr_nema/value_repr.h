@@ -6,7 +6,10 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: value_repr.h,v $
- * Revision 6.1  1999-10-29 17:51:55  neelin
+ * Revision 6.2  2000-08-16 15:53:46  neelin
+ * Added VR type UN (unknown) which has a length field similar to OB.
+ *
+ * Revision 6.1  1999/10/29 17:51:55  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -62,6 +65,7 @@ typedef enum {
    ACR_VR_UI,
    ACR_VR_UL,
    ACR_VR_US,
+   ACR_VR_UN,
    ACR_VR_NUM_TYPES
 } Acr_VR_Type;
 

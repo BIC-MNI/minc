@@ -6,7 +6,10 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   :  
  * $Log: value_repr.c,v $
- * Revision 6.1  1999-10-29 17:51:54  neelin
+ * Revision 6.2  2000-08-16 15:53:46  neelin
+ * Added VR type UN (unknown) which has a length field similar to OB.
+ *
+ * Revision 6.1  1999/10/29 17:51:54  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -126,6 +129,7 @@ static Acr_VR_Entry VR_table[] = {
    {ACR_VR_UI, "UI",        return_zero,        return_the_string },
    {ACR_VR_UL, "UL",        get_long,           numeric_to_string },
    {ACR_VR_US, "US",        get_short,          numeric_to_string },
+   {ACR_VR_UN, "UN",        return_zero,        return_empty_string },
    {ACR_VR_NUM_TYPES, NULL, NULL,               NULL}
 };
 
