@@ -1224,7 +1224,7 @@ minc_create_thumbnail(mihandle_t volume, int grp)
 
     /* Don't handle negative or overly large numbers!
      */
-    if (grp <= 0 || grp > MAX_RESOLUTION_GROUP) {
+    if (grp <= 0 || grp > MI2_MAX_RESOLUTION_GROUP) {
 	return (MI_ERROR);
     }
 
