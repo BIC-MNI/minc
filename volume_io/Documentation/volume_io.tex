@@ -1,14 +1,17 @@
 \documentstyle{report}
 
 \title{Programmer's Reference for the \\
-MNI Volume IO Library}
+BIC Volume IO Library}
+
 \author{David MacDonald}
 
-\newcommand{\path}{{\bf\tt /nil/david/Release/MNI\_lib}}
 \newcommand{\name}[1]{{\bf\tt #1}}
 
-\newcommand{\desc}[1]{\begin{tabular}{p{2cm}p{10cm}}
-& #1 \end{tabular}}
+\newcommand{\desc}[1]{\begin{itemize}
+\item[] #1
+\end{itemize}}
+
+\newcommand{\vol}{BIC Volume IO Library}
 
 \begin{document}
 
@@ -23,11 +26,12 @@ MNI Volume IO Library}
 \chapter{Introduction}
 
 This document describes a library of routines available at the
-McConnell Brain Imaging Centre at the Montreal Neurological Institute.
+McConnell Brain Imaging Centre (BIC) at the Montreal Neurological Institute.
 It was developed as part of a medical imaging software testbed by
 David MacDonald, with source code and considerable input from Peter
 Neelin, Louis Collins, and others at the Centre.
-The library comprises a set of functions for reading and writing
+The library, which is referred to as the \vol, comprises a set of functions
+for reading and writing
 volumes of medical imaging data, as well as some general support
 routines useful to many programming tasks.  All images at the Brain
 Imaging Centre are stored on disk in a format called {\bf MINC}, which
@@ -35,57 +39,53 @@ stands for {\bf Medical Image Net CDF}.  More information
 is available in related documentation specifically concerning this
 format and
 the MINC library of routines used to read and write MINC files.  The
-Volume IO library is built on top of the MINC library to
+\vol\  is built on top of the MINC library to
 provide easy access to MINC files for most general operations, without
 having to learn too much of
-the details of the MINC library, which is a comprehensive system which
-handles every conceivable case.  It provides a structure for internal
+the details of the MINC library, which is a comprehensive system for handling
+every conceivable case.  The \vol\  provides a structure for internal
 storage of volumes and routines to access and modify volumes.  In
 addition, it provides routines to manipulate tag points and
 transformations and to perform input and output on these objects in
 the standardized formats of the Brain Imaging Centre.
 
-This document describes where to find the Volume IO library,
+This document describes where to find the \vol,
 what functionality is provided, and
 how to integrate it into a user's programs.
 The library is written in C source code, and is designed
-to be linked with C source.  It makes calls to three other libraries:
-\name{MINC}, \name{netcdf} (a public domain portable file format
-manager), and \name{recipes} (the library associated
-with the Numerical Recipes handbook).
+to be linked with C source.  It makes calls to two other libraries:
+\name{MINC} (the BIC file format library)
+and \name{netcdf} (a portable file format manager).
 
 \chapter{Compiling and Linking}
 
-The relevant directory is \path.  In this directory is the library,
-\name{libvolume\_io.a}, and the related include files in the directory
-\name{Include}.  In order to compile a program using the Volume IO
-library, it is necessary to specify this include directory on
-the compile line:
-{\bf\begin{verbatim}
-        cc -prototypes -I/nil/david/Release/MNI_lib/Include \
-           -c test_volume_io.c
-\end{verbatim}}
-
+The library for linking is \name{libvolume\_io.a}, which is in
+\name{/usr/local/lib}, and the related include files are in the directory,
+\name{/usr/local/include} under \name{volume\_io}.  Both directories
+are usually in the compiler search path.
 Source files making calls to Volume IO functions must have the
 following line at the top, to include the relevant type definitions and
 prototypes:
 
 {\bf\begin{verbatim}
-        #include  <volume_io.h>
+        #include  <volume_io/volume_io.h>
 \end{verbatim}}
 
-In order to link with Volume IO, the relevant libraries must be
+In order to link with \vol, the relevant libraries must be
 specified:
 {\bf\begin{verbatim}
         cc test_volume_io.o  -o test_volume_io \
-           -L/nil/david/Release/MNI_lib -lmni \
-           -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
+           -lvolume_io -lminc -lnetcdf -lm -lsun -lmalloc
 \end{verbatim}}
-The three libraries, \name{minc}, \name{netcdf}, and \name{recipes},
-are usually in /usr/local/lib, which is
+
+The two libraries, \name{minc} and \name{netcdf}
+are usually in \name{/usr/local/lib}, which is
 automatically in the search path.  The \name{-lm} option includes the
-math library, which is sometimes called by the Volume IO library.  The
-\name{-lsun} library provides network support useful to all programs.
+math library, which is sometimes called by the \vol.  The
+\name{-lsun} library provides network support useful to all programs
+\footnote{The \name{-lsun} option is specific to the current version
+of the operating system on the SGI's at the BIC.  When the system is
+upgraded this option will become obsolete and unnecessary.}.
 The \name{-lmalloc} library provides faster and more robust memory
 allocation than the default.
 
@@ -108,7 +108,7 @@ variables.  Secondly, modification of a global variable by a given function
 precludes the use of this function in a multi-threaded environment
 (two processes may attempt to modify the global variable at the same
 time).  As a result of adopting the anti-global variable philosophy, the
-user of the Volume IO library often must specify
+user of the \vol\  often must specify
 many arguments to a function.  This seems a small price to pay, in
 return for the ability to see all factors controlling
 the behaviour of each function in the argument list.
@@ -117,13 +117,13 @@ the behaviour of each function in the argument list.
 
 The implementer of this library has an affinity to typing large
 amounts of text, and generally dislikes abbreviations.  As a result,
-the function and variable names occurring in the Volume IO library may
+the function and variable names occurring in the \vol\  may
 be quite verbose, almost to the point of being complete grammatically
 correct sentences.  In general, one will never see functions with names
 such as \name{rem\_garb()}.  Instead, functions are more likely to have
 names such as \name{remove\_garbage()}, and, in many cases, even
-\name{take\_garbage\_to\_curb()}.  As a result, the user of the Volume IO
-library will have to type longer-than-usual function and variable
+\name{take\_garbage\_to\_curb()}.  As a result, the user of the
+\vol\ will have to type longer-than-usual function and variable
 names, but hopefully will have a clearer insight into the associated
 functionality.
 
@@ -154,7 +154,7 @@ int  main()
 {
     big_struct   *s;
 
-    initialize( s );
+    initialize( s );   /* WRONG */
 }
 \end{verbatim}
 because the variable \name{s} is an uninitialized pointer.  The
@@ -173,8 +173,8 @@ allocating the \name{s} pointer before calling \name{initialize}.
 
 \chapter{Types and Macros}
 
-There are several types and macros defined for use with the Volume IO
-library.  All function declarations in the library are preceded with either
+There are several types and macros defined for use with the \vol.
+All function declarations in the library are preceded with either
 the word \name{public} or \name{private}, which indicates whether the
 function is accessible from outside the file in which it resides.
 Users of the library will only be interested in those functions
@@ -204,29 +204,39 @@ Other useful types defined include:
         typedef  char               Smallest_int;
 \end{verbatim}}
 
-\newcommand{\definemacro}[2]{
-\begin{flushleft}
-\begin{tabular}{p{2cm}p{10cm}}
-\multicolumn{2}{l}{{\bf\tt #1}} \\
-& #2 \\
-\end{tabular}\end{flushleft}}
-
 Some macros useful for general programming include:
 
-\definemacro{N\_DIMENSIONS}{A constant equal to 3, the number of
-dimensions in the real world.}
+{\bf\begin{verbatim}
+N_DIMENSIONS
+\end{verbatim}}
 
-\definemacro{X}{A constant equal to 0, used as an index into
-various XYZ structures.}
+\desc{A constant equal to 3, the number of dimensions in the real world.}
 
-\definemacro{Y}{A constant equal to 1, used as an index into
-various XYZ structures.}
+{\bf\begin{verbatim}
+X
+\end{verbatim}}
 
-\definemacro{Z}{A constant equal to 2, used as an index into
-various XYZ structures.}
+\desc{A constant equal to 0, used as an index into various XYZ structures.}
 
-\definemacro{SIZEOF\_STATIC\_ARRAY( array )}
-{returns the number of elements in a statically allocated array, for example,}
+{\bf\begin{verbatim}
+Y
+\end{verbatim}}
+
+\desc{A constant equal to 1, used as an index into various XYZ structures.}
+
+{\bf\begin{verbatim}
+Z
+\end{verbatim}}
+
+\desc{A constant equal to 2, used as an index into various XYZ structures.}
+
+{\bf\begin{verbatim}
+SIZEOF_STATIC_ARRAY( array )
+\end{verbatim}}
+
+\desc{returns the number of elements in a statically allocated array,
+      for example,}
+
 {\bf\begin{verbatim}
         {
             int  size;
@@ -236,312 +246,162 @@ various XYZ structures.}
         }
 \end{verbatim}}
 
-\definemacro{ROUND( x )}{returns the nearest integer to the \name{x}.  If
+{\bf\begin{verbatim}
+ROUND( x )
+\end{verbatim}}
+
+\desc{returns the nearest integer to the \name{x}.  If
 halfway in between two integers, returns the higher of the two.}
 
-\definemacro{IS\_INT( x )}{returns \name{TRUE} if the real argument is exactly an integer.}
+{\bf\begin{verbatim}
+IS_INT( x )
+\end{verbatim}}
 
-\definemacro{FRACTION( x )}{returns the fractional part of the argument.}
+\desc{returns \name{TRUE} if the real argument is exactly an integer.}
 
-\definemacro{FLOOR( x )}{returns the largest integer less than or
-equal to the argument.}
+{\bf\begin{verbatim}
+FRACTION( x )
+\end{verbatim}}
 
-\definemacro{CEILING( x )}{returns the smallest integer greater than or
-equal to the argument.}
+\desc{returns the fractional part of the argument.}
 
-\definemacro{ABS( x )}{returns the absolute value of an integer or real.}
+{\bf\begin{verbatim}
+FLOOR( x )
+\end{verbatim}}
 
-\definemacro{MAX( x, y )}{returns the maximum of two integers or reals.}
+\desc{returns the largest integer less than or equal to the argument.}
 
-\definemacro{MAX3( x, y, z )}{returns the maximum of three integers or
+{\bf\begin{verbatim}
+CEILING( x )
+\end{verbatim}}
+
+\desc{returns the smallest integer greater than or equal to the argument.}
+
+{\bf\begin{verbatim}
+ABS( x )
+\end{verbatim}}
+
+\desc{returns the absolute value of an integer or real.}
+
+{\bf\begin{verbatim}
+MAX( x, y )
+\end{verbatim}}
+
+\desc{returns the maximum of two integers or reals.}
+
+{\bf\begin{verbatim}
+MAX3( x, y, z )
+\end{verbatim}}
+
+\desc{returns the maximum of three integers or
 reals.}
 
-\definemacro{MIN( x, y )}{returns the minimum of two integers or reals.}
+{\bf\begin{verbatim}
+MIN( x, y )
+\end{verbatim}}
 
-\definemacro{MIN3( x, y, z )}{returns the minimum of three integers or
-reals.}
+\desc{returns the minimum of two integers or reals.}
 
-\definemacro{INTERPOLATE( alpha, a, b )}{returns the interpolation between
-\name{a} and \name{b}, where \name{alpha} is in the range zero to
-one.}
+{\bf\begin{verbatim}
+MIN3( x, y, z )
+\end{verbatim}}
 
-\definemacro{PI}{returns the value of $\pi$.}
+\desc{returns the minimum of three integers or reals.}
 
-\definemacro{DEG\_TO\_RAD}{returns the number of radians per degrees,
+{\bf\begin{verbatim}
+INTERPOLATE( alpha, a, b )
+\end{verbatim}}
+
+\desc{returns the interpolation between
+\name{a} and \name{b}, where \name{alpha} is in the range zero to one.}
+
+{\bf\begin{verbatim}
+PI
+\end{verbatim}}
+
+\desc{returns the value of $\pi$.}
+
+{\bf\begin{verbatim}
+DEG_TO_RAD
+\end{verbatim}}
+
+\desc{returns the number of radians per degrees,
 used to multiply an angle in degrees to result in radians.}
 
-\definemacro{RAD\_TO\_DEG}{returns the number of degrees per radian,
+{\bf\begin{verbatim}
+RAD_TO_DEG
+\end{verbatim}}
+
+\desc{returns the number of degrees per radian,
 used to multiply an angle in radians to result in degrees.}
 
-\definemacro{IJ( i, j, nj )}{converts the indices $\left[ i, j \right]$
+{\bf\begin{verbatim}
+IJ( i, j, nj )
+\end{verbatim}}
+
+\desc{converts the indices $\left[ i, j \right]$
 of a 2-D \name{ni} by \name{nj} array into a single index, based on
 row-major order.}
 
-\definemacro{IJK( i, j, k, nj, nk )}{converts the indices
+{\bf\begin{verbatim}
+IJK( i, j, k, nj, nk )
+\end{verbatim}}
+
+\desc{converts the indices
 $\left[ i , j , k \right]$ of a 3-D \name{ni} by \name{nj} by
 \name{nk} array into a single index, based on row-major order.}
 
-\definemacro{for\_less( i, start, end )}{performs a for loop where \name{i}
+{\bf\begin{verbatim}
+for_less( i, start, end )
+\end{verbatim}}
+
+\desc{performs a for loop where \name{i}
 starts at \name{start} and increments until it is greater than or
 equal to \name{end}.
 Equivalent to \name{for( i = start;  i < end; ++i )}.}
 
-\definemacro{for\_inclusive( i, start, end )}{performs a for loop where \name{i}
+{\bf\begin{verbatim}
+for_inclusive( i, start, end )
+\end{verbatim}}
+
+\desc{performs a for loop where \name{i}
 starts at \name{start} and increments until it is greater than \name{end}.
 Equivalent to \name{for( i = start;  i <= end; ++i )}.}
 
-\definemacro{GLUE(x,y)}{Special C source macro to stick two different
+{\bf\begin{verbatim}
+GLUE(x,y)
+\end{verbatim}}
+
+\desc{Special C source macro to stick two different
 identifiers together, i.e., \name{GLUE(colour,\_name)} results in
 \name{colour\_name}.}
 
-\definemacro{GLUE3(x,y,z)}{Special C source macro to stick three different
+{\bf\begin{verbatim}
+GLUE3(x,y,z)
+\end{verbatim}}
+
+\desc{Special C source macro to stick three different
 identifiers together, i.e., \name{GLUE(a,b,c)} results in \name{abc}.}
 
 \chapter{Programming Utilities}
 
 A set of functions which are useful for general purpose, portable
 programming is provided.  These include such basic areas as strings,
-time, file IO, etc.  Many parts of the Volume IO library refer
+time, file IO, etc.  Many parts of the \vol\  refer
 to the programming utilities, and it is advisable that users of the
-Volume IO library try to use these functions whenever convenient.
+\vol\  try to use these functions whenever convenient.
 The following is a list of all the programming utilities, grouped into
 related areas, and ordered alphabetically.
-
-\section{Automatic File Decompression}
-
-The unix command \name{compress} is often used to reduce file space by
-compressing files into new files ending in \name{.Z}.  The Volume IO
-library includes routines for automatically decompressing such files.
-This is done by inserting new definitions of such file operations as
-\name{fopen}, \name{fread}, and \name{fscanf}.  Use of this facility
-is transparent, as long as the Volume IO include directory is specified
-correctly on the compile line, and the executable is linked with the
-Volume IO library.
-
-\section{Argument Processing}
-
-Simple command line argument processing is provided.  Note that more
-sophisticated and extensive argument processing can be provided by
-other existing packages around the lab.  Nevertheless, command line
-argument lists can be scanned in command line order as follows:
-
-{\bf\begin{verbatim}
-public  void  initialize_argument_processing(
-    int     argc,
-    char    *argv[] )
-\end{verbatim}}
-
-\desc{called once to let the argument processor know what the command line
-arguments are.  Initializes the current argument to the first
-argument, in preparation for sequential processing of the command line
-arguments.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  get_int_argument(
-    int   default_value,
-    int   *value )
-public  BOOLEAN  get_real_argument(
-    Real  default_value,
-    Real  *value )
-public  BOOLEAN  get_string_argument(
-    char   default_value[],
-    char   *value[] )
-\end{verbatim}}
-
-\desc{checks if there is a current argument and that it
-is of the desired type.  If so,
-then it assigns the appropriate \name{value}, advances to the next
-argument, and returns \name{TRUE}.  Otherwise, the default value is assigned
-to the \name{value} and the current argument is not advanced.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  get_prefix_argument(
-    char  prefix[] )
-\end{verbatim}}
-
-\desc{checks if the next argument starts with the given prefix and if so,
-advances to the point in the argument just after the end of the prefix, or
-to the next argument if there are no characters after the prefix.
-Returns \name{TRUE} if the command line argument starts with the prefix.}
-
-\section{Colour Manipulation}
-
-Colours are generally represented as triples of coordinates,
-representing red, green, and blue components.  Sometimes, an opacity
-is included as a fourth component, to determine how much the colour
-will let other objects show through.  Sometimes it is useful
-to work with colours in a different space, Hue-Saturation-Light, which
-is also a triple of coordinates.  Each colour component is usually either a
-real value in the range zero to one, or an integral value in the range
-zero to 255.  A colour type is defined (\name{Colour}) which uses a
-single long integer to store colours as four eight-bit integers.
-Various macros and functions exist to manipulate these colours:
-
-\definemacro{make\_Colour( r, g, b )}{Returns a value of type
-\name{Colour} which contains the specified red, green, and blue
-components, each of which must be within the range zero to 255.}
-
-\definemacro{make\_rgba\_Colour( r, g, b, a )}{Returns a value of type
-\name{Colour} which contains the specified red, green, blue, and alpha
-(opacity) components, each of which must be within the range zero to 255.}
-
-\definemacro{get\_Colour\_r( col )}{Given an argument of type
-\name{Colour}, returns the value of the red component, in the range
-zero to 255.}
-
-\definemacro{get\_Colour\_g( col )}{Given an argument of type
-\name{Colour}, returns the value of the green component, in the range
-zero to 255.}
-
-\definemacro{get\_Colour\_b( col )}{Given an argument of type
-\name{Colour}, returns the value of the blue component, in the range
-zero to 255.}
-
-\definemacro{get\_Colour\_a( col )}{Given an argument of type
-\name{Colour}, returns the value of the alpha component, in the range
-zero to 255.}
-
-\definemacro{make\_Colour\_0\_1( r, g, b )}{Returns a value of type
-\name{Colour} which contains the specified red, green, and blue
-components, each of which must be within the range zero to 1.0.}
-
-\definemacro{make\_rgba\_Colour\_0\_1( r, g, b )}{Returns a value of type
-\name{Colour} which contains the specified red, green, blue, and
-alpha components, each of which must be within the range zero to 1.0.}
-
-\definemacro{get\_Colour\_r\_0\_1( col )}{Given an argument of type
-\name{Colour}, returns the value of the red component, in the range
-zero to 1.0.}
-
-\definemacro{get\_Colour\_g\_0\_1( col )}{Given an argument of type
-\name{Colour}, returns the value of the green component, in the range
-zero to 1.0.}
-
-\definemacro{get\_Colour\_b\_0\_1( col )}{Given an argument of type
-\name{Colour}, returns the value of the blue component, in the range
-zero to 1.0.}
-
-\definemacro{get\_Colour\_a\_0\_1( col )}{Given an argument of type
-\name{Colour}, returns the value of the alpha component, in the range
-zero to 1.0.}
-
-\definemacro{get\_Colour\_luminance( col )}{Given an argument of type
-\name{Colour}, returns the brightness of the colour, in the range zero
-to 255.  This is used to convert colour to gray-scale.}
-
-A surface property type is also defined, to provide descriptions of
-surface lighting characteristics:
-
-\definemacro{fill\_Surfprop( spr, a, d, s, e, o )}{Fills in the
-\name{spr} structure, which is of type \name{Surfprop}, with the five
-parameters:  ambient coefficient, diffuse coefficient, specular
-coefficient, specular exponent, and opacity.}
-
-\definemacro{Surfprop\_a( spr )}{Returns the ambient coefficient, a
-number in the range of zero to one.}
-
-\definemacro{Surfprop\_d( spr )}{Returns the diffuse coefficient, a
-number in the range of zero to one.}
-
-\definemacro{Surfprop\_s( spr )}{Returns the specular coefficient, a
-number in the range of zero to one.}
-
-\definemacro{Surfprop\_se( spr )}{Returns the specular exponent, a
-number in the range of zero to infinity, typically less than 100.}
-
-\definemacro{Surfprop\_t( spr )}{Returns the opacity (inverse of
-transparency), a number in the range of zero to one.}
-
-Several functions are available which deal with colours and surface
-properties:
-
-{\bf\begin{verbatim}
-public  void  rgb_to_hsl(
-    Real    r,
-    Real    g,
-    Real    b,
-    Real    *h,
-    Real    *s,
-    Real    *l )
-public  void  hsl_to_rgb(
-    Real   h,
-    Real   s,
-    Real   l,
-    Real   *r,
-    Real   *g,
-    Real   *b )
-public  void  convert_colour_to_hsl(
-    Colour   rgb,
-    Colour   *hsl )
-public  void  convert_colour_to_rgb(
-    Colour   hsl,
-    Colour   *rgb )
-\end{verbatim}}
-
-\desc{Converts between red-green-blue and hue-saturation-light space.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  equal_colours(
-    Colour  col1,
-    Colour  col2 )
-\end{verbatim}}
-
-\desc{returns \name{TRUE} if the two colours are equal.}
-
-{\bf\begin{verbatim}
-public  int  get_colour_distance(
-    int      r,
-    int      g,
-    int      b,
-    Colour   c2 )
-\end{verbatim}}
-
-\desc{finds the squared Euclidean distance between the first colour,
-specified by its components, and the second colour, \name{c2}.}
-
-{\bf\begin{verbatim}
-public  int   find_closest_colour(
-    int     r,
-    int     g,
-    int     b,
-    int     n_colours,
-    Colour  colours[] )
-\end{verbatim}}
-
-\desc{Given the three components of a target colour, and a list of
-\name{n\_colours} colours, returns the index in the list of the
-closest colour to the target colour.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  lookup_colour(
-    char    colour_name[],
-    Colour  *col )
-\end{verbatim}}
-
-\desc{Given a colour name, such as ``\name{red}'' or ``\name{dark\_blue}''
-looks up the name in a list of colours and passes back the
-corresponding colour, returning \name{TRUE} if successful.  The
-supported colours are from the list of about 300 named X colours.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  lookup_colour_name(
-    Colour  col,
-    char    colour_name[] )
-\end{verbatim}}
-
-\desc{This performs the inverse of the \name{lookup\_colour()}
-function, taking a colour and seeing if it matches one of the known
-named colours.  If so, the colour name is copied into the argument
-\name{colour\_name}, and \name{TRUE} is returned.}
 
 \section{General File IO}
 
 Although one may use the standard UNIX file interface (\name{fprintf},
-for example), the Volume IO library contains a set of routines for
+for example), the \vol\  contains a set of routines for
 doing all file operations, with the potential to be portable to
 other operating systems.  There are some other minor advantages,
 including the automatic expansion of \name{\~\ } and environment
-variables.
+variables.  Also, automatic decompression of compressed files is
+provided.
 
 {\bf\begin{verbatim}
 public  void  expand_filename(
@@ -1003,135 +863,6 @@ public  Status  io_unsigned_chars(
 \desc{Inputs or outputs an array of unsigned characters in binary or ascii
 format.}
 
-\section{Global Variables}
-
-This module provides support for defining global variables in such a
-way that there is a lookup table of global variable names.  This table
-can be used to provide reading of global variables from files at
-runtime, or to allow the user to query and modify global variable
-values during program execution.  In order to use this facility, the
-programmer must have (either directly or indirectly)
-{\bf\begin{verbatim}
-#include  <globals.h>
-\end{verbatim}}
-in every program file that refers to a global variable.  The
-global variables must be defined in a file called
-\name{global\_variables.h} which has the following form:
-{\bf\begin{verbatim}
-START_GLOBALS
-    DEF_GLOBAL(        Mine_1, BOOLEAN,  TRUE )
-    DEF_GLOBAL(        Mine_2, int,      3 )
-    DEF_GLOBAL(        Mine_3, Real,     2.5 )
-    DEF_GLOBAL(        Mine_4, Colour,   RED )
-    DEF_GLOBAL5(       Mine_5, Surfprop,
-                       0.3, 0.6, 0.6, 40.0, 1.0 )
-    DEF_GLOBAL3(       Mine_6, Vector,   1.0, 0.0, 0.0 )
-    DEF_GLOBAL3(       Mine_7, Point,    2.0, 2.0, 2.0 )
-    DEF_GLOBAL_STRING( Mine_8, "Initial value" )
-END_GLOBALS
-\end{verbatim}}
-The first argument of each of these macros is the name of the global
-variable.  The second argument is the type of the global variable.
-Note that only the types in the previous example are supported.  The
-final argument or arguments are the initial values of the global
-variable.
-
-Finally, one needs to create the lookup table in one program file,
-usually the main program file, as follows:
-{\bf\begin{verbatim}
-#define  GLOBALS_LOOKUP_NAME  my_globals
-#include  <globals.h>
-\end{verbatim}}
-which creates a global variable lookup table called
-\name{my\_globals} (any name may be chosen for this table).
-Relevant functions for global variables are:
-
-
-{\bf\begin{verbatim}
-public  Status  input_globals_file(
-    int             n_globals_lookup,
-    global_struct   globals_lookup[],
-    char            filename[] )
-\end{verbatim}}
-
-\desc{Inputs global variable assignments from the specified file.
-Assignments are of the form \name{variable = value ;}.  The lookup
-table and its size are passed to this function.  An example
-follows: }
-{\bf\begin{verbatim}
-    if( input_globals_file( SIZEOF_STATIC_ARRAY(my_globals),
-           my_globals, filename ) != OK )
-    {
-        print( "Error reading globals file.\n" );
-    }
-\end{verbatim}}
-
-{\bf\begin{verbatim}
-public  Status  get_global_variable(
-    int              n_globals_lookup,
-    global_struct    globals_lookup[],
-    char             variable_name[],
-    char             value[] )
-\end{verbatim}}
-
-\desc{Creates a string containing the value of the global variable
-matching the specified name, \name{variable\_name}.  For example, if
-the global variable \name{my\_variable} is of type integer,}
-{\bf\begin{verbatim}
-    if( get_global_variable( SIZEOF_STATIC_ARRAY(my_globals),
-            my_globals, "my_variable", value_string ) == OK )
-    {
-        print( "Value is: %s\n", value_string );
-    }
-\end{verbatim}}
-is equivalent to:
-{\bf\begin{verbatim}
-    print( "Value is: %d\n", my_variable );
-\end{verbatim}}
-
-{\bf\begin{verbatim}
-public  Status  set_global_variable(
-    int              n_globals_lookup,
-    global_struct    globals_lookup[],
-    char             variable_name[],
-    char             value_to_set[] )
-\end{verbatim}}
-
-\desc{Sets the value of the global variable matching the specified name,
-\name{variable\_name}, to the value specified by the ascii string
-\name{value\_to\_set}.  For example, if the global variable
-\name{my\_variable} is of type integer,}
-{\bf\begin{verbatim}
-    if( set_global_variable( SIZEOF_STATIC_ARRAY(my_globals),
-            my_globals, "my_variable", "45" ) != OK )
-    {
-        print( "Error setting variable.\n" );
-    }
-\end{verbatim}}
-is equivalent to
-{\bf\begin{verbatim}
-    my_variable = 45;
-\end{verbatim}}
-
-{\bf\begin{verbatim}
-public  Status  set_or_get_global_variable(
-    int              n_globals_lookup,
-    global_struct    globals_lookup[],
-    char             input_str[],
-    char             variable_name[],
-    char             value_string[] )
-\end{verbatim}}
-
-\desc{If the \name{input\_str} is of the form
-``\name{variable = value}'', then the corresponding global variable is
-set to the value, and the value is passed back in ascii form in the
-\name{value\_string} argument.  Otherwise, the form of
-\name{input\_str} is simply ``\name{variable}'' and the corresponding
-global variable is not changed, but its current value is passed back
-in the \name{value\_string} argument.  This routine is useful in many
-programs to read input lines from the user, allowing the user to query
-and set global variable values during program execution.}
-
 \section{Memory Allocation}
 
 A set of macros is provided to allow easy allocation and deallocation
@@ -1278,68 +1009,6 @@ from the use of \name{ADD\_ELEMENT\_TO\_ARRAY} in that the number of
 elements (\name{n\_elems}) can be decreased arbitrarily, without
 causing memory to be deallocated.}
 
-\section{Numerical Utilities}
-
-A small set of useful numerical functions are provided:
-
-{\bf\begin{verbatim}
-public  BOOLEAN  numerically_close(
-    Real  n1,
-    Real  n2,
-    Real  threshold_ratio )
-\end{verbatim}}
-
-\desc{Checks if the two numbers are within the given threshold ratio.
-For instance, \name{numerically\_close( 4113.0, 4112.0, 0.001 )}
-returns \name{TRUE}, since the two numbers are with 0.1 percent of
-each other.}
-
-{\bf\begin{verbatim}
-public  Real  get_good_round_value(
-    Real    value )
-\end{verbatim}}
-
-\desc{Returns the largest power of 10 or five times a power of 10
-which is less then the specified value.  Useful for determining graph
-axis positions.}
-
-{\bf\begin{verbatim}
-public  int  solve_quadratic(
-    Real   a,
-    Real   b,
-    Real   c,
-    Real   *root1,
-    Real   *root2 )
-\end{verbatim}}
-
-\desc{Finds the real roots of the equation $a * x^2 + b * x + c$.
-Returns either 0, 1, or 2, indicating the number of unique real roots,
-which are passed back either in the argument \name{root1}, or in both
-arguments, \name{root1} and \name{root2}.}
-
-{\bf\begin{verbatim}
-public  int solve_cubic(
-    Real   a,
-    Real   b,
-    Real   c,
-    Real   d,
-    Real   roots[ 3 ] )
-\end{verbatim}}
-
-\desc{Finds the real roots of the equation $a * x^3 + b * x^2 + c * x
-+ d$.  Returns the number of unique real solutions, and passes them
-back in the array \name{roots}.}
-
-{\bf\begin{verbatim}
-public  Real  evaluate_polynomial(
-    int     n,
-    Real    poly[],
-    Real    u )
-\end{verbatim}}
-
-\desc{Efficiently evaluates a polynomial of the form $poly[0] +
-poly[1] * u + poly[2] * u^2 ...$, using Horner's rule.}
-
 \section{Progress Reports}
 
 In order to provide simple monitoring of the progress of a particular
@@ -1405,34 +1074,6 @@ public  void  terminate_progress_report(
 \end{verbatim}}
 
 \desc{Terminates the progress report.}
-
-\section{Random Numbers}
-
-A simple random number package is provided, which produces a sequence
-of pseudo-random numbers based on a seed value, which totally
-determines the entire sequence of numbers.  If the user does not set a
-seed, a seed is automatically created from the current time and date.
-
-{\bf\begin{verbatim}
-public  void  set_random_seed(
-    int seed )
-\end{verbatim}}
-
-\desc{Sets the seed which determines the sequence of pseudo-random numbers.}
-
-{\bf\begin{verbatim}
-public  int  get_random_int(
-    int n )
-\end{verbatim}}
-
-\desc{Returns a random integer in the range zero to \name{n-1}.}
-
-{\bf\begin{verbatim}
-public  Real  get_random_0_to_1( void )
-\end{verbatim}}
-
-\desc{Returns a random number greater than or equal to zero and
-strictly less than one.}
 
 \section{Strings}
 
@@ -1802,7 +1443,7 @@ dealing with volumes, one is generally interested in the \name{real}
 range.
 
 {\bf\begin{verbatim}
-    GET_VOXEL( value, volume, v1, v2, v3, v4, v5 )
+GET_VOXEL( value, volume, v1, v2, v3, v4, v5 )
 \end{verbatim}}
 
 \desc{Given a volume and from one to five voxel indices, depending on
@@ -2806,7 +2447,7 @@ return \name{ERROR} or \name{OK}.}
 
 This is an example which attempts to illustrate a typical processing
 task incorporating use of volumes, tag points, and transformations.
-This is a full program which, when linked to the Volume IO library,
+This is a full program which, when linked to the \vol,
 reads two volumes in MINC format, a set of tag points from file, and a
 transformation from file.  The tag points are assumed to be in the
 world space of the first volume, and the transformation is assumed to
