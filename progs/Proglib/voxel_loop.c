@@ -6,9 +6,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.4  1995-05-01 20:04:50  neelin
-@MODIFIED   : Fixed memory leak - not freeing global_minimum/maximum.
+@MODIFIED   : Revision 1.5  1995-05-02 16:05:32  neelin
+@MODIFIED   : Fixed bug in handling more than 30 files (needed to detach from icv).
+@MODIFIED   : Added more checking of dimensions.
+@MODIFIED   : Fixed bug in allocation of space for global max/min.
 @MODIFIED   :
+ * Revision 1.4  1995/05/01  20:04:50  neelin
+ * Fixed memory leak - not freeing global_minimum/maximum.
+ *
  * Revision 1.3  1995/03/21  15:33:07  neelin
  * Changed call to voxel_function to always use proper vector length and
  * set num_voxels to the number of voxels, not multiplying by vector length.
@@ -33,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.4 1995-05-01 20:04:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.5 1995-05-02 16:05:32 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -134,6 +139,7 @@ private int input_image_varinq(int mincid, int imgid, char *name,
 private void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
                           double start[], double step[],
+                          double dircos[][3], int is_regular[],
                           Loop_Options *loop_options);
 private void setup_output_files(Loop_Options *loop_options, 
                                 Loopfile_Info *loopfile_info,
@@ -421,7 +427,7 @@ private void translate_input_coords(int inmincid,
 private void check_input_files(Loop_Options *loop_options,
                                Loopfile_Info *loopfile_info)
 {
-   int ifile, idim;
+   int ifile, idim, jdim;
    int first_ndims, ndims;
    int input_mincid;
    long first_size[MAX_VAR_DIMS], size[MAX_VAR_DIMS];
@@ -430,6 +436,9 @@ private void check_input_files(Loop_Options *loop_options,
    double first_start[MAX_VAR_DIMS], start[MAX_VAR_DIMS];
    double first_step[MAX_VAR_DIMS], step[MAX_VAR_DIMS];
    double start_diff, step_diff;
+   double first_dircos[MAX_VAR_DIMS][3], dircos[MAX_VAR_DIMS][3];
+   double dircos_diff, dircos_cumdiff;
+   int first_is_regular[MAX_VAR_DIMS], is_regular[MAX_VAR_DIMS];
 
    /* Keep track of number of inputs (files and looping dimension) */
    loop_options->num_all_inputs = 0;
@@ -448,11 +457,12 @@ private void check_input_files(Loop_Options *loop_options,
       /* Get dimension information for this file */
       if (ifile == 0) {
          get_dim_info(input_mincid, &first_ndims, first_size, first_dimname,
-                      first_start, first_step, loop_options);
+                      first_start, first_step, first_dircos,
+                      first_is_regular, loop_options);
       }
       else {
          get_dim_info(input_mincid, &ndims, size, dimname, start, step,
-                      loop_options);
+                      dircos, is_regular, loop_options);
          
          /* Check number of dimensions */
          if (ndims != first_ndims) {
@@ -492,12 +502,43 @@ private void check_input_files(Loop_Options *loop_options,
                if (first_start[idim] != 0.0) start_diff /= first_start[idim];
                step_diff = step[idim] - first_step[idim];
                if (first_step[idim] != 0.0) step_diff /= first_step[idim];
-               if ((ABS(start_diff) > COORD_EPSILON) ||
-                   (ABS(step_diff) > COORD_EPSILON)) {
+               dircos_cumdiff = 0.0;
+               for (jdim=0; jdim < 3; jdim++) {
+                  dircos_diff = first_dircos[idim][jdim] - dircos[idim][jdim];
+                  if (first_dircos[idim][jdim] != 0.0)
+                     dircos_diff /= first_dircos[idim][jdim];
+                  dircos_cumdiff += ABS(dircos_diff);
+               }
+               if (ABS(start_diff) > COORD_EPSILON) {
                   (void) fprintf(stderr, 
-                     "Files %s and %s have different dimension coordinates\n",
+                     "Files %s and %s have different start coordinates (%s)\n",
                                  get_input_filename(loopfile_info,ifile),
-                                 get_input_filename(loopfile_info,0));
+                                 get_input_filename(loopfile_info,0),
+                                 first_dimname[idim]);
+                  exit(EXIT_FAILURE);
+               }
+               if (ABS(step_diff) > COORD_EPSILON) {
+                  (void) fprintf(stderr, 
+                     "Files %s and %s have different step coordinates (%s)\n",
+                                 get_input_filename(loopfile_info,ifile),
+                                 get_input_filename(loopfile_info,0),
+                                 first_dimname[idim]);
+                  exit(EXIT_FAILURE);
+               }
+               if (dircos_cumdiff > COORD_EPSILON) {
+                  (void) fprintf(stderr, 
+                     "Files %s and %s have different direction cosines (%s)\n",
+                                 get_input_filename(loopfile_info,ifile),
+                                 get_input_filename(loopfile_info,0),
+                                 first_dimname[idim]);
+                  exit(EXIT_FAILURE);
+               }
+               if (first_is_regular[idim] != is_regular[idim]) {
+                  (void) fprintf(stderr, 
+                     "Files %s and %s have different coordinate spacings (%s)\n",
+                                 get_input_filename(loopfile_info,ifile),
+                                 get_input_filename(loopfile_info,0),
+                                 first_dimname[idim]);
                   exit(EXIT_FAILURE);
                }
 
@@ -600,6 +641,9 @@ private int input_image_varinq(int mincid, int imgid, char *name,
               dimname - array of dimension names
               start - array of starts for dimensions
               step  - array of steps for dimensions
+              dircos - array of direction cosines
+              is_regular - array of flags indicating whether dimension is
+                 regularly spaced or not
               loop_options - looping options
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to get dimension information for a file.
@@ -612,14 +656,24 @@ private int input_image_varinq(int mincid, int imgid, char *name,
 private void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
                           double start[], double step[],
+                          double dircos[][3], int is_regular[],
                           Loop_Options *loop_options)
 {
    int imgid, varid;
-   int idim;
+   int idim, jdim;
    int dim[MAX_VAR_DIMS];
+   int att_length;
    char string[MAX_NC_NAME];
    char *thename;
    int old_ncopts;
+   enum {XAXIS, YAXIS, ZAXIS, OAXIS} dimtype;
+   static double default_dircos[][3] = {
+      1.0, 0.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0,
+      0.0, 0.0, 0.0
+   };
+   char regstring[MI_MAX_ATTSTR_LEN];
 
    /* Get image variable info */
    imgid = ncvarid(mincid, MIimage);
@@ -632,9 +686,28 @@ private void get_dim_info(int mincid, int *ndims, long size[],
       else thename = dimname[idim];
       (void) ncdiminq(mincid, dim[idim], thename, &size[idim]);
 
-      /* Get coordinate info */
+      /* Set default coordinate info */
       if (start != NULL) start[idim] = 0.0;
       if (step != NULL) step[idim] = 1.0;
+      if (dircos != NULL) {
+         if ((strcmp(thename, MIxspace) == 0) ||
+             (strcmp(thename, MIxfrequency) == 0))
+            dimtype = XAXIS;
+         else if ((strcmp(thename, MIyspace) == 0) ||
+                  (strcmp(thename, MIyfrequency) == 0))
+            dimtype = YAXIS;
+         else if ((strcmp(thename, MIzspace) == 0) ||
+                  (strcmp(thename, MIzfrequency) == 0))
+            dimtype = ZAXIS;
+         else
+            dimtype = OAXIS;
+         for (jdim=0; jdim < 3; jdim++)
+            dircos[idim][jdim] = default_dircos[dimtype][jdim];
+      }
+      if (is_regular != NULL)
+         is_regular[idim] = TRUE;
+
+      /* Get the coordinate info */
       old_ncopts = ncopts; ncopts = 0;
       varid = ncvarid(mincid, thename);
       if (varid != MI_ERROR) {
@@ -642,7 +715,19 @@ private void get_dim_info(int mincid, int *ndims, long size[],
             (void) miattget1(mincid, varid, MIstart, NC_DOUBLE, &start[idim]);
          if (step != NULL)
             (void) miattget1(mincid, varid, MIstep, NC_DOUBLE, &step[idim]);
+         if (dircos != NULL)
+            (void) miattget(mincid, varid, MIdirection_cosines, NC_DOUBLE,
+                            3, dircos[idim], &att_length);
+         if (is_regular != NULL) {
+            if (miattgetstr(mincid, varid, MIspacing, 
+                            sizeof(regstring), regstring) != NULL) {
+               if (strcmp(regstring, MI_REGULAR) == 0)
+                  is_regular[idim] = TRUE;
+               else if (strcmp(regstring, MI_IRREGULAR) == 0)
+                  is_regular[idim] = FALSE;
+            }
          }
+      }
       ncopts = old_ncopts;
    }
    
@@ -1121,7 +1206,7 @@ private void do_voxel_loop(Loop_Options *loop_options,
       extra_buffers = NULL;
 
    /* Initialize global min and max */
-   if (num_output_files < 0) {
+   if (num_output_files > 0) {
       global_minimum = MALLOC(num_output_files * sizeof(double));
       global_maximum = MALLOC(num_output_files * sizeof(double));
       for (ofile=0; ofile < num_output_files; ofile++) {
@@ -1456,7 +1541,8 @@ private void setup_looping(Loop_Options *loop_options,
    inmincid = get_input_mincid(loopfile_info, 0);
 
    /* Get number of dimensions and their sizes */
-   get_dim_info(inmincid, &total_ndims, size, NULL, NULL, NULL, loop_options);
+   get_dim_info(inmincid, &total_ndims, size, NULL, NULL, NULL, NULL, NULL,
+                loop_options);
 
    /* Get vector lengths */
    input_vector_length = get_vector_length(inmincid, loop_options);
@@ -1696,8 +1782,9 @@ private Loopfile_Info *initialize_loopfile_info(int num_input_files,
    num_free_files = loop_options->max_open_files;
    if (num_free_files > MAX_NC_OPEN) num_free_files = MAX_NC_OPEN;
 
-   /* Check to see if we can open output files */
-   if (num_output_files < num_free_files) {
+   /* Check to see if we can open output files (we must leave room for one
+      input file) */
+   if (num_output_files < num_free_files-1) {
       loopfile_info->output_all_open = TRUE;
       num_files = num_output_files;
    }
@@ -2064,6 +2151,8 @@ private int get_input_mincid(Loopfile_Info *loopfile_info,
       index = 0;
       if ((loopfile_info->input_mincid[index] != MI_ERROR) &&
           (loopfile_info->current_input_file_number != file_num)) {
+         if (loopfile_info->input_icvid[index] != MI_ERROR)
+            (void) miicv_detach(loopfile_info->input_icvid[index]);
          (void) miclose(loopfile_info->input_mincid[index]);
          loopfile_info->input_mincid[index] = MI_ERROR;
       }
@@ -2119,6 +2208,8 @@ private int get_output_mincid(Loopfile_Info *loopfile_info,
       index = 0;
       if ((loopfile_info->output_mincid[index] != MI_ERROR) &&
           (loopfile_info->current_output_file_number != file_num)) {
+         if (loopfile_info->output_icvid[index] != MI_ERROR)
+            (void) miicv_detach(loopfile_info->output_icvid[index]);
          (void) miclose(loopfile_info->output_mincid[index]);
          loopfile_info->output_mincid[index] = MI_ERROR;
       }
