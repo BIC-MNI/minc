@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.2 1993-03-03 14:15:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.3 1993-03-08 11:41:28 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -765,6 +765,8 @@ public void create_output_file(char *filename, int clobber,
                                            ndims, out_dims);
    (void) micopy_all_atts(in_file->mincid, in_file->imgid,
                           out_file->mincid, out_file->imgid);
+   (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete,
+                      MI_FALSE);
    (void) ncattput(out_file->mincid, out_file->imgid, MIvalid_range, 
                    NC_DOUBLE, 2, out_file->vrange);
    if (out_file->is_signed)
@@ -1032,6 +1034,7 @@ public void finish_up(Volume *in_vol, Volume *out_vol)
    }
 
    /* Close the output file */
+   (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete, MI_TRUE);
    (void) ncclose(out_file->mincid);
 
    /* Close the input file */
@@ -1186,7 +1189,7 @@ public int get_fillvalue(char *dst, char *key, char *nextArg)
 
    /* Check key for fill value to set */
    if (strcmp(key, "-fill") == 0) {
-      *dptr = -FILL_DOUBLE;
+      *dptr = -FLT_MAX;
    }
    else if (strcmp(key, "-nofill") == 0) {
       *dptr = FILL_DEFAULT;

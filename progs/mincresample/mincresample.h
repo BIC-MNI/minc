@@ -21,6 +21,7 @@
 #define DEFAULT_MAX 1.0
 #define DEFAULT_MIN 0.0
 #define FILL_DEFAULT DBL_MAX   /* Fillvalue indicating -nofill */
+#define SMALL_VALUE (100.0*FLT_MIN)   /* A small floating-point value */
 #define PROCESSING_VAR "processing"
 #define TEMP_IMAGE_VAR "mincresample-temporary-image"
 #ifndef TRUE

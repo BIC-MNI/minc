@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.2 1993-03-03 14:15:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.3 1993-03-08 11:42:14 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -385,12 +385,12 @@ public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol,
    }        /* Loop over rows */
 
    if ((*maximum == -DBL_MAX) && (*minimum ==  DBL_MAX)) {
-      *maximum = 1.0;
       *minimum = 0.0;
+      *maximum = SMALL_VALUE;
    }
    else if (*maximum <= *minimum) {
       if (*minimum == 0.0) 
-         *maximum = 1.0;
+         *maximum = SMALL_VALUE;
       else if (*minimum < 0.0)
          *maximum = 0.0;
       else
