@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = mnitominc
 HEADERS  = $(PROGS:=.h)
 CDEFINES = #                        cpp defines
-LDOPT    = $(CC_PROG_LIB) -lm $(MINC_LDOPT)
+LDOPT    = $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 

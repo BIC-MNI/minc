@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = mincextract
 HEADERS  = 
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(CC_PROG_LIB) $(MINC_LDOPT)
+LDOPT    = $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 

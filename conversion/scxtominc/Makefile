@@ -12,7 +12,7 @@ PROGS    = scxtominc
 EXTRA_OBJS = scx_file.o
 HEADERS  = scx_file.h
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(CC_PROG_LIB) -lm $(MINC_LDOPT)
+LDOPT    = $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 
