@@ -30,14 +30,6 @@ sub ge5_initialize_tape_drive {
 # Subroutine to read the ge 5.x file headers
 sub ge5_read_headers {
 
-    # Set constants for reading file
-    local($suite_hdr_len) = 114;
-    local($exam_hdr_len) = 1024;
-    local($series_hdr_len) = 1020;
-    local($image_hdr_len) = 1022;
-    local($pixel_hdr_prefix_len) = 124;
-    local($pixdatsize_len) = 4;
-
     # Check arguements
     if (scalar(@_) != 8) {
         &cleanup_and_die("Argument error in ge5_read_headers",1);
@@ -46,43 +38,94 @@ sub ge5_read_headers {
           *image_hdr, *pixel_hdr, *pixel_data_offset, *pixel_data_len)
         = @_;
 
-    # Read in file headers
+    # Set constants for reading DAT files
+    local($magic_string) = "IMGF";
+    local($suite_hdr_len) = 114;
+    local($suite_hdr_off) = 0;
+    local($exam_hdr_len) = 1024;
+    local($exam_hdr_off) = $suite_hdr_off + $suite_hdr_len;
+    local($series_hdr_len) = 1020;
+    local($series_hdr_off) = $exam_hdr_off + $exam_hdr_len;
+    local($image_hdr_len) = 1022;
+    local($image_hdr_off) = $series_hdr_off + $series_hdr_len;
+    local($DAT_pixel_hdr_prefix_len) = 124;
+    local($DAT_pixel_hdr_off) = $image_hdr_off + $image_hdr_len;
+    local($DAT_pixdatsize_len) = 4;
+
+    # Set pixel header constants for disk files
+    local($DISK_pixel_hdr_prefix_len) = 156;
+    local($DISK_pixel_hdr_off) = 0;
+
+    # Open file
     if (!open(GEF, "<".$filename)) {
         warn "Can't open file $filename: $!";
         return 1;
     }
-    return 1
-        if (read(GEF, $suite_hdr, $suite_hdr_len) != $suite_hdr_len);
-    return 1
-        if (read(GEF, $exam_hdr, $exam_hdr_len) != $exam_hdr_len);
-    return 1
-        if (read(GEF, $series_hdr, $series_hdr_len) != $series_hdr_len);
-    return 1
-        if (read(GEF, $image_hdr, $image_hdr_len) != $image_hdr_len);
-    return 1
-        if (read(GEF, $pixel_hdr, $pixel_hdr_prefix_len) !=
-            $pixel_hdr_prefix_len);
 
-    # Check the image file magic number
-    if (unpack("a4",$pixel_hdr) ne "IMGF") {
-        warn "Bad image file magic number in \"$filename\"";
-        return 1;
+    # Check to see if this is a disk file or DAT file
+    return 1
+       if (read(GEF, $pixel_hdr, $DISK_pixel_hdr_prefix_len) 
+           != $DISK_pixel_hdr_prefix_len);
+    local($is_DISK_file) = (substr($pixel_hdr, 0, 4) eq $magic_string);
+
+    # For disk file, read header positions and lengths
+    if ($is_DISK_file) {
+       $suite_hdr_off = &unpack_value(*pixel_hdr, 124, 'i');
+       $suite_hdr_len = &unpack_value(*pixel_hdr, 128, 'i');
+       $exam_hdr_off = &unpack_value(*pixel_hdr, 132, 'i');
+       $exam_hdr_len = &unpack_value(*pixel_hdr, 136, 'i');
+       $series_hdr_off = &unpack_value(*pixel_hdr, 140, 'i');
+       $series_hdr_len = &unpack_value(*pixel_hdr, 144, 'i');
+       $image_hdr_off = &unpack_value(*pixel_hdr, 148, 'i');
+       $image_hdr_len = &unpack_value(*pixel_hdr, 152, 'i');
+       $pixel_data_offset = 7904;
+       $pixel_data_len = -1;
     }
 
-    # Get the length of the pixel header
-    local($pixel_hdr_len) = unpack("L", substr($pixel_hdr, 4, 4));
+    # For DAT file read in pixel header and get image position and length
+    else {
+       return 1 if (!seek(GEF, $DAT_pixel_hdr_off, 0));
+       return 1
+          if (read(GEF, $pixel_hdr, $DAT_pixel_hdr_prefix_len) 
+              != $DAT_pixel_hdr_prefix_len);
 
-    # Calculate the offset to pixel data
-    local($pixdatsize_offset) = $suite_hdr_len + $exam_hdr_len + 
-        $series_hdr_len + $image_hdr_len + $pixel_hdr_len;
-    $pixel_data_offset = $pixdatsize_offset + $pixdatsize_len;
+       # Check the image file magic number
+       if (substr($pixel_hdr, 0, 4) ne $magic_string) {
+          warn "Bad image file magic number in \"$filename\"";
+          return 1;
+       }
 
-    # Read in the length of the pixel data
-    local($pixdatsize);
-    seek(GEF, $pixdatsize_offset, 0);
+       # Get the length of the pixel header
+       local($pixel_hdr_len) = &unpack_value(*pixel_hdr, 4, "i");
+
+       # Calculate the offset to pixel data
+       local($pixdatsize_len) = $DAT_pixdatsize_len;
+       local($pixdatsize_offset) = $suite_hdr_len + $exam_hdr_len + 
+          $series_hdr_len + $image_hdr_len + $pixel_hdr_len;
+       $pixel_data_offset = $pixdatsize_offset + $pixdatsize_len;
+
+       # Read in the length of the pixel data
+       local($pixdatsize);
+       return 1 if (!seek(GEF, $pixdatsize_offset, 0));
+       return 1
+          if (read(GEF, $pixdatsize, $pixdatsize_len) != $pixdatsize_len);
+       $pixel_data_len = &unpack_value(*pixdatsize, 0, "i");
+
+    }
+
+    # Read in file headers
+    return 1 if (!seek(GEF, $suite_hdr_off, 0));
     return 1
-        if (read(GEF, $pixdatsize, $pixdatsize_len) != $pixdatsize_len);
-    $pixel_data_len = unpack("L",$pixdatsize);
+        if (read(GEF, $suite_hdr, $suite_hdr_len) != $suite_hdr_len);
+    return 1 if (!seek(GEF, $exam_hdr_off, 0));
+    return 1
+        if (read(GEF, $exam_hdr, $exam_hdr_len) != $exam_hdr_len);
+    return 1 if (!seek(GEF, $series_hdr_off, 0));
+    return 1
+        if (read(GEF, $series_hdr, $series_hdr_len) != $series_hdr_len);
+    return 1 if (!seek(GEF, $image_hdr_off, 0));
+    return 1
+        if (read(GEF, $image_hdr, $image_hdr_len) != $image_hdr_len);
 
     # Close input file
     close(GEF);
