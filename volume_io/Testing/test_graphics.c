@@ -1,5 +1,6 @@
 
 #include  <def_graphics.h>
+#include  <def_alloc.h>
 
 #define  LIGHT_INDEX       0
 
@@ -42,8 +43,14 @@ main()
     void              make_identity_transform();
     void              make_rotation_transform();
     void              concat_transforms();
+    static Point      origin = { 0.0, 0.0, 2.0 };
+    static Vector     up_direction = { 0.0, 1.0, 0.0 };
+    static Vector     line_of_sight = { 0.0, 0.0, -1.0 };
 
     status = G_create_window( "Test Window", -1, -1, -1, -1, &window );
+
+    G_set_3D_view( window, &origin, &line_of_sight, &up_direction,
+                   0.01, 4.0, ON, 2.0, 2.0, 2.0 );
 
     /* ------- define text to be drawn (text.string filled in later ----- */
 
@@ -56,13 +63,28 @@ main()
 
     status = initialize_lines( &lines, make_Colour(255,255,0) );
 
-    status = begin_adding_points_to_line( &lines );
+    lines.n_points = 4;
+    ALLOC( status, lines.points, 4 );
+    fill_Point( lines.points[0], 0.0, 0.0, 0.0 );
+    fill_Point( lines.points[1], 1.0, 1.0, 0.0 );
+    fill_Point( lines.points[2], -0.3, 1.0, -1.0 );
+    fill_Point( lines.points[3], 0.3, 1.0, 1.0 );
 
-    fill_Point( point, 0.1, 0.1, 0.0 );
-    status = add_point_to_line( &lines, &point );
+    lines.n_items = 3;
+    ALLOC( status, lines.end_indices, lines.n_items );
+    lines.end_indices[0] = 2;
+    lines.end_indices[1] = 4;
+    lines.end_indices[2] = 6;
 
-    fill_Point( point,0.9, 0.1, 0.0 );
-    status = add_point_to_line( &lines, &point );
+    ALLOC( status, lines.indices, lines.end_indices[lines.n_items-1] );
+    lines.indices[0] = 0;
+    lines.indices[1] = 1;
+
+    lines.indices[2] = 0;
+    lines.indices[3] = 2;
+
+    lines.indices[4] = 0;
+    lines.indices[5] = 3;
 
     /* ------------ define polygons to be drawn  ------------- */
 
@@ -208,8 +230,6 @@ main()
         {
             G_set_view_type( window, MODEL_VIEW );
             G_draw_polygons( window, &polygons );
-
-            G_set_view_type( window, SCREEN_VIEW );
             G_draw_lines( window, &lines );
 
             G_set_view_type( window, PIXEL_VIEW );
