@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 1.10  1993-08-11 15:25:05  neelin
-@MODIFIED   : Added RCS logging to source.
+@MODIFIED   : Revision 1.11  1993-10-06 10:14:17  neelin
+@MODIFIED   : Added include of string.h.
 @MODIFIED   :
+ * Revision 1.10  93/08/11  15:25:05  neelin
+ * Added RCS logging to source.
+ * 
               December 2, 1992 (P.N.)
                  - changed to parse argv with ParseArgv
 @COPYRIGHT  :
@@ -28,11 +31,12 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.10 1993-08-11 15:25:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.11 1993-10-06 10:14:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <minc.h>
 #include <float.h>
 #include <ParseArgv.h>
