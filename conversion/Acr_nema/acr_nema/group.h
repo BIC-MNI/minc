@@ -5,12 +5,9 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 4.2  1997-08-21 13:24:55  neelin
+@MODIFIED   : Added function acr_group_remove_element
 @MODIFIED   :
- * Revision 4.2  1997/08/21  13:24:55  neelin
- * Pre-release
- *
  * Revision 4.1  1997/06/17  23:49:08  neelin
  * Added routines for inserting elements into a group list.
  *
