@@ -10,7 +10,25 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.3  2000-09-08 18:17:15  neelin
+ * Revision 6.4.2.1  2005-02-15 19:59:54  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.4  2005/01/19 19:46:01  bert
+ * Changes from Anthonin Reilhac
+ *
+ *
+ * Revision 7.0  2004/08/13           Anthonin Reilhac
+ * Portage of the code under linux environment
+ *    - little / big Indian conversion
+ *    - the vax conversion routines are now included within the distribution
+ *    - MALLOC, REALLOC and FREE macros definined within the ecat_file.h body
+ *      MALLOC and REALLOC use the malloc_check and realloc_check in ecat_file.c
+ *      which are not private(static) anymore
+ *      mni_def.h is not used anymore and 
+ * Fixed x and y flipping when y size is odd.
+ * Did not show up before since normal x and y size are even
+ *
+ * Revision 6.3  2000/09/08 18:17:15  neelin
  * Fixed swapping of x and y sizes when getting dimensions sizes from ecat file.
  * This has not previously shown up since normal ECAT images are square.
  *
@@ -53,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.3 2000-09-08 18:17:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.4.2.1 2005-02-15 19:59:54 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -67,8 +85,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecatto
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <minc.h>
-#include <minc_def.h>
-#include <ecat_file.h>
+/*#include <def_mni.h>    modif anthonin */
+#include "ecat_file.h"
+
+
 
 /* Type declarations */
 typedef struct {
@@ -186,6 +206,14 @@ void FillBloodStructures (int mincHandle, int bloodHandle);
 #define MINIMUM_HALFLIFE 0.1
 #define FWHM_SCALE_FOR_HANN 1.082
 
+
+/* we don't need mni_def anymore*/
+
+/*#define MALLOC(size) ((void *) malloc(size))
+#define FREE(ptr) free( (void *) ptr)
+#define REALLOC(ptr, size) ((void *) realloc(ptr, size))*/
+
+
 /* Main program */
 
 int main(int argc, char *argv[])
@@ -235,9 +263,9 @@ int main(int argc, char *argv[])
    };
 
    /* Other variables */
-   char *pname;
-   char *mincfile;
-   char *ecat_filename;
+   char *pname; /*name of the present command ->argv[0]*/
+   char *mincfile; /*name of the minc file = output*/
+   char *ecat_filename; /*name of the ecat7 file = input*/
    int num_frames;
    int num_bed_positions;
    int sort_over_time;
@@ -253,7 +281,7 @@ int main(int argc, char *argv[])
    short *image;
    Ecat_file *ecat_fp;
    int status;
-   char *tm_stamp;
+   char *tm_stamp; /******** pk for minchistory*/
    double first_z, last_z, zstep;
 
    /* Get time stamp */
@@ -305,6 +333,8 @@ int main(int argc, char *argv[])
                      pname, ecat_filename);
       exit(EXIT_FAILURE);
    }
+
+   
 
    /* Get number of frames and bed positions to see if we are varying over
       time or interleaving slices */
@@ -1435,7 +1465,7 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
               general_info_type *general_info)
      /* ARGSUSED */
 {
-   long npix, ix, iy, y_offset, off1, off2;
+   long npix, in, off;
    int pmax;
    int lvalue;
    short temp;
@@ -1443,20 +1473,16 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
 
    /* Get the image from the file */
    if (ecat_get_image(ecat_fp, frame_num, slice_num, image)) return TRUE;
-
+   
    /* Flip the image to give positive x & y axes */
    npix = frame_info->image_xsize * frame_info->image_ysize;
-   for (iy=0; iy<frame_info->image_ysize/2; iy++) {
-      y_offset = iy * frame_info->image_xsize;
-      for (ix=0; ix<frame_info->image_xsize; ix++) {
-         off1 = y_offset + ix;
-         off2 = npix - off1 - 1;
-         temp = image[off1];
-         image[off1] = image[off2];
-         image[off2] = temp;
-      }
-   }
 
+   for(in = 0; in < npix/2; in++) {
+     off = npix - in - 1;
+     temp = image[off];
+     image[off] = image[in];
+     image[in] = temp;     
+   }
    /* Get image and pixel max */
    if (ecat_get_subhdr_value(ecat_fp, frame_num, slice_num, 
                              ECAT_Image_Max, 0, &pmax, NULL, NULL) ||
@@ -1483,7 +1509,6 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
    return FALSE;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : write_minc_slice
 @INPUT      : scale - scale for decay correcting image
@@ -1565,7 +1590,7 @@ int write_minc_slice(double scale, int write_byte_data,
    return FALSE;
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : decay_correction
 @INPUT      : scan_time - time of beginning of sample

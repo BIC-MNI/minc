@@ -10,7 +10,13 @@
 @CREATED    : January 10, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_ecat_header.c,v $
- * Revision 6.1  1999-10-29 17:52:00  neelin
+ * Revision 6.2.2.1  2005-02-15 19:59:54  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.2  2005/01/19 19:46:00  bert
+ * Changes from Anthonin Reilhac
+ *
+ * Revision 6.1  1999/10/29 17:52:00  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:22  neelin
@@ -38,14 +44,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/dump_ecat_header.c,v 6.1 1999-10-29 17:52:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/dump_ecat_header.c,v 6.2.2.1 2005-02-15 19:59:54 bert Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <ecat_file.h>
+#include "ecat_file.h"
 
 /* Main program */
 

@@ -5,7 +5,13 @@
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecat_file.c,v $
- * Revision 6.1  1999-10-29 17:52:01  neelin
+ * Revision 6.2.2.1  2005-02-15 19:59:54  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.2  2005/01/19 19:46:00  bert
+ * Changes from Anthonin Reilhac
+ *
+ * Revision 6.1  1999/10/29 17:52:01  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:22  neelin
@@ -33,15 +39,17 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecat_file.c,v 6.1 1999-10-29 17:52:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecat_file.c,v 6.2.2.1 2005-02-15 19:59:54 bert Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
-#include <ecat_file.h>
-#include <vax_conversions.h>
+#include "ecat_file.h"
+#include "machine_indep.h"
+
+/*#include <vax_conversions.h>*/
 
 /* Set some standard macros */
 #ifndef SEEK_SET
@@ -51,10 +59,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecat_f
 #  define TRUE 1
 #  define FALSE 0
 #endif
-#define MALLOC(size) ((void *) malloc_check(size))
-#define FREE(ptr) free(ptr)
-#define REALLOC(ptr, size) ((void *) realloc_check(ptr, size))
-#define CALLOC(nelem, elsize) ((void *) calloc(nelem, elsize))
 
 /* Constants */
 #define BLOCK_SIZE 512
@@ -99,19 +103,19 @@ typedef struct {
 
 /* ECAT file Type */
 struct Ecat_file {
-   FILE *file_pointer;
-   Ecat_header_description_type *header_description;
-   int vax_byte_order;
-   int num_planes;
-   int num_frames;
-   int num_bed_positions;
-   int num_gates;
-   int num_volumes;
-   unsigned char *main_header;
-   long cur_subhdr_offset;
-   unsigned char *subheader;
-   int num_subhdrs;
-   long *subhdr_offsets;
+  FILE *file_pointer;
+  Ecat_header_description_type *header_description;
+  int vax_byte_order;
+  int num_planes;
+  int num_frames;
+  int num_bed_positions;
+  int num_gates;
+  int num_volumes;
+  unsigned char *main_header;
+  long cur_subhdr_offset;
+  unsigned char *subheader;
+  int num_subhdrs;
+  long *subhdr_offsets;
 };
 
 typedef enum {
@@ -146,8 +150,7 @@ private int ecat_read_directory(Ecat_file *file);
 private long get_dirblock(Ecat_file *file, long *dirblock, int offset);
 private int ecat_get_subhdr_offset(Ecat_file *file, int volume, int slice, 
                                    long *offset);
-private void *malloc_check(size_t size);
-private void *realloc_check(void *ptr, size_t size);
+
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -169,6 +172,8 @@ public Ecat_file *ecat_open(char *filename)
 
    /* Allocate space for an ecat file structure */
    file = (void *) MALLOC(sizeof(*file));
+
+
    file->main_header = (void *) MALLOC(MAIN_HEADER_SIZE);
    file->subheader = (void *) MALLOC(SUBHEADER_SIZE);
    file->cur_subhdr_offset = -1;
@@ -216,13 +221,14 @@ public Ecat_file *ecat_open(char *filename)
    if (file->num_volumes < file->num_gates)
       file->num_volumes = file->num_gates;
 
+
    /* Read the directory structure */
    if (ecat_read_directory(file)) {
       ecat_close(file);
       return NULL;
    }
-
    /* Return the file pointer */
+
    return file;
 }
 
@@ -571,6 +577,7 @@ public int ecat_get_main_value(Ecat_file *file,
                                Ecat_field_name field, int index,
                                int *ivalue, double *fvalue, char *svalue)
 {
+
    return ecat_get_value(file, ECAT_MAIN_HEADER, 0, 0, field, index, 
                          ivalue, fvalue, svalue);
 }
@@ -674,29 +681,29 @@ private int ecat_get_value(Ecat_file *file,
    /* Get the value and convert it */
    switch (type) {
    case ecat_byte:
-      byte_value = header[offset];
-      if (ivalue != NULL) *ivalue = byte_value;
-      if (fvalue != NULL) *fvalue = byte_value;
-      if (svalue != NULL) (void) sprintf(svalue, "%d", (int) byte_value);
-      break;
+     byte_value = header[offset];
+     if (ivalue != NULL) *ivalue = byte_value;
+     if (fvalue != NULL) *fvalue = byte_value;
+     if (svalue != NULL) (void) sprintf(svalue, "%d", (int) byte_value);
+     break;
    case ecat_short:
-      if (file->vax_byte_order) {
-         get_vax_short(1, &header[offset], &short_value);
-      }
-      else {
-         (void) memcpy(&short_value, &header[offset], sizeof(short));
-      }
-      if (ivalue != NULL) *ivalue = short_value;
-      if (fvalue != NULL) *fvalue = short_value;
-      if (svalue != NULL) (void) sprintf(svalue, "%d", (int) short_value);
-      break;
+     if (file->vax_byte_order) {
+	get_vax_short(1, &header[offset], &short_value);
+     }
+     else {
+       get_short_value(& header[offset], &short_value);
+     }
+     if (ivalue != NULL) *ivalue = short_value;
+     if (fvalue != NULL) *fvalue = short_value;
+     if (svalue != NULL) (void) sprintf(svalue, "%d", (int) short_value);
+     break;
    case ecat_long:
-      if (file->vax_byte_order) {
-         get_vax_long(1, &header[offset], &long_value);
-      }
-      else {
-         (void) memcpy(&long_value, &header[offset], sizeof(long));
-      }
+     if (file->vax_byte_order) {
+       get_vax_long(1, &header[offset], &long_value);
+     }
+     else {
+       get_long_value(& header[offset], &long_value);
+     }
       if (ivalue != NULL) *ivalue = long_value;
       if (fvalue != NULL) *fvalue = long_value;
       if (svalue != NULL) (void) sprintf(svalue, "%d", (int) long_value);
@@ -704,10 +711,10 @@ private int ecat_get_value(Ecat_file *file,
    case ecat_float:
       offset += index * sizeof(float);
       if (file->vax_byte_order) {
-         get_vax_float(1, &header[offset], &float_value);
+	get_vax_float(1, &header[offset], &float_value);
       }
       else {
-         (void) memcpy(&float_value, &header[offset], sizeof(float));
+	get_long_value(& header[offset], &float_value);
       }
       if (ivalue != NULL) *ivalue = float_value;
       if (fvalue != NULL) *fvalue = float_value;
@@ -942,6 +949,8 @@ private int ecat_read_directory(Ecat_file *file)
    file->subhdr_offsets = 
       MALLOC(num_alloc * sizeof(file->subhdr_offsets[0]));
 
+  
+
    /* Reading directory blocks until done */
    nextblock = FIRST_DIRBLOCK;
    do {
@@ -952,6 +961,7 @@ private int ecat_read_directory(Ecat_file *file)
                  file->file_pointer) != sizeof(dirblock))) {
          return TRUE;
       }
+
 
       /* Get a pointer to the next block and the number of entries used */
       nextblock = get_dirblock(file, dirblock, DRBLK_NEXT);
@@ -997,10 +1007,11 @@ private long get_dirblock(Ecat_file *file, long *dirblock, int offset)
    long value;
 
    if (file->header_description == ECAT_VER_PRE7) {
-      get_vax_long(1, &dirblock[offset], &value);
+     /*get_vax_long(1, &dirblock[offset], &value);*/
    }
    else if (file->header_description == ECAT_VER_7) {
-      value = dirblock[offset];
+     /* value = dirblock[offset];*/
+      get_long_value(&dirblock[offset], &value); 
    }
    else {
       return 0;
@@ -1096,7 +1107,13 @@ public int ecat_get_image(Ecat_file *file, int volume, int slice,
       break;
    case 2:
       if (file->header_description == ECAT_VER_PRE7) {
-         get_vax_short(image_npix, image, image);
+	/*get_vax_short(image_npix, image, image);*/
+      }
+      else {
+	for (ipix=0; ipix<image_npix; ipix++) {
+	  get_short_value(&bimage[ipix * bytes_per_pixel], &image[ipix]); 
+	  /*image[ipix] = bimage[array_offset+ipix];*/
+	}	
       }
       break;
    default:
@@ -1167,7 +1184,7 @@ private int ecat_get_subhdr_offset(Ecat_file *file, int volume, int slice,
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void *malloc_check(size_t size)
+public void *malloc_check(size_t size)
 {
    void *ptr;
 
@@ -1193,7 +1210,7 @@ private void *malloc_check(size_t size)
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void *realloc_check(void *ptr, size_t size)
+public void *realloc_check(void *ptr, size_t size)
 {
    ptr = realloc(ptr, size);
    if (ptr == NULL) {

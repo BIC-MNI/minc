@@ -5,7 +5,10 @@
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecat_header_definition.h,v $
- * Revision 6.1  1999-10-29 17:52:01  neelin
+ * Revision 6.1.2.1  2005-02-15 19:59:54  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.1  1999/10/29 17:52:01  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:22  neelin
