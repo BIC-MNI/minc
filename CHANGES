@@ -1,4 +1,6 @@
-Wed Oct 31 14:23:57 EST 2001
+Wed Oct 31 14:40:30 EST 2001
+   - Fixed mincinfo printing of sign for default output. Change to
+     miget_datatype had messed this up.
    - Changed names of macros _R and _P in volume_io/Include/geometry.h to 
      avoid clashes with macro in ctype.h.
 
