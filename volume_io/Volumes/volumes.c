@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.58 1995-11-24 18:19:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.59 1996-02-08 17:40:14 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -400,6 +400,7 @@ public  void  alloc_volume_data(
     }
     else
     {
+        volume->is_cached_volume = FALSE;
         alloc_multidim_array( &volume->array );
     }
 }
@@ -420,9 +421,10 @@ public  void  alloc_volume_data(
 public  BOOLEAN  volume_is_alloced(
     Volume   volume )
 {
-    return( volume->is_cached_volume ||
-            (!volume->is_cached_volume &&
-             multidim_array_is_alloced( &volume->array )) );
+    return( volume->is_cached_volume &&
+            volume_cache_is_alloced( &volume->cache ) ||
+            !volume->is_cached_volume &&
+            multidim_array_is_alloced( &volume->array ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1067,7 +1069,7 @@ public  void  reorder_voxel_to_xyz(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  reorder_xyz_to_voxel(
+public  void  reorder_xyz_to_voxel(
     Volume   volume,
     Real     xyz[],
     Real     voxel[] )
