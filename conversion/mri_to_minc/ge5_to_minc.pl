@@ -1,5 +1,14 @@
 # Subroutines for GE mri machines, version 5.x
 
+# Routine to take absolute value
+sub abs {
+    local(@new, $val);
+    foreach $val (@_) {
+        push(@new, ($val<=>0) * $val);
+    }
+    return @new;
+}
+
 # Routine to initialize tape drive
 sub ge5_initialize_tape_drive {
     local($tapedrive) = @_;
@@ -110,9 +119,23 @@ sub ge5_read_file_info {
     elsif ($orient_flag == 4) {    # Sagittal
         $file_info{'orientation'} = 'sagittal';
     }
-    elsif (($orient_flag == 8) ||
-           ($orient_flag == 16)) { # Coronal
+    elsif ($orient_flag == 8) { # Coronal
         $file_info{'orientation'} = 'coronal';
+    }
+    elsif ($orient_flag == 16) { # Oblique (check normal vector)
+        local($norm_r, $norm_a, $norm_s) = 
+            &abs(&unpack_value(*image_hdr, 142, 'f3'));
+        local($plane) = 'transverse';
+        local($max) = $norm_s;
+        if ($norm_r > $max) {
+            $plane = 'sagittal';
+            $max = $norm_r;
+        }
+        if ($norm_a > $max) {
+            $plane = 'coronal';
+            $max = $norm_a;
+        }
+        $file_info{'orientation'} = $plane;
     }
     else {                      # Assume transverse
         print STDERR "orient_flag = $orient_flag, assuming transverse\n";
