@@ -27,7 +27,7 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 default: $(PROGS)
 
 #Dependency on Makefile
-$(PROG_OBJ) $(LINT_OBJS) : Makefile
+$(PROG_OBJ) $(LINT_LIST) : Makefile
 
 all: $(PROGS) lint
 
