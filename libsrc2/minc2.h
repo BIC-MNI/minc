@@ -207,10 +207,10 @@ extern int miset_space_name(mihandle_t vol, const char *name);
 /* DIMENSION FUNCTIONS */
 extern int miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume);
 extern int micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr);
-extern int micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
+extern int micreate_dimension(const char *name, midimclass_t dimclass, midimattr_t attr, 
 			      unsigned long length, midimhandle_t *new_dim_ptr);
 extern int mifree_dimension_handle(midimhandle_t dim_ptr);
-extern int miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
+extern int miget_volume_dimensions(mihandle_t volume, midimclass_t dimclass, midimattr_t attr,
 				   miorder_t order, int array_length, 
 				   midimhandle_t dimensions[]);
 extern int miset_apparent_dimension_order(mihandle_t volume, int array_length, midimhandle_t dimensions[]);
@@ -219,8 +219,8 @@ extern int miset_apparent_record_dimension_flag(mihandle_t volume, int record_fl
 extern int miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file_order,
 						miflipping_t *sign);
 extern int miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipping_order);
-extern int miget_dimension_class(midimhandle_t dimension, midimclass_t *class);
-extern int miset_dimension_class(midimhandle_t dimension, midimclass_t class);
+extern int miget_dimension_class(midimhandle_t dimension, midimclass_t *dimclass);
+extern int miset_dimension_class(midimhandle_t dimension, midimclass_t dimclass);
 extern int miget_dimension_direction_cosines(midimhandle_t dimension, 
 					     double direction_cosines[3]);
 extern int miset_dimension_direction_cosines(midimhandle_t dimension, 
@@ -273,7 +273,7 @@ extern int micreate_volume(const char *filename, int number_of_dimensions,
 			   mivolumeprops_t create_props,
 			   mihandle_t *volume);
 extern int micreate_volume_image(mihandle_t volume);
-extern int miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
+extern int miget_volume_dimension_count(mihandle_t volume, midimclass_t dimclass,
 					midimattr_t attr, int *number_of_dimensions);
 extern int miget_volume_voxel_count(mihandle_t volume, int *number_of_voxels);
 extern int miopen_volume(const char *filename, int mode, mihandle_t *volume);
