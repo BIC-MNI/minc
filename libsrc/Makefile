@@ -16,9 +16,6 @@ HEADERS = minc.h minc_routines.h minc_varlists.h minc_basic.h \
 # Compiler and loader options
 CDEFINES = 
 
-# Fortran jackets
-FORTRAN_OBJ = $(ROOT)/fortran/minc_jackets.o
-
 # --------------------------------------------------------------------
 
 # CFLAGS and LINTFLAGS should be same, except for -g/-O
