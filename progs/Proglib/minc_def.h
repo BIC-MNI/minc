@@ -5,9 +5,12 @@
 @CALLS      : 
 @CREATED    : July 7, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_def.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:34:30  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-12-02 09:03:05  neelin
+@MODIFIED   : Added definitions of public and private.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:34:30  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.6  94/09/28  10:34:22  neelin
  * Pre-release
  * 
@@ -19,9 +22,12 @@
  * 
  * Revision 1.3  93/08/04  13:03:30  neelin
  * Added RCS $Log: minc_def.h,v $
- * Added RCS Revision 2.0  1994-09-28 10:34:30  neelin
- * Added RCS Release of minc version 0.2
+ * Added RCS Revision 2.1  1994-12-02 09:03:05  neelin
+ * Added RCS Added definitions of public and private.
  * Added RCS
+ * Revision 2.0  94/09/28  10:34:30  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.6  94/09/28  10:34:22  neelin
  * Pre-release
  * 
@@ -43,6 +49,13 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
+
+#ifndef public
+#  define public
+#endif
+#ifndef private
+#  define private static
+#endif
 
 #ifndef EXIT_SUCCESS
 #  define EXIT_SUCCESS 0
