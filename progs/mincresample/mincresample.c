@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:30:57  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-11-07 15:04:02  neelin
+@MODIFIED   : Modified argument parsing so that only one pass is done.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:30:57  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.3  1995/05/05  19:11:05  neelin
  * Modified call to input_transform.
  *
@@ -83,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.0 1995-05-15 19:30:57 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.1 1995-11-07 15:04:02 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -146,7 +149,7 @@ public void get_arginfo(int argc, char *argv[],
    /* Argument parsing information */
    static Arg_Data args={
       FALSE,                  /* Clobber */
-      NC_SHORT,               /* Type will be modified anyway */
+      NC_UNSPECIFIED,         /* Flag that type not set */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
@@ -155,14 +158,14 @@ public void get_arginfo(int argc, char *argv[],
       {NULL, NULL, 0, NULL},  /* Transformation info is empty at beginning.
                                  Transformation must be set before invoking
                                  argument parsing */
-      {
-          {2, 1, 0},          /* Axis order */
-          {0, 0, 0},          /* nelements will be modified */
-          {1.0, 1.0, 1.0},    /* Default step */
-          {0.0, 0.0, 0.0},    /* Default start */
-          {{1.0, 0.0, 0.0},   /* Default direction cosines */
-           {0.0, 1.0, 0.0},
-           {0.0, 0.0, 1.0}},
+      {                       /* Use flags to indicate that values not set */
+          {NO_AXIS, NO_AXIS, NO_AXIS},          /* Axis order */
+          {0, 0, 0},          /* nelements */
+          {0.0, 0.0, 0.0},    /* step */
+          {NO_VALUE, NO_VALUE, NO_VALUE},    /* start */
+          {{NO_VALUE, NO_VALUE, NO_VALUE},   /* Default direction cosines */
+           {NO_VALUE, NO_VALUE, NO_VALUE},
+           {NO_VALUE, NO_VALUE, NO_VALUE}},
           {NULL, NULL, NULL}, /* Pointers to coordinate arrays */
           {"", "", ""},       /* units */
           {"", "", ""}        /* spacetype */
@@ -283,30 +286,26 @@ public void get_arginfo(int argc, char *argv[],
    };
 
    /* Other variables */
-   int save_argc, iarg, idim, index;
+   int iarg, idim, index;
    int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
    int in_findex, out_findex;  /* File indices (0 to ndims-1) */
    long size, total_size;
-   char **save_argv, *infile, *outfile;
+   char *infile, *outfile;
    File_Info *fp;
    char *tm_stamp, *pname;
+   Volume_Definition input_volume_def;
 
-   /* Initialize the to identity transformation */
+   /* Initialize the transformation to identity */
    create_linear_transform(transformation, NULL);
    args.transform_info.transformation = transformation;
 
    /* Get the time stamp */
    tm_stamp = time_stamp(argc, argv);
 
-   /* Save the default values and the arguments */
+   /* Save the program name */
    pname=argv[0];
-   save_argv=MALLOC((argc+1)*sizeof(*save_argv));
-   for (iarg=0; iarg<=argc; iarg++) {
-      save_argv[iarg] = argv[iarg];
-   }
-   save_argc = argc;
 
-   /* Call ParseArgv once to remove all parameters */
+   /* Call ParseArgv */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc!=3)) {
       (void) fprintf(stderr, 
                      "\nUsage: %s [<options>] <infile> <outfile>\n", pname);
@@ -319,12 +318,13 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Check input file for default argument information */
    in_vol->file = MALLOC(sizeof(File_Info));
-   get_file_info(infile, &args.volume_def, in_vol->file);
+   get_file_info(infile, &input_volume_def, in_vol->file);
+   get_args_volume_def(&input_volume_def, &args.volume_def);
 
    /* Save the voxel_to_world transformation information */
    in_vol->voxel_to_world = MALLOC(sizeof(General_transform));
    in_vol->world_to_voxel = MALLOC(sizeof(General_transform));
-   get_voxel_to_world_transf(&args.volume_def, in_vol->voxel_to_world);
+   get_voxel_to_world_transf(&input_volume_def, in_vol->voxel_to_world);
    create_inverse_general_transform(in_vol->voxel_to_world,
                                     in_vol->world_to_voxel);
 
@@ -356,8 +356,8 @@ public void get_arginfo(int argc, char *argv[],
    /* Get space for volume data */
    total_size = 1;
    for (idim=0; idim < WORLD_NDIMS; idim++) {
-      index = args.volume_def.axes[idim];
-      size = args.volume_def.nelements[idim];
+      index = input_volume_def.axes[idim];
+      size = input_volume_def.nelements[idim];
       total_size *= size;
       in_vol->volume->size[index] = size;
    }
@@ -374,14 +374,8 @@ public void get_arginfo(int argc, char *argv[],
    *program_flags = args.flags;
 
    /* Set the default output file datatype */
-   args.datatype = in_vol->file->datatype;
-
-   /* Call ParseArgv again to get args.volume_def data (and datatype) again */
-   if (ParseArgv(&save_argc, save_argv, argTable, 0)) {
-      (void) fprintf(stderr, "%s: Argument parsing error!\n", pname);
-      exit(EXIT_FAILURE);
-   }
-   FREE(save_argv);
+   if (args.datatype == NC_UNSPECIFIED)
+      args.datatype = in_vol->file->datatype;
 
    /* Explicitly force output files to have regular spacing */
    for (idim=0; idim < WORLD_NDIMS; idim++) {
@@ -756,6 +750,48 @@ public void get_file_info(char *filename,
    }
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_args_volume_def
+@INPUT      : input_volume_def - description of input volume
+@OUTPUT     : args_volume_def - description of new output volume
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to copy appropriate information from input volume 
+              definition to output volume definition, overriding values 
+              not set on the command line.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 7, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_args_volume_def(Volume_Definition *input_volume_def,
+                                Volume_Definition *args_volume_def)
+{
+   int idim, jdim;
+
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      if (args_volume_def->axes[idim] == NO_AXIS)
+         args_volume_def->axes[idim] = input_volume_def->axes[idim];
+      if (args_volume_def->nelements[idim] == 0)
+         args_volume_def->nelements[idim] = input_volume_def->nelements[idim];
+      if (args_volume_def->step[idim] == 0.0)
+         args_volume_def->step[idim] = input_volume_def->step[idim];
+      if (args_volume_def->start[idim] == NO_VALUE)
+         args_volume_def->start[idim] = input_volume_def->start[idim];
+      if (args_volume_def->dircos[idim][0] == NO_VALUE) {
+         for (jdim=0; jdim < WORLD_NDIMS; jdim++)
+            args_volume_def->dircos[idim][jdim] = 
+               input_volume_def->dircos[idim][jdim];
+      }
+      if (strlen(args_volume_def->units[idim]) == 0)
+         (void) strcpy(args_volume_def->units[idim],
+                        input_volume_def->units[idim]);
+      if (strlen(args_volume_def->spacetype[idim]) == 0)
+         (void) strcpy(args_volume_def->spacetype[idim],
+                        input_volume_def->spacetype[idim]);
+   }
 }
 
 /* ----------------------------- MNI Header -----------------------------------

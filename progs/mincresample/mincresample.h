@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:30:57  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-11-07 15:04:02  neelin
+@MODIFIED   : Modified argument parsing so that only one pass is done.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:30:57  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:32:48  neelin
  * Release of minc version 0.2
  *
@@ -78,6 +81,7 @@
 #define ROW    1
 #define COLUMN 2
 /* Various constants */
+#define NO_VALUE DBL_MAX   /* Constant to flag fact that value not set */
 #define DEFAULT_MAX 1.0
 #define DEFAULT_MIN 0.0
 #define FILL_DEFAULT DBL_MAX   /* Fillvalue indicating -nofill */
@@ -272,6 +276,8 @@ public void check_imageminmax(File_Info *fp, Volume_Data *volume);
 public void get_file_info(char *filename, 
                           Volume_Definition *volume_def,
                           File_Info *file_info);
+public void get_args_volume_def(Volume_Definition *input_volume_def,
+                                Volume_Definition *args_volume_def);
 public void create_output_file(char *filename, int clobber, 
                                Volume_Definition *volume_def,
                                File_Info *in_file,
