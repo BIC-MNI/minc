@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = xfminvert xfmconcat
 HEADERS  = 
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(CC_PROG_LIB) -lm -lc_s
+LDOPT    = $(CC_PROG_LIB) -lm $(MACHINE_LDOPT)
 
 # --------------------------------------------------------------------
 
