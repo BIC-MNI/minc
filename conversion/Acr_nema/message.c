@@ -5,11 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 1.4  1994-04-07 10:05:06  neelin
-@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
-@MODIFIED   : to that or ACR_OTHER_ERROR.
-@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
+@MODIFIED   : Revision 1.5  1994-05-18 08:48:12  neelin
+@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
 @MODIFIED   :
+ * Revision 1.4  94/04/07  10:05:06  neelin
+ * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+ * to that or ACR_OTHER_ERROR.
+ * Added #ifdef lint to DEFINE_ELEMENT.
+ * 
  * Revision 1.3  93/11/24  11:25:59  neelin
  * Added dump_message.
  * 
@@ -332,7 +335,7 @@ public Acr_Status acr_output_message(Acr_File *afp, Acr_Message message)
 
    /* Flush the buffer */
    if (acr_file_flush(afp) == EOF) {
-      status = ACR_OTHER_ERROR;
+      status = ACR_ABNORMAL_END_OF_OUTPUT;
       return status;
    }
 

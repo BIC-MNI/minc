@@ -5,11 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 1.4  1994-04-07 10:04:58  neelin
-@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
-@MODIFIED   : to that or ACR_OTHER_ERROR.
-@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
+@MODIFIED   : Revision 1.5  1994-05-18 08:48:05  neelin
+@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
 @MODIFIED   :
+ * Revision 1.4  94/04/07  10:04:58  neelin
+ * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+ * to that or ACR_OTHER_ERROR.
+ * Added #ifdef lint to DEFINE_ELEMENT.
+ * 
  * Revision 1.3  93/11/25  10:35:33  neelin
  * Added byte-order test and file free.
  * 
@@ -93,6 +96,8 @@ int main(int argc, char *argv[])
          status_string = "Other error"; break;
       case ACR_ABNORMAL_END_OF_INPUT:
          status_string = "Abnormal end of input"; break;
+      case ACR_ABNORMAL_END_OF_OUTPUT:
+         status_string = "Abnormal end of output"; break;
       default:
          status_string = "Unknown status"; break;
       }

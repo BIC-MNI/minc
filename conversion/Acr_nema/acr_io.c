@@ -6,11 +6,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.6  1994-04-07 10:03:40  neelin
-@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
-@MODIFIED   : to that or ACR_OTHER_ERROR.
-@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
+@MODIFIED   : Revision 1.7  1994-05-18 08:47:43  neelin
+@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
 @MODIFIED   :
+ * Revision 1.6  94/04/07  10:03:40  neelin
+ * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+ * to that or ACR_OTHER_ERROR.
+ * Added #ifdef lint to DEFINE_ELEMENT.
+ * 
  * Revision 1.5  94/01/06  13:30:57  neelin
  * Changed acr_need_invert to a public function.
  * 
@@ -431,7 +434,7 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
    for (i=0; i < buflen; i++) {
       ch = acr_putc(buffer[i], afp);
       if (ch == EOF) {
-         return ACR_OTHER_ERROR;
+         return ACR_ABNORMAL_END_OF_OUTPUT;
       }
    }
 
@@ -439,7 +442,7 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
    for (i=0; i < data_length; i++) {
       ch = acr_putc(data_pointer[i], afp);
       if (ch == EOF) {
-         return ACR_OTHER_ERROR;
+         return ACR_ABNORMAL_END_OF_OUTPUT;
       }
    }
 
