@@ -13,6 +13,10 @@ Thu Jan 20 15:36:04 EST 2000
      volume_io subdirectory and found by volume_io.h. 
      (Patch from Steve Robbins.)
 
+Fri Oct 15 15:25:56 EST 2000
+   - Moved the Acr_nema libraries and conversion programs out of the minc
+     package.
+
 Fri Nov 13 11:02:51 EST 1998
    - Modified acrnema library to support asynchronous transfers in the
      client routines (allow sending of next message before receiving 
