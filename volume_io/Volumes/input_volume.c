@@ -201,6 +201,8 @@ public  void  cancel_volume_input(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_volume
 @INPUT      : filename
+              dim_names
+              convert_to_byte_flag
 @OUTPUT     : volume
 @RETURNS    : OK if loaded alright
 @DESCRIPTION: Inputs the entire volume.
@@ -211,6 +213,7 @@ public  void  cancel_volume_input(
 public  Status  input_volume(
     char           filename[],
     String         dim_names[],
+    Boolean        convert_to_byte_flag,
     Volume         *volume )
 {
     Status               status;
@@ -219,8 +222,8 @@ public  Status  input_volume(
     progress_struct      progress;
     static const int     FACTOR = 1000;
 
-    status = start_volume_input( filename, dim_names, FALSE, volume,
-                                 &input_info );
+    status = start_volume_input( filename, dim_names, convert_to_byte_flag,
+                                 volume, &input_info );
 
     if( status == OK )
     {
