@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.44 1995-05-24 17:24:24 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.45 1995-06-15 13:27:01 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -1009,7 +1009,7 @@ public  void  set_volume_direction_cosine(
     recompute_world_transform( volume );
 }
 
-private  void  reorder_voxel_to_xyz(
+public  void  reorder_voxel_to_xyz(
     Volume   volume,
     Real     voxel[],
     Real     xyz[] )
