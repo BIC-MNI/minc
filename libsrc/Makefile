@@ -68,5 +68,6 @@ mostlyclean:
 # Copy files to installation directories
 install: $(CC_MINC_LIB)
 	$(CP) $(CP_FLAGS) $(CC_MINC_LIB) $(INSTALL_LIBDIR)
+	$(RANLIB) $(INSTALL_LIBDIR)/lib$(MINC_LIB).a
 	$(CP) $(CP_FLAGS) minc.h $(INSTALL_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_INCDIR)/minc.h
