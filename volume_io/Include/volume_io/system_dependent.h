@@ -14,19 +14,16 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifdef sun
-#ifndef __GNUC__
-#define  NO_DBL_MAX             /*--- sun os does not define DBL_MAX */
-#endif
-#define  NO_STRERROR            /*--- sun os does not define strerror */
+#include "config.h"
+
+#if HAVE_FLOAT_H
+#include <float.h>
 #endif
 
-#ifdef NO_DBL_MAX
 #ifndef DBL_MAX
 #include <values.h>
 #define DBL_MAX  MAXDOUBLE
-#endif
-#endif  /* NO_DBL_MAX */
+#endif  /* DBL_MAX not defined */
 
 #include <stdlib.h>
 
