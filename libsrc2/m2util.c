@@ -117,13 +117,13 @@ midescend_path(hid_t file_id, const char *path)
      */
     H5E_BEGIN_TRY {
         tmp_id = H5Gopen(file_id, path);
-    } H5E_END_TRY;
 
-    /* If the group open fails, try opening the object as a dataset.
-     */
-    if (tmp_id < 0) {
-	tmp_id = H5Dopen(file_id, path);
-    }
+        /* If the group open fails, try opening the object as a dataset.
+         */
+        if (tmp_id < 0) {
+            tmp_id = H5Dopen(file_id, path);
+        }
+    } H5E_END_TRY;
     return (tmp_id);
 }
 
