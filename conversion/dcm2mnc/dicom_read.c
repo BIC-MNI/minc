@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.5  2005-03-13 19:37:42  bert
+   * Revision 1.6  2005-03-14 23:29:35  bert
+   * Support basic dynamic PET fields.  Also allocate indices and coordinates arrays for all dimensions, even those we won't use.
+   *
+   * Revision 1.5  2005/03/13 19:37:42  bert
    * Try to use slice location for coordinate when all else fails, also added one debugging message and a check for PET modality
    *
    * Revision 1.4  2005/03/03 20:11:00  bert
@@ -319,11 +322,26 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
                  * it with the Siemens-specific value if present.
                  */
                 if (imri == SLICE) {
-                    /* Look for the standard slice count field first.
+                    /* Look for the standard slice count fields first. We
+                     * start with the (0054, 0081) first, and if that fails
+                     * we retry with (0020, 1002).
                      */
                     def_val = acr_find_int(group_list,
-                                           ACR_Images_in_acquisition,
-                                           1);
+                                           ACR_Number_of_slices,
+                                           0);
+                    if (def_val == 0) {
+                        def_val = acr_find_int(group_list,
+                                               ACR_Images_in_acquisition,
+                                               1);
+                    }
+                }
+
+                if (imri == TIME) {
+                    /* Look for the PET time slice count field first.
+                     */
+                    def_val = acr_find_int(group_list,
+                                           ACR_Number_of_time_slices,
+                                           0);
                 }
                 gi_ptr->max_size[imri] = acr_find_int(group_list,
                                                       mri_total_list[imri],
@@ -342,35 +360,30 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
                 gi_ptr->max_size[imri] *= number_of_3D_partitions;
             }
 
-            /* Set initial values */
             gi_ptr->default_index[imri] = fi_ptr->index[imri];
             gi_ptr->image_index[imri] = -1;
 	
-            /* Allocate space for index and coordinate arrays if 
-             * max_size > 1.
-             *
-             * Set the first values. 
+            /* Allocate space for index and coordinate arrays.
+             * Set the first values.
              */
 
-            if (gi_ptr->max_size[imri] > 1) {
-                gi_ptr->indices[imri] = 
-                    malloc(gi_ptr->max_size[imri] * sizeof(int));
+            gi_ptr->indices[imri] = 
+                malloc(gi_ptr->max_size[imri] * sizeof(int));
 
-                gi_ptr->coordinates[imri] = 
-                    malloc(gi_ptr->max_size[imri] * sizeof(double));
+            gi_ptr->coordinates[imri] = 
+                malloc(gi_ptr->max_size[imri] * sizeof(double));
 
-                for (index = 0; index < gi_ptr->max_size[imri]; index++) {
-                    gi_ptr->indices[imri][index] = -1;
-                    gi_ptr->coordinates[imri][index] = 0;
-                }
-                gi_ptr->search_start[imri] = 0;
-                gi_ptr->indices[imri][0] = fi_ptr->index[imri];
-                gi_ptr->coordinates[imri][0] = fi_ptr->coordinate[imri];
+            for (index = 0; index < gi_ptr->max_size[imri]; index++) {
+                gi_ptr->indices[imri][index] = -1;
+                gi_ptr->coordinates[imri][index] = 0;
+            }
+            gi_ptr->search_start[imri] = 0;
+            gi_ptr->indices[imri][0] = fi_ptr->index[imri];
+            gi_ptr->coordinates[imri][0] = fi_ptr->coordinate[imri];
 
-                if (G.Debug) {
-                    printf("%2d. %s axis length %d\n",
-                           imri, Mri_Names[imri], gi_ptr->max_size[imri]);
-                }
+            if (G.Debug) {
+                printf("%2d. %s axis length %d\n",
+                       imri, Mri_Names[imri], gi_ptr->max_size[imri]);
             }
         }          /* Loop over dimensions */
 
@@ -1076,19 +1089,29 @@ get_coordinate_info(Acr_Group group_list,
     fi_ptr->coordinate[ECHO] = 
         acr_find_double(group_list, ACR_Echo_time, 0.0) / MS_PER_SECOND;
 
-    /* time section (rhoge)
-     * now assume that time has been fixed when file was read
-     */
-    start_time = acr_find_double(group_list, ACR_Series_time, 0.0);
-    frame_time = acr_find_double(group_list, ACR_Acquisition_time, 0.0);
-    start_time = convert_time_to_seconds(start_time);
-    frame_time = convert_time_to_seconds(frame_time) - start_time;
 
-    /* check for case where scan starts right before midnight,
-     * but frame is after midnight
+    /* PET scan times (bert)
      */
-    if (frame_time < 0.0) {
-        frame_time += SECONDS_PER_DAY;
+    start_time = acr_find_double(group_list, ACR_Frame_reference_time, -1.0);
+    frame_time = acr_find_double(group_list, ACR_Actual_frame_duration, -1.0);
+    if (start_time > 0.0 && frame_time > 0.0) {
+        frame_time = start_time / 1000.0; /* Convert msec to seconds. */
+    }
+    else {
+        /* time section (rhoge)
+         * now assume that time has been fixed when file was read
+         */
+        start_time = acr_find_double(group_list, ACR_Series_time, 0.0);
+        frame_time = acr_find_double(group_list, ACR_Acquisition_time, 0.0);
+        start_time = convert_time_to_seconds(start_time);
+        frame_time = convert_time_to_seconds(frame_time) - start_time;
+
+        /* check for case where scan starts right before midnight,
+         * but frame is after midnight
+         */
+        if (frame_time < 0.0) {
+            frame_time += SECONDS_PER_DAY;
+        }
     }
     fi_ptr->coordinate[TIME] = frame_time;
 
