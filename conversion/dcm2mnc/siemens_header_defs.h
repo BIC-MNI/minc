@@ -16,65 +16,67 @@
 
 typedef double flt64_t;
 
-/* TYPES */
-typedef struct 
-{
-    int32_t Year;                  /* four digits e.g. 1989 */
-    int32_t Month;                 /* 1 - 12 */
-    int32_t Day;                   /* 1 - 31 */
-} ima_date_t;
-
-
-typedef struct 
-{
-    int32_t Hour;                  /* 0 - 23 */
-    int32_t Minute;                /* 0 - 59 */
-    int32_t Second;                /* 0 - 59 */
-    int32_t Fraction;              /* 0 - 999 */
-} ima_time_t;
-
-typedef struct 
+/* ACR-NEMA specific types */
+/* Analogous to DICOM field (0008, 0041) (retired) */
+typedef struct data_set_subtype
 {
     int32_t M;
     int32_t S;
 } data_set_subtype_t;
 
-typedef struct
+/* Analogous to DICOM field (0028, 0030) */
+typedef struct pixel_size
 {
-    flt64_t X;
-    flt64_t Y;
-    flt64_t Z;
-} ima_vector_t;
-
-typedef enum 
-{
-    Slice_Order_ASCENDING = 1,
-    Slice_Order_DECREASING = 2,
-    Slice_Order_FREE = 3,
-    Slice_Order_INTERLEAVED = 4,
-    Slice_Order_NONE = 5,
-} order_of_slices_t;
-
-typedef enum 
-{
-    Position_LEFT = 1,
-    Position_PRONE = 2,
-    Position_RIGHT = 3,
-    Position_SUPINE = 4,
-} patient_position_t;
-
-typedef struct
-{
-    flt64_t Row;
-    flt64_t Col;
+    flt64_t row;
+    flt64_t col;
 } pixel_size_t;
 
 /* Analogous to DICOM fields (0028, 1050) and (0028, 1051) */
-typedef struct 
+typedef struct window
 {
-    int32_t X;
-    int32_t Y;
-} windows_t;
+    int32_t x;
+    int32_t y;
+} window_t;
+
+/* IMA specific types */
+typedef struct ima_date
+{
+    int32_t year;               /* Full year including century */
+    int32_t month;              /* Month from 1(Jan) to 12(Dec) */
+    int32_t day;                /* Day of month from 1 to 31 */
+} ima_date_t;
+
+typedef struct ima_time
+{
+    int32_t hour;               /* Hour from 0 to 23 */
+    int32_t minute;             /* Minute from 0 to 59 */
+    int32_t second;             /* Second from 0 to 59 */
+    int32_t msec;               /* Milliseconds from 0 to 999 */
+} ima_time_t;
+
+typedef struct ima_vector
+{
+    flt64_t x;
+    flt64_t y;
+    flt64_t z;
+} ima_vector_t;
+
+typedef enum ima_slice_order
+{
+    SO_ASCENDING = 1,
+    SO_DESCENDING = 2,
+    SO_FREE = 3,
+    SO_INTERLEAVED = 4,
+    SO_NONE = 5
+} ima_slice_order_t;
+
+typedef enum ima_patient_position
+{
+    PP_LEFT = 1,
+    PP_PRONE = 2,
+    PP_RIGHT = 3,
+    PP_SUPINE = 4,
+} ima_patient_position_t;
 
 /*****************************************************/
 /* Identifying Information (From DICOM group 0x0008) */
@@ -147,7 +149,7 @@ struct ima_acr_0018
     char ConvolutionKernel[N_STRING + 1]; /* 1210 */
     char ReceivingCoil[N_STRING + 1]; /* 1250  06E7 */
     char pad5[N_STRING + 1]; /* XXXX   */
-    patient_position_t PatientPosition; /* 5100 1824 */
+    ima_patient_position_t PatientPosition; /* 5100 1824 */
     char ImagedNucleus[N_NUCLEUS + 1]; /* 0085  0724 */
     char pad6[80];              /* Pad to 384 bytes */
 };
@@ -189,8 +191,8 @@ struct ima_acr_0028
     int16_t BitsStored;         /* 0101 */
     int16_t HighBit;            /* 0102 */
     int16_t PixelRepresentation; /* 0103 */
-    windows_t WindowCenter;     /* 1050 */
-    windows_t WindowWidth;      /* 1051 */
+    window_t WindowCenter;      /* 1050 */
+    window_t WindowWidth;       /* 1051 */
     int32_t RescaleIntercept;   /* 1052 */
     int32_t RescaleSlope;       /* 1053 */
     char pad1[192];             /* Pad to 256 bytes */
@@ -384,7 +386,7 @@ struct ima_siemens_0021
     int32_t CardiacCode;        /* 1380 */
     char pad9[4];               /* Dummy padding */
     flt64_t CurrentSliceDistanceFactor; /* 1344 */
-    order_of_slices_t OrderOfSlices; /* 134F */
+    ima_slice_order_t SliceOrder; /* 134F */
     char pad10[4];              /* Dummy padding */
     flt64_t SlabThickness;      /* 1339 */
     char pad11[829];            /* Padding */
