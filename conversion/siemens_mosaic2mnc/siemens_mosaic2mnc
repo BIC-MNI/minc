@@ -2,7 +2,7 @@
 #
 # siemens_mosaic2mnc
 #
-# Andrew Janke - rotor@cmr.uq.edu DOT au
+# Andrew Janke - a.janke@gmail.com
 # Center for Magnetic Resonance
 # The University of Queensland
 # http://www.cmr.uq.edu.au/~rotor
@@ -207,6 +207,13 @@ my(@tile_size, $ntiles);
 # $tile_size[0] = $siemens_hdr{sKSpace}{lPhaseEncodingLines};
 $tile_size[0] = $siemens_hdr{sKSpace}{lImagesPerSlab};
 $tile_size[1] = $siemens_hdr{sKSpace}{lBaseResolution};
+
+# check for interpolation
+if(defined($siemens_hdr{sKSpace}{uc2DInterpolation}) && 
+   $siemens_hdr{sKSpace}{uc2DInterpolation} == 1){
+   $tile_size[0] *= 2;
+   $tile_size[1] *= 2;
+   }
 
 # number of tiles
 $ntiles = $siemens_hdr{sSliceArray}{lSize};
@@ -578,7 +585,7 @@ This script requires the <Getopt::Tabular> module.
 
 =head1 AUTHOR
 
-Andrew Janke E<lt>rotor@cmr.uq.edu AT auE<gt>
+Andrew Janke E<lt>a.janke@gmail.comE<gt>
 
 =head1 SEE ALSO
 
