@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:34:04  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-23 13:47:46  neelin
+@MODIFIED   : Changed ncopen, ncclose to miopen, miclose. Added miexpand_file to get
+@MODIFIED   : header only when appropriate.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:34:04  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.10  94/09/28  10:34:00  neelin
  * Pre-release
  * 
@@ -34,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.0 1994-09-28 10:34:04 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 2.1 1995-01-23 13:47:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -146,6 +150,8 @@ public int main(int argc, char *argv[])
    char name[MAX_NC_NAME];
    char *cdata;
    double *ddata;
+   int header_only, created_tempfile;
+   char *tempfile;
 
    /* Check arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
@@ -170,9 +176,31 @@ public int main(int argc, char *argv[])
    else
       ncopts = 0;
 
-   /* Open the file */
-   mincid = ncopen(filename, NC_NOWRITE);
+   /* Loop through print options, checking whether we need variable data */
+   header_only = TRUE;
+   for (option=0; option < length_option_list; option++) {
+      if (option_list[option].code == VARVALUES)
+         header_only = FALSE;
+   }
 
+   /* Expand file */
+   tempfile = miexpand_file(filename, header_only, &created_tempfile);
+   if (tempfile == NULL) {
+      (void) fprintf(stderr, "%s: Error expanding file \"%s\"\n",
+                     argv[0], filename);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Open the file */
+   mincid = miopen(tempfile, NC_NOWRITE);
+   if (created_tempfile) {
+      (void) remove(tempfile);
+   }
+   if (mincid == MI_ERROR) {
+      (void) fprintf(stderr, "%s: Error opening file \"%s\"\n",
+                     argv[0], tempfile);
+      exit(EXIT_FAILURE);
+   }
    /* Loop through print options */
    for (option=0; option < length_option_list; option++) {
       string = option_list[option].value;
@@ -296,7 +324,7 @@ public int main(int argc, char *argv[])
    }
 
    /* Close the file */
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
 
    exit(EXIT_SUCCESS);
 }
