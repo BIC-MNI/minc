@@ -1,3 +1,7 @@
+Wed Nov 11 11:28:34 EST 1998
+   - Modifications to acrnema library: Added functions acr_find_group and 
+     acr_group_steal_element. Increased default buffer size to 64KB.
+
 Thu Feb 19 09:06:38 EDT 1998
    - Fixes to internals of mincreshape that had not yet shown symptoms,
      but appeared with insure++.
