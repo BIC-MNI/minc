@@ -33,14 +33,19 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 1.16  1993-08-11 11:49:36  neelin
-@MODIFIED   : Added RCS logging in source.
-@MODIFIED   : Fixed bug in MI_icv_access so that pointer to values buffer is incremented
-@MODIFIED   : as we loop through the chunks. This affected calls to miicv_get/put that
-@MODIFIED   : had MIimagemax/min varying over the values read in one call (ie. reading
-@MODIFIED   : or writing a volume with MIimagemax/min varying over slices will give
-@MODIFIED   : incorrect results if the volume is read with one call).
+@MODIFIED   : Revision 1.17  1993-08-11 12:59:31  neelin
+@MODIFIED   : We need only increment the chunk pointer (see previous fix) if we are
+@MODIFIED   : not doing dimension conversion (dimension conversion handles the 
+@MODIFIED   : offsets itself).
 @MODIFIED   :
+ * Revision 1.16  93/08/11  11:49:36  neelin
+ * Added RCS logging in source.
+ * Fixed bug in MI_icv_access so that pointer to values buffer is incremented
+ * as we loop through the chunks. This affected calls to miicv_get/put that
+ * had MIimagemax/min varying over the values read in one call (ie. reading
+ * or writing a volume with MIimagemax/min varying over slices will give
+ * incorrect results if the volume is read with one call).
+ * 
               January 22, 1993 (P.N.)
                  - Modified handling of icv properties with miicv_set<type>.
                    Removed routine miicv_set. Use routines miicv_setdbl,
@@ -59,7 +64,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.16 1993-08-11 11:49:36 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.17 1993-08-11 12:59:31 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1266,7 +1271,12 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       var_end[idim]=var_start[idim]+var_count[idim];
    }
    (void) miset_coords(icvp->var_ndims, 1L, chunk_count);
-   chunk_size = nctypelen(icvp->user_type);
+   /* Get size of chunk in user's buffer. Dimension conversion routines
+      don't need the buffer pointer incremented - they do it themselves */
+   if (!icvp->do_dimconvert)
+      chunk_size = nctypelen(icvp->user_type);
+   else
+      chunk_size = 0;
    for (idim=MAX(icvp->derv_firstdim+1,0); idim < icvp->var_ndims; idim++) {
       chunk_count[idim]=var_count[idim];
       chunk_size *= chunk_count[idim];
