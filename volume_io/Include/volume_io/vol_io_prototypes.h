@@ -906,6 +906,11 @@ public  void  get_volume_direction_cosine(
     int      axis,
     Real     dir[] );
 
+public  void  set_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] );
+
 public  void  reorder_voxel_to_xyz(
     Volume   volume,
     Real     voxel[],
