@@ -3,21 +3,15 @@
 # MINC Makefile
 #
 
+ROOT = ../..
+include $(ROOT)/Makefile_machine_specific
+include $(ROOT)/Makefile_configuration
+
 # Executable names
 PROGS    = minctoraw
 HEADERS  = 
-PROG_LIB_DIR = ../proglib
-PROG_LIB  = mincprog
-LIB_DIR  = ../../src#                         directory for library
-LIBRARY  = minc#                           library
 CDEFINES = -DDEBUG#                        cpp defines
-OPT      = -O#                             compiler options
-LDOPT    = -L/usr/local/lib -lnetcdf -lsun -lm -lc_s# ld options
-INCLUDES = -I. -I../proglib -I../../src -I/usr/local/include
-
-# For cleaning up
-RM       = rm
-RM_FLAGS = -f
+LDOPT    = $(CC_PROG_LIB) $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -25,16 +19,10 @@ CFLAGS    = $(CDEFINES) $(INCLUDES) $(OPT)# CFLAGS and LINTFLAGS should
 LINTFLAGS = $(CDEFINES) $(INCLUDES)#        be same, except for -g/-O
 
 PROG_OBJ  = $(PROGS:=.o)#                 list of objects
-CC_LIB    = lib$(LIBRARY).a#              C library file
-CC_PROG_LIB= $(PROG_LIB_DIR)/lib$(PROG_LIB).a# library for prog objs
 LINT_LIST = $(PROG_OBJ:.o=.ln)
 LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
-LINT_LIB  = llib-l$(LIBRARY).ln#          lint library file
-LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln#
 
 # --------------------------------------------------------------------
-
-.SUFFIXES: .ln#                           tell make to watch for .ln's
 
 default: $(PROGS)
 
@@ -55,14 +43,14 @@ $(PROG_OBJ) : $(HEADERS)
 $(LINT_LIST) : $(HEADERS)
 
 # How to make executables
-$(PROGS) : $$@.o $(CC_PROG_LIB) $(LIB_DIR)/$(CC_LIB)
-	$(CC) $@.o -o $@ $(CC_PROG_LIB) -L$(LIB_DIR) -l$(LIBRARY) $(LDOPT)
+$(PROGS) : $$@.o $(CC_PROG_LIB) $(CC_MINC_LIB)
+	$(CC) $@.o -o $@ $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB) $(LIB_DIR)/$(LINT_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_PROG_LIB) $(LIB_DIR)/$(LINT_LIB)
+$(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB) $(LINT_MINC_LIB)
+	lint -u $(LINTFLAGS) $@ln $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
 clean:
