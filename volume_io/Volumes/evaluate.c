@@ -15,8 +15,58 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.21 1995-08-19 18:57:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.22 1995-09-21 19:00:53 david Exp $";
 #endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_voxel_to_value
+@INPUT      : volume
+              voxel
+@OUTPUT     : 
+@RETURNS    : real value
+@DESCRIPTION: Converts a voxel value to a real value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Real  convert_voxel_to_value(
+    Volume   volume,
+    Real     voxel )
+{
+    if( volume->real_range_set )
+        return( volume->real_value_scale * voxel +
+                volume->real_value_translation );
+    else
+        return( voxel );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_value_to_voxel
+@INPUT      : volume
+              value
+@OUTPUT     : 
+@RETURNS    : voxel value
+@DESCRIPTION: Converts a real value to a voxel value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Real  convert_value_to_voxel(
+    Volume   volume,
+    Real     value )
+{
+    if( volume->real_range_set )
+        return( (value - volume->real_value_translation) /
+                volume->real_value_scale );
+    else
+        return( value );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_voxel_value
@@ -81,7 +131,7 @@ public  Real  get_volume_real_value(
 
     voxel = get_volume_voxel_value( volume, v0, v1, v2, v3, v4 );
 
-    value = CONVERT_VOXEL_TO_VALUE( volume, voxel );
+    value = convert_voxel_to_value( volume, voxel );
 
     return( value );
 }
@@ -148,7 +198,7 @@ public  void  set_volume_real_value(
     Real         voxel;
     Data_types   data_type;
 
-    voxel = CONVERT_VALUE_TO_VOXEL( volume, value );
+    voxel = convert_value_to_voxel( volume, value );
 
     data_type = get_volume_data_type( volume );
 

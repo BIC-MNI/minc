@@ -82,7 +82,7 @@ int  main()
             v2 >= 0 && v2 < sizes[1] &&
             v3 >= 0 && v3 < sizes[2] )
         {
-            GET_VALUE_3D( voxel_value, volume2, v1, v2, v3 );
+            voxel_value = get_volume_real_value( volume2, v1, v2, v3, 0, 0 );
 
             print( "The value for tag point %d (%s) is: %g\n",
                    i, labels[i], voxel_value );

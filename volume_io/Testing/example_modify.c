@@ -19,7 +19,7 @@ int  main(
     char  *argv[] )
 {
     int        v1, v2, v3, sizes[MAX_DIMENSIONS];
-    Real       voxel_value, voxel_100;
+    Real       value;
     Volume     volume;
 
     /*--- input the volume */
@@ -33,15 +33,13 @@ int  main(
 
     /*--- change all values over 100 to 100 */
 
-    voxel_100 = CONVERT_VALUE_TO_VOXEL( volume, 100.0 );
-
     for( v1 = 0;  v1 < sizes[0];  ++v1 ) {
         for( v2 = 0;  v2 < sizes[1];  ++v2 ) {
             for( v3 = 0;  v3 < sizes[2];  ++v3 ) {
-                GET_VALUE_3D( voxel_value, volume, v1, v2, v3 );
+                value = get_volume_real_value( volume, v1, v2, v3, 0, 0 );
 
-                if( voxel_value > 100.0 ) {
-                    SET_VOXEL_3D( volume, v1, v2, v3, voxel_100 );
+                if( value > 100.0 ) {
+                    set_volume_real_value( volume, v1, v2, v3, 0, 0, 100.0 );
                 }
             }
         }

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.53 1995-09-19 18:23:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.54 1995-09-21 19:00:54 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -364,10 +364,10 @@ public  BOOLEAN  is_an_rgb_volume(
 public  void  alloc_volume_data(
     Volume   volume )
 {
-    int   data_size;
+    unsigned int   data_size;
 
     data_size = get_volume_total_n_voxels( volume ) *
-                get_type_size( get_volume_data_type( volume ) );
+                (unsigned int) get_type_size( get_volume_data_type( volume ) );
 
     if( data_size > get_n_bytes_cache_threshold() &&
         get_n_bytes_cache_threshold() >= 0 )
@@ -532,17 +532,18 @@ public  void  set_volume_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_volume_total_n_voxels(
+public  unsigned int  get_volume_total_n_voxels(
     Volume    volume )
 {
-    int   n, i, sizes[MAX_DIMENSIONS];
+    unsigned  int  n;
+    int       i, sizes[MAX_DIMENSIONS];
 
     n = 1;
 
     get_volume_sizes( volume, sizes );
 
     for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
-        n *= sizes[i];
+        n *= (unsigned int) sizes[i];
 
     return( n );
 }
@@ -565,9 +566,29 @@ public  void  set_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform )
 {
+    int         c, axis;
+    Vector      axes[N_DIMENSIONS];
+    Transform   *linear_transform;
+
     delete_general_transform( &volume->voxel_to_world_transform );
 
     volume->voxel_to_world_transform = *transform;
+
+    if( get_transform_type( transform ) == LINEAR )
+    {
+        linear_transform = get_linear_transform_ptr( transform );
+        get_transform_x_axis( linear_transform, &axes[X] );
+        get_transform_y_axis( linear_transform, &axes[Y] );
+        get_transform_z_axis( linear_transform, &axes[Z] );
+
+        for_less( c, 0, N_DIMENSIONS )
+        {
+            axis = volume->spatial_axes[c];
+            if( axis >= 0 )
+                volume->separations[axis] = SIGN( volume->separations[axis] ) *
+                                            MAGNITUDE( axes[c] );
+        }
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1462,7 +1483,7 @@ public  Real  get_volume_real_min(
     real_min = get_volume_voxel_min( volume );
 
     if( volume->real_range_set )
-        real_min = CONVERT_VOXEL_TO_VALUE( volume, real_min );
+        real_min = convert_voxel_to_value( volume, real_min );
 
     return( real_min );
 }
@@ -1488,7 +1509,7 @@ public  Real  get_volume_real_max(
     real_max = get_volume_voxel_max( volume );
 
     if( volume->real_range_set )
-        real_max = CONVERT_VOXEL_TO_VALUE( volume, real_max );
+        real_max = convert_voxel_to_value( volume, real_max );
 
     return( real_max );
 }

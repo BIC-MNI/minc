@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.37 1995-08-21 04:36:26 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.38 1995-09-21 19:00:51 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -231,16 +231,12 @@ typedef  volume_struct  *Volume;
 /* --- returns the conversion of the 'voxel' value to a real value */
 
 #define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
-            ( (volume)->real_range_set ? \
-                ((volume)->real_value_scale * (Real) (voxel) + \
-                 (volume)->real_value_translation) : (voxel) )
+            convert_voxel_to_value( volume, voxel )
 
 /* --- returns the conversion of the 'real' value to a voxel value */
 
 #define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
-            ( (volume)->real_range_set ? \
-              (((Real) value - (volume)->real_value_translation) / \
-               (volume)->real_value_scale) : (value) )
+            convert_value_to_voxel( volume, voxel )
 
 /* --- assigns 'value' the value of the [x][y]...'th voxel of 'volume' */
 
