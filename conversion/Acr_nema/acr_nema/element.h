@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 1.5  1993-11-26 18:47:48  neelin
-@MODIFIED   : Added element copy routine.
+@MODIFIED   : Revision 1.6  1994-04-07 10:05:11  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.5  93/11/26  18:47:48  neelin
+ * Added element copy routine.
+ * 
  * Revision 1.4  93/11/24  11:26:35  neelin
  * Changed short to unsigned short.
  * 
@@ -49,9 +54,14 @@ typedef struct Acr_Element_Id {
 } *Acr_Element_Id;
 
 /* Macros for creating element id's (class should be nothing or static) */
+#ifndef lint
 #define DEFINE_ELEMENT(class, name, group, element) \
    static struct Acr_Element_Id name##_struct = {group, element}; \
    class Acr_Element_Id name = &name##_struct
+#else
+#define DEFINE_ELEMENT(class, name, group, element) \
+   class Acr_Element_Id name = (void *) 0
+#endif
 
 /* Macro for creating global elements. If GLOBAL_ELEMENT_DEFINITION is
    defined then we define the variables, otherwise we just declar them */

@@ -6,9 +6,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.5  1994-01-06 13:30:57  neelin
-@MODIFIED   : Changed acr_need_invert to a public function.
+@MODIFIED   : Revision 1.6  1994-04-07 10:03:40  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.5  94/01/06  13:30:57  neelin
+ * Changed acr_need_invert to a public function.
+ * 
  * Revision 1.4  93/11/30  12:18:34  neelin
  * Handle MALLOC returning NULL because of extremely large data element length.
  * 
@@ -291,7 +296,7 @@ public Acr_Status acr_test_byte_ordering(Acr_File *afp)
          if (i == 0)
             return ACR_END_OF_INPUT;
          else
-            return ACR_PROTOCOL_ERROR;
+            return ACR_ABNORMAL_END_OF_INPUT;
       }
       buffer[i] = ch;
    }
@@ -310,7 +315,7 @@ public Acr_Status acr_test_byte_ordering(Acr_File *afp)
    /* Put the characters back */
    for (i=buflen-1; i >=0; i--) {
       if (acr_ungetc((int) buffer[i],afp) == EOF) {
-         return ACR_PROTOCOL_ERROR;
+         return ACR_OTHER_ERROR;
       }
    }
 
@@ -358,7 +363,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
          if (i == 0)
             return ACR_END_OF_INPUT;
          else
-            return ACR_PROTOCOL_ERROR;
+            return ACR_ABNORMAL_END_OF_INPUT;
       }
       buffer[i] = ch;
    }
@@ -383,7 +388,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
       ch = acr_getc(afp);
       if (ch == EOF) {
          FREE(*data_pointer);
-         return ACR_PROTOCOL_ERROR;
+         return ACR_ABNORMAL_END_OF_INPUT;
       }
       (*data_pointer)[i] = ch;
    }

@@ -6,9 +6,14 @@
 @GLOBALS    : 
 @CREATED    : March 14, 1994 (Peter Neelin)
 @MODIFIED   : $Log: read_acr_nema.c,v $
-@MODIFIED   : Revision 1.1  1994-03-14 16:02:49  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-04-07 10:05:08  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.1  94/03/14  16:02:49  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -44,7 +49,6 @@ int main(int argc, char *argv[])
    Acr_File *afp;
    Acr_Group group_list;
    Acr_Element element;
-   long element_length;
    Acr_Element_Id element_id;
    unsigned short *image;
    int nrows, ncols, bits_alloc;

@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 1.4  1994-01-06 13:31:30  neelin
-@MODIFIED   : Changed acr_need_invert to a public function.
+@MODIFIED   : Revision 1.5  1994-04-07 10:05:10  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.4  94/01/06  13:31:30  neelin
+ * Changed acr_need_invert to a public function.
+ * 
  * Revision 1.3  93/11/25  10:37:26  neelin
  * Added byte-ordering test.
  * 
@@ -35,7 +40,8 @@
 
 /* Status for io */
 typedef enum {
-   ACR_OK, ACR_END_OF_INPUT, ACR_PROTOCOL_ERROR, ACR_OTHER_ERROR
+   ACR_OK, ACR_END_OF_INPUT, ACR_PROTOCOL_ERROR, ACR_OTHER_ERROR, 
+   ACR_ABNORMAL_END_OF_INPUT
 } Acr_Status;
 
 /* Functions */

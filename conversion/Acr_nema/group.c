@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.9  1993-12-10 09:20:32  neelin
-@MODIFIED   : Added acr_find_<type> routines.
+@MODIFIED   : Revision 1.10  1994-04-07 10:05:04  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.9  93/12/10  09:20:32  neelin
+ * Added acr_find_<type> routines.
+ * 
  * Revision 1.8  93/12/08  09:04:59  neelin
  * Fixed memory leak in acr_input_group_with_max.
  * Fixed acr_input_group_list (didn't stop reading when reached max group).
@@ -416,7 +421,7 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
       if (status != ACR_OK) {
          acr_delete_group(*group);
          *group = NULL;
-         if (status == ACR_END_OF_INPUT) status = ACR_PROTOCOL_ERROR;
+         if (status == ACR_END_OF_INPUT) status = ACR_ABNORMAL_END_OF_INPUT;
          return status;
       }
       acr_group_add_element(*group, element);
@@ -487,7 +492,7 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
    /* Check for a bogus group (the true number of elements is different from
       nelements) */
    if ((ielement < nelements) || (next != NULL)) {
-      status = ACR_PROTOCOL_ERROR;
+      status = ACR_OTHER_ERROR;
       return status;
    }
 

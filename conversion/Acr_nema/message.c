@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 1.3  1993-11-24 11:25:59  neelin
-@MODIFIED   : Added dump_message.
+@MODIFIED   : Revision 1.4  1994-04-07 10:05:06  neelin
+@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+@MODIFIED   : to that or ACR_OTHER_ERROR.
+@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
 @MODIFIED   :
+ * Revision 1.3  93/11/24  11:25:59  neelin
+ * Added dump_message.
+ * 
  * Revision 1.2  93/11/22  13:12:09  neelin
  * Changed to use new Acr_Element_Id stuff
  * 
@@ -35,11 +40,7 @@
 #define ACR_GID_MESSLEN 0
 #define ACR_EID_MESSLEN 1
 
-#ifndef lint
 DEFINE_ELEMENT(static, ACR_Message_length, ACR_GID_MESSLEN, ACR_EID_MESSLEN);
-#else
-static Acr_Element_Id ACR_Message_length = NULL;
-#endif
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -281,7 +282,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
       status = acr_input_group(afp, &group);
       if (status != ACR_OK) {
          acr_delete_message(*message);
-         if (status == ACR_END_OF_INPUT) status = ACR_PROTOCOL_ERROR;
+         if (status == ACR_END_OF_INPUT) status = ACR_ABNORMAL_END_OF_INPUT;
          return status;
       }
       acr_message_add_group(*message, group);
@@ -338,7 +339,7 @@ public Acr_Status acr_output_message(Acr_File *afp, Acr_Message message)
    /* Check for a bogus message (the true number of groups is different from
       ngroups) */
    if ((igroup < ngroups) || (next != NULL)) {
-      status = ACR_PROTOCOL_ERROR;
+      status = ACR_OTHER_ERROR;
       return status;
    }
 
