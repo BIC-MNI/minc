@@ -61,3 +61,9 @@ $(LINT_MINC_LIB) : $(LINT_LIST)
 # Remove all derived files
 clean:
 	$(RM) $(RM_FLAGS)  $(OBJS) $(LINT_LIST) $(CC_MINC_LIB) $(LINT_MINC_LIB)
+
+# Copy files for to installation directories
+install:
+	$(CP) $(CP_FLAGS) $(CC_MINC_LIB) $(INSTALL_LIBDIR)
+	$(CP) $(CP_FLAGS) minc.h $(INSTALL_INCDIR)
+	$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_INCDIR)/minc.h
