@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.43 1995-12-07 15:45:28 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.44 1995-12-07 17:12:05 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -99,11 +99,11 @@ typedef  volume_struct  *Volume;
              _size3_ = _sizes_[3];                                            \
              _size4_ = _sizes_[4];                                            \
                                                                               \
-             for_less( v4, 0, _size4_ )                                       \
-             for_less( v3, 0, _size3_ )                                       \
-             for_less( v2, 0, _size2_ )                                       \
-             for_less( v1, 0, _size1_ )                                       \
              for_less( v0, 0, _size0_ )                                       \
+             for_less( v1, 0, _size1_ )                                       \
+             for_less( v2, 0, _size2_ )                                       \
+             for_less( v3, 0, _size3_ )                                       \
+             for_less( v4, 0, _size4_ )                                       \
              {
 
 #define  END_ALL_VOXELS                                                       \
