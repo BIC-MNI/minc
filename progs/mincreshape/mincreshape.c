@@ -13,7 +13,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.7  2001-09-18 15:32:53  neelin
+ * Revision 6.8  2001-11-13 14:16:50  neelin
+ * Get correct valid range for conversion from int to float types
+ *
+ * Revision 6.7  2001/09/18 15:32:53  neelin
  * Create image variable last to allow big images and to fix compatibility
  * problems with 2.3 and 3.x.
  *
@@ -86,7 +89,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.7 2001-09-18 15:32:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.8 2001-11-13 14:16:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -836,32 +839,80 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
 {
    int imgid;
    int file_is_signed;
+   nc_type file_datatype;
+   int found_range, file_integer_type, integer_type;
 
    /* Get the image variable id */
    imgid = ncvarid(mincid, MIimage);
 
-   /* Check that datatype is not specified */
+   /* Get the file data type */
+   (void) miget_datatype(mincid, imgid, &file_datatype, &file_is_signed);
+   /* Get the type and sign. If a type is specified, then the sign should
+      be the default for that type. If it is not specified, then use
+      the default from the file. */
    if (*datatype != MI_ORIGINAL_TYPE) {
       if (*is_signed == INT_MIN) {
          *is_signed = ((*datatype == NC_BYTE) ? FALSE : TRUE);
       }
-      if (valid_range[0] == DBL_MAX) {
+   }
+   else {
+      *datatype = file_datatype;
+      if (*is_signed == INT_MIN) {
+         *is_signed = file_is_signed;
+      }
+   }
+
+   /* Set the valid_range if needed. For integer types, just get the
+      default for the type. For float, get the valid range of the 
+      input if it is also float and is specified, otherwise get the 
+      image range. */
+   if (valid_range[0] == DBL_MAX) {
+
+      /* Test for integer types */
+      integer_type = (*datatype != NC_FLOAT && *datatype != NC_DOUBLE);
+      file_integer_type = 
+         (file_datatype != NC_FLOAT && file_datatype != NC_DOUBLE);
+
+      /* Integer type */
+      if (integer_type) {
          (void) miget_default_range(*datatype, *is_signed, valid_range);
       }
-      return;
-   }
 
-   /* Get data type */
-   (void) miget_datatype(mincid, imgid, datatype, &file_is_signed);
+      /* Float type */
+      else {
 
-   /* Look for sign if needed */
-   if (*is_signed == INT_MIN) {
-      *is_signed = file_is_signed;
-   }
+         found_range = FALSE;
 
-   /* Look for valid range if needed */
-   if (valid_range[0] == DBL_MAX) {
-      (void) miget_valid_range(mincid, imgid, valid_range);
+         /* Just get input valid_range for float input */
+         if (!file_integer_type) {
+            (void) miget_valid_range(mincid, imgid, valid_range);
+            if (file_datatype == NC_FLOAT)
+               found_range = (valid_range[1] != FLT_MAX);
+            else if (file_datatype == NC_DOUBLE)
+               found_range = (valid_range[1] != DBL_MAX);
+         }
+
+         /* If not float input, or did not find valid_range, then
+            get it from the image range (image-max/min) */
+         if (!found_range) {
+
+            /* Get the range if the variables exist, otherwise use
+               the default */
+            if (mivar_exists(mincid, MIimagemax) &&
+                mivar_exists(mincid, MIimagemin)) {
+               (void) miget_image_range(mincid, valid_range);
+            }
+            else if (!file_integer_type) {
+               (void) miget_default_range(*datatype, *is_signed, 
+                                          valid_range);
+            }
+            else {
+               valid_range[0] = MI_DEFAULT_MIN;
+               valid_range[1] = MI_DEFAULT_MAX;
+            }
+         }
+
+      }
    }
 
    return;
