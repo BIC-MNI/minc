@@ -7,7 +7,10 @@
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.h,v $
- * Revision 6.2  1999-10-19 14:45:29  neelin
+ * Revision 6.3  2001-12-06 14:12:45  neelin
+ * Trivial change to definition of NCOPTS_DEFAULT.
+ *
+ * Revision 6.2  1999/10/19 14:45:29  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.1  1998/08/19 13:57:50  neelin
@@ -49,7 +52,7 @@
 /* Constants used in program */
 #define NOFILL DBL_MAX   /* Fillvalue indicating -nofill */
 #define FILL -DBL_MAX    /* Fillvalue for -fill */
-#define NCOPTS_DEFAULT NC_VERBOSE | NC_FATAL
+#define NCOPTS_DEFAULT (NC_VERBOSE | NC_FATAL)
 #define DEFAULT_MAX_CHUNK_SIZE_IN_KB (1024*4)
 #define DIM_WIDTH_SUFFIX "-width"
 #define ARG_SEPARATOR ','
