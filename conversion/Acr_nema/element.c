@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:48:12  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-22 13:11:34  neelin
+@MODIFIED   : Added Acr_Element_Id code.
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:48:12  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -335,8 +338,7 @@ public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_element_short
-@INPUT      : group_id 
-              element_id
+@INPUT      : elid
               value
 @OUTPUT     : (none)
 @RETURNS    : Pointer to element structure
@@ -347,7 +349,7 @@ public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_short(int group_id, int element_id, 
+public Acr_Element acr_create_element_short(Acr_Element_Id elid,
                                             short value)
 {
    long data_length;
@@ -357,13 +359,13 @@ public Acr_Element acr_create_element_short(int group_id, int element_id,
    data = MALLOC(data_length);
    acr_put_short((long) 1, &value, data);
 
-   return acr_create_element(group_id, element_id, data_length, data);
+   return acr_create_element(elid->group_id, elid->element_id, 
+                             data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_element_long
-@INPUT      : group_id 
-              element_id
+@INPUT      : elid
               value
 @OUTPUT     : (none)
 @RETURNS    : Pointer to element structure
@@ -374,7 +376,7 @@ public Acr_Element acr_create_element_short(int group_id, int element_id,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_long(int group_id, int element_id, 
+public Acr_Element acr_create_element_long(Acr_Element_Id elid,
                                            long value)
 {
    long data_length;
@@ -384,13 +386,13 @@ public Acr_Element acr_create_element_long(int group_id, int element_id,
    data = MALLOC(data_length);
    acr_put_long((long) 1, &value, data);
 
-   return acr_create_element(group_id, element_id, data_length, data);
+   return acr_create_element(elid->group_id, elid->element_id, 
+                             data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_element_numeric
-@INPUT      : group_id 
-              element_id
+@INPUT      : elid
               value
 @OUTPUT     : (none)
 @RETURNS    : Pointer to element structure
@@ -402,7 +404,7 @@ public Acr_Element acr_create_element_long(int group_id, int element_id,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_numeric(int group_id, int element_id, 
+public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value)
 {
    char string[256];
@@ -413,13 +415,13 @@ public Acr_Element acr_create_element_numeric(int group_id, int element_id,
    data_length = strlen(string);
    data = strdup(string);
 
-   return acr_create_element(group_id, element_id, data_length, data);
+   return acr_create_element(elid->group_id, elid->element_id, 
+                             data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_element_string
-@INPUT      : group_id 
-              element_id
+@INPUT      : elid
               value
 @OUTPUT     : (none)
 @RETURNS    : Pointer to element structure
@@ -431,7 +433,7 @@ public Acr_Element acr_create_element_numeric(int group_id, int element_id,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_string(int group_id, int element_id, 
+public Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value)
 {
    long data_length;
@@ -440,7 +442,7 @@ public Acr_Element acr_create_element_string(int group_id, int element_id,
    data_length = strlen(value);
    data = strdup(value);
 
-   return acr_create_element(group_id, element_id, data_length, data);
+   return acr_create_element(elid->group_id, elid->element_id, data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
