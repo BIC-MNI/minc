@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.54 2001-04-17 18:40:30 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.55 2001-04-23 13:20:22 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -868,9 +868,9 @@ private  Status  check_minc_output_variables(
 
         if( file->image_range[0] < file->image_range[1] )
         {
-            (void) mivarput1( file->minc_icv, file->min_id, &start_index,
+            (void) mivarput1( file->cdfid, file->min_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
-            (void) mivarput1( file->minc_icv, file->max_id, &start_index,
+            (void) mivarput1( file->cdfid, file->max_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
         }
         ncopts = NC_VERBOSE | NC_FATAL;
@@ -1322,14 +1322,14 @@ private  Status  output_the_volume(
         for_less( r, 0, n_ranges )
             image_range[r] = real_min;
 
-        (void) mivarput( file->minc_icv, file->min_id,
+        (void) mivarput( file->cdfid, file->min_id,
                          range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
         for_less( r, 0, n_ranges )
             image_range[r] = real_max;
 
-        (void) mivarput( file->minc_icv, file->max_id,
+        (void) mivarput( file->cdfid, file->max_id,
                          range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
