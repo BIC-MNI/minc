@@ -10,16 +10,19 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.2  1994-12-13 16:34:02  neelin
-@MODIFIED   : Added sorting of lookup file.
+@MODIFIED   : Revision 1.3  1994-12-14 09:22:30  neelin
+@MODIFIED   : Removed debugging code.
 @MODIFIED   :
+ * Revision 1.2  94/12/13  16:34:02  neelin
+ * Added sorting of lookup file.
+ * 
  * Revision 1.1  94/12/09  15:31:00  neelin
  * Initial revision
  * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.2 1994-12-13 16:34:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.3 1994-12-14 09:22:30 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -388,17 +391,6 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
       table = new_table;
       FREE(sort_table);
    }
-
-#ifdef DEBUG
-   /* Print out the table */
-   if (need_sort) (void) printf("Did sorting\n");
-   for (ientry=0; ientry < nentries; ientry++) {
-      for (ivalue=0; ivalue < table_nvalues; ivalue++) {
-         (void) printf("%g ", table[ientry * table_nvalues + ivalue]);
-      }
-      (void) printf("\n");
-   }
-#endif
 
    /* Allocate space for the lookup table and set initial values */
    lookup_table = MALLOC(sizeof(*lookup_table));
