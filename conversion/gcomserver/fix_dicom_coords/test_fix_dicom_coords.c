@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
    double field_of_view;
    int orientation;
    char imagenum[128];
+   Acr_Status status;
 
    /* Check arguments */
    pname = argv[0];
@@ -79,10 +80,15 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_order(afp);
+   (void) acr_test_dicom_file(afp);
 
    /* Read in group list up to group */
-   (void) acr_input_group_list(afp, &group_list, ACR_Image_Number->group_id);
+   status = acr_input_group_list(afp, &group_list, ACR_Image_Number->group_id);
+   if (status != ACR_OK) {
+      (void) fprintf(stderr, "Error reading input: %s\n",
+                     acr_status_string(status));
+      exit(EXIT_FAILURE);
+   }
 
    /* Free the afp and close the input */
    acr_file_free(afp);
@@ -97,7 +103,7 @@ int main(int argc, char *argv[])
    off_centre_ap = acr_find_double(group_list, SPI_Off_center_ap, 0.0);
    off_centre_cc = acr_find_double(group_list, SPI_Off_center_cc, 0.0);
    field_of_view = acr_find_double(group_list, SPI_Field_of_view, 0.0);
-      
+
    /* Fix the values */
    calculate_dicom_coords(orientation, 
                           angulation_lr, angulation_ap, angulation_cc, 
