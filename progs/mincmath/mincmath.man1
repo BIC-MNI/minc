@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.3 1996-01-17 21:24:06 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.4 1997-04-23 19:34:56 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -166,6 +166,15 @@ Calculate the square root of a volume.
 .P
 .I -square:
 Calculate the square of a volume.
+.P
+.I -abs:
+Calculate the absolute value of a volume.
+.P
+.I -maximum:
+Calculate the maximum of a series of volumes.
+.P
+.I -minimum:
+Calculate the minimum of a series of volumes.
 .P
 .I -exp:
 Calculate c2*exp(c1*x) at each voxel of a volume, where x is the 

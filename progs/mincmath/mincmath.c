@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 3.3  1996-01-17 21:24:06  neelin
-@MODIFIED   : Added -exp and -log options.
+@MODIFIED   : Revision 3.4  1997-04-23 19:34:56  neelin
+@MODIFIED   : Added options -maximum, -minimum, -abs.
 @MODIFIED   :
+ * Revision 3.3  1996/01/17  21:24:06  neelin
+ * Added -exp and -log options.
+ *
  * Revision 3.2  1996/01/16  13:29:31  neelin
  * Added -invert option.
  *
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.3 1996-01-17 21:24:06 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.4 1997-04-23 19:34:56 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -64,7 +67,7 @@ typedef enum {
 UNSPECIFIED_OP = 0, ADD_OP, SUB_OP, MULT_OP, DIV_OP, SQRT_OP, SQUARE_OP,
 SCALE_OP, CLAMP_OP, SEGMENT_OP, NSEGMENT_OP, PERCENTDIFF_OP, 
 EQ_OP, NE_OP, GT_OP, GE_OP, LT_OP, LE_OP, AND_OP, OR_OP, NOT_OP, 
-ISNAN_OP, NISNAN_OP, INVERT_OP, EXP_OP, LOG_OP
+ISNAN_OP, NISNAN_OP, INVERT_OP, EXP_OP, LOG_OP, MAX_OP, MIN_OP, ABS_OP
 } Operation;
 
 typedef enum {
@@ -100,6 +103,9 @@ Num_Operands OperandTable[][3] = {
    UNARY_NUMOP,   UNARY_NUMOP,   ILLEGAL_NUMOP,       /* INVERT_OP */
    UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* EXP_OP */
    UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* LOG_OP */
+   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MAX_OP */
+   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MIN_OP */
+   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ABS_OP */
    ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP        /* nothing */
 };
 
@@ -232,6 +238,14 @@ ArgvInfo argTable[] = {
        "Take square root of a volume."},
    {"-square", ARGV_CONSTANT, (char *) SQUARE_OP, (char *) &operation,
        "Take square of a volume."},
+   {"-abs", ARGV_CONSTANT, (char *) ABS_OP, (char *) &operation,
+       "Take absolute value of a volume."},
+   {"-max", ARGV_CONSTANT, (char *) MAX_OP, (char *) &operation,
+       "Synonym for -maximum."},
+   {"-maximum", ARGV_CONSTANT, (char *) MAX_OP, (char *) &operation,
+       "Find maximum of N volumes."},
+   {"-minimum", ARGV_CONSTANT, (char *) MIN_OP, (char *) &operation,
+       "Find minimum of N volumes."},
    {"-exp", ARGV_CONSTANT, (char *) EXP_OP, (char *) &operation,
        "Calculate c2*exp(c1*x). The constants c1 and c2 default to 1."},
    {"-log", ARGV_CONSTANT, (char *) LOG_OP, (char *) &operation,
@@ -425,7 +439,7 @@ public void do_math(void *caller_data, long num_voxels,
    /* Check arguments */
    if ((input_num_buffers > 2) || (output_num_buffers != 1) || 
        (output_vector_length != input_vector_length)) {
-      (void) fprintf(stderr, "Bad arguments to accum_math!\n");
+      (void) fprintf(stderr, "Bad arguments to do_math!\n");
       exit(EXIT_FAILURE);
    }
 
@@ -493,6 +507,12 @@ public void do_math(void *caller_data, long num_voxels,
             break;
          case SQUARE_OP:
             output_data[0][ivox] = value1 * value1; break;
+         case ABS_OP:
+            if (value1 < 0.0)
+               output_data[0][ivox] = -value1;
+            else
+               output_data[0][ivox] = value1;
+            break;
          case EXP_OP:
             output_data[0][ivox] = constants[1] * exp(value1 * constants[0]);
             break;
@@ -635,6 +655,14 @@ public void accum_math(void *caller_data, long num_voxels,
                output_data[0][ivox] = 
                   (((oldvalue != 0.0) || (rint(value) != 0.0)) ? 1.0 : 0.0);
                break;
+            case MAX_OP:
+               if (value > oldvalue)
+                  output_data[0][ivox] = value;
+               break;
+            case MIN_OP:
+               if (value < oldvalue)
+                  output_data[0][ivox] = value;
+               break;
             default:
                (void) fprintf(stderr, "Bad op in accum_math!\n");
                exit(EXIT_FAILURE);
@@ -696,6 +724,12 @@ public void start_math(void *caller_data, long num_voxels,
          break;
       case OR_OP:
          output_data[0][ivox] = 0.0;
+         break;
+      case MAX_OP:
+         output_data[0][ivox] = -DBL_MAX * 0.9999999;
+         break;
+      case MIN_OP:
+         output_data[0][ivox] = DBL_MAX;
          break;
       default:
          (void) fprintf(stderr, "Bad op in start_math!\n");
