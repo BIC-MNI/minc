@@ -30,7 +30,7 @@ build: $(CC_PROG_LIB)
 $(OBJS) $(LINT_OBJS) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -46,7 +46,7 @@ lint : $(LINT_PROG_LIB)
 
 # How to create lint library
 $(LINT_PROG_LIB) : $(LINT_OBJS)
-	lint -o $(PROG_LIB) -m -x -u $(LINTFLAGS) $(LINT_OBJS)
+	$(LINT) -o $(PROG_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_OBJS)
 
 # Remove all derived files in this directory
 clean:

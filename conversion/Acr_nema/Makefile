@@ -39,7 +39,7 @@ build: $(CC_ACR_LIB) $(PROGS)
 $(PROG_OBJ) $(LINT_LIST) $(OBJS) $(LINT_OBJS) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -64,10 +64,10 @@ lint: $(LINT_ACR_LIB) $(LINT_LIST_EXE)
 
 # How to create lint library
 $(LINT_ACR_LIB) : $(LINT_OBJS)
-	lint -o $(ACR_LIB) -m -x -u $(LINTFLAGS) $(LINT_OBJS)
+	$(LINT) -o $(ACR_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_OBJS)
 
 $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_ACR_LIB)
-	lint -u -m $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
+	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
 
 # how to make man pages
 .man1.1:

@@ -9,8 +9,8 @@ include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = mincconcat
-EXTRA_OBJS = 
-HEADERS  = 
+EXTRA_OBJS = voxel_loop.o
+HEADERS  = voxel_loop.h
 CDEFINES = -DDEBUG# cpp defines
 LDOPT    = $(PROG_LDOPT)
 
@@ -36,7 +36,7 @@ build: $(PROGS)
 $(PROG_OBJ) $(LINT_LIST) $(EXTRA_OBJS) $(LINT_EXTRA) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -54,7 +54,8 @@ $(PROGS) : $$@.o $(EXTRA_OBJS) $(CC_PROG_LIB) $(CC_MINC_LIB)
 lint: $(LINT_LIST_EXE)
 
 $(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
+	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln $(LINT_EXTRA) \
+	      $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
 clean:
