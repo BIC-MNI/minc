@@ -27,8 +27,13 @@ extern "C" {                /* Hey, Mr. Compiler - this is "C" code! */
 #define MI_TALAIRACH "talairach_"
 #define MI_CALLOSAL  "callosal__"
 
+#ifndef TRUE
 #define TRUE  1
+#endif /* TRUE */
+
+#ifndef FALSE
 #define FALSE 0
+#endif /* FALSE */
 
 #define MI_DIMATTR_ALL 0
 #define MI_DIMATTR_REGULARLY_SAMPLED 0x1
@@ -411,6 +416,17 @@ extern int miget_volume_valid_range(mihandle_t volume,
 extern int miset_volume_valid_range(mihandle_t volume, 
                                     double valid_max, double valid_min);
 
+/* RECORD functions */
+extern int miget_record_name(mihandle_t volume, char **name);
+extern int miget_record_length(mihandle_t volume, int *length);
+extern int miget_record_field_name(mihandle_t volume, int index, char **name);
+extern int miset_record_field_name(mihandle_t volume, int index, 
+                                   const char *name);
+
+/* LABEL functions */
+extern int midefine_label(mihandle_t volume, int value, const char *name);
+extern int miget_label_name(mihandle_t volume, int value, char **name);
+extern int miget_label_value(mihandle_t volume, const char *name, int *value);
 
 #ifdef __cplusplus
 }
