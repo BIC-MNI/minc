@@ -2195,6 +2195,35 @@ then voxels along the second dimension of the volume will map to the real
 world axis (0.0, 1.0, 1.0) normalized to unit length, then scaled by
 the volume separation for the second volume dimension.}
 
+{\bf\begin{verbatim}
+public  void  get_volume_direction_cosine(
+    Volume   volume,
+    int      dimension,
+    Real     dir[] )
+\end{verbatim}}
+
+\desc{Passes back the real world axis for a specific voxel dimension.  Note
+that \name{dimension} must be a spatial dimension in the volume.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_space_name(
+    Volume   volume,
+    STRING   name )
+\end{verbatim}}
+
+\desc{Sets the coordinate system type of the volume in terms of a string
+name.  This can be any string, but a set of defined constants is given by
+MINC: \name{MI\_NATIVE}, \name{MI\_TALAIRACH}, and \name{MI\_CALLOSAL}.}
+
+{\bf\begin{verbatim}
+public  STRING  get_volume_space_name(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Returns a copy of the coordinate system type of the volume in terms of
+a string name.  The calling function must free this string when finished with
+it.}
+
 \subsection{Copying Volumes}
 
 Another method of creating a volume is to simply copy the entire

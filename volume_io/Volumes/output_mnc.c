@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.47 1996-11-15 16:09:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.48 1996-12-09 20:20:29 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -73,6 +73,7 @@ private  BOOLEAN  is_default_direction_cosine(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_world_transform
 @INPUT      : file
+              space_type
               voxel_to_world_transform
 @OUTPUT     : 
 @RETURNS    : OK or ERROR
@@ -82,11 +83,12 @@ private  BOOLEAN  is_default_direction_cosine(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Oct. 24, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 15, 1996    D. MacDonald  - added handling of space type
 ---------------------------------------------------------------------------- */
 
 private  Status  output_world_transform(
     Minc_file              file,
+    STRING                 space_type,
     General_transform      *voxel_to_world_transform )
 {
     double              separation[MAX_VAR_DIMS];
@@ -171,6 +173,11 @@ private  Status  output_world_transform(
                                  NC_DOUBLE, N_DIMENSIONS, dir_cosines[axis]);
             }
             (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
+            if( !equal_strings( space_type, MI_UNKNOWN_SPACE ) )
+            {
+                (void) miattputstr( file->cdfid, file->dim_ids[d], MIspacetype,
+                                    space_type );
+            }
         }
         else
             file->dim_ids[d] = -1;
@@ -204,7 +211,7 @@ private  Status  output_world_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 15, 1996   D. MacDonald  - added handling of space type
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_output(
@@ -367,8 +374,8 @@ public  Minc_file  initialize_minc_output(
                                 (long) sizes[d] );
     }
 
-    if( output_world_transform( file, voxel_to_world_transform )
-                  != OK )
+    if( output_world_transform( file, volume_to_attach->coordinate_system_name,
+                                voxel_to_world_transform ) != OK )
     {
         FREE( file );
         return( NULL );

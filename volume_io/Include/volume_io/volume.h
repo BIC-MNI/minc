@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.47 1996-11-15 16:09:42 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.48 1996-12-09 20:20:23 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -53,6 +53,8 @@ extern  STRING   File_order_dimension_names[];
 
 #define  ANY_SPATIAL_DIMENSION   "any_spatial_dimension"
 
+#define MI_UNKNOWN_SPACE    "unknown___"
+
 typedef  struct
 {
     BOOLEAN                 is_cached_volume;
@@ -79,6 +81,8 @@ typedef  struct
     Real                    world_space_for_translation_voxel[N_DIMENSIONS];
 
     General_transform       voxel_to_world_transform;
+
+    STRING                  coordinate_system_name;
 } volume_struct;
 
 typedef  volume_struct  *Volume;

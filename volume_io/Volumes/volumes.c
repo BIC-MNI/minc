@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.64 1996-11-15 16:09:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.65 1996-12-09 20:20:27 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -134,8 +134,8 @@ public  BOOLEAN  convert_dim_name_to_spatial_axis(
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
+@CREATED    : June, 1993       David MacDonald
+@MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
 ---------------------------------------------------------------------------- */
 
 public   Volume   create_volume(
@@ -213,6 +213,8 @@ public   Volume   create_volume(
 
     make_identity_transform( &identity );
     create_linear_transform( &volume->voxel_to_world_transform, &identity );
+
+    volume->coordinate_system_name = create_string( MI_UNKNOWN_SPACE );
 
     return( volume );
 }
@@ -459,7 +461,7 @@ public  void  free_volume_data(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
 ---------------------------------------------------------------------------- */
 
 public  void  delete_volume(
@@ -479,6 +481,8 @@ public  void  delete_volume(
 
     for_less( d, 0, get_volume_n_dimensions(volume) )
         delete_string( volume->dimension_names[d] );
+
+    delete_string( volume->coordinate_system_name );
 
     FREE( volume );
 }
@@ -850,6 +854,50 @@ public  void  delete_dimension_names(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_space_type
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Returns a copy of the string representing the volume coordinate
+              system name.  The calling function must delete_string() the
+              value when done.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Nov. 15, 1996    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  STRING  get_volume_space_type(
+    Volume   volume )
+{
+    return( create_string( volume->coordinate_system_name ) );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_space_type
+@INPUT      : volume
+              name
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Copies the name into the volume's coordinate system name.
+              Copies the string, rather than just the pointer.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Nov. 15, 1996    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_space_type(
+    Volume   volume,
+    STRING   name )
+{
+    delete_string( volume->coordinate_system_name );
+    volume->coordinate_system_name = create_string( name );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_separations
 @INPUT      : volume
 @OUTPUT     : separations
@@ -1026,6 +1074,21 @@ public  void  set_volume_direction_cosine(
     recompute_world_transform( volume );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_direction_cosine
+@INPUT      : volume
+              axis
+@OUTPUT     : dir
+@RETURNS    : 
+@DESCRIPTION: Passes back the direction cosine corresponding to the given
+              voxel axis, which must be a spatial dimension.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Nov. 15, 1996    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  get_volume_direction_cosine(
     Volume   volume,
     int      axis,
@@ -1036,7 +1099,7 @@ public  void  get_volume_direction_cosine(
     if( axis < 0 || axis >= get_volume_n_dimensions(volume) )
     {
         print_error(
-         "get_volume_direction_cosine:  cannot set dir cosine for axis %d\n",
+         "get_volume_direction_cosine:  cannot get dir cosine for axis %d\n",
           axis );
         return;
     }
@@ -1663,7 +1726,7 @@ public  void  set_volume_real_range(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
 ---------------------------------------------------------------------------- */
 
 public  Volume   copy_volume_definition_no_alloc(
@@ -1709,6 +1772,8 @@ public  Volume   copy_volume_definition_no_alloc(
                             &transform );
 
     set_voxel_to_world_transform( copy, &transform );
+
+    set_volume_space_type( copy, volume->coordinate_system_name );
 
     return( copy );
 }

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.55 1996-11-15 16:09:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.56 1996-12-09 20:20:26 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -91,7 +91,7 @@ public  int   get_minc_file_n_dimensions(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 15, 1996   D. MacDonald - added handling of space type
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_input_from_minc_id(
@@ -107,10 +107,12 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     BOOLEAN             min_voxel_found, max_voxel_found, range_specified;
     double              valid_range[2], temp;
     long                long_size, mindex[MAX_VAR_DIMS];
-    BOOLEAN             converted_sign;
+    BOOLEAN             converted_sign, space_type_consensus;
     nc_type             converted_type;
-    char                signed_flag[MI_MAX_ATTSTR_LEN+1];
+    char                signed_flag[MI_MAX_ATTSTR_LEN+1], *ptr;
     char                dim_name[MI_MAX_ATTSTR_LEN+1];
+    char                prev_space_type[MI_MAX_ATTSTR_LEN+1];
+    char                space_type[MI_MAX_ATTSTR_LEN+1];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
@@ -289,6 +291,9 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- get the spatial axis info, slice separation, start pos, etc. */
 
+    prev_space_type[0] = (char) 0;
+    space_type_consensus = TRUE;
+
     for_less( d, 0, file->n_file_dimensions )
     {
         file_separations[d] = 1.0;
@@ -323,6 +328,22 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                     dir_cosines[d][1] = tmp_cosines[1];
                     dir_cosines[d][2] = tmp_cosines[2];
                 }
+
+                ptr = miattgetstr( file->cdfid, dimvar, MIspacetype,
+                                    MI_MAX_ATTSTR_LEN+1, space_type );
+
+                if( ptr != NULL )
+                {
+                    if( string_length( prev_space_type ) > 0 &&
+                        string_length( space_type ) > 0 &&
+                        !equal_strings( prev_space_type, space_type ) )
+                    {
+                        space_type_consensus = FALSE;
+                    }
+
+                    if( string_length( space_type ) > 0 )
+                        (void) strcpy( prev_space_type, space_type );
+                }
             }
         }
 
@@ -337,6 +358,9 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                                           file_separations[d];
         }
     }
+
+    if( space_type_consensus )
+        set_volume_space_type( volume, prev_space_type );
 
     /* --- create the file world transform */
 
