@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.7 1997-09-07 17:54:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.8 1997-09-12 19:53:40 david Exp $";
 #endif
 
 public  void  convert_voxels_to_values(
@@ -731,22 +731,22 @@ public  void  get_voxel_values_3d(
 
         ASSIGN_PTR(unsigned_byte_ptr) = void_ptr;
 
-        values[0] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[0] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         ++unsigned_byte_ptr;
-        values[1] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[1] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         unsigned_byte_ptr += step1;
-        values[2] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[2] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         ++unsigned_byte_ptr;
-        values[3] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[3] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         unsigned_byte_ptr += step0;
 
-        values[4] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[4] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         ++unsigned_byte_ptr;
-        values[5] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[5] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         unsigned_byte_ptr += step1;
-        values[6] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[6] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
         ++unsigned_byte_ptr;
-        values[7] = int_to_real_conversion[*unsigned_byte_ptr];
+        values[7] = int_to_real_conversion[(unsigned long) *unsigned_byte_ptr];
 
         return;
     }
