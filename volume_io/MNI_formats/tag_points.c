@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.16 1995-07-31 13:44:56 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.17 1995-10-18 16:26:00 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -35,7 +35,7 @@ static   const char      *TAG_POINTS_STRING = "Points";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  char  *get_default_tag_file_suffix()
+public  STRING  get_default_tag_file_suffix()
 {
     return( "tag" );
 }
@@ -66,7 +66,7 @@ public  char  *get_default_tag_file_suffix()
 
 public  Status  output_tag_points(
     FILE      *file,
-    char      comments[],
+    STRING    comments,
     int       n_volumes,
     int       n_tag_points,
     Real      **tags_volume1,
@@ -74,7 +74,7 @@ public  Status  output_tag_points(
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    char      **labels )
+    STRING    *labels )
 {
     Status   status;
     int      i;
@@ -155,7 +155,7 @@ public  Status  output_tag_points(
                 (void) fprintf( file, " %d", -1 );
         }
 
-        if( labels != (char **) NULL )
+        if( labels != (STRING *) NULL )
             (void) fprintf( file, " \"%s\"", labels[i] );
 
         if( i == n_tag_points - 1 )
@@ -263,14 +263,13 @@ private  void  add_tag_id(
 ---------------------------------------------------------------------------- */
 
 private  void  add_tag_label(
-    char    ***labels,
+    STRING  *labels[],
     int     n_tag_points,
-    char    label[] )
+    STRING  label )
 {
     SET_ARRAY_SIZE( *labels, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
 
-    ALLOC( (*labels)[n_tag_points], strlen(label)+1 );
-    (void) strcpy( (*labels)[n_tag_points], label );
+    (*labels)[n_tag_points] = create_string( label );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -351,7 +350,7 @@ public  void  free_tag_points(
         if( labels != (char **) NULL )
         {
             for( i = 0;  i < n_tag_points;  ++i )
-                FREE( labels[i] );
+                delete_string( labels[i] );
 
             if( n_tag_points > 0 )
                 FREE( labels );
@@ -373,15 +372,14 @@ public  void  free_tag_points(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  extract_label(
-    char     str[],
-    char     label[] )
+private  STRING  extract_label(
+    STRING     str )
 {
     BOOLEAN  quoted;
-    int      i, len;
+    int      i;
+    STRING   label;
 
     i = 0;
-    len = 0;
 
     /* --- skip leading space */
 
@@ -399,16 +397,17 @@ private  void  extract_label(
     /* --- copy characters until either closing quote is found (if quoted),
            or white space or end of string is found */
 
-    while( str[i] != (char) 0 &&
+    label = create_string( NULL );
+
+    while( str[i] != END_OF_STRING &&
            (quoted && str[i] != '"' ||
             !quoted && str[i] != ' ' && str[i] != '\t') )
     {
-        label[len] = str[i];
-        ++len;
+        concat_char_to_string( &label, str[i] );
         ++i;
     }
 
-    label[len] = (char) 0;
+    return( label );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -442,7 +441,7 @@ public  Status  input_tag_points(
     Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    char      ***labels )
+    STRING    *labels[] )
 {
     STRING  line;
     Real    weight;
@@ -453,7 +452,7 @@ public  Status  input_tag_points(
 
     /* parameter checking */
 
-    if( file == (FILE *) 0 )
+    if( file == NULL )
     {
         (void) fprintf( stderr, "input_tag_points(): passed NULL FILE ptr.\n");
         return( ERROR );
@@ -461,13 +460,15 @@ public  Status  input_tag_points(
 
     /* okay read the header */
 
-    if( mni_input_string( file, line, MAX_STRING_LENGTH, (char) 0, (char) 0 )
-         != OK ||
-        strcmp( line, TAG_FILE_HEADER ) != 0 )
+    if( mni_input_string( file, &line, (char) 0, (char) 0 ) != OK ||
+        !equal_strings( line, (STRING) TAG_FILE_HEADER ) )
     {
         (void) fprintf(stderr, "input_tag_points(): invalid header in file.\n");
+        delete_string( line );
         return( ERROR );
     }
+
+    delete_string( line );
 
     /* now read the number of volumes */
 
@@ -519,18 +520,18 @@ public  Status  input_tag_points(
         if( *n_volumes == 2 && tags_volume2 != NULL )
             add_tag_point( tags_volume2, *n_tag_points, x2, y2, z2 );
 
-        label[0] = (char) 0;
+        label = NULL;
         weight = 0.0;
         structure_id = -1;
         patient_id = -1;
 
         n_strings = 0;
-        if( mni_input_line( file, line, MAX_STRING_LENGTH ) == OK )
+        if( mni_input_line( file, &line ) == OK )
         {
             i = 0;
             last_was_blank = TRUE;
             in_quotes = FALSE;
-            while( line[i] != (char) 0 )
+            while( line[i] != END_OF_STRING )
             {
                 if( line[i] == ' ' || line[i] == '\t' )
                 {
@@ -550,13 +551,14 @@ public  Status  input_tag_points(
             }
 
             while( i > 0 &&
-                   (line[i] == ' ' || line[i] == '\t' || line[i] == (char) 0 ) )
+                   (line[i] == ' ' || line[i] == '\t' ||
+                    line[i] == END_OF_STRING) )
                 --i;
 
             if( line[i] == ';' )
             {
                 (void) unget_character( file, (char) ';' );
-                line[i] = (char) 0;
+                line[i] = END_OF_STRING;
             }
         }
 
@@ -564,7 +566,7 @@ public  Status  input_tag_points(
         {
             if( n_strings == 1 )
             {
-                extract_label( line, label );
+                label = extract_label( line );
             }
             else if( n_strings < 3 || n_strings > 4 ||
                      sscanf( line, "%lf %d %d %n", &weight, &structure_id,
@@ -577,9 +579,11 @@ public  Status  input_tag_points(
             }
             else if( n_strings == 4 )
             {
-                extract_label( &line[pos], label );
+                label = extract_label( &line[pos] );
             }
         }
+
+        delete_string( line );
 
         if( weights != (Real **) NULL )
             add_tag_weight( weights, *n_tag_points, weight );
@@ -590,8 +594,10 @@ public  Status  input_tag_points(
         if( patient_ids != (int **) NULL )
             add_tag_id( patient_ids, *n_tag_points, patient_id );
 
-        if( labels != (char ***) NULL )
+        if( labels != (STRING **) NULL )
             add_tag_label( labels, *n_tag_points, label );
+
+        delete_string( label );
 
         ++(*n_tag_points);
     }
@@ -625,8 +631,8 @@ public  Status  input_tag_points(
 ---------------------------------------------------------------------------- */
 
 public  Status  output_tag_file(
-    char      filename[],
-    char      comments[],
+    STRING    filename,
+    STRING    comments,
     int       n_volumes,
     int       n_tag_points,
     Real      **tags_volume1,
@@ -634,7 +640,7 @@ public  Status  output_tag_file(
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    char      **labels )
+    STRING    labels[] )
 {
     Status  status;
     FILE    *file;
@@ -675,7 +681,7 @@ public  Status  output_tag_file(
 ---------------------------------------------------------------------------- */
 
 public  Status  input_tag_file(
-    char      filename[],
+    STRING    filename,
     int       *n_volumes,
     int       *n_tag_points,
     Real      ***tags_volume1,
@@ -683,7 +689,7 @@ public  Status  input_tag_file(
     Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    char      ***labels )
+    STRING    *labels[] )
 {
     Status  status;
     FILE    *file;
