@@ -143,7 +143,7 @@ if($opt{'bitdepth'} != 16 && $opt{'bitdepth'} != 8) {
    die "$me: Invalid bitdepth specified - $opt{'bitdepth'} instead of 8 or 16\n\n";
    }
 
-my ($space, $n_slices, $convert_infile, @extract_args, @convert_args, $dimorder);
+my ($space, $n_slices, $convert_infile, @extract_args, @convert_args, $pipe_args, $dimorder);
 my ($img_x, $img_y, $img_step_x, $img_step_y, $img_length_x, $img_length_y, $dim_names);
 
 # foreach slicing direction
@@ -227,7 +227,16 @@ foreach $space (@{$opt{'dirs'}}){
                     '-geometry', $img_length_y . 'x' . $img_length_x . '!',
                     "$CODE:-", $outfile);
    
-   &do_cmd(join(' ', @extract_args, '|', @convert_args));
+   # check if we are big or little endian for convert's MSB wierdity
+   $pipe_args = '|';
+   if($opt{'bitdepth'} == 16){
+      if(unpack("c",substr(pack("s",1),0,1))){
+         warn "$me: LSB machine, swapping bytes with dd and crossing fingers\n";
+         $pipe_args .= ' dd conv=swab | ';
+         }
+      }
+   
+   &do_cmd(join(' ', @extract_args, $pipe_args, @convert_args));
    }
 
 sub do_cmd {
