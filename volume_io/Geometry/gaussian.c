@@ -4,29 +4,21 @@ static char rcsid[] = "$Header";
 
 #include  <internal_volume_io.h>
 
-private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
+public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     int   n,
-    Real  **coefs,
+    int   row[],
+    Real  **a,
     int   n_values,
-    Real  **values )
+    Real  **solution )
 {
-    int       i, j, k, p, v, *row, tmp;
-    Real      **a, **solution, *s, val, best_val, m, scale_factor;
+    int       i, j, k, p, v, tmp;
+    Real      *s, val, best_val, m, scale_factor;
     BOOLEAN   success;
 
-    ALLOC( row, n );
-    ALLOC2D( a, n, n );
-    ALLOC2D( solution, n, n_values );
     ALLOC( s, n );
 
     for_less( i, 0, n )
-    {
         row[i] = i;
-        for_less( j, 0, n )
-            a[i][j] = coefs[i][j];
-        for_less( j, 0, n_values )
-            solution[i][j] = values[j][i];
-    }
 
     for_less( i, 0, n )
     {
@@ -96,7 +88,40 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
             for_less( v, 0, n_values )
                 solution[row[i]][v] /= a[row[i]][i];
         }
+    }
 
+    FREE( s );
+
+    return( success );
+}
+
+private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
+    int   n,
+    Real  **coefs,
+    int   n_values,
+    Real  **values )
+{
+    int       i, j, v, *row;
+    Real      **a, **solution;
+    BOOLEAN   success;
+
+    ALLOC( row, n );
+    ALLOC2D( a, n, n );
+    ALLOC2D( solution, n, n_values );
+
+    for_less( i, 0, n )
+    {
+        for_less( j, 0, n )
+            a[i][j] = coefs[i][j];
+        for_less( v, 0, n_values )
+            solution[i][v] = values[v][i];
+    }
+
+    success = scaled_maximal_pivoting_gaussian_elimination( n, row, a, n_values,
+                                                            solution );
+
+    if( success )
+    {
         for_less( i, 0, n )
         {
             for_less( v, 0, n_values )
@@ -108,7 +133,6 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
 
     FREE2D( a );
     FREE2D( solution );
-    FREE( s );
     FREE( row );
 
     return( success );
@@ -125,8 +149,8 @@ public  BOOLEAN  solve_linear_system(
     for_less( i, 0, n )
         solution[i] = values[i];
 
-    return( scaled_maximal_pivoting_gaussian_elimination( n, coefs, 1,
-                                                          &solution ) );
+    return( scaled_maximal_pivoting_gaussian_elimination_real( n, coefs, 1,
+                                                               &solution ) );
 }
 
 public  BOOLEAN  invert_square_matrix(
@@ -145,8 +169,8 @@ public  BOOLEAN  invert_square_matrix(
         inverse[i][i] = 1.0;
     }
 
-    success = scaled_maximal_pivoting_gaussian_elimination( n, matrix,
-                                                            n, inverse );
+    success = scaled_maximal_pivoting_gaussian_elimination_real( n, matrix,
+                                                                 n, inverse );
 
     if( success )
     {
