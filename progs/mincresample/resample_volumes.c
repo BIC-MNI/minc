@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.10  1993-10-15 13:48:22  neelin
-@MODIFIED   : Removed include of recipes.h
+@MODIFIED   : Revision 1.11  1993-10-20 14:06:36  neelin
+@MODIFIED   : Modified tri-linear interpolation to allow volumes to extend epsilon
+@MODIFIED   : beyond the first voxel.
+@MODIFIED   : Added code to handle volume dimensions of size one (in tri-linear
+@MODIFIED   : interpolation).
 @MODIFIED   :
+ * Revision 1.10  93/10/15  13:48:22  neelin
+ * Removed include of recipes.h
+ * 
  * Revision 1.9  93/10/12  12:48:08  neelin
  * Use volume_io.h instead of def_mni.h
  * 
@@ -39,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.10 1993-10-15 13:48:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.11 1993-10-20 14:06:36 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -458,6 +464,7 @@ public int trilinear_interpolant(Volume_Data *volume,
                                  Coord_Vector coord, double *result)
 {
    long slcind, rowind, colind, slcmax, rowmax, colmax;
+   long slcnext, rownext, colnext;
    static double f0, f1, f2, r0, r1, r2, r1r2, r1f2, f1r2, f1f2;
    static double v000, v001, v010, v011, v100, v101, v110, v111;
 
@@ -465,9 +472,12 @@ public int trilinear_interpolant(Volume_Data *volume,
    slcmax = volume->size[SLC_AXIS] - 1;
    rowmax = volume->size[ROW_AXIS] - 1;
    colmax = volume->size[COL_AXIS] - 1;
-   if ((coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
-       (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
-       (coord[COLUMN] < 0) || (coord[COLUMN] > colmax)) {
+   if ((coord[SLICE]  < -VOXEL_COORD_EPS) || 
+       (coord[SLICE]  > slcmax+VOXEL_COORD_EPS) ||
+       (coord[ROW]    < -VOXEL_COORD_EPS) || 
+       (coord[ROW]    > rowmax+VOXEL_COORD_EPS) ||
+       (coord[COLUMN] < -VOXEL_COORD_EPS) || 
+       (coord[COLUMN] > colmax+VOXEL_COORD_EPS)) {
       *result = volume->fillvalue;
       return FALSE;
    }
@@ -480,15 +490,34 @@ public int trilinear_interpolant(Volume_Data *volume,
    if (rowind >= rowmax-1) rowind = rowmax-1;
    if (colind >= colmax-1) colind = colmax-1;
 
+   /* Get the next voxel up */
+   slcnext = slcind+1;
+   rownext = rowind+1;
+   colnext = colind+1;
+
+   /* Check for case of dimension of length one */
+   if (slcmax == 0) {
+      slcind = 0;
+      slcnext = 0;
+   }
+   if (rowmax == 0) {
+      rowind = 0;
+      rownext = 0;
+   }
+   if (colmax == 0) {
+      colind = 0;
+      colnext = 0;
+   }
+
    /* Get the relevant voxels */
-   VOLUME_VALUE(volume, slcind  , rowind  , colind  , v000);
-   VOLUME_VALUE(volume, slcind  , rowind  , colind+1, v001);
-   VOLUME_VALUE(volume, slcind  , rowind+1, colind  , v010);
-   VOLUME_VALUE(volume, slcind  , rowind+1, colind+1, v011);
-   VOLUME_VALUE(volume, slcind+1, rowind  , colind  , v100);
-   VOLUME_VALUE(volume, slcind+1, rowind  , colind+1, v101);
-   VOLUME_VALUE(volume, slcind+1, rowind+1, colind  , v110);
-   VOLUME_VALUE(volume, slcind+1, rowind+1, colind+1, v111);
+   VOLUME_VALUE(volume, slcind , rowind , colind , v000);
+   VOLUME_VALUE(volume, slcind , rowind , colnext, v001);
+   VOLUME_VALUE(volume, slcind , rownext, colind , v010);
+   VOLUME_VALUE(volume, slcind , rownext, colnext, v011);
+   VOLUME_VALUE(volume, slcnext, rowind , colind , v100);
+   VOLUME_VALUE(volume, slcnext, rowind , colnext, v101);
+   VOLUME_VALUE(volume, slcnext, rownext, colind , v110);
+   VOLUME_VALUE(volume, slcnext, rownext, colnext, v111);
 
    /* Check that the values are not fill values */
    if ((v000 < volume->vrange[0]) || (v000 > volume->vrange[1]) ||
