@@ -1,27 +1,21 @@
 # --------------------------------------------------------------------
 #
-# MINC Makefile
+# MINC library Makefile
 #
+
+ROOT = ..
+include $(ROOT)/Makefile_machine_specific
+include $(ROOT)/Makefile_configuration
 
 # Object files, header files and library archive
 OBJS = minc_globdef.o minc_error.o value_conversion.o netcdf_convenience.o \
 	    minc_convenience.o image_conversion.o dim_conversion.o
 HEADERS = minc.h minc_routines.h minc_varlists.h minc_basic.h \
 	       minc_structures.h minc_private.h minc_useful.h type_limits.h
-LIBRARY = minc
 
 # Compiler and loader options
 CDEFINES = 
-OPT      = -O -prototypes
-LDOPT    = -L/usr/local/lib -lnetcdf -lsun -lm -lc_s
-INCLUDES = -I. -I/usr/local/include
-
-# Options for creating library
-RM       = rm
-RM_FLAGS = -f
-AR       = ar
-AR_FLAGS = -r
-RANLIB   = true
+LDOPT    = -L$(NETCDF_LIB_DIR) -lnetcdf $(MACHINE_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -29,23 +23,17 @@ RANLIB   = true
 CFLAGS    = $(CDEFINES) $(INCLUDES) $(OPT)
 LINTFLAGS = $(CDEFINES) $(INCLUDES)
 
-# C library file
-CC_LIB    = lib$(LIBRARY).a
-
 # Lint files
 LINT_LIST = $(OBJS:.o=.ln)
-LINT_LIB  = llib-l$(LIBRARY).ln
 
 # --------------------------------------------------------------------
 
-.SUFFIXES: .ln#                           tell make to watch for .ln's
-
-default : $(CC_LIB)
+default : $(CC_MINC_LIB)
 
 #Dependency on Makefile
-$(OBJS) $(CC_LIB) $(LINT_LIST) $(LINT_LIB) : Makefile
+$(OBJS) $(CC_MINC_LIB) $(LINT_LIST) $(LINT_MINC_LIB) : Makefile
 
-all : $(CC_LIB) $(LINT_LIB)
+all : $(CC_MINC_LIB) $(LINT_MINC_LIB)
 
 # define the rule for creating .ln
 $(LINT_LIST) : $(HEADERS)
@@ -58,17 +46,17 @@ $(OBJS) : $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # How to create library
-$(CC_LIB): $(OBJS)
-	$(RM) $(RM_FLAGS) $(CC_LIB)
-	$(AR) $(AR_FLAGS) $(CC_LIB) $(OBJS)
-	$(RANLIB) $(CC_LIB)
+$(CC_MINC_LIB): $(OBJS)
+	$(RM) $(RM_FLAGS) $(CC_MINC_LIB)
+	$(AR) $(AR_FLAGS) $(CC_MINC_LIB) $(OBJS)
+	$(RANLIB) $(CC_MINC_LIB)
 
 # Lint everything
-lint: $(LINT_LIB)
+lint: $(LINT_MINC_LIB)
 
-$(LINT_LIB) : $(LINT_LIST)
-	lint -o $(LIBRARY) -x -u $(LINTFLAGS) $(LINT_LIST)
+$(LINT_MINC_LIB) : $(LINT_LIST)
+	lint -o $(MINC_LIB) -x -u $(LINTFLAGS) $(LINT_LIST)
 
 # Remove all derived files
 clean:
-	\rm -f   $(OBJS) $(LINT_LIST) $(CC_LIB) $(LINT_LIB)
+	$(RM) $(RM_FLAGS)  $(OBJS) $(LINT_LIST) $(CC_MINC_LIB) $(LINT_MINC_LIB)
