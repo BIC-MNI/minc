@@ -49,7 +49,7 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_MINC_LIB)
 
 # Run tests
 test: $(PROGS)
-	run_tests.csh
+	./run_tests.csh
 
 # Remove all derived files in this directory
 mostlyclean clean:
