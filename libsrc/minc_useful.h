@@ -15,7 +15,18 @@
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   : July 29, 1992       Peter Neelin
                  - changed name for MINC routines and added some macros
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 1.4 1993-07-15 14:00:15 neelin Exp $ MINC (MNI)
+@COPYRIGHT  :
+              Copyright 1993 David MacDonald and Peter Neelin, 
+              McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The authors and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 1.5 1993-07-20 12:18:00 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* ------------ define signed for vaxes ----------------- */

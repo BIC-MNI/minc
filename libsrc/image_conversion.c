@@ -37,10 +37,20 @@
                    Removed routine miicv_set. Use routines miicv_setdbl,
                    miicv_setint, miicv_setlong, miicv_setstr instead (this
                    gives type checking at compile time).
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.14 1993-07-15 13:59:42 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.15 1993-07-20 12:17:37 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

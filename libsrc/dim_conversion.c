@@ -17,10 +17,20 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.6 1993-07-15 13:58:48 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.7 1993-07-20 12:17:26 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

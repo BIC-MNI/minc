@@ -20,10 +20,20 @@
                  MI_is_in_list
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.15 1993-03-03 11:28:34 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.16 1993-07-20 12:17:41 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
