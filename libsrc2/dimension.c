@@ -134,9 +134,6 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
    */
   handle->comments = NULL;  
   switch (class) {
-  case MI_DIMCLASS_ANY:
-    handle->class  = MI_DIMCLASS_ANY;
-    break;
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
     if (strcmp(name, "xspace") == 0) {
@@ -199,6 +196,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   case MI_DIMCLASS_RECORD:
     handle->class  = MI_DIMCLASS_RECORD;
     break;
+  case MI_DIMCLASS_ANY:
   default:
     return (MI_ERROR);
   }
