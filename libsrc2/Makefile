@@ -19,8 +19,7 @@ LIBS = -lminc -lnetcdf -lhdf5 -lm
 
 all:	libminc2.a test
 
-test:	full-test \
-	dimension-test \
+EXES=	dimension-test \
 	grpattr-test \
 	datatype-test \
 	label-test \
@@ -31,18 +30,15 @@ test:	full-test \
 	convert-test \
 	record-test
 
+test:	$(EXES)
+
 libminc2.a: $(OBJS)
 	ar r libminc2.a $(OBJS)
 	ranlib libminc2.a
 
-#full-test
-full-test-objs = full-test.o libminc2.a
-
-full-test: $(full-test-objs)
-	gcc $(LDFLAGS) -Wall -g -o full-test $(full-test-objs) $(LIBS)
-
-full-test.o: full-test.c minc2.h 
-	gcc $(CPPFLAGS) -Wall -g -c -o full-test.o full-test.c
+clean:
+	-rm *.o
+	-rm $(EXES)
 
 #convert-test
 
@@ -51,6 +47,7 @@ convert-test-objs = convert-test.o libminc2.a
 
 convert-test: $(convert-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o convert-test $(convert-test-objs) $(LIBS)
+
 convert-test.o: convert.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o convert-test.o convert.c
 
@@ -174,7 +171,7 @@ volume.o: volume.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volume.o volume.c
 
 m2util.o: m2util.c minc2.h minc2_private.h
-	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c -lm -lhdf5
+	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c
 
 free.o: free.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o free.o free.c
