@@ -1,7 +1,7 @@
 %product minc
 %copyright 1993-2005 Peter Neelin
 %vendor McConnell Brain Imaging Centre
-%packager Andrew Janke <rotor@bic.mni.mcgill.ca>
+%packager Andrew Janke <a.janke@gmail.com>
 %license COPYING
 %readme README
 %description Medical Imaging library
