@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.14 1995-10-25 14:27:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.15 1995-10-26 18:30:03 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -31,6 +31,8 @@ static  int      n_bytes_cache_threshold = DEFAULT_CACHE_THRESHOLD;
 static  BOOLEAN  default_cache_size_set = FALSE;
 static  int      default_cache_size = DEFAULT_MAX_BYTES_IN_CACHE;
 
+
+static  Cache_block_size_hints   block_size_hint = RANDOM_VOLUME_ACCESS;
 static  BOOLEAN  default_block_sizes_set = FALSE;
 static  int      default_block_sizes[MAX_DIMENSIONS] = {
                                                      DEFAULT_BLOCK_SIZE,
@@ -156,6 +158,8 @@ private  int  get_default_max_bytes_in_cache()
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Sets the default values for the volume cache block sizes.
+              A non-positive value will result in a block size equal to the
+              number of voxels in that dimension of the volume.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -164,19 +168,36 @@ private  int  get_default_max_bytes_in_cache()
 ---------------------------------------------------------------------------- */
 
 public  void  set_default_cache_block_sizes(
-    int    block_sizes[] )
+    int                      block_sizes[] )
 {
     int   dim;
 
     for_less( dim, 0, MAX_DIMENSIONS )
-    {
-        if( block_sizes[dim] >= 1 )
-            default_block_sizes[dim] = block_sizes[dim];
-        else
-            print( "Invalid block size in set_default_cache_block_sizes()\n" );
-    }
+        default_block_sizes[dim] = block_sizes[dim];
 
     default_block_sizes_set = TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cache_block_sizes_hint
+@INPUT      : hint
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the hint for deciding on block sizes.  This turns off
+              the default_block_sizes_set flag, thereby overriding any
+              previous calls to set_default_cache_block_sizes().
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 25, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_cache_block_sizes_hint(
+    Cache_block_size_hints  hint )
+{
+    block_size_hint = hint;
+    default_block_sizes_set = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -195,25 +216,48 @@ public  void  set_default_cache_block_sizes(
 ---------------------------------------------------------------------------- */
 
 private  void  get_default_cache_block_sizes(
+    int    n_dims,
+    int    volume_sizes[],
     int    block_sizes[] )
 {
     int   dim, block_size;
 
-    if( !default_block_sizes_set )
+    if( !default_block_sizes_set && block_size_hint == SLICE_ACCESS )
     {
-        if( getenv( "VOLUME_CACHE_BLOCK_SIZE" ) != NULL &&
+        for_less( dim, 0, n_dims - 2 )
+            block_sizes[dim] = 1;
+
+        /*--- set the last two dimensions to be entire size of dimension */
+
+        for_less( dim, MAX( 0, n_dims - 2), n_dims )
+            block_sizes[dim] = -1;
+    }
+    else if( !default_block_sizes_set &&
+             block_size_hint == RANDOM_VOLUME_ACCESS )
+    {
+        if( getenv( "VOLUME_CACHE_BLOCK_SIZE" ) == NULL ||
             sscanf( getenv( "VOLUME_CACHE_BLOCK_SIZE" ), "%d", &block_size )
-                    == 1 && block_size >= 1 )
+                    != 1 || block_size < 1 )
         {
-            for_less( dim, 0, MAX_DIMENSIONS )
-                default_block_sizes[dim] = block_size;
+            block_size = DEFAULT_BLOCK_SIZE;
         }
 
-        default_block_sizes_set = TRUE;
+        for_less( dim, 0, MAX_DIMENSIONS )
+            block_sizes[dim] = block_size;
+    }
+    else
+    {
+        for_less( dim, 0, MAX_DIMENSIONS )
+            block_sizes[dim] = default_block_sizes[dim];
     }
 
+    /*--- now change any non-positive values to the correct volume size */
+
     for_less( dim, 0, MAX_DIMENSIONS )
-        block_sizes[dim] = default_block_sizes[dim];
+    {
+        if( block_sizes[dim] <= 0 )
+            block_sizes[dim] = volume_sizes[dim];
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -234,7 +278,7 @@ public  void  initialize_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
-    int    dim, n_dims;
+    int    dim, n_dims, sizes[MAX_DIMENSIONS];
 
     n_dims = get_volume_n_dimensions( volume );
     cache->n_dimensions = n_dims;
@@ -253,7 +297,9 @@ public  void  initialize_volume_cache(
     cache->output_file_is_open = FALSE;
     cache->must_read_blocks_before_use = FALSE;
 
-    get_default_cache_block_sizes( cache->block_sizes );
+    get_volume_sizes( volume, sizes );
+
+    get_default_cache_block_sizes( n_dims, sizes, cache->block_sizes );
     cache->max_cache_bytes = get_default_max_bytes_in_cache();
 
     alloc_volume_cache( cache, volume );

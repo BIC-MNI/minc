@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.37 1995-10-19 15:47:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.38 1995-10-26 18:27:33 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -381,7 +381,7 @@ public  Minc_file  initialize_minc_output(
     else
     {
         n_range_dims = n_dimensions - 2;
-        if( strcmp( dim_names[n_dimensions-1], MIvector_dimension ) == 0 )
+        if( equal_strings( dim_names[n_dimensions-1], MIvector_dimension ) )
             --n_range_dims;
 
         file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
@@ -652,7 +652,7 @@ private  Status  get_dimension_ordering(
         for_less( f, 0, n_file_dims )
         {
             if( to_volume[f] < 0 &&
-                strcmp( vol_dim_names[v], file_dim_names[f] ) == 0 )
+                equal_strings( vol_dim_names[v], file_dim_names[f] ) )
             {
                 to_volume[f] = v;
                 to_file[v] = f;
@@ -940,9 +940,9 @@ private  void  output_slab(
     int               volume_start[MAX_DIMENSIONS];
     int               volume_sizes[MAX_DIMENSIONS];
     int               array_start[MAX_DIMENSIONS];
+    int               array_to_volume[MAX_DIMENSIONS];
     int               int_file_count[MAX_DIMENSIONS];
     int               int_file_start[MAX_DIMENSIONS];
-    int               volume_to_array[MAX_DIMENSIONS];
     int               slab_sizes[MAX_DIMENSIONS];
     int               v[MAX_DIMENSIONS];
     int               size0, size1, size2, size3, size4;
@@ -969,11 +969,13 @@ private  void  output_slab(
         for_less( dim, 0, get_volume_n_dimensions(volume) )
             volume_sizes[dim] = 1;
 
+        for_less( dim, 0, MAX_DIMENSIONS )
+            array_to_volume[dim] = 0;
+
         for_less( dim, get_volume_n_dimensions(volume), MAX_DIMENSIONS )
         {
             volume_start[dim] = 0;
             volume_sizes[dim] = 1;
-            volume_to_array[dim] = 0;
         }
 
         n_slab_dims = 0;
@@ -983,7 +985,7 @@ private  void  output_slab(
             if( ind != INVALID_AXIS )
             {
                 to_array[file_ind] = n_slab_dims;
-                volume_to_array[ind] = n_slab_dims;
+                array_to_volume[n_slab_dims] = ind;
                 array_start[n_slab_dims] = 0;
                 slab_sizes[n_slab_dims] = int_file_count[file_ind];
                 volume_sizes[ind] = int_file_count[file_ind];
@@ -1019,11 +1021,11 @@ private  void  output_slab(
                                             volume_start[3] + v[3],
                                             volume_start[4] + v[4] );
 
-            SET_MULTIDIM( array, v[volume_to_array[0]],
-                                 v[volume_to_array[1]],
-                                 v[volume_to_array[2]],
-                                 v[volume_to_array[3]],
-                                 v[volume_to_array[4]], value );
+            SET_MULTIDIM( array, v[array_to_volume[0]],
+                                 v[array_to_volume[1]],
+                                 v[array_to_volume[2]],
+                                 v[array_to_volume[3]],
+                                 v[array_to_volume[4]], value );
         }
 
         /*--- output the temporary array */
@@ -1156,8 +1158,8 @@ private  Status  output_the_volume(
         double   *image_range;
 
         n_range_dims = file->n_file_dimensions - 2;
-        if( strcmp( file->dim_names[file->n_file_dimensions-1],
-                    MIvector_dimension ) == 0 )
+        if( equal_strings( file->dim_names[file->n_file_dimensions-1],
+                           MIvector_dimension ) )
             --n_range_dims;
 
         n_ranges = 1;
