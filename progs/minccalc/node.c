@@ -50,7 +50,7 @@ nodenames[] = {
         { NODETYPE_ASSIGN,   "assign" },
         { NODETYPE_IFELSE,   "ifelse" },
         { NODETYPE_FOR,      "for" },
-        { 0, NULL }
+        { (enum nodetype) 0, NULL }
 };
 
 node_t new_node(int numargs, int is_scalar) {
