@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.5  1993-11-25 10:36:57  neelin
-@MODIFIED   : Fixed input_group_list (wasn't checking max properly).
+@MODIFIED   : Revision 1.6  1993-11-26 18:47:51  neelin
+@MODIFIED   : Added group and group list copy routines.
 @MODIFIED   :
+ * Revision 1.5  93/11/25  10:36:57  neelin
+ * Fixed input_group_list (wasn't checking max properly).
+ * 
  * Revision 1.4  93/11/24  12:05:12  neelin
  * Changed format of dump.
  * 
@@ -128,6 +131,68 @@ public void acr_delete_group_list(Acr_Group group_list)
    } while (next != NULL);
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_copy_group
+@INPUT      : group
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Makes a copy of an acr-nema group structure
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Group acr_copy_group(Acr_Group group)
+{
+   Acr_Group copy;
+   Acr_Element cur;
+
+   /* Create the group */
+   copy = acr_create_group(acr_get_group_group(group));
+
+   /* Get the second element (first element is always there) */
+   cur = acr_get_element_next(group->list_head);
+   while (cur != NULL) {
+      acr_group_add_element(copy, acr_copy_element(cur));
+   }
+
+   return copy;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_copy_group_list
+@INPUT      : group_list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Make a copy of a group list
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Group acr_copy_group_list(Acr_Group group_list)
+{
+   Acr_Group copy_list;
+   Acr_Group copy_group;
+   Acr_Group cur;
+
+   /* Create first group */
+   copy_list = copy_group = acr_copy_group(group_list);
+
+   /* Loop through groups */
+   cur = acr_get_group_next(group_list);
+   while (cur != NULL) {
+      acr_set_group_next(copy_group, acr_copy_group(cur));
+      copy_group = acr_get_group_next(copy_group);
+      cur = acr_get_group_next(cur);
+   }
+
+   return copy_list;
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------

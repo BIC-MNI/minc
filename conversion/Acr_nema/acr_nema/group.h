@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 1.3  1993-11-24 11:26:38  neelin
-@MODIFIED   : Added group list stuff (dump and input).
+@MODIFIED   : Revision 1.4  1993-11-26 18:48:04  neelin
+@MODIFIED   : Added group and group list copy routines.
 @MODIFIED   :
+ * Revision 1.3  93/11/24  11:26:38  neelin
+ * Added group list stuff (dump and input).
+ * 
  * Revision 1.2  93/11/22  13:12:41  neelin
  * Changed to use new Acr_Element_Id stuff.
  * 
@@ -44,6 +47,8 @@ typedef struct Acr_Group {
 public Acr_Group acr_create_group(int group_id);
 public void acr_delete_group(Acr_Group group);
 public void acr_delete_group_list(Acr_Group group_list);
+public Acr_Group acr_copy_group(Acr_Group group);
+public Acr_Group acr_copy_group_list(Acr_Group group_list);
 public void acr_group_add_element(Acr_Group group, Acr_Element element);
 public void acr_set_group_next(Acr_Group group, Acr_Group next);
 public int acr_get_group_group(Acr_Group group);
