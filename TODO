@@ -18,5 +18,3 @@
   I just built MINC and it worked.  Then I rebuilt the gram.c file before
   compiling and got the same message you did.
 
-* manpage for minchistory
-
