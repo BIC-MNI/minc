@@ -13,40 +13,25 @@ static   const char      *N_DIMENSIONS_STRING = "Number_Dimensions";
 static   const char      *POINTS_STRING = "Points";
 static   const char      *DISPLACEMENTS_STRING = "Displacements";
 
-public  Status  output_transform(
+private  void  output_one_transform(
     FILE                *file,
-    char                comments[],
+    Boolean             invert,
     General_transform   *transform )
 {
-    int        i, c;
+    int        i, c, trans;
     Transform  *lin_transform;
-
-    /* parameter checking */
-
-    if( file == (FILE *) 0 )
-    {
-        (void) fprintf( stderr, "output_transform(): passed NULL FILE ptr.\n");
-        return( ERROR );
-    }
-
-    /* okay write the file */
-
-    (void) fprintf( file, "%s\n", TRANSFORM_FILE_HEADER );
-
-    output_comments( file, comments );
-    (void) fprintf( file, "\n" );
-    (void) fprintf( file, "\n" );
 
     switch( transform->type )
     {
     case LINEAR:
-        (void) fprintf( file, "%s = %s\n", TYPE_STRING, LINEAR_TYPE );
-        if( transform->inverse_flag )
-            (void) fprintf( file, "%s = %s\n", INVERT_FLAG_STRING, TRUE_STRING);
+        (void) fprintf( file, "%s = %s;\n", TYPE_STRING, LINEAR_TYPE );
 
         (void) fprintf( file, "%s =\n", LINEAR_TRANSFORM_STRING );
 
-        lin_transform = get_linear_transform_ptr( transform );
+        if( invert )
+            lin_transform = get_inverse_linear_transform_ptr( transform );
+        else
+            lin_transform = get_linear_transform_ptr( transform );
 
         for_less( i, 0, 3 )
         {
@@ -62,9 +47,13 @@ public  Status  output_transform(
         break;
 
     case THIN_PLATE_SPLINE:
-        (void) fprintf( file, "%s = %s\n", TYPE_STRING,
+        (void) fprintf( file, "%s = %s;\n", TYPE_STRING,
                         THIN_PLATE_SPLINE_STRING);
+
         if( transform->inverse_flag )
+            invert = !invert;
+
+        if( invert )
             (void) fprintf( file, "%s = %s\n", INVERT_FLAG_STRING, TRUE_STRING);
 
         (void) fprintf( file, "%s = %d\n", N_DIMENSIONS_STRING,
@@ -96,60 +85,100 @@ public  Status  output_transform(
             (void) fprintf( file, "\n" );
         }
         break;
-    }
 
-    return( OK );
+    case USER_TRANSFORM:
+        print( "Cannot output user transformation.\n" );
+        output_comments( file, "User transform goes here." );
+        break;
+
+    case CONCATENATED_TRANSFORM:
+        
+        if( transform->inverse_flag )
+            invert = !invert;
+
+        if( invert )
+        {
+            for( trans = get_n_concated_transforms(transform)-1;  trans >= 0;
+                 --trans )
+            {
+                 output_one_transform( file, invert,
+                               get_nth_general_transform(transform,trans) );
+            }
+        }
+        else
+        {
+            for_less( trans, 0, get_n_concated_transforms(transform) )
+            {
+                 output_one_transform( file, invert,
+                                   get_nth_general_transform(transform,trans) );
+            }
+        }
+        break;
+    }
 }
 
-public  Status  input_transform(
+public  Status  output_transform(
     FILE                *file,
+    char                comments[],
     General_transform   *transform )
 {
-    int               i, j, n_points, n_dimensions;
-    float             **points, **displacements;
-    double            value, *points_1d;
-    String            line, type_name, str;
-    Transform_types   type;
-
     /* parameter checking */
 
     if( file == (FILE *) 0 )
     {
-        (void) fprintf( stderr, "input_transform(): passed NULL FILE ptr.\n");
+        print( "output_transform(): passed NULL FILE ptr.\n");
         return( ERROR );
     }
+
+    /* okay write the file */
+
+    (void) fprintf( file, "%s\n", TRANSFORM_FILE_HEADER );
+
+    output_comments( file, comments );
+    (void) fprintf( file, "\n" );
+    (void) fprintf( file, "\n" );
+
+    output_one_transform( file, FALSE, transform );
+
+    return( OK );
+}
+
+private  Status  input_one_transform(
+    FILE                *file,
+    General_transform   *transform )
+{
+    Status            status;
+    int               i, j, n_points, n_dimensions;
+    float             **points, **displacements;
+    double            value, *points_1d;
+    String            type_name, str;
+    Transform         linear_transform;
+    Transform_types   type;
 
     transform->inverse_flag = FALSE;
 
-    /* okay read the header */
-
-    if( mni_input_string( file, line, MAX_STRING_LENGTH, 0, 0 ) != OK ||
-        strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
-    {
-        (void) fprintf(stderr, "input_transform(): invalid header in file.\n");
-        return( ERROR );
-    }
-
     /* --- read the type of transform */
 
-    if( mni_input_keyword_and_equal_sign( file, TYPE_STRING ) != OK )
-        return( ERROR );
+    status = mni_input_keyword_and_equal_sign( file, TYPE_STRING, FALSE );
+
+    if( status != OK )
+        return( status );
 
     if( mni_input_string( file, type_name, MAX_STRING_LENGTH, ';', 0 ) != OK )
     {
-        (void) fprintf(stderr, "input_transform(): missing transform type.\n");
+        print( "input_transform(): missing transform type.\n");
         return( ERROR );
     }
     if( mni_skip_expected_character( file, ';' ) != OK )
         return( ERROR );
 
-    if( strcmp( type_name, LINEAR_TRANSFORM_STRING ) == 0 )
+    if( strcmp( type_name, LINEAR_TYPE ) == 0 )
         type = LINEAR;
     else if( strcmp( type_name, THIN_PLATE_SPLINE_STRING ) == 0 )
         type = THIN_PLATE_SPLINE;
     else
     {
-        (void) fprintf(stderr, "input_transform(): invalid transform type.\n");
+        print( "input_transform(): invalid transform type.\n");
         return( ERROR );
     }
 
@@ -194,7 +223,7 @@ public  Status  input_transform(
         if( mni_skip_expected_character( file, '=' ) != OK )
             return( ERROR );
 
-        create_linear_transform( transform, (Transform *) NULL );
+        make_identity_transform( &linear_transform );
 
         /* now read the 3 lines of transforms */
 
@@ -204,18 +233,20 @@ public  Status  input_transform(
             {
                 if( mni_input_double( file, &value ) != OK )
                 {
-                    (void) fprintf( stderr,
-                          "input_transform(): error reading transform elem [%d,%d]\n",
-                          i+1, j+1 );
+                    print(
+                    "input_transform(): error reading transform elem [%d,%d]\n",
+                    i+1, j+1 );
                     return( ERROR );
                 }
 
-                Transform_elem(*get_linear_transform_ptr(transform),i,j) =
-                                                                        value;
+                Transform_elem(linear_transform,i,j) = value;
             }
         }
+
         if( mni_skip_expected_character( file, ';' ) != OK )
             return( ERROR );
+
+        create_linear_transform( transform, &linear_transform );
 
         break;
 
@@ -237,7 +268,7 @@ public  Status  input_transform(
 
         /* --- read Points = x y z x y z .... ; */
 
-        if( mni_input_keyword_and_equal_sign( file, POINTS_STRING ) != OK )
+        if( mni_input_keyword_and_equal_sign( file, POINTS_STRING, TRUE ) != OK)
             return( ERROR );
         if( mni_input_doubles( file, &n_points, &points_1d ) != OK )
             return( ERROR );
@@ -264,7 +295,8 @@ public  Status  input_transform(
 
         ALLOC2D( displacements, n_points + n_dimensions + 1, n_dimensions );
 
-        if( mni_input_keyword_and_equal_sign( file, DISPLACEMENTS_STRING ) != OK )
+        if( mni_input_keyword_and_equal_sign( file, DISPLACEMENTS_STRING, TRUE )
+                                                                       != OK )
             return( ERROR );
 
         for_less( i, 0, n_points + n_dimensions + 1 )
@@ -285,6 +317,61 @@ public  Status  input_transform(
 
         create_thin_plate_transform( transform, n_dimensions, n_points, points,
                                      displacements );
+    }
+
+    return( OK );
+}
+
+public  Status  input_transform(
+    FILE                *file,
+    General_transform   *transform )
+{
+    Status              status;
+    int                 n_transforms;
+    String              line;
+    General_transform   next, concated;
+
+    /* parameter checking */
+
+    if( file == (FILE *) 0 )
+    {
+        print( "input_transform(): passed NULL FILE ptr.\n");
+        return( ERROR );
+    }
+
+    /* okay read the header */
+
+    if( mni_input_string( file, line, MAX_STRING_LENGTH, 0, 0 ) != OK ||
+        strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
+    {
+        print( "input_transform(): invalid header in file.\n");
+        return( ERROR );
+    }
+
+    n_transforms = 0;
+    while( (status = input_one_transform( file, &next )) == OK )
+    {
+        if( n_transforms == 0 )
+            *transform = next;
+        else
+        {
+            concat_general_transforms( transform, &next, &concated );
+            delete_general_transform( transform );
+            delete_general_transform( &next );
+            *transform = concated;
+        }
+        ++n_transforms;
+    }
+
+    if( status == ERROR )
+    {
+        print( "input_transform: error reading transform.\n" );
+        return( ERROR );
+    }
+    else if( n_transforms == 0 )
+    {
+        print( "input_transform: no transform present.\n" );
+        return( ERROR );
     }
 
     return( OK );

@@ -51,17 +51,21 @@ typedef  unsigned  long    Colour;
 #define  get_Colour_g( colour ) (((colour) >> 8) & 255)
 #define  get_Colour_b( colour ) (((colour) >> 16) & 255)
 
-#define  COLOUR_256_TO_0_1( val ) ( ((val) + 0.5) / 256.0 )
-#define  COLOUR_0_1_TO_256( val ) (int) ( (val) * 256.0 - 0.5 )
+#define  COLOUR_256_TO_0_1( val ) ( (val) / 255.0 )
+#define  COLOUR_0_1_TO_256( val ) (int) ( (val) * 255.0 )
 
 #define  get_Colour_r_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_r(colour) )
 #define  get_Colour_g_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_g(colour) )
 #define  get_Colour_b_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_b(colour) )
 
+#ifdef lint
+#define  make_Colour_0_1( r, g, b ) ((Colour) ( r + g + b ))
+#else
 #define  make_Colour_0_1( r, g, b )                       \
             make_Colour( COLOUR_0_1_TO_256(r),            \
                          COLOUR_0_1_TO_256(g),            \
                          COLOUR_0_1_TO_256(b) )
+#endif
 
 #define  SCALE_COLOUR( col, factor )                  \
           make_Colour( get_Colour_r(col) * (factor),    \

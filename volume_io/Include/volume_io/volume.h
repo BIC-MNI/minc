@@ -226,6 +226,36 @@ typedef  volume_struct  *Volume;
 #define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
           (((Real) value - (volume)->value_translation) / (volume)->value_scale)
 
+#define  GET_VALUE_1D( value, volume, x )       \
+         { \
+             GET_VOXEL_1D( value, volume, x ); \
+             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+         }
+
+#define  GET_VALUE_2D( value, volume, x, y )       \
+         { \
+             GET_VOXEL_2D( value, volume, x, y ); \
+             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+         }
+
+#define  GET_VALUE_3D( value, volume, x, y, z )       \
+         { \
+             GET_VOXEL_3D( value, volume, x, y, z ); \
+             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+         }
+
+#define  GET_VALUE_4D( value, volume, x, y, z, t )       \
+         { \
+             GET_VOXEL_4D( value, volume, x, y, z, t ); \
+             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+         }
+
+#define  GET_VALUE_5D( value, volume, x, y, z, t, v )       \
+         { \
+             GET_VOXEL_5D( value, volume, x, y, z, t, v ); \
+             value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
+         }
+
 /* -------------------- minc file struct -------------------- */
 
 typedef  struct

@@ -139,23 +139,18 @@ private  void  transform_or_invert_point(
     Real                *z_transformed )
 {
     int      trans;
-    Point    point;
 
     switch( transform->type )
     {
     case LINEAR:
-        Point_x(point) = x;
-        Point_y(point) = y;
-        Point_z(point) = z;
         if( inverse_flag )
             transform_point( transform->inverse_linear_transform,
-                             &point, &point );
+                             x, y, z,
+                             x_transformed, y_transformed, z_transformed );
         else
-            transform_point( transform->linear_transform, &point, &point );
-
-        *x_transformed = Point_x(point);
-        *y_transformed = Point_y(point);
-        *z_transformed = Point_z(point);
+            transform_point( transform->linear_transform,
+                             x, y, z,
+                             x_transformed, y_transformed, z_transformed );
         break;
 
     case THIN_PLATE_SPLINE:
