@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.4 1997-04-23 19:34:56 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.5 1997-04-24 13:48:51 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -123,11 +123,18 @@ ignored, ie. treated as though it is not present.
 .P
 .I -nan:
 When an illegal operation is attempted at a voxel (such as divide by
-zero), invalid data (NaN) is stored in the output file (default).
+zero), invalid data (NaN) is stored in the output file (default). Having 
+no valid input data for a cumulative operation is also considered an 
+illegal operation when -ignore_nan is used.
 .P
 .I -zero:
 When an illegal operation is attempted at a voxel (such as divide by
 zero), value zero is stored in the output file.
+.P
+.I -illegal_value
+<value>:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), the specified value is stored in the output file.
 
 .SH Options for specifying constants
 .P
@@ -258,6 +265,11 @@ and 0 for valid values.
 .P
 .I -nisnan:
 Opposite of -isnan. Output 0 for invalid values and 1 for valid values.
+.P
+.I -count_valid:
+Count the number of valid voxels across a series of volumes. If none of the
+volumes has valid data, then zero is written out (ie. -zero and -ignore_nan 
+are always assumed, unlike other cumulative operations).
 
 .SH Generic options for all commands:
 .P

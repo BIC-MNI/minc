@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 3.4  1997-04-23 19:34:56  neelin
-@MODIFIED   : Added options -maximum, -minimum, -abs.
+@MODIFIED   : Revision 3.5  1997-04-24 13:48:51  neelin
+@MODIFIED   : Fixed handling of invalid or uninitialized data for cumulative operations.
+@MODIFIED   : Added options -illegal_value and -count_valid.
 @MODIFIED   :
+ * Revision 3.4  1997/04/23  19:34:56  neelin
+ * Added options -maximum, -minimum, -abs.
+ *
  * Revision 3.3  1996/01/17  21:24:06  neelin
  * Added -exp and -log options.
  *
@@ -33,7 +37,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.4 1997-04-23 19:34:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.5 1997-04-24 13:48:51 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -56,10 +60,17 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
+
+
+
 #endif
 
-#define DEFAULT_DBL DBL_MAX
+/* Data values for invalid data and for uninitialized data */
+#define INVALID_DATA -DBL_MAX
+#define UNINITIALIZED_DATA DBL_MAX
 
+/* Values for representing default case for command-line options */
+#define DEFAULT_DBL DBL_MAX
 #define DEFAULT_BOOL -1
 
 /* Typedefs */
@@ -67,7 +78,8 @@ typedef enum {
 UNSPECIFIED_OP = 0, ADD_OP, SUB_OP, MULT_OP, DIV_OP, SQRT_OP, SQUARE_OP,
 SCALE_OP, CLAMP_OP, SEGMENT_OP, NSEGMENT_OP, PERCENTDIFF_OP, 
 EQ_OP, NE_OP, GT_OP, GE_OP, LT_OP, LE_OP, AND_OP, OR_OP, NOT_OP, 
-ISNAN_OP, NISNAN_OP, INVERT_OP, EXP_OP, LOG_OP, MAX_OP, MIN_OP, ABS_OP
+ISNAN_OP, NISNAN_OP, INVERT_OP, EXP_OP, LOG_OP, MAX_OP, MIN_OP, ABS_OP,
+COUNT_OP
 } Operation;
 
 typedef enum {
@@ -106,6 +118,7 @@ Num_Operands OperandTable[][3] = {
    NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MAX_OP */
    NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MIN_OP */
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ABS_OP */
+   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* COUNT_OP */
    ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP        /* nothing */
 };
 
@@ -137,6 +150,10 @@ public void start_math(void *caller_data, long num_voxels,
                        int output_num_buffers, int output_vector_length,
                        double *output_data[],
                        Loop_Info *loop_info);
+public void end_math(void *caller_data, long num_voxels, 
+                     int output_num_buffers, int output_vector_length,
+                     double *output_data[],
+                     Loop_Info *loop_info);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -153,6 +170,7 @@ double constant2[2] = {DEFAULT_DBL, DEFAULT_DBL};
 Operation operation = UNSPECIFIED_OP;
 int propagate_nan = TRUE;
 int use_nan_for_illegal_values = TRUE;
+double value_for_illegal_operations = DEFAULT_DBL;
 int check_dim_info = TRUE;
 
 /* Argument table */
@@ -214,6 +232,9 @@ ArgvInfo argTable[] = {
    {"-zero", ARGV_CONSTANT, (char *) FALSE, 
        (char *) &use_nan_for_illegal_values,
        "Output zero when an illegal operation is done."},
+   {"-illegal_value", ARGV_FLOAT, (char *) 1, 
+       (char *) &value_for_illegal_operations,
+       "Value to write out when an illegal operation is done."},
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "Options for specifying constants:"},
    {"-constant", ARGV_FLOAT, (char *) 1, (char *) &constant,
@@ -285,6 +306,8 @@ ArgvInfo argTable[] = {
        "Test for NaN values in vol1."},
    {"-nisnan", ARGV_CONSTANT, (char *) NISNAN_OP, (char *) &operation,
        "Negation of -isnan."},
+   {"-count_valid", ARGV_CONSTANT, (char *) COUNT_OP, (char *) &operation,
+       "Count the number of valid values in N volumes."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -320,6 +343,13 @@ public int main(int argc, char *argv[])
    nout = 1;
    outfiles = &argv[argc-1];
 
+   /* Handle special case of COUNT_OP - it always assume -ignore_nan and 
+      -zero */
+   if (operation == COUNT_OP) {
+      propagate_nan = FALSE;
+      value_for_illegal_operations = 0.0;
+   }
+
    /* Check that the arguments make sense */
    if ((constant != DEFAULT_DBL) && (constant2[0] != DEFAULT_DBL)) {
       (void) fprintf(stderr, "%s: Specify only one of -constant or -const2\n",
@@ -351,9 +381,9 @@ public int main(int argc, char *argv[])
       (void) fprintf(stderr, "%s: Expected two input files.\n", pname);
       exit(EXIT_FAILURE);
    }
-   if ((num_operands == NARY_NUMOP) && (nfiles < 2) && 
+   if ((num_operands == NARY_NUMOP) && (nfiles < 1) && 
        (loop_dimension == NULL)) {
-      (void) fprintf(stderr, "%s: Expected at least two input files.\n", 
+      (void) fprintf(stderr, "%s: Expected at least one input files.\n", 
                      pname);
       exit(EXIT_FAILURE);
    }
@@ -376,8 +406,10 @@ public int main(int argc, char *argv[])
       math_data.constants[1] = constant2[1];
       break;
    }
-   if (use_nan_for_illegal_values)
-      math_data.illegal_value = -DBL_MAX;
+   if (value_for_illegal_operations != DEFAULT_DBL)
+      math_data.illegal_value = value_for_illegal_operations;
+   else if (use_nan_for_illegal_values)
+      math_data.illegal_value = INVALID_DATA;
    else
       math_data.illegal_value = 0.0;
 
@@ -389,7 +421,7 @@ public int main(int argc, char *argv[])
                      valid_range[0], valid_range[1]);
    if (num_operands == NARY_NUMOP) {
       math_function = accum_math;
-      set_loop_accumulate(loop_options, TRUE, 0, start_math, NULL);
+      set_loop_accumulate(loop_options, TRUE, 0, start_math, end_math);
    }
    else {
       math_function = do_math;
@@ -466,7 +498,7 @@ public void do_math(void *caller_data, long num_voxels,
       value1 = input_data[0][ivox];
       if (input_num_buffers == 2) 
          value2 = input_data[1][ivox];
-      if ((value1 == -DBL_MAX) || (value2 == -DBL_MAX)) {
+      if ((value1 == INVALID_DATA) || (value2 == INVALID_DATA)) {
          switch(operation) {
          case ISNAN_OP:
             output_data[0][ivox] = 1.0;
@@ -475,7 +507,7 @@ public void do_math(void *caller_data, long num_voxels,
             output_data[0][ivox] = 0.0;
             break;
          default:
-            output_data[0][ivox] = -DBL_MAX;
+            output_data[0][ivox] = INVALID_DATA;
             break;
          }
       }
@@ -636,43 +668,59 @@ public void accum_math(void *caller_data, long num_voxels,
 
    /* Loop through the voxels */
    for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
+
+      /* Get previous value and the next value */
       oldvalue = output_data[0][ivox];
-      if (oldvalue != -DBL_MAX) {
-         value = input_data[0][ivox];
-         if (value != -DBL_MAX) {
-            switch (operation) {
-            case ADD_OP:
-               output_data[0][ivox] = oldvalue + value;
-               break;
-            case MULT_OP:
-               output_data[0][ivox] = oldvalue * value;
-               break;
-            case AND_OP:
-               output_data[0][ivox] = 
-                  (((oldvalue != 0.0) && (rint(value) != 0.0)) ? 1.0 : 0.0);
-               break;
-            case OR_OP:
-               output_data[0][ivox] = 
-                  (((oldvalue != 0.0) || (rint(value) != 0.0)) ? 1.0 : 0.0);
-               break;
-            case MAX_OP:
-               if (value > oldvalue)
-                  output_data[0][ivox] = value;
-               break;
-            case MIN_OP:
-               if (value < oldvalue)
-                  output_data[0][ivox] = value;
-               break;
-            default:
-               (void) fprintf(stderr, "Bad op in accum_math!\n");
-               exit(EXIT_FAILURE);
-            }
-         }
-         else if (propagate_nan) {
-            output_data[0][ivox] = -DBL_MAX;
+      value = input_data[0][ivox];
+
+      /* If the new data is invalid, then either mark the output as invalid
+         or ignore it */
+      if (value == INVALID_DATA) {
+         if (propagate_nan) {
+            output_data[0][ivox] = INVALID_DATA;
          }
       }
-   }
+
+      /* If we haven't set anything yet, then just copy the new value */
+      else if (oldvalue == UNINITIALIZED_DATA) {
+         output_data[0][ivox] = input_data[0][ivox];
+      }
+
+      /* Do the operation if the old data and the new data are valid */
+      else if (oldvalue != INVALID_DATA) {
+         switch (operation) {
+         case ADD_OP:
+            output_data[0][ivox] = oldvalue + value;
+            break;
+         case MULT_OP:
+            output_data[0][ivox] = oldvalue * value;
+            break;
+         case AND_OP:
+            output_data[0][ivox] = 
+               (((oldvalue != 0.0) && (rint(value) != 0.0)) ? 1.0 : 0.0);
+            break;
+         case OR_OP:
+            output_data[0][ivox] = 
+               (((oldvalue != 0.0) || (rint(value) != 0.0)) ? 1.0 : 0.0);
+            break;
+         case MAX_OP:
+            if (value > oldvalue)
+               output_data[0][ivox] = value;
+            break;
+         case MIN_OP:
+            if (value < oldvalue)
+               output_data[0][ivox] = value;
+            break;
+         case COUNT_OP:
+            output_data[0][ivox]++;
+            break;
+         default:
+            (void) fprintf(stderr, "Bad op in accum_math!\n");
+            exit(EXIT_FAILURE);
+         }
+      }
+
+   }              /* Loop over voxels */
 
    return;
 }
@@ -710,30 +758,66 @@ public void start_math(void *caller_data, long num_voxels,
    /* Get info */
    operation = math_data->operation;
 
-   /* Loop through the voxels */
+   /* Loop through the voxels, marking them all as uninitialized. We treat
+      COUNT_OP as a special case since it always has a value. This is 
+      especially important to prevent it from going through
+      the code in accum_math for handling the first valid voxel which
+      just assigns the first value. */
    for (ivox=0; ivox < num_voxels*output_vector_length; ivox++) {
       switch (operation) {
-      case ADD_OP:
+      case COUNT_OP:
          output_data[0][ivox] = 0.0;
-         break;
-      case MULT_OP:
-         output_data[0][ivox] = 1.0;
-         break;
-      case AND_OP:
-         output_data[0][ivox] = 1.0;
-         break;
-      case OR_OP:
-         output_data[0][ivox] = 0.0;
-         break;
-      case MAX_OP:
-         output_data[0][ivox] = -DBL_MAX * 0.9999999;
-         break;
-      case MIN_OP:
-         output_data[0][ivox] = DBL_MAX;
          break;
       default:
-         (void) fprintf(stderr, "Bad op in start_math!\n");
-         exit(EXIT_FAILURE);
+         output_data[0][ivox] = UNINITIALIZED_DATA;
+         break;
+      }
+   }
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : end_math
+@INPUT      : Standard for voxel loop
+@OUTPUT     : Standard for voxel loop
+@RETURNS    : (nothing)
+@DESCRIPTION: Start routine for math accumulation.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 25, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void end_math(void *caller_data, long num_voxels, 
+                     int output_num_buffers, int output_vector_length,
+                     double *output_data[],
+                     Loop_Info *loop_info)
+     /* ARGSUSED */
+{
+   Math_Data *math_data;
+   long ivox;
+   double value;
+   double illegal_value;
+
+   /* Get pointer to window info */
+   math_data = (Math_Data *) caller_data;
+
+   /* Check arguments */
+   if (output_num_buffers != 1) {
+      (void) fprintf(stderr, "Bad arguments to end_math!\n");
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get info */
+   operation = math_data->operation;
+   illegal_value = math_data->illegal_value;
+
+   /* Loop through the voxels, checking for uninitialized values */
+   for (ivox=0; ivox < num_voxels*output_vector_length; ivox++) {
+      value = output_data[0][ivox];
+      if ((value == UNINITIALIZED_DATA) || (value == INVALID_DATA)) {
+         output_data[0][ivox] = illegal_value;
       }
    }
 
