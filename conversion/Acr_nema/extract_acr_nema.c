@@ -6,7 +6,10 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: extract_acr_nema.c,v $
- * Revision 6.3  2000-05-01 13:59:55  neelin
+ * Revision 6.4  2000-05-01 17:54:45  neelin
+ * Fixed handling of test for byte order.
+ *
+ * Revision 6.3  2000/05/01 13:59:55  neelin
  * Added -e option to allow reading data streams with explicit VR.
  *
  * Revision 6.2  2000/04/28 15:02:01  neelin
@@ -65,6 +68,8 @@
 #include <minc_def.h>
 #include <acr_nema.h>
 
+#define UNKNOWN_VR_ENCODING ((Acr_VR_encoding_type) -1)
+
 int main(int argc, char *argv[])
 {
    char *pname;
@@ -73,7 +78,7 @@ int main(int argc, char *argv[])
    char *elemstr = NULL;
    int ignore_errors = FALSE;
    Acr_byte_order byte_order = ACR_UNKNOWN_ENDIAN;
-   Acr_VR_encoding_type vr_encoding = ACR_IMPLICIT_VR;
+   Acr_VR_encoding_type vr_encoding = UNKNOWN_VR_ENCODING;
    FILE *fp;
    Acr_File *afp;
    Acr_Group group_list;
@@ -176,13 +181,13 @@ int main(int argc, char *argv[])
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
    acr_set_ignore_errors(afp, ignore_errors);
-   if (byte_order == ACR_UNKNOWN_ENDIAN) {
-      (void) acr_test_byte_order(afp);
-   }
-   else {
+   (void) acr_test_byte_order(afp);
+   if (byte_order != ACR_UNKNOWN_ENDIAN) {
       acr_set_byte_order(afp, byte_order);
    }
-   acr_set_vr_encoding(afp, vr_encoding);
+   if (vr_encoding != UNKNOWN_VR_ENCODING) {
+      acr_set_vr_encoding(afp, vr_encoding);
+   }
 
    /* Read in group list up to group */
    (void) acr_input_group_list(afp, &group_list, element_id->group_id);
