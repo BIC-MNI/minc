@@ -16,13 +16,23 @@
 #include  <pwd.h>
 #include  <stdlib.h>
 #include  <unistd.h>
+#include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.29 1995-11-10 20:23:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.30 1996-04-10 13:34:49 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
 private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
+
+private  void  print_system_error()
+{
+    char   *error;
+
+    error = strerror( errno );
+
+    print_error( "\nSystem message: %s\n", error );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : real_is_double
@@ -217,7 +227,10 @@ public  void  remove_file(
     expanded = expand_filename( filename );
 
     if( unlink( expanded ) != 0 )
-        print_error( "Error removing %s\n", expanded );
+    {
+        print_error( "Error removing %s.  ", expanded );
+        print_system_error();
+    }
 
     delete_string( expanded );
 }
@@ -617,7 +630,8 @@ public  Status  open_file(
 
         if( *file == NULL )          /* --- print error message if needed */
         {
-            print_error( "Error:  could not open file \"%s\".\n", expanded );
+            print_error( "Error:  could not open file \"%s\".  ", expanded );
+            print_system_error();
             status = ERROR;
         }
         else if( gzipped )           /* if reading a decompressed temp file, */
@@ -753,7 +767,8 @@ public  Status  set_file_position(
     }
     else
     {
-        print_error( "Error setting the file position.\n" );
+        print_error( "Error setting the file position.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -897,7 +912,8 @@ public  Status  flush_file(
     }
     else
     {
-        print_error( "Error flushing file.\n" );
+        print_error( "Error flushing file.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1086,7 +1102,8 @@ public  Status  output_string(
         status = OK;
     else
     {
-        print_error( "Error outputting string.\n" );
+        print_error( "Error outputting string.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1308,8 +1325,9 @@ public  Status  input_binary_data(
     if( n_done != n )
     {
         print_error( "Error inputting binary data.\n" );
-        print_error( "     (%d out of %d items of size %ld).\n", n_done, n,
-               element_size );
+        print_error( "     (%d out of %d items of size %ld).  ", n_done, n,
+                     element_size );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1347,8 +1365,9 @@ public  Status  output_binary_data(
     if( n_done != n )
     {
         print_error( "Error outputting binary data.\n" );
-        print_error( "     (%d out of %d items of size %ld).\n", n_done, n,
-                element_size );
+        print_error( "     (%d out of %d items of size %ld).  ", n_done, n,
+                     element_size );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1377,7 +1396,8 @@ public  Status  input_newline(
 
     if( status != OK )
     {
-        print_error( "Error inputting newline.\n" );
+        print_error( "Error inputting newline.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1406,7 +1426,8 @@ public  Status  output_newline(
         status = OK;
     else
     {
-        print_error( "Error outputting newline.\n" );
+        print_error( "Error outputting newline.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1519,7 +1540,8 @@ public  Status  output_boolean(
 
     if( fprintf( file, " %s", str ) <= 0 )
     {
-        print_error( "Error outputting BOOLEAN.\n" );
+        print_error( "Error outputting BOOLEAN.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1577,7 +1599,8 @@ public  Status  output_short(
         status = OK;
     else
     {
-        print_error( "Error outputting short.\n" );
+        print_error( "Error outputting short.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1639,7 +1662,8 @@ public  Status  output_unsigned_short(
         status = OK;
     else
     {
-        print_error( "Error outputting unsigned short.\n" );
+        print_error( "Error outputting unsigned short.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1697,7 +1721,8 @@ public  Status  output_int(
         status = OK;
     else
     {
-        print_error( "Error outputting int.\n" );
+        print_error( "Error outputting int.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1820,7 +1845,8 @@ public  Status  output_float(
         status = OK;
     else
     {
-        print_error( "Error outputting float.\n" );
+        print_error( "Error outputting float.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -1880,7 +1906,8 @@ public  Status  output_double(
         status = OK;
     else
     {
-        print_error( "Error outputting double.\n" );
+        print_error( "Error outputting double.  " );
+        print_system_error();
         status = ERROR;
     }
 
@@ -2170,7 +2197,8 @@ public  Status  io_unsigned_char(
                 *c = (unsigned char) i;
             else
             {
-                print_error( "Error inputting unsigned char.\n" );
+                print_error( "Error inputting unsigned char.  " );
+                print_system_error();
                 status = ERROR;
             }
         }
@@ -2178,7 +2206,8 @@ public  Status  io_unsigned_char(
         {
             if( fprintf( file, "%d", (int) *c ) != 1 )
             {
-                print_error( "Error outputting unsigned char.\n" );
+                print_error( "Error outputting unsigned char.  " );
+                print_system_error();
                 status = ERROR;
             }
         }
