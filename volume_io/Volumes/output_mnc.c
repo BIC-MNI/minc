@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.31 1995-08-19 18:57:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.32 1995-08-20 03:57:22 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -666,7 +666,7 @@ private  Status  get_dimension_ordering(
     return( status );
 }
 
-private  void  check_output_variables(
+public  void  check_minc_output_variables(
     Minc_file   file )
 {
     int               d, axis;
@@ -703,46 +703,46 @@ private  void  check_output_variables(
             }
         }
 
-        file->output_icv = miicv_create();
+        file->minc_icv = miicv_create();
 
-        (void) miicv_setint( file->output_icv, MI_ICV_TYPE, volume->nc_data_type);
-        (void) miicv_setstr( file->output_icv, MI_ICV_SIGN,
+        (void) miicv_setint( file->minc_icv, MI_ICV_TYPE, volume->nc_data_type);
+        (void) miicv_setstr( file->minc_icv, MI_ICV_SIGN,
                              volume->signed_flag ? MI_SIGNED : MI_UNSIGNED );
-        (void) miicv_setint( file->output_icv, MI_ICV_DO_NORM, TRUE );
-        (void) miicv_setint( file->output_icv, MI_ICV_USER_NORM, TRUE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_DO_NORM, TRUE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_USER_NORM, TRUE );
 
         if( file->image_range[0] < file->image_range[1] )
         {
-            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MIN,
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MIN,
                                  file->image_range[0] );
-            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MAX,
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MAX,
                                  file->image_range[1] );
         }
         else
         {
             get_volume_real_range( volume, &real_min, &real_max );
-            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MIN, real_min );
-            (void) miicv_setdbl( file->output_icv, MI_ICV_IMAGE_MAX, real_max );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MIN, real_min );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_IMAGE_MAX, real_max );
         }
 
         get_volume_voxel_range( volume, &voxel_min, &voxel_max );
         if( voxel_min < voxel_max )
         {
-            (void) miicv_setdbl( file->output_icv, MI_ICV_VALID_MIN, voxel_min );
-            (void) miicv_setdbl( file->output_icv, MI_ICV_VALID_MAX, voxel_max );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MIN, voxel_min );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MAX, voxel_max );
         }
         else
             print_error( "Volume has invalid min and max voxel value\n" );
 
-        (void) miicv_attach( file->output_icv, file->cdfid, file->img_var_id );
+        (void) miicv_attach( file->minc_icv, file->cdfid, file->img_var_id );
 
         start_index = 0;
 
         if( file->image_range[0] < file->image_range[1] )
         {
-            (void) mivarput1( file->output_icv, file->min_id, &start_index,
+            (void) mivarput1( file->minc_icv, file->min_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
-            (void) mivarput1( file->output_icv, file->max_id, &start_index,
+            (void) mivarput1( file->minc_icv, file->max_id, &start_index,
                               NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
         }
         ncopts = NC_VERBOSE | NC_FATAL;
@@ -771,7 +771,7 @@ public  Status  output_minc_hyperslab(
     Status           status;
     multidim_array   buffer_array;
 
-    check_output_variables( file );
+    check_minc_output_variables( file );
 
     n_array_dims = get_multidim_n_dimensions( array );
     n_file_dims = file->n_file_dimensions;
@@ -845,7 +845,7 @@ public  Status  output_minc_hyperslab(
         GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
     }
 
-    if( miicv_put( file->output_icv, long_file_start, long_file_count,
+    if( miicv_put( file->minc_icv, long_file_start, long_file_count,
                    void_ptr ) == MI_ERROR )
         status = ERROR;
     else
@@ -1007,7 +1007,7 @@ private  Status  output_the_volume(
     BOOLEAN           increment;
     progress_struct   progress;
 
-    check_output_variables( file );
+    check_minc_output_variables( file );
 
     /* --- check if dimension name correspondence between volume and file */
 
@@ -1107,14 +1107,14 @@ private  Status  output_the_volume(
         for_less( i, 0, n_ranges )
             image_range[i] = real_min;
 
-        (void) mivarput( file->output_icv, file->min_id,
+        (void) mivarput( file->minc_icv, file->min_id,
                          range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
         for_less( i, 0, n_ranges )
             image_range[i] = real_max;
 
-        (void) mivarput( file->output_icv, file->max_id,
+        (void) mivarput( file->minc_icv, file->max_id,
                          range_start, range_count,
                          NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
 
@@ -1352,7 +1352,7 @@ public  Status  close_minc_output(
         (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_TRUE);
 
         (void) miclose( file->cdfid );
-        (void) miicv_free( file->output_icv );
+        (void) miicv_free( file->minc_icv );
 
         for_less( d, 0, file->n_file_dimensions )
             FREE( file->dim_names[d] );
