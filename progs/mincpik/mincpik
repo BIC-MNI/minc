@@ -31,6 +31,9 @@
 # Tue Dec  3 17:35:05 EST 2002 - added steves -lookup option (minclookup)
 #                              - major rewrite of the dimension ordering
 #                                  the hard bit is done by mincreshape now
+# Thu Jan 23 17:05:41 EST 2003 - fixed bug with step directions
+#                                  added -dimsize {z,y,z}space=-1
+
 
 
 use strict;
@@ -177,6 +180,9 @@ foreach $space (@{$opt{'dirs'}}){
    @args = ('mincreshape', '-clobber', '-quiet',
             '-byte', '-normalize',
             '+direction',
+            '-dimsize', "$space=-1",
+            '-dimsize', "$ordering{$space}[0]=-1",
+            '-dimsize', "$ordering{$space}[1]=-1",
             '-dimorder', $dimorder,
             '-dimrange', "$space=$opt{'slice'},1",
 	         $infile, "$tmpdir/reshaped.mnc");                  
