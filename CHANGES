@@ -6,6 +6,9 @@ Wed Nov 28 10:36:13 EST 2001
      to set the scaling for input to integers. This forces the Volume
      real range to a particular pair of values, rather than using the full 
      range of the file.
+   - Added get_info_voxel_index to voxel_loop to allow users to get the
+     full multi-dimensional file index of the current voxel.
+   - Allow arg_string in voxel_loop to be NULL.
 
 Tue Nov 13 16:04:36 EST 2001
    - Modified icv normalization handling in minc library. When the icv
