@@ -1,0 +1,186 @@
+> From: Doug Greve <greve@NMR.MGH.HARVARD.EDU>
+> Date: Wed Nov 27, 2002  4:57:31  AM Australia/Brisbane
+> To: FSL@JISCMAIL.AC.UK
+> Subject: Re: [FSL] Siemens Allegra file formats
+> Reply-To: "FSL - FMRIB's Software Library" <FSL@JISCMAIL.AC.UK>
+>
+>
+> I have written routines which will convert NUMARIS4 DICOM (including
+> mosaics) to analyze format (NUMARIS4 is the Siemens' WinNT system). The
+> routines are part of mri_convert, which is available with FreeSurfer
+> (surfer.nmr.mgh.harvard.edu). I've also attached a file with the rules
+> that I use to read and decode the DICOM. These rules refer to the 
+> "ASCII
+> Header". Siemens DICOM files have some data stored as a
+> block of ASCII text which contains information needed to decode the
+> mosaics (both matrix size and geometry). Each line in the block has the
+> form:
+>     VariableName = VariableValue
+> The begining of the block is delineated by the line
+>       ### ASCCONV BEGIN ###
+> The end of the block is delineated by the line
+>       ### ASCCONV END ###
+>
+> good luck!
+>
+> doug
+>
+>
+> Greg Miller wrote:
+>>
+>> Question for Siemens Allegra 3T sites - Our console will be upgraded
+>> from SunOS to WinNT soon. We'd like to get a head start to ensure that
+>> we know what to do with the raw data files, in terms of file
+>> formats. Our group uses FSL, SPM, and MEDx. Any advice, URLs, code,
+>> whatever would be appreciated.
+>>
+>> Gregory A. Miller, Director
+>> Biomedical Imaging Center
+>> University of Illinois at Urbana-Champaign
+>
+> --
+> Douglas N. Greve, Ph.D.
+> MGH-NMR Center
+> greve@nmr.mgh.harvard.edu
+> Phone Number: 617-724-2358
+> Fax: 617-726-7422
+>
+> Critical Parameters for a given series, and the rules Doug Greve
+> currently uses to determine them:
+>
+> 1. Files that belong to a series.
+>
+>    Read the series number from the DICOM header (20,11). This
+>    apparently won't work when "Multiple Series" is checked.
+>
+> 2. Whether each file contains an individual image, a mosaic, or
+>    supermosaic.
+>
+>    I use the Phase Encode FoV ("sSliceArray.asSlice[0].dPhaseFOV") and
+>    the Readout FoV ("sSliceArray.asSlice[0].dReadoutFOV") from the
+>    ASCII header, the Phase Encode Direction (18,1312), and the row and
+>    column resolutions (28,30) to compute an expected number of rows
+>    and columns. I then compare these numbers to the number of rows
+>    (28,10) and columns (28,11)in the image. If they are the same, then
+>    it is not a mosaic or supermosaic. If they are not, I assume it's a
+>    mosaic. I don't know how to tell if its a supermosaic.
+>
+> 3. If a file contains a mosaic, the number of rows and cols in the
+>    mosaic.
+>
+>    This is just the number of rows (28,10) and columns (28,11) in the
+>    image.
+>
+> 4. If a file contains a supermosaic, the number of mosaics in the
+>    super mosaic (as well as the dimension of each mosaic). ???
+>
+> 5. Volume dimensions (ie, number of rows, columns, slices).
+>
+>    a. Non-mosaics - the number of rows and columns are determined
+>    directly from the DICOM header ((28,10) and (28,11)). The number of
+>    slices is determined by counting the number of files in the series
+>    with different slice prescriptions.
+>
+>    b. Mosaics - the number of rows and columns are determined from the
+>    Phase Encode and Readout FoVs as described in #2. The number of
+>    slices is determined from the ASCII header (sSliceArray.lSize).
+>
+>    c. Supermosaics - ???
+>
+> 6. Volume resolution (ie, distance between the centers of adjacent
+>    rows, cols, and slices).
+>
+>    For rows and columns, the resolutions are obtained from DICOM
+>    (28,30), which is a string of the form "colres\rowres". The
+>    distance between slices is obtained from DICOM (18,88). If that
+>    does not exist, then the slice thickness (18,50) is used, but this
+>    will not include the distance factor or gap.  Supposedly, the skip
+>    can be obtained from (21,1344), but special software is needed to
+>    read odd DICOM groups. There is also an element in the ASCII header
+>    ("sGroupArray.asGroup[0].dDistFact").  One can also compute the
+>    slice resolution as the distance between adjacent slices using
+>    "sSliceArray.asSlice[N].sPosition.dAAA" where AAA is Sag (x), Cor
+>    (y), and Tra (z) from the ASCII header.
+>
+> 7. The direction cosines (DCs) for the row, col, and slice.
+>
+>    The DCs for the row and column are obtained from DICOM (20,37),
+>    which is a string of the form "cx\cy\cz\rx\ry\rz". The slice DC is
+>    obtained from the ASCII header. The x, y, and z components are from
+>    three lines of the form "sSliceArray.asSlice[0].sNormal.dAAA" where
+>    AAA is Sag (x), Cor (y), and Tra (z).
+>
+> 8. The XYZ coordinates at the exact center of a voxel at a given row,
+>    col, and slice.
+>
+>    a. Non-mosaics - DICOM (20,32) gives the XYZ coordinate at the
+>    first voxel of the image.
+>
+>    b. Mosaics - DICOM (20,32) is incorrect for mosaics. However, the
+>    center of a slice can be obtained from the ASCII header from lines
+>    of the form "sSliceArray.asSlice[N].sPosition.dAAA", where N is the
+>    slice number and AAA is Sag (x), Cor (y), and Tra (z). This may be
+>    off by half a voxel.
+>
+>    c. Supermosaics - ???
+>
+> 9. Number of Volumes (ie, number of frames or time points).
+>
+>    a. Non-mosaics - count the number of files with the same image
+>    position.
+>
+>    b. Mosaics - count the number of files in the series. The number
+>    of frames should also be stored in the ASCII header as 1 plus
+>    lRepetitions.
+>
+>    c. Supermosaics - ???
+>
+> 10. Time between volumes/frames (ie, the TR for fMRI).
+>
+>    a. Non-mosaics - ???
+>
+>    b. Mosaics - number of slices times the repetition time (DICOM
+>    (18,80)). This is for version 1.6 and before. For version 2.1
+>    and after, (18,80) will contain the inter-volume TR (instead
+>    of the time it takes to acquire one slice). The software version
+>    can be determined from tag (18,1020)
+>
+>    c. Supermosaics - ???
+>
+> 11. Time at which each slice was obtained (relative to the start of
+>     the volume acquisition). For sequences in which slices were
+>     acquired uniformly across the TR, there is a variable in the ASCII
+>     header called sSliceArray.ucMode which indicates the slice order:
+>     0x1 for Ascending, 0x2 for Descending, and 0x4 for Interleaved.
+>     The selection box for this option can be found on the Numaris/4
+>     GUI on the "Geometry" tab, "Common" sub-tab, field name "Series".
+>
+>
+> 12. Time at which each volume was obtained (relative to the start of 
+> the
+>     series).  This may not be computable from the slice timing if
+>     there is a temporal gap between volumes. ???
+>
+> 13. Other parameters not so critical: echo time, inversion time, phase
+>     encode direction, readout direction, flip angle, patient name,
+>     scan date, scan time, pulse sequence, protocol name, etc. These
+>     are obtainable from the DICOM header.
+>
+> NOTE ON COORDINATE DEFINITION. It is assumed that all xyz coordinates
+> (including direction cosines) in the Siemens DICOM header (including
+> ASCII) conform to an LPS standard. "LPS" means that x increases from
+> the subject's right to Left, y increases from anterior to Posterior,
+> and z increases from inferior to Superior. All this assumes that the
+> subject in the scanner Head-First/Supine (HFS). The patient's position
+> can be determined from DICOM tag (18,5100). It appears that this
+> definition can be changed from the Numaris 4 console.  On the "System"
+> tab, "Common" sub-tab, heading "Image Numbering" there are selections
+> for fields "Sagittal", "Coronal", and "Transversal". Changes these
+> parameters will affect the variable called
+> sSliceArray.ucImageNumb{Sag,Cor,Tra} in the ASCII header. The value
+> will be either 0 or 0x1 (NOTE: a value of 0 is indicated by the
+> absence of the variable in the header). The above coordinate system
+> definition assumes that the Sag and Cor components are set to 0x1.
+> Currently, only the LPS definition is valid in the software (ie,
+> changes in ImageNum variables from default will not be reflected in
+> the goemetry).

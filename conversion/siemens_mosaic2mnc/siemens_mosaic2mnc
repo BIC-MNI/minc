@@ -1,0 +1,292 @@
+#!/usr/bin/env perl
+#
+# Andrew Janke - rotor@cmr.uq.edu.au
+# Center for Magnetic Resonance
+# The University of Queensland
+# http://www.cmr.uq.edu.au/~rotor
+#
+# Copyright Andrew Janke, The University of Queensland.
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies.  The
+# author and the University of Queensland make no representations about the
+# suitability of this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
+#
+# Thu Oct 24 16:24:41 EST 2002 - initial version based upon guesswork
+# Thu Oct 31 16:27:10 EST 2002 - somewhat working version with starts and steps
+#                                  a fair bit of testing is going to be needed!
+
+
+$| = 1;
+# use strict;
+use warnings "all";
+use Getopt::Tabular;
+use File::Basename;
+use Data::Dumper;
+$SIG{'INT'} = $SIG{__DIE__} =  sub { &cleanup; die $_[0]; };
+
+my($Help, $Usage, $me, $infile, $outfile, $history);
+my(@opt_table, $clobber, $verbose, $tmpdir, @args);
+
+$Help = <<HELP;
+ | Siemens 'Mosaic' file format converter MKI
+ |
+ | This script works primarily by using the ##ASC_CONV## section
+ |    of a siemens Mosaic file.
+ |
+ | Problems or comments should be sent to: rotor\@cmr.uq.edu.au
+HELP
+
+$me = basename($0);
+$tmpdir = "/tmp/$me-$$";
+$verbose = 0;
+$quiet   = 0;
+$debug   = 0;
+$clobber = 0;
+@opt_table = (
+     ["-verbose", "boolean", 0, \$verbose, "be verbose"               ],
+     ["-quiet",   "boolean", 0, \$quiet,   "be quiet"                 ],
+     ["-debug",   "boolean", 0, \$debug,   "spew copious stuff"       ],
+     ["-clobber", "boolean", 0, \$clobber, "clobber existing files"   ],
+   );
+
+$Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
+         "       $me -help to list options\n\n";
+
+# Get the history string
+chomp($history = `date`);
+$history .= '>>>> ' . join(' ', $me, @ARGV) . "\n";
+
+# Check arguments
+&Getopt::Tabular::SetHelp($Help, $Usage);
+&GetOptions(\@opt_table, \@ARGV) || exit 1;
+if($#ARGV != 1){ die $Usage; }
+$infile  = $ARGV[0];
+$outfile = $ARGV[1];
+
+# make the tmpdir
+&do_cmd('mkdir', $tmpdir) if (!-e $tmpdir);
+
+# check for infile and outfile
+if(!-e $infile){ 
+   die "$me: Couldn't find $infile\n";
+   }
+if(-e $outfile && !$clobber){ 
+   die "$me: $outfile exists! use -clobber to overwrite\n"; 
+   }
+
+# first convert the image data using dicom_to_minc
+&do_cmd('dicom_to_minc', $tmpdir, $infile);
+chomp($conv_fn = `ls -1 $tmpdir/*.mnc`);
+print STDOUT " +++ Found file $conv_fn\n" if !$quiet;
+
+# have a hunt for the ASCCONV header
+print STDOUT " +++ Seeking ASCCONV header in $infile\n" if !$quiet;
+open(FH, "<$infile");
+do {
+   chomp($line = <FH>);   
+   } until (index($line, "### ASCCONV BEGIN ###") != -1);
+
+# copy the header into a hash
+print STDOUT " +++ Getting ASCCONV elements: " if !$quiet;
+$line = <FH>;
+for($c=0; (index($line, "### ASCCONV END ###") == -1); $line = <FH>, $c++){
+    
+   chomp($line);
+   ($key, $value) = split(/\s*\=\s*/, $line, 2);
+   
+   $ref = '$siemens_hdr';
+   foreach $k (split(/\./, $key)){
+      if($k =~ m/\[\d*\]$/){
+         ($hsh, $idx) = ($k =~ m/(.*?)\[(\d*)\]$/);
+         $text = "{'$hsh'}[$idx]";
+         }
+      else{
+         $text = "{'$k'}";
+         }
+      $ref .= $text;
+      }   
+   $ref .= " = $value";
+   eval($ref);
+   
+   print STDOUT "." if !$quiet;
+   }
+close(FH);
+print STDOUT "Done. ($c elements read)\n" if !$quiet;
+
+if($debug){
+   $ptr = \%siemens_hdr;
+   $Data::Dumper::Deepcopy = 1;
+   print STDOUT Dumper(\$ptr);
+   }
+
+# get the frames from the converted file
+$gen_hdr->{'xsize'} = $siemens_hdr{'sKSpace'}{'lPhaseEncodingLines'};
+$gen_hdr->{'ysize'} = $siemens_hdr{'sKSpace'}{'lBaseResolution'};
+chomp($xsize = `mincinfo -dimlength xspace $conv_fn`);
+chomp($ysize = `mincinfo -dimlength yspace $conv_fn`);
+
+print STDOUT " +++ Extracting Mosaic frames ($gen_hdr->{'xsize'} x $gen_hdr->{'ysize'}): " if !$quiet;
+$c = 0;
+for($y=0; $y<$ysize; $y += $gen_hdr->{'ysize'}){
+   for($x=0; $x<$xsize; $x += $gen_hdr->{'xsize'}){
+      
+      $tmpfile = "$tmpdir/slice" . sprintf("_%04d", $c) . ".mnc";
+      
+      &do_cmd('mincreshape', '-quiet', '-clobber',
+              '-dimrange', "xspace=$x,$gen_hdr->{'xsize'}",
+              '-dimrange', "yspace=$y,$gen_hdr->{'ysize'}",
+              '-dimrange', "zspace=0,0",
+              $conv_fn, $tmpfile);
+      
+      push(@concat_files, $tmpfile);
+      $c++;
+      print STDOUT "." if !$quiet;
+      }
+   }
+print STDOUT "Done. ($c Frames)\n" if !$quiet;
+
+# put them back together in the correct order...
+# currently broken until I get some docco from siemens
+push(@{$gen_hdr->{'files'}}, $concat_files[0]);
+foreach (@{$siemens_hdr{'sSliceArray'}{'anAsc'}}){
+   if(defined($_)){
+      push(@{$gen_hdr->{'files'}}, $concat_files[$_]);
+      }
+   }
+$gen_hdr->{'zsize'} = $siemens_hdr{'sSliceArray'}{'lSize'};
+
+#########################################
+# get parameters from the ASCCONV hash
+#########################################
+
+# direction cosines
+$c = 0;
+foreach (@{$siemens_hdr{'sSliceArray'}{'asSlice'}}){
+   $slice_pos[$c] = [$_->{'sPosition'}{'dSag'}, 
+                     $_->{'sPosition'}{'dCor'},
+                     $_->{'sPosition'}{'dTra'}];
+   
+   $nx = (defined($_->{'sNormal'}{'dSag'})) ? $_->{'sNormal'}{'dSag'} : undef;
+   $ny = (defined($_->{'sNormal'}{'dCor'})) ? $_->{'sNormal'}{'dCor'} : undef;
+   $nz = (defined($_->{'sNormal'}{'dTra'})) ? $_->{'sNormal'}{'dTra'} : undef;
+   
+   if(!defined($nx)){
+      $nx = 1 - sqrt($ny**2 + $nz**2);
+      }
+   if(!defined($ny)){
+      $ny = 1 - sqrt($nx**2 + $nz**2);
+      }
+   if(!defined($nz)){
+      $nz = 1 - sqrt($nx**2 + $ny**2);
+      }
+   
+   $slice_nrm[$c] = [$nx, $ny, $nz];
+   $c++;
+   }
+
+# as dicom_to_minc has already done the hard work, read in the direction cosines
+#  from the DICOM header
+$gen_hdr->{'xdircos'} = [split(' ', `mincinfo -attvalue xspace:direction_cosines $conv_fn`)];
+$gen_hdr->{'ydircos'} = [split(' ', `mincinfo -attvalue yspace:direction_cosines $conv_fn`)];
+$gen_hdr->{'zdircos'} = [split(' ', `mincinfo -attvalue zspace:direction_cosines $conv_fn`)];
+
+# check against the ASCCONV header
+$delta = 0.0000001;
+if((abs($slice_nrm[0][0]) - abs($gen_hdr->{'zdircos'}[0]) > $delta) ||
+   (abs($slice_nrm[0][1]) - abs($gen_hdr->{'zdircos'}[1]) > $delta) ||
+   (abs($slice_nrm[0][2]) - abs($gen_hdr->{'zdircos'}[2]) > $delta)){
+  warn "\n$me: ASCCONV normal (" . join(' ', @{$slice_nrm[0]}) . ")\n             " .
+       "             != DICOM (" . join(' ', @{$gen_hdr->{'zdircos'}}) . ")\n\n";
+  }
+
+# steps
+$gen_hdr->{'xstep'} = $siemens_hdr{'sSliceArray'}{'asSlice'}[0]{'dPhaseFOV'} / 
+                      $gen_hdr->{'xsize'};
+$gen_hdr->{'ystep'} = $siemens_hdr{'sSliceArray'}{'asSlice'}[0]{'dReadoutFOV'} / 
+                      $gen_hdr->{'ysize'};
+$gen_hdr->{'zstep'} = sqrt(($slice_pos[0][0] - $slice_pos[1][0])**2 +
+                           ($slice_pos[0][1] - $slice_pos[1][1])**2 +
+                           ($slice_pos[0][2] - $slice_pos[1][2])**2);
+
+$args = "mincinfo -attvalue xspace:step ".
+                 "-attvalue yspace:step $conv_fn";
+@steps = split(' ', `$args`); 
+if(($steps[0] != $gen_hdr->{'xstep'}) ||
+   ($steps[1] != $gen_hdr->{'ystep'})){
+  warn "\n$me: ASCCONV x and y step != Dicom header\n\n";
+  
+  $gen_hdr->{'xstep'} = $steps[0];
+  $gen_hdr->{'ystep'} = $steps[1];
+  }
+
+# calculate the start positions
+$gen_hdr->{'xstart'} = $slice_pos[0][0] - 
+                       (($gen_hdr->{'xsize'}-1)/2 * 
+                         $gen_hdr->{'xstep'} * 
+                         $gen_hdr->{'xdircos'}[0]);
+$gen_hdr->{'ystart'} = $slice_pos[0][1] - 
+                       (($gen_hdr->{'ysize'}-1)/2 * 
+                         $gen_hdr->{'ystep'} * 
+                         $gen_hdr->{'ydircos'}[1]);
+$gen_hdr->{'zstart'} = $slice_pos[0][2];
+
+print STDOUT dump_general_header($gen_hdr) if $debug;
+
+print STDOUT " +++ Creating 3D image: " if !$quiet;
+&do_cmd('mincconcat', '-clobber', 
+        '-nocheck_dimensions', 
+        '-step', $gen_hdr->{'zstep'},
+        '-start', $gen_hdr->{'zstart'},
+        '-concat_dimension', 'zspace',
+        @{$gen_hdr->{'files'}}, $outfile);        
+
+# fix a few things up and add the history string
+&do_cmd('minc_modify_header', 
+        '-dinsert', "xspace:start=$gen_hdr->{'xstart'}",
+        '-dinsert', "yspace:start=$gen_hdr->{'ystart'}",
+        '-dinsert', "zspace:direction_cosines=" . join(',', @{$gen_hdr->{'zdircos'}}),
+        '-sinsert', ":history=$history", $outfile);
+&cleanup;
+
+
+# subroutines
+sub do_cmd {
+   print "@_\n" if $verbose;
+   system(@_) == 0 or die;
+   }
+
+sub cleanup {
+   my($message, $status) = @_;
+   if(!defined($status)){
+      $status = 0;
+      }
+   print STDERR "$message\n" if defined $message;
+   
+   print STDOUT "Cleaning up....\n" if $verbose;
+   @args = ('rm', '-r', '-f', $tmpdir);
+   print STDOUT "@args\n" if $verbose;
+   system(@args);
+   
+   exit($status);
+   }
+
+# return a ASCII dump of a general header
+sub dump_general_header{
+   my($h) = shift;
+   my($tmp);
+   
+   $tmp = "General Header\n";
+   foreach (sort(keys(%{$h}))){
+      if($h->{$_} =~ /ARRAY/){
+         $tmp .= " $_\t<". join(' ' , @{$h->{$_}}) . ">\n";
+         }
+      else{
+         $tmp .= " $_\t<$h->{$_}>\n";
+         }
+      }
+   $tmp .= "\n";
+      
+   return $tmp;
+   }
