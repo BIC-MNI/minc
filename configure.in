@@ -120,7 +120,7 @@ AC_SUBST(OS_TYPE)
 # Check to see if we should use fortran
 #------------------------------------------------------------------------
 AC_CHECK_PROGS(FC, f77)
-AC_CHECKING(whether to build fortran jackets)
+AC_MSG_CHECKING(whether to build fortran jackets)
 if test "$OS_TYPE" = "irix" && test "$FC" = "f77" || test "$BUILD_FORTRAN"
 then
    FORTRAN_SUBDIR=fortran
@@ -131,6 +131,12 @@ else
 fi
 AC_SUBST(FORTRAN_SUBDIR)
 AC_SUBST(FORTRAN_OBJ)
+if test "$FORTRAN_SUBDIR"
+then
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
+fi
 
 
 AC_PREFIX_DEFAULT('$(ROOT)/..')
