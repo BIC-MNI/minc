@@ -18,7 +18,7 @@ use File::Basename;
 use File::Temp qw/ tempdir /;
 
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '1.0';
 
 
 my($Help, $Usage, $me, $infile, $outfile, $history);
@@ -204,7 +204,8 @@ print STDOUT "Dimension order: @dimnames - (@dimcodes)\n" if $opt{verbose};
 
 # get the tile size
 my(@tile_size, $ntiles);
-$tile_size[0] = $siemens_hdr{sKSpace}{lPhaseEncodingLines};
+# $tile_size[0] = $siemens_hdr{sKSpace}{lPhaseEncodingLines};
+$tile_size[0] = $siemens_hdr{sKSpace}{lImagesPerSlab};
 $tile_size[1] = $siemens_hdr{sKSpace}{lBaseResolution};
 
 # number of tiles
