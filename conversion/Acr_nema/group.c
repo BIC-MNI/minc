@@ -6,7 +6,11 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.3  2000-04-28 15:03:11  neelin
+ * Revision 6.4  2000-05-01 17:18:07  neelin
+ * Modifications tohandle end-of-input properly, both on first group
+ * read, and when ignoring protocol errors.
+ *
+ * Revision 6.3  2000/04/28 15:03:11  neelin
  * Added support for ignoring non-fatal protocol errors (cases where redundant
  * information is inconsistent). In particular, it is possible to ignore
  * differences between the group length element and the true group length.
@@ -851,10 +855,11 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
    }
 
    /* Check that we got a full group */
-   if (have_length_element && (group_length != 0)) {
+   if (have_length_element && (group_length != 0) && 
+       !acr_ignore_protocol_errors(afp)) {
       switch (status) {
       case ACR_OK:
-         if (!acr_ignore_protocol_errors(afp)) status = ACR_PROTOCOL_ERROR;
+         status = ACR_PROTOCOL_ERROR;
          break;
       case ACR_END_OF_INPUT:
          status = ACR_ABNORMAL_END_OF_INPUT; 
@@ -959,7 +964,6 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
 
    /* Read in the first group */
    status = acr_input_group_with_max(afp, &next_group, max_group_id);
-   if ((status != ACR_OK) || (next_group == NULL)) return status;
 
    /* Set up pointers */
    *group_list = cur_group = next_group;
