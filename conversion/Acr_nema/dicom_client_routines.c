@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.7  1998-02-20 17:28:42  neelin
-@MODIFIED   : Removed unused variables.
+@MODIFIED   : Revision 6.8  1998-03-17 17:05:16  neelin
+@MODIFIED   : Set default maximum length to 1MB for servers that do not handle
+@MODIFIED   : length 0 (unlimited).
 @MODIFIED   :
+ * Revision 6.7  1998/02/20  17:28:42  neelin
+ * Removed unused variables.
+ *
  * Revision 6.6  1998/02/20  17:24:41  neelin
  * In client routines, fd must be dup'ed before fdopen or problems may
  * occur reading and writing to 2 file pointers that open the same descriptor.
@@ -61,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.7 1998-02-20 17:28:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.8 1998-03-17 17:05:16 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -579,7 +583,8 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
 
    /* Add the user information */
    acr_group_add_element(group, 
-                         acr_create_element_long(DCM_PDU_Maximum_length, 0L));
+                         acr_create_element_long(DCM_PDU_Maximum_length, 
+                                                 1048576L));
    (void) sprintf(string, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
                   (int) 'M', (int) 'N', (int) 'I');
    acr_group_add_element(group, 
