@@ -7,7 +7,10 @@
 @CREATED    : November 9, 2000 (Peter Neelin)
 @MODIFIED   : 
  * $Log: copy_acr_nema.c,v $
- * Revision 6.1  2000-11-09 15:56:49  neelin
+ * Revision 6.2  2000-11-09 16:57:23  neelin
+ * Fixed bug in writing to stdout.
+ *
+ * Revision 6.1  2000/11/09 15:56:49  neelin
  * Added new program copy_acr_nema to read in acr-nema file, ignoring errors,
  * and then write it out again. This will fix any errors in group lengths,
  * etc.
@@ -140,7 +143,7 @@ int main(int argc, char *argv[])
       }
    }
    else {
-      fp = stdin;
+      fp = stdout;
    }
 
 
