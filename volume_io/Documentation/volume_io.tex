@@ -3,6 +3,9 @@
 \title{Programmer's Reference for the MNI Volume IO Library}
 \author{David MacDonald}
 
+\newcommand{\path}{{\bf\tt /nil/david/Release/MNI\_lib}}
+\newcommand{\name}[1]{{\bf\tt #1}}
+
 \begin{document}
 
 \maketitle
@@ -15,9 +18,95 @@
 
 \section{Introduction}
 
+This document describes a library of routines available at the
+McConnell Brain Imaging Centre at the Montreal Neurological Institute.
+The library comprises a set of functions for reading and writing
+volumes of medical imaging data, as well as some general support
+routines useful to many programming tasks.  All images at the Brain
+Imaging Centre are stored on disk in a format called {\bf MINC}, which
+stands for {\bf Medical Image Net CDF}.  More information on this
+format is available in related documentation concerning the format and
+the MINC library of routines used to read and write MINC files.  The
+Volume IO library is a library built on top of the MINC library to
+provide easy access to MINC files, without having to learn too much of
+the details of the MINC library.  It also provides a structure for internal
+storage of volumes and routines to access and modify volumes.
+
+This document describes where to find the Volume IO library, how to
+integrate it into a user's programs, and what functionality
+is provided.  The library is written in C source code, and is designed
+to be linked with C source.  It makes calls to three other libraries:
+\name{MINC}, \name{netcdf}, and \name{recipes}, the library associated
+with the Numerical Recipes handbook.
+
 \section{Compiling and Linking}
 
-\section{Macros}
+The relevent directory is \path.  In this directory is the library,
+\name{libvolume\_io.a}, and the related include files in the directory
+\name{Include}.  In order to compile a program using the Volume IO
+library, it is necessary to not only specify this include directory on
+the compile line, but also the include directories for the three
+libraries called by Volume IO, \name{MINC}, \name{netcdf}, and
+\name{recipes}.  The path for these is most likely \name{/usr/local/include},
+which is automatically in the search path, so the compile line would look like:
+\begin{verbatim}
+    cc -prototypes -I/nil/david/Release/MNI_lib/Include \
+       -c test_volume_io.c
+\end{verbatim}
+
+Source files making calls to Volume IO functions must have the
+following line at the top, to include the relevent type definitions and
+prototypes:
+\begin{verbatim}
+    #include  <volume_io.h>
+\end{verbatim}
+
+In order to link with Volume IO, the relevant libraries must be
+specified:
+\begin{verbatim}
+    cc test_volume_io.o  -o test_volume_io \
+       -L/nil/david/Release/MNI_lib -lmni \
+       -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
+\end{verbatim}
+The three libraries are usually in /usr/local/lib, which is
+automatically in the search path.  The \name{-lm} option includes the
+math library, which is sometimes called by the Volume IO library.  The
+\name{-lsun} library provides network support useful to all programs.
+The \name{-lmalloc} library provides faster and more robust memory
+allocation than the default.
+
+\section{Types and Macros}
+
+There are several types and macros defined for used with the Volume IO
+library.  All functions in the library are prefixed with either the
+word \name{public} or \name{private}, which indicates whether the
+function is accessible from outside the file in which it resides.
+They are defined as follows:
+\begin{verbatim}
+#define  public
+#define  private   static
+\end{verbatim}
+
+A type for logical values is defined:
+\begin{verbatim}
+typedef  int    BOOLEAN
+#define  FALSE  0
+#define  TRUE   1
+#define  OFF    FALSE
+#define  ON     TRUE
+\end{verbatim}
+
+Other useful types defined include:
+\begin{verbatim}
+typedef  double               Real;
+#define  MAX_STRING_LENGTH    200
+typedef  char                 STRING[MAX_STRING_LENGTH+1];
+typedef  enum 
+        { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT } Status;
+typedef  char                 Smallest_int;
+\end{verbatim}
+
+
 
 \section{Programming Utilities}
 
