@@ -6,7 +6,11 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.16  2000-05-24 14:31:05  neelin
+ * Revision 6.17  2000-09-29 15:06:47  neelin
+ * Fixed conversion of port string to number so that it is in network byte
+ * order even on little-endian machines (linux PC).
+ *
+ * Revision 6.16  2000/05/24 14:31:05  neelin
  * Modified acr_transmit_group_list to remove elements that have been added
  * so that the group_list is returned unchanged.
  *
@@ -98,7 +102,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.16 2000-05-24 14:31:05 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.17 2000-09-29 15:06:47 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -388,7 +392,7 @@ public int acr_connect_to_host(char *host, char *port,
 
    /* Get the port, either as a number or as a service name */
    if ((*port >= '0') && (*port <= '9')) {
-      server.sin_port = atoi(port);
+      server.sin_port = htons(atoi(port));
    }
    else if ((sp = getservbyname(port, "tcp")) != NULL) {
       server.sin_port = sp->s_port;
