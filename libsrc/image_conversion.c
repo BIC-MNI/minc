@@ -32,7 +32,16 @@
                  MI_icv_coords_tovar
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : January 22, 1993 (P.N.)
+@MODIFIED   : $Log: image_conversion.c,v $
+@MODIFIED   : Revision 1.16  1993-08-11 11:49:36  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Fixed bug in MI_icv_access so that pointer to values buffer is incremented
+@MODIFIED   : as we loop through the chunks. This affected calls to miicv_get/put that
+@MODIFIED   : had MIimagemax/min varying over the values read in one call (ie. reading
+@MODIFIED   : or writing a volume with MIimagemax/min varying over slices will give
+@MODIFIED   : incorrect results if the volume is read with one call).
+@MODIFIED   :
+              January 22, 1993 (P.N.)
                  - Modified handling of icv properties with miicv_set<type>.
                    Removed routine miicv_set. Use routines miicv_setdbl,
                    miicv_setint, miicv_setlong, miicv_setstr instead (this
@@ -50,7 +59,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.15 1993-07-20 12:17:37 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.16 1993-08-11 11:49:36 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1204,6 +1213,8 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
                                         (NULL if we don't care) */
    long chunk_count[MAX_VAR_DIMS];   /* Number of elements to get for chunk */
    long chunk_start[MAX_VAR_DIMS];   /* Starting index for getting a chunk */
+   long chunk_size;                  /* Size of chunk in bytes */
+   void *chunk_values;               /* Pointer to next chunk to get */
    long var_start[MAX_VAR_DIMS];     /* Coordinates of first var element */
    long var_count[MAX_VAR_DIMS];     /* Edge lengths in variable */
    long var_end[MAX_VAR_DIMS];       /* Coordinates of last var element */
@@ -1255,11 +1266,15 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       var_end[idim]=var_start[idim]+var_count[idim];
    }
    (void) miset_coords(icvp->var_ndims, 1L, chunk_count);
-   for (idim=MAX(icvp->derv_firstdim+1,0); idim < icvp->var_ndims; idim++)
+   chunk_size = nctypelen(icvp->user_type);
+   for (idim=MAX(icvp->derv_firstdim+1,0); idim < icvp->var_ndims; idim++) {
       chunk_count[idim]=var_count[idim];
+      chunk_size *= chunk_count[idim];
+   }
    firstdim = MAX(icvp->derv_firstdim, 0);
 
    /* Loop through variable */
+   chunk_values = values;
    while (chunk_start[0] < var_end[0]) {
 
       /* Calculate scale factor */
@@ -1271,7 +1286,7 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       MI_CHK_ERR(MI_varaccess(operation, icvp->cdfid, icvp->varid,
                               chunk_start, chunk_count,
                               icvp->user_type, icvp->user_sign,
-                              values, bufsize_step, icvp))
+                              chunk_values, bufsize_step, icvp))
 
       /* Increment the start counter */
       chunk_start[firstdim] += chunk_count[firstdim];
@@ -1280,6 +1295,10 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
          chunk_start[idim]=var_start[idim];
          chunk_start[idim-1]++;
       }
+
+      /* Increment the pointer to values */
+      chunk_values = (void *) ((char *) chunk_values + (size_t) chunk_size);
+
    }
 
    MI_RETURN(MI_NOERROR);
