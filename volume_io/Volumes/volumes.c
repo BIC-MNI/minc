@@ -1,5 +1,7 @@
 #include  <def_mni.h>
 #include  <def_splines.h>
+#include  <limits.h>
+#include  <float.h>
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
 
@@ -11,9 +13,6 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
     { MItime, MIzspace, MIyspace, MIxspace },
     { "", MItime, MIzspace, MIyspace, MIxspace }
 };
-
-private  void  free_volume_data(
-    Volume   volume );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_volume
@@ -47,7 +46,9 @@ public   Volume   create_volume(
     int         n_dimensions,
     char        *dimension_names[],
     nc_type     nc_data_type,
-    Boolean     signed_flag )
+    Boolean     signed_flag,
+    Real        voxel_min,
+    Real        voxel_max )
 {
     int             i, c, sizes[MAX_DIMENSIONS];
     Status          status;
@@ -75,8 +76,6 @@ public   Volume   create_volume(
 
     volume->n_dimensions = n_dimensions;
 
-    volume->min_voxel = 0.0;
-    volume->max_voxel = 0.0;
     volume->real_range_set = FALSE;
     volume->real_value_scale = 1.0;
     volume->real_value_translation = 0.0;
@@ -85,15 +84,12 @@ public   Volume   create_volume(
     {
         volume->translation_voxel[c] = 0.0;
         volume->world_space_for_translation_voxel[c] = 0.0;
+        volume->separations[c] = 1.0;
     }
-
-    volume->labels = (unsigned char ***) NULL;
 
     for_less( i, 0, n_dimensions )
     {
         sizes[i] = 0;
-        volume->separations[i] = 1.0;
-
 
         if( dimension_names != (char **) NULL )
             name = dimension_names[i];
@@ -105,7 +101,9 @@ public   Volume   create_volume(
     }
 
     volume->data_type = NO_DATA_TYPE;
-    set_volume_size( volume, nc_data_type, signed_flag, sizes );
+
+    set_volume_type( volume, nc_data_type, signed_flag, voxel_min, voxel_max );
+    set_volume_sizes( volume, sizes );
 
     make_identity_transform( &identity );
     create_linear_transform( &volume->voxel_to_world_transform, &identity );
@@ -113,30 +111,13 @@ public   Volume   create_volume(
     return( volume );
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_volume_size
-@INPUT      : volume
-              nc_data_type
-              signed_flag
-              sizes[]        - sizes per dimension
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Sets the sizes of the dimensions of the volume, and if specified,
-              the data type also.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  set_volume_size(
+public  void  set_volume_type(
     Volume       volume,
     nc_type      nc_data_type,
     Boolean      signed_flag,
-    int          sizes[] )
+    Real         voxel_min,
+    Real         voxel_max )
 {
-    int             i;
     Data_types      data_type;
 
     if( nc_data_type != NC_UNSPECIFIED )
@@ -175,10 +156,9 @@ public  void  set_volume_size(
         volume->data_type = data_type;
         volume->nc_data_type = nc_data_type;
         volume->signed_flag = signed_flag;
-    }
 
-    for_less( i, 0, volume->n_dimensions )
-        volume->sizes[i] = sizes[i];
+        set_volume_voxel_range( volume, voxel_min, voxel_max );
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -329,14 +309,14 @@ public  void  alloc_volume_data(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  free_volume_data(
+public  void  free_volume_data(
     Volume   volume )
 {
     void   *ptr, **ptr2, ***ptr3, ****ptr4, *****ptr5;
 
     if( volume->data == (void *) NULL )
     {
-        print( "Error: cannot free NULL volume data.\n" );
+        print( "Warning: cannot free NULL volume data.\n" );
         return;
     }
 
@@ -389,8 +369,6 @@ public  void  delete_volume(
     if( volume->data != (void *) NULL )
         free_volume_data( volume );
 
-    free_auxiliary_data( volume );
-
     delete_general_transform( &volume->voxel_to_world_transform );
 
     for_less( d, 0, volume->n_dimensions )
@@ -440,6 +418,31 @@ public  void  get_volume_sizes(
 
     for_less( i, 0, volume->n_dimensions )
         sizes[i] = volume->sizes[i];
+}
+
+public  void  set_volume_sizes(
+    Volume       volume,
+    int          sizes[] )
+{
+    int             i;
+
+    for_less( i, 0, volume->n_dimensions )
+        volume->sizes[i] = sizes[i];
+}
+
+public  int  get_volume_total_n_voxels(
+    Volume    volume )
+{
+    int   n, i, sizes[MAX_DIMENSIONS];
+
+    n = 1;
+
+    get_volume_sizes( volume, sizes );
+
+    for_less( i, 0, volume->n_dimensions )
+        n *= sizes[i];
+
+    return( n );
 }
 
 public  void  set_voxel_to_world_transform(
@@ -528,12 +531,12 @@ public  void  set_volume_translation(
 {
     int  c;
 
-    for_less( c, 0, N_DIMENSIONS )
-    {
+    for_less( c, 0, volume->n_dimensions )
         volume->translation_voxel[c] = voxel[c];
+
+    for_less( c, 0, N_DIMENSIONS )
         volume->world_space_for_translation_voxel[c] =
                                world_space_voxel_maps_to[c];
-    }
 
     recompute_world_transform( volume );
 }
@@ -650,23 +653,23 @@ public  void  convert_world_to_voxel(
                      x_world, y_world, z_world, x_voxel, y_voxel, z_voxel );
 }
 
-public  Real  get_volume_min_voxel(
+public  Real  get_volume_voxel_min(
     Volume   volume )
 {
-    return( volume->min_voxel );
+    return( volume->voxel_min );
 }
 
-public  Real  get_volume_max_voxel(
+public  Real  get_volume_voxel_max(
     Volume   volume )
 {
-    return( volume->max_voxel );
+    return( volume->voxel_max );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_voxel_range
 @INPUT      : volume
-@OUTPUT     : min_voxel
-              max_voxel
+@OUTPUT     : voxel_min
+              voxel_max
 @RETURNS    : 
 @DESCRIPTION: Passes back the min and max voxel values stored in the volume.
 @METHOD     : 
@@ -678,31 +681,48 @@ public  Real  get_volume_max_voxel(
 
 public  void  get_volume_voxel_range(
     Volume     volume,
-    Real       *min_voxel,
-    Real       *max_voxel )
+    Real       *voxel_min,
+    Real       *voxel_max )
 {
-    *min_voxel = get_volume_min_voxel( volume );
-    *max_voxel = get_volume_max_voxel( volume );
+    *voxel_min = get_volume_voxel_min( volume );
+    *voxel_max = get_volume_voxel_max( volume );
 }
 
 public  void  set_volume_voxel_range(
     Volume   volume,
-    Real     min_voxel,
-    Real     max_voxel )
+    Real     voxel_min,
+    Real     voxel_max )
 {
     Real  real_min, real_max;
 
-    if( min_voxel >= max_voxel )
+    if( voxel_min >= voxel_max )
     {
-        print( "set_volume_voxel_range( %g, %g ) : ", min_voxel, max_voxel );
-        print( " min must be less than max\n" );
+        switch( volume->data_type )
+        {
+        case UNSIGNED_BYTE:
+            voxel_min = 0.0;          voxel_max = UCHAR_MAX;     break;
+        case SIGNED_BYTE:
+            voxel_min = SCHAR_MIN;    voxel_max = SCHAR_MAX;     break;
+        case UNSIGNED_SHORT:
+            voxel_min = 0.0;          voxel_max = USHRT_MAX;     break;
+        case SIGNED_SHORT:
+            voxel_min = SHRT_MIN;     voxel_max = SHRT_MAX;      break;
+        case UNSIGNED_LONG:
+            voxel_min = 0.0;          voxel_max = ULONG_MAX;     break;
+        case SIGNED_LONG:
+            voxel_min = LONG_MIN;     voxel_max = LONG_MAX;      break;
+        case FLOAT:
+            voxel_min = -FLT_MAX;     voxel_max = FLT_MAX;       break;
+        case DOUBLE:
+            voxel_min = -DBL_MAX;     voxel_max = DBL_MAX;       break;
+        }
     }
 
     if( volume->real_range_set )
         get_volume_real_range( volume, &real_min, &real_max );
 
-    volume->min_voxel = min_voxel;
-    volume->max_voxel = max_voxel;
+    volume->voxel_min = voxel_min;
+    volume->voxel_max = voxel_max;
 
     if( volume->real_range_set )
         set_volume_real_range( volume, real_min, real_max );
@@ -738,7 +758,7 @@ public  Real  get_volume_real_min(
 {
     Real   real_min;
 
-    real_min = get_volume_min_voxel( volume );
+    real_min = get_volume_voxel_min( volume );
 
     if( volume->real_range_set )
         real_min = CONVERT_VOXEL_TO_VALUE( volume, real_min );
@@ -751,7 +771,7 @@ public  Real  get_volume_real_max(
 {
     Real   real_max;
 
-    real_max = get_volume_max_voxel( volume );
+    real_max = get_volume_voxel_max( volume );
 
     if( volume->real_range_set )
         real_max = CONVERT_VOXEL_TO_VALUE( volume, real_max );
@@ -764,35 +784,47 @@ public  void  set_volume_real_range(
     Real     real_min,
     Real     real_max )
 {
-    Real    min_voxel, max_voxel;
+    Real    voxel_min, voxel_max;
 
-
-    get_volume_voxel_range( volume, &min_voxel, &max_voxel );
-
-    if( min_voxel < max_voxel )
+    if( volume->data_type == FLOAT || volume->data_type == DOUBLE )
     {
-        volume->real_value_scale = (real_max - real_min) /
-                                   (max_voxel - min_voxel);
-        volume->real_value_translation = real_min -
-                                         min_voxel * volume->real_value_scale;
+        set_volume_voxel_range( volume, real_min, real_max );
+        volume->real_value_scale = 1.0;
+        volume->real_value_translation = 0.0;
     }
     else
     {
-        volume->real_value_scale = 0.0;
-        volume->real_value_translation = real_min;
+        get_volume_voxel_range( volume, &voxel_min, &voxel_max );
+
+        if( voxel_min < voxel_max )
+        {
+            volume->real_value_scale = (real_max - real_min) /
+                                       (voxel_min - voxel_min);
+            volume->real_value_translation = real_min -
+                                       voxel_min * volume->real_value_scale;
+        }
+        else
+        {
+            volume->real_value_scale = 0.0;
+            volume->real_value_translation = real_min;
+        }
+
     }
 
     volume->real_range_set = TRUE;
 }
 
-public  Volume   copy_volume(
+public  Volume   copy_volume_definition(
     Volume   volume,
     nc_type  nc_data_type,
-    Boolean  signed_flag )
+    Boolean  signed_flag,
+    Real     voxel_min,
+    Real     voxel_max )
 {
-    int      sizes[MAX_DIMENSIONS];
-    Real     separations[MAX_DIMENSIONS];
-    Volume   copy;
+    int                sizes[MAX_DIMENSIONS];
+    Real               separations[MAX_DIMENSIONS];
+    Volume             copy;
+    General_transform  transform;
 
     get_volume_sizes( volume, sizes );
     get_volume_separations( volume, separations );
@@ -801,17 +833,15 @@ public  Volume   copy_volume(
     {
         nc_data_type = volume->nc_data_type;
         signed_flag = volume->signed_flag;
+        get_volume_voxel_range( volume, &voxel_min, &voxel_max );
     }
 
     copy = create_volume( get_volume_n_dimensions(volume),
-                          volume->dimension_names, nc_data_type, signed_flag );
-
-    set_volume_size( copy, NC_UNSPECIFIED, FALSE, sizes );
+                          volume->dimension_names, nc_data_type, signed_flag,
+                          voxel_min, voxel_max );
+    set_volume_sizes( copy, sizes );
     alloc_volume_data( copy );
 
-    set_volume_voxel_range( copy,
-                            get_volume_min_voxel(volume),
-                            get_volume_max_voxel(volume) );
     set_volume_real_range( copy,
                            get_volume_real_min(volume),
                            get_volume_real_max(volume) );
@@ -819,7 +849,9 @@ public  Volume   copy_volume(
     set_volume_separations( copy, separations );
 
     copy_general_transform( get_voxel_to_world_transform(volume),
-                            get_voxel_to_world_transform(copy) );
+                            &transform );
+
+    set_voxel_to_world_transform( copy, &transform );
 
     return( copy );
 }

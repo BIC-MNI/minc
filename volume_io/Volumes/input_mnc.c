@@ -42,19 +42,22 @@ public  Minc_file  initialize_minc_input(
 {
     minc_file_struct    *file;
     int                 img_var, dim_vars[MAX_VAR_DIMS];
-    int                 slab_size, length;
+    int                 slab_size, length, prev_sizes[MAX_VAR_DIMS];
+    nc_type             prev_nc_type;
+    Boolean             different;
     Boolean             min_voxel_found, max_voxel_found, range_specified;
     double              valid_range[2], temp;
     long                long_size, mindex[MAX_VAR_DIMS];
     Boolean             converted_sign;
     nc_type             converted_type;
-    String              signed_flag;
+    String              signed_flag, last_dim_name;
     char                *dim_names[MAX_VAR_DIMS];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
     Real                axis_separations[MI_NUM_SPACE_DIMS];
     Real                volume_separations[MI_NUM_SPACE_DIMS];
+    Real                default_voxel_min, default_voxel_max;
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     Vector              axes[MI_NUM_SPACE_DIMS];
@@ -70,7 +73,7 @@ public  Minc_file  initialize_minc_input(
 
     if( options == (minc_input_options *) NULL )
     {
-        get_default_minc_input_options( &default_options );
+        set_default_minc_input_options( &default_options );
         options = &default_options;
     }
 
@@ -78,6 +81,9 @@ public  Minc_file  initialize_minc_input(
 
     file->file_is_being_read = TRUE;
     file->volume = volume;
+
+    get_volume_sizes( volume, prev_sizes );
+    prev_nc_type = volume->nc_data_type;
 
     /* --- open the file */
 
@@ -96,6 +102,14 @@ public  Minc_file  initialize_minc_input(
 
     ncvarinq( file->cdfid, img_var, (char *) NULL, &file_datatype,
               &file->n_file_dimensions, dim_vars, (int *) NULL );
+
+    if( options->convert_vector_to_scalar_flag )
+    {
+        (void) ncdiminq( file->cdfid, dim_vars[file->n_file_dimensions-1],
+                         last_dim_name, &long_size );
+        if( strcmp( last_dim_name, MIvector_dimension ) == 0 )
+            --file->n_file_dimensions;
+    }
 
     if( file->n_file_dimensions < volume->n_dimensions )
     {
@@ -262,12 +276,15 @@ public  Minc_file  initialize_minc_input(
             converted_sign = file_datatype != NC_BYTE;
 
         converted_type = file_datatype;
+        set_volume_type( volume, converted_type, converted_sign, 0.0, 0.0 );
     }
     else                                        /* --- use specified type */
     {
         converted_type = volume->nc_data_type;
         converted_sign = volume->signed_flag;
     }
+
+    set_volume_sizes( volume, sizes );
 
     for_less( d, 0, file->n_file_dimensions )
         mindex[d] = 0;
@@ -282,7 +299,8 @@ public  Minc_file  initialize_minc_input(
     (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
     (void) miicv_setint( file->icv, MI_ICV_DO_FILLVALUE, TRUE );
 
-    range_specified = (volume->min_voxel < volume->max_voxel);
+    get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
+    range_specified = (valid_range[0] < valid_range[1]);
 
     max_voxel_found = FALSE;
     min_voxel_found = FALSE;
@@ -322,44 +340,31 @@ public  Minc_file  initialize_minc_input(
 
     if( volume->data_type == NO_DATA_TYPE || !range_specified )
     {
-        if( !min_voxel_found )
-        {
-            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &valid_range[0] )
-                               != MI_ERROR )
-            {
-                min_voxel_found = TRUE;
-            }
-            else
-            {
-                HANDLE_INTERNAL_ERROR( "initialize minc input" );
-            }
-        }
+        set_volume_voxel_range( volume, 0.0, 0.0 );
+        get_volume_voxel_range( volume, &default_voxel_min, &default_voxel_max);
 
-        if( !max_voxel_found )
-        {
-            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &valid_range[1] )
-                               != MI_ERROR )
-            {
-                max_voxel_found = TRUE;
-            }
-            else
-            {
-                HANDLE_INTERNAL_ERROR( "initialize minc input" );
-            }
-        }
+        if( min_voxel_found && max_voxel_found )
+            set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
+        else if( min_voxel_found && !max_voxel_found )
+            set_volume_voxel_range( volume, valid_range[0], default_voxel_max );
+        else if( !min_voxel_found && max_voxel_found )
+            set_volume_voxel_range( volume, default_voxel_min, valid_range[0] );
     }
-
-    if( min_voxel_found && max_voxel_found )
-        set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
-    else if( min_voxel_found && !max_voxel_found )
-        set_volume_voxel_range( volume, valid_range[0], valid_range[0] + 1.0 );
-    else if( !min_voxel_found && max_voxel_found )
-        set_volume_voxel_range( volume, valid_range[1] - 1.0, valid_range[0] );
 
     get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
 
     (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, valid_range[0] );
     (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, valid_range[1] );
+
+    if( options->convert_vector_to_scalar_flag )
+    {
+        (void) miicv_setint( file->icv, MI_ICV_DO_DIM_CONV, TRUE );
+        (void) miicv_setint( file->icv, MI_ICV_DO_SCALAR, TRUE );
+        (void) miicv_setint( file->icv, MI_ICV_XDIM_DIR, FALSE );
+        (void) miicv_setint( file->icv, MI_ICV_YDIM_DIR, FALSE );
+        (void) miicv_setint( file->icv, MI_ICV_ZDIM_DIR, FALSE );
+        (void) miicv_setint( file->icv, MI_ICV_KEEP_ASPECT, FALSE );
+    }
 
     (void) miicv_attach( file->icv, file->cdfid, img_var );
 
@@ -368,15 +373,12 @@ public  Minc_file  initialize_minc_input(
     (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
     (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
 
-    if( volume->data_type == FLOAT || volume->data_type == DOUBLE )
-        set_volume_voxel_range( volume, real_min, real_max );
-    else
-        set_volume_real_range( volume, real_min, real_max );
+    set_volume_real_range( volume, real_min, real_max );
 
     if( options->promote_invalid_to_min_flag )
     {
         (void) miicv_detach( file->icv );
-        (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, volume->min_voxel );
+        (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, valid_range[0] );
         (void) miicv_attach( file->icv, file->cdfid, img_var );
     }
 
@@ -406,7 +408,20 @@ public  Minc_file  initialize_minc_input(
         --file->n_slab_dims;
     }
 
-    set_volume_size( volume, converted_type, converted_sign, sizes );
+    /* --- decide whether the volume data must be freed (if it changed size) */
+
+    different = FALSE;
+    for_less( d, 0, volume->n_dimensions )
+    {
+        if( sizes[d] != prev_sizes[d] )
+            different = TRUE;
+    }
+
+    if( prev_nc_type != converted_type )
+        different = TRUE;
+
+    if( different )
+        free_volume_data( volume );
 
     for_less( d, 0, file->n_file_dimensions )
         FREE( dim_names[d] );
@@ -696,7 +711,7 @@ public  Boolean  input_more_minc_file(
     return( !file->end_volume_flag );
 }
 
-public  Boolean  advance_volume(
+public  Boolean  advance_input_volume(
     Minc_file   file )
 {
     int   ind;
@@ -721,15 +736,23 @@ public  Boolean  advance_volume(
         file->end_volume_flag = FALSE;
 
         for_less( ind, 0, file->volume->n_dimensions )
-        {
             file->indices[file->valid_file_axes[ind]] = 0;
-        }
 
     }
     else
         file->end_volume_flag = TRUE;
 
     return( file->end_volume_flag );
+}
+
+public  void  reset_input_volume(
+    Minc_file   file )
+{
+    int   d;
+
+    for_less( d, 0, file->n_file_dimensions )
+        file->indices[d] = 0;
+    file->end_volume_flag = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -858,10 +881,11 @@ public  int  get_minc_file_id(
     return( file->cdfid );
 }
 
-public  void  get_default_minc_input_options(
+public  void  set_default_minc_input_options(
     minc_input_options  *options )
 {
     set_minc_input_promote_invalid_to_min_flag( options, TRUE );
+    set_minc_input_vector_to_scalar_flag( options, TRUE );
 }
 
 public  void  set_minc_input_promote_invalid_to_min_flag(
@@ -869,4 +893,11 @@ public  void  set_minc_input_promote_invalid_to_min_flag(
     Boolean             flag )
 {
     options->promote_invalid_to_min_flag = flag;
+}
+
+public  void  set_minc_input_vector_to_scalar_flag(
+    minc_input_options  *options,
+    Boolean             flag )
+{
+    options->convert_vector_to_scalar_flag = flag;
 }

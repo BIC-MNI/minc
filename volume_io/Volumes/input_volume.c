@@ -35,9 +35,15 @@ private  void  get_mni_scaling(
 
 public  Status  start_volume_input(
     char                 filename[],
+    int                  n_dimensions,
     char                 *dim_names[],
-    Boolean              convert_to_byte_flag,
+    nc_type              volume_nc_data_type,
+    Boolean              volume_signed_flag,
+    Real                 volume_voxel_min,
+    Real                 volume_voxel_max,
+    Boolean              create_volume_flag,
     Volume               *volume,
+    minc_input_options   *options,
     volume_input_struct  *input_info )
 {
     Status          status;
@@ -45,7 +51,6 @@ public  Status  start_volume_input(
     Real            mni_scale, mni_translation;
     Real            min_voxel, max_voxel, real_min, real_max;
     Boolean         mni_format;
-    nc_type         data_type;
     static char     *default_dim_names[N_DIMENSIONS] =
                                          { MIzspace, MIyspace, MIxspace };
     String          expanded_filename;
@@ -55,12 +60,14 @@ public  Status  start_volume_input(
 
     status = OK;
 
-    if( convert_to_byte_flag )
-        data_type = NC_BYTE;
-    else
-        data_type = NC_UNSPECIFIED;
-
-    *volume = create_volume( 3, dim_names, data_type, FALSE );
+    if( create_volume_flag || *volume == (Volume) NULL )
+    {
+        *volume = create_volume( n_dimensions, dim_names, volume_nc_data_type,
+                                 volume_signed_flag,
+                                 volume_voxel_min, volume_voxel_max );
+    }
+    else if( n_dimensions != get_volume_n_dimensions( *volume ) )
+        free_volume_data( *volume );
 
     expand_filename( filename, expanded_filename );
     mni_format = FALSE;
@@ -85,8 +92,7 @@ public  Status  start_volume_input(
 #ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
         input_info->minc_file = initialize_minc_input( expanded_filename,
-                                                 *volume,
-                                                 (minc_input_options *) NULL );
+                                                       *volume, options );
         if( input_info->minc_file == (Minc_file) NULL )
             status = ERROR;
 
@@ -212,10 +218,16 @@ public  void  cancel_volume_input(
 ---------------------------------------------------------------------------- */
 
 public  Status  input_volume(
-    char           filename[],
-    char           *dim_names[],
-    Boolean        convert_to_byte_flag,
-    Volume         *volume )
+    char                 filename[],
+    int                  n_dimensions,
+    char                 *dim_names[],
+    nc_type              volume_nc_data_type,
+    Boolean              volume_signed_flag,
+    Real                 volume_voxel_min,
+    Real                 volume_voxel_max,
+    Boolean              create_volume_flag,
+    Volume               *volume,
+    minc_input_options   *options )
 {
     Status               status;
     Real                 amount_done;
@@ -223,8 +235,11 @@ public  Status  input_volume(
     progress_struct      progress;
     static const int     FACTOR = 1000;
 
-    status = start_volume_input( filename, dim_names, convert_to_byte_flag,
-                                 volume, &input_info );
+    status = start_volume_input( filename, n_dimensions, dim_names,
+                                 volume_nc_data_type, volume_signed_flag,
+                                 volume_voxel_min, volume_voxel_max,
+                                 create_volume_flag, volume, options,
+                                 &input_info );
 
     if( status == OK )
     {

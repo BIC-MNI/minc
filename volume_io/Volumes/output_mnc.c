@@ -46,10 +46,10 @@ public  Minc_file  initialize_minc_output(
     int                    n_dimensions,
     char                   *dim_names[],
     int                    sizes[],
-    nc_type                nc_data_type,
-    Boolean                signed_flag,
-    Real                   min_voxel,
-    Real                   max_voxel,
+    nc_type                file_nc_data_type,
+    Boolean                file_signed_flag,
+    Real                   file_voxel_min,
+    Real                   file_voxel_max,
     Real                   real_min,
     Real                   real_max,
     General_transform      *voxel_to_world_transform,
@@ -69,7 +69,7 @@ public  Minc_file  initialize_minc_output(
 
     if( options == (minc_output_options *) NULL )
     {
-        get_default_minc_output_options( &default_options );
+        set_default_minc_output_options( &default_options );
         options = &default_options;
     }
 
@@ -159,10 +159,10 @@ public  Minc_file  initialize_minc_output(
     }
 
     file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
-                                              nc_data_type,
+                                              file_nc_data_type,
                                               n_dimensions, dim_vars );
 
-    if( signed_flag )
+    if( file_signed_flag )
         (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
                             MI_SIGNED );
     else
@@ -171,10 +171,10 @@ public  Minc_file  initialize_minc_output(
 
     /* --- put the valid voxel range */
 
-    if( min_voxel < max_voxel )
+    if( file_voxel_min < file_voxel_max )
     {
-        valid_range[0] = min_voxel;
-        valid_range[1] = max_voxel;
+        valid_range[0] = file_voxel_min;
+        valid_range[1] = file_voxel_max;
         (void) ncattput( file->cdfid, file->img_var_id, MIvalid_range,
                          NC_DOUBLE, 2, (void *) valid_range );
     }
@@ -231,7 +231,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     char        history_string[] )
 {
     int     src_img_var, varid, n_excluded, excluded_vars[10];
-    int     src_min_id, src_max_id;
+    int     src_min_id, src_max_id, src_root_id;
     Status  status;
 
     if( file->end_def_done )
@@ -255,6 +255,8 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
         excluded_vars[n_excluded++] = src_max_id;
     if( (src_min_id = ncvarid(src_cdfid, MIimagemin )) != MI_ERROR )
         excluded_vars[n_excluded++] = src_min_id;
+    if( (src_root_id = ncvarid(src_cdfid, MIrootvariable )) != MI_ERROR )
+        excluded_vars[n_excluded++] = src_root_id;
 
     (void) micopy_all_var_defs( src_cdfid, file->cdfid, n_excluded,
                                 excluded_vars );
@@ -269,12 +271,23 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     ncopts = NC_VERBOSE;
 
     if( src_min_id != MI_ERROR )
+    {
         (void) micopy_all_atts( src_cdfid, src_min_id,
                                 file->cdfid, file->min_id );
+    }
 
     if( src_max_id != MI_ERROR )
+    {
         (void) micopy_all_atts( src_cdfid, src_max_id,
                                 file->cdfid, file->max_id );
+    }
+
+    if( src_root_id != MI_ERROR )
+    {
+        (void) micopy_all_atts( src_cdfid, src_root_id,
+                                file->cdfid,
+                                ncvarid( file->cdfid, MIrootvariable) );
+    }
 
     status = OK;
 
@@ -344,7 +357,7 @@ public  Status  output_minc_volume(
     int    d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
     long   start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
     long   start_index, mindex[MAX_VAR_DIMS];
-    Real   min_voxel, max_voxel;
+    Real   voxel_min, voxel_max;
     double dim_value;
     void   *data_ptr;
 
@@ -384,11 +397,11 @@ public  Status  output_minc_volume(
         (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, file->image_range[0]);
         (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, file->image_range[1]);
 
-        get_volume_voxel_range( volume, &min_voxel, &max_voxel );
-        if( min_voxel < max_voxel )
+        get_volume_voxel_range( volume, &voxel_min, &voxel_max );
+        if( voxel_min < voxel_max )
         {
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, min_voxel );
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, max_voxel );
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, voxel_min );
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, voxel_max );
         }
         else
             print( "Volume has invalid min and max voxel value\n" );
@@ -496,7 +509,7 @@ public  Status  close_minc_output(
     return( OK );
 }
 
-public  void  get_default_minc_output_options(
+public  void  set_default_minc_output_options(
     minc_output_options  *options           /* ARGSUSED */ )
 {
 }

@@ -223,7 +223,8 @@ public  Status  initialize_free_format_input(
         set_volume_translation( volume, origin_voxel, trans );
     }
 
-    set_volume_size( volume, desired_data_type, FALSE, sizes );
+    set_volume_type( volume, desired_data_type, FALSE, 0.0, 0.0 );
+    set_volume_sizes( volume, sizes );
 
     /* allocate the slice buffer */
 
@@ -449,9 +450,9 @@ public  Boolean  input_more_free_format_file(
             scaling_flag = TRUE;
             get_volume_voxel_range( volume, &original_min_voxel,
                                     &original_max_voxel );
-            value_translation = (Real) volume->min_voxel;
-            value_scale = (Real) (volume->max_voxel - volume->min_voxel) /
-                                      (Real) (NUM_BYTE_VALUES - 1);
+            value_translation = original_min_voxel;
+            value_scale = (original_max_voxel - original_min_voxel) /
+                          (Real) (NUM_BYTE_VALUES - 1);
         }
 
         inner_index = &indices[volume_input->axis_index_from_file[2]];

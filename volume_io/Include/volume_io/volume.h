@@ -11,11 +11,6 @@ extern  char   *XYZ_dimension_names[];
 
 /* -------------------------- volume struct --------------------- */
 
-#define  LABEL_BIT                 128
-#define  ACTIVE_BIT                64
-#define  LOWER_AUXILIARY_BITS      63
-
-
 typedef  enum  { NO_DATA_TYPE,
                  UNSIGNED_BYTE,
                  SIGNED_BYTE,
@@ -39,19 +34,17 @@ typedef  struct
 
     void                    *data;
 
-    Real                    min_voxel;
-    Real                    max_voxel;
+    Real                    voxel_min;
+    Real                    voxel_max;
     Boolean                 real_range_set;
     Real                    real_value_scale;
     Real                    real_value_translation;
     int                     sizes[MAX_DIMENSIONS];
     Real                    separations[MAX_DIMENSIONS];
-    Real                    translation_voxel[N_DIMENSIONS];
-    Real                    world_space_for_translation_voxel[N_DIMENSIONS];
+    Real                    translation_voxel[MAX_DIMENSIONS];
+    Real                    world_space_for_translation_voxel[MAX_DIMENSIONS];
 
     General_transform       voxel_to_world_transform;
-
-    unsigned char           ***labels;
 } volume_struct;
 
 typedef  volume_struct  *Volume;
@@ -310,6 +303,7 @@ typedef  struct
 typedef  struct
 {
     Boolean     promote_invalid_to_min_flag;
+    Boolean     convert_vector_to_scalar_flag;
 } minc_input_options;
 
 typedef  struct
