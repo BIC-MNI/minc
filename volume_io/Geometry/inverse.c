@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.4 1994-11-25 14:19:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.5 1995-02-20 13:12:07 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -22,37 +22,28 @@ public  BOOLEAN   compute_transform_inverse(
     Transform  *transform,
     Transform  *inverse )
 {
-    int        i, j, ind[5];
-    float      **t, **inv, col[5], d;
+    int        i, j;
+    Real       **t, **inv;
     Transform  ident;
+    BOOLEAN    success;
 
     /* --- copy the transform to a numerical recipes type matrix */
 
-    ALLOC2D( t, 5, 5 );
-    ALLOC2D( inv, 5, 5 );
+    ALLOC2D( t, 4, 4 );
+    ALLOC2D( inv, 4, 4 );
 
     for_less( i, 0, 4 )
     {
         for_less( j, 0, 4 )
         {
-            t[i+1][j+1] = Transform_elem(*transform,i,j);
+            t[i][j] = Transform_elem(*transform,i,j);
         }
     }
 
-    ludcmp( t, 4, ind, &d );
+    success = invert_square_matrix( 4, t, inv );
 
-    if( d != 0.0 )
+    if( success )
     {
-        for_inclusive( j, 1, 4 )
-        {
-            for_inclusive( i, 1, 4 )
-                col[i] = 0.0;
-            col[j] = 1.0;
-            lubksb( t, 4, ind, col );
-            for_inclusive( i, 1, 4 )
-                inv[i][j] = col[i];
-        }
-
         /* --- copy the resulting numerical recipes matrix to the
                output argument */
 
@@ -60,7 +51,7 @@ public  BOOLEAN   compute_transform_inverse(
         {
             for_less( j, 0, 4 )
             {
-                Transform_elem(*inverse,i,j) = inv[i+1][j+1];
+                Transform_elem(*inverse,i,j) = inv[i][j];
             }
         }
 
@@ -73,9 +64,11 @@ public  BOOLEAN   compute_transform_inverse(
             print( "Error in compute_transform_inverse\n" );
         }
     }
+    else
+        make_identity_transform( inverse );
 
     FREE2D( t );
     FREE2D( inv );
 
-    return( d != 0.0 );
+    return( success );
 }

@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.21 1995-02-13 13:14:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.22 1995-02-20 13:12:24 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -114,7 +114,7 @@ public  Minc_file  initialize_minc_output(
     Vector              axes[MAX_DIMENSIONS];
     static  STRING      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     char                *file_dim_names[MAX_VAR_DIMS];
-    Transform           transform;
+    Transform           transform, t, inverse;
     char                **vol_dimension_names;
     minc_output_options default_options;
 
@@ -264,9 +264,16 @@ public  Minc_file  initialize_minc_output(
         }
     }
 
-    start[X] = DOT_POINT_VECTOR( origin, axes[X] );
-    start[Y] = DOT_POINT_VECTOR( origin, axes[Y] );
-    start[Z] = DOT_POINT_VECTOR( origin, axes[Z] );
+    make_identity_transform( &t );
+    set_transform_x_axis( &t, &axes[X] );
+    set_transform_y_axis( &t, &axes[Y] );
+    set_transform_z_axis( &t, &axes[Z] );
+
+    (void) compute_transform_inverse( &t, &inverse );
+
+    transform_point( &inverse,
+                     Point_x(origin), Point_y(origin), Point_z(origin),
+                     &start[X], &start[Y], &start[Z] );
 
     for_less( d, 0, n_dimensions )
     {

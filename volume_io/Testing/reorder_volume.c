@@ -5,17 +5,16 @@ int  main(
     char  *argv[] )
 {
     int                 i, a, n_dims, v, n_volumes, sizes[MAX_DIMENSIONS];
-    int                 sizes_2d[MAX_DIMENSIONS];
     char                *input_filename, *output_filename, *string;
     char                *in_dim_names[MAX_DIMENSIONS];
     char                *out_dim_names[MAX_DIMENSIONS];
-    Real                amount_done, value;
+    Real                amount_done;
     Real                real_min, real_max;
     STRING              dim_names[MAX_DIMENSIONS];
     Volume              volume;
     General_transform   transform;
     Minc_file           in_file, out_file;
-    minc_output_options options, *options_ptr;
+    minc_output_options options;
     volume_input_struct volume_input;
     nc_type             data_type;
     BOOLEAN             signed_flag;
@@ -66,8 +65,6 @@ int  main(
     {
         /*--- determine the output order */
 
-        options_ptr = &options;
-
         for_less( i, 0, N_DIMENSIONS )
         {
             string = argv[a];
@@ -86,6 +83,8 @@ int  main(
             (void) strcpy( out_dim_names[i], dim_names[i] );
         }
     }
+
+    /*--- open and close volume as 3D to get correct transform */
 
     (void) start_volume_input( input_filename, N_DIMENSIONS,
                                out_dim_names, NC_UNSPECIFIED, FALSE, 0.0, 0.0,

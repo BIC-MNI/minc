@@ -2280,6 +2280,13 @@ The linear transform functions all deal with objects whose type is
 \name{Transform}.
 
 {\bf\begin{verbatim}
+#define   Transform_elem( transform, i, j )
+\end{verbatim}}
+
+\desc{Is used to set or retrieve the value of the \name{i}'th row and
+\name{j}'th column of the transform, where $0 <= i,j <= 3$.}
+
+{\bf\begin{verbatim}
 public  void  make_identity_transform(
     Transform   *transform )
 \end{verbatim}}
@@ -2372,7 +2379,9 @@ public  void  create_linear_transform(
 \end{verbatim}}
 
 \desc{Creates a general transform consisting of a single linear
-transform, specified by \name{linear\_transform}.}
+transform, specified by \name{linear\_transform}.  If a \name{NULL} is
+passed as the argument \name{linear\-\_transform}, then an identity
+transform is created.}
 
 {\bf\begin{verbatim}
 public  void  create_thin_plate_transform(
@@ -2409,6 +2418,37 @@ fed into the function \name{create\-\_thin\-\_plane\-\_transform} to create
 the general transform.}
 
 {\bf\begin{verbatim}
+typedef  void   (*User_transform_function)( void  *user_data,
+                                            Real  x,
+                                            Real  y,
+                                            Real  z,
+                                            Real  *x_trans,
+                                            Real  *y_trans,
+                                            Real  *z_trans );
+
+public  void  create_user_transform(
+    General_transform         *transform,
+    void                      *user_data,
+    size_t                    size_user_data,
+    User_transform_function   transform_function,
+    User_transform_function   inverse_transform_function )
+\end{verbatim}}
+
+\desc{Creates a user defined transformation, by copying the user data
+(\name{size\-\_user\-\_data} bytes of data starting at
+\name{user\_data}).   Two function pointers are also required, to
+specify the method of transforming points and inversely transforming
+points.  These functions are of the type
+\name{User\-\_transform\-\_function}, which is specified above.}
+
+{\bf\begin{verbatim}
+public  void  delete_general_transform(
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{Frees up the memory stored in the general transform structure.}
+
+{\bf\begin{verbatim}
 public  Transform_types  get_transform_type(
     General_transform   *transform )
 \end{verbatim}}
@@ -2426,6 +2466,87 @@ public  Transform  *get_linear_transform_ptr(
 a pointer to the linear transform (of type \name{Transform}), for use
 with the routines specific to linear transforms, described earlier.
 Otherwise prints an error message.}
+
+{\bf\begin{verbatim}
+public  void  concat_general_transforms(
+    General_transform   *first,
+    General_transform   *second,
+    General_transform   *result )
+\end{verbatim}}
+
+\desc{Concatenates two general transforms.  If both transforms are of
+type \name{LINEAR}, then the result is also of this type, being the
+matrix product of the two.  Otherwise, the resulting transform is
+simply the concatenation of the two transforms.}
+
+{\bf\begin{verbatim}
+public  int  get_n_concated_transforms(
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{Returns the number of concatenated transforms in the given
+transform.  If the type of the transform is
+\name{CONCATENATED\_TRANSFORM}, then the number returned is the number
+of transforms, otherwise it is one.}
+
+{\bf\begin{verbatim}
+public  General_transform  *get_nth_general_transform(
+    General_transform   *transform,
+    int                 n )
+\end{verbatim}}
+
+\desc{If the transform is of type \name{CONCATENATED\_TRANSFORM}, then
+a pointer to the \name{n}'th transform is returned, where \name{n}
+is greater than or equal to zero and less than the number of
+transforms in the concatenated transform.}
+
+\section{Using General Transforms}
+
+{\bf\begin{verbatim}
+public  void  general_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed )
+\end{verbatim}}
+
+\desc{Transforms a three dimensional point by a general transform,
+passing back the result in the last three arguments.}
+
+{\bf\begin{verbatim}
+public  void  general_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed )
+\end{verbatim}}
+
+\desc{Transforms a three dimensional point by the inverse of the
+general transform, passing back the result in the last three arguments.}
+
+{\bf\begin{verbatim}
+public  void  copy_general_transform(
+    General_transform   *transform,
+    General_transform   *copy )
+\end{verbatim}}
+
+\desc{Creates a copy of the general transform, allocating memory
+within the structure as required.}
+
+{\bf\begin{verbatim}
+public  void  create_inverse_general_transform(
+    General_transform   *transform,
+    General_transform   *inverse )
+\end{verbatim}}
+
+\desc{Creates a new general transform that is the inverse of the given
+one.}
 
 \section{Reading and Writing General Transforms}
 

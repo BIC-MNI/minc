@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.4 1994-11-25 14:20:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.5 1995-02-20 13:12:27 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -26,7 +26,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin
 private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
                     float **bdefor, float **INVMLY, int num_marks);
 private  void 
-  usrfun(float x[], float **alpha, float bet[], float **bdefor, float **INVMLY, 
+  usrfun(float x[], Real **alpha, Real bet[], float **bdefor, float **INVMLY, 
 	 int num_marks, int dim, float *xout);
 private  float return_r(float *cor1, float *cor2, int dim);
 private  float FU(float r, int dim);
@@ -48,7 +48,7 @@ private  float FU(float r, int dim);
               INVMLY to 'in' to get 'out'
 @METHOD     : 
 @GLOBALS    : none
-@CALLS      : return_r, vector, free_vector
+@CALLS      : return_r
 @CREATED    : Mon Apr  5 09:00:54 EST 1993
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
@@ -188,31 +188,28 @@ public  void  thin_plate_spline_inverse_transform(
 	      either summed variable increments tolx or summed function values tolf
               
 @GLOBALS    : none
-@CALLS      : ludcmp, lubksb, usrfun
+@CALLS      : usrfun
 @CREATED    : Mon Apr  5 09:00:54 EST 1993
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#define FREERETURN {FREE2D(alpha);FREE(bet);FREE(indx);return;}
+#define FREERETURN {FREE2D(alpha);FREE(bet);return;}
 
 private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
                     float **bdefor, float **INVMLY, int num_marks)
 
 {
-  int k,i,*indx;
-  float 
-    errx,errf,d,
-    *bet,**alpha,
-    xout[N_DIMENSIONS];
+  int   k,i;
+  Real  *bet, **alpha;
+  float errx,errf, xout[N_DIMENSIONS];
   
    xout[0] = x[0];          /* assume that the result is equal to the input, */
    xout[1] = x[1];	    /* as if the transformation was identity         */
    if (dim>2)
      xout[2] = x[2];
 
-   ALLOC( indx, dim + 1 );
-   ALLOC( bet, dim + 1 );
-   ALLOC2D( alpha, dim + 1, dim + 1 );
+   ALLOC( bet, dim );
+   ALLOC2D( alpha, dim, dim );
 
    for (k=1;k<=ntrial;k++) {   
 			/* usrfun will build the matrix coefficients for
@@ -220,14 +217,16 @@ private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
       usrfun(x, alpha, bet, bdefor, INVMLY, num_marks, dim, xout);
 
       errf=0.0;			/* Check for function convergence */
-      for (i=1;i<=dim;i++) errf += fabs(bet[i]);
+      for (i=1;i<=dim;i++) errf += fabs(bet[i-1]);
       if (errf <= tolf) FREERETURN
-      ludcmp(alpha,dim,indx,&d); /* Solve the linear eqs using LU decomposition */
-      lubksb(alpha,dim,indx,bet);
+
+      if( !solve_linear_system( dim, alpha, bet, bet ) )
+          FREERETURN;
+
       errx=0.0;
       for (i=1;i<=dim;i++) {	/* check for root convergence */
-	 errx += fabs(bet[i]);
-	 x[i-1] += bet[i];	/* Update the solution */
+	 errx += fabs(bet[i-1]);
+	 x[i-1] += bet[i-1];	/* Update the solution */
       }
       if (errx <= tolx) FREERETURN
    }
@@ -261,7 +260,7 @@ private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
 ---------------------------------------------------------------------------- */
 
 private  void 
-  usrfun(float x[], float **alpha, float bet[], float **bdefor, float **INVMLY, 
+  usrfun(float x[], Real **alpha, Real bet[], float **bdefor, float **INVMLY, 
 	 int num_marks, int dim, float *xout)
 
 /* NOTE: Now this function will only work for 3-D case */
@@ -271,8 +270,8 @@ private  void
 
    ALLOC( d, num_marks );
 
-   for (i=1; i<=dim; i++){	/* build up the matrix of linear parameters */
-      for (j=1; j<=dim; j++){
+   for (i=0; i<dim; i++){	/* build up the matrix of linear parameters */
+      for (j=0; j<dim; j++){
          alpha[i][j] = 0;
       }
    }
@@ -281,25 +280,25 @@ private  void
    for (i=0; i<num_marks; i++)  /* build distances array */
        d[i] = return_r( x, bdefor[i], dim );
 
-   for (i = 1; i<= dim; i++){	/* Estimate the linear parameters for the error function */
-      for (j = 1; j <= dim; j++){
+   for (i = 0; i< dim; i++){	/* Estimate the linear parameters for the error function */
+      for (j = 0; j < dim; j++){
          alpha[i][j] = 0;
-         for (k = 1; k <= num_marks; k++){
-            alpha[i][j] += (x[j-1] - bdefor[k-1][j-1])/d[k-1] *INVMLY[k-1][i-1];
+         for (k = 0; k < num_marks; k++){
+            alpha[i][j] += (x[j] - bdefor[k][j])/d[k] *INVMLY[k][i];
          }
-         alpha[i][j] += INVMLY[k+j-1][i-1];
+         alpha[i][j] += INVMLY[k+j][i];
       }
    }
 
-   for (i=1; i<=dim; i++){
+   for (i=0; i<dim; i++){
       bet[i] = 0;
-      for (k=1; k<=num_marks; k++){
-         bet[i] += d[k-1]*INVMLY[k-1][i-1];
+      for (k=0; k<num_marks; k++){
+         bet[i] += d[k]*INVMLY[k][i];
       }
-      bet[i] += INVMLY[k-1][i-1] +
-                INVMLY[k+1-1][i-1]*x[0] +
-                INVMLY[k+2-1][i-1]*x[1] +
-                INVMLY[k+3-1][i-1]*x[2] - xout[i-1];
+      bet[i] += INVMLY[k][i] +
+                INVMLY[k+1][i]*x[0] +
+                INVMLY[k+2][i]*x[1] +
+                INVMLY[k+3][i]*x[2] - xout[i];
       bet[i] = -bet[i];
    }
 

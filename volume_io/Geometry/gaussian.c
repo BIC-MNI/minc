@@ -10,20 +10,22 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     int   n_values,
     Real  **values )
 {
-    int       i, j, k, p, v;
-    Real      **a, *s, val, best_val, m, *tmp, scale_factor;
+    int       i, j, k, p, v, *row, tmp;
+    Real      **a, **solution, *s, val, best_val, m, scale_factor;
     BOOLEAN   success;
 
-    ALLOC( a, n );
-    for_less( i, 0, n )
-        ALLOC( a[i], n );
-
+    ALLOC( row, n );
+    ALLOC2D( a, n, n );
+    ALLOC2D( solution, n, n_values );
     ALLOC( s, n );
 
     for_less( i, 0, n )
     {
+        row[i] = i;
         for_less( j, 0, n )
             a[i][j] = coefs[i][j];
+        for_less( j, 0, n_values )
+            solution[i][j] = values[j][i];
     }
 
     for_less( i, 0, n )
@@ -41,11 +43,11 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     for_less( i, 0, n-1 )
     {
         p = i;
-        best_val = a[i][i] / s[i];
+        best_val = a[row[i]][i] / s[row[i]];
         best_val = ABS( best_val );
-        for_less( j, i, n )
+        for_less( j, i+1, n )
         {
-            val = a[j][i] / s[j];
+            val = a[row[j]][i] / s[row[j]];
             val = ABS( val );
             if( val > best_val )
             {
@@ -54,7 +56,7 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
             }
         }
 
-        if( a[p][i] == 0.0 )
+        if( a[row[p]][i] == 0.0 )
         {
             success = FALSE;
             break;
@@ -62,42 +64,52 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
 
         if( i != p )
         {
-            tmp = a[i];
-            a[i] = a[p];
-            a[p] = tmp;
+            tmp = row[i];
+            row[i] = row[p];
+            row[p] = tmp;
         }
 
         for_less( j, i+1, n )
         {
-            m = a[j][i] / a[i][i];
+            m = a[row[j]][i] / a[row[i]][i];
             for_less( k, i+1, n )
-                a[j][k] -= m * a[i][k];
+                a[row[j]][k] -= m * a[row[i]][k];
             for_less( v, 0, n_values )
-                values[v][j] -= m * values[v][i];
+                solution[row[j]][v] -= m * solution[row[i]][v];
         }
     }
 
-    if( success && a[n-1][n-1] == 0.0 )
+    if( success && a[row[n-1]][n-1] == 0.0 )
         success = FALSE;
 
-    for( i = n-1;  i >= 0;  --i )
+    if( success )
     {
-        for_less( j, i+1, n )
+        for( i = n-1;  i >= 0;  --i )
         {
-            scale_factor = a[i][j];
+            for_less( j, i+1, n )
+            {
+                scale_factor = a[row[i]][j];
+                for_less( v, 0, n_values )
+                    solution[row[i]][v] -= scale_factor * solution[row[j]][v];
+            }
+
             for_less( v, 0, n_values )
-                values[v][i] -= scale_factor * values[v][j];
+                solution[row[i]][v] /= a[row[i]][i];
         }
 
-        for_less( v, 0, n_values )
-            values[v][i] /= a[i][i];
+        for_less( i, 0, n )
+        {
+            for_less( v, 0, n_values )
+            {
+                values[v][i] = solution[row[i]][v];
+            }
+        }
     }
 
-    for_less( i, 0, n )
-        FREE( a[i] );
-    FREE( a );
-
+    FREE2D( a );
+    FREE2D( solution );
     FREE( s );
+    FREE( row );
 
     return( success );
 }
@@ -122,6 +134,8 @@ public  BOOLEAN  invert_square_matrix(
     Real  **matrix,
     Real  **inverse )
 {
+    Real      tmp;
+    BOOLEAN   success;
     int       i, j;
 
     for_less( i, 0, n )
@@ -131,6 +145,21 @@ public  BOOLEAN  invert_square_matrix(
         inverse[i][i] = 1.0;
     }
 
-    return( scaled_maximal_pivoting_gaussian_elimination( n, matrix,
-                                                          n, inverse ) );
+    success = scaled_maximal_pivoting_gaussian_elimination( n, matrix,
+                                                            n, inverse );
+
+    if( success )
+    {
+        for_less( i, 0, n-1 )
+        {
+            for_less( j, i+1, n )
+            {
+                tmp = inverse[i][j];
+                inverse[i][j] = inverse[j][i];
+                inverse[j][i] = tmp;
+            }
+        }
+    }
+
+    return( success );
 }

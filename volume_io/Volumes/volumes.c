@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.38 1995-02-17 09:46:24 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.39 1995-02-20 13:12:21 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -997,6 +997,42 @@ public  void  set_volume_direction_cosine(
     recompute_world_transform( volume );
 }
 
+private  void  reorder_voxel_to_xyz(
+    Volume   volume,
+    Real     voxel[],
+    Real     xyz[] )
+{
+    int   c, axis;
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        axis = volume->spatial_axes[c];
+        if( axis >= 0 )
+            xyz[c] = voxel[axis];
+        else
+            xyz[c] = 0.0;
+    }
+}
+
+private  void  reorder_xyz_to_voxel(
+    Volume   volume,
+    Real     xyz[],
+    Real     voxel[] )
+{
+    int   c, axis, n_dims;
+
+    n_dims = get_volume_n_dimensions( volume );
+    for_less( c, 0, n_dims )
+        voxel[c] = 0.0;
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        axis = volume->spatial_axes[c];
+        if( axis >= 0 )
+            voxel[axis] = xyz[c];
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : convert_voxel_to_world
 @INPUT      : volume
@@ -1021,27 +1057,14 @@ public  void  convert_voxel_to_world(
     Real     *y_world,
     Real     *z_world )
 {
-    Real   x_voxel, y_voxel, z_voxel;
+    Real   xyz[N_DIMENSIONS];
 
-    if( volume->spatial_axes[0] >= 0 )
-        x_voxel = voxel[volume->spatial_axes[0]];
-    else
-        x_voxel = 0.0;
-
-    if( volume->spatial_axes[1] >= 0 )
-        y_voxel = voxel[volume->spatial_axes[1]];
-    else
-        y_voxel = 0.0;
-
-    if( volume->spatial_axes[2] >= 0 )
-        z_voxel = voxel[volume->spatial_axes[2]];
-    else
-        z_voxel = 0.0;
+    reorder_voxel_to_xyz( volume, voxel, xyz );
 
     /* apply linear transform */
 
     general_transform_point( &volume->voxel_to_world_transform,
-                             x_voxel, y_voxel, z_voxel,
+                             xyz[X], xyz[Y], xyz[Z],
                              x_world, y_world, z_world );
 }
 
@@ -1090,9 +1113,9 @@ public  void  convert_3D_voxel_to_world(
 
 /* ----------------------------- MNI Header -----------------------------------@NAME       : convert_voxel_normal_vector_to_world
 @INPUT      : volume
-              x_voxel
-              y_voxel
-              z_voxel
+              voxel_vector0
+              voxel_vector1
+              voxel_vector2
 @OUTPUT     : x_world
               y_world
               z_world
@@ -1105,14 +1128,21 @@ public  void  convert_3D_voxel_to_world(
 ---------------------------------------------------------------------------- */
 public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
-    Real            x_voxel,
-    Real            y_voxel,
-    Real            z_voxel,
+    Real            voxel_vector0,
+    Real            voxel_vector1,
+    Real            voxel_vector2,
     Real            *x_world,
     Real            *y_world,
     Real            *z_world )
 {
+    Real        voxel[N_DIMENSIONS], xyz[N_DIMENSIONS];
     Transform   *inverse;
+
+    voxel[0] = voxel_vector0;
+    voxel[1] = voxel_vector1;
+    voxel[2] = voxel_vector2;
+
+    reorder_voxel_to_xyz( volume, voxel, xyz );
 
     if( get_transform_type( &volume->voxel_to_world_transform ) != LINEAR )
         handle_internal_error( "Cannot get normal vector of nonlinear xforms.");
@@ -1122,15 +1152,15 @@ public  void  convert_voxel_normal_vector_to_world(
 
     /* transform vector by transpose of inverse transformation */
 
-    *x_world = Transform_elem(*inverse,0,0) * x_voxel +
-               Transform_elem(*inverse,1,0) * y_voxel +
-               Transform_elem(*inverse,2,0) * z_voxel;
-    *y_world = Transform_elem(*inverse,0,1) * x_voxel +
-               Transform_elem(*inverse,1,1) * y_voxel +
-               Transform_elem(*inverse,2,1) * z_voxel;
-    *z_world = Transform_elem(*inverse,0,2) * x_voxel +
-               Transform_elem(*inverse,1,2) * y_voxel +
-               Transform_elem(*inverse,2,2) * z_voxel;
+    *x_world = Transform_elem(*inverse,0,0) * xyz[X] +
+               Transform_elem(*inverse,1,0) * xyz[Y] +
+               Transform_elem(*inverse,2,0) * xyz[Z];
+    *y_world = Transform_elem(*inverse,0,1) * xyz[X] +
+               Transform_elem(*inverse,1,1) * xyz[Y] +
+               Transform_elem(*inverse,2,1) * xyz[Z];
+    *z_world = Transform_elem(*inverse,0,2) * xyz[X] +
+               Transform_elem(*inverse,1,2) * xyz[Y] +
+               Transform_elem(*inverse,2,2) * xyz[Z];
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1220,26 +1250,15 @@ public  void  convert_world_to_voxel(
     Real     z_world,
     Real     voxel[] )
 {
-    int    c;
-    Real   x_voxel, y_voxel, z_voxel;
+    Real   xyz[N_DIMENSIONS];
 
     /* apply linear transform */
 
     general_inverse_transform_point( &volume->voxel_to_world_transform,
-                     x_world, y_world, z_world,
-                     &x_voxel, &y_voxel, &z_voxel );
+                                     x_world, y_world, z_world,
+                                     &xyz[X], &xyz[Y], &xyz[Z] );
 
-    for_less( c, 0, get_volume_n_dimensions(volume) )
-        voxel[c] = 0.0;
-
-    if( volume->spatial_axes[0] >= 0 )
-        voxel[volume->spatial_axes[0]] = x_voxel;
-
-    if( volume->spatial_axes[1] >= 0 )
-        voxel[volume->spatial_axes[1]] = y_voxel;
-
-    if( volume->spatial_axes[2] >= 0 )
-        voxel[volume->spatial_axes[2]] = z_voxel;
+    reorder_xyz_to_voxel( volume, xyz, voxel );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
