@@ -1,3 +1,6 @@
+Tue Apr 24 14:18:07 EDT 2001
+   - Added minccalc from Andrew Janke to progs directory.
+
 Tue Apr 24 12:21:42 EDT 2001
    - Fixed bug in execute_decompress_command in libsrc/netcdf_convenience.c
      that caused multiple stdio buffer flushing when opening compressed files 
