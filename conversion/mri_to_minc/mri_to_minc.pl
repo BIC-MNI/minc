@@ -525,9 +525,16 @@ sub create_mincfile {
 
     # Run rawtominc with appropriate arguments
     $| = 1;
+    local(@typeinfo);
+    if ($mincinfo{'pixel_size'} == 1) {
+       @typeinfo = ("-byte", "-unsigned", "-range", "0", "255");
+    }
+    else {
+       @typeinfo = ("-short", "-signed",  "-range", "0", "4095");
+    }
     local(@minccommand) = 
         ("rawtominc", $mincfile, $nslices, $nrows, $ncols, "-noclobber",
-         "-scan_range", "-short", "-range", "0", "4095", $orientation,
+         "-scan_range", @typeinfo, $orientation,
          "-xstep", $xstep, "-ystep", $ystep, "-zstep", $zstep,
          "-xstart", $xstart, "-ystart", $ystart, "-zstart", $zstart,
          @dircos_options,

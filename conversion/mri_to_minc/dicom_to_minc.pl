@@ -310,11 +310,16 @@ sub dicom3_read_file_info {
     $file_info{'width'} = &acr_find_int(*header, &dc3_width);
     $file_info{'height'} = &acr_find_int(*header, &dc3_height);
     local($bits_alloc) = &acr_find_int(*header, &dc3_bits_alloc);
-    if ($bits_alloc != 16) {
+    if ($bits_alloc == 16) {
+       $file_info{'pixel_size'} = 2;
+    }
+    elsif ($bits_alloc == 8) {
+       $file_info{'pixel_size'} = 1;
+    }
+    else {
        warn "Wrong number of bits allocated per image ($bits_alloc)\n";
        return 1;
     }
-    $file_info{'pixel_size'} = 2;
     $file_info{'patient_name'} = &acr_find_string(*header, &dc3_patient_name);
 
     # Get slice position and orientation (row and column vectors)
@@ -419,6 +424,7 @@ sub dicom3_read_file_info {
     ($specific_file_info{'pixel_data_group'}, 
      $specific_file_info{'pixel_data_element'}) = &dc3_pixel_data;
     $specific_file_info{'file_offset'} = $header{'file_offset'};
+    $specific_file_info{'pixel_size'} = $file_info{'pixel_size'};
 
     return 0;
 }
@@ -436,7 +442,7 @@ sub dicom3_get_image_cmd {
         " | extract_acr_nema -i " . 
         $specific_file_info{'pixel_data_group'} . " " .
         $specific_file_info{'pixel_data_element'} . " ";
-    if (!$Image_is_big_endian) {
+    if (!$Image_is_big_endian && $specific_file_info{'pixel_size'} > 1) {
        $cmd .= " | byte_swap ";
     }
 
