@@ -61,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 1.1 1993-03-16 12:42:50 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 1.2 1993-03-19 10:36:34 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <ctype.h>
@@ -427,18 +427,21 @@ M4__FORTRAN_DEFINES
 %     int *rcode
 %     )
 % {
-   int ndims, i;
+   int ndims1, ndims2, i;
    long nincoords[MAX_VAR_DIMS];
 
    *rcode=0;
-   if (ncvarinq (*cdfid, *invar - 1, NULL, NULL, &ndims, NULL, NULL) == -1) {
+   if ((ncvarinq(*cdfid, *invar - 1, NULL, NULL, &ndims1, NULL, NULL)
+                                  == -1) ||
+       (ncvarinq(*cdfid, *outvar - 1, NULL, NULL, &ndims2, NULL, NULL)
+                                  == -1)) {
    	*rcode = ncerr;
 	   return;
    }
-   for (i = 0; i < ndims; i++) {
+   for (i = 0; i < ndims1; i++) {
 	   nincoords[i] = incoords[i];
    }
-   revlongs (nincoords, ndims);
+   revlongs (nincoords, ndims1);
 
    if (mitranslate_coords(*cdfid, *invar - 1, nincoords,
                           *outvar - 1, outcoords) == NULL) {
@@ -446,7 +449,7 @@ M4__FORTRAN_DEFINES
       return;
    }
 
-   revlongs (outcoords, ndims);
+   revlongs (outcoords, ndims2);
 
    return;
 }
@@ -475,7 +478,7 @@ M4__FORTRAN_DEFINES
 /*
  * Fortran version of micopy_var_def
  */
-% void
+% int
 % micvd (
 %     int *incdfid,
 %     int *invarid,
@@ -483,13 +486,15 @@ M4__FORTRAN_DEFINES
 %     int *rcode
 %     )
 % {
+   int outvarid;
+
    *rcode=0;
-   if (micopy_var_def(*incdfid, *invarid - 1, *outcdfid)
+   if ((outvarid=micopy_var_def(*incdfid, *invarid - 1, *outcdfid))
                            == MI_ERROR) {
       *rcode=ncerr;
-      return;
+      return MI_ERROR;
    }
-   return;
+   return (outvarid + 1);
 }
 
 /*
@@ -525,12 +530,19 @@ M4__FORTRAN_DEFINES
 %     int *rcode
 %     )
 % {
+   int i, *excl;
+
    *rcode=0;
-   if (micopy_all_var_defs(*incdfid, *outcdfid, *nexclude, excluded_vars)
+   excl=malloc((*nexclude) * sizeof(*excl));
+   for (i=0; i<(*nexclude); i++)
+      excl[i] = excluded_vars[i] - 1;
+   if (micopy_all_var_defs(*incdfid, *outcdfid, *nexclude, excl)
                            == MI_ERROR) {
+      free(excl);
       *rcode=ncerr;
       return;
    }
+   free(excl);
    return;
 }
 
@@ -546,12 +558,19 @@ M4__FORTRAN_DEFINES
 %     int *rcode
 %     )
 % {
+   int i, *excl;
+
    *rcode=0;
-   if (micopy_all_var_values(*incdfid, *outcdfid, *nexclude, excluded_vars)
+   excl=malloc((*nexclude) * sizeof(*excl));
+   for (i=0; i<(*nexclude); i++)
+      excl[i] = excluded_vars[i] - 1;
+   if (micopy_all_var_values(*incdfid, *outcdfid, *nexclude, excl)
                            == MI_ERROR) {
+      free(excl);
       *rcode=ncerr;
       return;
    }
+   free(excl);
    return;
 }
 
@@ -924,7 +943,7 @@ M4__FORTRAN_DEFINES
    *rcode = 0;
    if ((miicv_inqint(*icvid, MI_ICV_CDFID, &cdfid) == MI_ERROR) ||
        (miicv_inqint(*icvid, MI_ICV_VARID, &varid) == MI_ERROR) ||
-       (ncvarinq (cdfid, varid - 1, NULL, NULL, &ndims, NULL, NULL) 
+       (ncvarinq (cdfid, varid, NULL, NULL, &ndims, NULL, NULL) 
                            == MI_ERROR)) {
       *rcode = ncerr;
       return;
@@ -962,7 +981,7 @@ public int miicv_put(int icvid, long start[], long count[], void *values);
    *rcode = 0;
    if ((miicv_inqint(*icvid, MI_ICV_CDFID, &cdfid) == MI_ERROR) ||
        (miicv_inqint(*icvid, MI_ICV_VARID, &varid) == MI_ERROR) ||
-       (ncvarinq (cdfid, varid - 1, NULL, NULL, &ndims, NULL, NULL) 
+       (ncvarinq (cdfid, varid, NULL, NULL, &ndims, NULL, NULL) 
                            == MI_ERROR)) {
       *rcode = ncerr;
       return;

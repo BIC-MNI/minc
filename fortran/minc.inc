@@ -15,7 +15,7 @@ C                 MI study variable
 C                 MI acquisition variable
 C@CREATED    : March 15, 1993. (Peter Neelin, Montreal Neurological Institute)
 C@MODIFIED   : 
-C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.1 1993-03-16 12:43:19 neelin Exp $ MINC (MNI)
+C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.2 1993-03-19 10:35:18 neelin Exp $ MINC (MNI)
 C-----------------------------------------------------------------------------
 
 C     Some useful constants
@@ -330,6 +330,6 @@ C     Function and subroutine declarations
       EXTERNAL ICVNQI, ICVNQS, ICVNDA, ICVDET, ICVGET, ICVPUT
       EXTERNAL ICVATT
 
-      INTEGER MIAGTP, MISTDV, MIGRPV
+      INTEGER MIAGTP, MICVD, MISTDV, MIGRPV
       INTEGER ICVCRT
 
