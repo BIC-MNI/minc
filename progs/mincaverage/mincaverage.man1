@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 3.0 1995-05-15 19:32:44 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 3.1 1995-11-20 14:24:47 neelin Exp $
 .\"
 .TH MINCAVERAGE 1
 
@@ -131,6 +131,14 @@ Specify the range of values for binarization.
 Specify a single legal value (integer) for binarization. The range is
 set to be +/- 0.5 around this value to achieve an effective rounding
 of input values.
+.P
+.I -weights
+<w1,w2,...>:
+Specify a series of weights for averaging. The number of weighting
+values must match the number of input files and the values must be
+provided as a single argument with commas or spaces as
+separators. The sum of the weights must be non-zero and weights cannot
+be used with an averaging dimension.
 
 .SH Generic options for all commands:
 .P

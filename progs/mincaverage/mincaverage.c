@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-11-20 14:24:47  neelin
+@MODIFIED   : Added -weights option.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.6  1995/05/05  18:08:17  neelin
  * Removed debugging line for sd calculation.
  *
@@ -33,12 +36,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.0 1995-05-15 19:32:44 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.1 1995-11-20 14:24:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <float.h>
 #include <math.h>
 #include <minc.h>
@@ -60,12 +64,19 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverag
 
 #define THRESH_FRACTION (1/50.0)
 
-/* Structure for window information */
+/* Double_Array structure */
+typedef struct {
+   int numvalues;
+   double *values;
+} Double_Array;
+
+/* Structures for averaging and normalizing information */
 typedef struct {
    int binarize;
    int need_sd;
    double binrange[2];
    double *norm_factor;
+   double *weights;
 } Average_Data;
 
 typedef struct {
@@ -97,6 +108,7 @@ public void finish_average(void *caller_data, long num_voxels,
                           int output_num_buffers, int output_vector_length,
                           double *output_data[],
                           Loop_Info *loop_info);
+public int get_double_list(char *dst, char *key, char *nextarg);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -119,6 +131,7 @@ int max_buffer_size_in_kb = 4 * 1024;
 int binarize = FALSE;
 double binrange[2] = {DBL_MAX, -DBL_MAX};
 double binvalue = -DBL_MAX;
+Double_Array weights = {0, NULL};
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -177,6 +190,9 @@ ArgvInfo argTable[] = {
        "Specify a range for binarization."},
    {"-binvalue", ARGV_FLOAT, (char *) 1, (char *) &binvalue,
        "Specify a target value (+/- 0.5) for binarization."},
+   {"-weights", ARGV_FUNC, (char *) get_double_list, 
+       (char *) &weights,
+       "Specify weights for averaging (\"<w1>,<w2>,...\")."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -190,8 +206,9 @@ public int main(int argc, char *argv[])
    Norm_Data norm_data;
    Average_Data average_data;
    Loop_Options *loop_options;
-   double *vol_mean, vol_total, nvols, global_mean;
+   double *vol_mean, vol_total, nvols, global_mean, total_weight;
    int ifile;
+   int weights_specified;
 
    /* Save time stamp and args */
    arg_string = time_stamp(argc, argv);
@@ -210,6 +227,39 @@ public int main(int argc, char *argv[])
    outfiles[0] = argv[argc-1];
    outfiles[1] = sdfile;
    nout = ((sdfile == NULL) ? 1 : 2);
+
+   /* Check for weights */
+   weights_specified = weights.numvalues > 0;
+   if (weights_specified) {
+      if (averaging_dimension != NULL) {
+         (void) fprintf(stderr, 
+            "%s: Sorry, you cannot use weights to average over a dimension.\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+      if (weights.numvalues != nfiles) {
+         (void) fprintf(stderr, 
+            "%s: Number of weights does not match number of files.\n",
+                        argv[0]);
+         exit(EXIT_FAILURE);
+      }
+   }
+
+   /* Save weights */
+   average_data.weights = MALLOC(sizeof(*average_data.weights) * nfiles);
+   total_weight = 0.0;
+   for (ifile=0; ifile < nfiles; ifile++) {
+      average_data.weights[ifile] = 
+         (weights_specified ? weights.values[ifile] : 1.0);
+      total_weight += average_data.weights[ifile];
+   }
+   if (total_weight == 0.0) {
+      (void) fprintf(stderr, "%s: Weights sum to zero.\n", argv[0]);
+      exit(EXIT_FAILURE);
+   }
+   if (weights_specified) {
+      FREE(weights.values);
+   }
 
    /* Check for binarization */
    if (binarize) {
@@ -333,6 +383,7 @@ public int main(int argc, char *argv[])
    free_loop_options(loop_options);
 
    /* Free stuff */
+   FREE(average_data.weights);
    FREE(average_data.norm_factor);
 
    exit(EXIT_SUCCESS);
@@ -493,7 +544,7 @@ public void do_average(void *caller_data, long num_voxels,
    double value;
    int curfile;
    int num_out;
-   double norm_factor, binmin, binmax;
+   double norm_factor, binmin, binmax, weight;
    int binarize;
 
    /* Get pointer to window info */
@@ -510,6 +561,7 @@ public void do_average(void *caller_data, long num_voxels,
    /* Get the normalization factor and binarization range */
    curfile = get_info_current_file(loop_info);
    norm_factor = average_data->norm_factor[curfile];
+   weight = average_data->weights[curfile];
    binarize = average_data->binarize;
    binmin = average_data->binrange[0];
    binmax = average_data->binrange[1];
@@ -522,10 +574,10 @@ public void do_average(void *caller_data, long num_voxels,
       }
       if (value != -DBL_MAX) {
          value *= norm_factor;
-         output_data[0][ivox] += 1.0;
-         output_data[1][ivox] += value;
+         output_data[0][ivox] += weight;
+         output_data[1][ivox] += value * weight;
          if (average_data->need_sd)
-            output_data[2][ivox] += value * value;
+            output_data[2][ivox] += value * value * weight;
       }
    }
 
@@ -638,5 +690,95 @@ public void finish_average(void *caller_data, long num_voxels,
    }
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_double_list
+@INPUT      : dst - client data passed by ParseArgv
+              key - matching key in argv
+              nextarg - argument following key in argv
+@OUTPUT     : (none)
+@RETURNS    : TRUE since nextarg is used.
+@DESCRIPTION: Gets a list (array) of double values.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 8, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_double_list(char *dst, char *key, char *nextarg)
+{
+#define VECTOR_SEPARATOR ','
+
+   int num_elements;
+   int num_alloc;
+   double *double_list;
+   double dvalue;
+   char *cur, *end, *prev;
+   Double_Array *double_array;
+
+   /* Check for a following argument */
+   if (nextarg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get pointers to array variables */
+   double_array = (Double_Array *) dst;
+
+   /* Set up pointers to end of string and first non-space character */
+   end = nextarg + strlen(nextarg);
+   cur = nextarg;
+   while (isspace(*cur)) cur++;
+   num_elements = 0;
+   num_alloc = 0;
+   double_list = NULL;
+
+   /* Loop through string looking for doubles */
+   while (cur!=end) {
+
+      /* Get double */
+      prev = cur;
+      dvalue = strtod(prev, &cur);
+      if (cur == prev) {
+         (void) fprintf(stderr, 
+            "expected vector of doubles for \"%s\", but got \"%s\"\n", 
+                        key, nextarg);
+         exit(EXIT_FAILURE);
+      }
+
+      /* Add the value to the list */
+      num_elements++;
+      if (num_elements > num_alloc) {
+         num_alloc += 20;
+         if (double_list == NULL) {
+            double_list = 
+               MALLOC(num_alloc * sizeof(*double_list));
+         }
+         else {
+            double_list = 
+               REALLOC(double_list, num_alloc * sizeof(*double_list));
+         }
+      }
+      double_list[num_elements-1] = dvalue;
+
+      /* Skip any spaces */
+      while (isspace(*cur)) cur++;
+
+      /* Skip an optional comma */
+      if (*cur == VECTOR_SEPARATOR) cur++;
+
+   }
+
+   /* Update the global variables */
+   double_array->numvalues = num_elements;
+   if (double_array->values != NULL) {
+      FREE(double_array->values);
+   }
+   double_array->values = double_list;
+
+   return TRUE;
 }
 
