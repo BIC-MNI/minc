@@ -11,10 +11,20 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : December 2, 1992 (P.N.)
                  - changed to parse argv with ParseArgv
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.8 1993-07-13 16:40:04 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.9 1993-07-21 12:53:10 neelin Exp $";
 #endif
 
 #include <stdlib.h>
