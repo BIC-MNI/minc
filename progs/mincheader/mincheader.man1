@@ -1,0 +1,33 @@
+.\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 1.1 1993-10-19 12:13:24 neelin Exp $
+.\"
+.TH MINC 1 "MINC Image File Format" "Montreal Neurological Institute"
+
+.SH NAME
+mincheader - prints out header information for a minc file
+
+.SH SYNOPSIS
+.B mincheader
+<infile> <outfile>
+
+.SH DESCRIPTION
+.I Mincheader
+prints out the header information for a minc file in cdl format (the
+netCDF text format). Mincheader simply calls ncdump, writing out all
+information except the image data.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+\fB\(co\fR\s12 Copyright 1993 by Peter Neelin
