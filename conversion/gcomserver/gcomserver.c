@@ -4,10 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.8  1993-12-14 16:35:57  neelin
-@MODIFIED   : Set Keep_files and input tracing according to macros so that 
-@MODIFIED   : gcomserver-debug can turn them on.
+@MODIFIED   : Revision 1.9  1994-01-14 10:45:04  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.8  93/12/14  16:35:57  neelin
+ * Set Keep_files and input tracing according to macros so that 
+ * gcomserver-debug can turn them on.
+ * 
  * Revision 1.7  93/12/10  15:31:25  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -95,7 +99,7 @@ int main(int argc, char *argv[])
 
    /* Print message at start */
    pname = argv[0];
-      if (Do_logging >= LOW_LOGGING) {
+   if (Do_logging >= LOW_LOGGING) {
       (void) fprintf(stderr, "%s: Started gyrocom server.\n", pname);
    }
 
@@ -164,6 +168,9 @@ int main(int argc, char *argv[])
             file_info_list = MALLOC(num_files * sizeof(*file_info_list));
             cur_file = -1;
             state = WAITING_FOR_OBJECT;
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "\nCopying a group of files:\n");
+            }
             break;
 
             /* Ready */
@@ -202,6 +209,10 @@ int main(int argc, char *argv[])
                state = DISCONNECTING;
                break;
             }
+            /* Print message */
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "\nFinished group copy.\n");
+            }
             /* Do something with the files */
             use_the_files(num_files, file_list, file_info_list);
             /* Remove the temporary files */
@@ -210,6 +221,9 @@ int main(int argc, char *argv[])
             /* Create the output message */
             output_message = gcend_reply(input_message);
             state = WAITING_FOR_GROUP;
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "\nFinished group copy.\n");
+            }
             break;
 
             /* Unknown command */
@@ -264,6 +278,9 @@ int main(int argc, char *argv[])
          save_transferred_object(group_list, 
                                  file_prefix, &file_list[cur_file],
                                  &file_info_list[cur_file]);
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "   Copied %s\n", file_list[cur_file]);
+         }
          acr_delete_group_list(group_list);
       }
 
