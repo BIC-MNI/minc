@@ -60,6 +60,7 @@ public  Minc_file  initialize_minc_input(
     Real                world_space[N_DIMENSIONS];
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
+    double              tmp_cosines[MI_NUM_SPACE_DIMS];
     BOOLEAN             spatial_dim_flags[MAX_VAR_DIMS];
     Vector              offset;
     Point               origin;
@@ -218,11 +219,19 @@ public  Minc_file  initialize_minc_input(
 
             if( spatial_dim_flags[d] )
             {
-                 (void) miattget1( file->cdfid, dimvar, MIstart, NC_DOUBLE,
-                                   (void *) (&start_position[d]) );
-                 (void) miattget( file->cdfid, dimvar, MIdirection_cosines,
-                                  NC_DOUBLE, MI_NUM_SPACE_DIMS,
-                                  (void *) (dir_cosines[d]), (int *) NULL );
+                if( miattget1( file->cdfid, dimvar, MIstart, NC_DOUBLE,
+                               (void *) (&start_position[d]) ) == MI_ERROR )
+                    start_position[d] = 0.0;
+
+                if( miattget( file->cdfid, dimvar, MIdirection_cosines,
+                                 NC_DOUBLE, MI_NUM_SPACE_DIMS,
+                                 (void *) tmp_cosines, (int *) NULL )
+                     != MI_ERROR )
+                {
+                    dir_cosines[d][0] = tmp_cosines[0];
+                    dir_cosines[d][1] = tmp_cosines[1];
+                    dir_cosines[d][2] = tmp_cosines[2];
+                }
             }
         }
 
