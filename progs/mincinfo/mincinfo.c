@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.1 1993-05-19 15:17:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.2 1993-05-28 15:24:01 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,8 @@ double default_max[][2] = {
 
 /* Types */
 typedef enum  {
-   ENDLIST, IMAGE_INFO, DIMLENGTH, VARTYPE, VARDIMS, VARATTS, 
+   ENDLIST, IMAGE_INFO, DIMNAMES, VARNAMES,
+   DIMLENGTH, VARTYPE, VARDIMS, VARATTS, VARVALUES,
    ATTTYPE, ATTVALUE
 } Option_code;
 typedef struct {
@@ -82,6 +83,10 @@ int length_option_list = 0;
 ArgvInfo argTable[] = {
    {"-image_info", ARGV_FUNC, (char *) get_option, (char *) IMAGE_INFO,
        "Print out the default information about the images."},
+   {"-dimnames", ARGV_FUNC, (char *) get_option, (char *) DIMNAMES,
+       "Print the names of the dimensions in the file."},
+   {"-varnames", ARGV_FUNC, (char *) get_option, (char *) VARNAMES,
+       "Print the names of the variables in the file."},
    {"-dimlength", ARGV_FUNC, (char *) get_option, (char *) DIMLENGTH,
        "Print the length of the specified dimension."},
    {"-vartype", ARGV_FUNC, (char *) get_option, (char *) VARTYPE,
@@ -90,6 +95,8 @@ ArgvInfo argTable[] = {
        "Print the dimension names for the specified variable."},
    {"-varatts", ARGV_FUNC, (char *) get_option, (char *) VARATTS,
        "Print the attribute names for the specified variable."},
+   {"-varvalues", ARGV_FUNC, (char *) get_option, (char *) VARVALUES,
+       "Print the values for the specified variable."},
    {"-atttype", ARGV_FUNC, (char *) get_option, (char *) ATTTYPE,
        "Print the type of the specified attribute (variable:attribute)."},
    {"-attvalue", ARGV_FUNC, (char *) get_option, (char *) ATTVALUE,
@@ -107,9 +114,11 @@ public int main(int argc, char *argv[])
    int mincid, varid, dimid;
    int ndims, dims[MAX_VAR_DIMS];
    nc_type datatype;
-   long length;
+   long length, var_length, row_length;
+   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
    int att_length;
    int idim, iatt, natts, option;
+   int nvars, ivar, ival;
    char *string;
    char name[MAX_NC_NAME];
    char *cdata;
@@ -148,6 +157,22 @@ public int main(int argc, char *argv[])
       case IMAGE_INFO:
          print_image_info(filename, mincid);
          break;
+      case DIMNAMES:
+         CHK_ERR(ncinquire(mincid, &ndims, NULL, NULL, NULL));
+         for (idim=0; idim<ndims; idim++) {
+            CHK_ERR(ncdiminq(mincid, idim, name, NULL));
+            (void) printf("%s ", name);
+         }
+         (void) printf("\n");
+         break;
+      case VARNAMES:
+         CHK_ERR(ncinquire(mincid, NULL, &nvars, NULL, NULL));
+         for (ivar=0; ivar<nvars; ivar++) {
+            CHK_ERR(ncvarinq(mincid, ivar, name, NULL, NULL, NULL, NULL));
+            (void) printf("%s ", name);
+         }
+         (void) printf("\n");
+         break;
       case DIMLENGTH:
          CHK_ERR(dimid = ncdimid(mincid, string));
          CHK_ERR(ncdiminq(mincid, dimid, NULL, &length));
@@ -168,13 +193,51 @@ public int main(int argc, char *argv[])
          (void) printf("\n");
          break;
       case VARATTS:
-         CHK_ERR(varid = ncvarid(mincid, string));
-         CHK_ERR(ncvarinq(mincid, varid, NULL, NULL, NULL, NULL, &natts));
+         if (*string=='\0') {
+            varid = NC_GLOBAL;
+            CHK_ERR(ncinquire(mincid, NULL, NULL, &natts, NULL));
+         }
+         else {
+            CHK_ERR(varid = ncvarid(mincid, string));
+            CHK_ERR(ncvarinq(mincid, varid, NULL, NULL, NULL, NULL, &natts));
+         }
          for (iatt=0; iatt<natts; iatt++) {
             CHK_ERR(ncattname(mincid, varid, iatt, name));
             (void) printf("%s ", name);
          }
          (void) printf("\n");
+         break;
+      case VARVALUES:
+         CHK_ERR(varid = ncvarid(mincid, string));
+         CHK_ERR(ncvarinq(mincid, varid, NULL, &datatype, &ndims, dims, NULL));
+         var_length = 1;
+         for (idim=0; idim<ndims; idim++) {
+            CHK_ERR(ncdiminq(mincid, dims[idim], NULL, &length));
+            start[idim] = 0;
+            count[idim] = length;
+            var_length *= length;
+            if (idim==ndims-1)
+               row_length = length;
+         }
+         if (datatype==NC_CHAR) {
+            cdata = malloc(var_length*sizeof(char));
+            CHK_ERR(ncvarget(mincid, varid, start, count, cdata));
+            for (ival=0; ival<var_length; ival++) {
+               (void) putchar((int) cdata[ival]);
+               if (((ival+1) % row_length) == 0)
+                  (void) putchar((int)'\n');
+            }
+            free(cdata);
+         }
+         else {
+            ddata = malloc(var_length*sizeof(double));
+            CHK_ERR(mivarget(mincid, varid, start, count, 
+                             NC_DOUBLE, NULL, ddata));
+            for (ival=0; ival<var_length; ival++) {
+               (void) printf("%.10g\n", ddata[ival]);
+            }
+            free(ddata);
+         }
          break;
       case ATTTYPE:
          get_attname(mincid, string, &varid, name);
@@ -195,7 +258,7 @@ public int main(int argc, char *argv[])
             CHK_ERR(miattget(mincid, varid, name, NC_DOUBLE, att_length,
                              ddata, NULL));
             for (iatt=0; iatt<att_length; iatt++) {
-               (void) printf("%g ", ddata[iatt]);
+               (void) printf("%.10g ", ddata[iatt]);
             }
             (void) printf("\n");
          }
@@ -241,7 +304,9 @@ public int get_option(char *dst, char *key, char *nextarg)
    /* Save option */
    code  = (Option_code) dst;
    option_list[length_option_list].code = code;
-   if (code == IMAGE_INFO) {
+   if ((code == IMAGE_INFO) |
+       (code == DIMNAMES) ||
+       (code == VARNAMES)){
       option_list[length_option_list].value = NULL;
       return_value = FALSE;
    }
@@ -311,8 +376,13 @@ public void get_attname(int mincid, char *string, int *varid, char *name)
    cptr++;
 
    /* Get varid and name */
-   CHK_ERR(*varid=ncvarid(mincid, string));
-   (void) strncpy(name, cptr, MAX_NC_NAME);
+   if (*string == '\0') {
+      *varid = NC_GLOBAL;
+   }
+   else {
+      CHK_ERR(*varid=ncvarid(mincid, string));
+   }
+   (void) strncpy(name, cptr, MAX_NC_NAME-1);
 
    return;
 
@@ -377,7 +447,8 @@ public void print_image_info(char *filename, int mincid)
 
    /* Write out image info line */
    (void) printf("file: %s\n", filename);
-   (void) printf("image: %s %s %g to %g\n", sign_type, type_names[datatype],
+   (void) printf("image: %s %s %.10g to %.10g\n", 
+                 sign_type, type_names[datatype],
                  valid_range[0], valid_range[1]);
 
    /* Write out dimension names */
