@@ -19,7 +19,7 @@ clean mostlyclean :
 
 subdirs : 
 	@for dir in $(SUBDIRS); \
-	   do if [ -d $$dir -a $$dir != RCS ]; \
+	   do if [ -d $$dir -a $$dir != RCS -a $$dir != CVS ]; \
 	   then \
 	      cd $$dir; \
 	      echo Making $(TARGET) in $$dir; \
