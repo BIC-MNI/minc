@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.6  2005-03-14 23:29:35  bert
+   * Revision 1.7  2005-03-29 20:21:44  bert
+   * Fix use of slice spacing; fully check for position information if possible, otherwise create a reasonable position from the slice index
+   *
+   * Revision 1.6  2005/03/14 23:29:35  bert
    * Support basic dynamic PET fields.  Also allocate indices and coordinates arrays for all dimensions, even those we won't use.
    *
    * Revision 1.5  2005/03/13 19:37:42  bert
@@ -486,7 +489,7 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
             fi_ptr->valid = FALSE;
             return;
         }
-     
+
         /* Look to see if indices have changed */
         for (imri = 0; imri < MRI_NDIMS; imri++) {
        
@@ -994,14 +997,8 @@ get_coordinate_info(Acr_Group group_list,
         if (G.Debug && !NEARLY_EQUAL(dbl_tmp1, dbl_tmp2)) {
             printf("WARNING: slice thickness conflict: ");
             printf("old = %.10f, new = %.10f\n", dbl_tmp1, dbl_tmp2);
-
-            /* Choose the maximum for now - seems reasonable, maybe??
-             */
-            steps[VSLICE] = (dbl_tmp1 > dbl_tmp2) ? dbl_tmp1 : dbl_tmp2;
         }
-        else {
-            steps[VSLICE] = dbl_tmp1;
-        }
+        steps[VSLICE] = dbl_tmp2;
     }
 
     /* Make sure that direction cosines point the right way (dot
@@ -1032,29 +1029,43 @@ get_coordinate_info(Acr_Group group_list,
     for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
         coordinate[iworld] = 0.0;
     }
-    element = acr_find_group_element(group_list, ACR_Image_position_patient);
-    if (element == NULL) {
-        element = acr_find_group_element(group_list, ACR_Image_position_patient_old);
-    }
-    if (element == NULL) {
-        printf("WARNING: failed to find patient position\n");
-    }
-    else if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
-                                           coordinate) != WORLD_NDIMS) {
-        printf("WARNING: failed to read patient position\n");
+
+    if (G.opts & OPTS_NO_LOCATION) {
+        /* If the coordinates are untrustworthy, just generate something
+         * reasonable for the slice coordinate.  Ignore the rest.
+         */
+        coordinate[volume_to_world[VSLICE]] = 
+            (steps[VSLICE] * fi_ptr->index[SLICE]);
+        found_coordinate = TRUE;
     }
     else {
-        found_coordinate = TRUE;
-    }
-    /* Last gasp - try to interpret the slice location as our slice
-     * position.  It might work.
-     */
-    if (!found_coordinate) {
-        coordinate[volume_to_world[VSLICE]] = acr_find_double(group_list,
-                                                              ACR_Slice_location,
-                                                              1.0);
-
-        found_coordinate = TRUE;
+        element = acr_find_group_element(group_list, 
+                                         ACR_Image_position_patient);
+        if (element == NULL) {
+            element = acr_find_group_element(group_list, 
+                                             ACR_Image_position_patient_old);
+        }
+        if (element == NULL) {
+            printf("WARNING: failed to find patient position\n");
+        }
+        else if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
+                                               coordinate) != WORLD_NDIMS) {
+            printf("WARNING: failed to read patient position\n");
+        }
+        else {
+            found_coordinate = TRUE;
+        }
+        if (!found_coordinate) {
+            /* Last gasp - try to interpret the slice location as our slice
+             * position.  It might work.
+             */
+            if (!found_coordinate) {
+                coordinate[volume_to_world[VSLICE]] = 
+                    acr_find_double(group_list, ACR_Slice_location, 1.0);
+            }
+        
+            found_coordinate = TRUE;
+        }
     }
 
     convert_dicom_coordinate(coordinate);
@@ -1550,6 +1561,7 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
     unsigned short freq_cols;
     unsigned short phase_rows;
     unsigned short phase_cols;
+    double slice_coord[WORLD_NDIMS];
 
     /* Get info to construct unique identifiers for study, series/acq
      * for file processing
@@ -1609,10 +1621,22 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
     di_ptr->slice_number = acr_find_int(group_list,
                                         SPI_Current_slice_number,
                                         IDEFAULT);
-    if (di_ptr->slice_number == IDEFAULT) {
-        di_ptr->slice_number = rint(acr_find_double(group_list,
-                                                    ACR_Slice_location,
-                                                    0.0) * 100.0);
+
+    di_ptr->slice_location = acr_find_double(group_list,
+                                             ACR_Slice_location,
+                                             0.0);
+
+    di_ptr->coord_found = 0;
+    element = acr_find_group_element(group_list, ACR_Image_position_patient);
+    if (element == NULL) {
+        element = acr_find_group_element(group_list,
+                                         ACR_Image_position_patient_old);
+    }
+    if (element != NULL) {
+        if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
+                                          slice_coord) == WORLD_NDIMS) {
+            di_ptr->coord_found = 1;
+        }
     }
 
     /* identification info needed to generate unique session id
