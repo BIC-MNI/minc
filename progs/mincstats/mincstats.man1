@@ -1,0 +1,305 @@
+.\" Copyright 2001 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincstats/mincstats.man1,v 1.1 2001-12-11 14:36:27 neelin Exp $
+.\"
+.TH MINCSTATS 1
+
+.SH NAME
+mincstats - calculate simple statistics across voxels of a minc file
+
+.SH SYNOPSIS
+.B mincstats
+[<options>] <in1>.mnc
+
+.SH DESCRIPTION
+.I Mincstats
+will calculate simple statistical measures across all voxels of a minc
+file. Note that these are global statistical measures and not
+voxel-by-voxel measures (see mincaverage for that). By default all
+statistics are calculated. If any statistics are requested via a
+command-line option, then only the requested statistics are printed.
+
+A very useful feature of this program is the ability to restrict the
+set of voxels included in the statistic calculation, either by restricting
+the range of included values, or by using a mask file with a restricted
+range. Multiple ranges for the input file or mask file can be
+specified. For each range of included volume values, and for each range of
+mask values, the relevant statistics are printed out (n*m values,
+where n is the number of volume ranges and m the number of mask
+ranges). These calculations are done in a single pass through the
+data, so specifying multiple ranges is much faster than running the
+program repeatedly. This is quite helpful when calculating many
+regional averages with a VOI mask volume.
+
+Special mention should be given to histograms and related statistical
+measures. The default range of the histogram is from the smallest
+value in the file to the largest. In the not uncommon, but special,
+case when the number of histogram bins exactly matches the number of
+possible values in the file (e.g. 256 bins for full-range byte data),
+the histogram can end up with some odd features when using the default
+histogram range. This arises from the discretization of the data that
+are then rebinned into a slightly mismatched histgram. For the example
+of byte data, the values that should be used are 256 bins and a
+histogram range that extends half a bin below the smallest value and
+half a bin above the largest. Use option -discrete_histogram to work
+this out automatically, or use -integer_histogram to have bins of unit
+width if the input data are inherently integer (e.g. label data). In
+general, one should be careful about the rebinning of discretized data
+to a histogram with a bin size that is close to the level of
+discretization.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -verbose:
+Print out extra information (more than the default).
+.P
+.I -quiet:
+Print out only the requested numbers
+.P
+.I -max_buffer_size_in_kb
+<size>:
+Specify the maximum size of the internal buffers (in kbytes). Default
+is 4 MB.
+
+.SH Invalid value options
+.P
+.I -ignore_nan:
+Exclude invalid values (outside valid range) from statistic
+calculations. This is the default.
+.P
+.I -include_nan:
+Treat invalid values as zeros and include them in statistic calculations.
+.P
+.I -replace_nan
+<value>:
+Replace invalid values with the specified value and include the new
+value in statistic calculations.
+
+.SH Volume range options
+.P
+.I -floor
+<min1>,<min2>,...:
+Comma-separated list of lower bounds for ranges of data to include in
+statistic calculation.
+.P
+.I -ceil
+<max1>,<max2>,...:
+Comma-separated list of upper bounds for ranges of data to include in
+statistic calculation.
+.P
+.I -range
+<min1>,<max1>,<min2>,<max2>,...:
+Comma-separated list of lower and upper bounds for ranges of data to
+include in statistic calculation.
+.P
+.I -binvalue
+<val1>,<val2>,...:
+Comma-separated list of integer values to include in statistic
+calculation. A range of +/- 0.5 is defined around each specified value.
+.P
+.I -mask
+<mask_file>.mnc:
+Name of file to be used for masking data included in statistic
+calculation. For this to have any effect, you must specify a mask
+range with one of the following options.
+.P
+.I -mask_floor
+<min1>,<min2>,...:
+Like -floor, but applied to the mask file.
+.P
+.I -mask_ceil
+<max1>,<max2>,...:
+Like -ceil, but applied to the mask file.
+.P
+.I -mask_range
+<min1>,<max1>,<min2>,<max2>,...:
+Like -range, but applied to the mask file.
+.P
+.I -mask_binvalue
+<val1>,<val2>,...:
+Like -binvalue, but applied to the mask file.
+
+.SH Histogram options
+.P
+.I -histogram
+<file>:
+Specify the name of a file into which the histogram is written. If
+multiple ranges or mask ranges are specified, then all histograms are
+written in this file, separated by blank lines. Information
+describing each histogram is written before it in lines starting with
+'#'.
+.P
+.I -hist_bins
+<number of bins>:
+Specify number of bins in histogram.
+.P
+.I -bins
+<number of bins>:
+Synonym for -hist_bins.
+.P
+.I -hist_floor
+<min>:
+Specify lower bound for histogram.
+.P
+.I -hist_ceil
+<max>:
+Specify upper bound for histogram.
+.P
+.I -hist_range
+<min> <max>:
+Specify a range for the histogram
+.P
+.I -integer_histogram:
+Create bins of unit width, centred around integer values. This is
+useful for integer data such as labels. The histogram range is rounded
+to the nearest integer, then the min is lowered and the max is raised
+by 0.5. The number of bins is taken as the difference of these two
+values.  Note that 0.01 is added to the minimum and subtracted from the
+maximum prior to the rounding in order to ensure that a correctly
+specified range (e.g. [0.5,255.5]) is preserved. If you want to have
+integer bins that are wider than one, you will have to work out the
+histogram range and number of bins yourself and not use this option.
+.P
+.I -discrete_histogram:
+Attempt to match the histogram to the discretization of the input
+data. This is appropriate for continuous data that is stored in an
+integer representation and a bin width close to the discretization is
+desired. This is similar to -integer_histogram, except that the the
+histogram range is first converted to voxel values which are rounded
+and extended by half a bin on either side. This new voxel range is
+then converted back to real values. The number of bins is taken as the
+difference in the voxel value range. Note that this does not account
+for variations in slice-to-slice scaling, so odd histogram effects may
+still occur. This option is intended to give behaviour similar to that of
+volume_stats.
+.P
+.I -max_bins
+<number of bins>:
+Specify the largest histogram that can be automatically sized with the
+above options. The limit prevents accidental creation of huge
+histograms.
+
+.SH Basic statistics
+.P
+.I -all:
+Compute all statistical measures. This is the default.
+.P
+.I -none:
+Synonym for -count (for similarity to volume_stats). Note that
+although this was necessary for volume_stats, it is not needed here,
+since specifying any of these options automatically turns off -all.
+.P
+.I -count:
+Count the number of voxels that are within the range and mask.
+.P
+.I -percent:
+Print the percentage of voxels within the range and mask
+.P
+.I -volume:
+Print the volume of the voxels within the range and mask (in mm-cubed).
+.P
+.I -min:
+Print the minimum value.
+.P
+.I -max:
+Print the maximum value.
+.P
+.I -sum:
+Print the sum of all values.
+.P
+.I -sum2:
+Print the sum of the squares of all values.
+.P
+.I -mean:
+Print the mean.
+.P
+.I -variance:
+Print the variance.
+.P
+.I -stddev:
+Print the standard deviation.
+.P
+.I -CoM:
+Print the centre of mass. Both the voxel coordinate and the world
+coordinates are printed. The voxel coordinates are printed in file
+order, whilst the world coordinates are printed in x,y,z order.
+.P
+.I -com:
+Synonym for -CoM.
+.P
+.I -world_only:
+Print the centre of mass in world coordinates only.
+
+.SH Histogram statistics
+.P
+Note that histogram statistics are derived solely from the histogram
+counts and bin centres, so results such as the median will not be
+exactly the same as the true value for all included voxels. For
+example, the error on the median can be as large as a half bin
+width. Furthermore, if the histogram range is less than that of
+included voxels, then the result applies only to voxels included in
+the histogram.
+.P
+.I -hist_count:
+Print number of voxels in histogram. This may be different from the
+number of included and masked voxels if the histogram range is less
+than the range of the included data.
+.P
+.I -hist_percent:
+Print percentage of voxels included in histogram.
+.P
+.I -median:
+Print the histogram median.
+.P
+.I -majority:
+Print the bin centre (intensity value) for the bin with the most counts.
+.P
+.I -biModalT:
+Print the bi-modal threshold calculated using the method described in
+Otsu N, "A Threshold Selection Method from Grey-level Histograms",
+IEEE Trans on Systems, Man and Cybernetics. 1979, 9:1; 62-66.
+.P
+.I -pctT:
+Print the threshold needed for a particular critical percentage of the
+histogram.
+.P
+.I -entropy:
+Print the Shannon entropy.
+
+     H(x) = - Sum(P(i) * log2(P(i))
+
+where P(i) is the bin probability
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH AUTHOR
+Andrew Janke
+
+.SH COPYRIGHTS
+.ps 18
+.P
+Program: Copyright 2000 by Andrew Janke
+.P
+Man page: Copyright 2001 by Peter Neelin
+
