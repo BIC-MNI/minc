@@ -6,9 +6,14 @@
 #    NETCDF_LIB_DIR = directory in which netcdf library is found
 #    NETCDF_INCLUDE_DIR = directory in which netcdf include file is found
 #    NETCDF_FORTRAN_DIR = directory (or link) in which netcdf fortran jackets
-#        are located
+#        are located (only used if FORTRAN_SUBDIR is set)
 #    FORTRAN_SUBDIR = "fortran" to get compilation of fortran jackets, or
 #        nothing to leave out fortran jackets
+#    INSTALL_BINDIR = directory into which binaries are to be copied - they
+#        are not truly installed, just copied
+#    INSTALL_LIBDIR = directory into which libraries should be copied
+#    INSTALL_INCDIR = directory into which include files should be copied
+#    INSTALL_MANDIR = directory into which man files should be copied
 #
 NETCDF_LIB_DIR = /usr/local/lib
 NETCDF_INCLUDE_DIR = /usr/local/include
@@ -18,6 +23,7 @@ FORTRAN_SUBDIR =
 INSTALL_BINDIR = $(ROOT)/bin
 INSTALL_LIBDIR = $(ROOT)/lib
 INSTALL_INCDIR = $(ROOT)/include
+INSTALL_MANDIR = $(ROOT)/man
 
 # ------------------------------------------------------------
 # You probably shouldn't modify things beyond here
