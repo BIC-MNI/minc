@@ -15,7 +15,7 @@ YFLAGS= -d -t
 
 # Executable names
 PROGS    = minccalc
-EXTRA_OBJS = vector.o eval.o ident.o sym.o node.o gram.o lex.o optim.o 
+EXTRA_OBJS = vector.o scalar.o eval.o ident.o sym.o node.o gram.o lex.o optim.o 
 HEADERS  = node.h errx.h
 CDEFINES = -DDEBUG                 # cpp defines
 LDOPT    = $(PROG_LDOPT)

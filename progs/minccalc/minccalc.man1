@@ -125,6 +125,10 @@ zero), value zero is stored in the output file.
 <value>:
 When an illegal operation is attempted at a voxel (such as divide by
 zero), the specified value is stored in the output file.
+.P
+.I -eval-width
+<value>:
+Specify the number of voxels to process in parallel. Default is 200.
 
 .SH EXPRESSIONS
 .P
@@ -252,6 +256,19 @@ expression by a semicolon.
 The symbol table is global.
 
 Boolean operators && and || always evaluate both operands.
+
+A note on parallelism: For efficiency reasons, evaluations are done on many 
+voxels at once (the number of voxels is referred to as the width of the 
+evaluation and is changed with the -eval_width option). An odd consequence 
+of this is that both sides of an if-else statement are always evaluated 
+(unless all voxels give the same test result), but statements within
+each consequent are only evaluated on the appropriate voxels. In particular, 
+entries in the symbol table are only modified according to a voxel mask. 
+A side-effect of this is that any vector symbol set in an if-else consequent
+must not change the length of the symbol (although it can create it) and 
+both sides of the consequent must agree on the length of any vector 
+symbols that they both modify. If this is not clear, just try it - the 
+program will complain if it is not happy.
 
 .SH AUTHOR
 Andrew Janke - rotor@cmr.uq.edu.au

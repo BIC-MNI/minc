@@ -19,7 +19,16 @@ Thu Oct  5 17:09:12 EST 2000 - First alpha version
 Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 
  * $Log: minccalc.c,v $
- * Revision 1.4  2001-04-30 19:16:43  neelin
+ * Revision 1.5  2001-05-02 01:38:15  neelin
+ * Major changes to allow parallel evaluations. Created scalar_t type
+ * along the lines of vector_t (reference counting, etc.). Compiles
+ * and runs on basic standard deviation calculation (with test for invalid
+ * data). Gives over 3 times speedup compared to old version (on linux box).
+ * SD calculation is slightly under half the speed of mincaverage.
+ * Changes are significant enough and testing is little enough that there
+ * are probably lots of bugs left.
+ *
+ * Revision 1.4  2001/04/30 19:16:43  neelin
  * Added assignment operator, made symbol table global, added expression lists,
  * for loops, if operators and changed range operator to colon.
  *
@@ -34,7 +43,7 @@ Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.4 2001-04-30 19:16:43 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.5 2001-05-02 01:38:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -103,6 +112,7 @@ nc_type  datatype =                    MI_ORIGINAL_TYPE;
 char     *filelist =                   NULL;
 char     *expr_file =                  NULL;
 char     *expression =                 NULL;
+int      eval_width =                  200;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -171,7 +181,9 @@ ArgvInfo argTable[] = {
    {"-expression",  ARGV_STRING,  (char*)1,    (char*) &expression,
           "Expression to use in calculations."},  
    {"-expfile",  ARGV_STRING,  (char*)1,    (char*) &expr_file,
-          "Name of file containing expression."},  
+          "Name of file containing expression."}, 
+   {"-eval_width",  ARGV_INT,  (char*)1,    (char*) &eval_width,
+          "Number of voxels to evaluate simultaneously."}, 
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -189,6 +201,7 @@ public int main(int argc, char *argv[]){
    char *pname;
    int i;
    ident_t ident;
+   scalar_t scalar;
       
 
    /* Save time stamp and args */
@@ -288,13 +301,15 @@ public int main(int argc, char *argv[]){
    A = new_vector();
    for (i=0; i<nfiles; i++) {
       if (debug) fprintf(stderr,"Getting file[%d] %s\n", i, argv[i+1]);
-      vector_append(A, 0);
-      }
+      scalar = new_scalar(eval_width);
+      vector_append(A, scalar);
+      scalar_free(scalar);
+   }
       
    /* Construct initial symbol table from the A vector */
    rootsym = sym_enter_scope(NULL);
    ident = new_ident("A");
-   sym_set_vector(A, ident, rootsym);
+   sym_set_vector(eval_width, NULL, A, ident, rootsym);
    
    /* Set default copy_all_header according to number of input files */
    if (copy_all_header == DEFAULT_BOOL)
@@ -343,7 +358,8 @@ public void do_math(void *caller_data, long num_voxels,
                     int output_num_buffers, int output_vector_length,
                     double *output_data[],
                     Loop_Info *loop_info){
-   long ivox, i;
+   long ivox, ibuff, ivalue, nvox;
+   scalar_t scalar;
 
    /* Check arguments */
    if ((output_num_buffers != 1) || 
@@ -353,17 +369,28 @@ public void do_math(void *caller_data, long num_voxels,
    }
    
    /* Loop through the voxels */
-   for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
-      
-      for (i=0; i < input_num_buffers; i++){
-         A->el[i] = input_data[i][ivox];
+   for (ivox=0; ivox < num_voxels*input_vector_length; ivox+=eval_width) {
+
+      nvox = eval_width;
+      if (ivox + nvox > num_voxels) nvox = num_voxels - ivox;
+
+      for (ivalue=0; ivalue < nvox; ivalue++) {
+         for (ibuff=0; ibuff < input_num_buffers; ibuff++){
+            A->el[ibuff]->vals[ivalue] = input_data[ibuff][ivox+ivalue];
+         }
       }
 
       if (debug) {
          (void) fprintf(stderr, "\n===New voxel===\n");
       }
       
-      output_data[0][ivox] = eval_scalar(root, rootsym);
+      scalar = eval_scalar((int) nvox, NULL, root, rootsym);
+
+      for (ivalue=0; ivalue < nvox; ivalue++) {
+         output_data[0][ivox+ivalue] = scalar->vals[ivalue];
+      }
+
+      scalar_free(scalar);
 
       if (debug) {
          (void) printf("Voxel result = %g\n", output_data[0][ivox]);

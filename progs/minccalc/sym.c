@@ -74,39 +74,65 @@ static sym_t sym_lookup(ident_t id, sym_t sym){
    return sym;
 }
 
-void sym_set_scalar(scalar_t sc, ident_t id, sym_t sym){
+void sym_set_scalar(int width, int *eval_flags, 
+                    scalar_t sc, ident_t id, sym_t sym){
+   int ivalue;
    sym_t newsym = sym_lookup(id, sym);
    if (newsym == NULL) {
       newsym = new_sym(id, sym);
-      newsym->type = SYM_SCALAR;
    }
-   if (newsym->type == SYM_UNKNOWN) newsym->type = SYM_SCALAR;
-   if (newsym->type != SYM_SCALAR) {
+   if (newsym->type == SYM_VECTOR) {
       /* errx(1, "%s is not a scalar", ident_str(id)); */
       fprintf(stderr, "%s is not a scalar(lowercase)\n", ident_str(id));
       exit(1);
    }
-   newsym->scalar = sc;
+   if (newsym->type == SYM_UNKNOWN || eval_flags == NULL) {
+      if (newsym->type == SYM_SCALAR) scalar_free(newsym->scalar);
+      newsym->type = SYM_SCALAR;
+      newsym->scalar = sc;
+      scalar_incr_ref(sc);
+   }
+   else {
+      for (ivalue=0; ivalue < width; ivalue++) {
+         if (!eval_flags[ivalue]) continue;
+         newsym->scalar->vals[ivalue] = sc->vals[ivalue];
+      }
+   }
    return;
 }
 
-void sym_set_vector(vector_t v, ident_t id, sym_t sym){
+void sym_set_vector(int width, int *eval_flags, 
+                    vector_t v, ident_t id, sym_t sym){
+   int ivalue, iel;
    sym_t newsym = sym_lookup(id, sym);
    if (newsym == NULL) {
       newsym = new_sym(id, sym);
-      newsym->type = SYM_VECTOR;
    }
-   else if (newsym->type == SYM_VECTOR) {
-      vector_free(newsym->vector);
-   }
-   if (newsym->type == SYM_UNKNOWN) newsym->type = SYM_VECTOR;
-   if (newsym->type != SYM_VECTOR) {
+   if (newsym->type == SYM_SCALAR) {
       /* errx(1, "%s is not a vector", ident_str(id)); */
       fprintf(stderr, "%s is not a vector\n", ident_str(id));
       exit(1);
    }
-   newsym->vector = v;
-   v->refcnt++;
+   if (newsym->type == SYM_UNKNOWN || eval_flags == NULL) {
+      if (newsym->type == SYM_VECTOR) vector_free(newsym->vector);
+      newsym->type = SYM_VECTOR;
+      newsym->vector = v;
+      vector_incr_ref(v);
+   }
+   else if (newsym->vector->len != v->len) {
+      /* errx(1, "assigned vector must match length of %s in if", ident_str(id)); */
+      fprintf(stderr, "assigned vector must match length of %s in if", 
+              ident_str(id));
+      exit(1);
+   }
+   else {
+      for (ivalue=0; ivalue < width; ivalue++) {
+         if (!eval_flags[ivalue]) continue;
+         for (iel=0; iel < v->len; iel++) {
+            newsym->vector->el[iel]->vals[ivalue] = v->el[iel]->vals[ivalue];
+         }
+      }
+   }
    return;
 }
 

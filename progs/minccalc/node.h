@@ -1,16 +1,23 @@
 #include "errx.h"
 
 struct node;
+struct scalar;
 struct vector;
 struct sym;
 
-typedef double   scalar_t;
 typedef int      ident_t;
 typedef struct node    *node_t;
+typedef struct scalar  *scalar_t;
 typedef struct vector  *vector_t;
 typedef struct sym     *sym_t;
 
 #define SCALAR_ROUND(s)   (floorf(s + 0.5))
+
+struct scalar {
+   int      width;
+   double   *vals;
+   int      refcnt;
+};
 
 struct vector {
    int      len;
@@ -92,19 +99,24 @@ node_t      optimize(node_t);
 vector_t    new_vector(void);
 void        vector_append(vector_t, scalar_t);
 void        vector_free(vector_t);
+void        vector_incr_ref(vector_t);
+
+scalar_t    new_scalar(int);
+void        scalar_free(scalar_t);
+void        scalar_incr_ref(scalar_t);
 
 sym_t sym_enter_scope(sym_t sym);
 void sym_leave_scope(sym_t sym);
 void sym_declare_ident(ident_t id, sym_t sym);
-void sym_set_scalar(scalar_t sc, ident_t id, sym_t sym);
-void sym_set_vector(vector_t v, ident_t id, sym_t sym);
+void sym_set_scalar(int, int *, scalar_t, ident_t, sym_t);
+void sym_set_vector(int, int *, vector_t, ident_t, sym_t);
 scalar_t sym_lookup_scalar(ident_t id, sym_t sym);
 vector_t sym_lookup_vector(ident_t id, sym_t sym);
 
 void       lex_init(const char *);
 void       lex_finalize(void);
 
-scalar_t   eval_scalar(node_t, sym_t);
+scalar_t   eval_scalar(int, int *, node_t, sym_t);
 void       show_error(int, const char *);
 
 int      yyparse(void);
