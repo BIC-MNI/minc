@@ -12,6 +12,7 @@ set VIEWER_OPTIONS = "-geometry 512x512 -fixed -cmap -raw $xv_visual"
 set PGM_CODE = "P5"
 set PPM_CODE = "P6"
 set usage = "Usage: $0 <filename.mnc> [<slice number>]"
+set exit_status = 0
 
 # Check arguments
 if (($#argv < 1) || ($#argv > 2) || ("$1" == "-help") || ("$1" == "-h")) then
@@ -72,7 +73,8 @@ if ($ndims > 3) then
       "`awk 'BEGIN{for (i=0;i<$nprefix;i++) print "'"'"1,"'"'"}' < /dev/null`"
 else if ($ndims < 2) then
    echo "No image found in file $filename"
-   exit -1
+   set exit_status = -1
+   goto cleanup
 else
    set start_prefix = ""
    set count_prefix = ""
@@ -91,7 +93,8 @@ set imgsize = `mincinfo $filename -dimlength $dims[$ind2] -dimlength $dims[$ind3
 if ($slice_specified) then
    if (($slice >= $nslices) || ($slice < 0)) then
       echo "Slice number out of range"
-      exit -1
+      set exit_status = -1
+      goto cleanup
    endif
    @ nslices = $slice + 1
 endif
@@ -132,3 +135,4 @@ $VIEWER $VIEWER_OPTIONS $childdir/{?,??,???,????}
 cleanup:
    cd /
    rm -rf $workingparent
+   exit $exit_status
