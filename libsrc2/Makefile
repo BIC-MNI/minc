@@ -9,7 +9,7 @@ all: dimension-test grpattr-test datatype-test label-test volprops-test \
      hyper-test slice-test valid-test convert-test
 
 # convert.c
-convert-test-objs = convert-test.o m2util.o volume.o free.o
+convert-test-objs = convert-test.o m2util.o volume.o hyper.o free.o valid.o slice.o
 
 convert-test: $(convert-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o convert-test $(convert-test-objs) $(LIBS)
