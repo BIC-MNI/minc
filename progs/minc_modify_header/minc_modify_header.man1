@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.1 2000-09-13 14:12:36 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.2 2001-02-13 13:25:27 neelin Exp $
 .\"
 .TH MINC_MODIFY_HEADER 1
 
@@ -50,10 +50,11 @@ exist or the new string is longer than the existing one, then all data
 in the file will be copied.
 .P
 .I -dinsert
-<var>:<attr>=<value> :
+<var>:<attr>=<value>(,...) :
 Insert a double precision attribute into the header. If the attribute
 does not exist or the new attribute is longer than the existing one,
-then all data in the file will be copied.
+then all data in the file will be copied. A comma-separated array of
+values can be specified.
 .P
 .I -delete
 <var>:<attr> :
