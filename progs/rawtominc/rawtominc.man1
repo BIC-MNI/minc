@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.3 2003-10-22 15:34:24 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.4 2003-10-29 17:50:18 bert Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -124,6 +124,11 @@ Dimension order     : [[time] z] x y
 .P
 .I -zyx:
 Dimension order     : [[time] z] y x
+.P
+.I -dimorder
+<dim1>,<dim2>[,<dim3>[,<dim4>]]
+Specify an arbitrary dimension order, given by an comma-separated list
+of between 2 and 4 dimension names.
 .P
 .I -vector:
 Gives the size of a vector dimension (always the fastest varying

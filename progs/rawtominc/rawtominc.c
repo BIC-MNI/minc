@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.9  2003-10-21 22:22:09  bert
+ * Revision 6.10  2003-10-29 17:50:18  bert
+ * Added -dimorder option
+ *
+ * Revision 6.9  2003/10/21 22:22:09  bert
  * Added -swap_bytes option for int or short input, per A. Janke.
  *
  * Revision 6.8  2002/08/05 00:53:50  neelin
@@ -128,7 +131,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.9 2003-10-21 22:22:09 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.10 2003-10-29 17:50:18 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -150,16 +153,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define ERROR_STATUS 1
 #define MIN_DIMS 2
 #define MAX_DIMS 4
-#define TRANSVERSE 0
-#define SAGITTAL 1
-#define CORONAL 2
-#define TIME_FAST 3
-#define XYZ_ORIENTATION 4
-#define XZY_ORIENTATION 5
-#define YXZ_ORIENTATION 6
-#define YZX_ORIENTATION 7
-#define ZXY_ORIENTATION 8
-#define ZYX_ORIENTATION 9
 #define DEF_TYPE 0
 #define BYTE_TYPE 1
 #define SHORT_TYPE 2
@@ -180,6 +173,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define DEF_RANGE DBL_MAX
 #define DEF_DIRCOS DBL_MAX
 #define DEF_ORIGIN DBL_MAX
+#define ARG_SEPARATOR ','
 
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
@@ -189,20 +183,7 @@ void parse_args(int argc, char *argv[]);
 void usage_error(char *pname);
 int get_attribute(char *dst, char *key, char *nextarg);
 int get_times(char *dst, char *key, char *nextarg);
-
-/* Structure containing information about orientation */
-char *orientation_names[][MAX_DIMS] = {
-   {MItime, MIzspace, MIyspace, MIxspace},
-   {MItime, MIxspace, MIzspace, MIyspace},
-   {MItime, MIyspace, MIzspace, MIxspace},
-   {MIzspace, MItime, MIyspace, MIxspace},
-   {MItime, MIxspace, MIyspace, MIzspace},
-   {MItime, MIxspace, MIzspace, MIyspace},
-   {MItime, MIyspace, MIxspace, MIzspace},
-   {MItime, MIyspace, MIzspace, MIxspace},
-   {MItime, MIzspace, MIxspace, MIyspace},
-   {MItime, MIzspace, MIyspace, MIxspace},
-};
+int get_axis_order(char *dst, char *key, char *nextArg);
 
 /* Array containing information about signs. It is subscripted by
    [signtype][type]. Note that the first row should never be used, since
@@ -231,7 +212,6 @@ int clobber=FALSE;
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
-int orientation = TRANSVERSE;
 int type = BYTE_TYPE;
 int signtype = DEF_SIGN;
 nc_type datatype;
@@ -271,6 +251,7 @@ int do_minmax = FALSE;
 double real_range[2] = {DEF_RANGE, DEF_RANGE};
 long skip_length;
 int swap_bytes = FALSE;
+char *axis_order[MAX_DIMS+1];
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -278,26 +259,28 @@ ArgvInfo argTable[] = {
        "Options to specify input dimension order (from slowest to fastest)."},
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "   Default = -transverse."},
-   {"-transverse", ARGV_CONSTANT, (char *) TRANSVERSE, (char *) &orientation,
+   {"-transverse", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Transverse images   : [[time] z] y x"},
-   {"-sagittal", ARGV_CONSTANT, (char *) SAGITTAL, (char *) &orientation,
+   {"-sagittal", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Sagittal images     : [[time] x] z y"},
-   {"-coronal", ARGV_CONSTANT, (char *) CORONAL, (char *) &orientation,
+   {"-coronal", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Coronal images      : [[time] y] z x"},
-   {"-time", ARGV_CONSTANT, (char *) TIME_FAST, (char *) &orientation,
+   {"-time", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Time ordered images : [[z] time] y x"},
-   {"-xyz", ARGV_CONSTANT, (char *) XYZ_ORIENTATION, (char *) &orientation,
+   {"-xyz", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] x] y z"},
-   {"-xzy", ARGV_CONSTANT, (char *) XZY_ORIENTATION, (char *) &orientation,
+   {"-xzy", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] x] z y"},
-   {"-yxz", ARGV_CONSTANT, (char *) YXZ_ORIENTATION, (char *) &orientation,
+   {"-yxz", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] y] x z"},
-   {"-yzx", ARGV_CONSTANT, (char *) YZX_ORIENTATION, (char *) &orientation,
+   {"-yzx", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] y] z x"},
-   {"-zxy", ARGV_CONSTANT, (char *) ZXY_ORIENTATION, (char *) &orientation,
+   {"-zxy", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] z] x y"},
-   {"-zyx", ARGV_CONSTANT, (char *) ZYX_ORIENTATION, (char *) &orientation,
+   {"-zyx", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
        "Dimension order     : [[time] z] y x"},
+   {"-dimorder", ARGV_FUNC, (char *) get_axis_order, (char *) axis_order,
+       "Arbitrary dimensions: <dim1>,<dim2>[,<dim3>[,<dim4]]"},
    {"-vector", ARGV_INT, (char *) 1, (char *) &vector_dimsize,
        "Specifies the size of a vector dimension"},
    {NULL, ARGV_HELP, NULL, NULL,
@@ -910,7 +893,6 @@ main(int argc, char *argv[])
               dimname      - names of dimensions
               dimlength    - lengths of dimensions
               ndims        - number of dimensions
-              orientation  - orientation of dimensions
               type         - type of input data
               signtype     - sign of input data
               datatype     - NetCDF type of input data
@@ -963,7 +945,7 @@ void parse_args(int argc, char *argv[])
          }
          usage_error(pname);
       }
-      dimname[i]=orientation_names[orientation][i+MAX_DIMS-ndims];
+      dimname[i]=axis_order[i+MAX_DIMS-ndims];
    }
 
    /* Set types and signs */
@@ -1246,4 +1228,151 @@ int get_times(char *dst, char *key, char *nextarg)
    
 
    return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_axis_order
+@INPUT      : dst - Pointer to client data from argument table
+              key - argument key
+              nextArg - argument following key
+@OUTPUT     : (nothing) 
+@RETURNS    : TRUE or FALSE (so that ParseArgv will discard nextArg only
+              when needed)
+@DESCRIPTION: Routine called by ParseArgv to set the axis order
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 16, 1994 (Peter Neelin)
+@MODIFIED   : Copied from mincreshape.c by bert, 29 Oct 2003
+---------------------------------------------------------------------------- */
+/* "Standard" orientations - index the orientation_names table defined
+ * below.
+ */
+#define TRANSVERSE_ORIENTATION 0
+#define SAGITTAL_ORIENTATION 1
+#define CORONAL_ORIENTATION 2
+#define TIME_FAST_ORIENTATION 3
+#define XYZ_ORIENTATION 4
+#define YXZ_ORIENTATION 5
+#define ZXY_ORIENTATION 6
+#define STD_ORIENTATION_COUNT 7
+public int get_axis_order(char *dst, char *key, char *nextArg)
+{
+    char **dim_name_array;
+    char *argp;
+    int i, j;
+    int orientation;
+
+    /* Structure containing information about orientation */
+    static char *orientation_names[STD_ORIENTATION_COUNT][MAX_DIMS] = {
+        {MItime, MIzspace, MIyspace, MIxspace}, /* TRANSVERSE_ORIENTATIN */
+        {MItime, MIxspace, MIzspace, MIyspace}, /* SAGITTAL_ORIENTATION */
+        {MItime, MIyspace, MIzspace, MIxspace}, /* CORONAL_ORIENTATION */
+        {MIzspace, MItime, MIyspace, MIxspace}, /* TIME_FAST_ORIENTATION */
+        {MItime, MIxspace, MIyspace, MIzspace}, /* XYZ_ORIENTATION */
+        {MItime, MIyspace, MIxspace, MIzspace}, /* YXZ_ORIENTATION */
+        {MItime, MIzspace, MIxspace, MIyspace}, /* ZXY_ORIENTATION */
+    };
+
+    /* Get pointer to client data */
+    dim_name_array = (char **) dst;
+
+    if (!strcmp(key, "-dimorder")) {
+        /* Check for next argument */
+        if (nextArg == NULL) {
+            (void) fprintf(stderr, 
+                           "\"%s\" option requires an additional argument\n",
+                           key);
+            exit(EXIT_FAILURE);
+        }
+
+        /* Set up pointers to end of string and first non-space character 
+         */
+        argp = nextArg;
+        while (isspace(*argp)) 
+            argp++;
+
+        /* Loop through string looking for space or comma-separated names 
+         */
+        for (i = 0; i < MAX_DIMS && *argp != '\0'; i++) {
+            dim_name_array[i] = argp; /* Get string */
+
+            /* Search for end of dimension name 
+             */
+            while (!isspace(*argp) && *argp != ARG_SEPARATOR && *argp != '\0')
+                argp++;
+
+            if (*argp != '\0') {
+                *argp = '\0';
+                argp++;
+            }
+
+            /* Skip any spaces */
+            while (isspace(*argp)) 
+                argp++;
+        }
+        /* BEGIN WEIRDNESS */
+        /* parse_args() assumes that the axis_order[] array contains
+         * MAX_DIMS (4) entries, with optional values at the
+         * _beginning_ of the array.  To make the array we just
+         * constructed compatible with that assumption, I need to copy
+         * all of the just-specified dimensions to the end of this
+         * array, and fill the earlier entries up with some sort of
+         * dummy value.
+         */
+        if (i < MAX_DIMS) {
+            int deficit = MAX_DIMS - i; /* How many we're missing */
+            for (j = i; j >= 0; j--) {
+                dim_name_array[j + deficit] = dim_name_array[j];
+            }
+            for (j = 0; j < deficit; j++) {
+                dim_name_array[j] = "unknown"; /* Just a dummy value. */
+            }
+        }
+        /* END WEIRDNESS */
+
+        /* Return TRUE to let the argv processor know that we used an
+         * extra argument.
+         */
+        return (TRUE);
+    }
+    else if (!strcmp(key, "-transverse") || !strcmp(key, "-zyx")) {
+        orientation = TRANSVERSE_ORIENTATION;
+    }
+    else if (!strcmp(key, "-sagittal") || !strcmp(key, "-xzy")) {
+        orientation = SAGITTAL_ORIENTATION;
+    }
+    else if (!strcmp(key, "-coronal") || !strcmp(key, "-yzx")) {
+        orientation = CORONAL_ORIENTATION;
+    }
+    else if (!strcmp(key, "-time")) {
+        orientation = TIME_FAST_ORIENTATION;
+    }
+    else if (!strcmp(key, "-xyz")) {
+        orientation = XYZ_ORIENTATION;
+    }
+    else if (!strcmp(key, "-yxz")) {
+        orientation = YXZ_ORIENTATION;
+    }
+    else if (!strcmp(key, "-zxy")) {
+        orientation = ZXY_ORIENTATION;
+    }
+    else {
+        (void) fprintf(stderr, 
+                       "Unrecognized option \"%s\": internal program error.\n",
+                       key);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Copy from the appropriate row of the static array into the 
+     * dimension name array.
+     */
+    for (i = 0; i < MAX_DIMS; i++) {
+        dim_name_array[i] = orientation_names[orientation][i];
+    }
+
+    /* Return FALSE to let the argv processor know we didn't use anything
+     * extra from the argument list.
+     */
+    return (FALSE);
 }
