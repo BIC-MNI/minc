@@ -24,8 +24,8 @@
 This document describes a library of routines available at the
 McConnell Brain Imaging Centre at the Montreal Neurological Institute.
 It was developed as part of a medical imaging software testbed by
-David MacDonald, with considerable input from Peter Neelin, Louis
-Collins, and others at the Centre.
+David MacDonald, with source code and considerable input from Peter
+Neelin, Louis Collins, and others at the Centre.
 The library comprises a set of functions for reading and writing
 volumes of medical imaging data, as well as some general support
 routines useful to many programming tasks.  All images at the Brain
@@ -85,6 +85,87 @@ math library, which is sometimes called by the Volume IO library.  The
 The \name{-lmalloc} library provides faster and more robust memory
 allocation than the default.
 
+\chapter{Style}
+
+In order to use this library, one must become accustomed to certain
+subtleties of style, some of which are peculiar to the author of this
+software and some of which have evolved in ways dependent on history
+of the software.  Therefore, it is important to note the following
+style-related issues.
+
+\subsection{Global Variables}
+
+The philosophy that global variables are generally a bad idea has been
+adopted.  In general, global variables hide the behaviour of a
+function, and it is preferable to specify all relevent information to
+a function in the argument list, rather than relying on any global
+variables.  Secondly, modification of a global variable by a given function
+precludes the use of this function in a multi-threaded environment
+(two processes may attempt to modify the global variable at the same
+time).  As a result of adopting the anti-global variable philosophy, the
+user of the Volume IO library often must specify
+many arguments to a function.  This seems a small price to pay, in
+return for the ability to see all factors controlling
+the behaviour of each function in the argument list.
+
+\subsection{Identifier Names}
+
+The implementer of this library has an affinity to typing large
+amounts of texts, and generally dislikes abbreviations.  As a result,
+the function and variable names occurring in the Volume IO library may
+be quite verbose.  In general, one will never see functions with names
+such as \name{rem\_garb()}.  Instead, functions are more likely to have
+names such as \name{remove\_garbage()}, and, in many cases, even
+\name{take\_garbage\_to\_curb()}.  As a result, the user of the Volume IO
+library will have to type longer than usual function and variable
+names, but hopefully will have a clearer insight into the associated
+functionality.
+
+\subsection{Structure Arguments}
+
+There are many objects defined throughout the library as structures of
+varying and possibly large sizes.  Due to the inefficiency of passing
+structures by value (copying the whole structure to a function),
+structures are generally passed to functions by reference.  Because of
+this, there is always a potential to pass an invalid pointer to a
+function expecting a pointer to a structure.  The following examples
+illustrate the right and wrong ways to use such a function.  Given a
+structure and a library function which initializes it,
+\begin{verbatim}
+typedef  struct
+{
+    int   a, b, c, d;
+} big_struct;
+
+void    initialize( struct  big_struct   *s )
+{
+    s->a = 1;
+    s->b = 2;
+    s->c = 3;
+    s->d = 4;
+}
+\end{verbatim}
+the incorrect method of using this function is:
+\begin{verbatim}
+int  main()
+{
+    big_struct   *s;
+
+    initialize( s );
+}
+\end{verbatim}
+because the variable \name{s} is an uninitialized pointer.  The
+correct method is to define a structure variable, not a pointer to a
+structure, and pass a pointer to the structure:
+\begin{verbatim}
+int  main()
+{
+    big_struct   s;
+
+    initialize( &s );
+}
+\end{verbatim}
+
 \chapter{Types and Macros}
 
 There are several types and macros defined for used with the Volume IO
@@ -125,6 +206,18 @@ Other useful types defined include:
 \end{tabular}\end{flushleft}}
 
 Some macros useful for general programming include:
+
+\definemacro{N\_DIMENSIONS}{A constant equal to 3, the number of
+dimensions in the real world.}
+
+\definemacro{X}{A constant equal to 0, used as an index into
+various XYZ structures.}
+
+\definemacro{Y}{A constant equal to 1, used as an index into
+various XYZ structures.}
+
+\definemacro{Z}{A constant equal to 2, used as an index into
+various XYZ structures.}
 
 \definemacro{SIZEOF\_STATIC\_ARRAY( array )}
 {returns the number of elements in a statically allocated array, for example,}
@@ -471,9 +564,9 @@ public  BOOLEAN  filename_extension_matches(
 
 \desc{Returns \name{TRUE} if the file ends in the given extension, preceded
 by a period. e.g.,
-\name{filename\_extension\_matches("volume.mnc","mnc")} returns \name{TRUE}.
+\name{filename\_extension\_matches( "volume.mnc" , "mnc" )} returns \name{TRUE}.
 Correctly handles compressed files, e.g.,
-\name{filename\_extension\_matches("volume.mnc.Z","mnc")} returns \name{TRUE}.}
+\name{filename\_extension\_matches( "volume.mnc.Z" , "mnc" )} returns \name{TRUE}.}
 
 {\bf\begin{verbatim}
 public  void  remove_directories_from_filename(
@@ -924,7 +1017,8 @@ START_GLOBALS
     DEF_GLOBAL(        Mine_2, int,      3 )
     DEF_GLOBAL(        Mine_3, Real,     2.5 )
     DEF_GLOBAL(        Mine_4, Colour,   RED )
-    DEF_GLOBAL5(       Mine_5, Surfprop, 0.3, 0.6, 0.6, 40.0, 1.0 )
+    DEF_GLOBAL5(       Mine_5, Surfprop,
+                       0.3, 0.6, 0.6, 40.0, 1.0 )
     DEF_GLOBAL3(       Mine_6, Vector,   1.0, 0.0, 0.0 )
     DEF_GLOBAL3(       Mine_7, Point,    2.0, 2.0, 2.0 )
     DEF_GLOBAL_STRING( Mine_8, "Initial value" )
@@ -2298,14 +2392,370 @@ int  main(
 
 \chapter{Transforms}
 
-\chapter{Source Code Examples}
+In dealing with such tasks as inter- and intra-subject registration
+both within and across imaging modalities, the concept of
+transformations between different coordinate systems arises.  A module
+is provided to handle both linear (affine) and non-linear
+transformations, and to provide input and output in a standardized
+Brain Imaging Centre format, usually to filenames with the extension
+\name{.xfm}.
 
-\section{Reading and Writing MINC Volumes}
+To support these functions, two structure types are provided.  The
+first (\name{Transform}) is a four by four linear (affine) transform,
+which facilitates rigid transformations, consisting of scaling, rotation,
+translation, and shearing.  The second is a higher level transform
+(\name{General\_transform}), which represents either a linear
+transform, a non-linear transform (thin-plate spline), a user
+definable transform, or a concatenation of two or more of these.
 
-\section{Creating Tag Point Files}
+\section{Linear Transforms}
 
-\section{Creating Transformation Files}
+The linear transform functions all deal with objects whose type is
+\name{Transform}.
 
-\section{Volumes, Tag Points, and Transformations}
+{\bf\begin{verbatim}
+public  void  make_identity_transform(
+    Transform   *transform )
+\end{verbatim}}
+
+\desc{Creates a four by four identity transform.}
+
+{\bf\begin{verbatim}
+public  void  make_scale_transform(
+    Real        sx,
+    Real        sy,
+    Real        sz,
+    Transform   *transform )
+\end{verbatim}}
+
+\desc{Creates a scaling transform with separate scaling in each
+dimension.  Transforming the point ( 1.0, 1.0, 1.0 ) by the resulting
+transform will result in the point (\name{sx}, \name{sy}, \name{sz}).}
+
+{\bf\begin{verbatim}
+public  void  make_translation_transform(
+    Real        x_trans,
+    Real        y_trans,
+    Real        z_trans,
+    Transform   *transform )
+\end{verbatim}}
+
+\desc{Creates a translation transform with separate translation in each
+dimension.  Transforming the point ( 0.0, 0.0, 0.0 ) by the resulting
+transform will result in the point (\name{x\_trans}, \name{y\_trans},
+\name{z\_trans}).}
+
+{\bf\begin{verbatim}
+public  void  make_rotation_transform(
+    Real       radians,
+    int        axis,
+    Transform  *transform )
+\end{verbatim}}
+
+\desc{Creates a transform which achieves a rotation about one of the
+three axes, (\name{X}, \name{Y}, or \name{Z}).}
+
+{\bf\begin{verbatim}
+public  void  transform_point(
+    Transform  *transform,
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
+\end{verbatim}}
+
+\desc{Transforms a three dimensional point by the given transform,
+passing back the three transformed coordinates.}
+
+{\bf\begin{verbatim}
+public  void  transform_vector(
+    Transform  *transform,
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
+\end{verbatim}}
+
+\desc{Transforms a three dimensional vector by the given transform,
+passing back the three transformed coordinates.  The only difference
+between transforming a point and a vector is that transforming a
+vector does not include the translational component of the transform.}
+
+{\bf\begin{verbatim}
+public  void  inverse_transform_point(
+    Transform  *transform,
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
+\end{verbatim}}
+
+\desc{Assuming the transform is an orthogonal transform (no shear
+components), the point is transformed by the inverse of the
+transform.}
+
+{\bf\begin{verbatim}
+public  void  inverse_transform_vector(
+    Transform  *transform,
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
+\end{verbatim}}
+
+\desc{Assuming the transform is an orthogonal transform (no shear
+components), the vector is transformed by the inverse of the
+transform.}
+
+{\bf\begin{verbatim}
+public  void   concat_transforms(
+    Transform   *result,
+    Transform   *t1,
+    Transform   *t2 )
+\end{verbatim}}
+
+\desc{Multiplies the two matrices \name{t1} and \name{t2}, storing the
+product in \name{result}.  Transforming a point by \name{result} is
+equivalent to transforming the point by \name{t1}, then transforming
+the result by \name{t2}.}
+
+{\bf\begin{verbatim}
+public  void   compute_inverse_of_orthogonal_transform(
+    Transform  *transform,
+    Transform  *inverse )
+\end{verbatim}}
+
+\desc{Given a transform that has no shear component (consists of
+scales, rotations, and translations), the inverse is computed.}
+
+\section{General Transforms}
+
+General transforms can represent linear transforms, non-linear
+(thin-plate splines) transforms, user defined transforms, and
+concatenations of these.  All functions dealing with general
+transforms involve objects of type \name{General\_transform}.
+
+{\bf\begin{verbatim}
+public  void  create_linear_transform(
+    General_transform   *transform,
+    Transform           *linear_transform )
+\end{verbatim}}
+
+\desc{Creates a general transform consisting of a single linear
+transform, specified by \name{linear\_transform}.}
+
+{\bf\begin{verbatim}
+public  void  create_thin_plate_transform(
+    General_transform    *transform,
+    int                  n_dimensions,
+    int                  n_points,
+    float                **points,
+    float                **displacements )
+\end{verbatim}}
+
+\desc{Creates a general transform consisting of a thin plate spline,
+which provides a smooth non-linear mapping of a multidimensional
+space.  The \name{points} argument is an array of size
+\name{n\_points} by \name{n\_dimensions}, representing a set of points.
+The \name{displacements} is a (\name{n\_points} + \name{n\_dimensions}
++ 1) by \name{n\_dimensions}, which is created by the following
+function:}
+
+{\bf\begin{verbatim}
+public void  get_nonlinear_warp(
+    float **transformed_points,
+    float **original_points,
+    float **displacements,
+    int   n_points,
+    int   n_dimensions )
+\end{verbatim}}
+
+\desc{Fills in the \name{displacements} array with the appropriate
+values to achieve a thin-plate spline transformation.  The mapping
+will provide a smooth transformation of space such that each point in
+the \name{original\_points} array maps exactly to the corresponding point in
+the \name{transformed\_points} array.  These displacements are then
+fed into the function \name{create\_thin\_plane\_transform} to create
+the general transform.}
+
+{\bf\begin{verbatim}
+public  Transform_types  get_transform_type(
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{Returns the general transform type, one of \name{LINEAR},
+\name{THIN\_PLATE\_SPLINE}, \name{USER\_TRANSFORM}, or
+\name{CONCATENATED\_TRANSFORM}.}
+
+{\bf\begin{verbatim}
+public  Transform  *get_linear_transform_ptr(
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{If the general transform is of type \name{LINEAR}, then returns
+a pointer to the linear transform (of type \name{Transform}), for use
+with the routines specific to linear transforms, described earlier.
+Otherwise prints an error message.}
+
+\section{Reading and Writing General Transforms}
+
+General transforms are stored in files in an ascii format devised at
+the McConnell Brain Imaging Centre, and usually have a filename
+extension of \name{.xfm}.  The input and output functions are:
+
+{\bf\begin{verbatim}
+public  Status  output_transform(
+    FILE                *file,
+    char                comments[],
+    General_transform   *transform )
+public  Status  output_transform_file(
+    char                filename[],
+    char                comments[],
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{These two functions output the general transform to a file, in the
+appropriate format.  The comments line is an arbitrary string which is
+stored in the file for documentation purposes.  The first form of the
+function assumes
+the file is already open
+and will later be closed.  The second form opens the file, with a
+default extension of \name{.xfm}, outputs the transform, then closes
+the file.  Both functions return \name{ERROR} or \name{OK}.}
+
+{\bf\begin{verbatim}
+public  Status  input_transform(
+    FILE                *file,
+    General_transform   *transform )
+public  Status  input_transform_file(
+    char                filename[],
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{Inputs a general transform from a file.  The first form assumes
+the file has already been opened for input, and will later be closed.
+The second form opens the file for input, with a default extension of
+\name{.xfm}, reads the transform, then closes the file.  Both functions
+return \name{ERROR} or \name{OK}.}
+
+\chapter{Final Source Code Example}
+
+This is an example which attempts to illustrate a typical processing
+task incorporating use of volumes, tag points, and transformations.
+This is a full program which, when linked to the Volume IO library,
+reads two volumes in MINC format, a set of tag points from file, and a
+transformation from file.  The tag points are assumed to be in the
+world space of the first volume, and the transformation is assumed to
+transform points in the world space of the first volume to the world
+space of the second volume.  The program transforms each tag point by
+the transformation input (presumably transforming from the world space
+of the first volume to that of the second volume), then transforms the
+result to the voxel space of the second volume.  If the corresponding
+voxel coordinate is within the second volume, then the value at the
+corresponding voxel is printed.
+
+{\small
+\begin{verbatim}
+#include  <volume_io.h>
+
+int  main(
+    int   argc,
+    char  *argv[] )
+{
+    int                 v1, v2, v3, sizes[MAX_DIMENSIONS];
+    Real                x_world2, y_world2, z_world2;
+    Real                voxel2[MAX_DIMENSIONS];
+    Real                voxel_value;
+    Volume              volume1, volume2;
+    int                 i, n_volumes, n_tag_points;
+    int                 *structure_ids, *patient_ids;
+    Real                **tags1, **tags2, *weights;
+    char                **labels;
+    General_transform   transform;
+
+    /*--- input the two volumes */
+
+    if( input_volume( "volume1.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+            0.0, 0.0, TRUE, &volume1,
+            (minc_input_options *) NULL ) != OK )
+        return( 1 );
+
+    if( input_volume( "volume2.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+            0.0, 0.0, TRUE, &volume2,
+            (minc_input_options *) NULL ) != OK )
+        return( 1 );
+
+    /*--- input the tag points */
+
+    if( input_tag_file( "tags_volume1.tag", &n_volumes, &n_tag_points,
+                        &tags1, &tags2, &weights, &structure_ids,
+                        &patient_ids, &labels ) != OK )
+        return( 1 );
+
+    /*--- input the general transform */
+
+    if( input_transform_file( "vol1_to_vol2.xfm", &transform ) != OK )
+        return( 1 );
+
+    /*--- convert each tag point */
+
+    get_volume_sizes( volume2, sizes );
+
+    for_less( i, 0, n_tag_points )
+    {
+        /*--- transform the tag points from volume 1 to volume 2
+              world space */
+
+        general_transform_point( &transform,
+                                 tags1[i][X], tags1[i][Y], tags1[i][Z],
+                                 &x_world2, &y_world2, &z_world2 );
+
+        /*--- transform from volume 2 world space to
+              volume 2 voxel space */
+
+        convert_world_to_voxel( volume2, x_world2, y_world2, z_world2,
+                                voxel2 );
+
+        /*--- convert voxel coordinates to voxel indices */
+
+        v1 = ROUND( voxel2[0] );
+        v2 = ROUND( voxel2[1] );
+        v3 = ROUND( voxel2[2] );
+
+        /*--- check if voxel indices inside volume */
+     
+        if( v1 >= 0 && v1 < sizes[0] &&
+            v2 >= 0 && v2 < sizes[1] &&
+            v3 >= 0 && v3 < sizes[2] )
+        {
+            GET_VALUE_3D( voxel_value, volume2, v1, v2, v3 );
+
+            print( "The value for tag point %d (%s) is: %g\n",
+                   i, labels[i], voxel_value );
+        }
+        else
+            print( "The tag point %d (%s) is outside.\n" );
+    }
+
+    /*--- free up memory */
+
+    delete_volume( volume1 );
+    delete_volume( volume2 );
+    free_tag_points( n_volumes, n_tag_points, tags1, tags2,
+                 weights, structure_ids, patient_ids, labels );
+    delete_general_transform( &transform );
+
+    return( 0 );
+}
+\end{verbatim}
+}
 
 \end{document}
