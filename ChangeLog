@@ -1,4 +1,7 @@
 MINC 2:
+2005-03-17  Andrew Janke  <a.janke@gmail.com>
+	* removed ':' from temporary filenames for windows compatibility
+
 2005-03-11 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Improve nii2mnc's support for functional (time-varying) data, and
 	support qform as well as sform transforms in the header.

@@ -22,8 +22,9 @@
 #endif /* HAVE_UNISTD_H */
 #include  <errno.h>
 
+
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.40 2004-10-04 20:23:52 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.41 2005-03-17 14:13:47 rotor Exp $";
 #endif
 
 static  BOOLEAN  has_no_extension( STRING );
@@ -259,6 +260,7 @@ static  STRING  create_backup_filename(
 {
     int      i, len, count;
     STRING   expanded, backup_filename, date;
+  
 
     expanded = expand_filename( filename );
     date = get_date();
@@ -296,6 +298,12 @@ static  STRING  create_backup_filename(
             if( backup_filename[i] == ' ' || backup_filename[i] == '\t' ||
                 backup_filename[i] == '\n' )
                 backup_filename[i] = '_';
+            
+            /* remove ':' for windows */
+            if( backup_filename[i] == ':'){
+               backup_filename[i] = '-';
+               }
+            
         }
 
         ++count;
