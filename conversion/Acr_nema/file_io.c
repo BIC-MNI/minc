@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-11-11 16:26:49  neelin
+@MODIFIED   : Increased default buffer size to 64K.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -67,7 +70,7 @@
 #include <file_io.h>
 
 /* Define some constants */
-#define ACR_MAX_BUFFER_LENGTH (8*1024)
+#define ACR_MAX_BUFFER_LENGTH (64*1024)
 #define ACR_BUFFER_MARGIN 64
 #ifndef TRUE
 #  define TRUE 1
