@@ -7,9 +7,15 @@ ROOT = .
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
-BUILD_SUBDIRS = libsrc $(FORTRAN_SUBDIR) test doc volume_io progs
+LIB_SUBDIRS = libsrc $(FORTRAN_SUBDIR) volume_io
 
-TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
+PROG_SUBDIRS = progs
+
+BUILD_SUBDIRS = $(LIB_SUBDIRS) $(PROG_SUBDIRS)
+
+DOC_SUBDIRS = doc
+
+TEST_SUBDIRS = testdir $(FORTRAN_SUBDIR)
 
 # --------------------------------------------------------------------
 
@@ -18,10 +24,19 @@ default : build runtest
 all build clean mostlyclean install:
 	$(MAKE) 'TARGET=$@' 'SUBDIRS=$(BUILD_SUBDIRS)' subdirs
 
-runtest :
+libs:
+	$(MAKE) 'TARGET=build' 'SUBDIRS=$(LIB_SUBDIRS)' subdirs
+
+programs:
+	$(MAKE) 'TARGET=build' 'SUBDIRS=$(PROG_SUBDIRS)' subdirs
+
+docs:
+	$(MAKE) 'TARGET=build' 'SUBDIRS=$(DOC_SUBDIRS)' subdirs
+
+test :
 	$(MAKE) 'TARGET=test' 'SUBDIRS=$(TEST_SUBDIRS)' subdirs
 
-check : runtest
+check : test
 
 subdirs :
 	@for dir in $(SUBDIRS); \
