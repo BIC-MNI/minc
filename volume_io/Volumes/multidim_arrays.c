@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.4 1995-08-19 18:57:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.5 1995-08-21 04:36:30 david Exp $";
 #endif
 
 public   void   create_empty_multidim_array(
@@ -220,13 +220,18 @@ public  void  copy_multidim_reordered(
     int                 counts[],
     int                 to_dest_index[] )
 {
-    int     i, last_src_dim, inner_size, src_inner_step, dest_inner_step;
-    int     d, n_src_dims, n_dest_dims, ind[MAX_DIMENSIONS];
-    int     type_size, src_sizes[MAX_DIMENSIONS];
-    int     dest_offset[MAX_DIMENSIONS], src_offset[MAX_DIMENSIONS];
-    int     dest_sizes[MAX_DIMENSIONS], dest_index;
-    char    *dest_ptr, *src_ptr;
-    BOOLEAN done, full_count_used;
+    int       d, n_src_dims, n_dest_dims;
+    int       type_size, src_sizes[MAX_DIMENSIONS];
+    int       dest_offsets[MAX_DIMENSIONS], src_offsets[MAX_DIMENSIONS];
+    int       dest_steps[MAX_DIMENSIONS], src_steps[MAX_DIMENSIONS];
+    int       dest_sizes[MAX_DIMENSIONS], dest_index;
+    int       n_transfer_dims;
+    int       src_axis[MAX_DIMENSIONS], dest_axis[MAX_DIMENSIONS];
+    int       transfer_counts[MAX_DIMENSIONS];
+    int       v0, v1, v2, v3, v4;
+    int       size0, size1, size2, size3, size4;
+    char      *dest_ptr, *src_ptr;
+    BOOLEAN   full_count_used;
 
     type_size = get_type_size( get_multidim_data_type(dest) );
 
@@ -235,11 +240,11 @@ public  void  copy_multidim_reordered(
     n_dest_dims = get_multidim_n_dimensions( dest );
     get_multidim_sizes( dest, dest_sizes );
     GET_MULTIDIM_PTR( dest_ptr, *dest, dest_ind[0], dest_ind[1], dest_ind[2],
-                   dest_ind[3], dest_ind[4] );
+                      dest_ind[3], dest_ind[4] );
 
-    dest_offset[n_dest_dims-1] = type_size;
-    for( d = n_dest_dims-2;  d >= 0;  --d )
-        dest_offset[d] = dest_offset[d+1] * dest_sizes[d+1];
+    dest_steps[n_dest_dims-1] = type_size;
+    for_down( d, n_dest_dims-2, 0 )
+        dest_steps[d] = dest_steps[d+1] * dest_sizes[d+1];
 
     /*--- initialize src */
 
@@ -248,104 +253,88 @@ public  void  copy_multidim_reordered(
     GET_MULTIDIM_PTR( src_ptr, *src, src_ind[0], src_ind[1], src_ind[2],
                       src_ind[3], src_ind[4] );
 
-    src_offset[n_src_dims-1] = type_size;
-    for( d = n_src_dims-2;  d >= 0;  --d )
-        src_offset[d] = src_offset[d+1] * src_sizes[d+1];
+    src_steps[n_src_dims-1] = type_size;
+    for_down( d, n_src_dims-2, 0 )
+        src_steps[d] = src_steps[d+1] * src_sizes[d+1];
 
+    n_transfer_dims = 0;
     for_less( d, 0, n_src_dims )
-        ind[d] = src_ind[d];
+    {
+        dest_index = to_dest_index[d];
+        if( dest_index >= 0 )
+        {
+            src_axis[n_transfer_dims] = d;
+            dest_axis[n_transfer_dims] = dest_index;
+            src_offsets[n_transfer_dims] = src_steps[d];
+            dest_offsets[n_transfer_dims] = dest_steps[dest_index];
+            transfer_counts[n_transfer_dims] = counts[d];
+            ++n_transfer_dims;
+        }
+    }
 
     /*--- check if we can transfer more than one at once */
 
     full_count_used = TRUE;
 
-    while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 &&
-           full_count_used )
+    while( n_transfer_dims > 0 &&
+           src_axis[n_transfer_dims-1] == n_src_dims-1 &&
+           dest_axis[n_transfer_dims-1] == n_dest_dims-1 && full_count_used )
     {
-        if( counts[n_src_dims-1] != src_sizes[n_src_dims-1] ||
-            counts[n_src_dims-1] != dest_sizes[to_dest_index[n_src_dims-1]] )
+        if( transfer_counts[n_transfer_dims-1] != src_sizes[n_src_dims-1] ||
+            transfer_counts[n_transfer_dims-1] != dest_sizes[n_dest_dims-1] )
         {
             full_count_used = FALSE;
         }
 
-        type_size *= counts[n_src_dims-1];
+        type_size *= transfer_counts[n_transfer_dims-1];
         --n_src_dims;
         --n_dest_dims;
+        --n_transfer_dims;
     }
 
-    if( n_src_dims > 0 )
+    for_down( d, n_transfer_dims-1, 1 )
     {
-        last_src_dim = n_src_dims-1;
-        while( to_dest_index[last_src_dim] < 0 )
-            --last_src_dim;
-        inner_size = counts[last_src_dim];
-        src_inner_step = src_offset[last_src_dim];
-        dest_inner_step = dest_offset[to_dest_index[last_src_dim]];
-    }
-    else
-    {
-        last_src_dim = 0;
-        inner_size = 1;
-        src_inner_step = 0;
-        dest_inner_step = 0;
+        src_offsets[d] -= src_offsets[d-1] * transfer_counts[d-1];
+        dest_offsets[d] -= dest_offsets[d-1] * transfer_counts[d-1];
     }
 
-    done = FALSE;
-    while( !done )
+    for_less( d, n_transfer_dims, MAX_DIMENSIONS )
     {
-        if( src_inner_step == 1 )
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                ++src_ptr;
-                dest_ptr += dest_inner_step;
-            }
-        }
-        else if( dest_inner_step == 1 )
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                src_ptr += src_inner_step;
-                ++dest_ptr;
-            }
-        }
-        else
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                src_ptr += src_inner_step;
-                dest_ptr += dest_inner_step;
-            }
-        }
+        transfer_counts[d] = 1;
+        src_offsets[d] = 0;
+        dest_offsets[d] = 0;
+    }
 
-        src_ptr -= src_inner_step * inner_size;
-        dest_ptr -= dest_inner_step * inner_size;
+    size0 = transfer_counts[0];
+    size1 = transfer_counts[1];
+    size2 = transfer_counts[2];
+    size3 = transfer_counts[3];
+    size4 = transfer_counts[4];
 
-        done = TRUE;
-        d = last_src_dim-1;
-        while( d >= 0 && done )
+    for_less( v4, 0, size4 )
+    {
+        for_less( v3, 0, size3 )
         {
-            dest_index = to_dest_index[d];
-            if( dest_index >= 0 )
+            for_less( v2, 0, size2 )
             {
-                src_ptr += src_offset[d];
-                dest_ptr += dest_offset[dest_index];
-
-                ++ind[d];
-                if( ind[d] < src_ind[d] + counts[d] )
-                    done = FALSE;
-                else
+                for_less( v1, 0, size1 )
                 {
-                    ind[d] = src_ind[d];
-                    src_ptr -= src_offset[d] * counts[d];
-                    dest_ptr -= dest_offset[dest_index] * counts[d];
+                    for_less( v0, 0, size0 )
+                    {
+                        (void) memcpy( dest_ptr, src_ptr, type_size );
+                        src_ptr += src_offsets[0];
+                        dest_ptr += dest_offsets[0];
+                    }
+                    src_ptr += src_offsets[1];
+                    dest_ptr += dest_offsets[1];
                 }
+                src_ptr += src_offsets[2];
+                dest_ptr += dest_offsets[2];
             }
-
-            --d;
+            src_ptr += src_offsets[3];
+            dest_ptr += dest_offsets[3];
         }
+        src_ptr += src_offsets[4];
+        dest_ptr += dest_offsets[4];
     }
 }

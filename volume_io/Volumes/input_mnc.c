@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.44 1995-08-19 18:57:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.45 1995-08-21 04:36:28 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -379,13 +379,13 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- create the image conversion variable */
 
-    file->input_icv = miicv_create();
+    file->minc_icv = miicv_create();
 
-    (void) miicv_setint( file->input_icv, MI_ICV_TYPE, converted_type );
-    (void) miicv_setstr( file->input_icv, MI_ICV_SIGN,
+    (void) miicv_setint( file->minc_icv, MI_ICV_TYPE, converted_type );
+    (void) miicv_setstr( file->minc_icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
-    (void) miicv_setint( file->input_icv, MI_ICV_DO_NORM, TRUE );
-    (void) miicv_setint( file->input_icv, MI_ICV_DO_FILLVALUE, TRUE );
+    (void) miicv_setint( file->minc_icv, MI_ICV_DO_NORM, TRUE );
+    (void) miicv_setint( file->minc_icv, MI_ICV_DO_FILLVALUE, TRUE );
 
     get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
     range_specified = (valid_range[0] < valid_range[1]);
@@ -452,33 +452,33 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     {
         get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
 
-        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MIN, valid_range[0]);
-        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MAX, valid_range[1]);
+        (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MIN, valid_range[0]);
+        (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MAX, valid_range[1]);
     }
     else
     {
-        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MIN, 0.0 );
-        (void) miicv_setdbl( file->input_icv, MI_ICV_VALID_MAX, 1.0 );
+        (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MIN, 0.0 );
+        (void) miicv_setdbl( file->minc_icv, MI_ICV_VALID_MAX, 1.0 );
     }
 
     if( options->convert_vector_to_scalar_flag && !file->converting_to_colour )
     {
-        (void) miicv_setint( file->input_icv, MI_ICV_DO_DIM_CONV, TRUE );
-        (void) miicv_setint( file->input_icv, MI_ICV_DO_SCALAR, TRUE );
-        (void) miicv_setint( file->input_icv, MI_ICV_XDIM_DIR, FALSE );
-        (void) miicv_setint( file->input_icv, MI_ICV_YDIM_DIR, FALSE );
-        (void) miicv_setint( file->input_icv, MI_ICV_ZDIM_DIR, FALSE );
-        (void) miicv_setint( file->input_icv, MI_ICV_KEEP_ASPECT, FALSE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_DO_DIM_CONV, TRUE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_DO_SCALAR, TRUE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_XDIM_DIR, FALSE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_YDIM_DIR, FALSE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_ZDIM_DIR, FALSE );
+        (void) miicv_setint( file->minc_icv, MI_ICV_KEEP_ASPECT, FALSE );
     }
 
-    (void) miicv_attach( file->input_icv, file->cdfid, file->img_var );
+    (void) miicv_attach( file->minc_icv, file->cdfid, file->img_var );
 
     /* --- compute the mapping to real values */
 
     if( !file->converting_to_colour )
     {
-         (void) miicv_inqdbl( file->input_icv, MI_ICV_NORM_MIN, &real_min );
-         (void) miicv_inqdbl( file->input_icv, MI_ICV_NORM_MAX, &real_max );
+         (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MIN, &real_min );
+         (void) miicv_inqdbl( file->minc_icv, MI_ICV_NORM_MAX, &real_max );
 
          set_volume_real_range( volume, real_min, real_max );
     }
@@ -486,9 +486,9 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     if( options->promote_invalid_to_min_flag )
     {
         if( !file->converting_to_colour )
-            (void) miicv_setdbl( file->input_icv, MI_ICV_FILLVALUE, valid_range[0] );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_FILLVALUE, valid_range[0] );
         else
-            (void) miicv_setdbl( file->input_icv, MI_ICV_FILLVALUE, 0.0 );
+            (void) miicv_setdbl( file->minc_icv, MI_ICV_FILLVALUE, 0.0 );
     }
 
     for_less( d, 0, file->n_file_dimensions )
@@ -628,7 +628,7 @@ public  Status  close_minc_input(
     }
 
     (void) miclose( file->cdfid );
-    (void) miicv_free( file->input_icv );
+    (void) miicv_free( file->minc_icv );
 
     for_less( d, 0, file->n_file_dimensions )
         FREE( file->dim_names[d] );
@@ -745,7 +745,7 @@ public  Status  input_minc_hyperslab(
                       used_array_start[2], used_array_start[3],
                       used_array_start[4] );
 
-    if( miicv_get( file->input_icv, used_start, used_count, void_ptr ) ==
+    if( miicv_get( file->minc_icv, used_start, used_count, void_ptr ) ==
                                  MI_ERROR )
     {
         status = ERROR;

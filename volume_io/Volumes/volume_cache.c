@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.4 1995-08-21 02:50:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.5 1995-08-21 04:36:31 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -597,25 +597,27 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     int      *t,
     int      *v )
 {
-    cache_block_struct   **save_next, **save_prev, **block;
+    cache_block_struct   **save_next, **save_prev, **block_ptr, *block;
     int                  block_index, block_start[MAX_DIMENSIONS];
 
     block_index = get_block_index( &volume->cache,
                                    x, y, z, t, v, block_start );
-    block = &(volume->cache.blocks[block_index]);
+    block_ptr = &(volume->cache.blocks[block_index]);
+    block = *block_ptr;
 
-    if( *block == NULL )
+    if( block == NULL )
     {
-        get_cache_block( &volume->cache, volume, block );
-        read_cache_block( &volume->cache, volume, *block, block_start );
+        get_cache_block( &volume->cache, volume, block_ptr );
+        block = *block_ptr;
+        read_cache_block( &volume->cache, volume, block, block_start );
     }
 
     /*--- move block to the head */
 
-    if( block != volume->cache.head )
+    if( block_ptr != volume->cache.head )
     {
-        save_next = (*block)->next;
-        save_prev = (*block)->prev;
+        save_next = block->next;
+        save_prev = block->prev;
 
         if( save_next != NULL )
             (*save_next)->prev = save_prev;
@@ -625,14 +627,14 @@ private  cache_block_struct  *get_cache_block_for_voxel(
         if( save_prev != NULL )
             (*save_prev)->next = save_next;
 
-        (*block)->prev = NULL;
-        (*block)->next = volume->cache.head;
-        (*volume->cache.head)->prev = block;
+        block->prev = NULL;
+        block->next = volume->cache.head;
+        (*volume->cache.head)->prev = block_ptr;
 
-        volume->cache.head = block;
+        volume->cache.head = block_ptr;
     }
 
-    return( *block );
+    return( block );
 }
 
 public  Real  get_cached_volume_voxel(

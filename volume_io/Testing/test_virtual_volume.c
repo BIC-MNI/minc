@@ -6,9 +6,20 @@ private  int  compute_voxel(
     int    z,
     Real   factor );
 
-#define  X_SIZE  200
-#define  Y_SIZE  200
-#define  Z_SIZE  200
+#define   TESTING_IO
+#undef    TESTING_IO
+
+#define  CACHE_THRESHOLD  1
+
+#ifdef  TESTING_IO
+#define  CACHE_SIZE       50000
+#else
+#define  CACHE_SIZE       1000000000
+#endif
+
+#define  X_SIZE  150
+#define  Y_SIZE  150
+#define  Z_SIZE  150
 
 int  main(
     int   argc,
@@ -30,8 +41,8 @@ int  main(
     output_filename = argv[1];
     output_filename2 = argv[2];
 
-    set_n_bytes_cache_threshold( 100 );
-    set_max_bytes_in_cache( 100000000 );
+    set_n_bytes_cache_threshold( CACHE_THRESHOLD );
+    set_max_bytes_in_cache( CACHE_SIZE );
 
     volume = create_volume( N_DIMENSIONS, dim_names, NC_BYTE, FALSE,
                             0.0, 0.0 );
@@ -70,6 +81,7 @@ int  main(
         }
     }
 
+#ifdef  TESTING_IO
     print( "Outputting volume.\n" );
 
     if( output_volume( output_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
@@ -105,6 +117,7 @@ int  main(
                 print( "Error: %d %d %d: %d %d\n", x, y, z, true_voxel, test_voxel );
         }
     }
+#endif
 
     print( "Setting voxels.\n" );
 
@@ -134,9 +147,11 @@ int  main(
         }
     }
 
+#ifdef  TESTING_IO
     if( output_volume( output_filename2, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
                        volume, "Testing Virtual Volumes", NULL ) != OK )
         return( 1 );
+#endif
 
     delete_volume( volume );
 

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.32 1995-08-20 03:57:22 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.33 1995-08-21 04:36:29 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -886,10 +886,11 @@ private  void  output_slab(
     int               dim, file_ind, ind, n_slab_dims;
     int               to_array[MAX_DIMENSIONS];
     int               volume_start[MAX_DIMENSIONS];
+    int               volume_sizes[MAX_DIMENSIONS];
     int               array_start[MAX_DIMENSIONS];
     int               int_file_count[MAX_DIMENSIONS];
     int               int_file_start[MAX_DIMENSIONS];
-    int               array_to_volume[MAX_DIMENSIONS];
+    int               volume_to_array[MAX_DIMENSIONS];
     int               slab_sizes[MAX_DIMENSIONS];
     int               v[MAX_DIMENSIONS];
     int               size0, size1, size2, size3, size4;
@@ -910,6 +911,16 @@ private  void  output_slab(
 
     if( volume->is_cached_volume )
     {
+        for_less( dim, 0, get_volume_n_dimensions(volume) )
+            volume_sizes[dim] = 1;
+
+        for_less( dim, get_volume_n_dimensions(volume), MAX_DIMENSIONS )
+        {
+            volume_start[dim] = 0;
+            volume_sizes[dim] = 1;
+            volume_to_array[dim] = 0;
+        }
+
         n_slab_dims = 0;
         for_less( file_ind, 0, file->n_file_dimensions )
         {
@@ -917,32 +928,26 @@ private  void  output_slab(
             if( ind != INVALID_AXIS )
             {
                 to_array[file_ind] = n_slab_dims;
+                volume_to_array[ind] = n_slab_dims;
                 array_start[n_slab_dims] = 0;
-                slab_sizes[n_slab_dims] = file_count[file_ind];
-                array_to_volume[n_slab_dims] = ind;
+                slab_sizes[n_slab_dims] = int_file_count[file_ind];
+                volume_sizes[ind] = int_file_count[file_ind];
                 ++n_slab_dims;
             }
             else
             {
                 to_array[file_ind] = INVALID_AXIS;
-                slab_sizes[file_ind] = 1;
             }
         }
 
         create_multidim_array( &array, n_slab_dims, slab_sizes,
                                get_volume_data_type(volume) );
 
-        for_less( dim, n_slab_dims, MAX_DIMENSIONS )
-        {
-            slab_sizes[dim] = 1;
-            array_to_volume[dim] = 0;
-        }
-
-        size0 = slab_sizes[0];
-        size1 = slab_sizes[1];
-        size2 = slab_sizes[2];
-        size3 = slab_sizes[3];
-        size4 = slab_sizes[4];
+        size0 = volume_sizes[0];
+        size1 = volume_sizes[1];
+        size2 = volume_sizes[2];
+        size3 = volume_sizes[3];
+        size4 = volume_sizes[4];
 
         for_less( v[4], 0, size4 )
         for_less( v[3], 0, size3 )
@@ -951,13 +956,17 @@ private  void  output_slab(
         for_less( v[0], 0, size0 )
         {
             value = get_volume_voxel_value( volume,
-                                            v[array_to_volume[0]],
-                                            v[array_to_volume[1]],
-                                            v[array_to_volume[2]],
-                                            v[array_to_volume[3]],
-                                            v[array_to_volume[4]] );
+                                            volume_start[0] + v[0],
+                                            volume_start[1] + v[1],
+                                            volume_start[2] + v[2],
+                                            volume_start[3] + v[3],
+                                            volume_start[4] + v[4] );
 
-            SET_MULTIDIM( array, v[0], v[1], v[2], v[3], v[4], value );
+            SET_MULTIDIM( array, v[volume_to_array[0]],
+                                 v[volume_to_array[1]],
+                                 v[volume_to_array[2]],
+                                 v[volume_to_array[3]],
+                                 v[volume_to_array[4]], value );
         }
 
         (void) output_minc_hyperslab( file, &array, array_start,
