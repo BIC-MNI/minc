@@ -876,9 +876,9 @@ public int micreate_group_variable(int cdfid, char *name);
 
 \item \code{miicv\_create} : Create an image conversion variable and
 set the defaults --- an icv identifier is returned for later use (or
-\code{MI\_ERROR} if an error occurs). A maximum of
-\code{MI\_MAX\_NUM\_ICV} icv's can exist at one time (this is set to 
-the value of \code{MAX\_NC\_OPEN} which is 32 by default).
+\code{MI\_ERROR} if an error occurs). The old limit of
+\code{MI\_MAX\_NUM\_ICV} icv's that can exist at one time has been
+removed, although the definition remains.
 \begin{verbatim}
 public int miicv_create();
 \end{verbatim}
