@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: sample_dicom_client.c,v $
-@MODIFIED   : Revision 1.1  1997-09-08 21:52:55  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-09-11 16:29:34  neelin
+@MODIFIED   : Modified list of files included.
 @MODIFIED   :
+ * Revision 1.1  1997/09/08  21:52:55  neelin
+ * Initial revision
+ *
  * Revision 5.0  1997/08/21  13:25:30  neelin
  * Release of minc version 0.5
  *
@@ -38,12 +41,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 1.1 1997-09-08 21:52:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 1.2 1997-09-11 16:29:34 neelin Exp $";
 #endif
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <stdio.h>
+#include <string.h>
+#include <minc_def.h>
 #include <acr_nema.h>
 
 #ifndef public
