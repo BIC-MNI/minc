@@ -1,4 +1,7 @@
-/* MINC2.H */
+/** \file minc2.h 
+ * \brief MINC 2.0 public constants, types, and definitions.
+ */
+
 #ifndef _MINC2_H_		/* Avoid multiple inclusions */
 #define _MINC2_H_ 1
 
@@ -62,41 +65,50 @@ typedef struct volumehandle_struct volumehandle;
 typedef volumehandle *mihandle_t;      /* opaque pointer to volume handle */
 
 
-typedef enum {
-  MI_TYPE_BYTE = 1,		/* 8-bit signed integer */
-  MI_TYPE_CHAR = 2,		/* ASCII text */
-  MI_TYPE_SHORT = 3,		/* 16-bit signed integer */
-  MI_TYPE_INT = 4,		/* 32-bit signed integer */
-  MI_TYPE_FLOAT = 5,		/* 32-bit floating point */
-  MI_TYPE_DOUBLE = 6,		/* 64-bit floating point */
-  MI_TYPE_STRING = 7,		/* string */
-  MI_TYPE_UBYTE = 100,		/* 8-bit unsigned integer */
-  MI_TYPE_USHORT = 101,		/* 16-bit unsigned integer */
-  MI_TYPE_UINT = 102,		/* 32-bit unsigned integer */
-  MI_TYPE_SCOMPLEX = 1000,	/* 16-bit signed integer complex */
-  MI_TYPE_ICOMPLEX = 1001,	/* 32-bit signed integer complex */
-  MI_TYPE_FCOMPLEX = 1002,	/* 32-bit floating point complex */
-  MI_TYPE_DCOMPLEX = 1003,	/* 64-bit floating point complex */
-  MI_TYPE_UNKNOWN  = -1	  /* when the type is a non_uniform record */
+/** \typedef 
+ * This typedef used to represent the type of an individual voxel <b>as
+ * stored</b> by MINC 2.0.  If a volume is 
+ */
+typedef enum mitype {
+  MI_TYPE_BYTE = 1,		/**< 8-bit signed integer */
+  MI_TYPE_SHORT = 3,		/**< 16-bit signed integer */
+  MI_TYPE_INT = 4,		/**< 32-bit signed integer */
+  MI_TYPE_FLOAT = 5,		/**< 32-bit floating point */
+  MI_TYPE_DOUBLE = 6,		/**< 64-bit floating point */
+  MI_TYPE_STRING = 7,		/**< ASCII string */
+  MI_TYPE_UBYTE = 100,		/**< 8-bit unsigned integer */
+  MI_TYPE_USHORT = 101,		/**< 16-bit unsigned integer */
+  MI_TYPE_UINT = 102,		/**< 32-bit unsigned integer */
+  MI_TYPE_SCOMPLEX = 1000,	/**< 16-bit signed integer complex */
+  MI_TYPE_ICOMPLEX = 1001,	/**< 32-bit signed integer complex */
+  MI_TYPE_FCOMPLEX = 1002,	/**< 32-bit floating point complex */
+  MI_TYPE_DCOMPLEX = 1003,	/**< 64-bit floating point complex */
+  MI_TYPE_UNKNOWN  = -1         /**< when the type is a record */
 } mitype_t;
 
-typedef enum {
-  MI_CLASS_REAL = 0,
-  MI_CLASS_INT = 1,
-  MI_CLASS_LABEL = 2,           /* enumerated data with a description for each value */
-  MI_CLASS_COMPLEX = 3,
-  MI_CLASS_UNIFORM_RECORD = 4,   /*aggregate datatypes consisting of multiple values */
-  MI_CLASS_NON_UNIFORM_RECORD = 5
+/** \typedef 
+ * This typedef is used to represent the class of the volume.  The class
+ * specifies the data's interpretation rather than its storage format.
+ */
+typedef enum miclass {
+  MI_CLASS_REAL = 0,            /**< Floating point (default) */
+  MI_CLASS_INT = 1,             /**< Integer */
+  MI_CLASS_LABEL = 2,           /**< Enumerated (named data values) */
+  MI_CLASS_COMPLEX = 3,         /**< Complex (real/imaginary) values */
+  MI_CLASS_UNIFORM_RECORD = 4,  /**< Aggregate datatypes consisting of multiple values of the same underlying type. */
+  MI_CLASS_NON_UNIFORM_RECORD = 5 /**< Aggregate datatypes consisting of multiple values of potentially differing types (not yet implemented). */
 } miclass_t;
 
+/** The various classes of dimensions.
+ */
 typedef enum {
-    MI_DIMCLASS_ANY = 0,	/* Don't care (or unknown) */
-    MI_DIMCLASS_SPATIAL = 1,	/* Space */
-    MI_DIMCLASS_TIME = 2,	/* Time */
-    MI_DIMCLASS_SFREQUENCY = 3,	/* Spatial frequency */
-    MI_DIMCLASS_TFREQUENCY = 4,	/* Temporal frequency */
-    MI_DIMCLASS_USER = 5,	/* Arbitrary user-defined axis */
-    MI_DIMCLASS_RECORD = 6	/* Record as dimension */
+    MI_DIMCLASS_ANY = 0,	/**< Don't care (or unknown) */
+    MI_DIMCLASS_SPATIAL = 1,	/**< Spatial */
+    MI_DIMCLASS_TIME = 2,	/**< Time */
+    MI_DIMCLASS_SFREQUENCY = 3,	/**< Spatial frequency */
+    MI_DIMCLASS_TFREQUENCY = 4,	/**< Temporal frequency */
+    MI_DIMCLASS_USER = 5,	/**< Arbitrary user-defined axis */
+    MI_DIMCLASS_RECORD = 6	/**< Record as dimension */
 } midimclass_t;
 
 typedef enum {
@@ -129,24 +141,32 @@ typedef unsigned int midimattr_t;
 
 typedef unsigned long misize_t;
 
+/** 16-bit integer complex voxel.
+ */
 typedef struct {
-  short real;
-  short imag;
+  short real;                   /**< Real part */
+  short imag;                   /**< Imaginary part */
 } miscomplex_t;
 
+/** 32-bit integer complex voxel.
+ */
 typedef struct {
-  int real;
-  int imag;
+  int real;                     /**< Real part */
+  int imag;                     /**< Imaginary part */
 } miicomplex_t;
 
+/** 32-bit floating point complex voxel.
+ */
 typedef struct {
-  float real;
-  float imag;
+  float real;                   /**< Real part */
+  float imag;                   /**< Imaginary part */
 } mifcomplex_t;
 
+/** 64-bit floating point complex voxel.
+ */
 typedef struct {
-  double real;
-  double imag;
+  double real;                  /**< Real part */
+  double imag;                  /**< Imaginary part */
 } midcomplex_t;
 
 /************************************************************************
