@@ -410,8 +410,8 @@ public  int   evaluate_volume(
 
     if( degrees_continuity < -1 || degrees_continuity > 2 )
     {
-        print( "Warning: evaluate_volume(), degrees invalid: %d\n",
-               degrees_continuity );
+        print_error( "Warning: evaluate_volume(), degrees invalid: %d\n",
+                     degrees_continuity );
         degrees_continuity = 0;
     }
 
@@ -810,7 +810,8 @@ public  void   evaluate_volume_in_world(
         axis = volume->spatial_axes[d];
         if( axis < 0 )
         {
-            print("evaluate_volume_in_world(): must have 3 spatial axes.\n");
+            print_error(
+                  "evaluate_volume_in_world(): must have 3 spatial axes.\n" );
             return;
         }
 
