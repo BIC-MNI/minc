@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.5  2000-01-13 19:04:41  neelin
+ * Revision 1.6  2000-01-31 14:06:44  neelin
+ * Truncate image number if it is longer than the DICOM standard allows.
+ *
+ * Revision 1.5  2000/01/13 19:04:41  neelin
  * Added accession number to DICOM message, taken from patient comment field.
  *
  * Revision 1.4  1999/10/29 17:52:02  neelin
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.5 2000-01-13 19:04:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.6 2000-01-31 14:06:44 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -70,11 +73,15 @@ DEFINE_ELEMENT(static, ACR_Image_type                 , 0x0008, 0x0008, CS);
 DEFINE_ELEMENT(static, ACR_Accession_number           , 0x0008, 0x0050, SH);
 DEFINE_ELEMENT(static, ACR_Patient_comments           , 0x0010, 0x4000, SH);
 DEFINE_ELEMENT(static, ACR_Sequence_variant           , 0x0018, 0x0021, CS);
+DEFINE_ELEMENT(static, ACR_Image_Number               , 0x0020, 0x0013, IS);
 DEFINE_ELEMENT(static, ACR_Study_instance_UID         , 0x0020, 0x000d, UI);
 DEFINE_ELEMENT(static, ACR_Series_instance_UID        , 0x0020, 0x000e, UI);
 DEFINE_ELEMENT(static, ACR_Image_position             , 0x0020, 0x0032, DS);
 DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
+
+/* Dicom constants */
+#define ACR_MAX_IS_LEN 12
 
 /* Function prototypes */
 private void convert_image(Acr_Group *group_list);
@@ -156,6 +163,14 @@ public void convert_to_dicom(Acr_Group group_list)
       field at MNI) */
    acr_insert_string(&group_list, ACR_Accession_number,
                      acr_find_string(group_list, ACR_Patient_comments, ""));
+
+   /* Check that the image number is not too long - just chop it off
+      if it is. */
+   ptr = acr_find_string(group_list, ACR_Image_Number, NULL);
+   if ((ptr != NULL) && (strlen(ptr) > (size_t) ACR_MAX_IS_LEN)) {
+      ptr[ACR_MAX_IS_LEN] = '\0';
+      acr_insert_string(&group_list, ACR_Image_Number, ptr);
+   }
 
    /* Get image orientation */
    orientation = acr_find_int(group_list, SPI_Slice_orientation, 0);
