@@ -1,6 +1,11 @@
 # --------------------------------------------------------------------
 #
-# $Id: Makefile,v 1.3 2003-08-15 19:57:54 leili Exp $
+# $Id: Makefile,v 1.4 2003-08-15 19:58:17 leili Exp $
+#
+# $Log: Makefile,v $
+# Revision 1.4  2003-08-15 19:58:17  leili
+#  testing cvs
+#
 #
 # MINC Makefile
 # Written by leili Nov. 2002
@@ -38,7 +43,3 @@ dicomserver-nondebug.o: dicomserver-nondebug.c
 #Added by Leili
 dicomserver-nondebug2.o: dicomserver-nondebug2.c
 dicomserver-nondebug-old.o: dicomserver-nondebug-old.c
-# $Log: Makefile,v $
-# Revision 1.3  2003-08-15 19:57:54  leili
-#  testing cvs
-#
