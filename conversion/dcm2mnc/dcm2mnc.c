@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.7  2005-03-15 17:03:34  bert
+ * Revision 1.8  2005-03-18 19:10:31  bert
+ * Scan coordinate and location information for validity before relying on it
+ *
+ * Revision 1.7  2005/03/15 17:03:34  bert
  * Yet another directory expansion fix (sigh)
  *
  * Revision 1.6  2005/03/14 22:51:33  bert
@@ -65,7 +68,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.7 2005-03-15 17:03:34 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.8 2005-03-18 19:10:31 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -522,6 +525,7 @@ use_the_files(int num_files,
     int acq_num_files;
     const char **acq_file_list;
     int *used_file;
+    int *acq_file_index;
     double cur_study_id;
     int cur_acq_id;
     int cur_rec_num;
@@ -537,6 +541,9 @@ use_the_files(int num_files,
     int output_gid;
     string_t string;
     FILE *fp;
+    int trust_location;
+    int trust_coord;
+    int user_opts;              /* Options as set by user. We may override.. */
 
     if (out_dir != NULL) {    /* if an output directory name has been 
                                * provided on the command line
@@ -558,6 +565,9 @@ use_the_files(int num_files,
      */
     acq_file_list = malloc(num_files * sizeof(*acq_file_list));
     CHKMEM(acq_file_list);
+
+    acq_file_index = malloc(num_files * sizeof(*acq_file_index));
+    CHKMEM(acq_file_index);
 
     used_file = malloc(num_files * sizeof(*used_file));
     CHKMEM(used_file);
@@ -632,6 +642,7 @@ use_the_files(int num_files,
                    counter) */
 
                 acq_file_list[acq_num_files] = di_ptr[ifile]->file_name;
+                acq_file_index[acq_num_files] = ifile;
                 acq_num_files++;
             }
         }
@@ -655,6 +666,41 @@ use_the_files(int num_files,
             }
         }
 
+        /* Do some sanity checks on the acquisition.  In particular, we 
+         * verify that the coordinate and/or slice location information
+         * looks reliable.
+         */
+        trust_location = 1;
+        trust_coord = 1;
+
+        for (ifile = 0; ifile < acq_num_files; ifile++) {
+            int jfile;
+            int ix = acq_file_index[ifile];
+
+            if (!di_ptr[ix]->coord_found) {
+                trust_coord = 0;
+            }
+
+            for (jfile = ifile + 1; jfile < acq_num_files; jfile++) {
+                int jx = acq_file_index[jfile];
+
+                if (NEARLY_EQUAL(di_ptr[ix]->slice_location,
+                                 di_ptr[jx]->slice_location)) {
+                    trust_location = 0;
+                }
+            }
+        }
+
+        user_opts = G.opts;
+
+        if (!trust_coord) {
+            printf("WARNING: Image coordinates absent or incomplete.\n");
+            if (!trust_location) {
+                printf("WARNING: Slice location is untrustworthy.\n");
+                G.opts |= OPTS_NO_LOCATION;
+            }
+        }
+
         /* Create minc file
          */
         exit_status = dicom_to_minc(acq_num_files, 
@@ -664,9 +710,11 @@ use_the_files(int num_files,
                                     file_prefix, 
                                     &output_file_name);
 
+        G.opts = user_opts;
+       
         if (exit_status != EXIT_SUCCESS) 
             continue;
-       
+
         /* Print log message */
         if (G.Debug) {
             printf("Created minc file %s.\n", output_file_name);

@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.6  2005-03-13 19:34:41  bert
+ * Revision 1.7  2005-03-18 19:10:39  bert
+ * Scan coordinate and location information for validity before relying on it
+ *
+ * Revision 1.6  2005/03/13 19:34:41  bert
  * Add pms_element_defs.h to the header
  *
  * Revision 1.5  2005/03/03 20:10:14  bert
@@ -93,6 +96,7 @@
 #include "spi_element_defs.h"
 #include "ext_element_defs.h"
 #include "pms_element_defs.h"   /* Philips Medical Systems */
+#include "gems_element_defs.h"  /* GE Medical Systems */
 
 #ifndef TRUE
 #  define TRUE 1
@@ -155,6 +159,8 @@ typedef struct {
     string_t protocol_name;
     string_t patient_name;
     string_t patient_id;
+    double slice_location;
+    int coord_found;
 } Data_Object_Info;
 
 #include "dicom_to_minc.h"
@@ -190,8 +196,9 @@ struct globals {
 };
 
 /* Values for options flags */
-#define OPTS_NO_MOSAIC 0x00000001 /* Don't parse mosaic information. */
-#define OPTS_KEEP_COORD 0x00000002 /* Don't flip DICOM coordinates */
+#define OPTS_NO_MOSAIC   0x00000001 /* Don't parse mosaic information. */
+#define OPTS_KEEP_COORD  0x00000002 /* Don't flip DICOM coordinates */
+#define OPTS_NO_LOCATION 0x00000004 /* Never rely on slice location */
 
 extern struct globals G;
 
