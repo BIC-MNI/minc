@@ -14,8 +14,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#include "config.h"
-
 #if HAVE_FLOAT_H
 #include <float.h>
 #endif

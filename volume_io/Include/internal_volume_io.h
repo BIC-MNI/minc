@@ -23,6 +23,8 @@
 #define  private   static
 #endif
 
+#include "config.h"
+
 #include  <volume_io.h>
 
 #endif
