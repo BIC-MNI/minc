@@ -29,13 +29,6 @@
 #define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
 
-/** World spatial coordinates should always have this structure.
- */
-#define MI2_3D 3
-#define MI2_X 0
-#define MI2_Y 1
-#define MI2_Z 2
-
 /** Size of a linear transform */
 #define MI2_LIN_XFM_SIZE 4
 
@@ -52,7 +45,7 @@ typedef long long mi_i64_t;
 /** \internal
  * Volume properties  
  */
-struct volprops_struct{
+struct mivolprops {
     BOOLEAN enable_flag;        /* enable multi-res */
     int depth;                  /* multi-res depth */
     micompression_t compression_type;
@@ -68,7 +61,7 @@ struct volprops_struct{
 /** \internal
  * Dimension handle  
  */
-struct dimension_struct{
+struct midimension {
   midimattr_t attr;
   midimclass_t class;
   double direction_cosines[3];
@@ -88,11 +81,12 @@ struct dimension_struct{
 /** \internal
  * Volume handle  
  */
-struct volumehandle_struct {
+struct mivolume {
   hid_t hdf_id;
   BOOLEAN has_slice_scaling;
   int number_of_dims;
   midimhandle_t *dim_handles;   /* file order of dimensions */
+  short *world_indices;         /* conversion from voxel to world order */
   int *dim_indices;             /* apparent order of dimensions */
   mitype_t volume_type;
   miclass_t volume_class;
