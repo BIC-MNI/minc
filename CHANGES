@@ -1,0 +1,87 @@
+Mon Apr 21 13:33:55 EDT 1997
+   - Fixed icv calculation of scale so that values are never re-scaled
+     from their internal "real" value to an external floating-point type
+     (or the other way around). Previously, this re-scaling could occur if
+     normalization was turned off and a valid range was set in the file.
+Thu Apr 17 14:45:18 EDT 1997
+   - Added option of setting BUILD_FORTRAN to "no" for configure.
+   - Moved building of volume_io documentations to docs directory.
+   - Added explicit path to run_tests script
+Thu Apr 10 15:23:32 EDT 1997
+   - Fixed icv handling of invalid data when the scale factor is zero. When
+     this happens fillvalue checking is turned on (for both input and
+     output) regardless of the user setting. This fixes problems when
+     mincmath is writing out a uniform image that contains invalid data
+     as well.
+   - Removed redefinition of NULL from library header file and added
+     casts to pointer types in places where it matters.
+Mon Mar 10 15:23:32 EDT 1997
+   - Updated ACR-NEMA library to handle dicom messages.
+Wed Jan 15 11:26:28 EST 1997
+   - Fixed small bug in test program minc_types.c so that handling of FLT_MAX
+     is done properly and output agrees with original output and
+Tue Jan 14 14:47:40 EST 1997
+   - Added Fortran wrappers miopn, micre and miclos
+Tue Jan  7 14:47:40 EST 1997
+   - Added -origin option to rawtominc.
+Tue Dec 10 09:30:21 EST 1996
+   - Modified top-level Makefile
+      - added targets libs, programs, test and docs
+      - default make no longer does make in docs directory
+Tue Aug 27 13:08:18 EDT 1996
+   - Corrected dimension width suffix added by mincconcat. Changed to _width 
+     to -width.
+Wed Jul 10 13:08:18 EDT 1996
+   - Modified minclookup:
+      - added output type options
+      - added -lut_string
+      - added handling of duplicate first or last lookup table entries
+      - added man page
+Wed Jun 19 14:26:33 EDT 1996
+   - Catch errors in opening file specified with -input for rawtominc
+Tue Jan 16 08:30:08 EST 1996
+   - Added -invert option to mincmath
+Wed Dec 13 08:47:26 EST 1995
+   - Added -check_dimensions and -nocheck_dimensions options to mincmath.
+   - Improved tmp dir cleanup in mincview when an error occurs.
+   - Small changes to minc_modify_header man page.
+Tue Dec 12 14:19:07 EST 1995
+   - Added convert_origin_to_start routines to Proglib to handle conversion
+     of a point to a start value given 3 direction cosines
+   - Modified mincresample:
+      - modified argument parsing so that only one pass is done
+      - changed default to transform input sampling when -transformation
+        is specified and added options -tfm_input_sampling (to get above 
+        behaviour) and -use_input_sampling (to get old behaviour).
+      - added -origin option to specify a coordinate instead of dimension
+        start values.
+      - added -standard_sampling option.
+      - added -invert_transformation option.
+      - added -spacetype, -talairach and -units options.
+Mon Nov 20 14:24:47 EST 1995
+   - Added -weights option to mincaverage.
+Thu Nov 16 13:11:16 EST 1995
+   - Include math.h in rawtominc, mincwindow, mincinfo, mincconcat 
+     and Acr_nema library to get declaration of strtod under SunOs.
+Wed Oct  4 19:05:25 EDT 1995
+   - Fixed default minimum for signed long.
+Fri Sep 29 12:59:06 EDT 1995
+   - Modified micopy_all_atts in library to handle MI_ERROR being passed
+     as a variable id.
+   - Fixed handling of image-min/max in mincconcat when the variables are
+     not present in the input files.
+Wed Aug  2 13:41:36
+   - Added -prefix option to gyrotominc.
+Fri Jun 16 08:28:39 EDT 1995
+   - Modified mincview so that file name appears in xv window frame.
+Tue Jun 13 16:44:28 EDT 1995
+   - Improved test for ANSI compiler in configure script. Check that
+     (signed char *) is handled properly (since the Solaris compiler
+     doesn't handle it from what I've been told).
+   - Improved configuration for fortran compilation. Set FORTRAN_SUBDIR
+     and FORTRAN_OBJ from configure only if f77 is found and the system
+     is irix.
+Mon Jun 12 13:32:53 EDT 1995
+   - Added MI_LABEL modality to minc.h
+   - Modified miexpand_file and miopen to try adding compression
+     extensions to filenames if the first open fails.
