@@ -293,5 +293,64 @@ extern int miget_volume_range(mihandle_t volume, double *slice_max,
 			      double *slice_min);
 extern int miset_volume_range(mihandle_t volume, double slice_max, 
 			      double slice_min);
+/* HYPERSLAB FUNCTIONS */
 
+extern int miget_real_value_hyperslab(mihandle_t volume,
+                                      mitype_t buffer_data_type,
+                                      const long start[],
+                                      const long count[],
+                                      void *buffer);
+
+extern int miset_real_value_hyperslab(mihandle_t volume,
+                                      mitype_t buffer_data_type,
+                                      const long start[],
+                                      const long count[],
+                                      const void *buffer);
+
+extern int miget_voxel_value_hyperslab(mihandle_t volume,
+                                       mitype_t buffer_data_type,
+                                       const long start[],
+                                       const long count[],
+                                       void *buffer);
+
+extern int miset_voxel_value_hyperslab(mihandle_t volume,
+                                       mitype_t buffer_data_type,
+                                       const long start[],
+                                       const long count[],
+                                       const void *buffer);
+
+/* CONVERT FUNCTIONS */
+extern int miconvert_real_to_voxel(mihandle_t volume,
+                                   const unsigned long location[],
+                                   int ndims,
+                                   double real_value,
+                                   double *voxel_value_ptr);
+
+extern int miconvert_voxel_to_real(mihandle_t volume,
+                                   const unsigned long voxel_coords[],
+                                   int ndims,
+                                   double voxel_value,
+                                   double *real_value_ptr);
+
+extern int miconvert_3D_voxel_to_world(mihandle_t volume,
+                                       const double voxel[],
+                                       double world[]);
+
+extern int miconvert_3D_world_to_voxel(mihandle_t volume,
+                                       const double world[],
+                                       double voxel[]);
+
+extern int miget_real_value(mihandle_t volume,
+                            const unsigned long coords[],
+                            int ndims,
+                            double *value_ptr);
+
+extern int miset_real_value(mihandle_t volume,
+                            const unsigned long coords[],
+                            int ndims,
+                            double value);
+extern int miget_voxel_value(mihandle_t volume,
+                             const unsigned long coords[],
+                             int ndims,
+                             double *voxel_ptr);
 #endif /* _MINC2_H_ */
