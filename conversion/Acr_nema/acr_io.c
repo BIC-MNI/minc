@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-08 21:53:31  neelin
+@MODIFIED   : Added status ACR_CONNECTION_TIMEDOUT.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/07/10  17:14:38  neelin
  * Added more status codes and function to return status string.
  *
@@ -1156,6 +1159,8 @@ public char *acr_status_string(Acr_Status status)
       status_string = "VR not specified on output"; break;
    case ACR_PDU_UID_TOO_LONG:
       status_string = "Input PDU UID too long"; break;
+   case ACR_CONNECTION_TIMEDOUT:
+      status_string = "Connection timed out"; break;
    default:
       status_string = "Unknown status"; break;
    }

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-08 21:53:31  neelin
+@MODIFIED   : Added status ACR_CONNECTION_TIMEDOUT.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/07/10  17:14:38  neelin
  * Added more status codes and function to return status string.
  *
@@ -103,7 +106,8 @@ typedef enum {
    ACR_REACHED_WATCHPOINT,
    ACR_IO_ERROR,
    ACR_NO_VR_SPECIFIED,
-   ACR_PDU_UID_TOO_LONG
+   ACR_PDU_UID_TOO_LONG,
+   ACR_CONNECTION_TIMEDOUT
 } Acr_Status;
 
 /* Functions */
