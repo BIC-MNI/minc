@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.3  1994-12-07 08:20:22  neelin
-@MODIFIED   : Fixed some lint messages.
+@MODIFIED   : Revision 2.4  1994-12-12 09:05:57  neelin
+@MODIFIED   : Changed comment in calculate_slice_start (code is the same)
 @MODIFIED   :
+ * Revision 2.3  94/12/07  08:20:22  neelin
+ * Fixed some lint messages.
+ * 
  * Revision 2.2  94/11/21  08:07:59  neelin
  * Modified code to properly calculate start from centre locations, then
  * changed calculation back to old way because it worked.
@@ -1022,23 +1025,11 @@ public void calculate_slice_start(World_Index slice_world,
    offset[row_world] = (-step[row_world]) * (nrows - 1.0) / 2.0;
    offset[column_world] = (-step[column_world]) * (ncolumns - 1.0) / 2.0;
 
-#if 1
    /* Transform offsets but don't use direction cosines since these files
-      seem to give offsets along the rotated axes, not along real axes.
-      But should this work? Who cares - it does! */
+      seem to give centres along the rotated axes, not along real axes. */
    for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
       start[iworld] = centre[iworld] + offset[iworld];
    }
-#else
-   /* Transform offsets using direction cosines */
-   for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
-      World_Index jworld;
-      start[iworld] = centre[iworld];
-      for (jworld=0; jworld < WORLD_NDIMS; jworld++) {
-         start[iworld] += offset[jworld] * dircos[jworld][iworld];
-      }
-   }
-#endif
 
 }
       
