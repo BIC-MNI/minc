@@ -1,14 +1,10 @@
 %product MINC
-%copyright 1993-2002 Peter Neelin
+%copyright 1993-2004 Peter Neelin
 %vendor McConnell Brain Imaging Centre
 %packager Jason Lerch <jason@bic.mni.mcgill.ca>
 %license COPYING
 %readme README
 %description Medical Imaging library
-%version 1.2
+%version 2.0.005
 %requires netcdf 3.5.0 3.6.0
-
-
-
-
-
+%requires hdf5 1.6.1 1.6.2
