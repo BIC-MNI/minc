@@ -16,8 +16,8 @@ build : $(DOCS)
 	-latex $<
 	-latex $<
 
-.dvi.ps :
-	-dvips $< -o $@
+volume_io.ps: volume_io.dvi
+	-dvips $? -o $@
 
 clean: mostlyclean
 	$(RM) $(RM_FLAGS) *.aux *.log *.toc
