@@ -23,7 +23,7 @@ all build clean:
 	@TARGET=$@; export TARGET; $(MAKE) $(SUBDIRS)
 
 runtest :
-	@TARGET=$@; export TARGET; $(MAKE) $(TEST_SUBDIRS)
+	@TARGET=test; export TARGET; $(MAKE) $(TEST_SUBDIRS)
 
 $(SUBDIRS) : $(DUMMY)
 	@cd $@ ; echo Making $(TARGET) in $@; $(MAKE) $(TARGET)
