@@ -1,30 +1,20 @@
-PROGS = mincstats
-OBJS = $(PROGS:=.o)
+# --------------------------------------------------------------------
+#
+# MINC Makefile
+#
 
-OPTIONS = -O3
+ROOT = ../..
+include $(ROOT)/Make_machine_specific
+include $(ROOT)/Make_configuration
 
-INCLUDES = -I. \
-           -I/data/nil/rotor/opt/include \
-           -I/usr/local/mni/include \
-           -I/usr/local/include
+# Executable names
+PROGS    = mincstats
+EXTRA_OBJS = 
+HEADERS  = 
+CDEFINES = -DDEBUG                 # cpp defines
+LDOPT    = $(PROG_LDOPT)
+MANSECT  = 1
+MANPAGES = $(PROGS).$(MANSECT)
 
-LDINCLUDES = -L/data/nil/rotor/opt/lib32 \
-             -L/software/build/external/IRIX6/lib
+include $(ROOT)/progs/Make_progs
 
-LDLIBS = -lParseArgv -lvolume_io -lmincprog -lminc -lnetcdf -lm
-
-LDOPTS = $(LDINCLUDES) $(LDLIBS)
-
-CC=cc
-CFLAGS = $(OPTIONS) $(INCLUDES)
-
-all: $(PROGS) 
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(PROGS): $(OBJS)
-	$(CC) $@.o -o $@ $(OPTIONS) $(LDOPTS)
-
-clean:
-	rm -f *.o *~ $(PROGS)
