@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.9 1993-01-22 11:37:35 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.10 1993-02-01 10:48:17 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -105,6 +105,8 @@ public int miicv_create()
                                             icvp->user_sign);
    icvp->user_do_norm = FALSE;
    icvp->user_user_norm = FALSE;
+   icvp->user_maxvar = strdup(MIimagemax);
+   icvp->user_minvar = strdup(MIimagemin);
    icvp->user_imgmax = MI_DEFAULT_MAX;
    icvp->user_imgmin = MI_DEFAULT_MIN;
    icvp->user_do_dimconv = FALSE;
@@ -147,17 +149,23 @@ public int miicv_create()
 ---------------------------------------------------------------------------- */
 public int miicv_free(int icvid)
 {
+   mi_icv_type *icvp;
+
    MI_SAVE_ROUTINE_NAME("miicv_free");
 
    /* Check icv id */
-   if (MI_icv_chkid(icvid) == NULL) MI_RETURN_ERROR(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Detach the icv if it is attached */
-   if (minc_icv_list[icvid]->cdfid != MI_ERROR)
+   if (icvp->cdfid != MI_ERROR)
       {MI_CHK_ERR(miicv_detach(icvid))}
 
+   /* Free anything allocated at creation time */
+   FREE(icvp->user_maxvar);
+   FREE(icvp->user_minvar);
+
    /* Free the structure */
-   FREE(minc_icv_list[icvid]);
+   FREE(icvp);
    minc_icv_list[icvid]=NULL;
 
    MI_RETURN(MI_NOERROR);
@@ -255,6 +263,8 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
    case MI_ICV_KEEP_ASPECT:
       icvp->user_keep_aspect = value; break;
    case MI_ICV_SIGN:
+   case MI_ICV_MAXVAR:
+   case MI_ICV_MINVAR:
       MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
                         "Tried to set icv string property to a number");
       MI_RETURN_ERROR(MI_ERROR);
@@ -371,6 +381,18 @@ public int miicv_setstr(int icvid, int icv_property, char *value)
       icvp->user_vmin   = MI_get_default_range(MIvalid_min, icvp->user_type,
                                                icvp->user_sign);
       break;
+   case MI_ICV_MAXVAR:
+      if (value!=NULL) {
+         FREE(icvp->user_maxvar);
+         icvp->user_maxvar = strdup(value);
+      }
+      break;
+   case MI_ICV_MINVAR:
+      if (value!=NULL) {
+         FREE(icvp->user_minvar);
+         icvp->user_minvar = strdup(value);
+      }
+      break;
    case MI_ICV_TYPE:
    case MI_ICV_DO_RANGE:
    case MI_ICV_VALID_MAX:
@@ -468,6 +490,14 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
       *value = icvp->user_zdim_dir; break;
    case MI_ICV_NUM_IMGDIMS:
       *value = icvp->user_num_imgdims; break;
+   case MI_ICV_NUM_DIMS:
+      *value = icvp->var_ndims;
+      if (icvp->var_is_vector && icvp->user_do_scalar) (*value)--;
+      break;
+   case MI_ICV_CDFID:
+      *value = icvp->cdfid; break;
+   case MI_ICV_VARID:
+      *value = icvp->varid; break;
    case MI_ICV_ADIM_SIZE:
       *value = icvp->user_dim_size[0]; break;
    case MI_ICV_BDIM_SIZE:
@@ -483,6 +513,8 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
    case MI_ICV_KEEP_ASPECT:
       *value = icvp->user_keep_aspect; break;
    case MI_ICV_SIGN:
+   case MI_ICV_MAXVAR:
+   case MI_ICV_MINVAR:
       MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
                    "Tried to inquire about icv string property as a number");
       MI_RETURN_ERROR(MI_ERROR);
@@ -598,6 +630,12 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
       else
          (void) strcpy(value, MI_EMPTY_STRING);
       break;
+   case MI_ICV_MAXVAR:
+      (void) strcpy(value, icvp->user_maxvar);
+      break;
+   case MI_ICV_MINVAR:
+      (void) strcpy(value, icvp->user_minvar);
+      break;
    case MI_ICV_TYPE:
    case MI_ICV_DO_RANGE:
    case MI_ICV_VALID_MAX:
@@ -621,6 +659,9 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
    case MI_ICV_ADIM_START:
    case MI_ICV_BDIM_START:
    case MI_ICV_KEEP_ASPECT:
+   case MI_ICV_NUM_DIMS:
+   case MI_ICV_CDFID:
+   case MI_ICV_VARID:
       MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
                   "Tried to inquire about icv numeric property as a string");
       MI_RETURN_ERROR(MI_ERROR);
@@ -927,8 +968,8 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
    /* Look for image max, image min variables */
    if (icvp->user_do_norm) {
       oldncopts=ncopts; ncopts=0;
-      icvp->imgmaxid=ncvarid(cdfid, MIimagemax);
-      icvp->imgminid=ncvarid(cdfid, MIimagemin);
+      icvp->imgmaxid=ncvarid(cdfid, icvp->user_maxvar);
+      icvp->imgminid=ncvarid(cdfid, icvp->user_minvar);
       ncopts = oldncopts;
    }
 
@@ -942,8 +983,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       vid[0]=icvp->imgmaxid;
       vid[1]=icvp->imgminid;
 
-      /* No max/min variables, so use valid_range values for float/double
-         and 0, 1 for integer types */
+      /* No max/min variables, so use valid_range values */
       if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
          icvp->derv_imgmax = icvp->var_vmax;
          icvp->derv_imgmin = icvp->var_vmin;

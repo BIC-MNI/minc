@@ -18,12 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.19 1993-01-22 11:39:58 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.20 1993-02-01 10:51:20 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.19 1993-01-22 11:39:58 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.20 1993-02-01 10:51:20 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -264,6 +264,15 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.1
 #define MI_ICV_BDIM_START      23
 /* Number of image dimensions for dimension conversion */
 #define MI_ICV_NUM_IMGDIMS     24
+/* Number of dimensions of image variable taking into account vector/scalar
+   data (read-only property) */
+#define MI_ICV_NUM_DIMS        25
+/* Id of file and image variable (read-only properties) */
+#define MI_ICV_CDFID           26
+#define MI_ICV_VARID           27
+/* Names of MIimagemax and MIimagemin variables */
+#define MI_ICV_MAXVAR          28
+#define MI_ICV_MINVAR          29
 /* Image dimension properties. For each dimension, add the dimension 
    number (counting from fastest to slowest). */
 #define MI_ICV_DIM_SIZE        1000

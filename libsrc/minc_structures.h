@@ -12,7 +12,7 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 1.5 1992-12-01 14:04:55 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 1.6 1993-02-01 10:51:32 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* Image conversion variable structure type */
@@ -45,6 +45,8 @@ struct mi_icv_struct {
    int     user_do_norm;   /* Indicates that user wants value normalization */
    int     user_user_norm; /* If TRUE, user specifies range for norm, otherwise
                                  norm is taken from variable range */
+   char    *user_maxvar;   /* Name of MIimagemax variable */
+   char    *user_minvar;   /* Name of MIimagemin variable */
    double  user_imgmax;    /* Range for normalization */
    double  user_imgmin;
    int     user_do_dimconv; /* Indicates that user wants to do dimension 
