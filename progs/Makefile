@@ -12,7 +12,7 @@ include $(ROOT)/Make_configuration
 default : build
 
 all build install : 
-	@$(MAKE) 'TARGET=$@' 'SUBDIRS=$(PROG_LIB_DIR) $(ACR_LIB_DIR) [a-z]*' subdirs
+	@$(MAKE) 'TARGET=$@' 'SUBDIRS=$(PROG_LIB_DIR) [a-z]*' subdirs
 
 clean mostlyclean :
 	@$(MAKE) 'TARGET=$@' 'SUBDIRS=*' subdirs
