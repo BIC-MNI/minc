@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.3  1993-11-24 11:25:38  neelin
-@MODIFIED   : Added some group list stuff (dump, input_group_list).
+@MODIFIED   : Revision 1.4  1993-11-24 12:05:12  neelin
+@MODIFIED   : Changed format of dump.
 @MODIFIED   :
+ * Revision 1.3  93/11/24  11:25:38  neelin
+ * Added some group list stuff (dump, input_group_list).
+ * 
  * Revision 1.2  93/11/22  13:11:58  neelin
  * Changed to use new Acr_Element_Id stuff
  * 
@@ -560,7 +563,7 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
 
          /* Print the element id */
          (void) fprintf(file_pointer, 
-                        "   0x%04x  0x%04x  length = %d",
+                        "   0x%04x  0x%04x  length = %d :",
                         acr_get_element_group(cur_element),
                         acr_get_element_element(cur_element),
                         (int) acr_get_element_length(cur_element));
@@ -569,12 +572,12 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
          element_length = acr_get_element_length(cur_element);
          switch (element_length) {
          case 2:
-            (void) fprintf(file_pointer, ", short = %d (0x%04x)",
+            (void) fprintf(file_pointer, " short = %d (0x%04x)",
                            (int) acr_get_element_short(cur_element),
                            (int) acr_get_element_short(cur_element));
             break;
          case 4:
-            (void) fprintf(file_pointer, ", long = %d (0x%08x)",
+            (void) fprintf(file_pointer, " long = %d (0x%08x)",
                            (int) acr_get_element_long(cur_element),
                            (int) acr_get_element_long(cur_element));
             break;
@@ -592,7 +595,7 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
             }
 
             if (printable) {
-               (void) fprintf(file_pointer, ", string = \"%s\"", string);
+               (void) fprintf(file_pointer, " string = \"%s\"", string);
             }
 
          }
