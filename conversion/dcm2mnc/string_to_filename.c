@@ -8,7 +8,10 @@
 @CREATED    : January 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: string_to_filename.c,v $
- * Revision 1.1  2005-02-17 16:38:11  bert
+ * Revision 1.2  2005-03-03 18:59:16  bert
+ * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+ *
+ * Revision 1.1  2005/02/17 16:38:11  bert
  * Initial checkin, revised DICOM to MINC converter
  *
  * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -53,6 +56,8 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
+
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/string_to_filename.c,v 1.2 2005-03-03 18:59:16 bert Exp $";
 
 #include "dcm2mnc.h"
 #include <ctype.h>

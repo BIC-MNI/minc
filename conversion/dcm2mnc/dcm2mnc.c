@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.2  2005-03-02 18:23:32  bert
+ * Revision 1.3  2005-03-03 18:59:15  bert
+ * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+ *
+ * Revision 1.2  2005/03/02 18:23:32  bert
  * Added mosaic sequence and bitwise options
  *
  * Revision 1.1  2005/02/17 16:38:09  bert
@@ -50,24 +53,21 @@
  *
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.2 2005-03-02 18:23:32 bert Exp $";
-#endif
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.3 2005-03-03 18:59:15 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <math.h>
 #include <ParseArgv.h>
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
 
 /* Function Prototypes */
-static int ima_sort_function(const void *entry1, const void *entry2);
 static int dcm_sort_function(const void *entry1, const void *entry2);
 static void use_the_files(int num_files, 
-                          const char *file_list[], 
                           Data_Object_Info *data_info[],
                           const char *out_dir);
 static void usage(void);
@@ -79,7 +79,10 @@ static int check_file_type_consistency(int num_files, const char *file_list[]);
 
 struct globals G;
 
+#define VERSION_STRING "2.00.001 built " __DATE__ " " __TIME__
+
 ArgvInfo argTable[] = {
+    {NULL, ARGV_VERINFO, VERSION_STRING, NULL, NULL },
     {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &G.clobber,
      "Overwrite output files"},
     {"-list", ARGV_CONSTANT, (char *) TRUE, (char *) &G.List,
@@ -90,9 +93,9 @@ ArgvInfo argTable[] = {
      "Use <str> as session descriptor (default = patient initials)"},
     {"-cmd", ARGV_STRING, (char *) 1, G.command_line, 
      "Apply <command> to output files (e.g. gzip)"},
-    {"-verbose", ARGV_CONSTANT, (char *) 1, (char *) &G.Debug,
+    {"-verbose", ARGV_CONSTANT, (char *) LO_LOGGING, (char *) &G.Debug,
      "Print debugging information"},
-    {"-debug", ARGV_CONSTANT, (char *) 2, (char *) &G.Debug,
+    {"-debug", ARGV_CONSTANT, (char *) HI_LOGGING, (char *) &G.Debug,
      "Print lots of debugging information"},
     {"-nosplitecho", ARGV_CONSTANT, (char *) FALSE, (char *) &G.splitEcho,
      "Combine all echoes into a single file."},
@@ -267,20 +270,10 @@ main(int argc, char *argv[])
 
     printf("Sorting %d files...   ", num_files);
 
-    if (G.file_type == N4DCM) {
-        /* sort the files into series based on acquisition number
-         */
-        qsort(file_info_list, num_files, sizeof(file_info_list[0]),
-              dcm_sort_function);
-
-    } 
-    else if (G.file_type == IMA) {
-        /* sort the files based on file name
-         * (could also use dcm_sort_function, but would have 
-         * to use ACR_Image instead of ACR_Acquisition
-         */
-        qsort(file_list, num_files, sizeof(file_list[0]), ima_sort_function);
-    }
+    /* sort the files into series based on acquisition number
+     */
+    qsort(file_info_list, num_files, sizeof(file_info_list[0]),
+          dcm_sort_function);
 
     /* If DEBUG, print a list of all files.
      */
@@ -291,11 +284,10 @@ main(int argc, char *argv[])
             char *fname;
 
             if ((ifile % 16) == 0) {
-                printf("%-4s %-32.32s %-8s %-6s %-8s %-8s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-5s %-16s\n",
+                printf("%-4s %-32.32s %-14s %-8s %-8s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-4s %-5s %-16s\n",
                        "num",
                        "filename",
-                       "date",
-                       "time",
+                       "studyid",
                        "serialno",
                        "acq",
                        "nec",
@@ -317,11 +309,10 @@ main(int argc, char *argv[])
                 fname += strlen(fname) - 32;
             }
 
-            printf("%4d %-32.32s %8d %6d %8d %8d %4d %4d %4d %4d %4d %4d %4d %4d %4d %5d %-16s\n",
+            printf("%4d %-32.32s %14.6f %8d %8d %4d %4d %4d %4d %4d %4d %4d %4d %4d %5d %-16s\n",
                    ifile,
                    fname,
-                   info->study_date,
-                   info->study_time,
+                   info->study_id,
                    info->scanner_serialno,
                    info->acq_id,
                    info->num_echoes,
@@ -349,7 +340,7 @@ main(int argc, char *argv[])
         printf("Processing files, one series at a time...\n");
     }
 
-    use_the_files(num_files, file_list, file_info_list, out_dir);
+    use_the_files(num_files, file_info_list, out_dir);
 
     if (G.List) {
         printf("Done listing files.\n");
@@ -399,40 +390,6 @@ free_list(int num_files,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : ima_sort_function
-@INPUT      : entry1
-              entry2
-@OUTPUT     : (none)
-@RETURNS    : -1, 0, 1 for lt, eq, gt
-@DESCRIPTION: Function to compare two ima file names
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June 2001 (Rick Hoge)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-static int
-ima_sort_function(const void *entry1, const void *entry2)
-{
-    char * const *value1 = entry1;
-    char * const *value2 = entry2;
-
-    int session1,series1,image1;
-    int session2,series2,image2;
-  
-    sscanf(*value1,"%d-%d-%d.ima",&session1,&series1,&image1);
-    sscanf(*value2,"%d-%d-%d.ima",&session2,&series2,&image2);
-  
-    if (session1 < session2) return -1;
-    else if (session1 > session2) return 1;
-    else if (series1 < series2) return -1;
-    else if (series1 > series2) return 1;
-    else if (image1 < image2) return -1;
-    else if (image1 > image2) return 1;
-    else return 0;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
 @NAME       : dcm_sort_function
 @INPUT      : entry1
               entry2
@@ -469,6 +426,9 @@ dcm_sort_function(const void *entry1, const void *entry2)
     int image1 = (*file_info_list1)->global_image_number;
     int image2 = (*file_info_list2)->global_image_number;
 
+    int slice1 = (*file_info_list1)->slice_number;
+    int slice2 = (*file_info_list2)->slice_number;
+
     if (session1 < session2) return -1;
     else if (session1 > session2) return 1;
     else if (series1 < series2) return -1;
@@ -477,6 +437,8 @@ dcm_sort_function(const void *entry1, const void *entry2)
     else if (frame1 > frame2) return 1;
     else if (image1 < image2) return -1;
     else if (image1 > image2) return 1;
+    else if (slice1 < slice2) return -1;
+    else if (slice1 > slice2) return 1;
     else return 0;
 }
 
@@ -495,7 +457,6 @@ usage(void)
 
 static void
 use_the_files(int num_files, 
-              const char *file_list[], 
               Data_Object_Info *data_info[],
               const char *out_dir)
 {
@@ -605,7 +566,7 @@ use_the_files(int num_files,
                    to the list of files for this acquisition (and increment
                    counter) */
 
-                acq_file_list[acq_num_files] = file_list[ifile];
+                acq_file_list[acq_num_files] = data_info[ifile]->file_name;
                 acq_num_files++;
             }
         }
@@ -681,9 +642,6 @@ use_the_files(int num_files,
 
 }
 
-#define DICM_MAGIC_SIZE 4
-#define DICM_MAGIC_OFFS 128
-
 static int
 check_file_type_consistency(int num_files, const char *file_list[])
 {
@@ -744,5 +702,11 @@ check_file_type_consistency(int num_files, const char *file_list[])
         fclose(fp);
     }
     return (0);
+}
+
+/* compare two floating-point numbers */
+int fcmp(double x, double y, double delta) 
+{
+    return ((fabs(x - y) / ((x == 0.0) ? 1.0 : fabs(x))) < delta);
 }
 

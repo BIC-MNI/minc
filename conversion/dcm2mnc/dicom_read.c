@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.2  2005-03-02 20:18:09  bert
+   * Revision 1.3  2005-03-03 18:59:15  bert
+   * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+   *
+   * Revision 1.2  2005/03/02 20:18:09  bert
    * Latest fixes and tweaks
    *
    * Revision 1.1  2005/02/17 16:38:10  bert
@@ -163,13 +166,11 @@ static int irnd(double x)
    : matter 
    ---------------------------------------------------------------------------- */
 void 
-get_file_info(Acr_Group group_list, 
-              File_Info *fi_ptr,
-              General_Info *gi_ptr)
+get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 {
     Mri_Index imri;             /* MRI index (SLICE, ECHO, TIME, PHASE...) */
     World_Index iworld; /* World coordinate index (XCOORD, YCOORD...) */
-    World_Index jworld;
+    World_Index jworld;         /* World coordinate index */
     Volume_Index ivolume; /* Voxel coordinate index (VROW, VCOLUMN...) */
     int nrows;                  /* Row count in this file */
     int ncolumns;               /* Column count in this file */
@@ -205,9 +206,11 @@ get_file_info(Acr_Group group_list,
     mri_total_list[PHASE] = NULL;
     mri_total_list[CHEM_SHIFT] = NULL;
 
-    // Get image dimensions
+    /* Get image dimensions
+     */
     nrows = acr_find_short(group_list, ACR_Rows, 0);
     ncolumns = acr_find_short(group_list, ACR_Columns, 0);
+
     spatial_sizes[VROW] = nrows;
     spatial_sizes[VCOLUMN] = ncolumns;
 
@@ -221,12 +224,13 @@ get_file_info(Acr_Group group_list,
      */
     get_intensity_info(group_list, fi_ptr);
 
-    // Check for necessary values not found
+    /* Check for necessary values not found
+     */
     if ((nrows <= 0) || (ncolumns <= 0) ||
         (fi_ptr->bits_stored <= 0) ||
         (fi_ptr->bits_alloc <= 0)) {
         if (G.Debug) {
-            printf("Needed values missing, marking invalid\n");
+            printf("ERROR: Needed values missing, marking invalid\n");
         }
         fi_ptr->valid = FALSE;
         return;
@@ -276,7 +280,8 @@ get_file_info(Acr_Group group_list,
         fi_ptr->index[TIME] = irnd(fi_ptr->coordinate[TIME] * 100.0);
     }
 
-    // Set up general info on first pass
+    /* Set up general info on first pass
+     */
     if (!gi_ptr->initialized) {
 
         // Get row and columns sizes
@@ -734,7 +739,7 @@ get_coordinate_info(Acr_Group group_list,
         SAGITTAL, CORONAL, TRANSVERSE
     };
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("get_coordinate_info(%lx, ...)\n", (unsigned long) group_list);
     }
 
@@ -830,7 +835,7 @@ get_coordinate_info(Acr_Group group_list,
     }
 #endif
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("dircos %f %f %f %f %f %f %f %f %f\n",
                dircos[VSLICE][XCOORD],
                dircos[VSLICE][YCOORD],
@@ -893,7 +898,7 @@ get_coordinate_info(Acr_Group group_list,
         }
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" Volume_to_world slice=%s row=%s column=%s\n",
                World_Names[volume_to_world[VSLICE]],
                World_Names[volume_to_world[VROW]],
@@ -903,7 +908,7 @@ get_coordinate_info(Acr_Group group_list,
     /* Get orientation (depends on primary direction of slice normal)
      */
     *orientation = orientation_list[volume_to_world[VSLICE]];
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" Orientation is %s\n",
                (*orientation == SAGITTAL) ? "SAGITTAL" : 
                (*orientation == CORONAL) ? "CORONAL" : "TRANSVERSE");
@@ -938,20 +943,20 @@ get_coordinate_info(Acr_Group group_list,
 
     if (dbl_tmp1 == 0.0) {
         if (dbl_tmp2 == 0.0) {
-            if (G.Debug > 1) {
+            if (G.Debug >= HI_LOGGING) {
                 printf("Using default slice thickness of 1.0\n");
             }
             steps[VSLICE] = 1.0;
         }
         else {
-            if (G.Debug > 1) {
+            if (G.Debug >= HI_LOGGING) {
                 printf("Using (0018,0088) for slice thickness\n");
             }
             steps[VSLICE] = dbl_tmp2;
         }
     }
     else if (dbl_tmp2 == 0.0) {
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf("Using (0018,0050) for slice thickness\n");
         }
         steps[VSLICE] = dbl_tmp1;
@@ -977,7 +982,7 @@ get_coordinate_info(Acr_Group group_list,
     for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
         iworld = volume_to_world[ivolume];
         if (dircos[ivolume][iworld] < 0.0) {
-            if (G.Debug > 1) {
+            if (G.Debug >= HI_LOGGING) {
                 printf("Swapping direction of %s %s\n", 
                        Volume_Names[ivolume],
                        World_Names[iworld]);
@@ -991,16 +996,24 @@ get_coordinate_info(Acr_Group group_list,
 
     /* Find 3D coordinate of slice - ACR_Image_position_patient gives
      * the *corner* of the slice!
+     *
+     * Start by assuming that we didn't find it.
      */
+    found_coordinate = FALSE;
+    for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
+        coordinate[iworld] = 0.0;
+    }
     element = acr_find_group_element(group_list, ACR_Image_position_patient);
-    if ((element == NULL) ||
-        (acr_get_element_numeric_array(element, WORLD_NDIMS, coordinate) 
-         != WORLD_NDIMS)) {
-        found_coordinate = FALSE;
-        for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
-            coordinate[iworld] = 0.0;
-        }
-    } 
+    if (element == NULL) {
+        element = acr_find_group_element(group_list, ACR_Image_position_patient_old);
+    }
+    if (element == NULL) {
+        printf("WARNING: failed to find patient position\n");
+    }
+    else if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
+                                           coordinate) != WORLD_NDIMS) {
+        printf("WARNING: failed to read patient position\n");
+    }
     else {
         found_coordinate = TRUE;
     }
@@ -1025,7 +1038,7 @@ get_coordinate_info(Acr_Group group_list,
         }
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" coordinate %f %f %f, start %f %f %f\n", 
                coordinate[XCOORD], coordinate[YCOORD], coordinate[ZCOORD],
                starts[VROW], starts[VCOLUMN], starts[VSLICE]);
@@ -1314,6 +1327,11 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
                      group_list, ACR_MR_acquisition_type);
 
     get_string_field(gi_ptr->acq.image_type, group_list, ACR_Image_type);
+    if (G.Debug) {
+        if (strstr(gi_ptr->acq.image_type, "MOSAIC") != NULL) {
+            printf("This appears to be a Mosaic image\n");
+        }
+    }
 
     get_string_field(gi_ptr->acq.phase_enc_dir, 
                      group_list, ACR_Phase_encoding_direction);

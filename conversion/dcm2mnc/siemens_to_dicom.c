@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.2  2005-03-02 20:06:23  bert
+@MODIFIED   : Revision 1.3  2005-03-03 18:59:16  bert
+@MODIFIED   : Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+@MODIFIED   :
+@MODIFIED   : Revision 1.2  2005/03/02 20:06:23  bert
 @MODIFIED   : Update conversions to reflect simplified header structures and types
 @MODIFIED   :
 @MODIFIED   : Revision 1.1  2005/02/17 16:38:11  bert
@@ -38,9 +41,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.2 2005-03-02 20:06:23 bert Exp $";
-#endif
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.3 2005-03-03 18:59:16 bert Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,7 +163,7 @@ siemens_to_dicom(const char *filename, int read_image)
     assert(((char *)&Siemens_hdr.G21-(char *)&Siemens_hdr) == 0x0E80);
     assert(((char *)&Siemens_hdr.G28-(char *)&Siemens_hdr) == 0x1380);
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("siemens_to_dicom(%s, %d)\n", filename, read_image);
     }
 
@@ -330,7 +331,7 @@ update_coordinate_info(Acr_Group group_list)
     string_t string;
     int n_slices;
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("update_coordinate_info(%lx)\n", (unsigned long) group_list);
     }
 
@@ -367,7 +368,7 @@ update_coordinate_info(Acr_Group group_list)
         column[ZCOORD] = 0.0;
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("R %.3f %.3f %.3f C %.3f %.3f %.3f N %.3f %.3f %.3f\n",
                row[0], row[1], row[2],
                column[0], column[1], column[2],
@@ -392,7 +393,7 @@ update_coordinate_info(Acr_Group group_list)
         coord[ZCOORD] = 0.0;
     }
     else {
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf(" old %.3f %.3f %.3f, ", coord[0], coord[1], coord[2]);
         }
     }
@@ -429,7 +430,7 @@ update_coordinate_info(Acr_Group group_list)
     }
     sprintf(string, "%.15g\\%.15g\\%.15g", coord[0], -coord[1], -coord[2]);
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("new %.3f %.3f %.3f\n", coord[0], -coord[1], -coord[2]);
     }
 
@@ -441,7 +442,7 @@ update_coordinate_info(Acr_Group group_list)
     if (n_slices != 1) {
         int acq_cols = acr_find_short(group_list, SPI_Acquisition_columns, 
                                       ncolumns);
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf("Hmmm... This appears to be a mosaic image %d %d\n",
                    acq_cols, ncolumns);
         }

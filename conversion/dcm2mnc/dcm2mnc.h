@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.3  2005-03-02 18:23:33  bert
+ * Revision 1.4  2005-03-03 18:59:15  bert
+ * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+ *
+ * Revision 1.3  2005/03/02 18:23:33  bert
  * Added mosaic sequence and bitwise options
  *
  * Revision 1.2  2005/02/23 18:28:11  bert
@@ -91,19 +94,23 @@
 #  define FALSE 0
 #endif
 
+#define DICM_MAGIC_SIZE 4
+#define DICM_MAGIC_OFFS 128
+
 /* Test to see if two floating-point numbers are very close in value.
  */
-#define NEARLY_EQUAL(x,y) (fabs(x - y) < 0.0000001)
+
+extern int fcmp(double x, double y, double delta);
+
+#define NEARLY_EQUAL(x, y) (fcmp(x, y, 1e-6))
 
 typedef char string_t[511+1];
 #define STRING_T_LEN (sizeof(string_t) - 1)
 
-#define FILE_ALLOC_INCREMENT 10
-
 /* Define logging constants */
-#define NO_LOGGING   0
-#define LOW_LOGGING  1
-#define HIGH_LOGGING 2
+#define NO_LOGGING 0
+#define LO_LOGGING 1
+#define HI_LOGGING 2
 
 /* added by rhoge for ACQ and MEAS loop handling */
 typedef enum { NONE = 0 , ACQ , MEAS } Loop_Type;
@@ -174,7 +181,7 @@ struct globals {
 };
 
 /* Values for options flags */
-#define OPTS_NO_MOSAIC 0x00000001
+#define OPTS_NO_MOSAIC 0x00000001 /* Don't parse mosaic information. */
 
 extern struct globals G;
 

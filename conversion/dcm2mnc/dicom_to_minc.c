@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.2  2005-03-02 20:16:24  bert
+   * Revision 1.3  2005-03-03 18:59:15  bert
+   * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
+   *
+   * Revision 1.2  2005/03/02 20:16:24  bert
    * Latest changes and cleanup
    *
    * Revision 1.1  2005/02/17 16:38:10  bert
@@ -117,6 +120,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.3 2005-03-03 18:59:15 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -544,13 +548,13 @@ read_numa4_dicom(const char *filename, int max_group)
 
     protocol = acr_find_group_element(group_list, SPI_Protocol);
     if (protocol == NULL) {
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf("No Siemens protocol structure found...\n");
         }
         return group_list;
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("Incorporating Siemens protocol structure...\n");
     }
 
@@ -924,13 +928,13 @@ sort_dimensions(General_Info *gi_ptr)
             ((G.file_type == N4DCM) &&
              (imri == TIME) && 
              (gi_ptr->num_slices_in_file > 0))) { /* also fails on 1 slice */
-            if (G.Debug > 1) {
+            if (G.Debug >= HI_LOGGING) {
                 printf("Not sorting %s dimension\n", Mri_Names[imri]);
             }
             continue;
         }
             
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf("Sorting %s dimension\n", Mri_Names[imri]);
         }
 
@@ -965,7 +969,7 @@ sort_dimensions(General_Info *gi_ptr)
             gi_ptr->coordinates[imri][i] = sort_array[j].value;
         }
 
-        if (G.Debug > 1) {
+        if (G.Debug >= HI_LOGGING) {
             printf(" is_reversed %d nvalues %d min %f max %f\n",
                    is_reversed, nvalues, 
                    gi_ptr->coordinates[imri][0],
@@ -985,10 +989,17 @@ sort_dimensions(General_Info *gi_ptr)
                             gi_ptr->coordinates[imri][0]);
 
             for (i = 1; i < nvalues; i++) {
-                if (!NEARLY_EQUAL(delta, (gi_ptr->coordinates[imri][i] - 
-                                          gi_ptr->coordinates[imri][i - 1]))) {
+                if (!fcmp(delta, 
+                          (gi_ptr->coordinates[imri][i] - 
+                           gi_ptr->coordinates[imri][i - 1]),
+                          1.0e-4)) {
                     printf("WARNING: Missing data for %s dimension\n",
                            Mri_Names[imri]);
+                    printf("   slice # %d %.12f %.12f\n",
+                           i, 
+                           delta,
+                           (gi_ptr->coordinates[imri][i] -
+                            gi_ptr->coordinates[imri][i - 1]));
                 }
             }
         }
@@ -1023,7 +1034,7 @@ sort_dimensions(General_Info *gi_ptr)
                 
             }
             gi_ptr->start[gi_ptr->slice_world] = gi_ptr->coordinates[imri][0];
-            if (G.Debug > 1) {
+            if (G.Debug >= HI_LOGGING) {
                 printf("Set slice %d step to %f, start to %f\n",
                        gi_ptr->slice_world,
                        gi_ptr->step[gi_ptr->slice_world],
@@ -1167,7 +1178,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     double dircos[VOL_NDIMS][WORLD_NDIMS];
     char *str_tmp;
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("mosaic_init(%lx, %lx, %d)\n",
                (unsigned long) group_list, (unsigned long) mi_ptr,
                load_image);
@@ -1187,7 +1198,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
         mi_ptr->mosaic_seq = G.mosaic_seq;
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" ordering is %s\n", str_tmp);
     }
 
@@ -1301,6 +1312,10 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     /* Get position and correct to first slice
      */
     element = acr_find_group_element(group_list, ACR_Image_position_patient);
+    if (element == NULL) {
+        element = acr_find_group_element(group_list, 
+                                         ACR_Image_position_patient_old);
+    }
     if (element != NULL) {
         acr_get_element_numeric_array(element, WORLD_NDIMS, 
                                       mi_ptr->position);
@@ -1313,7 +1328,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
             mi_ptr->position[ZCOORD] = 0.0;
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" step %.3f %.3f %.3f position %.3f %.3f %.3f\n",
                mi_ptr->step[0],
                mi_ptr->step[1],
@@ -1346,7 +1361,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
         }
     }
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" corrected position %.3f %.3f %.3f\n",
                mi_ptr->position[0],
                mi_ptr->position[1],
@@ -1406,7 +1421,7 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
     string_t string;
     int islice;
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf("mosaic_modify_group_list(%lx, %lx, %d, %d)\n",
                (unsigned long)group_list, (unsigned long)mi_ptr,
                iimage, load_image);
@@ -1467,7 +1482,7 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
     acr_insert_string(&group_list, SPI_Image_position, string);
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
 
-    if (G.Debug > 1) {
+    if (G.Debug >= HI_LOGGING) {
         printf(" position %s\n", string);
     }
 
