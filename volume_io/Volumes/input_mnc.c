@@ -2,13 +2,13 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.36 1995-03-30 21:14:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.37 1995-04-04 03:42:27 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
 
 #define  MIN_SLAB_SIZE   10000      /* at least 10000 entries per read */
-#define  MAX_SLAB_SIZE   200000     /* no more than 200 K at a time */
+#define  MAX_SLAB_SIZE   400000     /* no more than 200 K at a time */
 
 private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,

@@ -1,9 +1,10 @@
 
 #include  <internal_volume_io.h>
 #include  <pwd.h>
+#include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.21 1995-03-21 19:01:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.22 1995-04-04 03:42:16 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -651,7 +652,7 @@ public  void  get_absolute_filename(
     /* if the directory is non-null and the filename is not already
        absolute (begins with '/'), then prefix the directory to the filename */
 
-    if( directory != (char *) 0 && strlen( directory ) > 0 &&
+    if( directory != (char *) 0 && (int) strlen( directory ) > 0 &&
         filename[0] != '/' )
     {
         (void) strcpy( abs_filename, directory );
@@ -724,7 +725,7 @@ public  Status  input_character(
     }
     else
     {
-        *ch = c;
+        *ch = (char) c;
         status = OK;
     }
 
@@ -1973,7 +1974,7 @@ public  Status  io_unsigned_char(
         if( io_flag == READ_FILE )
         {
             if( fscanf( file, "%d", &i ) == 1 )
-                *c = i;
+                *c = (unsigned char) i;
             else
             {
                 print( "Error inputting unsigned char.\n" );

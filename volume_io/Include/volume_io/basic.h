@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.19 1995-03-21 19:01:43 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.20 1995-04-04 03:42:14 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -86,9 +86,7 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 
 /* --------- C and LINT stuff -------------------------- */
 
-#ifndef lint
 #define USE_ANSI
-#endif
 
 #ifdef USE_ANSI
 #define GLUE(x,y) x##y

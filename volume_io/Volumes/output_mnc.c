@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.24 1995-03-21 19:02:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.25 1995-04-04 03:42:30 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -11,12 +11,6 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_m
 #define  MAX_SLAB_SIZE   200000     /* no more than 200 K at a time */
 
 #define  UNITS           "mm"
-
-private  void  create_world_transform(
-    Point       *origin,
-    Vector      axes[N_DIMENSIONS],
-    Real        axis_spacing[N_DIMENSIONS],
-    Transform   *transform );
 
 private  Status  get_dimension_ordering(
     int          n_vol_dims,

@@ -3,10 +3,11 @@
 #include  <sys/time.h>
 #include  <sys/param.h>
 #include  <limits.h>
+#include  <unistd.h>
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.6 1994-11-25 14:20:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.7 1995-04-04 03:42:19 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -198,7 +199,7 @@ public  void  sleep_program( Real seconds )
     long  ticks;
 
     ticks = (long) ROUND( seconds * CLK_TCK );
-    sginap( ticks );
+    (void) sginap( ticks );
 #endif
 }
 

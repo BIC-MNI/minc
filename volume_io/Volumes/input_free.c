@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.19 1995-03-21 19:01:57 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.20 1995-04-04 03:42:24 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -91,7 +91,7 @@ public  Status  initialize_free_format_input(
         /* decide how to store data in memory */
 
         if( volume->data_type == NO_DATA_TYPE )
-            desired_data_type = volume_input->file_data_type;
+            desired_data_type = NC_BYTE;
         else
             desired_data_type = volume->nc_data_type;
     }
@@ -301,9 +301,9 @@ public  Status  initialize_free_format_input(
             for_less( i, 0, n_voxels_in_slice )
             {
                 value = (int) volume_input->short_slice_buffer[i];
-                if( slice == 0 && i == 0 || value < min_value )
+                if( slice == 0 && i == 0 || (int) value < min_value )
                     min_value = value;
-                if( slice == 0 && i == 0 || value > max_value )
+                if( slice == 0 && i == 0 || (int) value > max_value )
                     max_value = value;
             }
 

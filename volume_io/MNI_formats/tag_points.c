@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.12 1994-11-25 14:20:22 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.13 1995-04-04 03:42:32 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -564,25 +564,25 @@ public  Status  input_tag_points(
             }
         }
 
-        if( n_strings == 0 )
+        if( n_strings != 0 )
         {
-        }
-        else if( n_strings == 1 )
-        {
-            extract_label( line, label );
-        }
-        else if( n_strings < 3 || n_strings > 4 ||
-                 sscanf( line, "%lf %d %d %n", &weight, &structure_id,
-                         &patient_id, &pos ) != 3 )
-        {
-            (void) fprintf( stderr,
-                  "input_tag_points(): error reading tag point %d\n",
-                  *n_tag_points + 1 );
-            return( ERROR );
-        }
-        else if( n_strings == 4 )
-        {
-            extract_label( &line[pos], label );
+            if( n_strings == 1 )
+            {
+                extract_label( line, label );
+            }
+            else if( n_strings < 3 || n_strings > 4 ||
+                     sscanf( line, "%lf %d %d %n", &weight, &structure_id,
+                             &patient_id, &pos ) != 3 )
+            {
+                (void) fprintf( stderr,
+                      "input_tag_points(): error reading tag point %d\n",
+                      *n_tag_points + 1 );
+                return( ERROR );
+            }
+            else if( n_strings == 4 )
+            {
+                extract_label( &line[pos], label );
+            }
         }
 
         if( weights != (Real **) NULL )
