@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:32  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:35:32  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.4  94/09/28  10:34:51  neelin
  * Pre-release
  * 
@@ -184,6 +189,7 @@ private Acr_Group spi_reply(Acr_Message input_message)
 @NAME       : gcbegin_reply
 @INPUT      : input_message
 @OUTPUT     : num_files - number of files needed
+              project_name - name to use for project file
 @RETURNS    : output_message
 @DESCRIPTION: Responds to GCBEGINq message
 @METHOD     : 
@@ -192,10 +198,14 @@ private Acr_Group spi_reply(Acr_Message input_message)
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
+public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
+                                 char **project_name)
 {
    Acr_Group group, group_list;
    Acr_Element element;
+   char project_option_string[512];
+   void *ptr;
+   int index;
 
    /* Print log message */
    if (Do_logging >= HIGH_LOGGING) {
@@ -203,15 +213,21 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
       acr_dump_message(stderr, input_message);
    }
 
+   /* Free project_name string if needed */
+   if (*project_name != NULL) FREE(*project_name);
+
    /* Get the group list */
-   group = acr_get_message_group_list(input_message);
+   group_list = acr_get_message_group_list(input_message);
 
    /* Get the number of files */
-   element = acr_find_group_element(group, SPI_Nr_data_objects);
+   element = acr_find_group_element(group_list, SPI_Nr_data_objects);
    if (element != NULL)
       *num_files = acr_get_element_short(element);
    else
       *num_files = 1;
+
+   /* Get the project name from the volume name */
+   *project_name = strdup(acr_find_string(group_list, SPI_Volume_name, ""));
 
    /* Create the reply */
    group_list = spi_reply(input_message);
@@ -246,6 +262,50 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files)
       acr_create_element_string(SPI_Closing_date, "2010.11.23"));
    acr_group_add_element(group,
       acr_create_element_numeric(SPI_Perc_space_used, (double) 20));
+
+   /* Check that the project file is okay - if not get a string listing 
+      possible project names and send it back */
+   if (read_project_file(*project_name, NULL, NULL, NULL, NULL, 0)) {
+
+      /* Print an error message */
+      (void) fprintf(stderr, "Unknown project \"%s\"\n", *project_name);
+
+      /* Set the project name to NULL as a signal to the caller */
+      FREE(*project_name);
+      *project_name = NULL;
+
+      /* Set an error status */
+      element = acr_find_group_element(group_list, ACR_Status);
+      if (element != NULL) {
+         ptr = acr_get_element_data(element);
+         *((unsigned short *) ptr) = ACR_REFUSED;
+      }
+      element = acr_find_group_element(group_list, SPI_Status);
+      if (element != NULL) {
+         ptr = acr_get_element_data(element);
+         *((long *) ptr) = SPI_MEDIUM_NOT_AVAIL;
+      }
+
+      /* Set a message for the operator */
+      (void) sprintf(project_option_string, 
+                     "Unknown volume, try remote DOR volume: ");
+      index = strlen(project_option_string);
+      get_project_option_string(&project_option_string[index],
+                                sizeof(project_option_string) - index);
+      index = strlen(project_option_string);
+      if ((index % 2) != 0) {
+         project_option_string[index] = ' ';
+         project_option_string[index+1] = '\0';
+      }
+      element = acr_find_group_element(group_list, SPI_Operator_text);
+      if (element != NULL) {
+         ptr = acr_get_element_data(element);
+         if (ptr != NULL) FREE(ptr);
+         acr_set_element_data(element, strlen(project_option_string),
+                              strdup(project_option_string));
+      }
+   }
+
 
    return make_message(group_list);
 

@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.5  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 2.6  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.5  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 2.4  1994/12/12  09:05:57  neelin
  * Changed comment in calculate_slice_start (code is the same)
  *
@@ -1011,6 +1016,7 @@ public World_Index get_nearest_world_axis(double dircos[WORLD_NDIMS])
 @CREATED    : November 18, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
+/* ARGSUSED */
 public void calculate_slice_start(World_Index slice_world,
                                   World_Index row_world,
                                   World_Index column_world,
@@ -1019,7 +1025,6 @@ public void calculate_slice_start(World_Index slice_world,
                                   double step[WORLD_NDIMS],
                                   double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                   double start[WORLD_NDIMS])
-     /* ARGSUSED */
 {
    World_Index iworld;
    double offset[WORLD_NDIMS];

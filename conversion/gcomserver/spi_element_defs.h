@@ -157,6 +157,8 @@ GLOBAL_ELEMENT(SPI_Fp_window_maximum       , 0x0029, 0x1160);
 
 /* Define status codes */
 #define ACR_SUCCESS 0x0000
+#define ACR_REFUSED 0xaf00
+#define SPI_MEDIUM_NOT_AVAIL 0xa0000e10
 
 /* Define data object types */
 #define ACR_IMAGE_OBJECT 0x0000

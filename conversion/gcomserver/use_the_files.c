@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:37  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:35:37  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.9  94/09/28  10:34:53  neelin
  * Pre-release
  * 
@@ -70,7 +75,8 @@ int gethostname (char *name, int namelen);
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : use_the_files
-@INPUT      : num_files - number of image files
+@INPUT      : project_name - name to use for project file
+              num_files - number of image files
               file_list - list of file names
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
@@ -81,7 +87,8 @@ int gethostname (char *name, int namelen);
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void use_the_files(int num_files, char *file_list[], 
+public void use_the_files(char *project_name, 
+                          int num_files, char *file_list[], 
                           Data_Object_Info data_info[])
 {
    int ifile;
@@ -101,32 +108,15 @@ public void use_the_files(int num_files, char *file_list[],
    int exit_status;
    char *output_file_name;
    char file_prefix[256];
-   char output_default_file[256];
-   char hostname[256];
    int output_uid, output_gid;
    char command_line[512];
    char string[512];
    FILE *fp;
-   int index;
 
    /* Look for defaults file */
-   file_prefix[0] = '\0';
-   command_line[0] = '\0';
-   output_uid = output_gid = INT_MIN;
-   (void) gethostname(hostname, sizeof(hostname) - 1);
-   (void) sprintf(output_default_file, "%s%s", 
-                  OUTPUT_DEFAULT_FILE, hostname);
-   if ((fp=fopen(output_default_file, "r")) != NULL) {
-      if (fgets(string, (int) sizeof(string), fp) != NULL) {
-         (void) sscanf(string, "%s %d %d", 
-                       file_prefix, &output_uid, &output_gid);
-      }
-      (void) fgets(command_line, (int) sizeof(command_line), fp);
-      index = strlen(command_line) - 1;
-      if ((index >= 0) && (command_line[index] == '\n'))
-         command_line[index] = '\0';
-      (void) fclose(fp);
-   }
+   (void) read_project_file(project_name, file_prefix, 
+                            &output_uid, &output_gid,
+                            command_line, (int) sizeof(command_line));
 
    /* Allocate space for acquisition file list */
    acq_file_list = MALLOC(num_files * sizeof(*acq_file_list));
@@ -198,7 +188,7 @@ public void use_the_files(int num_files, char *file_list[],
 
          /* Invoke a command on the file (if requested) and get the 
             returned file name */
-         if (strlen(command_line) > 0) {
+         if (strlen(command_line) > (size_t) 0) {
             (void) sprintf(string, "%s %s", command_line, output_file_name);
             if ((fp=popen(string, "r")) != NULL) {
                (void) fscanf(fp, "%s", output_file_name);

@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 2.2  1995-02-09 13:51:26  neelin
-@MODIFIED   : Mods for irix 5 lint.
+@MODIFIED   : Revision 2.3  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.2  1995/02/09  13:51:26  neelin
+ * Mods for irix 5 lint.
+ *
  * Revision 2.1  1994/10/20  13:48:02  neelin
  * Write out direction cosines to support rotated volumes.
  * Store single slices as 1-slice volumes (3D instead of 2D).
@@ -82,9 +87,12 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.2 1995-02-09 13:51:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.3 1995-02-14 18:12:26 neelin Exp $";
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <gcomserver.h>
 
 /* Global for minc history */
@@ -130,11 +138,14 @@ int main(int argc, char *argv[])
    Data_Object_Info *file_info_list;
    int num_files;
    int cur_file;
-   static char file_prefix_string[256] = "gcomserver";
+   static char file_prefix_string[L_tmpnam+1] = "gcomserver";
    char *file_prefix = file_prefix_string;
+   char *temp_dir;
    int continue_looping;
    FILE *fptemp;
    char last_file_name[256];
+   char *project_name = NULL;
+   char logfilename[256];
 
    /* Create minc history string */
    {
@@ -145,7 +156,8 @@ int main(int argc, char *argv[])
 
    /* Re-open stderr if we are logging */
    if (Do_logging > NO_LOGGING) {
-      (void) freopen("gcomserver.log", "w", stderr);
+      (void) sprintf(logfilename, "gcomserver-%d.log", (int) getpid());
+      (void) freopen(logfilename, "w", stderr);
       setbuf(stderr, NULL);
    }
 
@@ -167,13 +179,15 @@ int main(int argc, char *argv[])
       clashes */
    if (! Keep_files) {
       (void) tmpnam(file_prefix);
-      fptemp = fopen(file_prefix, "w");
-      if (fptemp == NULL) {
-         (void) fprintf(stderr, "%s: Unable to create temporary file.\n",
+      if (mkdir(file_prefix, (mode_t) 0777)) {
+         (void) fprintf(stderr, 
+            "%s: Unable to create directory for temporary files.\n",
                         pname);
+         perror(pname);
          exit(EXIT_FAILURE);
       }
-      (void) fclose(fptemp);
+      temp_dir = strdup(file_prefix);
+      (void) strcat(file_prefix, "/gyro");
    }
 
    /* Loop while reading messages */
@@ -222,7 +236,12 @@ int main(int argc, char *argv[])
                state = DISCONNECTING;
                break;
             }
-            output_message = gcbegin_reply(input_message, &num_files);
+            output_message = gcbegin_reply(input_message, &num_files,
+                                           &project_name);
+            if (project_name == NULL) {
+               num_files = 0;
+               break;
+            }
             file_list = MALLOC((size_t) num_files * sizeof(*file_list));
             for (cur_file=0; cur_file < num_files; cur_file++) {
                file_list[cur_file] = NULL;
@@ -282,7 +301,7 @@ int main(int argc, char *argv[])
             /* Disable input tracing */
             acr_disable_input_trace();
 #endif
-            use_the_files(num_files, file_list, file_info_list);
+            use_the_files(project_name, num_files, file_list, file_info_list);
 #ifdef DO_INPUT_TRACING
    /* Enable input tracing */
             acr_enable_input_trace();
@@ -382,9 +401,10 @@ int main(int argc, char *argv[])
       num_files = 0;
    }
    
-   /* Remove the file prefix file */
+   /* Remove the file prefix directory */
    if (! Keep_files) {
-      cleanup_files(1, &file_prefix);
+      cleanup_files(1, &temp_dir);
+      FREE(temp_dir);
    }
 
    /* Print final message */
@@ -437,6 +457,9 @@ int main(int argc, char *argv[])
          }
       }
    }
+
+   /* Free the project_name string */
+   if (project_name != NULL) FREE(project_name);
 
    exit(exit_status);
 

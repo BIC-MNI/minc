@@ -12,7 +12,7 @@ PROGS    = gcomserver gcomserver-debug gyrotominc
 EXTRA_OBJS = spi_element_defs.o open_connection.o reply.o spi_message.o \
              save_transferred_object.o use_the_files.o \
              gyro_to_minc.o gyro_read.o minc_file.o \
-             string_to_filename.o
+             string_to_filename.o project_file.o
 HEADERS  = gcomserver.h gcom_prototypes.h spi_element_defs.h gyro_to_minc.h
 MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines

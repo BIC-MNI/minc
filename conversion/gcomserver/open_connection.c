@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 2.4  1995-02-09 13:51:26  neelin
-@MODIFIED   : Mods for irix 5 lint.
+@MODIFIED   : Revision 2.5  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.4  1995/02/09  13:51:26  neelin
+ * Mods for irix 5 lint.
+ *
  * Revision 2.3  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -143,9 +148,9 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
+/* ARGSUSED */
 public void open_connection(int argc, char *argv[], 
                             Acr_File **afpin, Acr_File **afpout)
-     /* ARGSUSED */
 {
    SessionData sd;
    Io_data *io_data;
@@ -161,7 +166,6 @@ public void open_connection(int argc, char *argv[],
        (maxlength <= 0)) {
       maxlength = DN_MAX_IO;
    }
-   (void) fprintf(stderr, "Maxlength = %d\n", (int) maxlength);
 
    /* Set up input */
    io_data = MALLOC(sizeof(*io_data));

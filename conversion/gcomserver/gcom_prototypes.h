@@ -3,7 +3,8 @@ public void free_list(int num_files, char **file_list,
                       Data_Object_Info *file_info_list);
 public void open_connection(int argc, char *argv[], 
                             Acr_File **afpin, Acr_File **afpout);
-public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files);
+public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
+                                 char **project_name);
 public Acr_Message ready_reply(Acr_Message input_message);
 public Acr_Message send_reply(Acr_Message input_message);
 public Acr_Message gcend_reply(Acr_Message input_message);
@@ -14,7 +15,8 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list);
 public void save_transferred_object(Acr_Group group_list, char *file_prefix,
                                     char **new_file_name,
                                     Data_Object_Info *data_info);
-public void use_the_files(int num_files, char *file_list[], 
+public void use_the_files(char *project_name, 
+                          int num_files, char *file_list[], 
                           Data_Object_Info data_info[]);
 public int gyro_to_minc(int num_files, char *file_list[], 
                         char *minc_file, int clobber,
@@ -60,3 +62,9 @@ public void save_minc_image(int icvid, General_Info *general_info,
                             File_Info *file_info, Image_Data *image);
 public void close_minc_file(int icvid);
 public void string_to_filename(char *string, char *filename, int maxlen);
+public int read_project_file(char *project_name, 
+                             char *file_prefix, 
+                             int *output_uid, int *output_gid,
+                             char *command_line, int maxlen_command);
+public void get_project_option_string(char *project_option_string,
+                                      int maxlen_project_option);

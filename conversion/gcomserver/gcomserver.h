@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:25  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-14 18:12:26  neelin
+@MODIFIED   : Added project names and defaults files (using volume name).
+@MODIFIED   : Added process id to log file name.
+@MODIFIED   : Moved temporary files to subdirectory.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:35:25  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.9  94/09/28  10:34:56  neelin
  * Pre-release
  * 
@@ -94,7 +99,8 @@
 #define HIGH_LOGGING 2
 
 /* File containing defaults for gcomserver */
-#define OUTPUT_DEFAULT_FILE "/usr/local/lib/gcomserver."
+#define OUTPUT_DEFAULT_FILE_DIR "/usr/local/lib"
+#define OUTPUT_DEFAULT_FILE_PREFIX "gcomserver."
 
 /* System log file (set to NULL for no logging of error) */
 #define SYSTEM_LOG "/dev/log"
