@@ -8,7 +8,10 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.7  2001-04-09 23:02:50  neelin
+ * Revision 6.8  2001-04-21 13:29:06  neelin
+ * Added PROJECT_CAPTURE file type and support for .default project file.
+ *
+ * Revision 6.7  2001/04/09 23:02:50  neelin
  * Modified copyright notice, removing permission statement since copying,
  * etc. is probably not permitted by our non-disclosure agreement with
  * Philips.
@@ -140,10 +143,21 @@ public int read_project_file(char *project_name,
                   OUTPUT_DEFAULT_FILE_DIR, OUTPUT_DEFAULT_FILE_PREFIX,
                   project_string);
 
-   /* Open and read the defaults file - if it isn't there then return TRUE
-      if the caller gave a project name */
+   /* Open and read the defaults file. If it is not there and no project 
+      name was given, then try the ".default" extension. Return TRUE (error)
+      only if a project name was given */
    if ((fp=fopen(output_default_file, "r")) == NULL) {
-      return project_name_given;
+      if (project_name_given) {
+         return TRUE;
+      }
+      else {
+         (void) sprintf(output_default_file, "%s/%s%s", 
+                        OUTPUT_DEFAULT_FILE_DIR, OUTPUT_DEFAULT_FILE_PREFIX,
+                        OUTPUT_DEFAULT_FILE_SUFFIX);
+         if ((fp=fopen(output_default_file, "r")) == NULL) {
+            return FALSE;
+         }
+      }
    }
 
    /* Loop over lines of the file */
@@ -220,16 +234,24 @@ public int read_project_file(char *project_name,
          ptr++;
          *ptr = '\0';
 
+         /* Downcase the keyword */
+         for (ichar=0; (size_t) ichar < strlen(keyword); ichar++) {
+            keyword[ichar] = tolower((int) keyword[ichar]);
+         }
+
          /* Set up error string */
          error = NULL;
 
          /* Look for the project type on the first line */
          if (iline == 0) {
-            if (STREQ(keyword, "Type")) {
-               if (STREQ(value, "Directory")) {
+            for (ichar=0; (size_t) ichar < strlen(value); ichar++) {
+               value[ichar] = tolower((int) value[ichar]);
+            }
+            if (STREQ(keyword, "type")) {
+               if (STREQ(value, "directory")) {
                   project_info->type = PROJECT_DIRECTORY;
                }
-               else if (STREQ(value, "Dicom")) {
+               else if (STREQ(value, "dicom")) {
                   project_info->type = PROJECT_DICOM;
                   project_info->info.dicom.hostname[0] = '\0';
                   project_info->info.dicom.port[0] = '\0';
@@ -239,6 +261,9 @@ public int read_project_file(char *project_name,
                   project_info->info.dicom.use_safe_orientations = FALSE;
                   project_info->info.dicom.afpin = NULL;
                   project_info->info.dicom.afpout = NULL;
+               }
+               else if (STREQ(value, "capture")) {
+                  project_info->type = PROJECT_CAPTURE;
                }
                else {
                   error = "Unknown project type";
@@ -258,18 +283,19 @@ public int read_project_file(char *project_name,
             }
 
             /* Keywords for directory type */
-            else if (project_info->type == PROJECT_DIRECTORY) {
-               if (STREQ("Prefix", keyword)) {
+            else if ((project_info->type == PROJECT_DIRECTORY) ||
+                     (project_info->type == PROJECT_CAPTURE)) {
+               if (STREQ("prefix", keyword)) {
                   STRCOPY(project_info->info.directory.file_prefix,
                           value, LONG_LINE);
                }
-               else if (STREQ("Uid", keyword)) {
+               else if (STREQ("uid", keyword)) {
                   project_info->info.directory.output_uid = atoi(value);
                }
-               else if (STREQ("Gid", keyword)) {
+               else if (STREQ("gid", keyword)) {
                   project_info->info.directory.output_gid = atoi(value);
                }
-               else if (STREQ("Command", keyword)) {
+               else if (STREQ("command", keyword)) {
                   STRCOPY(project_info->info.directory.command_line,
                           value, LONG_LINE);
                }
@@ -280,28 +306,28 @@ public int read_project_file(char *project_name,
 
             /* Keywords for dicom type */
             else if (project_info->type == PROJECT_DICOM) {
-               if (STREQ("Host", keyword)) {
+               if (STREQ("host", keyword)) {
                   STRCOPY(project_info->info.dicom.hostname,
                           value, SHORT_LINE);
                }
-               else if (STREQ("Port", keyword)) {
+               else if (STREQ("port", keyword)) {
                   STRCOPY(project_info->info.dicom.port,
                           value, SHORT_LINE);
                }
-               else if (STREQ("AEtitle", keyword)) {
+               else if (STREQ("aetitle", keyword)) {
                   STRCOPY(project_info->info.dicom.AEtitle,
                           value, SHORT_LINE);
                }
-               else if (STREQ("LocalAEtitle", keyword)) {
+               else if (STREQ("localaetitle", keyword)) {
                   STRCOPY(project_info->info.dicom.LocalAEtitle,
                           value, SHORT_LINE);
                }
-               else if (STREQ("UIDprefix", keyword)) {
+               else if (STREQ("uidprefix", keyword)) {
                   STRCOPY(project_info->info.dicom.UIDprefix,
                           value, SHORT_LINE);
                }
-               else if (STREQ("UseSafeOrientations", keyword)) {
-                  for (ichar=0; ichar < strlen(value); ichar++) {
+               else if (STREQ("usesafeorientations", keyword)) {
+                  for (ichar=0; (size_t) ichar < strlen(value); ichar++) {
                      value[ichar] = tolower((int) value[ichar]);
                   }
                   if (STREQ(value, "true") || STREQ(value, "yes")) {
