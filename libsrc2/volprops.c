@@ -18,15 +18,17 @@
 #include "minc2.h"
 #include "minc2_private.h"
 
+/** Maximum number of elements in a filter parameter list. */
+#define MI2_MAX_CD_ELEMENTS 100
 
 /*! Create a volume property list.
  */
 int
 minew_volume_props(mivolumeprops_t  *props)
 {
-  volprops *handle;
+  mivolumeprops_t handle;
   
-  handle = (volprops *)malloc(sizeof(*handle));
+  handle = (mivolumeprops_t)malloc(sizeof(struct mivolprops));
   
   if (handle == NULL) {
     return (MI_ERROR);
@@ -72,14 +74,14 @@ mifree_volume_props(mivolumeprops_t props)
 int
 miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
 {
-  volprops *handle;
+  mivolumeprops_t handle;
   hid_t hdf_vol_dataset;
   hid_t hdf_plist;
   int nfilters;
   unsigned int flags;
   size_t cd_nelmts;
-  unsigned int cd_values[MAX_CD_ELEMENTS];
-  char fname[100];
+  unsigned int cd_values[MI2_MAX_CD_ELEMENTS];
+  char fname[MI2_CHAR_LENGTH];
   int fcode;
                     
   if (volume->hdf_id < 0) {
@@ -93,7 +95,7 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
   if (hdf_plist < 0) {
     return (MI_ERROR);
   }
-  handle = (volprops *)malloc(sizeof(*handle));
+  handle = (mivolumeprops_t)malloc(sizeof(struct mivolprops));
   if (handle == NULL) {
     return (MI_ERROR);
   }
@@ -122,26 +124,21 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
       }
       else {
 	for (i = 0; i < nfilters; i++) {
-	  cd_nelmts = MAX_CD_ELEMENTS;
+	  cd_nelmts = MI2_MAX_CD_ELEMENTS;
           fcode = H5Pget_filter(hdf_plist, i, &flags, &cd_nelmts,
                                 cd_values, sizeof(fname), fname);
 	  switch (fcode) {
 	  case H5Z_FILTER_DEFLATE:
-	    printf("Deflate");
+            handle->compression_type = MI_COMPRESS_ZLIB;
+            handle->zlib_level = cd_values[0];
 	    break;
           case H5Z_FILTER_SHUFFLE:
-	    /* NOT SURE WHAT TO DO */
-	    printf("Shuffle");
 	    break;
           case H5Z_FILTER_FLETCHER32:
-	    /* NOT SURE WHAT TO DO */
-	    printf("Fletcher32");
 	    break;
           case H5Z_FILTER_SZIP:
-	    printf("SZip");
 	    break;
           default:
-	    printf("Unknown(%d)", fcode);
 	    break;
 	  }
 	}
@@ -170,7 +167,7 @@ int
 miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
 			    int depth)
 {
-    if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
+    if (props == NULL || depth > MI2_MAX_RESOLUTION_GROUP || depth <= 0) {
         return (MI_ERROR);
     }
   
@@ -203,7 +200,7 @@ miselect_resolution(mihandle_t volume, int depth)
   hid_t grp_id;
   char path[MI2_MAX_PATH];
   
-  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth < 0) {
+  if ( volume->hdf_id < 0 || depth > MI2_MAX_RESOLUTION_GROUP || depth < 0) {
     return (MI_ERROR);
   }
   grp_id = H5Gopen(volume->hdf_id, "/minc-2.0/image");
@@ -251,13 +248,12 @@ miselect_resolution(mihandle_t volume, int depth)
 int
 miflush_from_resolution(mihandle_t volume, int depth)
 {
-  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
+  if ( volume->hdf_id < 0 || depth > MI2_MAX_RESOLUTION_GROUP || depth <= 0) {
     return (MI_ERROR);
   }
   
   if (depth > volume->create_props->depth) {
-    printf(" THIS RESOLUTION DOES NOT EXIST!!! \n");
-    return (0);
+    return (MI_ERROR);
   }
   else {
     if (minc_update_thumbnails(volume) < 0) {
@@ -319,7 +315,7 @@ miget_props_compression_type(mivolumeprops_t props, micompression_t *compression
 int
 miset_props_zlib_compression(mivolumeprops_t props, int zlib_level)
 {
-  if (props == NULL || zlib_level > MAX_ZLIB_LEVEL) {
+  if (props == NULL || zlib_level > MI2_MAX_ZLIB_LEVEL) {
     return (MI_ERROR);
   }
   
