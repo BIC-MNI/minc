@@ -190,6 +190,29 @@ sub ge5_read_file_info {
         $file_info{'orientation'} = 'transverse';
     }
 
+    # Crude hack to look for multiple scans with identical series number
+    # Check for new exam/series to reset values. If we have the same
+    # series, then check whether the raw data run number has changed.
+    # If so, then increment the runid and modify the series string that
+    # we are using
+    # Uses globals $GE5_CUR{EXAM,SERIES,RUN} and $GE5_{SERIESID,RUNID}
+    local($thisrun) = &unpack_value(*image_hdr, 383, 'i');
+    if (!defined($GE5_CUREXAM) ||
+        ($file_info{'exam'} != $GE5_CUREXAM) ||
+        ($file_info{'series'} != $GE5_CURSERIES)) {
+       $GE5_CUREXAM = $file_info{'exam'};
+       $GE5_CURSERIES = $file_info{'series'};
+       $GE5_CURRUN = $thisrun;
+       $GE5_RUNID = '';
+       $GE5_SERIESID = $GE5_CURSERIES;
+    }
+    elsif ($thisrun != $GE5_CURRUN) {
+       $GE5_CURRUN = $thisrun;
+       $GE5_RUNID++;
+       $GE5_SERIESID = $GE5_CURSERIES . "." . $GE5_RUNID;
+    }
+    $file_info{'series'} = $GE5_SERIESID;
+
     # Get coordinate information
     local($fovx, $fovy);
     $fovx = &unpack_value(*image_hdr, 34, 'f');
