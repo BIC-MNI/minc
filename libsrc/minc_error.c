@@ -10,6 +10,11 @@
 
 #include <minc_private.h>
 
+/* NetCDF error handling routines */
+void nc_serror(char *fmt, ...) ;
+void NCadvise(int err, char *fmt,...) ;
+
+
 semiprivate int MI_save_routine_name(char *name)
 {
    MI_ROUTINE_VAR = name; 
