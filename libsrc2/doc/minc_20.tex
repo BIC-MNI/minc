@@ -10,7 +10,7 @@
 \documentclass{article}
 \title{MINC 2.0 Application Programming Interface (API)}
 \author{Bert Vincent and Leila Baghdadi and John G Sled}
-\date{OCT 31, 2003}
+\date{FEB 01, 2004}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -100,13 +100,17 @@ FRI  OCT 31/2003 Bert\\*
 * Added mode argument to miopen\_volume\\*
 * Changed hyper_cube to hyperslab for all relevant functions\\*
 
+SUN FEB 01/2004 Leila\\*
+* Updated the entire document according to the current cvs
+
 \section{Introduction}
 
 
 
 \section{An Introduction to HDF5}
 
-(For a complete description, see the ``HDF5 User's Guide'').
+(For a complete description, see the ``HDF5 User's Guide''
+at http://hdf.ncsa.uiuc.edu/HDF5/doc/H5.user.html ).
 
 \subsection{The HDF5 file}
 
@@ -500,7 +504,7 @@ SEE ALSO
 mifree_name
 \end{verbatim}
 
-\section{DIMENSION FUNCTIONS (37)}
+\section{DIMENSION FUNCTIONS (39)}
 \subsection{miget\_volume\_from\_dimension}
 \begin{verbatim}
 NAME 
@@ -898,7 +902,7 @@ RETURN VALUE
 Returns MI_NOERROR on success, or MI_ERROR on failure.
 \end{verbatim}
 
-\subsection{miget\_dimension\_cosines/miset\_dimension\_cosines}
+\subsection{miset\_dimension\_cosines/miset\_dimension\_cosines}
 \begin{verbatim}
 NAME
 
@@ -930,6 +934,33 @@ Because of the direction cosines, it is possible for MINC volumes to
 define non-orthogonal dimensions.
 
 These functions fail if the dimension is not of the spatial class.
+
+RETURN VALUE
+
+Returns MI_NOERROR on success, or MI_ERROR on failure.
+\end{verbatim}
+
+\subsection{miget\_dimension\_description/miset\_dimension\_description}
+\begin{verbatim}
+NAME
+
+miget_dimension_description, miset_dimension_description - Get or set the dimension's description.
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int miget_dimension_description ( midimhandle_t dimension,
+                                  char **comments_ptr);
+
+int miset_dimension_description ( midimhandle_t dimension,
+                                  const char *comments);
+
+DESCRIPTION
+
+Get and Set the dimension description. Note that the spatial dimensions
+(xspace, yspace, zspace) are initialized according to minc1 description.
+All other dimensions will have an empty description unless set by the user.
 
 RETURN VALUE
 
@@ -1426,7 +1457,33 @@ SEE ALSO
 miget_dimension_name, miget_space_name
 \end{verbatim}
 
-\section{HYPERSLAB FUNCTIONS (9)}
+\section{HYPERSLAB FUNCTIONS (8)}
+\subsection{miget\_hyperslab\_size}
+\begin{verbatim}
+NAME
+
+miget_hyperslab_size - calculate the size of the hyperslab
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int miget_hyperslab_size ( mitype_t            volume_data_type,
+                           int                 number_of_dimensions,
+                           int                 sizes_of_dimensions[],
+                           misize_t            *size)
+
+DESCRIPTION
+
+calculate the size of the hyperslab. i.e., the amount of memory in BYTES
+which is needed to store the hyperslab
+
+RETURN VALUE
+
+miget_hyperslab_size returns MI_NOERROR if it successfully calculates the
+size of the hyperslab with specified dimensions and MI_ERROR otherwise
+\end{verbatim}
+
 \subsection{miget\_hyperslab\_normalized}
 \begin{verbatim}
 NAME
@@ -1458,31 +1515,6 @@ miget_hyperslab_normalized returns MI_NOERROR if it successfully returns
 a normalized hyperslab with specified size and type and MI_ERROR otherwise
 \end{verbatim}
 
-\subsection{miget\_hyperslab\_size}
-\begin{verbatim}
-NAME
-
-miget_hyperslab_size - calculate the size of the hyperslab
-
-SYNOPSIS
-
-#include <minc2.h>
-
-int miget_hyperslab_size ( mitype_t            volume_data_type,
-                           int                 number_of_dimensions,
-                           int                 sizes_of_dimensions[],
-                           misize_t            *size)
-
-DESCRIPTION
-
-calculate the size of the hyperslab. i.e., the amount of memory in BYTES
-which is needed to store the hyperslab
-
-RETURN VALUE
-
-miget_hyperslab_size returns MI_NOERROR if it successfully calculates the
-size of the hyperslab with specified dimensions and MI_ERROR otherwise
-\end{verbatim}
 
 \subsection{miget\_hyperslab\_with\_icv}
 \begin{verbatim}
@@ -1646,32 +1678,6 @@ RETURN VALUE
 
 miset_voxel_value_hyperslab returns MI_NOERROR if it successfully sets the
 voxel value hyperslab with specified size and type and MI_ERROR otherwise
-\end{verbatim}
-
-\subsection{mitransform\_hyperslab}
-\begin{verbatim}
-NAME 
-
-mitransform_hyperslab
-
-SYNOPSIS
-
-#include <minc2.h>
-
-int  mitransform_hyperslab( mihandle_t      volume,
-                            long            offsets[],    
-                            long            sizes[],
-                            int             target_depth,
-                            long            target_offsets[],
-                            long            target_sizes[])
-                                
-                        
-                                
-DESCRIPTION
-
-
-RETURN VALUE
-
 \end{verbatim}
 
 \section{IMAGE CONVERSION VARIABLE FUNCTIONS (4)}
@@ -1962,6 +1968,7 @@ MI_NOERROR on success, MI_ERROR on failure.
 \end{verbatim}
 
 \section{SLICE/VOLUME SCALE FUNCTIONS (14)}
+
 \subsection{miget\_slice\_max}
 \begin{verbatim}
 NAME 
@@ -2341,7 +2348,7 @@ miset_volume_range returns MI_NOERROR if it successfully sets the
 global range scale for the volume or MI_ERROR otherwise.
 \end{verbatim}
 
-\section{VALID MIN/MAX AND RANGE FUNCTIONS (7)}
+\section{VALID MIN/MAX AND RANGE FUNCTIONS (6)}
 \subsection{miget\_valid\_max}
 \begin{verbatim}
 
@@ -2484,31 +2491,53 @@ miset_volume_valid_range returns MI_NOERROR if it successfully sets
 the valid range values or MI_ERROR otherwise
 \end{verbatim}
 
-\subsection{miset\_valid\_range\_to\_default}
-\begin{verbatim}
-NAME 
+% THE FOLLOWING IS NO LONGER IN THE CODE (leila)
+%\subsection{miset\_valid\_range\_to\_default}
+%\begin{verbatim}
+%NAME 
 
-miset_valid_range_to_default - set the range to the default value
+%miset_valid_range_to_default - set the range to the default value
+
+%SYNOPSIS
+
+%#include <minc2.h>
+
+%int miset_valid_range_to_default ( mihandle_t   volume)
+                        
+                                
+%DESCRIPTION
+
+%This method sets the valid range to the dafault value specific to the
+%data type.
+
+%RETURN VALUE
+
+%miset_valid_range_to_default returns MI_NOERROR if it successfully sets 
+%the valid range to default values  or MI_ERROR otherwise
+%\end{verbatim}
+
+\section{VOLUME FUNCTIONS (6)}
+\subsection{micreate\_volume\_image}
+\begin{verbatim}
+NAME
+
+micreate_volume_image - 
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miset_valid_range_to_default ( mihandle_t   volume)
-                        
-                                
+int micreate_volume_image ( mihandle_t    volume);
+
 DESCRIPTION
 
-This method sets the valid range to the dafault value specific to the
-data type.
+Create the actual image for the volume.
 
 RETURN VALUE
 
-miset_valid_range_to_default returns MI_NOERROR if it successfully sets 
-the valid range to default values  or MI_ERROR otherwise
+Returns MI_NOERROR on success or MI_ERROR on failure.
 \end{verbatim}
 
-\section{VOLUME FUNCTIONS (4)}
 \subsection{micreate\_volume}
 \begin{verbatim}
 NAME
@@ -2582,6 +2611,27 @@ DESCRIPTION
 
 Opens an existing MINC volume for read-only access if mode argument is
 MI2_OPEN_READ, or read-write access if mode argument is MI2_OPEN_RDWR.
+
+RETURN VALUE
+
+Returns MI_NOERROR on success or MI_ERROR on failure.
+\end{verbatim}
+
+\subsection{miflush\_volume}
+\begin{verbatim}
+NAME
+
+miflush_volume 
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int miflush_volume ( mihandle_t    volume);
+
+DESCRIPTION
+
+Writes any changes associated with the volume to disk.
 
 RETURN VALUE
 
@@ -2913,24 +2963,22 @@ Returns MI_ERROR or MI_NOERROR
 
 \end{verbatim}
 
-\subsection{miset\_world\_origin}
+\subsection{miset\_spatial\_origin\_to\_start}
 \begin{verbatim}
 NAME 
 
-miset_world_origin
+miset_spatial_origin_to_start
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int  miset_world_origin( mihandle_t volume,
+int  miset_spatial_origin_to_start( mihandle_t volume,
                          double     world[3])
                        
 DESCRIPTION
 
-This function sets the world coordinates of the point (0,0,0) in voxel
-coordinates.  This changes the constant offset of the two coordinate
-systems.
+
 
 RETURN VALUE
 
@@ -2938,24 +2986,24 @@ Returns MI_ERROR or MI_NOERROR
 
 \end{verbatim}
 
-\subsection{miset\_spatial\_frequency\_origin}
+\subsection{miset\_spatial\_frequency\_origin\_to\_start}
 \begin{verbatim}
 NAME 
 
-miset_spatial_frequency_origin
+miset_spatial_frequency_origin_to_start
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int  miset_spatial_frequency_origin( mihandle_t volume,
-                                     double     world[3])
+int  miset_spatial_frequency_origin_to_start( mihandle_t volume,
+                                              double     world[3])
                        
                                 
 DESCRIPTION
 
-This function moves the origin for the world coordinate system of the 
-volume to the 3-dimensional coordinate ``world''.
+%This function moves the origin for the world coordinate system of the 
+%volume to the 3-dimensional coordinate ``world''.
 
 RETURN VALUE
 
@@ -3019,7 +3067,7 @@ RETURN VALUE
 Returns MI_NOERROR on success, MI_ERROR on failure.
 \end{verbatim}
 
-\section{VOLUME PROPERTIES FUNCTIONS (17)}
+\section{VOLUME PROPERTIES FUNCTIONS (15)}
 \subsection{minew\_volume\_props/mifree\_volume\_props}
 \begin{verbatim}
 NAME
@@ -3244,55 +3292,29 @@ RETURN VALUE
 Returns MI_NOERROR on success, MI_ERROR on failure
 \end{verbatim}
 
-\subsection{miset\_props\_uniform\_record}
+\subsection{miset\_props\_record}
 \begin{verbatim}
 NAME
 
-miset_props_uniform_record - set properties of a uniform record dimension
+miset_props_record - set properties of a uniform/nonuniform record dimension
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miset_props_uniform_record ( mivolumeprops_t        props,
-                                 long                   length,
-                                 char                   *name)
+int miset_props_record ( mivolumeprops_t        props,
+                         long                   length,
+                         char                   *name)
 
 DESCRIPTION
 
-This method sets the properties of an uniform record given its name and
+This method sets the properties of arecord given its name and
 size (i.e., number of fields included in the record).
 
 RETURN VALUE
 
-miset_props_uniform_record returns MI_NOERROR if it successfully sets
-the properties of an uniform record or MI_ERROR otherwise.
-\end{verbatim}
-
-\subsection{miset\_props\_non\_uniform\_record}
-\begin{verbatim}
-NAME
-
-miset_props_non_uniform_record - set properties of a non_uniform record
-
-SYNOPSIS
-
-#include <minc2.h>
-
-int miset_props_non_uniform_record ( mivolumeprops_t            props,
-                                     long                       length,
-                                     char                       *name)
-
-DESCRIPTION
-
-This method sets properties of a non_uniform record dimension given the 
-record's name and its size. Note that for the case of a non_uniform record
-size is specified in BYTEs instead of fields.
-
-RETURN VALUE
-
-miset_props_non_uniform_record returns MI_NOERROR if it successfully sets
-the properties of a non_uniform record or MI_ERROR otherwise.
+miset_props_record returns MI_NOERROR if it successfully sets
+the properties of a record or MI_ERROR otherwise.
 \end{verbatim}
 
 \subsection{miset\_props\_template}
@@ -3320,21 +3342,21 @@ miset_props_template returns MI_NOERROR if it successfully sets the template
 flag or MI_ERROR otherwise.
 \end{verbatim}
 
-\subsection{miset\_multi\_resolution\_method}
-\begin{verbatim}
-NAME
+%\subsection{miset\_multi\_resolution\_method}
+%\begin{verbatim}
+%NAME
 
-miset_multi_resolution_method - set the multi-resolution calculation algorithm
+%miset_multi_resolution_method - set the multi-resolution calculation algorithm
 
-SYNOPSIS
+%SYNOPSIS
 
-#include <minc2.h>
+%#include <minc2.h>
 
-int miset_multi_resolution_method()
-{
-}
+%int miset_multi_resolution_method()
+%{
+%}
 
-\end{verbatim}
+%\end{verbatim}
 
 
 \end{document}
