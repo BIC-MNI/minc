@@ -5,14 +5,20 @@
 @CALLS      : 
 @CREATED    : July 7, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_def.h,v $
-@MODIFIED   : Revision 1.4  1993-08-11 13:21:51  neelin
-@MODIFIED   : Added macros ROUND and STR_EQ.
+@MODIFIED   : Revision 1.5  1993-08-11 13:23:31  neelin
+@MODIFIED   : Modified ROUND macro to cast to (long)
 @MODIFIED   :
+ * Revision 1.4  93/08/11  13:21:51  neelin
+ * Added macros ROUND and STR_EQ.
+ * 
  * Revision 1.3  93/08/04  13:03:30  neelin
  * Added RCS $Log: minc_def.h,v $
- * Added RCS Revision 1.4  1993-08-11 13:21:51  neelin
- * Added RCS Added macros ROUND and STR_EQ.
- * Added RCS to keep track of modifications in source.
+ * Added RCS Revision 1.5  1993-08-11 13:23:31  neelin
+ * Added RCS Modified ROUND macro to cast to (long)
+ * Added RCS
+ * Revision 1.4  93/08/11  13:21:51  neelin
+ * Added macros ROUND and STR_EQ.
+ *  to keep track of modifications in source.
  * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
@@ -67,6 +73,6 @@
 #  undef STR_EQ
 #endif
 
-#define ROUND( x ) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) )
+#define ROUND( x ) ((long) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) ))
 
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
