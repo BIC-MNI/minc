@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.5  1993-11-26 18:47:36  neelin
+@MODIFIED   : Revision 1.6  1993-11-30 08:57:28  neelin
 @MODIFIED   : Added element copy routine.
 @MODIFIED   :
+ * Revision 1.5  93/11/26  18:47:36  neelin
+ * Added element copy routine.
+ * 
  * Revision 1.4  93/11/25  10:35:34  neelin
  * Ensure that strings have an even length (pad with space).
  * 
@@ -143,7 +146,9 @@ public Acr_Element acr_copy_element(Acr_Element element)
    length = acr_get_element_length(element);
    data = MALLOC(length+1);
    data[length] = '\0';
-   (void) memcpy(data, acr_get_element_data(element), length);
+   if (length > 0) {
+      (void) memcpy(data, acr_get_element_data(element), length);
+   }
 
    /* Create the new element */
    copy = acr_create_element(acr_get_element_group(element), 
