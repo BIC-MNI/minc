@@ -5,7 +5,11 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.7  2000-02-03 13:41:32  neelin
+ * Revision 1.8  2000-02-09 23:53:52  neelin
+ * Added code to create the series description using the orientation and the
+ * scanning sequence.
+ *
+ * Revision 1.7  2000/02/03 13:41:32  neelin
  * Modified Study, Series and Frame-of-reference UIDs. The first has the
  * form <prefix>.1.<study>, series has the form <prefix>.2.<study>.<series>.<echo>
  * and f-o-r has the form <prefix>.3.<study>.<series>. The echo is preserved
@@ -46,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.7 2000-02-03 13:41:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.8 2000-02-09 23:53:52 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -81,6 +85,7 @@ typedef enum { XCOORD = 0, YCOORD, ZCOORD, WORLD_NDIMS } World_Index;
 /* Dicom definitions */
 DEFINE_ELEMENT(static, ACR_Image_type                 , 0x0008, 0x0008, CS);
 DEFINE_ELEMENT(static, ACR_Accession_number           , 0x0008, 0x0050, SH);
+DEFINE_ELEMENT(static, ACR_Series_description         , 0x0008, 0x103e, LO);
 DEFINE_ELEMENT(static, ACR_Patient_comments           , 0x0010, 0x4000, SH);
 DEFINE_ELEMENT(static, ACR_Sequence_variant           , 0x0018, 0x0021, CS);
 DEFINE_ELEMENT(static, ACR_Image_Number               , 0x0020, 0x0013, IS);
@@ -144,7 +149,11 @@ public void convert_to_dicom(Acr_Group group_list)
                   (int) host_id.ch[2], (int) host_id.ch[3], (int) getpid());
    ptr = &string[strlen(string)];
 
-   /* Set study, series and frame of reference UID's */
+   /* Set study, series and frame of reference UID's.
+      Note that the series UID includes echo for the sake of viewing
+      stations (notably Picker) than have no notion of echo and try
+      to amalgamate the whole thing into a single volume and get upset
+      with the duplicate slice positions. */
    study = acr_find_int(group_list, ACR_Study, 0);
    series = acr_find_int(group_list, ACR_Acquisition, 0);
    echo = acr_find_int(group_list, SPI_Echo_number, 1);
@@ -173,6 +182,23 @@ public void convert_to_dicom(Acr_Group group_list)
       field at MNI) */
    acr_insert_string(&group_list, ACR_Accession_number,
                      acr_find_string(group_list, ACR_Patient_comments, ""));
+
+   /* Make up a series description from orientation, scanning sequence */
+   if (strlen(acr_find_string(group_list, ACR_Series_description, "")) == 0) {
+      orientation = acr_find_int(group_list, SPI_Slice_orientation, 0);
+      switch (orientation) {
+         case SPI_SAGITTAL_ORIENTATION:
+            ptr = "SAGITTAL"; break;
+         case SPI_CORONAL_ORIENTATION:
+            ptr = "CORONAL"; break;
+         case SPI_TRANSVERSE_ORIENTATION:
+         default:
+            ptr = "TRANSVERSE"; break;
+      }
+      (void) sprintf(string, "%s %s", ptr, 
+                     acr_find_string(group_list, ACR_Scanning_sequence, ""));
+      acr_insert_string(&group_list, ACR_Series_description, string);
+   }
 
    /* Check that the image number is not too long - just chop it off
       if it is. */
