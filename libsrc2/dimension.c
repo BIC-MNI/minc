@@ -1,5 +1,8 @@
 /** \file dimension.c
- * \brief MINC 2.0 "dimension" functions
+ * \brief MINC 2.0 Dimension Functions
+ * \author Leila Baghdadi
+ * 
+ * Functions to create, destroy, and manipulate MINC dimension objects.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
@@ -7,37 +10,41 @@
 #include "minc2_private.h"
 #include "minc.h"
 
+/**
+ * \defgroup mi2Dim MINC 2.0 Dimension Functions
+ */
+
 
 /*! Figure out whether a dimension is associated with a volume.
+ * \ingroup mi2Dim
  */
 
 int 
 miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume)
 {
- 
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }  
+    if (dimension == NULL) {
+        return (MI_ERROR);
+    }  
 
-  if (dimension->volume_handle != NULL) {
-    
-    *volume = dimension->volume_handle;
-  }
-  else {
-    return (MI_ERROR);
-  }
+    if (dimension->volume_handle != NULL) {
+        *volume = dimension->volume_handle;
+    }
+    else {
+        return (MI_ERROR);
+    }
 
-  return (MI_NOERROR);
+    return (MI_NOERROR);
 }
 
 /*! Create a copy of a given dimension.
+ * \ingroup mi2Dim
  */
 
 int 
 micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 {
   int i;
-  dimension *handle;
+  midimhandle_t handle;
   
   if (dim_ptr == NULL) {
     return (MI_ERROR);
@@ -45,7 +52,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 
   /* Allocate storage for the structure
    */
-  handle = (dimension *)malloc(sizeof(*handle));
+  handle = (midimhandle_t)malloc(sizeof(struct midimension));
   if (handle == NULL) {
     return (MI_ERROR);
   }
@@ -110,6 +117,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 }
 
 /*! Define a new dimension in a MINC volume.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -117,11 +125,11 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
 		   unsigned long length, midimhandle_t *new_dim_ptr)
 {  
   
-  dimension *handle;
+  midimhandle_t handle;
   int i;
   /* Allocate space for the new dimension
    */
-  handle = (dimension *)malloc(sizeof(*handle));
+  handle = (midimhandle_t)malloc(sizeof(struct midimension));
   if (handle == NULL) {
     return (MI_ERROR);
   }
@@ -236,9 +244,10 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
 }
 
 /*! Delete the dimension definition.
-    Note: The original document stated that a dimension has to be
-    associated with a given volume before it can be deleted. This
-    feature was erased from the document and not considered here.
+ * Note: The original document stated that a dimension has to be
+ * associated with a given volume before it can be deleted. This
+ * feature was erased from the document and not considered here.
+ * \ingroup mi2Dim
  */
 int 
 mifree_dimension_handle(midimhandle_t dim_ptr)
@@ -268,6 +277,7 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
  *  with the same class \a class and attribute \a attr.
  * \retval The number of dimensions returned.
  * \retval MI_ERROR on failure.
+ * \ingroup mi2Dim
  */
 int 
 miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
@@ -308,7 +318,11 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   return (num_ret_dims);
 }
 
-/*! Set apparent dimension order.
+/*! Set apparent dimension order, based on an array of dimensions.  You
+ * may also set the dimension order by the name of the dimension, see
+ * miset_apparent_dimension_order_by_name().
+ *
+ * \ingroup mi2Dim
  */
 
 int 
@@ -350,6 +364,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
 }
 
 /*! Set apparent dimension order by name.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -411,21 +426,21 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
 }
 
 /*! Set the record flag and add a record dimension to the volume
-    dimensions so the volume wuld appear to have n+1 dimensions
+    dimensions so the volume would appear to have n+1 dimensions
+ * \ingroup mi2Dim
  */
 
 int 
 miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
 {
-  
-  dimension *handle;  
+  midimhandle_t handle;  
  
   if (volume == NULL) {
     return (MI_ERROR);
   }
   /* Allocate space for the dimension
    */
-  handle = (dimension *)malloc(sizeof(*handle));
+  handle = (midimhandle_t)malloc(sizeof(struct midimension));
   if (handle == NULL) {
     return (MI_ERROR);
   }
@@ -444,10 +459,12 @@ miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
 }
 
 /*! Get the apparent order of voxels.
+ * \ingroup mi2Dim
  */
 
 int 
-miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file_order,
+miget_dimension_apparent_voxel_order(midimhandle_t dimension, 
+                                     miflipping_t *file_order,
 				     miflipping_t *sign)
 {
   if (dimension == NULL) {
@@ -497,10 +514,12 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file
 }
 
 /*! Set the apparent order of voxels.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipping_order)
+miset_dimension_apparent_voxel_order(midimhandle_t dimension, 
+                                     miflipping_t flipping_order)
 {
   if (dimension == NULL) {
     return (MI_ERROR);
@@ -515,27 +534,9 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipp
   case MI_POSITIVE:
     dimension->flipping_order  = MI_POSITIVE;
     break;
-    /*
-    if (dimension->separation > 0) {
-      dimension->flipping_order  = MI_FILE_ORDER;
-    }
-    else {
-      dimension->flipping_order  = MI_COUNTER_FILE_ORDER;
-    }
-    break;
-    */
   case MI_NEGATIVE:
     dimension->flipping_order  = MI_NEGATIVE;
     break;
-    /*
-    if (dimension->separation > 0) {
-      dimension->flipping_order  = MI_COUNTER_FILE_ORDER;
-    }
-    else {
-      dimension->flipping_order  = MI_FILE_ORDER;
-    }
-    break;
-    */
   default:
     return (MI_ERROR);
   }
@@ -544,6 +545,7 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipp
 }
 
 /*! Get the class of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -583,6 +585,7 @@ miget_dimension_class(midimhandle_t dimension, midimclass_t *class)
 }
 
 /*! Set the class of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -621,6 +624,7 @@ miset_dimension_class(midimhandle_t dimension, midimclass_t class)
 }
 
 /*! Get the direction cosine vector of a given SPATIAL dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -639,10 +643,12 @@ miget_dimension_cosines(midimhandle_t dimension, double direction_cosines[3])
 }
 
 /*! Set the direction cosine vector for a given SPATIAL dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_cosines(midimhandle_t dimension, const double direction_cosines[3])
+miset_dimension_cosines(midimhandle_t dimension, 
+                        const double direction_cosines[3])
 {
   
   if (dimension == NULL || dimension->class != MI_DIMCLASS_SPATIAL) {
@@ -656,7 +662,10 @@ miset_dimension_cosines(midimhandle_t dimension, const double direction_cosines[
   return (MI_NOERROR);
 }
 
-/*! Get the comments attribute for a given dimension.
+/*! Get the comments attribute for a given dimension.  The string pointer
+ * returned in \a *comments_ptr must be freed by the caller.
+ *
+ * \ingroup mi2Dim
  */
 
 int
@@ -673,6 +682,7 @@ miget_dimension_description(midimhandle_t dimension, char **comments_ptr)
 }
 
 /*! Set the comments attribute for a given dimension.
+ * \ingroup mi2Dim
  */
 
 int
@@ -695,6 +705,7 @@ miset_dimension_description(midimhandle_t dimension, const char *comments)
 
 
 /*! Get the identifier (name) of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -710,105 +721,113 @@ miget_dimension_name(midimhandle_t dimension, char **name_ptr)
 }
 
 /*! Set the identifier (name) of a given MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
 miset_dimension_name(midimhandle_t dimension, const char *name)
 {
-  if (dimension == NULL || name == NULL) {
-    return (MI_ERROR);
-  }
+    if (dimension == NULL || name == NULL) {
+        return (MI_ERROR);
+    }
+
+    if ((strlen(name) + 1) > MI2_CHAR_LENGTH) {
+        return (MI_ERROR);
+    }
+
+    /* Free the existing dimension name.
+     */
+    if (dimension->name != NULL) {
+        free(dimension->name);
+    }
  
-  if ((strlen(name) + 1) <= MI2_CHAR_LENGTH) {
     dimension->name = strdup(name);
-  }
-  else {
-    return (MI_ERROR);
-  }
-    
-  return (MI_NOERROR);
+
+    return (MI_NOERROR);
 }
 
-/*! Get the absolute world coordinates of points along a MINC dimension.
+/*! Get the untransformed world coordinates of points along a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
 miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 
 			unsigned long start_position, double offsets[])
 {
-  unsigned long  diff;
-  int i, j=0;
+    unsigned long end_position;
+    unsigned long i, j;
 
-  if (dimension == NULL || start_position > dimension->length ) {
-    return (MI_ERROR);
-  }
-  if ((start_position + array_length) > dimension->length) {
-    diff = dimension->length;
-  }
-  else {
-    diff = array_length;
-  }
-  /* Allocate enough space for offsets.
-   */
-  offsets = (double *) malloc(diff*sizeof(double));
-  
-  if (dimension->offsets == NULL) {
-    for (i=start_position; i <= diff ; i++) {
-      /* For regularly sampled dimensions, the step value
-	 is added to each value to get the next value.
-       */
-      offsets[j] = dimension->start + (i * dimension->step);
-      j++;
+    if (dimension == NULL || start_position > dimension->length ) {
+        return (MI_ERROR);
     }
-  }
-  else {
-    for (i=start_position; i <= diff ; i++) {
-      offsets[j] = dimension->offsets[i];
-      j++;
+    if ((start_position + array_length) > dimension->length) {
+        end_position = dimension->length;
     }
-  }
-  return (MI_NOERROR);
+    else {
+        end_position = start_position + array_length;
+    }
+
+    if (dimension->offsets == NULL) {
+        for (i = start_position, j = 0; i < end_position ; i++, j++) {
+            /* For regularly sampled dimensions, the step value
+             * is added to each value to get the next value.
+             */
+            offsets[j] = dimension->start + (i * dimension->step);
+        }
+    }
+    else {
+        for (i = start_position, j = 0; i < end_position ; i++, j++) {
+            offsets[j] = dimension->offsets[i];
+        }
+    }
+    return (MI_NOERROR);
 }
 
 /*! Set the absolute world coordinates of points along a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 
-			unsigned long start_position, const double offsets[])
+miset_dimension_offsets(midimhandle_t dimension, 
+                        unsigned long array_length, 
+			unsigned long start_position, 
+                        const double offsets[])
 {
-  unsigned long  diff;
-  int i, j=0;
-  /* Check to see whether the dimension is regularly sampled.
-   */
-  if (dimension == NULL || 
-      (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) == 0 || 
-      start_position > dimension->length ) {
-    return (MI_ERROR);
-  }
-  if ((start_position + array_length) > dimension->length) {
-    diff = dimension->length;
-  }
-  else {
-    diff = array_length;
-  }
-  
-  /* Allocate space for the offsets if not already done.
-   */
-  if (dimension->offsets == NULL) {
-    dimension->offsets = (double *) malloc(dimension->length*sizeof(double));
-  }
-  if (start_position == 0) {
-    diff--;
-  }
-  for (i=start_position; i <= diff ; i++) {
-      dimension->offsets[i] = offsets[j] ;
-      j++;
+    unsigned long end_position;
+    unsigned long i, j;
+
+    /* Check to see whether the dimension is regularly sampled.
+     */
+    if (dimension == NULL || 
+        (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) == 0 || 
+        start_position > dimension->length ) {
+        return (MI_ERROR);
     }
-  return (MI_NOERROR);
+    if ((start_position + array_length) > dimension->length) {
+        end_position = dimension->length;
+    }
+    else {
+        end_position = start_position + array_length;
+    }
+  
+    /* Allocate space for the offsets if not already done.
+     */
+    if (dimension->offsets == NULL) {
+        dimension->offsets = 
+            (double *) malloc(dimension->length * sizeof(double));
+    }
+    
+    for (i = start_position, j = 0; i < end_position; i++, j++) {
+        dimension->offsets[i] = offsets[j] ;
+    }
+    return (MI_NOERROR);
 }
 
-/*! Get the sampling flag for a MINC dimension. 
+/*! Get the sampling flag for a MINC dimension.  
+ * If the flag is TRUE, the
+ * dimension is irregularly sampled. If the flag is FALSE (the default),
+ * sampling points occur regularly along the axis.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -824,6 +843,10 @@ miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
 }
 
 /*! Set the sampling flag for a MINC dimension.
+ * If the flag is TRUE, the
+ * dimension is irregularly sampled. If the flag is FALSE (the default),
+ * sampling points occur regularly along the axis.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -841,26 +864,50 @@ miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
     return (MI_NOERROR);
 }
 
-/*! Get the sampling interval (STEP) for a single dimension.
+/*! Get the sampling interval (step) for a single dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miget_dimension_separation(midimhandle_t dimension, mivoxel_order_t voxel_order, 
+miget_dimension_separation(midimhandle_t dimension, 
+                           mivoxel_order_t voxel_order, 
 			   double *separation_ptr)
 {
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
-  if (voxel_order == 0) {
-    *separation_ptr = dimension->step;
-  }
-  else {
-    *separation_ptr = -1 * dimension->step;
-  }
-  return (MI_NOERROR);
+    if (dimension == NULL) {
+        return (MI_ERROR);
+    }
+    if (voxel_order == MI_ORDER_FILE) {
+        *separation_ptr = dimension->step;
+    }
+    else {
+        if (dimension->flipping_order == MI_COUNTER_FILE_ORDER) {
+            *separation_ptr = -dimension->step;
+        }
+        else if (dimension->flipping_order == MI_POSITIVE) {
+            if (dimension->step > 0) {
+                *separation_ptr = dimension->step;
+            }
+            else {
+                *separation_ptr = -dimension->step;
+            }
+        }
+        else if (dimension->flipping_order == MI_NEGATIVE) {
+            if (dimension->step < 0) {
+                *separation_ptr = dimension->step;
+            }
+            else {
+                *separation_ptr = -dimension->step;
+            }
+        }
+        else {
+            *separation_ptr = dimension->step;
+        }
+    }
+    return (MI_NOERROR);
 }
 
-/*! Set the sampling interval (STEP) for a single dimension.
+/*! Set the sampling interval (step) for a single dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -882,85 +929,90 @@ miset_dimension_separation(midimhandle_t dimension, double separation)
 }
 
 /*! Get the sampling interval (STEP) for a list of dimensions.
+ * \ingroup mi2Dim
  */
 
 int 
-miget_dimension_separations(const midimhandle_t dimensions[], mivoxel_order_t voxel_order,
-			    int array_length, double separations[])
+miget_dimension_separations(const midimhandle_t dimensions[], 
+                            mivoxel_order_t voxel_order,
+			    int array_length, 
+                            double separations[])
 {
-  int i;
-  /* Allocated space for the separations array.
-   */
-  //separations  = (double *) malloc(array_length*sizeof(double));
-  for (i=0; i< array_length; i++) {
-    miget_dimension_separation(dimensions[i], voxel_order, &separations[i]);
-  }
-  
-  return (MI_NOERROR);
+    int i;
+
+    for (i=0; i< array_length; i++) {
+        miget_dimension_separation(dimensions[i], voxel_order, 
+                                   &separations[i]);
+    }
+    return (MI_NOERROR);
 }
 
 /*! Set the sampling interval (STEP) for a list of dimensions.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_separations(const midimhandle_t dimensions[], int array_length, 
+miset_dimension_separations(const midimhandle_t dimensions[], 
+                            int array_length, 
 			    const double separations[])
 {
-  int i;
-  for (i=0; i< array_length; i++) {
-    miset_dimension_separation(dimensions[i],separations[i]);
-  }
-  return (MI_NOERROR);
+    int i;
+    for (i=0; i< array_length; i++) {
+        miset_dimension_separation(dimensions[i], separations[i]);
+    }
+    return (MI_NOERROR);
 }
 
 /*! Get the length of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
 miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
 {
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
-  *size_ptr = dimension->length;
-  return (MI_NOERROR);
+    if (dimension == NULL) {
+        return (MI_ERROR);
+    }
+    *size_ptr = dimension->length;
+    return (MI_NOERROR);
 }
 
 /*! Set the length of a MINC dimension if not associated with a 
-    volume.
+ *  volume.
+ * \ingroup mi2Dim
  */
 
 int 
 miset_dimension_size(midimhandle_t dimension, unsigned long size)
 {
-  /* Check whether the dimension is associated with a volume.
-   */
-  if (dimension == NULL || dimension->volume_handle != NULL) {
-    return (MI_ERROR);
-  }
-  dimension->length = size;
-  return (MI_NOERROR);
+    /* Check whether the dimension is associated with a volume.
+     */
+    if (dimension == NULL || dimension->volume_handle != NULL) {
+        return (MI_ERROR);
+    }
+    dimension->length = size;
+    return (MI_NOERROR);
 }
 
 /*! Retrieve the length of all dimensions in dimensions array.
+ * \ingroup mi2Dim
  */
 
 int 
 miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
 		      unsigned long sizes[])
 {
-  int i;
-  /* Allocated space for the length array.
-   */
-  //sizes  = (unsigned long *) malloc(array_length*sizeof(unsigned long));
-  for(i=0; i<array_length; i++) {
-    miget_dimension_size(dimensions[i], &sizes[i]);
-  }
+    int i;
+
+    for ( i = 0; i < array_length; i++) {
+        miget_dimension_size(dimensions[i], &sizes[i]);
+    }
     
-  return (MI_NOERROR);
+    return (MI_NOERROR);
 }
 
 /*! Get the start value of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -984,89 +1036,92 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
 }
 
 /*! Set the origin of a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_start(midimhandle_t dimension, double start_ptr)
+miset_dimension_start(midimhandle_t dimension, double start)
 {
   if (dimension == NULL) {
     return (MI_ERROR);
   }
-  dimension->start = start_ptr;
-
+  dimension->start = start;
   return (MI_NOERROR);
 }
 
 /*! Get the start values for MINC dimensions in dimensions array.
+ * \ingroup mi2Dim
  */
 
 int 
-miget_dimension_starts(const midimhandle_t dimensions[], mivoxel_order_t voxel_order,
+miget_dimension_starts(const midimhandle_t dimensions[], 
+                       mivoxel_order_t voxel_order,
 		       int array_length, double starts[])
 { 
-  int i;
-  /* Allocated space for the starts array.
-   */
-  //starts  = (double *) malloc(array_length*sizeof(double));
-  for (i=0; i < array_length; i++) {
-    miget_dimension_start(dimensions[i], voxel_order, &starts[i]);
-  }
+    int i;
 
-  return (MI_NOERROR);
+    for (i=0; i < array_length; i++) {
+        miget_dimension_start(dimensions[i], voxel_order, &starts[i]);
+    }
+    return (MI_NOERROR);
 }
 
 /*! Set the start values for MINC dimensions in dimensions array.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_starts(const midimhandle_t dimensions[], int array_length, 
+miset_dimension_starts(const midimhandle_t dimensions[], 
+                       int array_length, 
 		       const double starts[])
 {
-  int i;
+    int i;
  
-  for (i=0; i<array_length; i++) {
-    miset_dimension_start(dimensions[i], starts[i]);
-  }
-  return (MI_NOERROR);
+    for (i=0; i<array_length; i++) {
+        miset_dimension_start(dimensions[i], starts[i]);
+    }
+    return (MI_NOERROR);
 }
 
-/*! Get the unit string for a MINC dimension.
+/*! Get the unit string for a MINC dimension.  The caller must free the
+ * string returned by this function.
+ * \ingroup mi2Dim
  */
 
 int 
 miget_dimension_units(midimhandle_t dimension, char **units_ptr)
 {
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
+    if (dimension == NULL || units_ptr == NULL) {
+        return (MI_ERROR);
+    }
   
-  *units_ptr = strdup(dimension->units);
+    *units_ptr = strdup(dimension->units);
   
-  return (MI_NOERROR);
+    return (MI_NOERROR);
 }
 
 /*! Set the unit string for a MINC dimension.
+ * \ingroup mi2Dim
  */
 
 int 
 miset_dimension_units(midimhandle_t dimension, const char *units)
 {
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
+    if (dimension == NULL || units == NULL) {
+        return (MI_ERROR);
+    }
   
-  if (strlen(units) + 1 <= MI2_CHAR_LENGTH) {
-    dimension->units = strdup(units);
-  }
-  else {
-    return (MI_ERROR);
-  }
+    if (strlen(units) + 1 > MI2_CHAR_LENGTH) {
+        return (MI_ERROR);
+    }
 
-  return (MI_NOERROR);
+    dimension->units = strdup(units);
+    return (MI_NOERROR);
 }
 
 /*! Get A single full-width half-maximum value from a 
     regularly sampled dimension.
+ * \ingroup mi2Dim
  */
 
 int 
@@ -1082,11 +1137,12 @@ miget_dimension_width(midimhandle_t dimension, double *width_ptr)
 }
 
 /*! Set the A single full-width half-maximum value for a 
-    regulalry sampled dimension.
+ * regularly sampled dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_width(midimhandle_t dimension, double width_ptr)
+miset_dimension_width(midimhandle_t dimension, double width)
 {
   if (dimension == NULL || 
       (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) != 0) {
@@ -1094,22 +1150,25 @@ miset_dimension_width(midimhandle_t dimension, double width_ptr)
   }
   /* Check to make sure width value is positive.
    */
-  if (width_ptr < 0) {
-    dimension->width = -1 * width_ptr;
+  if (width < 0) {
+    dimension->width = -width;
   }
   else {
-    dimension->width = width_ptr;
+    dimension->width = width;
   }
   return (MI_NOERROR);
 }
 
 /*! Get the full-width half-maximum value for points along an
-    irregularly sampled dimension.
+ *     irregularly sampled dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miget_dimension_widths(midimhandle_t dimension, mivoxel_order_t voxel_order,
-		       unsigned long array_length, unsigned long start_position,
+miget_dimension_widths(midimhandle_t dimension, 
+                       mivoxel_order_t voxel_order,
+		       unsigned long array_length, 
+                       unsigned long start_position,
 		       double widths[])
 {
   unsigned long  diff;
@@ -1162,12 +1221,15 @@ miget_dimension_widths(midimhandle_t dimension, mivoxel_order_t voxel_order,
 }
 
 /*! Set the full-width half-maximum value for points along an
-    irregularly sampled dimension.
+ * irregularly sampled dimension.
+ * \ingroup mi2Dim
  */
 
 int 
-miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
-		       unsigned long start_position, const double widths[])
+miset_dimension_widths(midimhandle_t dimension, 
+                       unsigned long array_length,
+		       unsigned long start_position, 
+                       const double widths[])
 {
   unsigned long  diff;
   int i, j=0;
@@ -1204,129 +1266,4 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   }
   return (MI_NOERROR);
 }
-
-
-#ifdef M2_TEST
-#define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
-                                  "Error reported on line #%d, %s: %d\n", \
-                                  __LINE__, msg, val))
-
-static int error_cnt = 0;
-
-#define CX 10
-#define CY 10
-#define CZ 6
-#define NDIMS 3
-
-int main(int argc, char **argv)
-{
-  mihandle_t vol;
-  int r;
-  midimhandle_t dim[3];
-  mivolumeprops_t props;
-  double cosines[3];
-  double offsets[3];
-  double widths[3];
-  int n;
-  midimhandle_t dimens[3];
-  unsigned long coords[NDIMS];
-    unsigned long count[NDIMS];
-    int i,j,k;
-    struct test {
-        int r;
-        int g;
-        int b;
-    } voxel;
-    int result = 1;
-  /* Write data one voxel at a time. */
-    for (i = 0; i < NDIMS; i++) {
-        count[i] = 1;
-    }
-
-    r = minew_volume_props(&props);
-    r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
-    r = miset_props_zlib_compression(props, 3);
-     r = miset_props_multi_resolution(props, 1, 3);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dim[0]);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  //dim[0]=dimh;
-  
-  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dim[1]);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  //dim[1]=dimh1;
-  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 6,&dim[2]);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  //dim[2]=dimh2;
- 
-  r = micreate_volume("test_multi_h5.mnc", 3, dim, MI_TYPE_UINT, MI_CLASS_REAL,props,&vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-
-  r = micreate_volume_image(vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  printf( " N is %d \n", n);
-
-  for (i = 0; i < CX; i++) {
-        for (j = 0; j < CY; j++) {
-            for (k = 0; k < CZ; k++) {
-                coords[0] = i;
-                coords[1] = j;
-                coords[2] = k;
-
-                voxel.r = i;
-                voxel.g = j;
-                voxel.b = k;
-                
-                result = miset_voxel_value_hyperslab(vol, MI_TYPE_UINT,
-						     coords, count, &voxel);
-                if (result < 0) {
-                    TESTRPT("Error writing voxel", result);
-                }
-            }
-        }
-    }
-
- 
-  /* call miselect_resolution() 
-   */
-  r = miselect_resolution(vol,1);
-  //r = miflush_from_resolution(vol, 3);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  r = miclose_volume(vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  if (error_cnt != 0) {
-    fprintf(stderr, "%d error%s reported\n", 
-	    error_cnt, (error_cnt == 1) ? "" : "s");
-  }
-  else {
-    fprintf(stderr, "No errors\n");
-   
-  }
-  return (error_cnt);
-}
-#endif
 
