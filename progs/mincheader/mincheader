@@ -3,13 +3,16 @@
 # Script to view header info of MINC files.
 #
 # Usage: mincheader [-data] <file.mnc>
-# Exit status: status of `ncdump'
+# Exit status: status of `mincdump'
 #
 #
 # Modifications: 
 #   $Log: mincheader,v $
-#   Revision 6.2  2000-09-12 15:20:07  neelin
-#   Rewrite in Bourne shell by Steve Robbins. Returns exit status from ncdump.
+#   Revision 6.3  2004-04-27 15:32:58  bert
+#   Use mincdump instead of ncdump
+#
+#   Revision 6.2  2000/09/12 15:20:07  neelin
+#   Rewrite in Bourne shell by Steve Robbins. Returns exit status from mincdump.
 #
 #   Revision 6.1  1999/10/19 14:45:23  neelin
 #   Fixed Log subsitutions for CVS
@@ -82,7 +85,7 @@ dumpfile=`mincexpand $1 $tmpfile -name_only $header_opts`
 
 # For a compressed file, dump header only unless directed otherwise
 if test $dumpfile = $tmpfile -a $header_only = yes; then
-    ncdump -h $dumpfile
+    mincdump -h $dumpfile
 else
 #  Get variables names (excluding image): remove leading "image", remove word 
 #  "image", collapse multiple blanks to one, remove leading blanks, remove
@@ -94,6 +97,6 @@ else
 	    -e 's/^ //' \
 	    -e 's/ $//' \
 	    -e 's/ /,/g'`
-    test x$vars = x || ncdump -v "$vars" $dumpfile
+    test x$vars = x || mincdump -v "$vars" $dumpfile
 fi
 
