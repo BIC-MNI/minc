@@ -165,21 +165,23 @@
 #define MI_ICV_USER_NORM        7
 #define MI_ICV_IMAGE_MAX        8
 #define MI_ICV_IMAGE_MIN        9
+/* For doing dimension conversions */
+#define MI_ICV_DO_DIM_CONV     10
 /* For converting vector fields to scalar */
-#define MI_ICV_DO_SCALAR       10
+#define MI_ICV_DO_SCALAR       11
 /* For flipping axis direction */
-#define MI_ICV_XDIM_DIR        11
-#define MI_ICV_YDIM_DIR        12
-#define MI_ICV_ZDIM_DIR        13
+#define MI_ICV_XDIM_DIR        12
+#define MI_ICV_YDIM_DIR        13
+#define MI_ICV_ZDIM_DIR        14
 /* For changing size of first two dimensions (excluding MIvector_dimension) */
-#define MI_ICV_ADIM_SIZE       14
-#define MI_ICV_BDIM_SIZE       15
+#define MI_ICV_ADIM_SIZE       15
+#define MI_ICV_BDIM_SIZE       16
 /* The pixel size and location of first two dimensions (these are readonly) */
-#define MI_ICV_ADIM_STEP       16
-#define MI_ICV_BDIM_STEP       17
-#define MI_ICV_ADIM_START      18
-#define MI_ICV_BDIM_START      19
-#define MI_ICV_KEEP_ASPECT     20
+#define MI_ICV_ADIM_STEP       17
+#define MI_ICV_BDIM_STEP       18
+#define MI_ICV_ADIM_START      19
+#define MI_ICV_BDIM_START      20
+#define MI_ICV_KEEP_ASPECT     21
 /* Constants that can be used as values for the above properties. */
 /* Possible values for MI_ICV_?DIM_DIR */
 #define MI_ICV_POSITIVE         1
@@ -257,10 +259,14 @@ public int miicv_setdbl(int icvid, int icv_property, double value);
 public int miicv_setint(int icvid, int icv_property, int value);
 public int miicv_set(int icvid, int icv_property, void *value);
 public int miicv_inq(int icvid, int icv_property, void *value);
-public int miicv_attach(int icvid, int cdfid, int varid);
+public int miicv_ndattach(int icvid, int cdfid, int varid);
 public int miicv_detach(int icvid);
 public int miicv_get(int icvid, long start[], long count[], void *values);
 public int miicv_put(int icvid, long start[], long count[], void *values);
+
+/* From dim_conversion.c */
+public int miicv_attach(int icvid, int cdfid, int varid);
+
 
 
 /* End ifndef MINC_HEADER_FILE */

@@ -68,18 +68,22 @@ private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
 private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
 private double MI_get_default_range(char *what, nc_type datatype, int sign);
 private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
+private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+                          long count[], void *values);
+private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
+private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+                                long *icv_start, long *icv_count,
+                                long *var_start, long *var_count);
+private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
+semiprivate mi_icv_type *MI_icv_chkid(int icvid);
+
+/* From dim_conversion.c */
 private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid);
 private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
                            int subsc[]);
 private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[]);
 private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[]);
 private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[]);
-private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
-                          long count[], void *values);
-private int MI_icv_coords_tovar(mi_icv_type *icvp, 
-                                long *icv_start, long *icv_count,
-                                long *var_start, long *var_count);
-private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer);
@@ -87,7 +91,6 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               mi_icv_dimconv_type *dcp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer);
-private int MI_icv_chkid(int icvid);
 
 
 #endif
