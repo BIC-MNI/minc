@@ -22,17 +22,32 @@
 #define SPI_IMAGE_ELEMENT 0x0010
 
 /* Element id's for SPI */
+GLOBAL_ELEMENT(SPI_Net_frequency                      , 0x0019, 0x1010, IS);
+GLOBAL_ELEMENT(SPI_Measurement_mode                   , 0x0019, 0x1020, CS);
+GLOBAL_ELEMENT(SPI_Calculation_mode                   , 0x0019, 0x1030, CS);
+GLOBAL_ELEMENT(SPI_Noise_level                        , 0x0019, 0x1050, IS);
+GLOBAL_ELEMENT(SPI_Number_of_data_bytes               , 0x0019, 0x1060, IS);
+GLOBAL_ELEMENT(SPI_Total_measurement_time_nom         , 0x0019, 0x1210, DS);
 GLOBAL_ELEMENT(SPI_Total_measurement_time_cur         , 0x0019, 0x1211, DS);
+GLOBAL_ELEMENT(SPI_Start_delay_time                   , 0x0019, 0x1212, DS);
+GLOBAL_ELEMENT(SPI_Dwell_time                         , 0x0019, 0x1213, DS);
+GLOBAL_ELEMENT(SPI_Number_of_phases                   , 0x0019, 0x1214, IS);
+GLOBAL_ELEMENT(SPI_Sequence_control_mask              , 0x0019, 0x1216, UL);
+GLOBAL_ELEMENT(SPI_Measurement_status_mask            , 0x0019, 0x1218, UL);
+GLOBAL_ELEMENT(SPI_Number_of_fourier_lines_nom        , 0x0019, 0x1220, IS);
 GLOBAL_ELEMENT(SPI_Number_of_fourier_lines_current    , 0x0019, 0x1221, IS);
 GLOBAL_ELEMENT(SPI_Number_of_fourier_lines_after_zero , 0x0019, 0x1226, IS);
 GLOBAL_ELEMENT(SPI_First_measured_fourier_line        , 0x0019, 0x1228, IS);
 GLOBAL_ELEMENT(SPI_Acquisition_columns                , 0x0019, 0x1230, LO);
 GLOBAL_ELEMENT(SPI_Reconstruction_columns             , 0x0019, 0x1231, LO);
+GLOBAL_ELEMENT(SPI_Number_of_averages                 , 0x0019, 0x1250, IS);
 GLOBAL_ELEMENT(SPI_Flip_angle                         , 0x0019, 0x1260, DS);
 GLOBAL_ELEMENT(SPI_Number_of_prescans                 , 0x0019, 0x1270, IS);
+GLOBAL_ELEMENT(SPI_Magnetic_field_strength            , 0x0019, 0x1412, DS);
 GLOBAL_ELEMENT(SPI_ADC_voltage                        , 0x0019, 0x1414, DS);
 GLOBAL_ELEMENT(SPI_ADC_offset                         , 0x0019, 0x1416, DS);
 GLOBAL_ELEMENT(SPI_Transmitter_amplitude              , 0x0019, 0x1420, DS);
+GLOBAL_ELEMENT(SPI_Transmitter_calibration            , 0x0019, 0x1424, DS);
 GLOBAL_ELEMENT(SPI_Receiver_amplifier_gain            , 0x0019, 0x1451, DS);
 GLOBAL_ELEMENT(SPI_Receiver_preamplifier_gain         , 0x0019, 0x1452, DS);
 GLOBAL_ELEMENT(SPI_Phase_gradient_amplitude           , 0x0019, 0x1470, DS);
