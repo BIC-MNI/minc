@@ -17,10 +17,16 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 Mon May 28 01:00:01 EST 2000 - First minc version - Andrew Janke 
 Thu Oct  5 17:09:12 EST 2000 - First alpha version
 Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
+
+ * $Log: minccalc.c,v $
+ * Revision 1.2  2001-04-24 18:17:09  neelin
+ * Added CVS logging.
+ *
+
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.1 2001-04-24 18:14:03 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.2 2001-04-24 18:17:09 neelin Exp $";
 #endif
 
 #include <stdlib.h>
