@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.5  2001-08-16 19:24:11  neelin
+ * Revision 6.6  2001-08-20 13:16:53  neelin
+ * Removed extraneous variables from MI_icv_get_vrange.
+ *
+ * Revision 6.5  2001/08/16 19:24:11  neelin
  * Fixes to the code handling valid_range values.
  *
  * Revision 6.4  2001/08/16 16:41:31  neelin
@@ -127,7 +130,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.5 2001-08-16 19:24:11 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.6 2001-08-20 13:16:53 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -954,10 +957,7 @@ private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 ---------------------------------------------------------------------------- */
 private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 {
-   int oldncopts;            /* For saving value of ncopts */
-   int status;
    double vrange[2];         /* Valid range buffer */
-   int length;               /* Number of elements in attribute */
 
    MI_SAVE_ROUTINE_NAME("MI_icv_get_vrange");
 
