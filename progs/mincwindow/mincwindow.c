@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 2.3  1995-03-21 14:05:00  neelin
-@MODIFIED   : Modified calls to voxel_loop routines.
+@MODIFIED   : Revision 2.4  1995-03-21 14:35:25  neelin
+@MODIFIED   : Changed usage message and handle vector volumes properly.
 @MODIFIED   :
+ * Revision 2.3  1995/03/21  14:05:00  neelin
+ * Modified calls to voxel_loop routines.
+ *
  * Revision 2.2  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.3 1995-03-21 14:05:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.4 1995-03-21 14:35:25 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -106,8 +109,10 @@ public int main(int argc, char *argv[])
    if (ParseArgv(&argc, argv, argTable, 0) || 
        (argc < 5) || (argc > 6)) {
       (void) fprintf(stderr, 
-      "Usage: %s [options] <in.mnc> <out.mnc> <min> <max> [<newvalue>]\n",
+      "\nUsage: %s [options] <in.mnc> <out.mnc> <min> <max> [<newvalue>]\n",
                      argv[0]);
+      (void) fprintf(stderr, 
+        "Usage: %s -help\n\n", argv[0]);
       exit(EXIT_FAILURE);
    }
    infile = argv[1];
@@ -175,14 +180,14 @@ public void do_window(void *caller_data, long num_voxels,
    window_data = (Window_Data *) caller_data;
 
    /* Check arguments */
-   if ((input_num_buffers != 1) || (input_vector_length != 1) ||
-       (output_num_buffers != 1) || (output_vector_length != 1)) {
+   if ((input_num_buffers != 1) || (output_num_buffers != 1) || 
+       (output_vector_length != input_vector_length)) {
       (void) fprintf(stderr, "Bad arguments to do_window!\n");
       exit(EXIT_FAILURE);
    }
 
    /* Loop through the voxels */
-   for (ivox=0; ivox < num_voxels; ivox++) {
+   for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
       if (input_data[0][ivox] < window_data->minimum) {
          if (window_data->use_newvalue)
             output_data[0][ivox] = window_data->newvalue;
