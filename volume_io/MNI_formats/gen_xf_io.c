@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.12 1995-04-28 18:33:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.13 1995-05-12 14:28:45 david Exp $";
 #endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
@@ -176,7 +176,7 @@ private  void  output_one_transform(
         break;
 
     case USER_TRANSFORM:
-        print( "Cannot output user transformation.\n" );
+        print_error( "Cannot output user transformation.\n" );
         output_comments( file, "User transform goes here." );
         break;
 
@@ -241,7 +241,7 @@ public  Status  output_transform(
 
     if( file == (FILE *) 0 )
     {
-        print( "output_transform(): passed NULL FILE ptr.\n");
+        print_error( "output_transform(): passed NULL FILE ptr.\n");
         return( ERROR );
     }
 
@@ -307,7 +307,7 @@ private  Status  input_one_transform(
     if( mni_input_string( file, type_name, MAX_STRING_LENGTH, (char) ';',
                           (char) 0 ) != OK )
     {
-        print( "input_transform(): missing transform type.\n");
+        print_error( "input_transform(): missing transform type.\n");
         return( ERROR );
     }
     if( mni_skip_expected_character( file, (char) ';' ) != OK )
@@ -321,7 +321,7 @@ private  Status  input_one_transform(
         type = GRID_TRANSFORM;
     else
     {
-        print( "input_transform(): invalid transform type.\n");
+        print_error( "input_transform(): invalid transform type.\n");
         return( ERROR );
     }
 
@@ -347,7 +347,8 @@ private  Status  input_one_transform(
             inverse_flag = FALSE;
         else
         {
-            print( "Expected %s or %s after %s =\n", TRUE_STRING, FALSE_STRING,
+            print_error( "Expected %s or %s after %s =\n",
+                         TRUE_STRING, FALSE_STRING,
                    INVERT_FLAG_STRING );
             return( ERROR );
         }
@@ -362,7 +363,7 @@ private  Status  input_one_transform(
     case LINEAR:
         if( strcmp( str, LINEAR_TRANSFORM_STRING ) != 0 )
         {
-            print( "Expected %s =\n", LINEAR_TRANSFORM_STRING );
+            print_error( "Expected %s =\n", LINEAR_TRANSFORM_STRING );
             return( ERROR );
         }
 
@@ -379,7 +380,7 @@ private  Status  input_one_transform(
             {
                 if( mni_input_double( file, &value ) != OK )
                 {
-                    print(
+                    print_error(
                     "input_transform(): error reading transform elem [%d,%d]\n",
                     i+1, j+1 );
                     return( ERROR );
@@ -402,7 +403,7 @@ private  Status  input_one_transform(
 
         if( strcmp( str, N_DIMENSIONS_STRING ) != 0 )
         {
-            print( "Expected %s =\n", N_DIMENSIONS_STRING );
+            print_error( "Expected %s =\n", N_DIMENSIONS_STRING );
             return( ERROR );
         }
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
@@ -421,7 +422,8 @@ private  Status  input_one_transform(
 
         if( n_points % n_dimensions != 0 )
         {
-            print("Number of points (%d) must be multiple of number of dimensions (%d)\n",
+            print_error(
+        "Number of points (%d) must be multiple of number of dimensions (%d)\n",
                   n_points, n_dimensions );
             return( ERROR );
         }
@@ -451,7 +453,7 @@ private  Status  input_one_transform(
             {
                 if( mni_input_double( file, &value ) != OK )
                 {
-                    print( "Expected more displacements.\n" );
+                    print_error( "Expected more displacements.\n" );
                     return( ERROR );
                 }
                 displacements[i][j] = value;
@@ -471,7 +473,7 @@ private  Status  input_one_transform(
 
         if( strcmp( str, DISPLACEMENT_VOLUME ) != 0 )
         {
-            print( "Expected %s =\n", DISPLACEMENT_VOLUME );
+            print_error( "Expected %s =\n", DISPLACEMENT_VOLUME );
             return( ERROR );
         }
         if( mni_skip_expected_character( file, (char) '=' ) != OK )
@@ -551,7 +553,7 @@ public  Status  input_transform(
 
     if( file == (FILE *) 0 )
     {
-        print( "input_transform(): passed NULL FILE ptr.\n");
+        print_error( "input_transform(): passed NULL FILE ptr.\n");
         return( ERROR );
     }
 
@@ -561,7 +563,7 @@ public  Status  input_transform(
             != OK ||
         strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
     {
-        print( "input_transform(): invalid header in file.\n");
+        print_error( "input_transform(): invalid header in file.\n");
         return( ERROR );
     }
 
@@ -582,12 +584,12 @@ public  Status  input_transform(
 
     if( status == ERROR )
     {
-        print( "input_transform: error reading transform.\n" );
+        print_error( "input_transform: error reading transform.\n" );
         return( ERROR );
     }
     else if( n_transforms == 0 )
     {
-        print( "input_transform: no transform present.\n" );
+        print_error( "input_transform: no transform present.\n" );
         return( ERROR );
     }
 

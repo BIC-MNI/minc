@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.15 1995-04-28 18:33:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.16 1995-05-12 14:33:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -136,7 +136,7 @@ private  void  internal_create_grid_transform(
     if( get_volume_n_dimensions(displacement_volume) != 4 )
     {
         volume_ok = FALSE;
-        print( "Grid transform must be 4 dimensional.\n" );
+        print_error( "Grid transform must be 4 dimensional.\n" );
     }
     else
     {
@@ -160,8 +160,9 @@ private  void  internal_create_grid_transform(
             {
                 if( sizes[dim] != 3 )
                 {
-                    print( "displacement_volume must have 3 components on " );
-                    print( "the non-spatial axis.\n" );
+                    print_error(
+                            "displacement_volume must have 3 components on " );
+                    print_error( "the non-spatial axis.\n" );
                     volume_ok = FALSE;
                 }
 
@@ -171,7 +172,7 @@ private  void  internal_create_grid_transform(
 
         if( !dim_found[X] || !dim_found[Y] || !dim_found[Z] )
         {
-            print(
+            print_error(
               "Must have an x, y, and z dimension in displacement volume.\n" );
             volume_ok = FALSE;
         }
