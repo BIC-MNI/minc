@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 1.1 1993-10-19 13:05:36 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 1.2 1993-10-19 15:38:30 neelin Exp $
 .\"
 .TH MINCINFO 1 "MINC Image File Format"
 
@@ -34,42 +34,50 @@ Dimensions, variables and attributes are all specified by name.
 Attributes are specified by <variable>:<attribute> where <variable>
 can be omitted to specify global attributes.
 
-.I -image_info :
+.I -image_info:
 Print out the default general information about the file. This
 information includes the type, sign and range of the pixel data, the
 order of the dimensions, and a list of dimensions giving name,
 length, start and step for each one.
 .P
-.I -dimnames :
+.I -dimnames:
 Print out a space-separated list of the dimensions in the file.
 .P
-.I -varnames :
+.I -varnames:
 Print out a space-separated list of the variables in the file.
 .P
-.I -dimlength <dimension> :
+.I -dimlength
+<dimension> :
 Print the length of the specified dimension.
 .P
-.I -vartype <variable> :
+.I -vartype
+<variable> :
 Print the type of the variable.
 .P
-.I -vardims <variable> :
+.I -vardims 
+<variable> :
 Print a space-separated list of the dimensions that subscript the
 variable (in C order).
 .P
-.I -varatts <variable> :
+.I -varatts 
+<variable> :
 Print a space-separated list of the attribute names for the specified
 variable.
 .P
-.I -varvalues <variable> :
+.I -varvalues 
+<variable> :
 Print a newline-separated list of the values of the specified variable.
 .P
-.I -atttype <variable>:<attribute> :
+.I -atttype 
+<variable>:<attribute> :
 Print out the type of the specified attribute.
 .P
-.I -attvalue <variable>:<attribute> :
+.I -attvalue 
+<variable>:<attribute> :
 Print out a space-separated list of the values of the specified attribute.
 .P
-.I -error_string <string> :
+.I -error_string 
+<string> :
 Specifies a string to print out if an error occurs. This will cause
 the program to exit with normal status. The default is to print an
 appropriate error message and exit with an error status.
@@ -80,25 +88,17 @@ Print summary of command-line options and abort.
 .SH EXAMPLES
 
 Print out standard information about a minc file.
-.in +5
-mincinfo file.mnc
-.in -5
+     mincinfo file.mnc
 
 Print out contents of global history attribute.
-.in +5
-mincinfo file.mnc -attvalue :history
-.in -5
+     mincinfo file.mnc -attvalue :history
 
 Print out step value for x dimension, setting the default value
 to 1.
-.in +5
-mincinfo file.mnc -attvalue xspace:step -error 1
-.in -5
+     mincinfo file.mnc -attvalue xspace:step -error 1
 
 Print out the names of the dimensions subscripting the image variable.
-.in +5
-mincinfo file.mnc -vardims image
-.in -5
+     mincinfo file.mnc -vardims image
 
 .SH AUTHOR
 Peter Neelin

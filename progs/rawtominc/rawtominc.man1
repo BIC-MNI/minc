@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.2 1993-10-19 12:53:36 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.3 1993-10-19 15:38:58 neelin Exp $
 .\"
 .TH RAWTOMINC 1 "MINC Image File Format"
 
@@ -30,7 +30,6 @@ voxel to world coordinate conversion. Vector type data (such as RGB
 pixel data) can be read in as well.
 
 .SH PIXEL VALUE SPECIFICATION
-
 Pixel values are specified by a type and a sign (e.g. signed short
 integer). They are also characterized by a range of legal values. For
 example, many scanners produce images stored with short integer pixel
@@ -56,7 +55,6 @@ then read values in with -float and write them out with -oshort.
 .\" Alternatively, one can use the option -scan_range.
 
 .SH WORLD COORDINATES
-
 World coordinates refer to millimetric coordinates relative to some physical
 origin (either the scanner or some anatomical structure). Voxel coordinates
 are simply the indices into the image volume of a given voxel.
@@ -129,7 +127,8 @@ floating point types.
 Values are unsigned integers (default for byte). Ignored for
 floating point types.
 .P
-.I -range <min> <max>:
+.I -range 
+<min> <max>:
 specifies the valid range of pixel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values.
@@ -161,7 +160,8 @@ Values are unsigned integers (default for byte). Ignored for
 floating point types. If output type is not specified, then default
 is input sign type.
 .P
-.I -orange <min> <max>:
+.I -orange 
+<min> <max>:
 specifies the valid range of pixel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values. If output type and sign are not specified, then the default
