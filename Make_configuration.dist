@@ -10,8 +10,8 @@
 #    FORTRAN_SUBDIR = "fortran" to get compilation of fortran jackets, or
 #        nothing to leave out fortran jackets
 #
-NETCDF_LIB_DIR = $(ROOT)/../lib
-NETCDF_INCLUDE_DIR = $(ROOT)/../include
+NETCDF_LIB_DIR = /usr/local/lib
+NETCDF_INCLUDE_DIR = /usr/local/include
 NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf_fortran
 #FORTRAN_SUBDIR = fortran
 FORTRAN_SUBDIR =
