@@ -578,6 +578,10 @@ sub create_mincfile {
             }
             open(GEDAT, $image_cmd . " |");
             read(GEDAT, $image_data, $image_data_len);
+            local($dummy, $nread);
+            do {
+               $nread = read(GEDAT, $dummy, 8192);
+            } while ($nread == 8192);
             close(GEDAT);
             if ($? != 0) {
                 warn("Error or signal while reading image.\n");
