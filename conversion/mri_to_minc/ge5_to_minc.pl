@@ -12,7 +12,7 @@ sub time_to_string {
     if ($year >= 70) {$year += 1900;}
     else {$year += 2000;}
 
-    return sprintf("%s-%d-%d %d:%d:%d", $months[$mon], $mday, $year,
+    return sprintf("%d-%s-%d %d:%d:%d GMT", $mday, $months[$mon], $year,
                    $hour, $min, $sec);
 }
 
