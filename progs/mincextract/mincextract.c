@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.4 1993-07-13 15:41:38 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.5 1993-07-13 16:24:14 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -296,6 +296,7 @@ int main(int argc, char *argv[])
    /* Clean up */
    (void) ncclose(mincid);
    (void) miicv_free(icvid);
+   FREE(data);
 
    exit(EXIT_SUCCESS);
 }
