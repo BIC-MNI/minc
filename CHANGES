@@ -1,3 +1,7 @@
+Thu Dec  6 16:55:50 EST 2001
+   - extensive modifications to mincstats to get it working properly and
+     to add support for multiple volume and mask ranges.
+
 Thu Dec  6 09:14:22 EST 2001
    - Corrected return from mivar_exists in minc library to use MI_RETURN
      so that ncopts is properly restored.
