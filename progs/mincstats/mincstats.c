@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.8  2001-12-11 14:36:00  neelin
+ * Revision 1.9  2002-01-09 13:23:16  neelin
+ * Removed extraneous newline for histogram output with -quiet turned on.
+ *
+ * Revision 1.8  2001/12/11 14:36:00  neelin
  * Added -discrete_histogram and -integer_histogram, as well as
  * -world_only options.
  *
@@ -699,7 +702,7 @@ int main(int argc, char *argv[])
                print_result(str,              stats->pct_T);
             }
             if (All || Entropy)   {    print_result("Entropy :          ", stats->entropy  );     }
-            (void) fprintf(stdout, "\n");
+            if (!quiet) { (void) fprintf(stdout, "\n"); }
          }
 
       }   /* End of loop over masks */
