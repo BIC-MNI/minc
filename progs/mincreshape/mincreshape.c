@@ -12,9 +12,13 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 1.2  1994-11-03 08:48:20  neelin
-@MODIFIED   : Allow chunk_count to have sizes less than full block size.
+@MODIFIED   : Revision 1.3  1994-11-22 08:46:09  neelin
+@MODIFIED   : Fixed handling of normalization for number of image dimensions > 2.
+@MODIFIED   : Added appropriate default values of image-max and image-min.
 @MODIFIED   :
+ * Revision 1.2  94/11/03  08:48:20  neelin
+ * Allow chunk_count to have sizes less than full block size.
+ * 
  * Revision 1.1  94/11/02  16:21:24  neelin
  * Initial revision
  * 
@@ -31,7 +35,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.2 1994-11-03 08:48:20 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.3 1994-11-22 08:46:09 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1114,6 +1118,14 @@ public void setup_reshaping_info(int icvid, int mincid,
          reshape_info->chunk_count[idim] = size;
          total_size *= size;
       }
+   }
+
+   /* Make sure that all input image dimensions are considered used in the
+      block */
+   for (iloop=2; iloop < num_imgdims; iloop++) {
+      idim = fastest_input_img_dim - iloop;
+      if (idim >= 0)
+         reshape_info->dim_used_in_block[idim] = TRUE;
    }
 
    /* Save fillvalue */

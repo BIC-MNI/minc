@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 1.1  1994-11-02 16:21:09  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-11-22 08:45:11  neelin
+@MODIFIED   : Fixed handling of normalization for number of image dimensions > 2.
+@MODIFIED   : Added appropriate default values of image-max and image-min.
 @MODIFIED   :
+ * Revision 1.1  94/11/02  16:21:09  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1994 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -21,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.1 1994-11-02 16:21:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.2 1994-11-22 08:45:11 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -274,7 +278,7 @@ public void handle_normalization(Reshape_info *reshape_info,
    double minimum, maximum, *extreme, valid_min, valid_max, denom;
    long num_values;
    char *varname;
-   double sign;
+   double sign, default_extreme;
 
    /* Get input minc id, image id and icv id*/
    inmincid = reshape_info->inmincid;
@@ -301,12 +305,14 @@ public void handle_normalization(Reshape_info *reshape_info,
          varname = MIimagemin;
          extreme = &minimum;
          sign = -1.0;
+         default_extreme = 0.0;
          break;
       case 1: 
          num_values = num_max_values;
          varname = MIimagemax;
          extreme = &maximum;
          sign = +1.0;
+         default_extreme = 1.0;
          break;
       }
 
@@ -329,7 +335,7 @@ public void handle_normalization(Reshape_info *reshape_info,
          }
       }
       else {
-         *extreme = 0.0;
+         *extreme = default_extreme;
       }
       if (reshape_info->need_fillvalue && 
           (reshape_info->fillvalue == NOFILL) && 
@@ -344,6 +350,7 @@ public void handle_normalization(Reshape_info *reshape_info,
       (void) miicv_setdbl(icvid, MI_ICV_IMAGE_MIN, minimum);
       (void) miicv_setdbl(icvid, MI_ICV_IMAGE_MAX, maximum);
       (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);
+      (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
       (void) miicv_attach(icvid, inmincid, inimgid);
    }
 
