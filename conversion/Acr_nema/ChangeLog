@@ -1,0 +1,19 @@
+2005-03-03 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Modify sequence handling to better conform to the DICOM
+	specification.  This means handling group 0xfffe items as
+	magically conforming to implicit VR format. See DICOM Part 5,
+	section 7.5 for more details.	
+	* Fix bug that prevented any data element from ever being tagged
+	as "variable length".  This bug prevented us from properly parsing
+	files with sequences with unspecified lengths.
+	* Modify acr_get_element_total_length() to return zero if the
+	vr_name is NULL.  This avoids a core dump when erroneously parsing
+	non-DICOM files.
+	* Also got rid of small memory leak in sequence reading.
+	* Other random tweaks and cleanup.
+	
+2005-02-16 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Autoconfiscation
+	* Move headers into acr_nema subdirectory to avoid naming
+	conflicts
+	* Get rid of mktemp() warnings by using mkstemp().
