@@ -23,6 +23,9 @@
 
 This document describes a library of routines available at the
 McConnell Brain Imaging Centre at the Montreal Neurological Institute.
+It was developed as part of a medical imaging software testbed by
+David MacDonald, with considerable input from Peter Neelin, Louis
+Collins, and others at the Centre.
 The library comprises a set of functions for reading and writing
 volumes of medical imaging data, as well as some general support
 routines useful to many programming tasks.  All images at the Brain
@@ -32,8 +35,11 @@ format is available in related documentation concerning the format and
 the MINC library of routines used to read and write MINC files.  The
 Volume IO library is a library built on top of the MINC library to
 provide easy access to MINC files, without having to learn too much of
-the details of the MINC library.  It also provides a structure for internal
-storage of volumes and routines to access and modify volumes.
+the details of the MINC library.  It provides a structure for internal
+storage of volumes and routines to access and modify volumes.  In
+addition, it provides routines to manipulate tag points and
+transformations and to perform input and output on these objects in
+the standardized formats of the Brain Imaging Centre.
 
 This document describes where to find the Volume IO library, how to
 integrate it into a user's programs, and what functionality
@@ -1661,8 +1667,87 @@ function.}
 
 \section{Volume Manipulation}
 
-Once a volume has been created and allocated, there are many routines
-for manipulating the volume:
+Once a volume has been created and allocated, there are many macros
+and functions for manipulating the volume.  Note that associated with
+each volume is a valid voxel range indicating the range of values
+actually stored in the volume, for instance, zero to 200 is one
+possible range for an unsigned byte volume.  There is a second range,
+the \name{real} range, which is the mapping of the valid voxel range
+to an arbitrary real range, for instance, the zero to 200 of valid
+voxels could map to -1.5 to 1.5 in the \name{real} range.  When
+dealing with volumes, one is generally interested in the \name{real}
+range.
+
+{\bf\begin{verbatim}
+    GET_VOXEL( value, volume, v1, v2, v3, v4, v5 )
+\end{verbatim}}
+
+\desc{Given a volume and from one to five voxel indices, depending on
+the volume dimensions, stores the corresponding voxel value
+in the variable \name{value}, which may be of any type.  For instance,
+if the volume is three
+dimensional, then the final two arguments are ignored.}
+
+{\bf\begin{verbatim}
+    GET_VOXEL_1D( value, volume, v1 )
+    GET_VOXEL_2D( value, volume, v1, v2 )
+    GET_VOXEL_3D( value, volume, v1, v2, v3 )
+    GET_VOXEL_4D( value, volume, v1, v2, v3, v4 )
+    GET_VOXEL_5D( value, volume, v1, v2, v3, v4, v5 )
+\end{verbatim}}
+
+\desc{Given a volume and the required number of voxel indices for the
+volume, assigns the corresponding voxel value to the argument
+\name{value}.}
+
+{\bf\begin{verbatim}
+    CONVERT_VOXEL_TO_VALUE( volume, voxel )
+\end{verbatim}}
+
+\desc{Given a volume and a voxel value, converts this to a value in
+the real range, and returns it.}
+
+{\bf\begin{verbatim}
+    CONVERT_VALUE_TO_VOXEL( volume, value )
+\end{verbatim}}
+
+\desc{Given a volume and a real value, converts this to a voxel value in
+the valid voxel range, and returns it.}
+
+{\bf\begin{verbatim}
+    GET_VALUE( value, volume, v1, v2, v3, v4, v5 )
+\end{verbatim}}
+
+\desc{Given a volume and from one to five voxel indices, depending on
+the volume dimensions, stores the corresponding real value in the
+variable \name{value},
+which may be of any type.  For instance, if the volume is three
+dimensional, then the final two arguments are ignored.}
+
+{\bf\begin{verbatim}
+    GET_VALUE_1D( value, volume, v1 )
+    GET_VALUE_2D( value, volume, v1, v2 )
+    GET_VALUE_3D( value, volume, v1, v2, v3 )
+    GET_VALUE_4D( value, volume, v1, v2, v3, v4 )
+    GET_VALUE_5D( value, volume, v1, v2, v3, v4, v5 )
+\end{verbatim}}
+
+\desc{Given a volume and the required number of voxel indices for the
+volume, assigns the corresponding real value to the argument
+\name{value}.  This is the most efficient method to access the volume
+values (as compared to the \name{GET\_VALUE} macro, for instance).
+Typically, the \name{GET\_VALUE\_3D} macro is used for
+most applications.}
+
+{\bf\begin{verbatim}
+    SET_VOXEL( volume, v1, v2, v3, v4, v5, value )
+\end{verbatim}}
+
+\desc{Given a volume, one to five voxel indices, and a \name{voxel}
+value, assigns this value to the corresponding voxel in the volume.
+Note that no conversion from the valid real range to the valid voxel
+range is performed, so the user may need to use the
+\name{CONVERT\_VALUE\_TO\_VOXEL} macro first.}
 
 {\bf\begin{verbatim}
 public  void  delete_volume(
@@ -1709,11 +1794,44 @@ public  void  get_volume_separations(
 be at least as large as the number of dimensions of the volume.}
 
 {\bf\begin{verbatim}
+public  Real  get_volume_voxel_min(
+    Volume   volume )
+public  Real  get_volume_voxel_max(
+    Volume   volume )
+public  void  get_volume_voxel_range(
+    Volume     volume,
+    Real       *voxel_min,
+    Real       *voxel_max )
+\end{verbatim}}
+
+\desc{The first two functions return the minimum or maximum allowable
+voxel value.  The third function passes back both values.}
+
+{\bf\begin{verbatim}
+public  Real  get_volume_real_min(
+    Volume     volume )
+public  Real  get_volume_real_max(
+    Volume     volume )
+public  void  get_volume_real_range(
+    Volume     volume,
+    Real       *min_value,
+    Real       *max_value )
+\end{verbatim}}
+
+\desc{The first two functions return the minimum or maximum real
+value.  The third function passes back both values.  The mapping to
+this real space linearly maps the minimum \name{voxel} value to the minimum
+\name{real} value and the maximum \name{voxel} value to the maximum
+\name{real} value.}
+
+{\bf\begin{verbatim}
 public  char  **get_volume_dimension_names(
     Volume   volume )
 \end{verbatim}}
 
 \desc{Returns a pointer to the list of names of each dimension.}
+
+\subsection{Volume Coordinate Systems}
 
 A volume has two coordinate systems.  The {\bf voxel} coordinate
 system is simply the n-dimensional indexing coordinate system for a
@@ -1721,8 +1839,9 @@ volume.  A voxel coordinate of (0.0, 0.0, 0.0), for instance, corresponds
 to the centre of the first voxel in a three dimensional volume.  A voxel
 coordinate of ( 99.0, 0.0, 0.0 ) corresponds to the centre of the last
 voxel in the first direction of a three dimensional volume of size (
-100, 200, 150 ).  The second coordinate system is an arbitrary orthogonal
-system, usually referred to as the {\bf world} coordinate system, often
+100, 200, 150 ).  The second coordinate system is an arbitrary
+three dimensional coordinate system, usually referred to as the
+{\bf world} coordinate system, often
 the Talairach coordinate system.  The following functions provide
 conversion to and from these two coordinate systems:
 
@@ -1738,7 +1857,68 @@ public  void  convert_voxel_to_world(
 \desc{Given a volume and a real valued voxel index, passes back the
 corresponding world coordinate.}
 
+{\bf\begin{verbatim}
+public  void  convert_3D_voxel_to_world(
+    Volume   volume,
+    Real     voxel1,
+    Real     voxel2,
+    Real     voxel3,
+    Real     *x_world,
+    Real     *y_world,
+    Real     *z_world )
+\end{verbatim}}
+
+\desc{Same as \name{convert\_voxel\_to\_world} except it applies only
+to three dimensional volumes.}
+
+{\bf\begin{verbatim}
+public  void  convert_world_to_voxel(
+    Volume   volume,
+    Real     x_world,
+    Real     y_world,
+    Real     z_world,
+    Real     voxel[] )
+\end{verbatim}}
+
+\desc{Converts a world coordinate into a voxel.  In order to use
+these voxel coordinates as integer indices, for instance, as arguments
+to the \name{GET\_VALUE} macros, each component of the argument
+\name{voxel} must first be rounded to the nearest integer.}
+
+{\bf\begin{verbatim}
+public  void  convert_3D_world_to_voxel(
+    Volume   volume,
+    Real     x_world,
+    Real     y_world,
+    Real     z_world,
+    Real     *voxel1,
+    Real     *voxel2,
+    Real     *voxel3 )
+\end{verbatim}}
+
+\desc{Same as \name{convert\_world\_to\_voxel} except it applies only
+to three dimensional volumes.}
+
+{\bf\begin{verbatim}
+public  void  convert_voxel_normal_vector_to_world(
+    Volume          volume,
+    Real            voxel1,
+    Real            voxel2,
+    Real            voxel3,
+    Real            *x_world,
+    Real            *y_world,
+    Real            *z_world )
+\end{verbatim}}
+
+\desc{Converts a vector which is assumed to be a surface normal to the
+world coordinate system.}
+
 \section{Volume Creation from Scratch}
+
+In some circumstances, it is desireable to create volumes in ways
+other than reading from a file.  The following functions provide
+methods to create a volume from scratch or to create a volume which is
+similar to an existing volume.
 
 {\bf\begin{verbatim}
 public   Volume   create_volume(
@@ -1750,6 +1930,382 @@ public   Volume   create_volume(
     Real        voxel_max )
 \end{verbatim}}
 
-\desc{}
+\desc{Creates and returns a volume of the given type (e.g.
+\name{NC\_BYTE}, \name{signed\_flag} equal \name{FALSE}), and given
+valid voxel range.  The \name{dimension\_names} is used to describe
+each dimension of the volume and is currently only used when writing
+the volume to a file.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_voxel_range(
+    Volume   volume,
+    Real     voxel_min,
+    Real     voxel_max )
+public  void  set_volume_real_range(
+    Volume   volume,
+    Real     real_min,
+    Real     real_max )
+\end{verbatim}}
+
+\desc{After creation of a volume, the valid voxel range or valid real
+range can subsequently be changed by using these functions.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_sizes(
+    Volume       volume,
+    int          sizes[] )
+\end{verbatim}}
+
+\desc{Sets the sizes of the volume, the number of voxels in each
+dimension.  Note that this must be done before calling the function
+\name{alloc\_volume\_data} to allocate the voxels.}
+
+{\bf\begin{verbatim}
+public  void  alloc_volume_data(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{After the volume has been created, and its size has been set,
+then this function allocates the memory for the voxels.  Note that the
+voxel values are not initialized, and the user must fill the volume
+with desired values.}
+
+Associated with each volume is a transformation from \name{voxel}
+space to \name{world} space.  There are several ways to define this
+transformation.  The simplest is just to specify it directly:
+
+{\bf\begin{verbatim}
+public  void  set_voxel_to_world_transform(
+    Volume             volume,
+    General_transform  *transform )
+\end{verbatim}}
+
+\desc{Assigns the given transformation to the volume.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_separations(
+    Volume   volume,
+    Real     separations[] )
+\end{verbatim}}
+
+\desc{Sets the inter-voxel separations in each of the volume
+dimensions.  Note that this will cause the voxel to world
+transformation to be updated accordingly.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] )
+\end{verbatim}}
+
+\desc{Sets the translation portion of the voxel to world
+transformation.  A voxel coordinate is specified (\name{voxel}), as
+well as a real world position to which it is desired that this voxel
+map (\name{world\_space\_voxel\_maps\_to}).  The voxel to world
+transformation is updated to provide this mapping.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_direction_cosine(
+    Volume   volume,
+    int      dimension,
+    Real     dir[] )
+\end{verbatim}}
+
+\desc{Sets the real world axis for a specific voxel dimension.  For
+instance if \name{dimension} is 1, and \name{dir} is (0.0, 1.0, 1.0),
+then voxels along the second dimension of the volume will map to the real
+world axis (0.0, 1.0, 1.0) normalized to unit length, then scaled by
+the volume separation for the second volume dimension.}
+
+\subsection{Copying Volumes}
+
+Another method of creating a volume is to simply copy the entire
+volume definition from an existing volume:
+
+{\bf\begin{verbatim}
+public  Volume   copy_volume_definition(
+    Volume   existing_volume,
+    nc_type  nc_data_type,
+    BOOLEAN  signed_flag,
+    Real     voxel_min,
+    Real     voxel_max )
+\end{verbatim}}
+
+\desc{Creates and returns a new volume which has the same definition
+(sizes, voxel to world space transform, etc.), as an existing volume.
+If the argument \name{nc\_data\_type} is not \name{NC\_UNSPECIFIED},
+then the storage type of the new volume differs from the original and
+is specified by \name{nc\_data\_type}, \name{signed\_flag},
+\name{voxel\_min}, and \name{voxel\_max}.  The voxel values are allocated
+but not initialized.}
+
+\section{Source Code Example}
+
+An examples of reading, writing, and manipulating volumes is
+presented here.
+
+\subsection{Program to Read, Modify, and Write Volumes}
+
+This is a complete program to read a MINC volume, change all values
+over 100.0 to 100.0, then write out the result in a new file.
+
+{\small
+\begin{verbatim}
+#include  <volume_io.h>
+
+int  main(
+    int   argc,
+    char  *argv[] )
+{
+    int        v1, v2, v3, sizes[MAX_DIMENSIONS];
+    Real       voxel_value, voxel_100;
+    Volume     volume;
+
+    /*--- input the volume */
+
+    if( input_volume( "volume.mnc", 3, NULL, NC_UNSPECIFIED, FALSE,
+            0.0, 0.0, TRUE, &volume,
+            (minc_input_options *) NULL ) != OK )
+        return( 1 );
+
+    get_volume_sizes( volume, sizes );
+
+    /*--- change all values over 100 to 100 */
+
+    voxel_100 = CONVERT_VALUE_TO_VOXEL( volume, 100.0 );
+
+    for( v1 = 0;  v1 < sizes[0];  ++v1 ) {
+        for( v2 = 0;  v2 < sizes[1];  ++v2 ) {
+            for( v3 = 0;  v3 < sizes[2];  ++v3 ) {
+                GET_VALUE_3D( voxel_value, volume, v1, v2, v3 );
+
+                if( voxel_value > 100.0 ) {
+                    SET_VOXEL_3D( volume, v1, v2, v3, voxel_100 );
+                }
+            }
+        }
+    }
+
+    /*--- output the modified volume */
+
+    if( output_modified_volume( "output.mnc", NC_UNSPECIFIED,
+             FALSE, 0.0, 0.0, volume, "volume.mnc",
+             "Modified by clamping to 100",
+             (minc_output_options *) NULL ) != OK )
+        return( 1 );
+
+    return( 0 );
+}
+\end{verbatim}
+}
+
+\chapter{Tag Points}
+
+Tag points are sets of three dimensional points which are used to mark
+positions of interest.  Generally these result from manually locating
+corresponding positions in multiple volumes to provide a mapping among
+the volumes.  Tag points are stored in an ascii format devised at the
+McConnell Brain Imaging Centre, with convention of filenames ending in
+\name{.tag}.  A tag file can contain either sets of single tag points
+or two tag points, depending on whether the file corresponds to one or
+two volumes.  Each tag point consists of three coordinates, x, y, and
+z.  Each set of one or two tag points has additional optional
+information stored with it.  A tag point set may or may not include a
+set of three values, a real valued weight, an integer structure id,
+and an integer patient id.  A tag point may or may not include a label
+string.  Functions are provided to read and write files of this
+format are provided:
+
+{\bf\begin{verbatim}
+public  Status  input_tag_points(
+    FILE      *file,
+    int       *n_volumes,
+    int       *n_tag_points,
+    Real      ***tags_volume1,
+    Real      ***tags_volume2,
+    Real      **weights,
+    int       **structure_ids,
+    int       **patient_ids,
+    char      ***labels )
+public  Status  input_tag_file(
+    char      filename[],
+    int       *n_volumes,
+    int       *n_tag_points,
+    Real      ***tags_volume1,
+    Real      ***tags_volume2,
+    Real      **weights,
+    int       **structure_ids,
+    int       **patient_ids,
+    char      ***labels )
+\end{verbatim}}
+
+\desc{These two functions input a set of tag points from a file.  The
+first form assumes the file is already open and will be closed by the
+calling function, while the second form
+opens and closes the file specified by a filename, with a default
+extension of \name{.tag}.  The number of
+volumes (number of tags in a set, currently either one or two) is
+passed back in the \name{n\_volumes} argument.  The number of tag
+points is passed back in the \name{n\_tag\_points} argument.  The
+three dimensional coordinates of the first tag point in each set is
+passed back in the argument \name{tags\_volume1}.  If the number of
+volumes is two, then the second tag point in each set is passed back
+in the argument \name{tags\_volume2}.  The final four arguments pass
+back the auxiliary information associated with each tag point set.  If
+the calling program is not interested in any one of the four data,
+then it can pass in a \name{NULL} pointer and the values in the file
+will not be passed back.}
+
+{\bf\begin{verbatim}
+public  void  free_tag_points(
+    int       n_volumes,
+    int       n_tag_points,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
+    char      **labels )
+\end{verbatim}}
+
+\desc{When finished with a list of tag points, the
+associated memory may be freed by calling this function.}
+
+{\bf\begin{verbatim}
+public  Status  output_tag_points(
+    FILE      *file,
+    char      comments[],
+    int       n_volumes,
+    int       n_tag_points,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
+    char      **labels )
+public  Status  output_tag_file(
+    char      filename[],
+    char      comments[],
+    int       n_volumes,
+    int       n_tag_points,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
+    char      **labels )
+\end{verbatim}}
+
+\desc{These two functions output a list of tag points to a tag point
+file.  The first form assumes that the file has already been opened
+and will be closed later by the calling function, while the second
+form opens and closes the file, with the default extension of
+\name{.tag}.  The \name{comments} argument is any arbitrary string
+documenting the contents of this file.  The number of volumes
+(\name{n\_volumes}) must be either one or two.  The number of tag
+points is specified by the argument \name{n\_tag\_points}.  The actual
+positions of the sets of one or two tag points are in the arguments
+\name{tags\_volume1} and \name{tags\_volume2}.  If any of the three
+arguments, \name{weights}, \name{structure\_ids}, or
+\name{patient\_ids}, are specified as \name{NULL}, then none of these
+three pieces or information are written to the file.  Similarly, if
+the \name{labels} argument is \name{NULL}, then no labels are written
+to the file.}
+
+\section{Source Code Example}
+
+The following is an example which reads a tag volume, removes all tags
+which have negative x positions, ignores the second tag point in each
+set, if present, and writes the result to a new file.
+
+{\small
+\begin{verbatim}
+#include  <volume_io.h>
+
+int  main(
+    int   argc,
+    char  *argv[] )
+{
+    int        i, n_volumes, n_tag_points, *structure_ids, *patient_ids;
+    Real       **tags1, **tags2, *weights;
+    char       **labels;
+    int        new_n_tag_points, *new_structure_ids, *new_patient_ids;
+    Real       **new_tags1, *new_weights;
+    char       **new_labels;
+
+    /*--- input the tag file */
+
+    if( input_tag_file( "input_tags.tag", &n_volumes, &n_tag_points,
+                        &tags1, &tags2, &weights, &structure_ids,
+                        &patient_ids, &labels ) != OK )
+        return( 1 );
+
+    /*--- create a new tag point list of only those tag points
+          whose x coordinate is nonnegative */
+
+    new_n_tag_points = 0;
+
+    for_less( i, 0, n_tag_points )
+    {
+        if( tags1[i][0] >= 0.0 )
+        {
+            /*--- increase the memory allocation of the tag points */
+
+            SET_ARRAY_SIZE( new_tags1, new_n_tag_points,
+                            new_n_tag_points+1, 10 );
+            ALLOC( new_tags1[new_n_tag_points], 3 );
+
+            SET_ARRAY_SIZE( new_weights, new_n_tag_points,
+                            new_n_tag_points+1, 10 );
+            SET_ARRAY_SIZE( new_structure_ids, new_n_tag_points,
+                            new_n_tag_points+1, 10 );
+            SET_ARRAY_SIZE( new_patient_ids, new_n_tag_points,
+                            new_n_tag_points+1, 10 );
+
+            SET_ARRAY_SIZE( new_labels, new_n_tag_points,
+                            new_n_tag_points+1, 10 );
+            ALLOC( new_labels[new_n_tag_points], strlen(labels[i])+1 );
+
+            /*--- copy from the input tags to the new tags */
+
+            new_tags1[new_n_tag_points][0] = tags1[i][0];
+            new_tags1[new_n_tag_points][1] = tags1[i][1];
+            new_tags1[new_n_tag_points][2] = tags1[i][2];
+            new_weights[new_n_tag_points] = weights[i];
+            new_structure_ids[new_n_tag_points] = structure_ids[i];
+            new_patient_ids[new_n_tag_points] = patient_ids[i];
+            (void) strcpy( new_labels[new_n_tag_points], labels[i] );
+
+            /*--- increment the number of new tags */
+
+            ++new_n_tag_points;
+        }
+    }
+
+    /*--- output the new tags, the subset of the input tags */
+
+    if( output_tag_file( "output.tag", "Removed negative X's",
+                         1, new_n_tag_points, new_tags1, NULL,
+                         new_weights, new_structure_ids,
+                         new_patient_ids, new_labels ) != OK )
+        return( 1 );
+
+    return( 0 );
+}
+\end{verbatim}
+}
+
+\chapter{Transforms}
+
+\chapter{Source Code Examples}
+
+\section{Reading and Writing MINC Volumes}
+
+\section{Creating Tag Point Files}
+
+\section{Creating Transformation Files}
+
+\section{Volumes, Tag Points, and Transformations}
 
 \end{document}
