@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:33  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-09 13:51:26  neelin
+@MODIFIED   : Mods for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:35:33  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.6  94/09/28  10:34:58  neelin
  * Pre-release
  * 
@@ -161,7 +164,7 @@ public void save_transferred_object(Acr_Group group_list, char *file_prefix,
       }
 
       /* Close the file */
-      (void) acr_file_free(afp);
+      acr_file_free(afp);
       (void) fclose(fp);
    }
 

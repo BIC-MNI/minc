@@ -1,8 +1,8 @@
 public void cleanup_files(int num_files, char *file_list[]);
 public void free_list(int num_files, char **file_list, 
                       Data_Object_Info *file_info_list);
-public int open_connection(int argc, char *argv[], 
-                           Acr_File **afpin, Acr_File **afpout);
+public void open_connection(int argc, char *argv[], 
+                            Acr_File **afpin, Acr_File **afpout);
 public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files);
 public Acr_Message ready_reply(Acr_Message input_message);
 public Acr_Message send_reply(Acr_Message input_message);

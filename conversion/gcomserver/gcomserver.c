@@ -4,11 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 2.1  1994-10-20 13:48:02  neelin
-@MODIFIED   : Write out direction cosines to support rotated volumes.
-@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
-@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
+@MODIFIED   : Revision 2.2  1995-02-09 13:51:26  neelin
+@MODIFIED   : Mods for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.1  1994/10/20  13:48:02  neelin
+ * Write out direction cosines to support rotated volumes.
+ * Store single slices as 1-slice volumes (3D instead of 2D).
+ * Changed storing of minc history (get args for gyrotominc).
+ *
  * Revision 2.0  94/09/28  10:35:21  neelin
  * Release of minc version 0.2
  * 
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.1 1994-10-20 13:48:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.2 1995-02-09 13:51:26 neelin Exp $";
 #endif
 
 #include <gcomserver.h>
@@ -143,7 +146,7 @@ int main(int argc, char *argv[])
    /* Re-open stderr if we are logging */
    if (Do_logging > NO_LOGGING) {
       (void) freopen("gcomserver.log", "w", stderr);
-      (void) setbuf(stderr, NULL);
+      setbuf(stderr, NULL);
    }
 
 #ifdef DO_INPUT_TRACING
@@ -425,7 +428,7 @@ int main(int argc, char *argv[])
    if ((status != ACR_OK) && (status != ACR_END_OF_INPUT)) {
       if (SYSTEM_LOG != NULL) {
          if ((fptemp = fopen(SYSTEM_LOG, "w")) != NULL) {
-            if (strlen(last_file_name) > 0) {
+            if ((int) strlen(last_file_name) > 0) {
                (void) fprintf(fptemp, "%s: File \"%s\"\n",
                               pname, last_file_name);
             }

@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 2.2  1994-11-21 08:08:01  neelin
-@MODIFIED   : Modified code to properly calculate start from centre locations, then
-@MODIFIED   : changed calculation back to old way because it worked.
-@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
+@MODIFIED   : Revision 2.3  1995-02-09 13:51:26  neelin
+@MODIFIED   : Mods for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.2  1994/11/21  08:08:01  neelin
+ * Modified code to properly calculate start from centre locations, then
+ * changed calculation back to old way because it worked.
+ * Added a ncsetfill(mincid, NC_NOFILL).
+ *
  * Revision 2.1  94/10/20  13:50:15  neelin
  * Write out direction cosines to support rotated volumes.
  * Store single slices as 1-slice volumes (3D instead of 2D).
@@ -83,6 +86,9 @@ char *minc_history = NULL;
 static char *mri_dim_names[] = {
    NULL, "echo_time", MItime, "phase_number", "chemical_shift", NULL};
 
+/* Macros */
+#define STRLEN(s) ((int) strlen(s))
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_minc_file
 @INPUT      : minc_file - name of file to create. If NULL, a name is 
@@ -131,7 +137,7 @@ public int create_minc_file(char *minc_file, int clobber,
       /* Get patient name */
       string_to_filename(general_info->patient.name, patient_name,
                          sizeof(patient_name));
-      if (strlen(patient_name) == 0) {
+      if (STRLEN(patient_name) == 0) {
          (void) strcpy(patient_name, "unknown");
       }
 
@@ -329,24 +335,24 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
 
    /* Create image max and min variables */
    varid = micreate_std_variable(mincid, MIimagemin, NC_DOUBLE, ndims-2, dim);
-   if (strlen(general_info->units) > 0)
+   if (STRLEN(general_info->units) > 0)
       (void) miattputstr(mincid, varid, MIunits, general_info->units);
    varid = micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, ndims-2, dim);
-   if (strlen(general_info->units) > 0)
+   if (STRLEN(general_info->units) > 0)
       (void) miattputstr(mincid, varid, MIunits, general_info->units);
 
    /* Create the patient variable */
    varid = micreate_group_variable(mincid, MIpatient);
-   if (strlen(general_info->patient.name) > 0)
+   if (STRLEN(general_info->patient.name) > 0)
       (void) miattputstr(mincid, varid, MIfull_name, 
                          general_info->patient.name);
-   if (strlen(general_info->patient.identification) > 0)
+   if (STRLEN(general_info->patient.identification) > 0)
       (void) miattputstr(mincid, varid, MIidentification, 
                          general_info->patient.identification);
-   if (strlen(general_info->patient.birth_date) > 0)
+   if (STRLEN(general_info->patient.birth_date) > 0)
       (void) miattputstr(mincid, varid, MIbirthdate, 
                          general_info->patient.birth_date);
-   if (strlen(general_info->patient.sex) > 0)
+   if (STRLEN(general_info->patient.sex) > 0)
       (void) miattputstr(mincid, varid, MIsex, 
                          general_info->patient.sex);
    if (general_info->patient.weight != -DBL_MAX) 
@@ -355,34 +361,34 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
 
    /* Create the study variable */
    varid = micreate_group_variable(mincid, MIstudy);
-   if (strlen(general_info->study.start_time) > 0)
+   if (STRLEN(general_info->study.start_time) > 0)
       (void) miattputstr(mincid, varid, MIstart_time, 
                          general_info->study.start_time);
-   if (strlen(general_info->study.modality) > 0)
+   if (STRLEN(general_info->study.modality) > 0)
       (void) miattputstr(mincid, varid, MImodality, 
                          general_info->study.modality);
-   if (strlen(general_info->study.institution) > 0)
+   if (STRLEN(general_info->study.institution) > 0)
       (void) miattputstr(mincid, varid, MIinstitution, 
                          general_info->study.institution);
-   if (strlen(general_info->study.station_id) > 0)
+   if (STRLEN(general_info->study.station_id) > 0)
       (void) miattputstr(mincid, varid, MIstation_id, 
                          general_info->study.station_id);
-   if (strlen(general_info->study.ref_physician) > 0)
+   if (STRLEN(general_info->study.ref_physician) > 0)
       (void) miattputstr(mincid, varid, MIreferring_physician, 
                          general_info->study.ref_physician);
-   if (strlen(general_info->study.procedure) > 0)
+   if (STRLEN(general_info->study.procedure) > 0)
       (void) miattputstr(mincid, varid, MIprocedure, 
                          general_info->study.procedure);
-   if (strlen(general_info->study.study_id) > 0)
+   if (STRLEN(general_info->study.study_id) > 0)
       (void) miattputstr(mincid, varid, MIstudy_id, 
                          general_info->study.study_id);
-   if (strlen(general_info->study.acquisition_id) > 0)
+   if (STRLEN(general_info->study.acquisition_id) > 0)
       (void) miattputstr(mincid, varid, "acquisition_id", 
                          general_info->study.acquisition_id);
 
    /* Create acquisition variable */
    varid = micreate_group_variable(mincid, MIacquisition);
-   if (strlen(general_info->acq.scan_seq) > 0)
+   if (STRLEN(general_info->acq.scan_seq) > 0)
       (void) miattputstr(mincid, varid, MIscanning_sequence, 
                          general_info->acq.scan_seq);
    if (general_info->acq.rep_time != -DBL_MAX)
@@ -404,10 +410,10 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (general_info->acq.imaging_freq != -DBL_MAX)
       (void) miattputdbl(mincid, varid, MIimaging_frequency, 
                          general_info->acq.imaging_freq);
-   if (strlen(general_info->acq.imaged_nucl) > 0)
+   if (STRLEN(general_info->acq.imaged_nucl) > 0)
       (void) miattputstr(mincid, varid, MIimaged_nucleus, 
                          general_info->acq.imaged_nucl);
-   if (strlen(general_info->acq.comments) > 0)
+   if (STRLEN(general_info->acq.comments) > 0)
       (void) miattputstr(mincid, varid, MIcomments, 
                          general_info->acq.comments);
 
@@ -417,7 +423,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    (void) miattputstr(mincid, varid, MIvarid, "MNI SPI information variable");
    (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), varid);
    (void) miattputint(mincid, varid, "rec_num", general_info->rec_num);
-   if (strlen(general_info->image_type_string) > 0)
+   if (STRLEN(general_info->image_type_string) > 0)
       (void) miattputstr(mincid, varid, "image_type", 
                          general_info->image_type_string);
    (void) miattputdbl(mincid, varid, "window_min", general_info->window_min);

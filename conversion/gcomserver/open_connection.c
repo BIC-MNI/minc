@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 2.3  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 2.4  1995-02-09 13:51:26  neelin
+@MODIFIED   : Mods for irix 5 lint.
 @MODIFIED   :
+ * Revision 2.3  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 2.2  1994/12/07  09:45:59  neelin
  * Fixed called to ioctl to get rid of type mismatch warning messages.
  *
@@ -140,8 +143,8 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int open_connection(int argc, char *argv[], 
-                           Acr_File **afpin, Acr_File **afpout)
+public void open_connection(int argc, char *argv[], 
+                            Acr_File **afpin, Acr_File **afpout)
      /* ARGSUSED */
 {
    SessionData sd;
