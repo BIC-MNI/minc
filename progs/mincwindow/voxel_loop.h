@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.h,v $
-@MODIFIED   : Revision 1.1  1994-01-11 15:16:09  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-01-12 10:19:19  neelin
+@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
 @MODIFIED   :
+ * Revision 1.1  94/01/11  15:16:09  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,5 +25,6 @@
 typedef void (*VoxelFunction) (void *voxel_data, long nvoxels, double *data);
 
 public void voxel_loop(int inmincid, int outmincid, char *arg_string,
+                       int verbose,
                        VoxelFunction voxel_function, void *voxel_data);
 

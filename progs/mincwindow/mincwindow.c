@@ -9,16 +9,19 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 1.2  1994-01-11 15:56:17  neelin
-@MODIFIED   : Added optional newvalue argument.
+@MODIFIED   : Revision 1.3  1994-01-12 10:18:33  neelin
+@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
 @MODIFIED   :
+ * Revision 1.2  94/01/11  15:56:17  neelin
+ * Added optional newvalue argument.
+ * 
  * Revision 1.1  94/01/11  15:02:56  neelin
  * Initial revision
  * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.2 1994-01-11 15:56:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.3 1994-01-12 10:18:33 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -52,6 +55,7 @@ public void do_window(void *voxel_data, long nvoxels, double *data);
 
 /* Argument variables */
 int clobber = NC_NOCLOBBER;
+int verbose = TRUE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -59,6 +63,10 @@ ArgvInfo argTable[] = {
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) NC_NOCLOBBER, (char *) &clobber,
        "Don't overwrite existing file (default)."},
+   {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
+       "Print out log messages (default)."},
+   {"-quiet", ARGV_CONSTANT, (char *) FALSE, (char *) &verbose,
+       "Do not print out log messages."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 /* Main program */
@@ -98,7 +106,7 @@ public int main(int argc, char *argv[])
       window_data.use_newvalue = TRUE;
       window_data.newvalue = strtod(argv[5], &endptr);
       if ((endptr == argv[5]) || (*endptr != NULL)) {
-         (void) fprintf(stderr, "Cannot get max value from %s\n", argv[5]);
+         (void) fprintf(stderr, "Cannot get newvalue from %s\n", argv[5]);
          exit(EXIT_FAILURE);
       }
    }
@@ -114,8 +122,12 @@ public int main(int argc, char *argv[])
    outmincid = micreate(outfile, clobber);
 
    /* Do loop */
-   voxel_loop(inmincid, outmincid, arg_string, 
+   voxel_loop(inmincid, outmincid, arg_string, verbose,
               do_window, (void *) &window_data);
+
+   /* Close the files */
+   (void) miclose(inmincid);
+   (void) miclose(outmincid);
 
    exit(EXIT_SUCCESS);
 }

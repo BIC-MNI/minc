@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.1  1994-01-11 15:08:30  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-01-12 10:19:17  neelin
+@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
 @MODIFIED   :
+ * Revision 1.1  94/01/11  15:08:30  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/Attic/voxel_loop.c,v 1.1 1994-01-11 15:08:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/Attic/voxel_loop.c,v 1.2 1994-01-12 10:19:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -56,6 +59,7 @@ private void setup_variables(int inmincid, int outmincid,
 private void update_history(int mincid, char *arg_string);
 private void do_voxel_loop(int inicvid, int outicvid, 
                            int ndims, int nimgdims, long dimlength[],
+                           int verbose,
                            VoxelFunction voxel_function, void *voxel_data);
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -63,6 +67,7 @@ private void do_voxel_loop(int inicvid, int outicvid,
 @INPUT      : inmincid - input minc file id
               outmincid - output minc file id
               arg_string - string for history
+              verbose - TRUE if function should print out log messages.
               voxel_function - function to call with a group of voxels.
                  The first argument is a pointer to client data. The second
                  argument gives the number of voxels to handle on this call,
@@ -81,6 +86,7 @@ private void do_voxel_loop(int inicvid, int outicvid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public void voxel_loop(int inmincid, int outmincid, char *arg_string,
+                       int verbose,
                        VoxelFunction voxel_function, void *voxel_data)
 {
    int inicvid, outicvid;
@@ -107,7 +113,7 @@ public void voxel_loop(int inmincid, int outmincid, char *arg_string,
    (void) miicv_attach(outicvid, outmincid, ncvarid(outmincid, MIimage));
 
    /* Loop through the voxels */
-   do_voxel_loop(inicvid, outicvid, ndims, nimgdims, dimlength,
+   do_voxel_loop(inicvid, outicvid, ndims, nimgdims, dimlength, verbose,
                  voxel_function, voxel_data);
 
 }
@@ -178,10 +184,7 @@ private void setup_variables(int inmincid, int outmincid,
    outimgid = micreate_std_variable(outmincid, MIimage, datatype, 
                                     ndims, outdim);
    (void) micopy_all_atts(inmincid, inimgid, outmincid, outimgid);
-   ncopts = 0;
-   (void) ncattdel(outmincid, outimgid, MIvalid_max);
-   (void) ncattdel(outmincid, outimgid, MIvalid_min);
-   ncopts = NC_OPTS_VAL;
+   (void) miattputstr(outmincid, outimgid, MIcomplete, MI_FALSE);
    maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
                                  ndims-nimgdims, outdim);
    minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, 
@@ -194,6 +197,7 @@ private void setup_variables(int inmincid, int outmincid,
    ncopts = NC_OPTS_VAL;
 
    /* Put the file in data mode */
+   (void) ncsetfill(outmincid, NC_NOFILL);
    (void) ncendef(outmincid);
 
    /* Copy over variable values */
@@ -255,6 +259,7 @@ private void update_history(int mincid, char *arg_string)
               ndims - number of dimensions
               nimgdims - number of image dimensions
               dimlength - array of lengths of dimensions
+              verbose - TRUE if log messages should be printed
               voxel_function - function to call with a group of voxels.
                  The first argument is a pointer to client data. The second
                  argument gives the number of voxels to handle on this call,
@@ -273,6 +278,7 @@ private void update_history(int mincid, char *arg_string)
 ---------------------------------------------------------------------------- */
 private void do_voxel_loop(int inicvid, int outicvid, 
                            int ndims, int nimgdims, long dimlength[],
+                           int verbose,
                            VoxelFunction voxel_function, void *voxel_data)
 {
    int outmincid, imgid, maxid, minid;
@@ -304,9 +310,21 @@ private void do_voxel_loop(int inicvid, int outicvid,
       nvoxels *= dimlength[idim];
    data = MALLOC(sizeof(*data) * nvoxels);
 
+   /* Print log message */
+   if (verbose) {
+      (void) fprintf(stderr, "Processing:");
+      (void) fflush(stderr);
+   }
+
    /* Loop through voxels */
 
    while (start[0] < end[0]) {
+
+      /* Print log message */
+      if (verbose) {
+         (void) fprintf(stderr, ".");
+         (void) fflush(stderr);
+      }
 
       /* Get the slice */
       (void) miicv_get(inicvid, start, count, data);
@@ -346,6 +364,15 @@ private void do_voxel_loop(int inicvid, int outicvid,
       }
 
    }     /* End of loop through chunks */
+
+   /* Data has been completely written */
+   (void) miattputstr(outmincid, imgid, MIcomplete, MI_TRUE);
+
+   /* Print log message */
+   if (verbose) {
+      (void) fprintf(stderr, "Done\n");
+      (void) fflush(stderr);
+   }
 
    /* Free buffer */
    FREE(data);
