@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.2 2004-09-28 19:39:38 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.3 2004-11-02 17:40:39 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -101,6 +101,26 @@ VOLIO_OBJS = \
 	volume_io/Volumes/volume_cache.obj \
 	volume_io/Volumes/volumes.obj
 
+# Unfortunately the CVS tree does not reflect the desired file organization
+# of the software, so we have to fix that up here:
+
+VOLIO_HDRS = \
+        volume_io\Include\volume_io\alloc.h \
+        volume_io\Include\volume_io\arrays.h \
+        volume_io\Include\volume_io\basic.h \
+        volume_io\Include\volume_io\def_math.h \
+        volume_io\Include\volume_io\files.h \
+        volume_io\Include\volume_io\geometry.h \
+        volume_io\Include\volume_io\geom_structs.h \
+        volume_io\Include\volume_io\multidim.h \
+        volume_io\Include\volume_io\progress.h \
+        volume_io\Include\volume_io\string_funcs.h \
+        volume_io\Include\volume_io\system_dependent.h \
+        volume_io\Include\volume_io\transforms.h \
+        volume_io\Include\volume_io\vol_io_prototypes.h \
+        volume_io\Include\volume_io\volume_cache.h \
+        volume_io\Include\volume_io\volume.h
+
 INCLUDES = -I$(NETCDF_ROOT) -Ilibsrc -Iprogs/Proglib -Ivolume_io/Include
 DEFINES = -DDLL_NETCDF -D_POSIX_
 NETCDF_LIB = $(NETCDF_ROOT)/netcdf.lib
@@ -133,6 +153,68 @@ minc.dll: $(MINC_OBJS)
 volume_io.dll: $(VOLIO_OBJS) minc.dll
 	link /dll /nologo /out:volume_io.dll $(VOLIO_OBJS) minc.lib $(NETCDF_LIB)
 
+$(VOLIO_OBJS): $(VOLIO_HDRS)
+
+volume_io\Include\volume_io\alloc.h: volume_io\Include\alloc.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\arrays.h: volume_io\Include\arrays.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\basic.h: volume_io\Include\basic.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\def_math.h: volume_io\Include\def_math.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\files.h: volume_io\Include\files.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\geometry.h: volume_io\Include\geometry.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\geom_structs.h: volume_io\Include\geom_structs.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\multidim.h: volume_io\Include\multidim.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\progress.h: volume_io\Include\progress.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\string_funcs.h: volume_io\Include\string_funcs.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\system_dependent.h: volume_io\Include\system_dependent.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\transforms.h: volume_io\Include\transforms.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\vol_io_prototypes.h: volume_io\Include\vol_io_prototypes.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\volume_cache.h: volume_io\Include\volume_cache.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\volume.h: volume_io\Include\volume.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+        
 libsrc\config.h: libsrc\config.h.msvc-win32
 	copy libsrc\config.h.msvc-win32 libsrc\config.h
 
