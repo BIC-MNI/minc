@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.1  1999-10-19 14:45:21  neelin
+#   Revision 6.2  2000-09-12 15:43:37  neelin
+#   Changed default TMPDIR to look for /var/tmp, /usr/tmp, /tmp.
+#
+#   Revision 6.1  1999/10/19 14:45:21  neelin
 #   Fixed Log subsitutions for CVS
 #
 #   Revision 6.0  1997/09/12 13:23:34  neelin
@@ -45,8 +48,21 @@
 # software for any purpose.  It is provided "as is" without
 # express or implied warranty.
 
-# Constants
-set working_dir = /tmp
+# Create temporary directory
+if (! $?TMPDIR) then
+    if (-d /var/tmp) then
+	set TMPDIR = /var/tmp
+    else if (-d /usr/tmp) then
+	set TMPDIR = /usr/tmp
+    else
+	set TMPDIR = /tmp
+    endif
+endif
+if (! -d $TMPDIR) then
+    echo "Working directory $TMPDIR does not exist."
+    exit 1
+endif
+set working_dir = $TMPDIR
 
 # Set default editor
 set editor = emacs
