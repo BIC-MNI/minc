@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.6  1998-02-20 17:24:41  neelin
-@MODIFIED   : In client routines, fd must be dup'ed before fdopen or problems may
-@MODIFIED   : occur reading and writing to 2 file pointers that open the same descriptor.
+@MODIFIED   : Revision 6.7  1998-02-20 17:28:42  neelin
+@MODIFIED   : Removed unused variables.
 @MODIFIED   :
+ * Revision 6.6  1998/02/20  17:24:41  neelin
+ * In client routines, fd must be dup'ed before fdopen or problems may
+ * occur reading and writing to 2 file pointers that open the same descriptor.
+ *
  * Revision 6.4  1997/10/20  23:22:38  neelin
  * Added routine acr_dicom_close_no_release to close a connection that does
  * not have an association.
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.6 1998-02-20 17:24:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.7 1998-02-20 17:28:42 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -248,8 +251,6 @@ public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout)
 ---------------------------------------------------------------------------- */
 public void acr_close_dicom_connection(Acr_File *afpin, Acr_File *afpout)
 {
-   FILE *fpin, *fpout;
-
    /* Release the association */
    (void) acr_release_dicom_association(afpin, afpout);
 
