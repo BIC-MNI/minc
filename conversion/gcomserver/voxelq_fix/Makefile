@@ -39,4 +39,4 @@ lint_$(PROG): $(LINT_LIST)                # how to lint the executable source
 	lint -u $(LINTFLAGS) $(LINT_LIST)
 
 clean:
-	\rm -f   $(PROG_OBJ)  $(LINT_LIST)
+	\rm -f $(PROG) $(PROG_OBJ)  $(LINT_LIST)
