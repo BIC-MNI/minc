@@ -12,6 +12,7 @@ build : prog_ref.dvi prog_guide.dvi
 
 .tex.dvi :
 	latex $<
+	latex $<
 
 clean:
 	$(RM) $(RM_FLAGS) *.aux *.dvi *.log
