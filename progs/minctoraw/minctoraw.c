@@ -10,7 +10,10 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.2  2001-04-17 18:40:25  neelin
+ * Revision 6.3  2001-08-16 16:10:50  neelin
+ * Force user to specify either -normalize or -nonormalize.
+ *
+ * Revision 6.2  2001/04/17 18:40:25  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -59,7 +62,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.2 2001-04-17 18:40:25 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.3 2001-08-16 16:10:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -76,6 +79,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #  define TRUE 1
 #  define FALSE 0
 #endif
+#define BOOLEAN_DEFAULT -1
 static double default_max[][2] = {
    0.0, 0.0,
    UCHAR_MAX, SCHAR_MAX,
@@ -99,7 +103,7 @@ static double default_min[][2] = {
 nc_type output_datatype = INT_MAX;
 int output_signed = INT_MAX;
 double valid_range[2] = {DBL_MAX, DBL_MAX};
-int normalize_output = FALSE;
+int normalize_output = BOOLEAN_DEFAULT;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -124,7 +128,7 @@ ArgvInfo argTable[] = {
    {"-normalize", ARGV_CONSTANT, (char *) TRUE, (char *) &normalize_output,
        "Normalize integer pixel values to file max and min"},
    {"-nonormalize", ARGV_CONSTANT, (char *) FALSE, (char *) &normalize_output,
-       "Turn off pixel normalization (Default)"},
+       "Turn off pixel normalization"},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -151,6 +155,13 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
    filename = argv[1];
+
+   /* Check that a normalization option was specified */
+   if (normalize_output == BOOLEAN_DEFAULT) {
+      (void) fprintf(stderr, "Please specify either -normalize or -nonormalize
+n");
+      exit(EXIT_FAILURE);
+   }
 
    /* Open the file */
    mincid = miopen(filename, NC_NOWRITE);
