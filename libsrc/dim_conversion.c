@@ -16,7 +16,10 @@
                  MI_icv_dimconvert
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: dim_conversion.c,v $
+@MODIFIED   : Revision 1.8  1993-08-11 12:06:03  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.7 1993-07-20 12:17:26 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.8 1993-08-11 12:06:03 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

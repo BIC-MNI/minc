@@ -4,7 +4,10 @@
               defined in both to avoid errors from lint (on SGI).
 @METHOD     : 
 @CREATED    : August 7, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: type_limits.h,v $
+@MODIFIED   : Revision 1.4  1993-08-11 12:06:47  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -15,7 +18,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/type_limits.h,v 1.3 1993-07-20 12:18:04 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/type_limits.h,v 1.4 1993-08-11 12:06:47 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <limits.h>

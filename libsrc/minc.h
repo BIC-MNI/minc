@@ -17,7 +17,11 @@
                  MI study variable
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : July 15, 1993 (P.N.)
+@MODIFIED   : $Log: minc.h,v $
+@MODIFIED   : Revision 1.26  1993-08-11 12:06:34  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
+              July 15, 1993 (P.N.)
                  - added MI_ICV_DO_FILLVALUE and MI_FILLVALUE
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
@@ -29,12 +33,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.25 1993-07-20 12:16:12 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.26 1993-08-11 12:06:34 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.25 1993-07-20 12:16:12 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.26 1993-08-11 12:06:34 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 

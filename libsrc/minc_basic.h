@@ -12,7 +12,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_basic.h,v $
+@MODIFIED   : Revision 1.6  1993-08-11 12:06:37  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -23,7 +26,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.5 1993-07-20 12:17:54 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.6 1993-08-11 12:06:37 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */

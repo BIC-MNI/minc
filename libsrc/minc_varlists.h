@@ -4,7 +4,10 @@
               minc_convenience.c.
 @METHOD     : Note that lists should be NULL terminated.
 @CREATED    : Peter Neelin (August 7, 1992)
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_varlists.h,v $
+@MODIFIED   : Revision 1.4  1993-08-11 12:06:45  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -15,7 +18,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_varlists.h,v 1.3 1993-07-20 12:18:02 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_varlists.h,v 1.4 1993-08-11 12:06:45 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* Variables containing list of standard dimension names and variable names */

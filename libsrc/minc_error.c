@@ -5,7 +5,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : August 7, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_error.c,v $
+@MODIFIED   : Revision 1.6  1993-08-11 12:06:24  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -19,7 +22,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 1.5 1993-07-20 12:17:43 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 1.6 1993-08-11 12:06:24 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

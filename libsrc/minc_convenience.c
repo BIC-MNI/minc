@@ -19,7 +19,10 @@
                  MI_add_stdgroup
                  MI_is_in_list
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_convenience.c,v $
+@MODIFIED   : Revision 1.17  1993-08-11 12:06:19  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.16 1993-07-20 12:17:41 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.17 1993-08-11 12:06:19 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

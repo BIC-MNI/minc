@@ -12,7 +12,10 @@
                  MI_get_sign
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : 
+@MODIFIED   : $Log: value_conversion.c,v $
+@MODIFIED   : Revision 1.5  1993-08-11 12:06:32  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -26,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.4 1993-07-20 12:17:50 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.5 1993-08-11 12:06:32 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
