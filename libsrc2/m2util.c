@@ -25,9 +25,6 @@ mitype_to_hdftype(mitype_t mitype)
     case MI_TYPE_BYTE:
 	type_id = H5Tcopy(H5T_NATIVE_SCHAR);
 	break;
-    case MI_TYPE_CHAR:
-	type_id = H5Tcopy(H5T_NATIVE_SCHAR);
-	break;
     case MI_TYPE_SHORT:
 	type_id = H5Tcopy(H5T_NATIVE_SHORT);
 	break;
@@ -1284,7 +1281,9 @@ miget_scalar(hid_t loc_id, hid_t type_id, const char *path, void *data)
     hid_t spc_id;
     int result = MI_ERROR;
 
-    dset_id = H5Dopen(loc_id, path);
+    H5E_BEGIN_TRY {
+        dset_id = H5Dopen(loc_id, path);
+    } H5E_END_TRY;
     if (dset_id >= 0) {
         spc_id = H5Dget_space(dset_id);
         if (spc_id >= 0) {
