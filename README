@@ -1,26 +1,73 @@
-                        INSTALLATION
+               Minc - Medical Image NetCDF
 
-This document describes how to build and install the minc package on
-a UNIX system.
+INTRODUCTION
+------------
+The Minc file format is a highly flexible medical image file format
+built on top of the NetCDF generalized data format. The format is
+simple, self-describing, extensible, portable and N-dimensional, with
+programming interfaces for both low-level data access and high-level
+volume manipulation. On top of the libraries is a suite of generic
+image-file manipulation tools. The format, libraries and tools are
+designed for use in a medical-imaging research environment : they are
+simple and powerful and make no attempt to provide a pretty interface
+to users.
 
-1) Make sure that the netcdf package has been compiled and installed. 
-   Version 2.3.2 is known to work.
+Here's a list of some of the tools:
 
-2) Copy the appropriate Make_machine_specific.<osname> over the file
-   Make_machine_specific. Currently there are files for Silicon Graphics
-   machines running Irix 4.x and 5.x (the irix4 file works for both) and
-   for Suns running SunOS (tested on SunOS 4.1.3). Note that the compiler
-   used for building the package must be roughly ANSI-compatible 
-   (prototypes, void, enum, etc.), thus we use gcc for SunOS.
+ * rawtominc, minctoraw, mincextract - format conversion
+ * mincheader, mincedit, mincdiff, minc_modify_header, mincinfo -
+      header manipulation
+ * mincresample - arbitrary volume resampling
+ * mincreshape - extraction of volume sub-cubes, image flipping,
+      dimension re-ordering, type conversion
+ * mincconcat - concatenating or interleaving images from multiple
+      files
+ * mincmath - perform simple math on files
+ * mincaverage - average minc files
+ * minclookup - lookup table operations for arbitrary re-mappings of
+      intensities
+ * worldtovoxel, voxeltoworld - coordinate conversion
+ * xfmconcat, xfminvert - generalized transformation utilities
+ * mincview - simple image display using xv or ImageMagick
 
-3) Modify the configuration file Make_configuration. The fortran jackets
-   work on SGIs but not on SUNs. Note that installation is not a true
-   installation, but simply a copy. I prefer to simply copy the libraries,
-   includes, binaries and man pages into four directories in the 
-   distribution from which they can be installed manually.
+Additional tools are available from the Montreal Neurological
+Institute (MNI). These include register, a program designed for
+manual, landmark-based volume registration using a tri-plane interface
+that allows the user to roam simultaneously through two data volumes
+plus the combined volume that overlays the data of the other two. Emma
+is a minc interface to matlab (from The MathWorks) with functions to
+facilitate image processing and display.
 
-4) Type "make" in this directory. This will run some tests after building
-   the package.
+GETTING MINC
+------------
+The minc package is available through anonymous ftp from
+ftp.mni.mcgill.ca in directory pub/minc.
 
-5) Type "make install" to copy files into the INSTALL directories.
+Minc requires that the NetCDF package be built and installed first. It
+is available through anonymous ftp from the Unidata Program centre at
+the University Corporation for Atmospheric Research (unidata.ucar.edu). 
+You should also be able to get it from the same site that provided
+this package. Automatic registration software may also be available on
+request. 
+
+For building and installation instructions, refer to the general
+autoconf INSTALL file provided in this directory. Please note a few
+changes and additions: 
+
+   1. The default installation directory is the one above this one
+      (ie. ../bin, ../lib, ../include, ../man), not /usr/local. This
+      should correspond to the default for the netcdf package, so if
+      they are built side-by-side, they should install in the same
+      place.
+
+   2. Only a few of the many configure options are used: prefix,
+      exec_prefix, and CC, to name a few. Additionally, you can set
+      NETCDF_PREFIX to tell it where to look for the netcdf stuff (if
+      it is not in .. or /usr/local).
+
+   3. The host type information is only needed for compiling the
+      fortran interface and that is turned off by default. The fortran
+      has only been tested under irix 4 and 5.
+
+   4. The package has not been set up for cross-compiling.
 
