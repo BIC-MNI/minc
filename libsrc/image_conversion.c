@@ -32,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.6 1992-12-01 14:01:57 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.7 1992-12-01 16:29:52 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -200,7 +200,9 @@ public int miicv_setint(int icvid, int icv_property, int value)
 
    MI_SAVE_ROUTINE_NAME("miicv_setint");
 
-   if ((icv_property==MI_ICV_ADIM_SIZE) || (icv_property==MI_ICV_BDIM_SIZE)) {
+   if ((icv_property==MI_ICV_ADIM_SIZE) || (icv_property==MI_ICV_BDIM_SIZE) ||
+       ((icv_property>=MI_ICV_DIM_SIZE) && 
+        (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS))) {
       lvalue = (long) value;
       MI_CHK_ERR(miicv_set(icvid, icv_property, &lvalue))
    }
