@@ -2,6 +2,10 @@
 #ifndef  DEF_VOLUME_IO
 #define  DEF_VOLUME_IO
 
+#ifndef lint
+static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.5 1994-11-24 15:57:17 david Exp $";
+#endif
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : volume_io.h
 @INPUT      : 
