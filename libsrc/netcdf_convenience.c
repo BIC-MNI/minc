@@ -34,10 +34,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 3.1  1995-06-12 20:43:52  neelin
-@MODIFIED   : Modified miexpand_file and miopen to try adding compression exetensions
-@MODIFIED   : to filenames if the first open fails.
+@MODIFIED   : Revision 3.2  1995-09-29 14:34:09  neelin
+@MODIFIED   : Modified micopy_all_atts to handle MI_ERROR being passed in as a varid.
 @MODIFIED   :
+ * Revision 3.1  1995/06/12  20:43:52  neelin
+ * Modified miexpand_file and miopen to try adding compression exetensions
+ * to filenames if the first open fails.
+ *
  * Revision 3.0  1995/05/15  19:33:12  neelin
  * Release of minc version 0.3
  *
@@ -86,7 +89,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.1 1995-06-12 20:43:52 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.2 1995-09-29 14:34:09 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -1033,7 +1036,15 @@ public long *mitranslate_coords(int cdfid,
 @RETURNS    : MI_ERROR (=-1) if an error occurs
 @DESCRIPTION: Copies all of the attributes of one variable to another.
               Attributes that already exist in outvarid are not copied.
-              outcdfid must be in define mode.
+              outcdfid must be in define mode. This routine will only copy
+              global attributes to global attributes or variable attributes
+              to variable attributes, but not variable to global or global
+              to variable. This means that one can safely use
+                 micopy_all_atts(inmincid, ncvarid(inmincid, varname),...)
+              if outvarid is known to exist (the problem arises because
+              MI_ERROR == NC_GLOBAL). No error is flagged if the a bad
+              combination is given.
+
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : NetCDF routines
@@ -1050,6 +1061,15 @@ public int micopy_all_atts(int incdfid, int invarid,
    int i;
 
    MI_SAVE_ROUTINE_NAME("micopy_all_atts");
+
+   /* Only allow copying of global attributes to global attributes or
+      variable attributes to variable attributes - this makes
+      micopy_all_atts(inmincid, ncvarid(inmincid, varname),...) safer, since
+      MI_ERROR == NC_GLOBAL */
+   if (((invarid == NC_GLOBAL) || (outvarid == NC_GLOBAL)) &&
+       (invarid != outvarid)) {
+      MI_RETURN(MI_NOERROR);
+   }
 
    /* Inquire about the number of input variable attributes */
    if (invarid != NC_GLOBAL)
