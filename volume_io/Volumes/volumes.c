@@ -244,13 +244,6 @@ public  void  alloc_auxiliary_data(
     set_all_volume_auxiliary_data( volume, ACTIVE_BIT );
 }
 
-private  void  check_alloc_auxiliary_data(
-    volume_struct  *volume )
-{
-    if( volume->labels == (unsigned char ***) NULL )
-        alloc_auxiliary_data( volume );
-}
-
 private  void  free_auxiliary_data(
     volume_struct  *volume )
 {
@@ -457,9 +450,35 @@ public  Boolean   evaluate_volume_in_world(
     Real           *deriv_z )
 {
     Boolean voxel_is_active;
+
+    convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
+
+    voxel_is_active = evaluate_volume( volume, x, y, z, activity_if_mixed,
+                                       value, deriv_x, deriv_y, deriv_z );
+
+    if( deriv_x != (Real *) 0 )
+    {
+        convert_voxel_vector_to_world( volume, *deriv_x, *deriv_y, *deriv_z,
+                                       deriv_x, deriv_y, deriv_z );
+    }
+
+    return( voxel_is_active );
+}
+
+public  Boolean   evaluate_volume(
+    volume_struct  *volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    Boolean        activity_if_mixed,
+    Real           *value,
+    Real           *deriv_x,
+    Real           *deriv_y,
+    Real           *deriv_z )
+{
+    Boolean voxel_is_active;
     int     n_inactive;
     int     i, j, k;
-    Real    dx, dy, dz;
     double  u, v, w;
     double  c000, c001, c010, c011, c100, c101, c110, c111;
     double  c00, c01, c10, c11;
@@ -467,8 +486,6 @@ public  Boolean   evaluate_volume_in_world(
     double  du00, du01, du10, du11, du0, du1;
     double  dv0, dv1;
     int     nx, ny, nz;
-
-    convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
 
     get_volume_size( volume, &nx, &ny, &nz );
 
@@ -512,8 +529,6 @@ public  Boolean   evaluate_volume_in_world(
         w += 1.0;
     }
 
-    n_inactive = 0;
-
     c000 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k );
     c001 = (Real) GET_VOLUME_DATA( *volume, i,   j,   k+1 );
     c010 = (Real) GET_VOLUME_DATA( *volume, i,   j+1, k );
@@ -546,13 +561,28 @@ public  Boolean   evaluate_volume_in_world(
         du0 = INTERPOLATE( v, du00, du10 );
         du1 = INTERPOLATE( v, du01, du11 );
 
-        dx = INTERPOLATE( w, du0, du1 );
-        dy = INTERPOLATE( w, dv0, dv1 );
-        dz = (c1 - c0);
-
-        convert_voxel_vector_to_world( volume, dx, dy, dz,
-                                       deriv_x, deriv_y, deriv_z );
+        *deriv_x = INTERPOLATE( w, du0, du1 );
+        *deriv_y = INTERPOLATE( w, dv0, dv1 );
+        *deriv_z = (c1 - c0);
     }
+
+    n_inactive = 0;
+    if( !get_voxel_activity_flag( volume, i  , j  , k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j+1, k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i  , j+1, k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j  , k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j  , k+1 ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j+1, k ) )
+        ++n_inactive;
+    if( !get_voxel_activity_flag( volume, i+1, j+1, k+1 ) )
+        ++n_inactive;
 
     if( n_inactive == 0 )
         voxel_is_active = TRUE;
