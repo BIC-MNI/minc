@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-08-02 13:41:36  neelin
+@MODIFIED   : Added -prefix option.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.1  1994/10/20  13:50:14  neelin
  * Write out direction cosines to support rotated volumes.
  * Store single slices as 1-slice volumes (3D instead of 2D).
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 3.0 1995-05-15 19:31:44 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 3.1 1995-08-02 13:41:36 neelin Exp $";
 #endif
 
 #include <gcomserver.h>
@@ -55,6 +58,7 @@ extern char *minc_history;
 int Do_logging = LOW_LOGGING;
 int clobber = FALSE;
 char *outputfile = NULL;
+char *output_prefix = "";
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -70,6 +74,8 @@ ArgvInfo argTable[] = {
        "Don't overwrite existing file (default)."},
    {"-output", ARGV_STRING, (char *) 1, (char *) &outputfile,
        "Specify name of output file (default = make up name)."},
+   {"-prefix", ARGV_STRING, (char *) 1, (char *) &output_prefix,
+       "Specify a prefix for internally generated output filenames."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -86,7 +92,7 @@ int main(int argc, char *argv[])
    }
 
    exit_status = gyro_to_minc(argc-1, &argv[1], outputfile, clobber,
-                              "", NULL);
+                              output_prefix, NULL);
 
    exit(exit_status);
 }
