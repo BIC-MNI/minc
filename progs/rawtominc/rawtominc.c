@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:01  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-11 16:18:50  neelin
+@MODIFIED   : Fixed scanning of integers for max and min (conversion to double had
+@MODIFIED   : signed and unsigned reversed).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:33:01  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.15  94/09/28  10:32:55  neelin
  * Pre-release
  * 
@@ -47,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.0 1994-09-28 10:33:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.1 1994-10-11 16:18:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -535,21 +539,21 @@ main(int argc, char *argv[])
             switch (type) { 
             case NC_BYTE : 
                if (is_signed)
-                  value = (double) *((unsigned char *) ptr);
-               else
                   value = (double) *((signed char *) ptr);
+               else
+                  value = (double) *((unsigned char *) ptr);
                break; 
             case NC_SHORT : 
                if (is_signed)
-                  value = (double) *((unsigned short *) ptr);
-               else
                   value = (double) *((signed short *) ptr);
+               else
+                  value = (double) *((unsigned short *) ptr);
                break; 
             case NC_LONG : 
                if (is_signed)
-                  value = (double) *((unsigned long *) ptr); 
-               else
                   value = (double) *((signed long *) ptr); 
+               else
+                  value = (double) *((unsigned long *) ptr); 
                break; 
             case NC_FLOAT : 
                value = (double) *((float *) ptr); 
