@@ -12,7 +12,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#include "config.h"
+#include  <internal_volume_io.h>
 
 #include  <sys/types.h>
 
@@ -26,11 +26,12 @@
 #  include <time.h>
 # endif
 #endif
+#if HAVE_UNISTD_H
 #include  <unistd.h>
-#include  <internal_volume_io.h>
+#endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.21 2004-03-23 21:36:33 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.21.2.1 2004-10-04 20:19:22 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -47,7 +48,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Real  get_clock_ticks_per_second( void )
+static Real  get_clock_ticks_per_second( void )
 {
     static  BOOLEAN  initialized = FALSE;
     static  Real     clock_ticks_per_second;
@@ -74,7 +75,7 @@ private  Real  get_clock_ticks_per_second( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  current_cpu_seconds( void )
+VIOAPI Real  current_cpu_seconds( void )
 {
     static BOOLEAN first_call = TRUE;
     static clock_t first;
@@ -109,7 +110,7 @@ public  Real  current_cpu_seconds( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  current_realtime_seconds( void )
+VIOAPI  Real  current_realtime_seconds( void )
 {
     static BOOLEAN first_call = TRUE;
     static time_t first;
@@ -146,7 +147,7 @@ public  Real  current_realtime_seconds( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  format_time(
+VIOAPI  STRING  format_time(
     STRING   format,
     Real     seconds )
 {
@@ -198,7 +199,7 @@ public  STRING  format_time(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  print_time(
+VIOAPI  void  print_time(
     STRING   format,
     Real     seconds )
 {
@@ -224,7 +225,7 @@ public  void  print_time(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_clock_time( void )
+VIOAPI  STRING  get_clock_time( void )
 {
     time_t           clock_time;
     struct  tm       *time_tm;
@@ -252,7 +253,7 @@ public  STRING  get_clock_time( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  sleep_program( Real seconds )
+VIOAPI  void  sleep_program( Real seconds )
 {
 #if HAVE_SELECT
     struct  timeval  timeout;
@@ -279,7 +280,7 @@ public  void  sleep_program( Real seconds )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_date( void )
+VIOAPI  STRING  get_date( void )
 {
     time_t           clock_time;
     struct  tm       *time_tm;

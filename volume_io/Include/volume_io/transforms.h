@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.12 2001-12-14 17:12:28 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.12.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,36 +33,36 @@
 
 typedef enum { LINEAR, THIN_PLATE_SPLINE, USER_TRANSFORM,
                CONCATENATED_TRANSFORM, GRID_TRANSFORM }
-               Transform_types;
+              VIO_Transform_types;
 
 /* --- the user transformation function */
 
-typedef  void   (*User_transform_function)( void  *user_data,
-                                            Real  x,
-                                            Real  y,
-                                            Real  z,
-                                            Real  *x_trans,
-                                            Real  *y_trans,
-                                            Real  *z_trans );
+typedef  void   (*VIO_User_transform_function)( void  *user_data,
+                                            VIO_Real  x,
+                                            VIO_Real  y,
+                                            VIO_Real  z,
+                                            VIO_Real  *x_trans,
+                                            VIO_Real  *y_trans,
+                                            VIO_Real  *z_trans );
 
 /* --- the general transformation type */
 
-typedef struct General_transform
+typedef struct VIO_General_transform
 {
-    Transform_types             type;
-    BOOLEAN                     inverse_flag;
+    VIO_Transform_types         type;
+    VIO_BOOL                    inverse_flag;
 
     /* --- linear transform */
 
-    Transform                   *linear_transform;
-    Transform                   *inverse_linear_transform;
+    VIO_Transform               *linear_transform;
+    VIO_Transform               *inverse_linear_transform;
 
     /* --- non-linear transform */
 
     int                         n_points;
     int                         n_dimensions;
-    Real                        **points;
-    Real                        **displacements;   /* n_points + n_dim + 1 by */
+    VIO_Real                    **points;
+    VIO_Real                    **displacements;   /* n_points + n_dim + 1 by */
                                                    /* n_dim */
 
     /* --- grid transform */
@@ -73,14 +73,20 @@ typedef struct General_transform
 
     void                        *user_data;
     size_t                      size_user_data;
-    User_transform_function     user_transform_function;
-    User_transform_function     user_inverse_transform_function;
+    VIO_User_transform_function     user_transform_function;
+    VIO_User_transform_function     user_inverse_transform_function;
 
     /* --- concatenated transform */
 
     int                         n_transforms;
-    struct General_transform    *transforms;
+    struct VIO_General_transform    *transforms;
 
-} General_transform;
+} VIO_General_transform;
+
+#ifndef MINC_PLAY_NICE
+typedef VIO_Transform_types Transform_types;
+typedef VIO_General_transform General_transform;
+typedef VIO_User_transform_function User_transform_function;
+#endif /* MINC_PLAY_NICE */
 
 #endif

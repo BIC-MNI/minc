@@ -13,23 +13,9 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/def_math.h,v 1.8 2001-12-14 17:12:25 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/def_math.h,v 1.8.2.1 2004-10-04 20:16:38 bert Exp $
 ---------------------------------------------------------------------------- */
 
-/*  Redefines y1 and y0 so lint does not make erroneous messages */
-
-#ifdef lint
-#define  y1   math_y1
-#define  y0   math_y0
-#define  fcabs( x )   fcabs_avoid_lint_message( float )
-#endif
-
 #include  <math.h>
-
-#ifdef lint
-#undef  fcabs
-#undef  y1
-#undef  y0
-#endif
 
 #endif

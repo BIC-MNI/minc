@@ -16,18 +16,18 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.12 1996-05-17 19:36:16 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.12.2.1 2004-10-04 20:19:22 bert Exp $";
 #endif
 
 #define  MAX_PRINT_STACK  100
 
 typedef  void (*print_function_type) ( STRING );
 
-private  print_function_type  print_function[MAX_PRINT_STACK] = { NULL };
-private  int                  top_of_stack = 0;
+static  print_function_type  print_function[MAX_PRINT_STACK] = { NULL };
+static  int                  top_of_stack = 0;
 
-private  print_function_type  print_error_function[MAX_PRINT_STACK] = { NULL };
-private  int                  top_of_error_stack = 0;
+static  print_function_type  print_error_function[MAX_PRINT_STACK] = { NULL };
+static  int                  top_of_error_stack = 0;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_print_function
@@ -46,7 +46,7 @@ private  int                  top_of_error_stack = 0;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_print_function( void  (*function) ( STRING ) )
+VIOAPI  void  set_print_function( void  (*function) ( STRING ) )
 {
     print_function[top_of_stack] = function;
 }
@@ -65,7 +65,7 @@ public  void  set_print_function( void  (*function) ( STRING ) )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  push_print_function( void )
+VIOAPI  void  push_print_function( void )
 {
     if( top_of_stack < MAX_PRINT_STACK - 1 )
     {
@@ -89,7 +89,7 @@ public  void  push_print_function( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  pop_print_function( void )
+VIOAPI  void  pop_print_function( void )
 {
     if( top_of_stack > 0 )
         --top_of_stack;
@@ -113,7 +113,7 @@ public  void  pop_print_function( void )
 ---------------------------------------------------------------------------- */
 
 /* VARARGS */
-public  void  print( STRING format, ... )
+VIOAPI  void  print( STRING format, ... )
 {
     va_list  ap;
     char     print_buffer[EXTREMELY_LARGE_STRING_SIZE];
@@ -145,7 +145,7 @@ public  void  print( STRING format, ... )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_print_error_function( void  (*function) ( char [] ) )
+VIOAPI  void  set_print_error_function( void  (*function) ( char [] ) )
 {
     print_error_function[top_of_error_stack] = function;
 }
@@ -164,7 +164,7 @@ public  void  set_print_error_function( void  (*function) ( char [] ) )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  push_print_error_function( void )
+VIOAPI  void  push_print_error_function( void )
 {
     if( top_of_error_stack < MAX_PRINT_STACK - 1 )
     {
@@ -188,7 +188,7 @@ public  void  push_print_error_function( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  pop_print_error_function( void )
+VIOAPI  void  pop_print_error_function( void )
 {
     if( top_of_error_stack > 0 )
         --top_of_error_stack;
@@ -212,7 +212,7 @@ public  void  pop_print_error_function( void )
 ---------------------------------------------------------------------------- */
 
 /* VARARGS */
-public  void  print_error( char format[], ... )
+VIOAPI  void  print_error( char format[], ... )
 {
     va_list  ap;
     char     print_buffer[EXTREMELY_LARGE_STRING_SIZE];
@@ -241,7 +241,7 @@ public  void  print_error( char format[], ... )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void   handle_internal_error( char  str[] )
+VIOAPI  void   handle_internal_error( char  str[] )
 {
     print_error( "Internal error:  %s\n", str );
     abort_if_allowed();
@@ -260,7 +260,7 @@ public  void   handle_internal_error( char  str[] )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  abort_if_allowed( void )
+VIOAPI  void  abort_if_allowed( void )
 {
     char  ch;
 

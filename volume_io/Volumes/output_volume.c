@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.22 2001-04-24 13:38:49 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.22.2.1 2004-10-04 20:20:14 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -34,7 +34,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_v
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status   get_file_dimension_names(
+VIOAPI  Status   get_file_dimension_names(
     STRING   filename,
     int      *n_dims,
     STRING   *dim_names[] )
@@ -90,7 +90,7 @@ public  Status   get_file_dimension_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  *create_output_dim_names(
+VIOAPI  STRING  *create_output_dim_names(
     Volume                volume,
     STRING                original_filename,
     minc_output_options   *options,
@@ -227,7 +227,7 @@ public  STRING  *create_output_dim_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status   copy_volume_auxiliary_and_history(
+VIOAPI  Status   copy_volume_auxiliary_and_history(
     Minc_file   minc_file,
     STRING      filename,
     STRING      original_filename,
@@ -296,7 +296,7 @@ public  Status   copy_volume_auxiliary_and_history(
                                             use_volume_starts_and_steps flag
 ---------------------------------------------------------------------------- */
 
-public  Status  output_modified_volume(
+VIOAPI  Status  output_modified_volume(
     STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,
@@ -390,7 +390,7 @@ public  Status  output_modified_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_volume(
+VIOAPI  Status  output_volume(
     STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,

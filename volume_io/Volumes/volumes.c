@@ -17,13 +17,13 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.72 2002-08-23 03:16:44 stever Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.72.2.1 2004-10-04 20:20:14 bert Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
 STRING   File_order_dimension_names[] = { "", "", "", "", "" };
 
-private  STRING  default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
+static  STRING  default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 {
     { MIxspace },
     { MIyspace, MIxspace },
@@ -46,7 +46,7 @@ private  STRING  default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  *get_default_dim_names(
+VIOAPI  STRING  *get_default_dim_names(
     int    n_dimensions )
 {
     return( default_dimension_names[n_dimensions-1] );
@@ -65,7 +65,7 @@ public  STRING  *get_default_dim_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  STRING  convert_spatial_axis_to_dim_name(
+static  STRING  convert_spatial_axis_to_dim_name(
     int   axis )
 {
     switch( axis )
@@ -94,7 +94,7 @@ private  STRING  convert_spatial_axis_to_dim_name(
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  convert_dim_name_to_spatial_axis(
+VIOAPI  BOOLEAN  convert_dim_name_to_spatial_axis(
     STRING  name,
     int     *axis )
 {
@@ -139,7 +139,7 @@ public  BOOLEAN  convert_dim_name_to_spatial_axis(
 @MODIFIED   : May  22, 1996    D. MacDonald    - now stores starts/steps
 ---------------------------------------------------------------------------- */
 
-public   Volume   create_volume(
+VIOAPI   Volume   create_volume(
     int         n_dimensions,
     STRING      dimension_names[],
     nc_type     nc_data_type,
@@ -235,7 +235,7 @@ public   Volume   create_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_type(
+VIOAPI  void  set_volume_type(
     Volume       volume,
     nc_type      nc_data_type,
     BOOLEAN      signed_flag,
@@ -301,7 +301,7 @@ public  void  set_volume_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  nc_type  get_volume_nc_data_type(
+VIOAPI  nc_type  get_volume_nc_data_type(
     Volume       volume,
     BOOLEAN      *signed_flag )
 {
@@ -323,7 +323,7 @@ public  nc_type  get_volume_nc_data_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Data_types  get_volume_data_type(
+VIOAPI  Data_types  get_volume_data_type(
     Volume       volume )
 {
     return( get_multidim_data_type( &volume->array ) );
@@ -345,7 +345,7 @@ public  Data_types  get_volume_data_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_rgb_volume_flag(
+VIOAPI  void  set_rgb_volume_flag(
     Volume   volume,
     BOOLEAN  flag )
 {
@@ -366,7 +366,7 @@ public  void  set_rgb_volume_flag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  is_an_rgb_volume(
+VIOAPI  BOOLEAN  is_an_rgb_volume(
     Volume   volume )
 {
     return( volume->is_rgba_data );
@@ -386,7 +386,7 @@ public  BOOLEAN  is_an_rgb_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_volume_data(
+VIOAPI  void  alloc_volume_data(
     Volume   volume )
 {
     unsigned long   data_size;
@@ -420,7 +420,7 @@ public  void  alloc_volume_data(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  volume_is_alloced(
+VIOAPI  BOOLEAN  volume_is_alloced(
     Volume   volume )
 {
     return( volume->is_cached_volume &&
@@ -442,7 +442,7 @@ public  BOOLEAN  volume_is_alloced(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_volume_data(
+VIOAPI  void  free_volume_data(
     Volume   volume )
 {
     if( volume->is_cached_volume )
@@ -464,7 +464,7 @@ public  void  free_volume_data(
 @MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
 ---------------------------------------------------------------------------- */
 
-public  void  delete_volume(
+VIOAPI  void  delete_volume(
     Volume   volume )
 {
     int   d;
@@ -500,7 +500,7 @@ public  void  delete_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_volume_n_dimensions(
+VIOAPI  int  get_volume_n_dimensions(
     Volume   volume )
 {
     return( get_multidim_n_dimensions( &volume->array ) );
@@ -520,7 +520,7 @@ public  int  get_volume_n_dimensions(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_sizes(
+VIOAPI  void  get_volume_sizes(
     Volume   volume,
     int      sizes[] )
 {
@@ -541,7 +541,7 @@ public  void  get_volume_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_sizes(
+VIOAPI  void  set_volume_sizes(
     Volume       volume,
     int          sizes[] )
 {
@@ -561,7 +561,7 @@ public  void  set_volume_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  unsigned int  get_volume_total_n_voxels(
+VIOAPI  unsigned int  get_volume_total_n_voxels(
     Volume    volume )
 {
     unsigned  int  n;
@@ -592,7 +592,7 @@ public  unsigned int  get_volume_total_n_voxels(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  assign_voxel_to_world_transform(
+static  void  assign_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform )
 {
@@ -617,7 +617,7 @@ private  void  assign_voxel_to_world_transform(
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-private  Real   dot_vectors(
+static  Real   dot_vectors(
     int    n,
     Real   v1[],
     Real   v2[] )
@@ -647,7 +647,7 @@ private  Real   dot_vectors(
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-private  void   cross_3D_vector(
+static  void   cross_3D_vector(
     Real   v1[],
     Real   v2[],
     Real   cross[] )
@@ -672,7 +672,7 @@ private  void   cross_3D_vector(
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-private  void   normalize_vector(
+static  void   normalize_vector(
     Real   v1[],
     Real   v1_normalized[] )
 {
@@ -709,7 +709,7 @@ private  void   normalize_vector(
 @MODIFIED   : May  22, 1997   D. MacDonald - now uses starts/steps
 ---------------------------------------------------------------------------- */
 
-public  void  compute_world_transform(
+VIOAPI  void  compute_world_transform(
     int                 spatial_axes[N_DIMENSIONS],
     Real                separations[],
     Real                direction_cosines[][N_DIMENSIONS],
@@ -842,7 +842,7 @@ public  void  compute_world_transform(
 @MODIFIED   : May  20, 1997   D. MacDonald - now checks update flag
 ---------------------------------------------------------------------------- */
 
-private  void  check_recompute_world_transform(
+static  void  check_recompute_world_transform(
     Volume  volume )
 {
     General_transform        world_transform;
@@ -878,7 +878,7 @@ private  void  check_recompute_world_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  convert_transform_origin_to_starts(
+static  void  convert_transform_origin_to_starts(
     Real               origin[],
     int                n_volume_dimensions,
     int                spatial_axes[],
@@ -984,7 +984,7 @@ private  void  convert_transform_origin_to_starts(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_transform_to_starts_and_steps(
+VIOAPI  void  convert_transform_to_starts_and_steps(
     General_transform  *transform,
     int                n_volume_dimensions,
     Real               step_signs[],
@@ -1072,7 +1072,7 @@ public  void  convert_transform_to_starts_and_steps(
 @MODIFIED   : May  22, 1997   D. MacDonald - recomputes the starts/steps
 ---------------------------------------------------------------------------- */
 
-public  void  set_voxel_to_world_transform(
+VIOAPI  void  set_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform )
 {
@@ -1104,7 +1104,7 @@ public  void  set_voxel_to_world_transform(
 @MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
 ---------------------------------------------------------------------------- */
 
-public  General_transform  *get_voxel_to_world_transform(
+VIOAPI  General_transform  *get_voxel_to_world_transform(
     Volume   volume )
 {
     check_recompute_world_transform( volume );
@@ -1127,7 +1127,7 @@ public  General_transform  *get_voxel_to_world_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  *get_volume_dimension_names(
+VIOAPI  STRING  *get_volume_dimension_names(
     Volume   volume )
 {
     int      i;
@@ -1166,7 +1166,7 @@ public  STRING  *get_volume_dimension_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_dimension_names(
+VIOAPI  void  delete_dimension_names(
     Volume   volume,
     STRING   dimension_names[] )
 {
@@ -1193,7 +1193,7 @@ public  void  delete_dimension_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_volume_space_type(
+VIOAPI  STRING  get_volume_space_type(
     Volume   volume )
 {
     return( create_string( volume->coordinate_system_name ) );
@@ -1214,7 +1214,7 @@ public  STRING  get_volume_space_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_space_type(
+VIOAPI  void  set_volume_space_type(
     Volume   volume,
     STRING   name )
 {
@@ -1236,7 +1236,7 @@ public  void  set_volume_space_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_separations(
+VIOAPI  void  get_volume_separations(
     Volume   volume,
     Real     separations[] )
 {
@@ -1260,7 +1260,7 @@ public  void  get_volume_separations(
 @MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_separations(
+VIOAPI  void  set_volume_separations(
     Volume   volume,
     Real     separations[] )
 {
@@ -1287,7 +1287,7 @@ public  void  set_volume_separations(
 @MODIFIED   : May  22, 1997   D. MacDonald - now delays recomputing transform
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_starts(
+VIOAPI  void  set_volume_starts(
     Volume  volume,
     Real    starts[] )
 {
@@ -1312,7 +1312,7 @@ public  void  set_volume_starts(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_starts(
+VIOAPI  void  get_volume_starts(
     Volume  volume,
     Real    starts[] )
 {
@@ -1337,7 +1337,7 @@ public  void  get_volume_starts(
 @CREATED    : May  20, 1997     David MacDonald
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_direction_unit_cosine(
+VIOAPI  void  set_volume_direction_unit_cosine(
     Volume   volume,
     int      axis,
     Real     dir[] )
@@ -1386,7 +1386,7 @@ public  void  set_volume_direction_unit_cosine(
                                             set_volume_direction_unit_cosine
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_direction_cosine(
+VIOAPI  void  set_volume_direction_cosine(
     Volume   volume,
     int      axis,
     Real     dir[] )
@@ -1428,7 +1428,7 @@ public  void  set_volume_direction_cosine(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_direction_cosine(
+VIOAPI  void  get_volume_direction_cosine(
     Volume   volume,
     int      axis,
     Real     dir[] )
@@ -1480,7 +1480,7 @@ public  void  get_volume_direction_cosine(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_translation(
+VIOAPI  void  set_volume_translation(
     Volume  volume,
     Real    voxel[],
     Real    world_space_voxel_maps_to[] )
@@ -1656,7 +1656,7 @@ public  void  set_volume_translation(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_translation(
+VIOAPI  void  get_volume_translation(
     Volume  volume,
     Real    voxel[],
     Real    world_space_voxel_maps_to[] )
@@ -1686,7 +1686,7 @@ public  void  get_volume_translation(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  reorder_voxel_to_xyz(
+VIOAPI  void  reorder_voxel_to_xyz(
     Volume   volume,
     Real     voxel[],
     Real     xyz[] )
@@ -1718,7 +1718,7 @@ public  void  reorder_voxel_to_xyz(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  reorder_xyz_to_voxel(
+VIOAPI  void  reorder_xyz_to_voxel(
     Volume   volume,
     Real     xyz[],
     Real     voxel[] )
@@ -1754,7 +1754,7 @@ public  void  reorder_xyz_to_voxel(
 @MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
-public  void  convert_voxel_to_world(
+VIOAPI  void  convert_voxel_to_world(
     Volume   volume,
     Real     voxel[],
     Real     *x_world,
@@ -1793,7 +1793,7 @@ public  void  convert_voxel_to_world(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_3D_voxel_to_world(
+VIOAPI  void  convert_3D_voxel_to_world(
     Volume   volume,
     Real     voxel1,
     Real     voxel2,
@@ -1833,7 +1833,7 @@ public  void  convert_3D_voxel_to_world(
 @MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
-public  void  convert_voxel_normal_vector_to_world(
+VIOAPI  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
     Real            voxel_vector[],
     Real            *x_world,
@@ -1879,7 +1879,7 @@ public  void  convert_voxel_normal_vector_to_world(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_voxel_vector_to_world(
+VIOAPI  void  convert_voxel_vector_to_world(
     Volume          volume,
     Real            voxel_vector[],
     Real            *x_world,
@@ -1914,7 +1914,7 @@ public  void  convert_voxel_vector_to_world(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_world_vector_to_voxel(
+VIOAPI  void  convert_world_vector_to_voxel(
     Volume          volume,
     Real            x_world,
     Real            y_world,
@@ -1946,7 +1946,7 @@ public  void  convert_world_vector_to_voxel(
 @MODIFIED   : May  22, 1997   D. MacDonald - checks to recompute transform
 ---------------------------------------------------------------------------- */
 
-public  void  convert_world_to_voxel(
+VIOAPI  void  convert_world_to_voxel(
     Volume   volume,
     Real     x_world,
     Real     y_world,
@@ -1983,7 +1983,7 @@ public  void  convert_world_to_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  convert_3D_world_to_voxel(
+VIOAPI  void  convert_3D_world_to_voxel(
     Volume   volume,
     Real     x_world,
     Real     y_world,
@@ -2020,7 +2020,7 @@ public  void  convert_3D_world_to_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_voxel_min(
+VIOAPI  Real  get_volume_voxel_min(
     Volume   volume )
 {
     return( volume->voxel_min );
@@ -2039,7 +2039,7 @@ public  Real  get_volume_voxel_min(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_voxel_max(
+VIOAPI  Real  get_volume_voxel_max(
     Volume   volume )
 {
     return( volume->voxel_max );
@@ -2059,7 +2059,7 @@ public  Real  get_volume_voxel_max(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_voxel_range(
+VIOAPI  void  get_volume_voxel_range(
     Volume     volume,
     Real       *voxel_min,
     Real       *voxel_max )
@@ -2085,7 +2085,7 @@ public  void  get_volume_voxel_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_voxel_range(
+VIOAPI  void  set_volume_voxel_range(
     Volume   volume,
     Real     voxel_min,
     Real     voxel_max )
@@ -2151,7 +2151,7 @@ public  void  set_volume_voxel_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_real_range(
+VIOAPI  void  get_volume_real_range(
     Volume     volume,
     Real       *min_value,
     Real       *max_value )
@@ -2173,7 +2173,7 @@ public  void  get_volume_real_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_real_min(
+VIOAPI  Real  get_volume_real_min(
     Volume     volume )
 {
     Real   real_min;
@@ -2199,7 +2199,7 @@ public  Real  get_volume_real_min(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_real_max(
+VIOAPI  Real  get_volume_real_max(
     Volume     volume )
 {
     Real   real_max;
@@ -2228,7 +2228,7 @@ public  Real  get_volume_real_max(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_real_range(
+VIOAPI  void  set_volume_real_range(
     Volume   volume,
     Real     real_min,
     Real     real_max )
@@ -2287,7 +2287,7 @@ public  void  set_volume_real_range(
 @MODIFIED   : Nov. 15, 1996    D. MacDonald    - handles space type
 ---------------------------------------------------------------------------- */
 
-public  Volume   copy_volume_definition_no_alloc(
+VIOAPI  Volume   copy_volume_definition_no_alloc(
     Volume   volume,
     nc_type  nc_data_type,
     BOOLEAN  signed_flag,
@@ -2357,7 +2357,7 @@ public  Volume   copy_volume_definition_no_alloc(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Volume   copy_volume_definition(
+VIOAPI  Volume   copy_volume_definition(
     Volume   volume,
     nc_type  nc_data_type,
     BOOLEAN  signed_flag,
@@ -2387,7 +2387,7 @@ public  Volume   copy_volume_definition(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Volume  copy_volume(
+VIOAPI  Volume  copy_volume(
     Volume   volume )
 {
     Volume   copy;

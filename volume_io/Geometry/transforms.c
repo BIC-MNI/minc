@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.19 1997-08-13 13:21:28 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.19.2.1 2004-10-04 20:18:41 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -31,7 +31,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transfo
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  make_identity_transform( Transform   *transform )
+VIOAPI  void  make_identity_transform( Transform   *transform )
 {
     Transform_elem( *transform, 0, 0 ) = 1.0;
     Transform_elem( *transform, 0, 1 ) = 0.0;
@@ -64,7 +64,7 @@ public  void  make_identity_transform( Transform   *transform )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  close_to_identity(
+VIOAPI  BOOLEAN  close_to_identity(
     Transform   *transform )
 {
 #define   TOLERANCE   0.001
@@ -108,7 +108,7 @@ public  BOOLEAN  close_to_identity(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_origin(
+VIOAPI  void  get_transform_origin(
     Transform   *transform,
     Point       *origin )
 {
@@ -132,7 +132,7 @@ public  void  get_transform_origin(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_origin(
+VIOAPI  void  set_transform_origin(
     Transform   *transform,
     Point       *origin )
 {
@@ -155,7 +155,7 @@ public  void  set_transform_origin(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_origin_real(
+VIOAPI  void  get_transform_origin_real(
     Transform   *transform,
     Real        origin[] )
 {
@@ -178,7 +178,7 @@ public  void  get_transform_origin_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_x_axis(
+VIOAPI  void  get_transform_x_axis(
     Transform   *transform,
     Vector      *x_axis )
 {
@@ -202,7 +202,7 @@ public  void  get_transform_x_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_x_axis_real(
+VIOAPI  void  get_transform_x_axis_real(
     Transform   *transform,
     Real        x_axis[] )
 {
@@ -225,7 +225,7 @@ public  void  get_transform_x_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_x_axis(
+VIOAPI  void  set_transform_x_axis(
     Transform   *transform,
     Vector      *x_axis )
 {
@@ -248,7 +248,7 @@ public  void  set_transform_x_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_x_axis_real(
+VIOAPI  void  set_transform_x_axis_real(
     Transform   *transform,
     Real        x_axis[] )
 {
@@ -271,7 +271,7 @@ public  void  set_transform_x_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_y_axis(
+VIOAPI  void  get_transform_y_axis(
     Transform   *transform,
     Vector      *y_axis )
 {
@@ -295,7 +295,7 @@ public  void  get_transform_y_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_y_axis_real(
+VIOAPI  void  get_transform_y_axis_real(
     Transform   *transform,
     Real        y_axis[] )
 {
@@ -318,7 +318,7 @@ public  void  get_transform_y_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_y_axis(
+VIOAPI  void  set_transform_y_axis(
     Transform   *transform,
     Vector      *y_axis )
 {
@@ -341,7 +341,7 @@ public  void  set_transform_y_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_y_axis_real(
+VIOAPI  void  set_transform_y_axis_real(
     Transform   *transform,
     Real        y_axis[] )
 {
@@ -364,7 +364,7 @@ public  void  set_transform_y_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_z_axis(
+VIOAPI  void  get_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis )
 {
@@ -388,7 +388,7 @@ public  void  get_transform_z_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_transform_z_axis_real(
+VIOAPI  void  get_transform_z_axis_real(
     Transform   *transform,
     Real        z_axis[] )
 {
@@ -411,7 +411,7 @@ public  void  get_transform_z_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_z_axis(
+VIOAPI  void  set_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis )
 {
@@ -434,7 +434,7 @@ public  void  set_transform_z_axis(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_transform_z_axis_real(
+VIOAPI  void  set_transform_z_axis_real(
     Transform   *transform,
     Real        z_axis[] )
 {
@@ -461,7 +461,7 @@ public  void  set_transform_z_axis_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void   make_change_to_bases_transform(
+VIOAPI  void   make_change_to_bases_transform(
     Point      *origin,
     Vector     *x_axis,
     Vector     *y_axis,
@@ -504,7 +504,7 @@ public  void   make_change_to_bases_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void   make_change_from_bases_transform(
+VIOAPI  void   make_change_from_bases_transform(
     Point      *origin,
     Vector     *x_axis,
     Vector     *y_axis,
@@ -550,7 +550,7 @@ public  void   make_change_from_bases_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void   concat_transforms(
+VIOAPI  void   concat_transforms(
     Transform   *result,
     Transform   *t1,
     Transform   *t2 )
@@ -613,7 +613,7 @@ public  void   concat_transforms(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  homogenous_transform_point(
+static  void  homogenous_transform_point(
     Transform  *transform,
     Real       x,
     Real       y,
@@ -672,7 +672,7 @@ private  void  homogenous_transform_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  transform_point(
+VIOAPI  void  transform_point(
     Transform  *transform,
     Real       x,
     Real       y,
@@ -703,7 +703,7 @@ public  void  transform_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  transform_vector(
+VIOAPI  void  transform_vector(
     Transform  *transform,
     Real       x,
     Real       y,

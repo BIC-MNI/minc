@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/tensors.c,v 1.6 1995-07-31 13:44:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/tensors.c,v 1.6.2.1 2004-10-04 20:18:41 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -37,7 +37,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/tensors
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  multiply_basis_matrices(
+static void multiply_basis_matrices(
     int    n_derivs,
     int    n_degs,
     Real   m1[],
@@ -98,7 +98,7 @@ private  void  multiply_basis_matrices(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  multiply_matrices(
+static void multiply_matrices(
     int    x1,
     int    y1,
     Real   m1[],
@@ -172,7 +172,7 @@ private  void  multiply_matrices(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  spline_tensor_product(
+VIOAPI  void  spline_tensor_product(
     int     n_dims,
     Real    positions[],
     int     degrees[],

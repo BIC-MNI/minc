@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.6 1996-11-15 16:09:41 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.6.2.1 2004-10-04 20:18:40 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -40,7 +40,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Colour  make_rgba_Colour(
+VIOAPI  Colour  make_rgba_Colour(
     int    r,
     int    g,
     int    b,
@@ -73,7 +73,7 @@ public  Colour  make_rgba_Colour(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_Colour_r(
+VIOAPI  int  get_Colour_r(
     Colour   colour )
 {
     unsigned  char  *b;
@@ -96,7 +96,7 @@ public  int  get_Colour_r(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_Colour_g(
+VIOAPI  int  get_Colour_g(
     Colour   colour )
 {
     unsigned  char  *b;
@@ -119,7 +119,7 @@ public  int  get_Colour_g(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_Colour_b(
+VIOAPI  int  get_Colour_b(
     Colour   colour )
 {
     unsigned  char  *b;
@@ -143,7 +143,7 @@ public  int  get_Colour_b(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_Colour_a(
+VIOAPI  int  get_Colour_a(
     Colour   colour )
 {
     unsigned  char  *b;

@@ -17,18 +17,20 @@
 #include  <pwd.h>
 #endif /* HAVE_PWD_H */
 #include  <stdlib.h>
+#if HAVE_UNISTD_H
 #include  <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.39 2004-03-23 21:17:40 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.39.2.1 2004-10-04 20:19:22 bert Exp $";
 #endif
 
-private  BOOLEAN  has_no_extension( STRING );
-private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
+static  BOOLEAN  has_no_extension( STRING );
+static  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
 
 #if !HAVE_STRERROR
-private char *strerror(int errnum)
+static char *strerror(int errnum)
 {
     extern int  sys_nerr;
     extern char *sys_errlist[];
@@ -56,7 +58,7 @@ private char *strerror(int errnum)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  print_system_error( void )
+static  void  print_system_error( void )
 {
     char   *error;
 
@@ -78,7 +80,7 @@ private  void  print_system_error( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  real_is_double( void )
+VIOAPI  BOOLEAN  real_is_double( void )
 {
     static  const  size_t  constant_8 = sizeof(double);
     return( sizeof(Real) == constant_8 );
@@ -97,7 +99,7 @@ public  BOOLEAN  real_is_double( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  file_exists(
+VIOAPI  BOOLEAN  file_exists(
     STRING        filename )
 {
     BOOLEAN  exists;
@@ -134,7 +136,7 @@ public  BOOLEAN  file_exists(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  file_directory_exists(
+VIOAPI  BOOLEAN  file_directory_exists(
     STRING        filename )
 {
     BOOLEAN  exists;
@@ -166,7 +168,7 @@ public  BOOLEAN  file_directory_exists(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  check_clobber_file(
+VIOAPI  BOOLEAN  check_clobber_file(
     STRING   filename )
 {
     char     ch;
@@ -215,7 +217,7 @@ public  BOOLEAN  check_clobber_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  check_clobber_file_default_suffix(
+VIOAPI  BOOLEAN  check_clobber_file_default_suffix(
     STRING   filename,
     STRING   default_suffix )
 {
@@ -252,7 +254,7 @@ public  BOOLEAN  check_clobber_file_default_suffix(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  STRING  create_backup_filename(
+static  STRING  create_backup_filename(
     STRING   filename )
 {
     int      i, len, count;
@@ -321,7 +323,7 @@ private  STRING  create_backup_filename(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  make_backup_file(
+VIOAPI  Status  make_backup_file(
     STRING   filename,
     STRING   *backup_filename )
 {
@@ -364,7 +366,7 @@ public  Status  make_backup_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  cleanup_backup_file(
+VIOAPI  void  cleanup_backup_file(
     STRING   filename,
     STRING   backup_filename,
     Status   status_of_write )
@@ -405,7 +407,7 @@ public  void  cleanup_backup_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  remove_file(
+VIOAPI  void  remove_file(
     STRING  filename )
 {
     STRING   expanded;
@@ -435,7 +437,7 @@ public  void  remove_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  copy_file(
+VIOAPI  Status  copy_file(
     STRING  src,
     STRING  dest )
 {
@@ -480,7 +482,7 @@ public  Status  copy_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  move_file(
+VIOAPI  Status  move_file(
     STRING  src,
     STRING  dest )
 {
@@ -524,7 +526,7 @@ public  Status  move_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  STRING  get_user_home_directory(
+static  STRING  get_user_home_directory(
     STRING   user_name )
 {
 #if HAVE_GETPWNAM
@@ -560,7 +562,7 @@ private  STRING  get_user_home_directory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  expand_filename(
+VIOAPI  STRING  expand_filename(
     STRING  filename )
 {
     int      i, new_i, dest, len, env_index;
@@ -691,7 +693,7 @@ public  STRING  expand_filename(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  filename_extension_matches(
+VIOAPI  BOOLEAN  filename_extension_matches(
     STRING   filename,
     STRING   extension )
 {
@@ -737,7 +739,7 @@ public  BOOLEAN  filename_extension_matches(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  remove_directories_from_filename(
+VIOAPI  STRING  remove_directories_from_filename(
     STRING  filename )
 {
     STRING   expanded, no_directories;
@@ -773,7 +775,7 @@ public  STRING  remove_directories_from_filename(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  file_exists_as_compressed(
+VIOAPI  BOOLEAN  file_exists_as_compressed(
     STRING       filename,
     STRING       *compressed_filename )
 {
@@ -809,7 +811,7 @@ public  BOOLEAN  file_exists_as_compressed(
     return( gzipped );
 }
 
-public  STRING  get_temporary_filename( void )
+VIOAPI  STRING  get_temporary_filename( void )
 {
     return micreate_tempfile();
 }
@@ -829,7 +831,7 @@ public  STRING  get_temporary_filename( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  open_file(
+VIOAPI  Status  open_file(
     STRING             filename,
     IO_types           io_type,
     File_formats       file_format,
@@ -965,7 +967,7 @@ public  Status  open_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  open_file_with_default_suffix(
+VIOAPI  Status  open_file_with_default_suffix(
     STRING             filename,
     STRING             default_suffix,
     IO_types           io_type,
@@ -1026,7 +1028,7 @@ public  Status  open_file_with_default_suffix(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  has_no_extension(
+static  BOOLEAN  has_no_extension(
     STRING   filename )
 {
     STRING   base_name;
@@ -1055,7 +1057,7 @@ private  BOOLEAN  has_no_extension(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  set_file_position(
+VIOAPI  Status  set_file_position(
     FILE     *file,
     long     byte_position )
 {
@@ -1088,7 +1090,7 @@ public  Status  set_file_position(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  close_file(
+VIOAPI  Status  close_file(
     FILE     *file )
 {
     if( file != NULL )
@@ -1114,7 +1116,7 @@ public  Status  close_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  extract_directory(
+VIOAPI  STRING  extract_directory(
     STRING    filename )
 {
     int     i, slash_index;
@@ -1162,7 +1164,7 @@ public  STRING  extract_directory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_absolute_filename(
+VIOAPI  STRING  get_absolute_filename(
     STRING    filename,
     STRING    directory )
 {
@@ -1205,7 +1207,7 @@ public  STRING  get_absolute_filename(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  flush_file(
+VIOAPI  Status  flush_file(
     FILE     *file )
 {
     Status   status;
@@ -1237,7 +1239,7 @@ public  Status  flush_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_character(
+VIOAPI  Status  input_character(
     FILE  *file,
     char   *ch )
 {
@@ -1272,7 +1274,7 @@ public  Status  input_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  unget_character(
+VIOAPI  Status  unget_character(
     FILE  *file,
     char  ch )
 {
@@ -1302,7 +1304,7 @@ public  Status  unget_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_nonwhite_character(
+VIOAPI  Status  input_nonwhite_character(
     FILE   *file,
     char   *ch )
 {
@@ -1331,7 +1333,7 @@ public  Status  input_nonwhite_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_character(
+VIOAPI  Status  output_character(
     FILE   *file,
     char   ch )
 {
@@ -1364,7 +1366,7 @@ public  Status  output_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status   skip_input_until(
+VIOAPI  Status   skip_input_until(
     FILE   *file,
     char   search_char )
 {
@@ -1396,7 +1398,7 @@ public  Status   skip_input_until(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_string(
+VIOAPI  Status  output_string(
     FILE    *file,
     STRING  str )
 {
@@ -1429,7 +1431,7 @@ public  Status  output_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_string(
+VIOAPI  Status  input_string(
     FILE    *file,
     STRING  *str,
     char    termination_char )
@@ -1475,7 +1477,7 @@ public  Status  input_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_quoted_string(
+VIOAPI  Status  input_quoted_string(
     FILE            *file,
     STRING          *str )
 {
@@ -1526,7 +1528,7 @@ public  Status  input_quoted_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_possibly_quoted_string(
+VIOAPI  Status  input_possibly_quoted_string(
     FILE            *file,
     STRING          *str )
 {
@@ -1587,7 +1589,7 @@ public  Status  input_possibly_quoted_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_quoted_string(
+VIOAPI  Status  output_quoted_string(
     FILE            *file,
     STRING          str )
 {
@@ -1616,7 +1618,7 @@ public  Status  output_quoted_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_binary_data(
+VIOAPI  Status  input_binary_data(
     FILE            *file,
     void            *data,
     size_t          element_size,
@@ -1656,7 +1658,7 @@ public  Status  input_binary_data(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_binary_data(
+VIOAPI  Status  output_binary_data(
     FILE            *file,
     void            *data,
     size_t          element_size,
@@ -1693,7 +1695,7 @@ public  Status  output_binary_data(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_newline(
+VIOAPI  Status  input_newline(
     FILE            *file )
 {
     Status   status;
@@ -1723,7 +1725,7 @@ public  Status  input_newline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_newline(
+VIOAPI  Status  output_newline(
     FILE            *file )
 {
     Status   status;
@@ -1754,7 +1756,7 @@ public  Status  output_newline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_line(
+VIOAPI  Status  input_line(
     FILE    *file,
     STRING  *line )
 {
@@ -1794,7 +1796,7 @@ public  Status  input_line(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_boolean(
+VIOAPI  Status  input_boolean(
     FILE            *file,
     BOOLEAN         *b )
 {
@@ -1830,7 +1832,7 @@ public  Status  input_boolean(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_boolean(
+VIOAPI  Status  output_boolean(
     FILE            *file,
     BOOLEAN         b )
 {
@@ -1867,7 +1869,7 @@ public  Status  output_boolean(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_short(
+VIOAPI  Status  input_short(
     FILE            *file,
     short           *s )
 {
@@ -1895,7 +1897,7 @@ public  Status  input_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_short(
+VIOAPI  Status  output_short(
     FILE            *file,
     short           s )
 {
@@ -1926,7 +1928,7 @@ public  Status  output_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_unsigned_short(
+VIOAPI  Status  input_unsigned_short(
     FILE            *file,
     unsigned short  *s )
 {
@@ -1958,7 +1960,7 @@ public  Status  input_unsigned_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_unsigned_short(
+VIOAPI  Status  output_unsigned_short(
     FILE            *file,
     unsigned short  s )
 {
@@ -1989,7 +1991,7 @@ public  Status  output_unsigned_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_int(
+VIOAPI  Status  input_int(
     FILE  *file,
     int   *i )
 {
@@ -2017,7 +2019,7 @@ public  Status  input_int(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_int(
+VIOAPI  Status  output_int(
     FILE            *file,
     int             i )
 {
@@ -2048,7 +2050,7 @@ public  Status  output_int(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_real(
+VIOAPI  Status  input_real(
     FILE            *file,
     Real            *r )
 {
@@ -2080,7 +2082,7 @@ public  Status  input_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_real(
+VIOAPI  Status  output_real(
     FILE            *file,
     Real            r )
 {
@@ -2111,7 +2113,7 @@ public  Status  output_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_float(
+VIOAPI  Status  input_float(
     FILE            *file,
     float           *f )
 {
@@ -2141,7 +2143,7 @@ public  Status  input_float(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_float(
+VIOAPI  Status  output_float(
     FILE            *file,
     float           f )
 {
@@ -2172,7 +2174,7 @@ public  Status  output_float(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_double(
+VIOAPI  Status  input_double(
     FILE            *file,
     double          *d )
 {
@@ -2202,7 +2204,7 @@ public  Status  input_double(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_double(
+VIOAPI  Status  output_double(
     FILE            *file,
     double          d )
 {
@@ -2237,7 +2239,7 @@ public  Status  output_double(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_binary_data(
+VIOAPI  Status  io_binary_data(
     FILE            *file,
     IO_types        io_flag,
     void            *data,
@@ -2269,7 +2271,7 @@ public  Status  io_binary_data(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_newline(
+VIOAPI  Status  io_newline(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format )
@@ -2306,7 +2308,7 @@ public  Status  io_newline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_quoted_string(
+VIOAPI  Status  io_quoted_string(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2365,7 +2367,7 @@ public  Status  io_quoted_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_boolean(
+VIOAPI  Status  io_boolean(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2404,7 +2406,7 @@ public  Status  io_boolean(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_short(
+VIOAPI  Status  io_short(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2444,7 +2446,7 @@ public  Status  io_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_unsigned_short(
+VIOAPI  Status  io_unsigned_short(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2484,7 +2486,7 @@ public  Status  io_unsigned_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_unsigned_char(
+VIOAPI  Status  io_unsigned_char(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2540,7 +2542,7 @@ public  Status  io_unsigned_char(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_int(
+VIOAPI  Status  io_int(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2579,7 +2581,7 @@ public  Status  io_int(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_real(
+VIOAPI  Status  io_real(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2618,7 +2620,7 @@ public  Status  io_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_float(
+VIOAPI  Status  io_float(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2657,7 +2659,7 @@ public  Status  io_float(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_double(
+VIOAPI  Status  io_double(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2697,7 +2699,7 @@ public  Status  io_double(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_ints(
+VIOAPI  Status  io_ints(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
@@ -2757,7 +2759,7 @@ public  Status  io_ints(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_unsigned_chars(
+VIOAPI  Status  io_unsigned_chars(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,

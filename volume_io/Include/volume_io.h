@@ -14,7 +14,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11 2001-12-14 17:12:29 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -40,16 +40,15 @@
 #include  <volume_io/volume.h>
 #include  <volume_io/transforms.h>
 
-#ifndef  public
-#define       public   extern
-#define       public_was_defined_here
-#endif
+#ifndef  VIOAPI
+
+#if defined(_MSC_VER)
+#define       VIOAPI   __declspec(dllimport)
+#else
+#define       VIOAPI   extern
+#endif /* _MSC_VER not defined */
+#endif /* VIOAPI not defined */
 
 #include  <volume_io/vol_io_prototypes.h>
 
-#ifdef  public_was_defined_here
-#undef       public
-#undef       public_was_defined_here
-#endif
-
-#endif
+#endif /* DEF_VOLUME_IO */

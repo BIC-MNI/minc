@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.59 2001-09-18 15:33:17 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.59.2.1 2004-10-04 20:20:14 bert Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -26,7 +26,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_m
 
 #define  UNITS           "mm"
 
-private  Status  get_dimension_ordering(
+static  Status  get_dimension_ordering(
     int          n_vol_dims,
     STRING       vol_dim_names[],
     int          n_file_dims,
@@ -49,7 +49,7 @@ private  Status  get_dimension_ordering(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  is_default_direction_cosine(
+static  BOOLEAN  is_default_direction_cosine(
     int        axis,
     double     dir_cosines[] )
 {
@@ -88,7 +88,7 @@ private  BOOLEAN  is_default_direction_cosine(
 @MODIFIED   : May  22, 1997   D. MacDonald - added use_volume_starts_and_steps
 ---------------------------------------------------------------------------- */
 
-private  Status  output_world_transform(
+static  Status  output_world_transform(
     Minc_file              file,
     STRING                 space_type,
     General_transform      *voxel_to_world_transform,
@@ -222,7 +222,7 @@ private  Status  output_world_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private void create_image_variable(Minc_file file)
+static void create_image_variable(Minc_file file)
 {
     int old_ncopts;
 
@@ -285,7 +285,7 @@ private void create_image_variable(Minc_file file)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private Status end_file_def(Minc_file file)
+static Status end_file_def(Minc_file file)
 {
    int ret;
 
@@ -328,7 +328,7 @@ private Status end_file_def(Minc_file file)
                                               found by peter
 ---------------------------------------------------------------------------- */
 
-public  Minc_file  initialize_minc_output(
+VIOAPI  Minc_file  initialize_minc_output(
     STRING                 filename,
     int                    n_dimensions,
     STRING                 dim_names[],
@@ -558,7 +558,7 @@ public  Minc_file  initialize_minc_output(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  copy_auxiliary_data_from_minc_file(
+VIOAPI  Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
     STRING      filename,
     STRING      history_string )
@@ -610,7 +610,7 @@ public  Status  copy_auxiliary_data_from_minc_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  copy_auxiliary_data_from_open_minc_file(
+VIOAPI  Status  copy_auxiliary_data_from_open_minc_file(
     Minc_file   file,
     int         src_cdfid,
     STRING      history_string )
@@ -733,7 +733,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
                                            concating to non-existent history
 ---------------------------------------------------------------------------- */
 
-public  Status  add_minc_history(
+VIOAPI  Status  add_minc_history(
     Minc_file   file,
     STRING      history_string )
 {
@@ -807,7 +807,7 @@ public  Status  add_minc_history(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  get_dimension_ordering(
+static  Status  get_dimension_ordering(
     int          n_vol_dims,
     STRING       vol_dim_names[],
     int          n_file_dims,
@@ -866,7 +866,7 @@ private  Status  get_dimension_ordering(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  check_minc_output_variables(
+static  Status  check_minc_output_variables(
     Minc_file   file )
 {
     int               d, axis;
@@ -975,7 +975,7 @@ private  Status  check_minc_output_variables(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  set_minc_output_random_order(
+VIOAPI  Status  set_minc_output_random_order(
     Minc_file   file )
 {
     Status  status;
@@ -1007,7 +1007,7 @@ public  Status  set_minc_output_random_order(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_minc_hyperslab(
+VIOAPI  Status  output_minc_hyperslab(
     Minc_file           file,
     Data_types          data_type,
     int                 n_array_dims,
@@ -1144,7 +1144,7 @@ public  Status  output_minc_hyperslab(
 @MODIFIED   : Sep  1, 1995    D. MacDonald - added cached volumes.
 ---------------------------------------------------------------------------- */
 
-private  void  output_slab(
+static  void  output_slab(
     Minc_file   file,
     Volume      volume,
     int         to_volume[],
@@ -1281,7 +1281,7 @@ private  void  output_slab(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  output_the_volume(
+static  Status  output_the_volume(
     Minc_file   file,
     Volume      volume,
     int         volume_count[],
@@ -1532,7 +1532,7 @@ private  Status  output_the_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_volume_to_minc_file_position(
+VIOAPI  Status  output_volume_to_minc_file_position(
     Minc_file   file,
     Volume      volume,
     int         volume_count[],
@@ -1559,7 +1559,7 @@ public  Status  output_volume_to_minc_file_position(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_minc_volume(
+VIOAPI  Status  output_minc_volume(
     Minc_file   file )
 {
     int        d, volume_count[MAX_DIMENSIONS];
@@ -1629,7 +1629,7 @@ public  Status  output_minc_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  close_minc_output(
+VIOAPI  Status  close_minc_output(
     Minc_file   file )
 {
     int    d;
@@ -1677,7 +1677,7 @@ public  Status  close_minc_output(
 @MODIFIED   : May  22, 1997   D. MacDonald - added use_volume_starts_and_steps
 ---------------------------------------------------------------------------- */
 
-public  void  set_default_minc_output_options(
+VIOAPI  void  set_default_minc_output_options(
     minc_output_options  *options           )
 {
     int   dim;
@@ -1705,7 +1705,7 @@ public  void  set_default_minc_output_options(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  copy_minc_output_options(
+VIOAPI  void  copy_minc_output_options(
     minc_output_options  *src,
     minc_output_options  *dest )
 {
@@ -1739,7 +1739,7 @@ public  void  copy_minc_output_options(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_minc_output_options(
+VIOAPI  void  delete_minc_output_options(
     minc_output_options  *options           )
 {
     int   i;
@@ -1764,7 +1764,7 @@ public  void  delete_minc_output_options(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_output_dimensions_order(
+VIOAPI  void  set_minc_output_dimensions_order(
     minc_output_options  *options,
     int                  n_dimensions,
     STRING               dimension_names[] )
@@ -1793,7 +1793,7 @@ public  void  set_minc_output_dimensions_order(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_output_real_range(
+VIOAPI  void  set_minc_output_real_range(
     minc_output_options  *options,
     Real                 real_min,
     Real                 real_max )
@@ -1819,7 +1819,7 @@ public  void  set_minc_output_real_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_output_use_volume_starts_and_steps_flag(
+VIOAPI  void  set_minc_output_use_volume_starts_and_steps_flag(
     minc_output_options  *options,
     BOOLEAN              flag )
 {

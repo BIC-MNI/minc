@@ -15,15 +15,15 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef  public
-#define  public
-#endif
-
-#ifndef  private
-#define  private   static
-#endif
-
 #include "config.h"
+
+#ifndef  VIOAPI
+#if defined(_MSC_VER)
+#define  VIOAPI __declspec(dllexport)
+#else
+#define  VIOAPI
+#endif /* _MSC_VER not defined */
+#endif /* VIOAPI not defined */
 
 #include  <volume_io.h>
 

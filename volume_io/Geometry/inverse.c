@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.8 1995-07-31 13:44:28 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.8.2.1 2004-10-04 20:18:40 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -31,7 +31,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN   compute_transform_inverse(
+VIOAPI  BOOLEAN   compute_transform_inverse(
     Transform  *transform,
     Transform  *inverse )
 {

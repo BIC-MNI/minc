@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.22 2002-09-03 23:27:31 stever Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.22.2.1 2004-10-04 20:18:52 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -31,7 +31,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  alloc_linear_transform(
+static  void  alloc_linear_transform(
     General_transform   *transform )
 {
     transform->type = LINEAR;
@@ -56,7 +56,7 @@ private  void  alloc_linear_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_linear_transform(
+VIOAPI  void  create_linear_transform(
     General_transform   *transform,
     Transform           *linear_transform )
 {
@@ -91,7 +91,7 @@ public  void  create_linear_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  initialize_thin_plate_transform(
+static  void  initialize_thin_plate_transform(
     General_transform    *transform,
     int                  n_dimensions,
     int                  n_points )
@@ -123,7 +123,7 @@ private  void  initialize_thin_plate_transform(
 @MODIFIED   : Feb. 21, 1995   David MacDonald - make a real and float version
 ---------------------------------------------------------------------------- */
 
-public  void  create_thin_plate_transform_real(
+VIOAPI  void  create_thin_plate_transform_real(
     General_transform    *transform,
     int                  n_dimensions,
     int                  n_points,
@@ -163,7 +163,7 @@ public  void  create_thin_plate_transform_real(
 @MODIFIED   : Feb. 21, 1995   David MacDonald - make a real and float version
 ---------------------------------------------------------------------------- */
 
-public  void  create_thin_plate_transform(
+VIOAPI  void  create_thin_plate_transform(
     General_transform    *transform,
     int                  n_dimensions,
     int                  n_points,
@@ -200,7 +200,7 @@ public  void  create_thin_plate_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  internal_create_grid_transform(
+static  void  internal_create_grid_transform(
     General_transform    *transform,
     Volume               displacement_volume,
     BOOLEAN              copy_flag )
@@ -294,7 +294,7 @@ private  void  internal_create_grid_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_grid_transform(
+VIOAPI  void  create_grid_transform(
     General_transform    *transform,
     Volume               displacement_volume )
 {
@@ -316,7 +316,7 @@ public  void  create_grid_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_grid_transform_no_copy(
+VIOAPI  void  create_grid_transform_no_copy(
     General_transform    *transform,
     Volume               displacement_volume )
 {
@@ -339,7 +339,7 @@ public  void  create_grid_transform_no_copy(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_user_transform(
+VIOAPI  void  create_user_transform(
     General_transform         *transform,
     void                      *user_data,
     size_t                    size_user_data,
@@ -372,7 +372,7 @@ public  void  create_user_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Transform_types  get_transform_type(
+VIOAPI  Transform_types  get_transform_type(
     General_transform   *transform )
 {
     return( transform->type );
@@ -392,7 +392,7 @@ public  Transform_types  get_transform_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_n_concated_transforms(
+VIOAPI  int  get_n_concated_transforms(
     General_transform   *transform )
 {
     if( transform->type == CONCATENATED_TRANSFORM )
@@ -415,7 +415,7 @@ public  int  get_n_concated_transforms(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  General_transform  *get_nth_general_transform(
+VIOAPI  General_transform  *get_nth_general_transform(
     General_transform   *transform,
     int                 n )
 {
@@ -444,7 +444,7 @@ public  General_transform  *get_nth_general_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Transform  *get_linear_transform_ptr(
+VIOAPI  Transform  *get_linear_transform_ptr(
     General_transform   *transform )
 {
     if( transform->type == LINEAR )
@@ -475,7 +475,7 @@ public  Transform  *get_linear_transform_ptr(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Transform  *get_inverse_linear_transform_ptr(
+VIOAPI  Transform  *get_inverse_linear_transform_ptr(
     General_transform   *transform )
 {
     if( transform->type == LINEAR )
@@ -512,7 +512,7 @@ public  Transform  *get_inverse_linear_transform_ptr(
 @MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
-private  void  transform_or_invert_point(
+static  void  transform_or_invert_point(
     General_transform   *transform,
     BOOLEAN             inverse_flag,
     Real                x,
@@ -641,7 +641,7 @@ private  void  transform_or_invert_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  general_transform_point(
+VIOAPI  void  general_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -673,7 +673,7 @@ public  void  general_transform_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  general_inverse_transform_point(
+VIOAPI  void  general_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -702,7 +702,7 @@ public  void  general_inverse_transform_point(
 @MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
-private  void  copy_and_invert_transform(
+static  void  copy_and_invert_transform(
     General_transform   *transform,
     BOOLEAN             invert_it,
     General_transform   *copy )
@@ -798,7 +798,7 @@ private  void  copy_and_invert_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  copy_general_transform(
+VIOAPI  void  copy_general_transform(
     General_transform   *transform,
     General_transform   *copy )
 {
@@ -818,7 +818,7 @@ public  void  copy_general_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  invert_general_transform(
+VIOAPI  void  invert_general_transform(
     General_transform   *transform )
 {
     transform->inverse_flag = !transform->inverse_flag;
@@ -837,7 +837,7 @@ public  void  invert_general_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_inverse_general_transform(
+VIOAPI  void  create_inverse_general_transform(
     General_transform   *transform,
     General_transform   *inverse )
 {
@@ -860,7 +860,7 @@ public  void  create_inverse_general_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  concat_general_transforms(
+VIOAPI  void  concat_general_transforms(
     General_transform   *first,
     General_transform   *second,
     General_transform   *result )
@@ -1014,7 +1014,7 @@ public  void  concat_general_transforms(
 @MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
-public  void  delete_general_transform(
+VIOAPI  void  delete_general_transform(
     General_transform   *transform )
 {
     int   trans;

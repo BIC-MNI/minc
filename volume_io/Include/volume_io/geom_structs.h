@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.20 2003-06-02 20:30:07 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.20.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,11 +29,21 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#define  N_DIMENSIONS  3
+/* Define the structure of a point in world coordinates */
+#define VIO_N_DIMENSIONS 3
+#define VIO_X 0
+#define VIO_Y 1
+#define VIO_Z 2
 
-#define  X             0
-#define  Y             1
-#define  Z             2
+#ifndef MINC_PLAY_NICE /* Don't define commonly used symbols */
+
+#define  N_DIMENSIONS  VIO_N_DIMENSIONS
+
+#define  X             VIO_X
+#define  Y             VIO_Y
+#define  Z             VIO_Z
+
+#endif /* MINC_PLAY_NICE */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : Point   type
@@ -48,12 +58,12 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-typedef  float   Point_coord_type;
+typedef  float   VIO_Point_coord_type;
 
 typedef  struct
 {
-    Point_coord_type   coords[N_DIMENSIONS];
-} Point;
+    VIO_Point_coord_type   coords[VIO_N_DIMENSIONS];
+} VIO_Point;
 
 /* --- access the given coordinate of the point */
 
@@ -61,9 +71,9 @@ typedef  struct
 
 /* --- access x, y, or z coordinate of the point */
 
-#define  Point_x( point ) Point_coord( point, X )
-#define  Point_y( point ) Point_coord( point, Y )
-#define  Point_z( point ) Point_coord( point, Z )
+#define  Point_x( point ) Point_coord( point, VIO_X )
+#define  Point_y( point ) Point_coord( point, VIO_Y )
+#define  Point_z( point ) Point_coord( point, VIO_Z )
 
 /* --- assign all 3 coordinates of the point */
 
@@ -89,8 +99,8 @@ typedef  struct
 
 typedef  struct
 {
-    Point_coord_type   coords[N_DIMENSIONS];
-} Vector;
+    VIO_Point_coord_type   coords[VIO_N_DIMENSIONS];
+} VIO_Vector;
 
 /* --- access the given coordinate of the vector */
 
@@ -98,9 +108,9 @@ typedef  struct
 
 /* --- access x, y, or z coordinate of the vector */
 
-#define  Vector_x( vector ) Vector_coord( vector, X )
-#define  Vector_y( vector ) Vector_coord( vector, Y )
-#define  Vector_z( vector ) Vector_coord( vector, Z )
+#define  Vector_x( vector ) Vector_coord( vector, VIO_X )
+#define  Vector_y( vector ) Vector_coord( vector, VIO_Y )
+#define  Vector_z( vector ) Vector_coord( vector, VIO_Z )
 
 /* --- assign all 3 coordinates of the vector */
 
@@ -132,7 +142,7 @@ typedef  struct
  * exactly 4 bytes, so you get weird results on 64-bit architectures
  * if Colour is a 'long'.
  */
-typedef  unsigned  int     Colour;
+typedef  unsigned  int     VIO_Colour;
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \
@@ -182,14 +192,14 @@ typedef  unsigned  int     Colour;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-typedef  float  Spr_type;
+typedef  float  VIO_Spr_type;
 
 typedef  struct
 {
-    Spr_type   a, d, s;
-    Spr_type   se;
-    Spr_type   t;
-} Surfprop;
+    VIO_Spr_type   a, d, s;
+    VIO_Spr_type   se;
+    VIO_Spr_type   t;
+} VIO_Surfprop;
 
 /* --- access the given element of the surface property */
 
@@ -223,12 +233,12 @@ typedef  struct
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-typedef  double  Transform_elem_type;
+typedef  double  VIO_Transform_elem_type;
 
 typedef  struct
 {
-    Transform_elem_type    m2d[2][3];
-} Transform_2d;
+    VIO_Transform_elem_type    m2d[2][3];
+} VIO_Transform_2d;
 
 #define  Transform_2d_elem( t, i, j ) ((t).m2d[i][j])
 
@@ -247,9 +257,21 @@ typedef  struct
 
 typedef  struct
 {
-    Transform_elem_type    m[4][4];
-} Transform;
+    VIO_Transform_elem_type    m[4][4];
+} VIO_Transform;
 
 #define  Transform_elem( t, i, j ) ((t).m[j][i])
+
+#ifndef MINC_PLAY_NICE
+typedef VIO_Transform Transform;
+typedef VIO_Vector Vector;
+typedef VIO_Colour Colour;
+typedef VIO_Transform_2d Transform_2d;
+typedef VIO_Transform_elem_type Transform_elem_type;
+typedef VIO_Spr_type Spr_type;
+typedef VIO_Surfprop Surfprop;
+typedef VIO_Point Point;
+typedef VIO_Point_coord_type Point_coord_type;
+#endif /* MINC_PLAY_NICE */
 
 #endif

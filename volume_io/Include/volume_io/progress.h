@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.8 2001-12-14 17:12:27 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.8.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,23 +33,27 @@
 
 typedef  struct
 {
-    BOOLEAN    force_one_line;
-    BOOLEAN    first_msg_displayed;
-    BOOLEAN    one_line_flag;
+    VIO_BOOL   force_one_line;
+    VIO_BOOL   first_msg_displayed;
+    VIO_BOOL   one_line_flag;
     int        n_steps;
     int        n_dots_so_far;
     int        total_n_dots;
-    Real       start_time;
-    Real       previous_time;
-    Real       update_rate;
-    Real       sum_xy;
-    Real       sum_xx;
-    STRING     title;
+    VIO_Real   start_time;
+    VIO_Real   previous_time;
+    VIO_Real   update_rate;
+    VIO_Real   sum_xy;
+    VIO_Real   sum_xx;
+    VIO_STR    title;
 
-    Real       last_check_time;
+    VIO_Real   last_check_time;
     int        check_every;
     int        next_check_step;
     int        last_check_step;
-} progress_struct;
+} VIO_progress_struct;
 
-#endif
+#ifndef MINC_PLAY_NICE
+typedef VIO_progress_struct progress_struct;
+#endif /* MINC_PLAY_NICE */
+
+#endif /* DEF_PROGRESS */

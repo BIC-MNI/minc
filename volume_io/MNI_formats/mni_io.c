@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.10 1995-10-19 15:47:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.10.2.1 2004-10-04 20:18:52 bert Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -38,7 +38,7 @@ static   const char      COMMENT_CHAR2 = '#';
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_get_nonwhite_character(
+VIOAPI Status  mni_get_nonwhite_character(
     FILE   *file,
     char   *ch )
 {
@@ -80,7 +80,7 @@ public  Status  mni_get_nonwhite_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_skip_expected_character(
+VIOAPI Status  mni_skip_expected_character(
     FILE   *file,
     char   expected_ch )
 {
@@ -120,7 +120,7 @@ public  Status  mni_skip_expected_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_line(
+VIOAPI Status  mni_input_line(
     FILE     *file,
     STRING   *string )
 {
@@ -166,7 +166,7 @@ public  Status  mni_input_line(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_string(
+VIOAPI Status  mni_input_string(
     FILE     *file,
     STRING   *string,
     char     termination_char1,
@@ -174,7 +174,7 @@ public  Status  mni_input_string(
 {
     Status   status;
     char     ch;
-    BOOLEAN  quoted;
+    BOOLEAN quoted;
 
     *string = create_string( NULL );
 
@@ -229,10 +229,10 @@ public  Status  mni_input_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_keyword_and_equal_sign(
+VIOAPI Status  mni_input_keyword_and_equal_sign(
     FILE         *file,
     const char   keyword[],
-    BOOLEAN      print_error_message )
+    BOOLEAN     print_error_message )
 {
     Status     status;
     STRING     str;
@@ -272,7 +272,7 @@ public  Status  mni_input_keyword_and_equal_sign(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  unget_string(
+static void  unget_string(
     FILE    *file,
     STRING  str )
 {
@@ -300,7 +300,7 @@ private  void  unget_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_real(
+VIOAPI Status  mni_input_real(
     FILE    *file,
     Real    *d )
 {
@@ -335,7 +335,7 @@ public  Status  mni_input_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_reals(
+VIOAPI Status  mni_input_reals(
     FILE    *file,
     int     *n,
     Real    *reals[] )
@@ -365,11 +365,11 @@ public  Status  mni_input_reals(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_int(
+VIOAPI Status  mni_input_int(
     FILE    *file,
     int     *i )
 {
-    Status   status;
+    Status status;
     STRING   str;
 
     status = mni_input_string( file, &str, (char) ' ', (char) ';' );
@@ -402,7 +402,7 @@ public  Status  mni_input_int(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  output_comments(
+VIOAPI  void  output_comments(
     FILE     *file,
     STRING   comments )
 {

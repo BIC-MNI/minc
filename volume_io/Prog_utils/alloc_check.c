@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.22 1998-02-20 14:59:34 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.22.2.1 2004-10-04 20:19:22 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -61,11 +61,11 @@ typedef  struct
     skip_entry   *update[MAX_SKIP_LEVELS];
 } update_struct;
 
-private  void     update_total_memory( alloc_struct *, size_t );
-private  int      get_random_level( void );
-private  void     output_entry( FILE *, skip_entry * );
-private  BOOLEAN  size_display_enabled( void );
-private  size_t   skip_alloc_size = 0;
+static  void     update_total_memory( alloc_struct *, size_t );
+static  int      get_random_level( void );
+static  void     output_entry( FILE *, skip_entry * );
+static  BOOLEAN  size_display_enabled( void );
+static  size_t   skip_alloc_size = 0;
 
 typedef  void      *alloc_ptr;
 
@@ -86,7 +86,7 @@ typedef  void      *alloc_ptr;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   void  initialize_alloc_list(
+static   void  initialize_alloc_list(
     alloc_struct  *alloc_list )
 {
     int   i;
@@ -116,7 +116,7 @@ private   void  initialize_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  check_initialized_alloc_list(
+static  void  check_initialized_alloc_list(
     alloc_struct  *alloc_list )
 {
     static   BOOLEAN  first = TRUE;
@@ -143,7 +143,7 @@ private  void  check_initialized_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  find_pointer_position(
+static  BOOLEAN  find_pointer_position(
     alloc_struct    *alloc_list,
     void            *ptr,
     update_struct   *update )
@@ -189,7 +189,7 @@ private  BOOLEAN  find_pointer_position(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   void  insert_ptr_in_alloc_list(
+static   void  insert_ptr_in_alloc_list(
     alloc_struct   *alloc_list,
     update_struct  *update,
     void           *ptr,
@@ -245,7 +245,7 @@ private   void  insert_ptr_in_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  check_overlap(
+static  BOOLEAN  check_overlap(
     alloc_struct       *alloc_list,
     update_struct      *update,
     void               *ptr,
@@ -292,7 +292,7 @@ private  BOOLEAN  check_overlap(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   BOOLEAN  remove_ptr_from_alloc_list(
+static   BOOLEAN  remove_ptr_from_alloc_list(
     alloc_struct   *alloc_list,
     void           *ptr,
     STRING         *source_file,
@@ -352,7 +352,7 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Real  get_random_0_to_1( void )
+static  Real  get_random_0_to_1( void )
 {
     return( (Real) rand() );
 }
@@ -371,7 +371,7 @@ private  Real  get_random_0_to_1( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_random_level( void )
+static  int  get_random_level( void )
 {
     int    level;
 
@@ -397,7 +397,7 @@ private  int  get_random_level( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  memory_still_alloced(
+static  BOOLEAN  memory_still_alloced(
     alloc_struct  *alloc_list )
 {
     return( alloc_list->header->forward[0] != (skip_entry *) NULL );
@@ -417,7 +417,7 @@ private  BOOLEAN  memory_still_alloced(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  output_alloc_list(
+static  void  output_alloc_list(
     FILE          *file,
     alloc_struct  *alloc_list )
 {
@@ -446,7 +446,7 @@ private  void  output_alloc_list(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  update_total_memory(
+static  void  update_total_memory(
     alloc_struct  *alloc_list,
     size_t        n_bytes )
 {
@@ -479,7 +479,7 @@ private  void  update_total_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  print_source_location(
+static  void  print_source_location(
     STRING   source_file,
     int      line_number,
     int      sequence_number )
@@ -502,7 +502,7 @@ private  void  print_source_location(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  output_entry(
+static  void  output_entry(
     FILE          *file,
     skip_entry    *entry )
 {
@@ -518,7 +518,7 @@ private  void  output_entry(
 --------------------------------------------------------------------------
 */
 
-private   alloc_struct   alloc_list;
+static   alloc_struct   alloc_list;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_total_memory_alloced
@@ -534,7 +534,7 @@ private   alloc_struct   alloc_list;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  size_t  get_total_memory_alloced( void )
+VIOAPI  size_t  get_total_memory_alloced( void )
 {
     return( alloc_list.total_memory_allocated );
 }
@@ -556,7 +556,7 @@ static  BOOLEAN  enabled_initialized = FALSE;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  alloc_checking_enabled( void )
+VIOAPI  BOOLEAN  alloc_checking_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -570,7 +570,7 @@ public  BOOLEAN  alloc_checking_enabled( void )
 #endif
 }
 
-public  void  set_alloc_checking( BOOLEAN state )
+VIOAPI  void  set_alloc_checking( BOOLEAN state )
 {
     enabled_initialized = TRUE;
     checking_enabled = state;
@@ -590,7 +590,7 @@ public  void  set_alloc_checking( BOOLEAN state )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  size_display_enabled( void )
+static  BOOLEAN  size_display_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -625,7 +625,7 @@ private  BOOLEAN  size_display_enabled( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_stop_sequence_number( void )
+static  int  get_stop_sequence_number( void )
 {
     static   int   first = TRUE;
     static   int   stop_sequence_number = -1;
@@ -658,7 +658,7 @@ private  int  get_stop_sequence_number( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_current_sequence_number( void )
+static  int  get_current_sequence_number( void )
 {
     static   int  current_sequence_number = 0;
 
@@ -686,7 +686,7 @@ private  int  get_current_sequence_number( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  record_ptr_alloc_check(
+VIOAPI  void  record_ptr_alloc_check(
     void      *ptr,
     size_t    n_bytes,
     STRING    source_file,
@@ -754,7 +754,7 @@ public  void  record_ptr_alloc_check(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  change_ptr_alloc_check(
+VIOAPI  void  change_ptr_alloc_check(
     void      *old_ptr,
     void      *new_ptr,
     size_t    n_bytes,
@@ -824,7 +824,7 @@ public  void  change_ptr_alloc_check(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  unrecord_ptr_alloc_check(
+VIOAPI  BOOLEAN  unrecord_ptr_alloc_check(
     void     *ptr,
     STRING   source_file,
     int      line_number )
@@ -875,7 +875,7 @@ public  BOOLEAN  unrecord_ptr_alloc_check(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  output_alloc_to_file(
+VIOAPI  void  output_alloc_to_file(
     STRING   filename )
 {
     FILE     *file;
@@ -922,7 +922,7 @@ public  void  output_alloc_to_file(
 
 #ifndef  NO_DEBUG_ALLOC
 
-public  void  print_alloc_source_line(
+VIOAPI  void  print_alloc_source_line(
     STRING  filename,
     int     line_number )
 {

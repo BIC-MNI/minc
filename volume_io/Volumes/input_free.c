@@ -16,14 +16,14 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.28 1997-08-13 13:21:32 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.28.2.1 2004-10-04 20:20:14 bert Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
 
 #define  NUM_BYTE_VALUES      256
 
-private  Status  input_slice(
+static  Status  input_slice(
     volume_input_struct   *volume_input );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -40,7 +40,7 @@ private  Status  input_slice(
 @MODIFIED   : May  22, 1997   D. MacDonald  - now uses volume starts
 ---------------------------------------------------------------------------- */
 
-public  Status  initialize_free_format_input(
+VIOAPI  Status  initialize_free_format_input(
     STRING               filename,
     Volume               volume,
     volume_input_struct  *volume_input )
@@ -357,7 +357,7 @@ public  Status  initialize_free_format_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_free_format_input(
+VIOAPI  void  delete_free_format_input(
     volume_input_struct   *volume_input )
 {
     long   slice;
@@ -398,7 +398,7 @@ public  void  delete_free_format_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  input_slice(
+static  Status  input_slice(
     volume_input_struct   *volume_input )
 {
     Status           status;
@@ -475,7 +475,7 @@ private  Status  input_slice(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  input_more_free_format_file(
+VIOAPI  BOOLEAN  input_more_free_format_file(
     Volume                volume,
     volume_input_struct   *volume_input,
     Real                  *fraction_done )

@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.11 2001-12-14 17:12:26 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.11.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,8 +33,8 @@
 #include  <volume_io/basic.h>
 #include  <volume_io/geom_structs.h>
 
-#define  Point_coord_cast(x) ((Point_coord_type) (x))
-#define  Real_cast(x) ((Real) (x))
+#define  Point_coord_cast(x) ((VIO_Point_coord_type) (x))
+#define  Real_cast(x) ((VIO_Real) (x))
 
 #define  RPoint_x( p )  Real_cast(Point_x(p))
 #define  RPoint_y( p )  Real_cast(Point_y(p))
@@ -153,13 +153,13 @@
 
 /* --- return the magnitude of a vector */
 
-#define  MAGNITUDE( v ) (Real) sqrt( DOT_VECTORS(v,v) )
+#define  MAGNITUDE( v ) Real_cast(sqrt( DOT_VECTORS(v,v) ))
 
 /* --- set vn to the value of the vector v, normalized to length 1 */
 
 #define  NORMALIZE_VECTOR( vn, v ) \
          { \
-             Real  _mag_; \
+             VIO_Real  _mag_; \
  \
              _mag_ = MAGNITUDE( v ); \
              if( _mag_ != 0.0 ) \
@@ -208,4 +208,4 @@
             fill_Point( point, \
                         Vector_x(vector), Vector_y(vector), Vector_z(vector) )
 
-#endif
+#endif /* DEF_GEOMETRY */

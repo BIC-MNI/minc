@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.5 2001-12-14 17:12:26 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.5.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,7 +29,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#define  MAX_DIMENSIONS     5
+#define  VIO_MAX_DIMENSIONS     5
 
 /* -------------------------- Data_types ------------------------- */
 
@@ -42,15 +42,15 @@ typedef  enum  { NO_DATA_TYPE,
                  SIGNED_INT,
                  FLOAT,
                  DOUBLE,
-                 MAX_DATA_TYPE }   Data_types;
+                 MAX_DATA_TYPE }   VIO_Data_types;
 
 typedef  struct
 {
     int                     n_dimensions;
-    int                     sizes[MAX_DIMENSIONS];
-    Data_types              data_type;
+    int                     sizes[VIO_MAX_DIMENSIONS];
+    VIO_Data_types          data_type;
     void                    *data;
-} multidim_array;
+} VIO_multidim_array;
 
 /* ------------------------- set value ---------------------------- */
 
@@ -277,5 +277,11 @@ typedef  struct
          case 4:  GET_MULTIDIM_PTR_4D( ptr, array, x, y, z, t );     break; \
          case 5:  GET_MULTIDIM_PTR_5D( ptr, array, x, y, z, t, v );  break; \
          }
+
+#ifndef MINC_PLAY_NICE
+typedef VIO_multidim_array multidim_array;
+typedef VIO_Data_types Data_types;
+#define MAX_DIMENSIONS VIO_MAX_DIMENSIONS
+#endif /* MINC_PLAY_NICE */
 
 #endif

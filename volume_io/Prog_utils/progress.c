@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.9 1996-05-17 19:36:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.9.2.1 2004-10-04 20:19:22 bert Exp $";
 #endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
@@ -32,11 +32,11 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progr
 #define  DOUBLE_THRESHOLD          0.01
 #define  HALF_THRESHOLD            0.5
 
-private  void  show_one_line_progress(
+static  void  show_one_line_progress(
     progress_struct    *progress,
     int                current_step );
 
-private  void  show_multi_line_progress(
+static  void  show_multi_line_progress(
     progress_struct    *progress,
     int                current_step,
     Real               time_so_far,
@@ -62,7 +62,7 @@ private  void  show_multi_line_progress(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  initialize_progress_report(
+VIOAPI  void  initialize_progress_report(
     progress_struct   *progress,
     BOOLEAN           one_line_only,
     int               n_steps,
@@ -105,7 +105,7 @@ public  void  initialize_progress_report(
                                              to time so far
 ---------------------------------------------------------------------------- */
 
-public  void  update_progress_report(
+VIOAPI  void  update_progress_report(
     progress_struct   *progress,
     int               current_step )
 {
@@ -197,7 +197,7 @@ public  void  update_progress_report(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  show_one_line_progress(
+static  void  show_one_line_progress(
     progress_struct    *progress,
     int                current_step )
 {
@@ -243,7 +243,7 @@ private  void  show_one_line_progress(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  show_multi_line_progress(
+static  void  show_multi_line_progress(
     progress_struct    *progress,
     int                current_step,
     Real               time_so_far,
@@ -281,7 +281,7 @@ private  void  show_multi_line_progress(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  terminate_progress_report(
+VIOAPI  void  terminate_progress_report(
     progress_struct   *progress )
 {
     Real    total_time;

@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.9 2001-12-14 17:12:28 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.9.2.1 2004-10-04 20:16:39 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,67 +33,74 @@
 #include  <volume_io/multidim.h>
 
 typedef  enum  { SLICE_ACCESS, RANDOM_VOLUME_ACCESS }
-               Cache_block_size_hints;
+               VIO_Cache_block_size_hints;
 
 #define  CACHE_DEBUGGING
 #undef   CACHE_DEBUGGING
 
-typedef  struct  cache_block_struct
+typedef  struct  VIO_cache_block_struct
 {
     int                         block_index;
-    Smallest_int                modified_flag;
-    multidim_array              array;
-    struct  cache_block_struct  *prev_used;
-    struct  cache_block_struct  *next_used;
-    struct  cache_block_struct  **prev_hash;
-    struct  cache_block_struct  *next_hash;
-} cache_block_struct;
+    VIO_SCHAR                modified_flag;
+    VIO_multidim_array              array;
+    struct  VIO_cache_block_struct  *prev_used;
+    struct  VIO_cache_block_struct  *next_used;
+    struct  VIO_cache_block_struct  **prev_hash;
+    struct  VIO_cache_block_struct  *next_hash;
+} VIO_cache_block_struct;
 
 typedef  struct
 {
     int       block_index_offset;
     int       block_offset;
-} cache_lookup_struct;
+} VIO_cache_lookup_struct;
 
 typedef struct
 {
     int                         n_dimensions;
-    int                         file_offset[MAX_DIMENSIONS];
-    STRING                      input_filename;
+    int                         file_offset[VIO_MAX_DIMENSIONS];
+    VIO_STR                     input_filename;
 
-    STRING                      output_filename;
+    VIO_STR                     output_filename;
     nc_type                     file_nc_data_type;
-    BOOLEAN                     file_signed_flag;
-    Real                        file_voxel_min;
-    Real                        file_voxel_max;
-    STRING                      original_filename;
-    STRING                      history;
+    VIO_BOOL                    file_signed_flag;
+    VIO_Real                    file_voxel_min;
+    VIO_Real                    file_voxel_max;
+    VIO_STR                     original_filename;
+    VIO_STR                     history;
     minc_output_options         options;
 
-    BOOLEAN                     writing_to_temp_file;
+    VIO_BOOL                    writing_to_temp_file;
     int                         total_block_size;
-    int                         block_sizes[MAX_DIMENSIONS];
-    int                         blocks_per_dim[MAX_DIMENSIONS];
-    BOOLEAN                     output_file_is_open;
-    BOOLEAN                     must_read_blocks_before_use;
+    int                         block_sizes[VIO_MAX_DIMENSIONS];
+    int                         blocks_per_dim[VIO_MAX_DIMENSIONS];
+    VIO_BOOL                    output_file_is_open;
+    VIO_BOOL                    must_read_blocks_before_use;
     void                        *minc_file;
     int                         n_blocks;
     int                         max_cache_bytes;
     int                         max_blocks;
     int                         hash_table_size;
-    cache_block_struct          *head;
-    cache_block_struct          *tail;
-    cache_block_struct          **hash_table;
+    VIO_cache_block_struct      *head;
+    VIO_cache_block_struct      *tail;
+    VIO_cache_block_struct      **hash_table;
 
-    cache_lookup_struct         *lookup[MAX_DIMENSIONS];
-    cache_block_struct          *previous_block;
+    VIO_cache_lookup_struct     *lookup[VIO_MAX_DIMENSIONS];
+    VIO_cache_block_struct      *previous_block;
     int                         previous_block_index;
 
-    BOOLEAN                     debugging_on;
+    VIO_BOOL                    debugging_on;
     int                         n_accesses;
     int                         output_every;
     int                         n_hits;
     int                         n_prev_hits;
-} volume_cache_struct;
+} VIO_volume_cache_struct;
+
+#ifndef MINC_PLAY_NICE
+typedef VIO_Cache_block_size_hints Cache_block_size_hints;
+typedef VIO_cache_block_struct cache_block_struct;
+typedef VIO_cache_lookup_struct cache_lookup_struct;
+typedef VIO_volume_cache_struct volume_cache_struct;
+#endif /* MINC_PLAY_NICE */
 
 #endif
