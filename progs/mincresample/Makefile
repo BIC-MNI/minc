@@ -12,7 +12,7 @@ PROG_LIB  = mincprog
 LIB_DIR  = ../../src#                         directory for library
 LIBRARY  = minc#                           library
 CDEFINES = -D__STDC__#                        cpp defines
-OPT      = -fullwarn -prototypes -g#        compiler options
+OPT      = -fullwarn -prototypes -O#        compiler options
 LDOPT    = -L/usr/local/lib -lnetcdf -lsun -lrecipes -lm -lc_s# ld options
 INCLUDES = -I. -I../proglib -I../../src -I/usr/local/include
 
