@@ -33,9 +33,13 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:37:55  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-12-09 09:12:30  neelin
+@MODIFIED   : Added test in miicv_detach to make sure that icv is attached before
+@MODIFIED   : detaching it.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:37:55  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.18  94/09/28  10:37:06  neelin
  * Pre-release
  * 
@@ -70,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.0 1994-09-28 10:37:55 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.1 1994-12-09 09:12:30 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1119,6 +1123,10 @@ public int miicv_detach(int icvid)
 
    /* Check icv id */
    if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
+
+   /* Check that the icv is in fact attached */
+   if (icvp->cdfid == MI_ERROR)
+      MI_RETURN(MI_NOERROR);
 
    /* Free the pixel offset arrays */
    if (icvp->derv_var_pix_off != NULL) FREE(icvp->derv_var_pix_off);
