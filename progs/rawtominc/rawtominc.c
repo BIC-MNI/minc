@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.6 1993-05-05 15:48:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.7 1993-05-11 12:01:56 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -234,20 +234,24 @@ main(int argc, char *argv[])
    /* Create the dimensions */
    for (i=0; i<ndims; i++) {
 
-      /* Create dimension and variable */
+      /* Create dimension */
       dim[i] = ncdimdef(cdfid, dimname[i], dimlength[i]);
-      varid = micreate_std_variable(cdfid, dimname[i], 
-                                   NC_LONG, 0, NULL);
 
-      /* Write out step and start */
-      if (STR_EQ(dimname[i], MIxspace)) index = X;
-      if (STR_EQ(dimname[i], MIyspace)) index = Y;
-      if (STR_EQ(dimname[i], MIzspace)) index = Z;
-      if (dimstep[index] != DEF_STEP) {
-         (void) miattputdbl(cdfid, varid, MIstep, dimstep[index]);
-      }
-      if (dimstart[index] != DEF_START) {
-         (void) miattputdbl(cdfid, varid, MIstart, dimstart[index]);
+      /* Create the variable if needed */
+      if (!STR_EQ(dimname[i], MItime)) {
+         varid = micreate_std_variable(cdfid, dimname[i], 
+                                       NC_LONG, 0, NULL);
+
+         /* Write out step and start */
+         if (STR_EQ(dimname[i], MIxspace)) index = X;
+         if (STR_EQ(dimname[i], MIyspace)) index = Y;
+         if (STR_EQ(dimname[i], MIzspace)) index = Z;
+         if (dimstep[index] != DEF_STEP) {
+            (void) miattputdbl(cdfid, varid, MIstep, dimstep[index]);
+         }
+         if (dimstart[index] != DEF_START) {
+            (void) miattputdbl(cdfid, varid, MIstart, dimstart[index]);
+         }
       }
       
       /* Set variables for looping through images */
