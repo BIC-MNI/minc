@@ -20,8 +20,6 @@ static void miinit_default_range(mitype_t mitype, double *valid_max,
 static void miread_valid_range(mihandle_t volume, double *valid_max, 
                                double *valid_min);
 
-void misave_valid_range(mihandle_t volume);
-
 /**
  */
 int
@@ -59,12 +57,8 @@ micreate_volume_image(mihandle_t volume)
     
     dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image", 
                         volume->type_id, 
-                        dataspace_id, H5P_DEFAULT); 
-			//volume->plist_id);
-    // Leila, changed the above to H5P_DEFAULT as volume 
-    // property list is seperately created and added to the volume
-    // IN FUNCTION micreate_volume : 
-    // hdf_plist = H5Pcreate(H5P_DATASET_CREATE);
+                        dataspace_id, 
+			volume->plist_id);
     if (dset_id < 0) {  
         return (MI_ERROR);
     }
@@ -255,8 +249,11 @@ micreate_volume(const char *filename, int number_of_dimensions,
           return (MI_ERROR);
       }
       
-      for (i=0; i < create_props->edge_count; i++) {
+      for (i=0; i < number_of_dimensions; i++) {
           hdf_size[i] = create_props->edge_lengths[i];
+          if (hdf_size[i] > dimensions[i]->length) {
+              hdf_size[i] = dimensions[i]->length;
+          }
       }
     
       /* Sets the size of the chunks used to store a chunked layout dataset */
@@ -419,9 +416,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
   switch (volume_type) {
   case MI_TYPE_BYTE:
     handle->volume_type = MI_TYPE_BYTE;
-    break;
-  case MI_TYPE_CHAR:
-    handle->volume_type = MI_TYPE_CHAR;
     break;
   case MI_TYPE_SHORT:
     handle->volume_type = MI_TYPE_SHORT;
