@@ -21,6 +21,7 @@
 #                                with thanks to Mark Daglish - mark.daglish@bris.ac.uk
 # Thu Dec  2 13:00:38 EST 2004 - Added -version argument (Thanks again to mark)
 #                                and more std do_cmd() function
+# Thu Dec  9 09:36:30 EST 2004 - added -swap_data
 
 
 use strict;
@@ -31,7 +32,7 @@ use File::Basename;
 my($Help, $Usage, $me, @files, $history, %opt, @opt_table);
 my($anabase, $anahdr, $anaimg, $mncfile, $matfile, $xfmfile);
 
-my $version="1.3b";
+my $version="1.3c";
 $me = basename($0);
 my $versioninfo = "print '$me version $version\n\n'; exit 0;";
 
@@ -41,6 +42,7 @@ my $versioninfo = "print '$me version $version\n\n'; exit 0;";
    'fake'      => 0,
    'orientation' => undef,
    'flip' => 1,
+   'byte_swap_data' => 0,
    );
 
 $Help = <<HELP;
@@ -87,6 +89,8 @@ HELP
       "force files to be treated as coronal" ],
    ["-flip|-noflip", "boolean", undef, \$opt{flip}, 
       "Flip left-right assuming Analyze image in radiological format" ],
+   ["-swap_data", "boolean", undef, \$opt{byte_swap_data}, 
+      "Force byte swapping of data" ],
    );
 
 if   ($me eq "ana2mnc"){   @files = ('<in.hdr>', '<out.mnc>'); }
@@ -712,10 +716,12 @@ sub write_minc{
 
    # Set up rawtominc command
    my(@args) = ('rawtominc');
-   if($opt{clobber}){ push(@args, '-clobber'); }
+   push(@args, '-clobber') if $opt{clobber};
    
    # Swap bytes?
-   if($bs){ push(@args, '-swap_bytes'); }
+   if($bs || $opt{byte_swap_data}){ 
+      push(@args, '-swap_bytes');
+      }
 
    # datatype and ranges
    push(@args, @{$gen_hdr->{datatype}});
