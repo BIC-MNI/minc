@@ -3,5 +3,6 @@ Makefile.PL
 INSTALL
 README
 MANIFEST
+siemens_mosaic2mnc
 t/test.t
 META.yml                                 Module meta-data (added by MakeMaker)
