@@ -5,10 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 5.1  1997-08-22 15:08:34  neelin
-@MODIFIED   : Added routine acr_string_pad_char to set character used for padding
-@MODIFIED   : strings to an even number of bytes.
+@MODIFIED   : Revision 5.2  1997-09-02 22:52:12  neelin
+@MODIFIED   : Fixed padding of of UI strings and got rid of acr_string_pad_char
+@MODIFIED   : function.
 @MODIFIED   :
+ * Revision 5.1  1997/08/22  15:08:34  neelin
+ * Added routine acr_string_pad_char to set character used for padding
+ * strings to an even number of bytes.
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -1178,6 +1182,9 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
    int pad;
    Acr_VR_Type vr_code;
 
+   /* Get the appropriate vr code */
+   vr_code = ((elid->vr_code == ACR_VR_UNKNOWN) ? ACR_VR_ST : elid->vr_code);
+
    /* Get string length and check for an odd length */
    data_length = strlen(value);
    if ((data_length % 2) == 0)
@@ -1192,45 +1199,15 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
    data = (char *) MALLOC(alloc_length);
    (void) strcpy(data, value);
 
-   /* Pad the end with a blank if needed */
+   /* Pad the end with a blank or NUL if needed */
    if (pad) {
-      data[data_length - 1] = (char) acr_string_pad_char(EOF);
+      data[data_length - 1] = ((vr_code == ACR_VR_UI) ? '\0' : ' ');
       data[data_length] = '\0';
    }
 
-   /* Get the appropriate vr code */
-   vr_code = ((elid->vr_code == ACR_VR_UNKNOWN) ? ACR_VR_ST : elid->vr_code);
-
+   /* Create the element and return it */
    return acr_create_element(elid->group_id, elid->element_id, 
                              vr_code, data_length, data);
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_string_pad_char
-@INPUT      : pad_character - character for padding newly created strings.
-                 If set to EOF, then the pad character is not changed.
-@OUTPUT     : (none)
-@RETURNS    : Previous setting for pad character
-@DESCRIPTION: Sets the character that is used for padding newly created
-              strings. The previous value is returned. If the input
-              character is EOF, then the pad character is not changed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : August 22, 1997 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public int acr_string_pad_char(int pad_character)
-{
-   int old_pad_character;
-   static int current_pad_character = ' ';
-
-   old_pad_character = current_pad_character;
-
-   if (pad_character != EOF) {
-      current_pad_character = pad_character;
-   }
-   return old_pad_character;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
