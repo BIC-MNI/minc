@@ -1,13 +1,17 @@
 	        New in Release 1.3
         	------------------
 
+* Bug fix for incompatibility with netCDF 3.5.1, which caused mincreshape to 
+save incorrect start and step values.
+
+* Bug fix for minccalc which produced incorrect results when used on
+files with a "vector_dimension"
+
 * Build fixes.
 
 * Added -version flag to most programs
 
 * New functions in the library - miappend_history(), miget_version().
-
-* Bug fix for incompatibility with netCDF 3.5.1
 
 
 	        New in Release 1.2
