@@ -13,7 +13,10 @@ Thu Jan 20 15:36:04 EST 2000
      volume_io subdirectory and found by volume_io.h. 
      (Patch from Steve Robbins.)
 
-Fri Oct 15 15:25:56 EST 2000
+Tue Oct 19 14:45:27 1999
+   - Completed conversion from RCS to CVS
+
+Fri Oct 15 15:25:56 EST 1999
    - Moved the Acr_nema libraries and conversion programs out of the minc
      package.
 
