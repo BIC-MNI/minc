@@ -31,7 +31,7 @@ main()
    int length;
 
    ncopts=NC_VERBOSE|NC_FATAL;
-   cdf=nccreate("test.mnc",NC_CLOBBER);
+   cdf=micreate("test.mnc",NC_CLOBBER);
    count[2]=5;
    count[1]=3;
    count[0]=7;
@@ -51,7 +51,7 @@ main()
             image[ioff+k]=ioff+k+10;
       }
    }
-   cdf2=nccreate("test2.mnc",NC_CLOBBER);
+   cdf2=micreate("test2.mnc",NC_CLOBBER);
    (void) ncdimdef(cdf2, "junkdim", NC_UNLIMITED);
    (void) micopy_all_var_defs(cdf, cdf2, 1, &img);
    (void) ncendef(cdf2);
@@ -60,7 +60,7 @@ main()
    (void) mivarput(cdf, img, start, count, NC_DOUBLE, NULL, image);
 
    (void) micopy_all_var_values(cdf, cdf2, 1, &img);
-   (void) ncclose(cdf2);
-   (void) ncclose(cdf);
+   (void) miclose(cdf2);
+   (void) miclose(cdf);
    return(0);
 }
