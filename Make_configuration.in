@@ -30,8 +30,7 @@ NETCDF_PREFIX = @NETCDF_PREFIX@
 NETCDF_LIB_DIR = $(NETCDF_PREFIX)/lib
 NETCDF_INCLUDE_DIR = $(NETCDF_PREFIX)/include
 NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf/fortran
-#FORTRAN_SUBDIR = fortran
-FORTRAN_SUBDIR =
+FORTRAN_SUBDIR = @FORTRAN_SUBDIR@
 INSTALL_BINDIR = $(exec_prefix)/bin
 INSTALL_LIBDIR = $(exec_prefix)/lib
 INSTALL_INCDIR = $(prefix)/include
@@ -46,6 +45,9 @@ MINC_LIB_DIR  = $(ROOT)/libsrc
 MINC_LIB      = minc
 CC_MINC_LIB   = $(MINC_LIB_DIR)/lib$(MINC_LIB).a
 LINT_MINC_LIB = $(MINC_LIB_DIR)/llib-l$(MINC_LIB).ln
+
+# MINC fortran jackets
+FORTRAN_OBJ = @FORTRAN_OBJ@
 
 # MINC program utility library
 PROG_LIB_DIR  = $(ROOT)/progs/Proglib
