@@ -18,14 +18,10 @@ TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
 default : build runtest
 
 all build clean:
-	@TARGET=$@; export TARGET; \
-	SUBDIRS="$(BUILD_SUBDIRS)"; export SUBDIRS; \
-	$(MAKE) subdirs
+	$(MAKE) 'TARGET=$@' 'SUBDIRS=$(BUILD_SUBDIRS)' subdirs
 
 runtest :
-	@TARGET=test; export TARGET; \
-	SUBDIRS="$(TEST_SUBDIRS)"; export SUBDIRS; \
-	$(MAKE) subdirs
+	$(MAKE) 'TARGET=test' 'SUBDIRS=$(TEST_SUBDIRS)' subdirs
 
 subdirs :
 	@for dir in $(SUBDIRS); \
