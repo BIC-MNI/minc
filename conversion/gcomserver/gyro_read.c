@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.2  1993-12-10 15:35:07  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.3  1993-12-14 16:36:49  neelin
+@MODIFIED   : Fixed axis direction and start position.
 @MODIFIED   :
+ * Revision 1.2  93/12/10  15:35:07  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.1  93/11/30  14:41:04  neelin
  * Initial revision
  * 
@@ -94,10 +97,16 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    int cur_index;
    int index;
    double default_slice_pos;
-   double orientation_factor;
-   Acr_Element_Id elid;
+   double diff;
    Acr_Element_Id mri_index_list[MRI_NDIMS];
    Acr_Element_Id mri_total_list[MRI_NDIMS];
+   Acr_Element_Id off_center_elid[WORLD_NDIMS];
+
+   /* Directions of axes for different orientations */
+   static double axis_direction[NUM_ORIENTATIONS][WORLD_NDIMS] = {
+      -1.0, -1.0, +1.0,
+      +1.0, -1.0, -1.0,
+      -1.0, -1.0, -1.0};
 
    /* Array of elements for mri dimensions */
    mri_index_list[SLICE] = SPI_Slice_number;
@@ -110,6 +119,11 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    mri_total_list[TIME] = SPI_Number_of_dynamic_scans;
    mri_total_list[PHASE] = SPI_Number_of_phases;
    mri_total_list[CHEM_SHIFT] = SPI_Nr_of_chemical_shifts;
+
+   /* Array of elements giving off centers for each axis */
+   off_center_elid[XCOORD] = SPI_Off_center_lr; 
+   off_center_elid[YCOORD] = SPI_Off_center_ap;
+   off_center_elid[ZCOORD] = SPI_Off_center_cc;
 
    /* Look for data set type */
    element = acr_find_group_element(group_list, ACR_Data_set_type);
@@ -226,18 +240,29 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
 #endif
       general_info->step[general_info->slice_world] = 
          find_double(group_list, ACR_Slice_thickness, 1.0);
-      general_info->step[XCOORD] *= SPI_X_ORIENTATION;
-      general_info->step[YCOORD] *= SPI_Y_ORIENTATION;
-      general_info->step[ZCOORD] *= SPI_Z_ORIENTATION;
+      general_info->step[XCOORD] *= 
+         axis_direction[general_info->orientation][XCOORD];
+      general_info->step[YCOORD] *= 
+         axis_direction[general_info->orientation][YCOORD];
+      general_info->step[ZCOORD] *= 
+         axis_direction[general_info->orientation][ZCOORD];
 
       /* Get start information */
-      general_info->start[XCOORD] = SPI_X_ORIENTATION *
+      general_info->start[XCOORD] = 
          find_double(group_list, SPI_Off_center_lr, 0.0);
-      general_info->start[YCOORD] = SPI_Y_ORIENTATION *
+      general_info->start[YCOORD] = 
          find_double(group_list, SPI_Off_center_ap, 0.0);
-      general_info->start[ZCOORD] = SPI_Z_ORIENTATION *
+      general_info->start[ZCOORD] = 
          find_double(group_list, SPI_Off_center_cc, 0.0);
 
+      /* Adjust row and column start values */
+      iworld = general_info->row_world;
+      jworld = general_info->column_world;
+      general_info->start[iworld] -= 
+         general_info->step[iworld] * (general_info->nrows - 1.0) / 2.0;
+      general_info->start[jworld] -= 
+         general_info->step[jworld] * (general_info->ncolumns - 1.0) / 2.0;
+      
       /* Set direction cosines to default for now */
       for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
          for (jworld=0; jworld < WORLD_NDIMS; jworld++) {
@@ -264,8 +289,10 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       general_info->pixel_max = file_info->pixel_max;
 
       /* Keep track of range of slices */
-      general_info->slicepos_min = DBL_MAX;
-      general_info->slicepos_max = -DBL_MAX;
+      general_info->slicepos_first = 
+         general_info->start[general_info->slice_world];
+      general_info->slicepos_last = 
+         general_info->start[general_info->slice_world];
 
       /* Maximum length for strings */
       maxlen = sizeof(Cstring) - 1;
@@ -420,41 +447,30 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    }              /* Update general info for this file */
 
    /* Get other slice specific information */
-   iworld = general_info->slice_world;
-   switch (general_info->slice_world) {
-   case XCOORD: 
-      elid = SPI_Off_center_lr; 
-      orientation_factor = SPI_X_ORIENTATION;
-      break;
-   case YCOORD: 
-      elid = SPI_Off_center_ap; 
-      orientation_factor = SPI_Y_ORIENTATION;
-      break;
-   case ZCOORD: 
-      elid = SPI_Off_center_cc; 
-      orientation_factor = SPI_Z_ORIENTATION; 
-      break;
-   }
-   orientation_factor = 1.0;
    default_slice_pos = general_info->slice_start + 
       file_info->index[SLICE] * general_info->slice_step;
-   default_slice_pos *= orientation_factor;
-   file_info->slice_position = orientation_factor * 
-      find_double(group_list, elid, default_slice_pos);
+   file_info->slice_position = 
+      find_double(group_list, off_center_elid[general_info->slice_world],
+                  default_slice_pos);
    file_info->dyn_begin_time = 
       find_double(group_list, SPI_dynamic_scan_begin_time, 0.0);
 
    /* Update slice position information for general_info */
-   if (file_info->slice_position < general_info->slicepos_min)
-      general_info->slicepos_min = file_info->slice_position;
-   if (file_info->slice_position > general_info->slicepos_max)
-      general_info->slicepos_max = file_info->slice_position;
+   diff = (file_info->slice_position - general_info->slicepos_first) *
+      axis_direction[general_info->orientation][general_info->slice_world];
+   if (diff < 0.0)
+      general_info->slicepos_first = file_info->slice_position;
+   diff = (file_info->slice_position - general_info->slicepos_last) *
+      axis_direction[general_info->orientation][general_info->slice_world];
+   if (diff > 0.0)
+      general_info->slicepos_last = file_info->slice_position;
    if (general_info->size[SLICE] > 1) {
-      general_info->step[iworld] = orientation_factor *
-         (general_info->slicepos_max - general_info->slicepos_min) /
+      general_info->step[general_info->slice_world] = 
+         (general_info->slicepos_last - general_info->slicepos_first) /
             (general_info->size[SLICE] - 1);
    }
-   general_info->start[iworld] = general_info->slicepos_min;
+   general_info->start[general_info->slice_world] = 
+      general_info->slicepos_first;
 
    /* If we get to here, then we have a valid file */
    file_info->valid = TRUE;
