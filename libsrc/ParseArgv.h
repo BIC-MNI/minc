@@ -15,7 +15,7 @@
  *
  * This file has been modified to be used only for argv parsing without
  * reference to tk, tcl or X11. Base on tk.h from tk2.3
- * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.3 2002-10-30 13:53:02 jason Exp $ SPRITE (Berkeley)
+ * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.4 2003-01-08 19:59:22 bert Exp $ SPRITE (Berkeley)
  */
 
 /*
@@ -69,7 +69,7 @@ typedef struct {
 #define ARGV_NO_LEFTOVERS		0x2
 #define ARGV_NO_ABBREV		0x4
 #define ARGV_DONT_SKIP_FIRST_ARG	0x8
-#define ARGV_NO_PRINT 0x16
+#define ARGV_NO_PRINT 0x10	/* bert- value was 0x16, which was bogus */
 
 /*
  *--------------------------------------------------------------
