@@ -10,7 +10,10 @@
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakescalar.c,v $
- * Revision 6.5  2004-11-01 22:38:38  bert
+ * Revision 6.6  2005-01-28 19:34:09  bert
+ * Warn user if vector_dimension is not the last dimension in the image
+ *
+ * Revision 6.5  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.4  2004/04/27 15:32:33  bert
@@ -43,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.6 2005-01-28 19:34:09 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -158,6 +161,13 @@ ArgvInfo argTable[] = {
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
+const char str_wrong_dimension_order[] = {
+    "Your input file contains an image with a vector dimension, but the\n"
+    "vector dimension isn't the last (i.e. fastest-varying) dimension in\n"
+    "the image. Please restructure the file using mincreshape before\n"
+    "attempting to use mincmakescalar.\n"
+};
+
 /* Main program */
 
 int main(int argc, char *argv[])
@@ -215,6 +225,10 @@ int main(int argc, char *argv[])
    /* Open the input file and get the vector length */
    inmincid = miopen(infile, NC_NOWRITE);
    input_vector_length = get_vector_length(inmincid);
+   if (input_vector_length < 0) {
+       fprintf(stderr, str_wrong_dimension_order);
+       exit(EXIT_FAILURE);
+   }
    if (input_vector_length < 1) input_vector_length = 1;
 
    /* Check that this length is okay */
@@ -479,6 +493,7 @@ static long get_vector_length(int mincid)
    int dim[MAX_VAR_DIMS];
    char dimname[MAX_NC_NAME];
    long vector_length;
+   int i;
 
    /* Get image variable id */
    imgid = ncvarid(mincid, MIimage);
@@ -490,6 +505,17 @@ static long get_vector_length(int mincid)
    (void) ncdiminq(mincid, dim[ndims-1], dimname, &vector_length);
    if ((strcmp(dimname, MIvector_dimension) != 0) || (ndims <= 2)) {
       vector_length = 0;
+
+      /* New deal - check for an actual vector_dimension anywhere in the
+       * file.
+       */
+      for (i = 0; i < ndims; i++) {
+          ncdiminq(mincid, dim[i], dimname, NULL);
+          if (!strcmp(dimname, MIvector_dimension)) {
+              vector_length = -1;
+              break;
+          }
+      }
    }
 
    return vector_length;
