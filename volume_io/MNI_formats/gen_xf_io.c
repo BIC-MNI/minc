@@ -1,8 +1,24 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.15 1995-06-23 14:24:36 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.16 1995-07-31 13:44:57 david Exp $";
 #endif
+
+/*--------------------- file format keywords ------------------------------ */
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
 static   const char      *TYPE_STRING = "Transform_Type";
@@ -41,6 +57,8 @@ public  char  *get_default_transform_file_suffix()
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_one_transform
 @INPUT      : file
+              filename        \ these two used to manufacture unique filenames
+              volume_count    / for grid transform volume files.
               invert  - whether to invert the transform
               transform
 @OUTPUT     : 
@@ -50,7 +68,7 @@ public  char  *get_default_transform_file_suffix()
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb 21, 1995    David MacDonald : added grid transforms 
 ---------------------------------------------------------------------------- */
 
 private  void  output_one_transform(
@@ -209,8 +227,8 @@ private  void  output_one_transform(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_transform
               file
-              filename
-              volume_count_ptr
+              filename          \  these two args used to manufacture unique
+              volume_count_ptr  /  filenames for grid transform volumes
               comments   - can be null
               transform
 @INPUT      : 
@@ -268,6 +286,7 @@ public  Status  output_transform(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_one_transform
 @INPUT      : file
+              filename    - used to get relative paths
 @OUTPUT     : transform
 @RETURNS    : OK or ERROR
 @DESCRIPTION: Inputs a transform from the file.
@@ -275,7 +294,7 @@ public  Status  output_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 21, 1995   David MacDonald - added grid transforms
 ---------------------------------------------------------------------------- */
 
 private  Status  input_one_transform(

@@ -1,6 +1,20 @@
 #ifndef  DEF_ALLOC_CHECK
 #define  DEF_ALLOC_CHECK
 
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_check.h
 @INPUT      : 
@@ -22,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_check_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/Attic/alloc_check.h,v 1.5 1995-04-28 18:32:48 david Exp $";
+static char alloc_check_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/Attic/alloc_check.h,v 1.6 1995-07-31 13:44:34 david Exp $";
 #endif
 
 #ifndef NO_DEBUG_ALLOC

@@ -1,10 +1,24 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
 #include  <pwd.h>
+#include  <stdlib.h>
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.25 1995-05-24 17:24:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.26 1995-07-31 13:44:40 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -82,26 +96,6 @@ public  void  remove_file(
 {
     if( unlink( filename ) != 0 )
         print_error( "Error removing %s\n", filename );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : unlink_file
-@INPUT      : filename
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Unlinks the given file, which will result in it being deleted
-              when all references to it are closed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  unlink_file(
-    char  filename[] )
-{
-    (void) unlink( filename );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -313,6 +307,20 @@ public  void  remove_directories_from_filename(
     (void) strcpy( filename_no_directories, &expanded[i] );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : file_exists_as_compressed
+@INPUT      : filename
+@OUTPUT     : compressed_filename
+@RETURNS    : TRUE if a compressed file exists
+@DESCRIPTION: Checks to see if a compressed version of the file exists.  If so,
+              passes back the name of the compressed file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  BOOLEAN  file_exists_as_compressed(
     char               filename[],
     char               compressed_filename[] )
@@ -440,7 +448,7 @@ public  Status  open_file(
            the program closes the file or dies, the file is removed */
 
     if( gzipped && *file != (FILE *) NULL )
-        unlink_file( expanded );
+        remove_file( expanded );
 
     /* --- assign opening status and print error message if needed */
 

@@ -1,10 +1,22 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.13 1995-05-24 17:24:04 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.14 1995-07-31 13:44:39 david Exp $";
 #endif
-
-typedef  void      *alloc_ptr;
 
 private    void       record_alloc( size_t );
 private    void       record_realloc( size_t );
@@ -64,7 +76,7 @@ public  void  realloc_memory(
 {
     if( n_bytes != 0 )
     {
-        *ptr = (void *) realloc( (alloc_ptr) *ptr, n_bytes );
+        *ptr = (void *) realloc( *ptr, n_bytes );
 
         if( *ptr == (void *) 0 )
         {

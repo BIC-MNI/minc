@@ -1,13 +1,27 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.39 1995-05-24 17:24:20 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.40 1995-07-31 13:44:49 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
 
-#define  MIN_SLAB_SIZE   10000      /* at least 10000 entries per read */
+#define  MIN_SLAB_SIZE    10000     /* at least 10000 entries per read */
 #define  MAX_SLAB_SIZE   400000     /* no more than 200 K at a time */
 
 private  BOOLEAN  match_dimension_names(

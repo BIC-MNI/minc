@@ -1,41 +1,64 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.9 1994-12-08 08:49:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.10 1995-07-31 13:44:27 david Exp $";
 #endif
 
-/* ----------------------------- MNI Header -----------------------------------@NAME       : create_noncolinear_vector
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_noncolinear_vector
 @INPUT      : v
 @OUTPUT     : not_v
 @RETURNS    :
 @DESCRIPTION: Creates a vector which is not colinear with the given vector.
               This is used, for instance, when creating a vector which is
               perpendicular to a given vector.
-@METHOD     :
+@METHOD     : Copies v to not_v and sets the largest absolute component of
+              not_v to 0.
 @GLOBALS    :
 @CALLS      :
 @CREATED    : 1993            David MacDonald
-@MODIFIED   :
+@MODIFIED   : Jul. 11, 1995   D. MacDonald    - made more numerically robust
 ---------------------------------------------------------------------------- */
 
 public  void  create_noncolinear_vector(
     Vector  *v,
     Vector  *not_v )
 {
-    Real   x, y, z;
+    int    max_index;
+    Real   abs_x, abs_y, abs_z;
 
-    x = Vector_x(*v);
-    y = Vector_y(*v);
-    z = Vector_z(*v);
-    if( x != 0.0 || y != 0.0 )
+    abs_x = ABS( Vector_x(*v) );
+    abs_y = ABS( Vector_y(*v) );
+    abs_z = ABS( Vector_z(*v) );
+
+    if( abs_x > abs_y )
     {
-        fill_Vector( *not_v, x, y, z + 1.0 );
+        if( abs_x > abs_z )
+            max_index = X;
+        else
+            max_index = Z;
     }
+    else if( abs_y > abs_z )
+        max_index = Y;
     else
-    {
-        fill_Vector( *not_v, 1.0, y, z );
-    }
+        max_index = Z;
+
+    *not_v = *v;
+    Vector_coord( *not_v, max_index ) = 0.0;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

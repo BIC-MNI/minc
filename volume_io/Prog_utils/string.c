@@ -1,8 +1,21 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.6 1994-11-25 14:20:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.7 1995-07-31 13:44:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -31,13 +44,9 @@ public  BOOLEAN  string_ends_in(
     len_ending = strlen( ending );
 
     if( len_ending > len_string )
-    {
         ending_present = FALSE;
-    }
     else
-    {
         ending_present = (strcmp( &string[len_string-len_ending], ending ) ==0);
-    }
 
     return( ending_present );
 }
@@ -48,7 +57,8 @@ public  BOOLEAN  string_ends_in(
 @OUTPUT     : stripped
 @RETURNS    : 
 @DESCRIPTION: Creates a new string which is the original str without any
-            : leading or trailing blanks.
+            : leading or trailing blanks.  Output argument may be the same
+              pointer as input.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 

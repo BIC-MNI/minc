@@ -1,8 +1,40 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
+#include  <internal_volume_io.h>
+
 #ifndef lint
 static char rcsid[] = "$Header";
 #endif
 
-#include  <internal_volume_io.h>
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : scaled_maximal_pivoting_gaussian_elimination
+@INPUT      : n                 size of matrix, n by n
+              a                 matrix
+              n_values          number of values to solve for
+@OUTPUT     : row               permutation array filled in by this function
+              solution          on input, the values, on output the solution,
+                                size n by n_values
+@RETURNS    : TRUE if successful
+@DESCRIPTION: Performs scaled maximal pivoting gaussian elimination as a
+              numerically robust method to solve systems of linear equations.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 10, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     int   n,
@@ -95,6 +127,24 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     return( success );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : scaled_maximal_pivoting_gaussian_elimination_real
+@INPUT      : n
+              coefs
+              n_values
+              values
+@OUTPUT     : values has the solution on output
+@RETURNS    : TRUE if successful
+@DESCRIPTION: Performs gaussian elimination on a type-Real matrix, first
+              copying it into temporary storage, which is modified as
+              the gaussian elimination is performed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 10, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
     int   n,
     Real  **coefs,
@@ -125,9 +175,7 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
         for_less( i, 0, n )
         {
             for_less( v, 0, n_values )
-            {
                 values[v][i] = solution[row[i]][v];
-            }
         }
     }
 
@@ -137,6 +185,23 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
 
     return( success );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : solve_linear_system
+@INPUT      : n
+              coefs      - n by n matrix
+              values     - size n list
+@OUTPUT     : solution   - size n list
+@RETURNS    : TRUE if successful
+@DESCRIPTION: Solves a linear system of equations, finding the solution
+                                                         t          t
+              vector that satisfies  [coefs] * [solution] = [values]
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 10, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  solve_linear_system(
     int   n,
@@ -152,6 +217,20 @@ public  BOOLEAN  solve_linear_system(
     return( scaled_maximal_pivoting_gaussian_elimination_real( n, coefs, 1,
                                                                &solution ) );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : invert_square_matrix
+@INPUT      : n
+              matrix   - n by n matrix
+@OUTPUT     : inverse
+@RETURNS    : TRUE if successful
+@DESCRIPTION: Computes the inverse of a square matrix.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 10, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  invert_square_matrix(
     int   n,

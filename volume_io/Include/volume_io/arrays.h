@@ -1,5 +1,18 @@
 #ifndef  DEF_ARRAYS
 #define  DEF_ARRAYS
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : arrays.h
@@ -15,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.5 1994-11-25 14:19:50 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.6 1995-07-31 13:44:36 david Exp $";
 #endif
 
 #include  <alloc.h>

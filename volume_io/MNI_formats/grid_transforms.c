@@ -1,7 +1,21 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.7 1995-05-24 17:24:39 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.8 1995-07-31 13:45:00 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -70,6 +84,7 @@ public  void  grid_transform_point(
     *z_transformed = z + displacements[Z];
 }
 
+#ifdef USE_NEWTONS_METHOD
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : forward_function
 @INPUT      : function_data  - contains transform info
@@ -145,7 +160,18 @@ private  void  forward_function(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  my_grid_inverse_transform_point(
+/* ---------------------------------------------------------------------------
+
+     There are two different versions of the grid inverse function.  I would
+have hoped that my version worked best, since it uses first derivatives and
+Newton's method.  However, Louis' version seems to work better, perhaps since
+it matches the code he uses in minctracc to generate the grid transforms.
+
+- David MacDonald
+
+---------------------------------------------------------------------------- */
+
+public  void  grid_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -189,10 +215,30 @@ public  void  my_grid_inverse_transform_point(
         *z_transformed = z;
     }
 }
+#endif
 
-#define  NUMBER_TRIES  10
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : grid_inverse_transform_point
+@INPUT      : transform
+              x
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
+@RETURNS    : 
+@DESCRIPTION: Transforms the point by the inverse of the grid transform.
+              Approximates the solution using a simple iterative step
+              method.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993?   Louis Collins
+@MODIFIED   : 1994    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
-public  void  louis_grid_inverse_transform_point(
+public  void  grid_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -201,6 +247,7 @@ public  void  louis_grid_inverse_transform_point(
     Real                *y_transformed,
     Real                *z_transformed )
 {
+#define  NUMBER_TRIES  10
     int    tries;
     Real   best_x, best_y, best_z;
     Real   tx, ty, tz;
@@ -258,32 +305,6 @@ public  void  louis_grid_inverse_transform_point(
     *z_transformed = best_z;
 }
 
-/* ---------------------------------------------------------------------------
-
-     Above are two different versions of the grid inverse function.  I would
-have hoped that my version worked best, since it uses first derivatives and
-Newton's method.  However, Louis' version seems to work better, perhaps since
-it matches the code he uses in minctracc to generate the grid transforms.
-
-- David MacDonald
-
----------------------------------------------------------------------------- */
-
-public  void  grid_inverse_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed )
-{
-    louis_grid_inverse_transform_point( transform, x, y, z,
-                                        x_transformed,
-                                        y_transformed,
-                                        z_transformed );
-}
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : evaluate_grid_volume
 @INPUT      : volume
@@ -294,7 +315,8 @@ public  void  grid_inverse_transform_point(
 @RETURNS    : 
 @DESCRIPTION: Takes a voxel space position and evaluates the value within
               the volume by nearest_neighbour, linear, quadratic, or
-              cubic interpolation.
+              cubic interpolation.  Rather than use the generic evaluate_volume
+              function, this special purpose function is a bit faster.
 @CREATED    : Mar. 16, 1995           David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
@@ -346,6 +368,8 @@ private  void   evaluate_grid_volume(
 
     bound = (Real) degrees_continuity / 2.0;
 
+    /*--- if near the edges, reduce the degrees of continuity */
+
     for_less( d, 0, FOUR_DIMS )
     {
         if( d != vector_dim )
@@ -363,6 +387,8 @@ private  void   evaluate_grid_volume(
         }
     }
 
+    /*--- check to fill in the first derivative */
+
     if( degrees_continuity < 0 && deriv_x != NULL )
     {
         for_less( v, 0, N_COMPONENTS )
@@ -373,6 +399,8 @@ private  void   evaluate_grid_volume(
         }
     }
 
+    /*--- if outside */
+
     if( degrees_continuity == -2 )
     {
         for_less( v, 0, N_COMPONENTS )
@@ -380,6 +408,9 @@ private  void   evaluate_grid_volume(
 
         return;
     }
+
+    /*--- determine the starting positions in the volume to grab control
+          vertices */
 
     id = 0;
     for_less( d, 0, FOUR_DIMS )
@@ -401,6 +432,8 @@ private  void   evaluate_grid_volume(
         }
     }
 
+    /*--- create the strides */
+
     start[vector_dim] = 0;
     end[vector_dim] = N_COMPONENTS;
 
@@ -413,6 +446,8 @@ private  void   evaluate_grid_volume(
             inc_so_far *= degrees_continuity + 2;
         }
     }
+
+    /*--- copy stride arrays to variables for speed */
 
     inc[vector_dim] = 1;
 
@@ -430,6 +465,8 @@ private  void   evaluate_grid_volume(
     inc1 = inc[1] - inc[2] * (end2 - start2);
     inc2 = inc[2] - inc[3] * (end3 - start3);
     inc3 = inc[3];
+
+    /*--- extract values from volume */
 
     ind0 = 0;
 
@@ -451,6 +488,8 @@ private  void   evaluate_grid_volume(
         ind0 += inc0;
     }
 
+    /*--- interpolate values */
+
     if( degrees_continuity == -1 )
     {
         for_less( v, 0, N_COMPONENTS )
@@ -461,6 +500,8 @@ private  void   evaluate_grid_volume(
         evaluate_interpolating_spline( N_DIMENSIONS, fraction,
                                        degrees_continuity + 2, 
                                        N_COMPONENTS, coefs, 0, values_derivs );
+
+        /*--- extract values and derivatives from values_derivs */
 
         if( deriv_x != NULL )
             derivs_per_value = 8;

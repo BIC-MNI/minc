@@ -1,9 +1,23 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 #include  <limits.h>
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.46 1995-06-23 14:24:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.47 1995-07-31 13:44:51 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -348,6 +362,19 @@ public  int  get_type_size(
 
     return( size );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : is_an_rgb_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : TRUE if it is an RGB volume
+@DESCRIPTION: Tests if the volume is an RGB volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  is_an_rgb_volume(
     Volume   volume )
@@ -1010,6 +1037,21 @@ public  void  set_volume_direction_cosine(
     recompute_world_transform( volume );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : reorder_voxel_to_xyz
+@INPUT      : volume
+              voxel
+@OUTPUT     : xyz
+@RETURNS    : 
+@DESCRIPTION: Passes back the voxel coordinates corresponding to the x, y,
+              and z axes, if any.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  reorder_voxel_to_xyz(
     Volume   volume,
     Real     voxel[],
@@ -1026,6 +1068,21 @@ public  void  reorder_voxel_to_xyz(
             xyz[c] = 0.0;
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : reorder_xyz_to_voxel
+@INPUT      : volume
+              xyz
+@OUTPUT     : voxel
+@RETURNS    : 
+@DESCRIPTION: Passes back the voxel coordinates converted from those
+              corresponding to the x, y, and z axis.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  reorder_xyz_to_voxel(
     Volume   volume,
@@ -1139,6 +1196,7 @@ public  void  convert_3D_voxel_to_world(
 @CREATED    : Mar   1993           David MacDonald
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
+
 public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
     Real            voxel_vector[],
@@ -1658,6 +1716,19 @@ public  Volume   copy_volume_definition(
 
     return( copy );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : copy of volume
+@DESCRIPTION: Creates an exact copy of a volume, including voxel values.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Volume  copy_volume(
     Volume   volume )

@@ -1,7 +1,21 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.15 1995-06-23 14:24:35 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.16 1995-07-31 13:44:56 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -287,33 +301,6 @@ private   void  free_tags(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : free_labels
-@INPUT      : labels
-              n_tag_points
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Frees the tag labels.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  free_labels(
-    char    **labels,
-    int     n_tag_points )
-{
-    int   i;
-
-    for( i = 0;  i < n_tag_points;  ++i )
-        FREE( labels[i] );
-
-    if( n_tag_points > 0 )
-        FREE( labels );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
 @NAME       : free_tag_points
 @INPUT      : n_volumes
               n_tag_points
@@ -343,6 +330,8 @@ public  void  free_tag_points(
     int       patient_ids[],
     char      **labels )
 {
+    int   i;
+
     if( n_tag_points > 0 )
     {
         free_tags( tags_volume1, n_tag_points );
@@ -360,7 +349,13 @@ public  void  free_tag_points(
             FREE( patient_ids );
 
         if( labels != (char **) NULL )
-            free_labels( labels, n_tag_points );
+        {
+            for( i = 0;  i < n_tag_points;  ++i )
+                FREE( labels[i] );
+
+            if( n_tag_points > 0 )
+                FREE( labels );
+        }
     }
 }
 

@@ -1,14 +1,25 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <sys/types.h>
 #include  <sys/times.h>
 #include  <sys/time.h>
-#include  <sys/param.h>
-#include  <sys/resource.h>
-#include  <limits.h>
 #include  <unistd.h>
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.14 1995-07-10 18:02:32 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.15 1995-07-31 13:44:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

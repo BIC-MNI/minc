@@ -1,9 +1,22 @@
-
-#ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.9 1995-06-23 14:24:39 david Exp $";
-#endif
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.10 1995-07-31 13:44:59 david Exp $";
+#endif
 
 #define   INVERSE_FUNCTION_TOLERANCE     0.01
 #define   INVERSE_DELTA_TOLERANCE        0.01
@@ -419,14 +432,11 @@ private  Real  thin_plate_spline_U_deriv(
     {
     case  1:
         delta[X] = pos[X] - landmark[X];
-        r = abs( delta[X] );
-        if( delta[X] < 0.0 )
-            deriv = -3.0 * r * r;
-        else
-            deriv = 3.0 * r * r;
+        r = delta[X];
+        deriv = 3.0 * r * r;
         break;
 
-    case  2:   /* r is actually r^2 */
+    case  2:   /* r2 is r^2 */
         delta[X] = pos[X] - landmark[X];
         delta[Y] = pos[Y] - landmark[Y];
         r2 = delta[X] * delta[X] + delta[Y] * delta[Y];
@@ -434,10 +444,7 @@ private  Real  thin_plate_spline_U_deriv(
         if( r2 == 0.0 )
             deriv = 0.0;
         else
-        {
-            r = sqrt( r2 );
             deriv = (1.0 + log( r2 )) * 2.0 * delta[deriv_dim];
-        }
         break;
 
     case  3:

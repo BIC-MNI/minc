@@ -1,8 +1,21 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.16 1994-12-08 08:49:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.17 1995-07-31 13:44:27 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -38,8 +51,6 @@ public  void  make_identity_transform( Transform   *transform )
     Transform_elem( *transform, 3, 3 ) = 1.0;
 }
 
-#define   TOLERANCE   0.001
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : close_to_identity
 @INPUT      : transform
@@ -56,6 +67,7 @@ public  void  make_identity_transform( Transform   *transform )
 public  BOOLEAN  close_to_identity(
     Transform   *transform )
 {
+#define   TOLERANCE   0.001
     BOOLEAN    close;
     Real       expected_val;
     int        i, j;
@@ -367,7 +379,7 @@ public  void   make_change_from_bases_transform(
               result transform is also one of the operands.  Transforming
               a point by the 'result' transform will give the same point
               as first transforming the point by 't1', then by 't2'.
-@METHOD     : 
+@METHOD     : Multiplies result = t2 * t1
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
@@ -384,6 +396,8 @@ public  void   concat_transforms(
     BOOLEAN     result_is_also_an_arg;
     Transform   tmp, *t;
 
+    /*--- check if the result transform is same as one of the arguments */
+
     if( result == t1 || result == t2 )
     {
         result_is_also_an_arg = TRUE;
@@ -394,6 +408,8 @@ public  void   concat_transforms(
         result_is_also_an_arg = FALSE;
         t = result;
     }
+
+    /*--- perform multiplication */
 
     for_less( i, 0, 4 )
     {
@@ -414,6 +430,66 @@ public  void   concat_transforms(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : homogenous_transform_point
+@INPUT      : transform
+              x
+              y
+              z
+              w
+@OUTPUT     : x_trans
+              y_trans
+              z_trans
+@RETURNS    : 
+@DESCRIPTION: Transforms the point (x,y,z,w) by the homogenous transform
+              matrix, resulting in (x_trans,y_trans,z_trans).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  homogenous_transform_point(
+    Transform  *transform,
+    Real       x,
+    Real       y,
+    Real       z,
+    Real       w,
+    Real       *x_trans,
+    Real       *y_trans,
+    Real       *z_trans )
+{
+    Real       w_trans;
+
+    *x_trans = Transform_elem(*transform,0,0) * x +
+               Transform_elem(*transform,0,1) * y +
+               Transform_elem(*transform,0,2) * z +
+               Transform_elem(*transform,0,3) * w;
+
+    *y_trans = Transform_elem(*transform,1,0) * x +
+               Transform_elem(*transform,1,1) * y +
+               Transform_elem(*transform,1,2) * z +
+               Transform_elem(*transform,1,3) * w;
+
+    *z_trans = Transform_elem(*transform,2,0) * x +
+               Transform_elem(*transform,2,1) * y +
+               Transform_elem(*transform,2,2) * z +
+               Transform_elem(*transform,2,3) * w;
+
+    w_trans =  Transform_elem(*transform,3,0) * x +
+               Transform_elem(*transform,3,1) * y +
+               Transform_elem(*transform,3,2) * z +
+               Transform_elem(*transform,3,3) * w;
+
+    if( w_trans != 0.0 && w_trans != 1.0 )
+    {
+        *x_trans /= w_trans;
+        *y_trans /= w_trans;
+        *z_trans /= w_trans;
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : transform_point
 @INPUT      : transform
               x
@@ -423,7 +499,7 @@ public  void   concat_transforms(
               y_trans
               z_trans
 @RETURNS    : 
-@DESCRIPTION: Transforms the points (x,y,z) by the transform matrix, resulting
+@DESCRIPTION: Transforms the point (x,y,z) by the transform matrix, resulting
               in (x_trans,y_trans,z_trans).
 @METHOD     : 
 @GLOBALS    : 
@@ -441,34 +517,8 @@ public  void  transform_point(
     Real       *y_trans,
     Real       *z_trans )
 {
-    Real       w;
-
-    *x_trans = Transform_elem(*transform,0,0) * x +
-               Transform_elem(*transform,0,1) * y +
-               Transform_elem(*transform,0,2) * z +
-               Transform_elem(*transform,0,3);
-
-    *y_trans = Transform_elem(*transform,1,0) * x +
-               Transform_elem(*transform,1,1) * y +
-               Transform_elem(*transform,1,2) * z +
-               Transform_elem(*transform,1,3);
-
-    *z_trans = Transform_elem(*transform,2,0) * x +
-               Transform_elem(*transform,2,1) * y +
-               Transform_elem(*transform,2,2) * z +
-               Transform_elem(*transform,2,3);
-
-    w =        Transform_elem(*transform,3,0) * x +
-               Transform_elem(*transform,3,1) * y +
-               Transform_elem(*transform,3,2) * z +
-               Transform_elem(*transform,3,3);
-
-    if( w != 0.0 && w != 1.0 )
-    {
-        *x_trans /= w;
-        *y_trans /= w;
-        *z_trans /= w;
-    }
+    homogenous_transform_point( transform, x, y, z, 1.0,
+                                x_trans, y_trans, z_trans );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -498,114 +548,6 @@ public  void  transform_vector(
     Real       *y_trans,
     Real       *z_trans )
 {
-    Real   w;
-
-    *x_trans = Transform_elem(*transform,0,0) * x +
-               Transform_elem(*transform,0,1) * y +
-               Transform_elem(*transform,0,2) * z;
-
-    *y_trans = Transform_elem(*transform,1,0) * x +
-               Transform_elem(*transform,1,1) * y +
-               Transform_elem(*transform,1,2) * z;
-
-    *z_trans = Transform_elem(*transform,2,0) * x +
-               Transform_elem(*transform,2,1) * y +
-               Transform_elem(*transform,2,2) * z;
-
-    w = Transform_elem(*transform,3,0) * x +
-        Transform_elem(*transform,3,1) * y +
-        Transform_elem(*transform,3,2) * z;
-
-    if( w != 0.0 && w != 1.0 )
-    {
-        *x_trans /= w;
-        *y_trans /= w;
-        *z_trans /= w;
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : inverse_transform_point
-@INPUT      : transform
-              x
-              y
-              z
-@OUTPUT     : x_trans
-              y_trans
-              z_trans
-@RETURNS    : 
-@DESCRIPTION: Performs an inverse transform on the point.  NOTE that this
-              only works if the transform is a unit orthogonal transform.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  inverse_transform_point(
-    Transform  *transform,
-    Real       x,
-    Real       y,
-    Real       z,
-    Real       *x_trans,
-    Real       *y_trans,
-    Real       *z_trans )
-{
-    x -= Transform_elem(*transform,0,3);
-    y -= Transform_elem(*transform,1,3);
-    z -= Transform_elem(*transform,2,3);
-    
-    *x_trans = Transform_elem(*transform,0,0) * x +
-               Transform_elem(*transform,1,0) * y +
-               Transform_elem(*transform,2,0) * z;
-    
-    *y_trans = Transform_elem(*transform,0,1) * x +
-               Transform_elem(*transform,1,1) * y +
-               Transform_elem(*transform,2,1) * z;
-    
-    *z_trans = Transform_elem(*transform,0,2) * x +
-               Transform_elem(*transform,1,2) * y +
-               Transform_elem(*transform,2,2) * z;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : inverse_transform_vector
-@INPUT      : transform
-              x
-              y
-              z
-@OUTPUT     : x_trans
-              y_trans
-              z_trans
-@RETURNS    : 
-@DESCRIPTION: Performs an inverse transform on the vector.  NOTE that this
-              only works if the transform is a unit orthogonal transform.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  inverse_transform_vector(
-    Transform  *transform,
-    Real       x,
-    Real       y,
-    Real       z,
-    Real       *x_trans,
-    Real       *y_trans,
-    Real       *z_trans )
-{
-    *x_trans = Transform_elem(*transform,0,0) * x +
-               Transform_elem(*transform,1,0) * y +
-               Transform_elem(*transform,2,0) * z;
-    
-    *y_trans = Transform_elem(*transform,0,1) * x +
-               Transform_elem(*transform,1,1) * y +
-               Transform_elem(*transform,2,1) * z;
-    
-    *z_trans = Transform_elem(*transform,0,2) * x +
-               Transform_elem(*transform,1,2) * y +
-               Transform_elem(*transform,2,2) * z;
+    homogenous_transform_point( transform, x, y, z, 0.0,
+                                x_trans, y_trans, z_trans );
 }

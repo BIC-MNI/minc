@@ -1,9 +1,22 @@
-
-#ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.7 1995-05-24 17:23:50 david Exp $";
-#endif
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.8 1995-07-31 13:44:28 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : compute_transform_inverse
@@ -24,7 +37,6 @@ public  BOOLEAN   compute_transform_inverse(
 {
     int        i, j;
     Real       **t, **inv;
-    Transform  ident;
     BOOLEAN    success;
 
     /* --- copy the transform to a numerical recipes type matrix */
@@ -35,9 +47,7 @@ public  BOOLEAN   compute_transform_inverse(
     for_less( i, 0, 4 )
     {
         for_less( j, 0, 4 )
-        {
             t[i][j] = Transform_elem(*transform,i,j);
-        }
     }
 
     success = invert_square_matrix( 4, t, inv );
@@ -55,14 +65,20 @@ public  BOOLEAN   compute_transform_inverse(
             }
         }
 
+#ifdef  DEBUG
         /* --- check if this really is an inverse, by multiplying */
 
-        concat_transforms( &ident, transform, inverse );
-
-        if( !close_to_identity(&ident) )
         {
-            print_error( "Error in compute_transform_inverse\n" );
+            Transform  ident;
+
+            concat_transforms( &ident, transform, inverse );
+
+            if( !close_to_identity(&ident) )
+            {
+                print_error( "Error in compute_transform_inverse\n" );
+            }
         }
+#endif
     }
     else
         make_identity_transform( inverse );

@@ -1,7 +1,21 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.18 1995-06-23 14:24:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.19 1995-07-31 13:44:55 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -61,6 +75,22 @@ public  void  create_linear_transform(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_thin_plate_transform
+@INPUT      : transform
+              n_dimensions
+              n_points
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Initializes a General_transform structure for thin plate
+              transforms.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb. 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  initialize_thin_plate_transform(
     General_transform    *transform,
     int                  n_dimensions,
@@ -90,7 +120,7 @@ private  void  initialize_thin_plate_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 21, 1995   David MacDonald - make a real and float version
 ---------------------------------------------------------------------------- */
 
 public  void  create_thin_plate_transform_real(
@@ -130,7 +160,7 @@ public  void  create_thin_plate_transform_real(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 21, 1995   David MacDonald - make a real and float version
 ---------------------------------------------------------------------------- */
 
 public  void  create_thin_plate_transform(
@@ -158,7 +188,7 @@ public  void  create_thin_plate_transform(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : create_grid_transform
+@NAME       : internal_create_grid_transform
 @INPUT      : displacement_volume
 @OUTPUT     : transform
 @RETURNS    : 
@@ -254,12 +284,41 @@ private  void  internal_create_grid_transform(
     transform->displacement_volume = (void *) copy;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_grid_transform
+@INPUT      : displacement_volume
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a grid transform General_transform.  Makes a copy of
+              the displacement volume and puts it in the General_transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb. 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  create_grid_transform(
     General_transform    *transform,
     Volume               displacement_volume )
 {
     internal_create_grid_transform( transform, displacement_volume, TRUE );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_grid_transform_no_copy
+@INPUT      : displacement_volume
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a grid transform General_transform.  Places the
+              displacement volume into the General_transform; therefore the
+              calling program should not delete the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb. 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  create_grid_transform_no_copy(
     General_transform    *transform,

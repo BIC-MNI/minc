@@ -1,4 +1,22 @@
+/* ----------------------------------------------------------------------------
+@COPYRIGHT  :
+              Copyright 1993,1994,1995 David MacDonald,
+              McConnell Brain Imaging Centre,
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
 #include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.19 1995-07-31 13:44:47 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_voxel_value
@@ -360,6 +378,22 @@ private  void   interpolate_volume(
         FREE( derivs );
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : extract_coefficients
+@INPUT      : volume
+              start
+              end
+              inc
+@OUTPUT     : coefs
+@RETURNS    : 
+@DESCRIPTION: Extracts the coefficients from a volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jun 21, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void   extract_coefficients(
     Volume         volume,
