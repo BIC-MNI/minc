@@ -5,12 +5,16 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 6.2  1998-03-09 19:30:23  neelin
-@MODIFIED   : Fixed bug in acr_input_message where the last group added to the input
-@MODIFIED   : message was being deleted followed by the message itself when a
-@MODIFIED   : message length error occurred. When an input error occurs the message
-@MODIFIED   : should not be deleted.
+@MODIFIED   : Revision 6.3  1998-03-10 17:06:29  neelin
+@MODIFIED   : Added code to acr_input_message so that if we reach the watchpoint and
+@MODIFIED   : more message is expected, we keep on reading.
 @MODIFIED   :
+ * Revision 6.2  1998/03/09  19:30:23  neelin
+ * Fixed bug in acr_input_message where the last group added to the input
+ * message was being deleted followed by the message itself when a
+ * message length error occurred. When an input error occurs the message
+ * should not be deleted.
+ *
  * Revision 6.1  1998/02/18  20:27:13  neelin
  * Minor bug fix.
  *
@@ -404,6 +408,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
    Acr_Element length_element;
    long message_length;
    long group_length;
+   long watchpoint;
    int get_more_groups;
 
    /* Initialize the message pointer */
@@ -456,11 +461,20 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
    get_more_groups = ((length_element != NULL) ? (message_length > 0) : TRUE);
    while (get_more_groups) {
 
-      /* Check for a watchpoint */
-      if (acr_get_io_watchpoint(afp) <= 0) {
+      /* Check for a watchpoint. If we have reached it, but the message
+         length indicates that there is more to come, then move it along
+         so that we can keep reading. */
+      watchpoint = acr_get_io_watchpoint(afp);
+      if ((watchpoint == 0) && 
+          (length_element != NULL) && (message_length > 0)) {
+         acr_set_io_watchpoint(afp, LONG_MAX-1);
+      }
+      else if (watchpoint <= 0) {
          get_more_groups = FALSE;
          break;
       }
+
+      /* If we reach the end of a fragment and PDU, but we need more data
 
       /* Read in the next group and check for an error */
       status = acr_input_group(afp, &group);
