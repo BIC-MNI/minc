@@ -4,10 +4,13 @@
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 6.2  1997-10-20 23:22:38  neelin
-@MODIFIED   : Added routine acr_dicom_close_no_release to close a connection that does
-@MODIFIED   : not have an association.
+@MODIFIED   : Revision 6.3  1998-03-23 20:17:17  neelin
+@MODIFIED   : Removed some functions.
 @MODIFIED   :
+ * Revision 6.2  1997/10/20  23:22:38  neelin
+ * Added routine acr_dicom_close_no_release to close a connection that does
+ * not have an association.
+ *
  * Revision 6.1  1997/09/15  16:50:59  neelin
  * Separated out connection timeouts from i/o timeouts and added functions
  * to change them.
@@ -56,7 +59,6 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
                                         char *transfer_syntax_list[]);
 public void acr_set_client_timeout(double seconds);
 public void acr_set_client_initial_timeout(double seconds);
-public int acr_uid_equal(char *uid1, char *uid2);
 public void acr_dicom_error(Acr_Status status, char *string);
 public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout);
 public int acr_send_group_list(Acr_File *afpin, Acr_File *afpout, 
@@ -67,4 +69,3 @@ public int acr_transmit_group_list(Acr_File *afpout,
                                    char *sop_class_uid,
                                    int message_id);
 public int acr_receive_reply(Acr_File *afpin);
-public char *acr_create_uid(void);
