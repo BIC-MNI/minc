@@ -383,8 +383,10 @@ sub dicom3_get_image_cmd {
         " -1 $cur_file" .
         " | extract_acr_nema -i " . 
         $specific_file_info{'pixel_data_group'} . " " .
-        $specific_file_info{'pixel_data_element'} . " " .
-        " | byte_swap ";
+        $specific_file_info{'pixel_data_element'} . " ";
+    if (!$Image_is_big_endian) {
+       $cmd .= " | byte_swap ";
+    }
 
     return $cmd;
 }
@@ -400,6 +402,26 @@ sub dicom3_initialize_tape_drive {
 *initialize_tape_drive = *dicom3_initialize_tape_drive;
 *read_file_info = *dicom3_read_file_info;
 *get_image_cmd = *dicom3_get_image_cmd;
+
+# Check for dicom-specific arguments
+$Image_is_big_endian = 0;
+@args_to_remove = ();
+foreach $i (0..$#ARGV) {
+   $_ = $ARGV[$i];
+   if (/^-h(elp)?$/) {
+      warn 
+"Dicom-specific options:
+ -big_endian_image:\tSpecify that the image is big endian
+";
+   }
+   elsif (/^-big/ && (index("-big_endian_image",$_)==0)) {
+      $Image_is_big_endian = 1;
+      push(@args_to_remove, $i);
+   }
+}
+foreach $i (reverse(@args_to_remove)) {
+   splice(@ARGV, $i, 1);
+}
 
 &mri_to_minc(@ARGV);
 
