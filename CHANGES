@@ -1,3 +1,6 @@
+Mon Mar 23 15:17:49 EST 1998
+   - Moved some functions in the acr-nema library from one file to another.
+
 Tue Mar 17 12:05:43 EST 1998
    - Modified acrnema library so that default maximum length for client
      connections is 1MB to fix problems with servers that do not handle
