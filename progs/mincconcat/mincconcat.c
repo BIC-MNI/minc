@@ -11,7 +11,11 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.7  2001-08-16 16:41:33  neelin
+ * Revision 6.8  2001-09-18 15:32:39  neelin
+ * Create image variable last to allow big images and to fix compatibility
+ * problems with 2.3 and 3.x.
+ *
+ * Revision 6.7  2001/08/16 16:41:33  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -87,7 +91,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.7 2001-08-16 16:41:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.8 2001-09-18 15:32:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -202,7 +206,6 @@ public int main(int argc, char *argv[])
    char **input_files;
    int first_mincid, imgid;
    double valid_range[2];
-   nc_type file_datatype;
 
    /* Allocate the concat_info structure */
    concat_info = MALLOC(sizeof(*concat_info));
@@ -1282,8 +1285,20 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
 
    /* Add the time stamp to the history */
    update_history(outmincid, concat_info->history);
- 
-   /* Create the image and image-min/max variables */
+
+   /* Create the image-min/max variables */
+   maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
+                                 out_ndims-out_nimgdims, outdim);
+   minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, 
+                                 out_ndims-out_nimgdims, outdim);
+   ncopts = 0;
+   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
+                          outmincid, maxid);
+   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
+                          outmincid, minid);
+   ncopts = NC_OPTS_VAL;
+
+   /* Create the image variable */
    if (concat_info->output_datatype != MI_ORIGINAL_TYPE) {
       datatype = concat_info->output_datatype;
    }
@@ -1318,16 +1333,6 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
       }
    }
    (void) miattputstr(outmincid, outimgid, MIcomplete, MI_FALSE);
-   maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
-                                 out_ndims-out_nimgdims, outdim);
-   minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, 
-                                 out_ndims-out_nimgdims, outdim);
-   ncopts = 0;
-   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
-                          outmincid, maxid);
-   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
-                          outmincid, minid);
-   ncopts = NC_OPTS_VAL;
 
    /* Put the file in data mode */
    (void) ncsetfill(outmincid, NC_NOFILL);

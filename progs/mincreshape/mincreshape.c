@@ -13,7 +13,11 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.6  2001-08-16 16:41:36  neelin
+ * Revision 6.7  2001-09-18 15:32:53  neelin
+ * Create image variable last to allow big images and to fix compatibility
+ * problems with 2.3 and 3.x.
+ *
+ * Revision 6.6  2001/08/16 16:41:36  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -82,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.6 2001-08-16 16:41:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.7 2001-09-18 15:32:53 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -831,10 +835,6 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
                                  double valid_range[2])
 {
    int imgid;
-   int status;
-   double vrange[2];
-   char string[MI_MAX_ATTSTR_LEN];
-   int length;
    int file_is_signed;
 
    /* Get the image variable id */
@@ -1328,17 +1328,6 @@ public void setup_output_file(int mincid, char *history,
       if (0.0 > valid_range[1]) valid_range[1] = 0.0;
    }
 
-   /* Create the image variable */
-   imgid = micreate_std_variable(mincid, MIimage, datatype,
-                                 output_ndims, output_dim);
-   reshape_info->outimgid = imgid;
-   (void) micopy_all_atts(reshape_info->inmincid, 
-                          ncvarid(reshape_info->inmincid, MIimage),
-                          mincid, imgid);
-   (void) miattputstr(mincid, imgid, MIsigntype, signtype);
-   (void) miset_valid_range(mincid, imgid, valid_range);
-   (void) miattputstr(mincid, imgid, MIcomplete, MI_FALSE);
-
    /* Create the imagemax/min variables */
    minmax_ndims = 0;
    for (odim=0; odim < output_ndims; odim++) {
@@ -1360,6 +1349,17 @@ public void setup_output_file(int mincid, char *history,
          (void) micopy_all_atts(reshape_info->inmincid, 
                                 varid2, mincid, varid);
    }
+
+   /* Create the image variable */
+   imgid = micreate_std_variable(mincid, MIimage, datatype,
+                                 output_ndims, output_dim);
+   reshape_info->outimgid = imgid;
+   (void) micopy_all_atts(reshape_info->inmincid, 
+                          ncvarid(reshape_info->inmincid, MIimage),
+                          mincid, imgid);
+   (void) miattputstr(mincid, imgid, MIsigntype, signtype);
+   (void) miset_valid_range(mincid, imgid, valid_range);
+   (void) miattputstr(mincid, imgid, MIcomplete, MI_FALSE);
 
    /* Add history */
    ncopts=0;

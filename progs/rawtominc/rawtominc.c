@@ -11,7 +11,11 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.6  2001-08-16 16:41:37  neelin
+ * Revision 6.7  2001-09-18 15:33:00  neelin
+ * Create image variable last to allow big images and to fix compatibility
+ * problems with 2.3 and 3.x.
+ *
+ * Revision 6.6  2001/08/16 16:41:37  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -118,7 +122,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.6 2001-08-16 16:41:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.7 2001-09-18 15:33:00 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -609,19 +613,6 @@ main(int argc, char *argv[])
       end[ndims-1] = vector_dimsize;
    }
 
-   /* Create the image */
-   imgid=micreate_std_variable(cdfid, MIimage, odatatype, ndims, dim);
-   (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
-   (void) miattputstr(cdfid, imgid, MIsigntype, osign);
-   if (ovrange_set) 
-      (void) miset_valid_range(cdfid, imgid, ovalid_range);
-   if (do_minmax || do_real_range) {
-      maxid = micreate_std_variable(cdfid, MIimagemax, 
-                                    NC_DOUBLE, ndims-image_dims, dim);
-      minid = micreate_std_variable(cdfid, MIimagemin, 
-                                    NC_DOUBLE, ndims-image_dims, dim);
-   }
-
    /* Create the modality attribute */
    if (modality != NULL) {
       varid = micreate_group_variable(cdfid, MIstudy);
@@ -658,6 +649,19 @@ main(int argc, char *argv[])
       }
    }
    ncopts = NC_VERBOSE | NC_FATAL;
+
+   /* Create the image */
+   if (do_minmax || do_real_range) {
+      maxid = micreate_std_variable(cdfid, MIimagemax, 
+                                    NC_DOUBLE, ndims-image_dims, dim);
+      minid = micreate_std_variable(cdfid, MIimagemin, 
+                                    NC_DOUBLE, ndims-image_dims, dim);
+   }
+   imgid=micreate_std_variable(cdfid, MIimage, odatatype, ndims, dim);
+   (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
+   (void) miattputstr(cdfid, imgid, MIsigntype, osign);
+   if (ovrange_set) 
+      (void) miset_valid_range(cdfid, imgid, ovalid_range);
 
    /* End definition mode */
    (void) ncendef(cdfid);

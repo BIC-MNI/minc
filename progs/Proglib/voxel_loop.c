@@ -7,7 +7,11 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.6  2001-08-16 16:41:32  neelin
+ * Revision 6.7  2001-09-18 15:32:27  neelin
+ * Create image variable last to allow big images and to fix compatibility
+ * problems with 2.3 and 3.x.
+ *
+ * Revision 6.6  2001/08/16 16:41:32  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -94,7 +98,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.6 2001-08-16 16:41:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.7 2001-09-18 15:32:27 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1001,7 +1005,27 @@ private void setup_variables(int inmincid, int outmincid,
    /* Add the time stamp to the history */
    update_history(outmincid, arg_string);
  
-   /* Create the image and image-min/max variables */
+   /* Call the user's function if needed */
+   if (loop_options->output_file_function != NULL) {
+      set_info_current_file(loop_options->loop_info, 0);
+      loop_options->output_file_function(loop_options->caller_data,
+                                         outmincid, output_curfile,
+                                         loop_options->loop_info);
+   }
+
+   /* Create the image-min/max variables */
+   maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
+                                 out_ndims-out_nimgdims, outdim);
+   minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, 
+                                 out_ndims-out_nimgdims, outdim);
+   ncopts = 0;
+   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
+                          outmincid, maxid);
+   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
+                          outmincid, minid);
+   ncopts = NC_OPTS_VAL;
+
+   /* Create the image variable */
    if (loop_options->datatype != MI_ORIGINAL_TYPE) {
       datatype = loop_options->datatype;
    }
@@ -1034,24 +1058,6 @@ private void setup_variables(int inmincid, int outmincid,
       }
    }
    (void) miattputstr(outmincid, outimgid, MIcomplete, MI_FALSE);
-   maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
-                                 out_ndims-out_nimgdims, outdim);
-   minid = micreate_std_variable(outmincid, MIimagemin, NC_DOUBLE, 
-                                 out_ndims-out_nimgdims, outdim);
-   ncopts = 0;
-   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
-                          outmincid, maxid);
-   (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
-                          outmincid, minid);
-   ncopts = NC_OPTS_VAL;
-
-   /* Call the user's function if needed */
-   if (loop_options->output_file_function != NULL) {
-      set_info_current_file(loop_options->loop_info, 0);
-      loop_options->output_file_function(loop_options->caller_data,
-                                         outmincid, output_curfile,
-                                         loop_options->loop_info);
-   }
 
    /* Put the file in data mode */
    (void) ncsetfill(outmincid, NC_NOFILL);

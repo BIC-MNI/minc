@@ -10,7 +10,11 @@
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexample1.c,v $
- * Revision 6.3  2001-08-16 16:41:34  neelin
+ * Revision 6.4  2001-09-18 15:32:46  neelin
+ * Create image variable last to allow big images and to fix compatibility
+ * problems with 2.3 and 3.x.
+ *
+ * Revision 6.3  2001/08/16 16:41:34  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -68,7 +72,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 6.3 2001-08-16 16:41:34 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 6.4 2001-09-18 15:32:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -536,6 +540,16 @@ public void setup_image_variables(int inmincid, int mincid,
    int imgid, maxid, minid;
    static double valid_range[2] = {0.0, 255.0};
 
+   /* Create the image max and min variables */
+   maxid = micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, 0, NULL);
+   minid = micreate_std_variable(mincid, MIimagemin, NC_DOUBLE, 0, NULL);
+   if (inmincid != MI_ERROR) {
+      (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
+                             mincid, maxid);
+      (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
+                             mincid, minid);
+   }
+
    /* Create the image variable, copy attributes, set the signtype attribute,
       set the valid range attribute and delete valid max/min attributes */
    imgid = micreate_std_variable(mincid, MIimage, NC_BYTE, ndims, dim);
@@ -549,16 +563,6 @@ public void setup_image_variables(int inmincid, int mincid,
    }
    (void) miattputstr(mincid, imgid, MIsigntype, MI_UNSIGNED);
    (void) miset_valid_range(mincid, imgid, valid_range);
-
-   /* Create the image max and min variables */
-   maxid = micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, 0, NULL);
-   minid = micreate_std_variable(mincid, MIimagemin, NC_DOUBLE, 0, NULL);
-   if (inmincid != MI_ERROR) {
-      (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemax),
-                             mincid, maxid);
-      (void) micopy_all_atts(inmincid, ncvarid(inmincid, MIimagemin),
-                             mincid, minid);
-   }
 
 }
 

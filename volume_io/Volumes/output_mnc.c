@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.58 2001-08-16 16:41:38 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.59 2001-09-18 15:33:17 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -208,6 +208,96 @@ private  Status  output_world_transform(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_image_variable
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Defines the image variable in the output minc file. This 
+              should be done as the last thing before ending the header 
+              definition.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : September 13, 2001    Peter Neelin
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private void create_image_variable(Minc_file file)
+{
+    int old_ncopts;
+
+    old_ncopts = ncopts;
+
+    /* Create the variable */
+    file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
+                                              file->nc_data_type,
+                                              file->n_file_dimensions, 
+                                              file->image_dims );
+
+    /* Copy all attributes if required */
+    if( file->src_img_var != MI_ERROR )
+    {
+        ncopts = 0;
+        (void) micopy_all_atts( file->src_cdfid, file->src_img_var,
+                                file->cdfid, file->img_var_id );
+        (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_max );
+        (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_min );
+        (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_range );
+
+        ncopts = old_ncopts;
+    }
+
+    (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_FALSE );
+
+    if( file->signed_flag )
+        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
+                            MI_SIGNED );
+    else
+        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
+                            MI_UNSIGNED );
+
+    /* --- put the valid voxel range */
+
+    if( file->valid_range[0] < file->valid_range[1] )
+    {
+
+        (void) miset_valid_range( file->cdfid, file->img_var_id, 
+                                  file->valid_range);
+
+    }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : end_file_def
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Ends the definition of the file, calling ncendef, but
+              first creating the image variable as the last variable in 
+              the file. This is done to allow images > 2 GB (on 64-bit 
+              machines) and to ensure that data is written right to the 
+              end of the file for backwards compatibility.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : September 13, 2001    Peter Neelin
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private Status end_file_def(Minc_file file)
+{
+   int ret;
+
+   create_image_variable(file);
+
+   ret = ncendef( file->cdfid );
+
+   return ( ret == MI_ERROR ? ERROR : OK );
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_minc_output
 @INPUT      : filename
               n_dimensions
@@ -252,9 +342,8 @@ public  Minc_file  initialize_minc_output(
     minc_output_options    *options )
 {
     minc_file_struct    *file;
-    int                 dim_vars[MAX_VAR_DIMS], volume_sizes[MAX_DIMENSIONS];
+    int                 volume_sizes[MAX_DIMENSIONS];
     int                 n_volume_dims;
-    double              valid_range[2];
     int                 d, vol_index, n_range_dims;
     static  STRING      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     STRING              *vol_dimension_names;
@@ -314,6 +403,7 @@ public  Minc_file  initialize_minc_output(
     file->outputting_in_order = TRUE;
     file->entire_file_written = FALSE;
     file->ignoring_because_cached = FALSE;
+    file->src_img_var = MI_ERROR;
 
     file->filename = expand_filename( filename );
 
@@ -390,13 +480,17 @@ public  Minc_file  initialize_minc_output(
         return( NULL );
     }
 
+    /* Create the root variable */
+    (void) micreate_std_variable(file->cdfid, MIrootvariable, 
+                                 NC_INT, 0, NULL);
+
     for_less( d, 0, n_dimensions )
     {
         file->sizes_in_file[d] = (long) sizes[d];
         file->indices[d] = 0;
         file->dim_names[d] = create_string( dim_names[d] );
-        dim_vars[d] = ncdimdef( file->cdfid, file->dim_names[d],
-                                (long) sizes[d] );
+        file->image_dims[d] = ncdimdef( file->cdfid, file->dim_names[d],
+                                        (long) sizes[d] );
     }
 
     if( output_world_transform( file, volume_to_attach->coordinate_system_name,
@@ -406,30 +500,16 @@ public  Minc_file  initialize_minc_output(
         FREE( file );
         return( NULL );
     }
+
+    /*
+     * Save information for creating image variable later
+     */
+
+    file->nc_data_type = file_nc_data_type;
+    file->signed_flag = file_signed_flag;
+    file->valid_range[0] = file_voxel_min;
+    file->valid_range[1] = file_voxel_max;
             
-    file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
-                                              file_nc_data_type,
-                                              n_dimensions, dim_vars );
-    (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_FALSE );
-
-    if( file_signed_flag )
-        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
-                            MI_SIGNED );
-    else
-        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
-                            MI_UNSIGNED );
-
-    /* --- put the valid voxel range */
-
-    if( file_voxel_min < file_voxel_max )
-    {
-        valid_range[0] = file_voxel_min;
-        valid_range[1] = file_voxel_max;
-
-        (void) miset_valid_range( file->cdfid, file->img_var_id, valid_range);
-
-    }
-
     file->image_range[0] = options->global_image_range[0];
     file->image_range[1] = options->global_image_range[1];
 
@@ -447,9 +527,11 @@ public  Minc_file  initialize_minc_output(
             --n_range_dims;
 
         file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
-                                      NC_DOUBLE, n_range_dims, dim_vars );
+                                              NC_DOUBLE, n_range_dims, 
+                                              file->image_dims);
         file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
-                                      NC_DOUBLE, n_range_dims, dim_vars );
+                                              NC_DOUBLE, n_range_dims, 
+                                              file->image_dims );
     }
 
     ncopts = NC_VERBOSE | NC_FATAL;
@@ -533,7 +615,7 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     int         src_cdfid,
     STRING      history_string )
 {
-    int     src_img_var, varid, n_excluded, excluded_vars[10], ret;
+    int     src_img_var, varid, n_excluded, excluded_vars[10];
     int     i, src_min_id, src_max_id, src_root_id;
     Status  status;
     STRING  excluded_list[] = {
@@ -581,15 +663,6 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     (void) micopy_all_var_defs( src_cdfid, file->cdfid, n_excluded,
                                 excluded_vars );
 
-    if( src_img_var != MI_ERROR )
-        (void) micopy_all_atts( src_cdfid, src_img_var,
-                                file->cdfid, file->img_var_id );
-
-    ncopts = 0;
-    (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_max );
-    (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_min );
-    ncopts = NC_VERBOSE;
-
     if( src_min_id != MI_ERROR )
     {
         (void) micopy_all_atts( src_cdfid, src_min_id,
@@ -616,12 +689,19 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
 
     if( status == OK )
     {
-        ret = ncendef( file->cdfid );
 
-        if( ret == MI_ERROR )
+        /* Set info for copying image attributes. Unset afterwards, just
+           to be safe. */
+        file->src_cdfid = src_cdfid;
+        file->src_img_var = src_img_var;
+
+        status = end_file_def( file );
+
+        file->src_img_var = MI_ERROR;
+
+        if( status != OK )
         {
             print_error( "Error outputting volume: possibly disk full?\n" );
-            status = ERROR;
         }
     }
 
@@ -789,25 +869,26 @@ private  Status  get_dimension_ordering(
 private  Status  check_minc_output_variables(
     Minc_file   file )
 {
-    int               d, axis, ret;
+    int               d, axis;
     long              start_index, mindex[MAX_VAR_DIMS];
     Real              voxel_min, voxel_max, real_min, real_max;
     double            dim_value;
     Volume            volume;
+    Status            status;
 
     if( !file->end_def_done )
     {
         /* --- Get into data mode */
 
         ncopts = NC_VERBOSE;
-        ret = ncendef( file->cdfid );
+        status = end_file_def( file );
         ncopts = NC_VERBOSE | NC_FATAL;
         file->end_def_done = TRUE;
 
-        if( ret == MI_ERROR )
+        if( status != OK )
         {
             print_error( "Error outputting volume: possibly disk full?\n" );
-            return( ERROR );
+            return( status );
         }
     }
 

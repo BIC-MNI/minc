@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.50 2000-01-20 20:22:27 neelin Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.51 2001-09-18 15:33:10 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -400,6 +400,12 @@ typedef  struct
     int                dim_ids[MAX_VAR_DIMS];
     BOOLEAN            outputting_in_order;
     BOOLEAN            entire_file_written;
+    nc_type            nc_data_type;
+    BOOLEAN            signed_flag;
+    double             valid_range[2];
+    int                image_dims[MAX_VAR_DIMS];
+    int                src_cdfid;
+    int                src_img_var;
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;
