@@ -11,6 +11,7 @@ dimension variables.
 * Most man pages updated
 * Fixed endian-ness issues which could affect interoperability in 
   MINC 2.0 format
+* Changed volume_io caching defaults
 
                 New in Release 2.0.06
                 ---------------------
