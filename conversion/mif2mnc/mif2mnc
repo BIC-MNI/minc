@@ -57,7 +57,7 @@ my($miffile, $mncfile, $files, $nfiles, @args, $history);
 
 # create the history string
 chomp($history = `date`);
-$history .= '>>>> ' . join(' ', $me, @ARGV);
+$history .= '>>>> ' . join(' ', $me, @ARGV) . "\n";
 
 # Check arguments
 &Getopt::Tabular::SetHelp ($Help, $Usage);
@@ -216,7 +216,7 @@ push(@args, '-xstep', $pix_size_x,
             '-ystart', -$pix_size_y*$h{Image_Dim_y}/2,
             '-zstart', -$thickness*$h{Num_Slices}/2,
             
-            '-sattribute', ":history='$history'",
+            '-sattribute', ":history=$history",
             '-input', "$tmpfile.swp", $mncfile,
             "$h{Num_Slices}", "$h{Image_Dim_x}", "$h{Image_Dim_y}");
 
