@@ -1,5 +1,5 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : mincexample
+@NAME       : mincexample1
 @INPUT      : argc, argv - command line arguments
 @OUTPUT     : (none)
 @RETURNS    : status
@@ -9,12 +9,16 @@
 @CALLS      : 
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincexample1.c,v $
-@MODIFIED   : Revision 1.4  1993-08-30 11:00:55  neelin
-@MODIFIED   : Added reading of dimension step and start.
-@MODIFIED   : Added printing of volume information in main program.
-@MODIFIED   : Put icv setup stuff in separate routine.
-@MODIFIED   : Broke up save_volume into smaller routines.
+@MODIFIED   : Revision 1.5  1994-03-16 12:10:50  neelin
+@MODIFIED   : Changed ncopen,create,close to miopen,...
+@MODIFIED   : Changed setting of step and start attributes in output file.
 @MODIFIED   :
+ * Revision 1.4  93/08/30  11:00:55  neelin
+ * Added reading of dimension step and start.
+ * Added printing of volume information in main program.
+ * Put icv setup stuff in separate routine.
+ * Broke up save_volume into smaller routines.
+ * 
  * Revision 1.3  93/08/26  12:31:17  neelin
  * Added define so that minc_def.h is optionally included.
  * 
@@ -28,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.4 1993-08-30 11:00:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.5 1994-03-16 12:10:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -160,7 +164,7 @@ public void load_volume(char *infile, Volume *volume)
    setup_icv(icvid);
 
    /* Open the image file */
-   mincid = ncopen(infile, NC_NOWRITE);
+   mincid = miopen(infile, NC_NOWRITE);
 
    /* Attach the icv to the file */
    (void) miicv_attach(icvid, mincid, ncvarid(mincid, MIimage));
@@ -172,7 +176,7 @@ public void load_volume(char *infile, Volume *volume)
    read_volume_data(icvid, volume);
 
    /* Close the file and free the icv */
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
    (void) miicv_free(icvid);
 
 }
@@ -356,11 +360,11 @@ public void save_volume(char *infile, char *outfile, char *arg_string,
    int mincid, icvid, inmincid;
 
    /* Create output file */
-   mincid = nccreate(outfile, NC_CLOBBER);
+   mincid = micreate(outfile, NC_CLOBBER);
 
    /* Open the input file if it is provided */
    if (infile != NULL) {
-      inmincid = ncopen(infile, NC_NOWRITE);
+      inmincid = miopen(infile, NC_NOWRITE);
    }
    else {
       inmincid = MI_ERROR;
@@ -371,7 +375,7 @@ public void save_volume(char *infile, char *outfile, char *arg_string,
 
    /* Close the input file */
    if (inmincid != MI_ERROR) {
-      (void) ncclose(inmincid);
+      (void) miclose(inmincid);
    }
 
    /* Create an icv and set it up */
@@ -385,7 +389,7 @@ public void save_volume(char *infile, char *outfile, char *arg_string,
    write_volume_data(icvid, volume);
 
    /* Close the file and free the icv */
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
    (void) miicv_free(icvid);
 
 }
@@ -436,22 +440,27 @@ public void setup_variables(int inmincid, int mincid, Volume *volume,
 
    }
 
-   /* If the input file is not given, then we have to create the dimension
-      variables. Put step and start attributes in the variables. If the
+   /* Set up the dimension variables. If the variable doesn't exist, create
+      it (either no input file or variable did not exist in it). If the
       dimensions are not standard, then no variable is created. */
-   else {
-      for (idim=0; idim < ndims; idim++) {
-         ncopts = 0;
-         varid = micreate_std_variable(mincid, volume->dimension_names[idim],
+
+   for (idim=0; idim < ndims; idim++) {
+      ncopts = 0;
+      varid = ncvarid(mincid, volume->dimension_names[idim]);
+      if (varid == MI_ERROR) {
+         varid = micreate_std_variable(mincid, 
+                                       volume->dimension_names[idim],
                                        NC_LONG, 0, NULL);
-         ncopts = NC_OPTS_VAL;
-         if (varid != MI_ERROR) {
-            (void) miattputdbl(mincid, varid, MIstep, volume->step[idim]);
-            (void) miattputdbl(mincid, varid, MIstart, volume->start[idim]);
-         }
+      }
+      ncopts = NC_OPTS_VAL;
+      if (varid != MI_ERROR) {
+         (void) miattputdbl(mincid, varid, MIstep, 
+                            volume->step[idim]);
+         (void) miattputdbl(mincid, varid, MIstart, 
+                            volume->start[idim]);
       }
    }
-
+   
    /* Create the image, image-max and image-min variables */
    setup_image_variables(inmincid, mincid, ndims, dim);
 
