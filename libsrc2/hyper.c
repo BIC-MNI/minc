@@ -2,8 +2,7 @@
  * \brief MINC 2.0 Hyperslab Functions
  * \author Bert Vincent
  *
- * Functions to manipulate hyperslabs of volume image data.  Significant
- * portions of this code have been cut and pasted from netcdf 3.5.
+ * Functions to manipulate hyperslabs of volume image data.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
@@ -373,8 +372,11 @@ mirw_hyperslab_raw(int opcode,
         }
     }
 
-    H5Sselect_hyperslab(fspc_id, H5S_SELECT_SET, hdf_start, NULL, hdf_count,
-                        NULL);
+    result = H5Sselect_hyperslab(fspc_id, H5S_SELECT_SET, hdf_start, NULL, 
+                                 hdf_count, NULL);
+    if (result < 0) {
+        goto cleanup;
+    }
 
     if (opcode == MIRW_OP_READ) {
         result = H5Dread(dset_id, type_id, mspc_id, fspc_id, H5P_DEFAULT, 
@@ -838,11 +840,10 @@ main(int argc, char **argv)
     long imap[NDIMS];
     long offset;
     long sizes[NDIMS] = {CX,CY,CZ};
-    unsigned short stmp3[2][2][2];
     midimhandle_t hdims[NDIMS];
     char *dimnames[] = {"xspace", "yspace", "zspace"};
 
-    result = miopen_volume("hyper.mnc", MI2_OPEN_READ, &hvol);
+    result = miopen_volume("hyper.mnc", MI2_OPEN_RDWR, &hvol);
     if (result < 0) {
         TESTRPT("Unable to open input file", result);
     }
@@ -855,11 +856,7 @@ main(int argc, char **argv)
 
     miset_apparent_dimension_order_by_name(hvol, 3, dimnames);
 
-    /*
-    hvol->dim_handles[0]->flipping_order = MI_COUNTER_FILE_ORDER;
-    hvol->dim_handles[1]->flipping_order = MI_COUNTER_FILE_ORDER;
-    hvol->dim_handles[2]->flipping_order = MI_COUNTER_FILE_ORDER;
-    */
+    miset_dimension_apparent_voxel_order(hdims[2], MI_COUNTER_FILE_ORDER);
 
     start[0] = start[1] = start[2] = 0;
     i = miget_real_value_hyperslab(hvol, MI_TYPE_DOUBLE, start, count,
@@ -919,6 +916,34 @@ main(int argc, char **argv)
             }
         }
     }
+
+    i = miget_voxel_value_hyperslab(hvol, MI_TYPE_USHORT, start, count, stemp);
+    if (i < 0) {
+        printf("oops\n");
+    }
+    else {
+        for (i = 0; i < CX; i++) {
+            for (j = 0; j < CY; j++) {
+                for (k = 0; k < CZ; k++) {
+                    stemp[i][j][k] = stemp[i][j][k] ^ 0x55;
+                }
+            }
+        }
+    }
+    i = miset_voxel_value_hyperslab(hvol, MI_TYPE_USHORT, start, count, stemp);
+    if (i < 0) {
+        printf("oops\n");
+    }
+    else {
+        for (i = 0; i < CX; i++) {
+            for (j = 0; j < CY; j++) {
+                for (k = 0; k < CZ; k++) {
+                    stemp[i][j][k] = stemp[i][j][k] ^ 0x55;
+                }
+            }
+        }
+    }
+    i = miset_voxel_value_hyperslab(hvol, MI_TYPE_USHORT, start, count, stemp);
     miclose_volume(hvol);
     return (error_cnt);
 }
