@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.28 1995-07-31 13:44:53 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.29 1995-08-16 01:58:07 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -633,141 +633,14 @@ private  Status  get_dimension_ordering(
     return( status );
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : output_slab
-@INPUT      : file
-              volume
-              to_volume
-              file_start
-              file_count
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Outputs the slab specified by the file start and count arrays,
-              from the volume.  The to_volume array translates axes in the file
-              to axes in the volume.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  output_slab(
-    Minc_file   file,
-    Volume      volume,
-    int         to_volume[],
-    long        file_start[],
-    long        file_count[] )
+private  void  check_output_variables(
+    Minc_file   file )
 {
-    int      ind, expected_ind, n_vol_dims, file_ind;
-    int      iv[MAX_VAR_DIMS];
-    void     *void_ptr;
-    BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
-    Volume   tmp_volume;
-    int      tmp_ind, tmp_sizes[MAX_DIMENSIONS];
-    int      tmp_vol_indices[MAX_DIMENSIONS];
-    int      zero[MAX_VAR_DIMS];
-    nc_type  data_type;
-
-    direct_to_volume = TRUE;
-    n_vol_dims = get_volume_n_dimensions( volume );
-    expected_ind = n_vol_dims-1;
-    tmp_ind = file->n_slab_dims-1;
-    non_full_size_found = FALSE;
-
-    for_less( ind, 0, n_vol_dims )
-        tmp_vol_indices[ind] = -1;
-
-    for( file_ind = file->n_file_dimensions-1;  file_ind >= 0;  --file_ind )
-    {
-        ind = to_volume[file_ind];
-        if( ind != INVALID_AXIS )
-        {
-            if( !non_full_size_found &&
-                file_count[file_ind] < file->sizes_in_file[file_ind] )
-                non_full_size_found = TRUE;
-            else if( non_full_size_found && file_count[file_ind] > 1 )
-                direct_to_volume = FALSE;
-
-            if( file_count[file_ind] > 1 && ind != expected_ind )
-                direct_to_volume = FALSE;
-
-            if( file_count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
-            {
-                tmp_sizes[tmp_ind] = file->sizes_in_file[file_ind];
-                tmp_vol_indices[ind] = tmp_ind;
-                zero[tmp_ind] = 0;
-                --tmp_ind;
-            }
-
-            --expected_ind;
-
-            iv[ind] = (int) file_start[file_ind];
-        }
-    }
-
-    if( direct_to_volume )        /* file is same order as volume */
-    {
-        GET_VOXEL_PTR( void_ptr, volume, iv[0], iv[1], iv[2], iv[3], iv[4] );
-        (void) miicv_put( file->icv, file_start, file_count, void_ptr );
-    }
-    else
-    {
-        data_type = get_volume_nc_data_type( volume, &signed_flag );
-
-        tmp_volume = create_volume( file->n_slab_dims, NULL,
-                                    data_type, signed_flag,
-                                    get_volume_voxel_min(volume),
-                                    get_volume_voxel_max(volume) );
-
-        set_volume_sizes( tmp_volume, tmp_sizes );
-        alloc_volume_data( tmp_volume );
-
-        copy_volumes_reordered( tmp_volume, zero, volume, iv, tmp_vol_indices );
-
-        GET_VOXEL_PTR( void_ptr, tmp_volume, 0, 0, 0, 0, 0 );
-        (void) miicv_put( file->icv, file_start, file_count, void_ptr );
-
-        delete_volume( tmp_volume );
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : output_the_volume
-@INPUT      : file
-              volume
-              volume_count
-              file_start
-@OUTPUT     : 
-@RETURNS    : OK or ERROR
-@DESCRIPTION: Outputs the volume to the file in the given position.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  Status  output_the_volume(
-    Minc_file   file,
-    Volume      volume,
-    int         volume_count[],
-    long        file_start[] )
-{
-    Status            status;
-    int               i, d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
-    int               slab_size, n_slab, this_count;
-    int               vol_index, step, n_steps, n_range_dims;
-    int               to_volume_index[MAX_VAR_DIMS];
-    int               to_file_index[MAX_DIMENSIONS];
-    long              file_indices[MAX_VAR_DIMS];
-    long              count[MAX_VAR_DIMS];
+    int               d, axis;
     long              start_index, mindex[MAX_VAR_DIMS];
     Real              voxel_min, voxel_max, real_min, real_max;
-    char              **vol_dimension_names;
     double            dim_value;
-    BOOLEAN           increment;
-    progress_struct   progress;
+    Volume            volume;
 
     if( !file->end_def_done )
     {
@@ -779,6 +652,8 @@ private  Status  output_the_volume(
 
     if( !file->variables_written )
     {
+        volume = file->volume;
+
         file->variables_written = TRUE;
 
         ncopts = NC_VERBOSE;
@@ -839,6 +714,197 @@ private  Status  output_the_volume(
         }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
+}
+
+public  Status  output_minc_hyperslab(
+    Minc_file           file,
+    multidim_array      *array,
+    int                 array_start[],
+    int                 to_array[],
+    int                 file_start[],
+    int                 file_count[] )
+{
+    int              ind, expected_ind, n_array_dims, file_ind, dim;
+    int              n_file_dims, n_tmp_dims;
+    long             long_file_start[MAX_DIMENSIONS];
+    long             long_file_count[MAX_DIMENSIONS];
+    void             *void_ptr;
+    BOOLEAN          direct_to_array, non_full_size_found;
+    int              tmp_ind, tmp_sizes[MAX_DIMENSIONS];
+    int              array_indices[MAX_DIMENSIONS];
+    int              array_counts[MAX_VAR_DIMS];
+    int              zero[MAX_VAR_DIMS];
+    Data_types       data_type;
+    Status           status;
+    multidim_array   buffer_array;
+
+    check_output_variables( file );
+
+    n_array_dims = get_multidim_n_dimensions( array );
+    n_file_dims = file->n_file_dimensions;
+    expected_ind = n_array_dims-1;
+    tmp_ind = n_file_dims-1;
+    non_full_size_found = FALSE;
+
+    for_less( ind, 0, n_array_dims )
+    {
+        array_indices[ind] = -1;
+        array_counts[ind] = 1;
+    }
+
+    direct_to_array = TRUE;
+
+    for( file_ind = n_file_dims-1;  file_ind >= 0;  --file_ind )
+    {
+        long_file_start[file_ind] = (long) file_start[file_ind];
+        long_file_count[file_ind] = (long) file_count[file_ind];
+        ind = to_array[file_ind];
+        if( ind != INVALID_AXIS )
+        {
+            array_counts[ind] = file_count[file_ind];
+
+            if( !non_full_size_found &&
+                file_count[file_ind] < file->sizes_in_file[file_ind] )
+                non_full_size_found = TRUE;
+            else if( non_full_size_found && file_count[file_ind] > 1 )
+                direct_to_array = FALSE;
+
+            if( file_count[file_ind] > 1 && ind != expected_ind )
+                direct_to_array = FALSE;
+
+            if( file_count[file_ind] != 1 ||
+                file->sizes_in_file[file_ind] == 1 )
+            {
+                tmp_sizes[tmp_ind] = file_count[file_ind];
+                array_indices[ind] = tmp_ind;
+                --tmp_ind;
+            }
+
+            --expected_ind;
+        }
+    }
+
+    if( direct_to_array )        /* file is same order as array */
+    {
+        GET_MULTIDIM_PTR( void_ptr, *array, array_start[0], array_start[1],
+                          array_start[2], array_start[3], array_start[4] );
+    }
+    else
+    {
+        n_tmp_dims = n_file_dims - tmp_ind - 1;
+
+        for_less( dim, 0, n_tmp_dims )
+        {
+            tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
+            zero[dim] = 0;
+        }
+
+        for_less( dim, 0, n_array_dims )
+            array_indices[dim] -= tmp_ind + 1;
+
+        data_type = get_multidim_data_type( array );
+
+        create_multidim_array( &buffer_array, n_tmp_dims, tmp_sizes, data_type);
+
+        copy_multidim_reordered( &buffer_array, zero, array,
+                                 array_start, array_counts, array_indices );
+
+        GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
+    }
+
+    if( miicv_put( file->icv, long_file_start, long_file_count, void_ptr )
+                                                          == MI_ERROR )
+        status = ERROR;
+    else
+        status = OK;
+
+    if( !direct_to_array )
+        delete_multidim_array( &buffer_array );
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_slab
+@INPUT      : file
+              volume
+              to_volume
+              file_start
+              file_count
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Outputs the slab specified by the file start and count arrays,
+              from the volume.  The to_volume array translates axes in the file
+              to axes in the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  output_slab(
+    Minc_file   file,
+    Volume      volume,
+    int         to_volume[],
+    long        file_start[],
+    long        file_count[] )
+{
+    int      file_ind, ind;
+    int      volume_start[MAX_DIMENSIONS];
+    int      int_file_count[MAX_DIMENSIONS];
+    int      int_file_start[MAX_DIMENSIONS];
+
+    for_less( file_ind, 0, file->n_file_dimensions )
+    {
+        int_file_start[file_ind] = (int) file_start[file_ind];
+        int_file_count[file_ind] = (int) file_count[file_ind];
+
+        ind = to_volume[file_ind];
+        if( ind != INVALID_AXIS )
+            volume_start[ind] = int_file_start[file_ind];
+        else
+            volume_start[ind] = 0;
+    }
+
+    (void) output_minc_hyperslab( file, &volume->array, volume_start,
+                                  to_volume, int_file_start, int_file_count );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_the_volume
+@INPUT      : file
+              volume
+              volume_count
+              file_start
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the volume to the file in the given position.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  output_the_volume(
+    Minc_file   file,
+    Volume      volume,
+    int         volume_count[],
+    long        file_start[] )
+{
+    Status            status;
+    int               i, d, n_volume_dims, sizes[MAX_DIMENSIONS];
+    int               slab_size, n_slab, this_count;
+    int               vol_index, step, n_steps, n_range_dims;
+    int               to_volume_index[MAX_VAR_DIMS];
+    int               to_file_index[MAX_DIMENSIONS];
+    long              file_indices[MAX_VAR_DIMS];
+    long              count[MAX_VAR_DIMS];
+    Real              real_min, real_max;
+    char              **vol_dimension_names;
+    BOOLEAN           increment;
+    progress_struct   progress;
 
     /* --- check if dimension name correspondence between volume and file */
 

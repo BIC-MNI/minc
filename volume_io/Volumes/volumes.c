@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.48 1995-08-14 18:08:25 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.49 1995-08-16 01:58:06 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -77,7 +77,7 @@ private  char  *convert_spatial_axis_to_dim_name(
         "convert_spatial_axis_to_dim_name" ); break;
     }
 
-    return( (char *) 0 );
+    return( NULL );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -169,11 +169,7 @@ public   Volume   create_volume(
 
     ALLOC( volume, 1 );
 
-    volume->data = (void *) NULL;
-
     volume->is_rgba_data = FALSE;
-
-    volume->n_dimensions = n_dimensions;
 
     volume->real_range_set = FALSE;
     volume->real_value_scale = 1.0;
@@ -210,7 +206,7 @@ public   Volume   create_volume(
         (void) strcpy( volume->dimension_names[i], name );
     }
 
-    volume->data_type = NO_DATA_TYPE;
+    create_empty_multidim_array( &volume->array, n_dimensions, NO_DATA_TYPE );
 
     set_volume_type( volume, nc_data_type, signed_flag, voxel_min, voxel_max );
     set_volume_sizes( volume, sizes );
@@ -280,7 +276,8 @@ public  void  set_volume_type(
             data_type = DOUBLE;
             break;
         }
-        volume->data_type = data_type;
+
+        set_multidim_data_type( &volume->array, data_type );
         volume->nc_data_type = nc_data_type;
         volume->signed_flag = signed_flag;
 
@@ -327,40 +324,7 @@ public  nc_type  get_volume_nc_data_type(
 public  Data_types  get_volume_data_type(
     Volume       volume )
 {
-    return( volume->data_type );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_type_size
-@INPUT      : type
-@OUTPUT     : 
-@RETURNS    : size of the type
-@DESCRIPTION: Returns the size of the given type.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : June, 1993           David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  int  get_type_size(
-    Data_types   type )
-{
-    int   size;
-
-    switch( type )
-    {
-    case  UNSIGNED_BYTE:    size = sizeof( unsigned char );   break;
-    case  SIGNED_BYTE:      size = sizeof( signed   char );   break;
-    case  UNSIGNED_SHORT:   size = sizeof( unsigned short );  break;
-    case  SIGNED_SHORT:     size = sizeof( signed   short );  break;
-    case  UNSIGNED_LONG:    size = sizeof( unsigned long );   break;
-    case  SIGNED_LONG:      size = sizeof( signed   long );   break;
-    case  FLOAT:            size = sizeof( float );           break;
-    case  DOUBLE:           size = sizeof( double );          break;
-    }
-
-    return( size );
+    return( get_multidim_data_type( &volume->array ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -399,49 +363,13 @@ public  BOOLEAN  is_an_rgb_volume(
 public  void  alloc_volume_data(
     Volume   volume )
 {
-    int    type_size, *sizes;
-    void   *p1, **p2, ***p3, ****p4, *****p5;
+    alloc_multidim_array( &volume->array );
+}
 
-    if( volume->data != (void *) NULL )
-        free_volume_data( volume );
-
-    if( volume->data_type == NO_DATA_TYPE )
-    {
-        print_error(
-           "Error: cannot allocate volume data until size specified.\n" );
-        return;
-    }
-
-    sizes = volume->sizes;
-    type_size = get_type_size( volume->data_type );
-
-    switch( volume->n_dimensions )
-    {
-    case  1:
-        alloc_memory_1d( &p1, sizes[0], type_size _ALLOC_SOURCE_LINE );
-        volume->data = (void *) p1;
-        break;
-    case  2:
-        alloc_memory_2d( &p2, sizes[0], sizes[1], type_size _ALLOC_SOURCE_LINE);
-        volume->data = (void *) p2;
-        break;
-    case  3:
-        alloc_memory_3d( &p3, sizes[0], sizes[1], sizes[2], type_size
-                         _ALLOC_SOURCE_LINE );
-        volume->data = (void *) p3;
-        break;
-    case  4:
-        alloc_memory_4d( &p4, sizes[0], sizes[1],
-                         sizes[2], sizes[3], type_size _ALLOC_SOURCE_LINE );
-        volume->data = (void *) p4;
-        break;
-    case  5:
-        alloc_memory_5d( &p5, sizes[0], sizes[1],
-                         sizes[2], sizes[3], sizes[4], type_size
-                         _ALLOC_SOURCE_LINE );
-        volume->data = (void *) p5;
-        break;
-    }
+public  BOOLEAN  volume_is_alloced(
+    Volume   volume )
+{
+    return( multidim_array_is_alloced( &volume->array ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -460,25 +388,7 @@ public  void  alloc_volume_data(
 public  void  free_volume_data(
     Volume   volume )
 {
-    if( volume->data == (void *) NULL )
-    {
-        print_error( "Warning: cannot free NULL volume data.\n" );
-        return;
-    }
-
-    switch( volume->n_dimensions )
-    {
-    case  1:  free_memory_1d( (void **) &volume->data _ALLOC_SOURCE_LINE );
-              break;
-    case  2:  free_memory_2d( (void ***) &volume->data _ALLOC_SOURCE_LINE );
-              break;
-    case  3:  free_memory_3d( (void ****) &volume->data _ALLOC_SOURCE_LINE );
-              break;
-    case  4:  free_memory_4d( (void *****) &volume->data _ALLOC_SOURCE_LINE );
-              break;
-    case  5:  free_memory_5d( (void ******) &volume->data _ALLOC_SOURCE_LINE );
-              break;
-    }
+    delete_multidim_array( &volume->array );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -505,12 +415,11 @@ public  void  delete_volume(
         return;
     }
 
-    if( volume->data != (void *) NULL )
-        free_volume_data( volume );
+    free_volume_data( volume );
 
     delete_general_transform( &volume->voxel_to_world_transform );
 
-    for_less( d, 0, volume->n_dimensions )
+    for_less( d, 0, get_volume_n_dimensions(volume) )
         FREE( volume->dimension_names[d] );
 
     FREE( volume );
@@ -532,7 +441,7 @@ public  void  delete_volume(
 public  int  get_volume_n_dimensions(
     Volume   volume )
 {
-    return( volume->n_dimensions );
+    return( get_multidim_n_dimensions( &volume->array ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -553,10 +462,7 @@ public  void  get_volume_sizes(
     Volume   volume,
     int      sizes[] )
 {
-    int   i;
-
-    for_less( i, 0, volume->n_dimensions )
-        sizes[i] = volume->sizes[i];
+    get_multidim_sizes( &volume->array, sizes );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -577,10 +483,7 @@ public  void  set_volume_sizes(
     Volume       volume,
     int          sizes[] )
 {
-    int             i;
-
-    for_less( i, 0, volume->n_dimensions )
-        volume->sizes[i] = sizes[i];
+    set_multidim_sizes( &volume->array, sizes );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -605,7 +508,7 @@ public  int  get_volume_total_n_voxels(
 
     get_volume_sizes( volume, sizes );
 
-    for_less( i, 0, volume->n_dimensions )
+    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
         n *= sizes[i];
 
     return( n );
@@ -873,7 +776,7 @@ public  void  get_volume_separations(
 {
     int   i;
 
-    for_less( i, 0, volume->n_dimensions )
+    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
         separations[i] = volume->separations[i];
 }
 
@@ -897,7 +800,7 @@ public  void  set_volume_separations(
 {
     int   i;
 
-    for_less( i, 0, volume->n_dimensions )
+    for_less( i, 0, get_multidim_n_dimensions( &volume->array ) )
         volume->separations[i] = separations[i];
 
     recompute_world_transform( volume );
@@ -927,7 +830,7 @@ public  void  set_volume_translation(
 {
     int  c;
 
-    for_less( c, 0, volume->n_dimensions )
+    for_less( c, 0, get_multidim_n_dimensions( &volume->array ) )
         volume->translation_voxel[c] = voxel[c];
 
     for_less( c, 0, N_DIMENSIONS )
@@ -959,7 +862,7 @@ public  void  get_volume_translation(
 {
     int  c;
 
-    for_less( c, 0, volume->n_dimensions )
+    for_less( c, 0, get_multidim_n_dimensions( &volume->array ) )
         voxel[c] = volume->translation_voxel[c];
 
     for_less( c, 0, N_DIMENSIONS )
@@ -1449,7 +1352,7 @@ public  void  set_volume_voxel_range(
 
     if( voxel_min >= voxel_max )
     {
-        switch( volume->data_type )
+        switch( get_volume_data_type( volume ) )
         {
         case UNSIGNED_BYTE:
             voxel_min = 0.0;          voxel_max = UCHAR_MAX;     break;
@@ -1580,7 +1483,8 @@ public  void  set_volume_real_range(
 {
     Real    voxel_min, voxel_max;
 
-    if( volume->data_type == FLOAT || volume->data_type == DOUBLE )
+    if( get_volume_data_type(volume) == FLOAT ||
+        get_volume_data_type(volume) == DOUBLE )
     {
         set_volume_voxel_range( volume, real_min, real_max );
         volume->real_value_scale = 1.0;

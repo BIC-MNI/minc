@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.1 1995-08-15 17:56:32 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.2 1995-08-16 01:58:07 david Exp $";
 #endif
 
 public   void   create_empty_multidim_array(
@@ -217,6 +217,7 @@ public  void  copy_multidim_reordered(
     int                 dest_ind[],
     multidim_array      *src,
     int                 src_ind[],
+    int                 counts[],
     int                 to_dest_index[] )
 {
     int     i, last_src_dim, inner_size, src_inner_step, dest_inner_step;
@@ -256,7 +257,8 @@ public  void  copy_multidim_reordered(
 
     /*--- check if we can transfer more than one at once */
 
-    while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 )
+    while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 &&
+           counts[n_src_dims-1] == src_sizes[n_src_dims-1] )
     {
         type_size *= src_sizes[n_src_dims-1];
         --n_src_dims;
@@ -268,7 +270,7 @@ public  void  copy_multidim_reordered(
         last_src_dim = n_src_dims-1;
         while( to_dest_index[last_src_dim] < 0 )
             --last_src_dim;
-        inner_size = src_sizes[last_src_dim];
+        inner_size = counts[last_src_dim];
         src_inner_step = src_offset[last_src_dim];
         dest_inner_step = dest_offset[to_dest_index[last_src_dim]];
     }
@@ -325,13 +327,13 @@ public  void  copy_multidim_reordered(
                 dest_ptr += dest_offset[dest_index];
 
                 ++ind[d];
-                if( ind[d] < src_sizes[d] )
+                if( ind[d] < src_ind[d] + counts[d] )
                     done = FALSE;
                 else
                 {
-                    ind[d] = 0;
-                    src_ptr -= src_offset[d] * src_sizes[d];
-                    dest_ptr -= dest_offset[dest_index] * src_sizes[d];
+                    ind[d] = src_ind[d];
+                    src_ptr -= src_offset[d] * counts[d];
+                    dest_ptr -= dest_offset[dest_index] * counts[d];
                 }
             }
 
@@ -339,4 +341,3 @@ public  void  copy_multidim_reordered(
         }
     }
 }
-

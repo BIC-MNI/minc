@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.36 1995-07-31 13:44:50 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.37 1995-08-16 01:58:06 david Exp $";
 #endif
 
 #include  <minc.h>
@@ -70,7 +70,7 @@ public  Status  start_volume_input(
                                  volume_voxel_min, volume_voxel_max );
     }
     else if( n_dimensions != get_volume_n_dimensions( *volume ) &&
-             (*volume)->data != (void *) NULL )
+             volume_is_alloced( *volume ) )
         free_volume_data( *volume );
 
     expand_filename( filename, expanded_filename );

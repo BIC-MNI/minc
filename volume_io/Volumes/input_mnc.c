@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.42 1995-08-15 18:20:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.43 1995-08-16 01:58:05 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -636,157 +636,6 @@ public  Status  close_minc_input(
     return( OK );
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : copy_volumes_reordered
-@INPUT      : dest
-              dest_ind
-              src
-              src_ind
-              to_dest_index
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Copies a hyperslab from one volume to another.  The src_ind and
-              dest_ind are the starting points in the src and dest.  The
-              array to_dest_index gives the destination axis that each
-              src axis corresponds to, or -1 if no correspondence.  For
-              any src_ind[] and dest_ind[] which have a correspondence, the
-              starting position used is 0.  Therefore only hyperslabs which
-              have a count of either 1 or sizes[d] are performed.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  copy_volumes_reordered(
-    Volume      dest,
-    int         dest_ind[],
-    Volume      src,
-    int         src_ind[],
-    int         to_dest_index[] )
-{
-    int     i, last_src_dim, inner_size, src_inner_step, dest_inner_step;
-    int     d, n_src_dims, n_dest_dims, ind[MAX_DIMENSIONS];
-    int     type_size, src_sizes[MAX_DIMENSIONS];
-    int     dest_offset[MAX_DIMENSIONS], src_offset[MAX_DIMENSIONS];
-    int     dest_sizes[MAX_DIMENSIONS], dest_index;
-    char    *dest_ptr, *src_ptr;
-    BOOLEAN done;
-
-    type_size = get_type_size( get_volume_data_type(dest) );
-
-    /*--- initialize dest */
-
-    n_dest_dims = get_volume_n_dimensions( dest );
-    get_volume_sizes( dest, dest_sizes );
-    GET_VOXEL_PTR( dest_ptr, dest, dest_ind[0], dest_ind[1], dest_ind[2],
-                   dest_ind[3], dest_ind[4] );
-
-    dest_offset[n_dest_dims-1] = type_size;
-    for( d = n_dest_dims-2;  d >= 0;  --d )
-        dest_offset[d] = dest_offset[d+1] * dest_sizes[d+1];
-
-    /*--- initialize src */
-
-    n_src_dims = get_volume_n_dimensions( src );
-    get_volume_sizes( src, src_sizes );
-    GET_VOXEL_PTR( src_ptr, src, src_ind[0], src_ind[1], src_ind[2],
-                   src_ind[3], src_ind[4] );
-
-    src_offset[n_src_dims-1] = type_size;
-    for( d = n_src_dims-2;  d >= 0;  --d )
-        src_offset[d] = src_offset[d+1] * src_sizes[d+1];
-
-    for_less( d, 0, n_src_dims )
-        ind[d] = src_ind[d];
-
-    /*--- check if we can transfer more than one at once */
-
-    while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 )
-    {
-        type_size *= src_sizes[n_src_dims-1];
-        --n_src_dims;
-        --n_dest_dims;
-    }
-
-    if( n_src_dims > 0 )
-    {
-        last_src_dim = n_src_dims-1;
-        while( to_dest_index[last_src_dim] == INVALID_AXIS )
-            --last_src_dim;
-        inner_size = src_sizes[last_src_dim];
-        src_inner_step = src_offset[last_src_dim];
-        dest_inner_step = dest_offset[to_dest_index[last_src_dim]];
-    }
-    else
-    {
-        last_src_dim = 0;
-        inner_size = 1;
-        src_inner_step = 0;
-        dest_inner_step = 0;
-    }
-
-    done = FALSE;
-    while( !done )
-    {
-        if( src_inner_step == 1 )
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                ++src_ptr;
-                dest_ptr += dest_inner_step;
-            }
-        }
-        else if( dest_inner_step == 1 )
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                src_ptr += src_inner_step;
-                ++dest_ptr;
-            }
-        }
-        else
-        {
-            for_less( i, 0, inner_size )
-            {
-                (void) memcpy( dest_ptr, src_ptr, type_size );
-                src_ptr += src_inner_step;
-                dest_ptr += dest_inner_step;
-            }
-        }
-
-        src_ptr -= src_inner_step * inner_size;
-        dest_ptr -= dest_inner_step * inner_size;
-
-        done = TRUE;
-        d = last_src_dim-1;
-        while( d >= 0 && done )
-        {
-            dest_index = to_dest_index[d];
-            if( dest_index != INVALID_AXIS )
-            {
-                src_ptr += src_offset[d];
-                dest_ptr += dest_offset[dest_index];
-
-                ++ind[d];
-                if( ind[d] < src_sizes[d] )
-                    done = FALSE;
-                else
-                {
-                    ind[d] = 0;
-                    src_ptr -= src_offset[d] * src_sizes[d];
-                    dest_ptr -= dest_offset[dest_index] * src_sizes[d];
-                }
-            }
-
-            --d;
-        }
-    }
-}
-
 public  Status  input_minc_hyperslab(
     Minc_file        file,
     multidim_array   *array,
@@ -954,7 +803,7 @@ public  Status  input_minc_hyperslab(
         }
 
         copy_multidim_reordered( array, array_start,
-                                 &buffer_array, zero, vol1_indices );
+                                 &buffer_array, zero, tmp_sizes, vol1_indices );
 
         delete_multidim_array( &buffer_array );
     }
@@ -986,129 +835,25 @@ private  void  input_slab(
     long        start[],
     long        count[] )
 {
-    int      ind, expected_ind, n_vol_dims, file_ind, d, i;
-    int      iv[MAX_VAR_DIMS];
-    void     *void_ptr;
-    BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
-    Volume   slab_volume, rgb_volume, volume_to_read;
-    int      tmp_ind, tmp_sizes[MAX_VAR_DIMS], vol1_indices[MAX_DIMENSIONS];
-    int      zero[MAX_VAR_DIMS];
-    int      v[MAX_DIMENSIONS], voxel[MAX_DIMENSIONS];
-    Real     rgb[4];
-    Colour   colour;
-    nc_type  data_type;
+    int      file_ind, ind;
+    int      volume_start[MAX_VAR_DIMS];
+    int      file_start[MAX_DIMENSIONS];
+    int      file_count[MAX_DIMENSIONS];
 
-    direct_to_volume = !file->converting_to_colour;
-    n_vol_dims = get_volume_n_dimensions( volume );
-    expected_ind = n_vol_dims-1;
-    tmp_ind = file->n_slab_dims-1;
-    non_full_size_found = FALSE;
-
-    for_less( ind, 0, file->n_slab_dims )
-        vol1_indices[ind] = -1;
-
-    for( file_ind = file->n_file_dimensions-1;  file_ind >= 0;  --file_ind )
+    for_less( file_ind, 0, file->n_file_dimensions )
     {
+        file_start[file_ind] = (int) start[file_ind];
+        file_count[file_ind] = (int) count[file_ind];
+
         ind = to_volume[file_ind];
         if( ind != INVALID_AXIS )
-        {
-            if( !non_full_size_found &&
-                count[file_ind] < file->sizes_in_file[file_ind] )
-                non_full_size_found = TRUE;
-            else if( non_full_size_found && count[file_ind] > 1 )
-                direct_to_volume = FALSE;
-
-            if( count[file_ind] > 1 && ind != expected_ind )
-                direct_to_volume = FALSE;
-
-            if( count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
-            {
-                tmp_sizes[tmp_ind] = file->sizes_in_file[file_ind];
-                vol1_indices[tmp_ind] = ind;
-                zero[tmp_ind] = 0;
-                --tmp_ind;
-            }
-
-            --expected_ind;
-
-            iv[ind] = (int) start[file_ind];
-        }
-    }
-
-    if( direct_to_volume )        /* file is same order as volume */
-    {
-        GET_VOXEL_PTR( void_ptr, volume, iv[0], iv[1], iv[2], iv[3], iv[4] );
-        (void) miicv_get( file->icv, start, count, void_ptr );
-    }
-    else
-    {
-        data_type = get_volume_nc_data_type( volume, &signed_flag );
-
-        slab_volume = create_volume( file->n_slab_dims, NULL,
-                                    data_type, signed_flag,
-                                    get_volume_voxel_min(volume),
-                                    get_volume_voxel_max(volume) );
-
-        set_volume_sizes( slab_volume, tmp_sizes );
-        alloc_volume_data( slab_volume );
-
-        if( file->converting_to_colour )
-        {
-            rgb_volume = create_volume( file->n_slab_dims+1, NULL,
-                                        NC_FLOAT, FALSE, 0.0, 1.0 );
-            start[file->n_file_dimensions] = 0;
-            count[file->n_file_dimensions] =
-                                 file->sizes_in_file[file->n_file_dimensions];
-            tmp_sizes[file->n_slab_dims] = (int) count[file->n_file_dimensions];
-            set_volume_sizes( rgb_volume, tmp_sizes );
-            alloc_volume_data( rgb_volume );
-            volume_to_read = rgb_volume;
-        }
+            volume_start[ind] = file_start[file_ind];
         else
-            volume_to_read = slab_volume;
-
-        GET_VOXEL_PTR( void_ptr, volume_to_read, 0, 0, 0, 0, 0 );
-
-        (void) miicv_get( file->icv, start, count, void_ptr );
-
-        if( file->converting_to_colour )
-        {
-            BEGIN_ALL_VOXELS( slab_volume, v[0], v[1], v[2], v[3], v[4] )
-
-                for_less( d, 0, file->n_slab_dims )
-                    voxel[d] = v[d];
-
-                for_less( i, 0, 4 )
-                {
-                    if( file->rgba_indices[i] < 0 )
-                    {
-                        if( i < 3 )
-                            rgb[i] = 0.0;
-                        else
-                            rgb[i] = 1.0;
-                    }
-                    else
-                    {
-                         voxel[file->n_slab_dims] = file->rgba_indices[i];
-                         rgb[i] = get_volume_voxel_value( rgb_volume,
-                                             voxel[0], voxel[1],
-                                             voxel[2], voxel[3], voxel[4] );
-                    }
-                }
-
-                colour = make_rgba_Colour_0_1( rgb[0], rgb[1], rgb[2], rgb[3] );
-                set_volume_voxel_value( slab_volume,
-                                        v[0], v[1], v[2], v[3], v[4],
-                                        (Real) colour );
-            END_ALL_VOXELS
-
-            delete_volume( rgb_volume );
-        }
-
-        copy_volumes_reordered( volume, iv, slab_volume, zero, vol1_indices );
-
-        delete_volume( slab_volume );
+            volume_start[ind] = 0;
     }
+
+    (void) input_minc_hyperslab( file, &volume->array, volume_start, to_volume,
+                                 file_start, file_count );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.23 1995-07-31 13:44:48 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.24 1995-08-16 01:58:05 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -104,7 +104,7 @@ public  Status  initialize_free_format_input(
 
         /* decide how to store data in memory */
 
-        if( volume->data_type == NO_DATA_TYPE )
+        if( get_volume_data_type(volume) == NO_DATA_TYPE )
             desired_data_type = NC_BYTE;
         else
             desired_data_type = volume->nc_data_type;
@@ -294,7 +294,8 @@ public  Status  initialize_free_format_input(
        to find the max and min values, and set the value_scale and
        value_translation */
 
-    if( status == OK && volume->data_type != volume_input->file_data_type )
+    if( status == OK &&
+        get_volume_data_type(volume) != volume_input->file_data_type )
     {
         if( status == OK && !volume_input->one_file_per_slice )
         {
@@ -482,13 +483,13 @@ public  BOOLEAN  input_more_free_format_file(
 
     if( volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
-        if( volume->data == (void *) NULL )
+        if( !volume_is_alloced( volume ) )
             alloc_volume_data( volume );
 
         status = input_slice( volume_input );
 
         scaling_flag = FALSE;
-        if( volume->data_type != volume_input->file_data_type )
+        if( get_volume_data_type(volume) != volume_input->file_data_type )
         {
             scaling_flag = TRUE;
             get_volume_voxel_range( volume, &original_min_voxel,
@@ -567,18 +568,19 @@ public  BOOLEAN  input_more_free_format_file(
         }
     }
 
+    get_volume_sizes( volume, sizes );
+
     *fraction_done = (Real) volume_input->slice_index /
-                   (Real) volume->sizes[volume_input->axis_index_from_file[0]];
+                   (Real) sizes[volume_input->axis_index_from_file[0]];
 
     more_to_do = TRUE;
 
     if( volume_input->slice_index ==
-        volume->sizes[volume_input->axis_index_from_file[0]] )
+        sizes[volume_input->axis_index_from_file[0]] )
     {
         more_to_do = FALSE;
 
         min_value = get_volume_voxel_value( volume, 0, 0, 0, 0, 0 );
-        get_volume_sizes( volume, sizes );
         max_value = min_value;
         for_less( x, 0, sizes[X] )
         {
@@ -597,7 +599,7 @@ public  BOOLEAN  input_more_free_format_file(
 
         set_volume_voxel_range( volume, (Real) min_value, (Real) max_value );
 
-        if( volume->data_type != volume_input->file_data_type )
+        if( get_volume_data_type(volume) != volume_input->file_data_type )
         {
             set_volume_real_range( volume, original_min_voxel,
                                    original_max_voxel );

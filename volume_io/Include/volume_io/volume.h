@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.33 1995-07-31 13:44:31 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.34 1995-08-16 01:58:03 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,45 +36,30 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #include  <minc.h>
 #undef  cmode
 #include  <transforms.h>
-
-#define  MAX_DIMENSIONS     5
+#include  <multidim.h>
 
 extern  char   *XYZ_dimension_names[];
 extern  char   *File_order_dimension_names[];
 
 /* -------------------------- volume struct --------------------- */
 
-typedef  enum  { NO_DATA_TYPE,
-                 UNSIGNED_BYTE,
-                 SIGNED_BYTE,
-                 UNSIGNED_SHORT,
-                 SIGNED_SHORT,
-                 UNSIGNED_LONG,
-                 SIGNED_LONG,
-                 FLOAT,
-                 DOUBLE,
-                 MAX_DATA_TYPE }   Data_types;
-
 #define  ANY_SPATIAL_DIMENSION   "any_spatial_dimension"
 
 typedef  struct
 {
-    int                     n_dimensions;
+    multidim_array          array;
+
     char                    *dimension_names[MAX_DIMENSIONS];
     int                     spatial_axes[N_DIMENSIONS];
-    Data_types              data_type;
     nc_type                 nc_data_type;
     BOOLEAN                 signed_flag;
     BOOLEAN                 is_rgba_data;
-
-    void                    *data;
 
     Real                    voxel_min;
     Real                    voxel_max;
     BOOLEAN                 real_range_set;
     Real                    real_value_scale;
     Real                    real_value_translation;
-    int                     sizes[MAX_DIMENSIONS];
 
     Real                    separations[MAX_DIMENSIONS];
     Real                    translation_voxel[MAX_DIMENSIONS];
@@ -116,199 +101,74 @@ typedef  volume_struct  *Volume;
 
 /* ------------------------- set voxel value ------------------------ */
 
-/* --- private macros */
-
-#define  SET_ONE( volume, type, asterisks, subscripts, value )   \
-         (((type asterisks) ((volume)->data))  subscripts = (type) (value))
-
-#define  SET_GIVEN_DIM( volume, asterisks, subscripts, value )   \
-         switch( (volume)->data_type )  \
-         {  \
-         case UNSIGNED_BYTE:  \
-             SET_ONE( volume, unsigned char, asterisks, subscripts, value);\
-             break;  \
-         case SIGNED_BYTE:  \
-             SET_ONE( volume, signed char, asterisks, subscripts, value);\
-             break;  \
-         case UNSIGNED_SHORT:  \
-             SET_ONE( volume, unsigned short, asterisks, subscripts, value);\
-             break;  \
-         case SIGNED_SHORT:  \
-             SET_ONE( volume, signed short, asterisks, subscripts, value);\
-             break;  \
-         case UNSIGNED_LONG:  \
-             SET_ONE( volume, unsigned long, asterisks, subscripts, value);\
-             break;  \
-         case SIGNED_LONG:  \
-             SET_ONE( volume, signed long, asterisks, subscripts, value);\
-             break;  \
-         case FLOAT:  \
-             SET_ONE( volume, float, asterisks, subscripts, value);\
-             break;  \
-         case DOUBLE:  \
-             SET_ONE( volume, double, asterisks, subscripts, value);\
-             break;  \
-         }
-
 /* --- public macros to set the [x][y]... voxel of 'volume' to 'value' */
 
 #define  SET_VOXEL_1D( volume, x, value )       \
-           SET_GIVEN_DIM( volume, *, [x], value )
+           SET_MULTIDIM_1D( (volume)->array, x, value )
 
 #define  SET_VOXEL_2D( volume, x, y, value )       \
-           SET_GIVEN_DIM( volume, **, [x][y], value )
+           SET_MULTIDIM_2D( (volume)->array, x, y, value )
 
 #define  SET_VOXEL_3D( volume, x, y, z, value )       \
-           SET_GIVEN_DIM( volume, ***, [x][y][z], value )
+           SET_MULTIDIM_3D( (volume)->array, x, y, z, value )
 
 #define  SET_VOXEL_4D( volume, x, y, z, t, value )       \
-           SET_GIVEN_DIM( volume, ****, [x][y][z][t], value )
+           SET_MULTIDIM_4D( (volume)->array, x, y, z, t, value )
 
 #define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
-           SET_GIVEN_DIM( volume, *****, [x][y][z][t][v], value )
+           SET_MULTIDIM_5D( (volume)->array, x, y, z, t, v, value )
 
 /* --- same as previous, but don't have to know dimensions of volume */
 
 #define  SET_VOXEL( volume, x, y, z, t, v, value )       \
-         switch( (volume)->n_dimensions ) \
-         { \
-         case 1:  SET_VOXEL_1D( volume, x, value );              break; \
-         case 2:  SET_VOXEL_2D( volume, x, y, value );           break; \
-         case 3:  SET_VOXEL_3D( volume, x, y, z, value );        break; \
-         case 4:  SET_VOXEL_4D( volume, x, y, z, t, value );     break; \
-         case 5:  SET_VOXEL_5D( volume, x, y, z, t, v, value );  break; \
-         }
-
-/* ------------------------- get voxel value ------------------------ */
-
-/* --- private macros */
-
-#define  GET_ONE( value, volume, type, asterisks, subscripts )   \
-         (value) = (((type asterisks) ((volume)->data))  subscripts)
-
-#define  GET_GIVEN_DIM( value, volume, asterisks, subscripts )   \
-         switch( (volume)->data_type )  \
-         {  \
-         case UNSIGNED_BYTE:  \
-             GET_ONE( value, volume, unsigned char, asterisks, subscripts );\
-             break;  \
-         case SIGNED_BYTE:  \
-             GET_ONE( value, volume, signed char, asterisks, subscripts );\
-             break;  \
-         case UNSIGNED_SHORT:  \
-             GET_ONE( value, volume, unsigned short, asterisks, subscripts );\
-             break;  \
-         case SIGNED_SHORT:  \
-             GET_ONE( value, volume, signed short, asterisks, subscripts );\
-             break;  \
-         case UNSIGNED_LONG:  \
-             GET_ONE( value, volume, unsigned long, asterisks, subscripts );\
-             break;  \
-         case SIGNED_LONG:  \
-             GET_ONE( value, volume, signed long, asterisks, subscripts );\
-             break;  \
-         case FLOAT:  \
-             GET_ONE( value, volume, float, asterisks, subscripts );\
-             break;  \
-         case DOUBLE:  \
-             GET_ONE( value, volume, double, asterisks, subscripts );\
-             break;  \
-         }
+         SET_MULTIDIM( (volume)->array, x, y, z, t, v, value )
 
 /* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
 
 #define  GET_VOXEL_1D( value, volume, x )       \
-           GET_GIVEN_DIM( value, volume, *, [x] )
+           GET_MULTIDIM_1D( value, (volume)->array, x )
 
 #define  GET_VOXEL_2D( value, volume, x, y )       \
-           GET_GIVEN_DIM( value, volume, **, [x][y] )
+           GET_MULTIDIM_2D( value, (volume)->array, x, y )
 
 #define  GET_VOXEL_3D( value, volume, x, y, z )       \
-           GET_GIVEN_DIM( value, volume, ***, [x][y][z] )
+           GET_MULTIDIM_3D( value, (volume)->array, x, y, z )
 
 #define  GET_VOXEL_4D( value, volume, x, y, z, t )       \
-           GET_GIVEN_DIM( value, volume, ****, [x][y][z][t] )
+           GET_MULTIDIM_4D( value, (volume)->array, x, y, z, t )
 
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
-           GET_GIVEN_DIM( value, volume, *****, [x][y][z][t][v] )
+           GET_MULTIDIM_5D( value, (volume)->array, x, y, z, t, v )
 
 /* --- same as previous, but no need to know volume dimensions */
 
 #define  GET_VOXEL( value, volume, x, y, z, t, v )       \
-         switch( (volume)->n_dimensions ) \
-         { \
-         case 1:  GET_VOXEL_1D( value, volume, x );              break; \
-         case 2:  GET_VOXEL_2D( value, volume, x, y );           break; \
-         case 3:  GET_VOXEL_3D( value, volume, x, y, z );        break; \
-         case 4:  GET_VOXEL_4D( value, volume, x, y, z, t );     break; \
-         case 5:  GET_VOXEL_5D( value, volume, x, y, z, t, v );  break; \
-         }
+         GET_MULTIDIM( value, (volume)->array, x, y, z, t, v )
 
 /* ------------------------- get voxel ptr ------------------------ */
-
-/* --- private macros */
-
-#define  GET_ONE_PTR( ptr, volume, type, asterisks, subscripts )   \
-         (ptr) = (void *) (&(((type asterisks) ((volume)->data))  subscripts))
-
-#define  GET_GIVEN_DIM_PTR( ptr, volume, asterisks, subscripts )   \
-         switch( (volume)->data_type )  \
-         {  \
-         case UNSIGNED_BYTE:  \
-             GET_ONE_PTR( ptr, volume, unsigned char, asterisks, subscripts );\
-             break;  \
-         case SIGNED_BYTE:  \
-             GET_ONE_PTR( ptr, volume, signed char, asterisks, subscripts );\
-             break;  \
-         case UNSIGNED_SHORT:  \
-             GET_ONE_PTR( ptr, volume, unsigned short, asterisks, subscripts );\
-             break;  \
-         case SIGNED_SHORT:  \
-             GET_ONE_PTR( ptr, volume, signed short, asterisks, subscripts );\
-             break;  \
-         case UNSIGNED_LONG:  \
-             GET_ONE_PTR( ptr, volume, unsigned long, asterisks, subscripts );\
-             break;  \
-         case SIGNED_LONG:  \
-             GET_ONE_PTR( ptr, volume, signed long, asterisks, subscripts );\
-             break;  \
-         case FLOAT:  \
-             GET_ONE_PTR( ptr, volume, float, asterisks, subscripts );\
-             break;  \
-         case DOUBLE:  \
-             GET_ONE_PTR( ptr, volume, double, asterisks, subscripts );\
-             break;  \
-         }
 
 /* --- public macros to return a pointer to the [x][y]'th voxel of the
        'volume', and place it in 'ptr' */
 
 #define  GET_VOXEL_PTR_1D( ptr, volume, x )       \
-           GET_GIVEN_DIM_PTR( ptr, volume, *, [x] )
+           GET_MULTIDIM_PTR_1D( ptr, (volume)->array, x )
 
 #define  GET_VOXEL_PTR_2D( ptr, volume, x, y )       \
-           GET_GIVEN_DIM_PTR( ptr, volume, **, [x][y] )
+           GET_MULTIDIM_PTR_2D( ptr, (volume)->array, x, y )
 
 #define  GET_VOXEL_PTR_3D( ptr, volume, x, y, z )       \
-           GET_GIVEN_DIM_PTR( ptr, volume, ***, [x][y][z] )
+           GET_MULTIDIM_PTR_3D( ptr, (volume)->array, x, y, z )
 
 #define  GET_VOXEL_PTR_4D( ptr, volume, x, y, z, t )       \
-           GET_GIVEN_DIM_PTR( ptr, volume, ****, [x][y][z][t] )
+           GET_MULTIDIM_PTR_4D( ptr, (volume)->array, x, y, z, t )
 
 #define  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v )       \
-           GET_GIVEN_DIM_PTR( ptr, volume, *****, [x][y][z][t][v] )
+           GET_MULTIDIM_PTR_5D( ptr, (volume)->array, x, y, z, t, v )
 
 /* --- same as previous, but no need to know voxel dimensions */
 
 #define  GET_VOXEL_PTR( ptr, volume, x, y, z, t, v )       \
-         switch( (volume)->n_dimensions ) \
-         { \
-         case 1:  GET_VOXEL_PTR_1D( ptr, volume, x );              break; \
-         case 2:  GET_VOXEL_PTR_2D( ptr, volume, x, y );           break; \
-         case 3:  GET_VOXEL_PTR_3D( ptr, volume, x, y, z );        break; \
-         case 4:  GET_VOXEL_PTR_4D( ptr, volume, x, y, z, t );     break; \
-         case 5:  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v );  break; \
-         }
+           GET_MULTIDIM_PTR( ptr, (volume)->array, x, y, z, t, v )
 
 /* --- returns the conversion of the 'voxel' value to a real value */
 
@@ -460,16 +320,6 @@ typedef struct
     unsigned short       *short_slice_buffer;
 
 } volume_input_struct;
-
-/* --------------------- resample struct (used during resampling) ------- */
-
-typedef struct
-{
-    int                    x, y;
-    Volume                 src_volume;
-    Volume                 dest_volume;
-    General_transform      transform;
-} resample_struct;
 
 /* --------------------- filter types -------------------------------- */
 
