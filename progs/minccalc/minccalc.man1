@@ -149,16 +149,17 @@ There are two types of values in the language: vectors and scalars.
 Scalars literals are floating point numbers or may appear as symbols
 whose name starts with a lowercase letter.
 
-Besides normal scalar operators such as +, -, * and /,
-the expression language also supports the infix exponentiation 
-operator ^ and the usual boolean operators <, <=, >, >=, ==, != as
-well as && (and), || (or) and ! (not). Mathematical operations include
-abs, sqrt, exp, log, sin, and cos. There are also some specialized
-functions: 
+Besides normal scalar operators such as +, -, * and /, the expression
+language also supports the infix exponentiation operator ^ and the
+usual boolean operators <, <=, >, >=, ==, != as well as && (and), ||
+(or) and ! (not). Note that the && and || boolean operators always
+evaluate both operands, unlike C. Mathematical operations include abs,
+sqrt, exp, log, sin, and cos. There are also some specialized
+functions:
 
-   isnan(value) - 1 if value is invalid and 0 otherwise
-   clamp(val1, val2, val3) - val1 bounded by [val2, val3]
-   segment(val1, val2, val3) - tests if val1 is in [val2, val3]
+   isnan(v) - 1 if v is invalid and 0 otherwise
+   clamp(v1,v2,v3) - v1 bounded by [v2, v3]
+   segment(v1,v2,v3) - tests if v1 is in [v2, v3]
 
 Vectors can be written in the following `extensional' form
 
@@ -212,7 +213,7 @@ which is equivalent to sum(A). Note that this is similar to using
    sum=0; len{ i in [0:len(A)) | sum=sum+A[i]}
 
 since the for construct is actually an operator (although it is
-usually used for changing symbol values).
+usually only used for changing symbol values).
 
 There are also a few forms of the if-then-else construct:
 
@@ -236,6 +237,10 @@ For example, the following expression will always evaluate to 3:
 
    let a = 1, b = 2 in a + b
 
+These were originally designed to create variables only within the 
+evaluated expression, but modifications have been made so that the 
+global symbol table is changed.
+
 .SH CAVEATS
 A few things you should remember...
 
@@ -245,6 +250,8 @@ For loops and if expressions always need to be separated from the next
 expression by a semicolon.
 
 The symbol table is global.
+
+Boolean operators && and || always evaluate both operands.
 
 .SH AUTHOR
 Andrew Janke - rotor@cmr.uq.edu.au
