@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.4 1993-03-08 11:51:43 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.5 1993-05-03 10:33:07 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -41,6 +41,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define UNSIGNED 2
 #define TRUE 1
 #define FALSE 0
+#define X 0
+#define Y 1
+#define Z 2
+#define DEF_STEP DBL_MAX
+#define DEF_START DBL_MAX
 
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
@@ -82,6 +87,8 @@ int osigntype = DEF_SIGN;
 char *osign;
 double ovalid_range[2] = {0.0, -1.0};
 int ovrange_set;
+double dimstep[3] = {DEF_STEP, DEF_STEP, DEF_STEP};
+double dimstart[3] = {DEF_START, DEF_START, DEF_START};
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -149,6 +156,20 @@ ArgvInfo argTable[] = {
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
        "Don't overwrite existing file"},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Options for specifying spatial dimension coordinates."},
+   {"-xstep", ARGV_FLOAT, (char *) 1, (char *) &dimstep[X],
+       "Step size for x dimension."},
+   {"-ystep", ARGV_FLOAT, (char *) 1, (char *) &dimstep[Y],
+       "Step size for y dimension."},
+   {"-zstep", ARGV_FLOAT, (char *) 1, (char *) &dimstep[Z],
+       "Step size for z dimension."},
+   {"-xstart", ARGV_FLOAT, (char *) 1, (char *) &dimstart[X],
+       "Starting coordinate for x dimension."},
+   {"-ystart", ARGV_FLOAT, (char *) 1, (char *) &dimstart[Y],
+       "Starting coordinate for y dimension."},
+   {"-zstart", ARGV_FLOAT, (char *) 1, (char *) &dimstart[Z],
+       "Starting coordinate for z dimension."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -157,7 +178,7 @@ ArgvInfo argTable[] = {
 main(int argc, char *argv[])
 {
    int do_norm, do_vrange;
-   int cdfid, imgid, maxid, minid;
+   int cdfid, imgid, maxid, minid, varid;
    int icv;
    long start[MAX_VAR_DIMS];
    long count[MAX_VAR_DIMS];
@@ -170,6 +191,7 @@ main(int argc, char *argv[])
    long image_size, image_pix, nread, fastdim;
    int pix_size;
    int i, j;
+   int index;
    FILE *instream;
    char *tm_stamp;
 
@@ -204,9 +226,24 @@ main(int argc, char *argv[])
 
    /* Create the dimensions */
    for (i=0; i<ndims; i++) {
+
+      /* Create dimension and variable */
       dim[i] = ncdimdef(cdfid, dimname[i], dimlength[i]);
-      (void) micreate_std_variable(cdfid, dimname[i], 
+      varid = micreate_std_variable(cdfid, dimname[i], 
                                    NC_LONG, 0, NULL);
+
+      /* Write out step and start */
+      if (STR_EQ(dimname[i], MIxspace)) index = X;
+      if (STR_EQ(dimname[i], MIyspace)) index = Y;
+      if (STR_EQ(dimname[i], MIzspace)) index = Z;
+      if (dimstep[index] != DEF_STEP) {
+         (void) miattputdbl(cdfid, varid, MIstep, dimstep[index]);
+      }
+      if (dimstart[index] != DEF_START) {
+         (void) miattputdbl(cdfid, varid, MIstart, dimstart[index]);
+      }
+      
+      /* Set variables for looping through images */
       start[i]=0;
       count[i]= ((i<ndims-2) ? 1 : dimlength[i]);
       end[i]=dimlength[i];
