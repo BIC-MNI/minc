@@ -3,10 +3,14 @@
 @DESCRIPTION: Program to receive images from Siemens Vision.
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
-@MODIFIED   : $Log: dicomserver.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: dicomserver.c,v $
+ * Revision 6.1  1999-10-29 17:51:55  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:24:27  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:26  neelin
  * Release of minc version 0.5
  *
@@ -38,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.0 1997-09-12 13:24:27 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.1 1999-10-29 17:51:55 neelin Exp $";
 #endif
 
 #include <sys/types.h>

@@ -3,10 +3,14 @@
 @DESCRIPTION: Routines for dealing with spi messages.
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
-@MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
-@MODIFIED   : Added ability to convert gyrocom images to dicom images.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: reply.c,v $
+ * Revision 6.2  1999-10-29 17:52:05  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1997/09/12 23:13:28  neelin
+ * Added ability to convert gyrocom images to dicom images.
+ *
  * Revision 6.0  1997/09/12  13:23:50  neelin
  * Release of minc version 0.6
  *

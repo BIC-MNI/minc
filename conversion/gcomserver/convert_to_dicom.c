@@ -3,10 +3,14 @@
 @DESCRIPTION: Routines to convert GYROCOM images and convert them to DICOM.
 @GLOBALS    : 
 @CREATED    : September 12, 1997 (Peter Neelin)
-@MODIFIED   : $Log: convert_to_dicom.c,v $
-@MODIFIED   : Revision 1.3  1997-10-21 00:06:53  neelin
-@MODIFIED   : Fixed coordinate stuff.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: convert_to_dicom.c,v $
+ * Revision 1.4  1999-10-29 17:52:02  neelin
+ * Fixed Log keyword
+ *
+ * Revision 1.3  1997/10/21 00:06:53  neelin
+ * Fixed coordinate stuff.
+ *
  * Revision 1.2  1997/09/17  13:15:54  neelin
  * Changes to unpack packed images and to get coordinate directions right.
  *
@@ -26,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.3 1997-10-21 00:06:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.4 1999-10-29 17:52:02 neelin Exp $";
 #endif
 
 #include <stdio.h>

@@ -3,10 +3,14 @@
 @DESCRIPTION: Header file for routines that read ECAT image files
 @GLOBALS    : 
 @CREATED    : January 4, 1996 (Peter Neelin)
-@MODIFIED   : $Log: ecat_file.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:22  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: ecat_file.h,v $
+ * Revision 6.1  1999-10-29 17:52:01  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:24:22  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:21  neelin
  * Release of minc version 0.5
  *

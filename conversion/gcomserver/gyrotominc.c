@@ -3,10 +3,14 @@
 @DESCRIPTION: Program to convert gyrocom files to minc format.
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
-@MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: gyrotominc.c,v $
+ * Revision 6.1  1999-10-29 17:52:04  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:50  neelin
  * Release of minc version 0.5
  *
@@ -54,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 6.0 1997-09-12 13:23:50 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 6.1 1999-10-29 17:52:04 neelin Exp $";
 #endif
 
 #include <gcomserver.h>

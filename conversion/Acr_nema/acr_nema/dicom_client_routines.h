@@ -3,10 +3,14 @@
 @DESCRIPTION: Header for dicom_client_routines.c
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
-@MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 6.4  1998-11-13 15:55:27  neelin
-@MODIFIED   : Modifications to support asynchronous transfers.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: dicom_client_routines.h,v $
+ * Revision 6.5  1999-10-29 17:51:50  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.4  1998/11/13 15:55:27  neelin
+ * Modifications to support asynchronous transfers.
+ *
  * Revision 6.3  1998/03/23  20:17:17  neelin
  * Removed some functions.
  *

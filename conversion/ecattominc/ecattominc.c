@@ -8,10 +8,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 3, 1996 (Peter Neelin)
-@MODIFIED   : $Log: ecattominc.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:22  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: ecattominc.c,v $
+ * Revision 6.1  1999-10-29 17:52:01  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:24:22  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:21  neelin
  * Release of minc version 0.5
  *
@@ -42,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.0 1997-09-12 13:24:22 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.1 1999-10-29 17:52:01 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,10 +5,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
-@MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: save_transferred_object.c,v $
+ * Revision 6.1  1999-10-29 17:51:58  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:24:27  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:26  neelin
  * Release of minc version 0.5
  *

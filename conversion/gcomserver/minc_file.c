@@ -5,10 +5,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
-@MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: minc_file.c,v $
+ * Revision 6.1  1999-10-29 17:52:04  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:50  neelin
  * Release of minc version 0.5
  *

@@ -5,11 +5,15 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
-@MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 6.1  1999-08-05 20:00:34  neelin
-@MODIFIED   : Get acquisition id from series or study element, depending on the
-@MODIFIED   : version of the Siemens software.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: siemens_dicom_read.c,v $
+ * Revision 6.2  1999-10-29 17:51:58  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1999/08/05 20:00:34  neelin
+ * Get acquisition id from series or study element, depending on the
+ * version of the Siemens software.
+ *
  * Revision 6.0  1997/09/12  13:24:27  neelin
  * Release of minc version 0.6
  *

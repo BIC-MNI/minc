@@ -4,10 +4,14 @@
               dicom server.
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
-@MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.13  1998-11-16 19:35:51  neelin
-@MODIFIED   : Added include for compilation under SunOS.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: dicom_client_routines.c,v $
+ * Revision 6.14  1999-10-29 17:51:50  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.13  1998/11/16 19:35:51  neelin
+ * Added include for compilation under SunOS.
+ *
  * Revision 6.12  1998/11/13  15:55:27  neelin
  * Modifications to support asynchronous transfers.
  *
@@ -81,7 +85,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.13 1998-11-16 19:35:51 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.14 1999-10-29 17:51:50 neelin Exp $";
 #endif
 
 #include <stdio.h>

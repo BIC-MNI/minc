@@ -8,10 +8,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : December 7, 1992 (Peter Neelin)
-@MODIFIED   : $Log: mnitominc.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:27  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mnitominc.c,v $
+ * Revision 6.1  1999-10-29 17:52:06  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:27  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:28  neelin
  * Release of minc version 0.5
  *
@@ -54,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 6.0 1997-09-12 13:23:27 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 6.1 1999-10-29 17:52:06 neelin Exp $";
 #endif
 
 #include <stdlib.h>

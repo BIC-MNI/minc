@@ -3,10 +3,14 @@
 @DESCRIPTION: Routines for dealing with dicom messages.
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
-@MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 6.2  1999-08-05 20:01:16  neelin
-@MODIFIED   : Check for broken Siemens software using a list of implementation UIDs.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: reply.c,v $
+ * Revision 6.3  1999-10-29 17:51:57  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.2  1999/08/05 20:01:16  neelin
+ * Check for broken Siemens software using a list of implementation UIDs.
+ *
  * Revision 6.1  1998/05/19  19:27:43  neelin
  * Test for Siemens Vision machine by looking for implementation uid
  * rather than AE title

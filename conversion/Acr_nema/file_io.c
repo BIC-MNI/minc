@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
-@MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 6.1  1998-11-11 16:26:49  neelin
-@MODIFIED   : Increased default buffer size to 64K.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: file_io.c,v $
+ * Revision 6.2  1999-10-29 17:51:53  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1998/11/11 16:26:49  neelin
+ * Increased default buffer size to 64K.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *

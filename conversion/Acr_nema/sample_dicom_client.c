@@ -3,10 +3,14 @@
 @DESCRIPTION: Sample program to send dicom images to a remote server
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
-@MODIFIED   : $Log: sample_dicom_client.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: sample_dicom_client.c,v $
+ * Revision 6.1  1999-10-29 17:51:54  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 1.2  1997/09/11  16:29:34  neelin
  * Modified list of files included.
  *
@@ -44,7 +48,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.0 1997-09-12 13:23:59 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.1 1999-10-29 17:51:54 neelin Exp $";
 #endif
 
 #include <stdlib.h>

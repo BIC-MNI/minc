@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
-@MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 6.1  1998-11-06 19:41:06  neelin
-@MODIFIED   : Added functions acr_group_steal_element and acr_find_group.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: group.c,v $
+ * Revision 6.2  1999-10-29 17:51:53  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1998/11/06 19:41:06  neelin
+ * Added functions acr_group_steal_element and acr_find_group.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *

@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
-@MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: acr_nema.h,v $
+ * Revision 6.1  1999-10-29 17:51:50  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.1  1997/09/08  21:53:14  neelin
  * Added dicom_client_routines.
  *

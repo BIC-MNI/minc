@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
-@MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.6  1998-11-11 17:47:38  neelin
-@MODIFIED   : Fixed up freeing of data pointers on file close.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: dicom_network.c,v $
+ * Revision 6.7  1999-10-29 17:51:51  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.6  1998/11/11 17:47:38  neelin
+ * Fixed up freeing of data pointers on file close.
+ *
  * Revision 6.5  1998/11/11  17:05:03  neelin
  * Added pointer for client data to dicom structure.
  *

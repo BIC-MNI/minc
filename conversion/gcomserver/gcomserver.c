@@ -3,10 +3,14 @@
 @DESCRIPTION: Program to receive images from Philips GYROSCAN.
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
-@MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
-@MODIFIED   : Added ability to convert gyrocom images to dicom images.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: gcomserver.c,v $
+ * Revision 6.2  1999-10-29 17:52:02  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1997/09/12 23:13:28  neelin
+ * Added ability to convert gyrocom images to dicom images.
+ *
  * Revision 6.0  1997/09/12  13:23:50  neelin
  * Release of minc version 0.6
  *
@@ -105,7 +109,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.1 1997-09-12 23:13:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.2 1999-10-29 17:52:02 neelin Exp $";
 #endif
 
 #include <sys/types.h>

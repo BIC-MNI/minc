@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
-@MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 6.3  1998-11-11 17:05:03  neelin
-@MODIFIED   : Added pointer for client data to dicom structure.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: dicom_network.h,v $
+ * Revision 6.4  1999-10-29 17:51:51  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.3  1998/11/11 17:05:03  neelin
+ * Added pointer for client data to dicom structure.
+ *
  * Revision 6.2  1998/03/23  20:16:37  neelin
  * Added functions.
  *

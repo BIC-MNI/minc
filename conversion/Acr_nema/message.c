@@ -4,11 +4,15 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
-@MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 6.3  1998-03-10 17:06:29  neelin
-@MODIFIED   : Added code to acr_input_message so that if we reach the watchpoint and
-@MODIFIED   : more message is expected, we keep on reading.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: message.c,v $
+ * Revision 6.4  1999-10-29 17:51:53  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.3  1998/03/10 17:06:29  neelin
+ * Added code to acr_input_message so that if we reach the watchpoint and
+ * more message is expected, we keep on reading.
+ * 
  * Revision 6.2  1998/03/09  19:30:23  neelin
  * Fixed bug in acr_input_message where the last group added to the input
  * message was being deleted followed by the message itself when a

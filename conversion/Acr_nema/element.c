@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
-@MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: element.c,v $
+ * Revision 6.1  1999-10-29 17:51:52  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.0  1997/09/12 13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.2  1997/09/02  22:52:12  neelin
  * Fixed padding of of UI strings and got rid of acr_string_pad_char
  * function.

@@ -5,13 +5,17 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
-@MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 6.1  1999-10-27 20:13:15  neelin
-@MODIFIED   : Generalized acr_test_byte_order to recognize groups without a length element.
-@MODIFIED   :
-@MODIFIED   : Revision 6.0  1997/09/12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: acr_io.c,v $
+ * Revision 6.2  1999-10-29 17:51:49  neelin
+ * Fixed Log keyword
+ *
+ * Revision 6.1  1999/10/27 20:13:15  neelin
+ * Generalized acr_test_byte_order to recognize groups without a length element.
+ *
+ * Revision 6.0  1997/09/12 13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.1  1997/09/08  21:53:31  neelin
  * Added status ACR_CONNECTION_TIMEDOUT.
  *
