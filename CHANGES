@@ -1,3 +1,7 @@
+************************************************************************
+
+Wed Jan 16 08:43:28 EST 2002 *** RELEASE OF MINC 1.0
+
 Tue Jan 15 12:55:21 EST 2002
    - Modified libsrc/Makefile to install ParseArgv man pages.
 
