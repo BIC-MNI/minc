@@ -119,6 +119,10 @@ while ($slice < $nslices)
 end
 echo Done
 
+# Remove the temporary file
+rm -f $newfilename
+
+# Display the images
 $VIEWER $VIEWER_OPTIONS $workingdir/{?,??,???,????} 
 
 cleanup:
