@@ -119,6 +119,10 @@ WED OCT 27/2004 Leila\\*
 THU OCT 28/2004 Leila\\*
 * Added an extra function to retrive the number of defined labels
 
+MON DEC 13/2004 Leila\\*
+* Added some minor changes to the convert functions
+* Some are not yet implemented. 
+
 \section{Introduction}
 
 
@@ -1833,117 +1837,117 @@ miset_voxel_value_hyperslab returns MI_NOERROR if it successfully sets the
 voxel value hyperslab with specified size and type and MI_ERROR otherwise
 \end{verbatim}
 
-\section{IMAGE CONVERSION VARIABLE FUNCTIONS (4)}
-\subsection{miicv\_volume\_attach}
-\begin{verbatim}
-NAME
+%\section{IMAGE CONVERSION VARIABLE FUNCTIONS (4)}
+%\subsection{miicv\_volume\_attach}
+%\begin{verbatim}
+%NAME
 
-miicv_volume_attach - attach a MINC ICV object to a MINC 2.0 volume.
+%miicv_volume_attach - attach a MINC ICV object to a MINC 2.0 volume.
 
-SYNOPSIS
+%SYNOPSIS
 
-#include <minc2.h>
+%#include <minc2.h>
 
-int miicv_volume_attach ( int           icv, 
-                          mihandle_t    volume);
+%int miicv_volume_attach ( int           icv, 
+                         % mihandle_t    volume);
 
-DESCRIPTION
+%DESCRIPTION
 
-This function attaches a MINC image conversion variable (ICV) object
-to a MINC 2.0 volume.
+%This function attaches a MINC image conversion variable (ICV) object
+%to a MINC 2.0 volume.
 
-Given the flexibility of the MINC format, there are many different
-possible choices available for details such as dimension order, data
-type, and data range. Accounting for all of the possible combinations
-of these items could make MINC programming too complex or unwieldy in
-many situations.
+%Given the flexibility of the MINC format, there are many different
+%possible choices available for details such as dimension order, data
+%type, and data range. Accounting for all of the possible combinations
+%of these items could make MINC programming too complex or unwieldy in
+%many situations.
 
-MINC ICV objects are a solution to this problem.  They are essentially
-a specification of the properties that the programmer would like the
-data to have. The ICV is responsible for making any necessary
-conversions, hiding the details of the actual data format from the
-programmer.
+%MINC ICV objects are a solution to this problem.  They are essentially
+%a specification of the properties that the programmer would like the
+%data to have. The ICV is responsible for making any necessary
+%conversions, hiding the details of the actual data format from the
+%programmer.
 
-A program may allocate any number of ICV objects and may configure and
-attach them independently, allowing the program to have several
-different views of the volume's data at the same time.
+%A program may allocate any number of ICV objects and may configure and
+%attach them independently, allowing the program to have several
+%different views of the volume's data at the same time.
 
-Note that ICV properties cannot be modified while a variable is
-attached to the ICV. If a file and variable are already attached to
-the ICV, they will be automatically detached before the new variable
-is attached.
+%Note that ICV properties cannot be modified while a variable is
+%attached to the ICV. If a file and variable are already attached to
+%the ICV, they will be automatically detached before the new variable
+%is attached.
 
-NOTE
+%NOTE
 
-This interface is being extended to allow use with the new MINC 2.0
-interface, however, the existing ICV interface will be retained as
-well.
+%This interface is being extended to allow use with the new MINC 2.0
+%interface, however, the existing ICV interface will be retained as
+%well.
 
-RETURN VALUE
+%RETURN VALUE
 
-MI_NOERROR on success, or MI_ERROR on failure.
-\end{verbatim}
+%MI_NOERROR on success, or MI_ERROR on failure.
+%\end{verbatim}
 
-\subsection{miicv\_volume\_detach}
-\begin{verbatim}
-NAME
+%\subsection{miicv\_volume\_detach}
+%\begin{verbatim}
+%NAME
 
-miicv_volume_detach - detach an image conversion variable from a volume.
+%miicv_volume_detach - detach an image conversion variable from a volume.
 
-SYNOPSIS
+%SYNOPSIS
 
-#include <minc2.h>
+%#include <minc2.h>
 
-int miicv_volume_detach ( int   icv);
+%int miicv_volume_detach ( int   icv);
 
-DESCRIPTION
+%DESCRIPTION
 
-Deletes the association between an image conversion variable (ICV) 
-and a MINC2.0 volume object.
+%Deletes the association between an image conversion variable (ICV) 
+%and a MINC2.0 volume object.
 
-RETURN VALUE
+%RETURN VALUE
 
-MI_NOERROR on success, or MI_ERROR on failure.
+%MI_NOERROR on success, or MI_ERROR on failure.
 
-SEE ALSO 
+%SEE ALSO 
 
-miicv_volume_attach
-\end{verbatim}
+%miicv_volume_attach
+%\end{verbatim}
 
-\subsection{miicv\_volume\_get/miicv\_volume\_put}
-\begin{verbatim}
-NAME
+%\subsection{miicv\_volume\_get/miicv\_volume\_put}
+%\begin{verbatim}
+%NAME
 
-miicv_volume_get, miicv_volume_put
+%miicv_volume_get, miicv_volume_put
                 
-SYNOPSIS
+%SYNOPSIS
 
-#include <minc2.h>
+%#include <minc2.h>
 
-int miicv_volume_get(int                 icv, 
-                     mihandle_t          volume, 
-                     const unsigned long start[], 
-                     const unsigned long count[], 
-                     void                *value_ptr);
+%int miicv_volume_get(int                 icv, 
+                 %    mihandle_t          volume, 
+                  %   const unsigned long start[], 
+                 %    const unsigned long count[], 
+                %     void                *value_ptr);
 
-int miicv_volume_put(int                 icv, 
-                     mihandle_t          volume, 
-                     const unsigned long start[], 
-                     const unsigned long count[], 
-                     void                *value_ptr);
+%int miicv_volume_put(int                 icv, 
+%                     mihandle_t          volume, 
+%                     const unsigned long start[], 
+ %                    const unsigned long count[], 
+ %                    void                *value_ptr);
 
-DESCRIPTION
+%DESCRIPTION
 
-These functions actually read or write data through the ICV to the attached 
-variable and volume.
+%These functions actually read or write data through the ICV to the attached 
+%variable and volume.
 
-All value/range conversions and dimension conversions are applied before the
-data is read or written.
+%All value/range conversions and dimension conversions are applied before the
+%data is read or written.
 
-RETURN VALUES
+%RETURN VALUES
 
-MI_NOERROR on success, MI_ERROR on failure.
-\end{verbatim}
+%MI_NOERROR on success, MI_ERROR on failure.
+%\end{verbatim}
 
 \section{LABEL FUNCTIONS (4)}
 \subsection{midefine\_label}
@@ -2526,19 +2530,19 @@ global range scale for the volume or MI_ERROR otherwise.
 \end{verbatim}
 
 \section{VALID MIN/MAX AND RANGE FUNCTIONS (6)}
-\subsection{miget\_valid\_max}
+\subsection{miget\_volume\_valid\_max}
 \begin{verbatim}
 
 NAME 
 
-miget_valid_max - get the valid maximum value 
+miget_volume_valid_max - get the valid maximum value 
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miget_valid_max ( mihandle_t        volume,
-                      double            *valid_max)
+int miget_volume_valid_max ( mihandle_t        volume,
+                             double            *valid_max)
                                 
 DESCRIPTION
 
@@ -2546,22 +2550,22 @@ This method gets the valid maximum value specific to the data type.
 
 RETURN VALUE
 
-miget_valid_max returns MI_NOERROR if it successfully gets 
+miget_volume_valid_max returns MI_NOERROR if it successfully gets 
 the valid maximum or MI_ERROR otherwise
 \end{verbatim}
 
-\subsection{miset\_valid\_max}
+\subsection{miset\_volume\_valid\_max}
 \begin{verbatim}
 NAME 
 
-miset_valid_max - set the valid maximum value 
+miset_volume_valid_max - set the valid maximum value 
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miset_valid_max ( mihandle_t        volume,
-                      double            valid_max)
+int miset_volume_valid_max ( mihandle_t        volume,
+                             double            valid_max)
                                 
 DESCRIPTION
 
@@ -2569,22 +2573,22 @@ This method sets the valid maximum value specific to the data type.
 
 RETURN VALUE
 
-miset_valid_max returns MI_NOERROR if it successfully sets 
+miset_volume_valid_max returns MI_NOERROR if it successfully sets 
 the valid maximum or MI_ERROR otherwise
 \end{verbatim}
 
-\subsection{miget\_valid\_min}
+\subsection{miget\_volume\_valid\_min}
 \begin{verbatim}
 NAME 
 
-miget_valid_min - get the valid minimum value 
+miget_volume_valid_min - get the valid minimum value 
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miget_valid_min ( mihandle_t        volume,
-                      double            *valid_min)
+int miget_volume_valid_min ( mihandle_t        volume,
+                             double            *valid_min)
                                 
 DESCRIPTION
 
@@ -2592,22 +2596,22 @@ This method gets the valid minimum value specific to the data type.
 
 RETURN VALUE
 
-miget_valid_min returns MI_NOERROR if it successfully gets 
+miget_volume_valid_min returns MI_NOERROR if it successfully gets 
 the valid minimum or MI_ERROR otherwise
 \end{verbatim}
 
-\subsection{miset\_valid\_min}
+\subsection{miset\_volume\_valid\_min}
 \begin{verbatim}
 NAME 
 
-miset_valid_min - set the valid minimum value 
+miset_volume_valid_min - set the valid minimum value 
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int miset_valid_min ( mihandle_t        volume,
-                      double            valid_min)
+int miset_volume_valid_min ( mihandle_t        volume,
+                             double            valid_min)
                                 
 DESCRIPTION
 
@@ -2615,7 +2619,7 @@ This method sets the valid minimum value specific to the data type.
 
 RETURN VALUE
 
-miset_valid_min returns MI_NOERROR if it successfully sets 
+miset_volume_valid_min returns MI_NOERROR if it successfully sets 
 the valid minimum or MI_ERROR otherwise
 \end{verbatim}
 
@@ -2891,7 +2895,7 @@ int  miconvert_3D_voxel_to_world ( mihandle_t        volume,
                                    double            world[3])
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 This method makes conversion from voxel to world coordinate system. The
 voxels can come in any order but the result in world coordinate system 
 would be in (x,y,z) order. Use "miconvert_voxel_to_world" if any number
@@ -2919,7 +2923,7 @@ int  miconvert_3D_world_to_voxel ( mihandle_t        volume,
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 This method makes conversion from world to voxel coordinate system. The
 dimensions in world coordinate system come in (x,y,z) order but the result  
 in voxel coordinates will be in the order of spatial dimensions. 
@@ -2950,7 +2954,7 @@ int  miconvert_3D_voxel_to_spatial_frequency ( mihandle_t            volume,
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 
 RETURN VALUE
 
@@ -2973,7 +2977,7 @@ int  miconvert_3D_spatial_frequency_to_voxel ( mihandle_t            volume,
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 
 RETURN VALUE
 
@@ -2998,7 +3002,7 @@ int  miconvert_voxel_to_world ( midimhandle_t   dimensions[],
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 
 RETURN VALUE
 
@@ -3023,7 +3027,7 @@ int  miconvert_world_to_voxel ( midimhandle_t   dimensions[],
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 
 RETURN VALUE
 
@@ -3102,7 +3106,7 @@ int  miconvert_spatial_origin_to_start( mihandle_t           volume,
                        
                                 
 DESCRIPTION
-
+** Not implemented yet!!
 This function calculates the start values for the volume dimensions,
 assuming that the spatial origin is relocated to the given world
 coordinate.
