@@ -104,6 +104,7 @@ GLOBAL_ELEMENT(ACR_Message_id                , 0x0000, 0x0110, US);
 GLOBAL_ELEMENT(ACR_Message_id_brt            , 0x0000, 0x0120, US);
 GLOBAL_ELEMENT(ACR_Initiator                 , 0x0000, 0x0200, LO);
 GLOBAL_ELEMENT(ACR_Receiver                  , 0x0000, 0x0300, LO);
+GLOBAL_ELEMENT(ACR_Priority                  , 0x0000, 0x0700, US);
 GLOBAL_ELEMENT(ACR_Dataset_type              , 0x0000, 0x0800, US);
 GLOBAL_ELEMENT(ACR_Status                    , 0x0000, 0x0900, US);
 GLOBAL_ELEMENT(ACR_Affected_SOP_instance_UID , 0x0000, 0x1000, UI);
