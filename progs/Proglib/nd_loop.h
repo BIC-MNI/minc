@@ -6,7 +6,7 @@
    Set start, end and increment vectors to define looping;
 
    nd_begin_looping(start, current, ndims);
-   while (!nd_end_of_loop(start, end, ndims)) {
+   while (!nd_end_of_loop(current, end, ndims)) {
       nd_update_current_count(current, increment, end,
                               current_count, ndims);
 
@@ -18,9 +18,12 @@
 @GLOBALS    : 
 @CREATED    : December 2, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.h,v $
-@MODIFIED   : Revision 1.2  1994-12-02 09:20:17  neelin
-@MODIFIED   : Added comments to clarify use of routines.
+@MODIFIED   : Revision 1.3  1994-12-02 09:40:37  neelin
+@MODIFIED   : Fixed arguments to nd_end_of_loop.
 @MODIFIED   :
+ * Revision 1.2  94/12/02  09:20:17  neelin
+ * Added comments to clarify use of routines.
+ * 
  * Revision 1.1  94/12/02  08:40:31  neelin
  * Initial revision
  * 
@@ -37,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 public void nd_begin_looping(long start[], long current[], int ndims);
-public int nd_end_of_loop(long start[], long end[], int ndims);
+public int nd_end_of_loop(long current[], long end[], int ndims);
 public void nd_update_current_count(long current[], 
                                     long increment[], long end[],
                                     long current_count[],
