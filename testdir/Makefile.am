@@ -1,21 +1,27 @@
 INCLUDES = -I$(top_srcdir)/libsrc \
 	-I$(top_srcdir)/volume_io/Include \
 	-I$(top_builddir)/volume_io/Include
-LDADD = ../libvolume_io.la ../libminc.la
 
 script_tests = \
 	run_tests.csh \
+	run_test2.csh \
 	xfmconcat_01.sh \
 	xfmconcat_02.sh
 
 all-local:
 	cd $(srcdir) && chmod +x $(script_tests)
 
-TESTS = $(script_tests)
+AM_CPPFLAGS = -DMINC2
+LDADD = ../libvolume_io2.la ../libminc2.la
+TESTS = run_tests.csh \
+	run_test2.csh \
+	xfmconcat_01.sh \
+	xfmconcat_02.sh \
+	mincapi
 
 check_PROGRAMS = minc test_mconv minc_types icv icv_range \
 	icv_dim test_speed icv_dim1 icv_fillvalue \
-	test_xfm create_grid_xfm
+	test_xfm create_grid_xfm mincapi
 
 EXTRA_DIST = $(script_tests) $(expect_files) t1.xfm
 
