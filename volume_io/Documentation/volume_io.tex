@@ -3148,6 +3148,14 @@ public  void  create_inverse_general_transform(
 \desc{Creates a new general transform that is the inverse of the given
 one.}
 
+{\bf\begin{verbatim}
+public  void  invert_general_transform(
+    General_transform   *transform )
+\end{verbatim}}
+
+\desc{Changes the transform to be its inverse.  Calling it twice on the
+same transform is equivalent to not calling the function at all.}
+
 \section{Reading and Writing General Transforms}
 
 General transforms are stored in files in an ascii format devised at
