@@ -792,7 +792,6 @@ differences between the \code{valid\_range} attribute and the image
 data. These differences (particularly float images with double
 \code{valid\_range}) could otherwise lead to problems in properly
 identifying invalid data.
-
 \begin{verbatim}
 public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
 \end{verbatim}
@@ -801,9 +800,20 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
 for an image variable. This function follows the NetCDF convention of
 having both variable data and \code{valid\_range} attribute with the
 same type.
-
 \begin{verbatim}
 public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
+\end{verbatim}
+
+\item \code{miget\_image\_range} : Gets the maximum real range of the
+image data based on the image-min and image-max variables.
+\begin{verbatim}
+public int miget_image_range(int cdfid, double image_range[]);
+\end{verbatim}
+
+\item \code{mivar\_exists} : Tests for the existence of a
+variable. Returns true if the variable exists.
+\begin{verbatim}
+public int mivar_exists(int cdfid, char *varname);
 \end{verbatim}
 
 \item \code{miattput\_pointer} : Create an attribute \code{name} in the
