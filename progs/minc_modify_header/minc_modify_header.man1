@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.3 2004-05-20 21:52:07 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.4 2004-05-25 21:33:11 bert Exp $
 .\"
-.TH MINC_MODIFY_HEADER 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
+.TH MINC_MODIFY_HEADER 1 "$Date: 2004-05-25 21:33:11 $" "" "MINC User's Guide"
 
 .SH NAME
 minc_modify_header - modify the attributes in the header of a minc file
@@ -49,11 +49,20 @@ Insert a string attribute into the header. If the attribute does not
 exist or the new string is longer than the existing one, then all data
 in the file will be copied.
 .TP
+\fB\-sappend\fR \fIvar:attr=value\fR
+Similar to \fB\-sinsert\fR, but appends the string to the attribute's
+value.  If the attribute already exists it must be of string type.
+.TP
 \fB\-dinsert\fR \fIvar:attr=value(,...)\fR
 Insert a double precision attribute into the header. If the attribute
 does not exist or the new attribute is longer than the existing one,
 then all data in the file will be copied. A comma-separated array of
 values can be specified.
+.TP
+\fB\-dappend\fR \fIvar:attr=value(,...)\fR
+Similar to \fB\-dinsert\fR, but appends the list of double precision 
+values to the attribute's value.  If the attribute already exists it 
+must be of double precision type.
 .TP
 \fB-delete\fR \fIvar:attr\fR
 Delete an attribute from the header. USE OF THIS OPTION WILL FORCE A
