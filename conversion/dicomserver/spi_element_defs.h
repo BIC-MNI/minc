@@ -18,10 +18,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-/* Define siemens-specific stuff for associations and messages */
-#define SPI_VISION_AE_TITLE "OC1SA1MR010000"
-#define SPI_VISION_IMPLEMENTATION_UID "2.16.840.1.113669.2.931128"
-
 /* Element number for images */
 #define SPI_IMAGE_ELEMENT 0x0010
 
