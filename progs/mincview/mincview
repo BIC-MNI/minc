@@ -1,0 +1,113 @@
+#! /bin/csh -f
+# Script for viewing a minc file.
+# Requires a pnm file viewer such as xv or display from ImageMagick,
+# as wells as the filter invert_raw_image.
+
+# Constants
+set xv_visual = `xdpyinfo | awk '/class.*TrueColor/{found=1};END{if (found) print "-visual TrueColor"}'`
+set VIEWER = "xv"       # Any pnm display program that handles a list of files
+set VIEWER_OPTIONS = "-geometry 512x512 -fixed -cmap -raw $xv_visual"
+set PGM_CODE = "P5"
+set PPM_CODE = "P6"
+
+# Check arguments
+if (($#argv < 1) || ($#argv > 2)) then
+   echo "Usage: $0 <filename.mnc> [<slice number>]"
+   exit
+endif
+set filename = "$1"
+set slice = `awk "BEGIN{print $2+0}" < /dev/null`
+@ slice_specified = ( $#argv >= 2 )
+set workingdir = /usr/tmp
+if ($?TMPDIR) then
+   set workingdir = $TMPDIR
+else
+   set workingdir = /usr/tmp
+endif
+set workingdir = $workingdir/mincview-$$
+
+set dims = `mincinfo $filename -vardims image`
+
+# Check for vector dimension
+set pnm_code = $PGM_CODE
+set bytes_per_pixel = 1
+if ("$dims[$#dims]" == "vector_dimension") then
+   @ ndims = $#dims - 1
+   set nvec = `mincinfo $filename -dimlength $dims[$#dims]`
+   set start_suffix = ",0"
+   if ($nvec != 3) then
+      set count_suffix = ",1"
+   else
+      set count_suffix = ",3"
+      set pnm_code = $PPM_CODE
+      set bytes_per_pixel = 3
+   endif
+else
+   set ndims = $#dims
+   set start_suffix = ""
+   set count_suffix = ""
+endif
+
+if ($ndims > 3) then
+   @ nprefix = $ndims - 3
+   set start_prefix = \
+      "`awk 'BEGIN{for (i=0;i<$nprefix;i++) print "'"'"0,"'"'"}' < /dev/null`"
+   set count_prefix = \
+      "`awk 'BEGIN{for (i=0;i<$nprefix;i++) print "'"'"1,"'"'"}' < /dev/null`"
+else if ($ndims < 2) then
+   echo "No image found in file $filename"
+   exit -1
+else
+   set start_prefix = ""
+   set count_prefix = ""
+endif
+
+# Get number of slices and image dimensions
+@ ind1 = $ndims - 2
+@ ind2 = $ndims - 1
+@ ind3 = $ndims
+if ($ind1 > 0) then
+   set nslices = `mincinfo $filename -dimlength $dims[$ind1]`
+else
+   set nslices = 1
+endif
+set imgsize = `mincinfo $filename -dimlength $dims[$ind2] -dimlength $dims[$ind3]`
+if ($slice_specified) then
+   if (($slice >= $nslices) || ($slice < 0)) then
+      echo "Slice number out of range"
+      exit -1
+   endif
+   @ nslices = $slice + 1
+endif
+
+# Check for inverting images to get standard orientation
+set imgstep = `mincinfo $filename -attvalue ${dims[$ind2]}:step -attvalue ${dims[$ind3]}:step -error 1`
+set rows = `echo $imgstep[1] $imgsize[1] | nawk '{if ($1<0) print $2; else print -$2;}'`
+set cols = `echo $imgstep[2] $imgsize[2] | nawk '{if ($1<0) print -$2; else print $2;}'`
+
+# Loop through slices, if needed
+onintr cleanup
+mkdir $workingdir
+echo -n Loading slices
+while ($slice < $nslices)
+   echo -n .
+   if ($ndims > 2) then
+      set start = "$start_prefix $slice,0,0 $start_suffix"
+      set count = "$count_prefix 1,$imgsize[1],$imgsize[2] $count_suffix"
+   else
+      set start = "0,0 $start_suffix"
+      set count = "$imgsize[1],$imgsize[2] $count_suffix"
+   endif
+   mincextract $filename -byte -start "$start" -count "$count" |\
+      invert_raw_image $cols $rows $bytes_per_pixel | \
+      (echo "$pnm_code\n$imgsize[1] $imgsize[2]\n255";cat) \
+         > $workingdir/$slice
+   @ slice++
+end
+echo Done
+
+$VIEWER $VIEWER_OPTIONS $workingdir/{?,??,???,????} 
+
+cleanup:
+   rm -f $workingdir/*
+   rmdir $workingdir
