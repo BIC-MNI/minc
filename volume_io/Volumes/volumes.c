@@ -465,18 +465,10 @@ public  void  convert_voxel_to_world(
     Real     *y_world,
     Real     *z_world )
 {
-    Point   voxel, world;
-
-    fill_Point( voxel, x_voxel, y_voxel, z_voxel );
-
     /* apply linear transform */
 
     transform_point( &volume->voxel_to_world_transform,
-                     &voxel, &world );
-
-    *x_world = Point_x(world);
-    *y_world = Point_y(world);
-    *z_world = Point_z(world);
+                     x_voxel, y_voxel, z_voxel, x_world, y_world, z_world );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -542,16 +534,10 @@ public  void  convert_world_to_voxel(
     Real     *y_voxel,
     Real     *z_voxel )
 {
-    Point   voxel, world;
-
-    fill_Point( world, x_world, y_world, z_world );
+    /* apply linear transform */
 
     transform_point( &volume->world_to_voxel_transform,
-                     &world, &voxel );
-
-    *x_voxel = Point_x(voxel);
-    *y_voxel = Point_y(voxel);
-    *z_voxel = Point_z(voxel);
+                     x_world, y_world, z_world, x_voxel, y_voxel, z_voxel );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -772,7 +758,9 @@ public  Boolean   evaluate_volume_in_world(
 {
     Boolean   voxel_is_active;
     Real      ignore, dxx, dxy, dxz, dyy, dyz, dzz;
-    Real      tx, ty, tz;
+    Real      txx, txy, txz;
+    Real      tyx, tyy, tyz;
+    Real      tzx, tzy, tzz;
 
     convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
 
@@ -800,24 +788,23 @@ public  Boolean   evaluate_volume_in_world(
         dzz = *deriv_zz;
         convert_voxel_normal_vector_to_world( volume,
                                               dxx, dxy, dxz,
-                                              &tx, &ty, &tz );
-        convert_voxel_normal_vector_to_world( volume,
-                                              tx, ty, tz,
-                                              deriv_xx, deriv_xy, deriv_xz );
-
+                                              &txx, &txy, &txz );
         convert_voxel_normal_vector_to_world( volume,
                                               dxy, dyy, dyz,
-                                              &tx, &ty, &tz );
-        convert_voxel_normal_vector_to_world( volume,
-                                              tx, ty, tz,
-                                              &ignore, deriv_yy, deriv_yz );
-
+                                              &tyx, &tyy, &tyz );
         convert_voxel_normal_vector_to_world( volume,
                                               dxz, dyz, dzz,
-                                              &tx, &ty, &tz );
+                                              &tzx, &tzy, &tzz );
+
         convert_voxel_normal_vector_to_world( volume,
-                                              tx, ty, tz,
-                                              &ignore, &ignore, deriv_zz );
+                                              txx, tyx, tzx,
+                                              deriv_xx, &ignore, &ignore );
+        convert_voxel_normal_vector_to_world( volume,
+                                              txy, tyy, tzy,
+                                              deriv_xy, deriv_yy, &ignore );
+        convert_voxel_normal_vector_to_world( volume,
+                                              txz, tyz, tzz,
+                                              deriv_xz, deriv_yz, deriv_zz );
     }
 
     return( voxel_is_active );
