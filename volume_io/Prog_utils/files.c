@@ -19,7 +19,7 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.32 1996-05-17 19:36:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.33 1997-02-03 18:17:44 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
@@ -527,6 +527,15 @@ public  BOOLEAN  file_exists_as_compressed(
     delete_string( expanded );
 
     return( gzipped );
+}
+
+public  STRING  get_temporary_filename( void )
+{
+    char     tmp_name[L_tmpnam+1];
+
+    (void) tmpnam( tmp_name );
+
+    return( create_string( tmp_name ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1168,8 +1177,8 @@ public  Status  input_string(
 @OUTPUT     : str
 @RETURNS    : Status
 @DESCRIPTION: Skips to the next nonwhitespace character, checks if it is a
-            : quotation mark, then reads characters into the string until the
-            : next quotation mark.
+            : quotation mark ( ", ', or ` ), then reads characters into the
+            : string until the : next quotation mark.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -1181,12 +1190,12 @@ public  Status  input_quoted_string(
     FILE            *file,
     STRING          *str )
 {
-    char     ch;
+    char     ch, quote;
     Status   status;
 
-    status = input_nonwhite_character( file, &ch );
+    status = input_nonwhite_character( file, &quote );
 
-    if( status == OK && ch != '"' )
+    if( status == OK && quote != '"' && quote != '\'' && quote != '`' )
         status = ERROR;
 
     if( status == OK )
@@ -1194,7 +1203,7 @@ public  Status  input_quoted_string(
 
     *str = create_string( NULL );
 
-    while( status == OK && ch != '"' )
+    while( status == OK && ch != quote )
     {
         concat_char_to_string( str, ch );
 
@@ -1233,26 +1242,29 @@ public  Status  input_possibly_quoted_string(
     STRING          *str )
 {
     BOOLEAN  quoted;
-    char     ch;
+    char     ch, quote;
     Status   status;
 
-    status = input_nonwhite_character( file, &ch );
+    status = input_nonwhite_character( file, &quote );
 
     if( status == OK )
     {
-        if( ch == '\"' )
+        if( quote == '"' || quote == '\'' || quote == '`' )
         {
             quoted = TRUE;
             status = input_character( file, &ch );
         }
         else
+        {
             quoted = FALSE;
+            ch = quote;
+        }
     }
 
     *str = create_string( NULL );
 
     while( status == OK &&
-           (quoted && ch != '\"' ||
+           (quoted && ch != quote ||
             !quoted && ch != ' ' && ch != '\t' && ch != '\n') )
     {
         concat_char_to_string( str, ch );
@@ -1260,9 +1272,8 @@ public  Status  input_possibly_quoted_string(
         status = input_character( file, &ch );
     }
 
-    if( !quoted && ch == '\n' )
+    if( !quoted )
         (void) unget_character( file, ch );
-
 
     if( status != OK )
     {
