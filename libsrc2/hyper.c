@@ -56,7 +56,7 @@ micalc_mapping(int ndims,
  * \a count parameters.
  */
 int
-miget_hyper_cube_size(mitype_t volume_data_type, /**< Data type of a voxel. */
+miget_hyperslab_size(mitype_t volume_data_type, /**< Data type of a voxel. */
 		      int n_dimensions, /**< Dimensionality */
 		      const long count[], /**< Dimension lengths  */
 		      misize_t *size_ptr) /**< Returned byte count */
@@ -616,7 +616,7 @@ mirw_hyperslab_mapped_icv(int opcode,
  *  data type. Float type is NOT an allowed data type.  
  */
 int
-miget_hyper_cube_normalized(mihandle_t volume, 
+miget_hyperslab_normalized(mihandle_t volume, 
                             mitype_t buffer_data_type,
                             const long start[], 
                             const long count[],
@@ -676,7 +676,7 @@ miget_hyper_cube_normalized(mihandle_t volume,
  * conversion variable (ICV).
  */
 int
-miget_hyper_cube_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
+miget_hyperslab_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
 			  int icv, /**< The ICV to use */
 			  mitype_t buffer_data_type, /**< Output datatype */
 			  const long start[], /**< Start coordinates  */
@@ -711,7 +711,7 @@ miget_hyper_cube_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
  * conversion variable (ICV).
  */
 int
-miset_hyper_cube_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
+miset_hyperslab_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
 			  int icv, /**< The ICV to use */
 			  mitype_t buffer_data_type, /**< Output datatype */
 			  const long start[], /**< Start coordinates  */
@@ -752,7 +752,7 @@ miset_hyper_cube_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
  * "real" (float or double) data range.
  */
 int
-miget_real_value_hyper_cube(mihandle_t volume,
+miget_real_value_hyperslab(mihandle_t volume,
 			    mitype_t buffer_data_type,
 			    const long start[],
 			    const long count[],
@@ -800,7 +800,7 @@ miget_real_value_hyper_cube(mihandle_t volume,
  * "real" (float or double) data range.
  */
 int
-miset_real_value_hyper_cube(mihandle_t volume,
+miset_real_value_hyperslab(mihandle_t volume,
 			    mitype_t buffer_data_type,
 			    const long start[],
 			    const long count[],
@@ -846,7 +846,7 @@ miset_real_value_hyper_cube(mihandle_t volume,
  * be performed if necessary.
  */
 int
-miget_voxel_value_hyper_cube(mihandle_t volume,
+miget_voxel_value_hyperslab(mihandle_t volume,
 			     mitype_t buffer_data_type,
 			     const long start[],
 			     const long count[],
@@ -861,7 +861,7 @@ miget_voxel_value_hyper_cube(mihandle_t volume,
  * be performed if necessary.
  */
 int
-miset_voxel_value_hyper_cube(mihandle_t volume,
+miset_voxel_value_hyperslab(mihandle_t volume,
 			     mitype_t buffer_data_type,
 			     const long start[],
 			     const long count[],
@@ -916,10 +916,10 @@ main(int argc, char **argv)
     }
     else {
         start[0] = start[1] = start[2] = 0;
-        i = miget_real_value_hyper_cube(hvol, MI_TYPE_DOUBLE, start, count,
+        i = miget_real_value_hyperslab(hvol, MI_TYPE_DOUBLE, start, count,
                                         dtemp);
         
-        printf("miget_real_value_hyper_cube()\n");
+        printf("miget_real_value_hyperslab()\n");
         if (i < 0) {
             printf("oops\n");
         }
@@ -935,9 +935,9 @@ main(int argc, char **argv)
             }
         }
 
-        printf("miget_voxel_value_hyper_cube()\n");
+        printf("miget_voxel_value_hyperslab()\n");
 
-        i = miget_voxel_value_hyper_cube(hvol, MI_TYPE_USHORT, start, count,
+        i = miget_voxel_value_hyperslab(hvol, MI_TYPE_USHORT, start, count,
                                          stemp);
         if (i < 0) {
             printf("oops\n");
@@ -954,9 +954,9 @@ main(int argc, char **argv)
             }
         }
 
-        printf("miget_hyper_cube_normalized()\n");
+        printf("miget_hyperslab_normalized()\n");
 
-        i = miget_hyper_cube_normalized(hvol, MI_TYPE_UBYTE, start, count,
+        i = miget_hyperslab_normalized(hvol, MI_TYPE_UBYTE, start, count,
                                         0.0, 4096.0 * 102.0, btemp);
         if (i < 0) {
             printf("oops\n");
