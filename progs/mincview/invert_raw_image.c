@@ -51,14 +51,14 @@ main(int argc, char *argv[])
    }
    if ((xsize == 0) || (ysize == 0)) {
       (void) fprintf(stderr,"%s : Illegal image size\n",pname);
-      (void) exit(ERROR_STATUS);
+      exit(ERROR_STATUS);
    }
    image_size = ABS(xsize*ysize);
    row_size = ABS(xsize);
    if (((buffer=malloc(image_size*bytes_per_pixel)) == NULL) ||
        ((outbuf=malloc(row_size*bytes_per_pixel)) == NULL)){
       (void) fprintf(stderr,"%s : Image too large\n",pname);
-      (void) exit(ERROR_STATUS);
+      exit(ERROR_STATUS);
    }
 
    /* Get range of loop */
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
    /* Check that input corresponds to complete images */
    if (nread>0) {
       (void) fprintf(stderr,"%s : Insufficient data\n",pname);
-      (void) exit(ERROR_STATUS);
+      exit(ERROR_STATUS);
    }
 
    return NORMAL_STATUS;
