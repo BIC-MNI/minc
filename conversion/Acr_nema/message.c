@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/06/13  21:27:16  neelin
  * Made use of message length to figure out how much to read in -
  * previously was not checking it, so if watchpoint was not set, we would

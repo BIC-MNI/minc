@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 1.2  1997-09-11 17:19:49  neelin
-@MODIFIED   : Modified creation of uids. Replaced cftime with strftime.
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 1.2  1997/09/11  17:19:49  neelin
+ * Modified creation of uids. Replaced cftime with strftime.
+ *
  * Revision 1.1  1997/09/08  21:52:21  neelin
  * Initial revision
  *
@@ -37,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 1.2 1997-09-11 17:19:49 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.0 1997-09-12 13:23:59 neelin Rel $";
 #endif
 
 #include <stdio.h>

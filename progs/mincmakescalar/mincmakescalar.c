@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : $Log: mincmakescalar.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:19  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:20  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:19  neelin
+ * Release of minc version 0.5
+ *
  * Revision 1.2  1997/08/07  16:23:19  neelin
  * Change -length to -magnitude.
  *
@@ -21,7 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 5.0 1997-08-21 13:25:19 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.0 1997-09-12 13:24:20 neelin Rel $";
 #endif
 
 #include <stdlib.h>

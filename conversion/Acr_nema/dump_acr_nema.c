@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/07/10  17:14:38  neelin
  * Added more status codes and function to return status string.
  *

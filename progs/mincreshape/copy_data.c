@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:10  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:12  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:10  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:44  neelin
  * Release of minc version 0.4
  *
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 5.0 1997-08-21 13:25:10 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.0 1997-09-12 13:24:12 neelin Rel $";
 #endif
 
 #include <stdlib.h>

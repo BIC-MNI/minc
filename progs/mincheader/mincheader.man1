@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 5.0 1997-08-21 13:24:37 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 6.0 1997-09-12 13:23:37 neelin Rel $
 .\"
 .TH MINCHEADER 1
 

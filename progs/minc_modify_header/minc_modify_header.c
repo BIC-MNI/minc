@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : $Log: minc_modify_header.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:06  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:07  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:06  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:35  neelin
  * Release of minc version 0.4
  *
@@ -40,7 +43,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 5.0 1997-08-21 13:25:06 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.0 1997-09-12 13:24:07 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicomserver.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:26  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:26  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.2  1997/07/10  17:35:35  neelin
  * Changed error handling and fixed message deletion.
  *
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 5.0 1997-08-21 13:25:26 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.0 1997-09-12 13:24:27 neelin Rel $";
 #endif
 
 #include <sys/types.h>

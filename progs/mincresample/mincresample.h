@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:22  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:21  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:22  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/08/13  15:41:12  neelin
  * Fixed initialization problem that caused crashing under Linux.
  *

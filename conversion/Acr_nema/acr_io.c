@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 5.1  1997-09-08 21:53:31  neelin
-@MODIFIED   : Added status ACR_CONNECTION_TIMEDOUT.
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.1  1997/09/08  21:53:31  neelin
+ * Added status ACR_CONNECTION_TIMEDOUT.
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:41  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.2  1997/06/20  13:58:35  neelin
  * Fixed bug: when doing accumulation with no output file and with
  * 4D input (or more), had problem setting input start vector. This broke
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 5.0 1997-08-21 13:24:41 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.0 1997-09-12 13:23:41 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecat_file.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:21  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:22  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:21  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:06:04  neelin
  * Release of minc version 0.4
  *

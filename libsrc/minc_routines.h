@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_routines.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:53  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:54  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:53  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:07:52  neelin
  * Release of minc version 0.4
  *
@@ -46,7 +49,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 5.0 1997-08-21 13:25:53 neelin Rel $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 6.0 1997-09-12 13:24:54 neelin Rel $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */

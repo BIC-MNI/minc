@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: convert_origin_to_start.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:41  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:00:50  neelin
  * Release of minc version 0.4
  *
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/convert_origin_to_start.c,v 5.0 1997-08-21 13:24:41 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/convert_origin_to_start.c,v 6.0 1997-09-12 13:23:41 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:26  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:25  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:26  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  19:59:55  neelin
  * Release of minc version 0.4
  *
@@ -88,7 +91,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 5.0 1997-08-21 13:24:26 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.0 1997-09-12 13:23:25 neelin Rel $";
 #endif
 
 #include <stdlib.h>

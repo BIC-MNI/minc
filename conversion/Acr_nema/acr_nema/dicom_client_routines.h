@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 1.1  1997-09-08 21:52:21  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 1.1  1997/09/08  21:52:21  neelin
+ * Initial revision
+ *
  * Revision 1.3  1997/07/11  17:35:58  neelin
  * Changed around send and receive routines for data once again.
  *

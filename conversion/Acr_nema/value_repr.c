@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : $Log: value_repr.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:00  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/07/10  17:13:53  neelin
  * Fixed lookup of VR names so that both letters are used.
  *

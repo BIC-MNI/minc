@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecattominc.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:21  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:22  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:21  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/05/16  18:21:37  neelin
  * Changed calculation of z filter width to use BinSize rather than
  * PlaneSeparation.
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 5.0 1997-08-21 13:25:21 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.0 1997-09-12 13:24:22 neelin Rel $";
 #endif
 
 #include <stdlib.h>

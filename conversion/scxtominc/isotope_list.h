@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : January 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: isotope_list.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:32  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:31  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:32  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:00:13  neelin
  * Release of minc version 0.4
  *

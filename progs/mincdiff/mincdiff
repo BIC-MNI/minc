@@ -5,9 +5,12 @@
 # Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
 #
 # Modifications: $Log: mincdiff,v $
-# Modifications: Revision 5.0  1997-08-21 13:24:47  neelin
-# Modifications: Release of minc version 0.5
+# Modifications: Revision 6.0  1997-09-12 13:23:46  neelin
+# Modifications: Release of minc version 0.6
 # Modifications:
+# Revision 5.0  1997/08/21  13:24:47  neelin
+# Release of minc version 0.5
+#
 # Revision 4.0  1997/05/07  20:01:01  neelin
 # Release of minc version 0.4
 #

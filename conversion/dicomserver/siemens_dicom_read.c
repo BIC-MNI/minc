@@ -6,10 +6,13 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 5.1  1997-09-10 19:36:13  neelin
-@MODIFIED   : Small fix to set default direction cosines when they are absent from the
-@MODIFIED   : dicom data.
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.1  1997/09/10  19:36:13  neelin
+ * Small fix to set default direction cosines when they are absent from the
+ * dicom data.
+ *
  * Revision 5.0  1997/08/21  13:25:26  neelin
  * Release of minc version 0.5
  *

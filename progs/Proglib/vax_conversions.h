@@ -5,9 +5,12 @@
 @CALLS      : 
 @CREATED    : January 8, 1993
 @MODIFIED   : $Log: vax_conversions.h,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:24:41  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:24:41  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:00:50  neelin
  * Release of minc version 0.4
  *
@@ -22,9 +25,12 @@
  * 
  * Revision 1.3  93/08/04  13:04:03  neelin
  * Added RCS $Log: vax_conversions.h,v $
- * Added RCS Revision 5.0  1997-08-21 13:24:41  neelin
- * Added RCS Release of minc version 0.5
+ * Added RCS Revision 6.0  1997-09-12 13:23:41  neelin
+ * Added RCS Release of minc version 0.6
  * Added RCS
+ * Revision 5.0  1997/08/21  13:24:41  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:00:50  neelin
  * Release of minc version 0.4
  *

@@ -6,10 +6,13 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 5.1  1997-09-11 13:09:40  neelin
-@MODIFIED   : Added more complicated syntax for project files so that different things
-@MODIFIED   : can be done to the data. The old syntax is still supported.
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.1  1997/09/11  13:09:40  neelin
+ * Added more complicated syntax for project files so that different things
+ * can be done to the data. The old syntax is still supported.
+ *
  * Revision 5.0  1997/08/21  13:24:50  neelin
  * Release of minc version 0.5
  *

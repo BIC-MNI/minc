@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:05  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:05  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:05  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.0  1997/05/07  20:01:34  neelin
  * Release of minc version 0.4
  *
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 5.0 1997-08-21 13:25:05 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.0 1997-09-12 13:24:05 neelin Rel $";
 #endif
 
 #include <stdlib.h>

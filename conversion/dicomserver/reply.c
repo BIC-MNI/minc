@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:26  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:26  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/07/08  23:15:09  neelin
  * Added support for C_ECHO command.
  *

@@ -5,9 +5,12 @@
 # Usage: mincedit <minc file> [<editor>]
 #
 # Modifications: $Log: mincedit,v $
-# Modifications: Revision 5.0  1997-08-21 13:24:35  neelin
-# Modifications: Release of minc version 0.5
+# Modifications: Revision 6.0  1997-09-12 13:23:34  neelin
+# Modifications: Release of minc version 0.6
 # Modifications:
+# Revision 5.0  1997/08/21  13:24:35  neelin
+# Release of minc version 0.5
+#
 # Revision 4.0  1997/05/07  20:00:36  neelin
 # Release of minc version 0.4
 #

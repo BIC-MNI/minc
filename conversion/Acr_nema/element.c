@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 5.2  1997-09-02 22:52:12  neelin
-@MODIFIED   : Fixed padding of of UI strings and got rid of acr_string_pad_char
-@MODIFIED   : function.
+@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
+ * Revision 5.2  1997/09/02  22:52:12  neelin
+ * Fixed padding of of UI strings and got rid of acr_string_pad_char
+ * function.
+ *
  * Revision 5.1  1997/08/22  15:08:34  neelin
  * Added routine acr_string_pad_char to set character used for padding
  * strings to an even number of bytes.
