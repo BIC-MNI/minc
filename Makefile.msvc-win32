@@ -1,0 +1,332 @@
+# 
+# Makefile for MINC using Microsoft Visual C/C++ (on Windows, natch).
+#
+# Written for Microsoft's NMAKE utility, but appears to work 
+# more-or-less correctly with GNU Make for Windows (as in Cygwin).
+#
+# Builds all of the MINC command-line utilities, along with the
+# MINC libraries MINC.DLL and VOLUME_IO.DLL
+#
+# Assumes that the environment variable NETCDF_ROOT points to 
+# the location of netcdf.lib and netcdf.h.  This could be made
+# more flexible to allow the library and header to reside in 
+# different directories.
+#
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.1 2004-11-01 22:22:12 bert Exp $
+#
+PROGS = worldtovoxel.exe \
+	voxeltoworld.exe \
+	minc_modify_header.exe \
+	mincaverage.exe \
+	minccalc.exe \
+	mincconcat.exe \
+	minccopy.exe \
+	mincexpand.exe \
+	mincextract.exe \
+	mincinfo.exe \
+	minclookup.exe \
+	mincmakescalar.exe \
+	mincmakevector.exe \
+	mincmath.exe \
+	mincresample.exe \
+	mincreshape.exe \
+	mincstats.exe \
+	minctoraw.exe \
+	invert_raw_image.exe \
+	mincwindow.exe \
+	rawtominc.exe \
+	xfmconcat.exe \
+	xfminvert.exe
+
+MINC_HDRS = \
+	libsrc\minc.h \
+	libsrc\minc_basic.h \
+	libsrc\minc_private.h \
+	libsrc\minc_routines.h \
+	libsrc\minc_structures.h \
+	libsrc\minc_useful.h \
+	libsrc\minc_varlists.h \
+	libsrc\nd_loop.h \
+	libsrc\ParseArgv.h \
+	libsrc\time_stamp.h \
+	libsrc\type_limits.h \
+	libsrc\voxel_loop.h
+	
+MINC_OBJS = \
+	libsrc\ParseArgv.obj \
+	libsrc\dim_conversion.obj \
+	libsrc\image_conversion.obj \
+	libsrc\minc_convenience.obj \
+	libsrc\minc_error.obj \
+	libsrc\minc_globdef.obj \
+	libsrc\nd_loop.obj \
+	libsrc\netcdf_convenience.obj \
+	libsrc\time_stamp.obj \
+	libsrc\value_conversion.obj \
+	libsrc\voxel_loop.obj
+
+VOLIO_OBJS = \
+	volume_io/Geometry/colour.obj \
+	volume_io/Geometry/colour_def.obj \
+	volume_io/Geometry/gaussian.obj \
+	volume_io/Geometry/inverse.obj \
+	volume_io/Geometry/newton.obj \
+	volume_io/Geometry/points.obj \
+	volume_io/Geometry/splines.obj \
+	volume_io/Geometry/tensors.obj \
+	volume_io/Geometry/transforms.obj \
+	volume_io/MNI_formats/gen_xf_io.obj \
+	volume_io/MNI_formats/gen_xfs.obj \
+	volume_io/MNI_formats/grid_transforms.obj \
+	volume_io/MNI_formats/mni_io.obj \
+	volume_io/MNI_formats/tag_points.obj \
+	volume_io/MNI_formats/thin_plate_spline.obj \
+	volume_io/Prog_utils/alloc.obj \
+	volume_io/Prog_utils/alloc_check.obj \
+	volume_io/Prog_utils/arrays.obj \
+	volume_io/Prog_utils/files.obj \
+	volume_io/Prog_utils/print.obj \
+	volume_io/Prog_utils/progress.obj \
+	volume_io/Prog_utils/string.obj \
+	volume_io/Prog_utils/time.obj \
+	volume_io/Volumes/evaluate.obj \
+	volume_io/Volumes/get_hyperslab.obj \
+	volume_io/Volumes/input_free.obj \
+	volume_io/Volumes/input_mnc.obj \
+	volume_io/Volumes/input_volume.obj \
+	volume_io/Volumes/multidim_arrays.obj \
+	volume_io/Volumes/output_mnc.obj \
+	volume_io/Volumes/output_volume.obj \
+	volume_io/Volumes/set_hyperslab.obj \
+	volume_io/Volumes/volume_cache.obj \
+	volume_io/Volumes/volumes.obj
+
+# Unfortunately the CVS tree does not reflect the desired file organization
+# of the software, so we have to fix that up here:
+
+VOLIO_HDRS = \
+        volume_io\Include\volume_io\alloc.h \
+        volume_io\Include\volume_io\arrays.h \
+        volume_io\Include\volume_io\basic.h \
+        volume_io\Include\volume_io\def_math.h \
+        volume_io\Include\volume_io\files.h \
+        volume_io\Include\volume_io\geometry.h \
+        volume_io\Include\volume_io\geom_structs.h \
+        volume_io\Include\volume_io\multidim.h \
+        volume_io\Include\volume_io\progress.h \
+        volume_io\Include\volume_io\string_funcs.h \
+        volume_io\Include\volume_io\system_dependent.h \
+        volume_io\Include\volume_io\transforms.h \
+        volume_io\Include\volume_io\vol_io_prototypes.h \
+        volume_io\Include\volume_io\volume_cache.h \
+        volume_io\Include\volume_io\volume.h
+
+INCLUDES = -I$(NETCDF_ROOT) -Ilibsrc -Iprogs/Proglib -Ivolume_io/Include
+DEFINES = -DDLL_NETCDF -D_POSIX_
+NETCDF_LIB = $(NETCDF_ROOT)/netcdf.lib
+LIBS = minc.lib volume_io.lib $(NETCDF_LIB)
+CFLAGS = $(INCLUDES) $(DEFINES)
+
+.SUFFIXES: .obj
+
+.c.obj:
+	cl /nologo $(CFLAGS) -c -Fo$*.obj $<
+
+all: $(PROGS) minc.dll volume_io.dll
+
+clean:
+	-del /s *.obj
+	-del *.exp
+	-del *.lib
+	-del *.dll
+	-del *.exe
+
+LINK = link
+
+$(PROGS): minc.dll volume_io.dll
+
+$(MINC_OBJS):  libsrc\config.h $(MINC_HDRS)
+
+minc.dll: $(MINC_OBJS)
+	link /dll /nologo /out:minc.dll $(MINC_OBJS) $(NETCDF_LIB)
+
+volume_io.dll: $(VOLIO_OBJS) minc.dll
+	link /dll /nologo /out:volume_io.dll $(VOLIO_OBJS) minc.lib $(NETCDF_LIB)
+
+$(VOLIO_OBJS): $(VOLIO_HDRS)
+
+volume_io\Include\volume_io\alloc.h: volume_io\Include\alloc.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\arrays.h: volume_io\Include\arrays.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\basic.h: volume_io\Include\basic.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\def_math.h: volume_io\Include\def_math.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\files.h: volume_io\Include\files.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\geometry.h: volume_io\Include\geometry.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\geom_structs.h: volume_io\Include\geom_structs.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\multidim.h: volume_io\Include\multidim.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\progress.h: volume_io\Include\progress.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\string_funcs.h: volume_io\Include\string_funcs.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\system_dependent.h: volume_io\Include\system_dependent.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\transforms.h: volume_io\Include\transforms.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\vol_io_prototypes.h: volume_io\Include\vol_io_prototypes.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\volume_cache.h: volume_io\Include\volume_cache.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+
+volume_io\Include\volume_io\volume.h: volume_io\Include\volume.h
+        -mkdir volume_io\Include\volume_io
+        copy $? $@
+        
+libsrc\config.h: libsrc\config.h.msvc-win32
+	copy libsrc\config.h.msvc-win32 libsrc\config.h
+
+WORLDTOVOXEL_OBJS = progs/coordinates/worldtovoxel.obj
+worldtovoxel.exe: $(WORLDTOVOXEL_OBJS)
+	$(LINK) $(WORLDTOVOXEL_OBJS) $(LIBS) 
+
+VOXELTOWORLD_OBJS = progs/coordinates/voxeltoworld.obj
+voxeltoworld.exe: $(VOXELTOWORLD_OBJS)
+	$(LINK) $(VOXELTOWORLD_OBJS) $(LIBS) 
+
+MINC_MODIFY_HEADER_OBJS = progs/minc_modify_header/minc_modify_header.obj
+minc_modify_header.exe: $(MINC_MODIFY_HEADER_OBJS)
+	$(LINK) $(MINC_MODIFY_HEADER_OBJS) $(LIBS) 
+
+MINCAVERAGE_OBJS = progs/mincaverage/mincaverage.obj
+mincaverage.exe: $(MINCAVERAGE_OBJS)
+	$(LINK) $(MINCAVERAGE_OBJS) $(LIBS) 
+
+MINCCALC_OBJS = \
+	progs/minccalc/minccalc.obj \
+	progs/minccalc/gram.obj \
+	progs/minccalc/lex.obj \
+	progs/minccalc/eval.obj \
+	progs/minccalc/ident.obj \
+	progs/minccalc/node.obj \
+	progs/minccalc/optim.obj \
+	progs/minccalc/scalar.obj \
+	progs/minccalc/sym.obj \
+	progs/minccalc/vector.obj
+
+minccalc.exe: $(MINCCALC_OBJS)
+	$(LINK) $(MINCCALC_OBJS) $(LIBS) 
+
+MINCCONCAT_OBJS = progs/mincconcat/mincconcat.obj
+mincconcat.exe: $(MINCCONCAT_OBJS)
+	$(LINK) $(MINCCONCAT_OBJS) $(LIBS) 
+
+MINCCOPY_OBJS = progs/minccopy/minccopy.obj
+minccopy.exe: $(MINCCOPY_OBJS)
+	$(LINK) $(MINCCOPY_OBJS) $(LIBS) 
+
+MINCEXPAND_OBJS = progs/mincexpand/mincexpand.obj
+mincexpand.exe: $(MINCEXPAND_OBJS)
+	$(LINK) $(MINCEXPAND_OBJS) $(LIBS) 
+
+MINCEXTRACT_OBJS = progs/mincextract/mincextract.obj
+mincextract.exe: $(MINCEXTRACT_OBJS)
+	$(LINK) $(MINCEXTRACT_OBJS) $(LIBS) 
+
+MINCINFO_OBJS = progs/mincinfo/mincinfo.obj
+mincinfo.exe: $(MINCINFO_OBJS)
+	$(LINK) $(MINCINFO_OBJS) $(LIBS) 
+
+MINCLOOKUP_OBJS = progs/minclookup/minclookup.obj
+minclookup.exe: $(MINCLOOKUP_OBJS)
+	$(LINK) $(MINCLOOKUP_OBJS) $(LIBS) 
+
+MINCMAKESCALAR_OBJS = progs/mincmakescalar/mincmakescalar.obj
+mincmakescalar.exe: $(MINCMAKESCALAR_OBJS)
+	$(LINK) $(MINCMAKESCALAR_OBJS) $(LIBS) 
+
+MINCMAKEVECTOR_OBJS = progs/mincmakevector/mincmakevector.obj
+mincmakevector.exe: $(MINCMAKEVECTOR_OBJS)
+	$(LINK) $(MINCMAKEVECTOR_OBJS) $(LIBS) 
+
+MINCMATH_OBJS = progs/mincmath/mincmath.obj
+mincmath.exe: $(MINCMATH_OBJS)
+	$(LINK) $(MINCMATH_OBJS) $(LIBS) 
+
+MINCRESAMPLE_OBJS = \
+	progs/mincresample/mincresample.obj \
+	progs/mincresample/resample_volumes.obj \
+	progs/Proglib/convert_origin_to_start.obj
+
+mincresample.exe: $(MINCRESAMPLE_OBJS)
+	$(LINK) $(MINCRESAMPLE_OBJS) $(LIBS) 
+
+MINCRESHAPE_OBJS = \
+	progs/mincreshape/mincreshape.obj \
+	progs/mincreshape/copy_data.obj 
+
+mincreshape.exe: $(MINCRESHAPE_OBJS)
+	$(LINK) $(MINCRESHAPE_OBJS) $(LIBS) 
+
+MINCSTATS_OBJS = progs/mincstats/mincstats.obj
+mincstats.exe: $(MINCSTATS_OBJS)
+	$(LINK) $(MINCSTATS_OBJS) $(LIBS) 
+
+MINCTORAW_OBJS = progs/minctoraw/minctoraw.obj
+minctoraw.exe: $(MINCTORAW_OBJS)
+	$(LINK) $(MINCTORAW_OBJS) $(LIBS) 
+
+INVERT_RAW_IMAGE_OBJS = progs/mincview/invert_raw_image.obj
+invert_raw_image.exe: $(INVERT_RAW_IMAGE_OBJS)
+	$(LINK) $(INVERT_RAW_IMAGE_OBJS) $(LIBS) 
+
+MINCWINDOW_OBJS = progs/mincwindow/mincwindow.obj
+mincwindow.exe: $(MINCWINDOW_OBJS) 
+	$(LINK) $(MINCWINDOW_OBJS) $(LIBS) 
+
+RAWTOMINC_OBJS = \
+	progs/rawtominc/rawtominc.obj \
+	progs/Proglib/convert_origin_to_start.obj
+
+rawtominc.exe: $(RAWTOMINC_OBJS)
+	$(LINK) $(RAWTOMINC_OBJS) $(LIBS) 
+
+XFMCONCAT_OBJS = progs/xfm/xfmconcat.obj
+xfmconcat.exe: $(XFMCONCAT_OBJS)
+	$(LINK) $(XFMCONCAT_OBJS) $(LIBS) 
+
+XFMINVERT_OBJS = progs/xfm/xfminvert.obj
+xfminvert.exe: $(XFMINVERT_OBJS)
+	$(LINK) $(XFMINVERT_OBJS) $(LIBS)
