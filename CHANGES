@@ -1,3 +1,12 @@
+Tue Sep 18 11:34:16 EDT 2001
+   - Always create image variable last in order to allow images > 2GB on
+     64-bit machines (offset to variable must be < 2GB, but size can be 
+     greater). This also fixes a compatibility problem between NetCDF 3.x 
+     and 2.3, in which 3.x can create files that cause 2.3-linked programs
+     to crash (when NC_NOFILL is set). Putting the image variable at the end
+     ensures that data is always written to the end of the file, assuming 
+     that the image data will always be completely written.
+
 Mon Aug 20 09:20:04 EDT 2001
    - more fixes to valid_range handling functions
    - added function miattget_with_sign
