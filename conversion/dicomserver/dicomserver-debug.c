@@ -1,4 +1,4 @@
-#if 1
+#if 0
 #  define DO_INPUT_TRACING
 #endif
 
@@ -6,7 +6,7 @@
 #  define KEEP_FILES
 #endif
 
-#if 1
+#if 0
 #  define DO_HIGH_LOGGING
 #endif
 #include "dicomserver.c"
