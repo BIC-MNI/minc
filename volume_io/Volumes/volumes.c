@@ -1,6 +1,8 @@
 #include  <def_mni.h>
 #include  <def_splines.h>
 
+char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
+
 private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 {
     { MIxspace },
@@ -49,6 +51,7 @@ public   Volume   create_volume(
 {
     int             i, c, sizes[MAX_DIMENSIONS];
     Status          status;
+    char            *name;
     volume_struct   *volume;
     Transform       identity;
 
@@ -91,11 +94,14 @@ public   Volume   create_volume(
         sizes[i] = 0;
         volume->separations[i] = 1.0;
 
+
         if( dimension_names != (char **) NULL )
-            (void) strcpy( volume->dimension_names[i], dimension_names[i] );
+            name = dimension_names[i];
         else
-            (void) strcpy( volume->dimension_names[i],
-                           default_dimension_names[n_dimensions-1][i] );
+            name = default_dimension_names[n_dimensions-1][i];
+
+        ALLOC( volume->dimension_names[i], strlen( name ) + 1 );
+        (void) strcpy( volume->dimension_names[i], name );
     }
 
     volume->data_type = NO_DATA_TYPE;
@@ -372,6 +378,8 @@ private  void  free_volume_data(
 public  void  delete_volume(
     Volume   volume )
 {
+    int   d;
+
     if( volume == (Volume) NULL )
     {
         print( "delete_volume():  cannot delete a null volume.\n" );
@@ -384,6 +392,9 @@ public  void  delete_volume(
     free_auxiliary_data( volume );
 
     delete_general_transform( &volume->voxel_to_world_transform );
+
+    for_less( d, 0, volume->n_dimensions )
+        FREE( volume->dimension_names[d] );
 
     FREE( volume );
 }
