@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.6 1995-08-21 14:04:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.7 1995-09-12 17:58:17 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -34,12 +34,42 @@ private  BOOLEAN  n_bytes_cache_threshold_set = FALSE;
 private  int  max_bytes_in_cache = 80000000;
 private  BOOLEAN  max_bytes_in_cache_set = FALSE;
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_n_bytes_cache_threshold
+@INPUT      : threshold
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the threshold number of bytes which decides if a volume
+              is small enough to be held entirely in memory, or whether it
+              should be cached.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_n_bytes_cache_threshold(
     int  threshold )
 {
     n_bytes_cache_threshold = threshold;
     n_bytes_cache_threshold_set = TRUE;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_n_bytes_cache_threshold
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : number of bytes
+@DESCRIPTION: Returns the number of bytes defining the cache threshold.  If it
+              hasn't been set, returns the program initialized value, or the
+              value set by the environment variable.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  int  get_n_bytes_cache_threshold()
 {
@@ -58,12 +88,40 @@ public  int  get_n_bytes_cache_threshold()
     return( n_bytes_cache_threshold );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_max_bytes_in_cache
+@INPUT      : n_bytes
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the maximum number of bytes to be used for a single
+              volume's cache.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_max_bytes_in_cache(
     int  n_bytes )
 {
     max_bytes_in_cache = n_bytes;
     max_bytes_in_cache_set = TRUE;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_max_bytes_in_cache
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : number of bytes
+@DESCRIPTION: Returns the maximum number of bytes allowed for a single
+              volume's cache.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  int  get_max_bytes_in_cache()
 {
@@ -82,6 +140,19 @@ private  int  get_max_bytes_in_cache()
     return( max_bytes_in_cache );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_cache_block_sizes
+@INPUT      : block_sizes[]
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the size (in voxels) of each dimension of a cache block.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_volume_cache_block_sizes(
     int   block_sizes[] )
 {
@@ -95,6 +166,21 @@ public  void  set_volume_cache_block_sizes(
 
     volume_block_sizes_set = TRUE;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_cache_block_sizes
+@INPUT      : 
+@OUTPUT     : block_sizes[]
+@RETURNS    : 
+@DESCRIPTION: Passes back the size (in voxels) of each dimension of a cache
+              block.  If it hasn't been set, returns the program initialized
+              value, or the value set by the environment variable.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  get_volume_cache_block_sizes(
     int    block_sizes[] )
@@ -117,6 +203,18 @@ private  void  get_volume_cache_block_sizes(
         block_sizes[dim] = volume_block_sizes[dim];
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_cache_total_blocks
+@INPUT      : cache
+@OUTPUT     : 
+@RETURNS    : n_blocks
+@DESCRIPTION: Computes the total number of cache blocks covering the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  int  get_cache_total_blocks(
     volume_cache_struct   *cache )
@@ -132,11 +230,25 @@ private  int  get_cache_total_blocks(
     return( total_blocks );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_volume_cache
+@INPUT      : cache
+              volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Initializes the cache for a volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  initialize_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
-    int    dim, n_dims, sizes[MAX_DIMENSIONS], block, total_blocks;
+    int    dim, n_dims, sizes[MAX_DIMENSIONS], block, total_blocks, block_size;
 
     get_volume_sizes( volume, sizes );
     n_dims = get_volume_n_dimensions( volume );
@@ -151,13 +263,20 @@ public  void  initialize_volume_cache(
         cache->file_offset[dim] = 0;
     }
 
+    block_size = get_volume_data_type( volume );
+
+    /*--- count number of blocks needed per dimension */
+
     for_less( dim, 0, n_dims )
     {
         cache->blocks_per_dim[dim] = (sizes[dim] - 1) / cache->block_sizes[dim]
                                      + 1;
+        block_size *= cache->block_sizes[dim];
     }
 
     total_blocks = get_cache_total_blocks( cache );
+
+    /*--- allocate a block pointer for every block in the volume */
 
     ALLOC( cache->blocks, total_blocks );
 
@@ -173,12 +292,25 @@ public  void  initialize_volume_cache(
     cache->has_been_modified = FALSE;
     cache->n_blocks = 0;
 
-    cache->max_blocks = get_max_bytes_in_cache() / total_blocks /
-                        get_type_size( get_volume_data_type(volume) );
+    cache->max_blocks = get_max_bytes_in_cache() / block_size;
 
     if( cache->max_blocks < 1 )
         cache->max_blocks = 1;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_block_start
+@INPUT      : cache
+              block_index
+@OUTPUT     : block_start[]
+@RETURNS    : 
+@DESCRIPTION: Computes the starting voxel indices for a block.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  get_block_start(
     volume_cache_struct  *cache,
@@ -194,6 +326,23 @@ private  void  get_block_start(
         block_index /= cache->blocks_per_dim[dim];
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : write_cache_block
+@INPUT      : cache
+              volume
+              block
+              block_start
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Writes out a cache block to the appropriate position in the
+              corresponding file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  write_cache_block(
     volume_cache_struct  *cache,
@@ -237,6 +386,21 @@ private  void  write_cache_block(
                                   file_count );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_cache_blocks
+@INPUT      : cache
+              volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes all cache blocks, writing out all blocks, if the volume
+              has been modified.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  free_cache_blocks(
     volume_cache_struct   *cache,
     Volume                volume )
@@ -244,6 +408,8 @@ private  void  free_cache_blocks(
     int                 block, total_blocks, block_index;
     int                 block_start[MAX_DIMENSIONS];
     cache_block_struct  **this, **next;
+
+    /*--- step through linked list, freeing blocks */
 
     this = cache->head;
     while( this != NULL )
@@ -268,6 +434,20 @@ private  void  free_cache_blocks(
         cache->blocks[block] = NULL;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_volume_cache
+@INPUT      : cache
+              volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes the volume cache.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  delete_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
@@ -275,6 +455,8 @@ public  void  delete_volume_cache(
     free_cache_blocks( cache, volume );
 
     FREE( cache->blocks );
+
+    /*--- close the file that cache was reading from or writing to */
 
     if( cache->minc_file != NULL )
     {
@@ -286,6 +468,21 @@ public  void  delete_volume_cache(
             (void) close_minc_input( (Minc_file) cache->minc_file );
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cache_volume_output_dimension_names
+@INPUT      : volume
+              dimension_names
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the output dimension names for any file created as a
+              result of using volume caching.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_cache_volume_output_dimension_names(
     Volume      volume,
@@ -301,6 +498,24 @@ public  void  set_cache_volume_output_dimension_names(
     volume->cache.dim_names_set = TRUE;
 }
     
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cache_volume_output_filename
+@INPUT      : volume
+              filename
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the output filename for any file created as a result of
+              using volume caching.  If a cached volume is modified, a
+              temporary file is created to store the volume.  If this function
+              is called prior to this, a permanent file with the given name
+              is created instead.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_cache_volume_output_filename(
     Volume      volume,
     char        filename[] )
@@ -308,6 +523,22 @@ public  void  set_cache_volume_output_filename(
     (void) strcpy( volume->cache.output_filename, filename );
 }
     
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : open_cache_volume_input_file
+@INPUT      : cache
+              volume
+              filename
+              options
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Opens the volume file for reading into the cache as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  open_cache_volume_input_file(
     volume_cache_struct   *cache,
     Volume                volume,
@@ -319,6 +550,20 @@ public  void  open_cache_volume_input_file(
     cache->minc_file = initialize_minc_input( filename,
                                               volume, options );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : open_cache_volume_output_file
+@INPUT      : cache
+              volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Opens a volume file for reading and writing cache blocks.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  open_cache_volume_output_file(
     volume_cache_struct   *cache,
@@ -335,6 +580,8 @@ private  void  open_cache_volume_output_file(
     char       **vol_dim_names;
     STRING     out_dim_names[MAX_DIMENSIONS], output_filename;
     minc_output_options  options;
+
+    /*--- check if the output filename has been set */
 
     if( strlen( cache->output_filename ) == 0 )
     {
@@ -361,6 +608,8 @@ private  void  open_cache_volume_output_file(
         for_less( dim, 0, n_dims )
             (void) strcpy( out_dim_names[dim], vol_dim_names[dim] );
     }
+
+    /*--- using the dimension names, create output sizes */
 
     n_found = 0;
     for_less( i, 0, n_dims )
@@ -395,6 +644,8 @@ private  void  open_cache_volume_output_file(
     set_default_minc_output_options( &options );
     set_minc_output_real_range( &options, min_value, max_value );
 
+    /*--- open the file for writing */
+
     out_minc_file = initialize_minc_output( output_filename,
                                         n_dims, out_dim_names, out_sizes,
                                         nc_data_type, signed_flag,
@@ -409,6 +660,9 @@ private  void  open_cache_volume_output_file(
     if( strlen( cache->output_filename ) == 0 )
         remove_file( output_filename );
 
+    /*--- if the volume was previously reading a file, copy the volume to
+          the output and close the input file */
+
     if( cache->minc_file != NULL )
     {
         (void) output_minc_volume( out_minc_file );
@@ -420,6 +674,22 @@ private  void  open_cache_volume_output_file(
 
     cache->minc_file = out_minc_file;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cache_volume_file_offset
+@INPUT      : cache
+              volume
+              file_offset
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the offset in the file for writing volumes.  Used when
+              writing several cached volumes to a file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_cache_volume_file_offset(
     volume_cache_struct   *cache,
@@ -442,6 +712,22 @@ public  void  set_cache_volume_file_offset(
     if( changed )
         free_cache_blocks( cache, volume );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_cache_block
+@INPUT      : cache
+              volume
+              block
+              block_start
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Reads one cache block.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  read_cache_block(
     volume_cache_struct  *cache,
@@ -485,12 +771,29 @@ private  void  read_cache_block(
                                  file_count );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_cache_block
+@INPUT      : cache
+              volume
+@OUTPUT     : block
+@RETURNS    : 
+@DESCRIPTION: Finds an available cache block, either by allocating one, or
+              stealing the least recently used one.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  get_cache_block(
     volume_cache_struct  *cache,
     Volume               volume,
     cache_block_struct   **block )
 {
     int    block_index, block_start[MAX_DIMENSIONS];
+
+    /*--- if can allocate more blocks, do so */
 
     if( cache->n_blocks < cache->max_blocks )
     {
@@ -516,7 +819,7 @@ private  void  get_cache_block(
             (*cache->tail)->next = block;
         }
     }
-    else
+    else  /*--- otherwise, steal the least-recently used block */
     {
         if( cache->has_been_modified )
         {
@@ -536,6 +839,25 @@ private  void  get_cache_block(
     
     cache->tail = block;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_block_index
+@INPUT      : cache
+              x
+              y
+              z
+              t
+              v
+@OUTPUT     : block_start
+@RETURNS    : block index
+@DESCRIPTION: Converts a set of indices into a block index and sets the indices
+              to their values within the block.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  int   get_block_index(
     volume_cache_struct   *cache,
@@ -647,6 +969,25 @@ private  int   get_block_index(
     return( block_index );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_cache_block_for_voxel
+@INPUT      : volume
+              x
+              y
+              z
+              t
+              v
+@OUTPUT     : 
+@RETURNS    : pointer to cache block
+@DESCRIPTION: Finds the cache block corresponding to a given voxel, and
+              modifies the voxel indices to be block indices.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  cache_block_struct  *get_cache_block_for_voxel(
     Volume   volume,
     int      *x,
@@ -695,6 +1036,24 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     return( block );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_cached_volume_voxel
+@INPUT      : volume
+              x
+              y
+              z
+              t
+              v
+@OUTPUT     : 
+@RETURNS    : voxel value
+@DESCRIPTION: Finds the voxel value for the given voxel in a cached volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Real  get_cached_volume_voxel(
     Volume   volume,
     int      x,
@@ -715,6 +1074,25 @@ public  Real  get_cached_volume_voxel(
 
     return( value );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cached_volume_voxel
+@INPUT      : volume
+              x
+              y
+              z
+              t
+              v
+              value
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the voxel value for the given voxel in a cached volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_cached_volume_voxel(
     Volume   volume,
@@ -737,6 +1115,19 @@ public  void  set_cached_volume_voxel(
 
     SET_MULTIDIM( block->array, x, y, z, t, v, value );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cached_volume_has_been_modified
+@INPUT      : cache
+@OUTPUT     : 
+@RETURNS    : TRUE if the volume has been modified since creation
+@DESCRIPTION: Determines if the volume has been modified.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  BOOLEAN  cached_volume_has_been_modified(
     volume_cache_struct  *cache )
