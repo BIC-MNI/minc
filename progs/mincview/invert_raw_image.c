@@ -36,7 +36,7 @@ main(int argc, char *argv[])
    pname=argv[0];
    if ((argc != 3)&&(argc != 4)) {
       (void) fprintf(stderr,"Usage : %s xsize ysize <bytesperpixel>\n",pname);
-      (void) exit(ERROR_STATUS);
+      exit(ERROR_STATUS);
    }
    xsize = atol(argv[1]);
    ysize = atol(argv[2]);

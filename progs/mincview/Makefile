@@ -41,7 +41,7 @@ man: $(MANPAGES)
 $(PROG_OBJ) $(LINT_LIST) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -54,7 +54,7 @@ $(PROGS) : $(TARGET_IN_DEPENDENCY).o
 lint: $(LINT_LIST_EXE)
 
 $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln
-	lint -u $(LINTFLAGS) $@ln
+	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln
 
 # how to make man pages
 .man1.1:
