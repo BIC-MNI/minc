@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 1.9  1994-03-16 10:30:00  neelin
-@MODIFIED   : Changed default MI_ICV_STEP: if not found use 1.0 (and 0.0 for start).
+@MODIFIED   : Revision 1.10  1994-07-05 15:31:07  neelin
+@MODIFIED   : Assume that MIstep is positive if it is not found (for flipping dimensions).
 @MODIFIED   :
+ * Revision 1.9  94/03/16  10:30:00  neelin
+ * Changed default MI_ICV_STEP: if not found use 1.0 (and 0.0 for start).
+ * 
  * Revision 1.8  93/08/11  12:06:03  neelin
  * Added RCS logging in source.
  * 
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.9 1994-03-16 10:30:00 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.10 1994-07-05 15:31:07 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -254,18 +257,18 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
       if (dim_dir != MI_ICV_ANYDIR) {   /* Look for flipping? */
 
          /* Get the value of the MIstep attribute to determine whether flipping
-            is needed */
+            is needed. Assume that direction is positive if no step is
+            provided. */
+         dimstep = 1.0;
          if (dimvid[idim] != MI_ERROR) {   /* if dimension exists */
             oldncopts = ncopts; ncopts = 0;
             status=miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep);
             ncopts = oldncopts;
-            if (status != MI_ERROR) {   /* Found dimstep */
-               if (dim_dir == MI_ICV_POSITIVE)
-                  icvp->derv_dim_flip[idim] = (dimstep<0.0);
-               else if (dim_dir == MI_ICV_NEGATIVE)
-                  icvp->derv_dim_flip[idim] = (dimstep>0.0);
-            }                           /* if found dimstep */
          }                           /* if dimension exists */
+         if (dim_dir == MI_ICV_POSITIVE)
+            icvp->derv_dim_flip[idim] = (dimstep<0.0);
+         else if (dim_dir == MI_ICV_NEGATIVE)
+            icvp->derv_dim_flip[idim] = (dimstep>0.0);
       }                          /* if look for flipping */
 
    }                           /* for each dimension */
