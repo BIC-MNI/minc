@@ -6,11 +6,16 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.4  1993-12-10 15:35:41  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.5  1994-01-11 12:37:29  neelin
+@MODIFIED   : Modified handling of output directory and user id.
+@MODIFIED   : Defaults are current dir and no chown.
+@MODIFIED   : Read from file /usr/local/lib/gcomserver.<hostname>
 @MODIFIED   :
+ * Revision 1.4  93/12/10  15:35:41  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.3  93/11/30  14:42:34  neelin
  * Copies to minc format.
  * 
@@ -35,6 +40,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <gcomserver.h>
+
+/* Function prototypes */
+int gethostname (char *name, int namelen);
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : use_the_files
@@ -63,14 +72,18 @@ public void use_the_files(int num_files, char *file_list[],
    int exit_status;
    char *output_file_name;
    char file_prefix[256];
+   char output_default_file[256];
+   char hostname[256];
    int output_uid, output_gid;
    FILE *fp;
 
    /* Look for defaults file */
-   (void) strcpy(file_prefix, OUTPUT_MINC_DIR);
-   output_uid = MINC_FILE_OWNER;
-   output_gid = MINC_FILE_GROUP;
-   if ((fp=fopen(OUTPUT_DEFAULT_FILE, "r")) != NULL) {
+   file_prefix[0] = '\0';
+   output_uid = output_gid = INT_MIN;
+   (void) gethostname(hostname, sizeof(hostname) - 1);
+   (void) sprintf(output_default_file, "%s%s", 
+                  OUTPUT_DEFAULT_FILE, hostname);
+   if ((fp=fopen(output_default_file, "r")) != NULL) {
       (void) fscanf(fp, "%s %d %d", file_prefix, &output_uid, &output_gid);
       (void) fclose(fp);
    }
@@ -128,8 +141,10 @@ public void use_the_files(int num_files, char *file_list[],
          }
 
          /* Change the ownership */
-         (void) chown(output_file_name, (uid_t) output_uid,
-                      (gid_t) output_gid);
+         if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
+            (void) chown(output_file_name, (uid_t) output_uid,
+                         (gid_t) output_gid);
+         }
 
       }
 
