@@ -1,0 +1,77 @@
+#! /bin/csh -f
+#
+# Script to find differences between minc files
+#
+# Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
+#
+# Modifications: $Log: mincdiff,v $
+# Modifications: Revision 1.1  1993-11-01 16:46:07  neelin
+# Modifications: Initial revision
+# Modifications:
+#
+# Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+# Montreal Neurological Institute, McGill University.
+# Permission to use, copy, modify, and distribute this
+# software and its documentation for any purpose and without
+# fee is hereby granted, provided that the above copyright
+# notice appear in all copies.  The author and McGill University
+# make no representations about the suitability of this
+# software for any purpose.  It is provided "as is" without
+# express or implied warranty.
+
+# Constants
+set working_dir = /tmp
+
+# Check arguments
+switch ("$#argv")
+case 2:
+   set file1 = $1
+   set file2 = $2
+   set cmp_switch = ""
+   breaksw
+case 3:
+   if ("$1" == "-l") then
+      set file1 = $2
+      set file2 = $3
+      set cmp_switch = -l
+      breaksw
+   endif
+default:
+   echo "Usage: $0 [-l] <file1.mnc> <file2.mnc>"
+   exit
+endsw
+
+# Set up the file names
+set file1base = $file1:r
+set file2base = $file2:r
+set fileprefix = $working_dir/mincdiff-$$
+set file1tmp  = ${fileprefix}-1-${file1base:t}
+set file2tmp  = ${fileprefix}-2-${file2base:t}
+
+# Set interrupt handling
+onintr cleanup
+
+# Dump the headers and compare them
+mincheader $file1 > $file1tmp.cdl && mincheader $file2 > $file2tmp.cdl
+if ($status) then
+   echo "${0}: Error reading file headers"
+   goto cleanup
+endif
+diff $file1tmp.cdl $file2tmp.cdl
+if ($status) then
+   goto cleanup
+endif
+
+# Dump the raw data and compare them
+mincextract -file $file1 > $file1tmp.raw && \
+      mincextract -file $file2 > $file2tmp.raw
+if ($status) then
+   echo "${0}: Error reading raw data"
+   goto cleanup
+endif
+cmp $cmp_switch $file1tmp.raw $file2tmp.raw
+
+cleanup:
+   rm -f {$file1tmp,$file2tmp}.{raw,cdl}
+   exit
+
