@@ -112,10 +112,11 @@ Other useful types defined include:
 \end{verbatim}}
 
 \newcommand{\definemacro}[2]{
+\begin{flushleft}
 \begin{tabular}{p{2cm}p{10cm}}
 \multicolumn{2}{l}{{\bf\tt #1}} \\
 & #2 \\
-\end{tabular}}
+\end{tabular}\end{flushleft}}
 
 Some macros useful for general programming include:
 
@@ -218,9 +219,9 @@ other existing packages around the lab.  Nevertheless, command line
 argument lists can be scanned in command line order as follows:
 
 {\bf\begin{verbatim}
-    public  void  initialize_argument_processing(
-        int     argc,
-        char    *argv[] )
+public  void  initialize_argument_processing(
+    int     argc,
+    char    *argv[] )
 \end{verbatim}}
 
 \desc{called once to let the argument processor know what the command line
@@ -229,15 +230,15 @@ argument, in preparation for sequential processing of the command line
 arguments.}
 
 {\bf\begin{verbatim}
-    public  BOOLEAN  get_int_argument(
-        int   default_value,
-        int   *value )
-    public  BOOLEAN  get_real_argument(
-        Real  default_value,
-        Real  *value )
-    public  BOOLEAN  get_string_argument(
-        char   default_value[],
-        char   *value[] )
+public  BOOLEAN  get_int_argument(
+    int   default_value,
+    int   *value )
+public  BOOLEAN  get_real_argument(
+    Real  default_value,
+    Real  *value )
+public  BOOLEAN  get_string_argument(
+    char   default_value[],
+    char   *value[] )
 \end{verbatim}}
 
 \desc{checks if an argument exists and is of the desired type.  If so,
@@ -246,8 +247,8 @@ argument, and returns \name{TRUE}.  Otherwise, the default value is assigned
 to the \name{value} and the current argument is not advanced.}
 
 {\bf\begin{verbatim}
-    public  BOOLEAN  get_prefix_argument(
-        char  prefix[] )
+public  BOOLEAN  get_prefix_argument(
+    char  prefix[] )
 \end{verbatim}}
 
 \desc{checks if the next argument starts with the given prefix and if so,
@@ -347,56 +348,56 @@ Several functions are available which deal with colours and surface
 properties:
 
 {\bf\begin{verbatim}
-    public  void  rgb_to_hsl(
-        Real    r,
-        Real    g,
-        Real    b,
-        Real    *h,
-        Real    *s,
-        Real    *l )
-    public  void  hsl_to_rgb(
-        Real   h,
-        Real   sl,
-        Real   l,
-        Real   *r,
-        Real   *g,
-        Real   *b )
-    public  void  convert_colour_to_hsl(
-        Colour   rgb,
-        Colour   *hsl )
-    public  void  convert_colour_to_rgb(
-        Colour   hsl,
-        Colour   *rgb )
+public  void  rgb_to_hsl(
+    Real    r,
+    Real    g,
+    Real    b,
+    Real    *h,
+    Real    *s,
+    Real    *l )
+public  void  hsl_to_rgb(
+    Real   h,
+    Real   sl,
+    Real   l,
+    Real   *r,
+    Real   *g,
+    Real   *b )
+public  void  convert_colour_to_hsl(
+    Colour   rgb,
+    Colour   *hsl )
+public  void  convert_colour_to_rgb(
+    Colour   hsl,
+    Colour   *rgb )
 \end{verbatim}}
 
 \desc{Converts between red-green-blue and hue-saturation-light space.}
 
 {\bf\begin{verbatim}
-    public  BOOLEAN  equal_colours(
-        Colour  col1,
-        Colour  col2 )
+public  BOOLEAN  equal_colours(
+    Colour  col1,
+    Colour  col2 )
 \end{verbatim}}
 
 \desc{returns \name{TRUE} if the two colours are equal.}
 
 {\bf\begin{verbatim}
-    public  int  get_colour_distance(
-        int      r,
-        int      g,
-        int      b,
-        Colour   c2 )
+public  int  get_colour_distance(
+    int      r,
+    int      g,
+    int      b,
+    Colour   c2 )
 \end{verbatim}}
 
 \desc{finds the squared Euclidean distance between the first colour,
 specified by its components, and the second colour, \name{c2}.}
 
 {\bf\begin{verbatim}
-    public  int   find_closest_colour(
-        int     r,
-        int     g,
-        int     b,
-        int     n_colours,
-        Colour  colours[] )
+public  int   find_closest_colour(
+    int     r,
+    int     g,
+    int     b,
+    int     n_colours,
+    Colour  colours[] )
 \end{verbatim}}
 
 \desc{Given the three components of a target colour, and a list of
