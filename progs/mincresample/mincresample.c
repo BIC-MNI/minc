@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.8  1993-09-16 09:56:36  neelin
-@MODIFIED   : Added use of open_file_with_default_suffix in get_transformation to
-@MODIFIED   : append appropriate suffix for xfm files.
+@MODIFIED   : Revision 1.9  1993-10-12 12:47:50  neelin
+@MODIFIED   : Use volume_io.h instead of def_mni.h
 @MODIFIED   :
+ * Revision 1.8  93/09/16  09:56:36  neelin
+ * Added use of open_file_with_default_suffix in get_transformation to
+ * append appropriate suffix for xfm files.
+ * 
  * Revision 1.7  93/08/11  14:28:19  neelin
  * Modified get_arginfo and check_imageminmax to modify type of volume (not
  * file) so that output volume gets the input volume type by default when
@@ -43,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.8 1993-09-16 09:56:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.9 1993-10-12 12:47:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -55,7 +58,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <def_mni.h>
+#include <volume_io.h>
 #include <minc_def.h>
 #include "mincresample.h"
 

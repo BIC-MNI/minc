@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.8  1993-08-11 14:29:53  neelin
-@MODIFIED   : Use volume->datatype in load_volume instead of file->datatype.
-@MODIFIED   : Loop for slice max/min is from 0, not 1 in load_volume.
+@MODIFIED   : Revision 1.9  1993-10-12 12:48:08  neelin
+@MODIFIED   : Use volume_io.h instead of def_mni.h
 @MODIFIED   :
+ * Revision 1.8  93/08/11  14:29:53  neelin
+ * Use volume->datatype in load_volume instead of file->datatype.
+ * Loop for slice max/min is from 0, not 1 in load_volume.
+ * 
  * Revision 1.7  93/08/11  13:34:15  neelin
  * Converted to use Dave MacDonald's General_transform code.
  * Fixed bug in get_slice - for non-linear transformations coord was
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.8 1993-08-11 14:29:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.9 1993-10-12 12:48:08 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,7 +46,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 #include <math.h>
 #include <minc.h>
 #include <recipes.h>
-#include <def_mni.h>
+#include <volume_io.h>
 #include <minc_def.h>
 #include "mincresample.h"
 
