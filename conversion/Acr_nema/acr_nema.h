@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:49:34  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 11:26:09  neelin
+@MODIFIED   : Added TRUE and FALSE.
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:49:34  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -26,6 +29,13 @@
 #endif
 #ifndef private
 #  define private static
+#endif
+
+#ifndef TRUE
+#  define TRUE 1
+#endif
+#ifndef FALSE
+#  define FALSE 0
 #endif
 
 /* Include files */
