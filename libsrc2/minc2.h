@@ -94,6 +94,8 @@ typedef struct midimension *midimhandle_t;
 typedef struct mivolume *mihandle_t;
 
 
+typedef void *milisthandle_t;
+
 /**
  * This typedef used to represent the type of an individual voxel <b>as
  * stored</b> by MINC 2.0.  If a volume is 
@@ -466,6 +468,8 @@ extern int miset_voxel_value(mihandle_t volume,
                              double voxel);
 
 extern int miget_volume_real_range(mihandle_t volume, double real_range[2]);
+
+extern int miset_world_origin(mihandle_t volume, double origin[MI2_3D]);
 
 /* VALID functions */
 extern int miget_volume_valid_max(mihandle_t volume, double *valid_max);
