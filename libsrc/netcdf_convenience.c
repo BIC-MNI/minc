@@ -36,7 +36,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.11  2004-04-27 15:50:41  bert
+ * Revision 6.12  2004-04-30 18:57:39  bert
+ * Explicitly cast return values of NULL to char * where appropriate to make IRIX MIPSpro compiler happy
+ *
+ * Revision 6.11  2004/04/27 15:50:41  bert
  * The full 2.0 treatment
  *
  * Revision 6.10  2004/03/23 21:16:05  bert
@@ -145,7 +148,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.11 2004-04-27 15:50:41 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.12 2004-04-30 18:57:39 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
@@ -520,7 +523,7 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
       *created_tempfile = FALSE;
       FREE(newfile);
       milog_message(MI_MSG_UNCMPFAIL);
-      MI_RETURN(NULL);
+      MI_RETURN((char *)NULL);  /* Explicit cast needed for MIPSpro cc */
    }
 
    /* Return the new file name */
@@ -641,13 +644,6 @@ public int miopen(char *path, int mode)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 #ifdef MINC2
-public int micreate(char *path, int cmode)
-{
-    MI_SAVE_ROUTINE_NAME("micreate");
-
-    return micreatex(path, cmode, NULL);
-}
-
 public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
 {
     int fd;
@@ -674,6 +670,13 @@ public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
 	milog_message(MI_MSG_CREATEFILE, path);
     }
     MI_RETURN(fd);
+}
+
+public int micreate(char *path, int cmode)
+{
+    MI_SAVE_ROUTINE_NAME("micreate");
+
+    return micreatex(path, cmode, NULL);
 }
 
 #else
@@ -948,13 +951,13 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    /* Inquire about the attribute */
    if (ncattinq(cdfid, varid, name, &att_type, &att_length)==MI_ERROR) {
        milog_message(MI_MSG_FINDATTR, name);
-       MI_RETURN(NULL);
+       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
    }
 
    /* Check that the attribute type is character */
    if (att_type!=NC_CHAR) {
        milog_message(MI_MSG_ATTRNOTSTR, name);
-       MI_RETURN(NULL);
+       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
    }
 
    /* Check to see if the attribute length is less than maxlen. 
@@ -962,7 +965,7 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    if (att_length <= maxlen) {
       if (ncattget(cdfid, varid, name, value) == MI_ERROR) {
 	  milog_message(MI_MSG_READATTR, name);
-	  MI_RETURN(NULL);
+	  MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
       }
       /* Check the last character for a '\0' */
       if (value[att_length-1] != '\0') {
@@ -977,14 +980,14 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    /* Otherwise, get space for the attribute */
    if ((att_value = MALLOC(att_length * nctypelen(att_type), char)) ==NULL) {
        milog_message(MI_MSG_NOMEMATTR, name);
-       MI_RETURN(NULL);
+       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
    }
 
    /* Get the attribute */
    if (ncattget(cdfid, varid, name, att_value)==MI_ERROR) {
       FREE(att_value);
       milog_message(MI_MSG_READATTR, name);
-      MI_RETURN(NULL);
+      MI_RETURN((char *)NULL);
    }
 
    /* Copy the attribute */
