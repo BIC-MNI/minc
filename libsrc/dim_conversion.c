@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
+@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.3  1995/02/08  19:14:44  neelin
  * More changes for irix 5 lint.
  *
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -608,7 +611,7 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    int notmodified;             /* First dimension not reset */
    int out_of_range;            /* Flag indicating one pixel of sum out of 
                                    range */
-   double dmin, dmax;           /* Range limits */
+   double dmin, dmax, epsilon;  /* Range limits */
 
    MI_SAVE_ROUTINE_NAME("MI_icv_dimconvert");
 
@@ -622,8 +625,12 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    optr    = dcp->ostart;
    end     = dcp->end;
    fastdim = icvp->derv_dimconv_fastdim;
-   dmax = icvp->var_vmax;
-   dmin = icvp->var_vmin;
+   dmax = icvp->fill_valid_max;
+   dmin = icvp->fill_valid_min;
+   epsilon = (dmax - dmin) * FILLVALUE_EPSILON;
+   epsilon = ABS(epsilon);
+   dmax += epsilon;
+   dmin -= epsilon;
 
    /* Initialize counters */
    for (idim=0; idim<=fastdim; idim++) {

@@ -13,9 +13,12 @@
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
+@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.2  1995/02/08  19:14:44  neelin
  * More changes for irix 5 lint.
  *
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -553,8 +556,8 @@ semiprivate int MI_convert_type(long number_of_values,
       do_scale=icvp->do_scale;
       do_fillvalue=icvp->do_fillvalue;
       fillvalue = icvp->user_fillvalue;
-      dmax = icvp->var_vmax;
-      dmin = icvp->var_vmin;
+      dmax = icvp->fill_valid_max;
+      dmin = icvp->fill_valid_min;
       epsilon = (dmax - dmin) * FILLVALUE_EPSILON;
       epsilon = ABS(epsilon);
       dmax += epsilon;

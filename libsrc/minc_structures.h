@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_structures.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
+@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:38:09  neelin
  * Release of minc version 0.2
  *
@@ -34,7 +37,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* Image conversion variable structure type */
@@ -56,6 +59,8 @@ struct mi_icv_struct {
                              long bufstart[], long bufcount[], void *buffer);
    int     do_fillvalue;   /* Indicates to MI_convert_type that fillvalue
                               checking should be done */
+   double  fill_valid_min; /* Range limits for fillvalue checking */
+   double  fill_valid_max;
 
    /* private : fields available only to icv routines */
 

@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
+@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.3  1995/02/08  19:14:44  neelin
  * More changes for irix 5 lint.
  *
@@ -83,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -150,6 +153,8 @@ public int miicv_create()
    icvp->do_scale = FALSE;
    icvp->do_dimconvert = FALSE;
    icvp->do_fillvalue = FALSE;
+   icvp->fill_valid_min = -DBL_MAX;
+   icvp->fill_valid_max = DBL_MAX;
 
    /* User defaults */
    icvp->user_type = NC_SHORT;
@@ -825,7 +830,8 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    /* Set the do_scale and do_dimconvert fields of icv structure
       We have to scale only if do_range is TRUE. If ranges don't
       match, or we have to do user normalization, or if we are normalizing
-      and MIimagemax or MIimagemin vary over the variable. */
+      and MIimagemax or MIimagemin vary over the variable. We don't have
+      to scale if input and output are both floating point. */
 
    icvp->do_scale = 
       (icvp->user_do_range && 
@@ -833,6 +839,9 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
         (icvp->user_vmin!=icvp->var_vmin) ||
         (icvp->user_do_norm && icvp->user_user_norm) ||
         (icvp->user_do_norm && (icvp->derv_firstdim>=0))) );
+
+   if ((icvp->derv_usr_float && icvp->derv_var_float))
+      icvp->do_scale = FALSE;
 
    icvp->do_dimconvert = FALSE;
 
@@ -1272,9 +1281,6 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
       MI_RETURN_ERROR(MI_ERROR);
    }
 
-   /* Set the do_fillvalue flag only for input */
-   icvp->do_fillvalue = icvp->user_do_fillvalue && (operation == MI_PRIV_GET);
-
    /* Zero the user's buffer if needed */
    if ((operation == MI_PRIV_GET) && (icvp->derv_do_zero))
       {MI_CHK_ERR(MI_icv_zero_buffer(icvp, count, values))}
@@ -1323,6 +1329,15 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
    /* Loop through variable */
    chunk_values = values;
    while (chunk_start[0] < var_end[0]) {
+
+      /* Set the do_fillvalue flag if the user wants it and we are doing
+         a get. We must do it inside the loop since the scale factor 
+         calculation can change it if the scale is zero. (Fillvalue checking
+         is always done if the the scale is zero.) */
+      icvp->do_fillvalue = 
+         icvp->user_do_fillvalue && (operation == MI_PRIV_GET);
+      icvp->fill_valid_min = icvp->var_vmin;
+      icvp->fill_valid_max = icvp->var_vmax;
 
       /* Calculate scale factor */
       if (icvp->do_scale) {
@@ -1610,6 +1625,43 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
          icvp->scale  = 0.0;
       }
    }
+
+   /* Do fill value checking if scale is zero */
+   if (icvp->scale == 0.0) {
+
+      /* Check for floating point on both sides of conversion. We should
+         not be doing scaling in this case, but we will check to be safe. */
+      if (icvp->derv_var_float && icvp->derv_usr_float) {
+         icvp->do_scale = FALSE;
+         icvp->do_fillvalue = FALSE;
+      }
+
+      else {      /* Not pure floating point */
+
+         icvp->do_fillvalue = TRUE;
+
+         /* For output, set the range properly depending on whether the user
+            type is floating point or not */
+         if (operation == MI_PRIV_PUT) {
+            if (icvp->derv_usr_float) {
+               icvp->fill_valid_min = var_imgmin;
+               icvp->fill_valid_max = var_imgmax;
+            }
+            else if (usr_scale != 0.0) {
+               icvp->fill_valid_min = 
+                  usr_vmin + (var_imgmin - usr_imgmin) / usr_scale;
+               icvp->fill_valid_max = 
+                  usr_vmin + (var_imgmax - usr_imgmin) / usr_scale;
+            }
+            else {
+               icvp->fill_valid_min = usr_vmin;
+               icvp->fill_valid_max = usr_vmax;
+            }
+         }        /* If output operation */
+
+      }        /* If not pure floating point */
+
+   }       /* If scale == 0.0 */
 
    MI_RETURN(MI_NOERROR);
 }
