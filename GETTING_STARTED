@@ -33,6 +33,16 @@ listing of options.  All have man pages.
 and mni_autoreg -- a.k.a. ANIMAL (for registration) are available from
 the BIC web page, www.bic.mni.mcgill.ca.
 
+
+The LaTeX documentation is not built by default.  You can build these
+documents using
+
+    cd doc; make docs
+    cd volume_io/Documentation; make docs
+
+latex and dvips are required.
+
+
 Applications that use MINC alone need to #include <minc.h> and
 link with "-lminc -lnetcdf -lm".
 

@@ -1,6 +1,8 @@
 		New in Release 1.1
 		------------------
 
+* All MINC programs now ship with a man page.
+
 * Rawtominc has new "-skip" option, to allow skipping header information.
 
 * Mincstats option "-max_bins" renamed to "-int_max_bins", to avoid clash

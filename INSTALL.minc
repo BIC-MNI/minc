@@ -15,10 +15,13 @@ The NetCDF library
 
     http://www.unidata.ucar.edu/packages/netcdf/
 
-must be built and installed before you can build MINC.
+must be built and installed before you can build MINC.  
 
-1. This library may already be installed in a location where the
-compiler can find it.  If so, you have nothing to do.
+Teaching MINC to find the NetCDF library depends on where
+the latter is installed.  There are three cases.
+
+1. NetCDF may be installed in a location where the compiler can find
+it.  If so, you have nothing to do.
 
 2. Third-party libraries are commonly installed such that the headers
 live in /usr/local/include and the library file lives in
