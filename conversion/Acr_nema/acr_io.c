@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
+@MODIFIED   : Revision 6.1  1999-10-27 20:13:15  neelin
+@MODIFIED   : Generalized acr_test_byte_order to recognize groups without a length element.
+@MODIFIED   :
+@MODIFIED   : Revision 6.0  1997/09/12 13:23:59  neelin
 @MODIFIED   : Release of minc version 0.6
 @MODIFIED   :
  * Revision 5.1  1997/09/08  21:53:31  neelin
@@ -766,11 +769,15 @@ public Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
 @INPUT      : afp
 @OUTPUT     : (none)
 @RETURNS    : status.
-@DESCRIPTION: Tests input for byte ordering to use. This only works for
-              files that include the group length and that use implicit
-              VR encoding (pre-DICOM ACR-NEMA files, for example). If
-              it cannot figure it out, then it reverts to the previous
-              settings (usually the default which is appropriate for DICOM).
+@DESCRIPTION: Tests input for byte ordering to use. The test is done by 
+              assuming implicit VR and looking at the length of the first
+              element. We assume that the length of the first element is 
+              less than 64K and greater than zero, and we try the two possible 
+              byte orders. If the VR encoding is explicit, then we have 
+              two shortwords (2-bytes), both of which are non-zero and the
+              longword (4 bytes) will be greater than 64K. In this 
+              case, we set explicit VR encoding and revert to the original
+              byte-order.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -781,9 +788,11 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
-   long data_length;
+   unsigned long data_length;
    Acr_Status status;
    Acr_byte_order byte_order, old_byte_order;
+
+#define ACR_TEST_MAX USHRT_MAX
 
    /* Save old byte ordering */
    old_byte_order = acr_get_byte_order(afp);
@@ -800,19 +809,20 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
       Try big-endian ordering first. */
    byte_order = ACR_BIG_ENDIAN;
    acr_set_byte_order(afp, byte_order);
-   acr_get_long(byte_order, 1, &buffer[2*ACR_SIZEOF_SHORT], &data_length);
+   acr_get_long(byte_order, 1, &buffer[2*ACR_SIZEOF_SHORT], 
+                (long *) &data_length);
 
    /* If that doesn't work, set it to little-endian ordering. */
-   if (data_length != ACR_SIZEOF_LONG) {
+   if (data_length >= ACR_TEST_MAX) {
       byte_order = ACR_LITTLE_ENDIAN;
       acr_set_byte_order(afp, byte_order);
       acr_get_long(byte_order, 1, &buffer[2*ACR_SIZEOF_SHORT], 
-                   &data_length);
+                   (long *) &data_length);
    }
 
    /* If one of them worked, then it means that we have implicit VR 
       encoding since we didn't look for a VR field */
-   if (data_length == ACR_SIZEOF_LONG) {
+   if (data_length < ACR_TEST_MAX) {
       acr_set_vr_encoding(afp, ACR_IMPLICIT_VR);
    }
 
