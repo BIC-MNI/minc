@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 6.1  1997-10-20 22:52:46  neelin
-@MODIFIED   : Added support for implementation user information in association request.
+@MODIFIED   : Revision 6.2  1998-03-23 20:16:37  neelin
+@MODIFIED   : Added functions.
 @MODIFIED   :
+ * Revision 6.1  1997/10/20  22:52:46  neelin
+ * Added support for implementation user information in association request.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *
@@ -76,6 +79,9 @@ DCM_PDU_ELEMENT(DCM_PDU_Source,                          0x0160, US);
 DCM_PDU_ELEMENT(DCM_PDU_Reason,                          0x0170, US);
 
 /* Function prototypes */
+public int acr_uid_equal(char *uid1, char *uid2);
+public char *acr_create_uid(void);
+public char *acr_implementation_uid(void);
 public Acr_Status acr_input_dicom_message(Acr_File *dicom_afp, 
                                           Acr_Message *message);
 public Acr_Status acr_output_dicom_message(Acr_File *dicom_afp, 
