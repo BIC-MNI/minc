@@ -5,7 +5,12 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.c,v $
- * Revision 6.3  2000-02-21 23:48:14  neelin
+ * Revision 6.4  2000-06-14 18:24:07  neelin
+ * Added UseSafeOrientations keyword to project files to allow forcing of
+ * direction cosines to standard (safe) ones, and modified convert_to_dicom
+ * so that this is no longer the default behaviour.
+ *
+ * Revision 6.3  2000/02/21 23:48:14  neelin
  * More changes to improve dicom conformance for MNH PACS system.
  * Allow UID prefix to be defined in project file. Define SOP instance UID in
  * addition to study and series instance UIDs and frame-of-reference UID and
@@ -117,7 +122,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.3 2000-02-21 23:48:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.4 2000-06-14 18:24:07 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -432,7 +437,8 @@ int main(int argc, char *argv[])
             if (acr_find_group_element(group_list, ACR_Pixel_data)
                 != NULL) {
                convert_to_dicom(group_list, 
-                                project_info.info.dicom.UIDprefix);
+                                project_info.info.dicom.UIDprefix,
+                                project_info.info.dicom.use_safe_orientations);
                if (!acr_send_group_list(project_info.info.dicom.afpin,
                                         project_info.info.dicom.afpout, 
                                         group_list,

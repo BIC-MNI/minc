@@ -67,4 +67,5 @@ public int read_project_file(char *project_name,
                              Project_File_Info *project_info);
 public void get_project_option_string(char *project_option_string,
                                       int maxlen_project_option);
-public void convert_to_dicom(Acr_Group group_list, char *uid_prefix);
+public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
+                             int use_safe_orientations);

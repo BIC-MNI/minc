@@ -8,7 +8,12 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.4  2000-02-21 23:48:14  neelin
+ * Revision 6.5  2000-06-14 18:24:08  neelin
+ * Added UseSafeOrientations keyword to project files to allow forcing of
+ * direction cosines to standard (safe) ones, and modified convert_to_dicom
+ * so that this is no longer the default behaviour.
+ *
+ * Revision 6.4  2000/02/21 23:48:14  neelin
  * More changes to improve dicom conformance for MNH PACS system.
  * Allow UID prefix to be defined in project file. Define SOP instance UID in
  * addition to study and series instance UIDs and frame-of-reference UID and
@@ -233,6 +238,7 @@ public int read_project_file(char *project_name,
                   project_info->info.dicom.AEtitle[0] = '\0';
                   project_info->info.dicom.LocalAEtitle[0] = '\0';
                   project_info->info.dicom.UIDprefix[0] = '\0';
+                  project_info->info.dicom.use_safe_orientations = FALSE;
                   project_info->info.dicom.afpin = NULL;
                   project_info->info.dicom.afpout = NULL;
                }
@@ -295,6 +301,22 @@ public int read_project_file(char *project_name,
                else if (STREQ("UIDprefix", keyword)) {
                   STRCOPY(project_info->info.dicom.UIDprefix,
                           value, SHORT_LINE);
+               }
+               else if (STREQ("UseSafeOrientations", keyword)) {
+                  for (ichar=0; ichar < strlen(value); ichar++) {
+                     value[ichar] = tolower((int) value[ichar]);
+                  }
+                  if (STREQ(value, "true") || STREQ(value, "yes")) {
+                     project_info->info.dicom.use_safe_orientations = 
+                        TRUE;
+                  }
+                  else if (STREQ(value, "false") || STREQ(value, "no")) {
+                     project_info->info.dicom.use_safe_orientations = 
+                        FALSE;
+                  }
+                  else {
+                     error = "Unrecognized boolean value";
+                  }
                }
                else {
                   error = "Unrecognized keyword for given type";

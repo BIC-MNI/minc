@@ -5,7 +5,12 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.9  2000-02-21 23:48:13  neelin
+ * Revision 1.10  2000-06-14 18:24:07  neelin
+ * Added UseSafeOrientations keyword to project files to allow forcing of
+ * direction cosines to standard (safe) ones, and modified convert_to_dicom
+ * so that this is no longer the default behaviour.
+ *
+ * Revision 1.9  2000/02/21 23:48:13  neelin
  * More changes to improve dicom conformance for MNH PACS system.
  * Allow UID prefix to be defined in project file. Define SOP instance UID in
  * addition to study and series instance UIDs and frame-of-reference UID and
@@ -58,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.9 2000-02-21 23:48:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.10 2000-06-14 18:24:07 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -116,6 +121,7 @@ private void convert_coordinate(double coord[WORLD_NDIMS]);
 private void get_direction_cosines(int orientation,
                                    double angulation_ap, double angulation_lr,
                                    double angulation_cc, 
+                                   int use_safe_orientations,
                                    double dircos[WORLD_NDIMS][WORLD_NDIMS]);
 private void calculate_image_position(int orientation,
                                       double row_fov,
@@ -128,6 +134,8 @@ private void calculate_image_position(int orientation,
 @NAME       : convert_to_dicom
 @INPUT      : group_list
               uid_prefix
+              use_safe_orientations - TRUE if dir cos should be realigned
+                 to safe values for machines that do not handle angled axes
 @OUTPUT     : (nothing)
 @RETURNS    : output message.
 @DESCRIPTION: Convert a group list so that its elements are dicom-conformant.
@@ -137,7 +145,8 @@ private void calculate_image_position(int orientation,
 @CREATED    : June 13, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void convert_to_dicom(Acr_Group group_list, char *uid_prefix)
+public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
+                             int use_safe_orientations)
 {
    Acr_Element element;
    double value;
@@ -260,6 +269,7 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix)
       acr_find_double(group_list, SPI_Angulation_of_ap_axis, 0.0),
       acr_find_double(group_list, SPI_Angulation_of_lr_axis, 0.0),
       acr_find_double(group_list, SPI_Angulation_of_cc_axis, 0.0),
+                         use_safe_orientations,
                          dircos);
    switch (orientation) {
    case SPI_SAGITTAL_ORIENTATION:
@@ -536,6 +546,8 @@ private void convert_coordinate(double coord[WORLD_NDIMS])
               angulation_ap - Angle of rotation about ap (Y) axis
               angulation_lr - Angle of rotation about lr (X) axis
               angulation_cc - Angle of rotation about cc (Z) axis
+              use_safe_orientations - TRUE if dir cos should be realigned
+                 to safe values for machines that do not handle angled axes
 @OUTPUT     : dircos - array of direction cosines
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to compute direction cosines from angles
@@ -550,6 +562,7 @@ private void convert_coordinate(double coord[WORLD_NDIMS])
 private void get_direction_cosines(int orientation,
                                    double angulation_ap, double angulation_lr,
                                    double angulation_cc, 
+                                   int use_safe_orientations,
                                    double dircos[WORLD_NDIMS][WORLD_NDIMS])
 {
    World_Index iloop, jloop, kloop, axis_loop, axis;
@@ -640,10 +653,9 @@ private void get_direction_cosines(int orientation,
       }
    }
 
-#if 1
    /* Kludge to handle the fact the the Picker software does not seem
       to handle rotated volumes properly */
-   {
+   if (use_safe_orientations) {
       double biggest;
       int dimused[WORLD_NDIMS];
 
@@ -679,8 +691,8 @@ private void get_direction_cosines(int orientation,
          dimused[kloop] = TRUE;
 
       }       /* End of loop over dimension cosines */
-   }
-#endif
+
+   }       /* End if use_safe_orientations */
 
 }
 

@@ -6,7 +6,12 @@
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.h,v $
- * Revision 6.4  2000-02-21 23:48:14  neelin
+ * Revision 6.5  2000-06-14 18:24:08  neelin
+ * Added UseSafeOrientations keyword to project files to allow forcing of
+ * direction cosines to standard (safe) ones, and modified convert_to_dicom
+ * so that this is no longer the default behaviour.
+ *
+ * Revision 6.4  2000/02/21 23:48:14  neelin
  * More changes to improve dicom conformance for MNH PACS system.
  * Allow UID prefix to be defined in project file. Define SOP instance UID in
  * addition to study and series instance UIDs and frame-of-reference UID and
@@ -183,6 +188,7 @@ typedef struct {
          char AEtitle[SHORT_LINE];
          char LocalAEtitle[SHORT_LINE];
          char UIDprefix[SHORT_LINE];
+         int use_safe_orientations;
          Acr_File *afpin;
          Acr_File *afpout;
       } dicom;
