@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.3  1993-11-30 14:40:42  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.4  1993-11-30 14:56:18  neelin
+@MODIFIED   : Changed log level.
 @MODIFIED   :
+ * Revision 1.3  93/11/30  14:40:42  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.2  93/11/25  13:26:35  neelin
  * Working version.
  * 
@@ -33,7 +36,7 @@ typedef enum {
 } Server_state;
 
 /* Do we do logging? */
-int Do_logging = LOW_LOGGING;
+int Do_logging = NO_LOGGING;
 
 /* Do we keep files or are they temporary? */
 static int Keep_files = FALSE;
@@ -280,7 +283,7 @@ int main(int argc, char *argv[])
       break;
    }
 
-   if (Do_logging >= LOW_LOGGING) {
+   if ((Do_logging >= LOW_LOGGING) || (status != ACR_END_OF_INPUT)) {
       (void) fprintf(stderr, "%s: %s\n", pname, exit_string);
    }
 
