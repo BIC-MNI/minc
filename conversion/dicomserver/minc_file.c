@@ -7,7 +7,11 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_file.c,v $
- * Revision 6.2  2000-03-02 16:20:57  neelin
+ * Revision 6.3  2000-03-02 20:56:40  neelin
+ * Write out original image indices as attributes in the minc file under
+ * the dicominfo variable.
+ *
+ * Revision 6.2  2000/03/02 16:20:57  neelin
  * Clamp maximum voxel to second highest if difference between maximum and
  * second is greater than difference between second and minimum.
  *
@@ -204,6 +208,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    nc_type datatype;
    int is_char;
    int ich;
+   long *indices;
 
    /* Define the spatial dimension names */
    static char *spatial_dimnames[WORLD_NDIMS] = {MIxspace, MIyspace, MIzspace};
@@ -393,6 +398,28 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
                          general_info->image_type_string);
    (void) miattputdbl(mincid, varid, "window_min", general_info->window_min);
    (void) miattputdbl(mincid, varid, "window_max", general_info->window_max);
+
+   /* Put the index list into the dicominfo variable */
+   for (imri=0; (int) imri < MRI_NDIMS; imri++) {
+      dimsize = general_info->size[imri];
+      if ((dimsize > 1) &&
+          ((indices = MALLOC(sizeof(*indices) * dimsize)) != NULL)) {
+         
+         for (index=0; index < dimsize; index++) {
+            indices[index] = general_info->indices[imri][index];
+         }
+         if (imri == SLICE) {
+            dimname = spatial_dimnames[general_info->slice_world];
+         }
+         else {
+            dimname = mri_dim_names[imri];
+         }
+         (void) sprintf(name, "%s-indices", dimname);
+         (void) ncattput(mincid, varid, name, NC_LONG, 
+                         (int) dimsize, indices);
+         FREE(indices);
+      }
+   }
 
    /* Put group info in header */
    cur_group = general_info->group_list;
