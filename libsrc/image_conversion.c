@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.10 1993-02-01 10:48:17 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.11 1993-02-01 13:21:31 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1085,7 +1085,8 @@ public int miicv_detach(int icvid)
    }
 
    /* Set cdfid field to MI_ERROR to indicate that icv is detached */
-   minc_icv_list[icvid]->cdfid = MI_ERROR;
+   icvp->cdfid = MI_ERROR;
+   icvp->varid = MI_ERROR;
 
    MI_RETURN(MI_NOERROR);
 }
