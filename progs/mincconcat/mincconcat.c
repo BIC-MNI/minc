@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 3.1  1995-09-29 12:59:06  neelin
-@MODIFIED   : Fixed bug in handling of image-min/max when these variables are not
-@MODIFIED   : present in the input file.
+@MODIFIED   : Revision 3.2  1995-11-16 13:18:16  neelin
+@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
 @MODIFIED   :
+ * Revision 3.1  1995/09/29  12:59:06  neelin
+ * Fixed bug in handling of image-min/max when these variables are not
+ * present in the input file.
+ *
  * Revision 3.0  1995/05/15  19:32:40  neelin
  * Release of minc version 0.3
  *
@@ -33,13 +36,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.1 1995-09-29 12:59:06 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.2 1995-11-16 13:18:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <minc.h>

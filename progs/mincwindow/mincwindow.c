@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 3.1  1995-10-25 17:36:49  neelin
-@MODIFIED   : Fixed check of arguments: comparing char to NULL.
+@MODIFIED   : Revision 3.2  1995-11-16 13:15:11  neelin
+@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
 @MODIFIED   :
+ * Revision 3.1  1995/10/25  17:36:49  neelin
+ * Fixed check of arguments: comparing char to NULL.
+ *
  * Revision 3.0  1995/05/15  19:32:20  neelin
  * Release of minc version 0.3
  *
@@ -45,12 +48,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 3.1 1995-10-25 17:36:49 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 3.2 1995-11-16 13:15:11 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>

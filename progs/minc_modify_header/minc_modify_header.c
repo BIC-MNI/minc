@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : $Log: minc_modify_header.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:21  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-11-16 13:16:19  neelin
+@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:21  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.2  1995/04/04  19:10:56  neelin
  * Fixed handling of compressed files.
  *
@@ -31,13 +34,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 3.0 1995-05-15 19:32:21 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 3.1 1995-11-16 13:16:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <minc.h>
 #include <ParseArgv.h>
 #include <minc_def.h>

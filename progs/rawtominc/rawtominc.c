@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:00  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-11-16 13:11:16  neelin
+@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:00  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.7  1995/03/30  13:00:05  neelin
  * Added -sattribute and -dattribute options.
  *
@@ -72,7 +75,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.0 1995-05-15 19:31:00 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.1 1995-11-16 13:11:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -81,6 +84,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <ctype.h>
 #include <minc.h>
 #include <float.h>
+#include <math.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <minc_def.h>
