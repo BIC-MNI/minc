@@ -14,16 +14,16 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.7 1993-05-11 12:01:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.8 1993-07-13 16:40:04 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <minc.h>
 #include <float.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
+#include <minc_def.h>
 
 /* Some constants */
 
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
       image_pix *= end[ndims-i];
    pix_size=nctypelen(type);
    image_size=image_pix*pix_size;
-   image=malloc(image_size);
+   image=MALLOC(image_size);
 
    /* Loop through the images */
    instream=stdin;
@@ -355,7 +355,7 @@ main(int argc, char *argv[])
    }
 
    /* Free the memory */
-   free(image);
+   FREE(image);
 
    /* Write the valid max and min */
    if (do_vrange) {
@@ -366,7 +366,7 @@ main(int argc, char *argv[])
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_TRUE);
    (void) ncclose(cdfid);
    
-   return NORMAL_STATUS;
+   exit(NORMAL_STATUS);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
