@@ -12,8 +12,10 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 6.1  1998-08-19 13:03:56  neelin
-@MODIFIED   : Fixed index mapping in setting up reshaping info.
+@MODIFIED   : Revision 6.2  1998-08-19 13:57:23  neelin
+@MODIFIED   : Fixed argument parsing to detect errors such as octal numbers
+@MODIFIED   : containing illegal digits (08) and extraneous characters on the end of
+@MODIFIED   : arguments.
 @MODIFIED   :
  * Revision 6.0  1997/09/12  13:24:12  neelin
  * Release of minc version 0.6
@@ -59,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.1 1998-08-19 13:03:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.2 1998-08-19 13:57:23 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -507,6 +509,15 @@ public int get_dimsize(char *dst, char *key, char *nextArg)
       exit(EXIT_FAILURE);
    }
 
+   /* Check for extra stuff (spaces are allowed) */
+   while (ISSPACE(*cur)) cur++;
+   if (*cur != '\0') {
+      (void) fprintf(stderr,
+         "\"%s\" option requires the argument <dim>=<size>\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   
    dimsize_list->nentries++;
 
    return TRUE;
@@ -585,7 +596,8 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
       axis_order[ndims] = cur;
 
       /* Search for end of dimension name */
-      while (!ISSPACE(*cur) && (*cur != ',') && (*cur != '\0')) cur++;
+      while (!ISSPACE(*cur) && (*cur != ARG_SEPARATOR) && 
+             (*cur != '\0')) cur++;
       if (*cur != '\0') {
          *cur = '\0';
          cur++;
@@ -666,7 +678,8 @@ public int get_axis_range(char *dst, char *key, char *nextArg)
    /* Get the start */
    num_string++;
    axis_ranges->start[ientry] = strtol(num_string, &cur, 0);
-   if (cur == num_string) {
+   if ((cur == num_string) || 
+       !(ISSPACE(*cur) || (*cur == ARG_SEPARATOR) || (*cur == '\0'))) {
       (void) fprintf(stderr,
          "\"%s\" option requires the argument <dim>=<start>[,<count>]\n",
                      key);
@@ -677,7 +690,7 @@ public int get_axis_range(char *dst, char *key, char *nextArg)
    while (ISSPACE(*cur)) cur++;
    
    /* Skip an optional comma */
-   if (*cur == ',') cur++;
+   if (*cur == ARG_SEPARATOR) cur++;
 
    /* Look for a count string */
    num_string = cur;
@@ -688,6 +701,15 @@ public int get_axis_range(char *dst, char *key, char *nextArg)
 
    axis_ranges->nentries++;
 
+   /* Check for extra stuff (spaces are allowed) */
+   while (ISSPACE(*cur)) cur++;
+   if (*cur != '\0') {
+      (void) fprintf(stderr,
+         "\"%s\" option requires the argument <dim>=<start>[,<count>]\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   
    return TRUE;
 }
 
@@ -738,7 +760,8 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
       /* Get integer */
       prev = cur;
       vector[nvals] = strtol(prev, &cur, 0);
-      if (cur == prev) {
+      if ((cur == prev) ||
+          !(ISSPACE(*cur) || (*cur == VECTOR_SEPARATOR) || (*cur == '\0'))) {
          (void) fprintf(stderr, 
             "expected vector of integers for \"%s\", but got \"%s\"\n", 
                         key, nextArg);
