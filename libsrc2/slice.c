@@ -44,6 +44,7 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     int ndims;
     int i;
     int result;
+    char path[128];             /* TODO: string length? */
 
     if (volume == NULL || value == NULL) {
         return (MI_ERROR);      /* Bad parameters */
@@ -55,13 +56,15 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
 
     file_id = volume->hdf_id;
 
-    /* TODO: get the min/max from alternate resolutions??? */
     if (opcode & MIRW_SCALE_MIN) {
-	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-min");
+        sprintf(path, "/minc-2.0/image/%d/image-min", 
+                volume->selected_resolution);
     }
     else {
-	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-max");
+        sprintf(path, "/minc-2.0/image/%d/image-max", 
+                volume->selected_resolution);
     }
+    dset_id = midescend_path(file_id, path);
     if (dset_id < 0) {
 	return (MI_ERROR);
     }
@@ -252,6 +255,7 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
     hid_t fspc_id;
     hid_t mspc_id;
     int result;
+    char path[128];
 
     if (volume == NULL || value == NULL) {
         return (MI_ERROR);
@@ -262,11 +266,14 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
 
     file_id = volume->hdf_id;
     if (opcode & MIRW_SCALE_MIN) {
-	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-min");
+	sprintf(path, "/minc-2.0/image/%d/image-min", 
+                volume->selected_resolution);
     }
     else {
-	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-max");
+	sprintf(path, "/minc-2.0/image/%d/image-max", 
+                volume->selected_resolution);
     }
+    dset_id = midescend_path(file_id, path);
     if (dset_id < 0) {
 	return (MI_ERROR);
     }
