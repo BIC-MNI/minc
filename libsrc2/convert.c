@@ -230,7 +230,7 @@ miget_voxel_value(mihandle_t volume,
                   double *voxel_ptr)
 {
     int result;
-    long count[MI2_MAX_VAR_DIMS];
+    unsigned long count[MI2_MAX_VAR_DIMS];
     int i;
 
     for (i = 0; i < volume->number_of_dims; i++) {
@@ -284,7 +284,6 @@ main(int argc, char **argv)
     mihandle_t hvol;
     double v1, v2;
     double r1, r2;
-    double f;
 
     if (argc != 5) {
         TESTRPT("must specify a file name and position!", 0);
