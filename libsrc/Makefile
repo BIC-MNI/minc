@@ -27,12 +27,14 @@ LINT_LIST = $(OBJS:.o=.ln)
 
 # --------------------------------------------------------------------
 
-default : $(CC_MINC_LIB)
+default : build
+
+all : build $(LINT_MINC_LIB)
+
+build : $(CC_MINC_LIB)
 
 #Dependency on Makefile
 $(OBJS) $(CC_MINC_LIB) $(LINT_LIST) $(LINT_MINC_LIB) : Makefile
-
-all : $(CC_MINC_LIB) $(LINT_MINC_LIB)
 
 # define the rule for creating .ln
 $(LINT_LIST) : $(HEADERS)

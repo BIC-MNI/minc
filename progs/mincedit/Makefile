@@ -15,8 +15,8 @@ PROGS    = mincedit
 default: all
 
 all:
-	echo $(PROGS) is up to date
+	@echo $(PROGS) is up to date
 
 clean:
-	echo $(PROGS) : nothing to remove
+	@echo $(PROGS) : nothing to remove
 

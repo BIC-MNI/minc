@@ -26,9 +26,11 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 .SUFFIXES: .ln#                           tell make to watch for .ln's
 
-default: $(PROGS)
+default: build
 
-all: $(PROGS) test
+all: build test
+
+build: $(PROGS)
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
