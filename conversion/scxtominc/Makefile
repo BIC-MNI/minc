@@ -65,6 +65,6 @@ clean:
 scx_file.o scx_file.ln : scx_header_def.h
 
 # How to create scx_header_def.h
-scx_header_def.h : define_scx_header.perl pc5r1.drs
-	define_scx_header.perl scx_header_def.h pc5r1.drs
+scx_header_def.h : define_scx_header.perl pc5r1.drs pc6r1.drs
+	define_scx_header.perl scx_header_def.h pc5r1.drs pc6r1.drs
 
