@@ -103,7 +103,7 @@ C
      +           38.0, rcode)
       call mivgt1(mincid, imgid, start, NCLONG, MI_UNSIGNED,
      +           ival, rcode)
-      if (ival.ne. 38) print *, 'Error in mivpt/mivgt'
+      if (ival.ne. 38) print *, 'Error in mivpt1/mivgt1'
 
 C
 C     test icvnda, icvdet and icvatt
