@@ -10,7 +10,10 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.2  2004-02-02 18:24:11  bert
+ * Revision 6.2.2.1  2005-03-16 19:02:52  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.2  2004/02/02 18:24:11  bert
  * Call ParseArgv() so that version information will be available
  *
  * Revision 6.1  1999/10/19 14:45:32  neelin
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.2 2004-02-02 18:24:11 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.2.2.1 2005-03-16 19:02:52 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -68,16 +71,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.2 
 #include <string.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
-#endif
-#ifndef public
-#  define public
-#  define private static
 #endif
 
 /* Argument table */

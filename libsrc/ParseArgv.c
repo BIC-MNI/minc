@@ -16,13 +16,17 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.1 2004-09-28 20:23:39 bert Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.2 2005-03-16 19:02:49 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
+#include "config.h"
 #include "minc_private.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
-#include "ParseArgv.h"
+#include <ParseArgv.h>
 
 /*
  * Default table of argument descriptors.  These are normally available

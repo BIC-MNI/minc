@@ -11,7 +11,10 @@
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minccopy.c,v $
- * Revision 6.1  1999-10-19 14:45:20  neelin
+ * Revision 6.1.2.1  2005-03-16 19:02:50  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.1  1999/10/19 14:45:20  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:34  neelin
@@ -51,7 +54,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.1 1999-10-19 14:45:20 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.1.2.1 2005-03-16 19:02:50 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -59,7 +62,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 
 #include <string.h>
 #include <minc.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -155,7 +157,7 @@ int main(int argc, char *argv[])
    }
 
    /* Allocate space */
-   data = MALLOC(size);
+   data = malloc(size);
 
    /* Set up image conversion */
    if (!copy_pixel_values) {
@@ -203,7 +205,7 @@ int main(int argc, char *argv[])
       (void) miicv_free(outicv);
       (void) miicv_free(inicv);
    }
-   FREE(data);
+   free(data);
 
    exit(EXIT_SUCCESS);
 }

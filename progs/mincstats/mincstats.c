@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.14.2.2  2004-10-18 15:02:13  bert
+ * Revision 1.14.2.3  2005-03-16 19:02:52  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 1.14.2.2  2004/10/18 15:02:13  bert
  * Ported AJanke's biModalT fix to 1.X branch
  *
  * Revision 1.14.2.1  2004/09/28 20:03:40  bert
@@ -103,7 +106,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
 
 #ifndef TRUE
@@ -206,6 +208,13 @@ static int BiModalT = FALSE;
 static int PctT = FALSE;
 static double pctT = 0.0;
 static int Entropy = FALSE;
+
+/* Alternative methods of calculating the bimodal threshold */
+#define BMT_OTSU 1              /* Otsu algorithm (default) */
+#define BMT_KITTLER 2           /* Kittler-Illingworth algorithm */
+#define BMT_KAPUR 3             /* Kapur et al. algorithm */
+#define BMT_SIMPLE 4      /* Simple mean-of-means, citation unknown */
+static int BMTMethod = BMT_OTSU;
 
 static Double_Array vol_min = { 0, NULL };
 static Double_Array vol_max = { 0, NULL };
@@ -345,10 +354,367 @@ ArgvInfo argTable[] = {
     "<%> threshold at the supplied % of data."},
    {"-entropy", ARGV_CONSTANT, (char *)TRUE, (char *)&Entropy,
     "entropy of the volume."},
+   {"-otsu", ARGV_CONSTANT, (char *)BMT_OTSU, (char *)&BMTMethod,
+    "Use Otsu '97 algorithm for bimodal threshold (default)"},
+   {"-kittler", ARGV_CONSTANT, (char *)BMT_KITTLER, (char *)&BMTMethod,
+    "Use Kittler&Illingworth '86 algorithm for bimodal threshold"},
+   {"-kapur", ARGV_CONSTANT, (char *)BMT_KAPUR, (char *)&BMTMethod,
+    "Use Kapur et al. '85 algorithm for bimodal threshold"},
+   {"-simple", ARGV_CONSTANT, (char *)BMT_SIMPLE, (char *)&BMTMethod,
+    "Use simple mean-of-means algorithm for bimodal threshold"},
 
    {NULL, ARGV_HELP, NULL, NULL, ""},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
+
+/* Alternative thresholding algorithm.  This is more computationally
+ * expensive than some of the alternatives, and doesn't seem to do a 
+ * great job.  On the other hand it doesn't seem to fail like the 
+ * current algorithm.
+ */
+
+static double
+simple_threshold(float *histogram, float *hist_centre, int hist_bins)
+{
+    double sum1, sum2;
+    double mean1, mean2;
+    double testthreshold;
+    double newthreshold;
+    int newthreshold_bin;
+    double count1, count2;
+    int c;
+
+    /* Start with a guess of the bimodal threshold.
+     */
+    newthreshold = ceil(hist_centre[hist_bins / 2]);
+    newthreshold_bin = hist_bins / 2;
+
+    for (;;) {
+        sum1 = 0.0;
+        sum2 = 0.0;
+        count1 = 0.0;
+        count2 = 0.0;
+
+        /* Calculate the mean of the bins on each side of the
+         * proposed threshold.
+         */
+        for (c = 0; c < newthreshold_bin; c++) {
+            sum1 += (hist_centre[c] * histogram[c]);
+            count1 += histogram[c];
+        }
+
+        for (c = newthreshold_bin; c < hist_bins; c++) {
+            sum2 += (hist_centre[c] * histogram[c]);
+            count2 += histogram[c];
+        }
+
+        /* Avoid divide by zero 
+         */
+        if (count1 == 0.0 || count2 == 0.0) {
+            continue;
+        }
+
+        mean1 = sum1 / count1;
+        mean2 = sum2 / count2;
+
+        /* The new threshold is the mean of the means.
+         */
+        testthreshold = ceil((mean1 + mean2) / 2);
+
+        /* If the threshold is unchanged, that is our final
+         * guess.
+         */
+        if (newthreshold == testthreshold) {
+            break;              /* Return result */
+        }
+        else {
+            /* Adopt the new guess and try again until we converge.
+             */
+            newthreshold = testthreshold;
+
+            for (c = 0; c < hist_bins; c++) {
+                if (newthreshold == ceil(hist_centre[c])) {
+                    newthreshold_bin = c;
+                    break;
+                }
+            }
+        }
+    }
+    return (newthreshold);
+}
+
+/** This copyright applies to the following functions: 
+ *
+ * otsu_threshold()
+ * kittler_threshold()
+ * kapur_threshold()
+ * 
+ * These functions were extracted from the "xite" package from this
+ * source.  The functions were extensively modified, however, by me
+ * to generalize the functions for our purposes.  Any bugs are
+ * therefore my responsibility (bert 2004-12-14).
+ * 
+ * Copyright 1990, Blab, UiO
+ * Image processing lab, Department of Informatics
+ * University of Oslo
+ * E-mail: blab@ifi.uio.no
+ *________________________________________________________________
+ *
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation for any purpose and without fee is hereby
+ * granted, provided that this copyright notice appear in all copies
+ * and that both that copyright notice and this permission notice
+ * appear in supporting documentation and that the name of B-lab,
+ * Department of Informatics or University of Oslo not be used in
+ * advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission.
+ *
+ * B-LAB DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
+ * NO EVENT SHALL B-LAB BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+ * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Otsu, N. "A threshold selection method from gray-level histograms",
+ * IEEE Transactions on Systems, Man, and Cybernetics, vol T-SMC 9,
+ * No 1, pp 62-66, 1979.
+ */
+static double
+otsu_threshold(float histo[], float hist_centre[], int hist_bins)
+{
+    double threshold;
+    double criterion;
+    double expr_1;              /* Temporary for common subexpression */
+    int i, k;                   /* Generic loop counters */
+    double *p = malloc(hist_bins * sizeof(double));
+    double omega_k;
+    double sigma_b_k;
+    double sigma_T;
+    double mu_T;
+    double mu_k;
+    int sum;
+    int k_low, k_high;
+    double mu_0, mu_1, mu;
+
+    /* If memory allocation fails, abandon ship!!! */
+    if (p == NULL) {
+        return (0.0);
+    }
+
+    sum = 0;
+    for (i = 0; i < hist_bins; i++)
+        sum += histo[i];
+
+    for (i = 0; i < hist_bins; i++)
+        p[i] = histo[i] * 1.0 / sum;
+
+    mu_T = 0.0;
+    for (i = 0; i < hist_bins; i++)
+        mu_T += hist_centre[i] * p[i];
+
+    sigma_T = 0.0;
+    for (i = 0; i < hist_bins; i++)
+        sigma_T += (hist_centre[i] - mu_T) * (hist_centre[i] - mu_T) * p[i];
+
+    /* Ignore outlying zero bins */
+    for (k_low = 0; (p[k_low] == 0) && (k_low < hist_bins - 1); k_low++)
+        ;
+
+    for (k_high = hist_bins - 1; (p[k_high] == 0) && (k_high > 0); k_high--)
+        ;
+
+    criterion = 0.0;
+    threshold = hist_centre[hist_bins / 2];
+    mu_0 = hist_centre[hist_bins / 2 - 1];
+    mu_1 = hist_centre[hist_bins / 2 + 1];
+
+    omega_k = 0.0;
+    mu_k = 0.0;
+    for (k = k_low; k <= k_high ; k++) {
+        omega_k += p[k];
+        mu_k += hist_centre[k] * p[k];
+
+        expr_1 = (mu_T * omega_k - mu_k);
+        sigma_b_k = expr_1 * expr_1 / (omega_k * (1 - omega_k));
+        if (criterion < sigma_b_k / sigma_T) {
+            criterion = sigma_b_k / sigma_T;
+            threshold = hist_centre[k];
+            mu_0 = mu_k / omega_k;
+            mu_1 = (mu_T - mu_k) / (1.0 - omega_k);
+        }
+    }
+    mu = mu_T;
+    free(p);
+    return threshold;
+}
+
+/* Kittler, J. & Illingworth J., "Minimum error thresholding", Pattern
+ * Recognition, vol 19, pp 41-47, 1986.
+ */
+static double 
+kittler_threshold (float hist_bin[], float hist_centre[], int hist_size)
+{
+    double threshold;
+    double criterion;
+    int g;
+    double n;
+    int T_low, T_high;
+    double P_1_T, P_2_T, P_tot;
+    double mu_1_T, mu_2_T;
+    double sum_gh_1, sum_gh_2, sum_gh_tot;
+    double sum_ggh_1, sum_ggh_2, sum_ggh_tot;
+    double sigma_1_T, sigma_2_T;
+    double J_T;
+    double mu, mu_1, mu_2;
+
+    criterion = 1e10;
+    threshold = hist_centre[hist_size / 2 + 1];
+    J_T = criterion;
+
+    T_low = 0;
+    while ((hist_bin[T_low] == 0) && (T_low < hist_size - 1)) {
+        T_low++;
+    }
+
+    T_high = hist_size - 1;
+    while ((hist_bin[T_high] == 0) && (T_high > 0)) {
+        T_high--;
+    }
+
+    n = 0;
+    for (g = T_low; g <= T_high; g++) {
+        n += hist_bin[g];
+    }
+
+    P_1_T = hist_bin[T_low];
+
+    P_tot = 0;
+    for (g = T_low; g <= T_high; g++) {
+        P_tot += hist_bin[g];
+    }
+
+    sum_gh_1 = hist_centre[T_low] * hist_bin[T_low];
+
+    sum_gh_tot = 0.0;
+    for (g = T_low; g <= T_high; g++) {
+        sum_gh_tot += hist_centre[g] * hist_bin[g];
+    }
+
+    mu = sum_gh_tot * 1.0 / n;
+
+    sum_ggh_1 = hist_centre[T_low] * hist_centre[T_low] * hist_bin[T_low];
+
+    sum_ggh_tot = 0.0;
+    for (g = T_low; g <= T_high; g++) {
+        sum_ggh_tot += hist_centre[g] * hist_centre[g] * hist_bin[g];
+    }
+
+    for (g = T_low + 1; g < T_high - 1; g++) {
+        P_1_T += hist_bin[g];
+        P_2_T = P_tot - P_1_T;
+
+        sum_gh_1 += hist_centre[g] * hist_bin[g];
+        sum_gh_2 = sum_gh_tot - sum_gh_1;
+
+        mu_1_T = sum_gh_1 / P_1_T;
+        mu_2_T = sum_gh_2 / P_2_T;
+
+        sum_ggh_1 += hist_centre[g] * hist_centre[g] * hist_bin[g];
+        sum_ggh_2 = sum_ggh_tot - sum_ggh_1;
+
+        sigma_1_T = sum_ggh_1 / P_1_T - mu_1_T * mu_1_T;
+        sigma_2_T = sum_ggh_2 / P_2_T - mu_2_T * mu_2_T;
+
+        /* Equation (15) in the article */
+        if ((sigma_1_T != 0.0) && (P_1_T != 0) &&
+            (sigma_2_T != 0.0) && (P_2_T != 0)) {
+            J_T = 1 + 2 * (P_1_T * log(sigma_1_T) + P_2_T * log(sigma_2_T))
+                - 2 * (P_1_T * log(P_1_T) + P_2_T * log(P_2_T) );
+        }
+
+        if (criterion > J_T) {
+            criterion = J_T;
+            threshold = hist_centre[g];
+            mu_1 = mu_1_T;
+            mu_2 = mu_2_T;
+        }
+    }
+    return threshold;
+}
+
+/*
+  Kapur, Sahoo & Wong "A new method for Gray-level picture
+  thresholding using the entropy of the histogram", Computer Vision,
+  Graphics, and Image Processing, vol 29, pp 273-285, 1985.
+*/
+
+#define BIN_TINY 1e-6
+
+static double
+kapur_threshold(float histo[], float hist_centre[], int hist_bins)
+{
+    double threshold;
+    double Phi, Phi_max;
+    int i, k;
+    double *p = malloc(sizeof(double) * hist_bins);
+    double *P = malloc(sizeof(double) * hist_bins);
+    double *H = malloc(sizeof(double) * hist_bins);
+    double sum;
+
+    sum = 0;
+    for (i = 0; i < hist_bins; i++) {
+        sum += histo[i];
+    }
+
+    for (i = 0; i < hist_bins; i++) {
+        p[i] = histo[i] * 1.0 / sum;
+    }
+   
+    P[0] = p[0];
+    for (i = 1; i < hist_bins; i++) {
+        P[i] = P[i - 1] + p[i];
+    }
+
+    if (histo[0] == 0) {
+        H[0] = 0;
+    }
+    else {
+        H[0] = -p[0] * log(p[0]);
+    }
+
+    for (i = 1; i < hist_bins; i++) {
+        if (histo[i] == 0) {
+            H[i] = H[i - 1];
+        }
+        else {
+            H[i] = H[i - 1] - p[i] * log(p[i]);
+        }
+    }
+
+    Phi_max = -10e10;
+    threshold = hist_centre[hist_bins / 2];
+
+    for (k = 0; k <= hist_bins - 1; k++) {
+
+        if ((P[k] > BIN_TINY) && (1 - P[k] > BIN_TINY)) {
+            Phi = log(P[k] * (1 - P[k]))
+                + H[k] / P[k]
+                + (H[hist_bins - 1] - H[k]) / (1.0 - P[k]);
+
+            if (Phi_max < Phi) {	
+                Phi_max = Phi;
+                threshold = hist_centre[k];
+            }
+        }
+    }
+    free(p);
+    free(P);
+    free(H);
+    return threshold;
+}
 
 int main(int argc, char *argv[])
 {
@@ -538,9 +904,9 @@ int main(int argc, char *argv[])
    }
 
    /* Initialize the stats structure */
-   stats_info = MALLOC(num_ranges * sizeof(*stats_info));
+   stats_info = malloc(num_ranges * sizeof(*stats_info));
    for(irange = 0; irange < num_ranges; irange++) {
-      stats_info[irange] = MALLOC(num_masks * sizeof(**stats_info));
+      stats_info[irange] = malloc(num_masks * sizeof(**stats_info));
       for(imask = 0; imask < num_masks; imask++) {
          stats = &stats_info[irange][imask];
          init_stats(stats, hist_bins);
@@ -613,9 +979,9 @@ int main(int argc, char *argv[])
             double   max_var = 0.0;
 
             /* Allocate space for histograms */
-            hist_centre = CALLOC(hist_bins, sizeof(float));
-            pdf = CALLOC(hist_bins, sizeof(float));
-            cdf = CALLOC(hist_bins, sizeof(float));
+            hist_centre = calloc(hist_bins, sizeof(float));
+            pdf = calloc(hist_bins, sizeof(float));
+            cdf = calloc(hist_bins, sizeof(float));
             if(hist_centre == NULL || pdf == NULL || cdf == NULL) {
                (void)fprintf(stderr, "Memory allocation error\n");
                exit(EXIT_FAILURE);
@@ -647,7 +1013,7 @@ int main(int argc, char *argv[])
                zero_moment += pdf[c];
                first_moment += hist_centre[c] * pdf[c];
 
-               if(c > 0) {
+               if(c > 0 && zero_moment > 0.0 && zero_moment < 1.0) {
                   var = SQR((stats->mean * zero_moment) - first_moment) /
                      (zero_moment * (1 - zero_moment));
 
@@ -685,6 +1051,32 @@ int main(int argc, char *argv[])
                                * pdf[pctt_bin + 1]) * hist_sep;
             }
 
+            switch (BMTMethod) {
+            case BMT_KITTLER:
+                stats->biModalT = kittler_threshold(stats->histogram,
+                                                    hist_centre,
+                                                    hist_bins);
+                break;
+
+            case BMT_KAPUR:
+                stats->biModalT = kapur_threshold(stats->histogram,
+                                                  hist_centre,
+                                                  hist_bins);
+                break;
+
+            case BMT_SIMPLE:
+                stats->biModalT = simple_threshold(stats->histogram,
+                                                   hist_centre,
+                                                   hist_bins);
+                break;
+
+            default:
+                stats->biModalT = otsu_threshold(stats->histogram,
+                                                 hist_centre,
+                                                 hist_bins);
+                break;
+            }
+
             /* output the histogram */
             if(hist_file != NULL) {
 
@@ -710,9 +1102,9 @@ int main(int argc, char *argv[])
             }
 
             /* Free the space */
-            FREE(hist_centre);
-            FREE(pdf);
-            FREE(cdf);
+            free(hist_centre);
+            free(pdf);
+            free(cdf);
 
          }                             /* end histogram calculations */
 
@@ -844,9 +1236,9 @@ int main(int argc, char *argv[])
       for(imask = 0; imask < num_masks; imask++) {
          free_stats(&stats_info[irange][imask]);
       }
-      FREE(stats_info[irange]);
+      free(stats_info[irange]);
    }
-   FREE(stats_info);
+   free(stats_info);
 
    return EXIT_SUCCESS;
 }
@@ -1288,10 +1680,10 @@ int get_double_list(char *dst, char *key, char *nextarg)
       if(num_elements > num_alloc) {
          num_alloc += 20;
          if(double_list == NULL) {
-            double_list = MALLOC(num_alloc * sizeof(*double_list));
+            double_list = malloc(num_alloc * sizeof(*double_list));
          }
          else {
-            double_list = REALLOC(double_list, num_alloc * sizeof(*double_list));
+            double_list = realloc(double_list, num_alloc * sizeof(*double_list));
          }
       }
       double_list[num_elements - 1] = dvalue;
@@ -1309,7 +1701,7 @@ int get_double_list(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    double_array->numvalues = num_elements;
    if(double_array->values != NULL) {
-      FREE(double_array->values);
+      free(double_array->values);
    }
    double_array->values = double_list;
 
@@ -1378,11 +1770,11 @@ void verify_range_options(Double_Array * min, Double_Array * max,
    /* Allocate the space */
    if(min->numvalues <= 0) {
       min->numvalues = num_values;
-      min->values = MALLOC(num_values * sizeof(double));
+      min->values = malloc(num_values * sizeof(double));
    }
    if(max->numvalues <= 0) {
       max->numvalues = num_values;
-      max->values = MALLOC(num_values * sizeof(double));
+      max->values = malloc(num_values * sizeof(double));
    }
    if(min->values == NULL || max->values == NULL) {
       (void)fprintf(stderr, "Memory allocation error\n");
@@ -1434,7 +1826,7 @@ void init_stats(Stats_Info * stats, int hist_bins)
    stats->mask_range[0] = -DBL_MAX;
    stats->mask_range[1] = DBL_MAX;
    if(Hist && hist_bins > 0) {
-      stats->histogram = CALLOC(hist_bins, sizeof(float));
+      stats->histogram = calloc(hist_bins, sizeof(float));
       if(stats->histogram == NULL) {
          (void)fprintf(stderr, "Memory allocation error\n");
          exit(EXIT_FAILURE);
@@ -1475,5 +1867,5 @@ void init_stats(Stats_Info * stats, int hist_bins)
 void free_stats(Stats_Info * stats)
 {
    if(stats->histogram != NULL)
-      FREE(stats->histogram);
+      free(stats->histogram);
 }

@@ -62,7 +62,15 @@ noinst_HEADERS = \
 	progs/minccalc/node.h \
 	progs/minccalc/y.tab.h \
 	progs/mincresample/mincresample.h \
-	progs/mincreshape/mincreshape.h
+	progs/mincreshape/mincreshape.h \
+	conversion/ecattominc/ecat_file.h \
+	conversion/ecattominc/machine_indep.h \
+	conversion/ecattominc/ecat_header_definition.h \
+	conversion/minctoecat/ecat_write.h \
+	conversion/minctoecat/machine_indep.h \
+	conversion/nifti1/nifti1.h \
+	conversion/nifti1/nifti1_io.h \
+	conversion/nifti1/nifti1_local.h
 
 # Libraries which must be built and installed.
 #
@@ -105,7 +113,12 @@ bin_PROGRAMS = \
 	rawtominc \
 	transformtags \
 	xfmconcat \
-	xfminvert
+	xfminvert \
+	ecattominc \
+	minctoecat \
+	mnc2nii \
+	nii2mnc \
+	upet2mnc
 
 noinst_PROGRAMS = \
 	mincexample1 \
@@ -210,6 +223,28 @@ xfmconcat_SOURCES = progs/xfm/xfmconcat.c
 
 xfminvert_SOURCES = progs/xfm/xfminvert.c
 
+ecattominc_SOURCES = \
+	conversion/ecattominc/ecattominc.c \
+	conversion/ecattominc/insertblood.c \
+	conversion/ecattominc/ecat_file.c \
+	conversion/ecattominc/machine_indep.c
+
+minctoecat_SOURCES = \
+	conversion/minctoecat/minctoecat.c \
+	conversion/minctoecat/ecat_write.c \
+	conversion/minctoecat/machine_indep.c
+
+nii2mnc_SOURCES = \
+	conversion/nifti1/nii2mnc.c \
+	conversion/nifti1/nifti1_io.c
+
+mnc2nii_SOURCES = \
+	conversion/nifti1/mnc2nii.c \
+	conversion/nifti1/nifti1_io.c
+
+upet2mnc_SOURCES = \
+	conversion/micropet/upet2mnc.c
+
 libminc_la_LDFLAGS = -version-info 1:0:1
 libminc_la_SOURCES = \
 	libsrc/ParseArgv.c \
@@ -293,6 +328,8 @@ dist_man1_MANS = \
 	progs/rawtominc/rawtominc.man1 \
 	progs/xfm/transformtags.man1 \
 	progs/xfm/xfmconcat.man1 \
-	progs/xfm/xfminvert.man1
+	progs/xfm/xfminvert.man1 \
+	conversion/ecattominc/ecattominc.man1 \
+	conversion/minctoecat/minctoecat.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3

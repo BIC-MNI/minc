@@ -7,7 +7,10 @@
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.h,v $
- * Revision 6.3  2001-12-06 14:12:45  neelin
+ * Revision 6.3.2.1  2005-03-16 19:02:52  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.3  2001/12/06 14:12:45  neelin
  * Trivial change to definition of NCOPTS_DEFAULT.
  *
  * Revision 6.2  1999/10/19 14:45:29  neelin
@@ -112,66 +115,65 @@ typedef struct {
 #define  MIN( x, y )  ( ((x) <= (y)) ? (x) : (y) )
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         Reshape_info *reshape_info);
-public int get_fillvalue(char *dst, char *key, char *nextArg);
-public int get_dimsize(char *dst, char *key, char *nextArg);
-public int get_axis_order(char *dst, char *key, char *nextArg);
-public int get_axis_range(char *dst, char *key, char *nextArg);
-public int get_arg_vector(char *dst, char *key, char *nextArg);
-public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
+static int get_fillvalue(char *dst, char *key, char *nextArg);
+static int get_dimsize(char *dst, char *key, char *nextArg);
+static int get_axis_order(char *dst, char *key, char *nextArg);
+static int get_axis_range(char *dst, char *key, char *nextArg);
+static int get_arg_vector(char *dst, char *key, char *nextArg);
+static void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
                                  double valid_range[2]);
-public void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list);
-public void setup_reshaping_info(int icvid, int mincid, 
+static void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list);
+static void setup_reshaping_info(int icvid, int mincid, 
                                  int do_norm, double fillvalue, int do_scalar,
                                  char *axis_order[], Axis_ranges *axis_ranges,
                                  long hs_start[], long hs_count[],
                                  int max_chunk_size_in_kb,
                                  Reshape_info *reshape_info);
-public void setup_output_file(int mincid, char *history, 
+static void setup_output_file(int mincid, char *history, 
                               Reshape_info *reshape_info);
-public void create_dim_var(int outmincid, int outdimid,
+static void create_dim_var(int outmincid, int outdimid,
                            int inicvid, int cur_image_dim, int inmincid, 
                            long input_start, long input_count);
-public void copy_dimension_values(int outmincid, int outdimid, int inmincid,
+static void copy_dimension_values(int outmincid, int outdimid, int inmincid,
                                   long input_start, long input_count);
-public void copy_dim_var_values(int outmincid, char *dimname, char *varname,
+static void copy_dim_var_values(int outmincid, char *dimname, char *varname,
                                 int inmincid,
                                 long input_start, long input_count);
-public void copy_data(Reshape_info *reshape_info);
-public void get_num_minmax_values(Reshape_info *reshape_info,
+extern void copy_data(Reshape_info *reshape_info);
+static void get_num_minmax_values(Reshape_info *reshape_info,
                                   long *block_start, long *block_count,
                                   long *num_min_values, long *num_max_values);
-public void handle_normalization(Reshape_info *reshape_info,
+static void handle_normalization(Reshape_info *reshape_info,
                                  long *block_start,
                                  long *block_count,
                                  double *minmax_buffer,
                                  double *fillvalue);
-public void get_block_min_and_max(Reshape_info *reshape_info,
+static void get_block_min_and_max(Reshape_info *reshape_info,
                                   long *block_start,
                                   long *block_count,
                                   double *minmax_buffer,
                                   double *minimum,
                                   double *maximum);
-public void truncate_input_vectors(Reshape_info *reshape_info,
+static void truncate_input_vectors(Reshape_info *reshape_info,
                                    long *input_start,
                                    long *input_count);
-public void translate_output_to_input(Reshape_info *reshape_info,
+static void translate_output_to_input(Reshape_info *reshape_info,
                                       long *output_start,
                                       long *output_count,
                                       long *input_start,
                                       long *input_count);
-public void translate_input_to_output(Reshape_info *reshape_info,
+static void translate_input_to_output(Reshape_info *reshape_info,
                                       long *input_start,
                                       long *input_count,
                                       long *output_start,
                                       long *output_count);
-public void copy_the_chunk(Reshape_info *reshape_info,
+static void copy_the_chunk(Reshape_info *reshape_info,
                            long chunk_start[],
                            long chunk_count[],
                            void *chunk_data,
                            double fillvalue);
-public void convert_value_from_double(double dvalue, 
+static void convert_value_from_double(double dvalue, 
                                       nc_type datatype, int is_signed,
                                       void *ptr);

@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.5.2.1  2004-09-28 20:07:56  bert
+ * Revision 6.5.2.2  2005-03-16 19:02:51  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.5.2.1  2004/09/28 20:07:56  bert
  * Minor portability fix for Windows
  *
  * Revision 6.5  2001/04/24 13:38:44  neelin
@@ -69,7 +72,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.5.2.1 2004-09-28 20:07:56 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.5.2.2 2005-03-16 19:02:51 bert Exp $";
 #endif
 
 #include "config.h"
@@ -82,14 +85,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
 
 /* Constants */
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -164,28 +162,27 @@ typedef struct {
 } Math_Data;
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
-public void do_math(void *caller_data, long num_voxels, 
+static void do_math(void *caller_data, long num_voxels, 
                     int input_num_buffers, int input_vector_length,
                     double *input_data[],
                     int output_num_buffers, int output_vector_length,
                     double *output_data[],
                     Loop_Info *loop_info);
-public void accum_math(void *caller_data, long num_voxels, 
+static void accum_math(void *caller_data, long num_voxels, 
                        int input_num_buffers, int input_vector_length,
                        double *input_data[],
                        int output_num_buffers, int output_vector_length,
                        double *output_data[],
                        Loop_Info *loop_info);
-public void start_math(void *caller_data, long num_voxels, 
+static void start_math(void *caller_data, long num_voxels, 
                        int output_num_buffers, int output_vector_length,
                        double *output_data[],
                        Loop_Info *loop_info);
-public void end_math(void *caller_data, long num_voxels, 
+static void end_math(void *caller_data, long num_voxels, 
                      int output_num_buffers, int output_vector_length,
                      double *output_data[],
                      Loop_Info *loop_info);
-public char **read_file_names(char *filelist, int *num_files);
+static char **read_file_names(char *filelist, int *num_files);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -350,7 +347,7 @@ ArgvInfo argTable[] = {
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    char **infiles, **outfiles;
    int nfiles, nout;
@@ -511,7 +508,7 @@ public int main(int argc, char *argv[])
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_math(void *caller_data, long num_voxels, 
+static void do_math(void *caller_data, long num_voxels, 
                     int input_num_buffers, int input_vector_length,
                     double *input_data[],
                     int output_num_buffers, int output_vector_length,
@@ -700,7 +697,7 @@ public void do_math(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void accum_math(void *caller_data, long num_voxels, 
+static void accum_math(void *caller_data, long num_voxels, 
                        int input_num_buffers, int input_vector_length,
                        double *input_data[],
                        int output_num_buffers, int output_vector_length,
@@ -799,7 +796,7 @@ public void accum_math(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void start_math(void *caller_data, long num_voxels, 
+static void start_math(void *caller_data, long num_voxels, 
                        int output_num_buffers, int output_vector_length,
                        double *output_data[],
                        Loop_Info *loop_info)
@@ -851,7 +848,7 @@ public void start_math(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void end_math(void *caller_data, long num_voxels, 
+static void end_math(void *caller_data, long num_voxels, 
                      int output_num_buffers, int output_vector_length,
                      double *output_data[],
                      Loop_Info *loop_info)
@@ -901,7 +898,7 @@ public void end_math(void *caller_data, long num_voxels,
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char **read_file_names(char *filelist, int *num_files)
+static char **read_file_names(char *filelist, int *num_files)
 {
 #define FILE_NAME_ALLOC_SIZE 10
    char **files;
@@ -925,7 +922,7 @@ public char **read_file_names(char *filelist, int *num_files)
 
    /* Allocate an initial array and NULL-terminate it */
    array_size = FILE_NAME_ALLOC_SIZE;
-   files = MALLOC(sizeof(*files) * array_size);
+   files = malloc(sizeof(*files) * array_size);
    if (files == NULL) {
       (void) fprintf(stderr, "Error allocating memory\n");
       return NULL;
@@ -947,7 +944,7 @@ public char **read_file_names(char *filelist, int *num_files)
       /* Make room for names if needed */
       while (nfiles >= array_size-1) {
          array_size += FILE_NAME_ALLOC_SIZE;
-         files = REALLOC(files, sizeof(*files) * array_size);
+         files = realloc(files, sizeof(*files) * array_size);
          if (files == NULL) {
             (void) fprintf(stderr, "Error allocating memory\n");
             return NULL;

@@ -10,7 +10,10 @@
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: transformtags.c,v $
- * Revision 6.1  1999-10-19 14:45:31  neelin
+ * Revision 6.1.2.1  2005-03-16 19:02:52  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.1  1999/10/19 14:45:31  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:28  neelin
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 6.1 1999-10-19 14:45:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 6.1.2.1 2005-03-16 19:02:52 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -55,7 +58,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 
 #include <string.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE

@@ -10,7 +10,10 @@
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincextract.c,v $
- * Revision 6.4  2003-10-28 20:31:19  bert
+ * Revision 6.4.2.1  2005-03-16 19:02:50  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.4  2003/10/28 20:31:19  bert
  * Remove two unused variables
  *
  * Revision 6.3  2001/08/16 16:41:35  neelin
@@ -85,7 +88,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.4 2003-10-28 20:31:19 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.4.2.1 2005-03-16 19:02:50 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -96,16 +99,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextrac
 #include <float.h>
 #include <ctype.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
-#endif
-#ifndef public
-#  define public
-#  define private static
 #endif
 #define VECTOR_SEPARATOR ','
 #define TYPE_ASCII  0
@@ -120,7 +118,7 @@ static nc_type nc_type_list[8] = {
 };
 
 /* Function declarations */
-public int get_arg_vector(char *dst, char *key, char *nextArg);
+static int get_arg_vector(char *dst, char *key, char *nextArg);
 
 /* Variables used for argument parsing */
 int arg_odatatype = TYPE_ASCII;
@@ -374,7 +372,7 @@ int main(int argc, char *argv[])
    element_size = nctypelen(output_datatype);
 
    /* Allocate space */
-   data = MALLOC(element_size*nelements);
+   data = malloc(element_size*nelements);
 
    /* Loop over input slices */
 
@@ -412,7 +410,7 @@ int main(int argc, char *argv[])
    /* Clean up */
    (void) miclose(mincid);
    (void) miicv_free(icvid);
-   FREE(data);
+   free(data);
 
    exit(EXIT_SUCCESS);
 }
@@ -433,7 +431,7 @@ int main(int argc, char *argv[])
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_arg_vector(char *dst, char *key, char *nextArg)
+static int get_arg_vector(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
 

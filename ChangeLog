@@ -1,3 +1,14 @@
+2005-03-16  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Port other changes from 2.0 branch - new mincconcat bimodal
+	threshold calculations, get rid of minc_def.h for all programs.
+	* Add -dappend and -sappend operations to minc_modify_header on
+	the 1.X branch
+	* Add minctoecat to the 1.X branch	
+	
+2005-02-15  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add conversions to the branch
+	* Add simplified interface to the branch
+	
 2004-08-11  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fix MI_MAX_IMGDIMS at 100 to avoid netCDF 3.5.1 problem.
 	

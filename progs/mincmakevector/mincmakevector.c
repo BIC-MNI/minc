@@ -11,11 +11,8 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.5  2004-04-30 19:53:30  bert
- * Remove unused variable
- *
- * Revision 6.4  2004/04/27 15:32:15  bert
- * Added -2 option
+ * Revision 6.3.2.1  2005-03-16 19:02:51  bert
+ * Port changes from 2.0 branch
  *
  * Revision 6.3  2001/04/24 13:38:44  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
@@ -41,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.5 2004-04-30 19:53:30 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.3.2.1 2005-03-16 19:02:51 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -53,12 +50,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmak
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -75,19 +67,16 @@ typedef struct {
 } Program_Data;
 
 /* Function prototypes */
-public void do_makevector(void *caller_data, long num_voxels,
+static void do_makevector(void *caller_data, long num_voxels,
                           int input_num_buffers, int input_vector_length,
                           double *input_data[],
                           int output_num_buffers, int output_vector_length,
                           double *output_data[], Loop_Info *loop_info);
-public long get_vector_length(int mincid);
+static long get_vector_length(int mincid);
 
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
-#ifdef MINC2
-int v2format = FALSE;
-#endif /* MINC2 defined */
 nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
@@ -95,10 +84,6 @@ int buffer_size = 10 * 1024;
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
-    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
-       "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -173,9 +158,6 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
-#ifdef MINC2
-   set_loop_v2format(loop_options, v2format);
-#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_output_vector_size(loop_options, num_input_files);
@@ -211,15 +193,19 @@ int main(int argc, char *argv[])
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_makevector(void *caller_data, long num_voxels,
+static void do_makevector(void *caller_data, long num_voxels,
                           int input_num_buffers, int input_vector_length,
                           double *input_data[],
                           int output_num_buffers, int output_vector_length,
                           double *output_data[], Loop_Info *loop_info)
      /* ARGSUSED */
 {
+   Program_Data *program_data;
    long ivoxel, ovoxel;
    int current_input_file;
+
+   /* Get pointer to lookup info */
+   program_data = (Program_Data *) caller_data;
 
    /* Check that values correspond */
    if ((input_num_buffers != 1) || (output_num_buffers != 1) ||
@@ -255,7 +241,7 @@ public void do_makevector(void *caller_data, long num_voxels,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long get_vector_length(int mincid)
+static long get_vector_length(int mincid)
 {
    int imgid;
    int ndims;

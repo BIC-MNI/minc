@@ -10,11 +10,8 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.9  2004-06-11 15:19:34  bert
- * Fix attribute append operation
- *
- * Revision 6.8  2004/05/25 21:33:51  bert
- * Add -dappend and -sappend
+ * Revision 6.7.2.1  2005-03-16 19:02:49  bert
+ * Port changes from 2.0 branch
  *
  * Revision 6.7  2004/02/02 18:27:06  bert
  * Include config.h
@@ -75,7 +72,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.9 2004-06-11 15:19:34 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.7.2.1 2005-03-16 19:02:49 bert Exp $";
 #endif
 
 #include "config.h"
@@ -86,7 +83,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/min
 #include <math.h>
 #include <minc.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #define MINC_EXTENSION ".mnc"
@@ -204,7 +200,7 @@ int main(int argc, char *argv[])
       if (created_tempfile) {
          if (newfile != NULL) {
             (void) remove(newfile);
-            FREE(newfile);
+            free(newfile);
          }
          (void) fprintf(stderr, "Cannot edit file \"%s\" in place.\n",
                         filename);
@@ -325,8 +321,8 @@ int main(int argc, char *argv[])
          }
          else if (!done_redef && attribute_exists && (total_length > 0)) {
             if (total_length > alloc_length) {
-               if (zeros != NULL) FREE(zeros);
-               zeros = MALLOC(total_length);
+               if (zeros != NULL) free(zeros);
+               zeros = malloc(total_length);
                alloc_length = total_length;
                for (ival=0; ival < alloc_length; ival++)
                   zeros[ival] = '\0';
@@ -378,8 +374,8 @@ int main(int argc, char *argv[])
    (void) miclose(mincid);
 
    /* Free stuff */
-   FREE(newfile);
-   if (zeros != NULL) FREE(zeros);
+   free(newfile);
+   if (zeros != NULL) free(zeros);
 
    exit(EXIT_SUCCESS);
 }
@@ -486,7 +482,7 @@ int get_attribute(char *dst, char *key, char *nextarg)
          }
 
          /* Allocate a list */
-         dvalues = MALLOC(sizeof(*dvalues) * num_doubles);
+         dvalues = malloc(sizeof(*dvalues) * num_doubles);
 
          /* Loop over values */
          cur = value;
@@ -528,11 +524,11 @@ int get_attribute(char *dst, char *key, char *nextarg)
       attribute_list_alloc += 10;
       if (attribute_list == NULL) {
          attribute_list = 
-            MALLOC(attribute_list_alloc * sizeof(*attribute_list));
+            malloc(attribute_list_alloc * sizeof(*attribute_list));
       }
       else {
          attribute_list = 
-            REALLOC(attribute_list, 
+            realloc(attribute_list, 
                     attribute_list_alloc * sizeof(*attribute_list));
       }
    }

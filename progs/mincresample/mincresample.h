@@ -7,8 +7,8 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.5  2004-04-27 15:31:20  bert
- * Added -2 option
+ * Revision 6.4.2.1  2005-03-16 19:02:51  bert
+ * Port changes from 2.0 branch
  *
  * Revision 6.4  2002/11/06 13:32:23  jason
  * Fixes to mincresample: setting the interpolation type is now done
@@ -244,7 +244,6 @@ typedef struct {
    enum Interpolant_type interpolant_type;  /* Type of interpolation */
    Transform_Info transform_info;
    Volume_Definition volume_def;
-   int v2format;                /* If non-zero, create a MINC 2.0 output */
 } Arg_Data;
 
 typedef struct {
@@ -335,69 +334,69 @@ typedef struct {
 
 /* Function prototypes */
 
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         Program_Flags *program_flags,
                         VVolume *in_vol, VVolume *out_vol, 
                         General_transform *transformation);
-public void check_imageminmax(File_Info *fp, Volume_Data *volume);
-public void get_file_info(char *filename, int initialized_volume_def, 
+static void check_imageminmax(File_Info *fp, Volume_Data *volume);
+static void get_file_info(char *filename, int initialized_volume_def, 
                           Volume_Definition *volume_def,
                           File_Info *file_info);
-public void get_args_volume_def(Volume_Definition *input_volume_def,
+static void get_args_volume_def(Volume_Definition *input_volume_def,
                                 Volume_Definition *args_volume_def);
-public void transform_volume_def(Transform_Info *transform_info,
+static void transform_volume_def(Transform_Info *transform_info,
                                  Volume_Definition *input_volume_def,
                                  Volume_Definition *transformed_volume_def);
-public int is_zero_vector(double vector[]);
-public void normalize_vector(double vector[]);
-public void create_output_file(char *filename, int clobber, 
+static int is_zero_vector(double vector[]);
+static void normalize_vector(double vector[]);
+static void create_output_file(char *filename, int clobber, 
                                Volume_Definition *volume_def,
                                File_Info *in_file,
                                File_Info *out_file,
                                char *tm_stamp, 
                                Transform_Info *transform_info);
-public void get_voxel_to_world_transf(Volume_Definition *volume_def, 
+static void get_voxel_to_world_transf(Volume_Definition *volume_def, 
                                       General_transform *voxel_to_world);
-public void irregular_transform_function(void *user_data,
+static void irregular_transform_function(void *user_data,
                                          Real x,
                                          Real y,
                                          Real z,
                                          Real *x_trans,
                                          Real *y_trans,
                                          Real *z_trans);
-public void irregular_inverse_transform_function(void *user_data,
+static void irregular_inverse_transform_function(void *user_data,
                                                  Real x,
                                                  Real y,
                                                  Real z,
                                                  Real *x_trans,
                                                  Real *y_trans,
                                                  Real *z_trans);
-public double get_default_range(char *what, nc_type datatype, int is_signed);
-public void finish_up(VVolume *in_vol, VVolume *out_vol);
-public int get_transformation(char *dst, char *key, char *nextArg);
-public int get_model_file(char *dst, char *key, char *nextArg);
-public int set_standard_sampling(char *dst, char *key, char *nextArg);
-public int set_spacetype(char *dst, char *key, char *nextArg);
-public int set_units(char *dst, char *key, char *nextArg);
-public int get_axis_order(char *dst, char *key, char *nextArg);
-public int get_fillvalue(char *dst, char *key, char *nextArg);
-public void resample_volumes(Program_Flags *program_flags,
+static double get_default_range(char *what, nc_type datatype, int is_signed);
+static void finish_up(VVolume *in_vol, VVolume *out_vol);
+static int get_transformation(char *dst, char *key, char *nextArg);
+static int get_model_file(char *dst, char *key, char *nextArg);
+static int set_standard_sampling(char *dst, char *key, char *nextArg);
+static int set_spacetype(char *dst, char *key, char *nextArg);
+static int set_units(char *dst, char *key, char *nextArg);
+static int get_axis_order(char *dst, char *key, char *nextArg);
+static int get_fillvalue(char *dst, char *key, char *nextArg);
+extern void resample_volumes(Program_Flags *program_flags,
                              VVolume *in_vol, VVolume *out_vol, 
                              General_transform *transformation);
-public void load_volume(File_Info *file, long start[], long count[], 
+static void load_volume(File_Info *file, long start[], long count[], 
                         Volume_Data *volume);
-public void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol, 
+static void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol, 
                       General_transform *transformation, 
                       double *minimum, double *maximum);
-public int trilinear_interpolant(Volume_Data *volume, 
+extern int trilinear_interpolant(Volume_Data *volume, 
                                  Coord_Vector coord, double *result);
-public int tricubic_interpolant(Volume_Data *volume, 
+extern int tricubic_interpolant(Volume_Data *volume, 
                                 Coord_Vector coord, double *result);
-public int do_Ncubic_interpolation(Volume_Data *volume, 
+static int do_Ncubic_interpolation(Volume_Data *volume, 
                                    long index[], int cur_dim, 
                                    double frac[], double *result);
-public int nearest_neighbour_interpolant(Volume_Data *volume, 
+extern int nearest_neighbour_interpolant(Volume_Data *volume, 
                                          Coord_Vector coord, double *result);
-public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
+static void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
                                double slice_min[], double slice_max[]);
 

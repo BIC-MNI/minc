@@ -1,6 +1,11 @@
-                New in Release 1.4
+                New in Release 1.4-test
                 ------------------
 * New support for Windows
+
+* Added conversion programs for ecat, NIfTI-1/Analyze, and microPET
+  formats.
+
+* Added "simplified" MINC programming interface.
 
 	        New in Release 1.3
         	------------------

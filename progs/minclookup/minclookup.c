@@ -11,7 +11,10 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.3.2.1  2004-09-28 20:08:14  bert
+ * Revision 6.3.2.2  2005-03-16 19:02:51  bert
+ * Port changes from 2.0 branch
+ *
+ * Revision 6.3.2.1  2004/09/28 20:08:14  bert
  * Minor portability fix for Windows
  *
  * Revision 6.3  2001/04/24 13:38:43  neelin
@@ -66,7 +69,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.3.2.1 2004-09-28 20:08:14 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.3.2.2 2005-03-16 19:02:51 bert Exp $";
 #endif
 
 #include "config.h"
@@ -79,12 +82,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -121,21 +119,21 @@ typedef struct {
 } Sort_Key;
 
 /* Function prototypes */
-public Lookup_Table *read_lookup_table(char *lookup_file, char *lookup_string);
-public double *get_values_from_string(char *string, int array_size,
+static Lookup_Table *read_lookup_table(char *lookup_file, char *lookup_string);
+static double *get_values_from_string(char *string, int array_size,
                                       double *array, int *nread);
-public double *get_null_value(int vector_length, char *null_value_string);
-public void get_full_range(int mincid, double lookup_range[2]);
-public void do_lookup(void *caller_data, long num_voxels,
+static double *get_null_value(int vector_length, char *null_value_string);
+static void get_full_range(int mincid, double lookup_range[2]);
+static void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[], Loop_Info *loop_info);
-public void lookup_in_table(double index, Lookup_Table *lookup_table,
+static void lookup_in_table(double index, Lookup_Table *lookup_table,
                             int discrete_values, double null_value[],
                             double output_value[]);
-private char *get_next_line(char *line, int linelen, FILE *fp, char **string);
-private int sorting_function(const void *value1, const void *value2);
+static char *get_next_line(char *line, int linelen, FILE *fp, char **string);
+static int sorting_function(const void *value1, const void *value2);
 
 /* Lookup tables */
 static double gray_lookup_values[] = {
@@ -352,10 +350,10 @@ int main(int argc, char *argv[])
               do_lookup, (void *) &lookup_data);
 
    /* Free stuff */
-   if (lookup_data.null_value != NULL) FREE(lookup_data.null_value);
+   if (lookup_data.null_value != NULL) free(lookup_data.null_value);
    if (lookup_data.lookup_table->free_data) {
-      FREE(lookup_data.lookup_table->table);
-      FREE(lookup_data.lookup_table);
+      free(lookup_data.lookup_table->table);
+      free(lookup_data.lookup_table);
    }
 
    exit(EXIT_SUCCESS);
@@ -377,7 +375,7 @@ int main(int argc, char *argv[])
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Lookup_Table *read_lookup_table(char *lookup_filename, 
+static Lookup_Table *read_lookup_table(char *lookup_filename, 
                                        char *lookup_string)
 {
    Lookup_Table *lookup_table;
@@ -424,10 +422,10 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
    row = get_values_from_string(line, 0, NULL, &table_nvalues);
    if (table_nvalues < 2) {
       (void) fprintf(stderr, "First line has fewer than 2 values.\n");
-      if (row != NULL) FREE(row);
+      if (row != NULL) free(row);
       exit(EXIT_FAILURE);
    }
-   table = MALLOC(sizeof(*table) * table_nvalues);
+   table = malloc(sizeof(*table) * table_nvalues);
    for (ivalue=0; ivalue < table_nvalues; ivalue++)
       table[ivalue] = row[ivalue];
    nentries++;
@@ -438,11 +436,11 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
          (void) fprintf(stderr, 
                         "Wrong number of values on line %d.\n",
                         nentries+1);
-         FREE(row);
-         FREE(table);
+         free(row);
+         free(table);
          exit(EXIT_FAILURE);
       }
-      table = REALLOC(table, sizeof(*table) * table_nvalues * (nentries+1));
+      table = realloc(table, sizeof(*table) * table_nvalues * (nentries+1));
       for (ivalue=0; ivalue < table_nvalues; ivalue++) {
          table[ivalue + nentries*table_nvalues] = row[ivalue];
       }
@@ -464,7 +462,7 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
    if (need_sort) {
 
       /* Set up sorting table */
-      sort_table = MALLOC(sizeof(*sort_table) * nentries);
+      sort_table = malloc(sizeof(*sort_table) * nentries);
       for (ientry=0; ientry < nentries; ientry++) {
          sort_table[ientry].key = table[ientry*table_nvalues];
          sort_table[ientry].index = ientry;
@@ -475,7 +473,7 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
             sorting_function);
 
       /* Copy the table */
-      new_table = MALLOC(sizeof(*table) * table_nvalues * nentries);
+      new_table = malloc(sizeof(*table) * table_nvalues * nentries);
       for (ientry=0; ientry < nentries; ientry++) {
          new_offset = ientry * table_nvalues;
          old_offset = sort_table[ientry].index * table_nvalues;
@@ -483,13 +481,13 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
             new_table[new_offset + ivalue] = table[old_offset + ivalue];
          }
       }
-      FREE(table);
+      free(table);
       table = new_table;
-      FREE(sort_table);
+      free(sort_table);
    }
 
    /* Allocate space for the lookup table and set initial values */
-   lookup_table = MALLOC(sizeof(*lookup_table));
+   lookup_table = malloc(sizeof(*lookup_table));
    lookup_table->free_data = TRUE;
    lookup_table->nentries = nentries;
    lookup_table->vector_length = table_nvalues - 1;
@@ -516,7 +514,7 @@ public Lookup_Table *read_lookup_table(char *lookup_filename,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 #define LOOKUP_LINE_SEPARATOR ';'
-private char *get_next_line(char *line, int linelen, FILE *fp, char **string)
+static char *get_next_line(char *line, int linelen, FILE *fp, char **string)
 {
    int count;
 
@@ -568,7 +566,7 @@ private char *get_next_line(char *line, int linelen, FILE *fp, char **string)
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int sorting_function(const void *value1, const void *value2)
+static int sorting_function(const void *value1, const void *value2)
 {
    Sort_Key *key1, *key2;
 
@@ -606,7 +604,7 @@ private int sorting_function(const void *value1, const void *value2)
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public double *get_values_from_string(char *string, int array_size,
+static double *get_values_from_string(char *string, int array_size,
                                       double *array, int *nread)
 {
 #define VECTOR_SEPARATOR ','
@@ -639,7 +637,7 @@ public double *get_values_from_string(char *string, int array_size,
       if (cur == prev) {
          *nread = 0;
          if (array_size <= 0 && array != NULL) {
-            FREE(array);
+            free(array);
          }
          return NULL;
       }
@@ -650,10 +648,10 @@ public double *get_values_from_string(char *string, int array_size,
          if (array_size <= 0) {
             num_alloc += 1;
             if (array == NULL) {
-               array = MALLOC(num_alloc * sizeof(*array));
+               array = malloc(num_alloc * sizeof(*array));
             }
             else {
-               array = REALLOC(array, num_alloc * sizeof(*array));
+               array = realloc(array, num_alloc * sizeof(*array));
             }
          }
          else {
@@ -690,7 +688,7 @@ public double *get_values_from_string(char *string, int array_size,
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public double *get_null_value(int vector_length, char *string)
+static double *get_null_value(int vector_length, char *string)
 {
    int num_read;
    double *values;
@@ -703,7 +701,7 @@ public double *get_null_value(int vector_length, char *string)
 
    /* Check the number of values read */
    if (num_read != vector_length) {
-      if (values != NULL) FREE(values);
+      if (values != NULL) free(values);
       (void) fprintf(stderr, 
                      "Null value does not match lookup table (%d values).\n",
                      num_read);
@@ -725,7 +723,7 @@ public double *get_null_value(int vector_length, char *string)
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_full_range(int mincid, double range[2])
+static void get_full_range(int mincid, double range[2])
 {
    char *string;
    int varid;
@@ -762,7 +760,7 @@ public void get_full_range(int mincid, double range[2])
             num_values *= length;
          }
          if (num_values > 0) {
-            values = MALLOC(num_values * sizeof(*values));
+            values = malloc(num_values * sizeof(*values));
             (void) mivarget(mincid, varid, start, count, 
                             NC_DOUBLE, NULL, values);
             *extreme = values[0];
@@ -770,7 +768,7 @@ public void get_full_range(int mincid, double range[2])
                if ((values[ivalue] * sign) > (*extreme * sign))
                   *extreme = values[ivalue];
             }
-            FREE(values);
+            free(values);
          }
 
       }          /* If variable is found */
@@ -802,7 +800,7 @@ public void get_full_range(int mincid, double range[2])
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_lookup(void *caller_data, long num_voxels,
+static void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
@@ -883,7 +881,7 @@ public void do_lookup(void *caller_data, long num_voxels,
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void lookup_in_table(double index, Lookup_Table *lookup_table,
+static void lookup_in_table(double index, Lookup_Table *lookup_table,
                             int discrete_values, double null_value[],
                             double output_value[])
 {

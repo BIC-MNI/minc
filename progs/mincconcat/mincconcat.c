@@ -11,8 +11,8 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.9  2004-04-27 15:37:13  bert
- * Added -2 flag
+ * Revision 6.8.2.1  2005-03-16 19:02:50  bert
+ * Port changes from 2.0 branch
  *
  * Revision 6.8  2001/09/18 15:32:39  neelin
  * Create image variable last to allow big images and to fix compatibility
@@ -94,7 +94,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.9 2004-04-27 15:37:13 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.8.2.1 2005-03-16 19:02:50 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -108,7 +108,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <voxel_loop.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -139,7 +138,7 @@ typedef struct {
    char *output_file;
    int num_input_files;
    char *history;
-   int cflags;
+   int clobber;
    int verbose;
    nc_type output_datatype;
    int output_is_signed;
@@ -173,27 +172,26 @@ typedef struct {
 } Sort_Element;
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         int *num_input_files, char ***input_files,
                         Concat_Info *concat_info);
-public int get_double_list(char *dst, char *key, char *nextarg);
-public void get_concat_dim_name(Concat_Info *concat_info,
+static int get_double_list(char *dst, char *key, char *nextarg);
+static void get_concat_dim_name(Concat_Info *concat_info,
                                 char *first_filename, int *first_mincid);
-public void get_input_file_info(void *caller_data, int input_mincid,
+static void get_input_file_info(void *caller_data, int input_mincid,
                                 int input_curfile, Loop_Info *loop_info);
-public int get_image_dimension_id(int input_mincid, char *dimension_name);
-public void do_concat(void *caller_data, long num_voxels, 
+static int get_image_dimension_id(int input_mincid, char *dimension_name);
+static void do_concat(void *caller_data, long num_voxels, 
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[],
                       Loop_Info *loop_info);
-public void sort_coords(Concat_Info *concat_info);
-public int sort_function(const void *value1, const void *value2);
-public void create_concat_file(int inmincid, Concat_Info *concat_info);
-private void update_history(int mincid, char *arg_string);
-public char **read_file_names(char *filelist, int *num_files);
+static void sort_coords(Concat_Info *concat_info);
+static int sort_function(const void *value1, const void *value2);
+static void create_concat_file(int inmincid, Concat_Info *concat_info);
+static void update_history(int mincid, char *arg_string);
+static char **read_file_names(char *filelist, int *num_files);
 
 /* Globals */
 static int Sort_ascending = TRUE;
@@ -201,7 +199,7 @@ static int Sort_sequential = FALSE;
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    Concat_Info *concat_info;
    Loop_Options *loop_options;
@@ -211,7 +209,7 @@ public int main(int argc, char *argv[])
    double valid_range[2];
 
    /* Allocate the concat_info structure */
-   concat_info = MALLOC(sizeof(*concat_info));
+   concat_info = malloc(sizeof(*concat_info));
 
    /* Get argument information */
    get_arginfo(argc, argv, &num_input_files, &input_files, concat_info);
@@ -263,7 +261,7 @@ public int main(int argc, char *argv[])
 
    /* Free stuff */
    free_loop_options(loop_options);
-   FREE(concat_info);
+   free(concat_info);
 
    exit(EXIT_SUCCESS);
 }
@@ -284,16 +282,13 @@ public int main(int argc, char *argv[])
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         int *num_input_files, char ***input_files,
                         Concat_Info *concat_info)
 {
 
    /* Argument variables */
    static int clobber = FALSE;
-#ifdef MINC2
-   static int minc2_format = FALSE;
-#endif /* MINC2 defined */
    static int verbose = TRUE;
    static nc_type datatype = MI_ORIGINAL_TYPE;
    static int is_signed = INT_MIN;
@@ -312,11 +307,6 @@ public void get_arginfo(int argc, char *argv[],
    static ArgvInfo argTable[] = {
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "General options:"},
-
-#ifdef MINC2
-      {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
-       "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber, 
           "Overwrite existing file."},
       {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber, 
@@ -501,17 +491,7 @@ public void get_arginfo(int argc, char *argv[],
    concat_info->output_file = output_file;
    concat_info->num_input_files = *num_input_files;
    concat_info->history = history;
-   if (clobber) {
-       concat_info->cflags = NC_CLOBBER;
-   }
-   else {
-       concat_info->cflags = NC_NOCLOBBER;
-   }
-#ifdef MINC2
-   if (minc2_format) {
-       concat_info->cflags |= MI2_CREATE_V2;
-   }
-#endif /* MINC2 defined */
+   concat_info->clobber = clobber;
    concat_info->verbose = verbose;
    concat_info->max_memory_use_in_kb = max_chunk_size_in_kb;
    concat_info->check_dim_info = check_dim_info;
@@ -529,18 +509,18 @@ public void get_arginfo(int argc, char *argv[],
    /* Fill in coordinate info. We allocate space even if coordinates
       aren't specified just in case we can't get the info from the 
       files. */
-   concat_info->num_file_coords = MALLOC(sizeof(int) * (*num_input_files));
-   concat_info->file_coords = MALLOC(sizeof(void *) * (*num_input_files));
-   concat_info->file_widths = MALLOC(sizeof(void *) * (*num_input_files));
+   concat_info->num_file_coords = malloc(sizeof(int) * (*num_input_files));
+   concat_info->file_coords = malloc(sizeof(void *) * (*num_input_files));
+   concat_info->file_widths = malloc(sizeof(void *) * (*num_input_files));
    for (ifile=0; ifile < *num_input_files; ifile++) {
       concat_info->num_file_coords[ifile] = 1;
-      concat_info->file_coords[ifile] = MALLOC(sizeof(double));
+      concat_info->file_coords[ifile] = malloc(sizeof(double));
       concat_info->file_coords[ifile][0] =
          ((dimension_coords.numvalues > 0) ?
           dimension_coords.values[ifile] : 
           dimension_start + dimension_step * ifile);
       if ((dimension_widths.numvalues > 0) || (dimension_width != DBL_MAX)) {
-         concat_info->file_widths[ifile] = MALLOC(sizeof(double));
+         concat_info->file_widths[ifile] = malloc(sizeof(double));
          concat_info->file_widths[ifile][0] =
             ((dimension_widths.numvalues > 0) ?
              dimension_widths.values[ifile] : dimension_width);
@@ -565,7 +545,7 @@ public void get_arginfo(int argc, char *argv[],
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_double_list(char *dst, char *key, char *nextarg)
+static int get_double_list(char *dst, char *key, char *nextarg)
 {
 #define VECTOR_SEPARATOR ','
 
@@ -614,11 +594,11 @@ public int get_double_list(char *dst, char *key, char *nextarg)
          num_alloc += 20;
          if (double_list == NULL) {
             double_list = 
-               MALLOC(num_alloc * sizeof(*double_list));
+               malloc(num_alloc * sizeof(*double_list));
          }
          else {
             double_list = 
-               REALLOC(double_list, num_alloc * sizeof(*double_list));
+               realloc(double_list, num_alloc * sizeof(*double_list));
          }
       }
       double_list[num_elements-1] = dvalue;
@@ -634,7 +614,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    double_array->numvalues = num_elements;
    if (double_array->values != NULL) {
-      FREE(double_array->values);
+      free(double_array->values);
    }
    double_array->values = double_list;
 
@@ -655,7 +635,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
 @CREATED    : March 16, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_concat_dim_name(Concat_Info *concat_info,
+static void get_concat_dim_name(Concat_Info *concat_info,
                                 char *first_filename, int *first_mincid)
 {
    char *filename;
@@ -670,7 +650,7 @@ public void get_concat_dim_name(Concat_Info *concat_info,
    if (created_tempfile) {
       (void) remove(filename);
    }
-   FREE(filename);
+   free(filename);
    *first_mincid = input_mincid;
 
    /* Do we have to get the dimension name from the file? */
@@ -725,7 +705,7 @@ public void get_concat_dim_name(Concat_Info *concat_info,
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_input_file_info(void *caller_data, int input_mincid,
+static void get_input_file_info(void *caller_data, int input_mincid,
                                 int input_curfile, Loop_Info *loop_info)
 {
    Concat_Info *concat_info;
@@ -757,9 +737,9 @@ public void get_input_file_info(void *caller_data, int input_mincid,
       /* Allocate the arrays */
       (void) ncdiminq(input_mincid, dimid, dimname, &dimlength);
       concat_info->num_file_coords[input_curfile] = dimlength;
-      FREE(concat_info->file_coords[input_curfile]);
+      free(concat_info->file_coords[input_curfile]);
       concat_info->file_coords[input_curfile] =
-         MALLOC(sizeof(double) * dimlength);
+         malloc(sizeof(double) * dimlength);
 
       /* Set defaults */
       if (!Sort_sequential || (input_curfile < 1)) {
@@ -846,7 +826,7 @@ public void get_input_file_info(void *caller_data, int input_mincid,
 
          /* Allocate space for widths */
          concat_info->file_widths[input_curfile] =
-            MALLOC(sizeof(double) * dimlength);
+            malloc(sizeof(double) * dimlength);
 
          /* Loop through indices, getting values */
          for (index=0; index < dimlength; index++) {
@@ -878,7 +858,7 @@ public void get_input_file_info(void *caller_data, int input_mincid,
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_image_dimension_id(int input_mincid, char *dimension_name)
+static int get_image_dimension_id(int input_mincid, char *dimension_name)
 {
    int dimid, ndims, dim[MAX_VAR_DIMS], idim;
    int found;
@@ -923,7 +903,7 @@ public int get_image_dimension_id(int input_mincid, char *dimension_name)
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_concat(void *caller_data, long num_voxels, 
+static void do_concat(void *caller_data, long num_voxels, 
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
@@ -1058,7 +1038,7 @@ public void do_concat(void *caller_data, long num_voxels,
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void sort_coords(Concat_Info *concat_info)
+static void sort_coords(Concat_Info *concat_info)
 {
    int ifile;
    Sort_Element *sort_list;
@@ -1069,17 +1049,17 @@ public void sort_coords(Concat_Info *concat_info)
 
    /* Allocate space for the ordering information */
    concat_info->file_to_dim_order = 
-      MALLOC(sizeof(void *) * (concat_info->num_input_files));
+      malloc(sizeof(void *) * (concat_info->num_input_files));
    concat_dimension_length = 0;
    for (ifile=0; ifile < concat_info->num_input_files; ifile++) {
       concat_dimension_length += concat_info->num_file_coords[ifile];
       concat_info->file_to_dim_order[ifile] = 
-         MALLOC(sizeof(int) * concat_info->num_file_coords[ifile]);
+         malloc(sizeof(int) * concat_info->num_file_coords[ifile]);
    }
    concat_info->concat_dimension_length = concat_dimension_length;
 
    /* Set up sorting stuff */
-   sort_list = MALLOC(sizeof(Sort_Element) * concat_dimension_length);
+   sort_list = malloc(sizeof(Sort_Element) * concat_dimension_length);
    index = 0;
    for (ifile=0; ifile < concat_info->num_input_files; ifile++) {
       for (icoord=0; icoord < concat_info->num_file_coords[ifile]; icoord++) {
@@ -1154,7 +1134,7 @@ public void sort_coords(Concat_Info *concat_info)
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int sort_function(const void *value1, const void *value2)
+static int sort_function(const void *value1, const void *value2)
 {
    Sort_Element *element1, *element2;
    int return_value;
@@ -1189,7 +1169,7 @@ public int sort_function(const void *value1, const void *value2)
 @CREATED    : March 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void create_concat_file(int inmincid, Concat_Info *concat_info)
+static void create_concat_file(int inmincid, Concat_Info *concat_info)
 {
    int outmincid, outimgid, inimgid, coordid, widthid, invarid;
    int maxid, minid, icvid;
@@ -1202,7 +1182,8 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
    double valid_range[2];
 
    /* Create the file */
-   outmincid = micreate(concat_info->output_file, concat_info->cflags);
+   outmincid = micreate(concat_info->output_file,
+                        (concat_info->clobber ? NC_CLOBBER : NC_NOCLOBBER));
 
    /* Get image variable id for input file */
    inimgid = ncvarid(inmincid, MIimage);
@@ -1393,7 +1374,7 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void update_history(int mincid, char *arg_string)
+static void update_history(int mincid, char *arg_string)
 {
    nc_type datatype;
    int att_length;
@@ -1408,7 +1389,7 @@ private void update_history(int mincid, char *arg_string)
    att_length += strlen(arg_string) + 1;
 
    /* Allocate a string and get the old history */
-   string = MALLOC(att_length);
+   string = malloc(att_length);
    string[0] = '\0';
    (void) miattgetstr(mincid, NC_GLOBAL, MIhistory, att_length, 
                       string);
@@ -1417,7 +1398,7 @@ private void update_history(int mincid, char *arg_string)
    /* Add the new command and put the new history. */
    (void) strcat(string, arg_string);
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, string);
-   FREE(string);
+   free(string);
 
 }
 
@@ -1436,7 +1417,7 @@ private void update_history(int mincid, char *arg_string)
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char **read_file_names(char *filelist, int *num_files)
+static char **read_file_names(char *filelist, int *num_files)
 {
 #define FILE_NAME_ALLOC_SIZE 10
    char **files;
@@ -1460,7 +1441,7 @@ public char **read_file_names(char *filelist, int *num_files)
 
    /* Allocate an initial array and NULL-terminate it */
    array_size = FILE_NAME_ALLOC_SIZE;
-   files = MALLOC(sizeof(*files) * array_size);
+   files = malloc(sizeof(*files) * array_size);
    if (files == NULL) {
       (void) fprintf(stderr, "Error allocating memory\n");
       return NULL;
@@ -1482,7 +1463,7 @@ public char **read_file_names(char *filelist, int *num_files)
       /* Make room for names if needed */
       while (nfiles >= array_size-1) {
          array_size += FILE_NAME_ALLOC_SIZE;
-         files = REALLOC(files, sizeof(*files) * array_size);
+         files = realloc(files, sizeof(*files) * array_size);
          if (files == NULL) {
             (void) fprintf(stderr, "Error allocating memory\n");
             return NULL;
