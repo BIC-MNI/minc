@@ -7,7 +7,10 @@
 @CREATED    : November 9, 2000 (Peter Neelin)
 @MODIFIED   : 
  * $Log: copy_acr_nema.c,v $
- * Revision 6.2  2000-11-09 16:57:23  neelin
+ * Revision 6.3  2000-11-09 17:00:03  neelin
+ * Minor lint fix.
+ *
+ * Revision 6.2  2000/11/09 16:57:23  neelin
  * Fixed bug in writing to stdout.
  *
  * Revision 6.1  2000/11/09 15:56:49  neelin
@@ -48,7 +51,6 @@ int main(int argc, char *argv[])
    Acr_Group group_list, cur_group;
    Acr_Status status, tmpstatus, outstatus;
    char *status_string;
-   char *ptr;
    int iarg, argcounter;
    char *arg;
    char *usage = "Usage: %s [-h] [-b] [-l] [-e] <in> <out>\n";
