@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.1  2005-02-17 16:38:09  bert
+ * Revision 1.2  2005-02-23 18:28:11  bert
+ * Minor updates
+ *
+ * Revision 1.1  2005/02/17 16:38:09  bert
  * Initial checkin, revised DICOM to MINC converter
  *
  * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -70,18 +73,6 @@
 #include <ctype.h>
 #include <memory.h>
 #include <limits.h>
-#ifdef FLT_DIG
-#  undef FLT_DIG
-#endif
-#ifdef DBL_DIG
-#  undef DBL_DIG
-#endif
-#ifdef DBL_MIN
-#  undef DBL_MIN
-#endif
-#ifdef DBL_MAX
-#  undef DBL_MAX
-#endif
 #include <float.h>
 #include <time_stamp.h>
 #include <acr_nema.h>
@@ -96,6 +87,10 @@
 #ifndef FALSE
 #  define FALSE 0
 #endif
+
+/* Test to see if two floating-point numbers are very close in value.
+ */
+#define NEARLY_EQUAL(x,y) (fabs(x - y) < 0.0000001)
 
 typedef char string_t[511+1];
 #define STRING_T_LEN (sizeof(string_t) - 1)
@@ -113,11 +108,8 @@ typedef enum { NONE = 0 , ACQ , MEAS } Loop_Type;
 /* supported file types */
 typedef enum { UNDEF, IMA, N3DCM, N4DCM } File_Type;
 
-/* File containing defaults for dicomserver */
-#define OUTPUT_DEFAULT_FILE_DIR "/usr/local/lib"
-#define OUTPUT_DEFAULT_FILE_PREFIX "dicomserver."
-
-/* Type for carrying around object information */
+/* Type for carrying around object information 
+ */
 typedef struct {
     int file_index;             /* input file index */
     char *file_name;            /* input file name */
