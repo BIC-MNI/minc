@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.6  1995-02-14 18:12:26  neelin
-@MODIFIED   : Added project names and defaults files (using volume name).
-@MODIFIED   : Added process id to log file name.
-@MODIFIED   : Moved temporary files to subdirectory.
+@MODIFIED   : Revision 2.7  1995-03-21 15:43:19  neelin
+@MODIFIED   : Corrected setting of default image type.
 @MODIFIED   :
+ * Revision 2.6  1995/02/14  18:12:26  neelin
+ * Added project names and defaults files (using volume name).
+ * Added process id to log file name.
+ * Moved temporary files to subdirectory.
+ *
  * Revision 2.5  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -273,7 +276,7 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    if (element != NULL)
       image_type = (int) acr_get_element_numeric(element);
    else
-      acq_id = SPI_DEFAULT_IMAGE_TYPE;
+      image_type = SPI_DEFAULT_IMAGE_TYPE;
 
    /* Get pixel value information */
    file_info->pixel_min = find_short(group_list, ACR_Smallest_pixel_value, 0);
