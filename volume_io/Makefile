@@ -8,7 +8,7 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 # Example program
-PROGS = example/convert_volume_to_byte
+PROGS = Testing/example_volume_io
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)
 
@@ -18,13 +18,14 @@ OBJS     = \
    Prog_utils/files.o Prog_utils/time.o Prog_utils/string.o \
    Prog_utils/progress.o \
    Geometry/transforms.o Geometry/inverse.o Geometry/points.o \
-   Geometry/lubksb.o Geometry/ludcmp.o \
+   Geometry/gaussian.o Geometry/colour.o Geometry/colour_def.o \
+   Geometry/newton.o Geometry/splines.o Geometry/tensors.o \
    MNI_formats/gen_xfs.o MNI_formats/gen_xf_io.o \
    MNI_formats/thin_plate_spline.o MNI_formats/tag_points.o \
-   MNI_formats/mni_io.o \
+   MNI_formats/mni_io.o MNI_formats/grid_transforms.o \
    Volumes/volumes.o Volumes/input_mnc.o Volumes/input_volume.o \
    Volumes/output_mnc.o Volumes/output_volume.o \
-   Volumes/input_free.o
+   Volumes/input_free.o Volumes/evaluate.o
 
 # Header files
 HEADERS  = \
@@ -64,7 +65,7 @@ build: $(CC_VOLIO_LIB) $(PROGS) $(DOCS)
 $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
-	lint $(LINTFLAGS) -c $<
+	$(LINT) $(LINTFLAGS) -c $<
 	@if [ "`echo $@ | sed -e 's/.*\///'`" != "$@" ]; \
 	then \
 	   mv `echo $@ | sed -e 's/.*\///'` $@; \
@@ -74,8 +75,8 @@ $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .tex.dvi :
-	-latex $<
-	-latex $<
+	-(cd $(DOCDIR); file=`echo $< | sed -e 's/.*\///'`; \
+	   latex $$file; latex $$file)
 
 # How to create library
 $(CC_VOLIO_LIB): $(OBJS)
@@ -91,10 +92,11 @@ lint : $(LINT_VOLIO_LIB) $(LINT_LIST_EXE)
 
 # How to create lint library
 $(LINT_VOLIO_LIB) : $(LINT_OBJS)
-	lint -o $(VOLIO_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
+	$(LINT) -o $(VOLIO_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_OBJS)
 
 $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
+	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln $(LINT_VOLIO_LIB) \
+	      $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
 clean:
