@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.1 1993-06-10 12:51:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.2 1993-07-07 14:54:28 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -35,6 +35,16 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextrac
 #  define private static
 #endif
 #define VECTOR_SEPARATOR ','
+#define TYPE_ASCII  0
+#define TYPE_BYTE   1
+#define TYPE_SHORT  2
+#define TYPE_LONG   3
+#define TYPE_FLOAT  4
+#define TYPE_DOUBLE 5
+#define TYPE_FILE   6
+static nc_type nc_type_list[8] = {
+   NC_DOUBLE, NC_BYTE, NC_SHORT, NC_LONG, NC_FLOAT, NC_DOUBLE, NC_DOUBLE
+};
 static double default_max[][2] = {
    0.0, 0.0,
    UCHAR_MAX, SCHAR_MAX,
@@ -58,7 +68,8 @@ static double default_min[][2] = {
 public int get_arg_vector(char *dst, char *key, char *nextArg);
 
 /* Variables used for argument parsing */
-nc_type output_datatype = INT_MAX;
+int arg_odatatype = TYPE_ASCII;
+nc_type output_datatype = NC_DOUBLE;
 int output_signed = INT_MAX;
 double valid_range[2] = {DBL_MAX, DBL_MAX};
 int normalize_output = FALSE;
@@ -67,16 +78,20 @@ long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
 
 /* Argument table */
 ArgvInfo argTable[] = {
-   {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &output_datatype,
+   {"-ascii", ARGV_CONSTANT, (char *) TYPE_ASCII, (char *) &arg_odatatype,
+       "Write out data as ascii strings (default)"},
+   {"-byte", ARGV_CONSTANT, (char *) TYPE_BYTE, (char *) &arg_odatatype,
        "Write out data as bytes"},
-   {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &output_datatype,
+   {"-short", ARGV_CONSTANT, (char *) TYPE_SHORT, (char *) &arg_odatatype,
        "Write out data as short integers"},
-   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &output_datatype,
+   {"-long", ARGV_CONSTANT, (char *) TYPE_LONG, (char *) &arg_odatatype,
        "Write out data as long integers"},
-   {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &output_datatype,
+   {"-float", ARGV_CONSTANT, (char *) TYPE_FLOAT, (char *) &arg_odatatype,
        "Write out data as single precision floating-point values"},
-   {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &output_datatype,
+   {"-double", ARGV_CONSTANT, (char *) TYPE_DOUBLE, (char *) &arg_odatatype,
        "Write out data as double precision floating-point values"},
+   {"-filetype", ARGV_CONSTANT, (char *) TYPE_FILE, (char *) &arg_odatatype,
+       "Write out data in the type of the file"},
    {"-signed", ARGV_CONSTANT, (char *) TRUE, (char *) &output_signed,
        "Write out signed data"},
    {"-unsigned", ARGV_CONSTANT, (char *) FALSE, (char *) &output_signed,
@@ -104,13 +119,15 @@ int main(int argc, char *argv[])
    int is_signed;
    long start[MAX_VAR_DIMS], end[MAX_VAR_DIMS];
    long count[MAX_VAR_DIMS], cur[MAX_VAR_DIMS];
-   long size;
+   int element_size;
    int idim;
    int nstart, ncount;
    void *data;
    char the_sign[MI_MAX_ATTSTR_LEN];
    int length;
    double temp;
+   long nelements, ielement;
+   double *dbl_data;
 
    /* Check arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
@@ -142,7 +159,8 @@ int main(int argc, char *argv[])
    }
 
    /* Get output data type */
-   if (output_datatype == INT_MAX) output_datatype = datatype;
+   output_datatype = nc_type_list[arg_odatatype];
+   if (arg_odatatype == TYPE_FILE) output_datatype = datatype;
 
    /* Get output sign */ 
    ncopts = 0;
@@ -209,7 +227,7 @@ int main(int argc, char *argv[])
 
    /* Set input file start, count and end vectors for reading a slice
       at a time */
-   size = nctypelen(output_datatype);
+   nelements = 1;
    for (idim=0; idim < ndims; idim++) {
 
       /* Get start */
@@ -230,16 +248,17 @@ int main(int argc, char *argv[])
          exit(EXIT_FAILURE);
       }
 
-      /* Get count and size */
+      /* Get count and nelements */
       if (idim < ndims-2)
          count[idim] = 1;
       else
          count[idim] = end[idim] - start[idim];
-      size *= count[idim];
+      nelements *= count[idim];
    }
+   element_size = nctypelen(output_datatype);
 
    /* Allocate space */
-   data = malloc(size);
+   data = malloc(element_size*nelements);
 
    /* Loop over input slices */
 
@@ -249,9 +268,18 @@ int main(int argc, char *argv[])
       (void) miicv_get(icvid, cur, count, data);
 
       /* Write out the slice */
-      if (fwrite(data, sizeof(char), (size_t) size, stdout) != size) {
-         (void) fprintf(stderr, "Error writing data.\n");
-         exit(EXIT_FAILURE);
+      if (arg_odatatype == TYPE_ASCII) {
+         dbl_data = data;
+         for (ielement=0; ielement<nelements; ielement++) {
+            (void) fprintf(stdout, "%g\n", dbl_data[ielement]);
+         }
+      }
+      else {
+         if (fwrite(data, (size_t) element_size, (size_t) nelements, stdout)
+                       != nelements) {
+            (void) fprintf(stderr, "Error writing data.\n");
+            exit(EXIT_FAILURE);
+         }
       }
 
       /* Increment cur counter */
