@@ -1,3 +1,7 @@
+Wed Oct 31 14:23:57 EST 2001
+   - Changed names of macros _R and _P in volume_io/Include/geometry.h to 
+     avoid clashes with macro in ctype.h.
+
 Wed Oct 17 14:33:00 EDT 2001
    - Modified miset_valid_range to write out valid_range as double in all
      cases except float. Unfortunately, writing out values in a type that
