@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 6.1  1997-09-29 12:22:46  neelin
-@MODIFIED   : Clarified argument error messages.
+@MODIFIED   : Revision 6.2  1998-06-22 14:06:01  neelin
+@MODIFIED   : Fixed bug in handling of default types and signs.
 @MODIFIED   :
+ * Revision 6.1  1997/09/29  12:22:46  neelin
+ * Clarified argument error messages.
+ *
  * Revision 6.0  1997/09/12  13:23:25  neelin
  * Release of minc version 0.6
  *
@@ -94,7 +97,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.1 1997-09-29 12:22:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.2 1998-06-22 14:06:01 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -127,6 +130,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define ZXY_ORIENTATION 8
 #define ZYX_ORIENTATION 9
 #define DEF_TYPE 0
+#define BYTE_TYPE 1
+#define SHORT_TYPE 2
+#define LONG_TYPE 3
+#define FLOAT_TYPE 4
+#define DOUBLE_TYPE 5
 #define DEF_SIGN 0
 #define SIGNED 1
 #define UNSIGNED 2
@@ -165,11 +173,24 @@ char *orientation_names[][MAX_DIMS] = {
    {MItime, MIzspace, MIyspace, MIxspace},
 };
 
-/* Structure containing information about signs */
+/* Array containing information about signs. It is subscripted by
+   [signtype][type]. Note that the first row should never be used, since
+   default_signs should be used instead. */
 char *sign_names[][6] = {
    {MI_SIGNED, MI_UNSIGNED, MI_SIGNED, MI_SIGNED, MI_SIGNED, MI_SIGNED},
    {MI_SIGNED, MI_SIGNED, MI_SIGNED, MI_SIGNED, MI_SIGNED, MI_SIGNED},
    {MI_SIGNED, MI_UNSIGNED, MI_UNSIGNED, MI_UNSIGNED, MI_UNSIGNED, MI_UNSIGNED}
+};
+
+/* Array containing default signs subscripted by [type] (default, byte, 
+   short, long, float, double) */
+int default_signs[] = {
+   SIGNED, UNSIGNED, SIGNED, SIGNED, SIGNED, SIGNED
+};
+
+/* Information converting types for argument processing to NetCDF types */
+nc_type convert_types[] = {
+   NC_UNSPECIFIED, NC_BYTE, NC_SHORT, NC_LONG, NC_FLOAT, NC_DOUBLE
 };
 
 /* Argument variables */
@@ -180,13 +201,15 @@ char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
 int orientation = TRANSVERSE;
-nc_type type = NC_BYTE;
+int type = BYTE_TYPE;
 int signtype = DEF_SIGN;
+nc_type datatype;
 char *sign;
 double valid_range[2] = {0.0, -1.0};
 int vrange_set;
-nc_type otype = DEF_TYPE;
+int otype = DEF_TYPE;
 int osigntype = DEF_SIGN;
+nc_type odatatype;
 char *osign;
 double ovalid_range[2] = {0.0, -1.0};
 int ovrange_set;
@@ -246,15 +269,15 @@ ArgvInfo argTable[] = {
        "Specifies the size of a vector dimension"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options to specify input data type. Default = -byte."},
-   {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &type,
+   {"-byte", ARGV_CONSTANT, (char *) BYTE_TYPE, (char *) &type,
        "Byte values"},
-   {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &type,
+   {"-short", ARGV_CONSTANT, (char *) SHORT_TYPE, (char *) &type,
        "Short integer values"},
-   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &type,
+   {"-long", ARGV_CONSTANT, (char *) LONG_TYPE, (char *) &type,
        "Long integer values"},
-   {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &type,
+   {"-float", ARGV_CONSTANT, (char *) FLOAT_TYPE, (char *) &type,
        "Single-precision floating point values"},
-   {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &type,
+   {"-double", ARGV_CONSTANT, (char *) DOUBLE_TYPE, (char *) &type,
        "Double-precision floating point values"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for sign of input data. Default = -signed (-unsigned for byte)."},
@@ -270,15 +293,15 @@ ArgvInfo argTable[] = {
        "Real range of input values (ignored for floating-point types)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for type of output minc data. Default = input data type"},
-   {"-obyte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &otype,
+   {"-obyte", ARGV_CONSTANT, (char *) BYTE_TYPE, (char *) &otype,
        "Byte values"},
-   {"-oshort", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &otype,
+   {"-oshort", ARGV_CONSTANT, (char *) SHORT_TYPE, (char *) &otype,
        "Short integer values"},
-   {"-olong", ARGV_CONSTANT, (char *) NC_LONG, (char *) &otype,
+   {"-olong", ARGV_CONSTANT, (char *) LONG_TYPE, (char *) &otype,
        "Long integer values"},
-   {"-ofloat", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &otype,
+   {"-ofloat", ARGV_CONSTANT, (char *) FLOAT_TYPE, (char *) &otype,
        "Single-precision floating point values"},
-   {"-odouble", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &otype,
+   {"-odouble", ARGV_CONSTANT, (char *) DOUBLE_TYPE, (char *) &otype,
        "Double precision floating point values"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for sign of output minc data."},
@@ -406,11 +429,12 @@ main(int argc, char *argv[])
    parse_args(argc, argv);
 
    /* Do normalization if input type is float */
-   floating_type = (( type==NC_FLOAT) || ( type==NC_DOUBLE));
+   floating_type = (( datatype==NC_FLOAT) || ( datatype==NC_DOUBLE));
    do_minmax = do_minmax || floating_type;
 
    /* Find max and min for vrange if output type is float */
-   do_vrange = do_minmax && (( otype==NC_FLOAT) || ( otype==NC_DOUBLE));
+   do_vrange = 
+      do_minmax && (( odatatype==NC_FLOAT) || ( odatatype==NC_DOUBLE));
 
    /* Did the user provide a real range */
    do_real_range = (real_range[0] != DEF_RANGE) && !floating_type;
@@ -471,7 +495,7 @@ main(int argc, char *argv[])
 
    /* Create an icv */
    icv=miicv_create();
-   (void) miicv_setint(icv, MI_ICV_TYPE, type);
+   (void) miicv_setint(icv, MI_ICV_TYPE, datatype);
    (void) miicv_setstr(icv, MI_ICV_SIGN, sign);
    if (vrange_set) {
       (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, valid_range[0]);
@@ -561,7 +585,7 @@ main(int argc, char *argv[])
    }
 
    /* Create the image */
-   imgid=micreate_std_variable(cdfid, MIimage, otype, ndims, dim);
+   imgid=micreate_std_variable(cdfid, MIimage, odatatype, ndims, dim);
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
    (void) miattputstr(cdfid, imgid, MIsigntype, osign);
    if (ovrange_set) 
@@ -634,7 +658,7 @@ main(int argc, char *argv[])
    image_pix = 1;
    for (i=1; i<=image_dims; i++)
       image_pix *= end[ndims-i];
-   pix_size=nctypelen(type);
+   pix_size=nctypelen(datatype);
    image_size=image_pix*pix_size;
    image=MALLOC(image_size);
 
@@ -661,8 +685,8 @@ main(int argc, char *argv[])
          imgmin=DBL_MAX;
          is_signed = (signtype == SIGNED);
          for (j=0; j<image_pix; j++) {
-            ptr = (char *) image + j * nctypelen(type);
-            switch (type) { 
+            ptr = (char *) image + j * nctypelen(datatype);
+            switch (datatype) { 
             case NC_BYTE : 
                if (is_signed)
                   value = (double) *((signed char *) ptr);
@@ -763,11 +787,13 @@ main(int argc, char *argv[])
               orientation  - orientation of dimensions
               type         - type of input data
               signtype     - sign of input data
+              datatype     - NetCDF type of input data
               sign         - string sign of input
               valid_range  - valid range of input data
               vrange_set   - valid range used?
               otype        - type of output data
               osigntype    - sign of output data
+              datatype     - NetCDF type of output data
               osign        - string sign of output
               ovalid_range - valid range of output data
               ovrange_set  - valid range used?
@@ -815,16 +841,24 @@ void parse_args(int argc, char *argv[])
    }
 
    /* Set types and signs */
+   if (signtype==DEF_TYPE) {
+      signtype=default_signs[type];
+   }
    if ((otype==DEF_TYPE) && (osigntype==DEF_TYPE))
       osigntype=signtype;
-   if (otype==DEF_TYPE) otype=type;
+   if (otype==DEF_TYPE) 
+      otype=type;
+   if (osigntype==DEF_TYPE)
+      osigntype=default_signs[otype];
+   datatype = convert_types[type];
+   odatatype = convert_types[otype];
    sign  = sign_names[signtype][type];
    osign = sign_names[osigntype][otype];
 
    /* Check valid ranges */
    vrange_set=(valid_range[0]<valid_range[1]);
    ovrange_set=(ovalid_range[0]<ovalid_range[1]);
-   if ((otype==type) && (STR_EQ(osign,sign))) {
+   if ((odatatype==datatype) && (STR_EQ(osign,sign))) {
       if (!ovrange_set && vrange_set) {
          ovalid_range[0]=valid_range[0];
          ovalid_range[1]=valid_range[1];
@@ -838,7 +872,7 @@ void parse_args(int argc, char *argv[])
    }
 
    /* Always write valid range for floating point values */
-   if ((otype==NC_FLOAT) || (otype==NC_DOUBLE)) {
+   if ((odatatype==NC_FLOAT) || (odatatype==NC_DOUBLE)) {
       ovalid_range[0]=0.0;
       ovalid_range[1]=1.0;
       ovrange_set=TRUE;
