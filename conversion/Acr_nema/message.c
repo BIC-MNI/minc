@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-02-18 20:27:13  neelin
+@MODIFIED   : Minor bug fix.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:00  neelin
  * Release of minc version 0.5
  *
@@ -175,6 +178,8 @@ public void acr_message_add_group(Acr_Message message, Acr_Group group)
    /* If first message, then check for message length element */
    if (message->ngroups == 0) {
       length_element = NULL;
+      message_implicit_offset = 0;
+      message_explicit_offset = 0;
       if (acr_get_group_group(group) == ACR_GID_MESSLEN) {
          length_element = acr_get_group_element_list(group);
          if (length_element != NULL) {
