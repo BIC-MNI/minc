@@ -308,9 +308,9 @@ static struct {
 ';
 
 foreach $drs_id (@drs_list) {
-   print hfile "   $drs_file_types{$drs_id}, " .
-               "$drs_blocks{$drs_id}, " .
-               "$drs_mnemonics{$drs_id},\n";
+   print hfile "   ${drs_file_types{$drs_id}}, " .
+               "${drs_blocks{$drs_id}}, " .
+               "${drs_mnemonics{$drs_id}},\n";
 }
 
    print hfile '   0, NULL, NULL
