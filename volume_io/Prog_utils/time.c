@@ -6,8 +6,12 @@
 #include  <unistd.h>
 #include  <internal_volume_io.h>
 
+#ifdef dec                                   /* to get napms */
+#include  <curses.h>
+#endif
+
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.8 1995-04-20 18:18:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.9 1995-04-25 16:48:25 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -195,17 +199,21 @@ public  void  get_clock_time(
 
 public  void  sleep_program( Real seconds )
 {
-#ifdef sgi
-    long  ticks;
-
-    ticks = (long) ROUND( seconds * CLK_TCK );
-    (void) sginap( ticks );
-#endif
 #ifdef dec
+    int  n_seconds, n_milliseconds;
+
+    n_seconds = FLOOR( seconds );
+    if( n_seconds != 0 )
+        (void) sleep( FLOOR( seconds ) );
+
+    n_milliseconds = ROUND( 1000.0 * FRACTION(seconds) );
+    if( n_milliseconds != 0 )
+        napms( n_milliseconds );
+#else
     struct timespec  rqtp, rmtp;
 
     rqtp.tv_sec = FLOOR( seconds );
-    rqtp.tv_nsec = (long) (1.0e6 * FRACTION(seconds));
+    rqtp.tv_nsec = (long) (1.0e9 * FRACTION(seconds));
     (void) nanosleep( &rqtp, &rmtp );
 #endif
 }
