@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.2  1993-12-10 15:35:12  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.3  1993-12-14 16:37:18  neelin
+@MODIFIED   : Added MIcomplete attribute to image variable,.
 @MODIFIED   :
+ * Revision 1.2  93/12/10  15:35:12  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.1  93/11/30  14:41:43  neelin
  * Initial revision
  * 
@@ -256,6 +259,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    valid_range[0] = general_info->pixel_min;
    valid_range[1] = general_info->pixel_max;
    (void) ncattput(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, valid_range);
+   (void) miattputstr(mincid, imgid, MIcomplete, MI_FALSE);
 
    /* Create image max and min variables */
    varid = micreate_std_variable(mincid, MIimagemin, NC_DOUBLE, ndims-2, dim);
@@ -513,8 +517,15 @@ public void close_minc_file(int icvid)
 {
    int mincid;
 
+   /* Get the minc file id */
    (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+
+   /* Write out the complete attribute */
+   (void) miattputstr(mincid, ncvarid(mincid, MIimage), MIcomplete, MI_TRUE);
+
+   /* Close the file */
    (void) miclose(mincid);
+
    (void) miicv_free(icvid);
 
    return;
