@@ -1,3 +1,9 @@
+Tue Apr 24 09:43:38 EDT 2001
+   - Replaced NC_NAT by MI_ORIGINAL_TYPE since NC_NAT is not defined for
+     NetCDF 3.1-3.4. Because NC_NAT and NC_UNSPECIFIED are defined through
+     enums, they cannot be detected by the preprocessor. So we just define
+     MI_ORIGINAL_TYPE to the same value ((nc_type) 0).
+
 Mon Apr 23 09:20:36 EDT 2001
    - Fixed volume_io/Volumes/output_mnc.c to pass cdfid to mivarput* instead
      of minc_icv id (patch from Steve Robbins). Problems showed up when
