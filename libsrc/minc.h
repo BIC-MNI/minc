@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.8  2001-11-13 14:15:17  neelin
+ * Revision 6.9  2003-03-17 16:03:28  bert
+ * Added declaration of micreate_tempfile()
+ *
+ * Revision 6.8  2001/11/13 14:15:17  neelin
  * Added functions miget_image_range and mivar_exists
  *
  * Revision 6.7  2001/08/20 13:19:14  neelin
@@ -110,7 +113,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.8 2001-11-13 14:15:17 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.9 2003-03-17 16:03:28 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -462,6 +465,7 @@ public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
                                int excluded_vars[]);
 public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
                                  int excluded_vars[]);
+public char *micreate_tempfile(void);
 
 /* From minc_convenience.c */
 public int miget_datatype(int cdfid, int imgid, 
