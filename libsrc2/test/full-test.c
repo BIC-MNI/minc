@@ -194,6 +194,8 @@ int test2()
         return (1);
     }
 
+    r = miset_volume_valid_range(hvol, 1919.0, 0.0);
+
     r = micreate_volume_image(hvol);
     if (r != 0) {
         fprintf(stderr, "error creating volume image\n");
