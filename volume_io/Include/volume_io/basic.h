@@ -127,7 +127,7 @@ typedef  char     STRING[MAX_STRING_LENGTH+1];
 
 #define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
 
-#define  FLOOR( x )   (  (x < 0.0) ? (IS_INT(x) ? (int) (x) : (int) (x) - 1) \
+#define  FLOOR( x )   (  (x < 0.0) ? ((IS_INT(x) ? (int) (x) : (int) (x) - 1)) \
                                    : (int) (x) )
 
 #define  CEILING( x )   (  IS_INT(x) ?                                      \
