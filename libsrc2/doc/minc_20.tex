@@ -1158,7 +1158,7 @@ These functions get or set the scalar separation (sampling interval)
 associated with each of the dimensions in the input "dimensions[]"
 array.  The "array_length" parameter specifies the size of both the
 input and output arrays. While it is legal to call these functions for
-an regularly- sampled dimension, the values will be ignored.
+an irregularly- sampled dimension, the values will be ignored.
 
 RETURN VALUE
 
@@ -1284,8 +1284,8 @@ DESCRIPTION
 
 These functions get or set the start value for an array of
 regularly-sampled dimensions.  The start value defines the origin of
-that dimension.  While it is legal to call these functions for a
-regularly-sampled dimension, the values will be ignored.
+that dimension.  While it is legal to call these functions for an
+irregularly-sampled dimension, the values will be ignored.
 
 If not explicitly set, the start value defaults to zero.
 
