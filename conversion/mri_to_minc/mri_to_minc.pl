@@ -103,7 +103,12 @@ sub read_next_file {
     local($status) = system("dd if=$tapedrive of=$filename ".
                             "ibs=$tape_block_size >/dev/null 2>/dev/null");
     if (($status!=0) || -z $filename) {
-        print STDERR "End of tape.\n";
+        if ($status !=0) {
+            warn "\n\nWARNING!!!! Error occurred while reading tape.\n\n";
+        }
+        else {
+            print STDERR "End of tape.\n";
+        }
         &remove_file($filename);
         return "";
     }
