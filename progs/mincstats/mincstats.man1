@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincstats/mincstats.man1,v 1.1 2001-12-11 14:36:27 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincstats/mincstats.man1,v 1.2 2001-12-11 14:46:31 neelin Exp $
 .\"
 .TH MINCSTATS 1
 
@@ -180,8 +180,8 @@ histogram range and number of bins yourself and not use this option.
 .P
 .I -discrete_histogram:
 Attempt to match the histogram to the discretization of the input
-data. This is appropriate for continuous data that is stored in an
-integer representation and a bin width close to the discretization is
+data. This is appropriate for continuous data that are stored in an
+integer representation and when a bin width close to the discretization is
 desired. This is similar to -integer_histogram, except that the the
 histogram range is first converted to voxel values which are rounded
 and extended by half a bin on either side. This new voxel range is
