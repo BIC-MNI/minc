@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.6  2001-12-06 21:54:25  neelin
+ * Revision 1.7  2001-12-10 14:11:45  neelin
+ * Obtained speed improvement by only doing CoM summing when needed.
+ *
+ * Revision 1.6  2001/12/06 21:54:25  neelin
  * Check for -quiet when printing volume and mask ranges.
  *
  * Revision 1.5  2001/12/06 21:48:16  neelin
@@ -653,11 +656,21 @@ void do_math(void *caller_data, long num_voxels,
             stats = &stats_info[irange][imask];
             mask_min = stats->mask_range[0];
             mask_max = stats->mask_range[1];
-            for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
-               if ((input_data[1][ivox] >= mask_min) && 
-                   (input_data[1][ivox] <= mask_max)) {
-                  get_info_voxel_index(loop_info, ivox, file_ndims, index);
-                  do_stats(input_data[0][ivox], index, stats);
+            if (CoM || All) {
+               for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
+                  if ((input_data[1][ivox] >= mask_min) && 
+                      (input_data[1][ivox] <= mask_max)) {
+                     get_info_voxel_index(loop_info, ivox, file_ndims, index);
+                     do_stats(input_data[0][ivox], index, stats);
+                  }
+               }
+            }
+            else {
+               for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
+                  if ((input_data[1][ivox] >= mask_min) && 
+                      (input_data[1][ivox] <= mask_max)) {
+                     do_stats(input_data[0][ivox], NULL, stats);
+                  }
                }
             }
          }
@@ -667,9 +680,16 @@ void do_math(void *caller_data, long num_voxels,
    else {
       for (irange=0; irange < num_ranges; irange++) {
          stats = &stats_info[irange][0];
-         for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
-            get_info_voxel_index(loop_info, ivox, file_ndims, index);
-            do_stats(input_data[0][ivox], index, stats);
+         if (CoM || All) {
+            for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
+               get_info_voxel_index(loop_info, ivox, file_ndims, index);
+               do_stats(input_data[0][ivox], index, stats);
+            }
+         }
+         else {
+            for (ivox=0; ivox < num_voxels*input_vector_length; ivox++) {
+               do_stats(input_data[0][ivox], NULL, stats);
+            }
          }
       }
    }
@@ -700,10 +720,12 @@ void do_stats(double value, long index[], Stats_Info *stats)
       if (value > stats->max) { stats->max = value; }
 
       /* Get voxel index */
-      for (idim=0; idim < WORLD_NDIMS; idim++) {
-         dim_index = space_to_dim[idim];
-         if (dim_index >= 0) {
-            stats->voxel_com_sum[idim] += value * index[dim_index];
+      if (CoM || All) {
+         for (idim=0; idim < WORLD_NDIMS; idim++) {
+            dim_index = space_to_dim[idim];
+            if (dim_index >= 0) {
+               stats->voxel_com_sum[idim] += value * index[dim_index];
+            }
          }
       }
       
