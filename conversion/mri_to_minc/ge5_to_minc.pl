@@ -257,7 +257,7 @@ sub ge5_read_file_info {
     $file_info{'patient_id'} = &unpack_value(*exam_hdr, 84, 'A13');
     $file_info{'institution'} = &unpack_value(*exam_hdr, 10, 'A33');
     $file_info{'start_time'} = 
-        &time_to_string(&unpack_value(*exam_hdr, 208, 'i'));
+        &time_to_string(&unpack_value(*series_hdr, 16, 'i'));
 
     # Get GE specific stuff
     $specific_file_info{'pixel_data_offset'} = $pixel_data_offset;
