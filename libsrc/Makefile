@@ -42,6 +42,9 @@ LINT_LIB  = llib-l$(LIBRARY).ln
 
 default : $(CC_LIB)
 
+#Dependency on Makefile
+$(OBJS) $(CC_LIB) $(LINT_LIST) $(LINT_LIB) : Makefile
+
 all : $(CC_LIB) $(LINT_LIB)
 
 # define the rule for creating .ln
