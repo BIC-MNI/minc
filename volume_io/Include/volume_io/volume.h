@@ -2,7 +2,7 @@
 #define  DEF_VOLUME
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.30 1995-03-21 19:01:39 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.31 1995-06-19 20:14:58 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -77,16 +77,22 @@ typedef  volume_struct  *Volume;
 #define  BEGIN_ALL_VOXELS( volume, v0, v1, v2, v3, v4 )                       \
          {                                                                    \
              int  _i_, _sizes_[MAX_DIMENSIONS];                               \
+             int  _size0_, _size1_, _size2_, _size3_, _size4_;                \
                                                                               \
              get_volume_sizes( volume, _sizes_ );                             \
              for_less( _i_, get_volume_n_dimensions(volume), MAX_DIMENSIONS ) \
                  _sizes_[_i_] = 1;                                            \
+             _size0_ = _sizes_[0];                                            \
+             _size1_ = _sizes_[1];                                            \
+             _size2_ = _sizes_[2];                                            \
+             _size3_ = _sizes_[3];                                            \
+             _size4_ = _sizes_[4];                                            \
                                                                               \
-             for_less( v4, 0, _sizes_[4] )                                    \
-             for_less( v3, 0, _sizes_[3] )                                    \
-             for_less( v2, 0, _sizes_[2] )                                    \
-             for_less( v1, 0, _sizes_[1] )                                    \
-             for_less( v0, 0, _sizes_[0] )                                    \
+             for_less( v4, 0, _size4_ )                                       \
+             for_less( v3, 0, _size3_ )                                       \
+             for_less( v2, 0, _size2_ )                                       \
+             for_less( v1, 0, _size1_ )                                       \
+             for_less( v0, 0, _size0_ )                                       \
              {
 
 #define  END_ALL_VOXELS                                                       \
