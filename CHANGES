@@ -1,3 +1,6 @@
+Fri Dec 14 12:12:42 EST 2001
+   - Removed rcsid variables from volume_io .h files.
+
 Mon Dec 10 09:11:58 EST 2001
    - Sped up mincstats by only doing centre-of-mass summing when it is
      needed (thanks to Andrew Janke for the suggestion).
