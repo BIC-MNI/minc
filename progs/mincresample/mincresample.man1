@@ -1,0 +1,307 @@
+.\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 1.1 1993-10-19 15:38:50 neelin Exp $
+.\"
+.TH MINCRESAMPLE 1 "MINC Image File Format"
+
+.SH NAME
+mincresample - resamples a minc file along new spatial dimensions
+
+.SH SYNOPSIS
+.B mincresample
+[<options>] <infile> <outfile>
+
+.SH DESCRIPTION
+.I Mincresample
+will resample a minc file along new spatial dimensions with new
+voxel positions. Each volume in the input file (given by the spatial
+dimensions xspace, yspace and zspace) is resampled according to the
+command-line options. Non-spatial dimensions are preserved in their
+original order, but spatial dimensions can be re-ordered to give
+transverse, sagittal or coronal images. The new voxel values are
+calculated using tri-linear, tri-cubic or nearest-neighbour
+interpolation.
+
+.SH WORLD COORDINATES
+World coordinates refer to millimetric coordinates relative to some physical
+origin (either the scanner or some anatomical structure). Voxel coordinates
+are simply the indices into the image volume of a given voxel.
+In order to specify appropriate resampling options, it is necessary
+to understand how MINC coordinate conversions work. 
+
+Each dimension of a MINC image volume is specified by name - the
+spatial dimensions are xspace, yspace and zspace. The convention is
+that positive xspace coordinates run from the patient's left side to
+right side, positive yspace coordinates run from patient posterior to
+anterior and positive zspace coordinates run from inferior to
+superior. For each of these spatial dimensions, the world coordinate
+conversion is specified by a pair of attributes: step and start. The
+xspace world coordinate, for example is calculated using x = v*step +
+start, where x is the x world coordinate and v is the voxel count
+(starting at zero).  Thus the magnitude of the step attribute
+specifies the distance between voxels and the sign of the step
+attribute specifies the orientation of the axis.
+
+There is a further twist: MINC files are allowed to have
+non-orthogonal axes with the dimensions not perfectly aligned with the
+named axis.  There can be a direction_cosine attribute that gives the
+true orientation of the axis. For example, normally the xspace
+dimension should line up with the world x axis, ie. direction cosine =
+(1,0,0); however, it is possible to have a direction cosine of (0.9,
+0.43589, 0).
+
+These attributes (step, start and direction_cosines) provide a
+conversion from voxel coordinates to world coordinates.  Combined with
+a number of elements or samples along an axis, they provide a complete
+description of where the output sampling should be.  However, when we
+are resampling data, we are frequently interested in a change of world
+coordinates: from an MRI scanner's coordinate system to a PET
+scanner's coordinate system, for example, or from a volume in its
+acquisition space to coordinates in a standardized space. This change
+of world coordinates can be specified through the use of a
+transformation (.xfm) file. Thus, in general, the resampling involves
+three transformations: from the input file's voxel coordinates to its
+world coordinates (specified by the input file), from the input world
+coordinates to the output world coordinates (specified by the
+transformation file), and from the output file's world coordinates to
+its voxel coordinates (specified by command-line options).  
+
+In general, direction cosines are rarely used - axis re-orientation is
+specified by a change of world coordinates (the transformation file).
+As well, resampling positions (output world to voxel conversion) are
+often specified relative to a model file (ie. resample this file so
+that it looks like that file). Although there are many options for a
+complete specification of the transformation, one does not usually
+need to specify more than a few of them.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file (default).
+.P
+.I -noclobber:
+Don't overwrite an existing file.
+.P
+.I -verbose:
+Print out progress information for each slice computed (default).
+.P
+.I -quiet:
+Do not print out progress information.
+
+.SH Resampling specification
+Options that give the output sampling (all of the following except
+-transformation) are parsed in the order that they appear on the
+command line. Thus a command with -like file.mnc -znelements 34
+-zstep 2 will give a sampling like that in file in file.mnc but with
+34 samples at 2 mm along the zspace axis. The default sampling is
+taken from the input file.
+.P
+.I -transformation 
+<file.xfm>:
+Specify a file giving the world coordinate transformation (default is
+the identity transformation).
+.P
+.I -like 
+<file.mnc>:
+Specify a model file that gives the output world to voxel
+transformation and number of elements (ie. transform this file so that it
+looks like that one).
+.P
+.I -nelements 
+<nx> <ny> <nz>:
+Number of elements along each of the world dimensions.
+.P
+.I -xnelements 
+<nx>:
+Number of elements along the xspace dimension.
+.P
+.I -ynelements 
+<ny>:
+Number of elements along the yspace dimension.
+.P
+.I -znelements 
+<nz>:
+Number of elements along the zspace dimension.
+.P
+.I -step 
+<xstep> <ystep> <zstep>:
+Step between voxels along each of the world dimensions.
+.P
+.I -xstep 
+<xstep>:
+Step between voxels along the xspace dimension.
+.P
+.I -ystep
+<ystep>:
+Step between voxels along the yspace dimension.
+.P
+.I -zstep
+<zstep>:
+Step between voxels along the zspace dimension.
+.P
+.I -start 
+<xstep> <ystep> <zstep>:
+Position of centre of first voxel along each of the world dimensions.
+.P
+.I -xstart 
+<xstep>:
+Position of centre of first voxel along the xspace dimension.
+.P
+.I -ystart 
+<ystep>:
+Position of centre of first voxel along the yspace dimension.
+.P
+.I -zstart 
+<zstep>:
+Position of centre of first voxel along the zspace dimension.
+.P
+.I -dircos 
+<x1> <x2> <x3> <y1> <y2> <y3> <z1> <z2> <z3>:
+Direction cosines for each of the world axes.
+.P
+.I -xdircos 
+<x1> <x2> <x3>:
+Direction cosines for the xspace dimension.
+.P
+.I -ydircos 
+<y1> <y2> <y3>:
+Direction cosines for the yspace dimension.
+.P
+.I -zdircos 
+<z1> <z2> <z3>:
+Direction cosines for the zspace dimension.
+
+.SH Dimension ordering
+The default is to preserve the original dimension order.
+.P
+.I -transverse:
+Write out transverse slices.
+.P
+.I -sagittal:
+Write out sagittal slices.
+.P
+.I -coronal:
+Write out coronal slices.
+
+.SH Output data type and range
+The default for type, sign and valid range is to use those of the input
+file. If type is specified, then both sign and valid range are set to
+the default for that type. If sign is specified, then valid range is
+set to the default for the type and sign.
+.P
+.I -byte:
+Write out bytes values.
+.P
+.I -short:
+Write out short integer values.
+.P
+.I -long:
+Write out long integer values.
+.P
+.I -float:
+Write out single-precision floating point values.
+.P
+.I -double:
+Write out double-precision floating point values.
+.P
+.I -signed:
+Write out values as signed integers (default for short and long). Ignored for
+floating point types.
+.P
+.I -unsigned:
+Write out values as unsigned integers (default for byte). Ignored for
+floating point types.
+.P
+.I -range 
+<min> <max>:
+specifies the valid range of output voxel values. Default is the full range
+for the type and sign. This option is ignored for floating point
+values.
+
+.SH Handling of undefined (invalid) voxel values
+.P
+.I -fill:
+Output voxels that fall outside of the input volume have undefined
+values. When the -fill option is used, these voxels are given a value
+that is outside of the valid range (less than the valid minimum, if
+the type, sign and valid range permit) so that they can be detected
+by other software. The values of these voxels are not included in the
+image-max and image-min variables.
+.P
+.I -nofill:
+Use a real/physical value (not voxel value) of zero for points
+outside of the input volume. These points are included in the
+calculation of the image-max and image-min variables. This is the default.
+.P
+.I -fillvalue 
+<fillvalue>:
+Specifies a real/physical value (not voxel value) for points outside
+of the input volume. The points are not included in the calculation
+of the image-max and image-min variables.
+
+.SH Interpolation options
+.P
+.I -trilinear:
+Do a tri-linear interpolation between voxels. The edges of the volume
+are at the centre of the first and last voxels of a dimension. This
+is the default.
+.P
+.I -tricubic:
+Do a tri-cubic interpolation between voxels. The edges of the volume
+are at the centre of the first and last voxels of a dimension.
+.P
+.I -nearest_neighbour:
+Do nearest neighbour interpolation between voxels (ie. find the voxel
+closest to the point and use its value). The edges of the volume
+are at the edge of the first and last voxels of a dimension (centre
++/- half voxel separation).
+
+.SH Generic options
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH EXAMPLES
+
+Resample an individual's brain in a standardized space on a
+standard sampling grid:
+     mincresample individual.mnc individual_in_standard_space.mnc
+          -transform transform_to_standard_space.xfm 
+          -like standard_sampling.mnc
+
+Resample an MRI volume to be matched with a PET volume, but with
+finer resolution:
+     mincresample mri.mnc mri_resampled.mnc -transform mri_to_pet.xfm
+          -like pet.mnc -step 1 1 2 -xstart -0.5 -ystart -0.5
+          -nelements 256 256 64
+
+Turn a transverse volume into a sagittal volume:
+     mincresample transverse.mnc sagittal.mnc -sagittal -nearest
+
+Turn a 256x256x64 (1x1x2mm) transverse volume into 256x128x256
+(1x1x1mm) sagittal volume:
+     mincresample transverse.mnc sagittal.mnc -sagittal 
+          -zstep 1 -znelem 128
+
+Get a finer axial sampling on a PET volume:
+     mincresample pet_15_slices.mnc pet_46_slices.mnc 
+          -zstep 2 -znelements 46
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+\fB\(co\fR\s12 Copyright 1993 by Peter Neelin
