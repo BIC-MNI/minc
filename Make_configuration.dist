@@ -38,7 +38,7 @@ INSTALL_VOLIO_INCDIR = $(INSTALL_INCDIR)/volume_io
 # You probably shouldn't modify things beyond here
 
 # MINC library
-MINC_LIB_DIR  = $(ROOT)/src
+MINC_LIB_DIR  = $(ROOT)/libsrc
 MINC_LIB      = minc
 CC_MINC_LIB   = $(MINC_LIB_DIR)/lib$(MINC_LIB).a
 LINT_MINC_LIB = $(MINC_LIB_DIR)/llib-l$(MINC_LIB).ln

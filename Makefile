@@ -7,7 +7,7 @@ ROOT = .
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
-BUILD_SUBDIRS = src $(FORTRAN_SUBDIR) test doc volume_io progs
+BUILD_SUBDIRS = libsrc $(FORTRAN_SUBDIR) test doc volume_io progs
 
 TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
 
