@@ -1221,6 +1221,11 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 
     miinit();
 
+    /* Check arguments for basic validity. */
+    if (ogrp <= igrp) {
+        return (MI_ERROR);
+    }
+
     /* Calculate scale factor (always a power of 2) */
     for (i = igrp, scale = 1; i < ogrp; i++, scale <<= 1)
 	;
@@ -1263,36 +1268,47 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
     
     sprintf(path, "%d/image", ogrp);
     
-    odst_id = H5Dcreate(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
+    H5E_BEGIN_TRY {
+        odst_id = H5Dcreate(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
+    } H5E_END_TRY;
     if (odst_id < 0) {
         odst_id = H5Dopen(loc_id, path);
+        if (odst_id < 0) {
+            return (MI_ERROR);
+        }
     }
 
     H5Pclose(dcpl_id);          /* No longer needed. */
 
-    /* TODO: This is a bit of a hack - I need a better way to get the
-     * dimensionality of the source image-min and image-max.
-     */
+    if (volume->volume_class == MI_CLASS_REAL) {
+        /* TODO: This is a bit of a hack - I need a better way to get the
+         * dimensionality of the source image-min and image-max.
+         */
     
-    tfspc_id = H5Screate_simple(1, &osize[0], NULL);
+        tfspc_id = H5Screate_simple(1, &osize[0], NULL);
 
-    /* Create a simple scalar dataspace. */
-    tmspc_id = H5Screate(H5S_SCALAR);
+        /* Create a simple scalar dataspace. */
+        tmspc_id = H5Screate(H5S_SCALAR);
 
-    sprintf(path, "%d/image-max", ogrp);
-    omax_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
-                        H5P_DEFAULT);
-    if (omax_id < 0) {
-        omax_id = H5Dopen(loc_id, path);
+        sprintf(path, "%d/image-max", ogrp);
+        H5E_BEGIN_TRY {
+            omax_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
+                                H5P_DEFAULT);
+        } H5E_END_TRY;
+        if (omax_id < 0) {
+            omax_id = H5Dopen(loc_id, path);
+        }
+
+        sprintf(path, "%d/image-min", ogrp);
+        H5E_BEGIN_TRY {
+            omin_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
+                                H5P_DEFAULT);
+        } H5E_END_TRY;
+        if (omin_id < 0) {
+            omin_id = H5Dopen(loc_id, path);
+        }
     }
-
-    sprintf(path, "%d/image-min", ogrp);
-    omin_id = H5Dcreate(loc_id, path, H5T_NATIVE_DOUBLE, tfspc_id, 
-                        H5P_DEFAULT);
-    if (omin_id < 0) {
-        omin_id = H5Dopen(loc_id, path);
-    }
-
+    
     /* Calculate the input buffer size - scale slices.
      */
     in_bytes = scale * isize[1] * isize[2] * sizeof(double);
@@ -1350,15 +1366,17 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 	H5Dwrite(odst_id, H5T_NATIVE_DOUBLE, omspc_id, ofspc_id, H5P_DEFAULT, 
                  out_ptr);
 
-        /* Select the right point in tfspc_id */
-        H5Sselect_elements(tfspc_id, H5S_SELECT_SET, 1, 
-                           (const hssize_t **) &start[0]);
+        if (volume->volume_class == MI_CLASS_REAL) {
+            /* Select the right point in tfspc_id */
+            H5Sselect_elements(tfspc_id, H5S_SELECT_SET, 1, 
+                               (const hssize_t **) &start[0]);
 
-        H5Dwrite(omax_id, H5T_NATIVE_DOUBLE, tmspc_id, tfspc_id, H5P_DEFAULT,
-                 &smax);
+            H5Dwrite(omax_id, H5T_NATIVE_DOUBLE, tmspc_id, tfspc_id, 
+                     H5P_DEFAULT, &smax);
 
-        H5Dwrite(omin_id, H5T_NATIVE_DOUBLE, tmspc_id, tfspc_id, H5P_DEFAULT,
-                 &smin);
+            H5Dwrite(omin_id, H5T_NATIVE_DOUBLE, tmspc_id, tfspc_id, 
+                     H5P_DEFAULT, &smin);
+        }
     }
     
     free(in_ptr);
