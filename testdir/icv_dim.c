@@ -77,7 +77,9 @@ main()
    miicv_inqdbl(icv, MI_ICV_NORM_MIN, &dvalue);
    printf(", min = %g\n", dvalue);
    miicv_put(icv, coord, count, ivalue);
-   miicv_get(icv, coord, count, &ivalue);
+   for (i=0; i< sizeof(ivalue)/sizeof(ivalue[0]); i++)
+      ivalue[i] = 0;
+   miicv_get(icv, coord, count, ivalue);
    for (i=0; i<3; i++) {
       for (j=0; j<4; j++) {
          for (k=0; k<5; k++) {
