@@ -1,3 +1,42 @@
+MINC 2:
+
+2004-04-22  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Expanded test cases
+	
+2004-04-15  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add -DMINC2, #ifdef MINC2 to make most MINC2
+	additions and changes optional.
+	* Expand minc2_uguide.tex
+	
+2004-04-08  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add mincdump command
+	* Minor changes to increase portability, esp. to Windows.
+
+2004-03-25  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add support for -compress and -chunk options to mincconvert
+	* Some small library fixes
+	* Fix handling of irregular dimension variables in emulation
+	library.
+	
+2004-02-27  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix dimorder handling
+
+2004-02-18  Bert Vincent <bert@bic.mni.mcgill.ca> 
+	
+	* Fixed handling of "rootvariable" emulation in hdf_convenience.c
+	and netcdf_convenience.c
+	
+	* Fixed behavior of some of the netCDF emulation attribute functions
+	in hdf_convenience.c and minc_compat.c
+	
+2004-02-17  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Fixed mincconvert - added ncendef()
+	
+	* Actually implemented MINC_COMPRESS
+
+MINC 1:
+
 2004-03-24  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Minor fix to miappend_history() in libsrc/minc_convenience.c
 	
