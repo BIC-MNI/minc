@@ -11,7 +11,10 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.4  2004-04-27 15:32:15  bert
+ * Revision 6.5  2004-04-30 19:53:30  bert
+ * Remove unused variable
+ *
+ * Revision 6.4  2004/04/27 15:32:15  bert
  * Added -2 option
  *
  * Revision 6.3  2001/04/24 13:38:44  neelin
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.4 2004-04-27 15:32:15 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.5 2004-04-30 19:53:30 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -215,12 +218,8 @@ public void do_makevector(void *caller_data, long num_voxels,
                           double *output_data[], Loop_Info *loop_info)
      /* ARGSUSED */
 {
-   Program_Data *program_data;
    long ivoxel, ovoxel;
    int current_input_file;
-
-   /* Get pointer to lookup info */
-   program_data = (Program_Data *) caller_data;
 
    /* Check that values correspond */
    if ((input_num_buffers != 1) || (output_num_buffers != 1) ||

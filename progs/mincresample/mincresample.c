@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.14  2004-04-30 18:52:49  bert
+ * Revision 6.15  2004-04-30 19:53:40  bert
+ * Remove unused variable
+ *
+ * Revision 6.14  2004/04/30 18:52:49  bert
  * Remove some unused variables
  *
  * Revision 6.13  2004/04/27 15:31:20  bert
@@ -168,7 +171,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.14 2004-04-30 18:52:49 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.15 2004-04-30 19:53:40 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -427,7 +430,7 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Other variables */
    int idim, index;
-   int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
+   int out_vindex;              /* Volume indices (0, 1 or 2) */
    int out_findex;              /* File indices (0 to ndims-1) */
    long size, total_size;
    char *infile, *outfile;
@@ -640,7 +643,6 @@ public void get_arginfo(int argc, char *argv[],
    for (idim=0; idim < WORLD_NDIMS; idim++) {
       
       /* Get the index for input and output volumes */
-      in_vindex = in_vol->file->axes[idim];       /* 0, 1 or 2 */
       out_vindex = args.volume_def.axes[idim];    /* 0, 1 or 2 */
       out_findex = in_vol->file->indices[out_vindex];   /* 0 to ndims-1 */
       size = args.volume_def.nelements[idim];
