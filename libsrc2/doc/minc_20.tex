@@ -2764,6 +2764,7 @@ SYNOPSIS
 #include <minc2.h>
 
 int  miconvert_voxel_to_world ( midimhandle_t   dimensions[],
+                                int             n_dimensions,
                                 const double    voxels[],
                                 double          worlds[])
                                    
@@ -2788,6 +2789,7 @@ SYNOPSIS
 #include <minc2.h>
 
 int  miconvert_world_to_voxel ( midimhandle_t   dimensions[],
+                                int             n_dimensions,
                                 double          voxels[],
                                 const double    worlds[])
                                    
