@@ -13,7 +13,8 @@ EXE=	convert-test \
 	record-test \
 	slice-test \
 	valid-test \
-	volprops-test
+	volprops-test \
+	multires-test
 
 all: $(EXE)
 
@@ -40,6 +41,9 @@ hyper-test: hyper-test.o
 label-test: label-test.o
 	$(CC) $(LDFLAGS) -Wall -g -o $@ $< $(LIBS)
 
+multires-test: multires-test.o
+	$(CC) $(LDFLAGS) -Wall -g -o $@ $< $(LIBS)
+
 record-test: record-test.o
 	$(CC) $(LDFLAGS) -Wall -g -o $@ $< $(LIBS)
 
@@ -54,3 +58,7 @@ volprops-test: volprops-test.o
 
 m2stats: m2stats.o
 	$(CC) $(LDFLAGS) -Wall -g -o $@ $< $(LIBS)
+
+clean:
+	-rm $(EXE)
+	-rm *.o
