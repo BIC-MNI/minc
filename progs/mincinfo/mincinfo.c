@@ -12,10 +12,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.4 1993-06-10 10:18:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.5 1993-07-13 15:57:45 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +22,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 
 #include <float.h>
 #include <minc.h>
 #include <ParseArgv.h>
+#include <minc_def.h>
 
 /* Constants */
 #define public
@@ -221,7 +221,7 @@ public int main(int argc, char *argv[])
                row_length = length;
          }
          if (datatype==NC_CHAR) {
-            cdata = malloc(var_length*sizeof(char));
+            cdata = MALLOC(var_length*sizeof(char));
             CHK_ERR(ncvarget(mincid, varid, start, count, cdata));
             for (ival=0; ival<var_length; ival++) {
                (void) putchar((int) cdata[ival]);
@@ -231,7 +231,7 @@ public int main(int argc, char *argv[])
             free(cdata);
          }
          else {
-            ddata = malloc(var_length*sizeof(double));
+            ddata = MALLOC(var_length*sizeof(double));
             CHK_ERR(mivarget(mincid, varid, start, count, 
                              NC_DOUBLE, NULL, ddata));
             for (ival=0; ival<var_length; ival++) {
@@ -249,13 +249,13 @@ public int main(int argc, char *argv[])
          CHK_ERR(get_attname(mincid, string, &varid, name));
          CHK_ERR(ncattinq(mincid, varid, name, &datatype, &att_length));
          if (datatype == NC_CHAR) {
-            cdata = malloc((att_length+1)*sizeof(char));
+            cdata = MALLOC((att_length+1)*sizeof(char));
             if (miattgetstr(mincid, varid, name, att_length+1, cdata)==NULL)
                {REPORT_ERROR;}
             (void) printf("%s\n", cdata);
          }
          else {
-            ddata = malloc(att_length * sizeof(double));
+            ddata = MALLOC(att_length * sizeof(double));
             CHK_ERR(miattget(mincid, varid, name, NC_DOUBLE, att_length,
                              ddata, NULL));
             for (iatt=0; iatt<att_length; iatt++) {
@@ -266,7 +266,7 @@ public int main(int argc, char *argv[])
          break;
       default:
          (void) fprintf(stderr, "%s: Program bug!\n", argv[0]);
-         return EXIT_FAILURE;
+         exit(EXIT_FAILURE);
       }
    error_label: ;
    }
@@ -274,7 +274,7 @@ public int main(int argc, char *argv[])
    /* Close the file */
    (void) ncclose(mincid);
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
