@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.5 1995-02-20 13:12:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.6 1995-02-27 11:22:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -193,8 +193,6 @@ public  void  thin_plate_spline_inverse_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#define FREERETURN {FREE2D(alpha);FREE(bet);return;}
-
 private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
                     float **bdefor, float **INVMLY, int num_marks)
 
@@ -217,23 +215,26 @@ private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
       usrfun(x, alpha, bet, bdefor, INVMLY, num_marks, dim, xout);
 
       errf=0.0;			/* Check for function convergence */
-      for (i=1;i<=dim;i++) errf += fabs(bet[i-1]);
-      if (errf <= tolf) FREERETURN
+      for (i=1;i<=dim;i++)
+          errf += fabs(bet[i-1]);
+      if (errf <= tolf)
+          break;
 
       if( !solve_linear_system( dim, alpha, bet, bet ) )
-          FREERETURN;
+          break;
 
       errx=0.0;
       for (i=1;i<=dim;i++) {	/* check for root convergence */
-	 errx += fabs(bet[i-1]);
-	 x[i-1] += bet[i-1];	/* Update the solution */
+	  errx += fabs(bet[i-1]);
+	  x[i-1] += bet[i-1];	/* Update the solution */
       }
-      if (errx <= tolx) FREERETURN
+      if (errx <= tolx)
+          break;
    }
-   FREERETURN
-}
 
-#undef FREERETURN
+   FREE2D(alpha);
+   FREE(bet);
+}
 
 
 /* ----------------------------- MNI Header -----------------------------------
