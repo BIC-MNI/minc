@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.3  1993-11-24 11:25:14  neelin
-@MODIFIED   : Changed short to unsigned short.
+@MODIFIED   : Revision 1.4  1993-11-25 10:35:34  neelin
+@MODIFIED   : Ensure that strings have an even length (pad with space).
 @MODIFIED   :
+ * Revision 1.3  93/11/24  11:25:14  neelin
+ * Changed short to unsigned short.
+ * 
  * Revision 1.2  93/11/22  13:11:34  neelin
  * Added Acr_Element_Id code.
  * 
@@ -411,15 +414,10 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value)
 {
    char string[256];
-   long data_length;
-   void *data;
 
    (void) sprintf(string, "%.15g", value);
-   data_length = strlen(string);
-   data = strdup(string);
+   return acr_create_element_string(elid, string);
 
-   return acr_create_element(elid->group_id, elid->element_id, 
-                             data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -440,12 +438,32 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value)
 {
    long data_length;
-   void *data;
+   long alloc_length;
+   char *data;
+   int pad;
 
+   /* Get string length and check for an odd length */
    data_length = strlen(value);
-   data = strdup(value);
+   if ((data_length % 2) == 0)
+      pad = FALSE;
+   else {
+      pad = TRUE;
+      data_length++;
+   }
 
-   return acr_create_element(elid->group_id, elid->element_id, data_length, data);
+   /* Allocate the string and copy it */
+   alloc_length = data_length + 1;
+   data = (char *) MALLOC(alloc_length);
+   (void) strcpy(data, value);
+
+   /* Pad the end with a blank if needed */
+   if (pad) {
+      data[data_length - 1] = ' ';
+      data[data_length] = '\0';
+   }
+
+   return acr_create_element(elid->group_id, elid->element_id, 
+                             data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
