@@ -8,7 +8,7 @@
               to determine the sign of an integer variable.
 @METHOD     : Routines included in this file :
               public :
-                 midecompress_file
+                 miexpand_file
                  miopen
                  micreate
                  miclose
@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.1  1995-01-20 15:20:33  neelin
-@MODIFIED   : Added midecompress_file with ability to decompress only the header of a file.
+@MODIFIED   : Revision 2.2  1995-01-23 08:28:19  neelin
+@MODIFIED   : Changed name of midecompress_file to miexpand_file.
 @MODIFIED   :
+ * Revision 2.1  95/01/20  15:20:33  neelin
+ * Added midecompress_file with ability to decompress only the header of a file.
+ * 
  * Revision 2.0  94/09/28  10:38:13  neelin
  * Release of minc version 0.2
  * 
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.1 1995-01-20 15:20:33 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.2 1995-01-23 08:28:19 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -201,9 +204,9 @@ private int execute_decompress_command(char *command, char *infile,
 
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : midecompress_file
+@NAME       : miexpand_file
 @INPUT      : path  - name of file to open.
-              header_only - TRUE if only the header needs to be decompressed.
+              header_only - TRUE if only the header needs to be expanded.
 @OUTPUT     : created_tempfile - TRUE if a temporary file was created, FALSE
                  if no file was created (either because the original file
                  was not compressed or because of an error).
@@ -212,25 +215,25 @@ private int execute_decompress_command(char *command, char *infile,
               must free the string. If a system error occurs on file open or 
               the decompression type is unknown, then the original file name
               is returned.
-@DESCRIPTION: Routine to decompress a minc file. If the original file is not
-              compressed then its name is returned. If the name of a temporary
-              file is returned, then created_tempfile is TRUE. If header_only
-              is TRUE, then only the header part of the file is guaranteed,
-              the data part may or may not be present.
+@DESCRIPTION: Routine to expand a compressed minc file. If the original file 
+              is not compressed then its name is returned. If the name of a 
+              temporary file is returned, then created_tempfile is TRUE. If 
+              header_only is TRUE, then only the header part of the file is 
+              guaranteed, the data part may or may not be present.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : NetCDF routines, external decompression programs
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *midecompress_file(char *path, int header_only,
-                               int *created_tempfile)
+public char *miexpand_file(char *path, int header_only,
+                           int *created_tempfile)
 {
    int status, oldncopts, first_ncerr;
    char *tempfile, *extension;
    enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} compress_type;
 
-   MI_SAVE_ROUTINE_NAME("midecompress_file");
+   MI_SAVE_ROUTINE_NAME("miexpand_file");
 
    /* We have not created a temporary file yet */
    *created_tempfile = FALSE;
@@ -356,8 +359,8 @@ public int miopen(char *path, int mode)
       MI_RETURN(status);
    }
 
-   /* Try to decompress the file */
-   tempfile = midecompress_file(path, FALSE, &created_tempfile);
+   /* Try to expand the file */
+   tempfile = miexpand_file(path, FALSE, &created_tempfile);
 
    /* Check for error */
    if (tempfile == NULL) {
