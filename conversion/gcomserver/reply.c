@@ -5,7 +5,10 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: reply.c,v $
- * Revision 6.3  2000-01-31 13:57:39  neelin
+ * Revision 6.4  2000-02-22 00:06:34  neelin
+ * Added printing of project name into log file.
+ *
+ * Revision 6.3  2000/01/31 13:57:39  neelin
  * Added keyword to project file to allow definition of the local AEtitle.
  * A simple syntax allows insertion of the host name into the AEtitle.
  *
@@ -339,6 +342,9 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
 
    /* Get the project name from the volume name */
    *project_name = strdup(acr_find_string(group_list, SPI_Volume_name, ""));
+
+   /* Print out the project name */
+   (void) fprintf(stderr, "Requested project name is \"%s\"\n", *project_name);
 
    /* Create the reply */
    group_list = spi_reply(input_message);
