@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.3 1993-02-02 09:34:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.4 1993-03-08 12:01:41 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -376,6 +376,7 @@ int main(int argc, char *argv[])
 
    }         /* End file loop */
 
+   (void) miattputstr(mincid, ncvarid(mincid, MIimage), MIcomplete, MI_TRUE);
    (void) ncclose(mincid);
 
    FREE(image);
@@ -925,6 +926,7 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       vrange[1] = scx_general_info->vmax;
    }
    (void) ncattput(mincid, img, MIvalid_range, NC_DOUBLE, 2, vrange);
+   (void) miattputstr(mincid, img, MIcomplete, MI_FALSE);
 
    /* Create the image max and min variables */
    imgmax=micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, ndims-2, dim);
