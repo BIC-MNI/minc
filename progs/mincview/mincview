@@ -24,12 +24,21 @@ set slice = `awk "BEGIN{print $2+0}" < /dev/null`
 @ slice_specified = ( $#argv >= 2 )
 
 # Create temporary directory
-set workingdir = /usr/tmp
-if ($?TMPDIR) then
-   set workingdir = $TMPDIR
-else
-   set workingdir = /usr/tmp
+if (! $?TMPDIR) then
+    if (-d /var/tmp) then
+	set TMPDIR = /var/tmp
+    else if (-d /usr/tmp) then
+	set TMPDIR = /usr/tmp
+    else
+	set TMPDIR = /tmp
+    endif
 endif
+if (! -d $TMPDIR) then
+    echo "Working directory $TMPDIR does not exist."
+    exit 1
+endif
+set workingdir = $TMPDIR
+
 set workingparent = $workingdir/mincview-$$
 set childdir = $filename:t
 set workingdir = $workingparent/$childdir
