@@ -1,17 +1,21 @@
 INCLUDES = -I$(top_srcdir)/libsrc
-LDADD = ../libminc.la
+LDADD = ../libvolume_io.la ../libminc.la
 
-sh_tests = xfmconcat_01.sh
+script_tests = \
+	run_tests.csh \
+	xfmconcat_01.sh \
+	xfmconcat_02.sh
+
 all-local:
-	chmod +x $(sh_tests)
+	cd $(srcdir) && chmod +x $(script_tests)
 
-TESTS = run_tests.csh $(sh_tests)
+TESTS = $(script_tests)
 
 check_PROGRAMS = minc test_mconv minc_types icv icv_range \
 	icv_dim test_speed icv_dim1 icv_fillvalue \
-	create_grid_xfm
+	test_xfm create_grid_xfm
 
-EXTRA_DIST = run_tests.csh $(expect_files)
+EXTRA_DIST = $(script_tests) $(expect_files) t1.xfm
 
 CLEANFILES = test.mnc _*
 
@@ -33,6 +37,4 @@ icv_dim1.out: ;
 icv_fillvalue.out: ;
 icv_range.out: ;
 minc_types.out: ;
-
-create_grid_xfm_LDADD = ../libvolume_io.la ../libminc.la
 

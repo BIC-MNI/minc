@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . testdir doc volume_io
+SUBDIRS = . volume_io testdir doc
 
 
 # Add these to the include searches.

@@ -2,3 +2,10 @@
 
 * Add "-version" flag to all executables.
 
+* rationalize the testing into "testdir/".  I initially put 
+  stuff in volume_io/Testing in order to separate the testing of
+  minc proper from testing of volume_io.  But some of the "minc"
+  utilities (xfmconcat, xfminvert) use volume_io, so there is no
+  real separation, it seems.  Might as well move all testing stuff
+  to testdir.
+

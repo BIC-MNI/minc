@@ -6,8 +6,8 @@ set -e
 ./test-xfm 10000 $srcdir/t1.xfm
 ./test-xfm 10000 $srcdir/t2.xfm
 
-# Here's an illustration of how lousy the grid-transform inversion is:
-# using a tolerance of 0.8 will fail!
+# Transformation t3 is non-injective, so we have to set the tolerance
+# fairly large.
 ./test-xfm 10000 $srcdir/t3.xfm 0.9
 
 

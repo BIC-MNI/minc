@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <volume_io.h>
-#include "libsrc/time_stamp.h"
+#include "time_stamp.h"
 
 
 int main( int ac, char* av[] )

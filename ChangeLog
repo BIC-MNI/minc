@@ -1,9 +1,21 @@
 2003-06-01  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+	* testdir/Makefile.am (script_tests): 
+
+	* Makefile.am (SUBDIRS): Process volume_io before testdir,
+	because tests may link against volume_io.
+
+	* volume_io/MNI_formats/gen_xf_io.c (output_one_transform): 
+	Update *volume_count after writing a grid transform (thanks, Peter
+	Neelin).
+
 	* testdir/create_grid_xfm.c: New.  Utility to create grid
 	transformation.
 
-	* testdir/xfmconcat_01.sh: New.  Test concatenation of grid
+	* testdir/test_xfm.c: Copied from volume_io/Testing/test-xfm.c.
+
+	* testdir/xfmconcat_01.sh:
+	* testdir/xfmconcat_02.sh: New.  Test concatenation of grid
 	transformations.
 
 2003-03-17  Bert Vincent      <bert@bic.mni.mcgill.ca>
@@ -41,7 +53,7 @@
 2003-01-10  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* testdir/Makefile.am (INCLUDES): 
-	* volume_io/Testing//Makefile.am (INCLUDES): Set includes for
+	* volume_io/Testing/Makefile.am (INCLUDES): Set includes for
 	test files.
 
 	* Makefile.am (EXTRA_DIST, dist-hook): Distribute fortran
@@ -59,7 +71,7 @@
 	* volume_io/Documentation/Makefile.am: New.
 	
 	* volume_io/Testing/check_xfm.sh: 
-	* volume_io/Testing/check_xfm.sh
+	* volume_io/Testing/test-xfm.c:
 	* volume_io/Testing/t1.xfm:
 	* volume_io/Testing/t2.xfm:
 	* volume_io/Testing/t3.xfm:

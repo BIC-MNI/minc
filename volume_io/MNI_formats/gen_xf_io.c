@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.21 2001-04-24 13:38:47 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.22 2003-06-02 02:49:36 stever Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
@@ -64,6 +64,7 @@ public  STRING  get_default_transform_file_suffix( void )
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Outputs a transform to the MNI transform file.
+            : Increment *volume_count.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -179,6 +180,11 @@ private  void  output_one_transform(
                                         100 );
         (void) sprintf( volume_filename, "%s_grid_%d.mnc", prefix_filename,
                         *volume_count );
+
+	/* Increment the volume counter as a side-effect to ensure that grid
+	 * files have different names.
+	 */
+	(*volume_count)++;
 
         /*--- decide where to write the volume file */
 
