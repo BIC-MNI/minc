@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.5  2001-12-06 21:48:16  neelin
+ * Revision 1.6  2001-12-06 21:54:25  neelin
+ * Check for -quiet when printing volume and mask ranges.
+ *
+ * Revision 1.5  2001/12/06 21:48:16  neelin
  * Significant modifications to get mincstats working. Also added support
  * for multiple ranges in the volume and the mask. Added -binvalue and
  * -maskbinvalue options.
@@ -549,10 +552,10 @@ int main(int argc, char *argv[])
          }  /* end histogram calculations */
 
          /* Print range of data allowed */
-         if (verbose || num_ranges > 1) {
+         if (verbose || (num_ranges > 1 && !quiet)) {
             (void) fprintf(stdout, "Included Range:    %g   %g\n", stats->vol_range[0], stats->vol_range[1]);
          }
-         if (verbose || num_masks > 1) {
+         if (verbose || (num_masks > 1 && !quiet)) {
             (void) fprintf(stdout, "Mask Range:        %g   %g\n", stats->mask_range[0], stats->mask_range[1]);
          }
 
