@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.17  2004-11-01 22:38:39  bert
+ * Revision 1.18  2004-12-06 15:28:50  rotor
+ *  * Hopefully the final bug-fix for the BiModalT calculation
+ *
+ * Revision 1.17  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 1.16  2004/10/18 08:20:35  rotor
@@ -652,8 +655,8 @@ int main(int argc, char *argv[])
                /* BiModal Threshold */
                zero_moment += pdf[c];
                first_moment += hist_centre[c] * pdf[c];
-
-               if(c > 0) {
+               
+               if(c > 0 && zero_moment > 0.0 && zero_moment < 1.0) {
                   var = SQR((stats->mean * zero_moment) - first_moment) /
                      (zero_moment * (1 - zero_moment));
 
