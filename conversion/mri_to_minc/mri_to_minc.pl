@@ -92,6 +92,7 @@ sub read_next_file {
     # Create file counting variable if it does not exist and rewind tape
     # drive
     if (!defined($counter_for_read_next_file)) {
+        print STDERR "Rewinding tape drive $tapedrive\n";
         &execute("mt -t $tapedrive rewind");
         $counter_for_read_next_file = 0;
     }
@@ -110,7 +111,7 @@ sub read_next_file {
         # it just works!)
         select(undef, undef, undef, $tape_sleep);
         $status = system("dd if=$tapedrive of=$filename ".
-                         "ibs=$tape_block_size >/dev/null 2>/dev/null");
+                         "bs=$tape_block_size >/dev/null 2>/dev/null");
         if ($status == 0) {last;}
 
         # If we get to here then the read failed. Try to reposition the tape.
@@ -371,6 +372,9 @@ sub create_mincfile {
             open(GEDAT, $image_cmd . " |");
             read(GEDAT, $image_data, $image_data_len);
             close(GEDAT);
+            if ($? != 0) {
+                &cleanup_and_die("Error or signal while reading image.\n", $?);
+            }
             if (length($image_data) != $image_data_len) {
                 close(MINC);
                 warn "Error reading image from $cur_file ".
@@ -385,6 +389,9 @@ sub create_mincfile {
 
     # Close the minc file
     close(MINC);
+    if ($? != 0) {
+        &cleanup_and_die("Error or signal while writing image.\n", $?);
+    }
 
 }
 
