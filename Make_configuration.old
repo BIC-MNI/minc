@@ -15,6 +15,9 @@ NETCDF_INCLUDE_DIR = /usr/local/include
 NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf_fortran
 FORTRAN_SUBDIR = fortran
 #FORTRAN_SUBDIR =
+INSTALL_BINDIR = $(ROOT)/bin
+INSTALL_LIBDIR = $(ROOT)/lib
+INSTALL_INCDIR = $(ROOT)/include
 
 # ------------------------------------------------------------
 # You probably shouldn't modify things beyond here
@@ -31,9 +34,16 @@ PROG_LIB      = mincprog
 CC_PROG_LIB   = $(PROG_LIB_DIR)/lib$(PROG_LIB).a
 LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln
 
+# Volume io library
+VOLIO_LIB_DIR  = $(ROOT)/volume_io
+VOLIO_LIB      = volume_io
+CC_VOLIO_LIB   = $(VOLIO_LIB_DIR)/lib$(VOLIO_LIB).a
+LINT_VOLIO_LIB = $(VOLIO_LIB_DIR)/llib-l$(VOLIO_LIB).ln
+
 # Include directories
-INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(PROG_LIB_DIR)/dave_includes \
+INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(VOLIO_LIB_DIR)/Include \
 	      -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
 
 # MINC loader options
 MINC_LDOPT = $(CC_MINC_LIB) $(NETCDF_LIB_DIR)/libnetcdf.a $(MACHINE_LDOPT)
+PROG_LDOPT = $(CC_PROG_LIB) $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)

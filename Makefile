@@ -7,7 +7,7 @@ ROOT = .
 include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
-BUILD_SUBDIRS = src $(FORTRAN_SUBDIR) test doc progs
+BUILD_SUBDIRS = src $(FORTRAN_SUBDIR) test doc volume_io progs
 
 TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
 
@@ -15,7 +15,7 @@ TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
 
 default : build runtest
 
-all build clean:
+all build clean install:
 	$(MAKE) 'TARGET=$@' 'SUBDIRS=$(BUILD_SUBDIRS)' subdirs
 
 runtest :
