@@ -1,3 +1,7 @@
+Tue Sep 18 11:47:13 EDT 2001
+   - in library function miset_valid_range, changed output type of 
+     valid_range from byte to short when image type is byte.
+
 Tue Sep 18 11:34:16 EDT 2001
    - Always create image variable last in order to allow images > 2GB on
      64-bit machines (offset to variable must be < 2GB, but size can be 
