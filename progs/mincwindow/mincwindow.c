@@ -9,13 +9,16 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 1.1  1994-01-11 15:02:56  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-01-11 15:56:17  neelin
+@MODIFIED   : Added optional newvalue argument.
 @MODIFIED   :
+ * Revision 1.1  94/01/11  15:02:56  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.1 1994-01-11 15:02:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.2 1994-01-11 15:56:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -31,8 +34,15 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.
 #  define public
 #endif
 
+#ifndef TRUE
+#  define TRUE 1
+#  define FALSE 0
+#endif
+
 /* Structure for window information */
 typedef struct {
+   int use_newvalue;
+   double newvalue;
    double minimum;
    double maximum;
 } Window_Data;
@@ -66,9 +76,9 @@ public int main(int argc, char *argv[])
 
    /* Get arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || 
-       (argc < 5) || (argc > 5)) {
+       (argc < 5) || (argc > 6)) {
       (void) fprintf(stderr, 
-      "Usage: %s [options] <in.mnc> <out.mnc> <min> <max>\n",
+      "Usage: %s [options] <in.mnc> <out.mnc> <min> <max> [<newvalue>]\n",
                      argv[0]);
       exit(EXIT_FAILURE);
    }
@@ -83,6 +93,18 @@ public int main(int argc, char *argv[])
    if ((endptr == argv[4]) || (*endptr != NULL)) {
       (void) fprintf(stderr, "Cannot get max value from %s\n", argv[4]);
       exit(EXIT_FAILURE);
+   }
+   if (argc == 6) {
+      window_data.use_newvalue = TRUE;
+      window_data.newvalue = strtod(argv[5], &endptr);
+      if ((endptr == argv[5]) || (*endptr != NULL)) {
+         (void) fprintf(stderr, "Cannot get max value from %s\n", argv[5]);
+         exit(EXIT_FAILURE);
+      }
+   }
+   else {
+      window_data.use_newvalue = FALSE;
+      window_data.newvalue = 0.0;
    }
 
    /* Open input file */
@@ -123,10 +145,18 @@ public void do_window(void *voxel_data, long nvoxels, double *data)
 
    /* Loop through the voxels */
    for (ivox=0; ivox < nvoxels; ivox++) {
-      if (data[ivox] < window_data->minimum)
-         data[ivox] = window_data->minimum;
-      if (data[ivox] > window_data->maximum)
-         data[ivox] = window_data->maximum;
+      if (data[ivox] < window_data->minimum) {
+         if (window_data->use_newvalue)
+            data[ivox] = window_data->newvalue;
+         else
+            data[ivox] = window_data->minimum;
+      }
+      else if (data[ivox] > window_data->maximum) {
+         if (window_data->use_newvalue)
+            data[ivox] = window_data->newvalue;
+         else
+            data[ivox] = window_data->maximum;
+      }
    }
 
    return;
