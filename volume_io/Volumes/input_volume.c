@@ -5,6 +5,8 @@
 #define   MNC_ENDING   ".mnc"
 #endif
 
+#define   FREE_ENDING   ".fre"
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : start_volume_input
 @INPUT      : filename               - file to input
@@ -17,7 +19,7 @@
 
               Note: if you wish to modify the volume file input routines,
               then look at the new_C_dev/Include/def_volume.h for the
-              description of volume_struct and volume_input_struct.
+              description of Volum and volume_input_struct.
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
@@ -25,49 +27,48 @@
 public  Status  start_volume_input(
     char                 filename[],
     Boolean              convert_to_byte_flag,
-    volume_struct        *volume,
+    Volume               *volume,
     volume_input_struct  *input_info )
 {
-    Status       status;
-    String       expanded_filename;
+    Status          status;
+    nc_type         data_type;
+    static String   dim_names[N_DIMENSIONS] = { MIxspace, MIyspace, MIzspace };
+    String          expanded_filename;
 
     status = OK;
 
-    initialize_volume( volume );
+    if( convert_to_byte_flag )
+        data_type = NC_BYTE;
+    else
+        data_type = NC_UNSPECIFIED;
+
+    *volume = create_volume( 3, dim_names, data_type, FALSE,
+                             0.0, 0.0 );
 
     expand_filename( filename, expanded_filename );
 
 #ifndef  NO_MNC_FILES
-    if( string_ends_in( expanded_filename, MNC_ENDING ) )
-        input_info->file_type = MNC_FORMAT;
+    if( !string_ends_in( expanded_filename, FREE_ENDING ) )
+        input_info->file_format = MNC_FORMAT;
     else
 #endif
-        input_info->file_type = FREE_FORMAT;
+        input_info->file_format = FREE_FORMAT;
 
-    (void) strcpy( volume->filename, expanded_filename );
-
-    switch( input_info->file_type )
+    switch( input_info->file_format )
     {
 #ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
-        status = initialize_mnc_input( volume, input_info );
+        input_info->minc_file = initialize_minc_input( expanded_filename,
+                                                       *volume );
+        if( input_info->minc_file == (Minc_file) NULL )
+            status = ERROR;
         break;
 #endif
 
     case  FREE_FORMAT:
-        input_info->convert_to_byte = convert_to_byte_flag;
-        status = initialize_free_format_input( volume, input_info );
+        status = initialize_free_format_input( expanded_filename,
+                                               *volume, input_info );
         break;
-    }
-
-    if( status == OK )
-    {
-        compute_transform_inverse( &volume->voxel_to_world_transform,
-                                   &volume->world_to_voxel_transform );
-
-        alloc_volume( volume );
-
-        input_info->slice_index = 0;
     }
 
     return( status );
@@ -87,11 +88,11 @@ public  Status  start_volume_input(
 public  void  delete_volume_input(
     volume_input_struct   *input_info )
 {
-    switch( input_info->file_type )
+    switch( input_info->file_format )
     {
 #ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
-        delete_mnc_input( input_info );
+        (void) close_minc_input( input_info->minc_file );
         break;
 #endif
 
@@ -115,18 +116,18 @@ public  void  delete_volume_input(
 ---------------------------------------------------------------------------- */
 
 public  Boolean  input_more_of_volume(
-    volume_struct         *volume,
+    Volume                volume,
     volume_input_struct   *input_info,
     Real                  *fraction_done )
 {
-    int           x, y, z, value, min_value, max_value;
     Boolean       more_to_do;
 
-    switch( input_info->file_type )
+    switch( input_info->file_format )
     {
 #ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
-        more_to_do = input_more_mnc_file( volume, input_info, fraction_done );
+        more_to_do = input_more_minc_file( input_info->minc_file,
+                                           fraction_done );
         break;
 #endif
 
@@ -134,29 +135,6 @@ public  Boolean  input_more_of_volume(
         more_to_do = input_more_free_format_file( volume, input_info,
                                                   fraction_done );
         break;
-    }
-
-    if( !more_to_do )
-    {
-        min_value = GET_VOLUME_DATA( *volume, 0, 0, 0 );
-        max_value = min_value;
-        for_less( x, 0, volume->sizes[X] )
-        {
-            for_less( y, 0, volume->sizes[Y] )
-            {
-                for_less( z, 0, volume->sizes[Z] )
-                {
-                    value = GET_VOLUME_DATA( *volume, x, y, z );
-                    if( value < min_value )
-                        min_value = value;
-                    else if( value > max_value )
-                        max_value = value;
-                }
-            }
-        }
-
-        volume->min_value = min_value;
-        volume->max_value = max_value;
     }
 
     return( more_to_do );
@@ -175,7 +153,7 @@ public  Boolean  input_more_of_volume(
 ---------------------------------------------------------------------------- */
 
 public  void  cancel_volume_input(
-    volume_struct         *volume,
+    Volume                volume,
     volume_input_struct   *input_info )
 {
     delete_volume( volume );
@@ -195,7 +173,7 @@ public  void  cancel_volume_input(
 
 public  Status  input_volume(
     char           filename[],
-    volume_struct  *volume )
+    Volume         *volume )
 {
     Status               status;
     Real                 amount_done;
@@ -209,7 +187,7 @@ public  Status  input_volume(
     {
         initialize_progress_report( &progress, FALSE, FACTOR, "Reading Volume");
 
-        while( input_more_of_volume( volume, &input_info, &amount_done ) )
+        while( input_more_of_volume( *volume, &input_info, &amount_done ) )
         {
             update_progress_report( &progress,
                                     ROUND( (Real) FACTOR * amount_done));
