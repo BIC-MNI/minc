@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.6 2004-12-07 17:27:19 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.7 2005-01-19 20:00:43 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -222,6 +222,26 @@ pr_att_vals(
     char gps[30];
     float ff;
     double dd;
+
+    /* See if we would prefer to handle this as a string.
+     */
+    if (type == NC_BYTE && len > 2) {
+        int isstring = 1;
+        int ch;
+        ch = ((signed char *)vals)[len-1];
+        if (isprint(ch) || ch == '\0') {
+            for (iel = 0; iel < len-1; iel++) {
+                ch = ((signed char *)vals)[iel];
+                if (!isprint(ch) && ch != '\n') {
+                    isstring = 0;
+                }
+            }
+            if (isstring) {
+                pr_att_string(len, vals);
+                return;
+            }
+        }
+    }
 
     if (len == 0)
 	return;
