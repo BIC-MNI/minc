@@ -6,7 +6,7 @@
 # Displays images with patient left on left side of the screen.
 
 # Constants
-set xv_visual = `xdpyinfo | awk '/class.*TrueColor/{found=1};END{if (found) print "-visual TrueColor"}'`
+set xv_visual = `xdpyinfo | awk '($1=="class:"){visual=$2};(($1=="depth:") && (visual=="TrueColor") && ($2==24)) {found=1}; END {if (found) print "-visual TrueColor"}'`
 set VIEWER = "xv"       # Any pnm display program that handles a list of files
 set VIEWER_OPTIONS = "-geometry 512x512 -fixed -cmap -raw $xv_visual"
 set PGM_CODE = "P5"
@@ -20,6 +20,8 @@ endif
 set filename = "$1"
 set slice = `awk "BEGIN{print $2+0}" < /dev/null`
 @ slice_specified = ( $#argv >= 2 )
+
+# Create temporary directory
 set workingdir = /usr/tmp
 if ($?TMPDIR) then
    set workingdir = $TMPDIR
@@ -27,7 +29,20 @@ else
    set workingdir = /usr/tmp
 endif
 set workingdir = $workingdir/mincview-$$
+onintr cleanup
+mkdir $workingdir
 
+# Uncompress the file if needed
+set ext = $filename:e
+if (("$ext" == "z") || ("$ext" == "Z") || ("$ext" == "gz")) then
+   set newfilename = $filename:t
+   set newfilename = $workingdir/temp_$newfilename:r
+   echo "Unzipping file..."
+   gunzip -c $filename > $newfilename
+   set filename = $newfilename
+endif
+
+# Get dimension names
 set dims = `mincinfo $filename -vardims image`
 
 # Check for vector dimension
@@ -88,8 +103,6 @@ set rows = `echo $imgstep[1] $imgsize[1] | awk '{if ($1<0) print $2; else print 
 set cols = `echo $imgstep[2] $imgsize[2] | awk '{if ($1<0) print -$2; else print $2;}'`
 
 # Loop through slices, if needed
-onintr cleanup
-mkdir $workingdir
 echo -n Loading slices
 while ($slice < $nslices)
    echo -n .
