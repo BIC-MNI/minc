@@ -95,6 +95,7 @@ struct volumehandle_struct {
   mi_lin_xfm_t v2w_transform;   /* Voxel-to-world transform */
   mi_lin_xfm_t w2v_transform;   /* World-to-voxel transform (inverse) */
   int selected_resolution;
+  int mode;                     /* Open mode */
 };
 
 extern hid_t midescend_path(hid_t file_id, const char *path);
