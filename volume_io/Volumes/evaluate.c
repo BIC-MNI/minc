@@ -247,7 +247,7 @@ public  int   evaluate_volume(
     n_dims = get_volume_n_dimensions(volume);
     get_volume_sizes( volume, sizes );
 
-    bound = degrees_continuity / 2.0;
+    bound = (Real) degrees_continuity / 2.0;
     n_interp_dims = 0;
     n_values = 1;
     n_coefs = 1;
@@ -261,21 +261,15 @@ public  int   evaluate_volume(
         {
             interp_dims[n_interp_dims] = d;
             start[n_interp_dims] =       FLOOR( voxel[d] - bound );
-            fraction[n_interp_dims] = voxel[d] - (Real) start[n_interp_dims];
+            fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
             end[n_interp_dims] = start[n_interp_dims] + degrees_continuity + 2;
             n_coefs *= 2 + degrees_continuity;
 
-            if( start[n_interp_dims] < 0 ||
-                end[n_interp_dims] > sizes[n_interp_dims] )
-            {
+            if( start[n_interp_dims] < 0 || end[n_interp_dims] > sizes[d] )
                 fully_inside = FALSE;
-            }
 
-            if( start[n_interp_dims] < sizes[n_interp_dims] ||
-                end[n_interp_dims] >= 0 )
-            {
+            if( start[n_interp_dims] < sizes[d] && end[n_interp_dims] > 0 )
                 fully_outside = FALSE;
-            }
 
             ++n_interp_dims;
         }
@@ -336,13 +330,9 @@ public  int   evaluate_volume(
         for_less( vi[interp_dims[3]], start[3], end[3] )
         for_less( vi[interp_dims[4]], start[4], end[4] )
         {
-            coefs[ind] = get_volume_real_value( volume,
-                                            vi[0], vi[1], vi[2], vi[3], vi[4] );
+            GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3], vi[4] );
             ++ind;
         }
-
-        if( ind > n_values * n_coefs )
-            handle_internal_error( "overflow" );
     }
     else
     {
@@ -361,8 +351,8 @@ public  int   evaluate_volume(
 
             if( d == n_dims )
             {
-                coefs[ind] = get_volume_real_value( volume,
-                                            vi[0], vi[1], vi[2], vi[3], vi[4] );
+                GET_VALUE( coefs[ind], volume,
+                           vi[0], vi[1], vi[2], vi[3], vi[4] );
             }
             else
                 coefs[ind] = outside_value;
