@@ -1141,7 +1141,7 @@ public  void  set_print_error_function(
 \end{verbatim}}
 
 \desc{Sets the output function, where all text from calls to
-\name{print()} or \name{print\_error} will be sent.  By default, there is no
+\name{print()} or \name{print\-\_error} will be sent.  By default, there is no
 print function, and output is sent to printf().}
 
 {\bf\begin{verbatim}
@@ -1364,7 +1364,7 @@ scalar volume by averaging the components of each vector.  If this
 option is set to true, any vector volume with the number of components
 specified by \name{set\_minc\_input\_colour\_dimension\_size}
 (default 3) is converted to a colour volume, using the
-indices specified by \name{set\_minc\_input\_colour\_indices}
+indices specified by \name{set\-\_minc\-\_input\-\_colour\-\_indices}
 (default 0, 1, 2).}
 
 \section{Volume Output}
@@ -1740,7 +1740,7 @@ neighbour, linear, or cubic interpolation.  If
 will be downgraded to linear interpolation near the edge of the
 volume.  This option is only needed in special cases.  The parameter
 \name{outside\_value} is the value for any point outside the volume.
-The argument \name{interpolating\_dimensions} indicates which
+The argument \name{interpolating\-\_dimensions} indicates which
 dimensions are being interpolated, typically a \name{NULL} pointer
 indicating that all dimensions are being interpolated.
 The interpolated values are placed in the values array.  The number of
@@ -1776,7 +1776,7 @@ public  void   evaluate_volume_in_world(
 \end{verbatim}}
 
 \desc{Interpolates a volume at the specified world position, where
-\name{degrees\_continuity} has values -1, 0, or 2, for nearest
+\name{degrees\-\_continuity} has values -1, 0, or 2, for nearest
 neighbour, linear, or cubic interpolation.  If
 \name{use\_linear\_at\_edge} is true, then any cubic interpolation
 will be downgraded to linear interpolation near the edge of the
@@ -1929,6 +1929,88 @@ public  Volume   copy_volume(
 
 \desc{Creates an exact copy of a volume.}
 
+\subsection{Volume Caching}
+
+In order to efficiently handle volumes that are too large for virtual
+memory, a simple caching scheme has been implemented.  Disk files are
+read and written on demand to provide the appearance of having large
+volumes fully resident in memory.  All the volume routines described
+previously support this feature transparently, but there are a few
+routines for configuration of the volume caching.
+
+{\bf\begin{verbatim}
+public  void  set_n_bytes_cache_threshold(
+    int  threshold )
+\end{verbatim}}
+
+\desc{Sets the threshold number of bytes for volume caching.  If a
+volume larger than this is created, either explicitly or by input from a file,
+then that volume will be internally represented by the caching scheme.
+If this function is not called, the default is either 80 megabytes, or
+the value of the environment variable \name{VOLUME\_CACHE\_THRESHOLD},
+if present.  A threshold of zero will cause all volumes to be cached.  A
+threshold less than zero will result in no volumes being cached.}
+
+{\bf\begin{verbatim}
+public  void  set_volume_cache_block_sizes(
+    int   block_sizes[] )
+\end{verbatim}}
+
+\desc{Sets the size of the cache block in each dimension.  When a voxel is
+accessed in a
+cached volume, the corresponding block containing the voxel is read from
+or written to the disk as necessary.  This function sets the size of
+the block and therefore controls the tradeoff between fast access of
+adjacent voxels (using large block sizes) and fast access of arbitrarily
+distributed voxels (using small block sizes).  If an application
+intends to perform slice-by-slice operations, then a block size
+corresponding to one slice may be selected.  If this function is not
+called, the default value is a block size of 8 voxels per dimension,
+or the value specified by the environment variable
+\name{VOLUME\_CACHE\_BLOCK\_SIZE}.  Note that this function may be called
+after volume creation, but before the first voxel access.  This allows
+a volume to be created via \name{start\_volume\_input}, and the file
+sizes and other information to be examined, before setting the block
+size to an appropriate value.  After the first voxel access, the block
+size for a volume cannot be changed.}
+
+{\bf\begin{verbatim}
+public  void  set_max_bytes_in_cache(
+    int  n_bytes )
+\end{verbatim}}
+
+\desc{Sets the maximum number of bytes allowed in the cache for each
+volume.  A higher number may provide faster access, due to a greater
+chance of finding a particular voxel within the cache, so this value
+should be as large as reasonable, given the amount of virtual memory
+available.  If this function is not called, the default value is 80
+megabytes, or the value of the environment variable
+\name{VOLUME\_CACHE\_SIZE}, if present.  Setting a value of 0 will
+result in cached volumes having exactly one block in their cache.}
+
+{\bf\begin{verbatim}
+public  void  set_cache_volume_output_filename(
+    Volume      volume,
+    char        filename[] )
+public  void  set_cache_volume_output_dimension_names(
+    Volume      volume,
+    char        **dimension_names )
+\end{verbatim}}
+
+\desc{When a cached volume is modified, a temporary file is created to
+contain the voxel values.  When the volume is deleted this file is
+also deleted.  When a cached volume is output, the temporary file is
+copied to the output file, which results in two copies of the volume
+existing at once, which may incur unacceptable demands on disk
+storage, especially for large volumes.  To avoid this, an application
+can specify a filename where to place the voxel values, which
+overrides the use of a temporary file.  When the volume is deleted,
+this file is closed and remains on the disk, obviating the need for
+the application to output the volume.  If the application tries to
+output this volume to a file of the same name as that set by this
+function, the request to output will be ignored, because the volume
+already exists in this file.}
+
 \section{Source Code Example}
 
 An examples of reading, writing, and manipulating volumes is
@@ -1941,7 +2023,7 @@ over 100.0 to 100.0, then write out the result in a new file.
 \begin{verbatim}
 #include  <volume_io.h>
 
-/* ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------
 @COPYRIGHT  :
               Copyright 1993,1994,1995 David MacDonald,
               McConnell Brain Imaging Centre,
@@ -1949,11 +2031,11 @@ over 100.0 to 100.0, then write out the result in a new file.
               Permission to use, copy, modify, and distribute this
               software and its documentation for any purpose and without
               fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
----------------------------------------------------------------------------- */
+              notice appear in all copies.  The author and
+              McGill University make no representations about the
+              suitability of this software for any purpose.  It is
+              provided "as is" without express or implied warranty.
+------------------------------------------------------------------ */
 
 int  main(
     int   argc,
@@ -1977,10 +2059,12 @@ int  main(
     for( v1 = 0;  v1 < sizes[0];  ++v1 ) {
         for( v2 = 0;  v2 < sizes[1];  ++v2 ) {
             for( v3 = 0;  v3 < sizes[2];  ++v3 ) {
-                value = get_volume_real_value( volume, v1, v2, v3, 0, 0 );
+                value = get_volume_real_value( volume, v1, v2, v3,
+                                               0, 0 );
 
                 if( value > 100.0 ) {
-                    set_volume_real_value( volume, v1, v2, v3, 0, 0, 100.0 );
+                    set_volume_real_value( volume, v1, v2, v3,
+                                           0, 0, 100.0 );
                 }
             }
         }
@@ -2731,7 +2815,7 @@ corresponding voxel is printed.
 \begin{verbatim}
 #include  <volume_io.h>
 
-/* ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------
 @COPYRIGHT  :
               Copyright 1993,1994,1995 David MacDonald,
               McConnell Brain Imaging Centre,
@@ -2739,11 +2823,11 @@ corresponding voxel is printed.
               Permission to use, copy, modify, and distribute this
               software and its documentation for any purpose and without
               fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
----------------------------------------------------------------------------- */
+              notice appear in all copies.  The author and
+              McGill University make no representations about the
+              suitability of this software for any purpose.  It is
+              provided "as is" without express or implied warranty.
+------------------------------------------------------------------ */
 
 int  main()
 {
@@ -2813,7 +2897,8 @@ int  main()
             v2 >= 0 && v2 < sizes[1] &&
             v3 >= 0 && v3 < sizes[2] )
         {
-            voxel_value = get_volume_real_value( volume2, v1, v2, v3, 0, 0 );
+            voxel_value = get_volume_real_value( volume2, v1, v2, v3,
+                                                 0, 0 );
 
             print( "The value for tag point %d (%s) is: %g\n",
                    i, labels[i], voxel_value );

@@ -1,6 +1,6 @@
 #include  <volume_io.h>
 
-/* ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------
 @COPYRIGHT  :
               Copyright 1993,1994,1995 David MacDonald,
               McConnell Brain Imaging Centre,
@@ -8,11 +8,11 @@
               Permission to use, copy, modify, and distribute this
               software and its documentation for any purpose and without
               fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
----------------------------------------------------------------------------- */
+              notice appear in all copies.  The author and
+              McGill University make no representations about the
+              suitability of this software for any purpose.  It is
+              provided "as is" without express or implied warranty.
+------------------------------------------------------------------ */
 
 int  main(
     int   argc,
@@ -36,10 +36,12 @@ int  main(
     for( v1 = 0;  v1 < sizes[0];  ++v1 ) {
         for( v2 = 0;  v2 < sizes[1];  ++v2 ) {
             for( v3 = 0;  v3 < sizes[2];  ++v3 ) {
-                value = get_volume_real_value( volume, v1, v2, v3, 0, 0 );
+                value = get_volume_real_value( volume, v1, v2, v3,
+                                               0, 0 );
 
                 if( value > 100.0 ) {
-                    set_volume_real_value( volume, v1, v2, v3, 0, 0, 100.0 );
+                    set_volume_real_value( volume, v1, v2, v3,
+                                           0, 0, 100.0 );
                 }
             }
         }

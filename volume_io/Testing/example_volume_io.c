@@ -1,6 +1,6 @@
 #include  <volume_io.h>
 
-/* ----------------------------------------------------------------------------
+/* ------------------------------------------------------------------
 @COPYRIGHT  :
               Copyright 1993,1994,1995 David MacDonald,
               McConnell Brain Imaging Centre,
@@ -8,11 +8,11 @@
               Permission to use, copy, modify, and distribute this
               software and its documentation for any purpose and without
               fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
----------------------------------------------------------------------------- */
+              notice appear in all copies.  The author and
+              McGill University make no representations about the
+              suitability of this software for any purpose.  It is
+              provided "as is" without express or implied warranty.
+------------------------------------------------------------------ */
 
 int  main()
 {
@@ -82,7 +82,8 @@ int  main()
             v2 >= 0 && v2 < sizes[1] &&
             v3 >= 0 && v3 < sizes[2] )
         {
-            voxel_value = get_volume_real_value( volume2, v1, v2, v3, 0, 0 );
+            voxel_value = get_volume_real_value( volume2, v1, v2, v3,
+                                                 0, 0 );
 
             print( "The value for tag point %d (%s) is: %g\n",
                    i, labels[i], voxel_value );

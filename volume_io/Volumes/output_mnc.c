@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.35 1995-09-19 18:23:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.36 1995-09-26 14:25:12 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -1038,7 +1038,8 @@ private  void  output_slab(
         (void) output_minc_hyperslab( file, get_volume_data_type(volume),
                                       get_volume_n_dimensions(volume),
                                       volume_sizes, array_data_ptr,
-                                      to_array, int_file_start, int_file_count);
+                                      to_volume,
+                                      int_file_start, int_file_count );
     }
 }
 
