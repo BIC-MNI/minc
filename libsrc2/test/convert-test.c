@@ -114,7 +114,9 @@ main(int argc, char **argv)
                     }
                 }
 
-                v1 = VALID_MAX * (voxel[0] + voxel[1] + voxel[2]) / (CX+CY+CZ);
+                v1 = (VALID_MAX * (voxel[0] + voxel[1] + voxel[2]) 
+                      / ((CX-1)+(CY-1)+(CZ-1)));
+
                 result = miset_voxel_value_hyperslab(hvol, MI_TYPE_DOUBLE,
                                                      coords, count, &v1);
 
