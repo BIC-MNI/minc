@@ -7,9 +7,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:28  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:50:12  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:28  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.5  94/09/28  10:35:01  neelin
  * Pre-release
  * 
@@ -143,10 +148,6 @@ public int gyro_to_minc(int num_files, char *file_list[],
 
       /* Check that we have a valid file */
       if (!file_info[ifile].valid) {
-         if (Do_logging >= LOW_LOGGING) {
-            (void) fprintf(stderr, "Not using file %s\n",
-                           file_list[ifile]);
-         }
          continue;
       }
 

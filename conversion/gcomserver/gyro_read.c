@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:27  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:50:11  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:27  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.10  94/09/28  10:34:59  neelin
  * Pre-release
  * 
@@ -64,6 +69,7 @@
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
+#include <math.h>
 
 /* Define strings for spi image types */
 static struct {
@@ -158,7 +164,7 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    int data_set_type;
    Mri_Index imri;
    World_Index iworld, jworld;
-   char *string, *end;
+   char *string;
    int nrows;
    int ncolumns;
    int study_id, acq_id, rec_num, image_type;
@@ -166,8 +172,9 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    int length, maxlen;
    int cur_index;
    int index;
+   Orientation orientation;
    double default_slice_pos;
-   double diff;
+   double angulation_ap, angulation_lr, angulation_cc;
    char *image_type_string;
    char image_type_string_buf[20];
    Acr_Element_Id mri_index_list[MRI_NDIMS];
@@ -192,7 +199,7 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    mri_total_list[PHASE] = SPI_Number_of_phases;
    mri_total_list[CHEM_SHIFT] = SPI_Nr_of_chemical_shifts;
 
-   /* Array of elements giving off centers for each axis */
+   /* Array of elements giving off center for each axis */
    off_center_elid[XCOORD] = SPI_Off_center_lr; 
    off_center_elid[YCOORD] = SPI_Off_center_ap;
    off_center_elid[ZCOORD] = SPI_Off_center_cc;
@@ -313,40 +320,39 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          general_info->image_index[imri] = -1;
       }
 
+      /* Set direction cosines from rotation angles */
+      angulation_ap = find_double(group_list, SPI_Angulation_of_ap_axis, 0.0);
+      angulation_lr = find_double(group_list, SPI_Angulation_of_lr_axis, 0.0);
+      angulation_cc = find_double(group_list, SPI_Angulation_of_cc_axis, 0.0);
+      get_direction_cosines(angulation_ap, angulation_lr, angulation_cc,
+                            general_info->dircos);
+
       /* Get spatial orientation */
       switch (find_int(group_list, SPI_Slice_orientation, 0)) {
       case SPI_SAGITTAL_ORIENTATION:
-         general_info->orientation = SAGITTAL;
-         general_info->slice_world = XCOORD;
-         general_info->row_world = ZCOORD;
-         general_info->column_world = YCOORD;
-         break;
+         orientation = SAGITTAL; break;
       case SPI_CORONAL_ORIENTATION:
-         general_info->orientation = CORONAL;
-         general_info->slice_world = YCOORD;
-         general_info->row_world = ZCOORD;
-         general_info->column_world = XCOORD;
-         break;
+         orientation = CORONAL; break;
       case SPI_TRANSVERSE_ORIENTATION:
       default:
-         general_info->orientation = TRANSVERSE;
-         general_info->slice_world = ZCOORD;
-         general_info->row_world = YCOORD;
-         general_info->column_world = XCOORD;
-         break;
+         orientation = TRANSVERSE; break;
       }
+      get_orientation_info(orientation, general_info->dircos,
+                           &general_info->slice_world,
+                           &general_info->row_world,
+                           &general_info->column_world);
 
       /* Get step information. Use field-of-view since pixel size doesn't
          seem to be correct */
 #if 1
-      string = find_string(group_list, SPI_Field_of_view, "");
-      general_info->step[general_info->column_world] = strtod(string, &end);
-      if (end != string)
-         general_info->step[general_info->column_world] /= (double) nrows;
-      else
-         general_info->step[general_info->column_world] = 1.0;
       general_info->step[general_info->row_world] = 
-         general_info->step[general_info->column_world];
+         find_double(group_list, SPI_Field_of_view, (double) nrows)
+            / (double) nrows;
+      if (general_info->step[general_info->row_world] == 0.0) {
+         general_info->step[general_info->row_world] = 1.0;
+      }
+      general_info->step[general_info->column_world] = 
+         general_info->step[general_info->row_world];
 #else      
       string = find_string(group_list, ACR_Pixel_size, "");
       general_info->step[general_info->column_world] = strtod(string, &end);
@@ -363,12 +369,21 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
 #endif
       general_info->step[general_info->slice_world] = 
          find_double(group_list, ACR_Slice_thickness, 1.0);
-      general_info->step[XCOORD] *= 
-         axis_direction[general_info->orientation][XCOORD];
-      general_info->step[YCOORD] *= 
-         axis_direction[general_info->orientation][YCOORD];
-      general_info->step[ZCOORD] *= 
-         axis_direction[general_info->orientation][ZCOORD];
+      general_info->step[XCOORD] *= axis_direction[orientation][XCOORD];
+      general_info->step[YCOORD] *= axis_direction[orientation][YCOORD];
+      general_info->step[ZCOORD] *= axis_direction[orientation][ZCOORD];
+
+      /* Make sure that direction cosines point the right way (dot product
+         of direction cosine and axis is positive) and that step has proper
+         sign */
+      for (iworld = XCOORD; iworld < WORLD_NDIMS; iworld++) {
+         if (general_info->dircos[iworld][iworld] < 0.0) {
+            general_info->step[iworld] *= -1.0;
+            for (jworld = XCOORD; jworld < WORLD_NDIMS; jworld++) {
+               general_info->dircos[iworld][jworld] *= 1.0;
+            }
+         }
+      }
 
       /* Get start information */
       general_info->start[XCOORD] = 
@@ -386,16 +401,6 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       general_info->start[jworld] -= 
          general_info->step[jworld] * (general_info->ncolumns - 1.0) / 2.0;
       
-      /* Set direction cosines to default for now */
-      for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
-         for (jworld=0; jworld < WORLD_NDIMS; jworld++) {
-            if (iworld == jworld)
-               general_info->dircos[iworld][jworld] = 1.0;
-            else
-               general_info->dircos[iworld][jworld] = 0.0;
-         }
-      }
-
       /* Save slice step info */
       iworld = general_info->slice_world;
       general_info->slice_start = general_info->start[iworld];
@@ -420,6 +425,8 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          general_info->start[general_info->slice_world];
       general_info->slicepos_last = 
          general_info->start[general_info->slice_world];
+      general_info->sliceindex_first = file_info->index[SLICE];
+      general_info->sliceindex_last = file_info->index[SLICE];
 
       /* Maximum length for strings */
       maxlen = sizeof(Cstring) - 1;
@@ -607,14 +614,14 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       find_double(group_list, ACR_Echo_time, 0.0) / 1000.0;
 
    /* Update slice position information for general_info */
-   diff = (file_info->slice_position - general_info->slicepos_first) *
-      axis_direction[general_info->orientation][general_info->slice_world];
-   if (diff < 0.0)
+   if (file_info->index[SLICE] < general_info->sliceindex_first) {
+      general_info->sliceindex_first = file_info->index[SLICE];
       general_info->slicepos_first = file_info->slice_position;
-   diff = (file_info->slice_position - general_info->slicepos_last) *
-      axis_direction[general_info->orientation][general_info->slice_world];
-   if (diff > 0.0)
+   }
+   if (file_info->index[SLICE] > general_info->sliceindex_last) {
+      general_info->sliceindex_last = file_info->index[SLICE];
       general_info->slicepos_last = file_info->slice_position;
+   }
    if (general_info->size[SLICE] > 1) {
       general_info->step[general_info->slice_world] = 
          (general_info->slicepos_last - general_info->slicepos_first) /
@@ -745,6 +752,215 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
    }
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_direction_cosines
+@INPUT      : angulation_ap - Angle of rotation about ap (Y) axis
+              angulation_lr - Angle of rotation about lr (X) axis
+              angulation_cc - Angle of rotation about cc (Z) axis
+@OUTPUT     : dircos - array of direction cosines
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to compute direction cosines from angles
+@METHOD     : The rotation matrices are designed to be pre-multiplied by row 
+              vectors. The rows of the final rotation matrix are the 
+              direction cosines.
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 18, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_direction_cosines(double angulation_ap, double angulation_lr,
+                                  double angulation_cc, 
+                                  double dircos[WORLD_NDIMS][WORLD_NDIMS])
+{
+   World_Index iloop, jloop, kloop, axis_loop, axis;
+   double rotation[WORLD_NDIMS][WORLD_NDIMS];
+   double temp[WORLD_NDIMS][WORLD_NDIMS];
+   double angle, sinangle, cosangle;
+   /* Array giving order of rotations - cc, lr, ap */
+   static World_Index rotation_axis[WORLD_NDIMS]={ZCOORD, XCOORD, YCOORD};
+
+   /* Start with identity matrix */
+   for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
+      for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
+         if (iloop == jloop)
+            dircos[iloop][jloop] = 1.0;
+         else
+            dircos[iloop][jloop] = 0.0;
+      }
+   }
+
+   /* Loop through angles */
+   for (axis_loop=0; axis_loop < WORLD_NDIMS; axis_loop++) {
+
+      /* Get axis */
+      axis = rotation_axis[axis_loop];
+
+      /* Get angle */
+      switch (axis) {
+      case XCOORD: angle = angulation_lr; break;
+      case YCOORD: angle = angulation_ap; break;
+      case ZCOORD: angle = angulation_cc; break;
+      }
+      angle = angle / 180.0 * M_PI;
+      if (angle == 0.0) {
+         cosangle = 1.0;
+         sinangle = 0.0;
+      }
+      else {
+         cosangle = cos(angle);
+         sinangle = sin(angle);
+      }
+
+      /* Build up rotation matrix (make identity, then stuff in sin and cos) */
+      for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
+         for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
+            if (iloop == jloop)
+               rotation[iloop][jloop] = 1.0;
+            else
+               rotation[iloop][jloop] = 0.0;
+         }
+      }
+      rotation[(YCOORD+axis)%WORLD_NDIMS][(YCOORD+axis)%WORLD_NDIMS] 
+         = cosangle;
+      rotation[(YCOORD+axis)%WORLD_NDIMS][(ZCOORD+axis)%WORLD_NDIMS] 
+         = sinangle;
+      rotation[(ZCOORD+axis)%WORLD_NDIMS][(YCOORD+axis)%WORLD_NDIMS] 
+         = -sinangle;
+      rotation[(ZCOORD+axis)%WORLD_NDIMS][(ZCOORD+axis)%WORLD_NDIMS] 
+         = cosangle;
+
+      /* Multiply this by the previous matrix and then save the result */
+      for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
+         for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
+            temp[iloop][jloop] = 0.0;
+            for (kloop=0; kloop < WORLD_NDIMS; kloop++)
+               temp[iloop][jloop] += 
+                  (dircos[iloop][kloop] * rotation[kloop][jloop]);
+         }
+      }
+      for (iloop=0; iloop < WORLD_NDIMS; iloop++)
+         for (jloop=0; jloop < WORLD_NDIMS; jloop++)
+            dircos[iloop][jloop] = temp[iloop][jloop];
+
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_orientation_info
+@INPUT      : orientation         - orientation of acquisition
+              dircos              - direction cosines for each world axis
+@OUTPUT     : slice_world         - world axis for slices
+              row_world           - world axis for rows
+              column_world        - world axis for columns
+              dircos              - reordered direction cosines
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to get the orientation information for a volume,
+              taking into account rotation of the axes. We need to
+              get the mapping from slice, row or column to world axis, 
+              as well as re-ordering the direction cosines so that 
+              they correspond to the appropriate axes.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 19, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_orientation_info(Orientation orientation,
+                                 double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                 World_Index *slice_world,
+                                 World_Index *row_world,
+                                 World_Index *column_world)
+{
+   World_Index original_to_rotated[WORLD_NDIMS];
+   World_Index original_axis, rotated_axis;
+   static World_Index orientation_axes[NUM_ORIENTATIONS][VOL_NDIMS] = {
+      ZCOORD, YCOORD, XCOORD, /* TRANSVERSE */
+      XCOORD, ZCOORD, YCOORD, /* SAGITTAL */
+      YCOORD, ZCOORD, XCOORD  /* CORONAL */
+   };
+
+   /* Get mapping from original world axis to rotated world axis */
+   for (original_axis = XCOORD; original_axis < WORLD_NDIMS; original_axis++) {
+      original_to_rotated[original_axis] = 
+         get_nearest_world_axis(dircos[original_axis]);
+   }
+
+   /* Get mapping from volume axis to world axis (volume axes were defined
+      for original orientation, so we have to map those axes through the
+      rotation) */
+   *slice_world =
+      original_to_rotated[orientation_axes[orientation][VSLICE]];
+   *row_world =
+      original_to_rotated[orientation_axes[orientation][VROW]];
+   *column_world =
+      original_to_rotated[orientation_axes[orientation][VCOLUMN]];
+
+   /* Re-order direction cosines if needed */
+   if (XCOORD == original_to_rotated[YCOORD])
+      swap_dircos(dircos[XCOORD], dircos[YCOORD]);
+   else if (XCOORD == original_to_rotated[ZCOORD])
+      swap_dircos(dircos[XCOORD], dircos[ZCOORD]);
+   if (YCOORD == original_to_rotated[ZCOORD])
+      swap_dircos(dircos[YCOORD], dircos[ZCOORD]);
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : swap_dircos
+@INPUT      : dircos1 - first direction cosine
+              dircos2 - second direction cosine
+@OUTPUT     : dircos1 - first direction cosine
+              dircos2 - second direction cosine
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to swap direction cosines in place
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 19, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void swap_dircos(double dircos1[WORLD_NDIMS],
+                        double dircos2[WORLD_NDIMS])
+{
+   World_Index iaxis;
+   double temp;
+
+   for (iaxis = XCOORD; iaxis < WORLD_NDIMS; iaxis++) {
+      temp = dircos1[iaxis];
+      dircos1[iaxis] = dircos2[iaxis];
+      dircos2[iaxis] = temp;
+   }
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_nearest_world_axis
+@INPUT      : dircos - direction cosines
+@OUTPUT     : (none)
+@RETURNS    : Index label for nearest axis (XCOORD, YCOORD or ZCOORD).
+@DESCRIPTION: Routine to find the nearest axis to a direction cosine.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 19, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public World_Index get_nearest_world_axis(double dircos[WORLD_NDIMS])
+{
+   World_Index nearest_axis, iaxis;
+
+   nearest_axis = XCOORD;
+   for (iaxis = YCOORD; iaxis < WORLD_NDIMS; iaxis++) {
+      if (fabs(dircos[iaxis]) > fabs(dircos[nearest_axis]))
+         nearest_axis = iaxis;
+   }
+
+   return nearest_axis;
 }
 
 public int find_short(Acr_Group group_list, Acr_Element_Id elid, 

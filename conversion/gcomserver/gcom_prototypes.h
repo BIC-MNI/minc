@@ -25,6 +25,17 @@ public Acr_Group read_gyro(char *filename, int max_group);
 public void get_file_info(Acr_Group group_list, File_Info *file_info,
                           General_Info *general_info);
 public void get_gyro_image(Acr_Group group_list, Image_Data *image);
+public void get_direction_cosines(double angulation_ap, double angulation_lr,
+                                  double angulation_cc, 
+                                  double dircos[WORLD_NDIMS][WORLD_NDIMS]);
+public void get_orientation_info(Orientation orientation,
+                                 double dircos[WORLD_NDIMS][WORLD_NDIMS],
+                                 World_Index *slice_world,
+                                 World_Index *row_world,
+                                 World_Index *column_world);
+public void swap_dircos(double dircos1[WORLD_NDIMS],
+                        double dircos2[WORLD_NDIMS]);
+public World_Index get_nearest_world_axis(double dircos[WORLD_NDIMS]);
 public int find_short(Acr_Group group_list, Acr_Element_Id elid, 
                       int default_value);
 public int find_int(Acr_Group group_list, Acr_Element_Id elid, 

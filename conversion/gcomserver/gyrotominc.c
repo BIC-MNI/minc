@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:30  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:50:14  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:30  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.4  94/09/28  10:35:02  neelin
  * Pre-release
  * 
@@ -33,8 +38,15 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 2.1 1994-10-20 13:50:14 neelin Exp $";
+#endif
+
 #include <gcomserver.h>
 #include <ParseArgv.h>
+
+/* Global for minc history */
+extern char *minc_history;
 
 /* Argument variables */
 int Do_logging = LOW_LOGGING;
@@ -61,6 +73,8 @@ ArgvInfo argTable[] = {
 int main(int argc, char *argv[])
 {
    int exit_status;
+
+   minc_history = time_stamp(argc, argv);
 
    if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
       (void) fprintf(stderr, "\nUsage: %s [<options>] files...\n", argv[0]);

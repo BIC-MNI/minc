@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:30  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:50:15  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:30  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.10  94/09/28  10:35:03  neelin
  * Pre-release
  * 
@@ -65,6 +70,9 @@
 
 #include <gcomserver.h>
 #include <ctype.h>
+
+/* Global for minc history (sorry, but it was kludged in afterwards) */
+char *minc_history = NULL;
 
 /* Define mri dimension names */
 static char *mri_dim_names[] = {
@@ -214,7 +222,6 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    int varid, imgid, spivar;
    double valid_range[2];
    char name[MAX_NC_NAME];
-   char *string;
    int index, last;
    int regular;
    Acr_Group cur_group;
@@ -226,11 +233,7 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    int ich;
 
    /* Define the spatial dimension names */
-   static char *spatial_dimnames[VOL_NDIMS] = {MIxspace, MIyspace, MIzspace};
-   static World_Index spatial_dimensions[NUM_ORIENTATIONS][VOL_NDIMS] = {
-      ZCOORD, YCOORD, XCOORD,      /* TRANSVERSE */
-      XCOORD, ZCOORD, YCOORD,      /* SAGITTAL */
-      YCOORD, ZCOORD, XCOORD};     /* CORONAL */
+   static char *spatial_dimnames[WORLD_NDIMS] = {MIxspace, MIyspace, MIzspace};
 
    /* Create the dimensions from slowest to fastest */
 
@@ -260,41 +263,50 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    /* Next the spatial dimensions */
    for (ivol=0; ivol < VOL_NDIMS; ivol++) {
       switch (ivol) {
-      case VSLICE: dimsize = general_info->size[SLICE]; break;
-      case VROW: dimsize = general_info->nrows; break;
-      case VCOLUMN: dimsize = general_info->ncolumns; break;
+      case VSLICE: 
+         dimsize = general_info->size[SLICE];
+         iworld = general_info->slice_world;
+         break;
+      case VROW: 
+         dimsize = general_info->nrows;
+         iworld = general_info->row_world;
+         break;
+      case VCOLUMN: 
+         dimsize = general_info->ncolumns;
+         iworld = general_info->column_world;
+         break;
       }
-      if ((ivol != VSLICE) || (dimsize > 1)) {
-         iworld = spatial_dimensions[general_info->orientation][ivol];
-         dimname = spatial_dimnames[iworld];
-         dim[ndims] = ncdimdef(mincid, dimname, dimsize);
-         if (ivol == VSLICE) {
-            varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 
-                                          1, &dim[ndims]);
-            /* Check for regular slices */
-            regular = TRUE;
-            last = general_info->first[SLICE] + general_info->size[SLICE] - 1;
-            for (index=general_info->first[SLICE]; index < last; index++) {
-               if (general_info->position[SLICE][index] < 0) {
-                  regular = FALSE;
-                  break;
-               }
+      dimname = spatial_dimnames[iworld];
+      dim[ndims] = ncdimdef(mincid, dimname, dimsize);
+      if (ivol == VSLICE) {
+         varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 
+                                       1, &dim[ndims]);
+         /* Check for regular slices */
+         regular = TRUE;
+         last = general_info->first[SLICE] + general_info->size[SLICE] - 1;
+         for (index=general_info->first[SLICE]; index < last; index++) {
+            if (general_info->position[SLICE][index] < 0) {
+               regular = FALSE;
+               break;
             }
-            if (regular)
-               (void) miattputstr(mincid, varid, MIspacing, MI_REGULAR);
          }
-         else
-            varid = micreate_std_variable(mincid, dimname, NC_LONG, 0, NULL);
-         (void) miattputdbl(mincid, varid, MIstep, 
-                            general_info->step[iworld]);
-         (void) miattputdbl(mincid, varid, MIstart, 
-                            general_info->start[iworld]);
-         (void) miattputstr(mincid, varid, MIspacetype, MI_NATIVE);
-         if (ivol == VSLICE) {
-            general_info->image_index[SLICE] = ndims;
-         }
-         ndims++;
+         if (regular)
+            (void) miattputstr(mincid, varid, MIspacing, MI_REGULAR);
       }
+      else
+         varid = micreate_std_variable(mincid, dimname, NC_LONG, 0, NULL);
+      (void) miattputdbl(mincid, varid, MIstep, 
+                         general_info->step[iworld]);
+      (void) miattputdbl(mincid, varid, MIstart, 
+                         general_info->start[iworld]);
+      (void) miattputstr(mincid, varid, MIspacetype, MI_NATIVE);
+      (void) ncattput(mincid, varid, MIdirection_cosines, 
+                      NC_DOUBLE, WORLD_NDIMS,
+                      general_info->dircos[iworld]);
+      if (ivol == VSLICE) {
+         general_info->image_index[SLICE] = ndims;
+      }
+      ndims++;
    }
 
    /* Set up image variable */
@@ -446,9 +458,9 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    }
 
    /* Create the history attribute */
-   string = "gcomserver";
-   (void) miattputstr(mincid, NC_GLOBAL, MIhistory,
-                      time_stamp(1, &string));
+   if (minc_history != NULL) {
+      (void) miattputstr(mincid, NC_GLOBAL, MIhistory, minc_history);
+   }
 
    return;
 }
@@ -488,10 +500,11 @@ public void save_minc_image(int icvid, General_Info *general_info,
    /* Create start and count variables */
    idim = 0;
    for (imri=MRI_NDIMS-1; (int) imri >= 0; imri--) {
-      if ((general_info->image_index[imri] >= 0) &&
-          (general_info->position[imri] != NULL)) {
+      if (general_info->image_index[imri] >= 0) {
          index = general_info->image_index[imri];
-         start[index] = general_info->position[imri][file_info->index[imri]];
+         start[index] = ((general_info->position[imri] != NULL) ?
+               general_info->position[imri][file_info->index[imri]] :
+               0);
          count[index] = 1;
          idim++;
       }
@@ -501,18 +514,16 @@ public void save_minc_image(int icvid, General_Info *general_info,
    count[idim] = general_info->nrows;
    count[idim+1] = general_info->ncolumns;
 
-   /* Write out slice position, if needed */
-   if (general_info->size[SLICE] > 1) {
-      switch (general_info->slice_world) {
-      case XCOORD: dimname = MIxspace; break;
-      case YCOORD: dimname = MIyspace; break;
-      case ZCOORD: dimname = MIzspace; break;
-      default: dimname = MIzspace;
-      }
-      (void) mivarput1(mincid, ncvarid(mincid, dimname), 
-                       &start[general_info->image_index[SLICE]], 
-                       NC_DOUBLE, NULL, &file_info->slice_position);
+   /* Write out slice position */
+   switch (general_info->slice_world) {
+   case XCOORD: dimname = MIxspace; break;
+   case YCOORD: dimname = MIyspace; break;
+   case ZCOORD: dimname = MIzspace; break;
+   default: dimname = MIzspace;
    }
+   (void) mivarput1(mincid, ncvarid(mincid, dimname), 
+                    &start[general_info->image_index[SLICE]], 
+                    NC_DOUBLE, NULL, &file_info->slice_position);
 
    /* Write out time of slice, if needed */
    if (general_info->size[TIME] > 1) {

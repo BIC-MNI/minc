@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:21  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:48:02  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:21  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.16  94/09/28  10:34:48  neelin
  * Pre-release
  * 
@@ -73,7 +78,14 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 2.1 1994-10-20 13:48:02 neelin Exp $";
+#endif
+
 #include <gcomserver.h>
+
+/* Global for minc history */
+extern char *minc_history;
 
 /* State of server. Note that DISCONNECTING is used for a high-level
    protocol error and TERMINATING is used for a low-level error or
@@ -120,6 +132,13 @@ int main(int argc, char *argv[])
    int continue_looping;
    FILE *fptemp;
    char last_file_name[256];
+
+   /* Create minc history string */
+   {
+      char *string;
+      string = "gcomserver";
+      minc_history = time_stamp(1, &string);
+   }
 
    /* Re-open stderr if we are logging */
    if (Do_logging > NO_LOGGING) {

@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:35:29  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-10-20 13:50:16  neelin
+@MODIFIED   : Write out direction cosines to support rotated volumes.
+@MODIFIED   : Store single slices as 1-slice volumes (3D instead of 2D).
+@MODIFIED   : Changed storing of minc history (get args for gyrotominc).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:35:29  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.8  94/09/28  10:35:04  neelin
  * Pre-release
  * 
@@ -95,7 +100,6 @@ typedef struct {
    int *position[MRI_NDIMS];    /* Array indicating position of each image in
                                    output file. Only allocated when size > 1 */
    int image_index[MRI_NDIMS];  /* Mapping from MRI dim to output image dim */
-   Orientation orientation;
    World_Index slice_world;
    World_Index row_world;
    World_Index column_world;
@@ -106,6 +110,8 @@ typedef struct {
    double slice_start;
    double slicepos_first;
    double slicepos_last;
+   int sliceindex_first;
+   int sliceindex_last;
    nc_type datatype;
    int is_signed;
    double pixel_min;

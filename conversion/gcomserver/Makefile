@@ -18,7 +18,7 @@ MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines
 INCLUDES = -I. -I$(ACR_LIB_DIR) -I$(PROG_LIB_DIR) -I$(VOLIO_LIB_DIR)/Include \
 	            -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
-LDOPT    = $(CC_ACR_LIB) $(CC_PROG_LIB) $(CC_VOLIO_LIB) $(MINC_LDOPT)
+LDOPT    = -lm $(CC_ACR_LIB) $(CC_PROG_LIB) $(CC_VOLIO_LIB) $(MINC_LDOPT)
 # --------------------------------------------------------------------
 
 CFLAGS    = $(CDEFINES) $(INCLUDES) $(OPT)# CFLAGS and LINTFLAGS should
