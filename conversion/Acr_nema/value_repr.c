@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : $Log: value_repr.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-10 17:13:53  neelin
+@MODIFIED   : Fixed lookup of VR names so that both letters are used.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -218,7 +221,7 @@ private Acr_VR_Type find_vr_name(char *vr_name)
    /* Loop through standard VR table */
    for (ientry=0; ientry < ACR_VR_NUM_TYPES; ientry++) {
       if ((VR_table[ientry].vr_name[0] == vr_name[0]) &&
-          (VR_table[ientry].vr_name[0] == vr_name[0])) {
+          (VR_table[ientry].vr_name[1] == vr_name[1])) {
          return (Acr_VR_Type) ientry;
       }
    }
@@ -226,7 +229,7 @@ private Acr_VR_Type find_vr_name(char *vr_name)
    /* Loop through unknown VR table */
    for (ientry=0; ientry < unknown_VR_table_length; ientry++) {
       if ((unknown_VR_table[ientry].vr_name[0] == vr_name[0]) &&
-          (unknown_VR_table[ientry].vr_name[0] == vr_name[0])) {
+          (unknown_VR_table[ientry].vr_name[1] == vr_name[1])) {
          return (Acr_VR_Type) ientry+ACR_VR_NUM_TYPES;
       }
    }
