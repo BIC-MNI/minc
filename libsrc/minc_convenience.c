@@ -27,7 +27,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.9  2001-11-13 14:15:18  neelin
+ * Revision 6.10  2001-12-06 14:09:07  neelin
+ * Corrected return from mivar_exists to use minc macro MI_RETURN so that
+ * ncopts is properly restored.
+ *
+ * Revision 6.9  2001/11/13 14:15:18  neelin
  * Added functions miget_image_range and mivar_exists
  *
  * Revision 6.8  2001/10/17 14:32:20  neelin
@@ -106,7 +110,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.9 2001-11-13 14:15:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.10 2001-12-06 14:09:07 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -558,7 +562,7 @@ public int mivar_exists(int cdfid, char *varname)
    exists = (ncvarid(cdfid, varname) != MI_ERROR);
    ncopts = oldncopts;
 
-   return exists;
+   MI_RETURN(exists);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
