@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.10  2004-02-02 18:22:34  bert
+ * Revision 6.11  2004-04-15 21:13:21  bert
+ * Add C++ linkage specifier
+ *
+ * Revision 6.10  2004/02/02 18:22:34  bert
  * Added miget_version() and miappend_history()
  *
  * Revision 6.9  2003/03/17 16:03:28  bert
@@ -116,10 +119,14 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.10 2004-02-02 18:22:34 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.11 2004-04-15 21:13:21 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* For compatibility with NetCDF 2.x which uses NC_LONG rather than NC_INT.
    Since NC_INT is defined in an enum, and since there are no version macros,
@@ -512,6 +519,10 @@ public int miicv_attach(int icvid, int cdfid, int varid);
 #undef public
 #undef MINC_NEED_TO_UNDEF_PUBLIC
 #endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 /* End ifndef MINC_HEADER_FILE */
 #endif
