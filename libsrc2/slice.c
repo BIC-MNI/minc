@@ -36,7 +36,6 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
                   const unsigned long start_positions[],
                   int array_length, double *value)
 {
-    hid_t file_id;
     hid_t dset_id;
     hid_t fspc_id;
     hid_t mspc_id;
@@ -52,8 +51,6 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     if (!volume->has_slice_scaling) {
         return mirw_volume_minmax(opcode, volume, value);
     }
-
-    file_id = volume->hdf_id;
 
     if (opcode & MIRW_SCALE_MIN) {
         dset_id = volume->imin_id;
@@ -242,7 +239,6 @@ miset_slice_range(mihandle_t volume, const unsigned long start_positions[],
 static int
 mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
 {
-    hid_t file_id;
     hid_t dset_id;
     hid_t fspc_id;
     hid_t mspc_id;
@@ -264,7 +260,6 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
             return (MI_NOERROR);
         }
     }
-    file_id = volume->hdf_id;
     if (opcode & MIRW_SCALE_MIN) {
         dset_id = volume->imin_id;
     }

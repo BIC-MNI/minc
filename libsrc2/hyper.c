@@ -357,7 +357,6 @@ mirw_hyperslab_raw(int opcode,
                    const unsigned long count[],
                    void *buffer)
 {
-    hid_t file_id;
     hid_t type_id = -1;
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
@@ -368,8 +367,6 @@ mirw_hyperslab_raw(int opcode,
     int dir[MI2_MAX_VAR_DIMS];  /* Direction vector in file order */
     int ndims;
     int n_different = 0;
-
-    file_id = volume->hdf_id;
 
     /* Disallow write operations to anything but the highest resolution.
      */
@@ -484,7 +481,6 @@ mirw_hyperslab_icv(int opcode,
     int ndims;
     int nbytes;
     int nc_type;
-    int file_id;
     int result = MI_ERROR;
     long icv_start[MI2_MAX_VAR_DIMS];
     long icv_count[MI2_MAX_VAR_DIMS];
@@ -500,8 +496,6 @@ mirw_hyperslab_icv(int opcode,
     miicv_inqint(icv, MI_ICV_TYPE, &nc_type);
 
     nbytes = MI2typelen(nc_type);
-
-    file_id = volume->hdf_id;
 
     ndims = volume->number_of_dims;
 
