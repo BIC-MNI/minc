@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.4  2005-03-03 20:10:14  bert
+ * Revision 1.5  2005-03-14 22:25:41  bert
+ * If a directory is specified on the file list, expand it internally.  This gets around shell limitations.
+ *
+ * Revision 1.4  2005/03/03 20:10:14  bert
  * Consider patient_id and patient_name when sorting into series
  *
  * Revision 1.3  2005/03/03 18:59:15  bert
@@ -56,13 +59,14 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.4 2005-03-03 20:10:14 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.5 2005-03-14 22:25:41 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <math.h>
+#include <dirent.h>
 #include <ParseArgv.h>
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
@@ -128,10 +132,13 @@ main(int argc, char *argv[])
     Acr_Group group_list;
     const char **file_list;     /* List of file names */
     Data_Object_Info **file_info_list;
-    int num_files;              /* Total number of files on command line */
+    int num_file_args;          /* Number of files on command line */
+    int num_files;              /* Total number of files */
     string_t out_dir;           /* Output directory */
     string_t message;           /* Generic message */
     int num_files_ok;           /* Actual number of DICOM/IMA files */
+    struct stat st;
+    int length;
 
     G.mosaic_seq = MOSAIC_SEQ_ASCENDING; /* Assume ascending by default. */
     G.splitDynScan = FALSE;     /* Don't split dynamic scans by default */
@@ -152,22 +159,19 @@ main(int argc, char *argv[])
     }
 
     if (G.List) {
-        num_files = argc - 1;   /* Assume no directory given. */
+        num_file_args = argc - 1; /* Assume no directory given. */
     }
     else {
-        struct stat st;
-        int n;
-
-        num_files = argc - 2;   /* Assume last arg is directory. */
+        num_file_args = argc - 2; /* Assume last arg is directory. */
 
         strcpy(out_dir, argv[argc - 1]); 
 
         /* make sure path ends with slash 
          */
-        n = strlen(out_dir);
-        if (out_dir[n - 1] != '/') {
-            out_dir[n++] = '/';
-            out_dir[n++] = '\0';
+        length = strlen(out_dir);
+        if (out_dir[length - 1] != '/') {
+            out_dir[length++] = '/';
+            out_dir[length++] = '\0';
         }
 
         if (stat(out_dir, &st) != 0 || !S_ISDIR(st.st_mode)) {
@@ -181,11 +185,41 @@ main(int argc, char *argv[])
     /* Allocate the array of pointers used to implement the
      * list of filenames.
      */
-    file_list = malloc(num_files * sizeof(*file_list));
+    file_list = malloc(num_file_args * sizeof(char *));
     CHKMEM(file_list);
 
-    for (ifile = 0 ; ifile < num_files; ifile++) {
-        file_list[ifile] = strdup(argv[ifile + 1]);
+    /* Go through the list of files, expanding directories where they
+     * are encountered...
+     */
+    num_files = 0;
+    for (ifile = 0 ; ifile < num_file_args; ifile++) {
+        if (stat(argv[ifile + 1], &st) == 0 && S_ISDIR(st.st_mode)) {
+            DIR *dp;
+            struct dirent *np;
+
+            if (G.Debug) {
+                printf("Expanding directory '%s'\n", argv[ifile + 1]);
+            }
+
+            dp = opendir(argv[ifile + 1]);
+            if (dp != NULL) {
+                while ((np = readdir(dp)) != NULL) {
+                    if (stat(np->d_name, &st) == 0 && S_ISREG(st.st_mode)) {
+                        file_list = realloc(file_list,
+                                            (num_files + 1) * sizeof(char *));
+                        file_list[num_files++] = strdup(np->d_name);
+                    }
+                }
+                closedir(dp);
+            }
+            else {
+                fprintf(stderr, "Error opening directory '%s'\n", 
+                        argv[ifile + 1]);
+            }
+        }
+        else {
+            file_list[num_files++] = strdup(argv[ifile + 1]);
+        }
     }
 
     file_info_list = malloc(num_files * sizeof(*file_info_list));
