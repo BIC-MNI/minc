@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 6.0 1997-09-12 13:24:19 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 6.1 2000-07-07 13:19:12 neelin Exp $
 .\"
 .TH MINCAVERAGE 1
 
@@ -47,6 +47,12 @@ Do not print out progress information.
 .P
 .I -debug:
 Print extra information (e.g. normalization factors).
+.P
+.I -filelist:
+Specify a file containing a list of input file names. If "-" is given, then
+file names are read from stdin. If this option is given, then there should be
+no input file names specified on the command line. Empty lines in the input
+file are ignored.
 .P
 .I -max_buffer_size_in_kb:
 Specify the maximum size of the internal buffers (in kbytes). Default is

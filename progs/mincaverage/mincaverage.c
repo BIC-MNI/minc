@@ -10,7 +10,11 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.1  1999-10-19 14:45:18  neelin
+ * Revision 6.2  2000-07-07 13:19:12  neelin
+ * Added option -filelist to read file names from a file. This gets around
+ * command-line length limits.
+ *
+ * Revision 6.1  1999/10/19 14:45:18  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:19  neelin
@@ -52,7 +56,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.1 1999-10-19 14:45:18 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.2 2000-07-07 13:19:12 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -60,6 +64,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverag
 #include <string.h>
 #include <ctype.h>
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <minc.h>
 #include <ParseArgv.h>
@@ -131,6 +136,7 @@ public void finish_average(void *caller_data, long num_voxels,
                           double *output_data[],
                           Loop_Info *loop_info);
 public int get_double_list(char *dst, char *key, char *nextarg);
+public char **read_file_names(char *filelist, int *num_files);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -154,6 +160,7 @@ double binrange[2] = {DBL_MAX, -DBL_MAX};
 double binvalue = -DBL_MAX;
 Double_Array weights = {0, NULL};
 int width_weighted = FALSE;
+char *filelist = NULL;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -169,6 +176,8 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-debug", ARGV_CONSTANT, (char *) TRUE, (char *) &debug,
        "Print out debugging messages."},
+   {"-filelist", ARGV_STRING, (char *) 1, (char *) &filelist,
+       "Specify the name of a file containing input file names (- for stdin)."},
    {"-check_dimensions", ARGV_CONSTANT, (char *) TRUE, (char *) &check_dimensions,
        "Check that dimension info matches across files (default)."},
    {"-nocheck_dimensions", ARGV_CONSTANT, (char *) FALSE, (char *) &check_dimensions,
@@ -244,20 +253,45 @@ public int main(int argc, char *argv[])
    arg_string = time_stamp(argc, argv);
 
    /* Get arguments */
-   if (ParseArgv(&argc, argv, argTable, 0) || (argc < 3)) {
+   if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
       (void) fprintf(stderr, 
-      "\nUsage: %s [options] <in1.mnc> [...] <out.mnc>\n",
+      "\nUsage: %s [options] [<in1.mnc> ...] <out.mnc>\n",
                      argv[0]);
       (void) fprintf(stderr, 
         "       %s -help\n\n", argv[0]);
       exit(EXIT_FAILURE);
    }
-   nfiles = argc - 2;
-   infiles = &argv[1];
    outfiles[0] = argv[argc-1];
    outfiles[1] = sdfile;
    nout = ((sdfile == NULL) ? 1 : 2);
    first_mincid = MI_ERROR;
+
+   /* Get the list of input files either from the command line or
+      from a file, or report an error if both are specified */
+   nfiles = argc - 2;
+   if (filelist == NULL) {
+      infiles = &argv[1];
+   }
+   else if (nfiles <= 0) {
+      infiles = read_file_names(filelist, &nfiles);
+      if (infiles == NULL) {
+         (void) fprintf(stderr, 
+                        "Error reading in file names from file \"%s\"\n",
+                        filelist);
+         exit(EXIT_FAILURE);
+      }
+   }
+   else {
+      (void) fprintf(stderr, 
+                     "Do not specify both -filelist and input file names\n");
+      exit(EXIT_FAILURE);
+   }
+
+   /* Make sure that we have something to process */
+   if (nfiles == 0) {
+      (void) fprintf(stderr, "No input files specified\n");
+      exit(EXIT_FAILURE);
+   }
 
    /* Set default value of copy_all_header */
    if (copy_all_header == DEFAULT_BOOLEAN) {
@@ -934,5 +968,92 @@ public int get_double_list(char *dst, char *key, char *nextarg)
    double_array->values = double_list;
 
    return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_file_names
+@INPUT      : filelist - name of file from which to read names
+@OUTPUT     : num_files - number of files read in
+@RETURNS    : Pointer to a NULL-terminated array of file names
+@DESCRIPTION: Reads in a list of file names from file filelist or stdin if 
+              "-" is specified. Returns NULL if an error occurs. If
+              no error occurs, then a pointer to an empty array is 
+              returned and num_files is zero.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 8, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char **read_file_names(char *filelist, int *num_files)
+{
+#define FILE_NAME_ALLOC_SIZE 10
+   char **files;
+   int array_size;
+   int nfiles;
+   FILE *fp;
+   char line[PATH_MAX+1];
+   int length;
+
+   /* Open the file */
+   if (strcmp(filelist, "-") == 0) {
+      fp = stdin;
+   }
+   else {
+      fp = fopen(filelist, "r");
+      if (fp == NULL) {
+         (void) fprintf(stderr, "Error opening file \"%s\"\n", filelist);
+         return NULL;
+      }
+   }
+
+   /* Allocate an initial array and NULL-terminate it */
+   array_size = FILE_NAME_ALLOC_SIZE;
+   files = MALLOC(sizeof(*files) * array_size);
+   if (files == NULL) {
+      (void) fprintf(stderr, "Error allocating memory\n");
+      return NULL;
+   }
+   nfiles = 0;
+   files[nfiles] = NULL;
+
+   /* Read in file names */
+   while (fgets(line, sizeof(line)/sizeof(line[0]), fp) != NULL) {
+
+      /* Remove a trailing newline and check that there is a name */
+      length = strlen(line);
+      if ((length > 0) && (line[length-1] == '\n')) {
+         line[length-1] = '\0';
+         length--;
+      }
+      if (length == 0) continue;
+
+      /* Make room for names if needed */
+      while (nfiles >= array_size-1) {
+         array_size += FILE_NAME_ALLOC_SIZE;
+         files = REALLOC(files, sizeof(*files) * array_size);
+         if (files == NULL) {
+            (void) fprintf(stderr, "Error allocating memory\n");
+            return NULL;
+         }
+      }
+
+      /* Save the name, making sure that the list is NULL-terminated */
+      files[nfiles] = strdup(line);
+      if (files[nfiles] == NULL) {
+         (void) fprintf(stderr, "Error allocating memory\n");
+         return NULL;
+      }
+      nfiles++;
+      files[nfiles] = NULL;
+   }
+
+   /* Close the file */
+   (void) fclose(fp);
+
+   /* Return the number of files */
+   *num_files = nfiles;
+
+   return files;
 }
 
