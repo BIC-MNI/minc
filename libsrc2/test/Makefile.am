@@ -14,7 +14,8 @@ TESTS =	\
 	valid-test \
 	volprops-test \
 	multires-test \
-	convert-test
+	convert-test \
+	vector_dimension-test
 
 check_PROGRAMS = $(TESTS)
 
