@@ -305,6 +305,7 @@ public  Status  open_file(
 
     if( io_type == READ_FILE &&
         (string_ends_in( expanded, ".z" ) ||
+         string_ends_in( expanded, ".Z" ) ||
          string_ends_in( expanded, ".gz" )) )
     {
         gzipped = TRUE;
