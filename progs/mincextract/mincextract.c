@@ -12,10 +12,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.3 1993-07-07 15:01:48 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.4 1993-07-13 15:41:38 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +23,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextrac
 #include <float.h>
 #include <ctype.h>
 #include <ParseArgv.h>
+#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
    element_size = nctypelen(output_datatype);
 
    /* Allocate space */
-   data = malloc(element_size*nelements);
+   data = MALLOC(element_size*nelements);
 
    /* Loop over input slices */
 
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
    (void) ncclose(mincid);
    (void) miicv_free(icvid);
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -342,7 +342,7 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
          (void) fprintf(stderr, 
             "expected vector of integers for \"%s\", but got \"%s\"\n", 
                         key, nextArg);
-         exit(EXIT_SUCCESS);
+         exit(EXIT_FAILURE);
       }
       nvals++;
 
