@@ -17,9 +17,13 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:37:52  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-11-02 09:42:37  neelin
+@MODIFIED   : Fixed conversion of vector to scalar (old code simply returned the first
+@MODIFIED   : component of the vector - now averaging is done properly).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:37:52  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.11  94/09/28  10:37:35  neelin
  * Pre-release
  * 
@@ -45,7 +49,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.0 1994-09-28 10:37:52 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.1 1994-11-02 09:42:37 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -233,7 +237,6 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
    int dim_dir;               /* Desired direction for current dimension */
    double dimstep;            /* Dimension step size (and direction) */
    int idim;
-   int status;
 
    MI_SAVE_ROUTINE_NAME("MI_get_dim_flip");
 
@@ -268,7 +271,7 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
          dimstep = 1.0;
          if (dimvid[idim] != MI_ERROR) {   /* if dimension exists */
             oldncopts = ncopts; ncopts = 0;
-            status=miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep);
+            (void) miattget1(cdfid, dimvid[idim], MIstep, NC_DOUBLE, &dimstep);
             ncopts = oldncopts;
          }                           /* if dimension exists */
          if (dim_dir == MI_ICV_POSITIVE)
@@ -786,9 +789,13 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
 
    /* Calculate step size for variable and user buffers. This does not
       allow for growing or shrinking pixels. That correction is done below. */
-   dcp->buf_step[fastdim] = icvp->var_typelen;
-   if (icvp->var_is_vector && icvp->user_do_scalar)
-      dcp->buf_step[fastdim] *= bufcount[icvp->var_ndims-1];
+   if (icvp->var_is_vector && icvp->user_do_scalar) {
+      dcp->buf_step[fastdim+1] = icvp->var_typelen;
+      dcp->buf_step[fastdim] = dcp->buf_step[fastdim+1] * bufcount[fastdim+1];
+   }
+   else {
+      dcp->buf_step[fastdim] = icvp->var_typelen;
+   }
    dcp->usr_step[fastdim] = icvp->user_typelen;
    for (idim=fastdim-1; idim>=0; idim--) {
       dcp->buf_step[idim] = dcp->buf_step[idim+1] * bufcount[idim+1];
