@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.52 1998-11-03 16:34:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.53 1998-11-03 17:11:20 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -648,7 +648,8 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Nov. 2, 1998  D. MacDonald - fixed error P. Neelin found with
+                                           concating to non-existent history
 ---------------------------------------------------------------------------- */
 
 public  Status  add_minc_history(
@@ -680,6 +681,7 @@ public  Status  add_minc_history(
     /* Allocate a string and get the old history */
 
     new_history = alloc_string( old_att_length );
+    new_history[0] = (char) 0;
 
     (void) miattgetstr( file->cdfid, NC_GLOBAL, MIhistory, old_att_length+1,
                         new_history );
