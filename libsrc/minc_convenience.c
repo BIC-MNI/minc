@@ -30,7 +30,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.14  2004-06-04 18:15:46  bert
+ * Revision 6.15  2004-08-26 16:14:21  bert
+ * Fix up miappend_history() again
+ *
+ * Revision 6.14  2004/06/04 18:15:46  bert
  * Added micreate_ident()
  *
  * Revision 6.13  2004/04/27 15:49:17  bert
@@ -125,7 +128,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.14 2004-06-04 18:15:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.15 2004-08-26 16:14:21 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"
@@ -1334,50 +1337,52 @@ public int
 miappend_history(int fd, const char *tm_stamp)
 {
     nc_type att_type;
-    int att_length;
+    int att_len;
     int r;
-    char *att_value;
+    char *att_val;
+    int old_ncopts;
 
-    r = ncattinq(fd, NC_GLOBAL, MIhistory, &att_type, &att_length);
+    old_ncopts = ncopts;
+    ncopts = 0;
+
+    r = ncattinq(fd, NC_GLOBAL, MIhistory, &att_type, &att_len);
     if (r < 0 || att_type != NC_CHAR) {
-        att_length = 0;
+        att_len = 0;
     }
 
-    /* For some reason, miattgetstr() needs to receive a value
-     * one larger than the value returned by ncattinq() in order
-     * to account for the terminating null character.
-     */
-    att_length++;
+    ncopts = old_ncopts;
 
     /* Allocate enough bytes for the existing attribute, the string which 
      * will be appended, a terminating null character, and a possible
      * additional newline.
      */
-    att_value = malloc(att_length + strlen(tm_stamp) + 1);
-    if (att_value == NULL) {
+    att_val = malloc(att_len + strlen(tm_stamp) + 2);
+    if (att_val == NULL) {
         return (MI_ERROR);
     }
 
-    if (miattgetstr(fd, NC_GLOBAL, MIhistory, att_length, att_value) == NULL) {
-        return (MI_ERROR);
-    }
+    if (att_len != 0) {
+        if (miattgetstr(fd, NC_GLOBAL, MIhistory, att_len + 1, att_val) == NULL) {
+            return (MI_ERROR);
+        }
 
-    if (att_value[att_length-1] == '\0') {
-        att_length--;
-    }
+        while (att_val[att_len-1] == '\0' ) {
+            att_len--;
+        }
 
-    if (att_value[att_length-1] != '\n') {
-        att_value[att_length] = '\n';
-        att_length++;
+        if (att_val[att_len-1] != '\n') {
+            att_val[att_len] = '\n';
+            att_len++;
+        }
     }
 
     /* Append the new history.
      */
-    strcpy(att_value + att_length, tm_stamp);
+    strcpy(att_val + att_len, tm_stamp);
 
-    r = miattputstr(fd, NC_GLOBAL, MIhistory, att_value);
+    r = miattputstr(fd, NC_GLOBAL, MIhistory, att_val);
 
-    free(att_value);
+    free(att_val);
 
     return (r);
 }
