@@ -3,6 +3,8 @@
 
 #include  <def_mni.h>
 
+typedef  enum  { MNC_FORMAT, FREE_FORMAT } Volume_file_types;
+
 typedef  unsigned  char  Volume_type;
 
 typedef  struct
@@ -20,12 +22,23 @@ typedef  struct
 
 typedef  struct
 {
-    int          cdfid;
-    int          icv;
-    int          sizes_in_file[N_DIMENSIONS];
-    int          axis_index[N_DIMENSIONS];
-    int          slice_index;
-    Volume_type  *slice_buffer;
+    Volume_file_types  file_type;
+
+    int                sizes_in_file[N_DIMENSIONS];
+    int                axis_index[N_DIMENSIONS];
+    int                slice_index;
+
+/* for mnc files only */
+
+    int                cdfid;
+    int                icv;
+    Volume_type        *slice_buffer;
+
+/* for free format files only */
+
+    FILE               *volume_file;
+    short              *short_slice_buffer;
+
 } volume_input_struct;
 
 #endif
