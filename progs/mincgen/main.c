@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.1 2004-06-15 20:14:41 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.2 2004-06-16 16:19:51 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>		/* has getopt() under VMS */
@@ -97,7 +97,7 @@ main(
     (void) par_io_init(32, 32);
 #endif
 
-    while ((c = getopt(argc, argv, "bcfno:")) != EOF)
+    while ((c = getopt(argc, argv, "bcfo:")) != EOF)
       switch(c) {
 	case 'c':		/* for c output */
 	  c_flag = 1;
@@ -107,9 +107,6 @@ main(
 	  break;
 	case 'b':		/* for binary netcdf output, ".nc" extension */
 	  netcdf_flag = 1;
-	  break;
-	case 'n':		/* old version of -b, uses ".cdf" extension */
-	  netcdf_flag = -1;
 	  break;
 	case 'o':		/* to explicitly specify output name */
 	  netcdf_flag = 1;
