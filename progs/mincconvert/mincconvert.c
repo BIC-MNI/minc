@@ -10,7 +10,10 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.1  2004-04-27 15:27:57  bert
+ * Revision 1.2  2004-09-09 19:25:32  bert
+ * Force V1 file format creation if -2 not specified
+ *
+ * Revision 1.1  2004/04/27 15:27:57  bert
  * Initial checkin, MINC 1 <-> MINC 2 converter
  *
  * 
@@ -26,7 +29,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.1 2004-04-27 15:27:57 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.2 2004-09-09 19:25:32 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -131,6 +134,9 @@ main(int argc, char **argv)
 #if MINC2
     if (v2format) {
         flags |= MI2_CREATE_V2;
+    }
+    else {
+        flags |= MI2_CREATE_V1; /* Force V1 format */
     }
 
     opts.struct_version = MI2_OPTS_V1;
