@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:34:16  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-23 12:32:52  neelin
+@MODIFIED   : Changed ncopen, ncclose to miopen, miclose.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:34:16  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.12  94/09/28  10:34:12  neelin
  * Pre-release
  * 
@@ -46,7 +49,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 2.0 1994-09-28 10:34:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 2.1 1995-01-23 12:32:52 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -237,7 +240,7 @@ int main(int argc, char *argv[])
       zdirection = default_direction;
 
    /* Open the file */
-   mincid = ncopen(filename, NC_NOWRITE);
+   mincid = miopen(filename, NC_NOWRITE);
 
    /* Inquire about the image variable */
    imgid = ncvarid(mincid, MIimage);
@@ -411,7 +414,7 @@ int main(int argc, char *argv[])
    }       /* End loop over slices */
 
    /* Clean up */
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
    (void) miicv_free(icvid);
    FREE(data);
 
