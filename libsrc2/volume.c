@@ -61,7 +61,7 @@ micreate_volume_image(mihandle_t volume)
     }
     
     dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image", 
-                        volume->type_id, 
+                        volume->ftype_id, 
                         dataspace_id, volume->plist_id);
     
     if (dset_id < 0) {  
@@ -122,7 +122,7 @@ micreate_volume_image(mihandle_t volume)
         H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
 
         dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-min",
-                            H5T_NATIVE_DOUBLE, dataspace_id, dcpl_id);
+                            H5T_IEEE_F64LE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
@@ -137,7 +137,7 @@ micreate_volume_image(mihandle_t volume)
         H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
 
         dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-max",
-                            H5T_NATIVE_DOUBLE, dataspace_id, dcpl_id);
+                            H5T_IEEE_F64LE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
@@ -177,6 +177,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hsize_t hdf_size[MI2_MAX_VAR_DIMS];
   volumehandle *handle;
   volprops *props_handle;
+  char ident_str[128];
+  hid_t tmp_type;
 
   /* Initialization. 
      For the actual body of this function look at m2utils.c
@@ -213,17 +215,18 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   /* convert minc type to hdf type
    */
-  hdf_type = mitype_to_hdftype(volume_type);
+  hdf_type = mitype_to_hdftype(volume_type, FALSE);
 
   /* Setting up volume type_id 
    */
   switch (volume_class) {
   case MI_CLASS_REAL:
-      handle->type_id = hdf_type;
-      break;
   case MI_CLASS_INT:
-      handle->type_id = hdf_type;
+      handle->ftype_id = hdf_type;
+      handle->mtype_id = H5Tget_native_type(handle->ftype_id, 
+                                            H5T_DIR_ASCEND);
       break;
+
   case MI_CLASS_LABEL:
       /* A volume of class LABEL must have an integer type.
        */
@@ -234,13 +237,25 @@ micreate_volume(const char *filename, int number_of_dimensions,
       case MI_TYPE_UBYTE:
       case MI_TYPE_USHORT:
       case MI_TYPE_UINT:
-          handle->type_id = H5Tenum_create(hdf_type);
-          if (handle->type_id < 0) {
+          handle->ftype_id = H5Tenum_create(hdf_type);
+          if (handle->ftype_id < 0) {
+              return (MI_ERROR);
+          }
+
+          tmp_type = H5Tget_native_type(hdf_type, H5T_DIR_ASCEND);
+          H5Tclose(hdf_type);
+          hdf_type = tmp_type;
+
+          /* Create an enumerated type with the native type as it's base.
+           */
+          handle->mtype_id = H5Tenum_create(hdf_type);
+          if (handle->mtype_id < 0) {
               return (MI_ERROR);
           }
           H5Tclose(hdf_type);
-          hdf_type = handle->type_id;
-          miinit_enum(hdf_type);
+
+          miinit_enum(handle->ftype_id);
+          miinit_enum(handle->mtype_id);
           break;
       default:
           return (MI_ERROR);
@@ -253,7 +268,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
       case MI_TYPE_ICOMPLEX:
       case MI_TYPE_FCOMPLEX:
       case MI_TYPE_DCOMPLEX:
-          handle->type_id = hdf_type;
+          handle->ftype_id = hdf_type;
+          handle->mtype_id = mitype_to_hdftype(volume_type, TRUE);
           break;
       default:
           return (MI_ERROR);
@@ -261,7 +277,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
       break;
 
   case MI_CLASS_UNIFORM_RECORD:
-      handle->type_id = H5Tcreate(H5T_COMPOUND, H5Tget_size(hdf_type));
+      handle->ftype_id = H5Tcreate(H5T_COMPOUND, H5Tget_size(hdf_type));
+      handle->mtype_id = H5Tcreate(H5T_COMPOUND, H5Tget_size(hdf_type));
       H5Tclose(hdf_type);
       break;
 
@@ -276,12 +293,17 @@ micreate_volume(const char *filename, int number_of_dimensions,
                    erasing all data previously stored in the file.
      and create ID and ID access as default.
   */
-  file_id = hdf_create(filename, H5F_ACC_TRUNC);
+  
+  file_id = hdf_create(filename, H5F_ACC_TRUNC, NULL);
   if (file_id < 0) {
     return (MI_ERROR);
   }
 
   handle->hdf_id = file_id;
+
+  micreate_ident(ident_str, sizeof(ident_str));
+  miset_attribute(handle, MI_ROOT_PATH, "ident", MI_TYPE_STRING,
+                  strlen(ident_str), ident_str);
 
   _miset_volume_class(handle, handle->volume_class);
 
@@ -297,8 +319,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
   /* Set fill value to guarantee valid data on incomplete datasets.
    */
   {
-    char *tmp = calloc(1, H5Tget_size(handle->type_id));
-    H5Pset_fill_value(hdf_plist, handle->type_id, tmp);
+    char *tmp = calloc(1, H5Tget_size(handle->ftype_id));
+    H5Pset_fill_value(hdf_plist, handle->ftype_id, tmp);
     free(tmp);
   }
   
@@ -385,7 +407,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
      
     /* Create a dataset(dimension variable name) in DIMENSIONS GROUP */
     dataset_id = H5Dcreate(grp_id, dimensions[i]->name, 
-                           H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+                           H5T_IEEE_F64LE, dataspace_id, H5P_DEFAULT);
     
     /* Dimension variable for a regular dimension contains
        no meaningful data. Whereas, Dimension variable for 
@@ -424,7 +446,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 	strcpy(name, dimensions[i]->name);
 	strcat(name, "-width");
 	/* Create dataset dimension_name-width */
-	dataset_width = H5Dcreate(grp_id, name, H5T_NATIVE_DOUBLE, 
+	dataset_width = H5Dcreate(grp_id, name, H5T_IEEE_F64LE, 
                                   dataspace_id, H5P_DEFAULT);
 	/* Return an Id for the dataspace of the dataset dataset_width */
 	fspc_id = H5Dget_space(dataset_width);
@@ -523,6 +545,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 			strlen(dimensions[i]->comments),
                         dimensions[i]->comments);
     }
+
     /* Close the dataset with the specified Id
      */
     H5Dclose(dataset_id);
@@ -590,6 +613,10 @@ micreate_volume(const char *filename, int number_of_dimensions,
   /* Get the voxel to world transform for the volume
    */
   miget_voxel_to_world(handle, handle->v2w_transform);
+
+  /* Calculate the inverse transform */
+  miinvert_transform(handle->v2w_transform, handle->w2v_transform);
+
   /* Allocated space for the volume properties */
   props_handle = (volprops *)malloc(sizeof(*props_handle));
   /* Initialize volume properties with zero */
@@ -1028,11 +1055,45 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 	return (MI_ERROR);
     }
     /* Get the Id for the copy of the datatype for the dataset */
-    handle->type_id = H5Dget_type(handle->image_id);
-    if (handle->type_id < 0) {
+    handle->ftype_id = H5Dget_type(handle->image_id);
+    if (handle->ftype_id < 0) {
 	return (MI_ERROR);
     }
-     /* hdf5 macro can temporarily disable the automatic error printing */
+
+    switch (H5Tget_class(handle->ftype_id)) {
+    case H5T_INTEGER:
+    case H5T_FLOAT:
+        handle->mtype_id = H5Tget_native_type(handle->ftype_id, 
+                                              H5T_DIR_ASCEND);
+        break;
+
+    case H5T_COMPOUND:
+        handle->mtype_id = H5Tcreate(H5T_COMPOUND, 
+                                     H5Tget_size(handle->ftype_id));
+        for (i = 0; i < H5Tget_nmembers(handle->ftype_id); i++) {
+            hid_t tmp_id = H5Tget_member_type(handle->ftype_id, i);
+            size_t tmp_off = H5Tget_member_offset(handle->ftype_id, i);
+            char *tmp_nm = H5Tget_member_name(handle->ftype_id, i);
+            hid_t tmp2_id = H5Tget_native_type(tmp_id, H5T_DIR_ASCEND);
+            H5Tinsert(handle->mtype_id, tmp_nm, tmp_off, tmp2_id);
+
+            free(tmp_nm);
+            H5Tclose(tmp_id);
+            H5Tclose(tmp2_id);
+        }
+        break;
+
+    case H5T_ENUM:
+        handle->mtype_id = H5Tcopy(handle->ftype_id);
+        /* Set native order */
+        H5Tset_order(handle->mtype_id, H5Tget_order(H5T_NATIVE_INT));
+        break;
+
+    default:
+        return (MI_ERROR);
+    }
+
+    /* hdf5 macro can temporarily disable the automatic error printing */
     H5E_BEGIN_TRY {
         /* Open both image-min and image-max datasets */
         handle->imax_id = H5Dopen(file_id, "/minc-2.0/image/0/image-max");
@@ -1042,13 +1103,13 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     /* Convert the type to a MINC type.
      */
     /* Get the class Id for the datatype */
-    class = H5Tget_class(handle->type_id);
+    class = H5Tget_class(handle->ftype_id);
     /* Get the size of the datatype */
-    nbytes = H5Tget_size(handle->type_id);
+    nbytes = H5Tget_size(handle->ftype_id);
 
     switch (class) {
     case H5T_INTEGER:
-	is_signed = (H5Tget_size(handle->type_id) == H5T_SGN_2);
+	is_signed = (H5Tget_size(handle->ftype_id) == H5T_SGN_2);
 
 	switch (nbytes) {
 	case 1:
@@ -1120,8 +1181,11 @@ miclose_volume(mihandle_t volume)
     if (volume->imin_id > 0) {
         H5Dclose(volume->imin_id);
     }
-    if (volume->type_id > 0) {
-        H5Tclose(volume->type_id);
+    if (volume->ftype_id > 0) {
+        H5Tclose(volume->ftype_id);
+    }
+    if (volume->mtype_id > 0) {
+        H5Tclose(volume->mtype_id);
     }
     if (volume->plist_id > 0) {
         H5Pclose(volume->plist_id);

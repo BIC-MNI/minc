@@ -18,6 +18,7 @@ miget_record_name(mihandle_t volume,
 }
 
 
+
 /** This method gets the length (i.e., number of fields in the case of
  * uniform records and number of bytes for non_uniform ones) of the
  * record.
@@ -31,7 +32,7 @@ miget_record_length(mihandle_t volume,
     }
     if (volume->volume_class == MI_CLASS_UNIFORM_RECORD ||
         volume->volume_class == MI_CLASS_NON_UNIFORM_RECORD) {
-        *length = H5Tget_nmembers(volume->type_id);
+        *length = H5Tget_nmembers(volume->ftype_id);
         return (MI_NOERROR);
     }
     return (MI_ERROR);
@@ -53,7 +54,7 @@ miget_record_field_name(mihandle_t volume,
      * the memory for the string using malloc(), so we can return the 
      * pointer directly without any further manipulations.
      */
-    *name = H5Tget_member_name(volume->type_id, index);
+    *name = H5Tget_member_name(volume->ftype_id, index);
     if (*name == NULL) {
         return (MI_ERROR);
     }
@@ -69,7 +70,8 @@ miset_record_field_name(mihandle_t volume,
                         int index,
                         const char *name)
 {
-    hid_t type_id;
+    hid_t mtype_id;
+    hid_t ftype_id;
     int offset;
 
     if (volume == NULL || name == NULL) {
@@ -82,26 +84,33 @@ miset_record_field_name(mihandle_t volume,
     /* Get the type of the record's fields.  This is recorded as the
      * type of the volume.
      */
-    type_id = mitype_to_hdftype(volume->volume_type);
+    ftype_id = mitype_to_hdftype(volume->volume_type, FALSE);
+    mtype_id = mitype_to_hdftype(volume->volume_type, TRUE);
 
     /* Calculate the offset of the new member.
      */
-    offset = index * H5Tget_size(type_id);
+    offset = index * H5Tget_size(ftype_id);
 
     /* If the offset plus the size of the member is larger than the
      * current size of the structure, increase the size of the structure.
      */
-    if (offset + H5Tget_size(type_id) > H5Tget_size(volume->type_id)) {
-        H5Tset_size(volume->type_id, offset + H5Tget_size(type_id));
+    if (offset + H5Tget_size(ftype_id) > H5Tget_size(volume->ftype_id)) {
+        H5Tset_size(volume->ftype_id, offset + H5Tget_size(ftype_id));
+    }
+
+    if (offset + H5Tget_size(mtype_id) > H5Tget_size(volume->mtype_id)) {
+        H5Tset_size(volume->mtype_id, offset + H5Tget_size(mtype_id));
     }
 
     /* Actually define the field within the structure.
      */
-    H5Tinsert(volume->type_id, name, offset, type_id);
+    H5Tinsert(volume->ftype_id, name, offset, ftype_id);
+    H5Tinsert(volume->mtype_id, name, offset, mtype_id);
 
     /* Delete the HDF5 type object returned by mitype_to_hdftype().
      */
-    H5Tclose(type_id);
+    H5Tclose(ftype_id);
+    H5Tclose(mtype_id);
 
     return (MI_NOERROR);
 }
