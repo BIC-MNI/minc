@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 1.13  1994-06-10 15:24:41  neelin
-@MODIFIED   : Added option -real_range.
+@MODIFIED   : Revision 1.14  1994-09-23 08:30:52  neelin
+@MODIFIED   : Added -xyz, etc options for image/volume orientation.
 @MODIFIED   :
+ * Revision 1.13  94/06/10  15:24:41  neelin
+ * Added option -real_range.
+ * 
  * Revision 1.12  94/05/05  10:31:53  neelin
  * Added -scan_range, -frame_time, -frame_width, -input, -attribute and 
  * modality options.
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.13 1994-06-10 15:24:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.14 1994-09-23 08:30:52 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -62,6 +65,12 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define SAGITTAL 1
 #define CORONAL 2
 #define TIME_FAST 3
+#define XYZ_ORIENTATION 4
+#define XZY_ORIENTATION 5
+#define YXZ_ORIENTATION 6
+#define YZX_ORIENTATION 7
+#define ZXY_ORIENTATION 8
+#define ZYX_ORIENTATION 9
 #define DEF_TYPE 0
 #define DEF_SIGN 0
 #define SIGNED 1
@@ -89,7 +98,13 @@ char *orientation_names[][MAX_DIMS] = {
    {MItime, MIzspace, MIyspace, MIxspace},
    {MItime, MIxspace, MIzspace, MIyspace},
    {MItime, MIyspace, MIzspace, MIxspace},
-   {MIzspace, MItime, MIyspace, MIxspace}
+   {MIzspace, MItime, MIyspace, MIxspace},
+   {MItime, MIxspace, MIyspace, MIzspace},
+   {MItime, MIxspace, MIzspace, MIyspace},
+   {MItime, MIyspace, MIxspace, MIzspace},
+   {MItime, MIyspace, MIzspace, MIxspace},
+   {MItime, MIzspace, MIxspace, MIyspace},
+   {MItime, MIzspace, MIyspace, MIxspace},
 };
 
 /* Structure containing information about signs */
@@ -151,6 +166,18 @@ ArgvInfo argTable[] = {
        "Coronal images      : [[time] y] z x"},
    {"-time", ARGV_CONSTANT, (char *) TIME_FAST, (char *) &orientation,
        "Time ordered images : [[z] time] y x"},
+   {"-xyz", ARGV_CONSTANT, (char *) XYZ_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] x] y z"},
+   {"-xzy", ARGV_CONSTANT, (char *) XZY_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] x] z y"},
+   {"-yxz", ARGV_CONSTANT, (char *) YXZ_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] y] x z"},
+   {"-yzx", ARGV_CONSTANT, (char *) YZX_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] y] z x"},
+   {"-zxy", ARGV_CONSTANT, (char *) ZXY_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] z] x y"},
+   {"-zyx", ARGV_CONSTANT, (char *) ZYX_ORIENTATION, (char *) &orientation,
+       "Dimension order     : [[time] z] y x"},
    {"-vector", ARGV_INT, (char *) 1, (char *) &vector_dimsize,
        "Specifies the size of a vector dimension"},
    {NULL, ARGV_HELP, NULL, NULL,

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.5 1994-06-10 15:25:07 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.6 1994-09-23 08:31:10 neelin Exp $
 .\"
 .TH RAWTOMINC 1 "MINC Image File Format"
 
@@ -95,6 +95,24 @@ Coronal images      : [[time] y] z x
 .P
 .I -time:
 Time ordered images : [[z] time] y x
+.P
+.I -xyz:
+Dimension order     : [[time] x] y z
+.P
+.I -xzy:
+Dimension order     : [[time] x] z y
+.P
+.I -yxz:
+Dimension order     : [[time] y] x z
+.P
+.I -yzx:
+Dimension order     : [[time] y] z x
+.P
+.I -zxy:
+Dimension order     : [[time] z] x y
+.P
+.I -zyx:
+Dimension order     : [[time] z] y x
 .P
 .I -vector:
 Gives the size of a vector dimension (always the fastest varying
