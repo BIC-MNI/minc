@@ -31,6 +31,7 @@
 
 /* Define acr-nema constants */
 #define ACR_MODALITY_MR "MR"
+#define ACR_MODALITY_PT "PT"
 
 /* Element id's for DICOM */
 GLOBAL_ELEMENT(ACR_Affected_SOP_class_UID    , 0x0000, 0x0002, UI);
