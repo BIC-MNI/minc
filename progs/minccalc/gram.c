@@ -45,10 +45,10 @@ void yyerror(const char *msg);
 
 #line 10 "gram.y"
 typedef union{
-int		pos;
-node_t 		node;
-float		real;
-ident_t		ident;
+int      pos;
+node_t   node;
+float    real;
+ident_t  ident;
 } YYSTYPE;
 #ifndef YYDEBUG
 #define YYDEBUG 1
@@ -883,183 +883,183 @@ case 3:
 case 4:
 #line 55 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_GEN;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->ident = yyvsp[-5].ident;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_GEN;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->ident = yyvsp[-5].ident;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 5:
 #line 63 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_RANGE;
-		  yyval.node->flags = 0;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_RANGE;
+        yyval.node->flags = 0;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 6:
 #line 71 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_RANGE;
-		  yyval.node->flags = RANGE_EXACT_UPPER;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_RANGE;
+        yyval.node->flags = RANGE_EXACT_UPPER;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 7:
 #line 79 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_RANGE;
-		  yyval.node->flags = RANGE_EXACT_LOWER;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_RANGE;
+        yyval.node->flags = RANGE_EXACT_LOWER;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 8:
 #line 87 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_RANGE;
-		  yyval.node->flags = RANGE_EXACT_UPPER | RANGE_EXACT_LOWER;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_RANGE;
+        yyval.node->flags = RANGE_EXACT_UPPER | RANGE_EXACT_LOWER;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 9:
 #line 95 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_ADD;
+        yyval.node->type = NODETYPE_ADD;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 10:
 #line 103 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_SUB;
+        yyval.node->type = NODETYPE_SUB;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 11:
 #line 111 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_SUB;
-		  yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_SUB;
+        yyval.node->pos = yyvsp[-1].pos;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = new_node(0);
-		  yyval.node->expr[0]->type = NODETYPE_REAL;
-		  yyval.node->expr[0]->real = 0.0;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->expr[0] = new_node(0);
+        yyval.node->expr[0]->type = NODETYPE_REAL;
+        yyval.node->expr[0]->real = 0.0;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 12:
 #line 121 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_MUL;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_MUL;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 13:
 #line 129 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_DIV;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_DIV;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 14:
 #line 137 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_POW;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_POW;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 15:
 #line 145 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_LT;
+        yyval.node->type = NODETYPE_LT;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 16:
 #line 153 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_LE;
+        yyval.node->type = NODETYPE_LE;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 17:
 #line 161 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_GT;
+        yyval.node->type = NODETYPE_GT;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 18:
 #line 169 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_GE;
+        yyval.node->type = NODETYPE_GE;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 19:
 #line 177 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_EQ;
+        yyval.node->type = NODETYPE_EQ;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 20:
 #line 185 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_NE;
+        yyval.node->type = NODETYPE_NE;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 21:
 #line 193 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_AND;
+        yyval.node->type = NODETYPE_AND;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 22:
 #line 201 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_OR;
+        yyval.node->type = NODETYPE_OR;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 23:
 #line 209 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_INDEX;
-		  yyval.node->pos = yyvsp[0].pos;
-		  yyval.node->expr[0] = yyvsp[-3].node;
-		  yyval.node->expr[1] = yyvsp[-1].node; ;
+        yyval.node->type = NODETYPE_INDEX;
+        yyval.node->pos = yyvsp[0].pos;
+        yyval.node->expr[0] = yyvsp[-3].node;
+        yyval.node->expr[1] = yyvsp[-1].node; ;
     break;}
 case 24:
 #line 216 "gram.y"
@@ -1068,168 +1068,168 @@ case 24:
 case 25:
 #line 219 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_NOT;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_NOT;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 26:
 #line 226 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_SUM;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_SUM;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 27:
 #line 232 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_AVG;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_AVG;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 28:
 #line 238 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_LEN;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_LEN;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 29:
 #line 244 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_MAX;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_MAX;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 30:
 #line 250 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_MIN;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_MIN;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 31:
 #line 256 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_ISNAN;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_ISNAN;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 32:
 #line 263 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_SQRT;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_SQRT;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 33:
 #line 270 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_ABS;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_ABS;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 34:
 #line 277 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_EXP;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_EXP;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 35:
 #line 284 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_LOG;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_LOG;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 36:
 #line 291 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_SIN;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_SIN;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 37:
 #line 298 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_COS;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_COS;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 38:
 #line 305 "gram.y"
 { yyval.node = new_node(3);
-		  yyval.node->pos = yyvsp[-7].pos;
-		  yyval.node->type = NODETYPE_CLAMP;
+        yyval.node->pos = yyvsp[-7].pos;
+        yyval.node->type = NODETYPE_CLAMP;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[-5].node;
-		  yyval.node->expr[1] = yyvsp[-3].node;
-		  yyval.node->expr[2] = yyvsp[-1].node; ;
+        yyval.node->expr[0] = yyvsp[-5].node;
+        yyval.node->expr[1] = yyvsp[-3].node;
+        yyval.node->expr[2] = yyvsp[-1].node; ;
     break;}
 case 39:
 #line 314 "gram.y"
 { yyval.node = new_node(3);
-		  yyval.node->pos = yyvsp[-7].pos;
-		  yyval.node->type = NODETYPE_SEGMENT;
+        yyval.node->pos = yyvsp[-7].pos;
+        yyval.node->type = NODETYPE_SEGMENT;
         yyval.node->flags |= ALLARGS_SCALAR;
-		  yyval.node->expr[0] = yyvsp[-5].node;
-		  yyval.node->expr[1] = yyvsp[-3].node;
-		  yyval.node->expr[2] = yyvsp[-1].node; ;
+        yyval.node->expr[0] = yyvsp[-5].node;
+        yyval.node->expr[1] = yyvsp[-3].node;
+        yyval.node->expr[2] = yyvsp[-1].node; ;
     break;}
 case 40:
 #line 323 "gram.y"
 { yyval.node = new_node(0);
-		  yyval.node->type = NODETYPE_IDENT;
-		  yyval.node->pos = -1;
-		  yyval.node->ident = yyvsp[0].ident; ;
+        yyval.node->type = NODETYPE_IDENT;
+        yyval.node->pos = -1;
+        yyval.node->ident = yyvsp[0].ident; ;
     break;}
 case 41:
 #line 329 "gram.y"
 { yyval.node = new_node(0);
-		  yyval.node->pos = -1;
-		  yyval.node->type = NODETYPE_REAL;
-		  yyval.node->real = yyvsp[0].real; ;
+        yyval.node->pos = -1;
+        yyval.node->type = NODETYPE_REAL;
+        yyval.node->real = yyvsp[0].real; ;
     break;}
 case 42:
 #line 338 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->type = NODETYPE_LET;
-		  yyval.node->pos = yyvsp[-3].pos;
-		  yyval.node->ident = yyvsp[-4].ident;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->type = NODETYPE_LET;
+        yyval.node->pos = yyvsp[-3].pos;
+        yyval.node->ident = yyvsp[-4].ident;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 43:
 #line 345 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->pos = yyvsp[-3].pos;
-		  yyval.node->type = NODETYPE_LET;
-		  yyval.node->ident = yyvsp[-4].ident;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-3].pos;
+        yyval.node->type = NODETYPE_LET;
+        yyval.node->ident = yyvsp[-4].ident;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 case 44:
 #line 354 "gram.y"
 { yyval.node = new_node(1);
-		  yyval.node->pos = yyvsp[0].node->pos;
-		  yyval.node->type = NODETYPE_VEC1;
-		  yyval.node->expr[0] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[0].node->pos;
+        yyval.node->type = NODETYPE_VEC1;
+        yyval.node->expr[0] = yyvsp[0].node; ;
     break;}
 case 45:
 #line 359 "gram.y"
 { yyval.node = new_node(2);
-		  yyval.node->pos = yyvsp[-1].pos;
-		  yyval.node->type = NODETYPE_VEC2;
-		  yyval.node->expr[0] = yyvsp[-2].node;
-		  yyval.node->expr[1] = yyvsp[0].node; ;
+        yyval.node->pos = yyvsp[-1].pos;
+        yyval.node->type = NODETYPE_VEC2;
+        yyval.node->expr[0] = yyvsp[-2].node;
+        yyval.node->expr[1] = yyvsp[0].node; ;
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
@@ -1460,9 +1460,9 @@ node_t root;
 
 void
 yyerror(msg)
-	const char *msg;
+   const char *msg;
 {
-	extern int lexpos;
+   extern int lexpos;
 
-	show_error(lexpos, msg);
+   show_error(lexpos, msg);
 }

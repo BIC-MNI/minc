@@ -1,8 +1,8 @@
 typedef union{
-int		pos;
-node_t 		node;
-float		real;
-ident_t		ident;
+int      pos;
+node_t   node;
+float    real;
+ident_t  ident;
 } YYSTYPE;
 #define	IN	257
 #define	TO	258
