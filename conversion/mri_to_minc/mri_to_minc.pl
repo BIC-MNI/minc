@@ -119,6 +119,18 @@ sub unpack_value {
     return unpack("x$offset $type", $string);
 }
 
+# Subroutine to add an optional attribute to an array
+sub add_optional_attribute {
+    if (scalar(@_) != 3) {
+        die "Argument error in add_optional_attribute\n";
+    }
+    local(*array, $name, $value) = @_;
+
+    if (length($value) > 0) {
+        push(@array, "-attribute", $name."=".$value);
+    }
+}
+
 # Subroutine to create a minc file
 sub create_mincfile {
     if (scalar(@_) != 5) {
@@ -193,16 +205,20 @@ sub create_mincfile {
     }
 
     # Set up rawtominc command
+
+    # Dimension info
     local($nrows, $ncols, $orientation, $pixel_size);
-    local($xstep, $ystep, $zstep, $xstart, $ystart, $zstart);
-    local($orient_flag);
+    local($xstep, $ystep, $zstep);
     $pixel_size = $mincinfo{'pixel_size'};
     $nrows = $mincinfo{'height'};
     $ncols = $mincinfo{'width'};
     $xstep = $mincinfo{'colstep'};
     $ystep = $mincinfo{'rowstep'};
     $zstep = $slicestep;
-    $orient_flag = $mincinfo{'orientation'};
+
+    # Orientation
+    local($xstart, $ystart, $zstart);
+    local($orient_flag) = $mincinfo{'orientation'};
     if ($orient_flag eq 'sagittal') {    # Sagittal
         ($ystep, $zstep, $xstep) = 
             ($mincinfo{'colstep'}, $mincinfo{'rowstep'}, $slicestep);
@@ -221,27 +237,58 @@ sub create_mincfile {
         ($xstart, $ystart, $zstart) = (0, 0, $slicestart);
         $orientation = "-transverse";
     }
-    if (length($mincinfo{'ge_pseq'}) > 0) {
-        $ge_specific_attributes = 
-            "-attribute ge_mrimage:pseq='".$mincinfo{'ge_pseq'}."' ".
-                "-attribute ge_mrimage:pseqmode='".$mincinfo{'ge_pseqmode'};
-    }
-    else {
-        $ge_specific_attributes = "";
-    }
-    open(MINC, "|rawtominc $mincfile $nslices $nrows $ncols -noclobber ".
-         "-scan_range -short -obyte $orientation ".
-         "-xstep $xstep -ystep $ystep -zstep $zstep ".
-         "-xstart $xstart -ystart $ystart -zstart $zstart ".
-         "-mri -attribute patient:full_name='".$mincinfo{'patient_name'}."' ".
-         "-attribute acquisition:repetition_time='".$mincinfo{'tr'}."' ".
-         "-attribute acquisition:echo_time='".$mincinfo{'te',$echo}."' ".
-         "-attribute acquisition:inversion_time='".$mincinfo{'ti'}."' ".
-         "-attribute acquisition:flip_angle='".$mincinfo{'mr_flip'}."' ".
-         "-attribute acquisition:scanning_sequence='".$mincinfo{'scan_seq'}.
-         "' ". 
-         $ge_specific_attributes .
-         "");
+
+    # Optional attributes
+    local(@optional_attributes) = ();
+    &add_optional_attribute(*optional_attributes, 
+                            "acquisition:repetition_time", $mincinfo{'tr'});
+    &add_optional_attribute(*optional_attributes, 
+                            "acquisition:echo_time", $mincinfo{'te',$echo});
+    &add_optional_attribute(*optional_attributes,
+                            "acquisition:inversion_time", $mincinfo{'ti'});
+    &add_optional_attribute(*optional_attributes, 
+                            "acquisition:flip_angle", $mincinfo{'mr_flip'});
+    &add_optional_attribute(*optional_attributes, 
+                            "acquisition:scanning_sequence", 
+                            $mincinfo{'scan_seq'});
+    &add_optional_attribute(*optional_attributes, 
+                            "study:study_id", $mincinfo{'exam'});
+    &add_optional_attribute(*optional_attributes, 
+                            "study:acquisition_id", $mincinfo{'series'});
+    &add_optional_attribute(*optional_attributes, 
+                            "study:start_time", $mincinfo{'start_time'});
+    &add_optional_attribute(*optional_attributes, 
+                            "study:institution", $mincinfo{'institution'});
+    &add_optional_attribute(*optional_attributes, 
+                            "patient:birthdate", 
+                            $mincinfo{'patient_birthdate'});
+    &add_optional_attribute(*optional_attributes, 
+                            "patient:age", $mincinfo{'patient_age'});
+    &add_optional_attribute(*optional_attributes, 
+                            "patient:sex", $mincinfo{'patient_sex'});
+    &add_optional_attribute(*optional_attributes, 
+                            "patient:identification", $mincinfo{'patient_id'});
+
+    # GE specific stuff
+    local(@ge_specific_attributes);
+    @ge_specific_attributes = ();
+    &add_optional_attribute(*ge_specific_attributes,
+                            "ge_mrimage:pseq", $mincinfo{'ge_pseq'});
+    &add_optional_attribute(*ge_specific_attributes,
+                            "ge_mrimage:pseqmode", $mincinfo{'ge_pseqmode'});
+
+    # Run rawtominc with appropriate arguments
+    $| = 1;
+    open(MINC, "|-") || exec
+        ("rawtominc", $mincfile, $nslices, $nrows, $ncols, "-noclobber",
+         "-scan_range", "-short", "-obyte", $orientation,
+         "-xstep", $xstep, "-ystep", $ystep, "-zstep", $zstep,
+         "-xstart", $xstart, "-ystart", $ystart, "-zstart", $zstart,
+         "-mri", 
+         "-attribute", "patient:full_name=".$mincinfo{'patient_name'},
+         @optional_attributes,
+         @ge_specific_attributes,
+         );
 
     # Get keys for machine specific file info
     local(@specific_keys, %specific_keys, $key);
@@ -430,6 +477,12 @@ sub mri_to_minc {
             $mincinfo{'scan_seq'} = $file_info{'scan_seq'};
             $mincinfo{'ge_pseq'} = $file_info{'ge_pseq'};
             $mincinfo{'ge_pseqmode'} = $file_info{'ge_pseqmode'};
+            $mincinfo{'start_time'} = $file_info{'start_time'};
+            $mincinfo{'institution'} = $file_info{'institution'};
+            $mincinfo{'patient_birthdate'} = $file_info{'patient_birthdate'};
+            $mincinfo{'patient_age'} = $file_info{'patient_age'};
+            $mincinfo{'patient_sex'} = $file_info{'patient_sex'};
+            $mincinfo{'patient_id'} = $file_info{'patient_id'};
         }
         else {
             if (($cur_width != $mincinfo{'width'}) || # 
