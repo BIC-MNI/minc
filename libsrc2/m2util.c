@@ -364,3 +364,172 @@ mitransform_coord(double out_coord[],
         out_coord[i] = out_homogeneous[i];
     }
 }
+
+/** Generic HDF5 integer-to-double converter.
+ */
+static herr_t 
+mi2_int_to_dbl(hid_t src_id,
+               hid_t dst_id,
+               H5T_cdata_t *cdata,
+               hsize_t nelements,
+               size_t buf_stride,
+               size_t bkg_stride,
+               void *buf_ptr,
+               void *bkg_ptr,
+               hid_t dset_xfer_plist)
+{
+    double *dptr;
+    unsigned char *sptr;
+    int i;
+    int nb;
+    H5T_sign_t sg;
+    double t;
+
+    switch (cdata->command) {
+    case H5T_CONV_INIT:
+	nb = H5Tget_size(src_id);
+	if (nb != 1 && nb != 2 && nb != 4) {
+	    return (-1);
+	}
+	break;
+
+    case H5T_CONV_CONV:
+	nb = H5Tget_size(src_id);
+	sg = H5Tget_sign(src_id);
+
+        /* Convert starting from "far side" of buffer... (Hope this works!)
+         */
+        dptr = ((double *) buf_ptr) + nelements;
+	sptr = ((unsigned char *) buf_ptr) + (nelements * nb);
+
+	if (sg == H5T_SGN_2) {
+	    for (i = 0; i < nelements; i++) {
+		sptr -= nb;
+		if (nb == 4) {
+		    t = *((int *)sptr);
+		}
+		else if (nb == 2) {
+		    t = *((short *)sptr);
+		}
+		else if (nb == 1) {
+		    t = *((char *)sptr);
+		}
+                *--dptr = t;
+	    }
+	}
+	else {
+	    for (i = 0; i < nelements; i++) {
+		sptr -= nb;
+		if (nb == 4) {
+		    t = *((unsigned int *)sptr);
+		}
+		else if (nb == 2) {
+		    t = *((unsigned short *)sptr);
+		}
+		else if (nb == 1) {
+		    t = *((unsigned char *)sptr);
+		}
+                *--dptr = t;
+	    }
+	}
+	break;
+
+    case H5T_CONV_FREE:
+	break;
+
+    default:
+	/* Unknown command */
+	return (-1);
+    }
+    return (0);
+}
+
+/** Generic HDF5 double-to-integer converter.
+ */
+static herr_t 
+mi2_dbl_to_int(hid_t src_id,
+               hid_t dst_id,
+               H5T_cdata_t *cdata,
+               hsize_t nelements,
+               size_t buf_stride,
+               size_t bkg_stride,
+               void *buf_ptr,
+               void *bkg_ptr,
+               hid_t dset_xfer_plist)
+{
+    unsigned char *uptr;
+    double *dptr;
+    int i;
+    int nb;
+    H5T_sign_t sg;
+    double t;                   /* Signed data */
+
+    switch (cdata->command) {
+    case H5T_CONV_INIT:
+	nb = H5Tget_size(src_id);
+        fprintf(stderr, "d2i(INIT): %d\n", nb);
+	if (nb != 8) {
+	    return (-1);
+	}
+	break;
+
+    case H5T_CONV_CONV:
+	nb = H5Tget_size(dst_id);
+	sg = H5Tget_sign(dst_id);
+	uptr = (unsigned char *) buf_ptr;
+	dptr = (double *) buf_ptr;
+
+	if (sg == H5T_SGN_2) {
+	    for (i = 0; i < nelements; i++) {
+                t = rint(*dptr++);
+		if (nb == 4) {
+		    *((int *)uptr) = (int) t;
+		}
+		else if (nb == 2) {
+		    *((short *)uptr) = (short) t;
+		}
+		else if (nb == 1) {
+                    *((char *)uptr) = (char) t;
+		}
+		uptr += nb;
+	    }
+	}
+	else {
+	    for (i = 0; i < nelements; i++) {
+                t = rint(*dptr++);
+		if (nb == 4) {
+		    *((unsigned int *)uptr) = (unsigned int) t;
+		}
+		else if (nb == 2) {
+		    *((unsigned short *)uptr) = (unsigned short) t;
+		}
+		else if (nb == 1) {
+		    *((unsigned char *)uptr) = (unsigned char) t;
+		}
+		uptr += nb;
+	    }
+	}
+	break;
+
+    case H5T_CONV_FREE:
+	break;
+
+    default:
+	/* Unknown command */
+	return (-1);
+    }
+    return (0);
+}
+
+/** Initialize some critical pieces of the library.
+ */
+void
+miinit(void)
+{
+    H5Tregister(H5T_PERS_SOFT, "i2d", H5T_NATIVE_INT, H5T_NATIVE_DOUBLE,
+                mi2_int_to_dbl);
+    
+    H5Tregister(H5T_PERS_SOFT, "d2i", H5T_NATIVE_DOUBLE, H5T_NATIVE_INT,
+                mi2_dbl_to_int);
+}
+
