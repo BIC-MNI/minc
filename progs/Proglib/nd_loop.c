@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: nd_loop.c,v $
-@MODIFIED   : Revision 1.1  1994-12-02 08:40:12  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-12-02 09:19:59  neelin
+@MODIFIED   : Added comments to clarify use of routines.
 @MODIFIED   :
+ * Revision 1.1  94/12/02  08:40:12  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1994 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -21,7 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 1.1 1994-12-02 08:40:12 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/nd_loop.c,v 1.2 1994-12-02 09:19:59 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -67,9 +70,9 @@ public void nd_begin_looping(long start[], long current[], int ndims)
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int nd_end_of_loop(long start[], long end[], int ndims)
+public int nd_end_of_loop(long current[], long end[], int ndims)
 { /* ARGSUSED */
-   return (start[0] >= end[0]);
+   return (current[0] >= end[0]);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
