@@ -1,5 +1,10 @@
 #!/usr/local/bin/perl5
 
+# Louis Collins - louis@bic.mni.mcgill.ca
+#
+# Mon Mar 18 21:29:24 EST 2002 - shifted to CVS - Andrew Janke
+
+
 sub thrupipe {
    if (@_ != 3) {
       die "thrupipe : Incorrect number of arguments\n";
