@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.16 1995-07-31 13:44:39 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.17 1995-08-04 15:32:13 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -557,7 +557,7 @@ static  BOOLEAN  enabled_initialized = FALSE;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  alloc_checking_enabled( void )
+public  BOOLEAN  alloc_checking_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -687,7 +687,7 @@ private  int  get_current_sequence_number()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  record_ptr(
+public  void  record_ptr_alloc_check(
     void      *ptr,
     size_t    n_bytes,
     char      source_file[],
@@ -755,7 +755,7 @@ public  void  record_ptr(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  change_ptr(
+public  void  change_ptr_alloc_check(
     void      *old_ptr,
     void      *new_ptr,
     size_t    n_bytes,
@@ -825,7 +825,7 @@ public  void  change_ptr(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  unrecord_ptr(
+public  BOOLEAN  unrecord_ptr_alloc_check(
     void   *ptr,
     char   source_file[],
     int    line_number )

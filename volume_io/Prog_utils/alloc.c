@@ -13,17 +13,43 @@
 ---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
+#include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.15 1995-08-02 19:21:50 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.17 1995-08-04 15:33:39 david Exp $";
 #endif
 
-private    void       record_alloc( size_t );
-private    void       record_realloc( size_t );
-private    void       record_free( void );
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_up_array_pointers_2D
+@INPUT      : ptr
+              n1
+              n2
+              type_size
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Given a pointer allocated for 2D, creates the 1st level
+              pointers.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  set_up_array_pointers_2D(
+    void      **ptr,
+    size_t    n1,
+    size_t    n2,
+    size_t    type_size )
+{
+    size_t   i;
+
+    for_less( i, 1, n1 )
+        ptr[i] = (void *) ((long) ptr[i-1] + n2 * type_size);
+}
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : alloc_memory
+@NAME       : private_alloc_memory
 @INPUT      : n_bytes
 @OUTPUT     : ptr
 @RETURNS    : 
@@ -31,11 +57,11 @@ private    void       record_free( void );
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    :                      David MacDonald
+@CREATED    : Aug.  2, 1995        David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory(
+private  Status  private_alloc_memory(
     void         **ptr,
     size_t       n_bytes )
 {
@@ -43,23 +69,467 @@ public  void  alloc_memory(
     {
         *ptr = (void *) malloc( n_bytes );
 
-        if( *ptr == (void *) 0 )
-        {
-            print_error( "Error alloc_memory: out of memory, %d bytes.\n",
-                         n_bytes );
-            abort();
-        }
+        if( *ptr == NULL )
+            return( ERROR );
     }
     else
         *ptr = NULL;
 
-    record_alloc( n_bytes );
+    return( OK );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_alloc_memory_2d
+@INPUT      : n1
+              n2
+              type_size
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates the specified number of 2d elements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995        David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  private_alloc_memory_2d(
+    void         ***ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       type_size )
+{
+    if( private_alloc_memory( (void **) ptr, n1 * sizeof(**ptr) ) != OK ||
+        private_alloc_memory( *ptr, n1 * n2 * type_size ) != OK )
+    {
+        return( ERROR );
+    }
+
+    set_up_array_pointers_2D( *ptr, n1, n2, type_size );
+
+    return( OK );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_alloc_memory_3d
+@INPUT      : n1
+              n2
+              n3
+              type_size
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates the specified number of 3d elements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995        David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  private_alloc_memory_3d(
+    void         ****ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       type_size )
+{
+    if( private_alloc_memory_2d( (void ***) ptr, n1, n2, sizeof(***ptr) )!= OK||
+        private_alloc_memory( **ptr, n1 * n2 * n3 * type_size ) != OK)
+    {
+        return( ERROR );
+    }
+
+    set_up_array_pointers_2D( **ptr, n1 * n2, n3, type_size );
+
+    return( OK );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_alloc_memory_4d
+@INPUT      : n1
+              n2
+              n3
+              n4
+              type_size
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates the specified number of 4d elements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995        David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  private_alloc_memory_4d(
+    void         *****ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       n4,
+    size_t       type_size )
+{
+    if( private_alloc_memory_3d( (void ****) ptr, n1, n2, n3,
+                                 sizeof(****ptr) )!= OK ||
+        private_alloc_memory( ***ptr, n1 * n2 * n3 * n4 * type_size ) != OK )
+    {
+        return( ERROR );
+    }
+
+    set_up_array_pointers_2D( ***ptr, n1 * n2 * n3, n4, type_size );
+
+    return( OK );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_alloc_memory_5d
+@INPUT      : n1
+              n2
+              n3
+              n4
+              n5
+              type_size
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates the specified number of 5d elements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995        David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Status  private_alloc_memory_5d(
+    void         ******ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       n4,
+    size_t       n5,
+    size_t       type_size )
+{
+    if( private_alloc_memory_4d( (void *****) ptr, n1, n2, n3, n4,
+                                 sizeof(*****ptr) )!= OK ||
+        private_alloc_memory( ****ptr, n1 * n2 * n3 * n4 * n5 * type_size )!=OK)
+    {
+        return( ERROR );
+    }
+
+    set_up_array_pointers_2D( ****ptr, n1 * n2 * n3 * n4, n5, type_size );
+
+    return( OK );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_in_bytes
+@INPUT      : n_bytes
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates the specified amount of memory, and if successful,
+              calls the routine to record the memory allocated.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_in_bytes(
+    void         **ptr,
+    size_t       n_bytes
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory( ptr, n_bytes ) != OK )
+    {
+        print_error( "Cannot alloc 1D array of %d bytes.\n", n_bytes );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+        record_ptr_alloc_check( *ptr, n_bytes, filename, line_number );
+#endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_1d
+@INPUT      : n_elements
+              type_size
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates a 1D array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_1d(
+    void         **ptr,
+    size_t       n_elements,
+    size_t       type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory( ptr, n_elements * type_size ) != OK )
+    {
+        print_error( "Cannot alloc 1D array of %d elements of %d bytes.\n",
+                     n_elements, type_size );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+        record_ptr_alloc_check( *ptr, n_elements * type_size,
+                                filename, line_number );
+#endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_2d
+@INPUT      : n1
+              n2
+              type_size
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates a 2D array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_2d(
+    void         ***ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory_2d( ptr, n1, n2, type_size ) != OK )
+    {
+        print_error( "Cannot alloc 2D array of %d by %d elements of %d bytes.\n",
+                     n1, n2, type_size );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+    {
+        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( **ptr, n1 * n2 * type_size,
+                                filename, line_number );
+    }
+#endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_3d
+@INPUT      : n1
+              n2
+              n3
+              type_size
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates a 3D array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_3d(
+    void         ****ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory_3d( ptr, n1, n2, n3, type_size ) != OK )
+    {
+        print_error( "Cannot alloc 3D array of %d by %d by %d elements of %d bytes.\n",
+                     n1, n2, n3, type_size );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+    {
+        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * type_size,
+                                filename, line_number );
+    }
+#endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_4d
+@INPUT      : n1
+              n2
+              n3
+              n4
+              type_size
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates a 4D array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_4d(
+    void         *****ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       n4,
+    size_t       type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory_4d( ptr, n1, n2, n3, n4, type_size ) != OK )
+    {
+        print_error( "Cannot alloc 4D array of %d by %d by %d by %d elements of %d bytes.\n",
+                     n1, n2, n3, n4, type_size );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+    {
+        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * sizeof(****ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * type_size,
+                                filename, line_number );
+    }
+#endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_memory_5d
+@INPUT      : n1
+              n2
+              n3
+              n4
+              n5
+              type_size
+              filename
+              line_number
+@OUTPUT     : ptr
+@RETURNS    : 
+@DESCRIPTION: Allocates a 5D array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_memory_5d(
+    void         ******ptr,
+    size_t       n1,
+    size_t       n2,
+    size_t       n3,
+    size_t       n4,
+    size_t       n5,
+    size_t       type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                             )
+{
+    if( private_alloc_memory_5d( ptr, n1, n2, n3, n4, n5, type_size ) != OK )
+    {
+        print_error( "Cannot alloc 4D array of %d by %d by %d by %d by %d elements of %d bytes.\n",
+                     n1, n2, n3, n4, n5, type_size );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+        abort_if_allowed();
+    }
+#ifndef  NO_DEBUG_ALLOC
+    else
+    {
+        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * sizeof(****ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * sizeof(*****ptr),
+                                filename, line_number );
+        record_ptr_alloc_check( *****ptr, n1 * n2 * n3 * n4 * n5 * type_size,
+                                filename, line_number );
+    }
+#endif
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : realloc_memory
 @INPUT      : ptr
-            : n_bytes
+              n_elements
+              type_size
+              filename
+              line_number
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Reallocates the ptr.
@@ -72,26 +542,157 @@ public  void  alloc_memory(
 
 public  void  realloc_memory(
     void      **ptr,
-    size_t    n_bytes )
+    size_t    n_elements,
+    size_t    type_size
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                            )
 {
-    if( n_bytes != 0 )
-    {
-        *ptr = (void *) realloc( *ptr, n_bytes );
+#ifndef  NO_DEBUG_ALLOC
+    void   *old_ptr = *ptr;
+#endif
 
-        if( *ptr == (void *) 0 )
+    if( n_elements != 0 )
+    {
+        *ptr = (void *) realloc( *ptr, n_elements * type_size );
+
+        if( *ptr == NULL )
         {
-            print_error( "Error realloc_memory: out of memory, %d bytes.\n",
-                         n_bytes );
+            print_error( "Error reallocing %d elements of size %d.\n",
+                         n_elements, type_size );
+#ifndef  NO_DEBUG_ALLOC
+            print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
             abort_if_allowed();
         }
-    }
 
-    record_realloc( n_bytes );
+#ifndef  NO_DEBUG_ALLOC
+        change_ptr_alloc_check( old_ptr, *ptr, n_elements * type_size,
+                                filename, line_number );
+#endif
+    }
+    else
+    {
+        print_error("Error: tried to realloc invalid number of elements, %d.\n",
+                     n_elements );
+#ifndef  NO_DEBUG_ALLOC
+        print_error( "   in source file %s:%d\n", filename, line_number );
+#endif
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : free_memory
+@NAME       : private_free_memory_1d
 @INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  private_free_memory_1d(
+    void   **ptr)
+{
+    if( *ptr != NULL )
+    {
+        free( *ptr );
+
+        *ptr = NULL;
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_free_memory_2d
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  private_free_memory_2d(
+    void   ***ptr)
+{
+    private_free_memory_1d( *ptr );
+    private_free_memory_1d( (void **) ptr );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_free_memory_3d
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  private_free_memory_3d(
+    void   ****ptr)
+{
+    private_free_memory_1d( **ptr );
+    private_free_memory_2d( (void ***) ptr );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_free_memory_4d
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  private_free_memory_4d(
+    void   *****ptr)
+{
+    private_free_memory_1d( ***ptr );
+    private_free_memory_3d( (void ****) ptr );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : private_free_memory_5d
+@INPUT      : ptr
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the array and assigns the pointer to NULL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Aug.  2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  private_free_memory_5d(
+    void   ******ptr)
+{
+    private_free_memory_1d( ****ptr );
+    private_free_memory_4d( (void *****) ptr );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_memory_1d
+@INPUT      : ptr
+              filename
+              line_number
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Frees the pointer, and sets it to NIL.
@@ -102,183 +703,147 @@ public  void  realloc_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory( void   **ptr )
+public  void  free_memory_1d(
+    void   **ptr
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                         )
 {
-    record_free();
-
-    if( *ptr != (void *) 0 )
-    {
-        free( *ptr );
-
-        *ptr = (void *) 0;
-    }
-}
-
-#include  <stdio.h>
-
-private  FILE  *file;
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : writing_alloc_debug
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : TRUE if saving debug info
-@DESCRIPTION: 
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 1993            David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  BOOLEAN  writing_alloc_debug( void )
-{
-    static   BOOLEAN   first = TRUE;
-    static   BOOLEAN   writing = FALSE;
-    char               *filename;
-
-    if( first )
-    {
-        first = FALSE;
-        filename = getenv( "ALLOC_OUTPUT_FILE" );
-
-        if( filename != (char *) 0 )
-        {
-            file = fopen( filename, "w" );
-
-            if( file != (FILE *) 0 )
-                writing = TRUE;
-        }
-    }
-
-    return( writing );
+#ifndef  NO_DEBUG_ALLOC
+    if( unrecord_ptr_alloc_check( *ptr, filename, line_number ) )
+#endif
+        private_free_memory_1d( ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : record_alloc
-@INPUT      : n_bytes
+@NAME       : free_memory_2d
+@INPUT      : ptr
+              filename
+              line_number
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: If enabled, prints out the amount of memory allocated.
+@DESCRIPTION: Frees the pointer, and sets it to NIL.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  record_alloc(
-    size_t  n_bytes )
+public  void  free_memory_2d(
+    void   ***ptr
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                         )
 {
-    if( writing_alloc_debug() )
-    {
-        (void) fprintf( file, "ALLOC   %20d\n", n_bytes );
-        (void) fflush( file );
-    }
+#ifndef  NO_DEBUG_ALLOC
+    if( unrecord_ptr_alloc_check( **ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
+#endif
+        private_free_memory_2d( ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : record_realloc
-@INPUT      : n_bytes
+@NAME       : free_memory_3d
+@INPUT      : ptr
+              filename
+              line_number
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: If enabled, prints out the amount of memory reallocated.
+@DESCRIPTION: Frees the pointer, and sets it to NIL.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  record_realloc(
-    size_t   n_bytes )
+public  void  free_memory_3d(
+    void   ****ptr
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                         )
 {
-    if( writing_alloc_debug() )
-    {
-        (void) fprintf( file, "REALLOC %20d\n", n_bytes );
-        (void) fflush( file );
-    }
+#ifndef  NO_DEBUG_ALLOC
+    if( unrecord_ptr_alloc_check( ***ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
+#endif
+        private_free_memory_3d( ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : record_free
-@INPUT      : 
+@NAME       : free_memory_4d
+@INPUT      : ptr
+              filename
+              line_number
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: If enabled, prints out that memory was deallocated.
+@DESCRIPTION: Frees the pointer, and sets it to NIL.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    : 1993            David MacDonald
+@CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  record_free( void )
+public  void  free_memory_4d(
+    void   *****ptr
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                         )
 {
-    if( writing_alloc_debug() )
-    {
-        (void) fprintf( file, "FREE\n" );
-        (void) fflush( file );
-    }
+#ifndef  NO_DEBUG_ALLOC
+    if( unrecord_ptr_alloc_check( ****ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) ***ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
+#endif
+        private_free_memory_4d( ptr );
 }
 
-public  void  set_up_array_pointers_2D(
-    void      **ptr,
-    long      n1,
-    long      n2,
-    size_t    type_size )
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_memory_5d
+@INPUT      : ptr
+              filename
+              line_number
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the pointer, and sets it to NIL.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  free_memory_5d(
+    void   ******ptr
+#ifndef NO_DEBUG_ALLOC
+                        ,
+    char         filename[],
+    int          line_number
+#endif
+                         )
 {
-    int   i;
-
-    for_less( i, 1, n1 )
-        ptr[i] = (void *) ((long) ptr[i-1] + n2 * type_size);
-}
-
-#ifdef DELETE_THIS
-public  void  set_up_array_pointers_3D(
-    void      ***ptr,
-    long      n1,
-    long      n2,
-    long      n3,
-    size_t    type_size )
-{
-    int   i, j;
-
-    for_less( i, 0, n1 )
-    {
-        if( i > 0 )
-            ptr[i][0] = (void *) ((long) (ptr[i-1][0]) + n2 * n3 * type_size);
-
-        for_less( j, 1, n2 )
-            ptr[i][j] = (void *) ((long) (ptr[i][j-1]) + n3 * type_size);
-    }
-}
-
-public  void  set_up_array_pointers_4D(
-    void      ****ptr,
-    long      n1,
-    long      n2,
-    long      n3,
-    long      n4,
-    size_t    type_size )
-{
-    int   i, j, k;
-
-    for_less( i, 0, n1 )
-    {
-        if( i > 0 )
-            ptr[i][0][0] = (void *) ((long) (ptr[i-1][0][0]) +
-                                     n2 * n3 * n4 *type_size);
-        for_less( j, 0, n2 )
-        {
-            if( j > 0 )
-                ptr[i][j][0] = (void *) ((long) (ptr[i][j-1][0]) +
-                                         n3 * n4 * type_size);
-            for_less( k, 1, n3 )
-            {
-                ptr[i][j][k] = (void *) ((long) (ptr[i][j][k-1]) +
-                                         n4 * type_size);
-            }
-        }
-    }                                  
+#ifndef  NO_DEBUG_ALLOC
+    if( unrecord_ptr_alloc_check( *****ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) ****ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) ***ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) **ptr, filename, line_number ) &&
+        unrecord_ptr_alloc_check( (void *) *ptr, filename, line_number ) )
+#endif
+        private_free_memory_5d( ptr );
 }
