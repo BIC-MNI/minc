@@ -19,11 +19,8 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.10  2004-06-11 20:55:37  bert
+ * Revision 1.8.2.1  2004-06-11 21:36:53  bert
  * Fix for nasty bug which causes lots of bogus zero values to be inserted when minccalc is used with a file with a vector_dimension
- *
- * Revision 1.9  2004/04/27 15:37:52  bert
- * Added -2 option
  *
  * Revision 1.8  2001/05/24 15:08:40  neelin
  * Added support for comments so that minccalc scripts can be created.
@@ -69,7 +66,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.10 2004-06-11 20:55:37 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.8.2.1 2004-06-11 21:36:53 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -140,18 +137,11 @@ char     *filelist =                   NULL;
 char     *expr_file =                  NULL;
 char     *expression =                 NULL;
 int      eval_width =                  200;
-#ifdef MINC2
-int      minc2_format =                FALSE;
-#endif /* MINC2 defined */
 
 /* Argument table */
 ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "General options:"},
-#ifdef MINC2
-    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
-     "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -368,9 +358,6 @@ public int main(int argc, char *argv[]){
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
-#ifdef MINC2
-   set_loop_v2format(loop_options, minc2_format);
-#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_copy_all_header(loop_options, copy_all_header);
