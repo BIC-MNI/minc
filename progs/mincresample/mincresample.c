@@ -10,9 +10,18 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.1  1995-11-07 15:04:02  neelin
-@MODIFIED   : Modified argument parsing so that only one pass is done.
+@MODIFIED   : Revision 3.2  1995-11-21 14:13:20  neelin
+@MODIFIED   : Transform input sampling with transformation and use this as default.
+@MODIFIED   : Added -tfm_input_sampling to specify above option.
+@MODIFIED   : Added -use_input_sampling to get old behaviour (no longer the default).
+@MODIFIED   : Added -origin option (to specify coordinate instead of start values).
+@MODIFIED   : Added -standard_sampling option (to set standard values of start, step
+@MODIFIED   : and direction cosines).
+@MODIFIED   : Added -invert_transformation option.
 @MODIFIED   :
+ * Revision 3.1  1995/11/07  15:04:02  neelin
+ * Modified argument parsing so that only one pass is done.
+ *
  * Revision 3.0  1995/05/15  19:30:57  neelin
  * Release of minc version 0.3
  *
@@ -86,7 +95,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.1 1995-11-07 15:04:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.2 1995-11-21 14:13:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -100,6 +109,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <time_stamp.h>
 #include <volume_io.h>
 #include <minc_def.h>
+#include <convert_origin_to_start.h>
 #include "mincresample.h"
 
 /* Main program */
@@ -147,15 +157,17 @@ public void get_arginfo(int argc, char *argv[],
                         General_transform *transformation)
 {
    /* Argument parsing information */
+   static int transform_input_sampling = TRUE;
    static Arg_Data args={
       FALSE,                  /* Clobber */
       NC_UNSPECIFIED,         /* Flag that type not set */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
+      {NO_VALUE, NO_VALUE, NO_VALUE}, /* Flag indicating that origin not set */
       {TRUE},                 /* Verbose */
       trilinear_interpolant,
-      {NULL, NULL, 0, NULL},  /* Transformation info is empty at beginning.
+      {FALSE, NULL, NULL, 0, NULL}, /* Transformation info is empty at start.
                                  Transformation must be set before invoking
                                  argument parsing */
       {                       /* Use flags to indicate that values not set */
@@ -188,9 +200,24 @@ public void get_arginfo(int argc, char *argv[],
       {"-transformation", ARGV_FUNC, (char *) get_transformation, 
           (char *) &args.transform_info,
           "File giving world transformation. (Default = identity)."},
+      {"-invert_transformation", ARGV_CONSTANT, (char *) TRUE,
+          (char *) &args.transform_info.invert_transform,
+          "Invert the transformation before using it.\n"},
+      {"-noinvert_transformation", ARGV_CONSTANT, (char *) FALSE,
+          (char *) &args.transform_info.invert_transform,
+          "Do not invert the transformation (default).\n"},
+      {"-tfm_input_sampling", ARGV_CONSTANT, (char *) TRUE,
+          (char *) &transform_input_sampling,
+          "Transform the input sampling with the transform (default).\n"},
+      {"-use_input_sampling", ARGV_CONSTANT, (char *) FALSE,
+          (char *) &transform_input_sampling,
+          "Use the input sampling without transforming (old behaviour).\n"},
       {"-like", ARGV_FUNC, (char *) get_model_file, 
           (char *) &args.volume_def,
           "Specifies a model file for the resampling."},
+      {"-standard_sampling", ARGV_FUNC, (char *) set_standard_sampling, 
+          (char *) &args.volume_def,
+          "Set the sampling to standard values (step, start and dircos)."},
       {"-nelements", ARGV_INT, (char *) 3, 
           (char *) args.volume_def.nelements,
           "Number of elements along each dimension (X, Y, Z)"},
@@ -239,6 +266,8 @@ public void get_arginfo(int argc, char *argv[],
       {"-zdircos", ARGV_FLOAT, (char *) 3, 
           (char *) args.volume_def.dircos[Z],
           "Direction cosines along the Z dimension"},
+      {"-origin", ARGV_FLOAT, (char *) 3, (char *) args.origin,
+          "Origin of first pixel in 3D space"},
       {"-transverse", ARGV_FUNC, (char *) get_axis_order, 
           (char *) &args.volume_def,
           "Write out transverse slices"},
@@ -286,18 +315,19 @@ public void get_arginfo(int argc, char *argv[],
    };
 
    /* Other variables */
-   int iarg, idim, index;
+   int idim, index;
    int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
    int in_findex, out_findex;  /* File indices (0 to ndims-1) */
    long size, total_size;
    char *infile, *outfile;
    File_Info *fp;
    char *tm_stamp, *pname;
-   Volume_Definition input_volume_def;
+   Volume_Definition input_volume_def, transformed_volume_def;
+   General_transform input_transformation;
 
    /* Initialize the transformation to identity */
-   create_linear_transform(transformation, NULL);
-   args.transform_info.transformation = transformation;
+   create_linear_transform(&input_transformation, NULL);
+   args.transform_info.transformation = &input_transformation;
 
    /* Get the time stamp */
    tm_stamp = time_stamp(argc, argv);
@@ -316,10 +346,50 @@ public void get_arginfo(int argc, char *argv[],
    infile = argv[1];
    outfile = argv[2];
 
+   /* Check for an inverted transform. This looks backwards because we 
+      normally invert the transform. */
+   if (args.transform_info.invert_transform) {
+      copy_general_transform(args.transform_info.transformation,
+                             transformation);
+   }
+   else {
+      create_inverse_general_transform(args.transform_info.transformation,
+                                       transformation);
+   }
+   args.transform_info.transformation = transformation;
+
+   /* Get rid of the input transformation */
+   delete_general_transform(&input_transformation);
+
    /* Check input file for default argument information */
    in_vol->file = MALLOC(sizeof(File_Info));
    get_file_info(infile, &input_volume_def, in_vol->file);
-   get_args_volume_def(&input_volume_def, &args.volume_def);
+   transform_volume_def((transform_input_sampling ? 
+                         &args.transform_info : NULL), 
+                        &input_volume_def, 
+                        &transformed_volume_def);
+   get_args_volume_def(&transformed_volume_def, &args.volume_def);
+
+   /* Check that direction cosines are normalized and look for origin 
+      option */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      normalize_vector(args.volume_def.dircos[idim]);
+      if (is_zero_vector(args.volume_def.dircos[idim])) {
+         (void) fprintf(stderr, "Bad direction cosines.\n");
+         exit(EXIT_FAILURE);
+      }
+   }
+   if (args.origin[0] != NO_VALUE) {
+      if (convert_origin_to_start(args.origin,
+                                  args.volume_def.dircos[XCOORD],
+                                  args.volume_def.dircos[YCOORD],
+                                  args.volume_def.dircos[ZCOORD],
+                                  args.volume_def.start) != 0) {
+         (void) fprintf(stderr, "Error converting origin to start value: ");
+         (void) fprintf(stderr, "Bad direction cosines.\n");
+         exit(EXIT_FAILURE);
+      }
+   }
 
    /* Save the voxel_to_world transformation information */
    in_vol->voxel_to_world = MALLOC(sizeof(General_transform));
@@ -692,6 +762,9 @@ public void get_file_info(char *filename,
                          MI_MAX_ATTSTR_LEN, volume_def->spacetype[cur_axis]);
       ncopts = NC_VERBOSE | NC_FATAL;
 
+      /* Normalize the direction cosine */
+      normalize_vector(volume_def->dircos[cur_axis]);
+
       /* Look for irregular coordinates for dimension variable */
       ncopts = 0;
       coord_spacing = UNKNOWN;
@@ -771,7 +844,10 @@ public void get_args_volume_def(Volume_Definition *input_volume_def,
 {
    int idim, jdim;
 
+   /* Loop over dimensions */
    for (idim=0; idim < WORLD_NDIMS; idim++) {
+
+      /* Copy values, as needed */
       if (args_volume_def->axes[idim] == NO_AXIS)
          args_volume_def->axes[idim] = input_volume_def->axes[idim];
       if (args_volume_def->nelements[idim] == 0)
@@ -791,7 +867,164 @@ public void get_args_volume_def(Volume_Definition *input_volume_def,
       if (strlen(args_volume_def->spacetype[idim]) == 0)
          (void) strcpy(args_volume_def->spacetype[idim],
                         input_volume_def->spacetype[idim]);
+
    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : transform_volume_def
+@INPUT      : transform_info - description of output to input transform
+                 (if NULL, then don't transform).
+              input_volume_def - description of input volume
+@OUTPUT     : transformed_volume_def - description of new output volume
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to copy appropriate information from input volume 
+              definition to a new volume definition, after transformation 
+              from with the output to input transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 7, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void transform_volume_def(Transform_Info *transform_info,
+                                 Volume_Definition *input_volume_def,
+                                 Volume_Definition *transformed_volume_def)
+{
+   int idim, jdim;
+   Coord_Vector origin = {0, 0, 0};
+   Coord_Vector transformed_origin, vector;
+   double length, nelements;
+
+   /* Copy the volume definition */
+   *transformed_volume_def = *input_volume_def;
+
+   /* Modify things if the transform has changed */
+   if ((transform_info != NULL) && (transform_info->file_name != NULL)) {
+
+      /* Set up origin vector */
+      for (idim=0; idim < WORLD_NDIMS; idim++)
+         for (jdim=0; jdim < WORLD_NDIMS; jdim++)
+            origin[idim] += input_volume_def->start[jdim] *
+               input_volume_def->dircos[jdim][idim];
+
+      /* Transform origin vector */
+      DO_INVERSE_TRANSFORM(transformed_origin, 
+                           transform_info->transformation, origin);
+
+      /* Loop over dimensions */
+      for (idim=0; idim < WORLD_NDIMS; idim++) {
+
+         /* Get number of elements */
+         nelements = input_volume_def->nelements[idim] - 1;
+         if (nelements < 1) nelements = 1.0;
+
+         /* Transform whole axis */
+         VECTOR_SCALAR_MULT(vector, input_volume_def->dircos[idim],
+                            nelements * input_volume_def->step[idim]);
+         VECTOR_ADD(vector, vector, origin);
+         DO_INVERSE_TRANSFORM(vector, transform_info->transformation, vector);
+         VECTOR_DIFF(vector, vector, transformed_origin);
+
+         /* Calculate length of transformed axis - new step value */
+         length = sqrt(vector[XCOORD]*vector[XCOORD] +
+                       vector[YCOORD]*vector[YCOORD] +
+                       vector[ZCOORD]*vector[ZCOORD]);
+         transformed_volume_def->step[idim] = length / nelements;
+
+         /* Calculate new direction cosines */
+         for (jdim=0; jdim < WORLD_NDIMS; jdim++) {
+            transformed_volume_def->dircos[idim][jdim] = 
+               (length > 0.0 ? vector[jdim] / length : 
+                (jdim == idim ? 1.0 : 0.0));
+         }
+
+         /* Make sure that direction cosines point the right way */
+         if (transformed_volume_def->dircos[idim][idim] < 0.0) {
+            transformed_volume_def->dircos[idim][idim] *= -1.0;
+            transformed_volume_def->step[idim] *= -1.0;
+         }
+      }
+
+      /* Calculate the start along each axis - check for bad dircos. */
+      if (convert_origin_to_start(transformed_origin,
+                                  transformed_volume_def->dircos[XCOORD],
+                                  transformed_volume_def->dircos[YCOORD],
+                                  transformed_volume_def->dircos[ZCOORD],
+                                  transformed_volume_def->start) != 0) {
+
+         /* If dircos are bad, set them to default */
+         for (idim=0; idim < WORLD_NDIMS; idim++) {
+            for (jdim=0; jdim < WORLD_NDIMS; jdim++) {
+               transformed_volume_def->dircos[idim][jdim] = 
+                  ((idim==jdim) ? 1.0 : 0.0);
+            }
+         }
+
+         /* Try to convert point again */
+         if (convert_origin_to_start(transformed_origin,
+                                     transformed_volume_def->dircos[XCOORD],
+                                     transformed_volume_def->dircos[YCOORD],
+                                     transformed_volume_def->dircos[ZCOORD],
+                                     transformed_volume_def->start) != 0) {
+            (void) fprintf(stderr, 
+                           "Serious problem converting origin to start!\n");
+            exit(EXIT_FAILURE);
+         }
+      }
+
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : is_zero_vector
+@INPUT      : vector - 3D vector
+@OUTPUT     : (none)
+@RETURNS    : 1 if vector has zero length, 0 otherwise
+@DESCRIPTION: Routine to check for a zero length vector.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 9, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int is_zero_vector(double vector[])
+{
+   return ((vector[0] == 0.0) &&
+           (vector[1] == 0.0) &&
+           (vector[2] == 0.0));
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : normalize_vector
+@INPUT      : vector - 3D vector
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to normalize a vector
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 9, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void normalize_vector(double vector[])
+{
+   int idim;
+   double magnitude;
+
+   /* Normalize the direction cosine */
+   magnitude = 0.0;
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      magnitude += (vector[idim] * vector[idim]);
+   }
+   magnitude = sqrt(magnitude);
+   if (magnitude > 0.0) {
+      for (idim=0; idim < WORLD_NDIMS; idim++) {
+         vector[idim] /= magnitude;
+      }
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1047,6 +1280,10 @@ public void create_output_file(char *filename, int clobber,
       (void) sprintf(string, "transformation%d-filedata", itrans);
       (void) miattputstr(out_file->mincid, varid, string,
                          transform_info->file_contents);
+      if (transform_info->invert_transform) {
+         (void) sprintf(string, "transformation%d-inverted", itrans);
+         (void) miattputstr(out_file->mincid, varid, string, MI_TRUE);
+      }
    }         /* If transform specified on command line */
 
    /* Get into data mode */
@@ -1433,7 +1670,6 @@ public int get_transformation(char *dst, char *key, char *nextArg)
 {
    Transform_Info *transform_info;
    General_transform *transformation;
-   General_transform input_transformation;
    FILE *fp;
    int ch, index;
 
@@ -1490,19 +1726,16 @@ public int get_transformation(char *dst, char *key, char *nextArg)
    transform_info->file_contents[index] = '\0';
    rewind(fp);
 
+   /* Get rid of the old transformation */
+   delete_general_transform(transformation);
+
    /* Read the file */
    if (input_transform(fp, transform_info->file_name, 
-                       &input_transformation)!=OK) {
+                       transformation)!=OK) {
       (void) fprintf(stderr, "Error reading transformation file.\n");
       exit(EXIT_FAILURE);
    }
    (void) close_file(fp);
-
-   /* Get rid of the old one */
-   delete_general_transform(transformation);
-
-   /* Invert the transformation */
-   create_inverse_general_transform(&input_transformation, transformation);
 
    return TRUE;
 }
@@ -1546,6 +1779,42 @@ public int get_model_file(char *dst, char *key, char *nextArg)
    (void) miclose(file.mincid);
 
    return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_standard_sampling
+@INPUT      : dst - Pointer to client data from argument table
+              key - argument key
+              nextArg - argument following key
+@OUTPUT     : (nothing) 
+@RETURNS    : FALSE so that ParseArgv will not discard nextArg.
+@DESCRIPTION: Routine called by ParseArgv to set the sampling to standard
+              values (sets only step, start and direction cosines).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 14, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int set_standard_sampling(char *dst, char *key, char *nextArg)
+     /* ARGSUSED */
+{
+   Volume_Definition *volume_def;
+   int idim, jdim;
+
+   /* Get pointer to volume definition structure */
+   volume_def = (Volume_Definition *) dst;
+
+   /* Set sensible values */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      volume_def->step[idim] = 1.0;
+      volume_def->start[idim] = 0.0;
+      for (jdim=0; jdim < WORLD_NDIMS; jdim++) {
+         volume_def->dircos[idim][jdim] = (idim == jdim ? 1.0 : 0.0);
+      }
+   }
+
+   return FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

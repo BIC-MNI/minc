@@ -6,9 +6,18 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 3.1  1995-11-07 15:04:02  neelin
-@MODIFIED   : Modified argument parsing so that only one pass is done.
+@MODIFIED   : Revision 3.2  1995-11-21 14:13:20  neelin
+@MODIFIED   : Transform input sampling with transformation and use this as default.
+@MODIFIED   : Added -tfm_input_sampling to specify above option.
+@MODIFIED   : Added -use_input_sampling to get old behaviour (no longer the default).
+@MODIFIED   : Added -origin option (to specify coordinate instead of start values).
+@MODIFIED   : Added -standard_sampling option (to set standard values of start, step
+@MODIFIED   : and direction cosines).
+@MODIFIED   : Added -invert_transformation option.
 @MODIFIED   :
+ * Revision 3.1  1995/11/07  15:04:02  neelin
+ * Modified argument parsing so that only one pass is done.
+ *
  * Revision 3.0  1995/05/15  19:30:57  neelin
  * Release of minc version 0.3
  *
@@ -173,6 +182,7 @@ typedef struct {
 } Program_Flags;
 
 typedef struct {
+   int invert_transform;
    char *file_name;
    char *file_contents;
    long buffer_length;
@@ -185,6 +195,7 @@ typedef struct {
    int is_signed;
    double vrange[2];
    double fillvalue;
+   double origin[3];
    Program_Flags flags;
    Interpolating_Function interpolant;
    Transform_Info transform_info;
@@ -204,8 +215,19 @@ typedef struct {
       coord[XCOORD], coord[YCOORD], coord[ZCOORD], \
       &result[XCOORD], &result[YCOORD], &result[ZCOORD])
 
+#define DO_INVERSE_TRANSFORM(result, transformation, coord) \
+   general_inverse_transform_point(transformation, \
+      coord[XCOORD], coord[YCOORD], coord[ZCOORD], \
+      &result[XCOORD], &result[YCOORD], &result[ZCOORD])
+
 #define IS_LINEAR(transformation) \
    (get_transform_type(transformation)==LINEAR)
+
+#define VECTOR_COPY(result, first) { \
+   result[XCOORD] = first[XCOORD]; \
+   result[YCOORD] = first[YCOORD]; \
+   result[ZCOORD] = first[ZCOORD]; \
+}
 
 #define VECTOR_DIFF(result, first, second) { \
    result[XCOORD] = first[XCOORD] - second[XCOORD]; \
@@ -278,6 +300,11 @@ public void get_file_info(char *filename,
                           File_Info *file_info);
 public void get_args_volume_def(Volume_Definition *input_volume_def,
                                 Volume_Definition *args_volume_def);
+public void transform_volume_def(Transform_Info *transform_info,
+                                 Volume_Definition *input_volume_def,
+                                 Volume_Definition *transformed_volume_def);
+public int is_zero_vector(double vector[]);
+public void normalize_vector(double vector[]);
 public void create_output_file(char *filename, int clobber, 
                                Volume_Definition *volume_def,
                                File_Info *in_file,
@@ -304,6 +331,7 @@ public double get_default_range(char *what, nc_type datatype, int is_signed);
 public void finish_up(VVolume *in_vol, VVolume *out_vol);
 public int get_transformation(char *dst, char *key, char *nextArg);
 public int get_model_file(char *dst, char *key, char *nextArg);
+public int set_standard_sampling(char *dst, char *key, char *nextArg);
 public int get_axis_order(char *dst, char *key, char *nextArg);
 public int get_fillvalue(char *dst, char *key, char *nextArg);
 public void resample_volumes(Program_Flags *program_flags,
