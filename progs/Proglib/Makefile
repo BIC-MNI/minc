@@ -48,5 +48,5 @@ $(LINT_PROG_LIB) : $(LINT_OBJS)
 
 # Remove all derived files in this directory
 clean:
-	\rm -f $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
+	$(RM) $(RM_FLAGS) $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
 
