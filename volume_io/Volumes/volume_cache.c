@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.15 1995-10-26 18:30:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.16 1995-11-09 18:55:00 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -255,7 +255,7 @@ private  void  get_default_cache_block_sizes(
 
     for_less( dim, 0, MAX_DIMENSIONS )
     {
-        if( block_sizes[dim] <= 0 )
+        if( block_sizes[dim] <= 0 || block_sizes[dim] > volume_sizes[dim] )
             block_sizes[dim] = volume_sizes[dim];
     }
 }
@@ -501,7 +501,7 @@ private  void  flush_cache_blocks(
     while( this != NULL )
     {
         if( this->modified_flag &&
-            (!cache->writing_to_temp_file|| !deleting_volume_flag) )
+            (!cache->writing_to_temp_file || !deleting_volume_flag) )
         {
             block_index = this->block_index;
             get_block_start( cache, block_index, block_start );
@@ -592,13 +592,15 @@ public  void  set_volume_cache_block_sizes(
     int       block_sizes[] )
 {
     volume_cache_struct   *cache;
-    int                   d, dim;
+    int                   d, dim, sizes[N_DIMENSIONS];
     BOOLEAN               changed;
 
     if( !volume->is_cached_volume )
         return;
 
     cache = &volume->cache;
+
+    get_volume_sizes( volume, sizes );
 
     changed = FALSE;
 
@@ -608,12 +610,6 @@ public  void  set_volume_cache_block_sizes(
         {
             if( cache->block_sizes[d] != block_sizes[d] )
                 changed = TRUE;
-        }
-        else
-        {
-            print_error(
-                  "Invalid block sizes in set_volume_cache_block_sizes()\n" );
-            return;
         }
     }
 
@@ -633,11 +629,10 @@ public  void  set_volume_cache_block_sizes(
 
     for_less( d, 0, get_volume_n_dimensions(volume) )
     {
-        if( block_sizes[d] >= 1 )
-            cache->block_sizes[d] = block_sizes[d];
+        if( block_sizes[d] < 1 || block_sizes[d] > sizes[d] )
+            cache->block_sizes[d] = sizes[d];
         else
-            print_error(
-                  "Invalid block sizes in set_volume_cache_block_sizes()\n" );
+            cache->block_sizes[d] = block_sizes[d];
     }
 
     alloc_volume_cache( cache, volume );
@@ -883,6 +878,8 @@ private  void  open_cache_volume_output_file(
     /*--- if the volume was previously reading a file, copy the volume to
           the output and close the input file */
 
+    set_minc_output_random_order( out_minc_file );
+
     if( cache->minc_file != NULL )
     {
         (void) output_minc_volume( out_minc_file );
@@ -891,8 +888,6 @@ private  void  open_cache_volume_output_file(
 
         cache->must_read_blocks_before_use = TRUE;
     }
-    else
-        check_minc_output_variables( out_minc_file );
 
     cache->minc_file = out_minc_file;
 

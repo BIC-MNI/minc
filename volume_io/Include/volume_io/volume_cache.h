@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.4 1995-09-19 18:23:42 david Exp $";
+static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.5 1995-11-09 18:58:08 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -34,6 +34,9 @@ static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Inc
 ---------------------------------------------------------------------------- */
 
 #include  <multidim.h>
+
+typedef  enum  { SLICE_ACCESS, RANDOM_VOLUME_ACCESS }
+               Cache_block_size_hints;
 
 typedef  struct  cache_block_struct
 {
@@ -68,6 +71,7 @@ typedef struct
     BOOLEAN                     must_read_blocks_before_use;
     void                        *minc_file;
     int                         n_blocks;
+    int                         max_cache_bytes;
     int                         max_blocks;
     int                         hash_table_size;
     cache_block_struct          *head;
