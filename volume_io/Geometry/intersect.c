@@ -24,9 +24,6 @@ public  BOOLEAN   intersect_ray_polygon(
 {
     BOOLEAN  intersects;
     Point    points[MAX_POINTS];
-    Vector   normal;
-    Real     n_dot_d, t, plane_const;
-    Point    centroid, pt;
     int      ind, p, start_index, end_index, size;
 
     intersects = FALSE;
@@ -52,27 +49,47 @@ public  BOOLEAN   intersect_ray_polygon(
             points[p-start_index] = polygons->points[ind];
         }
 
-        find_polygon_normal( size, points, &normal );
+        intersects = intersect_ray_polygon_points( ray_origin, ray_direction,
+                                                   size, points, dist );
+    }
 
-        n_dot_d = DOT_VECTORS( normal, *ray_direction );
+    return( intersects );
+}
 
-        if( n_dot_d != 0.0 )
+public  BOOLEAN   intersect_ray_polygon_points(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    int              n_points,
+    Point            points[],
+    Real             *dist )
+{
+    BOOLEAN  intersects;
+    Vector   normal;
+    Real     n_dot_d, t, plane_const;
+    Point    centroid, pt;
+
+    intersects = FALSE;
+
+    find_polygon_normal( n_points, points, &normal );
+
+    n_dot_d = DOT_VECTORS( normal, *ray_direction );
+
+    if( n_dot_d != 0.0 )
+    {
+        get_points_centroid( n_points, points, &centroid );
+
+        plane_const = DOT_POINT_VECTOR( centroid, normal );
+
+        t = (plane_const - DOT_POINT_VECTOR(normal,*ray_origin) ) / n_dot_d;
+
+        if( t >= 0.0 && t <= *dist )
         {
-            get_points_centroid( size, points, &centroid );
+            GET_POINT_ON_RAY( pt, *ray_origin, *ray_direction, t );
 
-            plane_const = DOT_POINT_VECTOR( centroid, normal );
-
-            t = (plane_const - DOT_POINT_VECTOR(normal,*ray_origin) ) / n_dot_d;
-
-            if( t >= 0.0 && t <= *dist )
+            if( point_within_polygon( &pt, n_points, points, &normal ) )
             {
-                GET_POINT_ON_RAY( pt, *ray_origin, *ray_direction, t );
-
-                if( point_within_polygon( &pt, size, points, &normal ) )
-                {
-                    *dist = t;
-                    intersects = TRUE;
-                }
+                *dist = t;
+                intersects = TRUE;
             }
         }
     }
@@ -263,4 +280,161 @@ private  BOOLEAN  point_within_polygon_2d(
         intersects = cross;
 
     return( intersects );
+}
+
+public  BOOLEAN   intersect_ray_quadmesh(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    Real             *dist,
+    quadmesh_struct  *quadmesh,
+    int              obj_index )
+{
+    BOOLEAN  intersects;
+    Point    points[4];
+    int      i, j, m, n;
+
+    get_quadmesh_n_objects( quadmesh, &m, &n );
+
+    i = obj_index / n;
+    j = obj_index % n;
+
+    get_quadmesh_patch( quadmesh, i, j, points );
+
+    intersects = intersect_ray_polygon_points( ray_origin, ray_direction,
+                                               4, points, dist );
+
+    return( intersects );
+}
+
+public  BOOLEAN  ray_intersects_sphere(
+    Point       *origin,
+    Vector      *direction,
+    Point       *centre,
+    Real        radius,
+    Real        *dist )
+{
+    int     n_sols;
+    Real    a, b, c, sols[2];
+    Vector  o_minus_c;
+
+    SUB_VECTORS( o_minus_c, *origin, *centre );
+
+    a = DOT_VECTORS( *direction, *direction );
+    b = 2.0 * DOT_VECTORS( o_minus_c, *direction );
+    c = DOT_VECTORS( o_minus_c, o_minus_c ) - radius * radius;
+
+    n_sols = solve_quadratic( a, b, c, &sols[0], &sols[1] );
+
+    if( n_sols == 0 )
+        *dist = -1.0;
+    else if( n_sols == 1 )
+        *dist = sols[0];
+    else
+    {
+        if( sols[0] < 0.0 )
+            *dist = sols[1];
+        else if( sols[1] < 0.0 )
+            *dist = sols[0];
+        else
+            *dist = MIN( sols[0], sols[1] );
+    }
+
+    return( *dist >= 0.0 );
+}
+
+public  BOOLEAN  ray_intersects_tube(
+    Point       *origin,
+    Vector      *direction,
+    Point       *p1,
+    Point       *p2,
+    Real        radius,
+    Real        *dist )
+{
+    Real     o_dot_o, o_dot_v, v_dot_v, d_dot_d, d_dot_v, d_dot_o, d;
+    Vector   v, o, offset;
+    Point    point;
+    int      n_sols;
+    Real     a, b, c, sols[2];
+
+    SUB_POINTS( v, *p2, *p1 );
+    NORMALIZE_VECTOR( v, v );
+
+    SUB_POINTS( o, *origin, *p1 );
+
+    o_dot_o = DOT_VECTORS( o, o );
+    o_dot_v = DOT_VECTORS( o, v );
+    v_dot_v = DOT_VECTORS( v, v );
+    d_dot_d = DOT_VECTORS( *direction, *direction );
+    d_dot_o = DOT_VECTORS( *direction, o );
+    d_dot_v = DOT_VECTORS( *direction, v );
+    a = d_dot_d - 2.0 * d_dot_v * d_dot_v + v_dot_v * d_dot_v * d_dot_v;
+    b = 2.0 * d_dot_o - 4.0 * o_dot_v * d_dot_v +
+        2.0 * v_dot_v * o_dot_v * d_dot_v;
+    c = o_dot_o - 2.0 * o_dot_v * o_dot_v + v_dot_v * o_dot_v * o_dot_v -
+         radius * radius;
+
+    n_sols = solve_quadratic( a, b, c, &sols[0], &sols[1] );
+
+    if( n_sols == 0 )
+        *dist = -1.0;
+    else
+    {
+        if( sols[0] < 0.0 )
+            *dist = sols[1];
+        else if( sols[1] < 0.0 )
+            *dist = sols[0];
+        else
+            *dist = MIN( sols[0], sols[1] );
+
+        if( *dist >= 0.0 )
+        {
+            GET_POINT_ON_RAY( point, *origin, *direction, *dist );
+            SUB_POINTS( offset, point, *p1 );
+            d = DOT_VECTORS( v, offset );
+            if( d < 0.0 || d > distance_between_points( p1, p2 ) )
+                *dist = -1.0;
+        }
+    }
+
+    return( *dist >= 0.0 );
+}
+
+public  BOOLEAN   intersect_ray_tube_segment(
+    Point            *origin,
+    Vector           *direction,
+    Real             *dist,
+    lines_struct     *lines,
+    int              obj_index )
+{
+    Real     a_dist;
+    int      line, seg, p1, p2;
+    BOOLEAN  found;
+
+    get_line_segment_index( lines, obj_index, &line, &seg );
+
+    p1 = lines->indices[POINT_INDEX(lines->end_indices,line,seg)];
+    p2 = lines->indices[POINT_INDEX(lines->end_indices,line,seg+1)];
+    
+    found = ray_intersects_sphere( origin, direction, &lines->points[p1],
+                                   (Real) lines->line_thickness, dist );
+
+    if( ray_intersects_sphere( origin, direction, &lines->points[p2],
+                               (Real) lines->line_thickness, &a_dist ) &&
+        (!found || a_dist < *dist ) )
+    {
+        found = TRUE;
+        *dist = a_dist;
+    }
+
+    if( ray_intersects_tube( origin, direction,
+                             &lines->points[p1],
+                             &lines->points[p2],
+                             (Real) lines->line_thickness, &a_dist ) &&
+        (!found || a_dist < *dist ) )
+    {
+        found = TRUE;
+        *dist = a_dist;
+    }
+
+    return( found );
 }
