@@ -1,16 +1,33 @@
+# Code for reading generic dicom files for conversion to minc.
+# Does not make use of any shadow groups.
+# Should read both a stream of dicom groups, or a proper dicom file with
+# preamble.
+
+########################################################################
+
 # DICOM 3 CONSTANTS
+
+# Dicom file offset
+sub dc3_file_offset {return 128;}
+
+# Length of magic and length field
+sub dc3_preamble_length {return 16;}
+
+# Dicom magic
+sub dc3_magic_string {return "DICM";}
+
+# Offset to header length value
+sub dc3_offset_to_length {return 12;}
 
 # Maximum group number needed for header info
 sub dc3_header_maxid {return "0x0029";}
-
-# Number of echos
-sub dc3_numechos {return (0x21, 0x0);}
 
 # Exam is unique id of session in scanner (study)
 sub dc3_exam {return (0x20, 0x10);}
 
 # Series is id of scan within a session (acquisition)
-sub dc3_series {return (0x20, 0x12);}
+sub dc3_series {return (0x20, 0x11);}
+sub dc3_acquisition {return (0x20, 0x12);}
 
 # Image is image number
 sub dc3_image {return (0x20, 0x13);}
@@ -33,15 +50,11 @@ sub dc3_patient_name {return (0x10, 0x10);}
 # Pixel size
 sub dc3_pixel_size {return (0x28, 0x30);}
 
-# Image normal vector
-sub dc3_normal {return (0x21, 0x0);}
+# Image position
+sub dc3_image_position {return (0x20, 0x32);}
 
-# Column and row direction cosines (unit vectors)
-sub dc3_column_dircos {return (0x21, 0x0);}
-sub dc3_row_dircos {return (0x21, 0x0);}
-
-# Slice centre
-sub dc3_slice_centre {return (0x21, 0x0);}
+# Image orientation
+sub dc3_image_orientation {return (0x20, 0x37);}
 
 # Repetition, echo and inversion times in ms, plus flip angle in degrees
 sub dc3_tr {return (0x18, 0x80);}
@@ -49,8 +62,9 @@ sub dc3_te {return (0x18, 0x81);}
 sub dc3_ti {return (0x18, 0x82);}
 sub dc3_flip {return (0x19, 0x0);}
 
-# Patient birthdate, sex, id, institution
+# Patient birthdate, age, sex, id, institution
 sub dc3_patient_birthdate {return (0x10, 0x30);}
+sub dc3_patient_age {return (0x10, 0x1010);}
 sub dc3_patient_sex {return (0x10, 0x40);}
 sub dc3_patient_id {return (0x10, 0x20);}
 sub dc3_institution {return (0x8, 0x80);}
@@ -64,6 +78,8 @@ sub dc3_compression {return (0x28, 0x60);}
 
 # Pixel data location
 sub dc3_pixel_data {return ("0x7fe0", "0x10");}
+
+########################################################################
 
 # DICOM 3 ROUTINES
 
@@ -86,7 +102,7 @@ sub acr_find_numeric {
    foreach $value (@values) {
       $value += 0;
    }
-   return @values;
+   return (scalar(@values) > 1) ? @values : $values[0];
 }
 
 # Routine to get an integer from the header
@@ -100,6 +116,36 @@ sub acr_find_int {
    local($elstr) = sprintf("0x%04x", $element);
 
    return $header{$grstr, $elstr, 'short'};
+}
+
+# Routine to convert world coordinates
+sub convert_coordinates {
+    local(@coords) = @_;
+    $coords[0] *= -1;
+    $coords[1] *= -1;
+    return @coords;
+}
+
+# Routine to compute a dot product
+sub vector_dot_product {
+    local(*vec1, *vec2) = @_;
+    local($result, $i);
+    $result = 0;
+    for $i (0..2) {
+        $result += $vec1[$i] * $vec2[$i];
+    }
+    return $result;
+}
+
+# Routine to compute a vector cross product
+sub vector_cross_product {
+    local(*vec1, *vec2) = @_;
+    local(@result);
+    $#result = 2;
+    $result[0] = $vec1[1] * $vec2[2] - $vec1[2] * $vec2[1];
+    $result[1] = $vec1[2] * $vec2[0] - $vec1[0] * $vec2[2];
+    $result[2] = $vec1[0] * $vec2[1] - $vec1[1] * $vec2[0];
+    return @result;
 }
 
 # Subroutine to read the Dicom 3 file headers
@@ -120,9 +166,37 @@ sub dicom3_read_headers {
        return 1;
     }
 
+    # Figure out how much preamble to skip by looking for the DICOM magic
+    # and reading the first element (length) value
+    local($file_offset) = 0;
+    if (!open(FILE, $filename)) {
+       warn "Unable to open file \"$filename\"\n";
+       return 1;
+    }
+    local($buffer) = '';
+    if (!seek(FILE, &dc3_file_offset, 0) ||
+        (read(FILE, $buffer, &dc3_preamble_length) != &dc3_preamble_length)) {
+       warn "Error checking file type on file \"$filename\"\n";
+       return 1;
+    }
+
+    # Look for the magic string
+    if (substr($buffer, 0, length(&dc3_magic_string)) eq &dc3_magic_string) {
+       local($value) = substr($buffer, &dc3_offset_to_length, 4);
+       $file_offset = unpack("L", $value);
+       if ($file_offset > 65535) {
+          $file_offset = unpack("L", reverse($value));
+       }
+       $file_offset += &dc3_file_offset + &dc3_preamble_length;
+    }
+
+    # Save the file offset
+    $header{'file_offset'} = $file_offset;
+
     # Dump the header
     local($group, $element, $data);
-    open(DUMP, "dump_acr_nema $filename $header_maxid|");
+    open(DUMP, "extract $file_offset -1 $filename | " .
+         "dump_acr_nema - $header_maxid|");
     while (<DUMP>) {
        chop;
        if (/^\s*(0x[\da-f]{4,4})\s+(0x[\da-f]{4,4})\s+length = \d+ :(.*)$/) {
@@ -163,12 +237,19 @@ sub dicom3_read_file_info {
     }
 
     # Get interesting values
-    $file_info{'numechos'} = &acr_find_numeric(*header, &dc3_numechos);
+    $file_info{'numechos'} = 1;
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
-    # We cheat and use study date for exam, getting rid of weird characters
     ($file_info{'exam'} = &acr_find_string(*header, &dc3_exam))
        =~ s/\W//g;
-    $file_info{'series'} = &acr_find_numeric(*header, &dc3_series);
+    local($series) = &acr_find_numeric(*header, &dc3_series);
+    local($acquisition) = &acr_find_numeric(*header, &dc3_acquisition);
+    local($the_series);
+    if (($series > 0) && ($acquisition > 0)) {
+       $the_series = $series*1000+$acquisition;
+    }
+    elsif ($series > 0) {$the_series = $series;}
+    else {$the_series = $acquisition;}
+    $file_info{'series'} = $the_series;
     $file_info{'image'} = &acr_find_numeric(*header, &dc3_image);
 
     $file_info{'echo'} = &acr_find_numeric(*header, &dc3_echo);
@@ -182,34 +263,39 @@ sub dicom3_read_file_info {
     $file_info{'pixel_size'} = 2;
     $file_info{'patient_name'} = &acr_find_string(*header, &dc3_patient_name);
 
-    # Get orientation info
-    local(@normal, @col_dircos, @row_dircos, @slc_dircos, @dircos);
-    @normal = &acr_find_numeric(*header, &dc3_normal);
-    if (scalar(@normal) != 3) {
-       @normal = (0,0,1);
+    # Get slice position and orientation (row and column vectors)
+    local(@position) = 
+       &convert_coordinates(&acr_find_numeric(*header, &dc3_image_position));
+    if (scalar(@position) != 3) {
+       warn "************** Error reading slice position ***************\n";
     }
+    local(@array) = &acr_find_numeric(*header, &dc3_image_orientation);
+    if (scalar(@array) != 6) {
+       warn "************* Error reading slice orientation *************\n";
+    }
+    local(@column) = &convert_coordinates(@array[0..2]);
+    local(@row) = &convert_coordinates(@array[3..5]);
+
+    # Figure out normal and orientation
+    local(@normal) = 
+       &vector_cross_product(*column, *row);
     local($norm_r) = &abs($normal[0]);
     local($norm_a) = &abs($normal[1]);
     local($norm_s) = &abs($normal[2]);
     local($plane) = 'transverse';
     local($max) = $norm_s;
-    @col_dircos = (1,0,0);
-    @row_dircos = (0,1,0);
     if ($norm_r > $max) {
         $plane = 'sagittal';
         $max = $norm_r;
-        @col_dircos = (0,1,0);
-        @row_dircos = (0,0,1);
     }
     if ($norm_a > $max) {
         $plane = 'coronal';
         $max = $norm_a;
-        @col_dircos = (1,0,0);
-        @row_dircos = (0,0,1);
     }
     $file_info{'orientation'} = $plane;
 
     # Get coordinate information
+    local(@col_dircos, @row_dircos, @slc_dircos);
     ($file_info{'rowstep'}, $file_info{'colstep'}) = 
        &acr_find_numeric(*header, &dc3_pixel_size);
     if (length($file_info{'rowstep'}) <= 0) {
@@ -217,27 +303,14 @@ sub dicom3_read_file_info {
     }
     $file_info{'colstep'} *= -1.0;
     $file_info{'rowstep'} *= -1.0;
-    @dircos = &acr_find_numeric(*header, &dc3_column_dircos);
-    if (scalar(@dircos) == 3) {@col_dircos = @dircos;}
-    @dircos = &acr_find_numeric(*header, &dc3_row_dircos);
-    if (scalar(@dircos) == 3) {@row_dircos = @dircos;}
-    @col_dircos = &get_dircos(@col_dircos);
-    @row_dircos = &get_dircos(@row_dircos);
+    @col_dircos = &get_dircos(@column);
+    @row_dircos = &get_dircos(@row);
     @slc_dircos = &get_dircos(@normal);
-    local($xcentre, $ycentre, $zcentre) = 
-       &acr_find_numeric(*header, &dc3_slice_centre);
-    $file_info{'slicepos'} = $xcentre * $slc_dircos[0] + 
-        $ycentre * $slc_dircos[1] + $zcentre * $slc_dircos[2];
-    $file_info{'colstart'} =
-        ($xcentre * $col_dircos[0] + 
-         $ycentre * $col_dircos[1] + 
-         $zcentre * $col_dircos[2]) - 
-             $file_info{'colstep'} * ($file_info{'width'} - 1) / 2;
-    $file_info{'rowstart'} =
-        ($xcentre * $row_dircos[0] + 
-         $ycentre * $row_dircos[1] + 
-         $zcentre * $row_dircos[2]) - 
-             $file_info{'rowstep'} * ($file_info{'height'} - 1) / 2;
+    $file_info{'slicepos'} = &vector_dot_product(*position, *slc_dircos);
+    $file_info{'colstart'} = &vector_dot_product(*position, *col_dircos)
+       + $file_info{'colstep'} / 2;
+    $file_info{'rowstart'} = &vector_dot_product(*position, *row_dircos)
+       + $file_info{'rowstep'} / 2;
     $file_info{'col_dircos_x'} = $col_dircos[0];
     $file_info{'col_dircos_y'} = $col_dircos[1];
     $file_info{'col_dircos_z'} = $col_dircos[2];
@@ -255,6 +328,8 @@ sub dicom3_read_file_info {
     $file_info{'mr_flip'} = &acr_find_numeric(*header, &dc3_flip);
     ($file_info{'patient_birthdate'} = 
        &acr_find_string(*header, &dc3_patient_birthdate)) =~ s/\./-/g;
+    ($file_info{'patient_age'} = &acr_find_string(*header, &dc3_patient_age))
+        =~ s/\D//g;
     local($sex_flag) = &acr_find_string(*header, &dc3_patient_sex);
     if ($sex_flag eq 'M ') {
         $file_info{'patient_sex'} = "male__";
@@ -277,6 +352,7 @@ sub dicom3_read_file_info {
     }
     ($specific_file_info{'pixel_data_group'}, 
      $specific_file_info{'pixel_data_element'}) = &dc3_pixel_data;
+    $specific_file_info{'file_offset'} = $header{'file_offset'};
 
     return 0;
 }
@@ -288,8 +364,10 @@ sub dicom3_get_image_cmd {
     local($cur_file, *specific_file_info) = @_;
 
     local($cmd) = 
-        "extract_acr_nema " . 
-        $cur_file . " " .
+        "extract " .
+        $specific_file_info{'file_offset'} . 
+        " -1 $cur_file" .
+        " | extract_acr_nema " . 
         $specific_file_info{'pixel_data_group'} . " " .
         $specific_file_info{'pixel_data_element'} . " " .
         " | byte_swap ";
