@@ -1,5 +1,7 @@
 #! /bin/csh -f
 
+set path = (/usr/sbin /usr/bsd /sbin /usr/bin /bin /usr/local/bin)
+
 if ($#argv != 1) then
    exit -1
 endif
