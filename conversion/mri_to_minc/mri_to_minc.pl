@@ -227,8 +227,8 @@ sub create_mincfile {
     else {
         $ge_specific_attributes = "";
     }
-    open(MINC, "|itof |rawtominc $mincfile $nslices $nrows $ncols -noclobber ".
-         "-float -obyte $orientation ".
+    open(MINC, "|rawtominc $mincfile $nslices $nrows $ncols -noclobber ".
+         "-scan_range -short -obyte $orientation ".
          "-xstep $xstep -ystep $ystep -zstep $zstep ".
          "-xstart $xstart -ystart $ystart -zstart $zstart ".
          "-mri -attribute patient:full_name='".$mincinfo{'patient_name'}."' ".
