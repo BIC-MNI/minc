@@ -15,23 +15,29 @@
 #
 # Inspired by Peter Neelins' (neelin@bic.mni.mcgill.ca) ana2mnc for ANALYZE 4.x.
 # Since then it has grown into a veritable swiss-army chainsaw of 
-# SPM, ANALYZE 7.5 and MINC conversion. 
+# SPM, ANALYZE 7.5 and MINC conversion.
 #
-# Wed Oct 18 09:29:44 EST 2000 - updated to Analyze 7.5 format
-# Thu Oct 19 16:57:30 EST 2000 - Added support for writing out ANALYZE 7.5 headers
-# Wed Oct 25 10:29:54 EST 2000 - Added mnc2ana, ana_show and ana_write functionality
-# Wed Feb 13 16:22:05 EST 2002 - Added byte_swapping, THANKS PETER! 
-# Thu Feb 28 13:38:03 EST 2002 - Removed dependencies on MNI::Perllib stuff
+# Fri Oct  8 12:01:49 EST 2004 - Added -noflip and skipping of .mat file if not found
+#                                with thanks to Mark Daglish - mark.daglish@bris.ac.uk
+
 
 require 5.0;
 
 use strict;
 use warnings "all";
 use Getopt::Tabular;
+use File::Basename;
 
-my($Help, $Usage, $me, @files, $history);
-my(@opt_table, $clobber, $verbose, $settings, $args_h);
+my($Help, $Usage, $me, @files, $history, %opt, @opt_table);
 my($anabase, $anahdr, $anaimg, $mncfile, $matfile, $xfmfile);
+
+$me = basename($0);
+%opt = (
+   'verbose' => 0,
+   'clobber' => 0,
+   'orientation' => undef,
+   'flip' => 1,
+   );
 
 $Help = <<HELP;
 'ana2mnc' is a series of scripts.
@@ -58,60 +64,21 @@ some reverse conversions are included. The available conversions are:
 Problems or comments should be sent to: rotor\@cmr.uq.edu.au
 HELP
 
-chomp($me = `basename $0`);
-$clobber = 0;
-$verbose = 0;
-$args_h  = create_analyze_header();
-$settings = {};
 @opt_table = (
-     ["-verbose", "boolean", 0, \$verbose, 
-        "be verbose"                                                    ],
-     ["-clobber", "boolean", 0, \$clobber, 
-        "clobber existing files"                                        ],
+     ["-verbose", "boolean", 0, \$opt{verbose}, 
+        "be verbose" ],
+     ["-clobber", "boolean", 0, \$opt{clobber}, 
+        "clobber existing files" ],
      
-     ["Options for Conversion from analyze formats", "section"          ],
-     ["-transverse", "const", "-transverse", \$settings->{orientation}, 
-        "force files to be treated as transverse"                       ],
-     ["-sagittal",   "const", "-sagittal",   \$settings->{orientation}, 
-        "force files to be treated as sagittal"                         ],
-     ["-coronal",    "const", "-coronal",    \$settings->{orientation}, 
-        "force files to be treated as coronal"                          ],
-
-#  these are currently commented out as possible additions in the future...
-#  time will tell.
-#
-#      ["Options to override the analyze header", "section"],
-#      ["-datatype",     "string",  1, \$args_h->{data_type},    "datatype"     ],
-#      ["-db_name",      "string",  1, \$args_h->{db_name},      "db_name"      ],
-#      ["-vox_units",    "string",  1, \$args_h->{vox_units},    "vox_units"    ],
-#      ["-cal_units",    "string",  1, \$args_h->{cal_units},    "cal_units"    ],
-#      ["-datatype",     "float",   1, \$args_h->{datatype},     "datatype"     ],
-#      ["-bitpix",       "float",   1, \$args_h->{bitpix},       "bitpix"       ],
-#      ["-vox_offset",   "float",   1, \$args_h->{vox_offset},   "vox_offset"   ],
-#      ["-scale_factor", "float",   1, \$args_h->{scale_factor}, "scale_factor" ],
-#      ["-cal_max",      "float",   1, \$args_h->{cal_max},      "cal_max"      ],
-#      ["-cal_min",      "float",   1, \$args_h->{cal_min},      "cal_min"      ],
-#      ["-compressed",   "float",   1, \$args_h->{compressed},   "compressed"   ],
-#      ["-verified",     "float",   1, \$args_h->{verified},     "verified"     ],
-#      ["-glmax",        "float",   1, \$args_h->{glmax},        "glmax"        ],
-#      ["-glmin",        "float",   1, \$args_h->{glmin},        "glmin"        ],
-#      ["-descrip",      "string",  1, \$args_h->{descrip},      "descrip"      ],
-#      ["-aux_file",     "string",  1, \$args_h->{aux_file},     "aux_file"     ],
-#      ["-orient",       "float",   1, \$args_h->{orient},       "orient"       ],
-#      ["-generated",    "string",  1, \$args_h->{generated},    "generated"    ],
-#      ["-scannum",      "string",  1, \$args_h->{scannum},      "scannum"      ],
-#      ["-patient_id",   "string",  1, \$args_h->{patient_id},   "patient_id"   ],
-#      ["-exp_date",     "string",  1, \$args_h->{exp_date},     "exp_date"     ],
-#      ["-exp_time",     "string",  1, \$args_h->{exp_time},     "exp_time"     ],
-#      ["-views",        "float",   1, \$args_h->{views},        "views"        ],
-#      ["-vols_added",   "float",   1, \$args_h->{vols_added},   "vols_added"   ],
-#      ["-start_field",  "float",   1, \$args_h->{start_field},  "start_field"  ],
-#      ["-field_skip",   "float",   1, \$args_h->{field_skip},   "field_skip"   ],
-#      ["-omax",         "float",   1, \$args_h->{omax},         "omax"         ],
-#      ["-omin",         "float",   1, \$args_h->{omin},         "omin"         ],
-#      ["-smax",         "float",   1, \$args_h->{smax},         "smax"         ],
-#      ["-smin",         "float",   1, \$args_h->{smin},         "smin"         ],
-     
+     ["Options for Conversion from analyze formats", "section"],
+     ["-transverse", "const", "-transverse", \$opt{orientation}, 
+        "force files to be treated as transverse" ],
+     ["-sagittal", "const", "-sagittal", \$opt{orientation}, 
+        "force files to be treated as sagittal" ],
+     ["-coronal", "const", "-coronal", \$opt{orientation}, 
+        "force files to be treated as coronal" ],
+     ["-flip|-noflip", "boolean", 0, \$opt{flip}, 
+        "Flip left-right (radiological format)" ],
      );
 
 if   ($me eq "ana2mnc"){   @files = ('<in.hdr>', '<out.mnc>'); }
@@ -127,13 +94,13 @@ $Usage = "Usage: $me [options] @files\n".
 # Check arguments
 &Getopt::Tabular::SetHelp($Help, $Usage);
 &GetOptions(\@opt_table, \@ARGV) || exit 1;
-if($#ARGV != $#files){ die $Usage; }
+die $Usage if ($#ARGV != $#files);
 
 # Get the history string
 chomp($history = `date`);
 $history .= '>>>> ' . join(' ', $me, @ARGV) . "\n";
 
-# Set to 1 if byte-swapping is needed.
+# global byte-swapping flag
 my $bs = 0;
 
 # then do whatever we are supposed to be doing
@@ -142,33 +109,32 @@ if($me eq "ana2mnc"){
    $anabase =~ s/\.(hdr|img)$//;
    
    if(!-e "$anabase.hdr"){ 
-      die "$me: Couldn't find $anabase.hdr\n"; 
+      die "$me: Couldn't find $anabase.hdr\n\n"; 
       }
    if(!-e "$anabase.img"){ 
-      die "$me: Couldn't find $anabase.img\n"; 
+      die "$me: Couldn't find $anabase.img\n\n"; 
       }
-   if(-e $mncfile && !$clobber){ 
-      die "$me: $mncfile exists! use -clobber to overwrite\n"; 
+   if(-e $mncfile && !$opt{clobber}){ 
+      die "$me: $mncfile exists! use -clobber to overwrite\n\n"; 
       }
 
    # Read in the header file
    my($ana_hdr) = read_analyze_header("$anabase.hdr");
-   if($verbose){ 
-      print STDOUT dump_analyze_header($ana_hdr);
-      }
+   print STDOUT dump_analyze_header($ana_hdr) if $opt{verbose};
    
    # convert to the general header format
-   my($gen_hdr) = analyze_to_general_header($ana_hdr, $settings);
-   if($verbose){
-      print STDOUT dump_general_header($gen_hdr);
-      }
+   my($gen_hdr) = analyze_to_general_header($ana_hdr, \%opt);
+   print STDOUT dump_general_header($gen_hdr) if $opt{verbose};
    
    # check for a compressed img file
    if(!-e "$anabase.img" && -e "$anabase.img.gz"){
-      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n";
+      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n\n";
       }
    
    write_minc($gen_hdr, $mncfile, "$anabase.img");
+   if(!$opt{flip} && $opt{verbose}){
+      warn "$me: Remember this image has NOT been flipped\n\n";
+      }
    }
 
 elsif($me eq "spm2mnc"){
@@ -176,36 +142,35 @@ elsif($me eq "spm2mnc"){
    $anabase =~ s/\.(hdr|img|mat)$//;
    
    if(!-e "$anabase.hdr"){ 
-      die "$me: Couldn't find $anabase.hdr\n"; 
+      die "$me: Couldn't find $anabase.hdr\n\n"; 
       }
    if(!-e "$anabase.img"){ 
-      die "$me: Couldn't find $anabase.img\n"; 
+      die "$me: Couldn't find $anabase.img\n\n"; 
       }
    if(!-e "$anabase.mat"){ 
-      die "$me: Couldn't find $anabase.mat\n"; 
+      warn "$me: Couldn't find $anabase.mat, continuing anyway...\n\n"; 
       }
-   if(-e $mncfile && !$clobber){ 
-      die "$me: $mncfile exists! use -clobber to overwrite\n"; 
+   if(-e $mncfile && !$opt{clobber}){ 
+      die "$me: $mncfile exists! use -clobber to overwrite\n\n"; 
       }
 
    # Read in the header file
    my($ana_hdr) = read_analyze_header("$anabase.hdr");
-   if($verbose){ 
-      print STDOUT dump_analyze_header($ana_hdr);
-      }
+   print STDOUT dump_analyze_header($ana_hdr) if $opt{verbose};
    
    # convert to the general header format
-   my($gen_hdr) = spm_to_general_header($ana_hdr, $settings);
-   if($verbose){
-      print STDOUT dump_general_header($gen_hdr);
-      }
+   my($gen_hdr) = spm_to_general_header($ana_hdr, \%opt);
+   print STDOUT dump_general_header($gen_hdr) if $opt{verbose};
    
    # check for a compressed img file
    if(!-e "$anabase.img" && -e "$anabase.img.gz"){
-      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n";
+      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n\n";
       }
    
    write_minc($gen_hdr, $mncfile, "$anabase.img");
+   if(!$opt{flip} && $opt{verbose}){
+      warn "$me: Remember this image has NOT been flipped\n\n";
+      }
    }
 
 elsif($me eq "mnc2ana"){
@@ -213,14 +178,14 @@ elsif($me eq "mnc2ana"){
    $anabase =~ s/\.(hdr|img)$//;
    
    if(!-e $mncfile){ 
-      die "$me: Couldn't find $mncfile\n"; 
+      die "$me: Couldn't find $mncfile\n\n"; 
       }
-   if((-e "$anabase.hdr" || -e "$anabase.img") && !$clobber){ 
-      die "$me: $anabase.hdr or $anabase.img exist! use -clobber to overwrite\n"; 
+   if((-e "$anabase.hdr" || -e "$anabase.img") && !$opt{clobber}){ 
+      die "$me: $anabase.hdr or $anabase.img exist! -clobber to overwrite\n\n"; 
       }
       
    my($h) = read_minc($mncfile);
-   if($verbose){ print STDOUT dump_analyze_header($h); }
+   if($opt{verbose}){ print STDOUT dump_analyze_header($h); }
    write_analyze_header($h, "$anabase.hdr");
    
    # Set up mincextract command
@@ -228,8 +193,8 @@ elsif($me eq "mnc2ana"){
    $args .= ($h->{bitpix} == 8) ? '-unsigned ' : '-signed ';
    $args .=  "$mncfile > $anabase.img\n";
 
-   if($verbose){ print STDOUT $args; }
-   system($args) == 0 or die "$me: died during mincextract command\n";
+   if($opt{verbose}){ print STDOUT $args; }
+   system($args) == 0 or die "$me: died during mincextract command\n\n";
    }
    
 elsif($me eq "spm2xfm"){
@@ -239,10 +204,10 @@ elsif($me eq "spm2xfm"){
    my ($xfm_text, @dump, $c);
    
    if(!-e $matfile){ 
-      die "$me: Couldn't find file: $matfile\n";
+      die "$me: Couldn't find file: $matfile\n\n";
       }
-   if(-e $xfmfile && !$clobber){ 
-      die "$me: $xfmfile exists! use -clobber to overwrite\n"; 
+   if(-e $xfmfile && !$opt{clobber}){ 
+      die "$me: $xfmfile exists! use -clobber to overwrite\n\n"; 
       }
       
    # read in .mat file, convert to sensical format, remove first and last line
@@ -267,7 +232,7 @@ elsif($me eq "ana_show"){
    $anahdr = $ARGV[0];
    
    if(!-e "$anahdr"){
-      die "$me: Couldn't find file: $anahdr\n"; 
+      die "$me: Couldn't find file: $anahdr\n\n"; 
       }
    print STDOUT dump_analyze_header(read_analyze_header($anahdr));
    }
@@ -276,7 +241,7 @@ elsif($me eq "spm_show"){
    $matfile = $ARGV[0];
    
    if(!-e $matfile){ 
-      die "$me: Couldn't find $matfile\n"; 
+      die "$me: Couldn't find $matfile\n\n"; 
       }
    print STDOUT `mat1dump $matfile`;
    }
@@ -286,7 +251,7 @@ elsif($me eq "spm_show"){
 # Unpack a value from a string (passed by reference)
 # Legendary bit of code of peter neelins nicked from mri_to_minc 
 sub destruct{
-   my($stringref, $offset, $type, $bs) = @_;
+   my($stringref, $offset, $type, $byte_swap) = @_;
     
    my(%Unpack_codes, $code, $number, $size, $tempstring, $iloop, $max);
     
@@ -297,14 +262,14 @@ sub destruct{
                    );
    
    # Check for byte swapping
-   if($bs){
+   if($byte_swap){
       if($type !~ /^\s*([a-zA-Z])(\d+)?\s*$/){
-         die "$me: unrecognized data type \"$type\" on little-endian machine.\n";
+         die "$me: unrecognized data type \"$type\" on little-endian machine.\n\n";
          }
       $code = $1;
       $number = (defined($2) ? $2 : 1);
       if(!defined($Unpack_codes{$code})){
-         die "$me: unrecognized unpack code \"$code\" on little-endian machine.\n";
+         die "$me: unrecognized unpack code \"$code\" on little-endian machine.\n\n";
          }
       $size = $Unpack_codes{$code};
       $tempstring = substr($$stringref, $offset, $number * $size);
@@ -344,7 +309,7 @@ sub analyze_to_general_header{
    
    # begin the conversions..
    if(!defined($ana_dtypes{$ana_hdr->{datatype}})) {
-      die "$me: unknown data type:$ana_hdr->{data_type}\n";
+      die "$me: unknown data type:$ana_hdr->{data_type}\n\n";
       }
    $gen_hdr->{datatype} = $ana_dtypes{$ana_hdr->{datatype}};
    
@@ -384,7 +349,9 @@ sub analyze_to_general_header{
    my(@world_order) = @{$Orientation_to_world_order{$gen_hdr->{orientation}}};
    ($gen_hdr->{xstep}, $gen_hdr->{ystep}, $gen_hdr->{zstep}) = 
       @steps[@world_order];
-   $gen_hdr->{xstep} *= -1;
+   
+   # flip the xstep if required
+   $gen_hdr->{xstep} *= -1 if $opt{flip};
    
    return $gen_hdr;
    }
@@ -409,7 +376,7 @@ sub spm_to_general_header{
    
    # begin the conversions..
    if(!defined($ana_dtypes{$ana_hdr->{datatype}})) {
-      die "$me: unknown data type:$ana_hdr->{data_type}\n";
+      die "$me: unknown data type:$ana_hdr->{data_type}\n\n";
       }
    $gen_hdr->{datatype} = $ana_dtypes{$ana_hdr->{datatype}};
    
@@ -449,7 +416,9 @@ sub spm_to_general_header{
    my(@world_order) = @{$Orientation_to_world_order{$gen_hdr->{orientation}}};
    ($gen_hdr->{xstep}, $gen_hdr->{ystep}, $gen_hdr->{zstep}) = 
       @steps[@world_order];
-   $gen_hdr->{xstep} *= -1;
+   
+   # flip the xstep if required
+   $gen_hdr->{xstep} *= -1 if $opt{flip};
    
    # get origin information
    my(@starts) = @{$ana_hdr->{originator}}[0..2];
@@ -466,7 +435,7 @@ sub spm_to_general_header{
 
 # Read an analyze 7.5 header file and return a hash
 sub read_analyze_header{
-   open(HDR, $_[0]) or die "$me: error opening file: $_[0]\n";
+   open(HDR, $_[0]) or die "$me: error opening file: $_[0]\n\n";
    read(HDR, my($hdr_s), 40);
    read(HDR, my($dim_s), 108);
    read(HDR, my($his_s), 200);
@@ -486,10 +455,10 @@ sub read_analyze_header{
    if($h->{sizeof_hdr} != 348){
       warn "$me: sizeof header: $h->{sizeof_hdr}\n";
       die "$me: $_[0] doesn't appear to be a ANALYZE file\n".
-           "    Who would really know though......\n";
+           "    Who would really know though......\n\n";
       }
    
-   if($verbose){ 
+   if($opt{verbose}){ 
       print STDERR "sizeof_header: $h->{sizeof_hdr}  -- Byte Swap: $bs\n";
       }
    
@@ -693,7 +662,7 @@ sub write_analyze_header{
    $his_s .= pack("i",    $h->{smax}                );
    $his_s .= pack("i",    $h->{smin}                );
    
-   open(HDR, ">$hdrfile") or die "$me: error opening file: $hdrfile\n";
+   open(HDR, ">$hdrfile") or die "$me: error opening file: $hdrfile\n\n";
    syswrite(HDR, $hdr_s, 40);
    syswrite(HDR, $dim_s, 108);
    syswrite(HDR, $his_s, 200);
@@ -737,7 +706,7 @@ sub write_minc{
 
    # Set up rawtominc command
    my(@args) = ('rawtominc');
-   if($clobber){ push(@args, '-clobber'); }
+   if($opt{clobber}){ push(@args, '-clobber'); }
    
    # Swap bytes?
    if($bs){ push(@args, '-swap_bytes'); }
@@ -787,8 +756,8 @@ sub write_minc{
       }
    push(@args, @{$gen_hdr}{'zsize','ysize','xsize'});
 
-   if($verbose){ print STDOUT "@args\n"; }
-   system(@args) == 0 or die "$me: died during rawtominc system command\n";
+   if($opt{verbose}){ print STDOUT "@args\n"; }
+   system(@args) == 0 or die "$me: died during rawtominc system command\n\n";
    }
 
 # Read a minc file header and return an appropriate ANALYZE 7.5 header
