@@ -1,3 +1,7 @@
+Mon Aug 20 09:20:04 EDT 2001
+   - more fixes to valid_range handling functions
+   - added function miattget_with_sign
+
 Thu Aug 16 12:47:32 EDT 2001
    - added library functions to handle reading and writing of valid_range
      and reading of type and sign, as well as setting of default range
