@@ -1,9 +1,12 @@
 #! /bin/csh -f
 
 # Modifications: $Log: mincheader,v $
-# Modifications: Revision 2.1  1995-01-24 10:19:09  neelin
-# Modifications: Added support for compressed files.
+# Modifications: Revision 2.2  1995-01-25 08:04:41  neelin
+# Modifications: Added check for failure to read minc file.
 # Modifications:
+# Revision 2.1  95/01/24  10:19:09  neelin
+# Added support for compressed files.
+# 
 # Revision 2.0  94/09/28  10:34:10  neelin
 # Release of minc version 0.2
 # 
@@ -67,7 +70,9 @@ else
 #  "image", collapse multiple blanks to one, remove leading blanks, remove
 #  trailing blanks, replace blanks with commas
    set vars = `mincinfo -varnames $dumpfile | sed -e 's/^image //g' -e 's/ image / /g' -e 's/  */ /g' -e 's/^ //' -e 's/ $//' -e 's/ /,/g'`
-   ncdump -v "$vars" $dumpfile
+   if ($vars != "") then
+      ncdump -v "$vars" $dumpfile
+   endif
 endif
 
 
