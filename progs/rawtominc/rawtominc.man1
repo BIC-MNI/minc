@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.4 1994-05-05 10:33:13 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.5 1994-06-10 15:25:07 neelin Exp $
 .\"
 .TH RAWTOMINC 1 "MINC Image File Format"
 
@@ -130,6 +130,14 @@ floating point types.
 specifies the valid range of pixel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values.
+.P
+.I -real_range 
+<min> <max>:
+specifies the real range of image values that corresponds to the pixel
+values of option -range. Default is to not store the real image
+minimum and maximum. If -scan_range is used, then the image minimum
+and maximum corresponding to the scanned pixel minimum and maximum are
+calculated and stored. This option is ignored for floating point values.
 
 .SH Output data type and range
 .P
@@ -177,9 +185,10 @@ from the input type) and the created images are assumed to have a real
 .I -scan_range:
 Integer values are scanned for their minimum and maximum. Pixel values
 are rescaled to give the full range of pixel values and the real
-minimum and maximum are set to the pixel minimum and maximum. This
-should be equivalent to converting the input to a floating point
-type and reading it in with -float -oshort (for example).
+minimum and maximum are set to the pixel minimum and maximum (unless
+-real_range is used). This should be equivalent to converting the
+input to a floating point type and reading it in with -float -oshort
+(for example) assuming that -real_range is not used.
 
 .SH Writing output file
 .P

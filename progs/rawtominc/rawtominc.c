@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 1.12  1994-05-05 10:31:53  neelin
-@MODIFIED   : Added -scan_range, -frame_time, -frame_width, -input, -attribute and 
-@MODIFIED   : modality options.
+@MODIFIED   : Revision 1.13  1994-06-10 15:24:41  neelin
+@MODIFIED   : Added option -real_range.
 @MODIFIED   :
+ * Revision 1.12  94/05/05  10:31:53  neelin
+ * Added -scan_range, -frame_time, -frame_width, -input, -attribute and 
+ * modality options.
+ * 
  * Revision 1.11  93/10/06  10:14:17  neelin
  * Added include of string.h.
  * 
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.12 1994-05-05 10:31:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.13 1994-06-10 15:24:41 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -70,6 +73,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define Z 2
 #define DEF_STEP DBL_MAX
 #define DEF_START DBL_MAX
+#define DEF_RANGE DBL_MAX
 
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
@@ -131,6 +135,7 @@ int num_frame_widths = 0;
 double *frame_widths = NULL;
 char *inputfile = NULL;
 int do_minmax = FALSE;
+double real_range[2] = {DEF_RANGE, DEF_RANGE};
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -170,6 +175,8 @@ ArgvInfo argTable[] = {
        "Other input value options."},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range, 
        "Valid range of input values (default = full range)."},
+   {"-real_range", ARGV_FLOAT, (char *) 2, (char *) real_range, 
+       "Real range of input values (ignored for floating-point types)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for type of output minc data. Default = input data type"},
    {"-obyte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &otype,
@@ -284,6 +291,8 @@ main(int argc, char *argv[])
    int is_signed;
    void *ptr;
    int floating_type;
+   int do_real_range;
+   double scale, offset, denom, pixel_min, pixel_max;
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -297,6 +306,9 @@ main(int argc, char *argv[])
 
    /* Find max and min for vrange if output type is float */
    do_vrange = do_minmax && (( otype==NC_FLOAT) || ( otype==NC_DOUBLE));
+
+   /* Did the user provide a real range */
+   do_real_range = (real_range[0] != DEF_RANGE) && !floating_type;
    
    /* Create an icv */
    icv=miicv_create();
@@ -309,6 +321,23 @@ main(int argc, char *argv[])
    if (floating_type) {
       (void) miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(icv, MI_ICV_USER_NORM, TRUE);
+   }
+
+   /* Calculate scale and offset to convert pixel to real value for
+      input data */
+   if (do_real_range) {
+      (void) miicv_inqdbl(icv, MI_ICV_VALID_MIN, &pixel_min);
+      (void) miicv_inqdbl(icv, MI_ICV_VALID_MAX, &pixel_max);
+      denom = pixel_max - pixel_min;
+      if (denom != 0.0)
+         scale = (real_range[1] - real_range[0]) / denom;
+      else 
+         scale = 0.0;
+      offset = real_range[0] - pixel_min * scale;
+   }
+   else {
+      scale = 1.0;
+      offset = 0.0;
    }
 
    /* Create the file and save the time stamp */
@@ -374,7 +403,7 @@ main(int argc, char *argv[])
    (void) miattputstr(cdfid, imgid, MIsigntype, osign);
    if (ovrange_set) 
       (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
-   if (do_minmax) {
+   if (do_minmax || do_real_range) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
                                     NC_DOUBLE, ndims-image_dims, dim);
       minid = micreate_std_variable(cdfid, MIimagemin, 
@@ -462,7 +491,7 @@ main(int argc, char *argv[])
          (void) fprintf(stderr, "%s: Premature end of file.\n", pname);
          exit(ERROR_STATUS);
       }
- 
+
       /* Search for max and min for float and double */
       if (do_minmax) {
          imgmax=(-DBL_MAX);
@@ -504,9 +533,10 @@ main(int argc, char *argv[])
             if (imgmax>ovalid_range[1]) ovalid_range[1]=imgmax;
          }
 
-         /* Write the image max and min */
-         (void) mivarput1(cdfid, minid, start, NC_DOUBLE, NULL, &imgmin);
-         (void) mivarput1(cdfid, maxid, start, NC_DOUBLE, NULL, &imgmax);
+      }
+      else {
+         imgmin = pixel_min;
+         imgmax = pixel_max;
       }
 
       /* Change the valid range for integer types if needed */
@@ -517,6 +547,14 @@ main(int argc, char *argv[])
          (void) miicv_attach(icv, cdfid, imgid);
       }
 
+      /* Write the image max and min after re-scaling */
+      if (do_minmax || do_real_range) {
+         imgmin = imgmin * scale + offset;
+         imgmax = imgmax * scale + offset;
+         (void) mivarput1(cdfid, minid, start, NC_DOUBLE, NULL, &imgmin);
+         (void) mivarput1(cdfid, maxid, start, NC_DOUBLE, NULL, &imgmax);
+      }
+      
       /* Write the image */
       (void) miicv_put(icv, start, count, image);
 
