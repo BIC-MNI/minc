@@ -5,9 +5,12 @@
 # Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
 #
 # Modifications: $Log: mincdiff,v $
-# Modifications: Revision 2.0  1994-09-28 10:34:46  neelin
-# Modifications: Release of minc version 0.2
+# Modifications: Revision 2.1  1995-01-24 09:12:29  neelin
+# Modifications: Added support for compressed minc files.
 # Modifications:
+# Revision 2.0  94/09/28  10:34:46  neelin
+# Release of minc version 0.2
+# 
 # Revision 1.4  94/09/28  10:34:44  neelin
 # Pre-release
 # 
@@ -29,7 +32,8 @@
 # express or implied warranty.
 
 # Constants
-set working_dir = /tmp
+if (! $?TMPDIR) set TMPDIR = /usr/tmp
+set working_dir = $TMPDIR
 
 # Check arguments
 switch ("$#argv")
@@ -56,12 +60,19 @@ set file2base = $file2:r
 set fileprefix = $working_dir/mincdiff-$$
 set file1tmp  = ${fileprefix}-1-${file1base:t}
 set file2tmp  = ${fileprefix}-2-${file2base:t}
+set file1tmpmnc = ${fileprefix}-minc-1-${file1base:t}
+set file2tmpmnc = ${fileprefix}-minc-2-${file1base:t}
 
 # Set interrupt handling
 onintr cleanup
 
+# Expand the files
+set dumpfile1 = `mincexpand $file1 $file1tmp.mnc -name_only`
+set dumpfile2 = `mincexpand $file2 $file2tmp.mnc -name_only`
+
 # Dump the headers and compare them
-mincheader $file1 > $file1tmp.cdl && mincheader $file2 > $file2tmp.cdl
+mincheader $dumpfile1 > $file1tmp.cdl && \
+   mincheader $dumpfile2 > $file2tmp.cdl
 if ($status) then
    echo "${0}: Error reading file headers"
    goto cleanup
@@ -72,8 +83,8 @@ if ($status) then
 endif
 
 # Dump the raw data and compare them
-mincextract -nonormalize -file $file1 > $file1tmp.raw && \
-      mincextract -nonormalize -file $file2 > $file2tmp.raw
+mincextract -nonormalize -file $dumpfile1 > $file1tmp.raw && \
+      mincextract -nonormalize -file $dumpfile2 > $file2tmp.raw
 if ($status) then
    echo "${0}: Error reading raw data"
    goto cleanup
@@ -81,6 +92,6 @@ endif
 cmp $cmp_switch $file1tmp.raw $file2tmp.raw
 
 cleanup:
-   rm -f {$file1tmp,$file2tmp}.{raw,cdl}
+   rm -f {$file1tmp,$file2tmp}.{raw,cdl,mnc}
    exit
 
