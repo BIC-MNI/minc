@@ -38,7 +38,7 @@ static int usage(void)
         "-r: scan data to determine valid range\n"
         "Datatype specifies the voxel type of the output MINC file.  The\n"
         "default is the same as the voxel type of the input NIfTI-1 file.\n"
-        " -f32: 32-bit floating point output *\n"
+        " -f32: 32-bit floating point output\n"
         " -f64: 64-bit floating point output\n"
         " -i16: signed 16-bit integer output\n"
         " -u16: unsigned 16-bit integer output\n"
