@@ -6,7 +6,10 @@
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: A set of macros for use when allocating and freeing memory, in
+@DESCRIPTION: These macros are only for use by Volume IO internal use and are
+            : not meant for the user to call.
+            :
+            : A set of macros for use when allocating and freeing memory, in
             : order to test correctness of allocation,
             : i.e. freeing nil pointers, freeing pointers twice, or pointers
             : not allocated, checking if two alloced regions overlap, which
@@ -17,6 +20,10 @@
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
+
+#ifndef lint
+static char alloc_check_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/Attic/alloc_check.h,v 1.4 1994-11-25 14:19:42 david Exp $";
+#endif
 
 #ifndef NO_DEBUG_ALLOC
 

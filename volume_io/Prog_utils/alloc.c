@@ -1,7 +1,7 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.9 1994-11-16 09:36:55 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.10 1994-11-25 14:19:53 david Exp $";
 #endif
 
 #ifdef sgi

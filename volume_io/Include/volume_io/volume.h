@@ -1,6 +1,23 @@
 #ifndef  DEF_VOLUME
 #define  DEF_VOLUME
 
+#ifndef lint
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.28 1994-11-25 14:19:34 david Exp $";
+#endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : volume.h
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Types for use in dealing with volumes.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 #define  cmode  nc_cmode
 #include  <minc.h>
 #undef  cmode
@@ -56,6 +73,8 @@ typedef  volume_struct  *Volume;
 
 /* ------------------------- set voxel value ------------------------ */
 
+/* --- private macros */
+
 #define  SET_ONE( volume, type, asterisks, subscripts, value )   \
          (((type asterisks) ((volume)->data))  subscripts = (type) (value))
 
@@ -88,6 +107,8 @@ typedef  volume_struct  *Volume;
              break;  \
          }
 
+/* --- public macros to set the [x][y]... voxel of 'volume' to 'value' */
+
 #define  SET_VOXEL_1D( volume, x, value )       \
            SET_GIVEN_DIM( volume, *, [x], value )
 
@@ -103,6 +124,8 @@ typedef  volume_struct  *Volume;
 #define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
            SET_GIVEN_DIM( volume, *****, [x][y][z][t][v], value )
 
+/* --- same as previous, but don't have to know dimensions of volume */
+
 #define  SET_VOXEL( volume, x, y, z, t, v, value )       \
          switch( (volume)->n_dimensions ) \
          { \
@@ -114,6 +137,8 @@ typedef  volume_struct  *Volume;
          }
 
 /* ------------------------- get voxel value ------------------------ */
+
+/* --- private macros */
 
 #define  GET_ONE( value, volume, type, asterisks, subscripts )   \
          (value) = (((type asterisks) ((volume)->data))  subscripts)
@@ -147,6 +172,8 @@ typedef  volume_struct  *Volume;
              break;  \
          }
 
+/* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
+
 #define  GET_VOXEL_1D( value, volume, x )       \
            GET_GIVEN_DIM( value, volume, *, [x] )
 
@@ -162,6 +189,8 @@ typedef  volume_struct  *Volume;
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
            GET_GIVEN_DIM( value, volume, *****, [x][y][z][t][v] )
 
+/* --- same as previous, but no need to know volume dimensions */
+
 #define  GET_VOXEL( value, volume, x, y, z, t, v )       \
          switch( (volume)->n_dimensions ) \
          { \
@@ -173,6 +202,8 @@ typedef  volume_struct  *Volume;
          }
 
 /* ------------------------- get voxel ptr ------------------------ */
+
+/* --- private macros */
 
 #define  GET_ONE_PTR( ptr, volume, type, asterisks, subscripts )   \
          (ptr) = (void *) (&(((type asterisks) ((volume)->data))  subscripts))
@@ -206,6 +237,9 @@ typedef  volume_struct  *Volume;
              break;  \
          }
 
+/* --- public macros to return a pointer to the [x][y]'th voxel of the
+       'volume', and place it in 'ptr' */
+
 #define  GET_VOXEL_PTR_1D( ptr, volume, x )       \
            GET_GIVEN_DIM_PTR( ptr, volume, *, [x] )
 
@@ -221,6 +255,8 @@ typedef  volume_struct  *Volume;
 #define  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v )       \
            GET_GIVEN_DIM_PTR( ptr, volume, *****, [x][y][z][t][v] )
 
+/* --- same as previous, but no need to know voxel dimensions */
+
 #define  GET_VOXEL_PTR( ptr, volume, x, y, z, t, v )       \
          switch( (volume)->n_dimensions ) \
          { \
@@ -231,15 +267,21 @@ typedef  volume_struct  *Volume;
          case 5:  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v );  break; \
          }
 
+/* --- returns the conversion of the 'voxel' value to a real value */
+
 #define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
             ( (volume)->real_range_set ? \
                 ((volume)->real_value_scale * (Real) (voxel) + \
                  (volume)->real_value_translation) : (voxel) )
 
+/* --- returns the conversion of the 'real' value to a voxel value */
+
 #define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
             ( (volume)->real_range_set ? \
               (((Real) value - (volume)->real_value_translation) / \
                (volume)->real_value_scale) : (value) )
+
+/* --- assigns 'value' the value of the [x][y]...'th voxel of 'volume' */
 
 #define  GET_VALUE_1D( value, volume, x )       \
          { \
@@ -270,6 +312,8 @@ typedef  volume_struct  *Volume;
              GET_VOXEL_5D( value, volume, x, y, z, t, v ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
+
+/* --- same as previous, without knowing number of dimensions of volume */
 
 #define  GET_VALUE( value, volume, x, y, z, t, v )       \
          switch( (volume)->n_dimensions ) \
@@ -343,7 +387,7 @@ typedef  struct
     STRING   dimension_names[MAX_DIMENSIONS];
 } minc_output_options;
 
-/* recognized file formats */
+/* --- recognized file formats */
 
 typedef  enum  { MNC_FORMAT, FREE_FORMAT }       Volume_file_formats;
 

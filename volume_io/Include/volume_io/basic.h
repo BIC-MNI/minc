@@ -2,6 +2,10 @@
 #ifndef  DEF_BASIC
 #define  DEF_BASIC
 
+#ifndef lint
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.16 1994-11-25 14:19:39 david Exp $";
+#endif
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : basic.h
 @INPUT      : 
@@ -19,15 +23,6 @@
 #include  <stdio.h>
 #include  <memory.h>     /* --- for memcpy, etc. */
 #include  <def_math.h>
-
-/* --------- define the prefixes to all functions ---------- */
-
-#ifndef  public
-#define  public                /* functions called from outside file */
-#endif
-#ifndef  private
-#define  private   static      /* functions/variables used only within file */
-#endif
 
 /* --------- define  TRUE and FALSE ------------------------ */
 

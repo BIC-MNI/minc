@@ -1,5 +1,9 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 #include  <stdarg.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.6 1994-11-25 14:20:02 david Exp $";
+#endif
 
 private  void  (*saved_print_function) ( char [] );
 private  void  (*print_function) ( char [] );
@@ -94,6 +98,20 @@ public  void  print( char format[], ... )
     else
         (*print_function) ( print_buffer );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : handle_internal_error
+@INPUT      : str
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Prints the error string and tries to get users permission to
+              abort.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void   handle_internal_error( char  str[] )
 {

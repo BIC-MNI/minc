@@ -1,5 +1,9 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 #include  <minc.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.18 1994-11-25 14:20:10 david Exp $";
+#endif
 
 #define  DEFAULT_SUFFIX  "fre"
 
@@ -266,7 +270,7 @@ public  Status  initialize_free_format_input(
         break;
 
     default:
-        HANDLE_INTERNAL_ERROR( "initialize_free_format_input" );
+        handle_internal_error( "initialize_free_format_input" );
         break;
     }
 
@@ -417,7 +421,7 @@ private  Status  input_slice(
             break;
 
         default:
-            HANDLE_INTERNAL_ERROR( "input_slice" );
+            handle_internal_error( "input_slice" );
             break;
         }
 
@@ -540,7 +544,7 @@ public  BOOLEAN  input_more_free_format_file(
             break;
 
         default:
-            HANDLE_INTERNAL_ERROR( "input_more_free_format_file" );
+            handle_internal_error( "input_more_free_format_file" );
             break;
         }
     }

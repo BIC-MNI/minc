@@ -1,4 +1,22 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.7 1994-11-25 14:20:18 david Exp $";
+#endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_file_dimension_names
+@INPUT      : filename
+              n_dims
+@OUTPUT     : dim_names
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Gets the names of the dimensions from the specified file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  Status   get_file_dimension_names(
     char     filename[],
@@ -27,6 +45,33 @@ private  Status   get_file_dimension_names(
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_modified_volume
+@INPUT      : filename
+              file_nc_data_type
+              file_signed_flag
+              file_voxel_min
+              file_voxel_max
+              volume
+              original_filename
+              history
+              options
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Creates a Minc file and outputs the volume to it.  The data
+              type of the file is either specified by the second through fifth
+              parameters, or by the volume, if file_nc_data_type is
+              NC_UNSPECIFIED.  The volume is assumed to be derived, in some
+              fashion, from an existing MINC file, and the auxiliary data
+              from the existing MINC file, 'original_filename', is
+              copied to the output file, along with the 'history' string.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  output_modified_volume(
     char                  filename[],
@@ -151,6 +196,27 @@ public  Status  output_modified_volume(
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_volume
+@INPUT      : filename
+              file_nc_data_type
+              file_signed_flag
+              file_voxel_min
+              file_voxel_max
+              volume
+              history
+              options
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sames as output_modified_volume, above, but the volume is not
+              a modification of an existing MINC file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  output_volume(
     char                  filename[],

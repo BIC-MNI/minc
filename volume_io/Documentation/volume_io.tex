@@ -33,7 +33,7 @@ Neelin, Louis Collins, and others at the Centre.
 The library, which is referred to as the \vol, comprises a set of functions
 for reading and writing
 volumes of medical imaging data, as well as some general support
-routines useful to many programming tasks.  All images at the Brain
+routines useful to many programming tasks.  Images at the Brain
 Imaging Centre are stored on disk in a format called {\bf MINC}, which
 stands for {\bf Medical Image Net CDF}.  More information 
 is available in related documentation specifically concerning this
@@ -43,7 +43,7 @@ the MINC library of routines used to read and write MINC files.  The
 provide easy access to MINC files for most general operations, without
 having to learn too much of
 the details of the MINC library, which is a comprehensive system for handling
-every conceivable case.  The \vol\  provides a structure for internal
+most conceivable cases.  The \vol\  provides a structure for internal
 storage of volumes and routines to access and modify volumes.  In
 addition, it provides routines to manipulate tag points and
 transformations and to perform input and output on these objects in
@@ -1090,7 +1090,7 @@ instance, \name{string\_ends\_in( "rainfall", "fall" )} returns
 \name{TRUE}.}
 
 {\bf\begin{verbatim}
-public    void   strip_blanks(
+public    void   strip_outer_blanks(
     char  str[],
     char  stripped[] )
 \end{verbatim}}
@@ -1413,7 +1413,8 @@ public  void  set_minc_output_real_range(
 
 \desc{Defines the image range that will appear in the file.  By
 default, none is specified, and \name{output\_volume} uses the real
-minimum and maximum of the volume.}
+minimum and maximum of the volume.  To set the real range of the volume,
+see the relevant documentation for \name{set\_volume\_real\_range()}.}
 
 If the volume is a modification of another volume currently stored in
 a file, then it is more appropriate to use the following function to
@@ -2032,6 +2033,7 @@ position.  The file position is advanced by the size of the volume.}
 public  Status  output_volume_to_minc_file_position(
     Minc_file   file,
     Volume      volume,
+    int         volume_count[],
     long        file_start[] )
 \end{verbatim}}
 
@@ -2039,7 +2041,8 @@ public  Status  output_volume_to_minc_file_position(
 file in the specified
 position.  Since this routine does not update the file position, it
 does not interfere with normal volume output using the function
-\name{output\_minc\_volume}.  The entire volume is written to the file
+\name{output\_minc\_volume}.  The volume hyperslab defined by
+\name{volume\_count} is written to the file
 starting at the given file position.}
 
 {\bf\begin{verbatim}

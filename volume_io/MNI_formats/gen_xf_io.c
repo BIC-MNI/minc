@@ -1,4 +1,8 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.10 1994-11-25 14:20:23 david Exp $";
+#endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
 static   const char      *TYPE_STRING = "Transform_Type";
@@ -171,7 +175,7 @@ public  Status  output_transform(
     char                comments[],
     General_transform   *transform )
 {
-    /* parameter checking */
+    /* --- parameter checking */
 
     if( file == (FILE *) 0 )
     {
@@ -179,12 +183,11 @@ public  Status  output_transform(
         return( ERROR );
     }
 
-    /* okay write the file */
+    /* --- okay write the file */
 
     (void) fprintf( file, "%s\n", TRANSFORM_FILE_HEADER );
 
     output_comments( file, comments );
-    (void) fprintf( file, "\n" );
     (void) fprintf( file, "\n" );
 
     output_one_transform( file, FALSE, transform );
@@ -461,6 +464,21 @@ public  Status  input_transform(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_transform_file
+@INPUT      : filename
+              comments
+              transform
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Opens the file, outputs the transform, and closes the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  output_transform_file(
     char                filename[],
     char                comments[],
@@ -481,6 +499,19 @@ public  Status  output_transform_file(
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_transform_file
+@INPUT      : filename
+@OUTPUT     : transform
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Opens the file, inputs the transform, and closes the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  input_transform_file(
     char                filename[],

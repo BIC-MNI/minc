@@ -1,6 +1,23 @@
 #ifndef  DEF_PROGRESS
 #define  DEF_PROGRESS
 
+#ifndef lint
+static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.4 1994-11-25 14:19:41 david Exp $";
+#endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : progress.h
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Defines type used for progress reporting.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 #include  <basic.h>
 
 typedef  struct

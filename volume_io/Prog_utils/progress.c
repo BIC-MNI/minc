@@ -1,5 +1,9 @@
 
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.4 1994-11-25 14:20:06 david Exp $";
+#endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
 
@@ -182,9 +186,7 @@ private  void  show_one_line_progress(
                     (Real) progress->total_n_dots );
 
     if( n_dots > progress->total_n_dots )
-    {
-        HANDLE_INTERNAL_ERROR( "show_one_line_progress" );
-    }
+        handle_internal_error( "show_one_line_progress" );
 
     if( n_dots > progress->n_dots_so_far )
     {

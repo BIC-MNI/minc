@@ -3,7 +3,11 @@
 #include  <sys/time.h>
 #include  <sys/param.h>
 #include  <limits.h>
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.6 1994-11-25 14:20:05 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : current_cpu_seconds

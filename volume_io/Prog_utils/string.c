@@ -1,5 +1,9 @@
 
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.6 1994-11-25 14:20:03 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : string_ends_in
@@ -39,12 +43,11 @@ public  BOOLEAN  string_ends_in(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : strip_blanks
+@NAME       : strip_outer_blanks
 @INPUT      : str
 @OUTPUT     : stripped
 @RETURNS    : 
-@DESCRIPTION: This should be called strip_leading_and_trailing_blanks.
-            : Creates a new string which is the original str without any
+@DESCRIPTION: Creates a new string which is the original str without any
             : leading or trailing blanks.
 @METHOD     : 
 @GLOBALS    : 
@@ -53,7 +56,7 @@ public  BOOLEAN  string_ends_in(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public    void   strip_blanks(
+public    void   strip_outer_blanks(
     char  str[],
     char  stripped[] )
 {
@@ -61,11 +64,15 @@ public    void   strip_blanks(
 
     len = strlen( str );
 
+    /* --- skip leading blanks */
+
     first_non_blank = 0;
     while( first_non_blank < len && str[first_non_blank] == ' ' )
     {
         ++first_non_blank;
     }
+
+    /* --- skip trailing blanks */
 
     last_non_blank = len-1;
     while( last_non_blank >= 0 && str[last_non_blank] == ' ' )
@@ -73,10 +80,10 @@ public    void   strip_blanks(
         --last_non_blank;
     }
 
+    /* --- now copy string, without leading or trailing blanks */
+
     for_inclusive( i, first_non_blank, last_non_blank )
-    {
         stripped[i-first_non_blank] = str[i];
-    }
 
     stripped[last_non_blank - first_non_blank + 1] = (char) 0;
 }

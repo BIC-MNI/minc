@@ -1,9 +1,30 @@
 #ifndef  DEF_TAG_IO
 #define  DEF_TAG_IO
 
+#ifndef lint
+static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.8 1994-11-25 14:19:37 david Exp $";
+#endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : transforms.h
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Types for defining general transforms.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+/* --- the list of supported transform types */
+
 typedef enum { LINEAR, THIN_PLATE_SPLINE, USER_TRANSFORM,
                CONCATENATED_TRANSFORM }
                Transform_types;
+
+/* --- the user transformation function */
 
 typedef  void   (*User_transform_function)( void  *user_data,
                                             Real  x,
@@ -12,6 +33,8 @@ typedef  void   (*User_transform_function)( void  *user_data,
                                             Real  *x_trans,
                                             Real  *y_trans,
                                             Real  *z_trans );
+
+/* --- the general transformation type */
 
 typedef struct General_transform
 {

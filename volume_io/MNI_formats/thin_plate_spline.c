@@ -1,3 +1,8 @@
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.4 1994-11-25 14:20:26 david Exp $";
+#endif
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : thin_plate_spline.c
 @INPUT      : 
@@ -16,7 +21,7 @@
 ---------------------------------------------------------------------------- */
 
 
-#include <volume_io.h>
+#include <internal_volume_io.h>
 
 private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
                     float **bdefor, float **INVMLY, int num_marks);
@@ -329,7 +334,7 @@ private  float return_r(float *cor1, float *cor2, int dim)
       return( (float) sqrt((double)(r1*r1 + r2*r2 + r3*r3)) );
    } 
    else {
-      HANDLE_INTERNAL_ERROR( " impossible error in return_r" );
+      handle_internal_error( " impossible error in return_r" );
       return( 0.0 );
    }
 }
@@ -355,7 +360,7 @@ private  float FU(float r, int dim)
       return(fabs(r));
    }
    else {
-      HANDLE_INTERNAL_ERROR( " impossible error in FU" );
+      handle_internal_error( " impossible error in FU" );
       return( 0.0 );
    }
 }

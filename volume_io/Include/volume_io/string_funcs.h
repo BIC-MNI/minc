@@ -1,6 +1,10 @@
 #ifndef  DEF_STRING
 #define  DEF_STRING
 
+#ifndef lint
+static char string_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.4 1994-11-25 14:19:35 david Exp $";
+#endif
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : string.h
 @INPUT      : 

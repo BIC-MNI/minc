@@ -1,5 +1,9 @@
 #include  <minc.h>
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.20 1994-11-25 14:20:17 david Exp $";
+#endif
 
 #define  INVALID_AXIS   -1
 
@@ -22,6 +26,21 @@ private  Status  get_dimension_ordering(
     int          to_volume[],
     int          to_file[] );
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : is_default_direction_cosine
+@INPUT      : axis
+              dir_cosines
+@OUTPUT     : 
+@RETURNS    : TRUE if is default
+@DESCRIPTION: Checks to see if the cosine is the default for the axis,
+              i.e., for x axis, is it ( 1, 0, 0 ).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  BOOLEAN  is_default_direction_cosine(
     int        axis,
     double     dir_cosines[] )
@@ -42,6 +61,34 @@ private  BOOLEAN  is_default_direction_cosine(
 
     return( is_default );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_minc_output
+@INPUT      : filename
+              n_dimensions
+              dim_names
+              sizes
+              file_nc_data_type
+              file_signed_flag
+              file_voxel_min
+              file_voxel_max
+              voxel_to_world_transform
+              volume_to_attach
+              options
+@OUTPUT     : 
+@RETURNS    : minc file
+@DESCRIPTION: Creates a minc file for outputting volumes.  The n_dimensions,
+              dim_names, sizes, file_nc_data_type, file_signed_flag,
+              file_voxel_min, file_voxel_max, and voxel_to_world_transform
+              define the type and shape of the file.  The volume_to_attach
+              is the volume that will be output once or many times to 
+              fill up the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_output(
     char                   filename[],
@@ -229,7 +276,7 @@ public  Minc_file  initialize_minc_output(
         (void) strcpy( file->dim_names[d], dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
-        if( is_spatial_dimension( dim_names[d], &axis ) )
+        if( convert_dim_name_to_spatial_axis( dim_names[d], &axis ) )
         {
             file->dim_ids[d] = micreate_std_variable( file->cdfid,
                                 dim_names[d], NC_DOUBLE, 0, NULL);
@@ -299,6 +346,22 @@ public  Minc_file  initialize_minc_output(
     return( file );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_auxiliary_data_from_minc_file
+@INPUT      : file
+              filename
+              history_string
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Copies the auxiliary data from the filename to the opened
+              Minc file, 'file'.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
     char        filename[],
@@ -325,6 +388,22 @@ public  Status  copy_auxiliary_data_from_minc_file(
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_auxiliary_data_from_open_minc_file
+@INPUT      : file
+              src_cdfid
+              history_string
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Copies the auxiliary data from the opened minc file specified
+              by src_cdfid to the opened minc file specified by 'file'.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  copy_auxiliary_data_from_open_minc_file(
     Minc_file   file,
@@ -406,6 +485,20 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : add_minc_history
+@INPUT      : file
+              history_string
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Adds the history_string to the history in the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  add_minc_history(
     Minc_file   file,
     char        history_string[] )
@@ -451,6 +544,24 @@ public  Status  add_minc_history(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_dimension_ordering
+@INPUT      : n_vol_dims
+              vol_dim_names
+              n_file_dims
+              file_dim_names
+@OUTPUT     : to_volume
+              to_file
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Matches dimension names between the volume and file, setting
+              the axis conversion from file to_volume and from volume to_file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  Status  get_dimension_ordering(
     int          n_vol_dims,
     char         *vol_dim_names[],
@@ -495,12 +606,31 @@ private  Status  get_dimension_ordering(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_slab
+@INPUT      : file
+              volume
+              to_volume
+              file_start
+              file_count
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Outputs the slab specified by the file start and count arrays,
+              from the volume.  The to_volume array translates axes in the file
+              to axes in the volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  output_slab(
     Minc_file   file,
     Volume      volume,
     int         to_volume[],
-    long        start[],
-    long        count[] )
+    long        file_start[],
+    long        file_count[] )
 {
     int      ind, expected_ind, n_vol_dims, file_ind;
     int      iv[MAX_VAR_DIMS];
@@ -527,15 +657,15 @@ private  void  output_slab(
         if( ind != INVALID_AXIS )
         {
             if( !non_full_size_found &&
-                count[file_ind] < file->sizes_in_file[file_ind] )
+                file_count[file_ind] < file->sizes_in_file[file_ind] )
                 non_full_size_found = TRUE;
-            else if( non_full_size_found && count[file_ind] > 1 )
+            else if( non_full_size_found && file_count[file_ind] > 1 )
                 direct_to_volume = FALSE;
 
-            if( count[file_ind] > 1 && ind != expected_ind )
+            if( file_count[file_ind] > 1 && ind != expected_ind )
                 direct_to_volume = FALSE;
 
-            if( count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
+            if( file_count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
             {
                 tmp_sizes[tmp_ind] = file->sizes_in_file[file_ind];
                 tmp_vol_indices[ind] = tmp_ind;
@@ -545,14 +675,14 @@ private  void  output_slab(
 
             --expected_ind;
 
-            iv[ind] = start[file_ind];
+            iv[ind] = file_start[file_ind];
         }
     }
 
     if( direct_to_volume )        /* file is same order as volume */
     {
         GET_VOXEL_PTR( void_ptr, volume, iv[0], iv[1], iv[2], iv[3], iv[4] );
-        (void) miicv_put( file->icv, start, count, void_ptr );
+        (void) miicv_put( file->icv, file_start, file_count, void_ptr );
     }
     else
     {
@@ -569,16 +699,31 @@ private  void  output_slab(
         copy_volumes_reordered( tmp_volume, zero, volume, iv, tmp_vol_indices );
 
         GET_VOXEL_PTR( void_ptr, tmp_volume, 0, 0, 0, 0, 0 );
-        (void) miicv_put( file->icv, start, count, void_ptr );
+        (void) miicv_put( file->icv, file_start, file_count, void_ptr );
 
         delete_volume( tmp_volume );
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_the_volume
+@INPUT      : file
+              volume
+              volume_count
+              file_start
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the volume to the file in the given position.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  Status  output_the_volume(
     Minc_file   file,
     Volume      volume,
-    int         volume_start[],
     int         volume_count[],
     long        file_start[] )
 {
@@ -616,7 +761,7 @@ private  Status  output_the_volume(
         dim_value = 0.0;
         for_less( d, 0, file->n_file_dimensions )
         {
-            if( is_spatial_dimension( file->dim_names[d], &axis ) )
+            if( convert_dim_name_to_spatial_axis( file->dim_names[d], &axis ) )
             {
                 (void) mivarput1( file->cdfid, file->dim_ids[d], mindex,
                                   NC_DOUBLE, MI_SIGNED, &dim_value );
@@ -703,13 +848,11 @@ private  Status  output_the_volume(
 
         if( vol_index >= 0 )
         {
-            if( volume_count[vol_index] < 0 || volume_start[vol_index] < 0 ||
-                volume_start[vol_index] + volume_count[vol_index] >
-                                               sizes[vol_index] )
+            if( volume_count[vol_index] < 0 ||
+                volume_count[vol_index] > sizes[vol_index] )
             {
-                print( "output_the_volume: invalid volume position.\n" );
-                print( "    start[%d] = %d   count[%d] = %d\n",
-                       vol_index, volume_start[vol_index],
+                print( "output_the_volume: invalid volume count.\n" );
+                print( "    count[%d] = %d\n",
                        vol_index, volume_count[vol_index] );
                 return( ERROR );
             }
@@ -757,7 +900,7 @@ private  Status  output_the_volume(
             {
                 n_ranges *= volume_count[vol_index];
                 range_count[d] = volume_count[vol_index];
-                range_start[d] = volume_start[vol_index];
+                range_start[d] = 0;
             }
         }
 
@@ -877,23 +1020,50 @@ private  Status  output_the_volume(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_volume_to_minc_file_position
+@INPUT      : file
+              volume
+              volume_count
+              file_start
+@OUTPUT     : Outputs the volume to the specified file position.
+@RETURNS    : 
+@DESCRIPTION: 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  output_volume_to_minc_file_position(
     Minc_file   file,
     Volume      volume,
-    int         volume_start[],
     int         volume_count[],
     long        file_start[] )
 {
     file->outputting_in_order = FALSE;
 
-    return( output_the_volume( file, volume, volume_start, volume_count,
-                               file_start ) );
+    return( output_the_volume( file, volume, volume_count, file_start ) );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_minc_volume
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the attached volume to the MINC file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  output_minc_volume(
     Minc_file   file )
 {
-    int        d, volume_start[MAX_DIMENSIONS], volume_count[MAX_DIMENSIONS];
+    int        d, volume_count[MAX_DIMENSIONS];
     BOOLEAN    increment;
 
     /*--- check number of volumes written */
@@ -910,11 +1080,9 @@ public  Status  output_minc_volume(
         return( ERROR );
     }
 
-    for_less( d, 0, get_volume_n_dimensions(file->volume) )
-        volume_start[d] = 0;
     get_volume_sizes( file->volume, volume_count );
 
-    if( output_the_volume( file, file->volume, volume_start, volume_count,
+    if( output_the_volume( file, file->volume, volume_count,
                            file->indices ) != OK )
         return( ERROR );
 
@@ -944,6 +1112,19 @@ public  Status  output_minc_volume(
 
     return( OK );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : close_minc_output
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Closes the MINC file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  close_minc_output(
     Minc_file   file )
@@ -975,6 +1156,19 @@ public  Status  close_minc_output(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_default_minc_output_options
+@INPUT      : 
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the minc output options to the default.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_default_minc_output_options(
     minc_output_options  *options           )
 {
@@ -986,6 +1180,22 @@ public  void  set_default_minc_output_options(
     options->global_image_range[1] = -1.0;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_output_dimensions_order
+@INPUT      : n_dimensions
+              dimension_names
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the dimension ordering of the minc output options.
+              This option is used by output_volume, but not by
+              initialize_minc_output.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_minc_output_dimensions_order(
     minc_output_options  *options,
     int                  n_dimensions,
@@ -996,6 +1206,21 @@ public  void  set_minc_output_dimensions_order(
     for_less( i, 0, n_dimensions )
         (void) strcpy( options->dimension_names[i], dimension_names[i] );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_output_real_range
+@INPUT      : real_min
+              real_max
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the global real range of the entire file, unless real_min
+              >= real_max.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_minc_output_real_range(
     minc_output_options  *options,

@@ -1,4 +1,8 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.12 1994-11-25 14:20:22 david Exp $";
+#endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
 static   const char      *VOLUMES_STRING = "Volumes";
@@ -97,7 +101,6 @@ public  Status  output_tag_points(
     (void) fprintf( file, "%s = %d;\n", VOLUMES_STRING, n_volumes );
     output_comments( file, comments );
     (void) fprintf( file, "\n" );
-    (void) fprintf( file, "\n" );
 
     (void) fprintf( file, "%s =\n", TAG_POINTS_STRING );
 
@@ -152,6 +155,23 @@ public  Status  output_tag_points(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : add_tag_point
+@INPUT      : n_tag_points
+              x
+              y
+              z
+@OUTPUT     : tags
+@RETURNS    : 
+@DESCRIPTION: Adds the tag point to the tags, after increasing the size of the
+              array.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  add_tag_point(
     Real    ***tags,
     int     n_tag_points,
@@ -168,6 +188,20 @@ private  void  add_tag_point(
     (*tags)[n_tag_points][2] = z;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : add_tag_weight
+@INPUT      : n_tag_points
+              weight
+@OUTPUT     : weights
+@RETURNS    : 
+@DESCRIPTION: Adds the weight to the array, increasing size as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  add_tag_weight(
     Real    **weights,
     int     n_tag_points,
@@ -177,6 +211,20 @@ private  void  add_tag_weight(
     (*weights)[n_tag_points] = weight;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : add_tag_id
+@INPUT      : n_tag_points
+              id
+@OUTPUT     : ids
+@RETURNS    : 
+@DESCRIPTION: Adds the id to the array, increasing size as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  add_tag_id(
     int  **ids,
     int  n_tag_points,
@@ -185,6 +233,20 @@ private  void  add_tag_id(
     SET_ARRAY_SIZE( *ids, n_tag_points, n_tag_points+1, DEFAULT_CHUNK_SIZE);
     (*ids)[n_tag_points] = id;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : add_tag_label
+@INPUT      : n_tag_points
+              label
+@OUTPUT     : labels
+@RETURNS    : 
+@DESCRIPTION: Adds the label to the array, increasing size as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  add_tag_label(
     char    ***labels,
@@ -196,6 +258,20 @@ private  void  add_tag_label(
     ALLOC( (*labels)[n_tag_points], strlen(label)+1 );
     (void) strcpy( (*labels)[n_tag_points], label );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_tags
+@INPUT      : tags
+              n_tag_points
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the tag x,y,z positions.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private   void  free_tags(
     Real    **tags,
@@ -209,6 +285,20 @@ private   void  free_tags(
     if( n_tag_points > 0 )
         FREE( tags );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_labels
+@INPUT      : labels
+              n_tag_points
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the tag labels.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  free_labels(
     char    **labels,
@@ -253,23 +343,40 @@ public  void  free_tag_points(
     int       patient_ids[],
     char      **labels )
 {
-    free_tags( tags_volume1, n_tag_points );
+    if( n_tag_points > 0 )
+    {
+        free_tags( tags_volume1, n_tag_points );
 
-    if( n_volumes == 2 )
-        free_tags( tags_volume2, n_tag_points );
+        if( n_volumes == 2 )
+            free_tags( tags_volume2, n_tag_points );
 
-    if( weights != (Real *) NULL )
-        FREE( weights );
+        if( weights != (Real *) NULL )
+            FREE( weights );
 
-    if( structure_ids != (int *) NULL )
-        FREE( structure_ids );
+        if( structure_ids != (int *) NULL )
+            FREE( structure_ids );
 
-    if( patient_ids != (int *) NULL )
-        FREE( patient_ids );
+        if( patient_ids != (int *) NULL )
+            FREE( patient_ids );
 
-    if( labels != (char **) NULL )
-        free_labels( labels, n_tag_points );
+        if( labels != (char **) NULL )
+            free_labels( labels, n_tag_points );
+    }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : extract_label
+@INPUT      : str
+@OUTPUT     : label
+@RETURNS    : 
+@DESCRIPTION: Extracts the label from the string, by either taking the
+              first space delimited word, or first quoted string.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  extract_label(
     char     str[],
@@ -281,16 +388,21 @@ private  void  extract_label(
     i = 0;
     len = 0;
 
+    /* --- skip leading space */
+
     while( str[i] == ' ' || str[i] == '\t' )
         ++i;
 
-    if( str[i] == '"' )
+    if( str[0] == '"' )
     {
         quoted = TRUE;
         ++i;
     }
     else
         quoted = FALSE;
+
+    /* --- copy characters until either closing quote is found (if quoted),
+           or white space or end of string is found */
 
     while( str[i] != (char) 0 &&
            (quoted && str[i] != '"' ||
@@ -494,6 +606,28 @@ public  Status  input_tag_points(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_tag_file
+@INPUT      : filename
+              comments
+              n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Opens the file, outputs the tag points, and closes the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  output_tag_file(
     char      filename[],
     char      comments[],
@@ -523,6 +657,26 @@ public  Status  output_tag_file(
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_tag_file
+@INPUT      : filename
+@OUTPUT     : n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Opens the file, inputs the tag points, and closes the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  input_tag_file(
     char      filename[],

@@ -1,5 +1,9 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 #include  <minc.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.30 1994-11-25 14:20:11 david Exp $";
+#endif
 
 #define  INVALID_AXIS   -1
 
@@ -11,12 +15,27 @@ private  void  create_world_transform(
     Vector      axes[N_DIMENSIONS],
     Real        axis_spacing[N_DIMENSIONS],
     Transform   *transform );
-private  int  match_dimension_names(
+private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
     char              *volume_dimension_names[],
     int               n_file_dims,
     char              *file_dimension_names[],
     int               to_volume_index[] );
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_minc_input_from_minc_id
+@INPUT      : minc_id
+              volume
+              options
+@OUTPUT     : 
+@RETURNS    : Minc_file
+@DESCRIPTION: Initializes input of volumes from an already opened MINC file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_input_from_minc_id(
     int                  minc_id,
@@ -156,7 +175,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( convert_dim_name_to_axis( file->dim_names[d], &axis ) )
+        if( convert_dim_name_to_spatial_axis( file->dim_names[d], &axis ) )
         {
             spatial_axis_indices[d] = axis;
             file->spatial_axes[axis] = d;
@@ -552,6 +571,29 @@ public  Status  close_minc_input(
     return( OK );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_volumes_reordered
+@INPUT      : dest
+              dest_ind
+              src
+              src_ind
+              to_dest_index
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Copies a hyperslab from one volume to another.  The src_ind and
+              dest_ind are the starting points in the src and dest.  The
+              array to_dest_index gives the destination axis that each
+              src axis corresponds to, or -1 if no correspondence.  For
+              any src_ind[] and dest_ind[] which have a correspondence, the
+              starting position used is 0.  Therefore only hyperslabs which
+              have a count of either 1 or sizes[d] are performed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  copy_volumes_reordered(
     Volume      dest,
     int         dest_ind[],
@@ -872,6 +914,20 @@ public  BOOLEAN  input_more_minc_file(
     return( !file->end_volume_flag );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : advance_input_volume
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : TRUE if more volumes to read
+@DESCRIPTION: Advances the file indices to prepare for reading the next
+              volume from the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  BOOLEAN  advance_input_volume(
     Minc_file   file )
 {
@@ -925,6 +981,20 @@ public  BOOLEAN  advance_input_volume(
     return( file->end_volume_flag );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : reset_input_volume
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Rewinds the file indices to start inputting volumes from the
+              file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  reset_input_volume(
     Minc_file   file )
 {
@@ -935,30 +1005,28 @@ public  void  reset_input_volume(
     file->end_volume_flag = FALSE;
 }
 
-public  BOOLEAN  is_spatial_dimension(
-    char   dimension_name[],
-    int    *axis )
-{
-    if( strcmp(dimension_name,MIxspace) == 0 )
-    {
-        *axis = X;
-        return( TRUE );
-    }
-    else if( strcmp(dimension_name,MIyspace) == 0 )
-    {
-        *axis = Y;
-        return( TRUE );
-    }
-    else if( strcmp(dimension_name,MIzspace) == 0 )
-    {
-        *axis = Z;
-        return( TRUE );
-    }
-    else
-        return( FALSE );
-}
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : match_dimension_names
+@INPUT      : n_volume_dims
+              volume_dimension_names
+              n_file_dims
+              file_dimension_names
+@OUTPUT     : to_volume_index
+@RETURNS    : TRUE if match found
+@DESCRIPTION: Attempts to match all the volume dimensions with the file
+              dimensions.  This is done in 3 passes.  In the first pass,
+              exact matches are found.  In the second pass, volume dimensions
+              of "any_spatial_dimension" are matched.  On the final pass,
+              volume dimension names which are empty strings are matched
+              to any remaining file dimensions.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
-private  int  match_dimension_names(
+private  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
     char              *volume_dimension_names[],
     int               n_file_dims,
@@ -996,8 +1064,8 @@ private  int  match_dimension_names(
                         case 1:
                             match = (strcmp( volume_dimension_names[i],
                                              ANY_SPATIAL_DIMENSION ) == 0) &&
-                                is_spatial_dimension( file_dimension_names[j],
-                                                      &dummy );
+                                convert_dim_name_to_spatial_axis(
+                                     file_dimension_names[j], &dummy );
                             break;
                         case 2:
                             match = (strlen(volume_dimension_names[i]) == 0);
@@ -1020,11 +1088,38 @@ private  int  match_dimension_names(
     return( n_matches == n_volume_dims );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_minc_file_id
+@INPUT      : file
+@OUTPUT     : 
+@RETURNS    : minc file id
+@DESCRIPTION: Returns the minc file id to allow user to perform MINC calls on
+              this file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  int  get_minc_file_id(
     Minc_file  file )
 {
     return( file->cdfid );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_default_minc_input_options
+@INPUT      : 
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the default minc input options.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_default_minc_input_options(
     minc_input_options  *options )
@@ -1033,12 +1128,38 @@ public  void  set_default_minc_input_options(
     set_minc_input_vector_to_scalar_flag( options, TRUE );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_promote_invalid_to_min_flag
+@INPUT      : flag
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the invalid promotion flag of the input options.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  set_minc_input_promote_invalid_to_min_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
     options->promote_invalid_to_min_flag = flag;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_vector_to_scalar_flag
+@INPUT      : flag
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the vector conversion flag of the input options.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_minc_input_vector_to_scalar_flag(
     minc_input_options  *options,

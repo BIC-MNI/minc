@@ -1,4 +1,8 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.12 1994-11-25 14:20:20 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_linear_transform
@@ -203,7 +207,7 @@ public  General_transform  *get_nth_general_transform(
 {
     if( n < 0 || n >= get_n_concated_transforms( transform ) )
     {
-        HANDLE_INTERNAL_ERROR( "get_nth_general_transform" );
+        handle_internal_error( "get_nth_general_transform" );
         return( (General_transform *) NULL );
     }
     else if( transform->type == CONCATENATED_TRANSFORM )
@@ -238,7 +242,7 @@ public  Transform  *get_linear_transform_ptr(
     }
     else
     {
-        HANDLE_INTERNAL_ERROR( "get_linear_transform_ptr" );
+        handle_internal_error( "get_linear_transform_ptr" );
         return( (Transform *) NULL );
     }
 }
@@ -269,7 +273,7 @@ public  Transform  *get_inverse_linear_transform_ptr(
     }
     else
     {
-        HANDLE_INTERNAL_ERROR( "get_inverse_linear_transform_ptr" );
+        handle_internal_error( "get_inverse_linear_transform_ptr" );
         return( (Transform *) NULL );
     }
 }
@@ -386,7 +390,7 @@ private  void  transform_or_invert_point(
         break;
 
     default:
-        HANDLE_INTERNAL_ERROR( "transform_or_invert_point" );
+        handle_internal_error( "transform_or_invert_point" );
         break;
     }
 }
@@ -538,7 +542,7 @@ private  void  copy_and_invert_transform(
         break;
 
     default:
-        HANDLE_INTERNAL_ERROR( "copy_and_invert_transform" );
+        handle_internal_error( "copy_and_invert_transform" );
         break;
     }
 }
@@ -786,7 +790,7 @@ public  void  delete_general_transform(
         break;
 
     default:
-        HANDLE_INTERNAL_ERROR( "delete_general_transform" );
+        handle_internal_error( "delete_general_transform" );
         break;
     }
 }

@@ -7,17 +7,23 @@
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: A set of macros for allocating 1, 2, and 3 dimensional arrays.
-@METHOD     : Requires the file alloc.c linked in.  This include file references
-            : alloc_check.h, to allow for allocation error checking
-            : (these are the macros RECORD_PTR, UNRECORD_PTR, etc.)
+@METHOD     : Requires the file alloc.c linked in.  This includes file
+            : references alloc_check.h, to allow for allocation error
+            : checking (these are the macros RECORD_PTR, UNRECORD_PTR, etc.)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    :                      David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.7 1994-11-25 14:19:46 david Exp $";
+#endif
+
 #include  <basic.h>
 #include  <alloc_check.h>
+
+/* --- prototypes and macros used by the public allocation macros --- */
 
 void   alloc_memory( void **, int );
 void   realloc_memory( void **, int );

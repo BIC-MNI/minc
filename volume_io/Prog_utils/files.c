@@ -1,8 +1,13 @@
 
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 #include  <pwd.h>
 
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.19 1994-11-25 14:19:59 david Exp $";
+#endif
+
 private  BOOLEAN  has_no_extension( char [] );
+private  char     *compressed_endings[] = { ".z", ".Z", ".gz" };
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : real_is_double
@@ -101,6 +106,19 @@ public  void  unlink_file(
     (void) unlink( filename );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_user_home_directory
+@INPUT      : user_name
+@OUTPUT     : 
+@RETURNS    : Pointer to home directory string.
+@DESCRIPTION: Returns the home directory of the specified user.
+@METHOD     : UNIX password file utilities
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  char  *get_user_home_directory(
     char   user_name[] )
 {
@@ -122,7 +140,10 @@ private  char  *get_user_home_directory(
 @DESCRIPTION: Expands certain strings in the filename, if present:
 
                   environment variables, e.g.   "$DATA_DIR/filename.txt"
-                  ~                      e.g.   "~/filename.txt"
+                  ~                      e.g.   "~david/filename.txt"
+
+              If a dollar sign or backslash is desired, it must be preceded
+              by a backslash.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -139,19 +160,30 @@ public  void  expand_filename(
     char     *expand_value;
     STRING   env;
 
+    /* --- copy from filename to expanded_filename, changing environment
+           variables and home directories */
+
     len = strlen( filename );
 
     prev_was_backslash = FALSE;
     i = 0;
     dest = 0;
+
     while( i < len+1 )
     {
+        /* --- if not escaped by backslash, and is either a '~' at the
+               beginning or a '$' anywhere, expand it */
+
         if( !prev_was_backslash &&
             ((i == 0 && filename[i] == '~') || filename[i] == '$') )
         {
+            /* --- pick up the environment variable name or user name, by
+                   searching until the next '/' or a '.' or end of string */
+
             new_i = i;
             tilde_found = (filename[new_i] == '~');
             ++new_i;
+
             env_index = 0;
             while( filename[new_i] != '/' &&
                    filename[new_i] != '.' &&
@@ -164,6 +196,8 @@ public  void  expand_filename(
 
             env[env_index] = (char) 0;
 
+            /* --- if expanding a '~', find the corresponding home directory */
+
             if( tilde_found )
             {
                 if( strlen( env ) == 0 )
@@ -171,8 +205,10 @@ public  void  expand_filename(
                 else
                     expand_value = get_user_home_directory( env );
             }
-            else
+            else               /* --- get the environment variable value */
                 expand_value = getenv( env );
+
+            /* --- if an expansion is found, copy it, otherwise just copy char*/
 
             if( expand_value != (char *) NULL )
             {
@@ -191,7 +227,9 @@ public  void  expand_filename(
         }
         else
         {
-            if( prev_was_backslash || filename[i] != '\\' )
+            /* --- if not a backslash or if it is escaped, add character */
+
+            if( filename[i] != '\\' || prev_was_backslash )
             {
                 expanded_filename[dest] = filename[i];
                 ++dest;
@@ -204,23 +242,38 @@ public  void  expand_filename(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : filename_extension_matches
+@INPUT      : filename
+              extension
+@OUTPUT     : 
+@RETURNS    : TRUE if filename extension matches
+@DESCRIPTION: Checks if the filename ends in a period, then the given
+              extension.  Note that the filename first undergoes expansion
+              for home directories and environment variables, and any
+              ending of ".z", ".Z", or ".gz" is first removed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  BOOLEAN  filename_extension_matches(
     char   filename[],
     char   extension[] )
 {
-    int       len;
+    int       len, i;
     STRING    filename_no_z, ending;
 
     expand_filename( filename, filename_no_z );
 
     len = strlen( filename_no_z );
-    if( len >= 2 )
+
+    for_less( i, 0, SIZEOF_STATIC_ARRAY(compressed_endings) )
     {
-        if( filename_no_z[len-2] == '.' &&
-            (filename_no_z[len-1] == 'z' || filename_no_z[len-1] == 'Z') )
-        {
-            filename_no_z[len-2] = (char) 0;
-        }
+        if( string_ends_in( filename_no_z, compressed_endings[i] ) )
+            filename_no_z[len-strlen(compressed_endings[i])] = (char) 0;
     }
 
     (void) sprintf( ending, ".%s", extension );
@@ -287,7 +340,8 @@ public  Status  open_file(
     int      i;
     STRING   access_str, expanded, tmp_name, command, compressed;
     BOOLEAN  gzipped;
-    static   char   *endings[] = { ".z", ".Z", ".gz" };
+
+    /* --- determine what mode of file access */
 
     switch( io_type )
     {
@@ -299,30 +353,43 @@ public  Status  open_file(
     default:            (void) strcpy( access_str, "r" );  break;
     }
 
+    /* --- check if ascii or binary */
+
     if( file_format == BINARY_FORMAT )
         (void) strcat( access_str, "b" );
+
+    /* --- expand ~ and $ in filename */
 
     expand_filename( filename, expanded );
 
     gzipped = FALSE;
 
+    /* --- if reading the file, check if it is in compressed format */
+
     if( io_type == READ_FILE )
     {
-        for_less( i, 0, SIZEOF_STATIC_ARRAY( endings ) )
+        /* --- check if the filename ends in one of the compressed suffixes */
+
+        for_less( i, 0, SIZEOF_STATIC_ARRAY( compressed_endings ) )
         {
-            if( string_ends_in( expanded, endings[i] ) )
+            if( string_ends_in( expanded, compressed_endings[i] ) )
             {
                 gzipped = TRUE;
                 break;
             }
         }
 
+        /* --- if the filename does not have a compressed suffix and
+               the file does not exist, check to see if file.z or file.Z, etc,
+               exists */
+
         if( !gzipped && !file_exists( expanded ) )
         {
-            for_less( i, 0, SIZEOF_STATIC_ARRAY( endings ) )
+            for_less( i, 0, SIZEOF_STATIC_ARRAY( compressed_endings ) )
             {
                 (void) strcpy( compressed, expanded );
-                (void) strcat( compressed, endings[i] );
+                (void) strcat( compressed, compressed_endings[i] );
+
                 if( file_exists( compressed ) )
                 {
                     (void) strcpy( expanded, compressed );
@@ -333,6 +400,8 @@ public  Status  open_file(
         }
 
     }
+
+    /* --- if reading from a compressed file, decompress it to a temp file */
 
     if( gzipped )
     {
@@ -351,10 +420,17 @@ public  Status  open_file(
         (void) strcpy( expanded, tmp_name );
     }
 
+    /* --- finally, open the file */
+
     *file = fopen( expanded, access_str );
 
+    /* --- if reading a decompressed temp file, unlink it, so that when
+           the program closes the file or dies, the file is removed */
+
     if( gzipped && *file != (FILE *) NULL )
-        unlink_file( expanded ); /* --- make sure file disappears when closed */
+        unlink_file( expanded );
+
+    /* --- assign opening status and print error message if needed */
 
     if( *file != (FILE *) 0 )
     {
@@ -975,11 +1051,9 @@ public  Status  input_binary_data(
     n_done = fread( data, element_size, n, file );
     if( n_done != n )
     {
-#ifdef ERROR_MESSAGES
         print( "Error inputting binary data.\n" );
         print( "     (%d out of %d items of size %d).\n", n_done, n,
                 (int) element_size );
-#endif
         status = ERROR;
     }
 
@@ -1459,9 +1533,7 @@ public  Status  input_float(
         status = OK;
     else
     {
-#ifdef ERROR_MESSAGES
         print( "Error inputting float.\n" );
-#endif
         status = ERROR;
     }
 
@@ -1522,9 +1594,7 @@ public  Status  input_double(
         status = OK;
     else
     {
-#ifdef ERROR_MESSAGES
         print( "Error inputting double.\n" );
-#endif
         status = ERROR;
     }
 

@@ -14,6 +14,10 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#ifndef lint
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.5 1994-11-25 14:19:50 david Exp $";
+#endif
+
 #include  <alloc.h>
 
 #define  DEFAULT_CHUNK_SIZE    100

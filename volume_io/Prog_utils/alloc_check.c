@@ -1,6 +1,10 @@
 
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 #include  <stdlib.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.13 1994-11-25 14:19:54 david Exp $";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_check.c
@@ -92,6 +96,19 @@ private   void  initialize_alloc_list(
     for_less( i, 0, MAX_SKIP_LEVELS )
         alloc_list->header->forward[i] = (skip_entry *) 0;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_initialized_alloc_list
+@INPUT      : alloc_list
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Checks to make sure the allocation list is initialized.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  check_initialized_alloc_list(
     alloc_struct  *alloc_list )
@@ -315,10 +332,23 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
     return( found );
 }
 
-#define  MAX_RAND  2147483648.0
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_random_0_to_1
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : random number
+@DESCRIPTION: Returns a random number >= 0 and < 1.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  Real  get_random_0_to_1( void )
 {
+#define  MAX_RAND  2147483648.0
+
     return( (Real) random() / MAX_RAND );
 }
 
@@ -347,24 +377,6 @@ private  int  get_random_level( void )
 
     return( level );
 }
-
-#ifdef  NOT_NEEDED
-private   void  delete_alloc_list(
-    alloc_struct  *alloc_list )
-
-{
-    skip_entry    *ptr, *deleting;
-
-    ptr = alloc_list->header;
-
-    while( ptr != (skip_entry *) 0 )
-    {
-        deleting = ptr;
-        ptr = ptr->forward[0];
-        free( (void *) deleting );
-    }
-}
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : memory_still_alloced
@@ -590,6 +602,23 @@ private  BOOLEAN  size_display_enabled( void )
 #endif
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_stop_sequence_number
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : which allocation number
+@DESCRIPTION: Returns the number at which allocation should stop.  This is
+              used for debugging.  For instance, if an error message indicates
+              a problem with the 100'th alloc of the program, then do a
+              SETENV STOP_ALLOC_AT 100 and run the program from the debugger.
+              It will stop at the requested allocation.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  int  get_stop_sequence_number()
 {
     static   int   first = TRUE;
@@ -608,6 +637,21 @@ private  int  get_stop_sequence_number()
     return( stop_sequence_number );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_current_sequence_number
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : the index of this alloc
+@DESCRIPTION: Returns the count of how many allocations have been done, so that
+              each allocation can be assigned a value equal to its cardinality
+              in the set of allocations over the life of the program.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  int  get_current_sequence_number()
 {
     static   int  current_sequence_number = 0;
@@ -615,7 +659,7 @@ private  int  get_current_sequence_number()
     ++current_sequence_number;
 
     if( current_sequence_number == get_stop_sequence_number() )
-        HANDLE_INTERNAL_ERROR( "get_current_sequence_number" );
+        handle_internal_error( "get_current_sequence_number" );
 
     return( current_sequence_number );
 }

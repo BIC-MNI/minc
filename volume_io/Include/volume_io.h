@@ -3,7 +3,7 @@
 #define  DEF_VOLUME_IO
 
 #ifndef lint
-static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.5 1994-11-24 15:57:17 david Exp $";
+static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.6 1994-11-25 14:19:51 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -28,6 +28,17 @@ static char volume_io_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Includ
 #include  <geometry.h>
 #include  <volume.h>
 #include  <transforms.h>
+
+#ifndef  public
+#define       public   extern
+#define       public_was_defined_here
+#endif
+
 #include  <vol_io_prototypes.h>
+
+#ifdef  public_was_defined_here
+#undef       public
+#undef       public_was_defined_here
+#endif
 
 #endif

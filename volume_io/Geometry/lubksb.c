@@ -1,12 +1,31 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
+
+#ifndef lint
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/Attic/lubksb.c,v 1.3 1994-11-25 14:19:28 david Exp $";
+#endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : lubksb
+@INPUT      : a
+              n
+              indx
+@OUTPUT     : b
+@RETURNS    : 
+@DESCRIPTION: From numerical recipes
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void lubksb(
     float **a,
     int   n,
-    int   *indx,
-    float *b )
+    int   indx[],
+    float b[] )
 {
-   int i,ii=0,ip,j;
+   int   i,ii=0,ip,j;
    float sum;
 
    for (i=1;i<=n;i++) {
