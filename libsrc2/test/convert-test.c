@@ -102,9 +102,9 @@ main(int argc, char **argv)
                 voxel[1] = coords[1];
                 voxel[2] = coords[2];
 
-                miconvert_3D_voxel_to_world(hvol, voxel, world);
+                miconvert_voxel_to_world(hvol, voxel, world);
         
-                miconvert_3D_world_to_voxel(hvol, world, new_voxel);
+                miconvert_world_to_voxel(hvol, world, new_voxel);
 
                 for (n = 0; n < 3; n++) {
                     if (!NEARLY_EQUAL(voxel[n], new_voxel[n])) {
@@ -182,6 +182,30 @@ main(int argc, char **argv)
                 }
             }
         }
+    }
+
+    world[MI2_X] = -80;
+    world[MI2_Y] = 150;
+    world[MI2_Z] = 120;
+
+    result = miset_world_origin(hvol, world);
+
+    if (result != MI_NOERROR) {
+        TESTRPT("miset_world_origin error", result);
+    }
+
+    voxel[MI2_X] = voxel[MI2_Y] = voxel[MI2_Z] = 0;
+
+    result = miconvert_voxel_to_world(hvol, voxel, world);
+    if (result != MI_NOERROR) {
+        TESTRPT("miconvert_voxel_to_world error", result);
+    }
+
+    if (!NEARLY_EQUAL(world[MI2_X], -80.0) || 
+        !NEARLY_EQUAL(world[MI2_Y], 150.0) || 
+        !NEARLY_EQUAL(world[MI2_Z], 120.0)) {
+        fprintf(stderr, "%f %f %f\n", world[0], world[1], world[2]);
+        TESTRPT("conversion error", 0);
     }
 
     if (error_cnt == 0) {
