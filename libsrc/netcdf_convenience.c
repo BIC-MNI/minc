@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.2  1995-01-23 08:28:19  neelin
-@MODIFIED   : Changed name of midecompress_file to miexpand_file.
+@MODIFIED   : Revision 2.3  1995-01-24 08:34:11  neelin
+@MODIFIED   : Added optional tempfile argument to miexpand_file.
 @MODIFIED   :
+ * Revision 2.2  95/01/23  08:28:19  neelin
+ * Changed name of midecompress_file to miexpand_file.
+ * 
  * Revision 2.1  95/01/20  15:20:33  neelin
  * Added midecompress_file with ability to decompress only the header of a file.
  * 
@@ -66,7 +69,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.2 1995-01-23 08:28:19 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.3 1995-01-24 08:34:11 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -206,6 +209,8 @@ private int execute_decompress_command(char *command, char *infile,
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miexpand_file
 @INPUT      : path  - name of file to open.
+              tempfile - user supplied name for temporary file. If 
+                 NULL, then the routine generates its own name.
               header_only - TRUE if only the header needs to be expanded.
 @OUTPUT     : created_tempfile - TRUE if a temporary file was created, FALSE
                  if no file was created (either because the original file
@@ -217,20 +222,20 @@ private int execute_decompress_command(char *command, char *infile,
               is returned.
 @DESCRIPTION: Routine to expand a compressed minc file. If the original file 
               is not compressed then its name is returned. If the name of a 
-              temporary file is returned, then created_tempfile is TRUE. If 
-              header_only is TRUE, then only the header part of the file is 
-              guaranteed, the data part may or may not be present.
+              temporary file is returned, then *created_tempfile is set to
+              TRUE. If header_only is TRUE, then only the header part of the 
+              file will be expanded - the data part may or may not be present.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : NetCDF routines, external decompression programs
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *miexpand_file(char *path, int header_only,
+public char *miexpand_file(char *path, char *tempfile, int header_only,
                            int *created_tempfile)
 {
    int status, oldncopts, first_ncerr;
-   char *tempfile, *extension;
+   char *newfile, *extension;
    enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} compress_type;
 
    MI_SAVE_ROUTINE_NAME("miexpand_file");
@@ -248,8 +253,8 @@ public char *miexpand_file(char *path, int header_only,
 
    /* If there is no error then return the original file name */
    if (status != MI_ERROR) {
-      tempfile = strdup(path);
-      MI_RETURN(tempfile);
+      newfile = strdup(path);
+      MI_RETURN(newfile);
    }
 
    /* Save the error code */
@@ -276,12 +281,17 @@ public char *miexpand_file(char *path, int header_only,
    /* If there was a system error or we don't know what to do 
       with the file, then return the original file name */
    if ((first_ncerr == NC_SYSERR) || (compress_type == UNKNOWN)) {
-      tempfile = strdup(path);
-      MI_RETURN(tempfile);
+      newfile = strdup(path);
+      MI_RETURN(newfile);
    }
 
    /* Create a temporary file name */
-   tempfile = strdup(tmpnam(NULL));
+   if (tempfile == NULL) {
+      newfile = strdup(tmpnam(NULL));
+   }
+   else {
+      newfile = strdup(tempfile);
+   }
    *created_tempfile = TRUE;
 
    /* Try to use gunzip */
@@ -289,33 +299,33 @@ public char *miexpand_file(char *path, int header_only,
        (compress_type == COMPRESSED) ||
        (compress_type == PACKED) ||
        (compress_type == ZIPPED)) {
-      status = execute_decompress_command("gunzip -c", path, tempfile, 
+      status = execute_decompress_command("gunzip -c", path, newfile, 
                                           header_only);
    }
 
    /* If that doesn't work, try something else */
    if (status != 0) {
       if (compress_type == COMPRESSED) {
-         status = execute_decompress_command("zcat", path, tempfile, 
+         status = execute_decompress_command("zcat", path, newfile, 
                                              header_only);
       }
       else if (compress_type == PACKED) {
-         status = execute_decompress_command("pcat", path, tempfile, 
+         status = execute_decompress_command("pcat", path, newfile, 
                                              header_only);
       }
    }
 
    /* Check for failure to uncompress the file */
    if (status != 0) {
-      (void) remove(tempfile);
+      (void) remove(newfile);
       *created_tempfile = FALSE;
-      FREE(tempfile);
+      FREE(newfile);
       MI_LOG_PKG_ERROR2(MI_ERR_UNCOMPRESS,"Cannot uncompress the file");
       MI_RETURN_ERROR(NULL);
    }
 
    /* Return the new file name */
-   MI_RETURN(tempfile);
+   MI_RETURN(newfile);
 
 }
 
@@ -360,7 +370,7 @@ public int miopen(char *path, int mode)
    }
 
    /* Try to expand the file */
-   tempfile = miexpand_file(path, FALSE, &created_tempfile);
+   tempfile = miexpand_file(path, NULL, FALSE, &created_tempfile);
 
    /* Check for error */
    if (tempfile == NULL) {
