@@ -51,6 +51,16 @@ typedef  struct
          ( ((volume).data_type == UNSIGNED_BYTE) ?                            \
              ((volume).byte_data[x][y][z]) : ((volume).short_data[x][y][z]) )
 
+#define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
+            ((volume).value_scale * (Real) (voxel) + (volume).value_translation)
+
+#define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
+          ROUND( ((Real) value - (volume).value_translation) / \
+                 (volume).value_scale )
+
+#define  GET_VOLUME_SCALED_DATA( volume, x, y, z )                            \
+         CONVERT_VOXEL_TO_VALUE( volume, GET_VOLUME_DATA( volume, x, y, z ) )
+
 #define  GET_VOLUME_DATA_PTR( volume, x, y, z )                               \
          ( ((volume).data_type == UNSIGNED_BYTE) ?                            \
              ((void *)(&(volume).byte_data[x][y][z])) :                       \

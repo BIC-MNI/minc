@@ -323,3 +323,4 @@ private  void  create_world_transform(
     make_change_to_bases_transform( origin, &x_axis, &y_axis, &z_axis,
                                     transform );
 }
+#endif
