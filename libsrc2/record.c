@@ -37,7 +37,9 @@ miget_record_length(mihandle_t volume,
     return (MI_ERROR);
 }
 
-/** This method returns the field name for the given field.
+/** This method returns the field name for the given field index.  Memory
+ * for returned string is allocated on the heap and should be released using
+ * mifree_name().
  */
 int
 miget_record_field_name(mihandle_t volume,
@@ -47,6 +49,10 @@ miget_record_field_name(mihandle_t volume,
     if (volume == NULL || name == NULL) {
         return (MI_ERROR);
     }
+    /* Get the field name.  The H5Tget_member_name() function allocates
+     * the memory for the string using malloc(), so we can return the 
+     * pointer directly without any further manipulations.
+     */
     *name = H5Tget_member_name(volume->type_id, index);
     if (*name == NULL) {
         return (MI_ERROR);
@@ -54,7 +60,9 @@ miget_record_field_name(mihandle_t volume,
     return (MI_NOERROR);
 }
 
-/** This method sets a field name for the given record. e.g. field is "red"
+/** This method sets a field name for the volume record. The volume
+ * must be of class "MI_CLASS_UNIFORM_RECORD".  The size of record
+ * type will be increased if necessary to accomodate the new field.
  */
 int
 miset_record_field_name(mihandle_t volume,
@@ -71,13 +79,30 @@ miset_record_field_name(mihandle_t volume,
         volume->volume_class != MI_CLASS_NON_UNIFORM_RECORD) {
         return (MI_ERROR);
     }
+    /* Get the type of the record's fields.  This is recorded as the
+     * type of the volume.
+     */
     type_id = mitype_to_hdftype(volume->volume_type);
+
+    /* Calculate the offset of the new member.
+     */
     offset = index * H5Tget_size(type_id);
+
+    /* If the offset plus the size of the member is larger than the
+     * current size of the structure, increase the size of the structure.
+     */
     if (offset + H5Tget_size(type_id) > H5Tget_size(volume->type_id)) {
         H5Tset_size(volume->type_id, offset + H5Tget_size(type_id));
     }
+
+    /* Actually define the field within the structure.
+     */
     H5Tinsert(volume->type_id, name, offset, type_id);
+
+    /* Delete the HDF5 type object returned by mitype_to_hdftype().
+     */
     H5Tclose(type_id);
+
     return (MI_NOERROR);
 }
 
@@ -87,33 +112,52 @@ miset_record_field_name(mihandle_t volume,
                                   __LINE__, msg, val))
 
 static int error_cnt = 0;
+
+#define CX 10
+#define CY 10
+#define CZ 6
+#define NDIMS 3
+
 int
 main(int argc, char **argv)
 {
     mihandle_t hvol;
     char *name;
     int result;
-    int value;
-    midimhandle_t hdim[3];
-    unsigned long coords[3];
+    midimhandle_t hdim[NDIMS];
+    unsigned long coords[NDIMS];
+    unsigned long count[NDIMS];
+    int i,j,k;
+    struct test {
+        int r;
+        int g;
+        int b;
+    } voxel;
 
-    result = micreate_dimension("xspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, 10, &hdim[0]);
-
-    result = micreate_dimension("yspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, 10, &hdim[1]);
-
-    result = micreate_dimension("zspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, 6, &hdim[2]);
-
-    result = micreate_volume("tst-rec.mnc", 3, hdim, MI_TYPE_UINT, 
-                             MI_CLASS_UNIFORM_RECORD, NULL, &hvol);
-    if (result < 0) {
-	fprintf(stderr, "Unable to create test file %x\n", result);
-	return (-1);
+    /* Write data one voxel at a time. */
+    for (i = 0; i < NDIMS; i++) {
+        count[i] = 1;
     }
 
-    miset_record_field_name(hvol, 0, "Red");
+    result = micreate_dimension("xspace", MI_DIMCLASS_SPATIAL, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &hdim[0]);
+
+    result = micreate_dimension("yspace", MI_DIMCLASS_SPATIAL, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, CY, &hdim[1]);
+
+    result = micreate_dimension("zspace", MI_DIMCLASS_SPATIAL, 
+                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &hdim[2]);
+
+    result = micreate_volume("tst-rec.mnc", NDIMS, hdim, MI_TYPE_UINT, 
+                             MI_CLASS_UNIFORM_RECORD, NULL, &hvol);
+    if (result < 0) {
+	TESTRPT("Unable to create test file", result);
+    }
+
+    result = miset_record_field_name(hvol, 0, "Red");
+    if (result < 0) {
+        TESTRPT("miset_record_field_name", result);
+    }
     miset_record_field_name(hvol, 1, "Green");
     miset_record_field_name(hvol, 2, "Blue");
 
@@ -135,8 +179,49 @@ main(int argc, char **argv)
     }
     mifree_name(name);
 
-    micreate_volume_image(hvol);
+    result = micreate_volume_image(hvol);
+    if (result < 0) {
+        TESTRPT("micreate_volume_image failed", result);
+    }
 
+    for (i = 0; i < CX; i++) {
+        for (j = 0; j < CY; j++) {
+            for (k = 0; k < CZ; k++) {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+
+                voxel.r = i;
+                voxel.g = j;
+                voxel.b = k;
+                
+                result = miset_voxel_value_hyperslab(hvol, MI_TYPE_UNKNOWN,
+                                                     coords, count, &voxel);
+                if (result < 0) {
+                    TESTRPT("Error writing voxel", result);
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < CX; i++) {
+        for (j = 0; j < CY; j++) {
+            for (k = 0; k < CZ; k++) {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+
+                result = miget_voxel_value_hyperslab(hvol, MI_TYPE_UNKNOWN,
+                                                     coords, count, &voxel);
+                if (result < 0) {
+                    TESTRPT("Error reading voxel", result);
+                }
+                if (voxel.r != i || voxel.g != j || voxel.b != k) {
+                    TESTRPT("Data mismatch", 0);
+                }
+            }
+        }
+    }
 
     miclose_volume(hvol);
 
