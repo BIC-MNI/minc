@@ -590,12 +590,14 @@ sub get_arguments {
     local($tape_end) = -1;
     local(@input_list) = ();
     local($do_compression) = 0;
+    local($need_diskfiles) = 0;
 
     # Loop through arguments
     while (@_) {
         $_ = shift;
         if (/^-list$/) { $listfile = shift;}
         elsif (/^-tape$/) { $tapedrive = shift;}
+        elsif (/^-notape$/) {$need_diskfiles = 1;}
         elsif (/^-nominc$/) { $nominc = 1;}
         elsif (/^-first$/) { $tape_position = shift;}
         elsif (/^-last$/) {$tape_end = shift;}
@@ -604,15 +606,16 @@ sub get_arguments {
         elsif (/^-h(|elp)$/) {
             die
 "Command-specific options:
- -list:\t\tSpecify a file for listing contents of tape
- -tape:\t\tSpecify an input tape drive (default=/dev/nrtape if no files given)
+ -list:\t\t\tSpecify a file for listing contents of tape
+ -tape:\t\t\tSpecify an input tape drive (default=/dev/nrtape if no files given)
+ -notape:\t\t\tDo not try to use the tape drive
  -nominc:\t\tDo not produce output minc files
  -first:\t\tSpecify a starting tape position (# files to skip)
- -last:\t\tSpecify an ending tape position
+ -last:\t\t\tSpecify an ending tape position
  -compress:\t\tCompress the output minc files
  -nocompress:\t\tDo not compress the output minc files (default)
 Generic options for all commands:
- -help:\t\tPrint summary of comand-line options and abort
+ -help:\t\t\tPrint summary of comand-line options and abort
 
 $usage
 ";
@@ -631,6 +634,9 @@ $usage
     }
 
     # Check expected values
+    if ($need_diskfiles && (scalar(@input_list) == 0)) {
+       die "Please specify disk files.\n";
+    }
     if ((length($tapedrive) > 0) && (scalar(@input_list) > 0)) {
         die "You cannot specify both a tape drive and a file list.\n";
     }
@@ -657,15 +663,41 @@ sub mri_to_minc {
 
     $| = 1;
 
-    # Save history
-    chop($history = `date`);
-    $0 =~ /([^\/]+)$/;
-    $history .= ">>>> $1 @ARGV\n";
+    # Save arguments for history
+    @saved_args = @ARGV;
 
     # Get arguments
     ($outputdir, $tapedrive, $listfile, $nominc, 
      $tape_position, $tape_end, $do_compression, @input_list) = 
          &get_arguments(@_);
+
+    # Save history
+    chop($history = `date`);
+    $0 =~ /([^\/]+)$/;
+    $history .= ">>>> $1";
+    foreach $file (@input_list[0..$#input_list]) {
+       $bad_args{$file} = 1;
+    }
+    foreach $arg (@saved_args) {
+       if (! $bad_args{$arg}) {
+          $history .= " $arg";
+       }
+    }
+    if (scalar(@input_list) > 0) {
+       $history .= " $input_list[0]";
+    }
+    if (scalar(@input_list) > 1) {
+       $history .= " ... $input_list[$#input_list]";
+    }
+    $history .= "\n";
+
+    # Check that we can write to the output directory
+    if (! -d $outputdir) {
+       die "Directory \"$outputdir\" does not exist.\n";
+    }
+    if (! -w $outputdir) {
+       die "Cannot write to \"$outputdir\".\n";
+    }
 
     # Should we delete the files?
     $delete_files = (length($tapedrive) > 0);
