@@ -9,7 +9,7 @@ include $(ROOT)/Makefile_configuration
 
 # Object names
 OBJS     = ParseArgv.o vax_conversions.o time_stamp.o \
-	   nrutil.o ludcmp.o lubksb.o svbksb.o svdcmp.o lfit.o \
+	   nrutil.o ludcmp.o lubksb.o svbksb.o svdcmp.o lfit.o gaussj.o covsrt.o \
 	   gen_transforms.o gen_transform_io.o thin_plate_spline.o \
       tag_points.o mni_io.o\
 	   transforms.o inverse.o \
