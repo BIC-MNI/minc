@@ -78,7 +78,7 @@ sub ge5_read_headers {
        $series_hdr_len = &unpack_value(*pixel_hdr, 144, 'i');
        $image_hdr_off = &unpack_value(*pixel_hdr, 148, 'i');
        $image_hdr_len = &unpack_value(*pixel_hdr, 152, 'i');
-       $pixel_data_offset = 7904;
+       $pixel_data_offset = &unpack_value(*pixel_hdr, 4, 'i');
        $pixel_data_len = -1;
     }
 
