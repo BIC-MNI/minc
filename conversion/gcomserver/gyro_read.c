@@ -6,12 +6,19 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.8  1994-03-15 14:24:01  neelin
-@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
-@MODIFIED   : Added acquisition:comments attribute
-@MODIFIED   : Changed reading of configuration file to allow execution of a command on
-@MODIFIED   : the minc file.
+@MODIFIED   : Revision 1.9  1994-05-24 15:06:35  neelin
+@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
+@MODIFIED   : or 2 frames (put in 1 file for more).
+@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
+@MODIFIED   : Save echo times in dimension variable when appropriate.
+@MODIFIED   : Changed to file names to end in _mri.mnc.
 @MODIFIED   :
+ * Revision 1.8  94/03/15  14:24:01  neelin
+ * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+ * Added acquisition:comments attribute
+ * Changed reading of configuration file to allow execution of a command on
+ * the minc file.
+ * 
  * Revision 1.7  94/03/14  16:44:30  neelin
  * Changed scale to be fp_scaled_min/max instead of ext_scale_min/max.
  * Check units for millirad and change to radians.
@@ -469,17 +476,17 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       (void) strncpy(general_info->acq.scan_seq,
               find_string(group_list, ACR_Scanning_sequence, ""), maxlen);
       general_info->acq.rep_time = 
-         find_double(group_list, ACR_Repetition_time, -DBL_MAX);
+         find_double(group_list, ACR_Repetition_time, -DBL_MAX) / 1000.0;
       general_info->acq.echo_time = 
-         find_double(group_list, ACR_Echo_time, -DBL_MAX);
+         find_double(group_list, ACR_Echo_time, -DBL_MAX) / 1000.0;
       general_info->acq.inv_time = 
-         find_double(group_list, ACR_Inversion_time, -DBL_MAX);
+         find_double(group_list, ACR_Inversion_time, -DBL_MAX) / 1000.0;
       general_info->acq.flip_angle = 
          find_double(group_list, SPI_Flip_angle, -DBL_MAX);
       general_info->acq.num_avg = 
          find_double(group_list, ACR_Nr_of_averages, -DBL_MAX);
       general_info->acq.imaging_freq = 
-         find_double(group_list, ACR_Imaging_frequency, -DBL_MAX);
+         find_double(group_list, ACR_Imaging_frequency, -DBL_MAX) * 1000000.0;
       (void) strncpy(general_info->acq.imaged_nucl,
          find_string(group_list, ACR_Imaged_nucleus, ""), maxlen);
       (void) strncpy(general_info->acq.comments,
@@ -590,6 +597,8 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
                   default_slice_pos);
    file_info->dyn_begin_time = 
       find_double(group_list, SPI_dynamic_scan_begin_time, 0.0);
+   file_info->echo_time = 
+      find_double(group_list, ACR_Echo_time, 0.0) / 1000.0;
 
    /* Update slice position information for general_info */
    diff = (file_info->slice_position - general_info->slicepos_first) *

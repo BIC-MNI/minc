@@ -6,10 +6,17 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.4  1994-01-14 11:37:30  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.5  1994-05-24 15:09:47  neelin
+@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
+@MODIFIED   : or 2 frames (put in 1 file for more).
+@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
+@MODIFIED   : Save echo times in dimension variable when appropriate.
+@MODIFIED   : Changed to file names to end in _mri.mnc.
 @MODIFIED   :
+ * Revision 1.4  94/01/14  11:37:30  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.3  93/12/10  15:35:16  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -84,7 +91,18 @@ public void save_transferred_object(Acr_Group group_list, char *file_prefix,
    if (element != NULL)
       data_info->image_type = (int) acr_get_element_numeric(element);
    else
-      data_info->acq_id = SPI_DEFAULT_IMAGE_TYPE;
+      data_info->image_type = SPI_DEFAULT_IMAGE_TYPE;
+
+   /* Get number of echos, echo number, number of dynamic scans and 
+      dynamic_scan_number */
+   data_info->num_echoes =
+      acr_find_int(group_list, SPI_Number_of_echoes, 1);
+   data_info->echo_number =
+      acr_find_int(group_list, SPI_Echo_number, 1);
+   data_info->num_dyn_scans =
+      acr_find_int(group_list, SPI_Number_of_dynamic_scans, 1);
+   data_info->dyn_scan_number =
+      acr_find_int(group_list, SPI_Dynamic_scan_number, 1);
 
    /* Look for patient name */
    element = acr_find_group_element(group_list, ACR_Patient_name);

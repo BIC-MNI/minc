@@ -6,12 +6,19 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.6  1994-03-15 14:25:52  neelin
-@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
-@MODIFIED   : Added acquisition:comments attribute
-@MODIFIED   : Changed reading of configuration file to allow execution of a command on
-@MODIFIED   : the minc file.
+@MODIFIED   : Revision 1.7  1994-05-24 15:10:00  neelin
+@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
+@MODIFIED   : or 2 frames (put in 1 file for more).
+@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
+@MODIFIED   : Save echo times in dimension variable when appropriate.
+@MODIFIED   : Changed to file names to end in _mri.mnc.
 @MODIFIED   :
+ * Revision 1.6  94/03/15  14:25:52  neelin
+ * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+ * Added acquisition:comments attribute
+ * Changed reading of configuration file to allow execution of a command on
+ * the minc file.
+ * 
  * Revision 1.5  94/01/17  15:06:31  neelin
  * Added some acquisition parameters (flip angle) and fixed error in writing
  * of scanning sequence.
@@ -146,6 +153,7 @@ typedef struct {
    double window_min;
    double slice_position;
    double dyn_begin_time;
+   double echo_time;
    int index[MRI_NDIMS];
 } File_Info;
 

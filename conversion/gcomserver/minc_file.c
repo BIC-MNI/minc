@@ -6,12 +6,19 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.8  1994-03-15 14:25:41  neelin
-@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
-@MODIFIED   : Added acquisition:comments attribute
-@MODIFIED   : Changed reading of configuration file to allow execution of a command on
-@MODIFIED   : the minc file.
+@MODIFIED   : Revision 1.9  1994-05-24 15:09:36  neelin
+@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
+@MODIFIED   : or 2 frames (put in 1 file for more).
+@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
+@MODIFIED   : Save echo times in dimension variable when appropriate.
+@MODIFIED   : Changed to file names to end in _mri.mnc.
 @MODIFIED   :
+ * Revision 1.8  94/03/15  14:25:41  neelin
+ * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+ * Added acquisition:comments attribute
+ * Changed reading of configuration file to allow execution of a command on
+ * the minc file.
+ * 
  * Revision 1.7  94/03/14  16:45:28  neelin
  * Moved ncendef up a level so that we can catch errors.
  * 
@@ -55,7 +62,7 @@
 
 /* Define mri dimension names */
 static char *mri_dim_names[] = {
-   NULL, "echo_number", MItime, "phase_number", "chemical_shift_number", NULL};
+   NULL, "echo_time", MItime, "phase_number", "chemical_shift", NULL};
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_minc_file
@@ -122,7 +129,7 @@ public int create_minc_file(char *minc_file, int clobber,
       }
 
       /* Create file name */
-      (void) sprintf(temp_name, "%s%s_%s_%s_%02d%02d%s%s%s%s%s.mnc", 
+      (void) sprintf(temp_name, "%s%s_%s_%s_%02d%02d%s%s%s%s%s_mri.mnc", 
                      file_prefix,
                      patient_name,
                      general_info->study.study_id, 
@@ -229,8 +236,15 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
          dimname = mri_dim_names[imri];
          dim[ndims] = ncdimdef(mincid, dimname, dimsize);
          if (imri == TIME) {
-            varid = micreate_std_variable(mincid, dimname, NC_LONG, 1, 
+            varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 1, 
                                           &dim[ndims]);
+            (void) miattputstr(mincid, varid, MIunits, "s");
+         }
+         else if (imri == ECHO) {
+            varid = ncvardef(mincid, dimname, NC_DOUBLE, 1, &dim[ndims]);
+            (void) miattputstr(mincid, varid, MIvartype, MI_DIMENSION);
+            (void) miattputstr(mincid, varid, MIspacing, MI_IRREGULAR);
+            (void) miattputstr(mincid, varid, MIunits, "s");
          }
          general_info->image_index[imri] = ndims;
          ndims++;
@@ -350,7 +364,8 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (general_info->acq.rep_time != -DBL_MAX)
       (void) miattputdbl(mincid, varid, MIrepetition_time, 
                          general_info->acq.rep_time);
-   if (general_info->acq.echo_time != -DBL_MAX)
+   if ((general_info->acq.echo_time != -DBL_MAX) &&
+       (general_info->size[ECHO] <= 1))
       (void) miattputdbl(mincid, varid, MIecho_time, 
                          general_info->acq.echo_time);
    if (general_info->acq.inv_time != -DBL_MAX)
@@ -495,9 +510,16 @@ public void save_minc_image(int icvid, General_Info *general_info,
 
    /* Write out time of slice, if needed */
    if (general_info->size[TIME] > 1) {
-      (void) mivarput1(mincid, ncvarid(mincid, MItime), 
+      (void) mivarput1(mincid, ncvarid(mincid, mri_dim_names[TIME]), 
                        &start[general_info->image_index[TIME]], 
                        NC_DOUBLE, NULL, &file_info->dyn_begin_time);
+   }
+
+   /* Write out echo time of slice, if needed */
+   if (general_info->size[ECHO] > 1) {
+      (void) mivarput1(mincid, ncvarid(mincid, mri_dim_names[ECHO]), 
+                       &start[general_info->image_index[ECHO]], 
+                       NC_DOUBLE, NULL, &file_info->echo_time);
    }
 
    /* Search image for max and min */

@@ -6,12 +6,19 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.7  1994-03-15 14:25:49  neelin
-@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
-@MODIFIED   : Added acquisition:comments attribute
-@MODIFIED   : Changed reading of configuration file to allow execution of a command on
-@MODIFIED   : the minc file.
+@MODIFIED   : Revision 1.8  1994-05-24 15:09:53  neelin
+@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
+@MODIFIED   : or 2 frames (put in 1 file for more).
+@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
+@MODIFIED   : Save echo times in dimension variable when appropriate.
+@MODIFIED   : Changed to file names to end in _mri.mnc.
 @MODIFIED   :
+ * Revision 1.7  94/03/15  14:25:49  neelin
+ * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+ * Added acquisition:comments attribute
+ * Changed reading of configuration file to allow execution of a command on
+ * the minc file.
+ * 
  * Revision 1.6  94/01/14  11:37:37  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.
@@ -81,6 +88,10 @@ public void use_the_files(int num_files, char *file_list[],
    int cur_acq;
    int cur_rec;
    int cur_imgtyp;
+   int cur_echo;
+   int cur_dyn_scan;
+   int echoes_in_one_file;
+   int dyn_scans_in_one_file;
    int exit_status;
    char *output_file_name;
    char file_prefix[256];
@@ -132,12 +143,20 @@ public void use_the_files(int num_files, char *file_list[],
             cur_acq = data_info[ifile].acq_id;
             cur_rec = data_info[ifile].rec_num;
             cur_imgtyp = data_info[ifile].image_type;
+            cur_echo = data_info[ifile].echo_number;
+            cur_dyn_scan = data_info[ifile].dyn_scan_number;
+            echoes_in_one_file = (data_info[ifile].num_echoes > 2);
+            dyn_scans_in_one_file = (data_info[ifile].num_dyn_scans > 2);
             used_file[ifile] = TRUE;
          }
          else if ((data_info[ifile].study_id == cur_study) &&
                   (data_info[ifile].acq_id == cur_acq) &&
                   (data_info[ifile].rec_num == cur_rec) &&
-                  (data_info[ifile].image_type == cur_imgtyp)) {
+                  (data_info[ifile].image_type == cur_imgtyp) &&
+                  ((data_info[ifile].echo_number == cur_echo) ||
+                   echoes_in_one_file) &&
+                  ((data_info[ifile].dyn_scan_number == cur_dyn_scan) ||
+                   dyn_scans_in_one_file)) {
             used_file[ifile] = TRUE;
          }
          if (used_file[ifile]) {
