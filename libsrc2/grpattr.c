@@ -540,10 +540,18 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
     hdf_type = H5Aget_type(hdf_attr);
     switch (H5Tget_class(hdf_type)) {
     case H5T_FLOAT:
-	*data_type = MI_TYPE_DOUBLE;
+        if (H5Tget_size(hdf_type) == sizeof(float)) {
+            *data_type = MI_TYPE_FLOAT;
+        }
+        else {
+            *data_type = MI_TYPE_DOUBLE;
+        }
         break;
     case H5T_STRING:
 	*data_type = MI_TYPE_STRING;
+        break;
+    case H5T_INTEGER:
+        *data_type = MI_TYPE_INT;
         break;
     default:
 	return (MI_ERROR);
