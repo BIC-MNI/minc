@@ -633,14 +633,17 @@ sub mri_to_minc {
                     $mincfile .= "_e$echo";
                 }
                 $mincfile .= "_mri.mnc";
-                print STDERR "Creating minc file \"$mincfile\"\n";
                 if (length($listfile) > 0) {
                     &save_list_info($listfile, $mincfile, *mincinfo, 
                                     $image_list{$echo}, $echo);
                 }
                 if (!$nominc) {
+                    print STDERR "Creating minc file \"$mincfile\"\n";
                     &create_mincfile($mincfile, *file_list, *mincinfo, 
                                      $image_list{$echo}, $echo);
+                }
+                else {
+                    print STDERR "Not creating minc file \"$mincfile\"\n";
                 }
             }
 
