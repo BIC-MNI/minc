@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 1.2  1993-11-24 12:05:00  neelin
-@MODIFIED   : Write output to stdout instead of stderr.
+@MODIFIED   : Revision 1.3  1993-11-25 10:35:33  neelin
+@MODIFIED   : Added byte-order test and file free.
 @MODIFIED   :
+ * Revision 1.2  93/11/24  12:05:00  neelin
+ * Write output to stdout instead of stderr.
+ * 
  * Revision 1.1  93/11/24  11:25:01  neelin
  * Initial revision
  * 
@@ -61,9 +64,13 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
+   (void) acr_test_byte_ordering(afp);
 
    /* Read in group list */
    status = acr_input_group_list(afp, &group_list, 0);
+
+   /* Free the afp */
+   acr_file_free(afp);
 
    /* Dump the values */
    acr_dump_group_list(stdout, group_list);

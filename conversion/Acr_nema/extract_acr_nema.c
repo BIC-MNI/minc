@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: extract_acr_nema.c,v $
-@MODIFIED   : Revision 1.1  1993-11-24 11:25:23  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-25 10:36:05  neelin
+@MODIFIED   : Added byte-order test and file free.
 @MODIFIED   :
+ * Revision 1.1  93/11/24  11:25:23  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -81,9 +84,13 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
+   (void) acr_test_byte_ordering(afp);
 
    /* Read in group list up to group */
    (void) acr_input_group_list(afp, &group_list, element_id->group_id);
+
+   /* Free the afp */
+   acr_file_free(afp);
 
    /* Look for element */
    element = acr_find_group_element(group_list, element_id);
