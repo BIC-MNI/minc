@@ -311,6 +311,10 @@ sub create_mincfile {
             $pos_to_image{$cur_slicepos} = $cur_image;
             push(@positions, $cur_slicepos);
         }
+        else {
+           warn "Duplicate slice position: " .
+              "ignoring file $file_list{$cur_image}\n";
+        }
     }
     @positions = sort(numeric_order @positions);
 
@@ -529,13 +533,25 @@ sub create_mincfile {
             read(GEDAT, $image_data, $image_data_len);
             close(GEDAT);
             if ($? != 0) {
-                &cleanup_and_die("Error or signal while reading image.\n", $?);
+                &warn("Error or signal while reading image.\n");
+                if ($ignore_image_errors) {
+                    warn "Using blank image instead.\n";
+                    $image_data = pack("x$image_data_len",());
+                }
+                else {
+                    &cleanup_and_die("Quitting.\n", $?);
+                }
             }
             if (length($image_data) != $image_data_len) {
-                close(MINC);
-                warn "Error reading image from $cur_file ".
-                    "while creating minc file \"$mincfile\"\n";
-                return;
+                warn "Error reading image from \"$cur_file\"\n";
+                if ($ignore_image_errors) {
+                    warn "Using blank image instead.\n";
+                    $image_data = pack("x$image_data_len",());
+                }
+                else {
+                    close(MINC);
+                    return;
+                }
             }
         }
 
@@ -591,6 +607,7 @@ sub get_arguments {
     local(@input_list) = ();
     local($do_compression) = 0;
     local($need_diskfiles) = 0;
+    local($ignore_image_errors) = 0;
 
     # Loop through arguments
     while (@_) {
@@ -603,6 +620,7 @@ sub get_arguments {
         elsif (/^-last$/) {$tape_end = shift;}
         elsif (/^-compress$/) {$do_compression = 1;}
         elsif (/^-nocompress$/) {$do_compression = 0;}
+        elsif (/^-ignore_image_errors$/) {$ignore_image_errors = 1;}
         elsif (/^-h(|elp)$/) {
             die
 "Command-specific options:
@@ -614,6 +632,7 @@ sub get_arguments {
  -last:\t\t\tSpecify an ending tape position
  -compress:\t\tCompress the output minc files
  -nocompress:\t\tDo not compress the output minc files (default)
+ -ignore_image_errors:\tIgnore errors when reading images
 Generic options for all commands:
  -help:\t\t\tPrint summary of comand-line options and abort
 
@@ -653,7 +672,8 @@ $usage
 
     # Return values
     return($outputdir, $tapedrive, $listfile, $nominc, 
-           $tape_position, $tape_end, $do_compression, @input_list);
+           $tape_position, $tape_end, $do_compression, 
+           $ignore_image_errors, @input_list);
 }
 
 # Subroutine to do all the work - loops through files collecting info,
@@ -668,7 +688,8 @@ sub mri_to_minc {
 
     # Get arguments
     ($outputdir, $tapedrive, $listfile, $nominc, 
-     $tape_position, $tape_end, $do_compression, @input_list) = 
+     $tape_position, $tape_end, $do_compression, 
+     $ignore_image_errors, @input_list) = 
          &get_arguments(@_);
 
     # Save history
@@ -827,6 +848,7 @@ sub mri_to_minc {
         if (scalar(keys(%file_list)) <= 0) {
             $mincinfo{'history'} = $history;
             $mincinfo{'tape_position'} = $tape_position;
+            $mincinfo{'numechos'} = $cur_numechos;
             $mincinfo{'exam'} = $cur_exam;
             $mincinfo{'series'} = $cur_series;
             $mincinfo{'width'} = $cur_width;
