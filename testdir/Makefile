@@ -55,4 +55,4 @@ test: $(PROGS)
 
 # Remove all derived files in this directory
 clean:
-	\rm -f   $(PROG_OBJ)  $(LINT_LIST) $(PROGS)
+	$(RM) $(RM_FLAGS) $(PROG_OBJ)  $(LINT_LIST) $(PROGS)
