@@ -4,6 +4,9 @@ $! --------------------------------------------------------------------------
 $!
 $ ccc := cc /opt/nodebug/nolist/include=([],[--.netcdf.include])
 $
+$ on error then goto exit
+$ on control_y then goto exit
+$ set ver
 $ ccc dim_conversion.c
 $ ccc image_conversion.c
 $ ccc minc_convenience.c
@@ -17,3 +20,5 @@ $ library/create minc.olb
 $ library/replace minc dim_conversion, image_conversion, -
      minc_convenience, minc_error, minc_globdef, netcdf_convenience, -
      value_conversion, strdup
+$exit:
+$ set nover
