@@ -9,16 +9,19 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.2  1995-04-27 11:50:35  neelin
-@MODIFIED   : Require either -norm or -nonorm on command line.
+@MODIFIED   : Revision 1.3  1995-04-27 12:48:42  neelin
+@MODIFIED   : Changed order of options.
 @MODIFIED   :
+ * Revision 1.2  1995/04/27  11:50:35  neelin
+ * Require either -norm or -nonorm on command line.
+ *
  * Revision 1.1  1995/04/26  14:16:38  neelin
  * Initial revision
  *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.2 1995-04-27 11:50:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.3 1995-04-27 12:48:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -116,12 +119,6 @@ ArgvInfo argTable[] = {
    {"-max_buffer_size_in_kb", ARGV_INT, (char *) 1, 
        (char *) &max_buffer_size_in_kb,
        "Specify the maximum size of the internal buffers (in kbytes)."},
-   {"-normalise", ARGV_CONSTANT, (char *) TRUE, (char *) &normalise,
-       "Normalise data sets for mean intensity."},
-   {"-nonormalise", ARGV_CONSTANT, (char *) FALSE, (char *) &normalise,
-       "Do not normalise data sets (default)."},
-   {"-sdfile", ARGV_STRING, (char *) 1, (char *) &sdfile,
-       "Specify an output sd file (default=none)."},
    {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
@@ -140,6 +137,12 @@ ArgvInfo argTable[] = {
        "Write unsigned integer data (default if type specified)."},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
        "Valid range for output data."},
+   {"-normalise", ARGV_CONSTANT, (char *) TRUE, (char *) &normalise,
+       "Normalise data sets for mean intensity."},
+   {"-nonormalise", ARGV_CONSTANT, (char *) FALSE, (char *) &normalise,
+       "Do not normalise data sets (default)."},
+   {"-sdfile", ARGV_STRING, (char *) 1, (char *) &sdfile,
+       "Specify an output sd file (default=none)."},
    {"-copy_header", ARGV_CONSTANT, (char *) TRUE, (char *) &copy_all_header,
        "Copy all of the header from the first file."},
    {"-nocopy_header", ARGV_CONSTANT, (char *) FALSE, (char *) &copy_all_header,
