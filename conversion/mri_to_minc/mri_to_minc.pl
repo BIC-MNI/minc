@@ -513,6 +513,16 @@ sub create_mincfile {
     &add_optional_attribute(*ge_specific_attributes, "string",
                             "ge_mrimage:pseqmode", $mincinfo{'ge_pseqmode'});
 
+    # Dicom specific stuff
+    local(@dicom_specific_attributes);
+    @dicom_specific_attributes = ();
+    local(@elements) = sort(grep(/^dicom_/, keys(%mincinfo)));
+    local($element);
+    foreach $element (@elements) {
+       &add_optional_attribute(*dicom_specific_attributes, "string",
+                              $element, $mincinfo{$element});
+    }
+
     # Run rawtominc with appropriate arguments
     $| = 1;
     local(@minccommand) = 
@@ -525,6 +535,7 @@ sub create_mincfile {
          "-attribute", "patient:full_name=".$mincinfo{'patient_name'},
          @optional_attributes,
          @ge_specific_attributes,
+         @dicom_specific_attributes
          );
     open(MINC, "|-") || exec(@minccommand);
 
@@ -958,6 +969,14 @@ sub mri_to_minc {
             $mincinfo{'slc_dircos_x'} = $file_info{'slc_dircos_x'};
             $mincinfo{'slc_dircos_y'} = $file_info{'slc_dircos_y'};
             $mincinfo{'slc_dircos_z'} = $file_info{'slc_dircos_z'};
+
+            # Save dicom element information
+            local(@elements) = sort(grep(/^dicom_/, keys(%file_info)));
+            local($element);
+            foreach $element (@elements) {
+               $mincinfo{$element} = $file_info{$element};
+            }
+
         }
         else {
             if (($cur_width != $mincinfo{'width'}) || # 
