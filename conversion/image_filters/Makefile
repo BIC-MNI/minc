@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 CFLAGS = -O
-LDFLAGS = -lc_s
+# LDFLAGS = -lc_s
 
 default:
 	$(MAKE) `ls *.c |sed 's/\.c$$//'`
@@ -10,4 +10,3 @@ clean:
 
 .c:
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
-	
