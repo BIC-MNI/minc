@@ -59,9 +59,12 @@ mostlyclean clean:
       $(LINT_EXTRA) $(EXTRA_OBJS) $(MANPAGES)
 
 install:
-	@for prog in $(PROGS) DUMMY; do \
+	@for prog in $(PROGS) $(SCRIPTS) DUMMY; do \
 	   if test -x $$prog ; then \
 	      cmd="$(CP) $(CP_FLAGS) $$prog $(INSTALL_BINDIR)/."; \
+	      echo "$$cmd"; \
+	      eval "$$cmd"; \
+	      cmd="$(CHMOD) $(CHMOD_FLAGS) $(INSTALL_BINDIR)/$$prog"; \
 	      echo "$$cmd"; \
 	      eval "$$cmd"; \
 	   fi; \
