@@ -5,12 +5,6 @@
 # Usage:
 #    define_scx_header.perl <header_file> <drs file> [<drs file> ...]
 #
-# Modifications: $Log: define_scx_header.perl,v $
-# Modifications: Revision 1.6  1993-08-11 15:27:50  neelin
-# Modifications: Added RCS logging in source.
-# Modifications:
-#
-#
 # Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
 # Montreal Neurological Institute, McGill University.
 # Permission to use, copy, modify, and distribute this
