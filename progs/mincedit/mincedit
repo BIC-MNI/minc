@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.2  2000-09-12 15:43:37  neelin
+#   Revision 6.3  2004-06-16 16:27:27  bert
+#   Use mincgen instead of ncgen
+#
+#   Revision 6.2  2000/09/12 15:43:37  neelin
 #   Changed default TMPDIR to look for /var/tmp, /usr/tmp, /tmp.
 #
 #   Revision 6.1  1999/10/19 14:45:21  neelin
@@ -125,7 +128,7 @@ while ($do_edit)
 
 #  Rename the original file and generate a new one
    mv $filename $backup_filename
-   ncgen -o $filename $cdl_edit
+   mincgen -o $filename $cdl_edit
    if ($status) then
       mv $backup_filename $filename
       echo -n "Error generating new file. Redit the file (y/n)? (def=n):"
