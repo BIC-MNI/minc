@@ -175,6 +175,7 @@
 /* Study attribute constants */
 #define MI_PET   "PET__"
 #define MI_SPECT "SPECT"
+#define MI_GAMMA "GAMMA"
 #define MI_MRI   "MRI__"
 #define MI_MRS   "MRS__"
 #define MI_MRA   "MRA__"
@@ -194,8 +195,6 @@
 #define MIimaged_nucleus        "imaged_nucleus"
 #define MIradionuclide          "radionuclide"
 #define MIcontrast_agent        "contrast_agent"
-#define MItotal_dose            "total_dose"
-#define MIdose_units            "dose_units"
 #define MIradionuclide_halflife "radionuclide_halflife"
 #define MItracer                "tracer"
 #define MIinjection_time        "injection_time"
@@ -206,6 +205,8 @@
 #define MIinjection_minute      "injection_minute"
 #define MIinjection_seconds     "injection_seconds"
 #define MIinjection_length      "injection_length"
+#define MIinjection_dose        "injection_dose"
+#define MIdose_units            "dose_units"
 #define MIinjection_volume      "injection_volume"
 #define MIinjection_route       "injection_route"
 
