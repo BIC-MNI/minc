@@ -106,7 +106,22 @@ typedef  enum
 typedef  char                 Smallest_int;
 \end{verbatim}
 
+Some macros useful for general programming include:
 
+\name{SIZEOF\_STATIC\_ARRAY( array )}:
+returns the number of elements in a staticly allocated array,
+\begin{verbatim}
+{
+    int  size;
+    int  array[] = { 1, 2, 3 };
+
+    size = SIZEOF_STATIC_ARRAY( array );     /* == 3 */
+}
+\end{verbatim}
+
+\name{ABS( x )}:  returns the absolute value of an integer or real.
+
+\name{MAX( x, y )}:  returns the maximum of two integers or reals.
 
 \section{Programming Utilities}
 
