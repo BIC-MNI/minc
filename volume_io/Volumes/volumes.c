@@ -24,7 +24,7 @@ private  void  free_volume_data(
 @OUTPUT     : 
 @RETURNS    : Volume
 @DESCRIPTION: Creates a Volume structure, and initializes it.  In order to 
-              later use the volume, you must call either set_volume_sizes()
+              later use the volume, you must call either set_volume_size()
               and alloc_volume_data(), or one of the input volume routines,
               which in turn calls these two.
               The dimension_names are used when inputting
@@ -45,13 +45,12 @@ public   Volume   create_volume(
     int         n_dimensions,
     String      dimension_names[],
     nc_type     nc_data_type,
-    Boolean     signed_flag,
-    Real        min_voxel,
-    Real        max_voxel )
+    Boolean     signed_flag )
 {
-    int             i, sizes[MAX_DIMENSIONS];
+    int             i, c, sizes[MAX_DIMENSIONS];
     Status          status;
     volume_struct   *volume;
+    Transform       identity;
 
     status = OK;
 
@@ -73,16 +72,24 @@ public   Volume   create_volume(
 
     volume->n_dimensions = n_dimensions;
 
-    volume->min_voxel = min_voxel;
-    volume->max_voxel = max_voxel;
-    volume->value_scale = 1.0;
-    volume->value_translation = 0.0;
+    volume->min_voxel = 0.0;
+    volume->max_voxel = 0.0;
+    volume->real_range_set = FALSE;
+    volume->real_value_scale = 1.0;
+    volume->real_value_translation = 0.0;
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        volume->translation_voxel[c] = 0.0;
+        volume->world_space_for_translation_voxel[c] = 0.0;
+    }
+
     volume->labels = (unsigned char ***) NULL;
 
     for_less( i, 0, n_dimensions )
     {
         sizes[i] = 0;
-        volume->separation[i] = 1.0;
+        volume->separations[i] = 1.0;
 
         if( dimension_names != (String *) NULL )
             (void) strcpy( volume->dimension_names[i], dimension_names[i] );
@@ -94,8 +101,8 @@ public   Volume   create_volume(
     volume->data_type = NO_DATA_TYPE;
     set_volume_size( volume, nc_data_type, signed_flag, sizes );
 
-    make_identity_transform( &volume->world_to_voxel_transform );
-    make_identity_transform( &volume->voxel_to_world_transform );
+    make_identity_transform( &identity );
+    create_linear_transform( &volume->voxel_to_world_transform, &identity );
 
     return( volume );
 }
@@ -376,6 +383,8 @@ public  void  delete_volume(
 
     free_auxiliary_data( volume );
 
+    delete_general_transform( &volume->voxel_to_world_transform );
+
     FREE( volume );
 }
 
@@ -422,6 +431,49 @@ public  void  get_volume_sizes(
         sizes[i] = volume->sizes[i];
 }
 
+public  void  set_voxel_to_world_transform(
+    Volume             volume,
+    General_transform  *transform )
+{
+    delete_general_transform( &volume->voxel_to_world_transform );
+
+    volume->voxel_to_world_transform = *transform;
+}
+
+public  General_transform  *get_voxel_to_world_transform(
+    Volume   volume )
+{
+    return( &volume->voxel_to_world_transform );
+}
+
+private  void  recompute_world_transform(
+    Volume  volume )
+{
+    Transform                scale_xform, translation_xform, linear_xform;
+    General_transform        general_transform;
+    Real                     x, y, z;
+
+    make_scale_transform( volume->separations[X],
+                          volume->separations[Y],
+                          volume->separations[Z], &scale_xform );
+
+    transform_point( &scale_xform,
+                     volume->translation_voxel[X],
+                     volume->translation_voxel[Y],
+                     volume->translation_voxel[Z], &x, &y, &z );
+
+    make_translation_transform(volume->world_space_for_translation_voxel[X] - x,
+                               volume->world_space_for_translation_voxel[Y] - y,
+                               volume->world_space_for_translation_voxel[Z] - z,
+                               &translation_xform );
+
+    concat_transforms( &linear_xform, &scale_xform, &translation_xform );
+
+    create_linear_transform( &general_transform, &linear_xform );
+
+    set_voxel_to_world_transform( volume, &general_transform );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_separations
 @INPUT      : volume
@@ -443,7 +495,36 @@ public  void  get_volume_separations(
     int   i;
 
     for_less( i, 0, volume->n_dimensions )
-        separations[i] = volume->separation[i];
+        separations[i] = volume->separations[i];
+}
+
+public  void  set_volume_separations(
+    Volume   volume,
+    Real     separations[] )
+{
+    int   i;
+
+    for_less( i, 0, volume->n_dimensions )
+        volume->separations[i] = separations[i];
+
+    recompute_world_transform( volume );
+}
+
+public  void  set_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] )
+{
+    int  c;
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        volume->translation_voxel[c] = voxel[c];
+        volume->world_space_for_translation_voxel[c] =
+                               world_space_voxel_maps_to[c];
+    }
+
+    recompute_world_transform( volume );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -474,8 +555,9 @@ public  void  convert_voxel_to_world(
 {
     /* apply linear transform */
 
-    transform_point( &volume->voxel_to_world_transform,
-                     x_voxel, y_voxel, z_voxel, x_world, y_world, z_world );
+    general_transform_point( &volume->voxel_to_world_transform,
+                             x_voxel, y_voxel, z_voxel,
+                             x_world, y_world, z_world );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -504,17 +586,27 @@ public  void  convert_voxel_normal_vector_to_world(
     Real            *y_world,
     Real            *z_world )
 {
+    Transform   *inverse;
+
+    if( get_transform_type( &volume->voxel_to_world_transform ) != LINEAR )
+    {
+        HANDLE_INTERNAL_ERROR( "Cannot get normal vector of nonlinear xforms.");
+    }
+
+    inverse = get_inverse_linear_transform_ptr(
+                                      &volume->voxel_to_world_transform );
+
     /* transform vector by transpose of inverse transformation */
 
-    *x_world = Transform_elem(volume->world_to_voxel_transform,0,0) * x_voxel+
-               Transform_elem(volume->world_to_voxel_transform,1,0) * y_voxel+
-               Transform_elem(volume->world_to_voxel_transform,2,0) * z_voxel;
-    *y_world = Transform_elem(volume->world_to_voxel_transform,0,1) * x_voxel+
-               Transform_elem(volume->world_to_voxel_transform,1,1) * y_voxel+
-               Transform_elem(volume->world_to_voxel_transform,2,1) * z_voxel;
-    *z_world = Transform_elem(volume->world_to_voxel_transform,0,2) * x_voxel+
-               Transform_elem(volume->world_to_voxel_transform,1,2) * y_voxel+
-               Transform_elem(volume->world_to_voxel_transform,2,2) * z_voxel;
+    *x_world = Transform_elem(*inverse,0,0) * x_voxel+
+               Transform_elem(*inverse,1,0) * y_voxel+
+               Transform_elem(*inverse,2,0) * z_voxel;
+    *y_world = Transform_elem(*inverse,0,1) * x_voxel+
+               Transform_elem(*inverse,1,1) * y_voxel+
+               Transform_elem(*inverse,2,1) * z_voxel;
+    *z_world = Transform_elem(*inverse,0,2) * x_voxel+
+               Transform_elem(*inverse,1,2) * y_voxel+
+               Transform_elem(*inverse,2,2) * z_voxel;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -543,8 +635,20 @@ public  void  convert_world_to_voxel(
 {
     /* apply linear transform */
 
-    transform_point( &volume->world_to_voxel_transform,
+    general_inverse_transform_point( &volume->voxel_to_world_transform,
                      x_world, y_world, z_world, x_voxel, y_voxel, z_voxel );
+}
+
+public  Real  get_volume_min_voxel(
+    Volume   volume )
+{
+    return( volume->min_voxel );
+}
+
+public  Real  get_volume_max_voxel(
+    Volume   volume )
+{
+    return( volume->max_voxel );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -566,12 +670,35 @@ public  void  get_volume_voxel_range(
     Real       *min_voxel,
     Real       *max_voxel )
 {
-    *min_voxel = volume->min_voxel;
-    *max_voxel = volume->max_voxel;
+    *min_voxel = get_volume_min_voxel( volume );
+    *max_voxel = get_volume_max_voxel( volume );
+}
+
+public  void  set_volume_voxel_range(
+    Volume   volume,
+    Real     min_voxel,
+    Real     max_voxel )
+{
+    Real  real_min, real_max;
+
+    if( min_voxel >= max_voxel )
+    {
+        print( "set_volume_voxel_range( %g, %g ) : ", min_voxel, max_voxel );
+        print( " min must be less than max\n" );
+    }
+
+    if( volume->real_range_set )
+        get_volume_real_range( volume, &real_min, &real_max );
+
+    volume->min_voxel = min_voxel;
+    volume->max_voxel = max_voxel;
+
+    if( volume->real_range_set )
+        set_volume_real_range( volume, real_min, real_max );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_volume_range
+@NAME       : get_volume_real_range
 @INPUT      : volume
 @OUTPUT     : min_value
               max_value
@@ -586,11 +713,63 @@ public  void  get_volume_voxel_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_volume_range(
+public  void  get_volume_real_range(
     Volume     volume,
     Real       *min_value,
     Real       *max_value )
 {
-    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_voxel );
-    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_voxel );
+    *min_value = get_volume_real_min( volume );
+    *max_value = get_volume_real_max( volume );
+}
+
+public  Real  get_volume_real_min(
+    Volume     volume )
+{
+    Real   real_min;
+
+    real_min = get_volume_min_voxel( volume );
+
+    if( volume->real_range_set )
+        real_min = CONVERT_VOXEL_TO_VALUE( volume, real_min );
+
+    return( real_min );
+}
+
+public  Real  get_volume_real_max(
+    Volume     volume )
+{
+    Real   real_max;
+
+    real_max = get_volume_max_voxel( volume );
+
+    if( volume->real_range_set )
+        real_max = CONVERT_VOXEL_TO_VALUE( volume, real_max );
+
+    return( real_max );
+}
+
+public  void  set_volume_real_range(
+    Volume   volume,
+    Real     real_min,
+    Real     real_max )
+{
+    Real    min_voxel, max_voxel;
+
+
+    get_volume_voxel_range( volume, &min_voxel, &max_voxel );
+
+    if( min_voxel < max_voxel )
+    {
+        volume->real_value_scale = (real_max - real_min) /
+                                   (max_voxel - min_voxel);
+        volume->real_value_translation = real_min -
+                                         min_voxel * volume->real_value_scale;
+    }
+    else
+    {
+        volume->real_value_scale = 0.0;
+        volume->real_value_translation = real_min;
+    }
+
+    volume->real_range_set = TRUE;
 }
