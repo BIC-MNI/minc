@@ -6,9 +6,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-05-22 12:41:40  neelin
+@MODIFIED   : Loosened up checking of start coordinates so that we look at error
+@MODIFIED   : relative to the total extent of the volume (nelements*step) instead of
+@MODIFIED   : relative to start value (which may be close to zero).
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:00:50  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.0  1995/05/15  19:31:35  neelin
  * Release of minc version 0.3
  *
@@ -47,7 +52,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 4.0 1997-05-07 20:00:50 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 4.1 1997-05-22 12:41:40 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -442,6 +447,7 @@ private void check_input_files(Loop_Options *loop_options,
    long first_size[MAX_VAR_DIMS], size[MAX_VAR_DIMS];
    char first_dimname[MAX_VAR_DIMS][MAX_NC_NAME];
    char dimname[MAX_VAR_DIMS][MAX_NC_NAME];
+   double extent;
    double first_start[MAX_VAR_DIMS], start[MAX_VAR_DIMS];
    double first_step[MAX_VAR_DIMS], step[MAX_VAR_DIMS];
    double start_diff, step_diff;
@@ -508,7 +514,8 @@ private void check_input_files(Loop_Options *loop_options,
 
                /* Check coordinates */
                start_diff = start[idim] - first_start[idim];
-               if (first_start[idim] != 0.0) start_diff /= first_start[idim];
+               extent = ((double) first_size[idim]) * first_step[idim];
+               if (extent != 0.0) start_diff /= extent;
                step_diff = step[idim] - first_step[idim];
                if (first_step[idim] != 0.0) step_diff /= first_step[idim];
                dircos_cumdiff = 0.0;
