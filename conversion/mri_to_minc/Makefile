@@ -48,4 +48,4 @@ $(PERL_PROGS): $$@.pl $(PERL_INCLUDE) Makefile
 	cat $(PERL_INCLUDE) $@.pl > $@; chmod +x $@
 
 clean:
-	\rm -f   $(PROG_OBJ)  $(LINT_LIST) $(PERL_PROGS)
+	\rm -f $(PROG)  $(PROG_OBJ)  $(LINT_LIST) $(PERL_PROGS)
