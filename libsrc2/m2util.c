@@ -277,9 +277,10 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 {
     hid_t hdf_file;
     hid_t hdf_loc;
-    hid_t hdf_type;
+    hid_t hdf_type;             /* Parameter type */
     hid_t hdf_space;
     hid_t hdf_attr;
+    int status;
 
     /* Get a handle to the actual HDF file 
      */
@@ -288,7 +289,7 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 	return (MI_ERROR);
     }
     
-    /* Search through the path, descending into each group encountered.
+    /* Find the group or dataset referenced by the path.
      */
     hdf_loc = midescend_path(hdf_file, path);
     if (hdf_loc < 0) {
@@ -301,7 +302,7 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
     if (hdf_attr < 0) {
 	return (MI_ERROR);
     }
-    
+
     switch (data_type) {
     case MI_TYPE_INT:
 	hdf_type = H5Tcopy(H5T_NATIVE_INT);
@@ -340,7 +341,24 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 	}
     }
     
-    H5Aread(hdf_attr, hdf_type, values);
+    status = H5Aread(hdf_attr, hdf_type, values);
+    if (status < 0) {
+        return (MI_ERROR);
+    }
+
+    /* Be certain that the string is null-terminated.
+     */
+    if (data_type == MI_TYPE_STRING) {
+        hid_t atype;            /* Attribute type */
+        int alength;
+
+        atype = H5Aget_type(hdf_attr);
+        alength = H5Tget_size(atype);
+    
+        ((char *)values)[alength] = '\0';
+
+        H5Tclose(atype);
+    }
 
     H5Aclose(hdf_attr);
     H5Tclose(hdf_type);
