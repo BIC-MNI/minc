@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.4  2005-03-13 19:35:11  bert
+   * Revision 1.5  2005-03-14 22:26:40  bert
+   * Dump the entire coordinate array for each MRI dimension after sorting.  Also detect GE scans.
+   *
+   * Revision 1.4  2005/03/13 19:35:11  bert
    * Lots of changes for dealing with some proprietary Philips stuff
    *
    * Revision 1.3  2005/03/03 18:59:15  bert
@@ -123,7 +126,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.4 2005-03-13 19:35:11 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.5 2005-03-14 22:26:40 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -881,6 +884,12 @@ add_philips_info(Acr_Group group_list)
 }
 
 Acr_Group
+add_gems_info(Acr_Group group_list)
+{
+    return (group_list);
+}
+
+Acr_Group
 read_numa4_dicom(const char *filename, int max_group)
 {
     Acr_Group group_list;
@@ -896,15 +905,15 @@ read_numa4_dicom(const char *filename, int max_group)
      * standard DICOM fields whereever it makes sense to do so.
      */
     str_ptr = acr_find_string(group_list, ACR_Manufacturer, "");
-    if (G.Debug >= HI_LOGGING) {
-        printf("Manufacturer string is '%s'\n", str_ptr);
-    }
     if (strstr(str_ptr, "SIEMENS") != NULL ||
         strstr(str_ptr, "Siemens") != NULL) {
         group_list = add_siemens_info(group_list);
     }
     else if (strstr(str_ptr, "Philips") != NULL) {
         group_list = add_philips_info(group_list);
+    }
+    else if (strstr(str_ptr, "GEMS") != NULL) {
+        group_list = add_gems_info(group_list);
     }
     return (group_list);
 }
@@ -1029,7 +1038,7 @@ sort_dimensions(General_Info *gi_ptr)
              */
             ((G.file_type == N4DCM) &&
              (imri == TIME) && 
-             (gi_ptr->num_slices_in_file > 0))) { /* also fails on 1 slice */
+             (gi_ptr->num_slices_in_file > 1))) {
             if (G.Debug >= HI_LOGGING) {
                 printf("Not sorting %s dimension\n", Mri_Names[imri]);
             }
@@ -1072,21 +1081,29 @@ sort_dimensions(General_Info *gi_ptr)
         }
 
         if (G.Debug >= HI_LOGGING) {
+            /* Print out all of the information about this dimension.
+             */
             printf(" is_reversed %d nvalues %d min %f max %f\n",
                    is_reversed, nvalues, 
                    gi_ptr->coordinates[imri][0],
                    gi_ptr->coordinates[imri][nvalues - 1]);
+            for (i = 0; i < nvalues; i++) {
+                printf("%3d %6d %8.3f\n", 
+                       i,
+                       gi_ptr->indices[imri][i],
+                       gi_ptr->coordinates[imri][i]);
+            }
         }
         
         /* Free the temporary array we used to sort the coordinate axis.
          */
         free(sort_array);
 
-        /* Now verify that the coordinate array looks sane.  TODO:
-         * This may be valid and important only for the SLICE
-         * dimension.
+        /* Now verify that the slice coordinate array looks sane.  We
+         * don't complain about things like missing time slices, since
+         * many PET scanners produce irregular timings.
          */
-        if (nvalues >= 2) {
+        if (nvalues >= 2 && imri == SLICE) {
             double delta = (gi_ptr->coordinates[imri][1] - 
                             gi_ptr->coordinates[imri][0]);
 
