@@ -66,8 +66,10 @@ changes and additions:
       it is not in .. or /usr/local).
 
    3. The host type information is only needed for compiling the
-      fortran interface and that is turned off by default. The fortran
-      has only been tested under irix 4 and 5.
+      fortran interface and that is turned off by default. To turn it 
+      on, you must manually edit Make_configuration after running 
+      configure. The fortran interface has only been tested under irix 4
+      and 5.
 
    4. The package has not been set up for cross-compiling.
 
