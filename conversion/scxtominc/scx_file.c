@@ -7,7 +7,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.1 1993-01-22 09:00:51 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.2 1993-07-13 16:47:58 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ public scx_file *scx_open(char *filename)
    int i;
 
    /* Allocate space for a scx file structure */
-   file = malloc(sizeof(scx_file));
+   file = (void *) malloc(sizeof(scx_file));
 
    /* Open the file */
    if ((file->file_pointer=fopen(filename, "rb")) == NULL) {
@@ -69,7 +69,7 @@ public scx_file *scx_open(char *filename)
    }
 
    /* Read in the header */
-   file->header = malloc(HEADER_SIZE);
+   file->header = (void *) malloc(HEADER_SIZE);
    if (fread(file->header, sizeof(char), (size_t) HEADER_SIZE, 
              file->file_pointer) != HEADER_SIZE) {
       free(file->header);
@@ -245,7 +245,7 @@ private void scx_get_value(unsigned char *header, long position,
    if (length<=0) return;
    
    /* Get the values */
-   data = malloc(length * scx_mnem_type_size[type]);
+   data = (void *) malloc(length * scx_mnem_type_size[type]);
    bdata = data; idata = data; ldata = data; fdata = data;
    switch (type) {
    case scx_byte:

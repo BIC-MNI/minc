@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.4 1993-03-08 12:01:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.5 1993-07-13 16:49:13 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -25,13 +25,17 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtomi
 #include <time_stamp.h>
 #include <scx_file.h>
 #include <minc.h>
+#include <minc_def.h>
 #include "isotope_list.h"
 
 /* Macro definitions */
+#undef MALLOC
+#undef REALLOC
+#undef FREE
 #define  MALLOC( n_items, type ) \
-   ( malloc( (size_t) (n_items) * sizeof(type) ) )
+   ( (void *) malloc( (size_t) (n_items) * sizeof(type) ) )
 #define  REALLOC( ptr, n_items, type ) \
-   ( realloc( (void *) ptr, (size_t) (n_items) * sizeof(type) ) )
+   ( (void *) realloc( (void *) ptr, (size_t) (n_items) * sizeof(type) ) )
 #define  FREE( ptr ) \
    free( (void *) ptr )
 
@@ -259,7 +263,7 @@ int main(int argc, char *argv[])
    if (status >= 0) {
       (void) fprintf(stderr, "%s: Error reading scanditronix file %s.\n", 
                      pname, scx_files[status]);
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
    }
 
    /* Allocate space for ordered slice list if sorting over z position */
@@ -294,7 +298,7 @@ int main(int argc, char *argv[])
       (void) fprintf(stderr, 
                      "%s: Error setting up minc file %s from scx file %s.\n",
                      pname, mincfile, scx_files[0]);
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
    }
 
    /* Initialize minc start and count vectors */
@@ -320,7 +324,7 @@ int main(int argc, char *argv[])
       if ((scx_fp=scx_open(scx_files[ifile]))==NULL) {
          (void) fprintf(stderr, "%s: Error re-opening file %s.\n",
                         pname, scx_files[0]);
-         return EXIT_FAILURE;
+         exit(EXIT_FAILURE);
       }
 
       /* Print log message */
@@ -366,7 +370,7 @@ int main(int argc, char *argv[])
                               scx_file_info[ifile].zstart)) {
             (void) fprintf(stderr, "%s: Error copying slice from file %s.\n",
                            pname, scx_files[ifile]);
-            return EXIT_FAILURE;
+            exit(EXIT_FAILURE);
          }
 
       }        /* End slice loop */
@@ -388,7 +392,7 @@ int main(int argc, char *argv[])
    FREE(scx_file_info);
    FREE(scx_general_info);
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 
 }
 
