@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 2.2  1995-01-23 08:57:37  neelin
-@MODIFIED   : Changed nccreate to micreate.
+@MODIFIED   : Revision 2.3  1995-01-23 09:21:13  neelin
+@MODIFIED   : Changed ncclose to miclose
 @MODIFIED   :
+ * Revision 2.2  95/01/23  08:57:37  neelin
+ * Changed nccreate to micreate.
+ * 
  * Revision 2.1  95/01/09  15:17:37  neelin
  * Added code to check for generic reconstructions.
  * 
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.2 1995-01-23 08:57:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.3 1995-01-23 09:21:13 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -449,7 +452,7 @@ int main(int argc, char *argv[])
 
    /* Close minc file */
    (void) miattputstr(mincid, ncvarid(mincid, MIimage), MIcomplete, MI_TRUE);
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
 
    FREE(image);
    if (!sort_over_time) {
