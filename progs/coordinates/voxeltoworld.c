@@ -10,7 +10,10 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxeltoworld.c,v $
- * Revision 6.3  2001-04-24 13:38:41  neelin
+ * Revision 6.4  2004-02-02 18:27:51  bert
+ * Call ParseArgv() so that version information can be output
+ *
+ * Revision 6.3  2001/04/24 13:38:41  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.2  2001/04/17 18:40:15  neelin
@@ -59,13 +62,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.3 2001-04-24 13:38:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.4 2004-02-02 18:27:51 bert Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <volume_io.h>
+#include <ParseArgv.h>
 #include <minc_def.h>
 
 /* Constants */
@@ -85,6 +89,11 @@ void print_to_stderr(char *string)
    return;
 }
 
+/* Argument table */
+ArgvInfo argTable[] = {
+   {NULL, ARGV_END, NULL, NULL, NULL}
+};
+
 /* Main program */
 
 int main(int argc, char *argv[])
@@ -97,7 +106,7 @@ int main(int argc, char *argv[])
       {ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION};
 
    /* Check arguments */
-   if (argc != 5) {
+   if (ParseArgv(&argc, argv, argTable, 0) || argc != 5) {
       (void) fprintf(stderr, 
       "Usage: %s <image file> <voxel index 1 (slowest)> <index 2> <index 3>\n",
                      argv[0]);
