@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.3  2005-03-03 18:59:16  bert
+@MODIFIED   : Revision 1.4  2005-04-05 21:56:47  bert
+@MODIFIED   : Add some conversion functions, remove some more proprietary junk, and improve range-checking on some functions
+@MODIFIED   :
+@MODIFIED   : Revision 1.3  2005/03/03 18:59:16  bert
 @MODIFIED   : Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
 @MODIFIED   :
 @MODIFIED   : Revision 1.2  2005/03/02 20:06:23  bert
@@ -41,7 +44,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.3 2005-03-03 18:59:16 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.4 2005-04-05 21:56:47 bert Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,17 +61,11 @@ static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/sie
 #define IMAGE_NDIMS 2
 
 /* Conversion functions that are not defined */
-#define create_compression_code_t_element NULL
-#define create_contrast_t_element NULL
 #define create_field_of_view_t_element NULL
 #define create_geometry_t_element NULL
-#define create_image_format_t_element NULL
 #define create_object_orientation_t_element NULL
 #define create_patient_orientation_t_element NULL
-#define create_patient_position_t_element NULL
-#define create_rest_direction_t_element NULL
 #define create_rotation_direction_t_element NULL
-#define create_view_direction_t_element NULL
 #define create_data_set_subtype_t_element NULL
 
 /* Types */
@@ -104,11 +101,14 @@ DECLARE_ELEMENT_FUNC(create_ima_time_t_element);
 DECLARE_ELEMENT_FUNC(create_modality_element);
 DECLARE_ELEMENT_FUNC(create_sex_element);
 DECLARE_ELEMENT_FUNC(create_age_element);
-DECLARE_ELEMENT_FUNC(create_order_of_slices_t_element);
+DECLARE_ELEMENT_FUNC(create_slice_order_element);
 DECLARE_ELEMENT_FUNC(create_pixel_size_t_element);
-DECLARE_ELEMENT_FUNC(create_windows_t_element);
+DECLARE_ELEMENT_FUNC(create_window_t_element);
 DECLARE_ELEMENT_FUNC(create_ima_vector_t_element);
 DECLARE_ELEMENT_FUNC(create_laterality_element);
+DECLARE_ELEMENT_FUNC(create_patient_position_t_element);
+DECLARE_ELEMENT_FUNC(create_rest_direction_t_element);
+DECLARE_ELEMENT_FUNC(create_view_direction_t_element);
 
 /* Define the table of header values */
 siemens_header_t Siemens_hdr; /* Must define this first */
@@ -560,21 +560,21 @@ DEFINE_ELEMENT_FUNC(create_ima_date_t_element)
 
     ptr = (ima_date_t *) data;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Year, &year); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Month, &month);
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Day, &day);
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->year, &year); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->month, &month);
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->day, &day);
 
-    if ((year < 0) || (year > 9999)) 
+    if ((year < 1900) || (year > 9999)) 
         return NULL;
-    if ((month < 0) || (month > 12)) 
+    if ((month < 1) || (month > 12)) 
         return NULL;
-    if ((day < 0) || (day > 40)) 
+    if ((day < 1) || (day > 31)) 
         return NULL;
 
     sprintf(string, "%04d%02d%02d", (int) year, (int) month, (int) day);
 
-   return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DA),
-                                    string);
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DA),
+                                     string);
 }
 
 DEFINE_ELEMENT_FUNC(create_ima_time_t_element)
@@ -584,26 +584,28 @@ DEFINE_ELEMENT_FUNC(create_ima_time_t_element)
     long hour;
     long minute;
     long second;
-    long fraction;
+    long msec;
 
     ptr = (ima_time_t *) data;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Hour, &hour); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Minute, &minute); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Second, &second); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Fraction, &fraction); 
+    /* Convert data from big endian to native:
+     */
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->hour, &hour); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->minute, &minute); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->second, &second); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->msec, &msec); 
 
-    if ((hour < 0) || (hour > 24)) 
+    if ((hour < 0) || (hour >= 24)) 
         return NULL;
-    if ((minute < 0) || (minute > 60)) 
+    if ((minute < 0) || (minute >= 60)) 
         return NULL;
-    if ((second < 0) || (second > 60)) 
+    if ((second < 0) || (second >= 60)) 
         return NULL;
-    if ((fraction < 0) || (fraction > 999)) 
+    if ((msec < 0) || (msec > 999)) 
         return NULL;
 
     sprintf(string, "%02d%02d%02d.%03d", (int) hour, (int) minute, 
-            (int) second, (int) fraction);
+            (int) second, (int) msec);
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_TM), 
                                      string);
 }
@@ -690,24 +692,24 @@ DEFINE_ELEMENT_FUNC(create_age_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_order_of_slices_t_element)
+DEFINE_ELEMENT_FUNC(create_slice_order_element)
 {
     char *string;
-    order_of_slices_t order_of_slices;
+    ima_slice_order_t slice_order;
 
     /* Get the appropriate string */
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &order_of_slices); 
-    switch (order_of_slices) {
-    case Slice_Order_ASCENDING:
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &slice_order); 
+    switch (slice_order) {
+    case SO_ASCENDING:
         string = "ASCENDING ";
         break;
-    case Slice_Order_DECREASING:
+    case SO_DESCENDING:
         string = "DESCENDING ";
         break;
-    case Slice_Order_INTERLEAVED:
+    case SO_INTERLEAVED:
         string = "INTERLEAVED ";
         break;
-    case Slice_Order_NONE:
+    case SO_NONE:
         string = "NONE ";
         break;
     default:
@@ -730,8 +732,9 @@ DEFINE_ELEMENT_FUNC(create_pixel_size_t_element)
     /* Get the pixel sizes */
     ptr = (pixel_size_t *) data;
 
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Row, &row); 
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Col, &col); 
+    /* Convert from big endian to native format */
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->row, &row); 
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->col, &col); 
 
     sprintf(string, "%.15g\\%.15g", row, col);
     
@@ -739,17 +742,18 @@ DEFINE_ELEMENT_FUNC(create_pixel_size_t_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_windows_t_element)
+DEFINE_ELEMENT_FUNC(create_window_t_element)
 {
-    windows_t *ptr;
+    window_t *ptr;
     string_t string;
     long x;
     long y;
 
-    ptr = (windows_t *) data;   /* Get the window info */
+    ptr = (window_t *) data;    /* Get the window info */
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->X, &x); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->Y, &y); 
+    /* Convert from big endian to native format */
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->x, &x); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->y, &y); 
     
     sprintf(string, "%ld\\%ld", x, y);
 
@@ -766,9 +770,9 @@ DEFINE_ELEMENT_FUNC(create_ima_vector_t_element)
     /* Get the coordinate */
     ptr = (ima_vector_t *) data;
    
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->X, &x);
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Y, &y);
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->Z, &z);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->x, &x);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->y, &y);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->z, &z);
 
     sprintf(string, "%.15g\\%.15g\\%.15g", x, y, z);
 
@@ -795,5 +799,81 @@ DEFINE_ELEMENT_FUNC(create_laterality_element)
     }
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS), 
+                                     string);
+}
+
+DEFINE_ELEMENT_FUNC(create_patient_position_t_element)
+{
+    ima_patient_position_t position;
+    char *string;
+
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &position);
+    switch (position) {
+    case PP_LEFT:
+        string = "HFL"; break;
+    case PP_RIGHT:
+        string = "HFR"; break;
+    case PP_PRONE:
+        string = "HFP"; break;
+    case PP_SUPINE:
+        string = "HFS"; break;
+    default:
+        string = ""; break;
+    }
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
+                                     string);
+}
+
+DEFINE_ELEMENT_FUNC(create_rest_direction_t_element)
+{
+    rest_direction_t dir;
+    char *string;
+
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
+    switch (dir) {
+    case Rest_HEAD:
+        string = "HEAD";
+        break;
+    case Rest_FEET:
+        string = "FEET";
+        break;
+    default:
+        string = "";
+        break;
+    }
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
+                                     string);
+}
+
+DEFINE_ELEMENT_FUNC(create_view_direction_t_element)
+{
+    rest_direction_t dir;
+    char *string;
+
+    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
+    switch (dir) {
+    case View_HEAD:
+        string = "HEAD";
+        break;
+    case View_FEET:
+        string = "FEET";
+        break;
+    case View_AtoP:
+        string = "AtoP";
+        break;
+    case View_LtoR:
+        string = "LtoR";
+        break;
+    case View_PtoA:
+        string = "PtoA";
+        break;
+    case View_RtoL:
+        string = "RtoL";
+        break;
+    default:
+        string = "";
+        break;
+    }
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
                                      string);
 }
