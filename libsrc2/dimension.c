@@ -408,8 +408,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
   int diff;
   int i=0, j=0, k=0;
 
-  if (volume == NULL || array_length <= 0 || 
-      array_length != volume->number_of_dims) {
+  if (volume == NULL || array_length <= 0 ) {
     return (MI_ERROR);
   }
    /* If array_length was more than the number of dimensions
@@ -425,18 +424,33 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
     volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
     memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
   }
+  
+  if (diff > 0) {
+    
+    while(i < volume->number_of_dims && k < diff) {
+      for(j=0; j < array_length; j++) {
+	if(volume->dim_handles[i] == dimensions[j]) {
+	  break;
+	}
+      }
+      if (j == 3) {
+	volume->dim_indices[k] = i;
+	k++;
+      }
+      i++;
+    }
+  }
+  
   for (i=0; i < volume->number_of_dims; i++) {
     for (j=0; j < array_length; j++) {
       if (volume->dim_handles[i] == dimensions[j]) {
 	volume->dim_indices[j+diff] = i;  
 	break;
       }
-      if (j == (array_length-1)) {
-	volume->dim_indices[k++] = i;
-      }
+      
     }
   }
-  
+
   return (MI_NOERROR);
 }
 
@@ -493,6 +507,24 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
       volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
       memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
   }
+  i=0;
+  j=0;
+  k=0;
+  if (diff > 0) {
+    
+    while(i < volume->number_of_dims && k < diff) {
+      for(j=0; j < array_length; j++) {
+	if(strcmp(volume->dim_handles[i]->name, names[j])) {
+	  break;
+	}
+      }
+      if (j == 3) {
+	volume->dim_indices[k] = i;
+	k++;
+      }
+      i++;
+    }
+  }
   for (i = 0; i < volume->number_of_dims; i++) {
       for (j = 0; j < array_length; j++) {
           if (!strcmp(volume->dim_handles[i]->name, names[j])) {
@@ -500,9 +532,7 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
               break;
           }
       }
-      if (j == (array_length-1)) {
-          volume->dim_indices[k++] = i;
-      }
+      
   }
   return (MI_NOERROR);
 }
