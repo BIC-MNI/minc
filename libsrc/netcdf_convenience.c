@@ -8,6 +8,9 @@
               to determine the sign of an integer variable.
 @METHOD     : Routines included in this file :
               public :
+                 miopen
+                 micreate
+                 miclose
                  miattget
                  miattget1
                  miattgetstr
@@ -29,9 +32,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 1.9  1993-08-11 12:06:28  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.10  1993-11-03 12:28:04  neelin
+@MODIFIED   : Added miopen, micreate, miclose routines.
+@MODIFIED   : miopen will uncompress files before opening them, if needed.
 @MODIFIED   :
+ * Revision 1.9  93/08/11  12:06:28  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -45,11 +52,178 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.9 1993-08-11 12:06:28 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.10 1993-11-03 12:28:04 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
 
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miopen
+@INPUT      : path  - name of file to open
+              mode  - NC_WRITE or NC_NOWRITE to indicate whether file should
+                 be opened for write or read-only.
+@OUTPUT     : (nothing)
+@RETURNS    : file id or MI_ERROR (=-1) when an error occurs
+@DESCRIPTION: Similar to routine ncopen, but will de-compress (temporarily)
+              read-only files as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines
+@CREATED    : November 2, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miopen(char *path, int mode)
+{
+   int status, oldncopts, first_ncerr;
+   char *tempfile, *extension;
+   char command[256];
+   enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} compress_type;
+
+   char *command_format = "(%s %s > %s) 2> /dev/null";
+
+#define EXECUTE_COMMAND(com, in, out) \
+   { \
+      (void) sprintf(command, command_format, com, in, out); \
+      status = system(command); \
+   }
+   
+
+   MI_SAVE_ROUTINE_NAME("miopen");
+
+#ifdef vms
+
+   /* Call ncopen directly */
+   {MI_CHK_ERR(status = ncopen(path, mode))}
+   MI_RETURN(status);
+
+#else
+
+   /* Try to open the file */
+   oldncopts = ncopts; ncopts = 0;
+   status = ncopen(path, mode);
+   ncopts = oldncopts;
+
+   /* If there is no error then return */
+   if (status != MI_ERROR) {
+      MI_RETURN(status);
+   }
+
+   /* Save the error code */
+   first_ncerr = ncerr;
+
+   /* Get the file extension */
+   extension = strrchr(path, '.');
+   if (extension == NULL) {
+      extension = &path[strlen(path)];
+   }
+
+   /* Determine the type */
+   if (STRINGS_EQUAL(extension, ".gz"))
+      compress_type = GZIPPED;
+   else if (STRINGS_EQUAL(extension, ".Z"))
+      compress_type = COMPRESSED;
+   else if (STRINGS_EQUAL(extension, ".z"))
+      compress_type = PACKED;
+   else if (STRINGS_EQUAL(extension, ".zip"))
+      compress_type = ZIPPED;
+   else
+      compress_type = UNKNOWN;
+
+   /* If there was a system error, the user wants to modify the file or we
+      don't know what to do with it, then re-generate the error with ncopen */
+   if ((first_ncerr == NC_SYSERR) || (mode != NC_NOWRITE) || 
+       (compress_type == UNKNOWN)) {
+      {MI_CHK_ERR(status = ncopen(path, mode))}
+      MI_RETURN(status);
+   }
+
+   /* Create a temporary file name */
+   tempfile = tmpnam(NULL);
+
+   /* Try to use gunzip */
+   if ((compress_type == GZIPPED) || 
+       (compress_type == COMPRESSED) ||
+       (compress_type == PACKED) ||
+       (compress_type == ZIPPED)) {
+      EXECUTE_COMMAND("gunzip -c", path, tempfile);
+   }
+
+   /* If that doesn't work, try something else */
+   if (status != 0) {
+      if (compress_type == COMPRESSED) {
+         EXECUTE_COMMAND("zcat", path, tempfile);
+      }
+      else if (compress_type == PACKED) {
+         EXECUTE_COMMAND("pcat", path, tempfile);
+      }
+   }
+
+   /* Check for failure to uncompress the file */
+   if (status != 0) {
+      (void) unlink(tempfile);
+      MI_LOG_PKG_ERROR2(MI_ERR_UNCOMPRESS,"Cannot uncompress the file");
+      MI_RETURN_ERROR(MI_ERROR);
+   }
+
+   /* Open the temporary file and unlink it so that it will disappear when
+      the file is closed */
+   status = ncopen(tempfile, mode);
+   (void) unlink(tempfile);
+   {MI_CHK_ERR(status)}
+   MI_RETURN(status);
+
+#endif         /* ifdef vms else */
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : micreate
+@INPUT      : path  - name of file to create
+              cmode - NC_CLOBBER or NC_NOCLOBBER
+@OUTPUT     : (nothing)
+@RETURNS    : file id or MI_ERROR (=-1) when an error occurs
+@DESCRIPTION: A wrapper for routine nccreate, allowing future enhancements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines
+@CREATED    : November 2, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int micreate(char *path, int cmode)
+{
+   int status;
+
+   MI_SAVE_ROUTINE_NAME("micreate");
+
+   {MI_CHK_ERR(status = nccreate(path, cmode))}
+   MI_RETURN(status);
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miclose
+@INPUT      : cdfid - id of file to close
+@OUTPUT     : (nothing)
+@RETURNS    : MI_ERROR (=-1) when an error occurs
+@DESCRIPTION: A wrapper for routine ncclose, allowing future enhancements.
+              read-only files as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines
+@CREATED    : November 2, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miclose(int cdfid)
+{
+   int status;
+
+   MI_SAVE_ROUTINE_NAME("miclose");
+
+   {MI_CHK_ERR(status = ncclose(cdfid))}
+   MI_RETURN(status);
+}
 
 
 /* ----------------------------- MNI Header -----------------------------------
