@@ -24,7 +24,7 @@ PROG_OBJ  = $(PROGS:=.o)#                 list of objects
 LINT_LIST = $(PROG_OBJ:.o=.ln)
 LINT_EXTRA = $(EXTRA_OBJS:.o=.ln)
 LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
-#MANPAGES = $(PROGS).$(MANSECT)
+MANPAGES = $(PROGS).$(MANSECT)
 
 # --------------------------------------------------------------------
 
