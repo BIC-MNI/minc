@@ -8,7 +8,7 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = mincexample
+PROGS    = mincexample1 mincexample2
 HEADERS  = 
 CDEFINES = -DCOMPILING_MINC_PACKAGE -DDEBUG# cpp defines
 LDOPT    = $(PROG_LDOPT)

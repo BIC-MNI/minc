@@ -4,7 +4,7 @@
 #
 
 # Executable names
-PROGS    = mincexample
+PROGS    = mincexample1 mincexample2
 EXTRA_OBJ = time_stamp.o
 CDEFINES = -DDEBUG#                        cpp defines
 OPT      = -O
