@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.33 1995-03-07 13:35:51 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.34 1995-03-08 16:26:17 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -906,13 +906,16 @@ private  void  input_slab(
                     else
                     {
                          voxel[file->n_slab_dims] = file->rgba_indices[i];
-                         GET_VOXEL( rgb[i], rgb_volume, voxel[0], voxel[1],
+                         rgb[i] = get_volume_voxel_value( rgb_volume,
+                                             voxel[0], voxel[1],
                                              voxel[2], voxel[3], voxel[4] );
                     }
                 }
 
                 colour = make_rgba_Colour_0_1( rgb[0], rgb[1], rgb[2], rgb[3] );
-                SET_VOXEL( slab_volume, v[0], v[1], v[2], v[3], v[4], colour );
+                set_volume_voxel_value( slab_volume,
+                                        v[0], v[1], v[2], v[3], v[4],
+                                        (Real) colour );
             END_ALL_VOXELS
 
             delete_volume( rgb_volume );
