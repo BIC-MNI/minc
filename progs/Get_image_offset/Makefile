@@ -75,7 +75,7 @@ mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
 	            $(EXTRA_OBJS) $(LINT_EXTRA) $(MANPAGES)
 
-install:
+install: $(PROGS) $(MANPAGES)
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 #	$(CP) $(CP_FLAGS) $(MANPAGES) $(INSTALL_MANDIR)$(MANSECT)
 
