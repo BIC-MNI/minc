@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 1.4  1994-12-02 09:08:56  neelin
-@MODIFIED   : Moved nd_loop to proglib.
+@MODIFIED   : Revision 1.5  1995-03-20 13:32:03  neelin
+@MODIFIED   : Fixed -normalize option.
 @MODIFIED   :
+ * Revision 1.4  1994/12/02  09:08:56  neelin
+ * Moved nd_loop to proglib.
+ *
  * Revision 1.3  94/11/23  11:46:38  neelin
  * Handle image-min/max properly when using icv for normalization.
  * 
@@ -31,7 +34,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.4 1994-12-02 09:08:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 1.5 1995-03-20 13:32:03 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -400,8 +403,8 @@ public void get_block_min_and_max(Reshape_info *reshape_info,
 
    /* Is the icv doing the normalization? */
    if (reshape_info->do_icv_normalization) {
-      (void) miicv_inqdbl(icvid, MI_ICV_IMAGE_MIN, minimum);
-      (void) miicv_inqdbl(icvid, MI_ICV_IMAGE_MAX, maximum);
+      (void) miicv_inqdbl(icvid, MI_ICV_NORM_MIN, minimum);
+      (void) miicv_inqdbl(icvid, MI_ICV_NORM_MAX, maximum);
       return;
    }
 
