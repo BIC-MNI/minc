@@ -1,17 +1,51 @@
 # temporary makefile
 
-CPPFLAGS = -I/home/bic/baghdadi/include -I/usr/local/include
-LDFLAGS = -L/home/bic/baghdadi/lib -L/usr/local/lib
+OBJS = \
+	free.o \
+	m2util.o \
+	volprops.o \
+	volume.o \
+	convert.o \
+	datatype.o \
+	dimension.o \
+	grpattr.o \
+	hyper.o \
+	label.o \
+	slice.o \
+	valid.o
 
 LIBS = -lminc -lnetcdf -lhdf5 -lm
 
-all: dimension-test grpattr-test datatype-test label-test volprops-test \
-     hyper-test slice-test valid-test 
+all:	libminc2.a test
+
+test:	full-test \
+	dimension-test \
+	grpattr-test \
+	datatype-test \
+	label-test \
+	volprops-test \
+	hyper-test \
+	slice-test \
+	valid-test \
+	convert-test
+
+libminc2.a: $(OBJS)
+	ar r libminc2.a $(OBJS)
+	ranlib libminc2.a
+
+#full-test
+full-test-objs = full-test.o libminc2.a
+
+full-test: $(full-test-objs)
+	gcc $(LDFLAGS) -Wall -g -o full-test $(full-test-objs) $(LIBS)
+
+full-test.o: full-test.c minc2.h 
+	gcc $(CPPFLAGS) -Wall -g -c -o full-test.o full-test.c
 
 #convert-test
 
 # convert.c
-convert-test-objs = convert-test.o m2util.o volume.o hyper.o free.o valid.o slice.o
+convert-test-objs = convert-test.o libminc2.a
 
 convert-test: $(convert-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o convert-test $(convert-test-objs) $(LIBS)
@@ -20,7 +54,7 @@ convert-test.o: convert.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o convert-test.o convert.c
 
 # slice.c
-slice-test-objs = slice-test.o m2util.o free.o volume.o
+slice-test-objs = slice-test.o libminc2.a
 
 slice-test: $(slice-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o slice-test $(slice-test-objs) $(LIBS)
@@ -31,7 +65,7 @@ slice-test.o: slice.c minc2.h minc2_private.h
 slice.o: slice.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o slice.o slice.c
 # hyper.c
-hyper-test-objs = hyper-test.o m2util.o free.o volume.o
+hyper-test-objs = hyper-test.o libminc2.a
 
 hyper-test: $(hyper-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o hyper-test $(hyper-test-objs) $(LIBS)
@@ -43,7 +77,7 @@ hyper.o: hyper.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o hyper.o hyper.c
 
 # dimension.c
-dimension-test-objs = dimension-test.o m2util.o volume.o volprops.o free.o
+dimension-test-objs = dimension-test.o libminc2.a
 
 dimension-test: $(dimension-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o dimension-test $(dimension-test-objs) $(LIBS)
@@ -55,7 +89,7 @@ dimension.o: dimension.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o dimension.o dimension.c
 
 # grpattr.c
-grpattr-test-objs = grpattr-test.o m2util.o volume.o
+grpattr-test-objs = grpattr-test.o libminc2.a
 
 grpattr-test: $(grpattr-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o grpattr-test $(grpattr-test-objs) $(LIBS)
@@ -67,7 +101,7 @@ grpattr.o: grpattr.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o grpattr.o grpattr.c
 
 # datatype.c
-datatype-test-objs = datatype-test.o grpattr.o m2util.o free.o volume.o
+datatype-test-objs = datatype-test.o libminc2.a
 
 datatype-test: $(datatype-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o datatype-test $(datatype-test-objs) $(LIBS)
@@ -76,7 +110,7 @@ datatype-test.o: datatype.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o datatype-test.o datatype.c
 
 # label.c
-label-test-objs = label-test.o m2util.o free.o volume.o
+label-test-objs = label-test.o libminc2.a
 
 label-test: $(label-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o label-test $(label-test-objs) $(LIBS)
@@ -85,7 +119,7 @@ label-test.o: label.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o label-test.o label.c
 
 # volprops.c
-volprops-test-objs = volprops-test.o dimension.o m2util.o free.o volume.o
+volprops-test-objs = volprops-test.o libminc2.a
 
 volprops-test: $(volprops-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o volprops-test $(volprops-test-objs) $(LIBS)
@@ -96,7 +130,7 @@ volprops-test.o: volprops.c minc2.h minc2_private.h
 volprops.o: volprops.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volprops.o volprops.c
 
-valid-test-objs = valid-test.o m2util.o volume.o free.o
+valid-test-objs = valid-test.o libminc2.a
 
 valid-test: $(valid-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o valid-test $(valid-test-objs) $(LIBS)
