@@ -11,7 +11,7 @@ PROG_LIB  = mincprog
 LIB_DIR  = ../../src#                         directory for library
 LIBRARY  = minc#                           library
 CDEFINES = -DDEBUG#                        cpp defines
-OPT      = -g#                             compiler options
+OPT      = -O#                             compiler options
 LDOPT    = -L/usr/local/lib -lnetcdf -lsun -lm -lgl_s -lm -lc_s# ld options
 INCLUDES = -I. -I../proglib -I../../src -I/usr/local/include
 
