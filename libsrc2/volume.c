@@ -254,7 +254,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
 	  
           if (hdf_size[i] > dimensions[i]->length) {
               hdf_size[i] = dimensions[i]->length;
-	      
           }
       }
     
@@ -355,8 +354,33 @@ micreate_volume(const char *filename, int number_of_dimensions,
     miset_attr_at_loc(dataset_id, "spacing", MI_TYPE_STRING,
                       strlen(name), name);
 
-    miset_attr_at_loc(dataset_id, "class", MI_TYPE_INT, 1, 
-                      &dimensions[i]->class);
+    switch (dimensions[i]->class) {
+    case MI_DIMCLASS_SPATIAL:
+        name = "spatial";
+        break;
+    case MI_DIMCLASS_TIME:
+        name = "time___";
+        break;
+    case MI_DIMCLASS_SFREQUENCY:
+        name = "sfreq__";
+        break;
+    case MI_DIMCLASS_TFREQUENCY:
+        name = "tfreq__";
+        break;
+    case MI_DIMCLASS_USER:
+        name = "user___";
+        break;
+    case MI_DIMCLASS_RECORD:
+        name = "record_";
+        break;
+    case MI_DIMCLASS_ANY:
+    default:
+        /* These should not be seen in this context!!!
+         */
+        return (MI_ERROR);
+    }
+    miset_attr_at_loc(dataset_id, "class", MI_TYPE_STRING, strlen(name),
+                      name);
    
    /* Create Dimension attribute "direction_cosines"  */
     miset_attr_at_loc(dataset_id, "direction_cosines", MI_TYPE_DOUBLE,
@@ -601,7 +625,7 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             hdim->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
         }
 
-        r = miget_attribute(volume, path, "class", MI_TYPE_INT, 1, &hdim->class);
+        r = miget_attribute(volume, path, "class", MI_TYPE_INT, 1, temp);
         if (r < 0) {
             /* Get the default class. */
             if (!strcmp(dimname, "time")) {
@@ -609,6 +633,29 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             }
             else {
                 hdim->class =  MI_DIMCLASS_SPATIAL;
+            }
+        }
+        else {
+            if (!strcmp(temp, "spatial")) {
+                hdim->class = MI_DIMCLASS_SPATIAL;
+            }
+            else if (!strcmp(temp, "time___")) {
+                hdim->class = MI_DIMCLASS_TIME;
+            }
+            else if (!strcmp(temp, "sfreq__")) {
+                hdim->class = MI_DIMCLASS_SFREQUENCY;
+            }
+            else if (!strcmp(temp, "tfreq__")) {
+                hdim->class = MI_DIMCLASS_TFREQUENCY;
+            }
+            else if (!strcmp(temp, "user___")) {
+                hdim->class = MI_DIMCLASS_USER;
+            }
+            else if (!strcmp(temp, "record_")) {
+                hdim->class = MI_DIMCLASS_RECORD;
+            }
+            else {
+                /* TODO: error message?? */
             }
         }
         r = miget_attribute(volume, path, "length", MI_TYPE_UINT, 1, &hdim->length);
