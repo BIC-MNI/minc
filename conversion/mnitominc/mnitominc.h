@@ -206,6 +206,4 @@ int get_mni_header(char *file, mni_header_type *mni_header);
 int get_mni_image(mni_header_type *mni_header, mni_image_type *mni_image,
                   int image_num);
 int dblcmp(double dbl1, double dbl2, double epsilon);
-void get_vax_short(int nvals, void *vax_value, short *mach_value);
-void get_vax_float(int nvals, void *vax_value, float *mach_value);
 
