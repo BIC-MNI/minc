@@ -785,31 +785,53 @@ public int miicv_create();
 public int miicv_free(int icvid);
 \end{verbatim}
 
-\item \code{miicv\_setdbl} : Set a double precision icv property.
+\item \code{miicv\_setdbl} : Set a numeric icv property to a double value.
 \begin{verbatim}
 public int miicv_setdbl(int icvid, int icv_property, double value);
 \end{verbatim}
 
-\item \code{miicv\_setint} : Set an integer icv property
-(properties \code{MI\_ICV\_DIM\_SIZE}, \code{MI\_ICV\_ADIM\_SIZE}
-and \code{MI\_ICV\_BDIM\_SIZE} can also be 
-set with this routine, even though they are long values).
+\item \code{miicv\_setint} : Set a numeric icv property to an integer value.
 \begin{verbatim}
 public int miicv_setint(int icvid, int icv_property, int value);
 \end{verbatim}
 
-\item \code{miicv\_set} : Set an icv property. A pointer to the value
-is passed - this value must be of the correct type since no compiler
-or run-time checking is done.
+\item \code{miicv\_setlong} : Set a numeric icv property to a long
+integer value.
 \begin{verbatim}
-public int miicv_set(int icvid, int icv_property, void *value);
+public int miicv_setlong(int icvid, int icv_property, long value);
 \end{verbatim}
 
-\item \code{miicv\_inq} : Inquire about an icv property. \code{value}
-points to a the variable in which the value should be returned (the
-variable must of the correct type).
+\item \code{miicv\_setstr} : Set a string icv property.
 \begin{verbatim}
-public int miicv_inq(int icvid, int icv_property, void *value);
+public int miicv_set(int icvid, int icv_property, char *value);
+\end{verbatim}
+
+\item \code{miicv\_inqdbl} : Inquire about a numeric icv property.
+\code{value} points to the double precision variable in which the
+value should be returned. 
+\begin{verbatim}
+public int miicv_inqdbl(int icvid, int icv_property, double *value);
+\end{verbatim}
+
+\item \code{miicv\_inqint} : Inquire about a numeric icv property.
+\code{value} points to the integer variable in which the
+value should be returned. 
+\begin{verbatim}
+public int miicv_inqint(int icvid, int icv_property, int *value);
+\end{verbatim}
+
+\item \code{miicv\_inqlong} : Inquire about a numeric icv property.
+\code{value} points to the long integer variable in which the
+value should be returned. 
+\begin{verbatim}
+public int miicv_inqlong(int icvid, int icv_property, long *value);
+\end{verbatim}
+
+\item \code{miicv\_inqstr} : Inquire about a string icv property. \code{value}
+points to a the variable in which the value should be returned. The
+calling routine must allocate enough space for the return string.
+\begin{verbatim}
+public int miicv_inqstr(int icvid, int icv_property, char *value);
 \end{verbatim}
 
 \item \code{miicv\_attach} : Attach a MINC file and image variable to

@@ -406,7 +406,8 @@ patient's left side appear on the left or right of the image?).
 
 Accessing a file through an icv is a straight-forward process.
 Create the icv with \verb+miicv_create+, set properties
-(like desired datatype) with \verb+miicv_set+, attach the icv to a NetCDF
+(like desired datatype) with the \verb+miicv_set+ routines, attach the
+icv to a NetCDF 
 variable with \verb+miicv_attach+ and access the data with
 \verb+miicv_get+ or \verb+miicv_put+. The icv can be detached from a
 NetCDF variable with \verb+miicv_detach+ and can be freed with
@@ -415,9 +416,11 @@ NetCDF variable with \verb+miicv_detach+ and can be freed with
 Icv properties are strings, integers, long integers or doubles. For
 example, \verb+MI_ICV_SIGN+ (the sign of variable values) is a string,
 while \verb+MI_ICV_IMAGE_MAX+ (image maximum) is a double precision
-value.  Two functions, \verb+miicv_setint+ and \verb+miicv_setdbl+,
+value.  Four functions --- \verb+miicv_setint+, \verb+miicv_setlong+,
+\verb+miicv_setdbl+ and \verb+miicv_setstr+ ---
 are provided to simplify the setting of property values. Programs can
-inquire about property values with \verb+miicv_inq+.
+inquire about property values with \verb+miicv_inqint+,
+\verb+miicv_inqlong+, \verb+miicv_inqdbl+ and \verb+miicv_inqstr+.
 
 \subsubsection{Type and range conversion}
 
@@ -527,9 +530,9 @@ Read an image without normalization:
    /* Create the icv */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, NC_SHORT);
-   (void) miicv_set(icv, MI_ICV_SIGN, MI_UNSIGNED);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, 32000.0);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, 0.0);
+   (void) miicv_setstr(icv, MI_ICV_SIGN, MI_UNSIGNED);
+   (void) miicv_setint(icv, MI_ICV_VALID_MAX, 32000);
+   (void) miicv_setint(icv, MI_ICV_VALID_MIN, 0);
 
    /* Open the file, attach the image variable */
    cdfid=ncopen(filename, NC_NOWRITE);
@@ -551,9 +554,9 @@ Read an integer image with normalization:
    /* Create the icv */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, NC_SHORT);
-   (void) miicv_set(icv, MI_ICV_SIGN, MI_UNSIGNED);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, 32000.0);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, 0.0);
+   (void) miicv_setstr(icv, MI_ICV_SIGN, MI_UNSIGNED);
+   (void) miicv_setint(icv, MI_ICV_VALID_MAX, 32000);
+   (void) miicv_setint(icv, MI_ICV_VALID_MIN, 0);
    (void) miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
    (void) miicv_setint(icv, MI_ICV_USER_NORM, TRUE);
    (void) miicv_setdbl(icv, MI_ICV_IMAGE_MAX, 1.83);
@@ -686,9 +689,9 @@ inferior, posterior, left side as short values between 0 and 32000:
    /* Create the icv */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, NC_SHORT);
-   (void) miicv_set(icv, MI_ICV_SIGN, MI_UNSIGNED);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, 32000.0);
-   (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, 0.0);
+   (void) miicv_setstr(icv, MI_ICV_SIGN, MI_UNSIGNED);
+   (void) miicv_setint(icv, MI_ICV_VALID_MAX, 32000);
+   (void) miicv_setint(icv, MI_ICV_VALID_MIN, 0);
    (void) miicv_setint(icv, MI_ICV_DO_DIM_CONV, TRUE);
    (void) miicv_setint(icv, MI_ICV_ADIM_SIZE, 256);
    (void) miicv_setint(icv, MI_ICV_BDIM_SIZE, 256);
