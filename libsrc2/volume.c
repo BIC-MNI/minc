@@ -4,7 +4,6 @@
  *
  * Functions to create, open, and close MINC volume objects.
  ************************************************************************/
-
 #include <stdlib.h>
 #include <hdf5.h>
 #include <limits.h>
@@ -12,6 +11,10 @@
 #include <math.h>
 #include "minc2.h"
 #include "minc2_private.h"
+
+/**
+ * \defgroup mi2Vol MINC 2.0 Volume Functions
+ */
 
 /* Forward declarations */
 
@@ -26,6 +29,7 @@ static int _miget_volume_class(mihandle_t volume, miclass_t *volclass);
 /** Create the actual image for the volume.
     Note that the image dataset muct be created in the hierarchy 
     before the image data can be added.
+    \ingroup mi2Vol
  */
 int
 micreate_volume_image(mihandle_t volume)
@@ -151,8 +155,39 @@ micreate_volume_image(mihandle_t volume)
     return (MI_NOERROR);
 }
 
+/** Set up the array of conversions from voxel to world coordinate order.
+ */
+static int
+miset_volume_world_indices(mihandle_t hvol)
+{
+    int i;
+
+    hvol->world_indices = malloc(hvol->number_of_dims * sizeof(short));
+    if (hvol->world_indices == NULL) {
+        return (MI_ERROR);
+    }
+
+    for (i = 0; i < hvol->number_of_dims; i++) {
+        hvol->world_indices[i] = -1;
+        if (hvol->dim_handles[i]->class == MI_DIMCLASS_SPATIAL) {
+            char *tmp_ptr = hvol->dim_handles[i]->name;
+            
+            if (!strcmp(tmp_ptr, MIxspace)) {
+                hvol->world_indices[i] = MI2_X;
+            }
+            else if (!strcmp(tmp_ptr, MIyspace)) {
+                hvol->world_indices[i] = MI2_Y;
+            }
+            else if (!strcmp(tmp_ptr, MIzspace)) {
+                hvol->world_indices[i] = MI2_Z;
+            }
+        }
+    }
+}
+        
 /** Create a volume with the specified name, dimensions, 
     type, class, volume properties and retrieve the volume handle.
+    \ingroup mi2Vol
  */ 
 int
 micreate_volume(const char *filename, int number_of_dimensions,
@@ -175,8 +210,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
   char *name;
   int size;
   hsize_t hdf_size[MI2_MAX_VAR_DIMS];
-  volumehandle *handle;
-  volprops *props_handle;
+  mihandle_t handle;
+  mivolumeprops_t props_handle;
   char ident_str[128];
   hid_t tmp_type;
 
@@ -197,7 +232,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   /* Allocate space for the volume handle
    */
-  handle = (volumehandle *)malloc(sizeof(*handle));
+  handle = (mihandle_t)malloc(sizeof(struct mivolume));
   if (handle == NULL) {
     return (MI_ERROR);
   }
@@ -567,13 +602,18 @@ micreate_volume(const char *filename, int number_of_dimensions,
   if (handle->dim_handles == NULL) {
     return (MI_ERROR);
   }
+
   /* Once the space for all dimension handles is created
      fill the dimension handle array with the appropriate 
      dimension handle.
    */
-  for (i=0; i<number_of_dimensions ; i++) {
-    handle->dim_handles[i] = dimensions[i];  
+  for (i = 0; i < number_of_dimensions; i++) {
+    handle->dim_handles[i] = dimensions[i];
+    dimensions[i]->volume_handle = handle;
   }
+
+  miset_volume_world_indices(handle);
+
   /* Set the apparent order of dimensions to NULL
      until user defines them. Switch is used to 
      avoid errors.
@@ -618,9 +658,9 @@ micreate_volume(const char *filename, int number_of_dimensions,
   miinvert_transform(handle->v2w_transform, handle->w2v_transform);
 
   /* Allocated space for the volume properties */
-  props_handle = (volprops *)malloc(sizeof(*props_handle));
+  props_handle = (mivolumeprops_t)malloc(sizeof(struct mivolprops));
   /* Initialize volume properties with zero */
-  memset(props_handle, 0, sizeof (volprops));
+  memset(props_handle, 0, sizeof (struct mivolprops));
   /* If volume properties is specified by the user
      set all the properties of the volume handle
    */
@@ -678,6 +718,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 }
 
 /** Return the number of dimensions associated with this volume.
+    \ingroup mi2Vol
  */
 int
 miget_volume_dimension_count(mihandle_t volume, midimclass_t cls,
@@ -704,6 +745,7 @@ miget_volume_dimension_count(mihandle_t volume, midimclass_t cls,
 }
 
 /** Returns the number of voxels in the volume.
+    \ingroup mi2Vol
  */
 int
 miget_volume_voxel_count(mihandle_t volume, int *number_of_voxels)
@@ -922,12 +964,14 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
     } H5E_END_TRY;
     /* Return the dimension handle */
     *hdim_ptr = hdim;
+    hdim->volume_handle = volume;
     return (MI_NOERROR);
 }
 
 
 /** Opens an existing MINC volume for read-only access if mode argument is
     MI2_OPEN_READ, or read-write access if mode argument is MI2_OPEN_RDWR.
+    \ingroup mi2Vol
  */
 int
 miopen_volume(const char *filename, int mode, mihandle_t *volume)
@@ -935,7 +979,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     hid_t file_id;
     hid_t dset_id;
     hid_t space_id;
-    volumehandle *handle;
+    mihandle_t handle;
     int hdf_mode;
     char dimorder[MI2_CHAR_LENGTH];
     int i,r;
@@ -964,7 +1008,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 	return (MI_ERROR);
     }
      /* Allocate space for the volume handle */
-    handle = (volumehandle *)malloc(sizeof(*handle));
+    handle = (mihandle_t) malloc(sizeof(struct mivolume));
     if (handle == NULL) {
       return (MI_ERROR);
     }
@@ -1004,6 +1048,8 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
         _miget_file_dimension(handle, p1, &handle->dim_handles[i]);
         p1 = p2 + 1;
     }
+
+    miset_volume_world_indices(handle);
     
     /* SEE IF SLICE SCALING IS ENABLED
      */
@@ -1145,6 +1191,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 }
 
 /** Writes any changes associated with the volume to disk.
+    \ingroup mi2Vol
  */
 int
 miflush_volume(mihandle_t volume)
@@ -1154,9 +1201,10 @@ miflush_volume(mihandle_t volume)
     return (MI_NOERROR);
 }
 
-/** Close an existing MINC volume. If the volume was newly created, all
-changes will be written to disk. In all cases this function closes
-the open volume and frees memory associated with the volume handle.
+/** Close an existing MINC volume. If the volume was newly created,
+ *  all changes will be written to disk. In all cases this function closes
+ *  the open volume and frees memory associated with the volume handle.
+ *  \ingroup mi2Vol
  */
 int 
 miclose_volume(mihandle_t volume)
@@ -1201,6 +1249,9 @@ miclose_volume(mihandle_t volume)
     }
     if (volume->create_props != NULL) {
       mifree_volume_props(volume->create_props);
+    }
+    if (volume->world_indices != NULL) {
+        free(volume->world_indices);
     }
     free(volume);
 
@@ -1280,6 +1331,9 @@ miread_valid_range(mihandle_t volume, double *valid_max, double *valid_min)
     }
 }
 
+/** \internal
+ * This function saves the current valid range set for a MINC file.
+ */
 void
 misave_valid_range(mihandle_t volume)
 {
