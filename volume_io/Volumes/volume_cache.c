@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.22 1996-02-28 16:04:00 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.23 1996-03-14 15:51:42 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -23,7 +23,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_c
 
 #define   DEFAULT_BLOCK_SIZE              8
 #define   DEFAULT_CACHE_THRESHOLD         80000000
-#define   DEFAULT_MAX_BYTES_IN_CACHE      80000000
+#define   DEFAULT_MAX_BYTES_IN_CACHE      40000000
 
 static  BOOLEAN  n_bytes_cache_threshold_set = FALSE;
 static  int      n_bytes_cache_threshold = DEFAULT_CACHE_THRESHOLD;
