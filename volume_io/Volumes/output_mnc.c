@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.25 1995-04-04 03:42:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.26 1995-04-28 18:33:02 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -101,12 +101,13 @@ public  Minc_file  initialize_minc_output(
     int                 dim_vars[MAX_VAR_DIMS], volume_sizes[MAX_DIMENSIONS];
     int                 n_volume_dims;
     double              separation[MAX_VAR_DIMS], valid_range[2];
-    double              start[MAX_VAR_DIMS];
+    Real                start[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     int                 i, j, d, axis, vol_index, n_range_dims;
     Point               origin;
     Vector              axes[MAX_DIMENSIONS];
-    static  STRING      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+    static  STRING      default_dim_names[] = { { MIzspace }, { MIyspace },
+                                                { MIxspace } };
     char                *file_dim_names[MAX_VAR_DIMS];
     Transform           transform, t, inverse;
     char                **vol_dimension_names;
@@ -266,7 +267,8 @@ public  Minc_file  initialize_minc_output(
     (void) compute_transform_inverse( &t, &inverse );
 
     transform_point( &inverse,
-                     Point_x(origin), Point_y(origin), Point_z(origin),
+                     (Real) Point_x(origin), (Real) Point_y(origin),
+                     (Real) Point_z(origin),
                      &start[X], &start[Y], &start[Z] );
 
     for_less( d, 0, n_dimensions )
@@ -685,7 +687,7 @@ private  void  output_slab(
 
             --expected_ind;
 
-            iv[ind] = file_start[file_ind];
+            iv[ind] = (int) file_start[file_ind];
         }
     }
 

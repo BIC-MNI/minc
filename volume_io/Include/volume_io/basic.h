@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.20 1995-04-04 03:42:14 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.21 1995-04-28 18:32:48 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -62,12 +62,16 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 #define  ABS( x )   ( ((x) > 0) ? (x) : (-(x)) )
 #define  SIGN( x )  ( ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0) )
 
+#ifdef   MAX
 #undef   MAX
+#endif
 #define  MAX( x, y )  ( ((x) >= (y)) ? (x) : (y) )
 
 #define  MAX3( x, y, z )  MAX( x, MAX(y,z) )
 
+#ifdef   MIN
 #undef   MIN
+#endif
 #define  MIN( x, y )  ( ((x) <= (y)) ? (x) : (y) )
 
 #define  MIN3( x, y, z )  MIN( x, MIN(y,z) )
@@ -100,7 +104,7 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
 
 /* Basic types */
 
-typedef  char            Smallest_int;
+typedef  signed char     Smallest_int;
 
 typedef  unsigned char   unsigned_byte;
 

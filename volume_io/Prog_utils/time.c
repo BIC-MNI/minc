@@ -11,7 +11,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.9 1995-04-25 16:48:25 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.10 1995-04-28 18:32:54 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -210,11 +210,22 @@ public  void  sleep_program( Real seconds )
     if( n_milliseconds != 0 )
         napms( n_milliseconds );
 #else
+#ifdef linux
+    unsigned long  n_seconds, n_microseconds;
+
+    n_seconds = FLOOR( seconds );
+    if( n_seconds != 0 )
+        (void) sleep( FLOOR( seconds ) );
+
+    n_microseconds = ROUND( 1.0e6 * FRACTION(seconds) );
+    usleep( n_microseconds );
+#else
     struct timespec  rqtp, rmtp;
 
     rqtp.tv_sec = FLOOR( seconds );
     rqtp.tv_nsec = (long) (1.0e9 * FRACTION(seconds));
     (void) nanosleep( &rqtp, &rmtp );
+#endif
 #endif
 }
 

@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.20 1995-04-04 03:42:24 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.21 1995-04-28 18:32:59 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -189,7 +189,8 @@ public  Status  initialize_free_format_input(
     {
         n_slices = 0;
 
-        while( input_string( file, slice_filename, MAX_STRING_LENGTH, ' ' )==OK)
+        while( input_string( file, slice_filename, MAX_STRING_LENGTH,
+                             (char) ' ' )==OK)
         {
             SET_ARRAY_SIZE( volume_input->slice_filenames, n_slices, n_slices+1,
                             DEFAULT_CHUNK_SIZE );
@@ -213,7 +214,8 @@ public  Status  initialize_free_format_input(
     else
     {
         volume_input->one_file_per_slice = FALSE;
-        status = input_string( file, volume_filename, MAX_STRING_LENGTH, ' ' );
+        status = input_string( file, volume_filename, MAX_STRING_LENGTH,
+                               (char) ' ' );
         get_absolute_filename( volume_filename, volume_input->directory,
                                abs_volume_filename );
 
@@ -309,7 +311,7 @@ public  Status  initialize_free_format_input(
 
         }
 
-        set_volume_voxel_range( volume, min_value, max_value );
+        set_volume_voxel_range( volume, (Real) min_value, (Real) max_value );
 
         if( status == OK && !volume_input->one_file_per_slice )
             status = close_file( volume_input->volume_file );
@@ -513,7 +515,7 @@ public  BOOLEAN  input_more_free_format_file(
 
                     set_volume_voxel_value( volume,
                                indices[X], indices[Y], indices[Z], 0, 0,
-                               value );
+                               (Real) value );
 
                     ++byte_buffer_ptr;
                 }
@@ -538,7 +540,7 @@ public  BOOLEAN  input_more_free_format_file(
 
                     set_volume_voxel_value( volume,
                                indices[X], indices[Y], indices[Z], 0, 0,
-                               value );
+                               (Real) value );
 
                     ++short_buffer_ptr;
                 }
@@ -579,7 +581,7 @@ public  BOOLEAN  input_more_free_format_file(
             }
         }
 
-        set_volume_voxel_range( volume, min_value, max_value );
+        set_volume_voxel_range( volume, (Real) min_value, (Real) max_value );
 
         if( volume->data_type != volume_input->file_data_type )
         {

@@ -4,7 +4,7 @@
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.22 1995-04-04 03:42:16 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.23 1995-04-28 18:32:52 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -1108,8 +1108,8 @@ public  Status  input_binary_data(
     if( n_done != n )
     {
         print( "Error inputting binary data.\n" );
-        print( "     (%d out of %d items of size %d).\n", n_done, n,
-                (int) element_size );
+        print( "     (%d out of %d items of size %ld).\n", n_done, n,
+               element_size );
         status = ERROR;
     }
 
@@ -1147,8 +1147,8 @@ public  Status  output_binary_data(
     if( n_done != n )
     {
         print( "Error outputting binary data.\n" );
-        print( "     (%d out of %d items of size %d).\n", n_done, n,
-                (int) element_size );
+        print( "     (%d out of %d items of size %ld).\n", n_done, n,
+                element_size );
         status = ERROR;
     }
 
@@ -1173,7 +1173,7 @@ public  Status  input_newline(
 {
     Status   status;
 
-    status = skip_input_until( file, '\n' );
+    status = skip_input_until( file, (char) '\n' );
 
     if( status != OK )
     {

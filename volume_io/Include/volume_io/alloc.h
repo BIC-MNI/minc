@@ -17,17 +17,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.7 1994-11-25 14:19:46 david Exp $";
+static char alloc_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.8 1995-04-28 18:32:49 david Exp $";
 #endif
 
 #include  <basic.h>
 #include  <alloc_check.h>
 
 /* --- prototypes and macros used by the public allocation macros --- */
-
-void   alloc_memory( void **, int );
-void   realloc_memory( void **, int );
-void   free_memory( void ** );
 
 #define  ALLOC_private( ptr, size, n_items )                                  \
          {                                                                    \
@@ -187,8 +183,8 @@ void   free_memory( void ** );
          {                                                                    \
            OLD_PTR( ptr )                                                     \
            realloc_memory( (void **) &(ptr),                                  \
-                           (int) ((n_items) * sizeof((ptr)[0])) );            \
-           CHANGE_PTR( ptr, (int) (n_items) * (int) sizeof((ptr)[0]) );       \
+                           (size_t) ((n_items) * sizeof((ptr)[0])) );         \
+           CHANGE_PTR( ptr, (size_t) (n_items) * (int) sizeof((ptr)[0]) );    \
          }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -231,9 +227,9 @@ void   free_memory( void ** );
 #define  ALLOC_VAR_SIZED_STRUCT( ptr, element_type, n_elements )              \
          {                                                                    \
              alloc_memory( (void **) &(ptr),                                  \
-               (int) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
+               (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
              RECORD_PTR( ptr,                                                 \
-               (int) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
+               (size_t) (sizeof(*(ptr))+((n_elements)-1) * sizeof(element_type)));\
          }
 
 /* ----------------------------- MNI Header -----------------------------------

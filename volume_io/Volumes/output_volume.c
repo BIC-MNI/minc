@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.7 1994-11-25 14:20:18 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.8 1995-04-28 18:33:03 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -91,7 +91,7 @@ public  Status  output_modified_volume(
     int                  i, j, n_found;
     Real                 real_min, real_max;
     char                 **vol_dimension_names;
-    BOOLEAN              done[MAX_DIMENSIONS];
+    BOOLEAN              done[MAX_DIMENSIONS], copy_original_file_data;
     STRING               dim_names[MAX_DIMENSIONS];
     minc_output_options  used_options;
 
@@ -112,7 +112,7 @@ public  Status  output_modified_volume(
 
     if( options == NULL || strlen( options->dimension_names[0] ) == 0 )
     {
-        if( original_filename != NULL )
+        if( original_filename != NULL && file_exists(original_filename) )
         {
             if( get_file_dimension_names( original_filename, n_dims,
                                           dim_names ) != OK )
@@ -180,11 +180,28 @@ public  Status  output_modified_volume(
     if( minc_file == (Minc_file) NULL )
         status = ERROR;
 
-    if( status == OK && original_filename != (char *) NULL )
+    copy_original_file_data = FALSE;
+
+    if( original_filename != NULL )
+    {
+        STRING  full_filename, full_original_filename;
+
+        expand_filename( filename, full_filename );
+        expand_filename( original_filename, full_original_filename );
+
+        if( strcmp( full_filename, full_original_filename ) != 0 &&
+            file_exists( full_original_filename ) )
+        {
+            copy_original_file_data = TRUE;
+        }
+    }
+
+    if( status == OK && copy_original_file_data )
+    {
         status = copy_auxiliary_data_from_minc_file( minc_file,
                                                      original_filename,
                                                      history );
-
+    }
     else if( status == OK && history != (char *) NULL )
         status = add_minc_history( minc_file, history );
 

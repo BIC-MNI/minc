@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.5 1994-11-25 14:20:25 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.6 1995-04-28 18:33:09 david Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -219,13 +219,14 @@ public  Status  mni_input_keyword_and_equal_sign(
     Status     status;
     STRING     str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 );
+    status = mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
+                               (char) 0 );
 
     if( status == END_OF_FILE )
         return( status );
 
     if( status != OK || strcmp( str, keyword ) != 0 ||
-        mni_skip_expected_character( file, '=' ) != OK )
+        mni_skip_expected_character( file, (char) '=' ) != OK )
     {
         if( print_error_message )
             print( "Expected \"%s =\"\n", keyword );
@@ -287,7 +288,8 @@ public  Status  mni_input_double(
     Status   status;
     STRING   str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH, ' ', ';' );
+    status = mni_input_string( file, str, MAX_STRING_LENGTH,
+                               (char) ' ', (char) ';' );
 
     if( status == OK && sscanf( str, "%lf", d ) != 1 )
     {
@@ -327,7 +329,7 @@ public  Status  mni_input_doubles(
         ADD_ELEMENT_TO_ARRAY( *doubles, *n, d, DEFAULT_CHUNK_SIZE );
     }
 
-    return( mni_skip_expected_character( file, ';' ) );
+    return( mni_skip_expected_character( file, (char) ';' ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -350,7 +352,8 @@ public  Status  mni_input_int(
     Status   status;
     STRING   str;
 
-    status = mni_input_string( file, str, MAX_STRING_LENGTH, ' ', ';' );
+    status = mni_input_string( file, str, MAX_STRING_LENGTH, (char) ' ',
+                               (char) ';' );
 
     if( status == OK && sscanf( str, "%d", i ) != 1 )
     {
@@ -397,6 +400,6 @@ public  void  output_comments(
         }
 
         if( len > 0 && comments[len-1] != '\n' )
-            (void) output_character( file, '\n' );
+            (void) output_character( file, (char) '\n' );
     }
 }

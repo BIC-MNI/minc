@@ -6,32 +6,55 @@ public  Colour  make_rgba_Colour(
     int    b,
     int    a )
 {
-    return( (Colour) r |
-            ((Colour) g << (Colour) 8) |
-            ((Colour) b << (Colour) 16) |
-            ((Colour) a << (Colour) 24) );
+    Colour          c;
+    unsigned  char  *byte_ptr;
+
+    byte_ptr = (void *) &c;
+
+    byte_ptr[0] = (unsigned char) a;
+    byte_ptr[1] = (unsigned char) b;
+    byte_ptr[2] = (unsigned char) g;
+    byte_ptr[3] = (unsigned char) r;
+
+    return( c );
 }
 
 public  int  get_Colour_r(
     Colour   colour )
 {
-    return( (int) (colour & 255ul) );
+    unsigned  char  *b;
+
+    b = (void *) &colour;
+
+    return( (int) b[3] );
 }
 
 public  int  get_Colour_g(
     Colour   colour )
 {
-    return( (int) ((colour >> 8ul) & 255ul) );
+    unsigned  char  *b;
+
+    b = (void *) &colour;
+
+    return( (int) b[2] );
 }
 
 public  int  get_Colour_b(
     Colour   colour )
 {
-    return( (int) ((colour >> 16ul) & 255ul) );
+    unsigned  char  *b;
+
+    b = (void *) &colour;
+
+    return( (int) b[1] );
 }
 
 public  int  get_Colour_a(
     Colour   colour )
 {
-    return( (int) (colour >> 24ul) );
+    unsigned  char  *b;
+
+    b = (void *) &colour;
+
+    return( (int) b[0] );
 }

@@ -1,19 +1,13 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.11 1995-03-21 19:01:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.12 1995-04-28 18:32:51 david Exp $";
 #endif
 
-#ifdef sgi
-typedef  size_t    alloc_int;
 typedef  void      *alloc_ptr;
-#else
-typedef  unsigned  alloc_int;
-typedef  char      *alloc_ptr;
-#endif
 
-private    void       record_alloc( int );
-private    void       record_realloc( int );
+private    void       record_alloc( size_t );
+private    void       record_realloc( size_t );
 private    void       record_free( void );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -30,12 +24,12 @@ private    void       record_free( void );
 ---------------------------------------------------------------------------- */
 
 public  void  alloc_memory(
-    void   **ptr,
-    int    n_bytes )
+    void         **ptr,
+    size_t       n_bytes )
 {
-    if( n_bytes > 0 )
+    if( n_bytes != 0 )
     {
-        *ptr = (void *) malloc( (alloc_int) n_bytes );
+        *ptr = (void *) malloc( n_bytes );
 
         if( *ptr == (void *) 0 )
         {
@@ -65,12 +59,12 @@ public  void  alloc_memory(
 ---------------------------------------------------------------------------- */
 
 public  void  realloc_memory(
-    void   **ptr,
-    int    n_bytes )
+    void      **ptr,
+    size_t    n_bytes )
 {
-    if( n_bytes > 0 )
+    if( n_bytes != 0 )
     {
-        *ptr = (void *) realloc( (alloc_ptr) *ptr, (alloc_int) n_bytes );
+        *ptr = (void *) realloc( (alloc_ptr) *ptr, n_bytes );
 
         if( *ptr == (void *) 0 )
         {
@@ -103,11 +97,8 @@ public  void  free_memory( void   **ptr )
 
     if( *ptr != (void *) 0 )
     {
-#ifdef sgi
         free( *ptr );
-#else
-        free( (char *) *ptr );
-#endif
+
         *ptr = (void *) 0;
     }
 }
@@ -165,7 +156,8 @@ private  BOOLEAN  writing_alloc_debug( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  record_alloc( int  n_bytes )
+private  void  record_alloc(
+    size_t  n_bytes )
 {
     if( writing_alloc_debug() )
     {
@@ -187,7 +179,8 @@ private  void  record_alloc( int  n_bytes )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  record_realloc( int n_bytes )
+private  void  record_realloc(
+    size_t   n_bytes )
 {
     if( writing_alloc_debug() )
     {

@@ -1,6 +1,6 @@
 #include  <internal_volume_io.h>
 
-private  Real   constant_coefs[1][1] = {   1.0  };
+private  Real   constant_coefs[1][1] = {   { 1.0 }  };
 
 private  Real   linear_coefs[2][2] = {
                                            {  1.0,  0.0 },

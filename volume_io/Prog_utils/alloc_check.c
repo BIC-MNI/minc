@@ -3,7 +3,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.13 1994-11-25 14:19:54 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.14 1995-04-28 18:32:51 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,7 +29,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc
 typedef  struct skip_entry
 {
     void                    *ptr;
-    int                     n_bytes;
+    size_t                  n_bytes;
     char                    *source_file;
     int                     line_number;
     int                     sequence_number;
@@ -38,8 +38,8 @@ typedef  struct skip_entry
 
 typedef  struct
 {
-    int            next_memory_threshold;
-    int            total_memory_allocated;
+    size_t         next_memory_threshold;
+    size_t         total_memory_allocated;
     skip_entry     *header;
     int            level;
 } alloc_struct;
@@ -49,22 +49,16 @@ typedef  struct
     skip_entry   *update[MAX_SKIP_LEVELS];
 } update_struct;
 
-private  void     update_total_memory( alloc_struct *, int );
+private  void     update_total_memory( alloc_struct *, size_t );
 private  int      get_random_level( void );
 private  void     output_entry( FILE *, skip_entry * );
 private  BOOLEAN  size_display_enabled( void );
-private  int      skip_alloc_size = 0;
+private  size_t   skip_alloc_size = 0;
 
-#ifdef sgi
-typedef  size_t    alloc_int;
 typedef  void      *alloc_ptr;
-#else
-typedef  unsigned  alloc_int;
-typedef  char      *alloc_ptr;
-#endif
 
 #define  ALLOC_SKIP_STRUCT( ptr, n_level )                                    \
-     (ptr) = (skip_entry *) malloc( (alloc_int)                              \
+     (ptr) = (skip_entry *) malloc(                                          \
                  (sizeof(skip_entry)+((n_level)-1) * sizeof(skip_entry *)) );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -187,7 +181,7 @@ private   void  insert_ptr_in_alloc_list(
     alloc_struct   *alloc_list,
     update_struct  *update,
     void           *ptr,
-    int            n_bytes,
+    size_t         n_bytes,
     char           source_file[],
     int            line_number,
     int            sequence_number )
@@ -243,7 +237,7 @@ private  BOOLEAN  check_overlap(
     alloc_struct       *alloc_list,
     update_struct      *update,
     void               *ptr,
-    int                n_bytes,
+    size_t             n_bytes,
     skip_entry         **entry )
 {
     BOOLEAN      overlap;
@@ -443,7 +437,7 @@ private  void  output_alloc_list(
 
 private  void  update_total_memory(
     alloc_struct  *alloc_list,
-    int           n_bytes )
+    size_t        n_bytes )
 {
     alloc_list->total_memory_allocated += n_bytes;
 
@@ -518,7 +512,7 @@ private   alloc_struct   alloc_list;
 @NAME       : get_total_memory_alloced
 @INPUT      : 
 @OUTPUT     : 
-@RETURNS    : int  - the number of bytes allocated
+@RETURNS    : size_t  - the number of bytes allocated
 @DESCRIPTION: Returns the total amount of memory allocated by the program,
             : not counting that used by the skip list.
 @METHOD     : 
@@ -528,7 +522,7 @@ private   alloc_struct   alloc_list;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_total_memory_alloced( void )
+public  size_t  get_total_memory_alloced( void )
 {
     return( alloc_list.total_memory_allocated );
 }
@@ -681,10 +675,10 @@ private  int  get_current_sequence_number()
 ---------------------------------------------------------------------------- */
 
 public  void  record_ptr(
-    void   *ptr,
-    int    n_bytes,
-    char   source_file[],
-    int    line_number )
+    void      *ptr,
+    size_t    n_bytes,
+    char      source_file[],
+    int       line_number )
 {
     update_struct  update_ptrs;
     skip_entry     *entry;
@@ -693,7 +687,7 @@ public  void  record_ptr(
     {
         check_initialized_alloc_list( &alloc_list );
 
-        if( n_bytes <= 0 )
+        if( n_bytes == 0 )
         {
             print_source_location( source_file, line_number, -1 );
             print( ": Alloc called with zero size.\n" );
@@ -749,11 +743,11 @@ public  void  record_ptr(
 ---------------------------------------------------------------------------- */
 
 public  void  change_ptr(
-    void   *old_ptr,
-    void   *new_ptr,
-    int    n_bytes,
-    char   source_file[],
-    int    line_number )
+    void      *old_ptr,
+    void      *new_ptr,
+    size_t    n_bytes,
+    char      source_file[],
+    int       line_number )
 {
     char           *orig_source;
     int            orig_line;
@@ -765,7 +759,7 @@ public  void  change_ptr(
     {
         check_initialized_alloc_list( &alloc_list );
 
-        if( n_bytes <= 0 )
+        if( n_bytes == 0 )
         {
             print_source_location( source_file, line_number, -1 );
             print( ": Realloc called with zero size.\n" );

@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.37 1995-04-04 03:42:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.38 1995-04-28 18:33:01 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -96,7 +96,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
         (void) ncdiminq( file->cdfid, dim_vars[d], file->dim_names[d],
                          &long_size );
-        file->sizes_in_file[d] = long_size;
+        file->sizes_in_file[d] = (int) long_size;
     }
 
     file->converting_to_colour = FALSE;
@@ -842,7 +842,7 @@ private  void  input_slab(
 
             --expected_ind;
 
-            iv[ind] = start[file_ind];
+            iv[ind] = (int) start[file_ind];
         }
     }
 
@@ -870,7 +870,7 @@ private  void  input_slab(
             start[file->n_file_dimensions] = 0;
             count[file->n_file_dimensions] =
                                  file->sizes_in_file[file->n_file_dimensions];
-            tmp_sizes[file->n_slab_dims] = count[file->n_file_dimensions];
+            tmp_sizes[file->n_slab_dims] = (int) count[file->n_file_dimensions];
             set_volume_sizes( rgb_volume, tmp_sizes );
             alloc_volume_data( rgb_volume );
             volume_to_read = rgb_volume;

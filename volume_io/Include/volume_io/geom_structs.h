@@ -2,7 +2,7 @@
 #define  DEF_GEOM_STRUCTS
 
 #ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.14 1995-03-21 19:01:41 david Exp $";
+static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.15 1995-04-28 18:32:47 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -111,79 +111,11 @@ typedef  struct
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-typedef  unsigned  long    Colour;
-
-/* --- return a colour, given four values, each ranging from 0 and 255 */
-
-#define  make_rgba_Colour( r, g, b, a )            \
-          ( (Colour) (r) |                         \
-           ((Colour) (g) << (Colour) 8) |          \
-           ((Colour) (b) << (Colour) 16) |         \
-           ((Colour) (a) << (Colour) 24) )
-
-/* --- return a colour, given three rgb values */
-
-#define  make_Colour( r, g, b )  make_rgba_Colour( r, g, b, 255 )
-
-/* --- return the 4 components of the colour, in the range 0 to 255 */
-
-#define  get_Colour_r( colour ) ((colour) & 255)
-#define  get_Colour_g( colour ) (((colour) >> 8) & 255)
-#define  get_Colour_b( colour ) (((colour) >> 16) & 255)
-#define  get_Colour_a( colour ) (((colour) >> 24) & 255)
-
-/* --- convert a 0 to 255 colour component to a 0 to 1 range */
-
-#define  COLOUR_256_TO_0_1( val ) ( (val) / 255.0 )
-
-/* --- convert a 0 to 1 range colour component to the range 0 to 255 */
-
-#define  COLOUR_0_1_TO_256( val ) (int) ( (val) * 255.0 )
-
-/* --- return the 4 components of the colour in the range 0.0 to 1.0 */
-
-#define  get_Colour_r_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_r(colour) )
-#define  get_Colour_g_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_g(colour) )
-#define  get_Colour_b_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_b(colour) )
-#define  get_Colour_a_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_a(colour) )
-
-#ifdef lint
-#define  make_Colour_0_1( r, g, b ) ((Colour) ( r + g + b ))
-#define  make_rgba_Colour_0_1( r, g, b, a ) ((Colour) ( r + g + b + a))
+#ifdef  dec
+typedef  unsigned  int     Colour;
 #else
-
-/* --- create a colour from 3 rgb components, each in the range 0 to 1 */
-
-#define  make_Colour_0_1( r, g, b )                       \
-            make_Colour( COLOUR_0_1_TO_256(r),            \
-                         COLOUR_0_1_TO_256(g),            \
-                         COLOUR_0_1_TO_256(b) )
-
-/* --- create a colour from 4 rgba components, each in the range 0 to 1 */
-
-#define  make_rgba_Colour_0_1( r, g, b, a )              \
-            make_rgba_Colour( COLOUR_0_1_TO_256(r),            \
-                              COLOUR_0_1_TO_256(g),            \
-                              COLOUR_0_1_TO_256(b),            \
-                              COLOUR_0_1_TO_256(a) )
+typedef  unsigned  long    Colour;
 #endif
-
-/* --- converts a colour to a luminance (a gray scale intensity) */
-
-#define  get_Colour_luminance( c )                                            \
-            POSITIVE_ROUND( 0.299 * (Real) get_Colour_r(c) +                  \
-                            0.587 * (Real) get_Colour_g(c) +                  \
-                            0.114 * (Real) get_Colour_b(c) )
-
-/* --- returns a colour which is the given colour multiplied by the factor */
-
-#define  SCALE_COLOUR( col, factor )                  \
-          make_rgba_Colour( get_Colour_r(col) * (factor),    \
-                            get_Colour_g(col) * (factor),    \
-                            get_Colour_b(col) * (factor),    \
-                            get_Colour_a(col) )
-
-/* --- component-wise multiplication of two colours, returned in prod */
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \

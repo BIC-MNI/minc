@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.11 1995-03-21 19:02:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.12 1995-04-28 18:33:08 david Exp $";
 #endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
@@ -304,12 +304,13 @@ private  Status  input_one_transform(
     if( status != OK )
         return( status );
 
-    if( mni_input_string( file, type_name, MAX_STRING_LENGTH, ';', 0 ) != OK )
+    if( mni_input_string( file, type_name, MAX_STRING_LENGTH, (char) ';',
+                          (char) 0 ) != OK )
     {
         print( "input_transform(): missing transform type.\n");
         return( ERROR );
     }
-    if( mni_skip_expected_character( file, ';' ) != OK )
+    if( mni_skip_expected_character( file, (char) ';' ) != OK )
         return( ERROR );
 
     if( strcmp( type_name, LINEAR_TYPE ) == 0 )
@@ -326,16 +327,18 @@ private  Status  input_one_transform(
 
     /* --- read the next string */
 
-    if( mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 ) != OK )
+    if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
+                          (char) 0 ) != OK )
         return( ERROR );
 
     if( strcmp( str, INVERT_FLAG_STRING ) == 0 )
     {
-        if( mni_skip_expected_character( file, '=' ) != OK )
+        if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
-        if( mni_input_string( file, str, MAX_STRING_LENGTH, ';', 0 ) != OK )
+        if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) ';',
+                              (char) 0 ) != OK )
             return( ERROR );
-        if( mni_skip_expected_character( file, ';' ) != OK )
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
         if( strcmp( str, TRUE_STRING ) == 0 )
@@ -349,7 +352,8 @@ private  Status  input_one_transform(
             return( ERROR );
         }
 
-        if( mni_input_string( file, str, MAX_STRING_LENGTH, '=', 0 ) != OK )
+        if( mni_input_string( file, str, MAX_STRING_LENGTH, (char) '=',
+                              (char) 0 ) != OK )
             return( ERROR );
     }
 
@@ -362,7 +366,7 @@ private  Status  input_one_transform(
             return( ERROR );
         }
 
-        if( mni_skip_expected_character( file, '=' ) != OK )
+        if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
 
         make_identity_transform( &linear_transform );
@@ -385,7 +389,7 @@ private  Status  input_one_transform(
             }
         }
 
-        if( mni_skip_expected_character( file, ';' ) != OK )
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
         create_linear_transform( transform, &linear_transform );
@@ -401,11 +405,11 @@ private  Status  input_one_transform(
             print( "Expected %s =\n", N_DIMENSIONS_STRING );
             return( ERROR );
         }
-        if( mni_skip_expected_character( file, '=' ) != OK )
+        if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
         if( mni_input_int( file, &n_dimensions ) != OK )
             return( ERROR );
-        if( mni_skip_expected_character( file, ';' ) != OK )
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
         /* --- read Points = x y z x y z .... ; */
@@ -454,7 +458,7 @@ private  Status  input_one_transform(
             }
         }
 
-        if( mni_skip_expected_character( file, ';' ) != OK )
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
         create_thin_plate_transform( transform, n_dimensions, n_points, points,
@@ -470,14 +474,14 @@ private  Status  input_one_transform(
             print( "Expected %s =\n", DISPLACEMENT_VOLUME );
             return( ERROR );
         }
-        if( mni_skip_expected_character( file, '=' ) != OK )
+        if( mni_skip_expected_character( file, (char) '=' ) != OK )
             return( ERROR );
 
-        if( mni_input_string( file, volume_filename, MAX_STRING_LENGTH, ';',
-                              0 ) != OK )
+        if( mni_input_string( file, volume_filename, MAX_STRING_LENGTH,
+                              (char) ';', (char) 0 ) != OK )
             return( ERROR );
 
-        if( mni_skip_expected_character( file, ';' ) != OK )
+        if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
         /*--- if the volume filename is relative, add the required directory */
@@ -553,7 +557,8 @@ public  Status  input_transform(
 
     /* okay read the header */
 
-    if( mni_input_string( file, line, MAX_STRING_LENGTH, 0, 0 ) != OK ||
+    if( mni_input_string( file, line, MAX_STRING_LENGTH, (char) 0, (char) 0 )
+            != OK ||
         strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
     {
         print( "input_transform(): invalid header in file.\n");

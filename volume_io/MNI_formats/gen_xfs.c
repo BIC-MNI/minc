@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.14 1995-03-21 19:02:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.15 1995-04-28 18:33:04 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -122,12 +122,14 @@ public  void  create_thin_plate_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_grid_transform(
+private  void  internal_create_grid_transform(
     General_transform    *transform,
-    Volume               displacement_volume )
+    Volume               displacement_volume,
+    BOOLEAN              copy_flag )
 {
-    int       dim, sizes[MAX_DIMENSIONS];
+    int       dim, sizes[MAX_DIMENSIONS], vector_dim;
     char      **dim_names;
+    Volume    copy;
     BOOLEAN   volume_ok, dim_found[N_DIMENSIONS];
 
     volume_ok = TRUE;
@@ -144,6 +146,7 @@ public  void  create_grid_transform(
         dim_found[X] = FALSE;
         dim_found[Y] = FALSE;
         dim_found[Z] = FALSE;
+        vector_dim = -1;
 
         for_less( dim, 0, 4 )
         {
@@ -153,11 +156,16 @@ public  void  create_grid_transform(
                 dim_found[Y] = TRUE;
             else if( strcmp( dim_names[dim], MIzspace ) == 0 )
                 dim_found[Z] = TRUE;
-            else if( sizes[dim] != 3 )
+            else
             {
-                print( "displacement_volume must have 3 components on " );
-                print( "the non-spatial axis.\n" );
-                volume_ok = FALSE;
+                if( sizes[dim] != 3 )
+                {
+                    print( "displacement_volume must have 3 components on " );
+                    print( "the non-spatial axis.\n" );
+                    volume_ok = FALSE;
+                }
+
+                vector_dim = dim;
             }
         }
 
@@ -180,8 +188,32 @@ public  void  create_grid_transform(
     transform->type = GRID_TRANSFORM;
     transform->inverse_flag = FALSE;
 
-    transform->displacement_volume = (void *)
-                                     copy_volume( displacement_volume );
+    if( copy_flag )
+    {
+        copy = copy_volume( displacement_volume );
+
+        /* --- force 4th dimension to be vector dimension */
+    }
+    else
+        copy = displacement_volume;
+
+    (void) strcpy( copy->dimension_names[vector_dim], MIvector_dimension );
+
+    transform->displacement_volume = (void *) copy;
+}
+
+public  void  create_grid_transform(
+    General_transform    *transform,
+    Volume               displacement_volume )
+{
+    internal_create_grid_transform( transform, displacement_volume, TRUE );
+}
+
+public  void  create_grid_transform_no_copy(
+    General_transform    *transform,
+    Volume               displacement_volume )
+{
+    internal_create_grid_transform( transform, displacement_volume, FALSE );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

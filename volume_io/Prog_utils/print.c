@@ -2,7 +2,7 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.6 1994-11-25 14:20:02 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.7 1995-04-28 18:32:54 david Exp $";
 #endif
 
 private  void  (*saved_print_function) ( char [] );
@@ -99,6 +99,20 @@ public  void  print( char format[], ... )
         (*print_function) ( print_buffer );
 }
 
+/* VARARGS */
+public  void  print_error( char format[], ... )
+{
+    va_list  ap;
+    char     print_buffer[10000];
+
+    va_start( ap, format );
+    (void) vsprintf( print_buffer, format, ap );
+    va_end( ap );
+
+    (void) fprintf( stderr, "%s", print_buffer );
+}
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : handle_internal_error
 @INPUT      : str
@@ -158,4 +172,15 @@ public  void  abort_if_allowed( void )
             abort();
         }
     }
+}
+
+public  void  begin_error()
+{
+    push_print_function();
+    set_print_function( NULL );
+}
+
+public  void  end_error()
+{
+    pop_print_function();
 }

@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.13 1995-04-04 03:42:32 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.14 1995-04-28 18:33:06 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -466,7 +466,8 @@ public  Status  input_tag_points(
 
     /* okay read the header */
 
-    if( mni_input_string( file, line, MAX_STRING_LENGTH, 0, 0 ) != OK ||
+    if( mni_input_string( file, line, MAX_STRING_LENGTH, (char) 0, (char) 0 )
+         != OK ||
         strcmp( line, TAG_FILE_HEADER ) != 0 )
     {
         (void) fprintf(stderr, "input_tag_points(): invalid header in file.\n");
@@ -486,7 +487,7 @@ public  Status  input_tag_points(
         return( ERROR );
     }
 
-    if( mni_skip_expected_character( file, ';' ) != OK )
+    if( mni_skip_expected_character( file, (char) ';' ) != OK )
         return( ERROR );
 
     if( *n_volumes != 1 && *n_volumes != 2 )
@@ -559,7 +560,7 @@ public  Status  input_tag_points(
 
             if( line[i] == ';' )
             {
-                (void) unget_character( file, ';' );
+                (void) unget_character( file, (char) ';' );
                 line[i] = (char) 0;
             }
         }
@@ -600,7 +601,7 @@ public  Status  input_tag_points(
         ++(*n_tag_points);
     }
 
-    if( mni_skip_expected_character( file, ';' ) != OK )
+    if( mni_skip_expected_character( file, (char) ';' ) != OK )
         return( ERROR );
 
     return( OK );

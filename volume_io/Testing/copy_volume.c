@@ -1,4 +1,4 @@
-#include  <volume_io.h>
+#include  <internal_volume_io.h>
 
 int  main(
     int   argc,
@@ -12,7 +12,7 @@ int  main(
     char           *input_filename, *output_filename, *dummy;
     char           *tmp;
     Minc_file      file;
-    static String  dim_names[3] = { MIzspace, MIyspace, MIxspace };
+    static STRING  dim_names[3] = { MIzspace, MIyspace, MIxspace };
     Real           start_time, end_time;
 
     initialize_argument_processing( argc, argv );
