@@ -223,13 +223,14 @@ public  int   evaluate_volume(
     Real           voxel[],
     BOOLEAN        interpolating_dimensions[],
     int            degrees_continuity,
+    BOOLEAN        use_linear_at_edge,
     Real           outside_value,
     Real           values[],
     Real           **first_deriv,
     Real           ***second_deriv )
 {
     int      inc0, inc1, inc2, inc3, inc4, inc[MAX_DIMENSIONS];
-    int      ind0, ind1, ind2, ind3, ind4;
+    int      ind0, spline_degree;
     int      start0, start1, start2, start3, start4;
     int      end0, end1, end2, end3, end4;
     int      v0, v1, v2, v3, v4, next_d;
@@ -252,12 +253,33 @@ public  int   evaluate_volume(
     get_volume_sizes( volume, sizes );
 
     bound = (Real) degrees_continuity / 2.0;
+
+    if( use_linear_at_edge )
+    {
+        for_less( d, 0, n_dims )
+        {
+            if( interpolating_dimensions == NULL || interpolating_dimensions[d])
+            {
+                while( degrees_continuity >= 0 &&
+                       (voxel[d] < bound  ||
+                        voxel[d] > (Real) sizes[d] - 1.0 - bound) )
+                {
+                    --degrees_continuity;
+                    if( degrees_continuity == 1 )
+                        degrees_continuity = 0;
+                    bound = (Real) degrees_continuity / 2.0;
+                }
+            }
+        }
+    }
+
     n_interp_dims = 0;
     n_values = 1;
     n_coefs = 1;
+    spline_degree = degrees_continuity + 2;
 
     fully_inside = TRUE;
-    fully_outside = TRUE;
+    fully_outside = FALSE;
 
     for_less( d, 0, n_dims )
     {
@@ -266,15 +288,20 @@ public  int   evaluate_volume(
             interp_dims[n_interp_dims] = d;
             pos = voxel[d] - bound;
             start[d] =       FLOOR( pos );
-            fraction[n_interp_dims] = FRACTION( pos );
-            end[d] = start[d] + degrees_continuity + 2;
-            n_coefs *= 2 + degrees_continuity;
+            fraction[n_interp_dims] = pos - start[d];
+            end[d] = start[d] + spline_degree;
+            n_coefs *= spline_degree;
 
             if( start[d] < 0 || end[d] > sizes[d] )
+            {
                 fully_inside = FALSE;
 
-            if( start[d] < sizes[d] && end[d] > 0 )
-                fully_outside = FALSE;
+                if( end[d] <= 0 || start[d] >= sizes[d] )
+                {
+                    fully_outside = TRUE;
+                    break;
+                }
+            }
 
             ++n_interp_dims;
         }
@@ -282,14 +309,14 @@ public  int   evaluate_volume(
             n_values *= sizes[d];
     }
 
-    if( (fully_outside || degrees_continuity < 0) && first_deriv != NULL )
+    if( first_deriv != NULL && (fully_outside || degrees_continuity < 0) )
     {
         for_less( v, 0, n_values )
             for_less( d, 0, n_interp_dims )
                 first_deriv[v][d] = 0.0;
     }
 
-    if( (fully_outside || degrees_continuity < 1) && second_deriv != NULL )
+    if( second_deriv != NULL && (fully_outside || degrees_continuity < 1) )
     {
         for_less( v, 0, n_values )
             for_less( d, 0, n_interp_dims )
@@ -299,8 +326,11 @@ public  int   evaluate_volume(
 
     if( fully_outside )
     {
-        for_less( v, 0, n_values )
-            values[v] = outside_value;
+        if( values != NULL )
+        {
+            for_less( v, 0, n_values )
+                values[v] = outside_value;
+        }
 
         return( n_values );
     }
@@ -344,6 +374,14 @@ public  int   evaluate_volume(
 
         for_less( v, 0, n_values * n_coefs )
             coefs[v] = outside_value;
+
+        for_less( d, 0, n_dims-1 )
+            inc[d] -= inc[d+1] * (end[d+1] - start[d+1]);
+    }
+    else
+    {
+        for_less( d, 0, n_dims-1 )
+            inc[d] -= inc[d+1] * spline_degree;
     }
 
     start0 = start[0];
@@ -377,11 +415,10 @@ public  int   evaluate_volume(
     case 2:
         for_less( v0, start0, end0 )
         {
-            ind1 = ind0;
             for_less( v1, start1, end1 )
             {
-                GET_VALUE_2D( coefs[ind1], volume, v0, v1 );
-                ind1 += inc1;
+                GET_VALUE_2D( coefs[ind0], volume, v0, v1 );
+                ind0 += inc1;
             }
             ind0 += inc0;
         }
@@ -390,16 +427,14 @@ public  int   evaluate_volume(
     case 3:
         for_less( v0, start0, end0 )
         {
-            ind1 = ind0;
             for_less( v1, start1, end1 )
             {
-                ind2 = ind1;
                 for_less( v2, start2, end2 )
                 {
-                    GET_VALUE_3D( coefs[ind2], volume, v0, v1, v2 );
-                    ind2 += inc2;
+                    GET_VALUE_3D( coefs[ind0], volume, v0, v1, v2 );
+                    ind0 += inc2;
                 }
-                ind1 += inc1;
+                ind0 += inc1;
             }
             ind0 += inc0;
         }
@@ -408,21 +443,18 @@ public  int   evaluate_volume(
     case 4:
         for_less( v0, start0, end0 )
         {
-            ind1 = ind0;
             for_less( v1, start1, end1 )
             {
-                ind2 = ind1;
                 for_less( v2, start2, end2 )
                 {
-                    ind3 = ind2;
                     for_less( v3, start3, end3 )
                     {
-                        GET_VALUE_4D( coefs[ind3], volume, v0, v1, v2, v3 );
-                        ind3 += inc3;
+                        GET_VALUE_4D( coefs[ind0], volume, v0, v1, v2, v3 );
+                        ind0 += inc3;
                     }
-                    ind2 += inc2;
+                    ind0 += inc2;
                 }
-                ind1 += inc1;
+                ind0 += inc1;
             }
             ind0 += inc0;
         }
@@ -431,27 +463,23 @@ public  int   evaluate_volume(
     case 5:
         for_less( v0, start0, end0 )
         {
-            ind1 = ind0;
             for_less( v1, start1, end1 )
             {
-                ind2 = ind1;
                 for_less( v2, start2, end2 )
                 {
-                    ind3 = ind2;
                     for_less( v3, start3, end3 )
                     {
-                        ind4 = ind3;
                         for_less( v4, start4, end4 )
                         {
-                            GET_VALUE_5D( coefs[ind4], volume,
+                            GET_VALUE_5D( coefs[ind0], volume,
                                           v0, v1, v2, v3, v4 );
-                            ind4 += inc4;
+                            ind0 += inc4;
                         }
-                        ind3 += inc3;
+                        ind0 += inc3;
                     }
-                    ind2 += inc2;
+                    ind0 += inc2;
                 }
-                ind1 += inc1;
+                ind0 += inc1;
             }
             ind0 += inc0;
         }
@@ -485,7 +513,7 @@ public  int   evaluate_volume(
         else
         {
             interpolate_volume( n_interp_dims, fraction, n_values,
-                                degrees_continuity + 2, coefs,
+                                spline_degree, coefs,
                                 values, first_deriv, second_deriv );
         }
 
@@ -523,6 +551,7 @@ public  void   evaluate_volume_in_world(
     Real           y,
     Real           z,
     int            degrees_continuity,
+    BOOLEAN        use_linear_at_edge,
     Real           outside_value,
     Real           values[],
     Real           deriv_x[],
@@ -585,7 +614,7 @@ public  void   evaluate_volume_in_world(
         second_deriv = NULL;
 
     n_values = evaluate_volume( volume, voxel, interpolating_dimensions,
-                      degrees_continuity, outside_value,
+                      degrees_continuity, use_linear_at_edge, outside_value,
                       values, first_deriv, second_deriv );
 
     if( deriv_x != NULL )

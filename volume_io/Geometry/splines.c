@@ -1,9 +1,12 @@
 #include  <internal_volume_io.h>
 
+private  Real   constant_coefs[1][1] = {   1.0  };
+
 private  Real   linear_coefs[2][2] = {
                                            {  1.0,  0.0 },
                                            { -1.0,  1.0 }
                                       };
+
 private  Real   quadratic_coefs[3][3] = {
                                            {  0.5,  0.5,  0.0 },
                                            { -1.0,  1.0,  0.0 },
@@ -126,7 +129,7 @@ public  void  evaluate_interpolating_spline(
     int    d, degrees[MAX_DIMS], n_derivs_list[MAX_DIMS];
     Real   *bases[MAX_DIMS];
 
-    if( degree < 2 || degree > 4 )
+    if( degree < 1 || degree > 4 )
     {
         print( "evaluate_interpolating_spline: invalid degree: %d\n", degree );
         return;
@@ -140,6 +143,7 @@ public  void  evaluate_interpolating_spline(
 
     switch( degree )
     {
+    case 1:   bases[0] = &constant_coefs[0][0];    break;
     case 2:   bases[0] = &linear_coefs[0][0];      break;
     case 3:   bases[0] = &quadratic_coefs[0][0];   break;
     case 4:   bases[0] = &cubic_coefs[0][0];       break;

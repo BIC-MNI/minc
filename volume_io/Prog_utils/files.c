@@ -3,7 +3,7 @@
 #include  <pwd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.20 1994-12-08 08:49:55 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.21 1995-03-21 19:01:47 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -79,11 +79,8 @@ public  BOOLEAN  file_exists(
 public  void  remove_file(
     char  filename[] )
 {
-    STRING  command;
-
-    (void) sprintf( command, "rm -f %s", filename );
-
-    (void) system( command );
+    if( unlink( filename ) != 0 )
+        print( "Error removing %s\n", filename );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

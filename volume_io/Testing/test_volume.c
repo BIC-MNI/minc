@@ -15,7 +15,7 @@ int  main(
     int                  continuity, arg;
     Real                 x, y, z;
     char                 *input_filename;
-    static char          *dim_names[] = { MIxspace, MIyspace, MIzspace };
+    static char          *dim_names[] = { MIxspace, MIzspace, MIyspace };
 
     if( argc < 2 )
     {
@@ -62,7 +62,7 @@ private  Real  approx_deriv(
     pos[axis] = orig - STEP;
 
     evaluate_volume_in_world( volume,
-                          pos[X], pos[Y], pos[Z], continuity, 0.0, &val1,
+                          pos[X], pos[Y], pos[Z], continuity, FALSE, 0.0, &val1,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL );
@@ -70,7 +70,7 @@ private  Real  approx_deriv(
     pos[axis] = orig + STEP;
 
     evaluate_volume_in_world( volume,
-                          pos[X], pos[Y], pos[Z], continuity, 0.0, &val2,
+                          pos[X], pos[Y], pos[Z], continuity, FALSE, 0.0, &val2,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL,
                           (Real *) NULL, (Real *) NULL, (Real *) NULL );
@@ -143,7 +143,7 @@ private  void  check(
     pos[Z] = z;
 
     evaluate_volume_in_world( volume,
-                          x, y, z, continuity, 0.0, &value,
+                          x, y, z, continuity, FALSE, 0.0, &value,
                           &true_deriv[X], &true_deriv[Y], &true_deriv[Z],
                           &true_deriv2[X][X], &true_deriv2[X][Y],
                           &true_deriv2[X][Z], &true_deriv2[Y][Y],

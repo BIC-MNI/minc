@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.23 1995-03-07 13:35:59 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.24 1995-03-21 19:02:03 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -279,7 +279,7 @@ public  Minc_file  initialize_minc_output(
     {
         file->sizes_in_file[d] = sizes[d];
         file->indices[d] = 0;
-        ALLOC( file->dim_names[d], strlen( dim_names[d] + 1 ) );
+        ALLOC( file->dim_names[d], strlen(dim_names[d]) + 1 );
         (void) strcpy( file->dim_names[d], dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 

@@ -2271,7 +2271,8 @@ first (\name{Transform}) is a four by four linear (affine) transform,
 which facilitates rigid transformations, consisting of scaling, rotation,
 translation, and shearing.  The second is a higher level transform
 (\name{General\_transform}), which represents either a linear
-transform, a non-linear transform (thin-plate spline), a user
+transform, a non-linear transform (thin-plate spline), a smoothly interpolated
+grid transform, a user
 definable transform, or a concatenation of two or more of these.
 
 \section{Linear Transforms}
@@ -2367,8 +2368,9 @@ the result by \name{t2}.}
 
 \section{General Transforms}
 
-General transforms can represent linear transforms, non\--\-linear
-(via thin\--\-plate splines) transforms, user defined transforms, and
+General transforms can represent linear transforms,
+thin\--\-plate spline transforms, grid transforms,
+and user defined transforms, and
 concatenations of these.  All functions dealing with general
 transforms involve objects of type \name{General\-\_transform}.
 
@@ -2397,25 +2399,23 @@ which provides a smooth non-linear mapping of a multidimensional
 space.  The \name{points} argument is an array of size
 \name{n\_points} by \name{n\_dimensions}, representing a set of points.
 The \name{displacements} is a (\name{n\_points} + \name{n\_dimensions}
-+ 1) by \name{n\_dimensions} array, which is created by the following
-function:}
++ 1) by \name{n\_dimensions} array, which is created by the function
+\name{get\_\-nonlinear\_\-warp()}, which is not included in this library.}
 
 {\bf\begin{verbatim}
-public void  get_nonlinear_warp(
-    float **transformed_points,
-    float **original_points,
-    float **displacements,
-    int   n_points,
-    int   n_dimensions )
+public  void  create_grid_transform(
+    General_transform    *transform,
+    Volume               displacement_volume )
 \end{verbatim}}
 
-\desc{Fills in the \name{displacements} array with the appropriate
-values to achieve a thin-plate spline transformation.  The mapping
-will provide a smooth transformation of space such that each point in
-the \name{original\_points} array maps exactly to the corresponding point in
-the \name{transformed\_points} array.  These displacements are then
-fed into the function \name{create\-\_thin\-\_plane\-\_transform} to create
-the general transform.}
+\desc{Creates a general transform consisting of a grid transform,
+which provides a smooth non-linear mapping of a multidimensional
+space.  The \name{displacment\_volume} argument is a four dimensional
+volume representing the displacements for the x, y, and z directions.  Three
+of the dimensions of the volume must correspond to the x, y, and z
+spatial dimensions, and the fourth must have exactly three components,
+the displacements in each direction in world space.  The dimensions
+may be in any order.}
 
 {\bf\begin{verbatim}
 typedef  void   (*User_transform_function)( void  *user_data,

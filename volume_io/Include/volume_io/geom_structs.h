@@ -2,7 +2,7 @@
 #define  DEF_GEOM_STRUCTS
 
 #ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.13 1994-12-08 08:49:52 david Exp $";
+static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.14 1995-03-21 19:01:41 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -204,20 +204,20 @@ typedef  unsigned  long    Colour;
 
 #define  ADD_COLOURS( sum, c1, c2 )                  \
         { \
-            int r, g, b, r1, g1, b1, r2, g2, b2; \
-            r1 = get_Colour_r(c1); \
-            g1 = get_Colour_g(c1); \
-            b1 = get_Colour_b(c1); \
-            r2 = get_Colour_r(c2); \
-            g2 = get_Colour_g(c2); \
-            b2 = get_Colour_b(c2); \
-            r = r1 + r2; \
-            g = g1 + g2; \
-            b = b1 + b2; \
-            if( r > 255 ) r = 255; \
-            if( g > 255 ) g = 255; \
-            if( b > 255 ) b = 255; \
-            (sum) = make_rgba_Colour( r, g, b, get_Colour_a(c1) ); \
+            int _r, _g, _b, _r1, _g1, _b1, _r2, _g2, _b2; \
+            _r1 = get_Colour_r(c1); \
+            _g1 = get_Colour_g(c1); \
+            _b1 = get_Colour_b(c1); \
+            _r2 = get_Colour_r(c2); \
+            _g2 = get_Colour_g(c2); \
+            _b2 = get_Colour_b(c2); \
+            _r = _r1 + _r2; \
+            _g = _g1 + _g2; \
+            _b = _b1 + _b2; \
+            if( _r > 255 ) _r = 255; \
+            if( _g > 255 ) _g = 255; \
+            if( _b > 255 ) _b = 255; \
+            (sum) = make_rgba_Colour( _r, _g, _b, get_Colour_a(c1) ); \
         }
 
 /* ----------------------------- MNI Header -----------------------------------

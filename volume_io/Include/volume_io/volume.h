@@ -2,7 +2,7 @@
 #define  DEF_VOLUME
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.29 1995-01-12 18:31:34 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.30 1995-03-21 19:01:39 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -2,7 +2,7 @@
 #define  DEF_TAG_IO
 
 #ifndef lint
-static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.8 1994-11-25 14:19:37 david Exp $";
+static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.9 1995-03-21 19:01:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -21,7 +21,7 @@ static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Inclu
 /* --- the list of supported transform types */
 
 typedef enum { LINEAR, THIN_PLATE_SPLINE, USER_TRANSFORM,
-               CONCATENATED_TRANSFORM }
+               CONCATENATED_TRANSFORM, GRID_TRANSFORM }
                Transform_types;
 
 /* --- the user transformation function */
@@ -53,6 +53,10 @@ typedef struct General_transform
     float                       **points;
     float                       **displacements;   /* n_points + n_dim + 1 by */
                                                    /* n_dim */
+
+    /* --- grid transform */
+
+    void                        *displacement_volume;
 
     /* --- user_defined */
 

@@ -1,7 +1,13 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.6 1995-02-27 11:22:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.7 1995-03-21 19:02:10 david Exp $";
 #endif
+
+#include <internal_volume_io.h>
+
+#define   INVERSE_FUNCTION_TOLERANCE     0.01
+#define   INVERSE_DELTA_TOLERANCE        0.01
+#define   MAX_INVERSE_ITERATIONS         20
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : thin_plate_spline.c
@@ -18,46 +24,178 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin
                 - building new library routines, with prototypes
 @MODIFIED   : Wed Jul  14 1993  david 
                 - incorporated into libmni.c
+              Feb. 28, 1995     D. MacDonald
+                - rewrote to get rid of mnewt and floats
 ---------------------------------------------------------------------------- */
 
 
-#include <internal_volume_io.h>
+/* ----- structure used by newton root finding ---- */
 
-private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
-                    float **bdefor, float **INVMLY, int num_marks);
-private  void 
-  usrfun(float x[], Real **alpha, Real bet[], float **bdefor, float **INVMLY, 
-	 int num_marks, int dim, float *xout);
-private  float return_r(float *cor1, float *cor2, int dim);
-private  float FU(float r, int dim);
+typedef  struct
+{
+    float  **points;
+    float  **weights;
+    int    n_points;
+    int    n_dims;
+} spline_data_struct;
+
+/*------------ private functions -----------------*/
+
+private  void   newton_function(
+    void     *function_data,
+    Real     parameters[],
+    Real     values[],
+    Real     **first_derivs );
+
+private  Real  thin_plate_spline_U_deriv(
+   Real   pos[],
+   Real   landmark[],
+   int    n_dims,
+   int    deriv_dim );
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : mappingf
-@INPUT      : bdefor - numerical recipes array with 'num_marks' rows, and 'dim' cols,
-                       contains the list of landmarks points in the 'source' volume
-	      INVMLY - numerical recipes array with 'num_marks+dim+1' rows, and 'dim' cols,
-	               contains the deformation vectors that define the thin plate spline
-	      num_marks - number of landmark points
-              icor   - array of float [1..dim] for the input coordinate in the
-                       'source' volume space.
-	      dim    - number of dimensions (either 2 or 3).
-@OUTPUT     : rcor   - array of float [1..dim] of the output coordinate in the 
-                       'target' volume.
+@NAME       : evaluate_thin_plate_spline
+@INPUT      : n_dims           - dimensionality of the function
+              n_values         - number of values of the function
+              n_points         - number of defining landmarks
+              points[n_points][n_dims]  - landmarks
+              weights[n_points+1+n_dims][n_values] - weights for the points
+              pos[n_dims]      - position at which to evaluate
+@OUTPUT     : values[n_values] - function values at this position
+              deriv[n_values][n_dims] - function derivatives at this point
+@RETURNS    : 
+@DESCRIPTION: Evaluates the thin plate spline at the given point, and, if
+              the argument is non-null, the derivatives also.  The thin-plate
+              spline takes a point in n_dims dimensional space and returns
+              a point in n_values dimensional space.  When used for transforms,
+              as in this file, n_values == n_dims, but the code will work for
+              the general case where n_values != n_dims.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :
+@MODIFIED   : Feb. 27, 1995    David MacDonald 
+              modified from some code written by WeiQian Dai later modified by
+              Louis Collins
+---------------------------------------------------------------------------- */
+
+private  void  evaluate_thin_plate_spline(
+    int     n_dims,
+    int     n_values,
+    int     n_points,
+    float   **points,
+    float   **weights,
+    Real    pos[],
+    Real    values[],
+    Real    **derivs )
+{
+    int       v, d, p;
+    Real      real_point[N_DIMENSIONS];
+    Real      dist, dist_deriv;
+
+    /* f(x,y[,z]) =a_{n} + a_{n+1}x + a_{n+1}y + sum_{0}^{n-1}
+     *          w_{i}U(|P_{i} - (x,y)|) 
+     */
+
+    /* --- initialize derivatives, if desired */
+
+    if( derivs != NULL )
+    {
+        for_less( v, 0, n_values )
+           for_less( d, 0, n_dims )
+               derivs[v][d] = 0.0;
+    }
+
+    /* --- initialize value of thin plate spline to 0 */
+
+    for_less( v, 0, n_values )
+        values[v] = 0.0;
+
+    /* --- for each point, add its contribution to the values and derivs */
+
+    for_less( p, 0, n_points )
+    {
+        /* --- get a Real[] array from the float[] array */
+
+        for_less( d, 0, n_dims )
+            real_point[d] = (Real) points[p][d];
+
+        /* --- the thin plate spline weighting function for this point */
+
+        dist = thin_plate_spline_U( pos, real_point, n_dims );
+
+        /* --- add the weighted component to the values */
+
+        for_less( v, 0, n_values )
+            values[v] = values[v] + (Real) weights[p][v] * dist;
+
+        /* --- add the weighted component to the derivatives */
+
+        if( derivs != NULL )
+        {
+            for_less( v, 0, n_values )
+            {
+                for_less( d, 0, n_dims )
+                {
+                    dist_deriv = thin_plate_spline_U_deriv( pos, real_point,
+                                                            n_dims, d );
+                    derivs[v][d] += (Real) weights[p][v] * dist_deriv;
+                }
+            }
+        }
+    }
+
+    /* --- add the constant component to the values */
+
+    for_less( v, 0, n_values )
+        values[v] += (Real) weights[n_points][v];
+
+    /* --- add the linear components to the values and derivatives */
+
+    for_less( v, 0, n_values )
+    {
+        for_less( d, 0, n_dims )
+        {
+            values[v]    += (Real) weights[n_points+1+d][v] * pos[d];
+            if( derivs != NULL )
+                derivs[v][d] += (Real) weights[n_points+1+d][v];
+        }
+    }
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : thin_plate_spline_transform
+@INPUT      : 
+	      n_dims    - number of dimensions (either 2 or 3).
+              n_points  - number of points
+              points - array with 'n_points' rows, and 'n_dims' cols,
+                       the list of landmarks points in the 'source' volume
+	      weights - array with 'n_points+n_dims+1' rows, and 'n_dims' cols,
+	               the deformation weights that define the thin plate spline
+	      n_points - number of landmark points
+              x        - coordinate to transform
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
 @RETURNS    : nothing
-@DESCRIPTION: 
-              INVMLY to 'in' to get 'out'
+@DESCRIPTION: Transforms the 1,2, or 3D point given the thin plate spline
+              transform
 @METHOD     : 
 @GLOBALS    : none
-@CALLS      : return_r
+@CALLS      : 
 @CREATED    : Mon Apr  5 09:00:54 EST 1993
-@MODIFIED   : 
+@MODIFIED   : Feb. 27, 1995   D. MacDonald -
+                    reorganized to call evaluate_thin_plane_spline()
 ---------------------------------------------------------------------------- */
 
 public  void  thin_plate_spline_transform(
-    int     n_dimensions,
+    int     n_dims,
     int     n_points,
     float   **points,
-    float   **displacements,
+    float   **weights,
     Real    x,
     Real    y,
     Real    z,
@@ -65,81 +203,57 @@ public  void  thin_plate_spline_transform(
     Real    *y_transformed,
     Real    *z_transformed )
 {
-    BOOLEAN   markpoint;
-    int       i, j;
-    float     r,some_number,*tempcor,*coord_flt;
-    float     input_point[N_DIMENSIONS], output_point[N_DIMENSIONS];
-
-    /* f(x,y) =a_{1} + a_{x}x + a_{y}y + sum_{1}^{n}
-     *          w_{i}U(|P_{i} - (x,y)|) 
-     */
-
-    ALLOC( tempcor, n_dimensions );
-    ALLOC( coord_flt, n_dimensions );
-
-    for (j=0;j<n_dimensions;j++){
-        tempcor[j] = 0;
-    }
+    Real      input_point[N_DIMENSIONS], output_point[N_DIMENSIONS];
 
     input_point[0] = x;
     input_point[1] = y;
     input_point[2] = z;
 
-    for (i=0; i<n_points; i++){
-
-        markpoint = TRUE;            /* set the point as the landmark point */
-		                   /* check the point where is landmark */
-
-        for (j=0;j<n_dimensions;j++)
-	    coord_flt[j] = (float)points[i][j];
-
-        for (j=0;(j<n_dimensions)&&markpoint;j++){
-            if ((coord_flt[j] != input_point[j])){
-                markpoint = FALSE;
-            }
-        }
-
-        /* because the point at the landmark is not deformable, we use 
-         * the closest point at landmark.
-         */
-        if (markpoint){
-            input_point[0] = input_point[0] + 0.00001;
-        }
-
-        r = return_r(coord_flt,input_point,n_dimensions); 
-        some_number = FU(r,n_dimensions);
-
-        for (j=0;j<n_dimensions;j++){
-            tempcor[j] = displacements[i][j]*some_number + tempcor[j];
-        }
-    } 
-
-    for (j=0;j<n_dimensions;j++){
-        output_point[j] = displacements[n_points][j]+tempcor[j];
-    }
-
-    for (j = 0; j<n_dimensions; j++){   
-        for (i = 0; i<n_dimensions; i++){
-            output_point[j] = displacements[n_points+i+1][j]*input_point[i] +
-                              output_point[j];
-        }
-    }
+    evaluate_thin_plate_spline( n_dims, n_dims, n_points,
+                                points, weights, input_point, output_point,
+                                NULL );
 
     *x_transformed = output_point[0];
-    *y_transformed = output_point[1];
 
-    if( n_dimensions >= 3 )
+    if( n_dims >= 2 )
+        *y_transformed = output_point[1];
+
+    if( n_dims >= 3 )
         *z_transformed = output_point[2];
-
-    FREE( tempcor );
-    FREE( coord_flt );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : thin_plate_spline_inverse_transform
+@INPUT      : 
+	      n_dims    - number of dimensions (either 2 or 3).
+              n_points  - number of points
+              points - array with 'n_points' rows, and 'n_dims' cols,
+                       the list of landmarks points in the 'source' volume
+	      weights - array with 'n_points+n_dims+1' rows, and 'n_dims' cols,
+	               the deformation weights that define the thin plate spline
+	      n_points - number of landmark points
+              x        - coordinate to inverse transform
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
+@RETURNS    : nothing
+@DESCRIPTION: Inverse transforms the 1,2, or 3D point given the thin plate
+              spline transform.
+@METHOD     : 
+@GLOBALS    : none
+@CALLS      : 
+@CREATED    : Mon Apr  5 09:00:54 EST 1993
+@MODIFIED   : Feb. 27, 1995   D. MacDonald -
+                    reorganized to call evaluate_thin_plane_spline()
+---------------------------------------------------------------------------- */
+
 public  void  thin_plate_spline_inverse_transform(
-    int     n_dimensions,
+    int     n_dims,
     int     n_points,
     float   **points,
-    float   **displacements,
+    float   **weights,
     Real    x,
     Real    y,
     Real    z,
@@ -147,220 +261,209 @@ public  void  thin_plate_spline_inverse_transform(
     Real    *y_transformed,
     Real    *z_transformed )
 {
-    float temp[N_DIMENSIONS];
+    Real                x_in[N_DIMENSIONS], solution[N_DIMENSIONS];
+    spline_data_struct  data;
   
-    temp[0] = x;
-    temp[1] = y;
-    temp[2] = z;
+    x_in[X] = x;
 
-    mnewt( 100, temp, n_dimensions, 0.01, 0.05, points, displacements,
-           n_points ); 
-    *x_transformed = temp[0];
-    *y_transformed = temp[1];
-    *z_transformed = temp[2];
+    if( n_dims >= 2 )
+        x_in[Y] = y;
+    else
+        x_in[Y] = 0;
+
+    if( n_dims >= 3 )
+        x_in[Z] = z;
+    else
+        x_in[Z] = 0;
+
+    data.points = points;
+    data.weights = weights;
+    data.n_points = n_points;
+    data.n_dims = n_dims;
+
+    /* --- solve for the root of the function using Newton steps,
+           which require a function (newton_function) that evaluates the
+           thin plate spline and its derivative at an arbitrary point */
+
+    if( newton_root_find( n_dims, newton_function, (void *) &data,
+                          x_in, x_in, solution, INVERSE_FUNCTION_TOLERANCE,
+                          INVERSE_DELTA_TOLERANCE, MAX_INVERSE_ITERATIONS ) )
+    {
+        *x_transformed = solution[0];
+        *y_transformed = solution[1];
+        *z_transformed = solution[2];
+    }
+    else
+    {
+        *x_transformed = x_in[0];
+        *y_transformed = x_in[1];
+        *z_transformed = x_in[2];
+    }
 }
 
-
-
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : mnewt
-@INPUT      : ntrial - the upper limit on iterations 
-              x      - array of float [1..dim] for the input coordinate in the
-                       'target' volume space.
-		  ---> x is changed, see @OUTPUT
-	      dim    - number of dimensions (either 2 or 3).
-	      num_marks - number of landmark points
-	      tolx   - tolerance for fitting (routine stops when the point guessed
-	               is closer than tolx to the target point).
-	      tolf   - tolerance for fitting (routine stops when the point guessed
-	               is closer than tolx to the target point).
-              bdefor - numerical recipes array with 'num_marks' rows, and 'dim' cols,
-                       contains the list of landmarks points in the 'source' volume
-	      INVMLY - numerical recipes array with 'num_marks+dim+1' rows, and 'dim' cols,
-	               contains the deformation vectors that define the thin plate spline
-@OUTPUT     : x      - array of float [1..dim] of the output coordinate in the 
-                       'source' volume.
-@RETURNS    : nothing
-@DESCRIPTION: calls mnewt, to nummerically calculate the inverse transformation stored in
-              INVMLY to 'in' to get 'out'
-@METHOD     : Given an initial guess in x,  for a root in 'dim' dimensions, take ntrial
-              Newton-Raphson steps to improve the root.  Stop if the root converges in 
-	      either summed variable increments tolx or summed function values tolf
-              
-@GLOBALS    : none
-@CALLS      : usrfun
-@CREATED    : Mon Apr  5 09:00:54 EST 1993
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void mnewt(int ntrial,float x[], int dim, float tolx, float tolf,
-                    float **bdefor, float **INVMLY, int num_marks)
-
-{
-  int   k,i;
-  Real  *bet, **alpha;
-  float errx,errf, xout[N_DIMENSIONS];
-  
-   xout[0] = x[0];          /* assume that the result is equal to the input, */
-   xout[1] = x[1];	    /* as if the transformation was identity         */
-   if (dim>2)
-     xout[2] = x[2];
-
-   ALLOC( bet, dim );
-   ALLOC2D( alpha, dim, dim );
-
-   for (k=1;k<=ntrial;k++) {   
-			/* usrfun will build the matrix coefficients for
-			   the linear approximation to the local function */
-      usrfun(x, alpha, bet, bdefor, INVMLY, num_marks, dim, xout);
-
-      errf=0.0;			/* Check for function convergence */
-      for (i=1;i<=dim;i++)
-          errf += fabs(bet[i-1]);
-      if (errf <= tolf)
-          break;
-
-      if( !solve_linear_system( dim, alpha, bet, bet ) )
-          break;
-
-      errx=0.0;
-      for (i=1;i<=dim;i++) {	/* check for root convergence */
-	  errx += fabs(bet[i-1]);
-	  x[i-1] += bet[i-1];	/* Update the solution */
-      }
-      if (errx <= tolx)
-          break;
-   }
-
-   FREE2D(alpha);
-   FREE(bet);
-}
-
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : usrfun
-@INPUT      : x[]    - array of float [1..dim] of current guess of coordinate in
-                       source volume space.
-              bdefor - numerical recipes array with 'num_marks' rows, and 'dim' cols,
-                       contains the list of landmarks points in the 'source' volume
-	      
-	      dim    - number of dimensions (either 2 or 3).
-	      INVMLY - numerical recipes array with 'num_marks+dim+1' rows, and 'dim' cols,
-	               contains the deformation vectors that define the thin plate spline
-	      num_marks - number of landmark points
-	      xout   - array of float [1..dim] of true answer in target space.
-@OUTPUT     : alpha  - matrix[1..dim][1..dim] - linear matric coefficients.
-	      bet    - vector[1..dim] - negative of the function values
-@RETURNS    : nothing
-@DESCRIPTION: 
+@NAME       : newton_function
+@INPUT      : function_data
+              parameters
+@OUTPUT     : values
+              first_derivs
+@RETURNS    : 
+@DESCRIPTION: This function is passed to the newton function root finding
+              routine, and evaluates the values and derivatives of the
+              thin plate spline.
 @METHOD     : 
-@GLOBALS    : none
+@GLOBALS    : 
 @CALLS      : 
-@CREATED    : Mon Apr  5 09:00:54 EST 1993
+@CREATED    : Feb. 27, 1995    David MacDonald
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void 
-  usrfun(float x[], Real **alpha, Real bet[], float **bdefor, float **INVMLY, 
-	 int num_marks, int dim, float *xout)
-
-/* NOTE: Now this function will only work for 3-D case */
+private  void   newton_function(
+    void     *function_data,
+    Real     parameters[],
+    Real     values[],
+    Real     **first_derivs )
 {
-   register int i, j, k;
-   float *d;
+    spline_data_struct *spline_data;
 
-   ALLOC( d, num_marks );
+    spline_data = (spline_data_struct *) function_data;
 
-   for (i=0; i<dim; i++){	/* build up the matrix of linear parameters */
-      for (j=0; j<dim; j++){
-         alpha[i][j] = 0;
-      }
-   }
-
-
-   for (i=0; i<num_marks; i++)  /* build distances array */
-       d[i] = return_r( x, bdefor[i], dim );
-
-   for (i = 0; i< dim; i++){	/* Estimate the linear parameters for the error function */
-      for (j = 0; j < dim; j++){
-         alpha[i][j] = 0;
-         for (k = 0; k < num_marks; k++){
-            alpha[i][j] += (x[j] - bdefor[k][j])/d[k] *INVMLY[k][i];
-         }
-         alpha[i][j] += INVMLY[k+j][i];
-      }
-   }
-
-   for (i=0; i<dim; i++){
-      bet[i] = 0;
-      for (k=0; k<num_marks; k++){
-         bet[i] += d[k]*INVMLY[k][i];
-      }
-      bet[i] += INVMLY[k][i] +
-                INVMLY[k+1][i]*x[0] +
-                INVMLY[k+2][i]*x[1] +
-                INVMLY[k+3][i]*x[2] - xout[i];
-      bet[i] = -bet[i];
-   }
-
-   FREE( d );
+    evaluate_thin_plate_spline( spline_data->n_dims, spline_data->n_dims,
+                                spline_data->n_points,
+                                spline_data->points, spline_data->weights,
+                                parameters, values,
+                                first_derivs );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : thin_plate_spline_U
+@INPUT      : pos       - position at which to evaluate
+              landmark  - landmark
+              n_dims      number of dimensions (1,2, or 3)
+@OUTPUT     : 
+@RETURNS    : U interpolation function of distance between the two args 
+@DESCRIPTION: Returns the U interpolation function of the distance between
+              points.  In order to correspond to a thin-plate spline, this
+              function has a different form in each of the 3 dimensions.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb.   , 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
-
-/*===============================================================*/
-
-
-
-private  float return_r(float *cor1, float *cor2, int dim)
+public  Real  thin_plate_spline_U(
+   Real   pos[],
+   Real   landmark[],
+   int    n_dims )
 {
-   float r1,r2,r3;
+    Real r, fu, dx, dy, dz;
 
+    switch( n_dims )
+    {
+    case  1:
+        dx = pos[X] - landmark[X];
+        r = abs( dx );
+        fu = r * r * r;
+        break;
 
-   if (dim == 1){
-      r1 = cor1[0] - cor2[0]; 
-      r1 = fabs(r1);
-      return(r1);
-   }
-   else if (dim == 2){
-      r1 = cor1[0] - cor2[0];
-      r2 = cor1[1] - cor2[1];
-      return(r1*r1+r2*r2);
-   }
-   else if (dim == 3){
-      r1 = cor1[0] - cor2[0];
-      r2 = cor1[1] - cor2[1];
-      r3 = cor1[2] - cor2[2];
-      return( (float) sqrt((double)(r1*r1 + r2*r2 + r3*r3)) );
-   } 
-   else {
-      handle_internal_error( " impossible error in return_r" );
-      return( 0.0 );
-   }
+    case  2:   /* r is actually r^2 */
+        dx = pos[X] - landmark[X];
+        dy = pos[Y] - landmark[Y];
+        r = dx * dx + dy * dy;
+
+        if( r == 0.0 )
+            fu = 0.0;
+        else
+            fu = r * log( r );
+        break;
+
+    case  3:
+        dx = pos[X] - landmark[X];
+        dy = pos[Y] - landmark[Y];
+        dz = pos[Z] - landmark[Z];
+        r = sqrt( dx * dx + dy * dy + dz * dz );
+        fu = r;
+        break;
+
+    default:
+        handle_internal_error( " impossible error in FU" );
+        fu = 0.0;
+        break;
+    }
+
+    return( fu );
 }
 
-private  float FU(float r, int dim)
-/* This function will calculate the U(r) function.
- * if dim = 1, the funtion returns |r|^3 
- * if dim = 2, the funtion retruns r^2*log r^2
- * if dim = 3, the funtion returns |r|
- */ 
-{
-   float z;
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : thin_plate_spline_U_deriv
+@INPUT      : pos       - position at which to evaluate
+              landmark  - landmark
+              n_dims    - number of dimensions (1,2, or 3)
+              deriv_dim - dimension to differentiate
+@OUTPUT     : 
+@RETURNS    : derivative of U interpolation function
+@DESCRIPTION: Returns the derivative of the U interpolation function of the
+              distance between points (as specified by thin_plate_spline_U()
+              above).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb.   , 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
-   if (dim==1){
-      z = r*r*r;
-      return(fabs(z));
-   }
-   else if (dim==2){/* r is stored as r^2 */
-      z = r * log((double) r);
-      return(z);
-   }
-   else if (dim==3){
-      return(fabs(r));
-   }
-   else {
-      handle_internal_error( " impossible error in FU" );
-      return( 0.0 );
-   }
+private  Real  thin_plate_spline_U_deriv(
+   Real   pos[],
+   Real   landmark[],
+   int    n_dims,
+   int    deriv_dim )
+{
+    Real r, r2, deriv, delta[N_DIMENSIONS];
+
+    switch( n_dims )
+    {
+    case  1:
+        delta[X] = pos[X] - landmark[X];
+        r = abs( delta[X] );
+        if( delta[X] < 0.0 )
+            deriv = -3.0 * r * r;
+        else
+            deriv = 3.0 * r * r;
+        break;
+
+    case  2:   /* r is actually r^2 */
+        delta[X] = pos[X] - landmark[X];
+        delta[Y] = pos[Y] - landmark[Y];
+        r2 = delta[X] * delta[X] + delta[Y] * delta[Y];
+
+        if( r2 == 0.0 )
+            deriv = 0.0;
+        else
+        {
+            r = sqrt( r2 );
+            deriv = (1.0 + log( r2 )) * 2.0 * delta[deriv_dim];
+        }
+        break;
+
+    case  3:
+        delta[X] = pos[X] - landmark[X];
+        delta[Y] = pos[Y] - landmark[Y];
+        delta[Z] = pos[Z] - landmark[Z];
+        r = sqrt( delta[X] * delta[X] + delta[Y] * delta[Y] +
+                  delta[Z] * delta[Z] );
+
+        if( r == 0.0 )
+            deriv = 0.0;
+        else
+            deriv = delta[deriv_dim] / r;
+        break;
+
+    default:
+        handle_internal_error( " invalid dimensions error in FU" );
+        deriv = 0.0;
+        break;
+    }
+
+    return( deriv );
 }

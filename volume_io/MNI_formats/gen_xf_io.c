@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.10 1994-11-25 14:20:23 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.11 1995-03-21 19:02:08 david Exp $";
 #endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
@@ -16,6 +16,9 @@ static   const char      *FALSE_STRING = "False";
 static   const char      *N_DIMENSIONS_STRING = "Number_Dimensions";
 static   const char      *POINTS_STRING = "Points";
 static   const char      *DISPLACEMENTS_STRING = "Displacements";
+
+static   const char      *GRID_TRANSFORM_STRING = "Grid_Transform";
+static   const char      *DISPLACEMENT_VOLUME = "Displacement_Volume";
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_default_transform_file_suffix
@@ -52,11 +55,14 @@ public  char  *get_default_transform_file_suffix()
 
 private  void  output_one_transform(
     FILE                *file,
+    char                filename[],
+    int                 *volume_count,
     BOOLEAN             invert,
     General_transform   *transform )
 {
     int        i, c, trans;
     Transform  *lin_transform;
+    STRING     volume_filename, base_filename, prefix_filename;
 
     switch( transform->type )
     {
@@ -123,6 +129,52 @@ private  void  output_one_transform(
         }
         break;
 
+    case GRID_TRANSFORM:
+        (void) fprintf( file, "%s = %s;\n", TYPE_STRING,
+                        GRID_TRANSFORM_STRING );
+
+        if( transform->inverse_flag )
+            invert = !invert;
+
+        if( invert )
+            (void) fprintf( file, "%s = %s;\n", INVERT_FLAG_STRING,TRUE_STRING);
+
+        /*--- the volume will be stored in a file of the same prefix as this
+              transform, but ending in _grid.mnc */
+
+        if( filename == NULL || strlen(filename) == 0 )
+            (void) strcpy( prefix_filename, "grid" );
+        else
+        {
+            (void) strcpy( prefix_filename, filename );
+            i = strlen( prefix_filename ) - 1;
+            while( i > 0 && prefix_filename[i] != '.' &&
+                   prefix_filename[i] != '/' )
+                --i;
+            if( i >= 0 && prefix_filename[i] == '.' )
+                prefix_filename[i] = (char) 0;
+        }
+
+        /*--- write out the volume filename to the transform file */
+
+        (void) sprintf( volume_filename, "%s_grid_%d.mnc", prefix_filename,
+                        *volume_count );
+
+        /*--- decide where to write the volume file */
+
+        remove_directories_from_filename( volume_filename, base_filename );
+
+        (void) fprintf( file, "%s = %s;\n", DISPLACEMENT_VOLUME,
+                        base_filename );
+
+        /*--- write the volume file */
+
+        (void) output_volume( volume_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                              (Volume) transform->displacement_volume,
+                              NULL, NULL );
+
+        break;
+
     case USER_TRANSFORM:
         print( "Cannot output user transformation.\n" );
         output_comments( file, "User transform goes here." );
@@ -138,7 +190,7 @@ private  void  output_one_transform(
             for( trans = get_n_concated_transforms(transform)-1;  trans >= 0;
                  --trans )
             {
-                 output_one_transform( file, invert,
+                 output_one_transform( file, filename, volume_count, invert,
                                get_nth_general_transform(transform,trans) );
             }
         }
@@ -146,7 +198,7 @@ private  void  output_one_transform(
         {
             for_less( trans, 0, get_n_concated_transforms(transform) )
             {
-                 output_one_transform( file, invert,
+                 output_one_transform( file, filename, volume_count, invert,
                                    get_nth_general_transform(transform,trans) );
             }
         }
@@ -157,24 +209,34 @@ private  void  output_one_transform(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_transform
               file
+              filename
+              volume_count_ptr
               comments   - can be null
               transform
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : OK or ERROR
 @DESCRIPTION: Outputs the transform to the file in MNI transform format.
+              The filename is used to define the prefix for writing out
+              volumes that are part of grid transforms.  The volume_count_ptr
+              is used to give each volume written in a given file a unique
+              index, and therefore a unique filename.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 21, 1995   D. MacDonald
 ---------------------------------------------------------------------------- */
 
 public  Status  output_transform(
     FILE                *file,
+    char                filename[],
+    int                 *volume_count_ptr,
     char                comments[],
     General_transform   *transform )
 {
+    int    volume_count;
+
     /* --- parameter checking */
 
     if( file == (FILE *) 0 )
@@ -190,7 +252,15 @@ public  Status  output_transform(
     output_comments( file, comments );
     (void) fprintf( file, "\n" );
 
-    output_one_transform( file, FALSE, transform );
+    /*--- if the user has not initialized the volume count, then do so */
+
+    if( volume_count_ptr == NULL )
+    {
+        volume_count = 0;
+        volume_count_ptr = &volume_count;
+    }
+
+    output_one_transform( file, filename, volume_count_ptr, FALSE, transform );
 
     return( OK );
 }
@@ -210,17 +280,20 @@ public  Status  output_transform(
 
 private  Status  input_one_transform(
     FILE                *file,
+    char                filename[],
     General_transform   *transform )
 {
     Status            status;
     int               i, j, n_points, n_dimensions;
     float             **points, **displacements;
     double            value, *points_1d;
-    STRING            type_name, str;
+    STRING            type_name, str, volume_filename, directory, tmp_filename;
+    Volume            volume;
     Transform         linear_transform;
     Transform_types   type;
     BOOLEAN           inverse_flag;
     General_transform inverse;
+    minc_input_options  options;
 
     inverse_flag = FALSE;
 
@@ -243,6 +316,8 @@ private  Status  input_one_transform(
         type = LINEAR;
     else if( strcmp( type_name, THIN_PLATE_SPLINE_STRING ) == 0 )
         type = THIN_PLATE_SPLINE;
+    else if( strcmp( type_name, GRID_TRANSFORM_STRING ) == 0 )
+        type = GRID_TRANSFORM;
     else
     {
         print( "input_transform(): invalid transform type.\n");
@@ -384,6 +459,54 @@ private  Status  input_one_transform(
 
         create_thin_plate_transform( transform, n_dimensions, n_points, points,
                                      displacements );
+        break;
+
+    case GRID_TRANSFORM:
+
+        /*--- read the displacement volume filename */
+
+        if( strcmp( str, DISPLACEMENT_VOLUME ) != 0 )
+        {
+            print( "Expected %s =\n", DISPLACEMENT_VOLUME );
+            return( ERROR );
+        }
+        if( mni_skip_expected_character( file, '=' ) != OK )
+            return( ERROR );
+
+        if( mni_input_string( file, volume_filename, MAX_STRING_LENGTH, ';',
+                              0 ) != OK )
+            return( ERROR );
+
+        if( mni_skip_expected_character( file, ';' ) != OK )
+            return( ERROR );
+
+        /*--- if the volume filename is relative, add the required directory */
+
+        if( volume_filename[0] != '/' && filename != NULL )
+        {
+            extract_directory( filename, directory );
+
+            if( strlen(directory) != 0 )
+            {
+                (void) strcpy( tmp_filename, volume_filename );
+                (void) sprintf( volume_filename, "%s/%s", directory,
+                                tmp_filename );
+            }
+        }
+
+        /*--- input the displacement volume */
+
+        set_default_minc_input_options( &options );
+        set_minc_input_vector_to_scalar_flag( &options, FALSE );
+
+        if( input_volume( volume_filename, 4, NULL, NC_UNSPECIFIED, FALSE,
+                          0.0, 0.0, TRUE, &volume, &options ) != OK )
+            return( ERROR );
+
+        /*--- create the transform */
+
+        create_grid_transform( transform, volume );
+        break;
     }
 
     if( inverse_flag )
@@ -399,6 +522,7 @@ private  Status  input_one_transform(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_transform
 @INPUT      : file
+              filename    - used to define directory for relative filename
 @OUTPUT     : transform
 @RETURNS    : OK or ERROR
 @DESCRIPTION: Inputs the transform from the file.
@@ -406,11 +530,12 @@ private  Status  input_one_transform(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 21, 1995   D. MacDonald
 ---------------------------------------------------------------------------- */
 
 public  Status  input_transform(
     FILE                *file,
+    char                filename[],
     General_transform   *transform )
 {
     Status              status;
@@ -436,7 +561,7 @@ public  Status  input_transform(
     }
 
     n_transforms = 0;
-    while( (status = input_one_transform( file, &next )) == OK )
+    while( (status = input_one_transform( file, filename, &next )) == OK )
     {
         if( n_transforms == 0 )
             *transform = next;
@@ -486,13 +611,17 @@ public  Status  output_transform_file(
 {
     Status  status;
     FILE    *file;
+    int     volume_count;
 
     status = open_file_with_default_suffix( filename,
                       get_default_transform_file_suffix(),
                       WRITE_FILE, ASCII_FORMAT, &file );
 
+    volume_count = 0;
+
     if( status == OK )
-        status = output_transform( file, comments, transform );
+        status = output_transform( file, filename, &volume_count,
+                                   comments, transform );
 
     if( status == OK )
         status = close_file( file );
@@ -525,7 +654,7 @@ public  Status  input_transform_file(
                       READ_FILE, ASCII_FORMAT, &file );
 
     if( status == OK )
-        status = input_transform( file, transform );
+        status = input_transform( file, filename, transform );
 
     if( status == OK )
         status = close_file( file );

@@ -1,13 +1,13 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.4 1995-03-17 15:05:05 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.5 1995-03-21 19:02:12 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
 #define   SPLINE_DEGREE         ((DEGREES_CONTINUITY) + 2)
 
-#define   N_COMPONENTS   3        /* displacement vector has 3 components */
+#define   N_COMPONENTS   N_DIMENSIONS /* displacement vector has 3 components */
 
 #define   FOUR_DIMS      4
 
@@ -17,9 +17,14 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid
 
 private  void   evaluate_grid_volume(
     Volume         volume,
-    Real           voxel[],
+    Real           x,
+    Real           y,
+    Real           z,
     int            degrees_continuity,
-    Real           values[] );
+    Real           values[],
+    Real           deriv_x[],
+    Real           deriv_y[],
+    Real           deriv_z[] );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : grid_transform_point
@@ -48,8 +53,7 @@ public  void  grid_transform_point(
     Real                *y_transformed,
     Real                *z_transformed )
 {
-    Real    voxel[MAX_DIMENSIONS];
-    Real    displacements[N_DIMENSIONS];
+    Real    displacements[N_COMPONENTS];
     Volume  volume;
 
     /* --- the volume that defines the transform is an offset vector,
@@ -58,9 +62,8 @@ public  void  grid_transform_point(
 
     volume = (Volume) transform->displacement_volume;
 
-    convert_world_to_voxel( volume, x, y, z, voxel );
-
-    evaluate_grid_volume( volume, voxel, DEGREES_CONTINUITY, displacements );
+    evaluate_grid_volume( volume, x, y, z, DEGREES_CONTINUITY, displacements,
+                          NULL, NULL, NULL );
 
     *x_transformed = x + displacements[X];
     *y_transformed = y + displacements[Y];
@@ -93,20 +96,21 @@ private  void  forward_function(
 {
     int                c;
     General_transform  *transform;
-    Real               deriv_x[N_DIMENSIONS], deriv_y[N_DIMENSIONS];
-    Real               deriv_z[N_DIMENSIONS];
+    Real               deriv_x[N_COMPONENTS], deriv_y[N_COMPONENTS];
+    Real               deriv_z[N_COMPONENTS];
+    Volume             volume;
 
     transform = (General_transform *) function_data;
 
     /* --- store the offset vector in values[0-2] */
 
-    evaluate_volume_in_world( transform->displacement_volume,
-                              parameters[X], parameters[Y], parameters[Z],
-                              DEGREES_CONTINUITY, TRUE, 0.0,
-                              values, deriv_x, deriv_y, deriv_z,
-                              NULL, NULL, NULL, NULL, NULL, NULL );
+    volume = transform->displacement_volume;
 
-    for_less( c, 0, N_DIMENSIONS )
+    evaluate_grid_volume( volume, parameters[X], parameters[Y], parameters[Z],
+                          DEGREES_CONTINUITY, values,
+                          deriv_x, deriv_y, deriv_z );
+
+    for_less( c, 0, N_COMPONENTS )
     {
         values[c] += parameters[c];   /* to get x',y',z', add offset to x,y,z */
 
@@ -116,10 +120,7 @@ private  void  forward_function(
         derivatives[c][X] = deriv_x[c];
         derivatives[c][Y] = deriv_y[c];
         derivatives[c][Z] = deriv_z[c];
-/*derivatives[c][X] = 0.0;
-derivatives[c][Y] = 0.0;
-derivatives[c][Z] = 0.0;
-*/
+
         derivatives[c][c] += 1.0;    /* deriv of (x,y,z) w.r.t. x or y or z  */
     }
 }
@@ -288,7 +289,8 @@ public  void  grid_inverse_transform_point(
 @INPUT      : volume
               voxel
               degrees_continuity
-@OUTPUT     : value
+@OUTPUT     : values
+              derivs  (if non-NULL)
 @RETURNS    : 
 @DESCRIPTION: Takes a voxel space position and evaluates the value within
               the volume by nearest_neighbour, linear, quadratic, or
@@ -299,11 +301,17 @@ public  void  grid_inverse_transform_point(
 
 private  void   evaluate_grid_volume(
     Volume         volume,
-    Real           voxel[],
+    Real           x,
+    Real           y,
+    Real           z,
     int            degrees_continuity,
-    Real           values[] )
+    Real           values[],
+    Real           deriv_x[],
+    Real           deriv_y[],
+    Real           deriv_z[] )
 {
-    int      inc0, inc1, inc2, inc3, inc[MAX_DIMENSIONS];
+    Real     voxel[MAX_DIMENSIONS], voxel_vector[MAX_DIMENSIONS];
+    int      inc0, inc1, inc2, inc3, inc[MAX_DIMENSIONS], derivs_per_value;
     int      ind0, vector_dim;
     int      start0, start1, start2, start3, inc_so_far;
     int      end0, end1, end2, end3;
@@ -313,6 +321,9 @@ private  void   evaluate_grid_volume(
     int      end[MAX_DIMENSIONS];
     Real     fraction[MAX_DIMENSIONS], bound, pos;
     Real     coefs[SPLINE_DEGREE*SPLINE_DEGREE*SPLINE_DEGREE*N_COMPONENTS];
+    Real     values_derivs[N_COMPONENTS + N_COMPONENTS * N_DIMENSIONS];
+
+    convert_world_to_voxel( volume, x, y, z, voxel );
 
     if( get_volume_n_dimensions(volume) != FOUR_DIMS )
         handle_internal_error( "evaluate_grid_volume" );
@@ -426,11 +437,50 @@ private  void   evaluate_grid_volume(
     {
         for_less( v, 0, N_COMPONENTS )
             values[v] = coefs[v];
+
+        if( deriv_x != NULL )
+        {
+            for_less( v, 0, N_COMPONENTS )
+            {
+                deriv_x[v] = 0.0;
+                deriv_y[v] = 0.0;
+                deriv_z[v] = 0.0;
+            }
+        }
     }
     else
     {
         evaluate_interpolating_spline( N_DIMENSIONS, fraction,
                                        degrees_continuity + 2, 
-                                       N_COMPONENTS, coefs, 0, values );
+                                       N_COMPONENTS, coefs, 0, values_derivs );
+
+        if( deriv_x != NULL )
+            derivs_per_value = 8;
+        else
+            derivs_per_value = 1;
+
+        for_less( v, 0, N_COMPONENTS )
+            values[v] = values_derivs[v*derivs_per_value];
+
+        if( deriv_x != NULL )
+        {
+            for_less( v, 0, N_COMPONENTS )
+            {
+                id = 0;
+                for_less( d, 0, FOUR_DIMS )
+                {
+                    if( d != vector_dim )
+                    {
+                        voxel_vector[d] = values_derivs[v*8 + (4>>id)];
+                        ++id;
+                    }
+                    else
+                        voxel_vector[d] = 0.0;
+                }
+             
+                convert_voxel_normal_vector_to_world( volume, voxel_vector,
+                                    &deriv_x[v], &deriv_y[v], &deriv_z[v] );
+            }
+        }
     }
 }

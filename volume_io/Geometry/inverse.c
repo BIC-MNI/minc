@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.5 1995-02-20 13:12:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.6 1995-03-21 19:01:30 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>

@@ -2,7 +2,7 @@
 #define  DEF_GEOMETRY
 
 #ifndef lint
-static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.5 1994-11-25 14:19:44 david Exp $";
+static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.6 1995-03-21 19:01:44 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

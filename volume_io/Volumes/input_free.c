@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.18 1994-11-25 14:20:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.19 1995-03-21 19:01:57 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -511,8 +511,9 @@ public  BOOLEAN  input_more_free_format_file(
                     else
                         value = (int) (*byte_buffer_ptr);
 
-                    SET_VOXEL_3D( volume, indices[X], indices[Y], indices[Z],
-                                  value );
+                    set_volume_voxel_value( volume,
+                               indices[X], indices[Y], indices[Z], 0, 0,
+                               value );
 
                     ++byte_buffer_ptr;
                 }
@@ -535,8 +536,9 @@ public  BOOLEAN  input_more_free_format_file(
                     else
                         value = (int) (*short_buffer_ptr);
 
-                    SET_VOXEL_3D( volume, indices[X], indices[Y], indices[Z],
-                                  value );
+                    set_volume_voxel_value( volume,
+                               indices[X], indices[Y], indices[Z], 0, 0,
+                               value );
 
                     ++short_buffer_ptr;
                 }
@@ -559,7 +561,7 @@ public  BOOLEAN  input_more_free_format_file(
     {
         more_to_do = FALSE;
 
-        GET_VOXEL_3D( min_value, volume, 0, 0, 0 );
+        min_value = get_volume_voxel_value( volume, 0, 0, 0, 0, 0 );
         get_volume_sizes( volume, sizes );
         max_value = min_value;
         for_less( x, 0, sizes[X] )
@@ -568,7 +570,7 @@ public  BOOLEAN  input_more_free_format_file(
             {
                 for_less( z, 0, sizes[Z] )
                 {
-                    GET_VOXEL_3D( value, volume, x, y, z );
+                    value = get_volume_voxel_value( volume, x, y, z, 0, 0 );
                     if( value < min_value )
                         min_value = value;
                     else if( value > max_value )

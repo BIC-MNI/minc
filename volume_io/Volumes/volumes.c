@@ -3,7 +3,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.42 1995-03-08 17:00:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.43 1995-03-21 19:02:01 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -13,8 +13,8 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
     { MIxspace },
     { MIyspace, MIxspace },
     { MIzspace, MIyspace, MIxspace },
-    { MItime, MIzspace, MIyspace, MIxspace },
-    { "", MItime, MIzspace, MIyspace, MIxspace }
+    { "", MIzspace, MIyspace, MIxspace },
+    { "", "", MIzspace, MIyspace, MIxspace }
 };
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1660,7 +1660,6 @@ public  Volume  copy_volume(
     Volume   volume )
 {
     Volume   copy;
-    Real     value, voxel;
     void     *src, *dest;
     int      d, n_voxels, sizes[MAX_DIMENSIONS];
 

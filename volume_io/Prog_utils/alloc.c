@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.10 1994-11-25 14:19:53 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.11 1995-03-21 19:01:46 david Exp $";
 #endif
 
 #ifdef sgi
@@ -45,7 +45,7 @@ public  void  alloc_memory(
         }
     }
     else
-        *ptr = (void *) 0;
+        *ptr = NULL;
 
     record_alloc( n_bytes );
 }

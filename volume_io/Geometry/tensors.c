@@ -7,13 +7,14 @@ private  void  multiply_basis_matrices(
     Real   m2[],
     Real   prod[] )
 {
-    int   i, j, k;
+    int   i, j, k, m2_inc;
     Real  *m1_ptr, *m1_ptr1;
-    Real  *m2_ptr, *m2_ptr1;
+    Real  *m2_ptr;
     Real  sum, *prod_ptr;
 
     m1_ptr = m1;
     prod_ptr = prod;
+    m2_inc = 1 - n_degs * n_degs;
     for_less( i, 0, n_derivs )
     {
         m2_ptr = m2;
@@ -21,14 +22,13 @@ private  void  multiply_basis_matrices(
         {
             sum = 0.0;
             m1_ptr1 = m1_ptr;
-            m2_ptr1 = m2_ptr;
             for_less( k, 0, n_degs )
             {
-                sum += (*m1_ptr1) * (*m2_ptr1);
+                sum += (*m1_ptr1) * (*m2_ptr);
                 ++m1_ptr1;
-                m2_ptr1 += n_degs;
+                m2_ptr += n_degs;
             }
-            ++m2_ptr;
+            m2_ptr += m2_inc;
             *prod_ptr = sum;
             ++prod_ptr;
         }
@@ -52,30 +52,30 @@ private  void  multiply_matrices(
     int    sbp )
 {
     int   i, j, k;
-    Real  *m1_ptr, *m1_ptr1, *m2_ptr, *m2_ptr1;
-    Real  sum, *prod_ptr, *prod_ptr1;
+    Real  *m1_ptr, *m1_ptr1, *m2_ptr;
+    Real  sum, *prod_ptr;
 
     m1_ptr = m1;
     prod_ptr = prod;
+    sb2 -= y1 * sa2;
+    sap -= y2 * sbp;
     for_less( i, 0, x1 )
     {
         m2_ptr = m2;
-        prod_ptr1 = prod_ptr;
         for_less( j, 0, y2 )
         {
             sum = 0.0;
             m1_ptr1 = m1_ptr;
-            m2_ptr1 = m2_ptr;
             for_less( k, 0, y1 )
             {
-                sum += (*m1_ptr1) * (*m2_ptr1);
+                sum += (*m1_ptr1) * (*m2_ptr);
                 m1_ptr1 += sb1;
-                m2_ptr1 += sa2;
+                m2_ptr += sa2;
             }
 
-            *prod_ptr1 = sum;
+            *prod_ptr = sum;
 
-            prod_ptr1 += sbp;
+            prod_ptr += sbp;
             m2_ptr += sb2;
         }
         m1_ptr += sa1;
@@ -101,7 +101,7 @@ public  void  spline_tensor_product(
     int       ind, prev_ind, max_degree, n_derivs_plus_1, deg;
     int       static_indices[MAX_DIMS];
     int       *indices, total_derivs;
-    Real      *input_coefs;
+    Real      *input_coefs, u_power, u;
     Real      static_us[MAX_DEGREE*MAX_DEGREE];
     Real      static_weights[MAX_DEGREE*MAX_DEGREE];
     Real      *us, *weights;
@@ -174,9 +174,14 @@ public  void  spline_tensor_product(
         deg = degrees[d];
         n_derivs_plus_1 = 1 + n_derivs[d];
 
+        u = positions[d];
+        u_power = 1.0;
         us[0] = 1.0;
         for_less( k, 1, deg )
-            us[k] = us[k-1] * positions[d];
+        {
+            u_power *= u;
+            us[k] = u_power;
+        }
 
         ind = deg;
         for_less( deriv, 1, n_derivs_plus_1 )

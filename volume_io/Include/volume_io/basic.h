@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.18 1995-02-21 08:31:43 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.19 1995-03-21 19:01:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -135,6 +135,8 @@ typedef  char     STRING[MAX_STRING_LENGTH+1];
 /* for loops */
 
 #define  for_less( i, start, end )  for( (i) = (start);  (i) < (end);  ++(i) )
+
+#define  for_down( i, start, end )  for( (i) = (start);  (i) >= (end); --(i))
 
 #define  for_inclusive( i, start, end )  \
                    for( (i) = (start);  (i) <= (end);  ++(i) )
