@@ -16,11 +16,11 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.2 2002-10-30 13:53:02 jason Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.3 2004-02-02 18:22:07 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
-
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +38,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.2 2
 static ArgvInfo defaultTable[] = {
     {"-help",	ARGV_HELP,	(char *) NULL,	(char *) NULL,
 	"Print summary of command-line options and abort"},
+    {"-version", ARGV_VERSION,  (char *) NULL,  (char *) NULL,
+        "Print version number of program and exit"},
     {NULL,	ARGV_END,	(char *) NULL,	(char *) NULL,
 	(char *) NULL}
 };
@@ -47,6 +49,7 @@ static ArgvInfo defaultTable[] = {
  */
 
 static void	PrintUsage _ANSI_ARGS_((ArgvInfo *argTable, int flags));
+static void     PrintVersion(ArgvInfo *argTable);
 
 /*
  *----------------------------------------------------------------------
@@ -285,6 +288,9 @@ ParseArgv(argcPtr, argv, argTable, flags)
       case ARGV_HELP:
          PrintUsage (argTable, flags);
          return TRUE;
+      case ARGV_VERSION:
+         PrintVersion(argTable);
+         return FALSE;
       default:
          FPRINTF(stderr, "bad argument type %d in ArgvInfo",
                  infoPtr->type);
@@ -374,6 +380,9 @@ PrintUsage(argTable, flags)
    for (i = 0; ; i++) {
       for (infoPtr = i ? defaultTable : argTable;
            infoPtr->type != ARGV_END; infoPtr++) {
+         if (infoPtr->type == ARGV_VERINFO) {
+            continue;
+         }
          if ((infoPtr->type == ARGV_HELP) && (infoPtr->key == NULL)) {
             FPRINTF(stderr, "\n%s", infoPtr->help);
             continue;
@@ -440,4 +449,22 @@ PrintUsage(argTable, flags)
    }
 
    FPRINTF(stderr, "\n");
+}
+
+static void PrintVersion(ArgvInfo *argTable)
+{
+    char *versionStr = VERSION;
+
+    for ( ; argTable->type != ARGV_END; argTable++) {
+        if (argTable->type == ARGV_VERINFO) {
+            /* Version information found? */
+            if (argTable->src != NULL) {
+                versionStr = argTable->src;
+                break;
+            }
+        }
+    }
+    printf("program: %s\n", versionStr);
+    printf("libminc: %s\n", miget_version());
+    exit(0);
 }
