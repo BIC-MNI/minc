@@ -12,7 +12,7 @@ PROGS    = scxtominc
 EXTRA_OBJS = scx_file.o
 HEADERS  = scx_file.h
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(MINC_LDOPT)
+LDOPT    = $(PROG_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -68,3 +68,5 @@ scx_file.o scx_file.ln : scx_header_def.h
 scx_header_def.h : define_scx_header.perl pc5r1.drs pc6r1.drs
 	define_scx_header.perl scx_header_def.h pc5r1.drs pc6r1.drs
 
+install:
+	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)

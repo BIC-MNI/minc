@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = minctoraw
 HEADERS  = 
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(MINC_LDOPT)
+LDOPT    = $(PROG_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -57,4 +57,7 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 # Remove all derived files in this directory
 clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ)
+
+install:
+	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 

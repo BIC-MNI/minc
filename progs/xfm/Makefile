@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = xfminvert xfmconcat transformtags
 HEADERS  = 
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(MINC_LDOPT)
+LDOPT    = $(PROG_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -58,3 +58,5 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB)
 clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ)
 
+install:
+	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)

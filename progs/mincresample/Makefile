@@ -12,7 +12,7 @@ PROGS    = mincresample
 EXTRA_OBJS = resample_volumes.o
 HEADERS  = $(PROGS:=.h)
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(MINC_LDOPT)
+LDOPT    = $(PROG_LDOPT)
 
 # --------------------------------------------------------------------
 
@@ -60,4 +60,7 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
 	            $(EXTRA_OBJS) $(LINT_EXTRA)
+
+install:
+	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
 
