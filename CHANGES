@@ -2,6 +2,10 @@ Sun Aug  4 20:55:18 EDT 2002
    - Added code from Colin Holmes (somewhat modified) to rawtominc to
      support -skip option.
 
+Mon Apr  8 16:46:34 EST 2002
+   - fixed mincstats segmentation fault when trying to close a NULL 
+     file pointer (John Sled)
+
 ************************************************************************
 
 Wed Jan 16 08:43:28 EST 2002 *** RELEASE OF MINC 1.0
