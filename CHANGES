@@ -1,3 +1,18 @@
+Tue Apr 17 15:00:48 EDT 2001
+   - Modified to build with NetCDF 3.x.
+     Changed NC_LONG to NC_INT, as well as corresponding longs to ints.
+     Replaced NC_UNSPECIFIED with NC_NAT (not-a-type).
+     Added appropriate definitions to support both of these with both
+     NetCDF 2.x and 3.x.
+     Changed error handling to be independent of NetCDF library apart
+     from use of ncopts and ncerr. Uses old style NetCDF2 error handling
+     still, but no longer makes use of NetCDF internals.
+     Removed all prototype wrappers to only support ANSI C.
+     Changed fortran build - no longer generate .c from .src with m4
+     since fortran support mechanism under NetCDF has changed. 
+     Keeping irix5 .c file for backwards compatibility. Only build when 
+     BUILD_FORTRAN is set to "yes".
+
 Mon Apr  2 11:35:29 EDT 2001
    - Added -keep_real_range option to mincresample for resampling labels.
 
