@@ -175,6 +175,19 @@ public  void  get_clock_time(
     (void) strcpy( time_str, str );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : sleep_program
+@INPUT      : seconds
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Make the program sleep for the specified number of seconds.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  sleep_program( Real seconds )
 {
 #ifdef sgi

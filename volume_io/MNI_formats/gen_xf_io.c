@@ -87,9 +87,9 @@ private  void  output_one_transform(
             invert = !invert;
 
         if( invert )
-            (void) fprintf( file, "%s = %s\n", INVERT_FLAG_STRING, TRUE_STRING);
+            (void) fprintf( file, "%s = %s;\n", INVERT_FLAG_STRING,TRUE_STRING);
 
-        (void) fprintf( file, "%s = %d\n", N_DIMENSIONS_STRING,
+        (void) fprintf( file, "%s = %d;\n", N_DIMENSIONS_STRING,
                         transform->n_dimensions );
 
         (void) fprintf( file, "%s =\n", POINTS_STRING );

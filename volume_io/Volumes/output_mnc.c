@@ -46,15 +46,17 @@ public  Minc_file  initialize_minc_output(
     int        n_dimensions,
     String     dim_names[],
     int        sizes[],
-    nc_type    data_type,
+    nc_type    nc_data_type,
     Boolean    signed_flag,
-    Real       min_value,
-    Real       max_value,
+    Real       min_voxel,
+    Real       max_voxel,
+    Real       real_min,
+    Real       real_max,
     Transform  *voxel_to_world_transform )
 {
     minc_file_struct    *file;
     int                 dim_vars[MAX_VAR_DIMS];
-    double              separation[MAX_VAR_DIMS];
+    double              separation[MAX_VAR_DIMS], valid_range[2];
     double              start[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     int                 i, j, d, axis;
@@ -77,8 +79,6 @@ public  Minc_file  initialize_minc_output(
 
     file->file_is_being_read = FALSE;
     file->n_file_dimensions = n_dimensions;
-    file->output_nc_data_type = data_type;
-    file->output_signed_flag = signed_flag;
 
     ncopts = NC_VERBOSE;
     file->cdfid =  nccreate( filename, NC_CLOBBER );
@@ -138,21 +138,9 @@ public  Minc_file  initialize_minc_output(
         }
     }
 
-    file->img_var_id = micreate_std_variable( file->cdfid, MIimage, data_type,
+    file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
+                                              nc_data_type,
                                               n_dimensions, dim_vars );
-
-    file->image_range[0] = min_value;
-    file->image_range[1] = max_value;
-
-    file->min_id = micreate_std_variable( file->cdfid, MIimagemin, NC_DOUBLE, 0,
-                                          (int *) NULL );
-    (void) miattput_pointer( file->cdfid, file->img_var_id, MIimagemin,
-                             file->min_id );
-
-    file->max_id = micreate_std_variable( file->cdfid, MIimagemax, NC_DOUBLE, 0,
-                                          (int *) NULL );
-    (void) miattput_pointer( file->cdfid, file->img_var_id, MIimagemax,
-                             file->max_id );
 
     if( signed_flag )
         (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
@@ -160,6 +148,32 @@ public  Minc_file  initialize_minc_output(
     else
         (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
                             MI_UNSIGNED );
+
+    /* --- put the valid voxel range */
+
+    if( min_voxel < max_voxel )
+    {
+        valid_range[0] = min_voxel;
+        valid_range[1] = max_voxel;
+        (void) ncattput( file->cdfid, file->img_var_id, MIvalid_range,
+                         NC_DOUBLE, 2, (void *) valid_range );
+    }
+    else
+    {
+        print(
+          "initialize_minc_output:  min voxel must be less than max voxel.\n" );
+    }
+
+    file->image_range[0] = real_min;
+    file->image_range[1] = real_max;
+
+    if( file->image_range[0] < file->image_range[1] )
+    {
+       file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
+                                             NC_DOUBLE, 0, (int *) NULL );
+       file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
+                                             NC_DOUBLE, 0, (int *) NULL );
+    }
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
@@ -171,7 +185,8 @@ public  Minc_file  initialize_minc_output(
 
 public  Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
-    char        filename[] )
+    char        filename[],
+    char        history_string[] )
 {
     Status  status;
     int     src_cdfid;
@@ -185,7 +200,8 @@ public  Status  copy_auxiliary_data_from_minc_file(
         return( ERROR );
     }
 
-    status = copy_auxiliary_data_from_open_minc_file( file, src_cdfid );
+    status = copy_auxiliary_data_from_open_minc_file( file, src_cdfid,
+                                                      history_string );
 
     (void) ncclose( src_cdfid );
 
@@ -196,16 +212,22 @@ public  Status  copy_auxiliary_data_from_minc_file(
 
 public  Status  copy_auxiliary_data_from_open_minc_file(
     Minc_file   file,
-    int         src_cdfid )
+    int         src_cdfid,
+    char        history_string[] )
 {
     int     src_img_var, varid, n_excluded, excluded_vars[10];
     int     src_min_id, src_max_id;
+    Status  status;
+
+    if( file->end_def_done )
+    {
+        print( "Cannot call copy_auxiliary_data_from_open_minc_file when not in define mode\n" );
+        return( ERROR );
+    }
 
     ncopts = NC_VERBOSE;
 
     n_excluded = 0;
-    if( (varid = ncvarid(src_cdfid, MIrootvariable )) != MI_ERROR )
-        excluded_vars[n_excluded++] = varid;
     if( (varid = ncvarid(src_cdfid, MIxspace )) != MI_ERROR )
         excluded_vars[n_excluded++] = varid;
     if( (varid = ncvarid(src_cdfid, MIyspace )) != MI_ERROR )
@@ -226,6 +248,11 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
         (void) micopy_all_atts( src_cdfid, src_img_var,
                                 file->cdfid, file->img_var_id );
 
+    ncopts = 0;
+    (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_max );
+    (void) ncattdel( file->cdfid, file->img_var_id, MIvalid_min );
+    ncopts = NC_VERBOSE;
+
     if( src_min_id != MI_ERROR )
         (void) micopy_all_atts( src_cdfid, src_min_id,
                                 file->cdfid, file->min_id );
@@ -234,6 +261,11 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
         (void) micopy_all_atts( src_cdfid, src_max_id,
                                 file->cdfid, file->max_id );
 
+    status = OK;
+
+    if( history_string != (char *) NULL )
+        status = add_minc_history( file, history_string );
+
     (void) ncendef( file->cdfid );
     file->end_def_done = TRUE;
 
@@ -241,6 +273,51 @@ public  Status  copy_auxiliary_data_from_open_minc_file(
                                   n_excluded, excluded_vars );
 
     ncopts = NC_VERBOSE | NC_FATAL;
+
+    return( status );
+}
+
+public  Status  add_minc_history(
+    Minc_file   file,
+    char        history_string[] )
+{
+    int      att_length;
+    nc_type  datatype;
+    char     *new_history;
+
+    if( file->end_def_done )
+    {
+        print( "Cannot call add_minc_history when not in define mode\n" );
+        return( ERROR );
+    }
+
+    ncopts = 0;
+
+    if( ncattinq(file->cdfid, NC_GLOBAL, MIhistory, &datatype, &att_length)
+                                                          == MI_ERROR ||
+        datatype != NC_CHAR )
+    {
+        att_length = 0;
+    }
+
+    att_length += strlen(history_string) + 1;
+
+    /* Allocate a string and get the old history */
+
+    ALLOC( new_history, att_length );
+
+    new_history[0] = '\0';
+
+    (void) miattgetstr( file->cdfid, NC_GLOBAL, MIhistory, att_length,
+                        new_history );
+
+    /* Add the new command and put the new history. */
+    (void) strcat( new_history, history_string );
+
+    ncopts = NC_VERBOSE | NC_FATAL;
+    (void) miattputstr( file->cdfid, NC_GLOBAL, MIhistory, new_history );
+
+    FREE( new_history );
 
     return( OK );
 }
@@ -252,6 +329,7 @@ public  Status  output_minc_volume(
     int    d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
     long   start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
     long   start_index, mindex[MAX_VAR_DIMS];
+    Real   min_value, max_value;
     double dim_value;
     void   *data_ptr;
 
@@ -283,17 +361,34 @@ public  Status  output_minc_volume(
 
         file->icv = miicv_create();
 
-        (void) miicv_setint( file->icv, MI_ICV_TYPE, file->output_nc_data_type);
-        (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
+        (void) miicv_setint( file->icv, MI_ICV_TYPE, volume->nc_data_type);
         (void) miicv_setstr( file->icv, MI_ICV_SIGN,
-                           file->output_signed_flag ? MI_SIGNED : MI_UNSIGNED );
+                             volume->signed_flag ? MI_SIGNED : MI_UNSIGNED );
+        (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
+        (void) miicv_setint( file->icv, MI_ICV_USER_NORM, TRUE );
+        (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, file->image_range[0]);
+        (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, file->image_range[1]);
+
+        get_volume_voxel_range( volume, &min_value, &max_value );
+        if( min_value < max_value )
+        {
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, min_value );
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, max_value );
+        }
+        else
+            print( "Volume has invalid min and max voxel value\n" );
+
         (void) miicv_attach( file->icv, file->cdfid, file->img_var_id );
 
         start_index = 0;
-        (void) mivarput1( file->icv, file->min_id, &start_index,
-                          NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
-        (void) mivarput1( file->icv, file->max_id, &start_index,
-                          NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
+
+        if( file->image_range[0] < file->image_range[1] )
+        {
+            (void) mivarput1( file->icv, file->min_id, &start_index,
+                              NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
+            (void) mivarput1( file->icv, file->max_id, &start_index,
+                              NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
+        }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
 
@@ -324,7 +419,7 @@ public  Status  output_minc_volume(
 
     if( file->indices[0] >= file->sizes_in_file[0] )
     {
-        print( "output_minc_volume: attempted to write too many subvolumes.\n" );
+        print( "output_minc_volume: attempted to write too many subvolumes.\n");
         return( ERROR );
     }
 

@@ -282,8 +282,6 @@ typedef  struct
 
     /* output only */
 
-    Data_types         output_nc_data_type;
-    Data_types         output_signed_flag;
     int                img_var_id;
     int                min_id;
     int                max_id;
@@ -295,6 +293,21 @@ typedef  struct
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;
+
+typedef  struct
+{
+    int       arent_any_yet;
+} volume_creation_options;
+
+typedef  struct
+{
+    Boolean     promote_invalid_to_min_flag;
+} minc_input_options;
+
+typedef  struct
+{
+    int         duh;
+} minc_output_options;
 
 /* recognized file formats */
 

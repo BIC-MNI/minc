@@ -65,10 +65,7 @@ public  void  create_linear_transform(
               displacements
 @OUTPUT     : transform
 @RETURNS    : 
-@DESCRIPTION: Creates a general transform of type thin plate spline.  Note that
-              the points and displacements pointers are copied to the
-              general transform and should therefore not be free'd by the
-              caller.
+@DESCRIPTION: Creates a general transform of type thin plate spline.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -83,12 +80,29 @@ public  void  create_thin_plate_transform(
     float                **points,
     float                **displacements )
 {
+    int    p, d;
+
     transform->type = THIN_PLATE_SPLINE;
     transform->inverse_flag = FALSE;
     transform->n_dimensions = n_dimensions;
     transform->n_points = n_points;
-    transform->points = points;
-    transform->displacements = displacements;
+
+    ALLOC2D( transform->points, n_points, n_dimensions );
+
+    for_less( p, 0, n_points )
+    {
+        for_less( d, 0, n_dimensions )
+            transform->points[p][d] = points[p][d];
+    }
+
+    ALLOC2D( transform->displacements, n_points + n_dimensions + 1,
+             n_dimensions );
+
+    for_less( p, 0, n_points + n_dimensions + 1 )
+    {
+        for_less( d, 0, n_dimensions )
+            transform->displacements[p][d] = displacements[p][d];
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------

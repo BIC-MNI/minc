@@ -52,6 +52,7 @@ typedef  unsigned  long    Colour;
 #define  get_Colour_r( colour ) ((colour) & 255)
 #define  get_Colour_g( colour ) (((colour) >> 8) & 255)
 #define  get_Colour_b( colour ) (((colour) >> 16) & 255)
+#define  get_Colour_a( colour ) (((colour) >> 24) & 255)
 
 #define  COLOUR_256_TO_0_1( val ) ( (val) / 255.0 )
 #define  COLOUR_0_1_TO_256( val ) (int) ( (val) * 255.0 )
@@ -59,20 +60,28 @@ typedef  unsigned  long    Colour;
 #define  get_Colour_r_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_r(colour) )
 #define  get_Colour_g_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_g(colour) )
 #define  get_Colour_b_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_b(colour) )
+#define  get_Colour_a_0_1( colour )  COLOUR_256_TO_0_1( get_Colour_a(colour) )
 
 #ifdef lint
 #define  make_Colour_0_1( r, g, b ) ((Colour) ( r + g + b ))
+#define  make_Colour_0_1_alpha( r, g, b, a ) ((Colour) ( r + g + b + a))
 #else
 #define  make_Colour_0_1( r, g, b )                       \
             make_Colour( COLOUR_0_1_TO_256(r),            \
                          COLOUR_0_1_TO_256(g),            \
                          COLOUR_0_1_TO_256(b) )
+#define  make_Colour_0_1_alpha( r, g, b, a )              \
+            make_rgba_Colour( COLOUR_0_1_TO_256(r),            \
+                              COLOUR_0_1_TO_256(g),            \
+                              COLOUR_0_1_TO_256(b),            \
+                              COLOUR_0_1_TO_256(a) )
 #endif
 
 #define  SCALE_COLOUR( col, factor )                  \
-          make_Colour( get_Colour_r(col) * (factor),    \
-                       get_Colour_g(col) * (factor),    \
-                       get_Colour_b(col) * (factor) )
+          make_rgba_Colour( get_Colour_r(col) * (factor),    \
+                            get_Colour_g(col) * (factor),    \
+                            get_Colour_b(col) * (factor),    \
+                            get_Colour_a(col) )
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \
@@ -86,7 +95,7 @@ typedef  unsigned  long    Colour;
             r = r1 * r2; \
             g = g1 * g2; \
             b = b1 * b2; \
-            (prod) = make_Colour_0_1( r, g, b ); \
+            (prod) = make_Colour_0_1_alpha( r, g, b, get_Colour_a_0_1(c1) ); \
         }
 
 #define  ADD_COLOURS( sum, c1, c2 )                  \
@@ -104,7 +113,7 @@ typedef  unsigned  long    Colour;
             if( r > 255 ) r = 255; \
             if( g > 255 ) g = 255; \
             if( b > 255 ) b = 255; \
-            (sum) = make_Colour( r, g, b ); \
+            (sum) = make_rgba_Colour( r, g, b, get_Colour_a(c1) ); \
         }
 
 typedef  struct

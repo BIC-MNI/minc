@@ -1437,6 +1437,8 @@ private char _sctab[256] = {
         else  \
            (void) ungetc(ch,file)
 
+/* VARARGS */
+
 int  fscanf_compress(FILE *iop, const unsigned char *fmt, ... )
 {
 	register int ch;

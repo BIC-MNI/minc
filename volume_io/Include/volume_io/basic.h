@@ -124,14 +124,14 @@ typedef  char     String[MAX_STRING_LENGTH+1];
 #define  ROUND_UP( x )     ( (x) < 0.0 ? (int) ((x) - 0.5)      \
                                     : (int) ((x) + 0.5) )
 
-#define  CEILING( x )   (  ((double)(int)(x) == (double)(x)) ?              \
+#define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
+
+#define  CEILING( x )   (  IS_INT(x) ?                                      \
                                ((int) (x)) :                                \
                                ((x) < 0.0 ? (int)(x) : ((int) (x)+1))       \
                         )
 
 #define  FRACTION( x )  ((x) - (int) (x))
-
-#define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
 
 /* for loops */
 

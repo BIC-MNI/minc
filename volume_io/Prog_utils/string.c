@@ -146,6 +146,20 @@ public  void  get_upper_case_string(
     upper_case[i] = (char) 0;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : blank_string
+@INPUT      : string
+@OUTPUT     : 
+@RETURNS    : TRUE if string is blank
+@DESCRIPTION: Checks to see if the string is blank; only contains space,
+              tabs, and newlines.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  blank_string(
     char   string[] )
 {

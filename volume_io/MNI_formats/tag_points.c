@@ -4,10 +4,47 @@ static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
 static   const char      *VOLUMES_STRING = "Volumes";
 static   const char      *TAG_POINTS_STRING = "Points";
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_default_tag_file_suffix
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : "tag"
+@DESCRIPTION: Returns the default tag file suffix.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  char  *get_default_tag_file_suffix()
 {
     return( "tag" );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_tag_points
+@INPUT      : file
+              comments       - may be null
+              n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the tag points in MNI tag point format.  If weights,
+              structure_ids, and patient_ids are all NULL, they are not
+              written to the file.  If labels is NULL, it is not written.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  output_tag_points(
     FILE      *file,
@@ -183,6 +220,26 @@ private  void  free_labels(
         FREE( labels );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_tag_points
+@INPUT      : n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the tag point data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  free_tag_points(
     int       n_volumes,
     int       n_tag_points,
@@ -243,6 +300,28 @@ private  void  extract_label(
 
     label[len] = (char) 0;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_tag_points
+@INPUT      : file
+@OUTPUT     : n_volumes
+              n_tag_points
+              tags_volume1
+              tags_volume2
+              weights
+              structure_ids
+              patient_ids
+              labels
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Inputs the file and passes back the data.  The last four arguments
+              can each be set to NULL if the corresponding information is not
+              desired.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  input_tag_points(
     FILE      *file,

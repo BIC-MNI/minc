@@ -151,6 +151,19 @@ public  void  abort_if_allowed( void )
 
 private  FILE  *file;
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : writing_alloc_debug
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : TRUE if saving debug info
+@DESCRIPTION: 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  Boolean  writing_alloc_debug( void )
 {
     static   Boolean   first = TRUE;

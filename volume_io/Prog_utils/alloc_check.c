@@ -28,7 +28,7 @@ typedef  struct skip_entry
     int                     n_bytes;
     char                    *source_file;
     int                     line_number;
-    Real                    time_of_alloc;
+    int                     sequence_number;
     struct  skip_entry      *forward[1];
 } skip_entry;
 
@@ -152,7 +152,7 @@ private  Boolean  find_pointer_position(
             : n_bytes          }}
             : source_file      }}} these are recorded in the list
             : line_number      }}
-            : time_of_alloc    }
+            : sequence_number    }
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Records the allocated pointer in the allocation list.
@@ -170,7 +170,7 @@ private   void  insert_ptr_in_alloc_list(
     int            n_bytes,
     char           source_file[],
     int            line_number,
-    Real           time_of_alloc )
+    int            sequence_number )
 {
     int           i, new_level;
     skip_entry    *x;
@@ -191,7 +191,7 @@ private   void  insert_ptr_in_alloc_list(
     x->n_bytes = n_bytes;
     x->source_file = source_file;
     x->line_number = line_number;
-    x->time_of_alloc = time_of_alloc;
+    x->sequence_number = sequence_number;
     update_total_memory( alloc_list, n_bytes );
 
     for( i = 0;  i < new_level;  ++i )
@@ -252,11 +252,11 @@ private  Boolean  check_overlap(
             : ptr
 @OUTPUT     : source_file
             : line_number
-            : time_of_alloc
+            : sequence_number
 @RETURNS    : TRUE if it existed
 @DESCRIPTION: Finds and deletes the entry in the skip list associated with
             : ptr, and returns the information associated with the entry
-            : (source_file, line_number, time_of_alloc).
+            : (source_file, line_number, sequence_number).
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -269,7 +269,7 @@ private   Boolean  remove_ptr_from_alloc_list(
     void           *ptr,
     char           *source_file[],
     int            *line_number,
-    Real           *time_of_alloc )
+    int            *sequence_number )
 {
     int           i;
     Boolean       found;
@@ -284,7 +284,7 @@ private   Boolean  remove_ptr_from_alloc_list(
 
         *source_file = x->source_file;
         *line_number = x->line_number;
-        *time_of_alloc = x->time_of_alloc;
+        *sequence_number = x->sequence_number;
 
         update_total_memory( alloc_list, -x->n_bytes );
 
@@ -416,7 +416,7 @@ private  void  update_total_memory(
 @NAME       : print_source_location
 @INPUT      : source_file
             : line_number
-            : time_of_alloc
+            : sequence_number
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Prints the information about a particular allocation.
@@ -430,9 +430,9 @@ private  void  update_total_memory(
 private  void  print_source_location(
     char   source_file[],
     int    line_number,
-    Real   time_of_alloc )
+    int    sequence_number )
 {
-    print( "%s:%d\t%g seconds", source_file, line_number, time_of_alloc );
+    print( "%s:%d\t%d'th alloc", source_file, line_number, sequence_number );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -453,10 +453,10 @@ private  void  output_entry(
     FILE          *file,
     skip_entry    *entry )
 {
-    (void) fprintf( file, "%s:%d\t%g seconds\n",
+    (void) fprintf( file, "%s:%d\t%d'th alloc\n",
                     entry->source_file,
                     entry->line_number,
-                    entry->time_of_alloc );
+                    entry->sequence_number );
 }
 
 /*  
@@ -555,6 +555,36 @@ private  Boolean  size_display_enabled( void )
 #endif
 }
 
+private  int  get_stop_sequence_number()
+{
+    static   int   first = TRUE;
+    static   int   stop_sequence_number = -1;
+    char           *str;
+
+    if( first )
+    {
+        first = FALSE;
+        str = getenv( "STOP_ALLOC_AT" );
+        if( str == (char *) 0 ||
+            sscanf( str, "%d", &stop_sequence_number ) != 1 )
+            stop_sequence_number = -1;
+    }
+
+    return( stop_sequence_number );
+}
+
+private  int  get_current_sequence_number()
+{
+    static   int  current_sequence_number = 0;
+
+    ++current_sequence_number;
+
+    if( current_sequence_number == get_stop_sequence_number() )
+        HANDLE_INTERNAL_ERROR( "get_current_sequence_number" );
+
+    return( current_sequence_number );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : record_ptr
 @INPUT      : ptr
@@ -577,25 +607,22 @@ public  void  record_ptr(
     char   source_file[],
     int    line_number )
 {
-    Real           current_time;
     update_struct  update_ptrs;
     skip_entry     *entry;
 
     if( alloc_checking_enabled() )
     {
-        current_time = current_realtime_seconds();
-
         check_initialized_alloc_list( &alloc_list );
 
         if( n_bytes <= 0 )
         {
-            print_source_location( source_file, line_number, current_time );
+            print_source_location( source_file, line_number, -1 );
             print( ": Alloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( ptr == (void *) 0 )
         {
-            print_source_location( source_file, line_number, current_time );
+            print_source_location( source_file, line_number, -1 );
             print( ": Alloc returned a NIL pointer.\n" );
             abort_if_allowed();
         }
@@ -605,19 +632,20 @@ public  void  record_ptr(
 
             if( check_overlap( &alloc_list, &update_ptrs, ptr, n_bytes, &entry))
             {
-                print_source_location( source_file, line_number, current_time );
+                print_source_location( source_file, line_number, -1 );
                 print( 
                  ": Alloc returned a pointer overlapping an existing block:\n"
                  );
                 print_source_location( entry->source_file, entry->line_number,
-                                       entry->time_of_alloc );
+                                       entry->sequence_number );
                 print( "\n" );
                 abort_if_allowed();
             }
             else
                 insert_ptr_in_alloc_list( &alloc_list,
                            &update_ptrs, ptr, n_bytes,
-                           source_file, line_number, current_time );
+                           source_file, line_number,
+                           get_current_sequence_number() );
         }
     }
 }
@@ -650,7 +678,7 @@ public  void  change_ptr(
 {
     char           *orig_source;
     int            orig_line;
-    Real           time_of_alloc;
+    int            sequence_number;
     skip_entry     *entry;
     update_struct  update_ptrs;
 
@@ -660,16 +688,14 @@ public  void  change_ptr(
 
         if( n_bytes <= 0 )
         {
-            print_source_location( source_file, line_number,
-                                   current_realtime_seconds() );
+            print_source_location( source_file, line_number, -1 );
             print( ": Realloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( !remove_ptr_from_alloc_list( &alloc_list, old_ptr,
-                      &orig_source, &orig_line, &time_of_alloc ) )
+                      &orig_source, &orig_line, &sequence_number ) )
         {
-            print_source_location( source_file, line_number,
-                                   current_realtime_seconds() );
+            print_source_location( source_file, line_number, -1 );
             print( ": Tried to realloc a pointer not already alloced.\n");
             abort_if_allowed();
         }
@@ -680,19 +706,18 @@ public  void  change_ptr(
             if( check_overlap( &alloc_list, &update_ptrs, new_ptr, n_bytes,
                                &entry ) )
             {
-                print_source_location( source_file, line_number,
-                                       current_realtime_seconds());
+                print_source_location( source_file, line_number, -1 );
                 print( 
                ": Realloc returned a pointer overlapping an existing block:\n");
                 print_source_location( entry->source_file, entry->line_number,
-                                       entry->time_of_alloc );
+                                       entry->sequence_number );
                 print( "\n" );
                 abort_if_allowed();
             }
             else
                 insert_ptr_in_alloc_list( &alloc_list,
                        &update_ptrs, new_ptr, n_bytes,
-                       orig_source, orig_line, time_of_alloc );
+                       orig_source, orig_line, sequence_number );
         }
     }
 }
@@ -722,7 +747,7 @@ public  Boolean  unrecord_ptr(
     Boolean  was_previously_alloced;
     char     *orig_source;
     int      orig_line;
-    Real     time_of_alloc;
+    int      sequence_number;
 
     was_previously_alloced = TRUE;
 
@@ -732,17 +757,15 @@ public  Boolean  unrecord_ptr(
 
         if( ptr == (void *) 0 )
         {
-            print_source_location( source_file, line_number,
-                                   current_realtime_seconds() );
+            print_source_location( source_file, line_number, -1 );
             print( ": Tried to free a NIL pointer.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;
         }
         else if( !remove_ptr_from_alloc_list( &alloc_list, ptr, &orig_source,
-                                              &orig_line, &time_of_alloc ) )
+                                              &orig_line, &sequence_number ) )
         {
-            print_source_location( source_file, line_number,
-                                   current_realtime_seconds() );
+            print_source_location( source_file, line_number, -1 );
             print( ": Tried to free a pointer not alloced.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;

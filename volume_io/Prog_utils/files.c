@@ -144,6 +144,24 @@ public  void  expand_filename(
     }
 }
 
+public  Boolean  filename_extension_matches(
+    char   filename[],
+    char   extension[] )
+{
+    int       len;
+    String    filename_no_z, ending;
+
+    (void) strcpy( filename_no_z, filename );
+    len = strlen( filename );
+
+    if( filename[len-2] == '.' && filename[len-1] == 'Z' )
+        filename_no_z[len-2] = (char) 0;
+
+    (void) sprintf( ending, ".%s", extension );
+
+    return( string_ends_in( filename_no_z, ending ) );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : remove_directories_from_filename
 @INPUT      : filename

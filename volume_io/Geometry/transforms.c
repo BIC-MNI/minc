@@ -679,7 +679,7 @@ public  Status  read_transform_file(
 
     if( status == OK )
     {
-        if( !input_transform( file, &gen_transform ) )
+        if( input_transform( file, &gen_transform ) != OK )
             status = ERROR;
 
         (void) close_file( file );

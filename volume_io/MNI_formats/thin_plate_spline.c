@@ -326,7 +326,7 @@ private  float return_r(float *cor1, float *cor2, int dim)
       r1 = cor1[0] - cor2[0];
       r2 = cor1[1] - cor2[1];
       r3 = cor1[2] - cor2[2];
-      return(fsqrt(r1*r1 + r2*r2 + r3*r3));
+      return( (float) sqrt((double)(r1*r1 + r2*r2 + r3*r3)) );
    } 
    else {
       HANDLE_INTERNAL_ERROR( " impossible error in return_r" );

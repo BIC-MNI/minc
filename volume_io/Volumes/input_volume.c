@@ -2,11 +2,11 @@
 
 #ifndef  NO_MNC_FILES
 #include  <minc.h>
-#define   MNC_ENDING   ".mnc"
+#define   MNC_ENDING   "mnc"
 #endif
 
-#define   FREE_ENDING   ".fre"
-#define   MNI_ENDING    ".mni"
+#define   FREE_ENDING   "fre"
+#define   MNI_ENDING    "mni"
 
 private  void  setup_input_mni_as_free_format(
     char   filename[] );
@@ -41,22 +41,15 @@ public  Status  start_volume_input(
     volume_input_struct  *input_info )
 {
     Status          status;
-    int             len;
     Real            mni_scale, mni_translation;
     Boolean         mni_format;
     nc_type         data_type;
     static String   default_dim_names[N_DIMENSIONS] =
                                          { MIzspace, MIyspace, MIxspace };
-    String          expanded_filename, filename_no_z;
+    String          expanded_filename;
 
     if( dim_names == (String *) NULL )
         dim_names = default_dim_names;
-
-    (void) strcpy( filename_no_z, filename );
-    len = strlen( filename );
-
-    if( filename[len-2] == '.' && filename[len-1] == 'Z' )
-        filename_no_z[len-2] = (char) 0;
 
     status = OK;
 
@@ -68,18 +61,18 @@ public  Status  start_volume_input(
     *volume = create_volume( 3, dim_names, data_type, FALSE,
                              0.0, 0.0 );
 
-    expand_filename( filename_no_z, expanded_filename );
+    expand_filename( filename, expanded_filename );
     mni_format = FALSE;
 
 #ifndef  NO_MNC_FILES
-    if( string_ends_in( expanded_filename, MNI_ENDING ) )
+    if( filename_extension_matches( expanded_filename, MNI_ENDING ) )
     {
         get_mni_scaling( expanded_filename, &mni_scale, &mni_translation );
         setup_input_mni_as_free_format( expanded_filename );
         input_info->file_format = FREE_FORMAT;
         mni_format = TRUE;
     }
-    else if( !string_ends_in( expanded_filename, FREE_ENDING ) )
+    else if( !filename_extension_matches( expanded_filename, FREE_ENDING ) )
         input_info->file_format = MNC_FORMAT;
     else
 #endif

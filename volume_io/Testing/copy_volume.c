@@ -30,7 +30,7 @@ int  main(
         (void) strcpy( dim_names[2], MIzspace );
     }
 
-    status = input_volume( input_filename, dim_names, &volume );
+    status = input_volume( input_filename, dim_names, FALSE, &volume );
 
     get_volume_sizes( volume, sizes );
     get_volume_separations( volume, separations );

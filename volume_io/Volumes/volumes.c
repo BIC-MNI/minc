@@ -10,6 +10,9 @@ private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
     { "", MItime, MIzspace, MIyspace, MIxspace }
 };
 
+private  void  free_volume_data(
+    Volume   volume );
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_volume
 @INPUT      : n_dimensions      - number of dimensions (1-5)
@@ -43,8 +46,8 @@ public   Volume   create_volume(
     String      dimension_names[],
     nc_type     nc_data_type,
     Boolean     signed_flag,
-    Real        min_value,
-    Real        max_value )
+    Real        min_voxel,
+    Real        max_voxel )
 {
     int             i, sizes[MAX_DIMENSIONS];
     Status          status;
@@ -70,11 +73,10 @@ public   Volume   create_volume(
 
     volume->n_dimensions = n_dimensions;
 
-    volume->min_value = min_value;
-    volume->max_value = max_value;
+    volume->min_voxel = min_voxel;
+    volume->max_voxel = max_voxel;
     volume->value_scale = 1.0;
     volume->value_translation = 0.0;
-    volume->fill_value = 0.0;
     volume->labels = (unsigned char ***) NULL;
 
     for_less( i, 0, n_dimensions )
@@ -255,6 +257,11 @@ public  void  alloc_volume_data(
 {
     int    *sizes, n_dimensions;
     void   *ptr;
+
+    if( volume->data != (void *) NULL )
+    {
+        free_volume_data( volume );
+    }
 
     if( volume->data_type == NO_DATA_TYPE )
     {
@@ -543,8 +550,8 @@ public  void  convert_world_to_voxel(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_volume_voxel_range
 @INPUT      : volume
-@OUTPUT     : min_value
-              max_value
+@OUTPUT     : min_voxel
+              max_voxel
 @RETURNS    : 
 @DESCRIPTION: Passes back the min and max voxel values stored in the volume.
 @METHOD     : 
@@ -556,11 +563,11 @@ public  void  convert_world_to_voxel(
 
 public  void  get_volume_voxel_range(
     Volume     volume,
-    Real       *min_value,
-    Real       *max_value )
+    Real       *min_voxel,
+    Real       *max_voxel )
 {
-    *min_value = volume->min_value;
-    *max_value = volume->max_value;
+    *min_voxel = volume->min_voxel;
+    *max_voxel = volume->max_voxel;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -584,6 +591,6 @@ public  void  get_volume_range(
     Real       *min_value,
     Real       *max_value )
 {
-    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_value );
-    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_value );
+    *min_value = CONVERT_VOXEL_TO_VALUE( volume, volume->min_voxel );
+    *max_value = CONVERT_VOXEL_TO_VALUE( volume, volume->max_voxel );
 }

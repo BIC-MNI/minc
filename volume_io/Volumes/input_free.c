@@ -287,8 +287,8 @@ public  Status  initialize_free_format_input(
 
         }
 
-        volume->min_value = min_value;
-        volume->max_value = max_value;
+        volume->min_voxel = min_value;
+        volume->max_voxel = max_value;
 
         if( status == OK && !volume_input->one_file_per_slice )
             status = close_file( volume_input->volume_file );
@@ -455,13 +455,13 @@ public  Boolean  input_more_free_format_file(
         if( volume->data_type != volume_input->file_data_type )
         {
             scaling_flag = TRUE;
-            volume->value_translation = (Real) volume->min_value;
-            if( volume->min_value == volume->max_value )
+            volume->value_translation = (Real) volume->min_voxel;
+            if( volume->min_voxel == volume->max_voxel )
                 volume->value_scale = 1.0;
             else
             {
-                volume->value_scale = (Real) (volume->max_value -
-                                              volume->min_value) /
+                volume->value_scale = (Real) (volume->max_voxel -
+                                              volume->min_voxel) /
                                       (Real) (NUM_BYTE_VALUES - 1);
             }
         }
@@ -561,8 +561,8 @@ public  Boolean  input_more_free_format_file(
             }
         }
 
-        volume->min_value = (Real) min_value;
-        volume->max_value = (Real) max_value;
+        volume->min_voxel = (Real) min_value;
+        volume->max_voxel = (Real) max_value;
     }
 
     return( more_to_do );
