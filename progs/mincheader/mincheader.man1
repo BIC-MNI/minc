@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 2.0 1994-09-28 10:34:11 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincheader/mincheader.man1,v 2.1 1995-01-24 10:19:17 neelin Exp $
 .\"
 .TH MINCHEADER 1 "MINC Image File Format"
 
@@ -17,13 +17,17 @@ mincheader - prints out header information for a minc file
 
 .SH SYNOPSIS
 .B mincheader
-<infile> <outfile>
+[-data] <infile>
 
 .SH DESCRIPTION
 .I Mincheader
 prints out the header information for a minc file in cdl format (the
 netCDF text format). Mincheader simply calls ncdump, writing out all
-information except the image data.
+information except the image data. If the input file is compressed,
+then its header is decompressed and only the header is printed. If the
+.I -data
+option is given, then the whole file is decompressed and all data
+(except the image) is dumped.
 
 .SH AUTHOR
 Peter Neelin

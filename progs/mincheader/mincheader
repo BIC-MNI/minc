@@ -1,9 +1,12 @@
 #! /bin/csh -f
 
 # Modifications: $Log: mincheader,v $
-# Modifications: Revision 2.0  1994-09-28 10:34:10  neelin
-# Modifications: Release of minc version 0.2
+# Modifications: Revision 2.1  1995-01-24 10:19:09  neelin
+# Modifications: Added support for compressed files.
 # Modifications:
+# Revision 2.0  94/09/28  10:34:10  neelin
+# Release of minc version 0.2
+# 
 # Revision 1.6  94/09/28  10:34:06  neelin
 # Pre-release
 # 
@@ -18,21 +21,55 @@
 # 
 #
 
-# Check arguments
+# Set defaults
+if (! $?TMPDIR) set TMPDIR = /usr/tmp
+set header_opts = "-header_only"
+set header_only = 1
 
-if ($#argv != 1) then
-   echo "Usage: $0 <minc file>"
+# Check arguments
+set usage = "Usage: $0 [-data] <minc file>"
+if (($#argv < 1) || ($#argv > 2)) then
+   echo "$usage"
    exit -1
 endif
-if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
-   echo "Usage: $0 <minc file>"
-   exit
+if ($#argv == 1) then
+   if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
+      echo "$usage"
+      exit -1
+   endif
+else
+   if ("$1" != "-data") then
+      echo "$usage"
+      exit -1
+   endif
+   set header_opts = "-all_data"
+   set header_only = 0
+   shift
 endif
 set file = $1
 
-# Get variables names (excluding image): remove leading "image", remove word 
-# "image", collapse multiple blanks to one, remove leading blanks, remove
-# trailing blanks, replace blanks with commas
-set vars = `mincinfo -varnames $file | sed -e 's/^image //g' -e 's/ image / /g' -e 's/  */ /g' -e 's/^ //' -e 's/ $//' -e 's/ /,/g'`
+# Set interrupt handling
+onintr cleanup
 
-ncdump -v "$vars" $1
+# Expand file if needed
+set name = $file:t
+set tempfile = $TMPDIR/mincheader-$$-$name:r
+set dumpfile = `mincexpand $file $tempfile -name_only $header_opts`
+
+# Dump header only for compressed file
+if (("$dumpfile" == "$tempfile") && ($header_only)) then
+   ncdump -h $dumpfile
+
+# Dump everything if we've got it
+else
+
+#  Get variables names (excluding image): remove leading "image", remove word 
+#  "image", collapse multiple blanks to one, remove leading blanks, remove
+#  trailing blanks, replace blanks with commas
+   set vars = `mincinfo -varnames $dumpfile | sed -e 's/^image //g' -e 's/ image / /g' -e 's/  */ /g' -e 's/^ //' -e 's/ $//' -e 's/ /,/g'`
+   ncdump -v "$vars" $dumpfile
+endif
+
+
+cleanup:
+   rm -f $tempfile
