@@ -1,5 +1,18 @@
 #include  <def_mni.h>
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_linear_transform
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Allocates memory for the linear transform and its inverse.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 private  void  alloc_linear_transform(
     General_transform   *transform )
 {
@@ -9,6 +22,21 @@ private  void  alloc_linear_transform(
     ALLOC( transform->linear_transform, 1 );
     ALLOC( transform->inverse_linear_transform, 1 );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_linear_transform
+@INPUT      : linear_transform
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform of type linear, copying the
+              linear_transform and computing its inverse.  If the linear
+              transform is NULL, the identity transform is created.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  create_linear_transform(
     General_transform   *transform,
@@ -29,6 +57,25 @@ public  void  create_linear_transform(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_thin_plate_transform
+@INPUT      : n_dimensions
+              n_points
+              points
+              displacements
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform of type thin plate spline.  Note that
+              the points and displacements pointers are copied to the
+              general transform and should therefore not be free'd by the
+              caller.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  create_thin_plate_transform(
     General_transform    *transform,
     int                  n_dimensions,
@@ -43,6 +90,22 @@ public  void  create_thin_plate_transform(
     transform->points = points;
     transform->displacements = displacements;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_user_transform
+@INPUT      : user_data
+              size_user_data
+              transform_function
+              inverse_transform_function
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform of type user transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  create_user_transform(
     General_transform         *transform,
@@ -64,11 +127,38 @@ public  void  create_user_transform(
     transform->user_inverse_transform_function = inverse_transform_function;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_transform_type
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : type
+@DESCRIPTION: Returns the type of the general transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Transform_types  get_transform_type(
     General_transform   *transform )
 {
     return( transform->type );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_n_concated_transforms
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : # transforms
+@DESCRIPTION: Returns the number of concatenated transforms if the transform
+              type is concatenated, otherwise, 1.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  int  get_n_concated_transforms(
     General_transform   *transform )
@@ -78,6 +168,20 @@ public  int  get_n_concated_transforms(
     else
         return( 1 );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_nth_general_transform
+@INPUT      : transform
+              n
+@OUTPUT     : 
+@RETURNS    : pointer to nth transform
+@DESCRIPTION: Returns a pointer to the nth transform of the general transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  General_transform  *get_nth_general_transform(
     General_transform   *transform,
@@ -93,6 +197,20 @@ public  General_transform  *get_nth_general_transform(
     else
         return( transform );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_linear_transform_ptr
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : pointer to linear transform
+@DESCRIPTION: Returns a pointer to the linear transform of the general
+              transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Transform  *get_linear_transform_ptr(
     General_transform   *transform )
@@ -111,6 +229,20 @@ public  Transform  *get_linear_transform_ptr(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_inverse_linear_transform_ptr
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : pointer to inverse linear transform
+@DESCRIPTION: Returns a pointer to the inverse linear transform of the general
+              transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Transform  *get_inverse_linear_transform_ptr(
     General_transform   *transform )
 {
@@ -127,6 +259,26 @@ public  Transform  *get_inverse_linear_transform_ptr(
         return( (Transform *) NULL );
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : transform_or_invert_point
+@INPUT      : transform
+              inverse_flag
+              x
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
+@RETURNS    : 
+@DESCRIPTION: Transforms a point by the general transform or its inverse,
+              depending on inverse_flag.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  transform_or_invert_point(
     General_transform   *transform,
@@ -225,6 +377,24 @@ private  void  transform_or_invert_point(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : general_transform_point
+@INPUT      : transform
+              x
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
+@RETURNS    : 
+@DESCRIPTION: Transforms a point by the general transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  general_transform_point(
     General_transform   *transform,
     Real                x,
@@ -239,6 +409,24 @@ public  void  general_transform_point(
                                x_transformed, y_transformed, z_transformed );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : general_inverse_transform_point
+@INPUT      : transform
+              x
+              y
+              z
+@OUTPUT     : x_transformed
+              y_transformed
+              z_transformed
+@RETURNS    : 
+@DESCRIPTION: Transforms a point by the inverse of the general transform.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  general_inverse_transform_point(
     General_transform   *transform,
     Real                x,
@@ -252,6 +440,20 @@ public  void  general_inverse_transform_point(
     transform_or_invert_point( transform, !transform->inverse_flag, x, y, z,
                                x_transformed, y_transformed, z_transformed );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_and_invert_transform
+@INPUT      : transform
+              invert_it
+@OUTPUT     : copy
+@RETURNS    : 
+@DESCRIPTION: Copies the transform or its inverse to copy.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  copy_and_invert_transform(
     General_transform   *transform,
@@ -327,6 +529,19 @@ private  void  copy_and_invert_transform(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_general_transform
+@INPUT      : transform
+@OUTPUT     : copy
+@RETURNS    : 
+@DESCRIPTION: Copies the general transform to copy.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  copy_general_transform(
     General_transform   *transform,
     General_transform   *copy )
@@ -334,12 +549,41 @@ public  void  copy_general_transform(
     copy_and_invert_transform( transform, FALSE, copy );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_inverse_general_transform
+@INPUT      : transform
+@OUTPUT     : inverse
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform that is the inverse of the given one.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  create_inverse_general_transform(
     General_transform   *transform,
     General_transform   *inverse )
 {
     copy_and_invert_transform( transform, TRUE, inverse );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : concat_general_transforms
+@INPUT      : first
+              second
+@OUTPUT     : result
+@RETURNS    : 
+@DESCRIPTION: Concatenates two general transforms into result.  Transforming
+              a point by result is the same as transforming it by 'first',
+              then transforming by 'second'.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  concat_general_transforms(
     General_transform   *first,
@@ -447,6 +691,19 @@ public  void  concat_general_transforms(
     if( result == first || result == second )
         *result = *result_ptr;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_general_transform
+@INPUT      : transform
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes the transform, freeing up memory.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  delete_general_transform(
     General_transform   *transform )
