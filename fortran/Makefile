@@ -25,12 +25,14 @@ PROG_OBJ  = $(PROGS:=.o)#                 list of objects
 
 # --------------------------------------------------------------------
 
-default: $(PROGS)
+default: build 
+
+all: build lint library test
+
+build : $(PROGS) library
 
 #Dependency on Makefile
 $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
-
-all: $(PROGS) lint library test
 
 .c.ln:#                                   defines the rule for creating .ln
 	lint $(LINTFLAGS) -c $< -o $@
