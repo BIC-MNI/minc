@@ -145,6 +145,11 @@
 #define MIaddress        "address"
 #define MIinsurance_id   "insurance_id"
 
+/* Patient attribute constants */
+#define MI_MALE   "male__"
+#define MI_FEMALE "female"
+#define MI_OTHER  "other_"
+
 /* The study variable and its attributes */
 #define MIstudy               "study"
 #define MIstart_time          "start_time"
@@ -190,6 +195,7 @@
 #define MIradionuclide          "radionuclide"
 #define MIcontrast_agent        "contrast_agent"
 #define MItotal_dose            "total_dose"
+#define MIdose_units            "dose_units"
 #define MIradionuclide_halflife "radionuclide_halflife"
 #define MItracer                "tracer"
 #define MIinjection_time        "injection_time"
