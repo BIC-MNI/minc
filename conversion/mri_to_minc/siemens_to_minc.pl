@@ -150,6 +150,43 @@ sub matrix_identity {
     return (1,0,0, 0,1,0, 0,0,1);
 }
 
+sub matrix_xrot {
+   local($angle) = @_;
+   local(@result);
+   local($sin, $cos);
+
+   $sin = sin($angle);
+   $cos = cos($angle);
+   return (1,0,0, 0,$cos,$sin, 0,-$sin,$cos);
+}
+
+sub matrix_yrot {
+   local($angle) = @_;
+   local(@result);
+   local($sin, $cos);
+
+   $sin = sin($angle);
+   $cos = cos($angle);
+   return ($cos,0,-$sin, 0,1,0, $sin,0,$cos);
+}
+
+sub matrix_zrot {
+   local($angle) = @_;
+   local(@result);
+   local($sin, $cos);
+
+   $sin = sin($angle);
+   $cos = cos($angle);
+   return ($cos,$sin,0, -$sin,$cos,0, 0,0,1);
+}
+
+sub matrix_extract_row {
+   local(*matrix, $row) = @_;
+
+   local($offset) = $row*3;
+   return @matrix[$offset..$offset+2];
+}
+
 sub get_transform_from_normal {
     local(*major, *normal) = @_;
     local(@result);
@@ -173,22 +210,8 @@ sub get_transform_from_normal {
     return @result;
 }
 
-sub get_direction_cosines {
+sub old_get_direction_cosines {
     local($orientation, *normal, *col_dircos, *row_dircos, *slc_dircos) = @_;
-
-    # Check for normal that is not in one of the major planes
-    local($danger_normal) = 1;
-    foreach $coord (@normal) {
-        if ($coord == 0.0) { 
-            $danger_normal = 0;
-        }
-    }
-    if ($danger_normal) {
-        warn "\n\nWARNING!!!!! ".
-        "Found old Siemens file with dangerous image normal (2 rotations).\n".
-        "Getting out of here fast! Time to fix this program!\n\n\n";
-        &cleanup_and_die("Sorry!\n", -1);
-    }
 
     # Get transformation from col,row,slice (axis) to x,y,z (world)
     local(@axis_to_world, @world_to_axis);
@@ -221,6 +244,126 @@ sub get_direction_cosines {
     @col_dircos = &matrix_vector_multiply(*axis_to_world, *col_dircos);
     @row_dircos = &matrix_vector_multiply(*axis_to_world, *row_dircos);
     @slc_dircos = &matrix_vector_multiply(*axis_to_world, *slc_dircos);
+    @col_dircos = &get_dircos(@col_dircos);
+    @row_dircos = &get_dircos(@row_dircos);
+    @slc_dircos = &get_dircos(@slc_dircos);
+
+}
+
+sub get_transform_from_axes {
+   local($first, $second, $angle) = @_;
+
+   $angle *= 3.14159265358979323846/180.0;
+
+   if (($first eq 'tra') && ($second eq 'sag')) {
+      return &matrix_yrot($angle);
+   }
+   elsif (($first eq 'sag') && ($second eq 'tra')) {
+      return &matrix_yrot(-$angle);
+   }
+   elsif (($first eq 'sag') && ($second eq 'cor')) {
+      return &matrix_zrot($angle);
+   }
+   elsif (($first eq 'cor') && ($second eq 'sag')) {
+      return &matrix_zrot(-$angle);
+   }
+   elsif (($first eq 'cor') && ($second eq 'tra')) {
+      return &matrix_xrot($angle);
+   }
+   elsif (($first eq 'tra') && ($second eq 'cor')) {
+      return &matrix_xrot(-$angle);
+   }
+   else {
+      return &matrix_identity();
+   }
+}
+
+sub get_transform_from_orient_strings {
+   local($orient_str1, $orient_str2) = @_;
+   local(@result);
+
+   # Parse the orientation strings
+   local($axis_list) = 'tra|sag|cor';
+   $orient_str1 =~ tr/A-Z/a-z/;
+   $orient_str2 =~ tr/A-Z/a-z/;
+   if ($orient_str1 =~ /^\s*($axis_list)>($axis_list)\s*(\S*)/) {
+      $major_axis = $1;
+      $first_axis = $2;
+      $first_angle = $3;
+      if ($orient_str2 =~ /^\s*>($axis_list)\s*(\S*)/) {
+         $second_axis = $1;
+         $second_angle = $2;
+      }
+      else {
+         $second_axis = "";
+         $second_angle = 0;
+      }
+   }
+   else {
+      $major_axis = "";
+      $first_axis = "";
+      $first_angle = 0;
+      $second_axis = "";
+      $second_angle = 0;
+   }
+
+   # Create rotation matrix
+   local(@mat1, @mat2);
+   @mat1 = &get_transform_from_axes($major_axis, $first_axis, $first_angle);
+   @mat2 = &get_transform_from_axes($major_axis, $second_axis, $second_angle);
+   @result = &matrix_multiply(*mat1, *mat2);
+
+   return @result;
+}
+
+sub get_direction_cosines {
+    local($orientation, $orient_str1, $orient_str2, *normal,
+          *col_dircos, *row_dircos, *slc_dircos) = @_;
+
+    # Get transformation from col,row,slice (axis) to x,y,z (world)
+    local(@axis_row);
+    if ($orientation eq "transverse") {
+       @axis_row = (0,1,2);
+    }
+    elsif ($orientation eq "sagittal") {
+       @axis_row = (1,2,0);
+    }
+    elsif ($orientation eq "coronal") {
+       @axis_row = (0,2,1);
+    }
+    else {die "Unknown orientation \"$orientation\"";}
+
+    # Extract rotation angles from strings
+    local(@transform) = 
+       &get_transform_from_orient_strings($orient_str1, $orient_str2);
+ 
+    # Extract direction cosines
+    local(@transpose) = &matrix_transpose(*transform);
+    @col_dircos = &matrix_extract_row(*transpose, $axis_row[0]);
+    @row_dircos = &matrix_extract_row(*transpose, $axis_row[1]);
+    @slc_dircos = &matrix_extract_row(*transpose, $axis_row[2]);
+
+    # Fix up the coordinates
+    @col_dircos = &convert_coordinates(@col_dircos);
+    @row_dircos = &convert_coordinates(@row_dircos);
+    @slc_dircos = &convert_coordinates(@slc_dircos);
+    @col_dircos = &get_dircos(@col_dircos);
+    @row_dircos = &get_dircos(@row_dircos);
+    @slc_dircos = &get_dircos(@slc_dircos);
+
+    # Compare to normal
+    @normal = &get_dircos(@normal);
+    local($diff) = 0;
+    foreach $i (0..2) {
+       $diff += ($normal[$i] - $slc_dircos[$i]) ** 2;
+    }
+    $diff = sqrt($diff);
+    if ($diff > 1.0e-6) {
+       warn "\n\nWARNING!!!!! ".
+          "Calculated image normal doesn't match file value.\n".
+          "Something went wrong in dircos calculation for Numaris 2!\n\n\n";
+       &cleanup_and_die("Sorry!\n", -1);
+    }
 
 }
 
@@ -294,6 +437,7 @@ sub numaris2_read_file_info {
     local($patient_hdr) = substr($header, 6*$blksize, 512);
     local($meas_hdr) = substr($header, 7*$blksize, 3072);
     local($image_hdr) = substr($header, 13*$blksize, 512);
+    local($text_hdr) = substr($header, 14*$blksize, 512);
 
     # Get interesting values
     $file_info{'numechos'} = &unpack_int(*meas_hdr, 512);
@@ -335,11 +479,11 @@ sub numaris2_read_file_info {
     if ($fovy == 0) {$fovy = $fovx};
     $file_info{'colstep'} = -$fovx / $file_info{'width'};
     $file_info{'rowstep'} = -$fovy / $file_info{'height'};
-    &get_direction_cosines($file_info{'orientation'}, *normal, 
+    local($orient_str1) = &unpack_value(*text_hdr, 332, "A11");
+    local($orient_str2) = &unpack_value(*text_hdr, 343, "A11");
+    &get_direction_cosines($file_info{'orientation'}, 
+                           $orient_str1, $orient_str2, *normal,
                            *col_dircos, *row_dircos, *slc_dircos);
-    @col_dircos = &get_dircos(@col_dircos);
-    @row_dircos = &get_dircos(@row_dircos);
-    @slc_dircos = &get_dircos(@slc_dircos);
     local($xcentre, $ycentre, $zcentre) = 
         &convert_coordinates(&unpack_float(*meas_hdr, 368),
                              &unpack_float(*meas_hdr, 372),
