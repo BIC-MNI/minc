@@ -784,7 +784,8 @@ public int miicv_setdbl(int icvid, int icv_property, double value);
 \end{verbatim}
 
 \item \code{miicv\_setint} : Set an integer icv property
-(\code{MI\_ICV\_ADIM\_SIZE} and \code{MI\_ICV\_BDIM\_SIZE} can also be
+(properties \code{MI\_ICV\_DIM\_SIZE}, \code{MI\_ICV\_ADIM\_SIZE}
+and \code{MI\_ICV\_BDIM\_SIZE} can also be 
 set with this routine, even though they are long values).
 \begin{verbatim}
 public int miicv_setint(int icvid, int icv_property, int value);
