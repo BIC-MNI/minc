@@ -24,8 +24,6 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 # --------------------------------------------------------------------
 
-.SUFFIXES: .ln#                           tell make to watch for .ln's
-
 default: build
 
 all: build test
