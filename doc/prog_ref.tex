@@ -9,7 +9,7 @@
 % software for any purpose.  It is provided "as is" without
 % express or implied warranty.
 %
-\documentstyle{article}
+\documentclass{article}
 \title{MINC Programmer's Reference Manual}
 \author{Peter Neelin}
 \date{November 3, 1993}
@@ -770,6 +770,41 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 \subsection{MINC-specific convenience functions}
 
 \begin{itemize}
+
+\item \code{miget\_datatype} : Get the type and sign information for
+an image variable. Signed data is indicated by setting
+\code{is\_signed} to \code{TRUE}; unsigned by \code{FALSE}.
+\begin{verbatim}
+public int miget_datatype(int cdfid, int imgid,
+                          nc_type *datatype, int *is_signed);
+\end{verbatim}
+
+\item \code{miget\_default\_range} : Returns the default range for a
+specified type and sign.
+\begin{verbatim}
+public int miget_default_range(nc_type datatype, int is_signed,
+                               double default_range[]);
+\end{verbatim}
+
+\item \code{miget\_valid\_range} : Gets the valid range information
+for an image variable. This function handles potential type
+differences between the \code{valid\_range} attribute and the image
+data. These differences (particularly float images with double
+\code{valid\_range}) could otherwise lead to problems in properly
+identifying invalid data.
+
+\begin{verbatim}
+public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
+\end{verbatim}
+
+\item \code{miset\_valid\_range} : Sets the valid range information
+for an image variable. This function follows the NetCDF convention of
+having both variable data and \code{valid\_range} attribute with the
+same type.
+
+\begin{verbatim}
+public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
+\end{verbatim}
 
 \item \code{miattput\_pointer} : Create an attribute \code{name} in the
 variable \code{varid} that points to the variable \code{ptrvarid}.
