@@ -6,7 +6,11 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.h,v $
- * Revision 6.5  2000-05-17 20:17:48  neelin
+ * Revision 6.6  2001-03-19 18:30:33  neelin
+ * Added function to set implementation uid and changed name of function
+ * that gets it.
+ *
+ * Revision 6.5  2000/05/17 20:17:48  neelin
  * Added mechanism to allow testing of input streams for more data through
  * function acr_file_ismore.
  * This is used in dicom_client_routines to allow asynchronous transfer
@@ -97,7 +101,8 @@ DCM_PDU_ELEMENT(DCM_PDU_Reason,                          0x0170, US);
 /* Function prototypes */
 public int acr_uid_equal(char *uid1, char *uid2);
 public char *acr_create_uid(void);
-public char *acr_implementation_uid(void);
+public void acr_set_implementation_uid(char *uid);
+public char *acr_get_implementation_uid(void);
 public Acr_Status acr_input_dicom_message(Acr_File *dicom_afp, 
                                           Acr_Message *message);
 public Acr_Status acr_output_dicom_message(Acr_File *dicom_afp, 

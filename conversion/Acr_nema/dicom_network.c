@@ -6,7 +6,11 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.c,v $
- * Revision 6.9  2000-05-17 20:17:47  neelin
+ * Revision 6.10  2001-03-19 18:30:32  neelin
+ * Added function to set implementation uid and changed name of function
+ * that gets it.
+ *
+ * Revision 6.9  2000/05/17 20:17:47  neelin
  * Added mechanism to allow testing of input streams for more data through
  * function acr_file_ismore.
  * This is used in dicom_client_routines to allow asynchronous transfer
@@ -296,8 +300,34 @@ public char *acr_create_uid(void)
    return uid;
 }
 
+/* Space for storing the implementation class uid. Should only be used by
+   acr_set_implementation_uid and acr_get_implementation_uid */
+static char Implementation_class_uid[65] = "";
+
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_implementation_uid
+@NAME       : acr_set_implementation_uid
+@INPUT      : uid to set for implementation class
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to set a uid for this software implementation. This
+              string is returned by acr_get_implementation_uid which is used 
+              by client routines setting up associations. A static space is
+              used to store the uid string.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 7, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_implementation_uid(char *uid)
+{
+   (void) strncpy(Implementation_class_uid, uid, 
+                  sizeof(Implementation_class_uid));
+   Implementation_class_uid[sizeof(Implementation_class_uid)-1] = '\0';
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_get_implementation_uid
 @INPUT      : (none)
 @OUTPUT     : (none)
 @RETURNS    : pointer to internal buffer containing uid
@@ -308,17 +338,20 @@ public char *acr_create_uid(void)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : March 23, 1998 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : March 7, 2001 (P.N.)
+                 - changed name from acr_implementation_uid
 ---------------------------------------------------------------------------- */
-public char *acr_implementation_uid(void)
+public char *acr_get_implementation_uid(void)
 {
-   static char uid[64];
 
-   /* Set the uid */
-   (void) sprintf(uid, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
-                  (int) 'M', (int) 'N', (int) 'I');
+   /* Set the uid if it is not already set */
+   if (Implementation_class_uid[0] == '\0') {
+      (void) sprintf(Implementation_class_uid, 
+                     "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
+                     (int) 'M', (int) 'N', (int) 'I');
+   }
 
-   return uid;
+   return Implementation_class_uid;
 }
 
 /*****************************************************************************/
