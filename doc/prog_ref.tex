@@ -1,7 +1,7 @@
 \documentstyle{article}
 \title{MINC Reference Manual}
 \author{Peter Neelin}
-\date{March 19, 1993}
+\date{June 15, 1993}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -1025,17 +1025,6 @@ Default = \code{MIimagemin}.
 \section{Known bugs}
 
 \begin{itemize}
-
-\item The NetCDF package will crash on a rename system call in the
-routine \code{ncendef} if the environment variable \code{TMPDIR} is set
-when \code{ncredef} is called.
-
-\item The NetCDF package will not return the dimension ids through
-ncvarinq if the pointer to ndims is NULL.
-
-\item NetCDF does not set ncerr to \code{NC\_ENOTNC} if ncopen fails
-due to a non NetCDF file. Check for \code{NC\_SYSERR} to distinguish
-between file errors and non NetCDF files.
 
 \item For dimension conversion with image conversion variables, the
 values of \code{MI\_ICV\_DIM\_START}, \code{MI\_ICV\_ADIM\_START} and
