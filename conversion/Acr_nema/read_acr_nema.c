@@ -7,7 +7,13 @@
 @CREATED    : March 14, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: read_acr_nema.c,v $
- * Revision 6.1  1999-10-29 17:51:54  neelin
+ * Revision 6.2  2001-11-08 14:17:06  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.1  1999/10/29 17:51:54  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -106,7 +112,7 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_order(afp);
+   (void) acr_test_dicom_file(afp);
 
    /* Read in group list up to group */
    (void) acr_input_group_list(afp, &group_list, 0);

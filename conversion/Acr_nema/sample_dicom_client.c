@@ -5,7 +5,13 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: sample_dicom_client.c,v $
- * Revision 6.1  1999-10-29 17:51:54  neelin
+ * Revision 6.2  2001-11-08 14:17:06  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.1  1999/10/29 17:51:54  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -48,7 +54,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.1 1999-10-29 17:51:54 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.2 2001-11-08 14:17:06 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -150,7 +156,7 @@ public int send_file(Acr_File *afpin, Acr_File *afpout, char *filename)
 
    /* Connect to input stream */
    file_afp = acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_order(file_afp);
+   (void) acr_test_dicom_file(file_afp);
 
    /* Read in group list up to group */
    status =  acr_input_group_list(file_afp, &group, 0);

@@ -6,7 +6,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.h,v $
- * Revision 6.2  1999-10-29 17:51:53  neelin
+ * Revision 6.3  2001-11-08 14:17:06  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.2  1999/10/29 17:51:53  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1998/11/06 19:41:06  neelin
@@ -128,3 +134,4 @@ public void acr_insert_string(Acr_Group *group_list, Acr_Element_Id elid,
                               char *value);
 public void acr_insert_sequence(Acr_Group *group_list, Acr_Element_Id elid, 
                                 Acr_Element itemlist);
+public Acr_Status acr_test_dicom_file(Acr_File *afp);

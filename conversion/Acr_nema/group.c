@@ -6,7 +6,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.4  2000-05-01 17:18:07  neelin
+ * Revision 6.5  2001-11-08 14:17:05  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.4  2000/05/01 17:18:07  neelin
  * Modifications tohandle end-of-input properly, both on first group
  * read, and when ignoring protocol errors.
  *
@@ -103,6 +109,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 #include <minc_def.h>
 #include <acr_nema.h>
 
@@ -1420,5 +1427,65 @@ public void acr_insert_sequence(Acr_Group *group_list, Acr_Element_Id elid,
    element = acr_create_element_sequence(elid, itemlist);
    acr_insert_element_into_group_list(group_list, element);
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_test_dicom_file
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : status
+@DESCRIPTION: Tests for a dicom file input, as well as setting the byte
+              order and VR encoding.
+@METHOD     : Check the byte order and t
+              This function is in this file because it does not really have 
+              a better place to live: It depends on the group reading code 
+              (and so should not live in acr_io.c) and is independent of 
+              the other dicom code (and so should not live there).
+@GLOBALS    : 
+@CALLS      : acr_test_byte_order, acr_input_group_list
+@CREATED    : November 8, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Status acr_test_dicom_file(Acr_File *afp)
+{
+#define DICOM_FILE_MAGIC_OFFSET 128
+#define DICOM_MAGIC_STRING "DICM"
+#define DICOM_MAGIC_LEN 4
+#define DICOM_FILE_GROUP 0x2
+
+   unsigned char buffer[DICOM_FILE_MAGIC_OFFSET+DICOM_MAGIC_LEN];
+   Acr_Status status;
+   long buflen;
+   Acr_Group group_list;
+
+   /* Read in up to magic */
+   status = acr_read_buffer(afp, buffer, sizeof(buffer), &buflen);
+   if (status != ACR_OK) return status;
+
+   /* Check for the magic. If it is not there, put the data back and
+      then test the byte order. */
+   if (strncmp((char *) &buffer[DICOM_FILE_MAGIC_OFFSET], DICOM_MAGIC_STRING, 
+               DICOM_MAGIC_LEN) != 0) {
+      status = acr_unget_buffer(afp, buffer, buflen);
+      if (status != ACR_OK) return status;
+      return acr_test_byte_order(afp);
+   }
+
+   /* Read in group 2.
+      We could get the transfer syntax in the group at this point, 
+      or just use the test heuristic from acr_test_byte_order. It seems
+      safer to trust the heuristic than the file writer, so we will ignore
+      the contents of the group. */
+   status = acr_test_byte_order(afp);
+   if (status != ACR_OK) return status;
+   status = acr_input_group_list(afp, &group_list, DICOM_FILE_GROUP);
+   acr_delete_group_list(group_list);
+   if (status != ACR_OK) return status;
+
+   /* Test the byte order for the remainder of the file */
+   status = acr_test_byte_order(afp);
+   if (status != ACR_OK) return status;
+
+   return status;
 }
 

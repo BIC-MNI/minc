@@ -6,7 +6,13 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_acr_nema.c,v $
- * Revision 6.4  2000-05-01 17:54:45  neelin
+ * Revision 6.5  2001-11-08 14:17:05  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.4  2000/05/01 17:54:45  neelin
  * Fixed handling of test for byte order.
  *
  * Revision 6.3  2000/05/01 13:59:55  neelin
@@ -184,7 +190,7 @@ int main(int argc, char *argv[])
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
    acr_set_ignore_errors(afp, ignore_errors);
-   (void) acr_test_byte_order(afp);
+   (void) acr_test_dicom_file(afp);
    if (byte_order != ACR_UNKNOWN_ENDIAN) {
       acr_set_byte_order(afp, byte_order);
    }

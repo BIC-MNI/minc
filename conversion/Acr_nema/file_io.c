@@ -6,7 +6,13 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.3  2000-05-17 20:17:48  neelin
+ * Revision 6.4  2001-11-08 14:17:05  neelin
+ * Added acr_test_dicom_file to allow reading of DICOM part 10 format
+ * files. This function also calls acr_test_byte_order to set up the stream
+ * properly and can be used as a direct replacement for that function.
+ * This set of changes does NOT include the ability to write part 10 files.
+ *
+ * Revision 6.3  2000/05/17 20:17:48  neelin
  * Added mechanism to allow testing of input streams for more data through
  * function acr_file_ismore.
  * This is used in dicom_client_routines to allow asynchronous transfer
@@ -87,7 +93,7 @@
 
 /* Define some constants */
 #define ACR_MAX_BUFFER_LENGTH (64*1024)
-#define ACR_BUFFER_MARGIN 64
+#define ACR_BUFFER_MARGIN 256
 #ifndef TRUE
 #  define TRUE 1
 #endif
