@@ -62,20 +62,21 @@ struct mivolprops {
  * Dimension handle  
  */
 struct midimension {
-  midimattr_t attr;
-  midimclass_t class;
-  double direction_cosines[3];
+  midimattr_t attr;             /* Dimension attributes */
+  midimclass_t class;           /* Dimension class */
+  double direction_cosines[3];  /* Direction cosines */
   miflipping_t flipping_order;
-  char *name;
-  double *offsets;
-  double step;
-  unsigned long length;
-  double start;
-  char *units;
-  double width; 
-  double *widths;
-  char *comments;
-  mihandle_t volume_handle;
+  char *name;                   /* Dimension name */
+  double *offsets;              /* Offsets (if irregular) */
+  double step;                  /* Step size */
+  unsigned long length;         /* Length */
+  double start;                 /* Start value */
+  char *units;                  /* Units string */
+  double width;                 /* Sample width (if regular) */
+  double *widths;               /* Widths (if irregular) */
+  char *comments;               /* Comment string */
+  mihandle_t volume_handle;     /* Handle of associated volume */
+  short world_index;            /* -1, MI2_X, MI2_Y, or MI2_Z */
 };
 
 /** \internal
@@ -86,7 +87,6 @@ struct mivolume {
   BOOLEAN has_slice_scaling;
   int number_of_dims;
   midimhandle_t *dim_handles;   /* file order of dimensions */
-  short *world_indices;         /* conversion from voxel to world order */
   int *dim_indices;             /* apparent order of dimensions */
   mitype_t volume_type;
   miclass_t volume_class;
