@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.8  2002-08-05 00:53:50  neelin
+ * Revision 6.9  2003-10-21 22:22:09  bert
+ * Added -swap_bytes option for int or short input, per A. Janke.
+ *
+ * Revision 6.8  2002/08/05 00:53:50  neelin
  * Added slightly modified code from Colin Holmes to support -skip option
  *
  * Revision 6.7  2001/09/18 15:33:00  neelin
@@ -125,7 +128,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.8 2002-08-05 00:53:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.9 2003-10-21 22:22:09 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -267,6 +270,7 @@ char *inputfile = NULL;
 int do_minmax = FALSE;
 double real_range[2] = {DEF_RANGE, DEF_RANGE};
 long skip_length;
+int swap_bytes = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -324,6 +328,8 @@ ArgvInfo argTable[] = {
        "Valid range of input values (default = full range)."},
    {"-real_range", ARGV_FLOAT, (char *) 2, (char *) real_range, 
        "Real range of input values (ignored for floating-point types)."},
+   {"-swap_bytes", ARGV_CONSTANT, (char *) TRUE, (char *)&swap_bytes,
+       "Swap bytes on short or long integer input." },
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for type of output minc data. Default = input data type"},
    {"-obyte", ARGV_CONSTANT, (char *) BYTE_TYPE, (char *) &otype,
@@ -737,6 +743,66 @@ main(int argc, char *argv[])
       if (nread!=image_pix) {
          (void) fprintf(stderr, "%s: Premature end of file.\n", pname);
          exit(ERROR_STATUS);
+      }
+
+      /* If the user wants to swap bytes, do it here before any further
+       * processing of the image.
+       */
+      if (swap_bytes) {
+          switch (datatype) {
+          case NC_SHORT:
+              /* Easy case - call swab() */
+              if ((image_size & 1) != 0) {
+                  fprintf(stderr,
+                          "%s: image size must be even for -swap_bytes\n",
+                          pname);
+                  exit(ERROR_STATUS);
+              }
+              else {
+                  swab(image, image, image_size);
+              }
+              break;
+
+          case NC_INT:
+              /* Harder case - have to do a more complex 4-byte swap. */
+              if ((image_size & 3) != 0) {
+                  fprintf(stderr, 
+                          "%s: image size must be divisible by 4 for -swap_bytes!\n",
+                          pname);
+                  exit(ERROR_STATUS);
+              }
+              else {
+                  unsigned char *img_ptr;
+                  unsigned char *img_end;
+
+                  for (img_ptr = image, img_end = image + image_size;
+                       img_ptr < img_end;
+                       img_ptr += 4) {
+                      unsigned char tmp;
+
+                      /* Swap the inner 2 bytes 
+                       */
+                      tmp = img_ptr[1];
+                      img_ptr[1] = img_ptr[2];
+                      img_ptr[2] = tmp;
+
+                      /* Swap the outer 2 bytes 
+                       */
+                      tmp = img_ptr[0];
+                      img_ptr[0] = img_ptr[3];
+                      img_ptr[3] = tmp;
+                  }
+              }
+              break;
+
+          default:
+              /* I don't see any point in implementing swap for bytes, floats,
+               * or doubles.
+               */
+              fprintf(stderr, 
+                      "Warning: you specified -swap_bytes, but I can't swap this type if input\n");
+              break;
+          }
       }
 
       /* Search for max and min for float and double */
