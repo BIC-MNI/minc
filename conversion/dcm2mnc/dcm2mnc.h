@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.5  2005-03-03 20:10:14  bert
+ * Revision 1.6  2005-03-13 19:34:41  bert
+ * Add pms_element_defs.h to the header
+ *
+ * Revision 1.5  2005/03/03 20:10:14  bert
  * Consider patient_id and patient_name when sorting into series
  *
  * Revision 1.4  2005/03/03 18:59:15  bert
@@ -89,6 +92,7 @@
 #include "acr_element_defs.h"
 #include "spi_element_defs.h"
 #include "ext_element_defs.h"
+#include "pms_element_defs.h"   /* Philips Medical Systems */
 
 #ifndef TRUE
 #  define TRUE 1
