@@ -9,13 +9,16 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 1.1  1995-05-03 13:19:56  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1995-05-03 16:13:46  neelin
+@MODIFIED   : Changed default for -copy/-nocopy to depend on number of input files.
 @MODIFIED   :
+ * Revision 1.1  1995/05/03  13:19:56  neelin
+ * Initial revision
+ *
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 1.1 1995-05-03 13:19:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 1.2 1995-05-03 16:13:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -41,6 +44,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 
 #endif
 
 #define DEFAULT_DBL DBL_MAX
+
+#define DEFAULT_BOOL -1
 
 /* Typedefs */
 typedef enum {
@@ -119,7 +124,7 @@ int debug = FALSE;
 nc_type datatype = NC_UNSPECIFIED;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
-int copy_all_header = FALSE;
+int copy_all_header = DEFAULT_BOOL;
 char *loop_dimension = NULL;
 int max_buffer_size_in_kb = 4 * 1024;
 double constant = DEFAULT_DBL;
@@ -147,7 +152,7 @@ ArgvInfo argTable[] = {
    {"-copy_header", ARGV_CONSTANT, (char *) TRUE, (char *) &copy_all_header,
        "Copy all of the header from the first file."},
    {"-nocopy_header", ARGV_CONSTANT, (char *) FALSE, (char *) &copy_all_header,
-       "Do not copy all of the header from the first file (default)."},
+       "Do not copy all of the header from the first file."},
    {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
@@ -310,6 +315,10 @@ public int main(int argc, char *argv[])
                      pname);
       exit(EXIT_FAILURE);
    }
+
+   /* Set default copy_all_header according to number of input files */
+   if (copy_all_header == DEFAULT_BOOL)
+      copy_all_header = (nfiles == 1);
 
    /* Set up math data structure */
    math_data.operation = operation;
