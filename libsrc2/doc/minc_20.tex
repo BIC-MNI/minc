@@ -106,6 +106,10 @@ SUN FEB 01/2004 Leila\\*
 THU JUL 22/2004 Leila\\*
 * Updated miget_slice_scaling_flag : missing parameter
 
+THU AUG 12/2004 Leila\\*
+* Removed MI_TYPE_CHAR 
+* Added the attribute listing functions to API
+
 \section{Introduction}
 
 
@@ -119,7 +123,7 @@ at http://hdf.ncsa.uiuc.edu/HDF5/doc/H5.user.html ).
 
 To be completed later. 
 
-\section{ATTRIBUTE/GROUP FUNCTIONS (7)}
+\section{ATTRIBUTE/GROUP FUNCTIONS (13)}
 \subsection{micreate\_group}
 
 \begin{verbatim}
@@ -324,6 +328,182 @@ RETURN VALUE
 
 miset_attr_values returns MI_NOERROR if it successfully sets the
 attribute value(s) or MI_ERROR otherwise
+\end{verbatim}
+
+\subsection{milist\_attr\_start}
+
+\begin{verbatim}
+NAME 
+
+milist_attr_start - get list of attributes starting at given path
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_attr_start ( mihandle_t              volume, 
+                        const char              *path,
+                        int                     flags,
+                        milisthandle_t          *handle)
+
+                                                
+DESCRIPTION
+
+This function begins listing the attributes found in the group (and
+possibly the subgroups) associated with the given path.
+
+If the flags argument includes MILIST_ATTR_RECURSE, then all of the 
+paths subgroups will be searched and their attributes will be listed
+as well.
+
+The path string should always end with a slash ("/") character.
+
+The returned handle is used to pass to milist_attr_next() and 
+milist_attr_finish() to actually perform the listing operation.
+
+RETURN VALUE
+
+milist_attr_start returns MI_NOERROR if it successfully gets the
+attribute(s) or MI_ERROR otherwise
+
+\end{verbatim}
+
+\subsection{milist\_attr\_next}
+
+\begin{verbatim}
+NAME 
+
+milist_attr_next - get the attributes at given path
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_attr_next  ( milisthandle_t          handle,
+                        char                    *path,
+                        int                     maxpath
+                        char                    *name,
+                        int                     maxname)
+
+DESCRIPTION
+
+This function returns each of the attributes associated with the
+listing initiated by a call to milist_attr_start().  Each successive
+call of the milist_attr_next() function returns the next attribute's
+path and name in the corresponding string buffers.  
+
+When all possible attributes have been returned, the function returns
+an error.
+
+The maxpath and maxname parameters are used to set the maximum length of the
+two string buffers.
+
+If the listing operation is not recursive, the path parameter will always
+have length zero (the empty string).
+
+RETURN VALUE
+
+milist_attr_next returns MI_NOERROR if it successfully gets the
+attribute name or MI_ERROR otherwise
+
+\end{verbatim}
+
+\subsection{milist\_attr\_finish}
+
+\begin{verbatim}
+NAME
+
+milist_attr_finish - finish listing attributes in a group
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_attr_finish (milisthandle_t handle)
+
+DESCRIPTION
+
+Finishes the attribute listing process, and frees any memory
+associated with the handle.
+
+RETURN VALUE 
+
+milist_attr_finish() returns MI_NOERROR if it completes successfully,
+or MI_ERROR otherwise.
+
+\subsection{milist\_grp\_start}
+
+\begin{verbatim}
+NAME 
+
+milist_grp_start - get list of groups starting at given path
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_grp_start ( mihandle_t              volume, 
+                       const char              *path,
+                       int                     flags,
+                       milisthandle_t          *handle)
+
+DESCRIPTION
+
+RETURN VALUE
+
+milist_grp_start returns MI_NOERROR if it successfully gets the
+groups or MI_ERROR otherwise
+\end{verbatim}
+
+
+\subsection{milist\_grp\_next}
+
+\begin{verbatim}
+
+NAME 
+
+milist_grp_next - get the group at given path
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_grp_next  ( milisthandle_t          handle, 
+                       const char              *path,
+                       int                     maxpath)
+                        
+DESCRIPTION
+
+
+
+RETURN VALUE
+
+milist_grp_next returns MI_NOERROR if it successfully gets the
+group name or MI_ERROR otherwise
+
+\end{verbatim}
+
+\subsection{milist\_grp\_finish}
+
+\begin{verbatim}
+NAME
+
+milist_grp_finish - Finish listing the subgroups of a group.
+SYNOPSIS
+
+#include <minc2.h>
+
+int milist_grp_finish  ( milisthandle_t          handle, 
+                       
+DESCRIPTION
+
+Finishes the group listing process, and frees any memory associated
+with handle.
+
+RETURN VALUE
+milist_grp_finish() returns MI_NOERROR if it completes successfully,
+or MI_ERROR otherwise.
+
 \end{verbatim}
 
 \section{DATA TYPE/SPACE FUNCTIONS (5)}
