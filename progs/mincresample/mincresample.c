@@ -13,10 +13,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.3 1993-03-08 11:41:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.4 1993-07-13 16:17:02 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
@@ -27,8 +26,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <def_tag_io.h>
+#include <minc_def.h>
 #include "mincresample.h"
-#include <malloc.h>
 
 #define public
 #define private static
@@ -53,7 +52,7 @@ public int main(int argc, char *argv[])
    /* Finish up */
    finish_up(in_vol, out_vol);
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 }
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -125,10 +125,6 @@ typedef struct {
 
 /* Macros used in program */
 
-#define MALLOC(size) malloc(size)
-
-#define FREE(ptr) free(ptr)
-
 #define DO_TRANSFORM(result, transformation, coord) \
    (*transformation->transform) (result, transformation->trans_data, coord)
 

@@ -8,10 +8,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.4 1993-03-08 14:40:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.5 1993-07-13 16:17:30 neelin Exp $";
 #endif
 
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>
@@ -19,6 +18,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 #include <math.h>
 #include <minc.h>
 #include <recipes.h>
+#include <minc_def.h>
 #include "mincresample.h"
 
 /* Some external functions used in this file */
