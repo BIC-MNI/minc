@@ -1,4 +1,7 @@
-
+/** \internal
+ * \file minc2_private.h
+ * \brief MINC 2.0 private constants, types, and functions.
+ */
 /** The root of all MINC 2.0 objects in the HDF5 hierarchy.
  */
 #define MI_ROOT_PATH "/minc-2.0"
@@ -47,7 +50,8 @@ typedef long long mi_i64_t;
  */
 #define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
-/*! Volume properties  
+/** \internal
+ * Volume properties  
  */
 struct volprops_struct{
   BOOLEAN enable_flag; //enable multi-res 
@@ -62,7 +66,8 @@ struct volprops_struct{
   int  template_flag;
 }; 
 
-/*! Dimension handle  
+/** \internal
+ * Dimension handle  
  */
 struct dimension_struct{
   midimattr_t attr;
@@ -81,7 +86,8 @@ struct dimension_struct{
   mihandle_t volume_handle;
 };
 
-/*! Volume handle  
+/** \internal
+ * Volume handle  
  */
 struct volumehandle_struct {
   hid_t hdf_id;
@@ -104,6 +110,11 @@ struct volumehandle_struct {
   double scale_max;             /* Global maximum */
 };
 
+/**
+ * \internal
+ * "semi-private" functions.
+ ****************************************************************************/
+/* From m2util.c */
 extern hid_t midescend_path(hid_t file_id, const char *path);
 extern hid_t mitype_to_hdftype(mitype_t);
 extern int mitype_to_nctype(mitype_t, int *is_signed);
@@ -128,11 +139,15 @@ extern int miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse);
 extern void miinit(void);
 extern void miinit_enum(hid_t);
 
+extern int miget_scalar(hid_t loc_id, hid_t type_id, const char *path, 
+                        void *data);
+/* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 
                                         const long start[], 
                                         const long count[],
                                         hsize_t hdf_start[],
                                         hsize_t hdf_count[],
                                         int dir[]);
-extern int miget_scalar(hid_t loc_id, hid_t type_id, const char *path, 
-                        void *data);
+/* From volume.c */
+void misave_valid_range(mihandle_t volume);
+
