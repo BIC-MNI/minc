@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincexpand.c,v $
-@MODIFIED   : Revision 1.1  1995-01-23 08:33:31  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1995-01-24 08:48:57  neelin
+@MODIFIED   : Added optional output file argument.
 @MODIFIED   :
+ * Revision 1.1  95/01/23  08:33:31  neelin
+ * Initial revision
+ * 
  * Revision 1.1  95/01/20  15:51:32  neelin
  * Initial revision
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 1.1 1995-01-23 08:33:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 1.2 1995-01-24 08:48:57 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -60,27 +63,33 @@ ArgvInfo argTable[] = {
 
 int main(int argc, char *argv[])
 {
-   char *filename, *tempfile;
+   char *filename, *tempfile, *newfile;
    int created_tempfile;
 
    /* Check arguments */
-   if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
+   if (ParseArgv(&argc, argv, argTable, 0) || 
+       (argc < 2) || (argc > 3)) {
       (void) fprintf(stderr, 
-                     "\nUsage: %s [<options>] <infile>\n", argv[0]);
+                     "\nUsage: %s [<options>] <infile> [<outfile>]\n", 
+                     argv[0]);
       (void) fprintf(stderr,
                        "       %s -help\n\n", argv[0]);
       exit(EXIT_FAILURE);
    }
    filename  = argv[1];
+   if (argc == 3)
+      tempfile = argv[2];
+   else
+      tempfile = NULL;
 
    /* Expand the file */
    ncopts = 0;
-   tempfile = miexpand_file(filename, header_only, &created_tempfile);
-   if (tempfile == NULL)
-      tempfile = strdup(filename);
+   newfile = miexpand_file(filename, tempfile, header_only, &created_tempfile);
+   if (newfile == NULL)
+      newfile = strdup(filename);
 
    /* Print out file name and message about temporary file */
-   (void) printf("%s\n", tempfile);
+   (void) printf("%s\n", newfile);
    if (created_tempfile) {
       (void) printf("Temporary\n");
    }
@@ -89,7 +98,7 @@ int main(int argc, char *argv[])
    }
 
    /* Free the temporary file name string */
-   FREE(tempfile);
+   FREE(newfile);
 
    exit(EXIT_SUCCESS);
 }

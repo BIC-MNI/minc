@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 1.1 1995-01-23 08:33:40 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 1.2 1995-01-24 08:49:07 neelin Exp $
 .\"
 .TH MINCEXPAND 1 "MINC Image File Format"
 
@@ -17,7 +17,7 @@ mincexpand - expands a compressed minc file, if necessary.
 
 .SH SYNOPSIS
 .B mincexpand
-[<options>] <infile>
+[<options>] <infile> [<outfile>]
 
 .SH DESCRIPTION 
 .I Mincexpand 
@@ -26,7 +26,8 @@ temporary file using gunzip (or zcat or pcat) and prints out the name
 of the new file. If the input file is not compressed, then nothing
 is done and the original file name is printed. A second line is
 printed, indicating whether the name is that of a new temporary file
-("Temporary") or that of the original file ("Original").
+("Temporary") or that of the original file ("Original"). If no output
+file name is given, then the program generates its own.
 
 .SH OPTIONS
 
