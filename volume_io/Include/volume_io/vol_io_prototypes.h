@@ -1,34 +1,32 @@
-#ifndef  DEF_VOLUME_IO_PROTOTYPES
-#define  DEF_VOLUME_IO_PROTOTYPES
+#ifndef  DEF_vol_io_prototypes
+#define  DEF_vol_io_prototypes
 
 public  void  alloc_memory(
-    void   **ptr,
-    int    n_bytes );
+    void         **ptr,
+    size_t       n_bytes );
 
 public  void  realloc_memory(
-    void   **ptr,
-    int    n_bytes );
+    void      **ptr,
+    size_t    n_bytes );
 
 public  void  free_memory( void   **ptr );
 
-public  void  abort_if_allowed( void );
-
-public  int  get_total_memory_alloced( void );
+public  size_t  get_total_memory_alloced( void );
 
 public  void  set_alloc_checking( BOOLEAN state );
 
 public  void  record_ptr(
-    void   *ptr,
-    int    n_bytes,
-    char   source_file[],
-    int    line_number );
+    void      *ptr,
+    size_t    n_bytes,
+    char      source_file[],
+    int       line_number );
 
 public  void  change_ptr(
-    void   *old_ptr,
-    void   *new_ptr,
-    int    n_bytes,
-    char   source_file[],
-    int    line_number );
+    void      *old_ptr,
+    void      *new_ptr,
+    size_t    n_bytes,
+    char      source_file[],
+    int       line_number );
 
 public  BOOLEAN  unrecord_ptr(
     void   *ptr,
@@ -61,6 +59,10 @@ public  void  remove_directories_from_filename(
     char  filename[],
     char  filename_no_directories[] );
 
+public  BOOLEAN  file_exists_as_compressed(
+    char               filename[],
+    char               compressed_filename[] );
+
 public  Status  open_file(
     char               filename[],
     IO_types           io_type,
@@ -89,10 +91,6 @@ public  void  get_absolute_filename(
     char    filename[],
     char    directory[],
     char    abs_filename[] );
-
-public  void  strip_off_directories(
-    char    filename[],
-    char    no_dirs[] );
 
 public  Status  flush_file(
     FILE     *file );
@@ -128,6 +126,11 @@ public  Status  input_string(
     char  termination_char );
 
 public  Status  input_quoted_string(
+    FILE            *file,
+    char            str[],
+    int             str_length );
+
+public  Status  input_possibly_quoted_string(
     FILE            *file,
     char            str[],
     int             str_length );
@@ -183,7 +186,9 @@ public  Status  output_unsigned_short(
     FILE            *file,
     unsigned short  s );
 
-public  Status  input_int( FILE * file, int * i );
+public  Status  input_int(
+    FILE  *file,
+    int   *i );
 
 public  Status  output_int(
     FILE            *file,
@@ -302,6 +307,16 @@ public  void  pop_print_function();
 
 public  void  print( char format[], ... );
 
+public  void  print_error( char format[], ... );
+
+public  void   handle_internal_error( char  str[] );
+
+public  void  abort_if_allowed( void );
+
+public  void  begin_error();
+
+public  void  end_error();
+
 public  void  initialize_progress_report(
     progress_struct   *progress,
     BOOLEAN           one_line_only,
@@ -319,7 +334,7 @@ public  BOOLEAN  string_ends_in(
     char   string[],
     char   ending[] );
 
-public    void   strip_blanks(
+public    void   strip_outer_blanks(
     char  str[],
     char  stripped[] );
 
@@ -355,6 +370,70 @@ public  void  sleep_program( Real seconds );
 public  void  get_date(
     char  date_str[] );
 
+public  Real  get_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 );
+
+public  Real  get_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4 );
+
+public  void  set_volume_voxel_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     voxel );
+
+public  void  set_volume_real_value(
+    Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    Real     value );
+
+public  int   evaluate_volume(
+    Volume         volume,
+    Real           voxel[],
+    BOOLEAN        interpolating_dimensions[],
+    int            degrees_continuity,
+    BOOLEAN        use_linear_at_edge,
+    Real           outside_value,
+    Real           values[],
+    Real           **first_deriv,
+    Real           ***second_deriv );
+
+public  void   evaluate_volume_in_world(
+    Volume         volume,
+    Real           x,
+    Real           y,
+    Real           z,
+    int            degrees_continuity,
+    BOOLEAN        use_linear_at_edge,
+    Real           outside_value,
+    Real           values[],
+    Real           deriv_x[],
+    Real           deriv_y[],
+    Real           deriv_z[],
+    Real           deriv_xx[],
+    Real           deriv_xy[],
+    Real           deriv_xz[],
+    Real           deriv_yy[],
+    Real           deriv_yz[],
+    Real           deriv_zz[] );
+
 public  Status  initialize_free_format_input(
     char                 filename[],
     Volume               volume,
@@ -368,6 +447,11 @@ public  BOOLEAN  input_more_free_format_file(
     volume_input_struct   *volume_input,
     Real                  *fraction_done );
 
+public  Minc_file  initialize_minc_input_from_minc_id(
+    int                  minc_id,
+    Volume               volume,
+    minc_input_options   *options );
+
 public  Minc_file  initialize_minc_input(
     char                 filename[],
     Volume               volume,
@@ -379,6 +463,13 @@ public  int  get_n_input_volumes(
 public  Status  close_minc_input(
     Minc_file   file );
 
+public  void  copy_volumes_reordered(
+    Volume      dest,
+    int         dest_ind[],
+    Volume      src,
+    int         src_ind[],
+    int         to_dest_index[] );
+
 public  BOOLEAN  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done );
@@ -388,10 +479,6 @@ public  BOOLEAN  advance_input_volume(
 
 public  void  reset_input_volume(
     Minc_file   file );
-
-public  BOOLEAN  is_spatial_dimension(
-    char   dimension_name[],
-    int    *axis );
 
 public  int  get_minc_file_id(
     Minc_file  file );
@@ -406,6 +493,18 @@ public  void  set_minc_input_promote_invalid_to_min_flag(
 public  void  set_minc_input_vector_to_scalar_flag(
     minc_input_options  *options,
     BOOLEAN             flag );
+
+public  void  set_minc_input_vector_to_colour_flag(
+    minc_input_options  *options,
+    BOOLEAN             flag );
+
+public  void  set_minc_input_colour_dimension_size(
+    minc_input_options  *options,
+    int                 size );
+
+public  void  set_minc_input_colour_indices(
+    minc_input_options  *options,
+    int                 indices[4] );
 
 public  Status  start_volume_input(
     char                 filename[],
@@ -447,15 +546,14 @@ public  Status  input_volume(
 public  Minc_file  initialize_minc_output(
     char                   filename[],
     int                    n_dimensions,
-    char                   *dim_names[],
+    STRING                 dim_names[],
     int                    sizes[],
     nc_type                file_nc_data_type,
     BOOLEAN                file_signed_flag,
     Real                   file_voxel_min,
     Real                   file_voxel_max,
-    Real                   real_min,
-    Real                   real_max,
     General_transform      *voxel_to_world_transform,
+    Volume                 volume_to_attach,
     minc_output_options    *options );
 
 public  Status  copy_auxiliary_data_from_minc_file(
@@ -472,15 +570,30 @@ public  Status  add_minc_history(
     Minc_file   file,
     char        history_string[] );
 
-public  Status  output_minc_volume(
+public  Status  output_volume_to_minc_file_position(
     Minc_file   file,
-    Volume      volume );
+    Volume      volume,
+    int         volume_count[],
+    long        file_start[] );
+
+public  Status  output_minc_volume(
+    Minc_file   file );
 
 public  Status  close_minc_output(
     Minc_file   file );
 
 public  void  set_default_minc_output_options(
-    minc_output_options  *options           /* ARGSUSED */ );
+    minc_output_options  *options           );
+
+public  void  set_minc_output_dimensions_order(
+    minc_output_options  *options,
+    int                  n_dimensions,
+    STRING               dimension_names[] );
+
+public  void  set_minc_output_real_range(
+    minc_output_options  *options,
+    Real                 real_min,
+    Real                 real_max );
 
 public  Status  output_modified_volume(
     char                  filename[],
@@ -506,7 +619,7 @@ public  Status  output_volume(
 public  char  **get_default_dim_names(
     int    n_dimensions );
 
-public  BOOLEAN  convert_dim_name_to_axis(
+public  BOOLEAN  convert_dim_name_to_spatial_axis(
     char    name[],
     int     *axis );
 
@@ -534,6 +647,9 @@ public  Data_types  get_volume_data_type(
 
 public  int  get_type_size(
     Data_types   type );
+
+public  BOOLEAN  is_an_rgb_volume(
+    Volume   volume );
 
 public  void  alloc_volume_data(
     Volume   volume );
@@ -611,21 +727,33 @@ public  void  convert_voxel_to_world(
 
 public  void  convert_3D_voxel_to_world(
     Volume   volume,
-    Real     x_voxel,
-    Real     y_voxel,
-    Real     z_voxel,
+    Real     voxel1,
+    Real     voxel2,
+    Real     voxel3,
     Real     *x_world,
     Real     *y_world,
     Real     *z_world );
 
 public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
-    Real            x_voxel,
-    Real            y_voxel,
-    Real            z_voxel,
+    Real            voxel_vector[],
     Real            *x_world,
     Real            *y_world,
     Real            *z_world );
+
+public  void  convert_voxel_vector_to_world(
+    Volume          volume,
+    Real            voxel_vector[],
+    Real            *x_world,
+    Real            *y_world,
+    Real            *z_world );
+
+public  void  convert_world_vector_to_voxel(
+    Volume          volume,
+    Real            x_world,
+    Real            y_world,
+    Real            z_world,
+    Real            voxel_vector[] );
 
 public  void  convert_world_to_voxel(
     Volume   volume,
@@ -639,9 +767,9 @@ public  void  convert_3D_world_to_voxel(
     Real     x_world,
     Real     y_world,
     Real     z_world,
-    Real     *x_voxel,
-    Real     *y_voxel,
-    Real     *z_voxel );
+    Real     *voxel1,
+    Real     *voxel2,
+    Real     *voxel3 );
 
 public  Real  get_volume_voxel_min(
     Volume   volume );
@@ -675,12 +803,58 @@ public  void  set_volume_real_range(
     Real     real_min,
     Real     real_max );
 
+public  Volume   copy_volume_definition_no_alloc(
+    Volume   volume,
+    nc_type  nc_data_type,
+    BOOLEAN  signed_flag,
+    Real     voxel_min,
+    Real     voxel_max );
+
 public  Volume   copy_volume_definition(
     Volume   volume,
     nc_type  nc_data_type,
     BOOLEAN  signed_flag,
     Real     voxel_min,
     Real     voxel_max );
+
+public  Volume  copy_volume(
+    Volume   volume );
+
+public  void  grid_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed );
+
+public  void  my_grid_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed );
+
+public  void  louis_grid_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed );
+
+public  void  grid_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed );
 
 public  Status  mni_get_nonwhite_character(
     FILE   *file,
@@ -783,10 +957,10 @@ public  Status  input_tag_file(
     char      ***labels );
 
 public  void  thin_plate_spline_transform(
-    int     n_dimensions,
+    int     n_dims,
     int     n_points,
     float   **points,
-    float   **displacements,
+    float   **weights,
     Real    x,
     Real    y,
     Real    z,
@@ -795,10 +969,10 @@ public  void  thin_plate_spline_transform(
     Real    *z_transformed );
 
 public  void  thin_plate_spline_inverse_transform(
-    int     n_dimensions,
+    int     n_dims,
     int     n_points,
     float   **points,
-    float   **displacements,
+    float   **weights,
     Real    x,
     Real    y,
     Real    z,
@@ -806,15 +980,23 @@ public  void  thin_plate_spline_inverse_transform(
     Real    *y_transformed,
     Real    *z_transformed );
 
+public  Real  thin_plate_spline_U(
+   Real   pos[],
+   Real   landmark[],
+   int    n_dims );
+
 public  char  *get_default_transform_file_suffix();
 
 public  Status  output_transform(
     FILE                *file,
+    char                filename[],
+    int                 *volume_count_ptr,
     char                comments[],
     General_transform   *transform );
 
 public  Status  input_transform(
     FILE                *file,
+    char                filename[],
     General_transform   *transform );
 
 public  Status  output_transform_file(
@@ -836,6 +1018,14 @@ public  void  create_thin_plate_transform(
     int                  n_points,
     float                **points,
     float                **displacements );
+
+public  void  create_grid_transform(
+    General_transform    *transform,
+    Volume               displacement_volume );
+
+public  void  create_grid_transform_no_copy(
+    General_transform    *transform,
+    Volume               displacement_volume );
 
 public  void  create_user_transform(
     General_transform         *transform,
@@ -894,20 +1084,81 @@ public  void  concat_general_transforms(
 public  void  delete_general_transform(
     General_transform   *transform );
 
-public  BOOLEAN  null_Point(
-    Point   *point );
+public  Colour  make_rgba_Colour(
+    int    r,
+    int    g,
+    int    b,
+    int    a );
 
-public  BOOLEAN  null_Vector(
-    Vector   *vector );
+public  int  get_Colour_r(
+    Colour   colour );
 
-public  Real  distance_between_points(
-    Point  *p1,
-    Point  *p2 );
+public  int  get_Colour_g(
+    Colour   colour );
 
-public  BOOLEAN  points_within_distance(
-    Point  *p1,
-    Point  *p2,
-    Real   distance );
+public  int  get_Colour_b(
+    Colour   colour );
+
+public  int  get_Colour_a(
+    Colour   colour );
+
+public  Colour  make_Colour(
+    int   r,
+    int   g,
+    int   b );
+
+public  Real  get_Colour_r_0_1(
+    Colour   colour );
+
+public  Real  get_Colour_g_0_1(
+    Colour   colour );
+
+public  Real  get_Colour_b_0_1(
+    Colour   colour );
+
+public  Real  get_Colour_a_0_1(
+    Colour   colour );
+
+public  Colour  make_Colour_0_1(
+    Real   r,
+    Real   g,
+    Real   b );
+
+public  Colour  make_rgba_Colour_0_1(
+    Real   r,
+    Real   g,
+    Real   b,
+    Real   a );
+
+public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
+    int   n,
+    int   row[],
+    Real  **a,
+    int   n_values,
+    Real  **solution );
+
+public  BOOLEAN  solve_linear_system(
+    int   n,
+    Real  **coefs,
+    Real  values[],
+    Real  solution[] );
+
+public  BOOLEAN  invert_square_matrix(
+    int   n,
+    Real  **matrix,
+    Real  **inverse );
+
+public  BOOLEAN  newton_root_find(
+    int    n_dimensions,
+    void   (*function) ( void *function_data,
+                         Real parameters[],  Real values[], Real **derivatives),
+    void   *function_data,
+    Real   initial_guess[],
+    Real   desired_values[],
+    Real   solution[],
+    Real   function_tolerance,
+    Real   delta_tolerance,
+    int    max_iterations );
 
 public  void  create_noncolinear_vector(
     Vector  *v,
@@ -923,57 +1174,72 @@ public  void  create_two_orthogonal_vectors(
     Vector   *v1,
     Vector   *v2 );
 
-public  void  apply_point_to_min_and_max(
-    Point   *point,
-    Point   *min_point,
-    Point   *max_point );
-
-public  void  expand_min_and_max_points(
-    Point   *min_point,
-    Point   *max_point,
-    Point   *min_to_check,
-    Point   *max_to_check );
-
-public  void  get_range_points(
-    int                n_points,
-    Point              points[],
-    Point              *min_corner,
-    Point              *max_corner );
-
-public  void  get_points_centroid(
-    int     n_points,
-    Point   points[],
-    Point   *centroid );
-
-public   void     reverse_vectors(
-    int       n_vectors,
-    Vector    vectors[] );
-
-public  void lubksb(
-    float **a,
-    int   n,
-    int   *indx,
-    float *b );
-
-public  void ludcmp(
-    float    **a,
-    int      n,
-    int      *indx,
-    float    *d );
-
 public  BOOLEAN   compute_transform_inverse(
     Transform  *transform,
     Transform  *inverse );
 
+public  void  get_linear_spline_coefs(
+    Real  **coefs );
+
+public  void  get_quadratic_spline_coefs(
+    Real  **coefs );
+
+public  void  get_cubic_spline_coefs(
+    Real  **coefs );
+
+public  Real  cubic_interpolate(
+    Real   u,
+    Real   v0,
+    Real   v1,
+    Real   v2,
+    Real   v3 );
+
+public  void  evaluate_univariate_interpolating_spline(
+    Real    u,
+    int     degree,
+    Real    coefs[],
+    int     n_derivs,
+    Real    derivs[] );
+
+public  void  evaluate_bivariate_interpolating_spline(
+    Real    u,
+    Real    v,
+    int     degree,
+    Real    coefs[],
+    int     n_derivs,
+    Real    derivs[] );
+
+public  void  evaluate_trivariate_interpolating_spline(
+    Real    u,
+    Real    v,
+    Real    w,
+    int     degree,
+    Real    coefs[],
+    int     n_derivs,
+    Real    derivs[] );
+
+public  void  evaluate_interpolating_spline(
+    int     n_dims,
+    Real    parameters[],
+    int     degree,
+    int     n_values,
+    Real    coefs[],
+    int     n_derivs,
+    Real    derivs[] );
+
+public  void  spline_tensor_product(
+    int     n_dims,
+    Real    positions[],
+    int     degrees[],     /* [n_dims] */
+    Real    *bases[],      /* [n_dims][degress[dim]*degrees[dim]] */
+    int     n_values,
+    Real    coefs[],       /* [n_values*degrees[0]*degrees[1]*...] */
+    int     n_derivs[],    /* [n_dims] */
+    Real    results[] )    /* [n_values*n_derivs[0]*n_derivs[1]*...] */;
+
 public  void  make_identity_transform( Transform   *transform );
 
 public  BOOLEAN  close_to_identity(
-    Transform   *transform );
-
-public  void  make_scale_transform( 
-    Real        sx,
-    Real        sy,
-    Real        sz,
     Transform   *transform );
 
 public  void  get_transform_origin(
@@ -1008,21 +1274,6 @@ public  void  set_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis );
 
-public  void  set_transform_x_and_z_axes(
-    Transform   *transform,
-    Vector      *x_axis,
-    Vector      *z_axis );
-
-public  void  make_translation_transform(
-    Real        x_trans,
-    Real        y_trans,
-    Real        z_trans,
-    Transform   *transform );
-
-public  void  make_origin_transform(
-    Point      *origin,
-    Transform   *transform );
-
 public  void   make_change_to_bases_transform(
     Point      *origin,
     Vector     *x_axis,
@@ -1037,37 +1288,10 @@ public  void   make_change_from_bases_transform(
     Vector     *z_axis,
     Transform  *transform );
 
-public  void   compute_inverse_of_orthogonal_transform(
-    Transform  *transform,
-    Transform  *inverse );
-
 public  void   concat_transforms(
     Transform   *result,
     Transform   *t1,
     Transform   *t2 );
-
-public  void  make_rotation_transform(
-    Real       radians,
-    int        axis,
-    Transform  *transform );
-
-public  void  make_transform_relative_to_point(
-    Point      *point,
-    Transform  *transform,
-    Transform  *rel_transform );
-
-public  void  make_transform_in_coordinate_system(
-    Point      *origin,
-    Vector     *x_axis,
-    Vector     *y_axis,
-    Vector     *z_axis,
-    Transform  *transform,
-    Transform  *rel_transform );
-
-public  void  make_rotation_about_axis(
-    Vector     *axis,
-    Real       angle,
-    Transform  *transform );
 
 public  void  transform_point(
     Transform  *transform,
@@ -1104,42 +1328,4 @@ public  void  inverse_transform_vector(
     Real       *x_trans,
     Real       *y_trans,
     Real       *z_trans );
-
-public  void  convert_2d_transform_to_rotation_translation(
-    Transform  *transform,
-    Real       *degrees_clockwise,
-    Real       *x_trans,
-    Real       *y_trans );
-
-public  Real  compute_clockwise_rotation( Real x, Real y );
-
-public  void  make_identity_transform_2d( Transform_2d *transform );
-
-public  void  get_inverse_transform_2d(
-    Transform_2d   *transform,
-    Transform_2d   *inverse );
-
-public  void  transform_point_2d(
-    Transform_2d   *transform,
-    Real           x,
-    Real           y,
-    Real           *x_trans,
-    Real           *y_trans );
-
-public  Status  write_transform_file(
-    char       filename[],
-    char       comments[],
-    Transform  *transform );
-
-public  Status  read_transform_file(
-    char       filename[],
-    Transform  *transform );
-
-public  void  get_least_squares_transform_2d(
-    int           n_points,
-    Real          x[],
-    Real          y[],
-    Real          x_trans[],
-    Real          y_trans[],
-    Transform_2d  *transform_2d );
 #endif
