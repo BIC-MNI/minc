@@ -5,8 +5,8 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.15  2004-04-27 15:29:22  bert
- * Added milog_init() call during initialization
+ * Revision 1.14.2.1  2004-09-28 20:03:40  bert
+ * Minor portability changes for Windows
  *
  * Revision 1.14  2003/09/05 18:29:40  bert
  * Avoid passing NULL to fprintf when no mask file is specified, to avoid seg. faults reported by Richard Boyes.
@@ -86,11 +86,16 @@
  *               of a histogram.
  */
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <limits.h>
+#if HAVE_FLOAT_H
 #include <float.h>
+#endif /* HAVE_FLOAT_H */
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -358,8 +363,6 @@ int main(int argc, char *argv[])
    FILE    *FP;
    double   scale, voxmin, voxmax;
 
-   milog_init(argv[0]);
-
    /* Get arguments */
    if(ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
       (void)fprintf(stderr, "\nUsage: %s [options] <infile.mnc>\n", argv[0]);
@@ -427,17 +430,17 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
 
-   if(access(infiles[0], F_OK) != 0) {
+   if(access(infiles[0], 0) != 0) {
       (void)fprintf(stderr, "%s: Couldn't find %s\n", argv[0], infiles[0]);
       exit(EXIT_FAILURE);
    }
 
-   if(infiles[1] != NULL && access(infiles[1], F_OK) != 0) {
+   if(infiles[1] != NULL && access(infiles[1], 0) != 0) {
       (void)fprintf(stderr, "%s: Couldn't find mask file: %s\n", argv[0], infiles[1]);
       exit(EXIT_FAILURE);
    }
 
-   if(hist_file != NULL && !clobber && access(hist_file, F_OK) != -1) {
+   if(hist_file != NULL && !clobber && access(hist_file, 0) != -1) {
       (void)fprintf(stderr, "%s: Histogram %s exists! (use -clobber to overwrite)\n",
                     argv[0], hist_file);
       exit(EXIT_FAILURE);
