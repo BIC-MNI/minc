@@ -1,3 +1,9 @@
+Thu Jan 20 15:36:04 EST 2000
+   - Re-arranged headers in volume_io so that only volume_io.h needs to be 
+     on the search path. Other header files are installed in the 
+     volume_io subdirectory and found by volume_io.h. 
+     (Patch from Steve Robbins.)
+
 Fri Nov 13 11:02:51 EST 1998
    - Modified acrnema library to support asynchronous transfers in the
      client routines (allow sending of next message before receiving 
