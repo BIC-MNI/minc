@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.5  1995-05-02 16:08:17  neelin
-@MODIFIED   : Added -check, -nocheck options.
+@MODIFIED   : Revision 1.6  1995-05-05 18:08:17  neelin
+@MODIFIED   : Removed debugging line for sd calculation.
 @MODIFIED   :
+ * Revision 1.5  1995/05/02  16:08:17  neelin
+ * Added -check, -nocheck options.
+ *
  * Revision 1.4  1995/04/27  14:05:38  neelin
  * Added binarization options.
  *
@@ -27,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.5 1995-05-02 16:08:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.6 1995-05-05 18:08:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -611,8 +614,6 @@ public void finish_average(void *caller_data, long num_voxels,
          if (average_data->need_sd) {
             sum2 = output_data[2][ivox];
             if (sum0 > 1.0) {
-               (void) printf("sum0, sum1, sum2 = %g %g %g\n",
-                             sum0, sum1, sum2);
                value = (sum2 - sum1*sum1 / sum0) / (sum0 - 1.0);
                if (value > 0.0)
                   value = sqrt(value);
