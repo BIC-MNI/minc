@@ -12,8 +12,8 @@ sub time_to_string {
     if ($year >= 70) {$year += 1900;}
     else {$year += 2000;}
 
-    return sprintf("%d-%s-%d %d:%d:%d GMT", $mday, $months[$mon], $year,
-                   $hour, $min, $sec);
+    return sprintf("%02d-%s-%04d %02d:%02d:%02d GMT", 
+                   $mday, $months[$mon], $year, $hour, $min, $sec);
 }
 
 # Routine to initialize tape drive
@@ -280,7 +280,7 @@ sub ge5_read_file_info {
     $file_info{'patient_id'} = &unpack_value(*exam_hdr, 84, 'A13');
     $file_info{'institution'} = &unpack_value(*exam_hdr, 10, 'A33');
     $file_info{'start_time'} = 
-        &time_to_string(&unpack_value(*series_hdr, 16, 'i'));
+        &time_to_string(&unpack_value(*image_hdr, 14, 'i'));
 
     # Get GE specific stuff
     $specific_file_info{'pixel_data_offset'} = $pixel_data_offset;
