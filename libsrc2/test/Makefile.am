@@ -1,6 +1,6 @@
 INCLUDES = -I$(top_srcdir)/libsrc2
 
-LDADD = $(top_srcdir)/libminc2.la
+LDADD = ../../libminc2.la
 
 TESTS =	\
 	datatype-test \
