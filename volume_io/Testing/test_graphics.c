@@ -1,7 +1,10 @@
 
 #include  <def_graphics.h>
 
-#define  LIGHT_INDEX  0
+#define  LIGHT_INDEX       0
+
+#define  UPDATE_INTERVAL                     0.1
+#define  MIN_TIME_BETWEEN_EVENT_PROCESSING   0.01
 
 main()
 {
@@ -29,6 +32,10 @@ main()
     int               current_mouse_x, current_mouse_y;
     int               x_position, y_position, x_size, y_size;
     Real              x, y;
+    Real              time_since_last_events;
+    Real              current_time, end_event_processing, previous_event_time;
+    Real              current_realtime_seconds();
+    void              sleep_program();
 
     status = G_create_window( "Test Window", -1, -1, -1, -1, &window );
 
@@ -37,6 +44,7 @@ main()
     fill_Point( point, 10.0, 10.0, 0.0 );
     status = initialize_text( &text, &point, make_Colour(255,0,255),
                               SIZED_FONT, 14.0 );
+    text.string[0] = (char) 0;
 
     /* ------------ define line to be drawn  ------------- */
 
@@ -89,66 +97,93 @@ main()
 
     (void) printf( "Hit middle mouse button to exit\n" );
 
+    previous_event_time = -1000.0;
+
     do
     {
-        event_type = G_get_event( &event_window, &key_pressed,
-                                  &mouse_x, &mouse_y );
+        /* to avoid using cpu time to do a busy wait, go to sleep before
+           processing events */
 
-        if( event_type != NO_EVENT && event_window == window )
+        current_time = current_realtime_seconds();
+        time_since_last_events = current_time - previous_event_time;
+
+        if( time_since_last_events < MIN_TIME_BETWEEN_EVENT_PROCESSING )
         {
-            switch( event_type )
+            sleep_program( MIN_TIME_BETWEEN_EVENT_PROCESSING -
+                           time_since_last_events );
+        }
+
+        /* process events for up to UPDATE_INTERVAL seconds */
+
+        end_event_processing = current_time + UPDATE_INTERVAL;
+
+        do
+        {
+            event_type = G_get_event( &event_window, &key_pressed,
+                                      &mouse_x, &mouse_y );
+
+            if( event_window == window )
             {
-            case KEYBOARD_EVENT:
-                (void) printf( "Key pressed: \"%c\"\n", key_pressed );
-                break;
+                switch( event_type )
+                {
+                case KEYBOARD_EVENT:
+                    (void) printf( "Key pressed: \"%c\"\n", key_pressed );
+                    break;
 
-            case LEFT_MOUSE_DOWN_EVENT:
-                (void) printf( "Left mouse DOWN\n" );
-                break;
+                case LEFT_MOUSE_DOWN_EVENT:
+                    (void) printf( "Left mouse DOWN\n" );
+                    break;
 
-            case LEFT_MOUSE_UP_EVENT:
-                (void) printf( "Left mouse UP\n" );
-                break;
+                case LEFT_MOUSE_UP_EVENT:
+                    (void) printf( "Left mouse UP\n" );
+                    break;
 
-            case RIGHT_MOUSE_DOWN_EVENT:
-                (void) printf( "Right mouse DOWN\n" );
-                break;
+                case RIGHT_MOUSE_DOWN_EVENT:
+                    (void) printf( "Right mouse DOWN\n" );
+                    break;
 
-            case RIGHT_MOUSE_UP_EVENT:
-                (void) printf( "Right mouse UP\n" );
-                break;
+                case RIGHT_MOUSE_UP_EVENT:
+                    (void) printf( "Right mouse UP\n" );
+                    break;
 
-            case MIDDLE_MOUSE_DOWN_EVENT:
-                (void) printf( "Middle mouse DOWN\n" );
-                done = TRUE;
-                break;
+                case MIDDLE_MOUSE_DOWN_EVENT:
+                    (void) printf( "Middle mouse DOWN\n" );
+                    done = TRUE;
+                    break;
 
-            case MIDDLE_MOUSE_UP_EVENT:
-                (void) printf( "Middle mouse UP\n" );
-                break;
+                case MIDDLE_MOUSE_UP_EVENT:
+                    (void) printf( "Middle mouse UP\n" );
+                    break;
 
-            case MOUSE_MOVEMENT_EVENT:
-                current_mouse_x = mouse_x;
-                current_mouse_y = mouse_y;
-                G_convert_mouse_pixels_to_0_1( window,
+                case MOUSE_MOVEMENT_EVENT:
+                    current_mouse_x = mouse_x;
+                    current_mouse_y = mouse_y;
+                    G_convert_mouse_pixels_to_0_1( window,
                                                current_mouse_x, current_mouse_y,
                                                &x, &y );
-                (void) sprintf( text.string,
+                    (void) sprintf( text.string,
                                 "Mouse: %4d,%4d pixels   %4.2f,%4.2f window",
                                 current_mouse_x, current_mouse_y, x, y );
-                update_required = TRUE;
-                break;
+                    update_required = TRUE;
+                    break;
 
-            case WINDOW_RESIZE_EVENT:
-                G_get_window_position( window, &x_position, &y_position );
-                G_get_window_size( window, &x_size, &y_size );
-                (void) printf( "Window resized, moved, or popped." );
-                (void) printf( "  New position: %d %d   New size: %d %d\n",
-                               x_position, y_position, x_size, y_size );
-                update_required = TRUE;
-                break;
+                case WINDOW_RESIZE_EVENT:
+                    G_get_window_position( window, &x_position, &y_position );
+                    G_get_window_size( window, &x_size, &y_size );
+                    (void) printf( "Window resized, moved, or popped." );
+                    (void) printf( "  New position: %d %d   New size: %d %d\n",
+                                   x_position, y_position, x_size, y_size );
+                    update_required = TRUE;
+                    break;
+                }
             }
         }
+        while( event_type != NO_EVENT &&
+               current_realtime_seconds() < end_event_processing );
+
+        previous_event_time = current_realtime_seconds();
+
+        /* if one or more events caused an update, redraw the screen */
 
         if( update_required )
         {
@@ -167,9 +202,7 @@ main()
     }
     while( !done );
 
-    G_draw_lines( window, &lines );
-    G_draw_polygons( window, &polygons );
-    G_update_window( window );
+    /* delete drawing objects and window (text does not need to be deleted */
 
     status = delete_lines( &lines );
 
