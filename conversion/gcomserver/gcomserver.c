@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.5  1993-12-08 09:12:53  neelin
-@MODIFIED   : Delete group list.
+@MODIFIED   : Revision 1.6  1993-12-08 09:35:06  neelin
+@MODIFIED   : changed logging level.
 @MODIFIED   :
+ * Revision 1.5  93/12/08  09:12:53  neelin
+ * Delete group list.
+ * 
  * Revision 1.4  93/11/30  14:56:18  neelin
  * Changed log level.
  * 
@@ -39,7 +42,7 @@ typedef enum {
 } Server_state;
 
 /* Do we do logging? */
-int Do_logging = NO_LOGGING;
+int Do_logging = LOW_LOGGING;
 
 /* Do we keep files or are they temporary? */
 static int Keep_files = FALSE;
