@@ -5,7 +5,18 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.10  2002-04-08 21:46:34  jgsled
+ * Revision 1.11  2002-09-05 00:41:57  rotor
+ * ----------------------------------------------------------------------
+ * Fixed clash of C/L arguments in mincstats (-max and -max_bins)
+ *    -max_bins has now been changed to -int_max_bins
+ *
+ * Committing in .
+ *
+ * Modified Files:
+ *  mincstats.c
+ * ----------------------------------------------------------------------
+ *
+ * Revision 1.10  2002/04/08 21:46:34  jgsled
  * fixed problem where mincstats segmentation fault when trying to close a NULL file pointer
  *
  * Revision 1.9  2002/01/09 13:23:16  neelin
@@ -251,7 +262,7 @@ ArgvInfo argTable[] = {
   {"-hist_range", ARGV_FLOAT,   (char*)2,    (char*)&hist_range,"Histogram floor and ceiling. (incl)"       },
   {"-discrete_histogram", ARGV_CONSTANT,   (char*)TRUE,    (char*)&discrete_histogram,"Match histogram bins to data discretization"       },
   {"-integer_histogram", ARGV_CONSTANT,   (char*)TRUE,    (char*)&integer_histogram,"Set histogram bins to unit width"       },
-  {"-max_bins", ARGV_INT,   (char*)1,    (char*)&max_bins,"Set maximum number of histogram bins for integer histograms"       },
+  {"-int_max_bins", ARGV_INT,   (char*)1,    (char*)&max_bins,"Set maximum number of histogram bins for integer histograms"       },
 
   {NULL,          ARGV_HELP,    (char*)NULL, (char*)NULL,       "\nStatistics (Printed in this order)"      },
   {"-all",        ARGV_CONSTANT,(char*)TRUE, (char*)&All,       "all statistics (default)."                 },
