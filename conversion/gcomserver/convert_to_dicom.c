@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.4  1999-10-29 17:52:02  neelin
+ * Revision 1.5  2000-01-13 19:04:41  neelin
+ * Added accession number to DICOM message, taken from patient comment field.
+ *
+ * Revision 1.4  1999/10/29 17:52:02  neelin
  * Fixed Log keyword
  *
  * Revision 1.3  1997/10/21 00:06:53  neelin
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.4 1999-10-29 17:52:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.5 2000-01-13 19:04:41 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -64,6 +67,8 @@ typedef enum { XCOORD = 0, YCOORD, ZCOORD, WORLD_NDIMS } World_Index;
 
 /* Dicom definitions */
 DEFINE_ELEMENT(static, ACR_Image_type                 , 0x0008, 0x0008, CS);
+DEFINE_ELEMENT(static, ACR_Accession_number           , 0x0008, 0x0050, SH);
+DEFINE_ELEMENT(static, ACR_Patient_comments           , 0x0010, 0x4000, SH);
 DEFINE_ELEMENT(static, ACR_Sequence_variant           , 0x0018, 0x0021, CS);
 DEFINE_ELEMENT(static, ACR_Study_instance_UID         , 0x0020, 0x000d, UI);
 DEFINE_ELEMENT(static, ACR_Series_instance_UID        , 0x0020, 0x000e, UI);
@@ -146,6 +151,11 @@ public void convert_to_dicom(Acr_Group group_list)
                      "ORIGINAL\\PRIMARY\\UNDEFINED");
    acr_insert_string(&group_list, ACR_Sequence_variant, 
                      "NONE\\NONE");
+
+   /* Put in the accession number (hospital patient id taken from comment
+      field at MNI) */
+   acr_insert_string(&group_list, ACR_Accession_number,
+                     acr_find_string(group_list, ACR_Patient_comments, ""));
 
    /* Get image orientation */
    orientation = acr_find_int(group_list, SPI_Slice_orientation, 0);
