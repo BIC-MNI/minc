@@ -5,7 +5,17 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.6  2000-01-31 14:06:44  neelin
+ * Revision 1.7  2000-02-03 13:41:32  neelin
+ * Modified Study, Series and Frame-of-reference UIDs. The first has the
+ * form <prefix>.1.<study>, series has the form <prefix>.2.<study>.<series>.<echo>
+ * and f-o-r has the form <prefix>.3.<study>.<series>. The echo is preserved
+ * in the series UID for the sake of the Picker viewing stations. The frame-of-
+ * reference UID contains the series since the coordinates are not necessarily
+ * consistent between acquisitions. The <prefix> is the ASCII (decimal)
+ * representation of 'I'.'P' followed by the IP address, and then the process
+ * id.
+ *
+ * Revision 1.6  2000/01/31 14:06:44  neelin
  * Truncate image number if it is longer than the DICOM standard allows.
  *
  * Revision 1.5  2000/01/13 19:04:41  neelin
@@ -36,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.6 2000-01-31 14:06:44 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.7 2000-02-03 13:41:32 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -141,11 +151,11 @@ public void convert_to_dicom(Acr_Group group_list)
    if (study < 1) study = 1;
    if (series < 1) series = 1;
    if (echo < 1) echo = 1;
-   (void) sprintf(ptr, ".%d.%d.%d.1", study, series, echo);
+   (void) sprintf(ptr, ".1.%d", study);
    acr_insert_string(&group_list, ACR_Study_instance_UID, string);
-   (void) sprintf(ptr, ".%d.%d.%d.2", study, series, echo);
+   (void) sprintf(ptr, ".2.%d.%d.%d", study, series, echo);
    acr_insert_string(&group_list, ACR_Series_instance_UID, string);
-   (void) sprintf(ptr, ".%d.%d.%d.3", study, series, echo);
+   (void) sprintf(ptr, ".3.%d.%d", study, series);
    acr_insert_string(&group_list, ACR_Frame_of_reference_UID, string);
    
    /* Update dates and times */
