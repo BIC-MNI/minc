@@ -17,6 +17,7 @@
 ---------------------------------------------------------------------------- */
 #include <stdlib.h>
 #include <stdio.h>
+#include <ParseArgv.h>
 
 #define ABS( x )  ( ((x) > (0)) ? (x) : (-(x)) )
 #define MAX( x, y )  ( ((x) >= (y)) ? (x) : (y) )
@@ -24,6 +25,11 @@
 
 #define ERROR_STATUS -1
 #define NORMAL_STATUS 0
+
+/* Argument table */
+ArgvInfo argTable[] = {
+   {NULL, ARGV_END, NULL, NULL, NULL}
+};
 
 int main(int argc, char *argv[])
 {
@@ -34,7 +40,7 @@ int main(int argc, char *argv[])
 
    /* Check arguments */
    pname=argv[0];
-   if ((argc != 3)&&(argc != 4)) {
+   if (ParseArgv(&argc, argv, argTable, 0) || (argc < 3) || (argc > 4)) {
       (void) fprintf(stderr,"Usage : %s xsize ysize <bytesperpixel>\n",pname);
       exit(ERROR_STATUS);
    }
