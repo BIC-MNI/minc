@@ -1,5 +1,21 @@
 # Subroutines for GE mri machines, version 5.x
 
+# Routine to convert unix time to date string
+sub time_to_string {
+    if (scalar(@_) != 1) {
+        die "Argument error in time_to_string\n";
+    }
+    local(@months) = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", 
+                      "Aug", "Sep", "Oct", "Nov", "Dec");
+    local($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)
+        = gmtime(@_[0]);
+    if ($year >= 70) {$year += 1900;}
+    else {$year += 2000;}
+
+    return sprintf("%s-%d-%d %d:%d:%d", $months[$mon], $mday, $year,
+                   $hour, $min, $sec);
+}
+
 # Routine to take absolute value
 sub abs {
     local(@new, $val);
@@ -156,6 +172,18 @@ sub ge5_read_file_info {
     $file_info{'scan_seq'} =~ s/\n//;
     $file_info{'ge_pseq'} = &unpack_value(*image_hdr, 304, 's');
     $file_info{'ge_pseqmode'} = &unpack_value(*image_hdr, 306, 's');
+    $file_info{'patient_age'} = &unpack_value(*exam_hdr, 122, 's');
+    local($sex_flag) = &unpack_value(*exam_hdr, 126, 's');
+    if ($sex_flag == 1) {
+        $file_info{'patient_sex'} = "male__";
+    }
+    elsif ($sex_flag == 2) {
+        $file_info{'patient_sex'} = "female";
+    }
+    $file_info{'patient_id'} = &unpack_value(*exam_hdr, 84, 'A13');
+    $file_info{'institution'} = &unpack_value(*exam_hdr, 10, 'A33');
+    $file_info{'start_time'} = 
+        &time_to_string(&unpack_value(*exam_hdr, 208, 'i'));
 
     # Get GE specific stuff
     $specific_file_info{'pixel_data_offset'} = $pixel_data_offset;
