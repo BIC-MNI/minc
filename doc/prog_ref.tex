@@ -1,7 +1,7 @@
 \documentstyle{article}
 \title{MINC Reference Manual}
 \author{Peter Neelin}
-\date{January, 1993}
+\date{February 1, 1993}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -880,7 +880,7 @@ of values that the user wants. Modifying this property automatically
 causes \code{MI\_ICV\_VALID\_MAX} and \code{MI\_ICV\_VALID\_MIN} to
 be set to their default values. Default = \code{NC\_SHORT}.
 
-\item \code{MI\_ICV\_SIGN} (type \code{char []}) :  Specifies the sign of
+\item \code{MI\_ICV\_SIGN} (type \code{char *}) :  Specifies the sign of
 values that the user wants (irrelevant for floating point types).
 Modifying this property automatically causes
 \code{MI\_ICV\_VALID\_MAX} and \code{MI\_ICV\_VALID\_MIN} to be set to
@@ -995,6 +995,26 @@ property that gives the equivalent of attribute \code{MIstart} for an
 image dimension after dimension conversion. The number of the
 dimension to be queried should be added to the property (adding zero
 corresponds to the fastest varying dimension). 
+
+\item \code{MI\_ICV\_NUM\_DIMS} (type \code{int}) : Read-only property
+that gives the number of dimensions of the image variable, taking into
+account the conversion of vector images into scalar images.
+
+\item \code{MI\_ICV\_CDFID} (type \code{int}) : Read-only property
+that gives the id of the currently attached NetCDF file, or
+\code{MI\_ERROR} if no file is attached.
+
+\item \code{MI\_ICV\_VARID} (type \code{int}) : Read-only property
+that gives the id of the currently attached NetCDF variable, or
+\code{MI\_ERROR} if no variable is attached.
+
+\item \code{MI\_ICV\_MAXVAR} (type \code{char *}) : String property
+specifying the name of the variable that gives the image maximum. 
+Default = \code{MIimagemax}. 
+
+\item \code{MI\_ICV\_MINVAR} (type \code{char *}) : String property
+specifying the name of the variable that gives the image minimum. 
+Default = \code{MIimagemin}.
 
 \end{itemize}
 
