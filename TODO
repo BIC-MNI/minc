@@ -9,5 +9,16 @@
   real separation, it seems.  Might as well move all testing stuff
   to testdir.
 
+* fix problem with YYDEBUG
+  - see message of 2003-06-03 to minc-users by Anders Bertil Rodell
+
+  Possibly something has #defined YYDEBUG to 0.  Did you happen to notice
+  whether yacc (or bison) rebuilt progs/minccalc/gram.c from
+  progs/minccalc/gram.y?  Check the timestamps on the two files to see if the
+  .c is newer than .y.
+
+  I just built MINC and it worked.  Then I rebuilt the gram.c file before
+  compiling and got the same message you did.
+
 * manpage for minchistory
 

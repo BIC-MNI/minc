@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.32 2001-12-14 17:12:24 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.33 2003-11-23 16:07:11 stever Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,6 +29,7 @@
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
+#include  <math.h>
 #include  <stdlib.h>
 #include  <stdio.h>
 

@@ -1,3 +1,9 @@
+2003-11-21  Steve ROBBINS  <stever@bic.mni.mcgill.ca>
+
+	* volume_io/Include/basic.h: Include <math.h> for M_PI definition.
+	Build problem reported by Maxime Descoteaux
+	<mdesco@cim.mcgill.ca>.
+
 2003-11-14  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* Makefile.am (libvolume_io_la_LDFLAGS): 
