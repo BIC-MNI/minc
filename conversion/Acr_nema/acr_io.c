@@ -1,14 +1,17 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_nema_io.c
+@NAME       : acr_io.c
 @DESCRIPTION: Routines for doing basic acr_nema operations (reading and
               writing an element).
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.7  1994-05-18 08:47:43  neelin
-@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+@MODIFIED   : Revision 1.8  1994-09-23 16:42:35  neelin
+@MODIFIED   : Changed acr_nema_io to acr_io and acr_nema_test to acr_test.
 @MODIFIED   :
+ * Revision 1.7  94/05/18  08:47:43  neelin
+ * Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+ * 
  * Revision 1.6  94/04/07  10:03:40  neelin
  * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
  * to that or ACR_OTHER_ERROR.

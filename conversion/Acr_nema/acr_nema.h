@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 1.4  1994-01-06 13:31:27  neelin
-@MODIFIED   : Changed acr_need_invert to a public function.
+@MODIFIED   : Revision 1.5  1994-09-23 16:42:37  neelin
+@MODIFIED   : Changed acr_nema_io to acr_io and acr_nema_test to acr_test.
 @MODIFIED   :
+ * Revision 1.4  94/01/06  13:31:27  neelin
+ * Changed acr_need_invert to a public function.
+ * 
  * Revision 1.3  93/12/08  09:07:02  neelin
  * 
  * Revision 1.2  93/11/24  11:26:09  neelin
@@ -45,7 +48,7 @@
 
 /* Include files */
 #include <file_io.h>
-#include <acr_nema_io.h>
+#include <acr_io.h>
 #include <element.h>
 #include <group.h>
 #include <message.h>
