@@ -11,4 +11,7 @@ icv_fillvalue
 junk.out
 test.mnc
 Makefile.in Makefile
+create_grid_xfm
+test_xfm
+_*
 
