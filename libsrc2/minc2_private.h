@@ -76,6 +76,7 @@ struct dimension_struct{
   char *units;
   double width; 
   double *widths;
+  char *comments;
   mihandle_t volume_handle;
 };
 

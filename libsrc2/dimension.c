@@ -129,10 +129,12 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   }
 
 
-  /* Explicitly allocate storage for name
+  /* Duplicate the dimension name
    */
   handle->name = strdup(name);
-
+  /* Set the dimension comment to NULL unless otherwise
+   */
+  handle->comments = NULL;  
   switch (class) {
   case MI_DIMCLASS_ANY:
     handle->class  = MI_DIMCLASS_ANY;
@@ -143,21 +145,25 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
       handle->direction_cosines[MI2_X] = 1.0;
       handle->direction_cosines[MI2_Y] = 0.0;
       handle->direction_cosines[MI2_Z] = 0.0;
+      handle->comments = strdup("X increases from patient left to right");
     }
     else if (strcmp(name, "yspace") == 0) {
       handle->direction_cosines[MI2_X] = 0.0;
       handle->direction_cosines[MI2_Y] = 1.0;
       handle->direction_cosines[MI2_Z] = 0.0;
+      handle->comments = strdup("Y increases from patient posterior to anterior");
     }
     else if (strcmp(name, "zspace") == 0) {
       handle->direction_cosines[MI2_X] = 0.0;
       handle->direction_cosines[MI2_Y] = 0.0;
       handle->direction_cosines[MI2_Z] = 1.0;
+      handle->comments = strdup("Z increases from patient inferior to superior");
     }
     else {
       handle->direction_cosines[MI2_X] = 1.0;
       handle->direction_cosines[MI2_Y] = 0.0;
       handle->direction_cosines[MI2_Z] = 0.0;
+      handle->comments = NULL;
     }
     break;
   case MI_DIMCLASS_TIME:
@@ -201,20 +207,21 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   /* "attr" can only be one of the following ,   
      MI_DIMATTR_ALL is not valid for this function
    */
+  handle->offsets = NULL;
   switch (attr) {
   case MI_DIMATTR_REGULARLY_SAMPLED:
     handle->attr = MI_DIMATTR_REGULARLY_SAMPLED;
     handle->sampling_flag = 1;
-    handle->offsets = NULL;
+   
     handle->widths = NULL;
     break;
   case MI_DIMATTR_NOT_REGULARLY_SAMPLED:
     handle->attr = MI_DIMATTR_NOT_REGULARLY_SAMPLED;
     handle->sampling_flag = 0;
-    handle->offsets = (double *) malloc(length *sizeof(double));
+   
     handle->widths = (double *) malloc(length *sizeof(double));
     for (i=0; i< length; i++) {
-      handle->offsets[i] = 0;
+      
       handle->widths[i] = 1.0;
     }
     break;
@@ -649,6 +656,42 @@ miset_dimension_cosines(midimhandle_t dimension, const double direction_cosines[
   return (MI_NOERROR);
 }
 
+/*! Set the comments attribute for a given dimension.
+ */
+
+int
+miset_dimension_description(midimhandle_t dimension, const char *comments)
+{
+
+ if (dimension == NULL || comments == NULL) {
+    return (MI_ERROR);
+  }
+ 
+  if ((strlen(comments) + 1) <= MI2_CHAR_LENGTH) {
+    dimension->comments = strdup(comments);
+  }
+  else {
+    return (MI_ERROR);
+  }
+    
+  return (MI_NOERROR); 
+}
+/*! Get the comments attribute for a given dimension.
+ */
+
+int
+miget_dimension_description(midimhandle_t dimension, char **comments_ptr)
+{
+
+  if (dimension == NULL) {
+    return (MI_ERROR);
+  }
+ 
+  *comments_ptr = strdup(dimension->comments);
+  
+  return (MI_NOERROR); 
+}
+
 /*! Get the identifier (name) of a MINC dimension.
  */
 
@@ -745,6 +788,7 @@ miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   else {
     diff = array_length;
   }
+  
   /* Allocate space for the offsets if not already done.
    */
   if (dimension->offsets == NULL) {
@@ -1166,6 +1210,8 @@ int main(int argc, char **argv)
   midimhandle_t dim[4];
   mivolumeprops_t props;
   double cosines[3];
+  double offsets[3];
+  double widths[3];
   int n;
   midimhandle_t dimens[3];
    /* Turn off automatic error reporting - we'll take care of this
@@ -1191,6 +1237,10 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  offsets[0]=1.5;
+  offsets[1]=2.5;
+  offsets[2]=3.5;
+  r = miset_dimension_offsets(dimh2, 3, 0, offsets);
   r = miget_dimension_cosines(dimh1, cosines);
   if (r < 0) {
     TESTRPT("failed", r);
@@ -1210,11 +1260,23 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  r = miget_volume_dimensions(vol, MI_DIMCLASS_SPATIAL, 0, 0, 4, dimens);
+  r =miset_dimension_description(dimh3, "this is funny");
+  if ( r < 0) {
+    TESTRPT("failed", r);
+  }
+  widths[0]=2;
+  widths[1]=3.5;
+  widths[2]=4.5;
+  r = miset_dimension_widths(dimh2, 3, 0, widths);
+  r = miget_volume_dimensions(vol, MI_DIMCLASS_ANY, 0, 0, 4, dimens);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   printf(" %s %s %s \n", dimens[0]->name, dimens[1]->name, dimens[2]->name);
+  printf(" %s \n", dimens[3]->comments);
+  printf(" %s \n", dimens[0]->comments);
+  printf( " %f %f %f \n", dimens[2]->offsets[0], dimens[2]->offsets[1], dimens[2]->offsets[2] );
+  printf( " %f %f %f \n", dimens[2]->widths[0], dimens[2]->widths[1], dimens[2]->widths[2] );
   r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
   if (r < 0) {
     TESTRPT("failed", r);

@@ -195,6 +195,8 @@ extern int miget_dimension_direction_cosines(midimhandle_t dimension,
 					     double direction_cosines[3]);
 extern int miset_dimension_direction_cosines(midimhandle_t dimension, 
 					     const double direction_cosines[3]);
+extern int miset_dimension_description(midimhandle_t dimension, const char *comments);
+extern int miget_dimension_description(midimhandle_t dimension, char **comments_ptr);
 extern int miget_dimension_name(midimhandle_t dimension, char **name_ptr);
 extern int miset_dimension_name(midimhandle_t dimension, const char *name);
 extern int miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 

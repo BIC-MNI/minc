@@ -193,33 +193,40 @@ micreate_volume(const char *filename, int number_of_dimensions,
      */
     
     if (dimensions[i]->attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
-      fspc_id = H5Dget_space(dataset_id);
-      if (fspc_id < 0) {
+      if (dimensions[i]->offsets == NULL) {
+	printf(" OFFSETS MUST BE SPECIFIED FOR IRREGULARLY SAMPLED DIMENSIONS \n");
 	return (MI_ERROR);
-      }
-      status = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->offsets);
-      if (status < 0) {
-	return (MI_ERROR);
-      }
-      size = strlen(dimensions[i]->name) + 6;
-      if (size <= MI2_CHAR_LENGTH) {
-	name = malloc(size);
       }
       else {
-	name = malloc(MI2_CHAR_LENGTH);
+	
+	fspc_id = H5Dget_space(dataset_id);
+	if (fspc_id < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->offsets);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	size = strlen(dimensions[i]->name) + 6;
+	if (size <= MI2_CHAR_LENGTH) {
+	  name = malloc(size);
+	}
+	else {
+	  name = malloc(MI2_CHAR_LENGTH);
+	}
+	strcpy(name, dimensions[i]->name);
+	strcat(name, "-width");
+	dataset_width = H5Dcreate(grp_dimensions_id, name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	fspc_id = H5Dget_space(dataset_width);
+	if (fspc_id < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Dwrite(dataset_width, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->widths);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	H5Dclose(dataset_width);
       }
-      strcpy(name, dimensions[i]->name);
-      strcat(name, "-width");
-      dataset_width = H5Dcreate(grp_dimensions_id, name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-      fspc_id = H5Dget_space(dataset_width);
-      if (fspc_id < 0) {
-	return (MI_ERROR);
-      }
-      status = H5Dwrite(dataset_width, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->widths);
-      if (status < 0) {
-	return (MI_ERROR);
-      }
-      H5Dclose(dataset_width);
     }
     
     /* Create Dimension attribute  "attr" */
@@ -341,7 +348,24 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
+
+   /* Create Dimension attribute "comments" */
+   dataspace_id = H5Screate(H5S_SCALAR);
+   hdf_type = H5Tcopy(H5T_C_S1);
+   H5Tset_size(hdf_type, MI2_CHAR_LENGTH);
+   hdf_attr = H5Acreate(dataset_id, "comments", hdf_type, dataspace_id, H5P_DEFAULT);
+   if (hdf_attr < 0) {
+     return (MI_ERROR);
+   }
    
+   H5Awrite(hdf_attr, hdf_type, dimensions[i]->comments);
+
+   /* Close attribute dataspace. */
+   H5Sclose(dataspace_id); 
+   /* Close attribute. */
+   H5Aclose(hdf_attr);
+   /* !!! DELETE DATA TYPE OBJECT !!! */
+   H5Tclose(hdf_type);
   }
   
   /* Create image attribute "dimorder" */
