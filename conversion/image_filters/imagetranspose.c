@@ -24,8 +24,8 @@
 
 main(int argc, char *argv[])
 {
-   int i,j,k,oi,image_size,offset,bytes_per_pixel,row_size,nread;
-   int xsize,ysize,xstart,ystart,xstop,ystop,xstep,ystep;
+   int i,j,k,image_size,bytes_per_pixel,row_size,nread;
+   int xsize,ysize;
    char *pname;
    char *buffer,*outbuf;
 

@@ -32,7 +32,7 @@ main(int argc, char **argv)
    char *pname;
    FILE *fp1;
    INTYPE value[ARRSIZE];
-   int i,nread,skip,pass,all;
+   int nread,skip,pass,all;
 
    /* Get arguments */
    if ((argc--) > 0) pname=(*argv++);   /* program name */
