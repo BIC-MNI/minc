@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.1  1994-10-11 16:18:50  neelin
-@MODIFIED   : Fixed scanning of integers for max and min (conversion to double had
-@MODIFIED   : signed and unsigned reversed).
+@MODIFIED   : Revision 2.2  1995-01-03 13:09:24  neelin
+@MODIFIED   : Added direction cosine support.
 @MODIFIED   :
+ * Revision 2.1  94/10/11  16:18:50  neelin
+ * Fixed scanning of integers for max and min (conversion to double had
+ * signed and unsigned reversed).
+ * 
  * Revision 2.0  94/09/28  10:33:01  neelin
  * Release of minc version 0.2
  * 
@@ -51,7 +54,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.1 1994-10-11 16:18:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.2 1995-01-03 13:09:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -93,6 +96,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define DEF_STEP DBL_MAX
 #define DEF_START DBL_MAX
 #define DEF_RANGE DBL_MAX
+#define DEF_DIRCOS DBL_MAX
 
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
@@ -144,6 +148,11 @@ double ovalid_range[2] = {0.0, -1.0};
 int ovrange_set;
 double dimstep[3] = {DEF_STEP, DEF_STEP, DEF_STEP};
 double dimstart[3] = {DEF_START, DEF_START, DEF_START};
+double dimdircos[3][3] = {
+   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS,
+   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS,
+   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS
+};
 int vector_dimsize = -1;
 char *modality = NULL;
 int attribute_list_size = 0;
@@ -268,6 +277,12 @@ ArgvInfo argTable[] = {
        "Starting coordinate for y dimension."},
    {"-zstart", ARGV_FLOAT, (char *) 1, (char *) &dimstart[Z],
        "Starting coordinate for z dimension."},
+   {"-xdircos", ARGV_FLOAT, (char *) 3, (char *) dimdircos[X],
+       "Direction cosines for x dimension."},
+   {"-ydircos", ARGV_FLOAT, (char *) 3, (char *) dimdircos[Y],
+       "Direction cosines for y dimension."},
+   {"-zdircos", ARGV_FLOAT, (char *) 3, (char *) dimdircos[Z],
+       "Direction cosines for z dimension."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying imaging modality. Default = -nomodality."},
    {"-nomodality", ARGV_CONSTANT, NULL, (char *) &modality,
@@ -405,7 +420,7 @@ main(int argc, char *argv[])
          varid = micreate_std_variable(cdfid, dimname[i], 
                                        NC_LONG, 0, NULL);
 
-         /* Write out step and start */
+         /* Write out step and start and direction cosine */
          if (STR_EQ(dimname[i], MIxspace)) index = X;
          if (STR_EQ(dimname[i], MIyspace)) index = Y;
          if (STR_EQ(dimname[i], MIzspace)) index = Z;
@@ -414,6 +429,10 @@ main(int argc, char *argv[])
          }
          if (dimstart[index] != DEF_START) {
             (void) miattputdbl(cdfid, varid, MIstart, dimstart[index]);
+         }
+         if (dimdircos[index][0] != DEF_DIRCOS) {
+            (void) ncattput(cdfid, varid, MIdirection_cosines, NC_DOUBLE,
+                            3, dimdircos[index]);
          }
       }
       

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.0 1994-09-28 10:33:02 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.1 1995-01-03 13:09:38 neelin Exp $
 .\"
 .TH RAWTOMINC 1 "MINC Image File Format"
 
@@ -247,6 +247,18 @@ Starting coordinate for y dimension (default = none).
 .I -zstart
 <zstart>:
 Starting coordinate for z dimension (default = none).
+.P
+.I -xdircos
+<x1> <x2> <x3>:
+Direction cosines for x dimension (default = none).
+.P
+.I -ydircos
+<y1> <y2> <y3>:
+Direction cosines for y dimension (default = none).
+.P
+.I -zdircos
+<z1> <z2> <z3>:
+Direction cosines for z dimension (default = none).
 
 .SH Frame time and length specification
 .P
@@ -266,23 +278,32 @@ apply here as well.
 .SH Imaging modality
 .P
 .I -nomodality:
-Do not store modality type in file.
+Do not store modality type in file (default).
+.P
 .I -pet:
 PET data.
+.P
 .I -mri:
 MRI data.
+.P
 .I -spect:
 SPECT data.
+.P
 .I -gamma:
 Data from a gamma camera.
+.P
 .I -mrs:
 MR spectroscopy data.
+.P
 .I -mra:
 MR angiography data.
+.P
 .I -ct:
 CT data.
+.P
 .I -dsa:
 DSA data
+.P
 .I -dr:
 Digital radiography data.
 
