@@ -104,13 +104,18 @@ sub ge5_read_file_info {
     $file_info{'slicepos'} = &unpack_value(*image_hdr, 126, 'f');
     $file_info{'patient_name'} = &unpack_value(*exam_hdr, 97, "A25");
     local($orient_flag) = &unpack_value(*image_hdr, 114, 's');
-    if ($orient_flag == 4) {    # Sagittal
+    if ($orient_flag == 2) {    # Transverse
+        $file_info{'orientation'} = 'transverse';
+    }
+    elsif ($orient_flag == 4) {    # Sagittal
         $file_info{'orientation'} = 'sagittal';
     }
-    elsif ($orient_flag == 8) { # Coronal
+    elsif (($orient_flag == 8) ||
+           ($orient_flag == 16)) { # Coronal
         $file_info{'orientation'} = 'coronal';
     }
-    else {                      # Transverse
+    else {                      # Assume transverse
+        print STDERR "orient_flag = $orient_flag, assuming transverse\n";
         $file_info{'orientation'} = 'transverse';
     }
 
