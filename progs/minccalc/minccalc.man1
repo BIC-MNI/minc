@@ -13,7 +13,7 @@ minccalc - perform complex math operations on minc files
 will perform complex, voxel-by-voxel math operations, on one or more
 minc files of the same shape and having the same coordinate sampling,
 producing a single output file. The operations to be performed are
-input using the -expression argument (see EXPRESSIONS)
+input using the -expression argument (see EXPRESSIONS).
 
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
@@ -103,28 +103,37 @@ dimensions (default).
 Ignore any differences in world dimensions sampling for input files .
 .P
 .I -propagate_nan:
-Invalid data (Not-A-Number or NaN) at a voxel in any of the input
-files will produce invalid data in the output file at that voxel
-(default).
+For cumulative vector operations (sum, prod and avg), invalid data 
+(Not-A-Number or NaN) in any element of the vector will produce
+invalid data in the result (default).
 .P
 .I -ignore_nan:
-For cumulative operations, invalid data (NaN) in an input file is
+For cumulative operations, invalid data (NaN) in the vector is
 ignored, ie. treated as though it is not present.
 .P
 .I -nan:
 When an illegal operation is attempted at a voxel (such as divide by
-zero), invalid data (NaN) is stored in the output file (default). Having 
+zero), the result is invalid data (NaN) (default). Having 
 no valid input data for a cumulative operation is also considered an 
 illegal operation when -ignore_nan is used.
 .P
 .I -zero:
 When an illegal operation is attempted at a voxel (such as divide by
-zero), value zero is stored in the output file.
+zero), the result is value zero.
 .P
 .I -illegal_value
 <value>:
 When an illegal operation is attempted at a voxel (such as divide by
-zero), the specified value is stored in the output file.
+zero), the result is the value specified by this option.
+.P
+.I -expression
+<string>:
+Specify the expression to evaluate at each voxel (see EXPRESSIONS).
+.P
+.I -expfile
+<filename>:
+Specify a file containing an expression to evaluate at each voxel
+(see EXPRESSIONS).
 .P
 .I -eval-width
 <value>:
@@ -164,6 +173,8 @@ functions:
    isnan(v) - 1 if v is invalid and 0 otherwise
    clamp(v1,v2,v3) - v1 bounded by [v2, v3]
    segment(v1,v2,v3) - tests if v1 is in [v2, v3]
+
+The scalar constant NaN is defined such that isnan(NaN) return 1.
 
 Vectors can be written in the following `extensional' form
 
@@ -244,6 +255,30 @@ For example, the following expression will always evaluate to 3:
 These were originally designed to create variables only within the 
 evaluated expression, but modifications have been made so that the 
 global symbol table is changed.
+
+.SH EXAMPLES
+
+Here is a expression for calculating standard deviation, taking into account
+the possibility of invalid input data, which is ignored:
+
+   s0 = s1 = s2 = 0;
+   
+   for i in [0:len(A)) {
+      v=A[i];
+      if (!isnan(v)) {
+         s0 = s0 + 1;
+         s1 = s1 + v;
+         s2 = s2 + v*v;
+      }
+   };
+   
+   if (s0 > 1) {
+      sqrt((s2 - s1*s1/s0) / (s0-1));
+   }
+   else {
+      NaN;
+   }; 
+
 
 .SH CAVEATS
 A few things you should remember...

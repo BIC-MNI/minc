@@ -19,7 +19,13 @@ Thu Oct  5 17:09:12 EST 2000 - First alpha version
 Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 
  * $Log: minccalc.c,v $
- * Revision 1.5  2001-05-02 01:38:15  neelin
+ * Revision 1.6  2001-05-02 16:27:19  neelin
+ * Fixed handling of invalid values. Added NaN constant. Force copy of
+ * data when assigning to a symbol so that s1 = s2 = expr does the right
+ * thing (s1 and s2 should be separate copies of the data). Updated man
+ * page.
+ *
+ * Revision 1.5  2001/05/02 01:38:15  neelin
  * Major changes to allow parallel evaluations. Created scalar_t type
  * along the lines of vector_t (reference counting, etc.). Compiles
  * and runs on basic standard deviation calculation (with test for invalid
@@ -43,7 +49,7 @@ Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.5 2001-05-02 01:38:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.6 2001-05-02 16:27:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -77,14 +83,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 
 /* Values for representing default case for command-line options */
 #define DEFAULT_DBL DBL_MAX
 #define DEFAULT_BOOL -1
-
-/* Structure for window information */
-typedef struct {
-   int num_constants;
-   double constants[2];
-   int propagate_nan;
-   double illegal_value;
-} Math_Data;
 
 /* Function prototypes */
 public void do_math(void *caller_data, long num_voxels, 
@@ -196,7 +194,6 @@ public int main(int argc, char *argv[]){
    char **infiles, **outfiles;
    int nfiles, nout;
    char *arg_string;
-   Math_Data math_data;
    Loop_Options *loop_options;
    char *pname;
    int i;
@@ -306,21 +303,29 @@ public int main(int argc, char *argv[]){
       scalar_free(scalar);
    }
       
-   /* Construct initial symbol table from the A vector */
+   /* Construct initial symbol table from the A vector. Since setting
+      a symbol makes a copy, we have to get a handle to that copy. */
    rootsym = sym_enter_scope(NULL);
    ident = new_ident("A");
    sym_set_vector(eval_width, NULL, A, ident, rootsym);
+   vector_free(A);
+   A = sym_lookup_vector(ident, rootsym);
+   if (A==NULL) {
+      (void) fprintf(stderr, "Error initializing symbol table\n");
+      exit(EXIT_FAILURE);
+   }
+   vector_incr_ref(A);
    
    /* Set default copy_all_header according to number of input files */
    if (copy_all_header == DEFAULT_BOOL)
       copy_all_header = (nfiles == 1);
 
-   if (value_for_illegal_operations != DEFAULT_DBL)
-      math_data.illegal_value = value_for_illegal_operations;
-   else if (use_nan_for_illegal_values)
-      math_data.illegal_value = INVALID_DATA;
-   else
-      math_data.illegal_value = 0.0;
+   if (value_for_illegal_operations == DEFAULT_DBL) {
+      if (use_nan_for_illegal_values)
+         value_for_illegal_operations = INVALID_DATA;
+      else
+         value_for_illegal_operations = 0.0;
+   }
 
    /* Do math */
    loop_options = create_loop_options();
@@ -331,11 +336,12 @@ public int main(int argc, char *argv[]){
    set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
    set_loop_check_dim_info(loop_options, check_dim_info);
    voxel_loop(nfiles, infiles, nout, outfiles, arg_string, loop_options,
-              do_math, (void *) &math_data);
+              do_math, NULL);
    free_loop_options(loop_options);
 
    
    /* Clean up */
+   vector_free(A);
    sym_leave_scope(rootsym);
    exit(EXIT_SUCCESS);
 }

@@ -28,6 +28,7 @@ scalar_t   for_loop(int, int *, node_t n, sym_t sym);
 
 extern int debug;
 extern int propagate_nan;
+extern double value_for_illegal_operations;
 
 void eval_error(node_t n, const char *msg){
    int pos = n->pos;
@@ -72,7 +73,7 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
    scalar_t s, s2, result;
    scalar_t args[3];
    double vals[3];
-   int *eval_flags2;
+   int *eval_flags2, *isnan_flags;
    int found_invalid, all_true, all_false;
    int iarg, ivalue;
 
@@ -148,8 +149,12 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
             result->vals[ivalue] = vals[0] * vals[1]; break;
       
          case NODETYPE_DIV:
-            result->vals[ivalue] = vals[0] / vals[1]; break;
-      
+            if (vals[1] == 0.0)
+               result->vals[ivalue] = value_for_illegal_operations;
+            else
+               result->vals[ivalue] = vals[0] / vals[1];
+            break;
+
          case NODETYPE_LT:
             result->vals[ivalue] = vals[0] < vals[1]; break;
    
@@ -187,7 +192,11 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
             result->vals[ivalue] = pow(vals[0], vals[1]); break;
    
          case NODETYPE_SQRT:
-            result->vals[ivalue] = sqrt(vals[0]); break;
+            if (vals[0] < 0.0)
+               result->vals[ivalue] = value_for_illegal_operations;
+            else 
+               result->vals[ivalue] = sqrt(vals[0]);
+            break;
    
          case NODETYPE_ABS:
             result->vals[ivalue] = fabs(vals[0]); break;
@@ -196,7 +205,11 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
             result->vals[ivalue] = exp(vals[0]); break;
    
          case NODETYPE_LOG:
-            result->vals[ivalue] = log(vals[0]); break;
+            if (vals[0] <= 0.0)
+               result->vals[ivalue] = value_for_illegal_operations;
+            else
+               result->vals[ivalue] = log(vals[0]);
+            break;
    
          case NODETYPE_SIN:
             result->vals[ivalue] = sin(vals[0]); break;
@@ -339,13 +352,18 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
       /* Do the test */
       s = eval_scalar(width, eval_flags, n->expr[0], sym);
 
-      /* Set the eval flags based on the results */
+      /* Set the eval flags based on the results. Keep track of invalid
+         data in the expression - we will not evaluate either part in that
+         case. */
       eval_flags2 = malloc(sizeof(eval_flags[0]) * width);
+      isnan_flags = malloc(sizeof(eval_flags[0]) * width);
       all_true = TRUE;
       all_false = TRUE;
       for (ivalue=0; ivalue < width; ivalue++) {
+         isnan_flags[ivalue] = (s->vals[ivalue] == INVALID_VALUE);
          eval_flags2[ivalue] = ((eval_flags == NULL ? 1 : eval_flags[ivalue])
-                                && (s->vals[ivalue] != 0.0));
+                                && (s->vals[ivalue] != 0.0)
+                                && (!isnan_flags[ivalue]));
          if (eval_flags2[ivalue])
             all_false = FALSE;
          else
@@ -368,12 +386,14 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
       if (!all_true && n->numargs > 2) {
          if (eval_flags2 != NULL) {
             for (ivalue=0; ivalue < width; ivalue++) 
-               eval_flags2[ivalue] = !eval_flags2[ivalue];
+               eval_flags2[ivalue] = 
+                  !eval_flags2[ivalue] && !isnan_flags[ivalue];
          }
          s2 = eval_scalar(width, eval_flags2, n->expr[2], sym);
          if (eval_flags2 != NULL) {
             for (ivalue=0; ivalue < width; ivalue++) 
-               eval_flags2[ivalue] = !eval_flags2[ivalue];
+               eval_flags2[ivalue] = 
+                  !eval_flags2[ivalue] && !isnan_flags[ivalue];
          }
       }
 
@@ -400,9 +420,18 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
          }
       }
 
+      /* Mark appropriate invalid values */
+      for (ivalue=0; ivalue < width; ivalue++) {
+         if (isnan_flags[ivalue]) {
+            s->vals[ivalue] = value_for_illegal_operations;
+         }
+      }
+      
+
       /* Free things and return */
       if (s2 != NULL) scalar_free(s2);
       if (eval_flags2 != NULL) free(eval_flags2);
+      if (isnan_flags != NULL) free(isnan_flags);
       return s;
 
    default:
@@ -438,20 +467,24 @@ scalar_t eval_sum(int width, int *eval_flags, node_t n, vector_t v)
    int i, ivalue;
    scalar_t result;
    double value;
-   int found_invalid;
+   int found_invalid, found_valid;
 
    result = new_scalar(width);
    for (ivalue=0; ivalue < width; ivalue++) {
       if (eval_flags != NULL && !eval_flags[ivalue]) continue;
       result->vals[ivalue] = 0.0;
-      found_invalid = FALSE;
+      found_invalid = found_valid = FALSE;
       for (i = 0; i < v->len; i++) {
          value = v->el[i]->vals[ivalue];
-         if (value == INVALID_VALUE) found_invalid = TRUE;
-         else result->vals[ivalue] += value;
+         if (value == INVALID_VALUE) 
+            found_invalid = TRUE;
+         else {
+            result->vals[ivalue] += value;
+            found_valid = TRUE;
+         }
       }
-      if (found_invalid && propagate_nan) {
-         result->vals[ivalue] = INVALID_VALUE;
+      if ((found_invalid && propagate_nan) || !found_valid) {
+         result->vals[ivalue] = value_for_illegal_operations;
       }
    }
    return result;
@@ -463,20 +496,24 @@ scalar_t eval_prod(int width, int *eval_flags, node_t n, vector_t v)
    int i, ivalue;
    scalar_t result;
    double value;
-   int found_invalid;
+   int found_invalid, found_valid;
 
    result = new_scalar(width);
    for (ivalue=0; ivalue < width; ivalue++) {
       if (eval_flags != NULL && !eval_flags[ivalue]) continue;
       result->vals[ivalue] = 1.0;
-      found_invalid = FALSE;
+      found_invalid = found_valid = FALSE;
       for (i = 0; i < v->len; i++) {
          value = v->el[i]->vals[ivalue];
-         if (value == INVALID_VALUE) found_invalid = TRUE;
-         else result->vals[ivalue] *= value;
+         if (value == INVALID_VALUE) 
+            found_invalid = TRUE;
+         else {
+            result->vals[ivalue] *= value;
+            found_valid = TRUE;
+         }
       }
-      if (found_invalid && propagate_nan) {
-         result->vals[ivalue] = INVALID_VALUE;
+      if ((found_invalid && propagate_nan) || !found_valid) {
+         result->vals[ivalue] = value_for_illegal_operations;
       }
    }
    return result;
@@ -488,7 +525,7 @@ scalar_t eval_max(int width, int *eval_flags,
                   node_t n, vector_t v, double sign)
 {
    int i, ivalue;
-   scalar_t result, s;
+   scalar_t result;
    double value, ans;
 
    result = new_scalar(width);
@@ -513,7 +550,7 @@ vector_t eval_vector(int width, int *eval_flags, node_t n, sym_t sym){
    vector_t v, v2;
    scalar_t s;
    int ivalue, iel;
-   int *eval_flags2;
+   int *eval_flags2, *isnan_flags;
    int all_true, all_false;
 
    /* Check that node is of correct type */
@@ -577,11 +614,14 @@ vector_t eval_vector(int width, int *eval_flags, node_t n, sym_t sym){
 
       /* Set the eval flags based on the results */
       eval_flags2 = malloc(sizeof(eval_flags[0]) * width);
+      isnan_flags = malloc(sizeof(eval_flags[0]) * width);
       all_true = TRUE;
       all_false = TRUE;
       for (ivalue=0; ivalue < width; ivalue++) {
+         isnan_flags[ivalue] = (s->vals[ivalue] == INVALID_VALUE);
          eval_flags2[ivalue] = ((eval_flags == NULL ? 1 : eval_flags[ivalue])
-                                && (s->vals[ivalue] != 0.0));
+                                && (s->vals[ivalue] != 0.0)
+                                && (!isnan_flags[ivalue]));
          if (eval_flags2[ivalue])
             all_false = FALSE;
          else
@@ -604,12 +644,14 @@ vector_t eval_vector(int width, int *eval_flags, node_t n, sym_t sym){
       if (!all_true && n->numargs > 2) {
          if (eval_flags2 != NULL) {
             for (ivalue=0; ivalue < width; ivalue++) 
-               eval_flags2[ivalue] = !eval_flags2[ivalue];
+               eval_flags2[ivalue] = 
+                  !eval_flags2[ivalue] && !isnan_flags[ivalue];
          }
          v2 = eval_vector(width, eval_flags2, n->expr[2], sym);
          if (eval_flags2 != NULL) {
             for (ivalue=0; ivalue < width; ivalue++) 
-               eval_flags2[ivalue] = !eval_flags2[ivalue];
+               eval_flags2[ivalue] = 
+                  !eval_flags2[ivalue] && !isnan_flags[ivalue];
          }
       }
 
@@ -639,9 +681,19 @@ vector_t eval_vector(int width, int *eval_flags, node_t n, sym_t sym){
          }
       }
 
+      /* Mark appropriate invalid values */
+      for (ivalue=0; ivalue < width; ivalue++) {
+         if (isnan_flags[ivalue]) {
+            for (iel=0; iel < v->len; iel++) {
+               v->el[iel]->vals[ivalue] = value_for_illegal_operations;
+            }
+         }
+      }
+
       /* Free things and return */
       if (v2 != NULL) vector_free(v2);
       if (eval_flags2 != NULL) free(eval_flags2);
+      if (isnan_flags != NULL) free(isnan_flags);
       return v;
 
    case NODETYPE_IDENT:

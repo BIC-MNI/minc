@@ -30,6 +30,7 @@ to             setpos(); return TO;
 if             setpos(); return IF;
 else           setpos(); return ELSE;
 for            setpos(); return FOR;
+NaN            setpos(); return NAN;
 \<             setpos(); return LT;
 \<=            setpos(); return LE;
 \>             setpos(); return GT;
@@ -46,7 +47,7 @@ for            setpos(); return FOR;
                }
 [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)? {
                   setpos();
-                  sscanf(yytext, "%f", &yylval.real);
+                  yylval.real = atof(yytext);;
                   return REAL;
                }
 [ \t\n\f]+            setpos();

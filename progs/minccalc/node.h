@@ -80,7 +80,7 @@ struct node {
    node_t expr[3];
    ident_t ident;
    int   flags;
-   float real;
+   double real;
    int   pos;
    int   numargs;
 };

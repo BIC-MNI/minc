@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
+#include <float.h>
 #include "node.h"
+
+#define INVALID_VALUE (-DBL_MAX)
 
 /* Avoid problems with conflicting declarations */
 void yyerror(const char *msg);
@@ -11,10 +15,11 @@ void yyerror(const char *msg);
 %union{
 int      pos;
 node_t   node;
-float    real;
+double   real;
 ident_t  ident;
 }
 
+%token      NAN
 %token      IN TO IDENT REAL AVG PROD SUM LET NEG LEN MAX MIN
 %token      ISNAN SQRT ABS EXP LOG SIN COS CLAMP SEGMENT
 %token      LT LE GT GE EQ NE NOT AND OR
@@ -361,7 +366,7 @@ expr   :   '(' expr ')'
         $$->expr[2] = $5; }
 
    |   IF '(' expr ')' '{' exprlist '}' ELSE '{' exprlist '}'
-      { $$ = new_node(3, node_is_scalar($3));
+      { $$ = new_node(3, node_is_scalar($6));
         $$->pos = $1;
         $$->type = NODETYPE_IFELSE;
         $$->expr[0] = $3;
@@ -369,7 +374,7 @@ expr   :   '(' expr ')'
         $$->expr[2] = $10; }
 
    |   IF '(' expr ')' '{' exprlist '}'
-      { $$ = new_node(2, node_is_scalar($3));
+      { $$ = new_node(2, node_is_scalar($6));
         $$->pos = $1;
         $$->type = NODETYPE_IFELSE;
         $$->expr[0] = $3;
@@ -394,6 +399,12 @@ expr   :   '(' expr ')'
         $$->pos = -1;
         $$->type = NODETYPE_REAL;
         $$->real = $1; }
+      
+   |   NAN
+      { $$ = new_scalar_node(0);
+        $$->pos = -1;
+        $$->type = NODETYPE_REAL;
+        $$->real = INVALID_VALUE; }
       
    ;
 

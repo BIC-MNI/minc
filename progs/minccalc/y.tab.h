@@ -1,42 +1,43 @@
 typedef union{
 int      pos;
 node_t   node;
-float    real;
+double   real;
 ident_t  ident;
 } YYSTYPE;
-#define	IN	257
-#define	TO	258
-#define	IDENT	259
-#define	REAL	260
-#define	AVG	261
-#define	PROD	262
-#define	SUM	263
-#define	LET	264
-#define	NEG	265
-#define	LEN	266
-#define	MAX	267
-#define	MIN	268
-#define	ISNAN	269
-#define	SQRT	270
-#define	ABS	271
-#define	EXP	272
-#define	LOG	273
-#define	SIN	274
-#define	COS	275
-#define	CLAMP	276
-#define	SEGMENT	277
-#define	LT	278
-#define	LE	279
-#define	GT	280
-#define	GE	281
-#define	EQ	282
-#define	NE	283
-#define	NOT	284
-#define	AND	285
-#define	OR	286
-#define	IF	287
-#define	ELSE	288
-#define	FOR	289
+#define	NAN	257
+#define	IN	258
+#define	TO	259
+#define	IDENT	260
+#define	REAL	261
+#define	AVG	262
+#define	PROD	263
+#define	SUM	264
+#define	LET	265
+#define	NEG	266
+#define	LEN	267
+#define	MAX	268
+#define	MIN	269
+#define	ISNAN	270
+#define	SQRT	271
+#define	ABS	272
+#define	EXP	273
+#define	LOG	274
+#define	SIN	275
+#define	COS	276
+#define	CLAMP	277
+#define	SEGMENT	278
+#define	LT	279
+#define	LE	280
+#define	GT	281
+#define	GE	282
+#define	EQ	283
+#define	NE	284
+#define	NOT	285
+#define	AND	286
+#define	OR	287
+#define	IF	288
+#define	ELSE	289
+#define	FOR	290
 
 
 extern YYSTYPE yylval;
