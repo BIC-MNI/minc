@@ -13,9 +13,12 @@
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 1.7  1993-10-28 15:12:06  neelin
-@MODIFIED   : Fixed fillvalue checking stuff in MI_convert_type.
+@MODIFIED   : Revision 1.8  1993-11-05 09:18:08  neelin
+@MODIFIED   : Improved epsilon calculation for valid range checking.
 @MODIFIED   :
+ * Revision 1.7  93/10/28  15:12:06  neelin
+ * Fixed fillvalue checking stuff in MI_convert_type.
+ * 
  * Revision 1.6  93/10/28  10:19:16  neelin
  * Added an epsilon for fillvalue checking in routine MI_convert_type (for
  * reading through an icv).
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.7 1993-10-28 15:12:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.8 1993-11-05 09:18:08 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -514,6 +517,7 @@ semiprivate int MI_convert_type(long number_of_values,
    int do_fillvalue;       /* Should fillvalue checking be done? */
    double fillvalue;       /* Value to fill with */
    double dmax, dmin;      /* Range of legal values */
+   double epsilon;         /* Epsilon for legal values comparisons */
 
    MI_SAVE_ROUTINE_NAME("MI_convert_type");
 
@@ -530,8 +534,10 @@ semiprivate int MI_convert_type(long number_of_values,
       fillvalue = icvp->user_fillvalue;
       dmax = icvp->var_vmax;
       dmin = icvp->var_vmin;
-      dmax += ABS(dmax) * FILLVALUE_EPSILON;
-      dmin -= ABS(dmin) * FILLVALUE_EPSILON;
+      epsilon = (dmax - dmin) * FILLVALUE_EPSILON;
+      epsilon = ABS(epsilon);
+      dmax += epsilon;
+      dmin -= epsilon;
    }
 
    /* Check the types and get their size */
