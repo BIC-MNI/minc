@@ -78,7 +78,13 @@ noinst_HEADERS = \
 	progs/mincgen/generic.h \
 	progs/mincgen/genlib.h \
 	progs/mincgen/ncgen.h \
-	progs/mincgen/ncgentab.h
+	progs/mincgen/ncgentab.h \
+	conversion/ecattominc/ecat_file.h \
+	conversion/ecattominc/machine_indep.h \
+	conversion/ecattominc/ecat_header_definition.h \
+	conversion/nifti1/nifti1.h \
+	conversion/nifti1/nifti1_io.h \
+	conversion/nifti1/nifti1_local.h
 
 # Libraries which must be built and installed.
 #
@@ -124,7 +130,11 @@ bin_PROGRAMS = \
 	xfmconcat \
 	xfminvert \
 	mincconvert \
-	mincdump
+	mincdump \
+	ecattominc \
+	mnc2nii \
+	nii2mnc \
+	upet2mnc
 
 noinst_PROGRAMS = \
 	mincexample1 \
@@ -247,6 +257,23 @@ mincdump_SOURCES = \
 	progs/mincdump/mincdump.c \
 	progs/mincdump/vardata.c \
 	progs/mincdump/dumplib.c
+
+ecattominc_SOURCES = \
+	conversion/ecattominc/ecattominc.c \
+	conversion/ecattominc/insertblood.c \
+	conversion/ecattominc/ecat_file.c \
+	conversion/ecattominc/machine_indep.c
+
+nii2mnc_SOURCES = \
+	conversion/nifti1/nii2mnc.c \
+	conversion/nifti1/nifti1_io.c
+
+mnc2nii_SOURCES = \
+	conversion/nifti1/mnc2nii.c \
+	conversion/nifti1/nifti1_io.c
+
+upet2mnc_SOURCES = \
+	conversion/micropet/upet2mnc.c
 
 libminc2_la_LDFLAGS = -version-info 2:0:1
 libminc2_la_SOURCES = \
