@@ -148,7 +148,7 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
       }
   }
   else {
-      handle->edge_count = 1;
+      handle->edge_count = 0;
       handle->edge_lengths = NULL;
       handle->zlib_level = 0;
       handle->compression_type = MI_COMPRESS_NONE;
