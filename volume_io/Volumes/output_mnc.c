@@ -18,7 +18,7 @@ private  Status  get_dimension_ordering(
     int          n_vol_dims,
     char         *vol_dim_names[],
     int          n_file_dims,
-    STRING       file_dim_names[],
+    char         *file_dim_names[],
     int          to_volume[],
     int          to_file[] );
 
@@ -52,21 +52,21 @@ public  Minc_file  initialize_minc_output(
     BOOLEAN                file_signed_flag,
     Real                   file_voxel_min,
     Real                   file_voxel_max,
-    Real                   real_min,
-    Real                   real_max,
     General_transform      *voxel_to_world_transform,
     Volume                 volume_to_attach,
     minc_output_options    *options )
 {
     minc_file_struct    *file;
     int                 dim_vars[MAX_VAR_DIMS], volume_sizes[MAX_DIMENSIONS];
+    int                 n_volume_dims;
     double              separation[MAX_VAR_DIMS], valid_range[2];
     double              start[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    int                 i, j, d, axis;
+    int                 i, j, d, axis, vol_index, n_range_dims;
     Point               origin;
     Vector              axes[MAX_DIMENSIONS];
     static  char        *default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+    char                *file_dim_names[MAX_VAR_DIMS];
     Transform           transform;
     char                **vol_dimension_names;
     minc_output_options default_options;
@@ -89,6 +89,18 @@ public  Minc_file  initialize_minc_output(
         dim_names = default_dim_names;
     }
 
+    /* --- check if dimension name correspondence between volume and file */
+
+    n_volume_dims = get_volume_n_dimensions( volume_to_attach );
+
+    if( n_volume_dims > n_dimensions )
+    {
+        print( "initialize_minc_output:" );
+        print( " volume (%d) has more dimensions than file (%d).\n",
+               n_volume_dims, n_dimensions );
+        return( (Minc_file) NULL );
+    }
+
     ALLOC( file, 1 );
 
     file->file_is_being_read = FALSE;
@@ -96,34 +108,49 @@ public  Minc_file  initialize_minc_output(
     file->volume = volume_to_attach;
     file->entire_file_written = FALSE;
 
-    /* --- check if dimension name correspondence between volume and file */
-
-    n_volume_dims = get_volume_n_dimensions( volume_to_attach );
-
-    if( n_volume_dims > n_file_dimensions )
-    {
-        print( "initialize_minc_output:" );
-        print( " volume (%d) has more dimensions than file (%d).\n",
-               n_volume_dims, n_file_dimensions );
-        return( (Minc_file) NULL );
-    }
-
     /*--- find correspondence between volume dimensions and file dimensions */
 
     vol_dimension_names = get_volume_dimension_names( volume_to_attach );
 
+    for_less( d, 0, n_dimensions )
+        file_dim_names[d] = dim_names[d];
+
     if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
-                            n_file_dimensions, dim_names,
+                                n_dimensions, file_dim_names,
                             file->to_volume_index, file->to_file_index ) != OK )
+    {
+        FREE( file );
         return( (Minc_file) NULL );
+    }
 
     delete_dimension_names( vol_dimension_names );
+
+    /*--- check if image range specified */
+
+    if( options->global_image_range[0] >= options->global_image_range[1] )
+    {
+        n_range_dims = n_dimensions - 2;
+        if( strcmp( dim_names[n_dimensions-1], MIvector_dimension ) == 0 )
+            --n_range_dims;
+
+        for_less( d, n_range_dims, n_dimensions )
+        {
+            if( file->to_volume_index[d] == INVALID_AXIS )
+            {
+                print( "initialize_minc_output: " );
+                print( "if outputting volumes which don't contain all image\n");
+                print( "dimensions, then must specify global image range.\n" );
+                FREE( file );
+                return( (Minc_file) NULL );
+            }
+        }
+    }
 
     /*--- check sizes match between volume and file */
 
     get_volume_sizes( volume_to_attach, volume_sizes );
 
-    for_less( d, 0, n_file_dimensions )
+    for_less( d, 0, n_dimensions )
     {
         vol_index = file->to_volume_index[d];
 
@@ -242,15 +269,26 @@ public  Minc_file  initialize_minc_output(
                          NC_DOUBLE, 2, (void *) valid_range );
     }
 
-    file->image_range[0] = real_min;
-    file->image_range[1] = real_max;
+    file->image_range[0] = options->global_image_range[0];
+    file->image_range[1] = options->global_image_range[1];
 
     if( file->image_range[0] < file->image_range[1] )
     {
-       file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
-                                             NC_DOUBLE, 0, (int *) NULL );
-       file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
-                                             NC_DOUBLE, 0, (int *) NULL );
+        file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
+                                              NC_DOUBLE, 0, (int *) NULL );
+        file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
+                                              NC_DOUBLE, 0, (int *) NULL );
+    }
+    else
+    {
+        n_range_dims = n_dimensions - 2;
+        if( strcmp( dim_names[n_dimensions-1], MIvector_dimension ) == 0 )
+            --n_range_dims;
+
+        file->min_id = micreate_std_variable( file->cdfid, MIimagemin,
+                                      NC_DOUBLE, n_range_dims, file->dim_ids );
+        file->max_id = micreate_std_variable( file->cdfid, MIimagemax,
+                                      NC_DOUBLE, n_range_dims, file->dim_ids );
     }
 
     ncopts = NC_VERBOSE | NC_FATAL;
@@ -417,7 +455,7 @@ private  Status  get_dimension_ordering(
     int          n_vol_dims,
     char         *vol_dim_names[],
     int          n_file_dims,
-    STRING       file_dim_names[],
+    char         *file_dim_names[],
     int          to_volume[],
     int          to_file[] )
 {
@@ -465,13 +503,13 @@ private  void  output_slab(
     long        count[] )
 {
     int      ind, expected_ind, n_vol_dims, file_ind;
-    int      iv[MAX_DIMENSIONS];
+    int      iv[MAX_VAR_DIMS];
     void     *void_ptr;
     BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
     Volume   tmp_volume;
     int      tmp_ind, tmp_sizes[MAX_DIMENSIONS];
     int      tmp_vol_indices[MAX_DIMENSIONS];
-    int      zero[MAX_DIMENSIONS];
+    int      zero[MAX_VAR_DIMS];
     nc_type  data_type;
 
     direct_to_volume = TRUE;
@@ -537,16 +575,22 @@ private  void  output_slab(
     }
 }
 
-public  Status  output_minc_volume(
-    Minc_file   file )
+private  Status  output_the_volume(
+    Minc_file   file,
+    Volume      volume,
+    long        volume_count[],
+    long        file_start[] )
 {
-    int               d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
-    int               slab_size, n_slab;
-    int               to_volume[MAX_DIMENSIONS], to_file[MAX_DIMENSIONS];
-    int               vol_index, step, n_steps;
+    Status            status;
+    int               i, d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
+    int               slab_size, n_slab, this_count;
+    int               vol_index, step, n_steps, n_range_dims;
+    int               to_volume_index[MAX_VAR_DIMS];
+    int               to_file_index[MAX_DIMENSIONS];
+    long              file_indices[MAX_VAR_DIMS];
     long              count[MAX_VAR_DIMS];
     long              start_index, mindex[MAX_VAR_DIMS];
-    Real              voxel_min, voxel_max;
+    Real              voxel_min, voxel_max, real_min, real_max;
     char              **vol_dimension_names;
     double            dim_value;
     BOOLEAN           increment;
@@ -585,8 +629,20 @@ public  Status  output_minc_volume(
                              volume->signed_flag ? MI_SIGNED : MI_UNSIGNED );
         (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
         (void) miicv_setint( file->icv, MI_ICV_USER_NORM, TRUE );
-        (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, file->image_range[0]);
-        (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, file->image_range[1]);
+
+        if( file->image_range[0] < file->image_range[1] )
+        {
+            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN,
+                                 file->image_range[0] );
+            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX,
+                                 file->image_range[1] );
+        }
+        else
+        {
+            get_volume_real_range( volume, &real_min, &real_max );
+            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, real_min );
+            (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, real_max );
+        }
 
         get_volume_voxel_range( volume, &voxel_min, &voxel_max );
         if( voxel_min < voxel_max )
@@ -611,18 +667,120 @@ public  Status  output_minc_volume(
         ncopts = NC_VERBOSE | NC_FATAL;
     }
 
-    /*--- check number of volumes written */
+    /* --- check if dimension name correspondence between volume and file */
 
-    d = 0;
-    while( d < file->n_file_dimensions &&
-           file->to_volume_index[d] != INVALID_AXIS )
-        ++d;
+    n_volume_dims = get_volume_n_dimensions( volume );
 
-    if( d < file->n_file_dimensions &&
-        file->indices[d] >= file->sizes_in_file[d] )
+    if( n_volume_dims > file->n_file_dimensions )
     {
-        print( "output_minc_volume: attempted to write too many subvolumes.\n");
+        print( "output_volume_to_minc_file_position:" );
+        print( " volume (%d) has more dimensions than file (%d).\n",
+               n_volume_dims, file->n_file_dimensions );
         return( ERROR );
+    }
+
+    /*--- find correspondence between volume dimensions and file dimensions */
+
+    vol_dimension_names = get_volume_dimension_names( volume );
+
+    status = get_dimension_ordering( n_volume_dims, vol_dimension_names,
+                                     file->n_file_dimensions, file->dim_names,
+                                     to_volume_index, to_file_index );
+
+    delete_dimension_names( vol_dimension_names );
+
+    if( status != OK )
+        return( ERROR );
+
+    /*--- check sizes match between volume and file */
+
+    get_volume_sizes( volume, sizes );
+
+    for_less( d, 0, file->n_file_dimensions )
+    {
+        vol_index = to_volume_index[d];
+
+        if( vol_index >= 0 )
+        {
+            if( sizes[vol_index] != file->sizes_in_file[d] )
+            {
+                print( "output_volume_to_minc_file_position: " );
+                print( "volume size[%d]=%d does not match file[%d]=%d.\n",
+                       vol_index, sizes[vol_index], d, file->sizes_in_file[d] );
+                return( ERROR );
+            }
+
+            /* --- check that we are outputting valid part of volume */
+
+            if( volume_count[vol_index] > sizes[vol_index] ||
+                volume_count[vol_index] < 0 )
+            {
+                print( "output_volume_to_minc_file_position: " );
+                print( "invalid start and count for volume.\n" );
+                return( ERROR );
+            }
+
+            this_count = volume_count[vol_index];
+        }
+        else
+            this_count = 1;
+
+        /* --- check that we are outputting valid part of file */
+
+        if( file_start[d] < 0 ||
+            file_start[d] + this_count > file->sizes_in_file[d] )
+        {
+            print( "output_volume_to_minc_file_position: " );
+            print( "invalid start and count for file.\n" );
+            return( ERROR );
+        }
+    }
+
+    /*--- if per slice image ranges, output some ranges */
+
+    if( file->image_range[0] >= file->image_range[1] )
+    {
+        long     n_ranges, range_start[MAX_VAR_DIMS], range_count[MAX_VAR_DIMS];
+        double   *image_range;
+
+        n_range_dims = file->n_file_dimensions - 2;
+        if( strcmp( file->dim_names[file->n_file_dimensions-1],
+                    MIvector_dimension ) == 0 )
+            --n_range_dims;
+
+        n_ranges = 1;
+        for_less( d, 0, n_range_dims )
+        {
+            if( to_volume_index[d] == INVALID_AXIS )
+            {
+                range_count[d] = 1;
+                range_start[d] = file_start[d];
+            }
+            else
+            {
+                n_ranges *= file->sizes_in_file[d];
+                range_count[d] = file->sizes_in_file[d];
+                range_start[d] = 0;
+            }
+        }
+
+        get_volume_real_range( volume, &real_min, &real_max );
+
+        ALLOC( image_range, n_ranges );
+
+        for_less( i, 0, n_ranges )
+            image_range[i] = real_min;
+
+        (void) mivarput( file->icv, file->min_id, range_start, range_count,
+                         NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
+
+        for_less( i, 0, n_ranges )
+            image_range[i] = real_max;
+
+        (void) mivarput( file->icv, file->max_id, range_start, range_count,
+                         NC_DOUBLE, MI_UNSIGNED, (void *) image_range );
+
+        FREE( image_range );
     }
 
     /*--- determine which contiguous blocks of volume to output */
@@ -633,10 +791,10 @@ public  Status  output_minc_volume(
 
     do
     {
-        if( file->to_volume_index[d] != INVALID_AXIS )
+        if( to_volume_index[d] != INVALID_AXIS )
         {
             ++file->n_slab_dims;
-            slab_size *= file->sizes_in_file[d];
+            slab_size *= volume_count[to_volume_index[d]];
         }
         --d;
     }
@@ -652,11 +810,11 @@ public  Status  output_minc_volume(
 
     for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
-        if( file->to_volume_index[d] != INVALID_AXIS &&
-            n_slab >= file->n_slab_dims )
-            n_steps *= file->sizes_in_file[d];
-        if( file->to_volume_index[d] != INVALID_AXIS )
+        if( to_volume_index[d] != INVALID_AXIS && n_slab >= file->n_slab_dims )
+            n_steps *= volume_count[to_volume_index[d]];
+        if( to_volume_index[d] != INVALID_AXIS )
             ++n_slab;
+        file_indices[d] = file_start[d];
     }
 
     step = 0;
@@ -671,17 +829,17 @@ public  Status  output_minc_volume(
         n_slab = 0;
         for( d = file->n_file_dimensions-1;  d >= 0;  --d )
         {
-            if( file->to_volume_index[d] == INVALID_AXIS ||
+            if( to_volume_index[d] == INVALID_AXIS ||
                 n_slab >= file->n_slab_dims )
                 count[d] = 1;
             else
-                count[d] = file->sizes_in_file[d];
+                count[d] = volume_count[to_volume_index[d]];
 
-            if( file->to_volume_index[d] != INVALID_AXIS )
+            if( to_volume_index[d] != INVALID_AXIS )
                 ++n_slab;
         }
 
-        output_slab( file, volume, file->to_volume_index, file->indices, count);
+        output_slab( file, volume, to_volume_index, file_indices, count );
 
         increment = TRUE;
 
@@ -692,17 +850,17 @@ public  Status  output_minc_volume(
         n_slab = 0;
         while( increment && d >= 0 )
         {
-            if( file->to_volume_index[d] != INVALID_AXIS &&
+            if( to_volume_index[d] != INVALID_AXIS &&
                 n_slab >= file->n_slab_dims )
             {
-                ++file->indices[d];
-                if( file->indices[d] < file->sizes_in_file[d] )
+                ++file_indices[d];
+                if( file_indices[d] < file->sizes_in_file[d] )
                     increment = FALSE;
                 else
-                    file->indices[d] = 0;
+                    file_indices[d] = 0;
             }
 
-            if( file->to_volume_index[d] != INVALID_AXIS )
+            if( to_volume_index[d] != INVALID_AXIS )
                 ++n_slab;
 
             --d;
@@ -716,8 +874,54 @@ public  Status  output_minc_volume(
 
     terminate_progress_report( &progress );
 
+    return( OK );
+}
+
+public  Status  output_volume_to_minc_file_position(
+    Minc_file   file,
+    Volume      volume,
+    long        volume_count[],
+    long        file_start[] )
+{
+    file->outputting_in_order = FALSE;
+
+    return( output_the_volume( file, volume, volume_count, file_start ) );
+}
+
+public  Status  output_minc_volume(
+    Minc_file   file )
+{
+    int        d, sizes[MAX_DIMENSIONS];
+    long       volume_count[MAX_DIMENSIONS];
+    BOOLEAN    increment;
+
+    /*--- check number of volumes written */
+
+    d = 0;
+    while( d < file->n_file_dimensions &&
+           file->to_volume_index[d] != INVALID_AXIS )
+        ++d;
+
+    if( d < file->n_file_dimensions &&
+        file->indices[d] >= file->sizes_in_file[d] )
+    {
+        print( "output_minc_volume: attempted to write too many subvolumes.\n");
+        return( ERROR );
+    }
+
+    get_volume_sizes( file->volume, sizes );
+
+    for_less( d, 0, get_volume_n_dimensions(file->volume) )
+        volume_count[d] = sizes[d];
+
+    if( output_the_volume( file, file->volume, volume_count,
+                           file->indices ) != OK )
+        return( ERROR );
+
     /*--- increment the file index dimensions which do not
           correspond to volume dimensions */
+
+    increment = TRUE;
 
     d = file->n_file_dimensions-1;
     while( increment && d >= 0 )
@@ -752,7 +956,7 @@ public  Status  close_minc_output(
         return( ERROR );
     }
 
-    if( !file->entire_file_written )
+    if( file->outputting_in_order && !file->entire_file_written )
     {
         print( "Warning:  the MINC file has been " );
         print( "closed without writing part of it.\n");
@@ -778,6 +982,8 @@ public  void  set_default_minc_output_options(
 
     for_less( i, 0, MAX_DIMENSIONS )
         (void) strcpy( options->dimension_names[i], "" );
+    options->global_image_range[0] = 0.0;
+    options->global_image_range[1] = -1.0;
 }
 
 public  void  set_minc_output_dimensions_order(
@@ -789,4 +995,13 @@ public  void  set_minc_output_dimensions_order(
 
     for_less( i, 0, n_dimensions )
         (void) strcpy( options->dimension_names[i], dimension_names[i] );
+}
+
+public  void  set_minc_output_real_range(
+    minc_output_options  *options,
+    Real                 real_min,
+    Real                 real_max )
+{
+    options->global_image_range[0] = real_min;
+    options->global_image_range[1] = real_max;
 }
