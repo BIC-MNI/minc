@@ -111,135 +111,12 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
  */
 
 int 
-micreate_dimension(mihandle_t volume, const char *name, midimclass_t class, 
-		   midimattr_t attr, unsigned long size, midimhandle_t *new_dim_ptr)
-{
-
-  hid_t hdf_file;
-  hid_t hdf_mnc_grp;		/* /minc-2.0 */
-  hid_t hdf_dims_grp;
+micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
+		   unsigned long size, midimhandle_t *new_dim_ptr)
+{  
   
-  int stat;
-  
-  hsize_t dim[1] = {size};      /* Dataspace dimensions */
-
-  hid_t dataset;
-  hid_t space;                 /* Handles */
-  hid_t dim_tid;               /* Dimension datatype identifier */
-  hid_t h5_enum;
-  herr_t status;
   dimension *handle;
-  dimension *buff_dim;
-  
-  if (volume == NULL) {
-    return (MI_ERROR);
-  }
-
-  /* Get a handle to the actual HDF file 
-     */
-  
-  hdf_file = volume->hdf_id;
-  if (hdf_file < 0) {
-    return (MI_ERROR);
-  }
-  
-  /* Try opening the ROOT group or create one if 
-     it does not exist.
-     */
-  if ((hdf_mnc_grp = H5Gopen(hdf_file, MI2_ROOT_NAME)) < 0) {
-    hdf_mnc_grp = H5Gcreate(hdf_file, MI2_ROOT_NAME, 0);
-    stat = H5Gset_comment(hdf_file, MI2_ROOT_NAME, MI2_ROOT_COMMENT);
-    if (stat < 0) {
-      return (MI_ERROR);
-    }
-  }
-
-  if (hdf_mnc_grp < 0) {
-    return (MI_ERROR);
-  }
-   
-  /* Try opening the DIMENSION group or create one if 
-     it does not exist.
-     */
-  if ((hdf_dims_grp = H5Gopen(hdf_mnc_grp, MI2_DIMS_NAME)) < 0) {
-    hdf_dims_grp = H5Gcreate(hdf_mnc_grp, MI2_DIMS_NAME, 0);
-    stat = H5Gset_comment(hdf_mnc_grp, MI2_DIMS_NAME, MI2_DIMS_COMMENT);
-    if (stat < 0) {
-      return (MI_ERROR);
-    }
-  }
-  if (hdf_dims_grp < 0) {
-    return (MI_ERROR);
-  }
-   
-  /* Create the data space
-   */ 
-  space = H5Screate_simple(1,dim, NULL);
-
-  /* Create the memory datatype
-   */
-  dim_tid = H5Tcreate(H5T_COMPOUND, sizeof(dimension));
-
-  /* Insert individual fields
-   */
-  H5Tinsert(dim_tid, "name", HOFFSET(dimension, name), H5T_NATIVE_UCHAR);
-  
-  h5_enum = H5Tenum_create(H5T_NATIVE_UCHAR);
-  if (h5_enum >= 0) {
-    unsigned char v;
-    v = 0;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_ANY", &v);
-    v = 1;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_SPATIAL", &v);
-    v = 2;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_TIME", &v);
-    v = 3;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_SFREQUENCY", &v);
-    v = 4;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_TFREQUENCY", &v);
-    v = 5;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_USER", &v);
-    v = 6;
-    H5Tenum_insert(h5_enum, "MI_DIMCLASS_FLAT_RECORD", &v);
-
-    stat = H5Tcommit(dim_tid, "class", h5_enum);
-    H5Tclose(h5_enum);
-  }
-   
-  H5Tinsert(dim_tid, "attr", HOFFSET(dimension, attr), H5T_NATIVE_UINT);
-  H5Tinsert(dim_tid, "size", HOFFSET(dimension, size), H5T_NATIVE_ULONG);
-  H5Tinsert(dim_tid, "cosines", HOFFSET(dimension, cosines), H5T_NATIVE_DOUBLE);
-  H5Tinsert(dim_tid, "start", HOFFSET(dimension, start), H5T_NATIVE_ULONG);
-  H5Tinsert(dim_tid, "sampling_flag", HOFFSET(dimension, sampling_flag), H5T_NATIVE_HBOOL);
-  H5Tinsert(dim_tid, "separation", HOFFSET(dimension, separation), H5T_NATIVE_DOUBLE);
-  H5Tinsert(dim_tid, "units", HOFFSET(dimension, units), H5T_NATIVE_UCHAR);
-  H5Tinsert(dim_tid, "width", HOFFSET(dimension, width), H5T_NATIVE_DOUBLE);
-  H5Tinsert(dim_tid, "volume_handle", HOFFSET(dimension, volume_handle), H5T_NATIVE_INT);
-   
-  /* Create the dataset
-   */
-  
-  dataset = H5Dcreate(hdf_dims_grp, name, dim_tid, space, H5P_DEFAULT);
-  if (dataset < 0) {
-    return (MI_ERROR);
-  }
-  
-  /* Write data to the dataset // NOT SURE IF WE NEED TO WRITE ON DISK
-   */
-  /*
-  status = H5Dwrite(dataset, dim_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, buff_dim);
-  if (status < 0) {
-    return (MI_ERROR);
-  }
-  */
-  
-  /* Close/free the handles we created.
-     */
-  H5Tclose(dim_tid);
-  H5Sclose(space);
-  H5Dclose(dataset);
-  H5Gclose(hdf_dims_grp);
-  H5Gclose(hdf_mnc_grp);  
+ 
   
   /* Allocate space for the dimension
    */
@@ -1288,77 +1165,57 @@ static int error_cnt = 0;
 
 int main(int argc, char **argv)
 {
-  mihandle_t vol, vol1, vol2;
+  mihandle_t vol, vol1;
   int r;
-  hid_t file_id;
   midimhandle_t dimh, dimh1,dimh2; 
   midimhandle_t dim[3];
   mivolumeprops_t props;
   
   int n;
-  volumehandle *handle;
+  
    /* Turn off automatic error reporting - we'll take care of this
    * ourselves, thanks!
    */
   H5Eset_auto(NULL, NULL);
   
-  file_id = H5Fcreate("test.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  
-  if (file_id < 0) {
-    fprintf(stderr, "Unable to create test file %x", file_id);
-    return (-1);
-  }
-  /* Allocate space for the volume handle
-   */
-  handle = (volumehandle *)malloc(sizeof(*handle));
-  if (handle == NULL) {
-    return (MI_ERROR);
-  }
-  handle->hdf_id = file_id;
-  
-  vol = handle;
-  
   r = minew_volume_props(&props);
   
-  r = micreate_dimension(vol,"MIxspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh);
+  r = micreate_dimension("MIxspace",MI_DIMCLASS_SPATIAL,1, 10,&dimh);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[0]=dimh;
   
-  r = micreate_dimension(vol,"MIyspace",MI_DIMCLASS_SPATIAL,2, 12,&dimh1);
+  r = micreate_dimension("MIyspace",MI_DIMCLASS_SPATIAL,2, 12,&dimh1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension(vol,"MIzspace",MI_DIMCLASS_ANY,2, 12,&dimh2);
+  r = micreate_dimension("MIzspace",MI_DIMCLASS_ANY,2, 12,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[2]=dimh2;
 
-  r = micreate_volume("h5", 3, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol1);
+  r = micreate_volume("test.h5", 3, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  printf(" %d ********* \n", vol1->volume_type);
-  /*
-  r = miget_volume_dimension_count(vol1, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
+  
+  r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  printf(" %d ---- \n", n);
-  */
-  /*
-  r= miopen_volume("h5",MI2_OPEN_READ ,&vol2);
+  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  r = miclose_volume(vol2);
+
+  r = miclose_volume(vol1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  */
+  
   if (error_cnt != 0) {
     fprintf(stderr, "%d error%s reported\n", 
 	    error_cnt, (error_cnt == 1) ? "" : "s");

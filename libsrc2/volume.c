@@ -21,6 +21,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hid_t g1_id; 
   volumehandle *handle;
   volprops *props_handle;
+
   if (filename == NULL || number_of_dimensions <=0 || 
       dimensions == NULL || create_props == NULL) {
     return (MI_ERROR);
@@ -51,13 +52,13 @@ micreate_volume(const char *filename, int number_of_dimensions,
   handle->hdf_id = file_id;
   handle->has_slice_scaling = FALSE;
   handle->number_of_dims = number_of_dimensions;
-  handle->dim_handles = (midimhandle_t *)malloc(sizeof(number_of_dimensions));
+  handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions*sizeof(int));
   if (handle->dim_handles == NULL) {
     return (MI_ERROR);
   }
   for (i=0; i<number_of_dimensions ; i++) {
-    handle->dim_handles[i] = dimensions[i];
-    }
+    handle->dim_handles[i] = dimensions[i];  
+  }
   /* Set the apparent order of dimensions to NULL
      until user defines them.
    */
@@ -133,6 +134,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   default:
     return (MI_ERROR);
   }
+  
   props_handle = (volprops *)malloc(sizeof(*props_handle));
   
   props_handle->enable_flag = create_props->enable_flag;
@@ -168,6 +170,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   props_handle->template_flag = create_props->template_flag;
   
   handle->create_props = props_handle;
+  
   *volume = handle;
 
   return (MI_NOERROR);
@@ -183,11 +186,10 @@ miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
     return (MI_ERROR);
   }
   for (i=0; i< volume->number_of_dims; i++) {
-    if (volume->dim_handles[i]->class == class && 
-	(attr == MI_DIMATTR_ALL || volume->dim_handles[i]->attr == attr)) {
-	 
+   if (volume->dim_handles[i]->class == class && 
+      (attr == MI_DIMATTR_ALL || volume->dim_handles[i]->attr == attr)) {
       count++;     
-    }
+      }
   }
 
   *number_of_dimensions = count;
@@ -249,16 +251,20 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 int 
 miclose_volume(mihandle_t volume)
 {
- 
-    if (H5Fclose(volume->hdf_id) < 0) {
+  
+    if (volume == NULL || H5Fclose(volume->hdf_id) < 0) {
       return (MI_ERROR);
     }
+    
     free(volume->dim_handles);
     free(volume->dim_indices);
-    free(volume->create_props->edge_lengths);
-    free(volume->create_props->record_name);
-    free(volume->create_props);
+    if (volume->create_props != NULL) {
+      free(volume->create_props->edge_lengths);
+      free(volume->create_props->record_name);
+      free(volume->create_props);
+    }
     free(volume);
+
     return (MI_NOERROR);
 }
 

@@ -182,8 +182,8 @@ extern int miset_space_name(mihandle_t vol, const char *name);
 /* DIMENSION FUNCTIONS */
 extern int miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume);
 extern int micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr);
-extern int micreate_dimension(mihandle_t volume, const char *name, midimclass_t class, 
-			      midimattr_t attr, unsigned long size, midimhandle_t *new_dim_ptr);
+extern int micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
+			      unsigned long size, midimhandle_t *new_dim_ptr);
 extern int mifree_dimension_handle(midimhandle_t dim_ptr);
 extern int miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 				   miorder_t order, int array_length, 
