@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:39  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1996-07-10 14:38:03  neelin
+@MODIFIED   : Added options to set output file type, sign and range.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:39  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.6  1995/03/21  14:26:42  neelin
  * changed usage message.
  *
@@ -34,7 +37,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.0 1995-05-15 19:32:39 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.1 1996-07-10 14:38:03 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -162,6 +165,9 @@ static Lookup_Table hotmetal_lookup = {
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
+nc_type datatype = NC_UNSPECIFIED;
+int is_signed = FALSE;
+double valid_range[2] = {0.0, 0.0};
 int buffer_size = 10 * 1024;
 char *lookup_file = NULL;
 Lookup_Type lookup_type = LU_GRAY;
@@ -182,6 +188,24 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-buffer_size", ARGV_INT, (char *) 1, (char *) &buffer_size,
        "Set the internal buffer size (in kb)."},
+   {"-filetype", ARGV_CONSTANT, (char *) NC_UNSPECIFIED, (char *) &datatype,
+       "Use data type of first file (default)."},
+   {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
+       "Write out byte data."},
+   {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &datatype,
+       "Write out short integer data."},
+   {"-long", ARGV_CONSTANT, (char *) NC_LONG, (char *) &datatype,
+       "Write out long integer data."},
+   {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *) &datatype,
+       "Write out single-precision floating-point data."},
+   {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *) &datatype,
+       "Write out double-precision floating-point data."},
+   {"-signed", ARGV_CONSTANT, (char *) TRUE, (char *) &is_signed,
+       "Write signed integer data."},
+   {"-unsigned", ARGV_CONSTANT, (char *) FALSE, (char *) &is_signed,
+       "Write unsigned integer data (default if type specified)."},
+   {"-valid_range", ARGV_FLOAT, (char *) 2, (char *) valid_range,
+       "Valid range for output data."},
    {"-gray", ARGV_CONSTANT, (char *) LU_GRAY, (char *) &lookup_type,
        "Use a grayscale lookup table (default)."},
    {"-grey", ARGV_CONSTANT, (char *) LU_GRAY, (char *) &lookup_type,
@@ -273,6 +297,8 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
+   set_loop_datatype(loop_options, datatype, is_signed, 
+                     valid_range[0], valid_range[1]);
    set_loop_convert_input_to_scalar(loop_options, TRUE);
    set_loop_output_vector_size(loop_options, 
                                lookup_data.lookup_table->vector_length);
