@@ -6,9 +6,13 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.1  1994-12-14 10:17:19  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1995-03-21 14:06:39  neelin
+@MODIFIED   : Improved interface and added lots of functionality (much for the benefit
+@MODIFIED   : of mincconcat).
 @MODIFIED   :
+ * Revision 1.1  94/12/14  10:17:19  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.1 1994-12-14 10:17:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.2 1995-03-21 14:06:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -33,13 +37,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_lo
 #include <minc_def.h>
 #include <voxel_loop.h>
 #include <nd_loop.h>
-
-#ifndef public
-#  define public
-#endif
-#ifndef private
-#  define private static
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -56,7 +53,45 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_lo
 #define ABS(x)  ( ((x) > (0)) ? (x) : (-(x)))
 
 /* Typedefs */
-typedef struct {
+typedef struct Loopfile_Info Loopfile_Info;
+
+/* Structure definitions */
+struct Loop_Info {
+   int current_file;
+   int current_index;
+   long start[MAX_VAR_DIMS];
+   long count[MAX_VAR_DIMS];
+   Loopfile_Info *loopfile_info;
+};
+
+struct Loop_Options {
+   int verbose;
+   int clobber;
+   nc_type datatype;
+   int is_signed;
+   double valid_range[2];
+   int max_open_files;
+   int check_all_input_dim_info;
+   int convert_input_to_scalar;
+   int output_vector_size;        /* 0 = same as input size */
+   int input_mincid;
+   long total_copy_space;
+   char *loop_dimension;
+   int num_all_inputs;
+   VoxelInputFileFunction input_file_function;
+   VoxelOutputFileFunction output_file_function;
+   int copy_all_header_info;
+   int do_accumulate;
+   int num_extra_buffers;
+   VoxelStartFunction start_function;
+   VoxelFinishFunction finish_function;
+   VoxelFunction voxel_function;
+   void *caller_data;
+   Loop_Info *loop_info;
+   int is_floating_type;
+};
+
+struct Loopfile_Info {
    int clobber_output;
    int num_input_files;
    int num_output_files;
@@ -70,23 +105,39 @@ typedef struct {
    int *output_icvid;
    int current_input_file_number;
    int current_output_file_number;
-} Loopfile_Info;
+   int headers_only;
+   int want_headers_only;
+   int sequential_access;
+   int can_open_all_input;
+};
 
 /* Function prototypes */
+private int get_loop_dim_size(int inmincid, Loop_Options *loop_options);
+private void translate_input_coords(int inmincid,
+                                    long chunk_cur[], long input_cur[],
+                                    long chunk_curcount[], 
+                                    long input_curcount[],
+                                    int *loop_dim_index,
+                                    Loop_Options *loop_options);
 private void check_input_files(Loop_Options *loop_options,
                                Loopfile_Info *loopfile_info);
+private int input_image_varinq(int mincid, int imgid, char *name,
+                               nc_type *datatype, int *ndims, int dim[],
+                               int *natts, Loop_Options *loop_options);
 private void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
-                          double start[], double step[]);
+                          double start[], double step[],
+                          Loop_Options *loop_options);
 private void setup_output_files(Loop_Options *loop_options, 
                                 Loopfile_Info *loopfile_info,
                                 char *arg_string);
-private long get_vector_length(int mincid);
+private long get_vector_length(int mincid, Loop_Options *loop_options);
 private void setup_variables(int inmincid, int outmincid,
                              int output_curfile,
                              char *arg_string, Loop_Options *loop_options);
 private void update_history(int mincid, char *arg_string);
-private void setup_icvs(Loopfile_Info *loopfile_info);
+private void setup_icvs(Loop_Options *loop_options, 
+                        Loopfile_Info *loopfile_info);
 private void do_voxel_loop(Loop_Options *loop_options,
                            Loopfile_Info *loopfile_info);
 private void setup_looping(Loop_Options *loop_options, 
@@ -95,13 +146,35 @@ private void setup_looping(Loop_Options *loop_options,
                            long block_start[], long block_end[], 
                            long block_incr[], long *block_num_voxels,
                            long chunk_incr[], long *chunk_num_voxels);
-private void initialize_loopfile_info(int num_input_files,
-                                      char *input_files[],
-                                      int num_output_files,
-                                      char *output_files[],
-                                      Loop_Options *loop_options,
-                                      Loopfile_Info *loopfile_info);
+private void initialize_file_and_index(Loop_Options *loop_options, 
+                                       Loopfile_Info *loopfile_info,
+                                       int do_loop,
+                                       int *ifile, int *dim_index,
+                                       int *dummy_index);
+private int finish_file_and_index(Loop_Options *loop_options, 
+                                  Loopfile_Info *loopfile_info,
+                                  int do_loop,
+                                  int ifile, int dim_index,
+                                  int dummy_index);
+private void increment_file_and_index(Loop_Options *loop_options, 
+                                      Loopfile_Info *loopfile_info,
+                                      int do_loop,
+                                      int *ifile, int *dim_index,
+                                      int *dummy_index);
+private Loopfile_Info *initialize_loopfile_info(int num_input_files,
+                                                char *input_files[],
+                                                int num_output_files,
+                                                char *output_files[],
+                                                Loop_Options *loop_options);
 private void cleanup_loopfile_info(Loopfile_Info *loopfile_info);
+private int get_input_numfiles(Loopfile_Info *loopfile_info);
+private int get_output_numfiles(Loopfile_Info *loopfile_info);
+private char *get_input_filename(Loopfile_Info *loopfile_info, int file_num);
+private char *get_output_filename(Loopfile_Info *loopfile_info, int file_num);
+private void set_input_headers_only(Loopfile_Info *loopfile_info,
+                                    int headers_only);
+private void set_input_sequential(Loopfile_Info *loopfile_info,
+                                  int sequential_access);
 private int get_input_mincid(Loopfile_Info *loopfile_info,
                              int file_num);
 private int get_output_mincid(Loopfile_Info *loopfile_info,
@@ -116,7 +189,14 @@ private int create_input_icvid(Loopfile_Info *loopfile_info,
                                int file_num);
 private int create_output_icvid(Loopfile_Info *loopfile_info,
                                 int file_num);
-
+private Loop_Info *create_loop_info(void);
+private void initialize_loop_info(Loop_Info *loop_info);
+private void free_loop_info(Loop_Info *loop_info);
+private void set_info_shape(Loop_Info *loop_info, long start[], long count[]);
+private void set_info_current_file(Loop_Info *loop_info, int current_file);
+private void set_info_current_index(Loop_Info *loop_info, int current_index);
+private void set_info_loopfile_info(Loop_Info *loop_info, 
+                                    Loopfile_Info *loopfile_info);
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : voxel_loop
@@ -145,9 +225,13 @@ public void voxel_loop(int num_input_files, char *input_files[],
                        Loop_Options *loop_options,
                        VoxelFunction voxel_function, void *caller_data)
 {
-   Loop_Options loop_options_struct;
-   Loopfile_Info loopfile_info_struct;
-   Loopfile_Info *loopfile_info = &loopfile_info_struct;
+   Loopfile_Info *loopfile_info;
+   int need_to_free_loop_options;
+   int old_ncopts;
+
+   /* Save ncopts and set it to default value */
+   old_ncopts = ncopts;
+   ncopts = NC_OPTS_VAL;
 
    /* Check that there is at least one input file */
    if (num_input_files < 1) {
@@ -160,33 +244,158 @@ public void voxel_loop(int num_input_files, char *input_files[],
    }
 
    /* Initialize loop options if needed */
+   need_to_free_loop_options = FALSE;
    if (loop_options == NULL) {
-      loop_options = &loop_options_struct;
-      initialize_loop_options(loop_options);
+      loop_options = create_loop_options();
+      need_to_free_loop_options = TRUE;
    }
    loop_options->voxel_function = voxel_function;
    loop_options->caller_data = caller_data;
 
+   /* Make sure that Loop_Info structure is initialized */
+   initialize_loop_info(loop_options->loop_info);
+
    /* Initialize looping info */
-   initialize_loopfile_info(num_input_files, input_files,
-                            num_output_files, output_files,
-                            loop_options, loopfile_info);
+   loopfile_info = initialize_loopfile_info(num_input_files, input_files,
+                                            num_output_files, output_files,
+                                            loop_options);
 
    /* Check that input files match */
+   set_input_headers_only(loopfile_info, TRUE);
    check_input_files(loop_options, loopfile_info);
+   set_input_headers_only(loopfile_info, FALSE);
 
    /* Set up variables in output file */
    setup_output_files(loop_options, loopfile_info, arg_string);
 
    /* Setup icv's */
-   setup_icvs(loopfile_info);
+   setup_icvs(loop_options, loopfile_info);
 
    /* Loop through the voxels */
    do_voxel_loop(loop_options, loopfile_info);
 
    /* Clean up looping info */
    cleanup_loopfile_info(loopfile_info);
+
+   /* Free loop options if needed */
+   if (need_to_free_loop_options) {
+      free_loop_options(loop_options);
+   }
+
+   /* Restore ncopts */
+   ncopts = old_ncopts;
                  
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_loop_dim_size
+@INPUT      : inmincid - input minc id
+              loop_options - Options for loops
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to get the size of the looping dimension for the given
+              input file
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 24, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int get_loop_dim_size(int inmincid, Loop_Options *loop_options)
+{
+   int dimid;
+   long dim_length;
+   int ndims, dim[MAX_VAR_DIMS];
+   int found;
+   int idim;
+
+   /* Look for dimension */
+   dimid = MI_ERROR;
+   if (loop_options->loop_dimension != NULL) {
+      ncopts = 0;
+      dimid = ncdimid(inmincid, loop_options->loop_dimension);
+      ncopts = NC_OPTS_VAL;
+   }
+   if (dimid == MI_ERROR) return 1;
+   (void) ncdiminq(inmincid, dimid, NULL, &dim_length);
+
+   /* Get image variable info */
+   (void) ncvarinq(inmincid, ncvarid(inmincid, MIimage), NULL, NULL, 
+                   &ndims, dim, NULL);
+
+   /* Check to see if the dimension subscripts the image */
+   found = FALSE;
+   for (idim=0; idim < ndims; idim++) {
+      if (dimid == dim[idim]) found = TRUE;
+   }
+
+   /* Return appropriate value */
+   if (found)
+      return dim_length;
+   else
+      return 1;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : translate_input_coords
+@INPUT      : inmincid - input minc id
+              chunk_cur - start for current chunk
+              chunk_curcount - count for current chunk
+              loop_options - Options for loops
+@OUTPUT     : input_cur - start for input file
+              input_curcount - count for input file
+              loop_dim_index - index in input_cur for looping dimension
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to translate the input hyperslab coords from those 
+              excluding the looping dimension to ones appropriate for the 
+              input file. Also returns the index (offset in input_cur) for 
+              the looping dimension (so that the caller can modify this 
+              index).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 24, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void translate_input_coords(int inmincid,
+                                    long chunk_cur[], long input_cur[],
+                                    long chunk_curcount[], 
+                                    long input_curcount[],
+                                    int *loop_dim_index,
+                                    Loop_Options *loop_options)
+{
+   int dimid;
+   int ndims, dim[MAX_VAR_DIMS];
+   int idim, jdim;
+
+   /* Look for dimension */
+   dimid = MI_ERROR;
+   if (loop_options->loop_dimension != NULL) {
+      ncopts = 0;
+      dimid = ncdimid(inmincid, loop_options->loop_dimension);
+      ncopts = NC_OPTS_VAL;
+   }
+
+   /* Get image variable info */
+   (void) ncvarinq(inmincid, ncvarid(inmincid, MIimage), NULL, NULL, 
+                   &ndims, dim, NULL);
+
+   /* Copy the hyperslab coordinates and get the index */
+   *loop_dim_index = ndims;
+   jdim = 0;
+   for (idim=0; idim < ndims; idim++) {
+      if (dimid != dim[idim]) {
+         input_cur[idim] = chunk_cur[jdim];
+         input_curcount[idim] = chunk_curcount[jdim];
+         jdim++;
+      }
+      else {
+         input_cur[idim] = 0;
+         input_curcount[idim] = 1;
+         *loop_dim_index = idim;
+      }
+   }
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -207,6 +416,7 @@ private void check_input_files(Loop_Options *loop_options,
 {
    int ifile, idim;
    int first_ndims, ndims;
+   int input_mincid;
    long first_size[MAX_VAR_DIMS], size[MAX_VAR_DIMS];
    char first_dimname[MAX_VAR_DIMS][MAX_NC_NAME];
    char dimname[MAX_VAR_DIMS][MAX_NC_NAME];
@@ -214,69 +424,165 @@ private void check_input_files(Loop_Options *loop_options,
    double first_step[MAX_VAR_DIMS], step[MAX_VAR_DIMS];
    double start_diff, step_diff;
 
-   /* Get information for first file */
-   get_dim_info(get_input_mincid(loopfile_info, 0), 
-                &first_ndims, first_size, first_dimname,
-                first_start, first_step);
+   /* Keep track of number of inputs (files and looping dimension) */
+   loop_options->num_all_inputs = 0;
 
-   /* Loop over files */
-   for (ifile = 1; ifile < loopfile_info->num_input_files; ifile++) {
+   /* Loop over files. For the first file, we only get the dimension info, 
+      we don't check it. */
+   for (ifile = 0; ifile < get_input_numfiles(loopfile_info); ifile++) {
+
+      /* Get mincid */
+      input_mincid = get_input_mincid(loopfile_info, ifile);
+
+      /* Add up number of inputs */
+      loop_options->num_all_inputs += 
+         get_loop_dim_size(input_mincid, loop_options);
+
       /* Get dimension information for this file */
-      get_dim_info(get_input_mincid(loopfile_info, ifile), 
-                   &ndims, size, dimname, start, step);
-
-      /* Check number of dimensions */
-      if (ndims != first_ndims) {
-         (void) fprintf(stderr, 
-            "Files %s and %s have different numbers of dimensions\n",
-                        loopfile_info->input_files[ifile],
-                        loopfile_info->input_files[0]);
-         exit(EXIT_FAILURE);
+      if (ifile == 0) {
+         get_dim_info(input_mincid, &first_ndims, first_size, first_dimname,
+                      first_start, first_step, loop_options);
       }
-
-      /* Loop over dimensions */
-      for (idim = 0; idim < first_ndims; idim++) {
-
-         /* Check dimension sizes */
-         if (size[idim] != first_size[idim]) {
+      else {
+         get_dim_info(input_mincid, &ndims, size, dimname, start, step,
+                      loop_options);
+         
+         /* Check number of dimensions */
+         if (ndims != first_ndims) {
             (void) fprintf(stderr, 
-               "Files %s and %s have different sizes of dimensions\n",
-                           loopfile_info->input_files[ifile],
-                           loopfile_info->input_files[0]);
+               "Files %s and %s have different numbers of dimensions\n",
+                           get_input_filename(loopfile_info,ifile),
+                           get_input_filename(loopfile_info,0));
             exit(EXIT_FAILURE);
          }
 
-         /* Check optional dimension stuff */
-         if (loop_options->check_all_input_dim_info) {
+         /* Loop over dimensions */
+         for (idim = 0; idim < first_ndims; idim++) {
 
-            /* Check names */
-            if (strcmp(dimname[idim], first_dimname[idim]) != 0) {
+            /* Check dimension sizes */
+            if (size[idim] != first_size[idim]) {
                (void) fprintf(stderr, 
-                  "Files %s and %s have different dimension names\n",
-                              loopfile_info->input_files[ifile],
-                              loopfile_info->input_files[0]);
+                  "Files %s and %s have different sizes of dimensions\n",
+                              get_input_filename(loopfile_info,ifile),
+                              get_input_filename(loopfile_info,0));
                exit(EXIT_FAILURE);
             }
 
-            /* Check coordinates */
-            start_diff = start[idim] - first_start[idim];
-            if (first_start[idim] != 0.0) start_diff /= first_start[idim];
-            step_diff = step[idim] - first_step[idim];
-            if (first_step[idim] != 0.0) step_diff /= first_step[idim];
-            if ((ABS(start_diff) > COORD_EPSILON) ||
-                (ABS(step_diff) > COORD_EPSILON)) {
-               (void) fprintf(stderr, 
-                  "Files %s and %s have different dimension coordinates\n",
-                              loopfile_info->input_files[ifile],
-                              loopfile_info->input_files[0]);
-               exit(EXIT_FAILURE);
-            }
+            /* Check optional dimension stuff */
+            if (loop_options->check_all_input_dim_info) {
 
-         }      /* If check all dimension info */
+               /* Check names */
+               if (strcmp(dimname[idim], first_dimname[idim]) != 0) {
+                  (void) fprintf(stderr, 
+                     "Files %s and %s have different dimension names\n",
+                                 get_input_filename(loopfile_info,ifile),
+                                 get_input_filename(loopfile_info,0));
+                  exit(EXIT_FAILURE);
+               }
 
-      }      /* End of loop over files */
+               /* Check coordinates */
+               start_diff = start[idim] - first_start[idim];
+               if (first_start[idim] != 0.0) start_diff /= first_start[idim];
+               step_diff = step[idim] - first_step[idim];
+               if (first_step[idim] != 0.0) step_diff /= first_step[idim];
+               if ((ABS(start_diff) > COORD_EPSILON) ||
+                   (ABS(step_diff) > COORD_EPSILON)) {
+                  (void) fprintf(stderr, 
+                     "Files %s and %s have different dimension coordinates\n",
+                                 get_input_filename(loopfile_info,ifile),
+                                 get_input_filename(loopfile_info,0));
+                  exit(EXIT_FAILURE);
+               }
+
+            }      /* If check all dimension info */
+
+         }      /* End of loop over dimensions */
+
+      }      /* End of if ifile == 0 else */
+
+      /* Call the user's function if needed */
+      if (loop_options->input_file_function != NULL) {
+         set_info_current_file(loop_options->loop_info, ifile);
+         set_info_loopfile_info(loop_options->loop_info, loopfile_info);
+         loop_options->input_file_function(loop_options->caller_data,
+                                           input_mincid, ifile,
+                                           loop_options->loop_info);
+         set_info_loopfile_info(loop_options->loop_info, NULL);
+      }
 
    }      /* End of loop over files */   
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_image_varinq
+@INPUT      : mincid - Minc id of file
+              imgid - id of image variable
+              loop_options - structure containing looping options
+@OUTPUT     : name - name of variable
+              datatype - type of variable
+              ndims - number of dimensions
+              dim - array of dimension ids
+              natts - number of attributes
+@RETURNS    : MI_ERROR if an error occurs
+@DESCRIPTION: Routine to call ncvarinq for the image variable, suppressing
+              the dimension specified in loop_options.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int input_image_varinq(int mincid, int imgid, char *name,
+                               nc_type *datatype, int *ndims, int dim[],
+                               int *natts, Loop_Options *loop_options)
+{
+   int dimid;
+   int old_ncopts;
+   int idim, jdim;
+   int status;
+   int nimgdims;
+   char dimname[MAX_NC_NAME];
+
+   /* Get loop dimension id */
+   dimid = MI_ERROR;
+   if (loop_options->loop_dimension != NULL) {
+      old_ncopts = ncopts; ncopts = 0;
+      dimid = ncdimid(mincid, loop_options->loop_dimension);
+      ncopts = old_ncopts;
+   }
+
+   /* Call ncvarinq. If there is no loop dim, or an error occurred, then
+      return. */
+   status = ncvarinq(mincid, imgid, name, datatype, ndims, dim, natts);
+   if ((dimid == MI_ERROR) || (status == MI_ERROR)) 
+      return status;
+
+   /* Get number of image dimensions */
+   nimgdims = 2;
+   if (*ndims > 0) {
+      (void) ncdiminq(mincid, dim[*ndims-1], dimname, NULL);
+      if (strcmp(dimname, MIvector_dimension) == 0)
+         nimgdims++;
+   }
+
+   /* Look for the loop dimension */
+   jdim = 0;
+   for (idim=0; idim < *ndims; idim++) {
+      if (dim[idim] != dimid) {
+         dim[jdim] = dim[idim];
+         jdim++;
+      }
+      else if (idim >= *ndims-nimgdims) {
+         (void) fprintf(stderr, 
+                        "Don't use an image dimension as a loop dimension.\n");
+         exit(EXIT_FAILURE);
+      }
+   }
+
+   /* Save number of dimensions */
+   *ndims = jdim;
+
+   return status;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -287,6 +593,7 @@ private void check_input_files(Loop_Options *loop_options,
               dimname - array of dimension names
               start - array of starts for dimensions
               step  - array of steps for dimensions
+              loop_options - looping options
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to get dimension information for a file.
 @METHOD     : 
@@ -297,7 +604,8 @@ private void check_input_files(Loop_Options *loop_options,
 ---------------------------------------------------------------------------- */
 private void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
-                          double start[], double step[])
+                          double start[], double step[],
+                          Loop_Options *loop_options)
 {
    int imgid, varid;
    int idim;
@@ -308,7 +616,8 @@ private void get_dim_info(int mincid, int *ndims, long size[],
 
    /* Get image variable info */
    imgid = ncvarid(mincid, MIimage);
-   (void) ncvarinq(mincid, imgid, NULL, NULL, ndims, dim, NULL);
+   (void) input_image_varinq(mincid, imgid, NULL, NULL, ndims, dim, NULL,
+                             loop_options);
 
    /* Loop through dimensions */
    for (idim=0; idim < *ndims; idim++) {
@@ -357,7 +666,7 @@ private void setup_output_files(Loop_Options *loop_options,
    inmincid = get_input_mincid(loopfile_info, 0);
 
    /* Create output files */
-   for (ifile=0; ifile < loopfile_info->num_output_files; ifile++) {
+   for (ifile=0; ifile < get_output_numfiles(loopfile_info); ifile++) {
       outmincid = create_output_file(loopfile_info, ifile);
       setup_variables(inmincid, outmincid, ifile, arg_string, loop_options);
    }
@@ -366,6 +675,7 @@ private void setup_output_files(Loop_Options *loop_options,
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_vector_length
 @INPUT      : mincid - minc file id
+              loop_options - looping options (if NULL, uses ncvarinq)
 @OUTPUT     : (none)
 @RETURNS    : Length of vector dimension or zero if no such dimension.
 @DESCRIPTION: Routine to get the length of the vector dimension in a minc file.
@@ -375,7 +685,7 @@ private void setup_output_files(Loop_Options *loop_options,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private long get_vector_length(int mincid)
+private long get_vector_length(int mincid, Loop_Options *loop_options)
 {
    int imgid;
    int ndims;
@@ -387,7 +697,13 @@ private long get_vector_length(int mincid)
    imgid = ncvarid(mincid, MIimage);
 
    /* Get the image dimension info */
-   (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
+   if (loop_options != NULL) {
+      (void) input_image_varinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL, 
+                                loop_options);
+   }
+   else {
+      (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
+   }
 
    /* Check for vector dimension */
    (void) ncdiminq(mincid, dim[ndims-1], dimname, &vector_length);
@@ -418,24 +734,26 @@ private void setup_variables(int inmincid, int outmincid,
                              int output_curfile,
                              char *arg_string, Loop_Options *loop_options)
 {
-   int inimgid, outimgid, maxid, minid;
+   int inimgid, outimgid, maxid, minid, varid;
    int indim[MAX_VAR_DIMS], outdim[MAX_VAR_DIMS];
    nc_type datatype;
-   int idim, odim, in_ndims, out_ndims, in_nimgdims, out_nimgdims;
+   int idim, odim, ivar, in_ndims, out_ndims, in_nimgdims, out_nimgdims;
    char dimname[MAX_NC_NAME];
-   int nexcluded, excluded_vars[MAX_VAR_DIMS];
+   int nvars, varlist[MAX_VAR_DIMS*2];
    long dimlength;
    int input_vector_length;
    int changing_vector_dim;
+   double valid_range[2];
 
    /* Get image variable id for input file */
    inimgid = ncvarid(inmincid, MIimage);
 
    /* Get the list of dimensions subscripting the image variable */
-   (void) ncvarinq(inmincid, inimgid, NULL, &datatype, &in_ndims, indim, NULL);
+   (void) input_image_varinq(inmincid, inimgid, NULL, &datatype, 
+                             &in_ndims, indim, NULL, loop_options);
 
    /* Get the length of the input vector dimension */
-   input_vector_length = get_vector_length(inmincid);
+   input_vector_length = get_vector_length(inmincid, loop_options);
    if (loop_options->convert_input_to_scalar && (input_vector_length > 0)) {
       input_vector_length = 0;
       in_ndims--;
@@ -469,6 +787,7 @@ private void setup_variables(int inmincid, int outmincid,
 
    /* Loop, creating output dimensions */
    odim = 0;
+   nvars = 0;
    for (idim=0; idim < in_ndims; idim++) {
 
       /* Check for a change in vector dimension length */
@@ -478,6 +797,23 @@ private void setup_variables(int inmincid, int outmincid,
          /* Copy the dimension */
          (void) ncdiminq(inmincid, indim[idim], dimname, &dimlength);
          outdim[odim] = ncdimdef(outmincid, dimname, dimlength);
+
+         /* Copy the dimension variables if we are not copying the 
+            whole header */
+         if (!loop_options->copy_all_header_info) {
+            ncopts = 0;
+            for (ivar=0; ivar < 2; ivar++) {
+               if (ivar == 1) 
+                  (void) strcat(dimname, "_width");
+               varlist[nvars] = ncvarid(inmincid, dimname);
+               if (varlist[nvars] != MI_ERROR) {
+                  (void) micopy_var_def(inmincid, varlist[nvars], outmincid);
+                  nvars++;
+               }
+            }
+            ncopts = NC_OPTS_VAL;
+         }
+         
          odim++;
       }
    }
@@ -488,23 +824,61 @@ private void setup_variables(int inmincid, int outmincid,
                               (long) loop_options->output_vector_size);
    }
 
-   /* Copy other variables in file */
-   nexcluded = 0;
-   excluded_vars[nexcluded] = inimgid;
-   if (excluded_vars[nexcluded] != MI_ERROR) nexcluded++;
-   excluded_vars[nexcluded] = ncvarid(inmincid, MIimagemax);
-   if (excluded_vars[nexcluded] != MI_ERROR) nexcluded++;
-   excluded_vars[nexcluded] = ncvarid(inmincid, MIimagemin);
-   if (excluded_vars[nexcluded] != MI_ERROR) nexcluded++;
-   (void) micopy_all_var_defs(inmincid, outmincid, nexcluded, excluded_vars);
+   /* Copy other variables in file, if appropriate */
+   if (loop_options->copy_all_header_info) {
+      nvars = 0;
+      ncopts = 0;
+      varlist[nvars] = inimgid;
+      if (varlist[nvars] != MI_ERROR) nvars++;
+      varlist[nvars] = ncvarid(inmincid, MIimagemax);
+      if (varlist[nvars] != MI_ERROR) nvars++;
+      varlist[nvars] = ncvarid(inmincid, MIimagemin);
+      if (varlist[nvars] != MI_ERROR) nvars++;
+      if (loop_options->loop_dimension != NULL) {
+         (void) strcpy(dimname, loop_options->loop_dimension);
+         varlist[nvars] = ncvarid(inmincid, dimname);
+         if (varlist[nvars] != MI_ERROR) nvars++;
+         (void) strcat(dimname, "_width");
+         varlist[nvars] = ncvarid(inmincid, dimname);
+         if (varlist[nvars] != MI_ERROR) nvars++;
+      }
+      (void) micopy_all_var_defs(inmincid, outmincid, 
+                                 nvars, varlist);
+      ncopts = NC_OPTS_VAL;
+   }
 
    /* Add the time stamp to the history */
    update_history(outmincid, arg_string);
  
-  /* Create the image and image-min/max variables */
+   /* Create the image and image-min/max variables */
+   if (loop_options->datatype != NC_UNSPECIFIED) {
+      datatype = loop_options->datatype;
+   }
+   loop_options->is_floating_type = 
+      ((datatype == NC_FLOAT) || (datatype == NC_DOUBLE));
    outimgid = micreate_std_variable(outmincid, MIimage, datatype, 
                                     out_ndims, outdim);
    (void) micopy_all_atts(inmincid, inimgid, outmincid, outimgid);
+   if (loop_options->is_floating_type) {
+      (void) ncattdel(outmincid, outimgid, MIsigntype);
+      valid_range[0] = 0;
+      valid_range[1] = 1;
+      (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
+                      (void *) valid_range);
+   }
+   else if (loop_options->datatype != NC_UNSPECIFIED) {
+      if (loop_options->is_signed)
+         (void) miattputstr(outmincid, outimgid, MIsigntype, MI_SIGNED);
+      else
+         (void) miattputstr(outmincid, outimgid, MIsigntype, MI_UNSIGNED);
+      if ((loop_options->valid_range[1] > loop_options->valid_range[0])) {
+         (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
+                         (void *) loop_options->valid_range);
+      }
+      else {
+         (void) ncattdel(outmincid, outimgid, MIvalid_range);
+      }
+   }
    (void) miattputstr(outmincid, outimgid, MIcomplete, MI_FALSE);
    maxid = micreate_std_variable(outmincid, MIimagemax, NC_DOUBLE, 
                                  out_ndims-out_nimgdims, outdim);
@@ -519,8 +893,10 @@ private void setup_variables(int inmincid, int outmincid,
 
    /* Call the user's function if needed */
    if (loop_options->output_file_function != NULL) {
+      set_info_current_file(loop_options->loop_info, 0);
       loop_options->output_file_function(loop_options->caller_data,
-                                         outmincid, output_curfile);
+                                         outmincid, output_curfile,
+                                         loop_options->loop_info);
    }
 
    /* Put the file in data mode */
@@ -528,8 +904,23 @@ private void setup_variables(int inmincid, int outmincid,
    (void) ncendef(outmincid);
 
    /* Copy over variable values */
-   (void) micopy_all_var_values(inmincid, outmincid,
-                                nexcluded, excluded_vars);
+   ncopts = 0;
+   if (loop_options->copy_all_header_info) {
+      (void) micopy_all_var_values(inmincid, outmincid, nvars, varlist);
+   }
+   else {
+      for (ivar=0; ivar < nvars; ivar++) {
+         (void) ncvarinq(inmincid, varlist[ivar], dimname, NULL, NULL,
+                         NULL, NULL);
+         varid = ncvarid(outmincid, dimname);
+         if (varid != MI_ERROR) {
+            (void) micopy_var_values(inmincid, varlist[ivar], 
+                                     outmincid, varid);
+         }
+      }
+   }
+   ncopts = NC_OPTS_VAL;
+         
 
 }
 
@@ -577,7 +968,8 @@ private void update_history(int mincid, char *arg_string)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : setup_icvs
-@INPUT      : loopfile_info - looping information
+@INPUT      : loop_options - loop option info
+              loopfile_info - looping information
 @OUTPUT     : (nothing)
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to set up the input and output icv's.
@@ -587,24 +979,33 @@ private void update_history(int mincid, char *arg_string)
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void setup_icvs(Loopfile_Info *loopfile_info)
+private void setup_icvs(Loop_Options *loop_options, 
+                        Loopfile_Info *loopfile_info)
 {
    int ifile;
    int icvid;
 
    /* Loop through input icv's, setting their values. Attaching is
       done by get_input_icvid. */
-   for (ifile=0; ifile < loopfile_info->num_input_files; ifile++) {
+   for (ifile=0; ifile < get_input_numfiles(loopfile_info); ifile++) {
       icvid = create_input_icvid(loopfile_info, ifile);
       (void) miicv_setint(icvid, MI_ICV_TYPE, NC_DOUBLE);
       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);
       (void) miicv_setint(icvid, MI_ICV_DO_FILLVALUE, TRUE);
+      if (loop_options->convert_input_to_scalar) {
+         (void) miicv_setint(icvid, MI_ICV_DO_DIM_CONV, TRUE);
+         (void) miicv_setint(icvid, MI_ICV_DO_SCALAR, TRUE);
+         (void) miicv_setint(icvid, MI_ICV_XDIM_DIR, MI_ICV_ANYDIR);
+         (void) miicv_setint(icvid, MI_ICV_YDIM_DIR, MI_ICV_ANYDIR);
+         (void) miicv_setint(icvid, MI_ICV_ZDIM_DIR, MI_ICV_ANYDIR);
+         (void) miicv_setint(icvid, MI_ICV_KEEP_ASPECT, FALSE);
+      }
    }
 
    /* Loop through output icv's, setting their values. Attaching is
       done by get_input_icvid. */
-   for (ifile=0; ifile < loopfile_info->num_output_files; ifile++) {
+   for (ifile=0; ifile < get_output_numfiles(loopfile_info); ifile++) {
       icvid = create_output_icvid(loopfile_info, ifile);
       (void) miicv_setint(icvid, MI_ICV_TYPE, NC_DOUBLE);
       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
@@ -634,30 +1035,40 @@ private void do_voxel_loop(Loop_Options *loop_options,
    long chunk_start[MAX_VAR_DIMS], chunk_end[MAX_VAR_DIMS];
    long chunk_incr[MAX_VAR_DIMS];
    long chunk_cur[MAX_VAR_DIMS], chunk_curcount[MAX_VAR_DIMS];
+   long input_cur[MAX_VAR_DIMS], input_curcount[MAX_VAR_DIMS];
+   long firstfile_cur[MAX_VAR_DIMS], firstfile_curcount[MAX_VAR_DIMS];
    double **input_buffers, **output_buffers, **extra_buffers;
    double **results_buffers;
    long chunk_num_voxels, block_num_voxels, ivox;
    int outmincid, imgid, maxid, minid;
-   double *data, minimum, maximum;
-   int ifile, ibuff, ndims, idim;
-   int num_input_files, num_output_files;
+   double *data, minimum, maximum, valid_range[2];
+   double *global_minimum, *global_maximum;
+   int ifile, ofile, ibuff, ndims, idim;
+   int num_output_files;
    int num_input_buffers, num_output_buffers, num_extra_buffers;
    int input_vector_length, output_vector_length;
    int modify_vector_count;
+   int current_input;
+   int input_icvid, input_mincid;
+   int loop_dim_index;
+   int dim_index;
+   int outer_file_loop;
+   int dummy_index;
+   int input_curfile;
 
    /* Get number of files, buffers, etc. */
-   num_input_files = loopfile_info->num_input_files;
-   num_output_files = loopfile_info->num_output_files;
-   num_input_buffers = (loop_options->do_accumulate ? 1 : num_input_files);
+   num_output_files = get_output_numfiles(loopfile_info);
+   num_input_buffers = (loop_options->do_accumulate ? 1 : 
+                        loop_options->num_all_inputs);
    num_extra_buffers = loop_options->num_extra_buffers;
    num_output_buffers = num_output_files + num_extra_buffers;
    input_vector_length = 
-      get_vector_length(get_input_mincid(loopfile_info, 0));
+      get_vector_length(get_input_mincid(loopfile_info, 0), loop_options);
    if ((input_vector_length == 0) || (loop_options->convert_input_to_scalar))
       input_vector_length = 1;
    if (num_output_files > 0) {
       output_vector_length = 
-         get_vector_length(get_output_mincid(loopfile_info, 0));
+         get_vector_length(get_output_mincid(loopfile_info, 0), NULL);
       if (output_vector_length == 0) output_vector_length = 1;
    }
    else
@@ -702,64 +1113,171 @@ private void do_voxel_loop(Loop_Options *loop_options,
    else
       extra_buffers = NULL;
 
+   /* Initialize global min and max */
+   global_minimum = MALLOC(num_output_files * sizeof(double));
+   global_maximum = MALLOC(num_output_files * sizeof(double));
+   for (ofile=0; ofile < num_output_files; ofile++) {
+      global_minimum[ofile] = DBL_MAX;
+      global_maximum[ofile] = -DBL_MAX;
+   }
+
+   /* Initialize loop info - just to be safe */
+   initialize_loop_info(loop_options->loop_info);
+
    /* Print log message */
    if (loop_options->verbose) {
       (void) fprintf(stderr, "Processing:");
       (void) fflush(stderr);
    }
 
-   /* Loop through blocks (image-max/min do not vary over blocks) */
+   /* Outer loop over files, if appropriate */
+   outer_file_loop = (loop_options->do_accumulate && 
+                      (num_output_buffers <= 0));
+   for (initialize_file_and_index(loop_options, loopfile_info,
+                                  outer_file_loop, &ifile, &dim_index,
+                                  &dummy_index);
+        finish_file_and_index(loop_options, loopfile_info,
+                              outer_file_loop, ifile, dim_index,
+                              dummy_index);
+        increment_file_and_index(loop_options, loopfile_info,
+                                 outer_file_loop, &ifile, &dim_index,
+                                 &dummy_index)) {
 
-   nd_begin_looping(block_start, block_cur, ndims);
+      /* Loop through blocks (image-max/min do not vary over blocks) */
 
-   while (!nd_end_of_loop(block_cur, block_end, ndims)) {
+      nd_begin_looping(block_start, block_cur, ndims);
 
-      nd_update_current_count(block_cur, block_incr, block_end,
-                              block_curcount, ndims);
+      while (!nd_end_of_loop(block_cur, block_end, ndims)) {
 
-      /* Set results_buffers to beginning of output buffers */
-      for (ifile=0; ifile < num_output_files; ifile++) {
-         results_buffers[ifile] = output_buffers[ifile];
-      }
+         nd_update_current_count(block_cur, block_incr, block_end,
+                                 block_curcount, ndims);
 
-      /* Loop through chunks (space for input buffers) */
-      for (idim=0; idim < ndims; idim++) {
-         chunk_start[idim] = block_cur[idim];
-         chunk_end[idim] = block_cur[idim] + block_curcount[idim];
-      }
-
-      nd_begin_looping(chunk_start, chunk_cur, ndims);
-
-      while (!nd_end_of_loop(chunk_cur, chunk_end, ndims)) {
-
-         nd_update_current_count(chunk_cur, chunk_incr, chunk_end,
-                                 chunk_curcount, ndims);
-
-         /* Print log message */
-         if (loop_options->verbose) {
-            (void) fprintf(stderr, ".");
-            (void) fflush(stderr);
+         /* Set results_buffers to beginning of output buffers */
+         for (ofile=0; ofile < num_output_files; ofile++) {
+            results_buffers[ofile] = output_buffers[ofile];
          }
 
-         /* Initialize results buffers if necessary */
-         if (loop_options->do_accumulate) {
-            for (ibuff=0; ibuff < num_output_buffers; ibuff++) {
-               loop_options->start_function(loop_options->caller_data,
-                                            chunk_num_voxels,
-                                            num_output_buffers,
-                                            loop_options->output_vector_size,
-                                            results_buffers,
-                                            chunk_cur, chunk_curcount);
+         /* Loop through chunks (space for input buffers) */
+         for (idim=0; idim < ndims; idim++) {
+            chunk_start[idim] = block_cur[idim];
+            chunk_end[idim] = block_cur[idim] + block_curcount[idim];
+         }
+
+         nd_begin_looping(chunk_start, chunk_cur, ndims);
+
+         while (!nd_end_of_loop(chunk_cur, chunk_end, ndims)) {
+
+            nd_update_current_count(chunk_cur, chunk_incr, chunk_end,
+                                    chunk_curcount, ndims);
+
+            /* Print log message */
+            if (loop_options->verbose) {
+               (void) fprintf(stderr, ".");
+               (void) fflush(stderr);
             }
-         }
 
-         /* Get the input buffers and accumulate them if needed */
-         for (ifile=0; ifile < num_input_files; ifile++) {
-            ibuff = (loop_options->do_accumulate ? 0 : ifile);
-            (void) miicv_get(get_input_icvid(loopfile_info, ifile),
-                             chunk_cur, chunk_curcount, 
-                             input_buffers[ibuff]);
+            /* Calculate number of voxels in a chunk */
+            chunk_num_voxels = 1;
+            for (idim=0; idim < ndims; idim++)
+               chunk_num_voxels *= chunk_curcount[idim];
+
+            /* Translate start and count for file and save in loop_info */
+            if (outer_file_loop)
+               input_curfile = ifile;
+            else
+               input_curfile = 0;
+            input_mincid = get_input_mincid(loopfile_info, input_curfile);
+            translate_input_coords(input_mincid, chunk_cur, firstfile_cur,
+                                   chunk_curcount, firstfile_curcount,
+                                   &loop_dim_index, loop_options);
+
+            /* Save start and count and file and index in loop_info */
+            set_info_shape(loop_options->loop_info, 
+                           firstfile_cur, firstfile_curcount);
+            set_info_current_file(loop_options->loop_info, 0);
+            set_info_current_index(loop_options->loop_info, 0);
+
+            /* Initialize results buffers if necessary */
             if (loop_options->do_accumulate) {
+               if (loop_options->start_function != NULL) {
+                  loop_options->start_function
+                     (loop_options->caller_data,
+                      chunk_num_voxels,
+                      num_output_buffers,
+                      output_vector_length,
+                      results_buffers,
+                      loop_options->loop_info);
+               }
+            }
+
+            /* Get the input buffers and accumulate them if needed */
+            current_input = 0;
+            for (initialize_file_and_index(loop_options, loopfile_info,
+                                           !outer_file_loop, &ifile, 
+                                           &dim_index, &dummy_index);
+                 finish_file_and_index(loop_options, loopfile_info,
+                                       !outer_file_loop, ifile, 
+                                       dim_index, dummy_index);
+                 increment_file_and_index(loop_options, loopfile_info,
+                                          !outer_file_loop, &ifile, 
+                                          &dim_index, &dummy_index)) {
+
+               /* Get input icvid and mincid and translate coords for file */
+               if (dim_index == 0) {
+                  input_icvid = get_input_icvid(loopfile_info, ifile);
+                  (void) miicv_inqint(input_icvid, MI_ICV_CDFID, 
+                                      &input_mincid);
+                  translate_input_coords(input_mincid, chunk_cur, input_cur,
+                                         chunk_curcount, input_curcount,
+                                         &loop_dim_index, loop_options);
+               }
+
+
+               /* Read buffer */
+               ibuff = (loop_options->do_accumulate ? 0 : current_input);
+               input_cur[loop_dim_index] = dim_index;
+               (void) miicv_get(input_icvid,
+                                input_cur, input_curcount, 
+                                input_buffers[ibuff]);
+               if (loop_options->do_accumulate) {
+                  set_info_shape(loop_options->loop_info, 
+                                 input_cur, input_curcount);
+                  set_info_current_file(loop_options->loop_info, ifile);
+                  set_info_current_index(loop_options->loop_info, dim_index);
+                  set_info_loopfile_info(loop_options->loop_info, 
+                                         loopfile_info);
+                  loop_options->voxel_function(loop_options->caller_data,
+                                               chunk_num_voxels, 
+                                               num_input_buffers, 
+                                               input_vector_length,
+                                               input_buffers,
+                                               num_output_buffers, 
+                                               output_vector_length,
+                                               results_buffers,
+                                               loop_options->loop_info);
+                  set_info_loopfile_info(loop_options->loop_info, NULL);
+               }
+
+               current_input++;
+
+            }            /* Inner loop over files and dimension index */
+
+            /* Do something with the buffers or finish accumulation */
+            set_info_shape(loop_options->loop_info, 
+                           firstfile_cur, firstfile_curcount);
+            set_info_current_file(loop_options->loop_info, 0);
+            set_info_current_index(loop_options->loop_info, 0);
+            if (loop_options->do_accumulate) {
+               if (loop_options->finish_function != NULL) {
+                  loop_options->finish_function(loop_options->caller_data,
+                                                chunk_num_voxels, 
+                                                num_output_buffers,
+                                                output_vector_length,
+                                                results_buffers,
+                                                loop_options->loop_info);
+               }
+            }
+            else {
                loop_options->voxel_function(loop_options->caller_data,
                                             chunk_num_voxels, 
                                             num_input_buffers, 
@@ -768,85 +1286,85 @@ private void do_voxel_loop(Loop_Options *loop_options,
                                             num_output_buffers, 
                                             output_vector_length,
                                             results_buffers,
-                                            chunk_cur, chunk_curcount);
+                                            loop_options->loop_info);
             }
-         }
 
-         /* Do something with the buffers or finish accumulation */
-         if (loop_options->do_accumulate) {
-            loop_options->finish_function(loop_options->caller_data,
-                                          chunk_num_voxels, 
-                                          num_output_buffers,
-                                          output_vector_length,
-                                          results_buffers,
-                                          chunk_cur, chunk_curcount);
-         }
-         else {
-            loop_options->voxel_function(loop_options->caller_data,
-                                         chunk_num_voxels, 
-                                         num_input_buffers, 
-                                         input_vector_length,
-                                         input_buffers,
-                                         num_output_buffers, 
-                                         output_vector_length,
-                                         results_buffers,
-                                         chunk_cur, chunk_curcount);
-         }
+            /* Increment results_buffers through output buffers */
+            for (ofile=0; ofile < num_output_files; ofile++) {
+               results_buffers[ofile] += 
+                  chunk_num_voxels * output_vector_length;
+            }
 
-         /* Increment results_buffers through output buffers */
-         for (ifile=0; ifile < num_output_files; ifile++) {
-            results_buffers[ifile] += chunk_num_voxels;
-         }
+            nd_increment_loop(chunk_cur, chunk_start, chunk_incr, 
+                              chunk_end, ndims);
 
-         nd_increment_loop(chunk_cur, chunk_start, chunk_incr, 
-                           chunk_end, ndims);
+         }     /* End of loop through chunks */
+
+         /* Write out output buffers */
+
+         for (ofile=0; ofile < num_output_files; ofile++) {
+            outmincid = get_output_mincid(loopfile_info, ofile);
+            maxid = ncvarid(outmincid, MIimagemax);
+            minid = ncvarid(outmincid, MIimagemin);
+            data = output_buffers[ofile];
+
+            /* Find the max and min */
+            minimum = DBL_MAX;
+            maximum = -DBL_MAX;
+            for (ivox=0; ivox < block_num_voxels*output_vector_length; 
+                 ivox++) {
+               if (data[ivox] != -DBL_MAX) {
+                  if (data[ivox] < minimum) minimum = data[ivox];
+                  if (data[ivox] > maximum) maximum = data[ivox];
+               }
+            }
+            if ((minimum == DBL_MAX) && (maximum == -DBL_MAX)) {
+               minimum = 0.0;
+               maximum = 0.0;
+            }
+
+            /* Save global min and max */
+            if (minimum < global_minimum[ofile]) 
+               global_minimum[ofile] = minimum;
+            if (maximum > global_maximum[ofile]) 
+               global_maximum[ofile] = maximum;
+
+            /* Write out the max and min */
+            (void) mivarput1(outmincid, maxid, block_cur, 
+                             NC_DOUBLE, NULL, &maximum);
+            (void) mivarput1(outmincid, minid, block_cur, 
+                             NC_DOUBLE, NULL, &minimum);
+
+            /* Write out the values */
+            if (modify_vector_count)
+               block_curcount[ndims-1] = output_vector_length;
+            (void) miicv_put(get_output_icvid(loopfile_info, ofile), 
+                             block_cur, block_curcount, data);
+         }          /* End of loop through output files */
+
+         nd_increment_loop(block_cur, block_start, block_incr, 
+                           block_end, ndims);
 
       }     /* End of loop through chunks */
 
-      /* Write out output buffers */
-
-      for (ifile=0; ifile < num_output_files; ifile++) {
-         outmincid = get_output_mincid(loopfile_info, ifile);
-         maxid = ncvarid(outmincid, MIimagemax);
-         minid = ncvarid(outmincid, MIimagemin);
-         data = output_buffers[ifile];
-
-         /* Find the max and min */
-         minimum = DBL_MAX;
-         maximum = -DBL_MAX;
-         for (ivox=0; ivox < block_num_voxels*output_vector_length; ivox++) {
-            if (data[ivox] != -DBL_MAX) {
-               if (data[ivox] < minimum) minimum = data[ivox];
-               if (data[ivox] > maximum) maximum = data[ivox];
-            }
-         }
-         if ((minimum == DBL_MAX) && (maximum == -DBL_MAX)) {
-            minimum = 0.0;
-            maximum = 0.0;
-         }
-
-         /* Write out the max and min */
-         (void) mivarput1(outmincid, maxid, block_cur, 
-                          NC_DOUBLE, NULL, &maximum);
-         (void) mivarput1(outmincid, minid, block_cur, 
-                          NC_DOUBLE, NULL, &minimum);
-
-         /* Write out the values */
-         if (modify_vector_count)
-            block_curcount[ndims-1] = output_vector_length;
-         (void) miicv_put(get_output_icvid(loopfile_info, ifile), 
-                          block_cur, block_curcount, data);
-      }          /* End of loop through output files */
-
-      nd_increment_loop(block_cur, block_start, block_incr, block_end, ndims);
-
-   }     /* End of loop through chunks */
+   }     /* End of outer loop through files and dimension indices */
 
    /* Data has been completely written */
-   for (ifile=0; ifile < num_output_files; ifile++) {
-      outmincid = get_output_mincid(loopfile_info, ifile);
+   for (ofile=0; ofile < num_output_files; ofile++) {
+      outmincid = get_output_mincid(loopfile_info, ofile);
       imgid = ncvarid(outmincid, MIimage);
       (void) miattputstr(outmincid, imgid, MIcomplete, MI_TRUE);
+      if (loop_options->is_floating_type) {
+         if ((global_minimum[ofile] == DBL_MAX) && 
+             (global_maximum[ofile] == -DBL_MAX)) {
+            global_minimum[ofile] = 0.0;
+            global_maximum[ofile] = 0.0;
+         }
+         valid_range[0] = global_minimum[ofile];
+         valid_range[1] = global_maximum[ofile];
+         (void) ncattput(outmincid, imgid, MIvalid_range, NC_DOUBLE, 2,
+                         (void *) valid_range);
+      }
    }
 
    /* Print log message */
@@ -860,9 +1378,6 @@ private void do_voxel_loop(Loop_Options *loop_options,
       FREE(input_buffers[ibuff]);
    }
    FREE(input_buffers);
-   if (num_output_buffers > 0) {
-      results_buffers = MALLOC(sizeof(*results_buffers) * num_output_buffers);
-   }
    if (num_output_files > 0) {
       for (ibuff=0; ibuff < num_output_files; ibuff++) {
          FREE(output_buffers[ibuff]);
@@ -874,6 +1389,9 @@ private void do_voxel_loop(Loop_Options *loop_options,
          FREE(extra_buffers[ibuff]);
       }
       FREE(extra_buffers);
+   }
+   if (num_output_buffers > 0) {
+      FREE(results_buffers);
    }
 
    return;
@@ -910,6 +1428,7 @@ private void setup_looping(Loop_Options *loop_options,
    int inmincid;
    int total_ndims, scalar_ndims, idim;
    int input_vector_length, output_vector_length;
+   int num_input_buffers;
    int vector_data;
    int nimgdims;
    long size[MAX_VAR_DIMS];
@@ -919,13 +1438,13 @@ private void setup_looping(Loop_Options *loop_options,
    inmincid = get_input_mincid(loopfile_info, 0);
 
    /* Get number of dimensions and their sizes */
-   get_dim_info(inmincid, &total_ndims, size, NULL, NULL, NULL);
+   get_dim_info(inmincid, &total_ndims, size, NULL, NULL, NULL, loop_options);
 
    /* Get vector lengths */
-   input_vector_length = get_vector_length(inmincid);
-   if (loopfile_info->num_output_files > 0)
+   input_vector_length = get_vector_length(inmincid, loop_options);
+   if (get_output_numfiles(loopfile_info) > 0)
       output_vector_length = 
-         get_vector_length(get_output_mincid(loopfile_info, 0));
+         get_vector_length(get_output_mincid(loopfile_info, 0), NULL);
    else
       output_vector_length = 0;
 
@@ -964,11 +1483,13 @@ private void setup_looping(Loop_Options *loop_options,
 
    /* Figure out chunk size */
    *chunk_num_voxels = 1;
+   num_input_buffers = (loop_options->do_accumulate ? 1 : 
+                        loop_options->num_all_inputs);
    max_voxels_in_buffer = 
-      (loop_options->total_copy_space/sizeof(double) - 
-       loopfile_info->num_output_files * *block_num_voxels *
+      (loop_options->total_copy_space/((long) sizeof(double)) - 
+       get_output_numfiles(loopfile_info) * *block_num_voxels *
        output_vector_length) / 
-          (loopfile_info->num_input_files * input_vector_length + 
+          (num_input_buffers * input_vector_length + 
            loop_options->num_extra_buffers * output_vector_length);
    if (max_voxels_in_buffer > 0) {
       for (idim=scalar_ndims-1; idim >= 0; idim--) {
@@ -985,14 +1506,130 @@ private void setup_looping(Loop_Options *loop_options,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_file_and_index
+@INPUT      : loop_options - users options controlling looping
+              loopfile_info - information on files
+              do_loop - TRUE if looping stuff should really be done
+@OUTPUT     : ifile - file counter
+              dim_index - dimension index counter
+              dummy_index - counter used when do_loop is FALSE
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to initialize the file and index loop. These 
+              three routines allow looping through files and dimension 
+              indices at two levels. If do_loop is TRUE, then normal looping 
+              is done (increment dim_index fastest, then ifile). If do_loop is
+              FALSE, then only one loop is performed (using dummy_index).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void initialize_file_and_index(Loop_Options *loop_options, 
+                                       Loopfile_Info *loopfile_info,
+                                       int do_loop,
+                                       int *ifile, int *dim_index,
+                                       int *dummy_index)
+     /* ARGSUSED */
+{
+   if (do_loop) {
+      *ifile = 0;
+      *dim_index = 0;
+   }
+   else {
+      *dummy_index = 0;
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : finish_file_and_index
+@INPUT      : loop_options - users options controlling looping
+              loopfile_info - information on files
+              do_loop - TRUE if looping stuff should really be done
+              ifile - file counter
+              dim_index - dimension index counter
+              dummy_index - counter used when do_loop is FALSE
+@RETURNS    : TRUE while there are more buffers to process.
+@DESCRIPTION: Routine to test for the end of the file and index loop. These 
+              three routines allow looping through files and dimension 
+              indices at two levels. If do_loop is TRUE, then normal looping 
+              is done (increment dim_index fastest, then ifile). If do_loop is
+              FALSE, then only one loop is performed (using dummy_index).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int finish_file_and_index(Loop_Options *loop_options, 
+                                  Loopfile_Info *loopfile_info,
+                                  int do_loop,
+                                  int ifile, int dim_index,
+                                  int dummy_index)
+     /* ARGSUSED */
+{
+   if (do_loop) {
+      return (ifile < get_input_numfiles(loopfile_info));
+   }
+   else {
+      return (dummy_index < 1);
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : increment_file_and_index
+@INPUT      : loop_options - users options controlling looping
+              loopfile_info - information on files
+              do_loop - TRUE if looping stuff should really be done
+@OUTPUT     : ifile - file counter
+              dim_index - dimension index counter
+              dummy_index - counter used when do_loop is FALSE
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to increment the file and index loop. These 
+              three routines allow looping through files and dimension 
+              indices at two levels. If do_loop is TRUE, then normal looping 
+              is done (increment dim_index fastest, then ifile). If do_loop is
+              FALSE, then only one loop is performed (using dummy_index).
+              Note that dummy_index is not touched if do_loop is TRUE.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void increment_file_and_index(Loop_Options *loop_options, 
+                                      Loopfile_Info *loopfile_info,
+                                      int do_loop,
+                                      int *ifile, int *dim_index,
+                                      int *dummy_index)
+{
+   int input_mincid;
+
+   if (do_loop) {
+      (*dim_index)++;
+      input_mincid = get_input_mincid(loopfile_info, *ifile);
+      if (*dim_index >= get_loop_dim_size(input_mincid, loop_options)) {
+         *dim_index = 0;
+         (*ifile)++;
+      }
+   }
+   else {
+      (*dummy_index)++;
+   }
+}
+
+
+/* ------------ Routines controlling looping over files ------------ */
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_loopfile_info
 @INPUT      : num_input_files - number of input files
               input_files - list of input file names
               num_output_files - list of output file names
               output_files - list of output file names
               loop_options - user options for looping
-@OUTPUT     : loopfile_info - looping information
-@RETURNS    : (nothing)
+@OUTPUT     : (none)
+@RETURNS    : pointer to Loopfile_Info structure
 @DESCRIPTION: Routine to set up looping information for these files.
 @METHOD     : 
 @GLOBALS    : 
@@ -1000,14 +1637,17 @@ private void setup_looping(Loop_Options *loop_options,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void initialize_loopfile_info(int num_input_files,
-                                      char *input_files[],
-                                      int num_output_files,
-                                      char *output_files[],
-                                      Loop_Options *loop_options,
-                                      Loopfile_Info *loopfile_info)
+private Loopfile_Info *initialize_loopfile_info(int num_input_files,
+                                                char *input_files[],
+                                                int num_output_files,
+                                                char *output_files[],
+                                                Loop_Options *loop_options)
 {
    int num_free_files, num_files, ifile;
+   Loopfile_Info *loopfile_info;
+
+   /* Allocate structure */
+   loopfile_info = MALLOC(sizeof(*loopfile_info));
 
    /* Save clobber info */
    loopfile_info->clobber_output = loop_options->clobber;
@@ -1056,13 +1696,18 @@ private void initialize_loopfile_info(int num_input_files,
    }
    loopfile_info->current_input_file_number = -1;
 
+   /* Check whether sequential access would be better */
+   loopfile_info->sequential_access = 
+      (loop_options->do_accumulate &&
+       ((num_output_files + loop_options->num_extra_buffers) <= 0));
+
    /* Check to see if we can open input files */
-   if (num_input_files < num_free_files) {
-      loopfile_info->input_all_open = TRUE;
+   if (num_input_files < num_free_files) { 
+      loopfile_info->can_open_all_input = TRUE;
       num_files = num_input_files;
    }
    else {
-      loopfile_info->input_all_open = FALSE;
+      loopfile_info->can_open_all_input = FALSE;
       num_files = 1;
    }
    num_free_files -= num_files;
@@ -1079,6 +1724,17 @@ private void initialize_loopfile_info(int num_input_files,
       loopfile_info->input_mincid[0] = loop_options->input_mincid;
       loopfile_info->current_input_file_number = 0;
    }
+
+   /* Check whether we want to open all input files */
+   loopfile_info->input_all_open = (! loopfile_info->sequential_access) &&
+      loopfile_info->can_open_all_input;
+
+   /* Set default for expanding compressed files */
+   loopfile_info->headers_only = FALSE;
+   loopfile_info->want_headers_only = FALSE;
+
+   /* Return the loopfile_info structure */
+   return loopfile_info;
 
 }
 
@@ -1099,13 +1755,15 @@ private void cleanup_loopfile_info(Loopfile_Info *loopfile_info)
    int num_files, ifile;
 
    /* Close input files and free icv's */
-   if (loopfile_info->input_all_open)
+   if (loopfile_info->can_open_all_input)
       num_files = loopfile_info->num_input_files;
    else
       num_files = 1;
    for (ifile=0; ifile < num_files; ifile++) {
-      (void) miicv_free(loopfile_info->input_icvid[ifile]);
-      (void) miclose(loopfile_info->input_mincid[ifile]);
+      if (loopfile_info->input_icvid[ifile] != MI_ERROR)
+         (void) miicv_free(loopfile_info->input_icvid[ifile]);
+      if (loopfile_info->input_mincid[ifile] != MI_ERROR)
+         (void) miclose(loopfile_info->input_mincid[ifile]);
    }
 
    /* Close output files and free icv's */
@@ -1133,6 +1791,223 @@ private void cleanup_loopfile_info(Loopfile_Info *loopfile_info)
       FREE(loopfile_info->output_mincid);
    if (loopfile_info->output_icvid != NULL)
       FREE(loopfile_info->output_icvid);
+
+   /* Free the structure */
+   FREE(loopfile_info);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_input_numfiles
+@INPUT      : loopfile_info - looping information
+@OUTPUT     : (none)
+@RETURNS    : Number of input files
+@DESCRIPTION: Routine to get the number of input files.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int get_input_numfiles(Loopfile_Info *loopfile_info)
+{
+   return loopfile_info->num_input_files;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_output_numfiles
+@INPUT      : loopfile_info - looping information
+@OUTPUT     : (none)
+@RETURNS    : Number of output files
+@DESCRIPTION: Routine to get the number of output files.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int get_output_numfiles(Loopfile_Info *loopfile_info)
+{
+   return loopfile_info->num_output_files;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_input_filename
+@INPUT      : loopfile_info - looping information
+              file_num - input file number
+@OUTPUT     : (none)
+@RETURNS    : Pointer to string containing input file name for file ifile.
+@DESCRIPTION: Routine to get name of an input file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private char *get_input_filename(Loopfile_Info *loopfile_info, int file_num)
+{
+   /* Check for bad file_num */
+   if ((file_num < 0) || (file_num >= loopfile_info->num_input_files)) {
+      (void) fprintf(stderr, "Bad input file number %d\n", file_num);
+      exit(EXIT_FAILURE);
+   }
+
+   return loopfile_info->input_files[file_num];
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_output_filename
+@INPUT      : loopfile_info - looping information
+              file_num - output file number
+@OUTPUT     : (none)
+@RETURNS    : Pointer to string containing output file name for file ifile.
+@DESCRIPTION: Routine to get name of an output file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private char *get_output_filename(Loopfile_Info *loopfile_info, int file_num)
+{
+   /* Check for bad file_num */
+   if ((file_num < 0) || (file_num >= loopfile_info->num_output_files)) {
+      (void) fprintf(stderr, "Bad output file number %d\n", file_num);
+      exit(EXIT_FAILURE);
+   }
+
+   return loopfile_info->output_files[file_num];
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_input_headers_only
+@INPUT      : loopfile_info - looping information
+              headers_only - TRUE if we only need input headers, FALSE
+                 if we need the whole file.
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to modify the Loopfile_Info structure so that
+              in future we get either whole minc files or only the headers.
+              The change is only made if it makes sense (ie. we are processing
+              files sequentially).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_input_headers_only(Loopfile_Info *loopfile_info,
+                                    int headers_only)
+{
+   int num_files, ifile;
+   int icvid, mincid;
+
+   /* Change the indication that we want to have headers only */
+   loopfile_info->want_headers_only = headers_only;
+
+   /* If headers_only is not changing, don't do anything */
+   if ((headers_only && loopfile_info->headers_only) ||
+       (!headers_only && !loopfile_info->headers_only)) {
+      return;
+   }
+
+   /* Check to see if it makes sense to change to headers only */
+   if (headers_only && loopfile_info->input_all_open) return;
+
+   /* Change the value */
+   loopfile_info->headers_only = headers_only;
+
+   /* If we are going to headers_only == FALSE, then loop through icv's and 
+      files, making sure that they are detached and closed (we will need to 
+      re-open them */
+   if (!loopfile_info->headers_only) {
+      num_files = (loopfile_info->can_open_all_input ?
+                   loopfile_info->num_input_files : 1);
+      for (ifile=0; ifile < num_files; ifile++) {
+         icvid = loopfile_info->input_icvid[ifile];
+         mincid = MI_ERROR;
+         if (icvid != MI_ERROR) {
+            (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+            if (mincid != MI_ERROR) {
+               (void) miicv_detach(icvid);
+               (void) miclose(mincid);
+            }
+         }
+         if ((loopfile_info->input_mincid[ifile] != MI_ERROR) &&
+             (loopfile_info->input_mincid[ifile] != mincid)) {
+            (void) miclose(loopfile_info->input_mincid[ifile]);
+         }
+         loopfile_info->input_mincid[ifile] = MI_ERROR;
+      }
+         
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_input_sequential
+@INPUT      : loopfile_info - looping information
+              sequential_access - TRUE if we want to open only one file at a
+                 time, FALSE otherwise.
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to modify the Loopfile_Info structure so that
+              files are opened one at a time.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 1, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_input_sequential(Loopfile_Info *loopfile_info,
+                                  int sequential_access)
+{
+   int old_input_all_open;
+   int ifile, num_files;
+   int mincid, icvid;
+   int current_input_file_number;
+
+   /* Set flag for sequential access */
+   loopfile_info->sequential_access = sequential_access;
+
+   /* Change status of input_all_open */
+   old_input_all_open = loopfile_info->input_all_open;
+   loopfile_info->input_all_open = (! loopfile_info->sequential_access) &&
+      loopfile_info->can_open_all_input;
+
+   /* Check if input_all_open has changed */
+   if (!old_input_all_open && loopfile_info->input_all_open) {
+      current_input_file_number = loopfile_info->current_input_file_number;
+      if (current_input_file_number >= 0) {
+         mincid = loopfile_info->input_mincid[0];
+         loopfile_info->input_mincid[0] = MI_ERROR;
+         loopfile_info->input_mincid[current_input_file_number] = mincid;
+      }
+   }
+   else if (old_input_all_open && !loopfile_info->input_all_open) {
+      if (loopfile_info->can_open_all_input)
+         num_files = loopfile_info->num_input_files;
+      else
+         num_files = 1;
+      for (ifile=0; ifile < num_files; ifile++) {
+         icvid = loopfile_info->input_icvid[ifile];
+         if (icvid != MI_ERROR) {
+            (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+            (void) miicv_detach(icvid);
+            if (mincid != MI_ERROR) {
+               (void) miclose(mincid);
+            }
+         }
+         if ((loopfile_info->input_mincid[ifile] != MI_ERROR) &&
+             (loopfile_info->input_mincid[ifile] != mincid))
+            (void) miclose(loopfile_info->input_mincid[ifile]);
+         loopfile_info->input_mincid[ifile] = MI_ERROR;
+      }
+   }
+
+   /* Call set_input_headers_only in case want_headers_only is different
+      from headers_only */
+   set_input_headers_only(loopfile_info, loopfile_info->want_headers_only);
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1154,6 +2029,8 @@ private int get_input_mincid(Loopfile_Info *loopfile_info,
                              int file_num)
 {
    int index;
+   int created_tempfile;
+   char *filename;
 
    /* Check for bad file_num */
    if ((file_num < 0) || (file_num >= loopfile_info->num_input_files)) {
@@ -1177,8 +2054,14 @@ private int get_input_mincid(Loopfile_Info *loopfile_info,
 
    /* Open the file if it hasn't been already */
    if (loopfile_info->input_mincid[index] == MI_ERROR) {
-      loopfile_info->input_mincid[index] =
-         miopen(loopfile_info->input_files[file_num], NC_NOWRITE);
+      filename = miexpand_file(loopfile_info->input_files[file_num], NULL,
+                               loopfile_info->headers_only,
+                               &created_tempfile);
+      loopfile_info->input_mincid[index] = miopen(filename, NC_NOWRITE);
+      if (created_tempfile) {
+         (void) remove(filename);
+      }
+      FREE(filename);
    }
 
    return loopfile_info->input_mincid[index];
@@ -1316,7 +2199,7 @@ private int get_input_icvid(Loopfile_Info *loopfile_info,
    }
 
    /* Check to see if all files are open or not - get the correct index */
-   if (loopfile_info->input_all_open) {
+   if (loopfile_info->can_open_all_input) {
       index = file_num;
    }
    else {
@@ -1415,7 +2298,7 @@ private int create_input_icvid(Loopfile_Info *loopfile_info,
    }
 
    /* Check to see if all files are open or not - get the correct index */
-   if (loopfile_info->input_all_open) {
+   if (loopfile_info->can_open_all_input) {
       index = file_num;
    }
    else {
@@ -1474,35 +2357,76 @@ private int create_output_icvid(Loopfile_Info *loopfile_info,
    return loopfile_info->output_icvid[index];
 }
 
+
+/* ------------ Routines to set loop options ------------ */
+
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : initialize_loop_options
-@INPUT      : loop_options - user options for looping
+@NAME       : create_loop_options
+@INPUT      : (none)
 @OUTPUT     : (none)
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to initialize the loop options structure.
+@RETURNS    : Pointer to Loop_Options structure
+@DESCRIPTION: Routine to create and initialize the loop options structure.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void initialize_loop_options(Loop_Options *loop_options)
+public Loop_Options *create_loop_options(void)
 {
+   Loop_Options *loop_options;
+
+   /* Allocate structure */
+   loop_options = MALLOC(sizeof(*loop_options));
+
+   /* Fill in the defaults */
    loop_options->clobber = FALSE;
-   loop_options->verbose = FALSE;
+   loop_options->verbose = TRUE;
+   loop_options->datatype = NC_UNSPECIFIED;
+   loop_options->is_signed = TRUE;
+   loop_options->valid_range[0] = 0.0;
+   loop_options->valid_range[1] = 0.0;
    loop_options->max_open_files = MAX_NC_OPEN - 2;
    loop_options->check_all_input_dim_info = TRUE;
    loop_options->convert_input_to_scalar = FALSE;
    loop_options->output_vector_size = 0;
    loop_options->input_mincid = MI_ERROR;
    loop_options->total_copy_space = 4 * 1024 * 1024;
+   loop_options->loop_dimension = NULL;
+   loop_options->num_all_inputs = 0;
+   loop_options->input_file_function = NULL;
    loop_options->output_file_function = NULL;
+   loop_options->copy_all_header_info = TRUE;
    loop_options->do_accumulate = FALSE;
    loop_options->num_extra_buffers = 0;
    loop_options->start_function = NULL;
    loop_options->finish_function = NULL;
    loop_options->voxel_function = NULL;
    loop_options->caller_data = NULL;
+   loop_options->loop_info = create_loop_info();
+
+   /* Return the structure pointer */
+   return loop_options;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_loop_options
+@INPUT      : loop_options - pointer to structure to cleanup
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to cleanup and free the Loop_Options structure
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 6, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void free_loop_options(Loop_Options *loop_options)
+{
+   free_loop_info(loop_options->loop_info);
+   if (loop_options->loop_dimension != NULL)
+      FREE(loop_options->loop_dimension);
+   FREE(loop_options);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1544,6 +2468,34 @@ public void set_loop_verbose(Loop_Options *loop_options,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_datatype
+@INPUT      : loop_options - user options for looping
+              datatype - NetCDF datatype for output (NC_UNSPECIFIED means
+                 use input type)
+              is_signed - TRUE if type is signed
+              valid_min - valid minimum for type (if valid_min >= valid_max,
+                 then defaults are used)
+              valid_max - valid maximum for type
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to set the output file datatype, sign and range.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_datatype(Loop_Options *loop_options, 
+                              nc_type datatype, int is_signed,
+                              double valid_min, double valid_max)
+{
+   loop_options->datatype = datatype;
+   loop_options->is_signed = is_signed;
+   loop_options->valid_range[0] = valid_min;
+   loop_options->valid_range[1] = valid_max;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_max_open_files
 @INPUT      : loop_options - user options for looping
               max_open_files - maximum number of open files allowed (between
@@ -1571,6 +2523,26 @@ public void set_loop_max_open_files(Loop_Options *loop_options,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_check_dim_info
+@INPUT      : loop_options - user options for looping
+              check_dim_info - TRUE if all dimension information in input
+                 files should be check, FALSE otherwise
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to turn dimension info checking on or off.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 16, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_check_dim_info(Loop_Options *loop_options, 
+                                    int check_dim_info)
+{
+   loop_options->check_all_input_dim_info = check_dim_info;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_convert_input_to_scalar
 @INPUT      : loop_options - user options for looping
               convert_input_to_scalar - TRUE if input should be converted
@@ -1594,7 +2566,7 @@ public void set_loop_convert_input_to_scalar(Loop_Options *loop_options,
 @NAME       : set_loop_output_vector_size
 @INPUT      : loop_options - user options for looping
               output_vector_size - length of vector dimension for output.
-                 0 means no vector dimension.
+                 0 means keep the size the same as the input.
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to turn set the length of the vector dimension for 
@@ -1662,6 +2634,58 @@ public void set_loop_buffer_size(Loop_Options *loop_options,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_dimension
+@INPUT      : loop_options - user options for looping
+              dimension_name - name of dimension that is treated like a series
+                 of input files.
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to allow a dimension to be treated like a series of
+              input files (one buffer per dimension element per file).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 24, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_dimension(Loop_Options *loop_options,
+                               char *dimension_name)
+{
+   if (loop_options->loop_dimension != NULL)
+      FREE(loop_options->loop_dimension);
+
+   if ((dimension_name == NULL) || ((int)strlen(dimension_name) <= 0)) {
+      loop_options->loop_dimension = NULL;
+   }
+   else {
+      loop_options->loop_dimension = strdup(dimension_name);
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_input_file_function
+@INPUT      : loop_options - user options for looping
+              input_file_function - function to be called for each
+                 input file so that the user can extract any extract
+                 information.
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to allow the user to define a function to be called
+              for each input file before processing is done.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_input_file_function
+   (Loop_Options *loop_options,
+    VoxelInputFileFunction input_file_function)
+{
+   loop_options->input_file_function = input_file_function;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_output_file_function
 @INPUT      : loop_options - user options for looping
               output_file_function - function to be called for each
@@ -1686,8 +2710,30 @@ public void set_loop_output_file_function
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_copy_all_header
+@INPUT      : loop_options - user options for looping
+              copy_all_header - TRUE if all header info should be copied
+                 to output file
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to turn copying of all header info off.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 13, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_copy_all_header(Loop_Options *loop_options, 
+                                     int copy_all_header)
+{
+   loop_options->copy_all_header_info = copy_all_header;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_accumulate
 @INPUT      : loop_options - user options for looping
+              do_accumulation - TRUE if accumulating should be done,
+                 FALSE otherwise.
               num_extra_buffers - number of extra buffers to allocate.
               start_function - function to be called before looping with 
                  all output and extra buffers as arguments. NULL means
@@ -1712,21 +2758,313 @@ public void set_loop_output_file_function
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public void set_loop_accumulate(Loop_Options *loop_options, 
+                                int do_accumulation,
                                 int num_extra_buffers,
                                 VoxelStartFunction start_function,
                                 VoxelFinishFunction finish_function)
 {
-   if (num_extra_buffers < 0) {
-      (void) fprintf(stderr, 
-                     "Bad num_extra_buffers %d in set_loop_accumulate\n",
-                     num_extra_buffers);
-      exit(EXIT_FAILURE);
+   loop_options->do_accumulate = do_accumulation;
+
+   /* Turning off accumulation */
+   if (!do_accumulation) {
+      loop_options->num_extra_buffers = 0;
+      loop_options->start_function = NULL;
+      loop_options->finish_function = NULL;
    }
 
-   loop_options->do_accumulate = TRUE;
-   loop_options->num_extra_buffers = num_extra_buffers;
-   loop_options->start_function = start_function;
-   loop_options->finish_function = finish_function;
+   /* Turning on accumulation */
+   else {
+      if (num_extra_buffers < 0) {
+         (void) fprintf(stderr, 
+                        "Bad num_extra_buffers %d in set_loop_accumulate\n",
+                        num_extra_buffers);
+         exit(EXIT_FAILURE);
+      }
+      loop_options->do_accumulate = TRUE;
+      loop_options->num_extra_buffers = num_extra_buffers;
+      loop_options->start_function = start_function;
+      loop_options->finish_function = finish_function;
+   }
    
+}
+
+/* ------------ Routines to set and get loop info ------------ */
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_loop_info
+@INPUT      : (none)
+@OUTPUT     : (none)
+@RETURNS    : Pointer to Loop_Info structure
+@DESCRIPTION: Routine to create and initialize the loop info structure.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private Loop_Info *create_loop_info(void)
+{
+   Loop_Info *loop_info;
+
+   /* Allocate structure */
+   loop_info = MALLOC(sizeof(*loop_info));
+
+   /* Fill in the defaults */
+   initialize_loop_info(loop_info);
+
+   /* Return the structure pointer */
+   return loop_info;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_loop_info
+@INPUT      : loop_info - pointer to Loop_Info structure
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to initialize the loop info structure.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 28, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void initialize_loop_info(Loop_Info *loop_info)
+{
+   int idim;
+
+   /* Fill in the defaults */
+   loop_info->current_file = 0;
+   loop_info->current_index = 0;
+   for (idim=0; idim < MAX_VAR_DIMS; idim++) {
+      loop_info->start[idim] = 0;
+      loop_info->count[idim] = 0;
+   }
+   loop_info->loopfile_info = NULL;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_loop_info
+@INPUT      : loop_info - pointer to structure to cleanup
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to cleanup and free the Loop_Info structure
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void free_loop_info(Loop_Info *loop_info)
+{
+   FREE(loop_info);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_info_shape
+@INPUT      : loop_info - info structure pointer
+              start - start of hyperslab
+              count - count of hyperslab
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to set the hyperslab shape (start and count)
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_info_shape(Loop_Info *loop_info, long start[], long count[])
+{
+   int idim;
+
+   for (idim=0; idim < MAX_VAR_DIMS; idim++) {
+      loop_info->start[idim] = start[idim];
+      loop_info->count[idim] = count[idim];
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_shape
+@INPUT      : loop_info - info structure pointer
+              ndims - number of dimensions to copy (uses MAX_VAR_DIMS
+                 if ndims == 0)
+@OUTPUT     : start - start of hyperslab
+              count - count of hyperslab
+@RETURNS    : (none)
+@DESCRIPTION: Routine to get the current hyperslab shape (start and count)
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void get_info_shape(Loop_Info *loop_info, int ndims,
+                           long start[], long count[])
+{
+   int idim;
+
+   if ((ndims <= 0) || (ndims > MAX_VAR_DIMS))
+      ndims = MAX_VAR_DIMS;
+   for (idim=0; idim < ndims; idim++) {
+      start[idim] = loop_info->start[idim];
+      count[idim] = loop_info->count[idim];
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_info_current_file
+@INPUT      : loop_info - info structure pointer
+              current_file - number of current input file (for 
+                 accumulation)
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to set the current input file number.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 28, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_info_current_file(Loop_Info *loop_info, int current_file)
+{
+
+   loop_info->current_file = current_file;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_current_file
+@INPUT      : loop_info - info structure pointer
+@OUTPUT     : (none)
+@RETURNS    : Number of current input file (for accumulating over files)
+@DESCRIPTION: Routine to get the current input file number.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 28, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_info_current_file(Loop_Info *loop_info)
+{
+
+   return loop_info->current_file;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_current_mincid
+@INPUT      : loop_info - info structure pointer
+@OUTPUT     : (none)
+@RETURNS    : Minc id for current input file (for accumulating over files)
+@DESCRIPTION: Routine to get the current input file mincid.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 8, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_info_current_mincid(Loop_Info *loop_info)
+{
+
+   if (loop_info->loopfile_info == NULL) return MI_ERROR;
+   return get_input_mincid(loop_info->loopfile_info, loop_info->current_file);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_info_current_index
+@INPUT      : loop_info - info structure pointer
+              current_index - number of current dimension index (for 
+                 accumulation over files and dimension)
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to set the current dimension index.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 28, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_info_current_index(Loop_Info *loop_info, int current_index)
+{
+
+   loop_info->current_index = current_index;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_current_index
+@INPUT      : loop_info - info structure pointer
+@OUTPUT     : (none)
+@RETURNS    : Number of current dimension index (for accumulating over files)
+@DESCRIPTION: Routine to get the current dimension index.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 28, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_info_current_index(Loop_Info *loop_info)
+{
+
+   return loop_info->current_index;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_info_loopfile_info
+@INPUT      : loop_info - info structure pointer
+              loopfile_info - loopfile info structure pointer
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Routine to set the loopfile info structure for future queries
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 7, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void set_info_loopfile_info(Loop_Info *loop_info, 
+                                    Loopfile_Info *loopfile_info)
+{
+
+   loop_info->loopfile_info = loopfile_info;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_info_whole_file
+@INPUT      : loop_info - info structure pointer
+@OUTPUT     : (none)
+@RETURNS    : Id of current minc file
+@DESCRIPTION: Routine to change minc file handling to get the whole input 
+              file, not just the header (should be called from within the 
+              input_file_function).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 7, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_info_whole_file(Loop_Info *loop_info)
+{
+   Loopfile_Info *loopfile_info;
+
+   /* Check for NULL pointer */
+   if (loop_info->loopfile_info == NULL) return MI_ERROR;
+   loopfile_info = loop_info->loopfile_info;
+
+   /* Make the input non-sequential (hold the files open if possible), and
+      ask for whole files */
+   set_input_sequential(loopfile_info, FALSE);
+   set_input_headers_only(loopfile_info, FALSE);
+
+   /* Return the current minc file id */
+   if (loop_info->current_file >= 0)
+      return get_input_mincid(loopfile_info, loop_info->current_file);
+   else
+      return MI_ERROR;
+
 }
 
