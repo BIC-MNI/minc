@@ -16,12 +16,18 @@
 
 #if HAVE_FLOAT_H
 #include <float.h>
-#endif
+
+#else
+
+#if HAVE_VALUES_H
+#include <values.h>
 
 #ifndef DBL_MAX
-#include <values.h>
 #define DBL_MAX  MAXDOUBLE
 #endif  /* DBL_MAX not defined */
+
+#endif /* HAVE_VALUES_H */
+#endif /* HAVE_FLOAT_H */
 
 #include <stdlib.h>
 
