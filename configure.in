@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 1.2)
 AM_CONFIG_HEADER([config.h])
 
-AC_REVISION($Revision: 6.10 $)
+AC_REVISION($Revision: 6.11 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -17,6 +17,9 @@ AC_PROG_RANLIB
 AC_PROG_F77
 AM_PROG_LEX
 AC_PROG_YACC
+
+AC_HEADER_TIME
+AC_CHECK_HEADERS(sys/time.h)
 
 dnl Build only static libs by default
 AC_DISABLE_SHARED
