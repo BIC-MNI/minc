@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 2.2  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 2.3  1995-03-21 14:05:00  neelin
+@MODIFIED   : Modified calls to voxel_loop routines.
 @MODIFIED   :
+ * Revision 2.2  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 2.1  1994/12/14  10:20:23  neelin
  * Changed to use standard (Proglib) voxel_loop routines.
  *
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.2 1995-02-08 19:31:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.3 1995-03-21 14:05:00 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -68,7 +71,7 @@ public void do_window(void *caller_data, long num_voxels,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[],
-                      long start[], long count[]);
+                      Loop_Info *loop_info);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -94,7 +97,7 @@ public int main(int argc, char *argv[])
    char *arg_string;
    Window_Data window_data;
    char *endptr;
-   Loop_Options loop_options;
+   Loop_Options *loop_options;
 
    /* Save time stamp and args */
    arg_string = time_stamp(argc, argv);
@@ -133,10 +136,10 @@ public int main(int argc, char *argv[])
    }
 
    /* Do loop */
-   initialize_loop_options(&loop_options);
-   set_loop_verbose(&loop_options, verbose);
-   set_loop_clobber(&loop_options, clobber);
-   voxel_loop(1, &infile, 1, &outfile, arg_string, &loop_options,
+   loop_options = create_loop_options();
+   set_loop_verbose(loop_options, verbose);
+   set_loop_clobber(loop_options, clobber);
+   voxel_loop(1, &infile, 1, &outfile, arg_string, loop_options,
               do_window, (void *) &window_data);
 
    exit(EXIT_SUCCESS);
@@ -162,7 +165,7 @@ public void do_window(void *caller_data, long num_voxels,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
                       double *output_data[],
-                      long start[], long count[])
+                      Loop_Info *loop_info)
      /* ARGSUSED */
 {
    Window_Data *window_data;
