@@ -7,7 +7,11 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.3  2000-04-28 15:03:10  neelin
+ * Revision 6.4  2000-05-01 17:54:02  neelin
+ * Improved testing of input stream to figure out byte order for both
+ * implicit and expicit VR.
+ *
+ * Revision 6.3  2000/04/28 15:03:10  neelin
  * Added support for ignoring non-fatal protocol errors (cases where redundant
  * information is inconsistent). In particular, it is possible to ignore
  * differences between the group length element and the true group length.
@@ -834,14 +838,15 @@ public Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
 @OUTPUT     : (none)
 @RETURNS    : status.
 @DESCRIPTION: Tests input for byte ordering to use. The test is done by 
-              assuming implicit VR and looking at the length of the first
-              element. We assume that the length of the first element is 
-              less than 64K and greater than zero, and we try the two possible 
-              byte orders. If the VR encoding is explicit, then we have 
-              two shortwords (2-bytes), both of which are non-zero and the
-              longword (4 bytes) will be greater than 64K. In this 
-              case, we set explicit VR encoding and revert to the original
-              byte-order.
+              looking at the length of the first element. First a test is
+              done for implicit VR, assuming that the length of the first 
+              element is less than 64K and greater than zero, and we try 
+              the two possible byte orders. If the VR encoding is explicit, 
+              then we have two shortwords (2-bytes), both of which are 
+              non-zero and the longword (4 bytes) will be greater than 64K. 
+              In this case, we test the 2-byte length looking for a length
+              that is less than 256 bytes. If that fails, than we revert
+              to the original byte order.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -853,10 +858,12 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
    unsigned long data_length;
+   unsigned short data_length2;
    Acr_Status status;
    Acr_byte_order byte_order, old_byte_order;
 
 #define ACR_TEST_MAX USHRT_MAX
+#define ACR_TEST_MAX2 UCHAR_MAX
 
    /* Save old byte ordering */
    old_byte_order = acr_get_byte_order(afp);
@@ -890,11 +897,25 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
       acr_set_vr_encoding(afp, ACR_IMPLICIT_VR);
    }
 
-   /* Otherwise we should just go back to the default and assume explicit
-      vr encoding */
+   /* Otherwise we probably have explicit vr encoding. */
    else {
       acr_set_vr_encoding(afp, ACR_EXPLICIT_VR);
-      acr_set_byte_order(afp, old_byte_order);
+
+      /* Check the length in this case to see if it small. The default
+         will be little endian. */
+      byte_order = ACR_BIG_ENDIAN;
+      acr_set_byte_order(afp, byte_order);
+      acr_get_short(byte_order, 1, &buffer[3*ACR_SIZEOF_SHORT], 
+                   &data_length2);
+      if (data_length2 >= ACR_TEST_MAX2) {
+         byte_order = ACR_LITTLE_ENDIAN;
+         acr_set_byte_order(afp, byte_order);
+         acr_get_short(byte_order, 1, &buffer[3*ACR_SIZEOF_SHORT], 
+                       &data_length2);
+      }
+      if (data_length2 >= ACR_TEST_MAX2) {
+         acr_set_byte_order(afp, old_byte_order);
+      }
    }
 
    return ACR_OK;
