@@ -281,7 +281,7 @@ sub create_mincfile {
     $| = 1;
     open(MINC, "|-") || exec
         ("rawtominc", $mincfile, $nslices, $nrows, $ncols, "-noclobber",
-         "-scan_range", "-short", "-obyte", $orientation,
+         "-scan_range", "-short", "-range", "0", "4095", $orientation,
          "-xstep", $xstep, "-ystep", $ystep, "-zstep", $zstep,
          "-xstart", $xstart, "-ystart", $ystart, "-zstart", $zstart,
          "-mri", 
@@ -433,6 +433,9 @@ sub mri_to_minc {
 
             # Loop through echos
             @echos = sort(numeric_order keys(%echo_list));
+            if (scalar(@echos) > $mincinfo{'numechos'}) {
+                $mincinfo{'numechos'} = scalar(@echos);
+            }
             foreach $echo (@echos) {
 
                 # Create minc file
@@ -441,7 +444,7 @@ sub mri_to_minc {
                 $patient_name =~ tr/A-Z/a-z/;
                 $mincfile = "$outputdir/".$patient_name."_".
                     $mincinfo{'exam'}."_".$mincinfo{'series'};
-                if (scalar(@echos) > 1) {
+                if ($mincinfo{'numechos'} > 1) {
                     $mincfile .= "_e$echo";
                 }
                 $mincfile .= "_mri.mnc";
