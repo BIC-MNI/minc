@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-08-02 13:41:36  neelin
+@MODIFIED   : Fixed bug in direction cosine inversion (in test cases, this code was never
+@MODIFIED   : called, so it does not seem to be an important bug).
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.7  1995/03/21  15:43:19  neelin
  * Corrected setting of default image type.
  *
@@ -405,7 +409,7 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          if (general_info->dircos[iworld][iworld] < 0.0) {
             general_info->step[iworld] *= -1.0;
             for (jworld = XCOORD; jworld < WORLD_NDIMS; jworld++) {
-               general_info->dircos[iworld][jworld] *= 1.0;
+               general_info->dircos[iworld][jworld] *= -1.0;
             }
          }
       }
