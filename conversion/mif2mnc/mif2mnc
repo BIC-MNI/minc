@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl5 -w
+#! /usr/bin/env perl
 #
 # Andrew Janke - rotor@bic.mni.mcgill.ca
 # McConnell Brain Imaging Center
@@ -14,7 +14,10 @@
 # Mon Jan  7 14:18:37 EST 2002 - initial version
 # Wed Feb 13 16:22:05 EST 2002 - Added byte_swapping aka ana2mnc 
 
+require 5.0;
+
 use strict;
+use warnings "all";
 
 use Getopt::Tabular;
 $SIG{__DIE__} =  sub { &cleanup; die $_[0]; };
@@ -34,6 +37,7 @@ my(%dtypes) = (
               );
 
 chomp(my($me) = `basename $0`);
+my($tmpfile) = "/tmp/$me-$$.raw";
 my($clobber) = 0;
 my($verbose) = 0;
 my(@opt_table) = (
@@ -47,9 +51,9 @@ This script can be invoked as:
 HELP
 
 my($Usage) = "Usage: $me [options] <in.MIF> <out.mnc>\n".
-             "       $me -help to list options\n";
+             "       $me -help to list options\n\n";
              
-my($miffile, $mncfile, $tmpfile, $files, $nfiles, @args, $history);
+my($miffile, $mncfile, $files, $nfiles, @args, $history);
 
 # create the history string
 chomp($history = `date`);
@@ -60,7 +64,6 @@ $history .= '>>>> ' . join(' ', $me, @ARGV);
 &GetOptions (\@opt_table, \@ARGV) || exit 1;
 if ($#ARGV < 1){ die $Usage; }
 ($miffile, $mncfile) = @ARGV[0..1];
-$tmpfile = "/tmp/$me-$$.raw";
    
 if(!-e "$miffile"){ 
    die "$me: Couldn't find $miffile\n"; 
