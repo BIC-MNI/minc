@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.9  1998-03-23 20:17:04  neelin
-@MODIFIED   : Moved some general-purpose functions to dicom_network.c.
+@MODIFIED   : Revision 6.10  1998-03-23 20:22:56  neelin
+@MODIFIED   : Removed unnecessary include.
 @MODIFIED   :
+ * Revision 6.9  1998/03/23  20:17:04  neelin
+ * Moved some general-purpose functions to dicom_network.c.
+ *
  * Revision 6.8  1998/03/17  17:05:16  neelin
  * Set default maximum length to 1MB for servers that do not handle
  * length 0 (unlimited).
@@ -68,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.9 1998-03-23 20:17:04 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.10 1998-03-23 20:22:56 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -82,7 +85,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
-#include <unistd.h>
 #ifndef sun
 #include <bstring.h>
 #endif
