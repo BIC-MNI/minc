@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.5  2005-03-14 22:26:40  bert
+   * Revision 1.6  2005-03-29 20:20:42  bert
+   * Add checks for GE Medical Systems proprietary files
+   *
+   * Revision 1.5  2005/03/14 22:26:40  bert
    * Dump the entire coordinate array for each MRI dimension after sorting.  Also detect GE scans.
    *
    * Revision 1.4  2005/03/13 19:35:11  bert
@@ -126,7 +129,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.5 2005-03-14 22:26:40 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.6 2005-03-29 20:20:42 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -886,6 +889,62 @@ add_philips_info(Acr_Group group_list)
 Acr_Group
 add_gems_info(Acr_Group group_list)
 {
+    char *tmp_str;
+    int image_count;
+    int image_index;
+    double tr;
+    int ok;
+
+    ok = 1;
+    tmp_str = acr_find_string(group_list, GEMS_Acqu_private_creator_id, "");
+    if (strcmp(tmp_str, "GEMS_ACQU_01")) {
+        ok = 0;
+    }
+
+    tmp_str = acr_find_string(group_list, GEMS_Sers_private_creator_id, "");
+    if (strcmp(tmp_str, "GEMS_SERS_01")) {
+        ok = 0;
+    }
+
+    if (!ok) {
+        printf("WARNING: GEMS data not found\n");
+    }
+
+    /* Do this only for EPI images for now 
+     */
+    tmp_str = acr_find_string(group_list, ACR_Image_type, "");
+    image_index = acr_find_int(group_list, ACR_Image, -1);
+    image_count = acr_find_int(group_list, GEMS_Images_in_series, -1);
+    tr = acr_find_double(group_list, ACR_Repetition_time, 0.0);
+
+    if (strstr(tmp_str, "\\EPI") != NULL &&
+        image_index >= 0 &&
+        image_count > 0 &&
+        tr != 0.0) {
+        int frame_count = acr_find_int(group_list, 
+                                       GEMS_Fast_phases, -1);
+        if (frame_count > 0) {
+            if (acr_find_int(group_list, ACR_Acquisitions_in_series, -1) < 0) {
+                acr_insert_long(&group_list, ACR_Acquisitions_in_series,
+                                frame_count);
+            }
+        }
+
+        if (acr_find_double(group_list, ACR_Frame_reference_time, -1.0) < 0) {
+            acr_insert_numeric(&group_list, ACR_Frame_reference_time,
+                               ((image_index - 1) / image_count) * tr);
+        }
+        if (acr_find_double(group_list, ACR_Actual_frame_duration, -1.0) < 0) {
+            acr_insert_numeric(&group_list, ACR_Actual_frame_duration,
+                               tr);
+        }
+
+        if (G.Debug >= HI_LOGGING) {
+            printf("EPI slice %d timing information: %f, %f\n", 
+                   image_index, ((image_index - 1) / image_count) * tr,
+                   tr);
+        }
+    }
     return (group_list);
 }
 
@@ -912,7 +971,8 @@ read_numa4_dicom(const char *filename, int max_group)
     else if (strstr(str_ptr, "Philips") != NULL) {
         group_list = add_philips_info(group_list);
     }
-    else if (strstr(str_ptr, "GEMS") != NULL) {
+    else if (strstr(str_ptr, "GEMS") != NULL ||
+             strstr(str_ptr, "GE MEDICAL") != NULL) {
         group_list = add_gems_info(group_list);
     }
     return (group_list);
