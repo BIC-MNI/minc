@@ -12,7 +12,7 @@ PROGS    = mincresample
 EXTRA_OBJS = resample_volumes.o
 HEADERS  = $(PROGS:=.h)
 CDEFINES = -DDEBUG#                        cpp defines
-LDOPT    = $(CC_PROG_LIB) -lm $(MINC_LDOPT)
+LDOPT    = $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
 
