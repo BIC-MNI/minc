@@ -10,13 +10,16 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.1  1994-12-09 15:31:00  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-12-13 16:34:02  neelin
+@MODIFIED   : Added sorting of lookup file.
 @MODIFIED   :
+ * Revision 1.1  94/12/09  15:31:00  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.1 1994-12-09 15:31:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.2 1994-12-13 16:34:02 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -63,6 +66,12 @@ typedef struct {
    double range[2];
 } Lookup_Data;
 
+/* Structure for sorting the lookup table */
+typedef struct {
+   double key;
+   int index;
+} Sort_Key;
+
 /* Function prototypes */
 public Lookup_Table *read_lookup_table(char *lookup_file);
 public double *get_values_from_string(char *string, int array_size,
@@ -73,10 +82,11 @@ public void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
-                      double *output_data[]);
+                      double *output_data[], long start[], long count[]);
 public void lookup_in_table(double index, Lookup_Table *lookup_table,
                             int discrete_values, double null_value[],
                             double output_value[]);
+private int sorting_function(const void *value1, const void *value2);
 
 /* Lookup tables */
 static double gray_lookup_values[] = {
@@ -283,9 +293,12 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
 {
    Lookup_Table *lookup_table;
    FILE *fp;
-   double *table, *row;
-   int nentries, table_nvalues, nvalues, ivalue;
+   double *table, *row, *new_table;
+   int nentries, table_nvalues, nvalues, ivalue, ientry;
    char line[1000];
+   Sort_Key *sort_table;
+   int need_sort;
+   int old_offset, new_offset;
 
    /* Check for null file name */
    if (lookup_filename == NULL) return NULL;
@@ -321,6 +334,7 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
    for (ivalue=0; ivalue < table_nvalues; ivalue++)
       table[ivalue] = row[ivalue];
    nentries++;
+   need_sort = FALSE;
    while (fgets(line, sizeof(line), fp) != NULL) {
       (void) get_values_from_string(line, table_nvalues, row, &nvalues);
       if (nvalues != table_nvalues) {
@@ -336,10 +350,55 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
          table[ivalue + nentries*table_nvalues] = row[ivalue];
       }
       nentries++;
+
+      /* Check for need to sort */
+      if (table[(nentries-2)*table_nvalues] > 
+          table[(nentries-1)*table_nvalues]) {
+         need_sort = TRUE;
+      }
    }
 
    /* Close the input file */
    (void) fclose(fp);
+
+   /* Do sorting if needed */
+   if (need_sort) {
+
+      /* Set up sorting table */
+      sort_table = MALLOC(sizeof(*sort_table) * nentries);
+      for (ientry=0; ientry < nentries; ientry++) {
+         sort_table[ientry].key = table[ientry*table_nvalues];
+         sort_table[ientry].index = ientry;
+      }
+
+      /* Sort the sorting table */
+      qsort((void *) sort_table, nentries, sizeof(*sort_table),
+            sorting_function);
+
+      /* Copy the table */
+      new_table = MALLOC(sizeof(*table) * table_nvalues * nentries);
+      for (ientry=0; ientry < nentries; ientry++) {
+         new_offset = ientry * table_nvalues;
+         old_offset = sort_table[ientry].index * table_nvalues;
+         for (ivalue=0; ivalue < table_nvalues; ivalue++) {
+            new_table[new_offset + ivalue] = table[old_offset + ivalue];
+         }
+      }
+      FREE(table);
+      table = new_table;
+      FREE(sort_table);
+   }
+
+#ifdef DEBUG
+   /* Print out the table */
+   if (need_sort) (void) printf("Did sorting\n");
+   for (ientry=0; ientry < nentries; ientry++) {
+      for (ivalue=0; ivalue < table_nvalues; ivalue++) {
+         (void) printf("%g ", table[ientry * table_nvalues + ivalue]);
+      }
+      (void) printf("\n");
+   }
+#endif
 
    /* Allocate space for the lookup table and set initial values */
    lookup_table = MALLOC(sizeof(*lookup_table));
@@ -350,6 +409,38 @@ public Lookup_Table *read_lookup_table(char *lookup_filename)
 
    /* Return the lookup table */
    return lookup_table;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : sorting_function
+@INPUT      : value1 - pointer to first value
+              value2 - pointer to second value
+@OUTPUT     : (nothing)
+@RETURNS    : -1, 0 or 1 for value1 <, ==, > value2
+@DESCRIPTION: Routine to compare two values for sorting. The value is a
+              pointer to a structure that has a double precision primary
+              key. If that is equal then an integer secondary key is used.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 8, 1994 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int sorting_function(const void *value1, const void *value2)
+{
+   Sort_Key *key1, *key2;
+
+   key1 = (Sort_Key *) value1;
+   key2 = (Sort_Key *) value2;
+
+   if (key1->key == key2->key) {
+      if (key1->index == key2->index) return 0;
+      else if (key1->index < key2->index) return -1;
+      else return 1;
+   }
+   else if (key1->key < key2->key) return -1;
+   else return 1;
+   
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -557,6 +648,8 @@ public void get_full_range(int mincid, double range[2])
               input_data - vector of pointers to input buffer data
               output_num_buffers - number of output buffers
               output_vector_length - length of output vector dimension
+              start - vector specifying start of hyperslab (not used)
+              count - vector specifying count of hyperslab (not used)
 @OUTPUT     : output_data - vector of pointers to output buffer data
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to loop through an array of voxels and do a lookup
@@ -567,11 +660,12 @@ public void get_full_range(int mincid, double range[2])
 @CREATED    : December 8, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
+/* ARGSUSED */
 public void do_lookup(void *caller_data, long num_voxels,
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
-                      double *output_data[])
+                      double *output_data[], long start[], long count[])
 {
    Lookup_Data *lookup_data;
    long ivoxel;
