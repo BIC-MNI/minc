@@ -1,4 +1,14 @@
+2003-01-10  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* Makefile.am (EXTRA_DIST, dist-hook): Distribute fortran
+	subdirectory, sans the CVS files.
+
+	* progs/mincstats/mincstats.man1: Document change of
+	-max_bins to -int_max_bins.
+
 2003-01-09  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* progs/rawtominc/rawtominc.man1: Document -skip option.
 
 	* volume_io/Makefile.am: New.
 

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.1 2001-04-17 18:40:26 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.2 2003-01-10 05:25:16 stever Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -238,6 +238,12 @@ Don't overwrite existing minc file.
 .I -input
 <inputfile>:
 Read input data from <inputfile> instead of standard input.
+.P
+.I -skip
+<length>:
+Skip the first 
+.B length
+bytes of the input.
 
 .SH World coordinate conversion
 .P

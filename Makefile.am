@@ -111,8 +111,15 @@ noinst_PROGRAMS = \
 LDADD = libvolume_io.la libminc.la
 
 EXTRA_DIST = GETTING_STARTED $(m4_files) \
+	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c
+
+# The fortran directory is not yet automakified, so it is just
+# listed in EXTRA_DIST.  This will copy everything including CVS
+# files.  We use this hook to get rid of the latter.
+dist-hook:
+	rm -rf $(distdir)/fortran/CVS $(distdir)/fortran/vms/CVS
 
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \
