@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.3 1995-08-21 00:27:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.4 1995-08-21 02:50:33 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -536,44 +536,66 @@ private  void  get_cache_block(
 
 private  int   get_block_index(
     volume_cache_struct   *cache,
-    int                   x,
-    int                   y,
-    int                   z,
-    int                   t,
-    int                   v,
+    int                   *x,
+    int                   *y,
+    int                   *z,
+    int                   *t,
+    int                   *v,
     int                   block_start[] )
 {
     int      block_index, block_i;
-    int      n_dims, dim, ind[MAX_DIMENSIONS];
+    int      n_dims;
 
     n_dims = cache->n_dimensions;
-
-    ind[0] = x;
-    ind[1] = y;
-    ind[2] = z;
-    ind[3] = t;
-    ind[4] = v;
-
     block_index = 0;
 
-    for_less( dim, 0, n_dims )
-    {
-        block_i = ind[dim] / cache->block_sizes[dim];
-        block_start[dim] = block_i * cache->block_sizes[dim];
-        block_index = block_index * cache->blocks_per_dim[dim] + block_i;
-    }
+    block_i = *x / cache->block_sizes[0];
+    block_index = block_index * cache->blocks_per_dim[0] + block_i;
+    block_start[0] = block_i * cache->block_sizes[0];
+    *x -= block_start[0];
+
+    if( n_dims == 1 )
+        return( block_index );
+
+    block_i = *y / cache->block_sizes[1];
+    block_index = block_index * cache->blocks_per_dim[1] + block_i;
+    block_start[1] = block_i * cache->block_sizes[1];
+    *y -= block_start[1];
+
+    if( n_dims == 2 )
+        return( block_index );
+
+    block_i = *z / cache->block_sizes[2];
+    block_index = block_index * cache->blocks_per_dim[2] + block_i;
+    block_start[2] = block_i * cache->block_sizes[2];
+    *z -= block_start[2];
+
+    if( n_dims == 3 )
+        return( block_index );
+
+    block_i = *t / cache->block_sizes[3];
+    block_index = block_index * cache->blocks_per_dim[3] + block_i;
+    block_start[3] = block_i * cache->block_sizes[3];
+    *t -= block_start[3];
+
+    if( n_dims == 4 )
+        return( block_index );
+
+    block_i = *v / cache->block_sizes[4];
+    block_index = block_index * cache->blocks_per_dim[4] + block_i;
+    block_start[4] = block_i * cache->block_sizes[4];
+    *v -= block_start[4];
 
     return( block_index );
 }
 
 private  cache_block_struct  *get_cache_block_for_voxel(
     Volume   volume,
-    int      x,
-    int      y,
-    int      z,
-    int      t,
-    int      v,
-    int      block_indices[] )
+    int      *x,
+    int      *y,
+    int      *z,
+    int      *t,
+    int      *v )
 {
     cache_block_struct   **save_next, **save_prev, **block;
     int                  block_index, block_start[MAX_DIMENSIONS];
@@ -610,12 +632,6 @@ private  cache_block_struct  *get_cache_block_for_voxel(
         volume->cache.head = block;
     }
 
-    block_indices[0] = x - block_start[0];
-    block_indices[1] = y - block_start[1];
-    block_indices[2] = z - block_start[2];
-    block_indices[3] = t - block_start[3];
-    block_indices[4] = v - block_start[4];
-
     return( *block );
 }
 
@@ -629,19 +645,13 @@ public  Real  get_cached_volume_voxel(
 {
     Real                 value;
     cache_block_struct   *block;
-    int                  block_index[MAX_DIMENSIONS];
 
     if( volume->cache.minc_file == NULL )
         return( get_volume_voxel_min( volume ) );
 
-    block = get_cache_block_for_voxel( volume, x, y, z, t, v, block_index );
+    block = get_cache_block_for_voxel( volume, &x, &y, &z, &t, &v );
 
-    GET_MULTIDIM( value, block->array,
-                  block_index[0],
-                  block_index[1],
-                  block_index[2],
-                  block_index[3],
-                  block_index[4] );
+    GET_MULTIDIM( value, block->array, x, y, z, t, v );
 
     return( value );
 }
@@ -656,7 +666,6 @@ public  void  set_cached_volume_voxel(
     Real     value )
 {
     cache_block_struct   *block;
-    int                  block_index[MAX_DIMENSIONS];
 
     if( !volume->cache.has_been_modified )
     {
@@ -664,14 +673,9 @@ public  void  set_cached_volume_voxel(
         volume->cache.has_been_modified = TRUE;
     }
 
-    block = get_cache_block_for_voxel( volume, x, y, z, t, v, block_index );
+    block = get_cache_block_for_voxel( volume, &x, &y, &z, &t, &v );
 
-    SET_MULTIDIM( block->array,
-                  block_index[0],
-                  block_index[1],
-                  block_index[2],
-                  block_index[3],
-                  block_index[4], value );
+    SET_MULTIDIM( block->array, x, y, z, t, v, value );
 }
 
 public  BOOLEAN  cached_volume_has_been_modified(
