@@ -1,10 +1,11 @@
-# Makefile.am for MINC
+# Makefile.am for MINC2
 #
 AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . volume_io testdir doc
+AM_CPPFLAGS = -DMINC2
 
+SUBDIRS = . volume_io testdir doc
 
 # Add these to the include searches.
 #
@@ -22,7 +23,9 @@ include_HEADERS = \
 	libsrc/voxel_loop.h \
 	libsrc/nd_loop.h \
 	libsrc/time_stamp.h \
-	volume_io/Include/volume_io.h
+	libsrc/minc_compat.h \
+	volume_io/Include/volume_io.h \
+	libsrc2/minc2.h
 
 include_volume_iodir = $(includedir)/volume_io
 
@@ -49,23 +52,30 @@ include_volume_io_HEADERS = \
 #
 noinst_HEADERS = \
 	libsrc/minc_basic.h \
+	libsrc/minc_config.h \
+	libsrc/minc_error.h \
 	libsrc/minc_private.h \
 	libsrc/minc_routines.h \
 	libsrc/minc_structures.h \
 	libsrc/minc_useful.h \
 	libsrc/minc_varlists.h \
 	libsrc/type_limits.h \
+	libsrc/hdf_convenience.h \
 	progs/Proglib/convert_origin_to_start.h \
 	progs/Proglib/minc_def.h \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
 	progs/minccalc/y.tab.h \
 	progs/mincresample/mincresample.h \
-	progs/mincreshape/mincreshape.h
+	progs/mincreshape/mincreshape.h \
+	libsrc2/minc2_private.h \
+	progs/mincdump/mincdump.h \
+	progs/mincdump/dumplib.h \
+	progs/mincdump/vardata.h
 
 # Libraries which must be built and installed.
 #
-lib_LTLIBRARIES = libminc.la libvolume_io.la
+lib_LTLIBRARIES = libminc2.la libvolume_io2.la
 
 # Scripts we install: sh, csh, or perl.
 #
@@ -104,19 +114,22 @@ bin_PROGRAMS = \
 	rawtominc \
 	transformtags \
 	xfmconcat \
-	xfminvert
+	xfminvert \
+	mincconvert \
+	mincdump
 
 noinst_PROGRAMS = \
 	mincexample1 \
 	mincexample2
 
-LDADD = libvolume_io.la libminc.la
+LDADD = libvolume_io2.la libminc2.la
 
 EXTRA_DIST = GETTING_STARTED $(m4_files) \
 	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
-	mni_minc.epm.header README.binary_packaging
+	mni_minc.epm.header README.binary_packaging \
+	WHATSNEW-2.0
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS
@@ -205,8 +218,15 @@ xfmconcat_SOURCES = progs/xfm/xfmconcat.c
 
 xfminvert_SOURCES = progs/xfm/xfminvert.c
 
-libminc_la_LDFLAGS = -version-info 1:0:1
-libminc_la_SOURCES = \
+mincconvert_SOURCES = progs/mincconvert/mincconvert.c
+
+mincdump_SOURCES = \
+	progs/mincdump/mincdump.c \
+	progs/mincdump/vardata.c \
+	progs/mincdump/dumplib.c
+
+libminc2_la_LDFLAGS = -version-info 2:0:1
+libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/dim_conversion.c \
 	libsrc/image_conversion.c \
@@ -217,10 +237,25 @@ libminc_la_SOURCES = \
 	libsrc/netcdf_convenience.c \
 	libsrc/time_stamp.c \
 	libsrc/value_conversion.c \
-	libsrc/voxel_loop.c
+	libsrc/voxel_loop.c \
+	libsrc/hdf_convenience.c \
+	libsrc/minc_compat.c \
+	libsrc2/convert.c \
+	libsrc2/datatype.c \
+	libsrc2/dimension.c \
+	libsrc2/free.c \
+	libsrc2/grpattr.c \
+	libsrc2/hyper.c \
+	libsrc2/label.c \
+	libsrc2/m2util.c \
+	libsrc2/record.c \
+	libsrc2/slice.c \
+	libsrc2/valid.c \
+	libsrc2/volprops.c \
+	libsrc2/volume.c
 
-libvolume_io_la_LDFLAGS = -version-info 0:1:0
-libvolume_io_la_SOURCES = \
+libvolume_io2_la_LDFLAGS = -version-info 2:0:1
+libvolume_io2_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \
 	volume_io/Geometry/gaussian.c \
@@ -287,6 +322,7 @@ dist_man1_MANS = \
 	progs/rawtominc/rawtominc.man1 \
 	progs/xfm/transformtags.man1 \
 	progs/xfm/xfmconcat.man1 \
-	progs/xfm/xfminvert.man1
+	progs/xfm/xfminvert.man1 \
+	progs/mincconvert/mincconvert.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
