@@ -7,11 +7,9 @@ ROOT = .
 include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
-SUBDIRS = src $(FORTRAN_SUBDIR) test doc progs
+BUILD_SUBDIRS = src $(FORTRAN_SUBDIR) test doc progs
 
 TEST_SUBDIRS = test $(FORTRAN_SUBDIR)
-
-DUMMY = dummy_file_that_does_not_exist
 
 # --------------------------------------------------------------------
 
@@ -20,13 +18,22 @@ DUMMY = dummy_file_that_does_not_exist
 default : build runtest
 
 all build clean:
-	@TARGET=$@; export TARGET; $(MAKE) $(SUBDIRS)
+	@TARGET=$@; export TARGET; \
+	SUBDIRS="$(BUILD_SUBDIRS)"; export SUBDIRS; \
+	$(MAKE) subdirs
 
 runtest :
-	@TARGET=test; export TARGET; $(MAKE) $(TEST_SUBDIRS)
+	@TARGET=test; export TARGET; \
+	SUBDIRS="$(TEST_SUBDIRS)"; export SUBDIRS; \
+	$(MAKE) subdirs
 
-$(SUBDIRS) : $(DUMMY)
-	@cd $@ ; echo Making $(TARGET) in $@; $(MAKE) $(TARGET)
-
-$(DUMMY) :
-
+subdirs :
+	@for dir in $(SUBDIRS); \
+	   do if [ -d $$dir ]; \
+	   then \
+	      cd $$dir; \
+	      echo Making $(TARGET) in $$dir; \
+	      $(MAKE) $(TARGET); \
+	      cd ..; \
+	   fi; \
+	 done
