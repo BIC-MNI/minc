@@ -498,6 +498,7 @@ extern int miset_record_field_name(mihandle_t volume, int index,
 extern int midefine_label(mihandle_t volume, int value, const char *name);
 extern int miget_label_name(mihandle_t volume, int value, char **name);
 extern int miget_label_value(mihandle_t volume, const char *name, int *value);
+extern int miget_number_of_defined_labels(mihandle_t volume, int *number_of_labels);
 
 #ifdef __cplusplus
 }

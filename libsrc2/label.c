@@ -159,3 +159,32 @@ miget_label_value(mihandle_t volume, const char *name, int *value_ptr)
     return (MI_NOERROR);
 }
 
+int
+miget_number_of_defined_labels(mihandle_t volume, int *number_of_labels)
+{
+  int result;
+ 
+  if (volume == NULL) {
+    return (MI_ERROR);
+  }
+  if (volume->volume_class != MI_CLASS_LABEL) {
+    return (MI_ERROR);
+  }
+
+  if (volume->mtype_id <= 0) {
+    return (MI_ERROR);
+  }
+
+  H5E_BEGIN_TRY {
+    result = H5Tget_nmembers(volume->mtype_id);
+  } H5E_END_TRY;
+
+  if (result < 0) {
+    return (MI_ERROR);
+  }
+  else {
+    *number_of_labels = result;
+  }
+    
+  return (MI_NOERROR);
+}

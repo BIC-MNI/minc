@@ -116,6 +116,9 @@ MON AUG 30/2004 Leila\\*
 WED OCT 27/2004 Leila\\*
 * Correct the order of parameters in range functions
 
+THU OCT 28/2004 Leila\\*
+* Added an extra function to retrive the number of defined labels
+
 \section{Introduction}
 
 
@@ -1942,7 +1945,7 @@ RETURN VALUES
 MI_NOERROR on success, MI_ERROR on failure.
 \end{verbatim}
 
-\section{LABEL FUNCTIONS (3)}
+\section{LABEL FUNCTIONS (4)}
 \subsection{midefine\_label}
 \begin{verbatim}
 NAME
@@ -2015,6 +2018,29 @@ DESCRIPTION
 
 This function is the inverse of miget_label_name. It is called to determine
 what integer value, if any, corresponds to the given text string.
+
+RETURN VALUE
+
+MI_NOERROR on success, MI_ERROR on failure.
+\end{verbatim}
+
+\subsection{miget\_number\_of\_defined\_labels}
+\begin{verbatim}
+
+NAME
+
+miget_number_of_defined_labels - Retrive the number of defined labels
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int miget_number_of_defined_labels ( mihandle_t      volume, 
+                                     int             *number_of_labels );
+
+DESCRIPTION
+
+This function returns the number of defined labels, if any, or zero otherwise.
 
 RETURN VALUE
 

@@ -34,6 +34,13 @@ main(int argc, char **argv)
 	return (-1);
     }
 
+    result = miget_number_of_defined_labels(hvol,&value);
+    if (result != MI_NOERROR) {
+	TESTRPT("Invalid return from miget_label_name", result);
+    }
+    else {
+      printf(" %d \n", value);
+    }
     /* Now test some stuff... */
 
     midefine_label(hvol, 0, "Black");
@@ -42,7 +49,13 @@ main(int argc, char **argv)
     midefine_label(hvol, 0xff0000, "Red");
     midefine_label(hvol, 0x00ff00, "Blue");
     midefine_label(hvol, 0x0000ff, "Green");
-
+    result = miget_number_of_defined_labels(hvol,&value);
+    if (result != MI_NOERROR) {
+	TESTRPT("Invalid return from miget_label_name", result);
+    }
+    else {
+      printf(" %d \n", value);
+    }
     result = miget_label_name(hvol, 0, &name);
     if (result != MI_NOERROR) {
 	TESTRPT("Invalid return from miget_label_name", result);
