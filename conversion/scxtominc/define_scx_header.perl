@@ -8,27 +8,27 @@
 
 # Constants
 %types = (
-            "B",  "byte",
-            "W",  "word",
-            "L",  "long",
-            "F",  "float",
-            "FS", "short_float",
-            "S",  "string",
-            "B-",  "date",
-            "B:",  "time"
+            "B",  "scx_byte",
+            "W",  "scx_word",
+            "L",  "scx_long",
+            "F",  "scx_float",
+            "FS", "scx_short_float",
+            "S",  "scx_string",
+            "B-", "scx_date",
+            "B:", "scx_time"
 );
 %lengths = (
-            "byte", 1,
-            "word", 2,
-            "long", 4,
-            "float", 4,
-            "short_float", 2,
-            "string", 1,
-            "date", 1,
-            "time", 1
+            "scx_byte", 1,
+            "scx_word", 2,
+            "scx_long", 4,
+            "scx_float", 4,
+            "scx_short_float", 2,
+            "scx_string", 1,
+            "scx_date", 1,
+            "scx_time", 1
 );
 @mnem_fields = 
-   ("name", "type", "length", "in_file", "default", "start", "block");
+   ("name", "type", "length", "in_file", "mdefault", "start", "block");
 @block_fields = 
    ("length", "multiplicity", "parent", "start");
 
@@ -51,8 +51,8 @@ print hfile '
 #define SCX_FILE_HEADER_DEFINITION_H
 
 /* Mnemonic types */
-enum scx_mnem_types 
-   {' . join(', ', @types) . '};
+typedef enum scx_mnem_types_enum 
+   {' . join(', ', @types) . '} scx_mnem_types;
 static int scx_mnem_type_size[] =
    {' . join(', ', @lengths) . '};
 
@@ -71,7 +71,7 @@ struct scx_mnemonic_struct {
    scx_mnem_types type;
    int length;
    int in_file;
-   long default;
+   long mdefault;
    long start;
    scx_block_type *block;
 };
@@ -120,7 +120,7 @@ undef $ext;
       elsif (/^\s*[EDM]\s/) {
 
 #        Parse the line
-         ($code, $mnem, $ftype, $default, $prio, @rest) = split(' ');
+         ($code, $mnem, $ftype, $mdefault, $prio, @rest) = split(' ');
          next if ($prio eq "");
          $nmnems++;
 
@@ -138,8 +138,8 @@ undef $ext;
          $mnemonics{$nmnems-1, "type"} = $types{$2};
 
 #        Get pre-defined values
-         if ($default !~ /^=(.*)$/) {next;}
-         $mnemonics{$nmnems-1, "default"} = $1;
+         if ($mdefault !~ /^=(.*)$/) {next;}
+         $mnemonics{$nmnems-1, "mdefault"} = $1;
 
 #        Get block
          $mnemonics{$nmnems-1, "block"} = $blk;
@@ -161,9 +161,9 @@ undef $ext;
 
 #        Check for file type matching first word of file
          if (($position == 0) && ($code eq 'D') && 
-             ($file_type != $mnemonics{$nmnems-1, "default"})) {
+             ($file_type != $mnemonics{$nmnems-1, "mdefault"})) {
             die "Type $file_type does not match first word of file (",
-                  $mnemonics{$nmnems-1, "default"},")\n";
+                  $mnemonics{$nmnems-1, "mdefault"},")\n";
          }
 
       }
@@ -277,10 +277,11 @@ static scx_mnemonic_type '.$mnem_array.'[] = {
       if ($the_block < 0) {$the_block = 'NULL';}
       else {$the_block = '&('.$block_array.'['.$the_block.'])';}
 
-      $the_default = $mnemonics{$mnem, "default"};
-      if ($the_default eq "") {$the_default = "0";}
-      elsif ($mnemonics{$mnem, "type"} eq "string")
-         {$the_default = '(long) "'.$the_default.'"';}
+#     For now, we don't handle anything other than integer defaults
+      $the_default = $mnemonics{$mnem, "mdefault"};
+      if (($the_default eq "") || 
+          ($mnemonics{$mnem, "type"} !~ /^(scx_byte|scx_word|scx_long)$/))
+         {$the_default = "0";}
 
       print hfile '   "' . 
          $mnemonics{$mnem, "name"} . '", ' .
@@ -291,7 +292,7 @@ static scx_mnemonic_type '.$mnem_array.'[] = {
          $mnemonics{$mnem, "start"} . ', ' .
          $the_block . ",\n";
    }
-   print hfile "   NULL, byte, 0, 0, 0, NULL\n};\n\n";
+   print hfile "   NULL, scx_byte, 0, 0, 0, NULL\n};\n\n";
    
 }  # End of loop over files
 
