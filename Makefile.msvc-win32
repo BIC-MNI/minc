@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.2 2004-12-03 21:50:59 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.3 2004-12-07 17:30:41 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -292,7 +292,6 @@ MINCDUMP_OBJS = \
 	progs/mincdump/mincdump.obj \
 	progs/mincdump/vardata.obj \
 	progs/mincdump/dumplib.obj \
-	progs/mincdump/getopt.obj
 mincdump.exe: $(MINCDUMP_OBJS)
 	$(LINK) $(MINCDUMP_OBJS) $(LIBS) 
 
@@ -312,8 +311,7 @@ MINCGEN_OBJS = \
 	progs/mincgen/load.obj \
 	progs/mincgen/main.obj \
 	progs/mincgen/ncgentab.obj \
-	progs/mincgen/ncgenyy.obj \
-	progs/mincdump/getopt.obj
+	progs/mincgen/ncgenyy.obj
 
 mincgen.exe: $(MINCGEN_OBJS)
 	$(LINK) $(MINCGEN_OBJS) $(LIBS) 
