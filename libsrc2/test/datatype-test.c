@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <hdf5.h>
 #include "minc2.h"
 
 int

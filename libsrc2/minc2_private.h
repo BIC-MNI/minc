@@ -159,6 +159,9 @@ extern int scaled_maximal_pivoting_gaussian_elimination_real(int n,
                                                              int n_values,
                                                              double **values );
 
+extern double *alloc1d(int);
+extern double **alloc2d(int, int);
+
 /* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 
                                         const unsigned long start[], 

@@ -13,6 +13,7 @@
  * managing properties is also believed to be more readily extensible than 
  * any obvious alternative.
  ************************************************************************/
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <hdf5.h>
 #include "minc2.h"

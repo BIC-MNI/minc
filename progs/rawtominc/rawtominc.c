@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.16  2004-12-03 21:54:27  bert
+ * Revision 6.17  2004-12-14 23:38:52  bert
+ * Get rid of c99 compilation problems
+ *
+ * Revision 6.16  2004/12/03 21:54:27  bert
  * Minor changes for Windows build
  *
  * Revision 6.15  2004/11/01 22:38:39  bert
@@ -149,9 +152,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.16 2004-12-03 21:54:27 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.17 2004-12-14 23:38:52 bert Exp $";
 #endif
 
+#define _GNU_SOURCE 1
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>

@@ -4,6 +4,7 @@
  *
  * Functions to create, open, and close MINC volume objects.
  ************************************************************************/
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <hdf5.h>
 #include <limits.h>

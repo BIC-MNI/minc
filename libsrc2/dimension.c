@@ -5,11 +5,11 @@
  * Functions to create, destroy, and manipulate MINC dimension objects.
  * All functions return MI_NOERROR upon success and MI_ERROR on failure.
  ************************************************************************/
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <hdf5.h>
 #include "minc2.h"
 #include "minc2_private.h"
-
 
 /*! 
   Figure out whether a dimension is associated with a volume.

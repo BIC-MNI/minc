@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.8  2004-12-03 21:56:51  bert
+ * Revision 6.9  2004-12-14 23:40:07  bert
+ * Get rid of c99 compilation problems
+ *
+ * Revision 6.8  2004/12/03 21:56:51  bert
  * Include config.h
  *
  * Revision 6.7  2004/11/01 22:38:39  bert
@@ -75,9 +78,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.8 2004-12-03 21:56:51 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.9 2004-12-14 23:40:07 bert Exp $";
 #endif
 
+#define _GNU_SOURCE 1
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
