@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.12 1995-10-19 15:47:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.13 1995-10-24 14:09:23 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -162,7 +162,7 @@ public  void  set_volume_cache_block_sizes(
 
     for_less( dim, 0, MAX_DIMENSIONS )
     {
-        if( block_sizes[dim] > 1 )
+        if( block_sizes[dim] >= 1 )
             volume_block_sizes[dim] = block_sizes[dim];
     }
 
