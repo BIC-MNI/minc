@@ -1,0 +1,416 @@
+\documentclass{article}
+
+\usepackage{times}
+
+\title{MINC 2.0 User's Guide}
+\author{John G. Sled \\
+Robert D. Vincent \\
+et al.}
+\date{\today}
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction to MINC 2}
+MINC is a software system for storing and manipulating medical images,
+originally developed in 1993 by Peter Neelin at the McConnell Brain
+Imaging Centre.  The name MINC is an acronym for Medical Imaging
+NetCDF.  MINC was conceived as a means to allow researchers to use a
+common set of tools and files to work with medical images in a variety
+of modalities.  The file format was originally defined as a
+specialization of the NetCDF (Network Common Data Form) file format
+created by the Unidata Program Center at UCAR (Univerity Corporation
+for Atmospheric Research).  The NetCDF format, libraries, and tools
+were created to store generic datasets of arbitrary dimensionality.
+NetCDF was chosen because it implements many of the functions that
+were envisioned for the MINC system.
+
+Like most other medical imaging data formats, MINC allows medical
+image data to take on a wide range of data types or ranges, and
+defines a set of standard supporting data describing the image
+acquistion parameters or patient details.
+
+However, MINC is different from most other medical imaging formats in
+several respects:
+\begin{itemize}
+\item MINC is inherently {\it N-dimensional}.  MINC data can be
+structured with any number of spatial, temporal, or other dimensions,
+and these dimensions may be organized an an arbitrary order.
+Actually, NetCDF limits data to at most 100 dimensions, but
+this has not proven to be a meaningful restriction.
+\item MINC is {\it multi-modal}.  MINC has been used to store CT, MRI,
+PET, EEG, and other medical imaging data.
+\item MINC is {\it extensible}.  MINC file may contain an arbitrary
+collection of supporting attributes and data.  If your study requires
+that you keep track of a patient's blood pressure or psychiatric
+history, this information can be added to the header of your MINC
+files without having to concern yourself with
+\item MINC is {\it self-describing}.  Most of the attributes and
+variables used in MINC have descriptive names and values which can be
+easily interpreted by a user.
+\item MINC permits {\it scaling} of voxel data on either a per-image or
+per-slice basis.
+\item MINC defines both a {\it voxel} and a {\it world} coordinate system.  
+A MINC file effectively stores a linear transform which defines the 
+relationship between the logical layout of the voxels in the file and 
+some reference physical coordinate system.  The physical coordinate
+system could be the scanner's native coordinates, or it could be a
+more universal coordinate space such as the Talairach system.
+\end{itemize}
+
+Like many specialized computing terms, the term ``MINC'' has been used in
+several different ways over the years.  It may refer to the file
+format itself, that is, the definition of the physical and logical
+layout of data within a MINC file. It is also applied to the
+programming environment which exists to provide access to MINC format
+files.  Lastly, the term sometimes refers to the rapidly evolving set
+of programs and scripts which analyze, modify, or display MINC files.
+
+The ``core'' MINC system can be considered to include the following:
+\begin{itemize}
+\item The file format itself
+\item The ``libminc'' programming interface, which allows programmers
+full access to the format.
+\item The ``volume\_io'' programming interface, which provides a 
+simplified but restricted programming interface to the MINC format.
+\item A set of tools written using these libraries.
+\end{itemize}
+
+In addition to the core MINC tools, a large set of additional
+application programs exist which perform more sophisticated operations
+on MINC files.  These include programs for visualization, image
+enhancement or correction, automatic tissue classification, and image
+registration.
+
+\subsection{The evolution of MINC}
+MINC 2 has been designed to address a few specific problems that
+had been identified in MINC 1. 
+\begin{itemize}
+\item Limited file size.  The NetCDF file format used 32-bit pointers to
+address objects within the file.  This effectively restricted files to a 
+maximum size of 2 gigabytes.  With the advent of very high resolution
+brain atlas data (from macrotome or other sources) and large fMRI datasets,
+it became clear that this restriction might become a serious problem.
+\item Restricted data types.  The NetCDF format defines a small fixed
+set of data types - integers, floating point, and ASCII strings.  
+Neither aggregate data (arrays or structures) nor labeled (enumerated) data
+are supported as fundamental data types in NetCDF.
+\item Limited storage options.  NetCDF files store data in a
+continguous array.  This inhibits the addition of either block
+addressible data or internal data compression to the NetCDF format.
+\end{itemize}
+Since most of these problems were inherent in the MINC 1 file format,
+it was clear that the design of MINC 2 would require a major revision
+of the file format.  The team developing MINC 2 chose to replace
+NetCDF with the HDF5 library to form the basis of the MINC 2 format.
+HDF5 provides a number of advanced features which are not available in
+NetCDF.
+
+For more information on the specifics of the MINC 2 file format, see the
+appropriate document (insert reference here).
+
+\subsection{Definitions}
+\begin{itemize}
+\item volume - A MINC file.  
+\end{itemize}
+\newpage
+\section{Using the core tools}
+The core tools included with the basic MINC software distribution
+share a number of characteristics.  First, they all function correctly
+with any MINC file, regardless of dimensionality or data type.
+Second, they are implemented as UNIX ``command line'' tools, with no
+graphical user interface.  While this can make the tools somewhat more
+difficult to learn, it has the advantage that it is easy to build more
+complex applications which invoke the tools from within scripting
+languages or batch programming environments.  Lastly, the tools are
+designed so that the input files are never modified: The result of any
+MINC tool is always one or more new MINC files, if appropriate.
+
+\subsection{Common command-line options}
+The MINC tools use a large and sometimes bewildering set of command line
+options to control the behavior of the tools.  Rather than treat
+each tool separately, this section will attempt to explain some of the 
+more common command line options.
+
+Most options are introduced with a single ``dash'' character.
+
+Many of these command line options have default values, so if you 
+don't explicitly specify a value, the program will just assume that
+you want the ``normal'' behavior.  The default options are indicated
+in bold type in each entry below.
+
+\begin{itemize}
+\item {\tt -version} - This option will cause the tool to print its
+version number and exit.  No other action will be taken.
+\item{\tt -help} - This option asks the tool to print a 
+summary of all of the options that it recognizes, with brief descriptions
+of each option.
+\item \texttt{\textbf{-noclobber}} and {\tt -clobber} - These options control
+whether or not a MINC tool will overwrite an existing output file.
+Normal behavior of all MINC tools is to refuse to replace an existing
+file.  For example, if you already have a file named ``test.mnc'' in
+the same directory as ``input.mnc'', and you type the following:\\
+
+\mbox{\tt mincreshape -transverse -noclobber input.mnc test.mnc}\\
+
+The program would refuse to run, because doing so would destroy the
+existing {\tt test.mnc} file.  If you specify the {\tt -clobber} option, the
+program would replace the existing file with the new output file.
+
+\item \texttt{\textbf{-quiet}} and {\tt -verbose} - Specifying
+'-verbose' will cause the program to print a more extensive list of
+intermediate actions and calculations, which may be useful for
+debugging.  Specifying '-quiet' will suppress most of these messages.
+
+\item \texttt{-2} - This option tells the program to produce a MINC 2
+format output file.
+
+\end{itemize}
+
+\subsection{Format conversion}
+The new tool ``mincconvert'' has been created for conversion between
+MINC 1 and MINC 2 format.  To convert a MINC 1 file to a MINC 2 file you
+would use mincconvert like this:\\
+\mbox{\tt mincconvert -2 input.mnc output.mnc} \\
+To convert from a MINC 2 back to MINC 1 format, omit the ``-2'' option: \\
+\mbox{\tt mincconvert input.mnc output.mnc}
+
+For conversion to MINC 2 from other formats such as Analyze or DICOM,
+it may be necessary to first convert to MINC 1 format, and then use
+mincconvert to convert from MINC 1 to MINC 2.  This limitation will be
+removed from future versions of these conversion scripts.
+
+\subsection{Working with files in either format}
+Each of the core MINC tools now automatically detects MINC 1 or MINC 2
+files as input files and will work correctly in either case.
+
+Additionally, each of the core MINC tools which can generate a MINC file
+as output now accepts the ``-2'' option
+to indicate that output in MINC 2 format is desired.
+
+\subsection{Synopsis of core tools}
+\begin{itemize}
+\item Image geometry and discretization
+\begin{itemize}
+\item mincreshape - This tool is used to restructure the data in a MINC
+file.  It can be used to extract a subset of data, or to reorder the 
+dimensions in the data.  It does not modify the scaling of data, and it
+does not change the world coordinate system of the file.  Performs dimension
+length changes, however these are accomplished using very simple voxel
+averaging or doubling.  For more sophisticated file reshaping, see
+{\tt mincresample}.
+\item mincresample - This tool is used to apply an arbitray coordinate
+transformation on a MINC file.  Can perform tricubic, trilinear, or
+nearest-neighbor interpolation.
+\item mincconcat - This tool will concatentate any number of MINC
+files along a specific axis, producing a single output file.
+\end{itemize}
+\item Voxelwise calculations
+\begin{itemize}
+\item mincmath - Performs simple, ``voxelwise'' math operations
+on one or more MINC files.  For example, {\tt mincmath} may be used
+to add two volumes, to add a constant to a volume, to calculate the
+square or inversion of a volume, etc.
+\item mincstats - Calculates a number of basic statistical
+characteristics of a MINC file.  These include voxel count, volume,
+global minimum and maximum, sum, variance, standard deviation, etc.
+Will also calculate histograms and histogram-related statistics.
+\item minccalc - Similar to {\tt mincmath}, {\tt minccalc} can perform
+a wider and more complex range of voxelwise mathematical operations
+on a series of MINC files.
+\item mincaverage - Calculates an average MINC volume from a number of
+input volumes.
+\item minclookup - Performs a ``lookup table'' conversion on a MINC file
+replacing values with new values according to an arbitrary function.
+For example, the file can be converted to a grayscale, spectral RGB values.
+\item mincmakescalar - Convert a vector image to a scalar image.
+\item mincmakevector - Convert a group of scalar images into a vector image.
+\end{itemize}
+\item Utility functions
+\begin{itemize}
+\item mincheader - Print the header of a MINC file.
+\item minc\_modify\_header - Change individual attributes in a MINC file. This
+is useful for adding or changing supporting information, or for correcting
+coordinate information without altering data.
+\item mincedit - Edit a MINC file.
+\item mincview - View a MINC file.
+\item minchistory - Print the ``history'' attribute of a MINC file, which
+provides an audit trail of the commands used to generate this file.
+\item mincdiff - Display the differences between two MINC files.
+\item minccopy - Copy data from one MINC file to another.
+\end{itemize}
+\item Basic file format conversion
+\begin{itemize}
+\item mincconvert - Used to convert a MINC 1 file to a MINC 2 file, or
+vice versa.
+\item minctoraw - Convert a MINC file to a raw data file.  A raw data file
+is a file that consists only of voxel values, stored in a well-ordered
+arrangement.
+\item rawtominc - Convert a raw datafile to a MINC file.
+\item mincextract - Extract an arbitrary chunk of MINC file data.
+\item mincpik - Generate graphic images from a MINC file.
+\end{itemize}
+\end{itemize}
+\subsection{Where to get more information}
+You can get additional information about each of the core MINC tools from
+two sources.  Each tool has a UNIX ``man'' page which gives an extensive
+explanation of the function of the tool and the options which control its
+behavior.
+
+For a more abbreviated list of the tool's options, use the {\tt -help} 
+option with the command.
+
+\newpage
+\section{Working with the MINC 2 library}
+Programmers may use the MINC 2 library to create new programs that manipulate
+MINC files.  This library has been designed and written for use with the ``C''
+programming language.  It is not necessary to have an understanding of HDF5
+or NetCDF in order to use the MINC 2 library.
+
+It is beyond the scope of this document to provide a complete
+explanation of all of the library's functionality.  For an exhaustive
+reference to the MINC 2 programming interface, please see the document
+\emph{MINC 2.0 Programmer's Reference Manual}.
+
+\subsection{Header and library files}
+The MINC 2 library can be included in any C or C++ program by including
+the file ``minc2.h'' in the source file, and linking against the libminc2.a
+library.  This can be accomplished with most UNIX linking tools by adding
+the following to your compiler's link options:\\
+
+{\tt -lminc2 -lhdf5 -lnetcdf} \\
+
+It is necessary to explicitly link with both the HDF5 and the NetCDF
+libraries to build a MINC 2 program.
+
+\subsection{Function return values}
+Most MINC 2 library functions return a signed integer value that
+reports either that the operation succeeded ({\tt MI\_NOERROR}) or
+failed ({\tt MI\_ERROR}).  More generally, a negative return value
+is interpreted as an error result, while a zero or positive value
+is interpreted as signifying a successful operation.
+\subsection{Opening and closing a volume}
+A MINC 2 volume may be opened with the function call: \\
+
+{\tt miopen\_volume(const char *path, int mode, mihandle\_t *hvol)}; \\
+
+The {\tt path} argument gives the absolute or relative pathname of the
+file to be accessed.
+
+The {\tt mode} argument controls whether the file is opened for read
+access only ({\tt MI2\_OPEN\_RDONLY}), or for both read and write access
+({\tt MI2\_OPEN\_RDWR}). 
+
+The file ``handle'', which must be used in subsequent operations on the
+file, is returned in the {\tt hvol} argument.
+
+Once your program is finished using the file, it should close the file
+and release the file handle by calling:\\
+
+{\tt miclose\_volume(mihandle\_t hvol);} \\
+
+Here is an example showing the use of these two functions:
+
+\begin{verbatim}
+
+#include <minc2.h>
+
+main() {
+    int result;
+    mihandle_t hvol;
+
+    result = miopen_volume("/home/sparky/test.mnc", MI_OPEN_RDONLY, &hvol);
+    if (result != MI_NOERROR) {
+        fprintf(stderr, "Error opening the input file.\n");
+    }
+
+    /* Work with the file here. */
+
+    miclose_volume(hvol);
+}
+\end{verbatim}
+
+\newpage
+\section{Data types}
+\subsection{Types}
+These types refer to the format of data as it is stored in the file.
+Additional scaling or other conversions may apply in some instances, 
+depending upon the class of the volume.
+\begin{enumerate}
+\item MI\_TYPE\_BYTE - 8-bit signed integer.
+\item MI\_TYPE\_SHORT - 16-bit signed integer.
+\item MI\_TYPE\_INT - 32-bit signed integer.
+\item MI\_TYPE\_FLOAT - 32-bit floating point.
+\item MI\_TYPE\_DOUBLE - 64-bit floating point.
+\item MI\_TYPE\_STRING - ASCII string.
+\item MI\_TYPE\_UBYTE - 8-bit unsigned integer.
+\item MI\_TYPE\_USHORT - 16-bit unsigned integer.
+\item MI\_TYPE\_UINT - 32-bit unsigned integer.
+\item MI\_TYPE\_SCOMPLEX - 16-bit signed integer complex
+\item MI\_TYPE\_ICOMPLEX - 32-bit signed integer complex
+\item MI\_TYPE\_FCOMPLEX - 32-bit floating point complex
+\item MI\_TYPE\_DCOMPLEX - 64-bit floating point complex
+\item MI\_TYPE\_UNKNOWN - Used for record or array types.
+\end{enumerate}
+\subsection{Classes}
+The class of a volume describes how the voxel data should be interpreted.
+The most typical case is of a volume which has integer type, but the class
+value ``real''.  This corresponds to the typical MINC 1 file, which defined
+scaling
+\begin{enumerate}
+\item MI\_CLASS\_REAL - Floating point.  The data are to be
+interpreted as floating point values regardless of the storage type.
+May be used with any integer or floating point type.
+\item MI\_CLASS\_INT - Integer.  The data are to be interpreted as integer
+values.  May be used with any integer type.
+\item MI\_CLASS\_LABEL - Labeled or enumerated data.  The values of
+the voxels are assumed to be taken from a discrete set.  These values
+may be assigned a sybolic name to clarify the interpretation of the
+data.  May be used with any integer type.
+\item MI\_CLASS\_COMPLEX - Complex data.  May be used with one of the
+complex types only.
+\item MI\_CLASS\_UNIFORM\_RECORD - A uniform record structure, essentially an
+array with named entries.
+\item MI\_CLASS\_NON\_UNIFORM\_RECORD - A non uniform record structure.  This
+is not yet implemented.
+\end{enumerate}
+\section{Dimensions and coordinate systems}
+MINC 2 files can define any number of dimensions.  A dimension is simply
+an axis or index along which the data is stored.  Typical scans might be
+two dimensional or three dimensional, while functional data may be stored
+in a four dimensional file with three spatial and one temporal dimension.
+
+Dimensions in a MINC file can have a number of properties that specify
+how the data should be interpreted.  For example, each dimension can
+have a ``unit'' value assigned to it.  This value is a text string
+(e.g. ``mm'', ``seconds'') which specifies the units along the
+dimension's axis.  Dimensions can also be regularly or irregularly
+sampled.  A regularly sampled dimension is defined by an origin or
+``start'' value and a ``step'' value that defines the distance between
+points on the axis.  An irregularly sampled dimension must define an
+array of values that specify the position of each sample along the
+axis.
+
+In the MINC 2 library, a dimension is represented by an opaque datatype
+called a \emph{dimension handle}, which is defined by the ``C'' typedef
+{\tt midimhandle\_t}.
+
+Each dimension has a class, which specifies whether the dimension is 
+a spatial dimension, a temporal dimension, a spatial frequency dimension,
+a temporal frequency dimension, or a user-defined (i.e. arbitrary) dimension.
+
+You can retrieve the dimensions associated with an open MINC file using
+the function:\\
+\begin{verbatim}
+miget_volume_dimensions(mihandle_t hvol, midimclass_t class,
+                        midimattr_t attr, miorder_t order,
+                        int max_dims, midimhandle_t dims[]);
+\end{verbatim}
+                             
+\section{Volume attributes}
+\section{Reading and writing data}
+\section{Volume creation}
+\section{Multiresolution, blocking and compression}
+\end{document}
+
