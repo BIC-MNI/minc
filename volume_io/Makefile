@@ -89,6 +89,7 @@ mostlyclean:
 
 install: $(CC_VOLIO_LIB)
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
+	$(RANLIB) $(INSTALL_LIBDIR)/lib$(VOLIO_LIB).a
 	$(CP) $(CP_FLAGS) Include/volume_io.h $(INSTALL_INCDIR)
 	$(CP) $(CP_FLAGS) $(VOLIO_HEADERS) $(INSTALL_VOLIO_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) \
