@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxeltoworld.c,v $
-@MODIFIED   : Revision 1.1  1994-06-13 10:21:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-09-26 10:05:15  neelin
+@MODIFIED   : Changed vx,vy,vz to v0, v1, v2.
 @MODIFIED   :
+ * Revision 1.1  94/06/13  10:21:47  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 1.1 1994-06-13 10:21:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 1.2 1994-09-26 10:05:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -58,7 +61,7 @@ int main(int argc, char *argv[])
    Volume volume;
    volume_input_struct input_info;
    char *filename;
-   double vx, vy, vz, wx, wy, wz;
+   double v0, v1, v2, wx, wy, wz;
    static char *dim_names[] =
       {ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION};
 
@@ -70,9 +73,9 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
    filename = argv[1];
-   vx = atof(argv[2]);
-   vy = atof(argv[3]);
-   vz = atof(argv[4]);
+   v0 = atof(argv[2]);
+   v1 = atof(argv[3]);
+   v2 = atof(argv[4]);
 
    /* Open the image file */
    set_print_function(print_to_stderr);
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
    }
 
    /* Convert the voxel to world coordinates */
-   convert_3D_voxel_to_world(volume, vx, vy, vz, &wx, &wy, &wz);
+   convert_3D_voxel_to_world(volume, v0, v1, v2, &wx, &wy, &wz);
 
    /* Write out the result */
    (void) printf("%.20g %.20g %.20g\n", wx, wy, wz);
