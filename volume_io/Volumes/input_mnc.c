@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.58 1997-08-13 13:21:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.59 1998-05-28 12:47:11 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -119,8 +119,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
-    Real                volume_separations[MI_NUM_SPACE_DIMS];
-    Real                volume_starts[MI_NUM_SPACE_DIMS];
+    Real                volume_separations[MAX_VAR_DIMS];
+    Real                volume_starts[MAX_VAR_DIMS];
     Real                default_voxel_min, default_voxel_max;
     Real                voxel_zero;
     double              start_position[MAX_VAR_DIMS];

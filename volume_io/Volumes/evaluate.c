@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.32 1998-02-20 14:59:36 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.33 1998-05-28 12:47:04 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -238,13 +238,13 @@ private  void    trilinear_interpolate(
     Real     *value,
     Real     derivs[] )
 {
-    int    c, i, j, k, sizes[N_DIMENSIONS], dx, dy, dz;
+    int    c, i, j, k, *sizes, dx, dy, dz;
     Real   x, y, z, u, v, w;
     Real   coefs[8];
     Real   du00, du01, du10, du11, c00, c01, c10, c11, c0, c1, du0, du1;
     Real   dv0, dv1, dw, scale_factor;
 
-    get_volume_sizes( volume, sizes );
+    sizes = &volume->array.sizes[0];
 
     x = voxel[0];
     y = voxel[1];
