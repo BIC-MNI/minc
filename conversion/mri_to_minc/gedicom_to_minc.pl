@@ -195,8 +195,10 @@ sub gedicom_read_file_info {
     @row_dircos = &get_dircos(@row);
     @slc_dircos = &get_dircos(@normal);
     $file_info{'slicepos'} = &vector_dot_product(*position, *slc_dircos);
-    $file_info{'colstart'} = &vector_dot_product(*position, *col_dircos);
-    $file_info{'rowstart'} = &vector_dot_product(*position, *row_dircos);
+    $file_info{'colstart'} = &vector_dot_product(*position, *col_dircos)
+       + $file_info{'colstep'} / 2;
+    $file_info{'rowstart'} = &vector_dot_product(*position, *row_dircos)
+       + $file_info{'rowstep'} / 2;
     $file_info{'col_dircos_x'} = $col_dircos[0];
     $file_info{'col_dircos_y'} = $col_dircos[1];
     $file_info{'col_dircos_z'} = $col_dircos[2];
