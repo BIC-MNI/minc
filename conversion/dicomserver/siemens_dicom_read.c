@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:26  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 5.1  1997-09-10 19:36:13  neelin
+@MODIFIED   : Small fix to set default direction cosines when they are absent from the
+@MODIFIED   : dicom data.
 @MODIFIED   :
+ * Revision 5.0  1997/08/21  13:25:26  neelin
+ * Release of minc version 0.5
+ *
  * Revision 4.1  1997/06/13  12:51:21  neelin
  * Changed definition of time index and acquisition id to match change
  * in Siemens dicom software.
@@ -466,7 +470,7 @@ public void get_coordinate_info(Acr_Group group_list, File_Info *file_info,
       for (ivolume=0; ivolume < VOL_NDIMS; ivolume++) {
          for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
             dircos[ivolume][iworld] = 
-               ((ivolume == (WORLD_NDIMS-iworld)) ? -1.0 : 0.0);
+               ((ivolume == (WORLD_NDIMS-iworld-1)) ? -1.0 : 0.0);
          }
       }
    }
