@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.3  2005-03-03 18:59:15  bert
+ * Revision 1.4  2005-03-03 20:10:14  bert
+ * Consider patient_id and patient_name when sorting into series
+ *
+ * Revision 1.3  2005/03/03 18:59:15  bert
  * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
  *
  * Revision 1.2  2005/03/02 18:23:32  bert
@@ -53,7 +56,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.3 2005-03-03 18:59:15 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.4 2005-03-03 20:10:14 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -457,7 +460,7 @@ usage(void)
 
 static void
 use_the_files(int num_files, 
-              Data_Object_Info *data_info[],
+              Data_Object_Info *di_ptr[],
               const char *out_dir)
 {
     int ifile;
@@ -470,6 +473,8 @@ use_the_files(int num_files,
     int cur_image_type;
     int cur_echo_number;
     int cur_dyn_scan_number;
+    string_t cur_patient_name;
+    string_t cur_patient_id;
     int exit_status;
     char *output_file_name;
     string_t file_prefix;
@@ -537,26 +542,31 @@ use_the_files(int num_files,
                  * as `used' 
                  */ 
 	 
-                cur_study_id = data_info[ifile]->study_id;
-                cur_acq_id = data_info[ifile]->acq_id;
-                cur_rec_num = data_info[ifile]->rec_num;
-                cur_image_type = data_info[ifile]->image_type;
-                cur_echo_number = data_info[ifile]->echo_number;
-                cur_dyn_scan_number = data_info[ifile]->dyn_scan_number;
+                cur_study_id = di_ptr[ifile]->study_id;
+                cur_acq_id = di_ptr[ifile]->acq_id;
+                cur_rec_num = di_ptr[ifile]->rec_num;
+                cur_image_type = di_ptr[ifile]->image_type;
+                cur_echo_number = di_ptr[ifile]->echo_number;
+                cur_dyn_scan_number = di_ptr[ifile]->dyn_scan_number;
+
+                strcpy(cur_patient_name, di_ptr[ifile]->patient_name);
+                strcpy(cur_patient_id, di_ptr[ifile]->patient_id);
 
                 used_file[ifile] = TRUE;
             }
             /* otherwise check if attributes of the new input file match those
              * of the current output context and flag input file as `used' 
              */
-            else if ((data_info[ifile]->study_id == cur_study_id) &&
-                     (data_info[ifile]->acq_id == cur_acq_id) &&
-                     (data_info[ifile]->rec_num == cur_rec_num) &&
-                     (data_info[ifile]->image_type == cur_image_type) &&
-                     (data_info[ifile]->echo_number == cur_echo_number ||
+            else if ((di_ptr[ifile]->study_id == cur_study_id) &&
+                     (di_ptr[ifile]->acq_id == cur_acq_id) &&
+                     (di_ptr[ifile]->rec_num == cur_rec_num) &&
+                     (di_ptr[ifile]->image_type == cur_image_type) &&
+                     (di_ptr[ifile]->echo_number == cur_echo_number ||
                       !G.splitEcho) &&
-                     (data_info[ifile]->dyn_scan_number == cur_dyn_scan_number ||
-                      !G.splitDynScan)) {
+                     (di_ptr[ifile]->dyn_scan_number == cur_dyn_scan_number ||
+                      !G.splitDynScan) &&
+                     !strcmp(cur_patient_name, di_ptr[ifile]->patient_name) &&
+                     !strcmp(cur_patient_id, di_ptr[ifile]->patient_id)) {
 
                 used_file[ifile] = TRUE;
             }
@@ -566,11 +576,14 @@ use_the_files(int num_files,
                    to the list of files for this acquisition (and increment
                    counter) */
 
-                acq_file_list[acq_num_files] = data_info[ifile]->file_name;
+                acq_file_list[acq_num_files] = di_ptr[ifile]->file_name;
                 acq_num_files++;
             }
         }
-     
+
+        /* If no files were added to this acquisition, it implies that
+         * all files have been processed.
+         */
         if (acq_num_files == 0) {
             break;              /* All done!!! */
         }

@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.4  2005-03-03 18:59:15  bert
+ * Revision 1.5  2005-03-03 20:10:14  bert
+ * Consider patient_id and patient_name when sorting into series
+ *
+ * Revision 1.4  2005/03/03 18:59:15  bert
  * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
  *
  * Revision 1.3  2005/03/02 18:23:33  bert
@@ -146,6 +149,8 @@ typedef struct {
     int num_slices_in_file;
     string_t sequence_name;
     string_t protocol_name;
+    string_t patient_name;
+    string_t patient_id;
 } Data_Object_Info;
 
 #include "dicom_to_minc.h"
@@ -182,6 +187,7 @@ struct globals {
 
 /* Values for options flags */
 #define OPTS_NO_MOSAIC 0x00000001 /* Don't parse mosaic information. */
+#define OPTS_KEEP_COORD 0x00000002 /* Don't flip DICOM coordinates */
 
 extern struct globals G;
 
