@@ -1,3 +1,7 @@
+Tue Sep 19 11:37:41 EDT 2000
+   - Added option for user-defined allocation function to voxel_loop code
+   - Added LICENSE file to top-level directory
+
 Wed Sep 13 11:38:49 EDT 2000
    - added bzip support (patches from Steve Robbins)
    - modified TMPDIR to look in /var/tmp, /usr/tmp, /tmp in scripts
