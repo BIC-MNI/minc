@@ -1,125 +1,105 @@
-.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.1 2004-06-15 20:14:41 bert Exp $
-.TH NCGEN 1 "$Date: 2004-06-15 20:14:41 $" "Printed: \n(yr-\n(mo-\n(dy" "UNIDATA UTILITIES"
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.2 2004-06-21 20:06:15 bert Exp $
+.TH MINCGEN 1 "$Date: 2004-06-21 20:06:15 $" "" "MINC User's Guide"
 .SH NAME
-ncgen \- From a CDL file generate a netCDF file, a C program, or a Fortran
-program
+mincgen \- Generate a MINC file from a CDL file.
 .SH SYNOPSIS
 .HP
-ncgen
+mincgen
 .nh
 \%[-b]
-\%[-c]
-\%[-f]
 \%[-n]
-\%[-o \fInetcdf_filename\fP]
+\%[-o \fIminc_filename\fP]
 \%\fIinput_file\fP
 .hy
 .ft
 .SH DESCRIPTION
-\fBncgen\fP generates either a netCDF file, or C or Fortran source code to
-create a netCDF file.  The input to \fBncgen\fP is a description of a netCDF
+\fBmincgen\fP generates a MINC file.  The input to \fBmincgen\fP is a 
+description of a MINC
 file in a small language known as CDL (network Common Data form Language),
 described below.
-If no options are specified in invoking \fBncgen\fP, it merely checks the
+If no options are specified in invoking \fBmincgen\fP, it merely checks the
 syntax of the input CDL file, producing error messages for
 any violations of CDL syntax.  Other options can be used to create the
-corresponding netCDF file, to generate a C program that uses the netCDF C
-interface to create the netCDF file, or to generate a Fortran program that
-uses the netCDF Fortran interface to create the same netCDF file.
+corresponding MINC file.
 .LP
-\fBncgen\fP may be used with the companion program \fBncdump\fP to perform
-some simple operations on netCDF files.  For example, to rename a dimension
-in a netCDF file, use \fBncdump\fP to get a CDL version of the netCDF file,
-edit the CDL file to change the name of the dimensions, and use \fBncgen\fP
-to generate the corresponding netCDF file from the edited CDL file.
+\fBmincgen\fP may be used with the companion program \fBmincdump\fP to perform
+some simple operations on MINC files.  For example, to rename a dimension
+in a MINC file, use \fBmincdump\fP to get a CDL version of the MINC file,
+edit the CDL file to change the name of the dimensions, and use \fBmincgen\fP
+to generate the corresponding MINC file from the edited CDL file.
 .SH OPTIONS
 .IP "\fB-b\fP"
-Create a (binary) netCDF file.  If the \fB-o\fP option is absent, a default
-file name will be constructed from the netCDF name (specified after the
-\fBnetcdf\fP keyword in the input) by appending the `.nc' extension.  If a
+Create a (binary) MINC file.  If the \fB-o\fP option is absent, a default
+file name will be constructed from the MINC name (specified after the
+\fBnetcdf\fP or \fBhdf5\fP keyword in the input) by appending the `.mnc' 
+extension.  If a
 file already exists with the specified name, it will be overwritten.
-.IP "\fB-c\fP"
-Generate
-.B C
-source code that will create a netCDF file
-matching the netCDF specification.  The C source code is written to
-standard output.
-.IP "\fB-f\fP"
-Generate
-.B Fortran
-source code that will create a netCDF file
-matching the netCDF specification.  The Fortran source code is written
-to standard output.
-.IP "\fB-o\fP \fRnetcdf_file\fP"
-Name for the binary netCDF file created.  If this option is specified, it implies
-the "\fB-b\fP" option.  (This option is necessary because netCDF files
+.IP "\fB-o\fP \fRminc_filename\fP"
+Name for the binary MINC file created.  If this option is specified, it
+implies
+the "\fB-b\fP" option.  (This option is necessary because MINC files
 cannot be written directly to standard output, since standard output is not
 seekable.)
-.IP "\fB-n\fP"
-Like \fB-b\fP option, except creates netCDF file with the obsolete `.cdf'
-extension instead of the `.nc' extension, in the absence of an output
-filename specified by the \fB-o\fP option.  This option is only supported
-for backward compatibility.
 .SH EXAMPLES
 .LP
 Check the syntax of the CDL file `\fBfoo.cdl\fP':
 .RS
 .HP
-ncgen foo.cdl
+mincgen foo.cdl
 .RE
 .LP
-From the CDL file `\fBfoo.cdl\fP', generate an equivalent binary netCDF file
-named `\fBx.nc\fP':
+From the CDL file `\fBfoo.cdl\fP', generate an equivalent binary MINC file
+named `\fBx.mnc\fP':
 .RS
 .HP
-ncgen -o x.nc foo.cdl
-.RE
-.LP
-From the CDL file `\fBfoo.cdl\fP', generate a C program containing the
-netCDF function invocations necessary to create an equivalent binary netCDF
-file named `\fBx.nc\fP':
-.RS
-.HP
-ncgen -c -o x.nc foo.cdl
+mincgen -o x.mnc foo.cdl
 .RE
 .LP
 .SH USAGE
 .SS "CDL Syntax Summary"
 .LP
-Below is an example of CDL syntax, describing a netCDF file with several
-named dimensions (lat, lon, and time), variables (Z, t, p, rh, lat, lon,
-time), variable attributes (units, long_name, valid_range, _FillValue), and
+Below is an example of CDL syntax, describing a MINC file with several
+named dimensions (xspace, yspace, and zspace), variables (zspace, image), 
+variable attributes (valid_range, signtype), and
 some data.  CDL keywords are in boldface.  (This example is intended to
 illustrate the syntax; a real CDL file would have a more complete set of
 attributes so that the data would be more completely self-describing.)
 
 .RS
 .nf
-\fBnetcdf\fP foo {  // an example netCDF specification in CDL
+\fBnetcdf\fP foo {  // an example MINC specification in CDL
 
 \fBdimensions\fP:
-	lat = 10, lon = 5, time = \fBunlimited\fP ;
+	xspace = 8;
+        yspace = 8;
+        zspace = 5;
 
 \fBvariables\fP:
-	\fBlong\fP    lat(lat), lon(lon), time(time);
-	\fBfloat\fP   Z(time,lat,lon), t(time,lat,lon);
-	\fBdouble\fP  p(time,lat,lon);
-	\fBlong\fP    rh(time,lat,lon);
+	\fBfloat\fP  xspace;
+        \fBfloat\fP  yspace;
+	\fBfloat\fP  zspace(zspace);
+	\fBshort\fP  image(zspace,yspace,xspace);
+        \fBdouble\fP image-min(zspace)
+        \fBdouble\fP image-max(zspace)
 
 	// variable attributes
-	lat:long_name = "latitude";
-	lat:units = "degrees_north";
-	lon:long_name = "longitude";
-	lon:units = "degrees_east";
-	time:units = "seconds since 1992-1-1 00:00:00";
-	Z:units = "geopotential meters";
-	Z:valid_range = 0., 5000.;
-	p:_FillValue = -9999.;
-	rh:_FillValue = -1;
-
+        image:valid_range = 0,5;
 \fBdata\fP:
-	lat   = 0, 10, 20, 30, 40, 50, 60, 70, 80, 90;
-	lon   = -140, -118, -96, -84, -52;
+        image-min = -1,-1,-1,-1,-1;
+        image-max = 1,1,1,1,1;
+        image = 
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+        5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5;
+        zspace = 0,2,3.5,7,10;
 }
 .fi
 .RE
@@ -138,11 +118,9 @@ respectively.
 The variable part may contain \fIvariable
 declarations\fP and \fIattribute assignments\fP.
 .LP
-A netCDF \fIdimension\fP is used to define the shape of one or more of the
-multidimensional variables contained in the netCDF file.  A netCDF
-dimension has a name and a size.  At most one dimension in a netCDF file
-can have the \fBunlimited\fP size, which means a variable using this
-dimension can grow to any length (like a record number in a file).
+A MINC \fIdimension\fP is used to define the shape of one or more of the
+multidimensional variables contained in the MINC file.  A MINC
+dimension has a name, a size, and possibly several other attributes.
 .LP
 A \fIvariable\fP represents a multidimensional array of values of the
 same type.  A variable has a name, a data type, and a shape described
@@ -167,7 +145,7 @@ data).
 .LP
 In CDL, an attribute is designated by a variable and attribute name,
 separated by `:'.  It is possible to assign \fIglobal\fP attributes
-not associated with any variable to the netCDF as a whole by using
+not associated with any variable to the file as a whole by using
 `:' before the attribute name.  The data type of an attribute in CDL
 is derived from the type of the value assigned to it.  The length of
 an attribute is the number of data values assigned to it, or the
@@ -181,7 +159,7 @@ alphabetic character or `_', and subsequent characters may be alphanumeric
 or `_' or `-'.
 .LP
 The optional \fIdata\fP section of a CDL specification is where
-netCDF variables may be initialized.  The syntax of an initialization
+variables may be initialized.  The syntax of an initialization
 is simple: a variable name, an equals sign, and a
 comma-delimited list of constants (possibly separated by spaces, tabs
 and newlines) terminated with a semicolon.  For multi-dimensional
@@ -219,41 +197,28 @@ in either upper or lower case.
 Bytes differ from characters in that they are intended to hold a full eight
 bits of data, and the zero byte has no special significance, as it
 does for character data.
-\fBncgen\fP converts \fBbyte\fP declarations to \fBchar\fP
-declarations in the output C code and to the nonstandard \fBBYTE\fP
-declaration in output Fortran code.
 .LP
 Shorts can hold values between -32768 and 32767.
-\fBncgen\fP converts \fBshort\fP declarations to \fBshort\fP
-declarations in the output C code and to the nonstandard \fBINTEGER*2\fP
-declaration in output Fortran code.
 .LP
 Longs can hold values between -2147483648 and 2147483647.
-\fBncgen\fP converts \fBlong\fP declarations to \fBlong\fP
-declarations in the output C code and to \fBINTEGER\fP
-declarations in output Fortran code.  \fBint\fP and \fBinteger\fP are
+\fBint\fP and \fBinteger\fP are
 accepted as synonyms for \fBlong\fP in CDL declarations.
 Now that there are platforms with 64-bit representations for C longs, it may
 be better to use the \fBint\fP synonym to avoid confusion.
 .LP
 Floats can hold values between about -3.4+38 and 3.4+38.  Their
 external representation is as 32-bit IEEE normalized single-precision
-floating point numbers.  \fBncgen\fP converts \fBfloat\fP
-declarations to \fBfloat\fP declarations in the output C code and to
-\fBREAL\fP declarations in output Fortran code.  \fBreal\fP is accepted
+floating point numbers. \fBreal\fP is accepted
 as a synonym for \fBfloat\fP in CDL declarations.
 .LP
 Doubles can hold values between about -1.7+308 and 1.7+308.  Their
 external representation is as 64-bit IEEE standard normalized
-double-precision floating point numbers.  \fBncgen\fP converts
-\fBdouble\fP declarations to \fBdouble\fP declarations in the output C
-code and to \fBDOUBLE PRECISION\fP declarations in output Fortran
-code.
+double-precision floating point numbers.
 .LP
 .SS "CDL Constants"
 .LP
 Constants assigned to attributes or variables may be of any of the
-basic netCDF types.  The syntax for constants is similar to C syntax,
+basic MINC types.  The syntax for constants is similar to C syntax,
 except that type suffixes must be appended to shorts and floats to
 distinguish them from longs and doubles.
 .LP
@@ -280,13 +245,13 @@ string escape conventions are honored.  For example
 "a bell:\\007"	// a string containing an ASCII bell
 .fi
 .RE
-Note that the netCDF character array "a" would fit in a one-element
+Note that the character array "a" would fit in a one-element
 variable, since no terminating NULL character is assumed.  However, a zero
 byte in a character array is interpreted as the end of the significant
-characters by the \fBncdump\fP program, following the C convention.
+characters by the \fBmincdump\fP program, following the C convention.
 Therefore, a NULL byte should not be embedded in a character string unless
 at the end: use the \fIbyte\fP data type instead for byte arrays that
-contain the zero byte.  NetCDF and CDL have no string type, but only
+contain the zero byte.  MINC and CDL have no string type, but only
 fixed-length character arrays, which may be multi-dimensional.
 .LP
 \fIshort\fP integer constants are intended for representing 16-bit
@@ -345,17 +310,26 @@ For example the following are all acceptable \fIdouble\fP constants:
 .fi
 .RE
 
+.SH AUTHOR
+Originally written by members of the Unidata Program at the University 
+Corporation for Atmospheric Research.
+
+Modified by Bert Vincent (bert@bic.mni.mcgill.ca) for use with both 
+netCDF and HDF5 files.
+
+.SH COPYRIGHTS
+Copyright \(co University Corporation for Atmospheric Research
+
+.SH "SEE ALSO"
+.LP
+.BR ncdump (1),
+.BR ncgen (1),
+.BR netcdf (3)
 .SH BUGS
 .LP
-The programs generated by \fBncgen\fP when using the \fB-c\fP or \fB-f\fP
-use initialization statements to store data in variables, and will fail to
-produce compilable programs if you try to use them for large datasets, since
-the resulting statements may exceed the line length or number of
-continuation statements permitted by the compiler.
-.LP
 The CDL syntax makes it easy to assign what looks like an array of
-variable-length strings to a netCDF variable, but the strings will simply be
-concatenated into a single array of characters, since netCDF cannot
-represent an array of variable-length strings in one netCDF variable.
+variable-length strings to a variable, but the strings will simply be
+concatenated into a single array of characters, since MINC cannot
+represent an array of variable-length strings in one MINC variable.
 .LP
-NetCDF and CDL do not yet support a type corresponding to a 64-bit integer.
+MINC and CDL do not yet support a type corresponding to a 64-bit integer.
