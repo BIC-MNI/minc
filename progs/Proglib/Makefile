@@ -46,7 +46,7 @@ lint : $(LINT_PROG_LIB)
 
 # How to create lint library
 $(LINT_PROG_LIB) : $(LINT_OBJS)
-	lint -o $(PROG_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
+	lint -o $(PROG_LIB) -m -x -u $(LINTFLAGS) $(LINT_OBJS)
 
 # Remove all derived files in this directory
 clean:
