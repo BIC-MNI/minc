@@ -438,13 +438,13 @@ extern int miconvert_voxel_to_real(mihandle_t volume,
                                    double voxel_value,
                                    double *real_value_ptr);
 
-extern int miconvert_3D_voxel_to_world(mihandle_t volume,
-                                       const double voxel[],
-                                       double world[]);
+extern int miconvert_voxel_to_world(mihandle_t volume,
+                                    const double voxel[],
+                                    double world[]);
 
-extern int miconvert_3D_world_to_voxel(mihandle_t volume,
-                                       const double world[],
-                                       double voxel[]);
+extern int miconvert_world_to_voxel(mihandle_t volume,
+                                    const double world[],
+                                    double voxel[]);
 
 extern int miget_real_value(mihandle_t volume,
                             const unsigned long coords[],
