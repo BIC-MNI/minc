@@ -42,6 +42,7 @@ public  Status  start_volume_input(
 
     if( input->cdfid == MI_ERROR )
     {
+        print( "Error opening volume file \"%s\".\n", filename );
         return( ERROR );
     }
 
@@ -54,7 +55,8 @@ public  Status  start_volume_input(
     if( ndims != N_DIMENSIONS )
     {
         print(
-           "Error:  input volume file does not have exactly 3 dimensions.\n" );
+          "Error:  input volume file \"%s\" does not have exactly 3 dimensions.\n",
+          filename );
         status = ERROR;
         return( status );
     }
@@ -110,7 +112,8 @@ public  Status  start_volume_input(
     if( input->axis_index[X] == -1 || input->axis_index[Y] == -1 ||
         input->axis_index[Z] == -1 )
     {
-        print( "Error:  missing some of the 3 dimensions.\n" );
+        print( "Error:  missing some of the 3 dimensions in \"%s\".\n",
+                filename );
         status = ERROR;
         return( status );
     }
@@ -164,6 +167,15 @@ public  Status  start_volume_input(
     return( status );
 }
 
+private  void  delete_volume_input(
+    volume_input_struct   *input )
+{
+    FREE( input->slice_buffer );
+
+    (void) ncclose( input->cdfid );
+    (void) miicv_free( input->icv );
+}
+
 public  Boolean  input_more_of_volume(
     volume_struct         *volume,
     volume_input_struct   *input,
@@ -213,13 +225,19 @@ public  Boolean  input_more_of_volume(
     if( input->slice_index == (Real) volume->sizes[input->axis_index[0]] )
     {
         more_to_do = FALSE;
-        FREE( input->slice_buffer );
-
-        (void) ncclose( input->cdfid );
-        (void) miicv_free( input->icv );
+        delete_volume_input( input );
     }
 
     return( more_to_do );
+}
+
+public  void  cancel_volume_input(
+    volume_struct         *volume,
+    volume_input_struct   *input )
+{
+    delete_volume( volume );
+
+    delete_volume_input( input );
 }
 
 public  Status  input_volume(
