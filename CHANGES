@@ -1,3 +1,6 @@
+Fri Nov  3 11:44:38 EST 2000
+   - Modified -dinsert option to minc_modify_header to allow multiple values.
+
 Tue Sep 19 11:37:41 EDT 2000
    - Added option for user-defined allocation function to voxel_loop code
    - Added LICENSE file to top-level directory
