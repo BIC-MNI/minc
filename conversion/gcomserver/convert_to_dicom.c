@@ -5,7 +5,11 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.18  2001-04-21 12:50:23  neelin
+ * Revision 1.19  2001-04-21 18:30:23  neelin
+ * Do not modify uid_prefix string that is passed in, since it could be a
+ * constant.
+ *
+ * Revision 1.18  2001/04/21 12:50:23  neelin
  * Added in elements for samples per pixel and photometric interpretation.
  *
  * Revision 1.17  2001/04/09 23:27:19  neelin
@@ -85,7 +89,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.18 2001-04-21 12:50:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.19 2001-04-21 18:30:23 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -258,9 +262,9 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
       index--;
    }
    index++;
-   uid_prefix[index] = '\0';
    if (index > 0) {
       (void) strcpy(string, uid_prefix);
+      string[index] = '\0';
    }
    else {
       host_id.ul = gethostid();
