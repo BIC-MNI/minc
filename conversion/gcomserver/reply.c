@@ -5,7 +5,10 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: reply.c,v $
- * Revision 6.4  2000-02-22 00:06:34  neelin
+ * Revision 6.5  2001-03-19 18:38:35  neelin
+ * Set implementation UID to have prefix specified in config file.
+ *
+ * Revision 6.4  2000/02/22 00:06:34  neelin
  * Added printing of project name into log file.
  *
  * Revision 6.3  2000/01/31 13:57:39  neelin
@@ -317,6 +320,7 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
    Acr_Group group, group_list;
    Acr_Element element;
    char operator_string[512];
+   char implementation_uid[65];
    char ae_title[MAX_AE_LEN+1];
    void *ptr;
    int index;
@@ -410,6 +414,13 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
                      project_info->info.dicom.port);
       (void) fprintf(stderr, "with AE title %s and local AE title %s\n",
                      project_info->info.dicom.AEtitle, ae_title);
+
+      /* Set the implementation uid if a prefix is given */
+      if (strlen(project_info->info.dicom.UIDprefix) > 0) {
+         (void) sprintf(implementation_uid, "%s.100.1.1", 
+                        project_info->info.dicom.UIDprefix);
+         acr_set_implementation_uid(implementation_uid);
+      }
 
       /* Make the dicom connection */
       if (!acr_open_dicom_connection(project_info->info.dicom.hostname,
