@@ -36,7 +36,7 @@ LINT_LIB  = llib-l$(LIBRARY).ln#          lint library file
 default: $(PROGS)
 
 #Dependency on Makefile
-$(PROG_OBJ) $(EXTRA_OBJS) $(LINT_EXTRA) : Makefile
+minc_jackets.c $(PROG_OBJ) $(EXTRA_OBJS) $(LINT_EXTRA) : Makefile
 
 all: $(PROGS) lint
 
