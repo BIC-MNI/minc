@@ -24,17 +24,11 @@ int
 miget_volume_valid_max(mihandle_t volume, /**< MINC 2.0 volume handle */
                        double *valid_max) /**< the output value */
 {
-    double range[2];
-    int result;
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
-    if (result == MI_NOERROR) {
-        *valid_max = range[1];
+    if (volume == NULL || valid_max == NULL) {
+        return (MI_ERROR);      /* Invalid arguments */
     }
-    return (result);
+    *valid_max = volume->valid_max;
+    return (MI_NOERROR);
 }
 
 /** This function sets the maximum valid value specific to the data
@@ -46,18 +40,14 @@ int
 miset_volume_valid_max(mihandle_t volume, /**< MINC 2.0 volume handle */
                        double valid_max) /**< the new maximum value  */
 {
-    double range[2];
-    int result;
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
-    if (result == MI_NOERROR) {
-        range[1] = valid_max;
-        //result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    if (volume == NULL) {
+        return (MI_ERROR);      /* Invalid arguments */
     }
-    return (result);
+    /* TODO?: Should we require valid max to have some specific relationship
+     * to valid_min?
+     */
+    volume->valid_max = valid_max;
+    return (MI_NOERROR);
 }
 
 /** This function gets the minimum valid value specific to the data
@@ -69,17 +59,11 @@ int
 miget_volume_valid_min(mihandle_t volume, /**< MINC 2.0 volume handle */
                        double *valid_min) /**< the output value  */
 {
-    double range[2];
-    int result;
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
-    if (result == MI_NOERROR) {
-        *valid_min = range[0];
+    if (volume == NULL || valid_min == NULL) {
+        return (MI_ERROR);      /* Invalid arguments. */
     }
-    return (result);
+    *valid_min = volume->valid_min;
+    return (MI_NOERROR);
 }
 
 /** This function sets the minimum valid value specific to the data
@@ -91,18 +75,11 @@ int
 miset_volume_valid_min(mihandle_t volume,  /**< MINC 2.0 volume handle */
                        double valid_min) /**< the new minimum value  */
 {
-    double range[2];
-    int result;
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
-    if (result == MI_NOERROR) {
-        range[0] = valid_min;
-	// result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    if (volume == NULL) {
+        return (MI_ERROR);       /* Invalid arguments */
     }
-    return (result);
+    volume->valid_min = valid_min;
+    return (MI_NOERROR);
 }
 
 /** This function gets the minimum and maximum valid value specific to the 
@@ -115,18 +92,12 @@ miget_volume_valid_range(mihandle_t volume,  /**< MINC 2.0 volume handle */
                          double *valid_max, /**< the output maximum value */
                          double *valid_min) /**< the output minimum value */
 {
-    double range[2];
-    int result;
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
-    if (result == MI_NOERROR) {
-        *valid_min = range[0];
-        *valid_max = range[1];
+    if (volume == NULL || valid_min == NULL || valid_max == NULL) {
+        return (MI_ERROR);
     }
-    return (result);
+    *valid_min = volume->valid_min;
+    *valid_max = volume->valid_max;
+    return (MI_NOERROR);
 }
 
 /** This function sets the minimum and maximum valid value specific to the 
@@ -139,14 +110,16 @@ miset_volume_valid_range(mihandle_t volume, /**< MINC 2.0 volume handle */
                          double valid_max, /**< the new maximum value */
                          double valid_min) /**< the output minimum value */
 {
-    double range[2];
-    hid_t file_id;
-
-    file_id = volume->hdf_id;
-
-    range[0] = valid_min;
-    range[1] = valid_max;
-    //return miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    if (volume == NULL) {
+        return (MI_ERROR);
+    }
+    /* TODO?: Again, should we require min<max, for example?  Or should we
+     * just do the right thing and swap them?  What if valid_max is greater
+     * than the maximum value that can be represented by the volume's type?
+     */
+    volume->valid_min = valid_min;
+    volume->valid_max = valid_max;
+    return (MI_NOERROR);
 }
 
 #ifdef M2_TEST
@@ -213,17 +186,6 @@ main(int argc, char **argv)
         r = miget_volume_valid_max(hvol, &max);
         if (max != orig_max + 100) {
             TESTRPT("error changing volume maximum", 0);
-        }
-
-        file_id = hvol->hdf_id;
-        //r = miattget(file_id, MI2varid(file_id, MIimage),
-	//MIvalid_range, NC_DOUBLE, 2, range, &length);
-        if (r < 0 || length != 2) {
-            TESTRPT("error reading attribute", r);
-        }
-
-        if (range[0] != min || range[1] != max) {
-            TESTRPT("error reading attribute", 0);
         }
 
         r = miset_volume_valid_range(hvol, orig_max, orig_min);
