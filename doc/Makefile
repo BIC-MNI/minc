@@ -2,7 +2,7 @@ ROOT = ..
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
-DOCS = prog_ref.ps prog_guide.ps
+DOCS = prog_ref.ps prog_guide.ps volume_io.ps
 
 .SUFFIXES : .tex .dvi .ps
 
