@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.10  2003-10-29 17:50:18  bert
+ * Revision 6.11  2003-11-03 19:43:18  bert
+ * Handle unspecified dimension order correctly
+ *
+ * Revision 6.10  2003/10/29 17:50:18  bert
  * Added -dimorder option
  *
  * Revision 6.9  2003/10/21 22:22:09  bert
@@ -131,7 +134,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.10 2003-10-29 17:50:18 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.11 2003-11-03 19:43:18 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -251,7 +254,7 @@ int do_minmax = FALSE;
 double real_range[2] = {DEF_RANGE, DEF_RANGE};
 long skip_length;
 int swap_bytes = FALSE;
-char *axis_order[MAX_DIMS+1];
+char *axis_order[MAX_DIMS+1] = { MItime, MIzspace, MIyspace, MIxspace };
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -1265,7 +1268,7 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
 
     /* Structure containing information about orientation */
     static char *orientation_names[STD_ORIENTATION_COUNT][MAX_DIMS] = {
-        {MItime, MIzspace, MIyspace, MIxspace}, /* TRANSVERSE_ORIENTATIN */
+        {MItime, MIzspace, MIyspace, MIxspace}, /* TRANSVERSE_ORIENTATION */
         {MItime, MIxspace, MIzspace, MIyspace}, /* SAGITTAL_ORIENTATION */
         {MItime, MIyspace, MIzspace, MIxspace}, /* CORONAL_ORIENTATION */
         {MIzspace, MItime, MIyspace, MIxspace}, /* TIME_FAST_ORIENTATION */
