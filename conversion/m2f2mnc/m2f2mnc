@@ -1,0 +1,704 @@
+#!/usr/local/bin/perl5
+
+sub thrupipe {
+   if (@_ != 3) {
+      die "thrupipe : Incorrect number of arguments\n";
+   }
+#
+#  Flush the output buffer on STDOUT and remove the record separator
+   local($oldfh) = select(STDOUT); $| = 1; select($oldfh);
+   local($oldsep) = $/;
+   undef($/);
+#
+#  open handle to child process and pipe variable to command in child
+   if (open(PIPEHANDLE,"-|") == 0) {
+      open(CHILDHANDLE,"|".$_[1]);
+      print(CHILDHANDLE $_[0]);
+      close(CHILDHANDLE);
+      exit(0);
+   }
+#
+#  In parent, read from child
+   $_[2]=<PIPEHANDLE>;
+   close(PIPEHANDLE);
+   $/ = $oldsep;
+   1;
+}
+
+# Routine to extract a vax integer from a string
+sub get_uchar {
+    if (scalar(@_) != 2) {
+        die "Argument error in get_uchar";
+    }
+
+    return unpack('C',scalar(substr($_[0], $_[1], 1)));
+}
+
+# Routine to extract an integer from a string
+sub get_int {
+    if (scalar(@_) != 2) {
+        die "Argument error in get_int";
+    }
+
+    if ($Swap_needed) {
+       return unpack('i',scalar(reverse(substr($_[0], $_[1], 4))));
+    }
+    else {
+       return unpack('i',scalar(substr($_[0], $_[1], 4)));
+    }
+}
+
+# Routine to extract a vax integer from a string
+sub get_short {
+    if (scalar(@_) != 2) {
+        die "Argument error in get_short";
+    }
+
+    if ($Swap_needed) {
+       return unpack('s',scalar(reverse(substr($_[0], $_[1], 2))));
+    }
+    else {
+       return unpack('s',scalar(substr($_[0], $_[1], 2)));
+    }
+}
+
+# Routine to extract a vax float from a string
+sub get_float {
+    if (scalar(@_) != 2) {
+        die "Argument error in get_float";
+    }
+    local($string) = substr($_[0], $_[1], 4);
+#    $string =~ s/(.|\n)(.|\n)/$2$1/g;
+#    return unpack('f',$string) / 4.0;
+    return unpack('f',$string);
+}
+
+# Routine to extract a clean string (no nulls) from a string
+sub get_string {
+    if (scalar(@_) != 3) {
+        die "Argument error in get_string";
+    }
+    local($string) = substr($_[0], $_[1], $_[2]);
+    $string =~ s/\0.*$//g;
+
+    return $string;
+}
+
+
+# Routine to read the main file header
+# 
+# 
+# The image data is stored a 2 bytes per pixel. The images are always 256 x 256.
+# 
+# Notes:
+# 1)  The byte order of all numerical fields within the MIF file is PC order.
+#     i.e. short (16 bit) - LOW BYTE | HIGH BYTE
+#     Hence, this will appear _byte_ _reversed_ if the file was read on a
+# Sun.
+# 
+# 2)  The #defines in this document follow the following conventtion:
+#     MIF_         -  indicates the define originates within the MIF definition
+#     MIF_CONST_   -  indicates the define is one for a field which has a
+#                     constant value
+#     MIF_DEFAULT_ -  indicates the default value for a field.
+#     MIF_LEN_     -  indicates the length of the field
+# 
+#     The function supplied within mifheader.cpp sets all of the constant fields
+#     to their defines and set all non-constant fields to their default values,
+#     again, as specified in their defines.
+# 
+sub read_main_header {
+    if (scalar(@_) != 2) {
+        die "Argument error in read_main_header";
+    }
+    local($fh, *header_info) = @_;
+
+    local($main_header_offset) = 0;
+    local($header);
+    seek($fh, $main_header_offset, 0) || die "header seek: $!";
+    read($fh, $header, $header_size);                  # read the whole header in one shot
+
+
+#             this header info comes from m2f.h
+#ifndef _MIFHEADER_H
+#define _MIFHEADER_H
+# This is a table of defines for the mifheader. It is a combination of
+# constant fields and default values for fields. They should always be
+# used to insure the consistency of the fields in the MIF header.
+# include <fstream.h>
+#define MIF_HEADER_TOTAL_LENGTH      512
+#define SIGNA                        71       # GE scanner
+#define MIF_CONST_FILLER             0x00
+#define MIF_CONST_HEADER_OFFSET      1
+# 
+# struct mifheader
+# {
+#    Data area ... Format and order is as the MIF header
+#    BYTE RANGE  LENGTH  BUFFER FORMAT        COMMENT
+#------------------------------------------------------------------------------
+#    000-019     20      0      char string   #<<<<<<<MIFS>>>>>>>#
+#define MIF_LEN_ID  20
+#define MIF_CONST_MIF_ID "#<<<<<<<MIFS>>>>>>>#"
+# char mif_id[MIF_LEN_ID];
+    $header_info{'mif_id'}  = &get_string($header, 0, 20);
+#    020-023     4       0      char string   empty unused field
+# char buffer1[4];
+    $header_info{'buffer1'}  = &get_string($header, 20, 4);
+
+#    024-033     9       1      char string   scan date from tape - format 16-DEC-71
+#                                             NULL terminated to
+#                                             ensure old version 2.0
+#                                             programs work. See note
+#                                             at the bottom of this
+#                                             file about these dates.
+#define MIF_LEN_SCAN_DATE 9
+# char scan_date[MIF_LEN_SCAN_DATE + 1];
+    $header_info{'scan_date'}  = &get_string($header, 24, 9);
+
+
+#    034-043     9       1      char string   Creation date of the MIF file 
+#                                             format 16-DEC-71 NULL
+#                                             terminated to ensure
+#                                             old version 2.0 programs work
+#define MIF_LEN_MIF_FILE_DATE 9
+# char mif_file_date[MIF_LEN_MIF_FILE_DATE + 1];
+    $header_info{'mif_file_date'}  = &get_string($header, 34, 9);
+
+#    044-045     2       0      short         MIF version code, constant at ... 3
+#define MIF_CONST_VERSION 3
+# short mif_version;
+    $header_info{'mif_version'}  = &get_short($header, 44);
+
+#    046-047     2       0      short         MIF subversion number set to 0
+#                                             This field is not
+#                                             really used and is a
+#                                             prime target for
+#                                             re-assignment
+#define MIF_CONST_SUBVERSION 0
+# short mif_subversion;
+    $header_info{'mif_subversion'}  = &get_short($header, 46);
+
+#    048-049     2       0      short         Scanner ID; See above for a
+#                                             list of valid scanner ids
+#define MIF_DEFAULT_SCANNER_ID  -1
+# short scanner_id;
+    $header_info{'scanner_id'}  = &get_short($header, 48);
+
+#    050-062     13      0      char string   
+#                                =  (SE or LE time)/1000 + 
+#                                   (patient initials) + (last 8 chars of scanid)
+#                                   Default = -1, example : 30MKG12306618
+#define MIF_LEN_FILE_ID 13
+# char file_id[MIF_LEN_FILE_ID];
+    $header_info{'file_id'}  = &get_string($header, 50, 13);
+
+#    063-070     8       3      char string   scan time in 24 hour format,
+#                                             e.g. 14:25:33
+
+#define MIF_LEN_SCAN_TIME 8
+#char scan_time[MIF_LEN_SCAN_TIME];
+    $header_info{'scan_time'}  = &get_string($header, 63, 8);
+
+#    071-071     1       0      unsigned char Number of echos per slice
+#                                             Used when multiple
+#                                             echos of the same slice
+#                                             needs to be placed
+#                                             within an MIF
+#                                             file. Usually 1, 0 denotes
+#                                             an unknown number of echos.
+# unsigned char echo_count;
+    $header_info{'echo_count'}  = &get_uchar($header, 71);
+
+#    072-073     2       0      char string   empty unused field
+# char buffer2[2];
+    $header_info{'buffer2'}  = &get_string($header, 72, 2);
+
+#    074-077     4       0      long          file sequence - scan_id,
+#                                             unique for every scan
+#define MIF_DEFAULT_SCAN_ID  -1
+# long int scan_id;
+    $header_info{'scan_id'}  = &get_int($header, 74);
+
+#    078-102     25      0      char string   patient name
+#define MIF_LEN_PATIENT_NAME 25
+#char patient_name[MIF_LEN_PATIENT_NAME];
+    $header_info{'patient_name'}  = &get_string($header, 78, 25);
+
+#    103-127     25      0      char string   patient id number
+#define MIF_LEN_PATIENT_NUMBER 25
+#char patient_number[MIF_LEN_PATIENT_NUMBER];
+    $header_info{'patient_number'}  = &get_string($header, 103, 25);
+
+#    128-131     4       0      long          The date and time of the
+#                                             executable of the conversion
+#                                             program used to create this
+#                                             MIF file. The long is given
+#                                             by the function time_t
+#                                             time(time_t *). It is converted
+#                                             to a string by ctime.
+#long conversion_exe_time;
+    $header_info{'conversion_exe_time'}  = &get_int($header, 128);
+
+#    131-133     2       0      short         The version number of the
+#                                             conversion program.
+#                                             100's indicate major
+#                                             versions, units indicate a change.
+# short conversion_version;
+    $header_info{'conversion_version'}  = &get_short($header, 131);
+
+#    134-137     4       0      long          TE echo time in microseconds
+#define MIF_DEFAULT_TE -1
+#long te;
+    $header_info{'te'}  = &get_int($header, 134);
+
+#    138-141     4       0      long          TR repititon time in
+#                                             microseconds
+#define MIF_DEFAULT_TR -1
+#long tr;
+    $header_info{'tr'}  = &get_int($header, 138);
+
+#    142-145     4       0      long          slice gap in micrometres.
+#define MIF_DEFAULT_SLICE_GAP -9999999
+#long slice_gap;
+    $header_info{'slice_gap'}  = &get_int($header, 142);
+
+#    146-151     6       0      char string   MIF file creation time,
+#                                             format hhmmss, e.g. 142530
+#define MIF_LEN_MIF_TIME 6
+#char mif_time[MIF_LEN_MIF_TIME];
+    $header_info{'mif_time'}  = &get_int($header, 146);
+
+#    152-215     64      0      short[32]     slice offset array. divided
+#                                             by 512 to fit into a short + 1
+#                          - starting position of each image e.g. [2,130,258 ....]
+# short image_offsets[32];
+
+#
+#   here I read only the 1st image offset - and not all of them! (LC)
+#
+    $header_info{'image_offsets'}  = &get_short($header, 152);
+
+#    216-217     2       0      short         0 compression is never used
+#                                             in MIF files
+#define MIF_DEFAULT_COMPRESSION 0
+# short compression;
+    $header_info{'compression'}  = &get_short($header, 216);
+
+#    218-219     2       0      short         window type - set to 0 as
+#                                             not used
+#                                             This field was never used so
+#                                             is prime for re-assignment.
+#define MIF_CONST_WINDOW_TYPE 0
+# short window;
+    $header_info{'window'}  = &get_short($header, 218);
+
+#    220-221     2       0      short         number of bytes used per
+#                                             pixel - set to 1 for 8 bits per pixel
+#define MIF_DEFAULT_BPP 1
+# short bpp;
+    $header_info{'bpp'}  = &get_short($header, 220);
+
+#    222-225     4       0      long          x pixel size in micrometres,
+#                                             default -1
+#define MIF_DEFAULT_PIX_SIZE_X -1
+# long pixel_size_x;
+    $header_info{'pixel_size_x'}  = &get_int($header, 222);
+
+#    226-229     4       0      long          y pixel size in micrometres,
+#                                             default -1
+#define MIF_DEFAULT_PIX_SIZE_Y -1
+# long pixel_size_y;
+    $header_info{'pixel_size_y'}  = &get_int($header, 226);
+
+#    230-233     4       0      long          slice thickness in micrometres, 
+#                                             default -1;
+#define MIF_DEFAULT_SLICE_THICK -1
+#long slice_thickness;
+    $header_info{'slice_thickness'}  = &get_int($header, 230);
+
+#    234-235     2       0      short         x matrix dimension, usually
+#                                             256 (or number of rows)
+#define MIF_DEFAULT_DIM_X -1
+# short dim_x;
+    $header_info{'dim_x'}  = &get_short($header, 234);
+
+#    236-237     2       0      short         y max matrix dimension,
+#                                             usually 256 (or number columns)
+#define MIF_DEFAULT_DIM_Y -1
+# short dim_y;
+    $header_info{'dim_y'}  = &get_short($header, 236);
+
+#    238-239     2       0      short         number of data slices in the
+#                                             file, usually 24
+#                                             This number must be less
+#                                             than or equal to 32 for version 2.0
+#                                             or version 3.0 8 bits per
+#                                             pixel images. It can theoretically
+#                                             be unlimited for 16 bit images.
+#define MIF_DEFAULT_SLICE_COUNT -1
+# short slice_count;
+    $header_info{'slice_count'}  = &get_short($header, 238);
+
+#    240-265     26      0      char string   name of MIF file created
+#define MIF_LEN_MIF_NAME 26
+#char mif_name[MIF_LEN_MIF_NAME];
+    $header_info{'mif_name'}  = &get_string($header, 240, 26);
+
+#    266-329     64      0      short[32]     minimum pixel value for each
+#                                             slice, these are all set to 0
+#                                             for a 16 bit MIF
+#define MIF_DEFAULT_PIXEL_MIN 0
+#short pixel_min[32];
+
+#
+# this will read only the first slice pixel min, and not all of them.
+#
+    $header_info{'pixel_min'}  = &get_short($header, 266);
+
+#    330-393     64      0      short[32]     maximum pixel value for each
+#                                             slice, these are all set to 0
+#                                             for a 16 bit MIF
+#define MIF_DEFAULT_PIXEL_MAX 0
+# short pixel_max[32];
+
+#
+# this will read only the first slice pixel max, and not all of them.
+#
+    $header_info{'pixel_max'}  = &get_short($header, 330);
+
+#    394-457     64      0      short[32]     factor to restore original
+#                                             pixel values, not used so array of 1's
+#define MIF_CONST_PIXEL_DIVISOR 1
+#short pixel_divisor[32];
+
+#
+# this will read only the first divisor, and not all of them.
+#
+    $header_info{'divisor'}  = &get_short($header, 394);
+
+#    458-469     10      2      char string   patient date of birth, e.g.
+#                                             1971.12.16 or age where this 
+#                                             information is not available
+#define MIF_LEN_PATIENT_BIRTH_DATE 12
+# char patient_birth_date[MIF_LEN_PATIENT_BIRTH_DATE];
+    $header_info{'patient_birth_date'}  = &get_string($header, 458, 10);
+
+#    The following transformation and rotation fields are not
+#    presently in use. However, they may be used so
+#    they should not be the first target for any extra fields added.
+
+#    470-473     4       0      long          x scan orientation, set to 0
+#                                             since not used.
+#define MIF_CONST_TRANS_X 0
+# long trans_x;
+    $header_info{'trans_x'}  = &get_int($header, 470);
+
+#    474-477     4       0      long          y scan orientation, set to 0
+#                                             since not used.
+#define MIF_CONST_TRANS_Y 0
+# long trans_y;
+    $header_info{'trans_y'}  = &get_int($header, 474);
+
+#    478-481     4       0      long          z scan orientation, set to 0
+#                                             since not used.
+#define MIF_CONST_TRANS_Z 0
+# long trans_z;
+    $header_info{'trans_z'}  = &get_int($header, 478);
+
+#    482-485     4       0      long          x scan rotation, set to 0
+#                                             since not used.
+#define MIF_CONST_ROT_X 0
+#long rot_x;
+    $header_info{'rot_x'}  = &get_int($header, 482);
+
+#    486-489     4       0      long          y scan rotation, set to 0
+#                                             since not used.
+#define MIF_CONST_ROT_Y 0
+#long rot_y;
+    $header_info{'rot_y'}  = &get_int($header, 486);
+
+#    490-493     4       0      long          z scan rotation, set to 0
+#                                             since not used.
+#define MIF_CONST_ROT_Z 0
+#long rot_z;
+    $header_info{'rot_z'}  = &get_int($header, 490);
+
+#    494-501     8       0      char string   tape name extracted from
+#                                             full directory pathname
+#                                             e.g. SULH0001
+#define MIF_LEN_TAPE_NAME 8
+#char tape_name[MIF_LEN_TAPE_NAME];
+    $header_info{'tape_name'}  = &get_string($header, 494, 8);
+
+#    502-504     3       0      char string   patient initials
+#define MIF_LEN_PATIENT_INITIALS 3
+#char patient_initials[MIF_LEN_PATIENT_INITIALS];
+    $header_info{'patient_initials'}  = &get_string($header, 502, 3);
+
+#    505-509     4       0      long          File count of MIF. The conversion 
+#                      counts the input files as they are
+#                      processed. This yields a unique number for
+#                      each input file. The filecount is the unique
+#                      number of theA0101L01.M2F first input file to make up the
+#                      current MIF file.  It is used primarily in the
+#                      renaming of the file to distinguish between
+#                      two identical scans of the same patient that
+#                      may have been saved on the same site tape.
+#define MIF_DEFAULT_FILE_COUNT -1
+#long file_count;
+    $header_info{'file_count'}  = &get_int($header, 505);
+
+#    509-511     0      7       char string   3 blanks to round of the
+#                                             header to 512 bytes .
+#char filler[3];
+    $header_info{'filler'}  = &get_string($header, 509, 3);
+
+    # Calculate slice locations
+    for $slice (0..$header_info{'slice_count'}) {
+       if ($slice <= 0) {
+          push(@slice_locations, $header_size);
+       }
+       else {
+	 $nbytes = $slice_locations[$slice-1] + 
+	   $header_info{'dim_x'} * $header_info{'dim_y'} * 2;
+	 push(@slice_locations, $nbytes);
+       }
+    }
+}
+
+sub print_header {
+   print "mif_id\t\t\t" .     $header_info{'mif_id'}  . "\n";
+   print "buffer1\t\t" .     $header_info{'buffer1'}  . "\n";
+   print "scan_date\t\t" .     $header_info{'scan_date'}  . "\n";
+   print "mif_file_date\t\t" .     $header_info{'mif_file_date'}  . "\n";
+   print "mif_version\t\t" .     $header_info{'mif_version'}  . "\n";
+   print "mif_subversion\t\t" .     $header_info{'mif_subversion'}  . "\n";
+   print "scanner_id\t\t" .     $header_info{'scanner_id'}  . "\n";
+   print "file_id\t\t\t" .     $header_info{'file_id'}  . "\n";
+   print "scan_time\t\t" .     $header_info{'scan_time'}  . "\n";
+   print "echo_count\t\t" .     $header_info{'echo_count'}  . "\n";
+   print "buffer2\t\t" .     $header_info{'buffer2'}  . "\n";
+   print "scan_id\t\t\t" .     $header_info{'scan_id'}  . "\n";
+   print "patient_name\t\t" .     $header_info{'patient_name'}  . "\n";
+   print "patient_number\t\t" .     $header_info{'patient_number'}  . "\n";
+   print "conversion_exe_time\t" .     $header_info{'conversion_exe_time'}  . "\n";
+   print "conversion_version\t" .     $header_info{'conversion_version'}  . "\n";
+   print "te\t\t\t" .     $header_info{'te'}  . "\n";
+   print "tr\t\t\t" .     $header_info{'tr'}  . "\n";
+   print "slice_gap\t\t" .     $header_info{'slice_gap'}  . "\n";
+   print "mif_time\t\t" .     $header_info{'mif_time'}  . "\n";
+   print "image_offsets\t\t" .     $header_info{'image_offsets'}  . "\n";
+   print "compression\t\t" .     $header_info{'compression'}  . "\n";
+   print "window\t\t\t" .     $header_info{'window'}  . "\n";
+   print "bpp\t\t\t" .     $header_info{'bpp'}  . "\n";
+   print "pixel_size_x\t\t" .     $header_info{'pixel_size_x'}  . "\n";
+   print "pixel_size_y\t\t" .     $header_info{'pixel_size_y'}  . "\n";
+   print "slice_thickness\t\t" .     $header_info{'slice_thickness'}  . "\n";
+   print "dim_x\t\t\t" .     $header_info{'dim_x'}  . "\n";
+   print "dim_y\t\t\t" .     $header_info{'dim_y'}  . "\n";
+   print "slice_count\t\t" .     $header_info{'slice_count'}  . "\n";
+   print "mif_name\t\t" .     $header_info{'mif_name'}  . "\n";
+   print "pixel_min\t\t" .     $header_info{'pixel_min'}  . "\n";
+   print "pixel_max\t\t" .     $header_info{'pixel_max'}  . "\n";
+   print "divisor\t\t\t" .     $header_info{'divisor'}  . "\n";
+   print "patient_birth_date\t" .     $header_info{'patient_birth_date'}  . "\n";
+   print "trans_x\t\t\t" .     $header_info{'trans_x'}  . "\n";
+   print "trans_y\t\t\t" .     $header_info{'trans_y'}  . "\n";
+   print "trans_z\t\t\t" .     $header_info{'trans_z'}  . "\n";
+   print "rot_x\t\t\t" .     $header_info{'rot_x'}  . "\n";
+   print "rot_y\t\t\t" .     $header_info{'rot_y'}  . "\n";
+   print "rot_z\t\t\t" .     $header_info{'rot_z'}  . "\n";
+   print "tape_name\t\t" .     $header_info{'tape_name'}  . "\n";
+   print "patient_initials\t" .     $header_info{'patient_initials'}  . "\n";
+   print "file_count\t\t" .     $header_info{'file_count'}  . "\n";
+}
+
+# Routine to create the minc file
+sub create_minc_file {
+    if (scalar(@_) != 4) {
+        die "Argument error in create_minc_file";
+    }
+    local($fh, $mincfile, *slice_locations, *header_info) = @_;
+
+#    # Print out header information
+#    foreach $key (sort(keys(%header_info))) {
+#        print "$key : $header_info{$key}\n";
+#    }
+
+    # Open pipe to rawtominc
+    local($nslc) = $header_info{'slice_count'};
+    local($nrow) = $header_info{'dim_y'};
+    local($ncol) = $header_info{'dim_x'};
+    local($xstep) = -1.0 * $header_info{'pixel_size_x'} / 1000.0;
+    local($ystep) = -1.0 * $header_info{'pixel_size_y'} / 1000.0;
+    local($zstep) = $header_info{'slice_thickness'} / 1000.0;
+    local($type_flag, $type_to_input_cmd);
+    if ($header_info{'bpp'} eq "1") {
+      $data_type = "byte";
+      $type_flag = "-byte";
+      $type_to_input_cmd = "cat";
+    }
+    elsif  ($header_info{'bpp'} eq "2") {
+      $data_type = "short";
+      $type_flag = "-short";
+      if ($Swap_needed) {
+         $type_to_input_cmd = "byte_swap";
+      }
+      else {
+         $type_to_input_cmd = "cat";
+      }
+#        $type_to_input_cmd = "itof";
+    }
+    else {
+      die "Unknown bytes per pixel <$header_info{'bbp'}>\n";
+    }
+
+ print("rawtominc $mincfile $nslc $nrow $ncol -transverse " .
+         "$type_flag -mri -xstep $xstep -ystep $ystep -zstep $zstep ".
+         "-attribute patient:full_name='" .$header_info{'patient_name'}."' ".
+         "-attribute patient:number='"    .$header_info{'patient_number'}."' ".
+         "-attribute patient:birth_date='".$header_info{'patient_birth_date'}."' ".
+         "-attribute patient:initials='"  .$header_info{'patient_initials'}."' ".
+         "-attribute acquisition:echo_time='"        .$header_info{'tr'}."' ".
+         "-attribute acquisition:repetition_time='"  .$header_info{'te'}."' ".
+         "-attribute acquisition:scan_date='"        .$header_info{'scan_date'}."' ".
+         "-attribute study:study_id='"               .$header_info{'scan_id'}."' ".
+         "\n") if ($Debug);
+
+    open(MINC, "| rawtominc $mincfile $nslc $nrow $ncol -transverse " .
+         "$type_flag -mri -xstep $xstep -ystep $ystep -zstep $zstep ".
+         "-scan_range ".
+         "-attribute patient:full_name='" .$header_info{'patient_name'}."' ".
+         "-attribute patient:number='"    .$header_info{'patient_number'}."' ".
+         "-attribute patient:birth_date='".$header_info{'patient_birth_date'}."' ".
+         "-attribute patient:initials='"  .$header_info{'patient_initials'}."' ".
+         "-attribute acquisition:echo_time='"        .$header_info{'tr'}."' ".
+         "-attribute acquisition:repetition_time='"  .$header_info{'te'}."' ".
+         "-attribute acquisition:scan_date='"        .$header_info{'scan_date'}."' ".
+         "-attribute study:study_id='"               .$header_info{'scan_id'}."' ".
+         "");
+
+
+    # Loop through images, reading them in and scaling them
+    local($nbytes) = $ncol * $nrow * 
+        ($data_type eq "short" ? 2 : 1);
+    local($inimage, $outimage);
+    print "Converting slices:";
+
+    foreach $slice (0..$nslc-1) {
+
+#        $image = ($nslc - 1 - $slice);
+	$image = $slice;
+	print STDOUT ".";
+        seek($fh, scalar($slice_locations[$image]), 0) || die "seek: $!";
+
+
+        if (read($fh, $inimage, $nbytes) != $nbytes) {die "read: $!";}
+
+        &thrupipe($inimage, "$type_to_input_cmd ", $outimage);
+        print MINC $outimage;
+
+    }
+    print "Done.\n";
+
+    # Close minc file
+    close(MINC);
+
+}
+
+# MAIN PROGRAM
+
+# Constants
+
+# Get program name
+$0 =~ /([^\/]+)$/;
+my($prog) = $1;
+
+$| = 1;
+$header_size = 512;
+$blksize = 512;
+
+# Save history string
+my($history) = `date`;
+chop($history);
+$history .= ">>>> ";
+$history .= join(" ", $prog, @ARGV);
+
+# Parse arguments
+
+$Swap_needed = TRUE;
+
+while ((scalar(@ARGV) > 0) && ($ARGV[0] =~ /^-./)) {
+   my($arg) = shift;
+   if ($arg =~ /^-clob(ber)?$/) {
+      print "Clobber ON\n";
+      $Clobber = TRUE;
+   }
+   elsif ($arg =~ /^-deb(ug)?$/) {
+      print "Debug ON\n";
+      $Debug = TRUE;
+   }
+   elsif ($arg =~ /^-swap?$/) {
+      print "Swap ON\n";
+      $Swap_needed = TRUE;
+   }
+   elsif ($arg =~ /^-noswap?$/) {
+      print "Swap OFF\n";
+      undef $Swap_needed;
+   }
+   elsif ($arg =~ /^-h(elp)?$/) {
+      print <<EOF;
+Options:
+ -clobber:\toverwrite output file.
+ -h(elp):\tPrint this message
+EOF
+      @ARGV = ();
+      last;
+   }
+   else {
+      die "Unrecognized option \"$arg\"\n";
+   }
+
+}
+
+if (scalar(@ARGV) != 2) {
+    die "Usage: $0 input.m2f output.mnc \n";
+}
+$filename = $ARGV[0];
+$mincfile = $ARGV[1];
+
+# Open the file
+$fh = 'ECAT';
+
+if (grep (/.(gz|GZ|z|Z)$/,$filename) ) {
+  $tmpfile = "/tmp/m2f_to_minc$$";
+  system "gunzip -c $filename > $tmpfile" || die "Unable to uncompress $filename ($!)";
+  open($fh, "<$tmpfile") || die "Unable to open file $filename ($!)";
+
+  unlink ($tmpfile) ;
+  
+}
+else {
+  open($fh, "<$filename") || die "Unable to open file $filename ($!)";
+}
+
+# Get general header information
+&read_main_header($fh, *header_info);
+
+&print_header if ($Debug);
+
+
+if (-e $mincfile) {
+   if ($Clobber) {
+      unlink $mincfile;
+   }
+   else {
+      die "$mincfile exists already, use -clobber\n";
+   }
+}
+
+# Create minc file
+&create_minc_file($fh, $mincfile, *slice_locations, *header_info);
+
+close($fh);
+
