@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.7  2005-03-18 19:10:39  bert
+ * Revision 1.8  2005-04-05 21:50:11  bert
+ * Add comment
+ *
+ * Revision 1.7  2005/03/18 19:10:39  bert
  * Scan coordinate and location information for validity before relying on it
  *
  * Revision 1.6  2005/03/13 19:34:41  bert
@@ -185,7 +188,7 @@ struct globals {
     short Debug;                /* Debug on/off */
     short Anon;                 /* "Anonymize" the output */
     short List;
-    short useMinMax;
+    short useMinMax;            /* TRUE if need to use pixel min/max values */
     short splitEcho;            /* TRUE if echos in separate files */
     short splitDynScan;  /* TRUE if dynamic scans in separate files */
     short clobber;
