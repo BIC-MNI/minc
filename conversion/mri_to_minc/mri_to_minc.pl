@@ -850,7 +850,11 @@ sub mri_to_minc {
             $cur_exam = $file_info{'exam'};
             $cur_series = $file_info{'series'};
             $cur_echo = $file_info{'echo'};
-            $cur_image = $file_info{'image'} * $cur_numechos + $cur_echo;
+            $cur_image = $file_info{'image'};
+            if ($cur_numechos > 1) {
+               $cur_image = $cur_image * $cur_numechos + 
+                  (($cur_echo <= $cur_numechos) ? $cur_echo : 1);
+            }
             $cur_width = $file_info{'width'};
             $cur_height = $file_info{'height'};
             $cur_slicepos = $file_info{'slicepos'};
