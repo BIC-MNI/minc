@@ -6,11 +6,14 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.5  1995-05-02 16:05:32  neelin
-@MODIFIED   : Fixed bug in handling more than 30 files (needed to detach from icv).
-@MODIFIED   : Added more checking of dimensions.
-@MODIFIED   : Fixed bug in allocation of space for global max/min.
+@MODIFIED   : Revision 1.6  1995-05-11 12:31:29  neelin
+@MODIFIED   : Removed error messages from ncattdel.
 @MODIFIED   :
+ * Revision 1.5  1995/05/02  16:05:32  neelin
+ * Fixed bug in handling more than 30 files (needed to detach from icv).
+ * Added more checking of dimensions.
+ * Fixed bug in allocation of space for global max/min.
+ *
  * Revision 1.4  1995/05/01  20:04:50  neelin
  * Fixed memory leak - not freeing global_minimum/maximum.
  *
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.5 1995-05-02 16:05:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 1.6 1995-05-11 12:31:29 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -952,7 +955,9 @@ private void setup_variables(int inmincid, int outmincid,
                                     out_ndims, outdim);
    (void) micopy_all_atts(inmincid, inimgid, outmincid, outimgid);
    if (loop_options->is_floating_type) {
+      ncopts = 0;
       (void) ncattdel(outmincid, outimgid, MIsigntype);
+      ncopts = NC_OPTS_VAL;
       valid_range[0] = 0;
       valid_range[1] = 1;
       (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
@@ -968,7 +973,9 @@ private void setup_variables(int inmincid, int outmincid,
                          (void *) loop_options->valid_range);
       }
       else {
+         ncopts = 0;
          (void) ncattdel(outmincid, outimgid, MIvalid_range);
+         ncopts = NC_OPTS_VAL;
       }
    }
    (void) miattputstr(outmincid, outimgid, MIcomplete, MI_FALSE);
