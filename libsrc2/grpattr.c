@@ -82,63 +82,63 @@ milist_recursion(milisthandle_t handle, char *path)
   int i=0;
   
   for(;;){
-    ;
-  struct milistframe *frame;
-  H5E_BEGIN_TRY {
     
-    r = H5Gget_objtype_by_idx(data->frame_ptr->grp_id,
-			      data->frame_ptr->grp_idx);
-  } H5E_END_TRY;
- 
-  if (r < 0) {
+    struct milistframe *frame;
+    H5E_BEGIN_TRY {
     
-    /* End of this group, need to pop the frame. */
-    frame = data->frame_ptr->next;
-    H5Gclose(data->frame_ptr->grp_id);
-    free(data->frame_ptr);
-    data->frame_ptr = frame;
-    if (frame == NULL) {
-      return (MI_ERROR);
-    }
-  }
-  else {
+      r = H5Gget_objtype_by_idx(data->frame_ptr->grp_id,
+				data->frame_ptr->grp_idx);
+    } H5E_END_TRY;
     
-    data->frame_ptr->grp_idx++;
-    /* If the object is a group, we need to recurse into it.
-     */
-    if (r == H5G_GROUP) {
-      char tmp[256];
-      int l;
-
-      H5Gget_objname_by_idx(data->frame_ptr->grp_id,
-			    data->frame_ptr->grp_idx - 1,
-			    tmp, sizeof(tmp));
-      frame = malloc(sizeof(struct milistframe));
+    if (r < 0) {
+      
+      /* End of this group, need to pop the frame. */
+      frame = data->frame_ptr->next;
+      H5Gclose(data->frame_ptr->grp_id);
+      free(data->frame_ptr);
+      data->frame_ptr = frame;
       if (frame == NULL) {
 	return (MI_ERROR);
       }
-      
-      frame->grp_idx = 0;
-      frame->att_idx = 0;
-      frame->grp_id = H5Gopen(data->frame_ptr->grp_id, tmp);
-			
-      strcpy(frame->relpath, data->frame_ptr->relpath);
-      l = strlen(frame->relpath);
-                            
-      if (l > 0 && frame->relpath[l - 1] != '/') {
-	strcat(frame->relpath, "/");
-      }
-      strcat(frame->relpath, tmp);
-
-      /* Start working on the next frame.
-       */
-      frame->next = data->frame_ptr;
-      data->frame_ptr = frame;
-      strncpy(path, data->frame_ptr->relpath, MILIST_MAX_PATH);
-      break;  /* Out of inner for(;;) */
     }
-  }       
-   }  
+    else {
+      
+      data->frame_ptr->grp_idx++;
+      /* If the object is a group, we need to recurse into it.
+       */
+      if (r == H5G_GROUP) {
+	char tmp[256];
+	int l;
+
+	H5Gget_objname_by_idx(data->frame_ptr->grp_id,
+			      data->frame_ptr->grp_idx - 1,
+			      tmp, sizeof(tmp));
+	frame = malloc(sizeof(struct milistframe));
+	if (frame == NULL) {
+	  return (MI_ERROR);
+	}
+      
+	frame->grp_idx = 0;
+	frame->att_idx = 0;
+	frame->grp_id = H5Gopen(data->frame_ptr->grp_id, tmp);
+	
+	strcpy(frame->relpath, data->frame_ptr->relpath);
+	l = strlen(frame->relpath);
+                            
+	if (l > 0 && frame->relpath[l - 1] != '/') {
+	  strcat(frame->relpath, "/");
+	}
+	strcat(frame->relpath, tmp);
+	
+	/* Start working on the next frame.
+	 */
+	frame->next = data->frame_ptr;
+	data->frame_ptr = frame;
+	strncpy(path, data->frame_ptr->relpath, MILIST_MAX_PATH);
+	break;  /* Out of inner for(;;) */
+      }
+    }       
+  }  
 }
 
 
