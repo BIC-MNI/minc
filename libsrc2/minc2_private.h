@@ -19,6 +19,9 @@
 /** The fixed path to the full-resolution image data.
  */
 #define MI_IMAGE_PATH MI_ROOT_PATH "/" MI_DIMAGE_PATH
+
+/** The fixed path to the full-resolution image data.
+ */
 #define MI_FULLIMAGE_PATH MI_IMAGE_PATH "/0"
 
 /** The fixed path to the dimension 
@@ -36,10 +39,6 @@
 /** Size of a linear transform */
 #define MI2_LIN_XFM_SIZE 4
 
-/** The fixed path to the full-resolution image data.
- */
-//#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
-
 /** Standard linear transform, a 4x4 matrix.
  */
 typedef double mi_lin_xfm_t[MI2_LIN_XFM_SIZE][MI2_LIN_XFM_SIZE];
@@ -54,16 +53,16 @@ typedef long long mi_i64_t;
  * Volume properties  
  */
 struct volprops_struct{
-  BOOLEAN enable_flag; //enable multi-res 
-  int depth; //multi-res depth
-  micompression_t compression_type;
-  int zlib_level; 
-  int edge_count; //how many chunks
-  int *edge_lengths; //size of each chunk
-  int max_lengths;
-  long record_length;
-  char *record_name;
-  int  template_flag;
+    BOOLEAN enable_flag;        /* enable multi-res */
+    int depth;                  /* multi-res depth */
+    micompression_t compression_type;
+    int zlib_level; 
+    int edge_count;             /* how many chunks */
+    int *edge_lengths;          /* size of each chunk */
+    int max_lengths;
+    long record_length;
+    char *record_name;
+    int  template_flag;
 }; 
 
 /** \internal
@@ -93,8 +92,8 @@ struct volumehandle_struct {
   hid_t hdf_id;
   BOOLEAN has_slice_scaling;
   int number_of_dims;
-  midimhandle_t *dim_handles;  // file order of dimensions
-  int *dim_indices; // apparent order of dimensions
+  midimhandle_t *dim_handles;   /* file order of dimensions */
+  int *dim_indices;             /* apparent order of dimensions */
   mitype_t volume_type;
   miclass_t volume_class;
   mivolumeprops_t create_props;
@@ -141,13 +140,23 @@ extern void miinit_enum(hid_t);
 
 extern int miget_scalar(hid_t loc_id, hid_t type_id, const char *path, 
                         void *data);
+
+extern int minc_create_thumbnail(hid_t file_id, int grp);
+extern int minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp);
+extern int minc_update_thumbnails(hid_t file_id);
+
 /* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 
-                                        const long start[], 
-                                        const long count[],
-                                        hsize_t hdf_start[],
+                                        const unsigned long start[], 
+                                        const unsigned long count[],
+                                        hssize_t hdf_start[],
                                         hsize_t hdf_count[],
                                         int dir[]);
 /* From volume.c */
-void misave_valid_range(mihandle_t volume);
+extern void misave_valid_range(mihandle_t volume);
+
+/* External */
+extern int hdf_var_declare(int fd, char *varnm, char *varpath, int ndims, hsize_t *sizes);
+extern int hdf_create(const char *path, int cmode);
+extern int hdf_open(const char *path, int mode);
 
