@@ -5,8 +5,8 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: open_connection.c,v $
- * Revision 6.2  2001-02-19 22:03:13  neelin
- * Port to linux.
+ * Revision 6.3  2001-02-20 00:55:38  neelin
+ * Fixes for port to linux decnet.
  *
  * Revision 6.1  1999/10/29 17:52:04  neelin
  * Fixed Log keyword
@@ -83,20 +83,25 @@
 #include <acr_nema.h>
 #include <minc_def.h>
 
-/* Section specific to Irix 4DDN interface (includes input and 
-   output routines) */
-#ifdef USE_4DDN
-
-/* Decnet functions */
+/* Decnet functions. If DNIOCTL is defined, then we have irix 5.
+   Otherwise we have linux or irix4. We do not need the ioctl stuff
+   for linux */
 #ifdef DNIOCTL
 #  define GCOM_IOCTL DNIOCTL
 #  define GCOM_READ DNREAD
 #  define GCOM_WRITE DNWRITE
 #else
-#  define GCOM_IOCTL ioctl
 #  define GCOM_READ read
 #  define GCOM_WRITE write
+#  ifdef USE_4DDN
+#     define GCOM_IOCTL ioctl
 int ioctl (int fildes, int request, ...);
+#  endif
+#endif
+
+/* Make sure that maximum write length is defined */
+#ifndef DN_MAX_IO
+#  define DN_MAX_IO 1460
 #endif
 
 /* Structure for passing info around */
@@ -163,8 +168,6 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
    return nwritten;
 }
 
-#endif    /* USE_4DDN */
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : open_connection
 @INPUT      : argc - number of command-line arguments
@@ -186,24 +189,22 @@ public void open_connection(int argc, char *argv[],
 
 #ifdef USE_4DDN
    SessionData sd;
-   Io_data *io_data;
    int link;
+#endif
+   Io_data *io_data;
    long maxlength;
-#endif
 
-   /* If there are no arguments, then assume that we are not using
-      irix 4DDN decnet and just use stdin and stdout */
-#ifdef USE_4DDN
+   /* If there are no arguments, then assume that we are just using 
+      stdin and stdout */
    if (argc == 1) {
-#endif
       *afpin = acr_file_initialize((void *) stdin, 0, acr_stdio_read);
       *afpout = acr_file_initialize((void *) stdout, 0, acr_stdio_write);
-#ifdef USE_4DDN
    }
 
    /* Otherwise, use decnet routines */
    else {
 
+#ifdef USE_4DDN
       /* Accept the connection and get the maximum buffer length */
       link = fileno(stdin);
       (void) memset((void *) &sd, 0, sizeof(sd));
@@ -213,6 +214,9 @@ public void open_connection(int argc, char *argv[],
           (maxlength <= 0)) {
          maxlength = DN_MAX_IO;
       }
+#else
+      maxlength = DN_MAX_IO;
+#endif   /* USE_4DDN */
 
       /* Set up input */
       io_data = MALLOC(sizeof(*io_data));
@@ -227,7 +231,6 @@ public void open_connection(int argc, char *argv[],
                                     output_routine);
 
    }        /* If decnet else */
-#endif /* USE_4DDN */
 
 }
 
