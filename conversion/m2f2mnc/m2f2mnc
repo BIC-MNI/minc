@@ -627,7 +627,7 @@ $blksize = 512;
 my($history) = `date`;
 chop($history);
 $history .= ">>>> ";
-$history .= join(" ", $prog, @ARGV);
+$history .= join(" ", $prog, @ARGV) . "\n";
 
 # Parse arguments
 
