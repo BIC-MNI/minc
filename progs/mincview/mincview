@@ -29,8 +29,11 @@ if ($?TMPDIR) then
 else
    set workingdir = /usr/tmp
 endif
-set workingdir = $workingdir/mincview-$$
+set workingparent = $workingdir/mincview-$$
+set childdir = $filename:t
+set workingdir = $workingparent/$childdir
 onintr cleanup
+mkdir $workingparent
 mkdir $workingdir
 
 # Expand the file if needed
@@ -123,8 +126,9 @@ echo Done
 rm -f $newfilename
 
 # Display the images
-$VIEWER $VIEWER_OPTIONS $workingdir/{?,??,???,????} 
+cd $workingparent
+$VIEWER $VIEWER_OPTIONS $childdir/{?,??,???,????} 
 
 cleanup:
-   rm -f $workingdir/*
-   rmdir $workingdir
+   cd /
+   rm -rf $workingparent
