@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.1 2004-04-27 15:35:15 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.2 2004-04-30 20:06:56 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -22,7 +22,7 @@ static void tztrim(char* ss);
 static void pr_att_string(long len, const char* string);
 static void pr_att_vals(nc_type  type, long len, const double* vals);
 static void pr_att(int ncid, int varid, const char *varname, int ia);
-static void do_ncdump(const char* path, struct fspec* specp);
+static void do_ncdump(char* path, struct fspec* specp);
 static void make_lvars(char* optarg, struct fspec* fspecp);
 static void set_sigdigs( const char* optarg);
 static void set_precision( const char *optarg);
@@ -336,7 +336,7 @@ pr_att(
 }
 
 static void
-do_ncdump(const char *path, struct fspec* specp)
+do_ncdump(char *path, struct fspec* specp)
 {
     int ndims;			/* number of dimensions */
     int nvars;			/* number of variables */
