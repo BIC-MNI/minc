@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.3  1993-12-14 16:36:49  neelin
-@MODIFIED   : Fixed axis direction and start position.
+@MODIFIED   : Revision 1.4  1994-01-06 14:18:44  neelin
+@MODIFIED   : Added image unpacking (3 bytes -> 2 pixels).
 @MODIFIED   :
+ * Revision 1.3  93/12/14  16:36:49  neelin
+ * Fixed axis direction and start position.
+ * 
  * Revision 1.2  93/12/10  15:35:07  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -492,6 +495,13 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
 ---------------------------------------------------------------------------- */
 public void get_gyro_image(Acr_Group group_list, Image_Data *image)
 {
+   /* Define some constants */
+#define PACK_BITS 12
+#define PACK_BYTES 3
+#define PACK_MASK 0x0F
+#define PACK_SHIFT 4
+
+   /* Variables */
    Acr_Element element;
    int nrows, ncolumns;
    int bits_alloc;
@@ -501,6 +511,10 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
    long imagepix, ipix;
    struct Acr_Element_Id elid;
    nc_type datatype;
+   unsigned char *packed;
+   unsigned char pixel[2][2];
+   int need_byte_flip;
+   unsigned char temp_byte;
 
    /* Get the image information */
    bits_alloc = find_short(group_list, ACR_Bits_allocated, 0);
@@ -537,17 +551,49 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
    data = acr_get_element_data(element);
 
    /* Convert the data according to type */
+
+   /* Look for byte data */
    if (datatype == NC_BYTE) {
       for (ipix=0; ipix < imagepix; ipix++) {
          image->data[ipix] = *((unsigned char *) data + ipix);
       }
    }
    else {
-      if (bits_alloc != nctypelen(datatype) * CHAR_BIT) {
-         (void) memset(image->data, 0, imagepix * sizeof(short));
-         return;
+
+      /* Look for unpacked short data */
+      if (bits_alloc == nctypelen(datatype) * CHAR_BIT) {
+         acr_get_short(nrows*ncolumns, data, image->data);
       }
-      acr_get_short(nrows*ncolumns, data, image->data);
+
+      /* Get packed short data */
+      else if ((bits_alloc == PACK_BITS) && (bits_stored <= bits_alloc) &&
+               ((imagepix % 2) == 0)) {
+         need_byte_flip = acr_need_invert();
+         packed = (unsigned char *) data;
+         for (ipix=0; ipix < imagepix; ipix+=2) {
+            pixel[0][0] = packed[0];
+            pixel[0][1] = packed[1] & PACK_MASK;
+            pixel[1][0] = (packed[1] >> PACK_SHIFT) |
+               ((packed[2] & PACK_MASK) << PACK_SHIFT);
+            pixel[1][1] = packed[2] >> PACK_SHIFT;
+            if (need_byte_flip) {
+               temp_byte = pixel[0][0];
+               pixel[0][0] = pixel[0][1];
+               pixel[0][1] = temp_byte;
+               temp_byte = pixel[1][0];
+               pixel[1][0] = pixel[1][1];
+               pixel[1][1] = temp_byte;
+            }
+            image->data[ipix]   = *((unsigned short *) pixel[0]);
+            image->data[ipix+1] = *((unsigned short *) pixel[1]);
+            packed += PACK_BYTES;
+         }
+      }
+
+      /* Fill with zeros in any other case */
+      else {
+         (void) memset(image->data, 0, imagepix * sizeof(short));
+      }
    }
 
    return;
