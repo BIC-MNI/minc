@@ -35,7 +35,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.3  2000-02-02 18:43:29  neelin
+ * Revision 6.4  2000-09-13 14:02:00  neelin
+ * Added support for bzip files. (Modified patch from Steve Robbins)
+ *
+ * Revision 6.3  2000/02/02 18:43:29  neelin
  * Fixed bug in miexpand_file that would call fclose with a NULL file handle.
  * For newer versions of glibc, this would cause a seg fault.
  *
@@ -113,7 +116,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.3 2000-02-02 18:43:29 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.4 2000-09-13 14:02:00 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -155,7 +158,6 @@ private int execute_decompress_command(char *command, char *infile,
    char whole_command[1024];
    int status;
    FILE *pipe, *output;
-   int output_opened;
    char buffer[1024];
    int successful_ncopen;
    int ibuf;
@@ -186,7 +188,7 @@ private int execute_decompress_command(char *command, char *infile,
       (void) sprintf(whole_command, "exec %s %s 2> /dev/null", 
                      command, infile);
       pipe = popen(whole_command, "r");
-      output_opened = FALSE;
+      output = NULL;
 
       /* Loop until we have successfully opened the minc file (the header
          is all there) */
@@ -199,13 +201,12 @@ private int execute_decompress_command(char *command, char *infile,
               ((nread = 
                 fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0); 
               ibuf++) {
-            if (!output_opened) {
-               output= fopen(outfile, "w");
+            if (output == NULL) {
+               output = fopen(outfile, "w");
                if (output == NULL) {
                   (void) fclose(pipe);
                   return 1;
                }
-               output_opened = TRUE;
             }
             if (fwrite(buffer, sizeof(char), nread, output) != nread) {
                (void) fclose(output);
@@ -285,7 +286,8 @@ private int execute_decompress_command(char *command, char *infile,
 public char *miexpand_file(char *path, char *tempfile, int header_only,
                            int *created_tempfile)
 {
-   typedef enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} Compress_type;
+   typedef enum 
+      {BZIPPED, GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} Compress_type;
    int status, oldncopts, first_ncerr, iext;
    char *newfile, *extension, *compfile;
    FILE *fp;
@@ -294,6 +296,8 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
       char *extension;
       Compress_type type;
    } compression_code_list[] = {
+      {".bz", BZIPPED},
+      {".bz2", BZIPPED},
       {".gz", GZIPPED},
       {".Z", COMPRESSED},
       {".z", PACKED},
@@ -397,6 +401,10 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
        (compress_type == PACKED) ||
        (compress_type == ZIPPED)) {
       status = execute_decompress_command("gunzip -c", path, newfile, 
+                                          header_only);
+   }
+   else if (compress_type == BZIPPED) {
+      status = execute_decompress_command("bunzip2 -c", path, newfile, 
                                           header_only);
    }
 
