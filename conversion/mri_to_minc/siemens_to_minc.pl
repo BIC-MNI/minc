@@ -123,7 +123,7 @@ sub siemens_read_file_info {
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
     # We cheat and use patient id for exam, getting rid of weird characters
     ($file_info{'exam'} = &unpack_value(*patient_hdr, 28, 'A12'))
-        =~ s/[^\w]//g;
+        =~ s/^\W//g;
     $file_info{'series'} = &unpack_int(*patient_hdr, 112);
     $file_info{'image'} = &unpack_int(*meas_hdr, 364);
     $file_info{'echo'} = &unpack_int(*meas_hdr, 516);
