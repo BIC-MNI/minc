@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.2  1995-01-03 13:09:24  neelin
-@MODIFIED   : Added direction cosine support.
+@MODIFIED   : Revision 2.3  1995-01-23 08:59:31  neelin
+@MODIFIED   : Changed nccreate to micreate
 @MODIFIED   :
+ * Revision 2.2  95/01/03  13:09:24  neelin
+ * Added direction cosine support.
+ * 
  * Revision 2.1  94/10/11  16:18:50  neelin
  * Fixed scanning of integers for max and min (conversion to double had
  * signed and unsigned reversed).
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.2 1995-01-03 13:09:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.3 1995-01-23 08:59:31 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -393,7 +396,7 @@ main(int argc, char *argv[])
    }
 
    /* Create the file and save the time stamp */
-   cdfid=nccreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   cdfid=micreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Set the number of image dimensions */
