@@ -13,7 +13,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.8  2001-11-13 14:16:50  neelin
+ * Revision 6.9  2004-04-27 15:30:02  bert
+ * Add -2 flag
+ *
+ * Revision 6.8  2001/11/13 14:16:50  neelin
  * Get correct valid range for conversion from int to float types
  *
  * Revision 6.7  2001/09/18 15:32:53  neelin
@@ -89,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.8 2001-11-13 14:16:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.9 2004-04-27 15:30:02 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -121,7 +124,7 @@ public int main(int argc, char *argv[])
    (void) miattputstr(reshape_info.outmincid, reshape_info.outimgid,
                       MIcomplete, MI_TRUE);
    (void) miclose(reshape_info.outmincid);
-
+   (void) miclose(reshape_info.inmincid);
    exit(EXIT_SUCCESS);
 }
 
@@ -168,6 +171,10 @@ public void get_arginfo(int argc, char *argv[],
    static long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
    static double fillvalue = NOFILL;
    static int max_chunk_size_in_kb = DEFAULT_MAX_CHUNK_SIZE_IN_KB;
+#ifdef MINC2
+   static int minc2_format = 0;
+#endif /* MINC2 defined */
+   int cflags;			/* File creation flags */
 
    /* Argument table */
    static ArgvInfo argTable[] = {
@@ -184,6 +191,10 @@ public void get_arginfo(int argc, char *argv[],
       {"-max_chunk_size_in_kb", ARGV_INT, (char *) 0, 
           (char *) &max_chunk_size_in_kb,
           "Specify the maximum size of the copy buffer (in kbytes)."},
+#ifdef MINC2
+      {"-2", ARGV_CONSTANT, (char *) TRUE, (char *)&minc2_format,
+       "Produce a MINC 2.0 format output file."},
+#endif /* MINC2 defined */
 
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "Image conversion options (pixel type and range):"},
@@ -426,8 +437,18 @@ public void get_arginfo(int argc, char *argv[],
                        ncvarid(reshape_info->inmincid, MIimage));
 
    /* Create the output file */
-   reshape_info->outmincid = 
-      micreate(outfile, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   if (clobber) {
+       cflags = NC_CLOBBER;
+   }
+   else {
+       cflags = NC_NOCLOBBER;
+   }
+#ifdef MINC2
+   if (minc2_format) {
+       cflags |= MI2_CREATE_V2;
+   }
+#endif /* MINC2 defined */
+   reshape_info->outmincid = micreate(outfile, cflags);
    setup_output_file(reshape_info->outmincid, history, reshape_info);
 
    return;
