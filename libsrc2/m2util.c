@@ -506,25 +506,21 @@ miget_voxel_to_world(mihandle_t volume, mi_lin_xfm_t voxel_to_world)
     }
 
     for (j = 0; j < volume->number_of_dims; j++) {
+        midimhandle_t hdim = volume->dim_handles[j];
 
-        if (!strcmp(volume->dim_handles[j]->name, "xspace")) {
-            k = MI2_X;
-        }
-        else if (!strcmp(volume->dim_handles[j]->name, "yspace")) {
-            k = MI2_Y;
-        }
-        else if (!strcmp(volume->dim_handles[j]->name, "zspace")) {
-            k = MI2_Z;
+        if (hdim->class == MI_DIMCLASS_SPATIAL ||
+            hdim->class == MI_DIMCLASS_SFREQUENCY) {
+            k = hdim->world_index;
         }
         else {
             continue;
         }
 
-        start = volume->dim_handles[j]->start;
-        step = volume->dim_handles[j]->step;
-        dircos[0] = volume->dim_handles[j]->direction_cosines[0];
-        dircos[1] = volume->dim_handles[j]->direction_cosines[1];
-        dircos[2] = volume->dim_handles[j]->direction_cosines[2];
+        start = hdim->start;
+        step = hdim->step;
+        dircos[0] = hdim->direction_cosines[0];
+        dircos[1] = hdim->direction_cosines[1];
+        dircos[2] = hdim->direction_cosines[2];
 
         minormalize_vector(dircos);
 
@@ -1665,53 +1661,86 @@ minc_update_thumbnails(mihandle_t volume)
 
 }
 
+double *
+alloc1d(int n)
+{
+    return ((double *) malloc(sizeof(double) * n));
+}
+
+double **
+alloc2d(int n, int m)
+{
+    char *tmp = malloc((n * sizeof (double *)) + 
+                       (n * m * sizeof (double)));
+    if (tmp != NULL) {
+        int i;
+        double **mat;
+
+        mat = (double **) tmp;
+
+        tmp += n * sizeof (double *);
+
+        for (i = 0; i < n; i++) {
+            mat[i] = (double *) tmp;
+            tmp += m * sizeof (double);
+        }
+
+        return (mat);
+    }
+    return (NULL);
+}
+
+
 /** Performs scaled maximal pivoting gaussian elimination as a
     numerically robust method to solve systems of linear equations.
 */
-
-static int
-scaled_maximal_pivoting_gaussian_elimination(int   row[4],
-                                             double  a[4][4],
-                                             double solution[4][4] )
+int
+scaled_maximal_pivoting_gaussian_elimination(int   n,
+                                             int   row[],
+                                             double **a,
+                                             int   n_values,
+                                             double **solution )
 {
     int i, j, k, p, v, tmp;
-    double s[4], val, best_val, m, scale_factor;
-    int result;
+    double *s, val, best_val, m, scale_factor;
+    int success;
 
-    for ( i = 0; i < 4; i++) {
+    s = alloc1d( n );
+
+    for ( i = 0; i < n; i++ )
         row[i] = i;
-    }
 
-    for ( i = 0; i < 4; i++) {
+    for ( i = 0; i < n; i++ ) {
         s[i] = fabs( a[i][0] );
-        for ( j = 1; j < 4; j++ ) {
-            if ( fabs(a[i][j]) > s[i] ) {
-                s[i] = fabs(a[i][j]);
-            }
+        for ( j = 1; j < n; j++ ) {
+            if ( fabs(a[i][j]) > s[i] )
+               s[i] = fabs(a[i][j]);
         }
 
         if ( s[i] == 0.0 ) {
-            return ( MI_ERROR );
+            free( s );
+
+            return ( FALSE );
         }
     }
 
-    result = MI_NOERROR;
+    success = TRUE;
 
-    for ( i = 0; i < 4 - 1; i++ ) {
+    for ( i = 0; i < n-1; i++ ) {
         p = i;
         best_val = a[row[i]][i] / s[row[i]];
         best_val = fabs( best_val );
-        for ( j = i + 1; j < 4; j++ ) {
+        for ( j = i+1; j < n; j++ ) {
             val = a[row[j]][i] / s[row[j]];
             val = fabs( val );
-            if( val > best_val ) {
+            if ( val > best_val ) {
                 best_val = val;
                 p = j;
             }
         }
 
         if ( a[row[p]][i] == 0.0 ) {
-            result = MI_ERROR;
+            success = FALSE;
             break;
         }
 
@@ -1721,67 +1750,82 @@ scaled_maximal_pivoting_gaussian_elimination(int   row[4],
             row[p] = tmp;
         }
 
-        for ( j = i + 1; j < 4; j++ ) {
+        for ( j = i+1; j < n; j++ ) {
             if ( a[row[i]][i] == 0.0 ) {
-                result = MI_ERROR;
+                success = FALSE;
                 break;
             }
 
             m = a[row[j]][i] / a[row[i]][i];
-            for ( k = i + 1; k < 4; k++ )
+            for ( k = i+1; k < n; k++ )
                 a[row[j]][k] -= m * a[row[i]][k];
-            for( v = 0; v < 4; v++ )
+            for ( v = 0; v < n_values; v++ )
                 solution[row[j]][v] -= m * solution[row[i]][v];
         }
 
-        if (result != MI_NOERROR)
+        if ( !success )
             break;
     }
 
-    if ( result == MI_NOERROR && a[row[4-1]][4-1] == 0.0 )
-        result = MI_ERROR;
+    if ( success && a[row[n-1]][n-1] == 0.0 )
+        success = FALSE;
 
-    if ( result == MI_NOERROR ) {
-        for ( i = 4-1;  i >= 0;  --i ) {
-            for ( j = i+1; j < 4; j++) {
+    if ( success ) {
+        for ( i = n-1;  i >= 0;  --i ) {
+            for ( j = i+1; j < n; j++ ) {
                 scale_factor = a[row[i]][j];
-                for ( v = 0; v < 4; v++ )
+                for ( v = 0; v < n_values; v++ )
                     solution[row[i]][v] -= scale_factor * solution[row[j]][v];
             }
 
-            for( v = 0; v < 4; v++ )
+            for ( v = 0; v < n_values; v++ )
                 solution[row[i]][v] /= a[row[i]][i];
         }
     }
 
-    return (result);
+    free( s );
+
+    return( success );
 }
 
-static int
-scaled_maximal_pivoting_gaussian_elimination_real(double coefs[4][4],
-                                                  double values[4][4])
+int
+scaled_maximal_pivoting_gaussian_elimination_real(int n,
+                                                  double **coefs,
+                                                  int n_values,
+                                                  double **values )
 {
-    int i, j, v, row[4];
-    double a[4][4], solution[4][4];
-    int result;
+    int i, j, v, *row;
+    double **a, **solution;
+    int success;
 
-    for ( i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++)
+    row = alloc1d( n );
+    a = alloc2d( n, n );
+    solution = alloc2d( n, n_values );
+
+    for (i = 0; i < n; i++) {
+        for ( j = 0; j < n; j++ )
             a[i][j] = coefs[i][j];
-        for ( v = 0; v < 4; v++ )
+        for ( v = 0; v < n_values; v++ )
             solution[i][v] = values[v][i];
     }
 
-    result = scaled_maximal_pivoting_gaussian_elimination(row, a, solution);
+    success = scaled_maximal_pivoting_gaussian_elimination( n, row, a, 
+                                                            n_values,
+                                                            solution );
 
-    if ( result == MI_NOERROR ) {
-        for ( i = 0; i < 4; i++ ) {
-            for ( v = 0; v < 4; v++ )
+    if ( success ) {
+        for ( i = 0; i < n; i++ ) {
+            for ( v = 0; v < n_values; v++ ) {
                 values[v][i] = solution[row[i]][v];
+            }
         }
     }
 
-    return ( result );
+    free(a);
+    free(solution);
+    free(row);
+
+    return ( success );
 }
 
 /** Computes the inverse of a square matrix.
@@ -1793,28 +1837,36 @@ invert_4x4_matrix(double matrix[4][4], /**< Input matrix */
     double tmp;
     int result;
     int i, j;
+    double **mtmp;
+    double **itmp;
+
+    mtmp = alloc2d(4, 4);
+    itmp = alloc2d(4, 4);
 
     /* Start off with the identity matrix. */
     for ( i = 0; i < 4; i++ ) {
         for ( j = 0; j < 4; j++ ) {
-            inverse[i][j] = 0.0;
+            itmp[i][j] = 0.0;
+            mtmp[i][j] = matrix[i][j];
         }
-        inverse[i][i] = 1.0;
+        itmp[i][i] = 1.0;
     }
 
-    result = scaled_maximal_pivoting_gaussian_elimination_real( matrix,
-                                                                inverse );
+    result = scaled_maximal_pivoting_gaussian_elimination_real( 4, mtmp,
+                                                                4, itmp );
 
-    if ( result == MI_NOERROR )  {
-        for ( i = 0; i < 4 - 1; i++) {
-            for ( j = i + 1; j < 4; j++ ) {
-                tmp = inverse[i][j];
-                inverse[i][j] = inverse[j][i];
-                inverse[j][i] = tmp;
+    if ( result )  {
+        for ( i = 0; i < 4; i++) {
+            for ( j = 0; j < 4; j++ ) {
+                inverse[i][j] = itmp[j][i];
             }
         }
     }
-    return (result);
+
+    free(mtmp);
+    free(itmp);
+
+    return (result ? MI_NOERROR : MI_ERROR);
 }
 
 /** Fills in the transform with the identity matrix.
