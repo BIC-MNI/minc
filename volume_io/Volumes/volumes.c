@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.68 1998-02-20 14:59:36 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.69 1998-06-29 13:11:34 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -1637,6 +1637,38 @@ public  void  set_volume_translation(
     }
 
     set_volume_starts( volume, starts );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_volume_translation
+@INPUT      : volume
+@OUTPUT     : voxel                     - returns 0, 0, 0 ...
+              world_space_voxel_maps_to - returns centre of voxel [0][0][0]...
+@RETURNS    : 
+@DESCRIPTION: Reinstated this old function for backward compatibility.
+              Simply returns the voxel 0, 0, 0, and the world
+              coordinate of its centre, to indicate the translational
+              component of the transformation.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : May. 23, 1998    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] )
+{
+    int   dim;
+
+    for_less( dim, 0, get_volume_n_dimensions(volume) )
+        voxel[dim] = 0.0;
+
+    convert_voxel_to_world( volume, voxel, &world_space_voxel_maps_to[X],
+                                           &world_space_voxel_maps_to[Y],
+                                           &world_space_voxel_maps_to[Z] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
