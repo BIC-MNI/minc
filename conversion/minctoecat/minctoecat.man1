@@ -1,0 +1,47 @@
+.TH "minctoecat" "1" "" "" ""
+.SH "NAME"
+minctecat \- convert a minc format file to an Ecat7 format file
+.SH "SYNOPSIS"
+\fBminctoecat [<options>] <infile.mnc> <outfile.v>\fR
+
+\fBminctoecat [\-help]\fR
+.SH "DESCRIPTION"
+\fIminctoecat\fR will convert a 2D image, a 3D volumes or a 4D dynamic volumes written in minc file format to a 2D, 3D or 4D Ecat7 file.
+Whereas the Ecat7 format has been designed for PET volume issued by Ecat scanners (CTI/SIEMENS \- Knoxville, TN, USA) it reads any minc volume type (static PET, dynamic PET, aMRI, fMRI, labels) natively delivered by any tomograph brand and transform it to a viable Ecat7 file in term of number of dimensions, dimension size, dimension step, orientation, spatial position, voxel values and voxel unit.
+Furthermore, it tries the best as it can to fill optional Ecat7 header fields from the available minc variables and attributes. By default, it extracts these additional information from common minc variables, namely: patient_variable, study_variable, acquisition_variable. In the case of volumes originally delivered by an Ecat PET scanners, then, other variable are generally available within the minc header: ecat_acquisition_variable, ecat_main and ecat_sub\-header_variable.
+There, for a such minc volume, the conversion yields a Ecat7 volume almost identical to the original native volume in terms of header fields.
+The user can alter this behaviour using the ignore\-list options (see the option section).
+.SH "OPTIONS"
+Note that options can be specified in abbreviated form (as long as they are unique) and can be given anywhere on the command line.
+.SH "Command specific options"
+.TP 
+\fI\-ignore_patient_variable:\fR Ignore information from the minc patient variable (MIpatient).
+.TP 
+\fI\-ignore_study_variable:\fR Ignore information from the minc study variable (MIstudy).
+.TP 
+\fI\-ignore_acquisition_variable:\fR Ignore information from the minc acquisition variable (MIacquisition).
+.TP 
+\fI\-ignore_ecat_accquisition_variable:\fR Ignore information from the minc ecat acquisition variable (MIecat_acquisition).
+.TP 
+\fI\-ignore_ecat_main_variable:\fR Ignore information from the minc ecat\-mainheader variable (MIecat\-main).
+.TP 	
+\fI\-ignore_ecat_subheader_variable:\fR Ignore information from the minc ecat\-subheader variable (MIecat\-subheader).  
+.TP 	
+\fI\-no_decay_corr_fctr:\fR do not regenerate the decay correction factors employed as part as the reconstruction of the original PET volume. The correction factors is a field in the ecat sub\-headers which can be used by processing programs. By default, if the volume is a PET volume ,those factors are regenerated. This option has no interest in the case of non PET data.
+.TP 
+\fI\-label:\fR Treats voxel as integer values instead of floating point values. In this case, the scale factors and the calibration factors are both set to unity. This option is particularly useful when the input minc files is a volume of labels.
+
+
+.SH "General options"
+.TP 	
+\fI\-help:\fR Print summary of command\-line options and abort
+.TP 
+\fI\-version:\fR Print the program's version and abort
+.SH "KNOWN BUGS"
+No bug listed so far :=)
+.SH "SEE ALSO"
+ecattominc(1), rawtominc(1), minctoraw(1), dicomtominc(1)
+.SH "AUTHOR"
+Anthonin Reilhac (anthonin.reilhac@cermep.fr)
+.SH "COPYRIGHTS"
+Copyrights 2005 by Anthonin Reilhac
