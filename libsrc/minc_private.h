@@ -13,9 +13,12 @@
 @CALLS      : 
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_private.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:07  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 19:00:55  neelin
+@MODIFIED   : Removed include of math.h
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:38:07  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.7  94/09/28  10:37:27  neelin
  * Pre-release
  * 
@@ -35,12 +38,11 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 2.0 1994-09-28 10:38:07 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 2.1 1995-02-08 19:00:55 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include  <stdlib.h>
 #include  <stdio.h>
-#include  <math.h>
 #include  <string.h>
 #include  <memory.h>
 #include  <minc.h>
