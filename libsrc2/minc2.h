@@ -113,12 +113,12 @@ typedef enum {
 
 typedef enum {
   MI_DIMORDER_FILE      = 0,
-  MI_DIMORDER_APPARENT  = 1,
-} miorder_t; // dimension orders
+  MI_DIMORDER_APPARENT  = 1
+} miorder_t; /* dimension orders */
 
 typedef enum {
   MI_ORDER_FILE      = 0,
-  MI_ORDER_APPARENT  = 1,
+  MI_ORDER_APPARENT  = 1
 } mivoxel_order_t;
 
 typedef enum {
@@ -126,13 +126,13 @@ typedef enum {
   MI_COUNTER_FILE_ORDER = 1,    /* flip */
   MI_POSITIVE           = 2,    /* check step if positive -> no flip,
 				   negative ->flip */
-  MI_NEGATIVE           = 3,    /* check step if positive -> flip,
+  MI_NEGATIVE           = 3     /* check step if positive -> flip,
 				                 negative -> no flip */
 } miflipping_t;
 
 typedef enum {
   MI_COMPRESS_NONE = 0,
-  MI_COMPRESS_ZLIB = 1,
+  MI_COMPRESS_ZLIB = 1
 } micompression_t;
 
 typedef int BOOLEAN;
@@ -333,26 +333,26 @@ extern int miset_volume_range(mihandle_t volume, double slice_max,
 
 extern int miget_real_value_hyperslab(mihandle_t volume,
                                       mitype_t buffer_data_type,
-                                      const long start[],
-                                      const long count[],
+                                      const unsigned long start[],
+                                      const unsigned long count[],
                                       void *buffer);
 
 extern int miset_real_value_hyperslab(mihandle_t volume,
                                       mitype_t buffer_data_type,
-                                      const long start[],
-                                      const long count[],
+                                      const unsigned long start[],
+                                      const unsigned long count[],
                                       const void *buffer);
 
 extern int miget_voxel_value_hyperslab(mihandle_t volume,
                                        mitype_t buffer_data_type,
-                                       const long start[],
-                                       const long count[],
+                                       const unsigned long start[],
+                                       const unsigned long count[],
                                        void *buffer);
 
 extern int miset_voxel_value_hyperslab(mihandle_t volume,
                                        mitype_t buffer_data_type,
-                                       const long start[],
-                                       const long count[],
+                                       const unsigned long start[],
+                                       const unsigned long count[],
                                        const void *buffer);
 
 /* CONVERT FUNCTIONS */
