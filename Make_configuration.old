@@ -18,7 +18,7 @@ LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln
 INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(MINC_LIB_DIR) -I/usr/local/include
 
 # Directory for netcdf stuff
-NETCDF_FORTRAN_DIR = $(ROOT)/fortran/netcdf
+NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf_fortran
 
 # MINC loader options
 MINC_LDOPT = $(CC_MINC_LIB) /usr/local/lib/libnetcdf.a $(MACHINE_LDOPT)
