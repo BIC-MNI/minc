@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
 #
 # Andrew Janke - rotor@cmr.uq.edu.au
 # Center for Magnetic Resonance
@@ -24,31 +24,42 @@ use warnings "all";
 use Getopt::Tabular;
 use File::Basename;
 use Data::Dumper;
-$SIG{'INT'} = $SIG{__DIE__} =  sub { &cleanup; die $_[0]; };
+use File::Temp qw/ tempdir /;
 
 my($Help, $Usage, $me, $infile, $outfile, $history);
-my(@opt_table, $clobber, $verbose, $tmpdir, @args);
+my(@opt_table, %opt, $tmpdir, @args);
+
+$me = basename($0);
+%opt = (
+   'verbose'   => 0,
+   'quiet'     => 0,
+   'debug'     => 0,
+   'clobber'   => 0,
+   'fake'      => 0,
+   ); 
 
 $Help = <<HELP;
  | Siemens 'Mosaic' file format converter MKI
  |
- | This script works primarily by using the ##ASC_CONV## section
+ | $me works primarily by using the ##ASC_CONV## section
  |    of a siemens Mosaic file.
  |
  | Problems or comments should be sent to: rotor\@cmr.uq.edu.au
 HELP
+$Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
+         "       $me -help to list options\n\n";
 
-$me = basename($0);
-$tmpdir = "/tmp/$me-$$";
-$verbose = 0;
-$quiet   = 0;
-$debug   = 0;
-$clobber = 0;
 @opt_table = (
-     ["-verbose", "boolean", 0, \$verbose, "be verbose"               ],
-     ["-quiet",   "boolean", 0, \$quiet,   "be quiet"                 ],
-     ["-debug",   "boolean", 0, \$debug,   "spew copious stuff"       ],
-     ["-clobber", "boolean", 0, \$clobber, "clobber existing files"   ],
+   ["-verbose", "boolean", 0, \$opt{verbose},
+      "be verbose" ],
+   ["-quiet", "boolean", 0, \$opt{quiet},
+      "be quiet" ],
+   ["-debug", "boolean", 0, \$opt{debug},
+      "spew copious output" ],
+   ["-clobber", "boolean", 0, \$opt{clobber},
+      "clobber existing files" ],
+   ["-fake", "boolean", 0, \$opt{fake},
+      "do a dry run, (echo cmds only)" ],
    );
 
 $Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
@@ -65,21 +76,16 @@ if($#ARGV != 1){ die $Usage; }
 $infile  = $ARGV[0];
 $outfile = $ARGV[1];
 
-# make the tmpdir
-&do_cmd('mkdir', $tmpdir) if (!-e $tmpdir);
+# make tmpdir
+$tmpdir = &tempdir( "$me-XXXXXXXX", TMPDIR => 1, CLEANUP => 1 );
 
 # check for infile and outfile
 if(!-e $infile){ 
    die "$me: Couldn't find $infile\n";
    }
-if(-e $outfile && !$clobber){ 
+if(-e $outfile && !$opt{clobber}){ 
    die "$me: $outfile exists! use -clobber to overwrite\n"; 
    }
-
-# first convert the image data using dicom_to_minc
-&do_cmd('dicom_to_minc', $tmpdir, $infile);
-chomp($conv_fn = `ls -1 $tmpdir/*.mnc`);
-print STDOUT " +++ Found file $conv_fn\n" if !$quiet;
 
 # have a hunt for the ASCCONV header
 print STDOUT " +++ Seeking ASCCONV header in $infile\n" if !$quiet;
@@ -115,29 +121,130 @@ for($c=0; (index($line, "### ASCCONV END ###") == -1); $line = <FH>, $c++){
 close(FH);
 print STDOUT "Done. ($c elements read)\n" if !$quiet;
 
-if($debug){
+if($opt{debug}){
    $ptr = \%siemens_hdr;
    $Data::Dumper::Deepcopy = 1;
    print STDOUT Dumper(\$ptr);
    }
 
-# get the frames from the converted file
-$gen_hdr->{'xsize'} = $siemens_hdr{'sKSpace'}{'lPhaseEncodingLines'};
-$gen_hdr->{'ysize'} = $siemens_hdr{'sKSpace'}{'lBaseResolution'};
-chomp($xsize = `mincinfo -dimlength xspace $conv_fn`);
-chomp($ysize = `mincinfo -dimlength yspace $conv_fn`);
-
-print STDOUT " +++ Extracting Mosaic frames ($gen_hdr->{'xsize'} x $gen_hdr->{'ysize'}): " if !$quiet;
+# Read in ASCCONV header slice positions and normals (and fill in the blanks!)
 $c = 0;
-for($y=0; $y<$ysize; $y += $gen_hdr->{'ysize'}){
-   for($x=0; $x<$xsize; $x += $gen_hdr->{'xsize'}){
+foreach (@{$siemens_hdr{sSliceArray}{asSlice}}){
+   
+   # fill in "missing" (default?) co-ordinates.
+   if(!defined($_->{sPosition}{dSag})){
+      $_->{sPosition}{dSag} = 0;
+      print "Completed position for slice in Sag\n" if $opt{debug};
+      }
+   if(!defined($_->{sPosition}{dCor})){
+      $_->{sPosition}{dCor} = 0;
+      print "Completed position for slice in Cor\n" if $opt{debug};
+      }
+   if(!defined($_->{sPosition}{dTra})){
+      $_->{sPosition}{dTra} = 0;
+      print "Completed position for slice in Tra\n" if $opt{debug};
+      }
+   
+   $slice_pos[$c] = [$_->{sPosition}{dSag}, 
+                     $_->{sPosition}{dCor},
+                     $_->{sPosition}{dTra}];
+                     
+    
+   # Damn LPS and Radiological vs Neurological Stupidity!
+   $slice_pos[$c][0] *= -1;
+   $slice_pos[$c][1] *= -1;
+   
+   # fill in sNormal -- 1 defined (perpendicular slice normal)
+   if(defined($_->{sNormal}{dSag}) && $_->{sNormal}{dSag} == 1){
+      $_->{sNormal}{dCor} = 0;
+      $_->{sNormal}{dTra} = 0;
+      print "Perp slice in Sag\n" if $opt{debug};
+      }
+   elsif(defined($_->{sNormal}{dCor}) && $_->{sNormal}{dCor} == 1){
+      $_->{sNormal}{dSag} = 0;
+      $_->{sNormal}{dTra} = 0;
+      print "Perp slice in Cor\n" if $opt{debug};
+      }
+   elsif(defined($_->{sNormal}{dTra}) && $_->{sNormal}{dTra} == 1){
+      $_->{sNormal}{dSag} = 0;
+      $_->{sNormal}{dCor} = 0;
+      print "Perp slice in Tra\n" if $opt{debug};
+      }
+   
+   # fill in sNormal -- 2 defined
+   if(!defined($_->{sNormal}{dSag})){
+      $_->{sNormal}{dSag} = 1 - sqrt($_->{sNormal}{dCor}**2 + $_->{sNormal}{dTra}**2);
+      print "Completed normal for slice in Sag\n" if $opt{debug};
+      }
+   elsif(!defined($_->{sNormal}{dCor})){
+      $_->{sNormal}{dCor} = 1 - sqrt($_->{sNormal}{dSag}**2 + $_->{sNormal}{dTra}**2);
+      print "Completed normal for slice in Cor\n" if $opt{debug};
+      }
+   elsif(!defined($_->{sNormal}{dTra})){
+      $_->{sNormal}{dTra} = 1 - sqrt($_->{sNormal}{dSag}**2 + $_->{sNormal}{dCor}**2);
+      print "Completed normal for slice in Tra\n" if $opt{debug};
+      }
+   
+   $slice_nrm[$c] = [$_->{sNormal}{dSag}, 
+                     $_->{sNormal}{dCor}, 
+                     $_->{sNormal}{dTra}];
+   $c++;
+   }
+
+
+# convert the image data using dicom_to_minc
+print STDOUT " +++ Converting using dicom_to_minc: \n" if !$quiet;
+&do_cmd('dicom3_to_minc', $tmpdir, $infile);
+chomp($conv_fn = `ls -1 $tmpdir/*.mnc`);
+print STDOUT " +++ Found file $conv_fn\n" if !$quiet;
+
+# get the file dimension order
+chomp($tmp = `mincinfo -dimnames $conv_fn`);
+$tmp =~ s/\ $//;
+($dimnames[2], $dimnames[1], $dimnames[0]) = split(/\ /, $tmp, 3);
+for($i=0; $i<3; $i++){
+   $code = substr($dimnames[$i], 0, 1);
+   $dimcodes[$i] = $code;
+   if($code eq 'x'){
+      $dim_idx[$i] = 0;
+      }
+   elsif($code eq 'y'){
+      $dim_idx[$i] = 1;
+      }
+   elsif($code eq 'z'){
+      $dim_idx[$i] = 2;
+      }
+   }
+print STDOUT "Dimension order: @dimnames - (@dimcodes)\n" if $opt{verbose};
+
+# get the tile size
+$tile_size[0] = $siemens_hdr{sKSpace}{lPhaseEncodingLines};
+$tile_size[1] = $siemens_hdr{sKSpace}{lBaseResolution};
+
+# number of tiles
+$ntiles = $siemens_hdr{sSliceArray}{lSize};
+if($ntiles == 1){
+   warn "$me: This is not a mosaic, (sSliceArray.lSize == $ntiles) simply moving the file should do\n";
+   &do_cmd('mv', $conv_fn, $outfile);
+   exit(0);
+   }
+
+# get the mosaic size
+chomp($mosaic_size[0] = `mincinfo -dimlength $dimnames[0] $conv_fn`);
+chomp($mosaic_size[1] = `mincinfo -dimlength $dimnames[1] $conv_fn`);
+
+# extract the mosaic tiles
+print STDOUT " +++ Extracting Mosaic tiles ($tile_size[0] x $tile_size[1])" .
+             " from ($mosaic_size[0] x $mosaic_size[1]): " if !$quiet;
+$c = 0;
+for($y=0; $y<$mosaic_size[1]; $y += $tile_size[1]){
+   for($x=0; $x<$mosaic_size[0]; $x += $tile_size[0]){
       
-      $tmpfile = "$tmpdir/slice" . sprintf("_%04d", $c) . ".mnc";
-      
+      $tmpfile = sprintf("$tmpdir/slice_%05d.mnc", $c);
       &do_cmd('mincreshape', '-quiet', '-clobber',
-              '-dimrange', "xspace=$x,$gen_hdr->{'xsize'}",
-              '-dimrange', "yspace=$y,$gen_hdr->{'ysize'}",
-              '-dimrange', "zspace=0,0",
+              '-dimrange', "$dimnames[0]=$x,$tile_size[0]",
+              '-dimrange', "$dimnames[1]=$y,$tile_size[1]",
+              '-dimrange', "$dimnames[2]=0,0",
               $conv_fn, $tmpfile);
       
       push(@concat_files, $tmpfile);
@@ -149,127 +256,143 @@ print STDOUT "Done. ($c Frames)\n" if !$quiet;
 
 # put them back together in the correct order...
 # currently broken until I get some docco from siemens
-push(@{$gen_hdr->{'files'}}, $concat_files[0]);
-foreach (@{$siemens_hdr{'sSliceArray'}{'anAsc'}}){
+push(@{$gen_hdr->{files}}, $concat_files[0]);
+foreach (@{$siemens_hdr{sSliceArray}{anAsc}}){
    if(defined($_)){
-      push(@{$gen_hdr->{'files'}}, $concat_files[$_]);
+      push(@{$gen_hdr->{files}}, $concat_files[$_]);
       }
    }
-$gen_hdr->{'zsize'} = $siemens_hdr{'sSliceArray'}{'lSize'};
+   
 
-#########################################
-# get parameters from the ASCCONV hash
-#########################################
+# get sizes
+$gen_hdr->{"$dimcodes[0]size"} = $tile_size[0];
+$gen_hdr->{"$dimcodes[1]size"} = $tile_size[1];
+$gen_hdr->{"$dimcodes[2]size"} = $ntiles;
 
-# direction cosines
-$c = 0;
-foreach (@{$siemens_hdr{'sSliceArray'}{'asSlice'}}){
-   $slice_pos[$c] = [$_->{'sPosition'}{'dSag'}, 
-                     $_->{'sPosition'}{'dCor'},
-                     $_->{'sPosition'}{'dTra'}];
-   
-   $nx = (defined($_->{'sNormal'}{'dSag'})) ? $_->{'sNormal'}{'dSag'} : undef;
-   $ny = (defined($_->{'sNormal'}{'dCor'})) ? $_->{'sNormal'}{'dCor'} : undef;
-   $nz = (defined($_->{'sNormal'}{'dTra'})) ? $_->{'sNormal'}{'dTra'} : undef;
-   
-   if(!defined($nx)){
-      $nx = 1 - sqrt($ny**2 + $nz**2);
-      }
-   if(!defined($ny)){
-      $ny = 1 - sqrt($nx**2 + $nz**2);
-      }
-   if(!defined($nz)){
-      $nz = 1 - sqrt($nx**2 + $ny**2);
-      }
-   
-   $slice_nrm[$c] = [$nx, $ny, $nz];
-   $c++;
+
+# in-plane steps
+$gen_hdr->{"$dimcodes[0]step"} = $siemens_hdr{sSliceArray}{asSlice}[0]{dPhaseFOV} / 
+                                 $gen_hdr->{"$dimcodes[0]size"};
+$gen_hdr->{"$dimcodes[1]step"} = $siemens_hdr{sSliceArray}{asSlice}[0]{dReadoutFOV} / 
+                                 $gen_hdr->{"$dimcodes[1]size"};
+
+# for inter-slice gap (z in axial) in mosaics let's assume 
+# the gap between the first two slices is indicitive
+#$gen_hdr->{"$dimcodes[2]step"} = sqrt(($slice_pos[0][0] - $slice_pos[1][0])**2 +
+#                                      ($slice_pos[0][1] - $slice_pos[1][1])**2 +
+#                                      ($slice_pos[0][2] - $slice_pos[1][2])**2);
+
+# assume first slice thickness is indicitive
+$gen_hdr->{"$dimcodes[2]step"} = $siemens_hdr{sSliceArray}{asSlice}[0]{dThickness};
+
+# add slice gap if defined
+if(defined($siemens_hdr{sGroupArray}{asGroup}[0]{dDistFact})){
+   $gen_hdr->{"$dimcodes[2]step"} *= 1 + $siemens_hdr{sGroupArray}{asGroup}[0]{dDistFact};
    }
 
-# as dicom_to_minc has already done the hard work, read in the direction cosines
-#  from the DICOM header
-$gen_hdr->{'xdircos'} = [split(' ', `mincinfo -attvalue xspace:direction_cosines $conv_fn`)];
-$gen_hdr->{'ydircos'} = [split(' ', `mincinfo -attvalue yspace:direction_cosines $conv_fn`)];
-$gen_hdr->{'zdircos'} = [split(' ', `mincinfo -attvalue zspace:direction_cosines $conv_fn`)];
+# flipping step _SHOULD_ be here (for out of plane step)
 
 # check against the ASCCONV header
+$args = "mincinfo -attvalue $dimnames[0]:step ".
+                 "-attvalue $dimnames[1]:step $conv_fn";
+@steps = split(' ', `$args`);
+if(($steps[0] != $gen_hdr->{xstep}) ||
+   ($steps[1] != $gen_hdr->{ystep})){
+   warn "\n$me: ASCCONV slice steps (" .
+        $gen_hdr->{"$dimcodes[0]step"} . ':' . 
+        $gen_hdr->{"$dimcodes[1]step"} . ') != '.
+        "Header from minc file ($steps[0]:$steps[1])\n\n";
+
+   $gen_hdr->{"$dimcodes[0]step"} = $steps[0];
+   $gen_hdr->{"$dimcodes[1]step"} = $steps[1];
+  }
+
+
+# as dicom_to_minc has already extracted these, simply read in the direction cosines
+$gen_hdr->{xdircos} = [split(' ', `mincinfo -attvalue xspace:direction_cosines $conv_fn`)];
+$gen_hdr->{ydircos} = [split(' ', `mincinfo -attvalue yspace:direction_cosines $conv_fn`)];
+$gen_hdr->{zdircos} = [split(' ', `mincinfo -attvalue zspace:direction_cosines $conv_fn`)];
+
+# check slice norm against the ASCCONV header
 $delta = 0.0000001;
-if((abs($slice_nrm[0][0]) - abs($gen_hdr->{'zdircos'}[0]) > $delta) ||
-   (abs($slice_nrm[0][1]) - abs($gen_hdr->{'zdircos'}[1]) > $delta) ||
-   (abs($slice_nrm[0][2]) - abs($gen_hdr->{'zdircos'}[2]) > $delta)){
+if((abs($slice_nrm[0][0]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[0]) > $delta) ||
+   (abs($slice_nrm[0][1]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[1]) > $delta) ||
+   (abs($slice_nrm[0][2]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[2]) > $delta)){
   warn "\n$me: ASCCONV normal (" . join(' ', @{$slice_nrm[0]}) . ")\n             " .
-       "             != DICOM (" . join(' ', @{$gen_hdr->{'zdircos'}}) . ")\n\n";
+       "             != DICOM (" . join(' ', @{$gen_hdr->{"$dimcodes[2]dircos"}}) . ")\n\n";
   }
 
-# steps
-$gen_hdr->{'xstep'} = $siemens_hdr{'sSliceArray'}{'asSlice'}[0]{'dPhaseFOV'} / 
-                      $gen_hdr->{'xsize'};
-$gen_hdr->{'ystep'} = $siemens_hdr{'sSliceArray'}{'asSlice'}[0]{'dReadoutFOV'} / 
-                      $gen_hdr->{'ysize'};
-$gen_hdr->{'zstep'} = sqrt(($slice_pos[0][0] - $slice_pos[1][0])**2 +
-                           ($slice_pos[0][1] - $slice_pos[1][1])**2 +
-                           ($slice_pos[0][2] - $slice_pos[1][2])**2);
 
-$args = "mincinfo -attvalue xspace:step ".
-                 "-attvalue yspace:step $conv_fn";
-@steps = split(' ', `$args`); 
-if(($steps[0] != $gen_hdr->{'xstep'}) ||
-   ($steps[1] != $gen_hdr->{'ystep'})){
-  warn "\n$me: ASCCONV x and y step != Dicom header\n\n";
-  
-  $gen_hdr->{'xstep'} = $steps[0];
-  $gen_hdr->{'ystep'} = $steps[1];
-  }
-
-# calculate the start positions
-$gen_hdr->{'xstart'} = $slice_pos[0][0] - 
-                       (($gen_hdr->{'xsize'}-1)/2 * 
-                         $gen_hdr->{'xstep'} * 
-                         $gen_hdr->{'xdircos'}[0]);
-$gen_hdr->{'ystart'} = $slice_pos[0][1] - 
-                       (($gen_hdr->{'ysize'}-1)/2 * 
-                         $gen_hdr->{'ystep'} * 
-                         $gen_hdr->{'ydircos'}[1]);
-$gen_hdr->{'zstart'} = $slice_pos[0][2];
-
-print STDOUT dump_general_header($gen_hdr) if $debug;
-
-print STDOUT " +++ Creating 3D image: " if !$quiet;
-&do_cmd('mincconcat', '-clobber', 
-        '-nocheck_dimensions', 
-        '-step', $gen_hdr->{'zstep'},
-        '-start', $gen_hdr->{'zstart'},
-        '-concat_dimension', 'zspace',
-        @{$gen_hdr->{'files'}}, $outfile);        
-
-# fix a few things up and add the history string
-&do_cmd('minc_modify_header', 
-        '-dinsert', "xspace:start=$gen_hdr->{'xstart'}",
-        '-dinsert', "yspace:start=$gen_hdr->{'ystart'}",
-        '-dinsert', "zspace:direction_cosines=" . join(',', @{$gen_hdr->{'zdircos'}}),
-        '-sinsert', ":history=$history", $outfile);
-&cleanup;
-
-
-# subroutines
-sub do_cmd {
-   print "@_\n" if $verbose;
-   system(@_) == 0 or die;
+# calculate origin
+for $i (0..2){
+   $origin[$i] = $slice_pos[0][$i];
+   }
+   
+# transpose tile dimensions to origin
+# origin = slice_position - half FOV + 1/2 step for "tile dimensions"
+for $i (0..1){
+   $scale = -($gen_hdr->{"$dimcodes[$i]size"}/2 * $gen_hdr->{"$dimcodes[$i]step"}) +
+            ($gen_hdr->{"$dimcodes[$i]step"}/2);
+   @tmp = &vector_scale($scale, $gen_hdr->{"$dimcodes[$i]dircos"});
+   
+   # add to the current origin
+   @origin = &vector_add(\@origin, \@tmp);
+   }
+for $i (0..2){
+   $gen_hdr->{origin}[$i] = $origin[$i];
    }
 
-sub cleanup {
-   my($message, $status) = @_;
-   if(!defined($status)){
-      $status = 0;
+($gen_hdr->{xstart}, $gen_hdr->{ystart}, $gen_hdr->{zstart}) 
+    = &convert_origin_to_start($gen_hdr->{origin}, 
+                               $gen_hdr->{xdircos},
+                               $gen_hdr->{ydircos},
+                               $gen_hdr->{zdircos});
+
+print STDOUT dump_general_header($gen_hdr) if $opt{verbose};
+
+print STDOUT " +++ Creating 3D image ($dimnames[2]): " if !$opt{quiet};
+&do_cmd('mincconcat', '-clobber', 
+        '-nocheck_dimensions', 
+        '-step', $gen_hdr->{"$dimcodes[2]step"},
+        '-start', $gen_hdr->{"$dimcodes[2]start"},
+        '-concat_dimension', $dimnames[2],
+        @{$gen_hdr->{files}}, $outfile);        
+
+# dodgy hack to ascertain out of slice step direction (and flip it)
+# THIS MUST BE DONE after mincconcat as it is too clever for it's own good
+if($slice_pos[0][$dim_idx[2]] > $slice_pos[1][$dim_idx[2]]){
+   $gen_hdr->{"$dimcodes[2]step"} *= -1;
+   print STDOUT "$dim_idx[2] - Flipped step in $dimcodes[2] - " . $gen_hdr->{"$dimcodes[2]step"} . "\n";
+   }
+
+# insert correct start/step/dircos and add the history string
+&do_cmd('minc_modify_header', 
+        '-dinsert', "xspace:start=$gen_hdr->{xstart}",
+        '-dinsert', "yspace:start=$gen_hdr->{ystart}",
+        '-dinsert', "zspace:start=$gen_hdr->{zstart}",
+        
+        '-dinsert', "xspace:step=$gen_hdr->{xstep}",
+        '-dinsert', "yspace:step=$gen_hdr->{ystep}",
+        '-dinsert', "zspace:step=$gen_hdr->{zstep}",
+        
+        '-dinsert', "xspace:direction_cosines=" . join(',', @{$gen_hdr->{xdircos}}),
+        '-dinsert', "yspace:direction_cosines=" . join(',', @{$gen_hdr->{ydircos}}),
+        '-dinsert', "zspace:direction_cosines=" . join(',', @{$gen_hdr->{zdircos}}),
+        
+        '-sinsert', ":history=$history", $outfile);
+
+# add ASCCONV header to MINC header
+#foreach  (sort(keys(%siemens_hdr))){
+#   push(@args, '-sinsert', "siemens_header:$_=" . Dumper($siemens_hdr{$_}));
+#   }
+#&do_cmd('minc_modify_header', @args, $outfile);
+
+
+sub do_cmd {
+   print STDOUT "@_\n" if $opt{verbose};
+   if(!$opt{fake}){
+      system(@_) == 0 or die;
       }
-   print STDERR "$message\n" if defined $message;
-   
-   print STDOUT "Cleaning up....\n" if $verbose;
-   @args = ('rm', '-r', '-f', $tmpdir);
-   print STDOUT "@args\n" if $verbose;
-   system(@args);
-   
-   exit($status);
    }
 
 # return a ASCII dump of a general header
@@ -289,4 +412,132 @@ sub dump_general_header{
    $tmp .= "\n";
       
    return $tmp;
+   }
+
+# Routine to compute a dot product from two arrayrefs
+sub vector_dot_product {
+   my($vec1, $vec2) = @_;
+   my($result, $i);
+   $result = 0;
+   for $i (0..2) {
+       $result += $$vec1[$i] * $$vec2[$i];
+   }
+   return $result;
+   }
+
+# Routine to compute a vector cross product from two arrayrefs
+sub vector_cross_product {
+   my($vec1, $vec2) = @_;
+   my(@result);
+   $#result = 2;
+   $result[0] = $$vec1[1] * $$vec2[2] - $$vec1[2] * $$vec2[1];
+   $result[1] = $$vec1[2] * $$vec2[0] - $$vec1[0] * $$vec2[2];
+   $result[2] = $$vec1[0] * $$vec2[1] - $$vec1[1] * $$vec2[0];
+   return @result;
+   }
+
+# Routine to add two vectors
+sub vector_add {
+   my($vec1, $vec2) = @_;
+   my(@result, $i);
+   $#result = 2;
+   for $i (0..2) {
+      $result[$i] = $$vec1[$i] + $$vec2[$i];
+      }
+   return @result;
+   }
+
+
+# Routine to calculate a vector that is orthogonal to 2 other
+# vectors by doing a cross product. The vectors are copied
+# before the calculation so the result vector can be one of
+# the input vectors.
+sub calculate_orthogonal_vector {
+   my($vec1, $vec2) = @_;
+   my(@result);
+   $#result = 2;
+   
+   for $i (0..2) {
+      $result[$i] = 
+         $$vec1[($i+1) % 3] * $$vec2[($i+2) % 3] -
+         $$vec2[($i+1) % 3] * $$vec1[($i+2) % 3];
+      }
+   return @result;
+   }
+
+# Routine to scale a vector
+sub vector_scale {
+   my($scale, $vec1) = @_;
+   my(@result, $i);
+   $#result = 2;
+   for $i (0..2) {
+      $result[$i] = $$vec1[$i] * $scale;
+      }
+   return @result;
+   }
+
+
+# Routine to convert an origin specified in world coordinates
+# to an array of minc start positions by projecting the point
+# along the edges of the parallelopiped formed by the
+# 3 direction cosines. Direction cosines are normalized.
+sub convert_origin_to_start {
+   my($origin, $xdircos, $ydircos, $zdircos) = @_;
+   my(@start);
+   $#start = 2;
+
+   # Set up dircos matrix
+   for $i (0..2){
+      $axes[0][$i] = $$xdircos[$i];
+      $axes[1][$i] = $$ydircos[$i];
+      $axes[2][$i] = $$zdircos[$i];
+      }
+
+   # Calculate lengths of direction cosines, 
+   # checking for zero lengths and parallel vectors.
+   for $i (0..2){
+      
+      @normal = &calculate_orthogonal_vector($axes[$i], $axes[($i+1) % 3]);
+      
+      $lengths[$i] = 0.0;
+      $normal_length = 0.0;
+      for $j (0..2) {
+         $lengths[$i] += $axes[$i][$j] ** 2;
+         $normal_length += $normal[$j] ** 2;
+         }
+      $lengths[$i] = sqrt($lengths[$i]);
+      
+      # sanity checks
+      if($lengths[$i] == 0.0) {
+         die "$me: Cannot convert origin to start - some direction cosines have zero length.\n";
+         }
+      if($normal_length == 0.0) {
+         die "$me: Cannot convert origin to start - some direction cosines are parallel.\n";
+         }
+      }
+
+   # Loop over axes, calculating projections
+   for $i (0..2) {
+
+      # Calculate vector normal to other two axes by doing cross product
+      @normal = &calculate_orthogonal_vector($axes[($i+1) % 3], $axes[($i+2) % 3]);
+
+      # Calculate dot product of origin with normal (numerator) and
+      # dot product of current axis with normal (denominator)
+      $denominator = $numerator = 0.0;
+      for $j (0..2) {
+         $numerator += $$origin[$j] * $normal[$j];
+         $denominator += $axes[$i][$j] * $normal[$j];
+         }
+
+      # Calculate parallel projection
+      if($denominator != 0.0){
+         $start[$i] = $lengths[$i] * $numerator / $denominator;
+         }
+      else{
+         $start[$i] = 0.0;
+         }
+      }
+
+   return @start;
    }
