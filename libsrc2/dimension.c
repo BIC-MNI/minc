@@ -1204,59 +1204,64 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
 
 static int error_cnt = 0;
 
+#define CX 10
+#define CY 10
+#define CZ 6
+#define NDIMS 3
 
 int main(int argc, char **argv)
 {
-  mihandle_t vol, vol1;
+  mihandle_t vol;
   int r;
-  midimhandle_t dimh, dimh1,dimh2, dimh3; 
-  midimhandle_t dim[4];
+  midimhandle_t dimh, dimh1,dimh2; 
+  midimhandle_t dim[3];
   mivolumeprops_t props;
   double cosines[3];
   double offsets[3];
   double widths[3];
   int n;
   midimhandle_t dimens[3];
+  unsigned long coords[NDIMS];
+    unsigned long count[NDIMS];
+    int i,j,k;
+    struct test {
+        int r;
+        int g;
+        int b;
+    } voxel;
+    int result = 1;
+  /* Write data one voxel at a time. */
+    for (i = 0; i < NDIMS; i++) {
+        count[i] = 1;
+    }
+
+    r = minew_volume_props(&props);
+    r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
+    r = miset_props_zlib_compression(props, 3);
+     r = miset_props_multi_resolution(props, 1, 3);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
   
-  r = minew_volume_props(&props);
-  r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
-  r = miset_props_zlib_compression(props, 3);
-  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 100,&dimh);
+  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[0]=dimh;
   
-  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 12,&dimh1);
+  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension("z",MI_DIMCLASS_SPATIAL,MI_DIMATTR_NOT_REGULARLY_SAMPLED, 3,&dimh2);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  offsets[0]=1.5;
-  offsets[1]=2.5;
-  offsets[2]=3.5;
-  r = miset_dimension_offsets(dimh2, 3, 0, offsets);
-  r = miget_dimension_cosines(dimh1, cosines);
+  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 6,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   
   dim[2]=dimh2;
-   r = micreate_dimension("zfrequency",MI_DIMCLASS_SFREQUENCY,MI_DIMATTR_REGULARLY_SAMPLED,3,&dimh3);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  r = miget_dimension_cosines(dimh3, cosines);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  } 
-  dim[3]=dimh3;
-  r = micreate_volume("test.h5", 4, dim, MI_TYPE_UINT, MI_CLASS_INT,props,&vol);
+ 
+  r = micreate_volume("test_multi_h5.mnc", 3, dim, MI_TYPE_UINT, MI_CLASS_REAL,props,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
@@ -1266,37 +1271,44 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   }
   
-  r =miset_dimension_description(dimh3, "this is funny");
-  if ( r < 0) {
-    TESTRPT("failed", r);
-  }
-  widths[0]=2;
-  widths[1]=3.5;
-  widths[2]=4.5;
-  r = miset_dimension_widths(dimh2, 3, 0, widths);
-  r = miget_volume_dimensions(vol, MI_DIMCLASS_ANY, 0, 0, 4, dimens);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  //printf(" %s %s %s \n", dimens[0]->name, dimens[1]->name, dimens[2]->name);
-  //printf(" %s \n", dimens[3]->comments);
-  //printf(" %s \n", dimens[0]->comments);
-  //printf( " %f %f %f \n", dimens[2]->offsets[0], dimens[2]->offsets[1], dimens[2]->offsets[2] );
-  //printf( " %f %f %f \n", dimens[2]->widths[0], dimens[2]->widths[1], dimens[2]->widths[2] );
   r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   printf( " N is %d \n", n);
+
+  for (i = 0; i < CX; i++) {
+        for (j = 0; j < CY; j++) {
+            for (k = 0; k < CZ; k++) {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+
+                voxel.r = i;
+                voxel.g = j;
+                voxel.b = k;
+                
+                result = miset_voxel_value_hyperslab(vol, MI_TYPE_UINT,
+						     coords, count, &voxel);
+                if (result < 0) {
+                    TESTRPT("Error writing voxel", result);
+                }
+            }
+        }
+    }
+
+  /* call miselect_resolution() 
+   */
  
+  r = miflush_from_resolution(vol, 3);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
   r = miclose_volume(vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  r= miopen_volume("test.h5",MI2_OPEN_READ ,&vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
+  
   if (error_cnt != 0) {
     fprintf(stderr, "%d error%s reported\n", 
 	    error_cnt, (error_cnt == 1) ? "" : "s");

@@ -908,17 +908,14 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
                     for (z = 0; z < scale; z++) {
                         int x1,y1,z1;
                         double t;
-
                         x1 = x;
                         y1 = y + (j * scale);
                         z1 = z + (k * scale);
-
                         t = in_ptr[((x1 * isize[1]) + y1) * isize[2] + z1];
                         d += t;
                     }
                 }
             }
-
             d /= total;
             out_ptr[(j * osize[1]) + k] = d;
         }
@@ -961,6 +958,7 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
      */
     sprintf(path, "%d/image", igrp);
     idst_id = H5Dopen(loc_id, path);
+    
     if (idst_id < 0) {
         return (MI_ERROR);
     }
@@ -979,21 +977,23 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     /* Calculate the size of the new thumbnail.
      */
     for (i = 0; i < ndims; i++) {
-	osize[i] = isize[i] / scale; 
+	osize[i] = isize[i] / scale;
 	if (osize[i] == 0) {	/* Too small? */
 	    return (MI_ERROR);
 	}
     }
-
+    /* Create dataspace for new resolution
+     */
     ofspc_id = H5Screate_simple(ndims, osize, NULL);
-
+    
     sprintf(path, "%d/image", ogrp);
+    
     /* TODO: Non-default properties */
     odst_id = H5Dcreate(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
     if (odst_id < 0) {
         odst_id = H5Dopen(loc_id, path);
     }
-
+    
     /* Calculate the input buffer size - scale slices.
      */
     in_bytes = scale * isize[1] * isize[2] * sizeof(double);
@@ -1029,7 +1029,7 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 	H5Dread(idst_id, H5T_NATIVE_DOUBLE, imspc_id, ifspc_id, H5P_DEFAULT, in_ptr);
 
         midownsample_slice(in_ptr, out_ptr, isize, osize, scale);
-
+	
 	start[0] = slice;
 	start[1] = 0;
 	start[2] = 0;
@@ -1037,18 +1037,22 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 	count[1] = osize[1];
 	count[2] = osize[2];
 	H5Sselect_hyperslab(ofspc_id, H5S_SELECT_SET, start, NULL, count, NULL);
+	
 	H5Dwrite(odst_id, H5T_NATIVE_DOUBLE, omspc_id, ofspc_id, H5P_DEFAULT, 
                  out_ptr);
     }
-
+    
     free(in_ptr);
-    free(out_ptr);
+    // THIS CALL RESULTS IN segfault, NOT SURE WHY!
+    //free(out_ptr);
+    
     H5Sclose(omspc_id);
     H5Sclose(imspc_id);
     H5Dclose(odst_id);
     H5Tclose(typ_id);
     H5Sclose(ofspc_id);
     H5Sclose(ifspc_id);
+    
     return (MI_NOERROR);
 }
 
@@ -1063,29 +1067,33 @@ minc_update_thumbnails(hid_t file_id)
     hsize_t i;
     char name[128];
     size_t length;
-
+  
     grp_id = H5Gopen(file_id, "/minc-2.0/image");
+    
     if (grp_id >= 0) {
-        if (H5Gget_num_objs(grp_id, &n) != 0) {
+        if (H5Gget_num_objs(grp_id, &n) >= 0) {
             for (i = 0; i < n; i++) {
-                length = sizeof(name);
-                H5Gget_objname_by_idx(grp_id, i, name, length);
+	        length = sizeof(name);
+                if (H5Gget_objname_by_idx(grp_id, i, name, 128) < 0) {
+		  return (MI_ERROR);
+		}
                 fprintf(stderr, "Found group %s\n", name);
                 prv_grp_no = grp_no;
                 grp_no = atoi(name);
                 if (grp_no != 0) {
                     fprintf(stderr, "Updating group #%d from #%d\n", 
                             grp_no, prv_grp_no);
-                    minc_update_thumbnail(grp_id, prv_grp_no, grp_no);
+		    minc_update_thumbnail(grp_id, prv_grp_no, grp_no);
                 }
             }
         }
         else {
             fprintf(stderr, "error getting object count?\n");
         }
-
+	
         H5Gclose(grp_id);
-    }
+	
+    } 
     else {
         fprintf(stderr, "error opening group?\n");
 	

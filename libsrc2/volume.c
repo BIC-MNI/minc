@@ -30,7 +30,8 @@ micreate_volume_image(mihandle_t volume)
     hid_t dataspace_id;
     hid_t dset_id;
     hsize_t hdf_size[MI2_MAX_VAR_DIMS];
-
+    hid_t grp_id;
+    hsize_t n;
     /* Try creating IMAGE dataset i.e. /minc-2.0/image/0/image
      */
 
@@ -120,7 +121,9 @@ micreate_volume_image(mihandle_t volume)
         volume->imax_id = dset_id;
         hdf_var_declare(volume->hdf_id, "image-max", "/minc-2.0/image/0/image-max", ndims, hdf_size);
         H5Sclose(dataspace_id);
+	
     }
+
     return (MI_NOERROR);
 }
 
@@ -225,7 +228,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   if (file_id < 0) {
     return (MI_ERROR);
   }
-  
+
   hdf_plist = H5Pcreate(H5P_DATASET_CREATE);
   if (hdf_plist < 0) {
     return (MI_ERROR);
@@ -276,6 +279,15 @@ micreate_volume(const char *filename, int number_of_dimensions,
     }
   }
   
+  /* See if Multi-res is set to a level above 0 and if yes create subgroups*/
+  if (create_props != NULL && create_props->depth > 0) {
+    for (i=0; i < create_props->depth ; i++) {
+      if (minc_create_thumbnail(file_id, i+1) < 0) {
+	return (MI_ERROR);
+      }
+    }
+  }
+
    /* Try creating DIMENSIONS GROUP i.e. /minc-2.0/dimensions
     */
   grp_dimensions_id = H5Gopen(file_id, "/minc-2.0/dimensions");

@@ -170,14 +170,14 @@ int
 miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
 			    int depth)
 {
-  if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth < 0) {
+  int i;
+  if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
     return (MI_ERROR);
   }
   
   if (enable_flag){
     props->enable_flag = enable_flag;
     props->depth = depth;
-   
   }
   else {
     return (MI_ERROR);
@@ -216,13 +216,16 @@ miselect_resolution(mihandle_t volume, int depth)
     return (MI_ERROR);
   }
   /* Check given depth with the available depth in file.
+     Make sure the selected resolution does exist.
    */
-  if (depth <= volume->create_props->depth) {
-    printf(" THIS RESOLUTION IS ALREADY COMPUTED!!! \n");
+  if (depth > volume->create_props->depth) {
+    printf(" THIS RESOLUTION DOES NOT EXIST!!! \n");
     return (0);
   }
   else {
-    minc_update_thumbnail(grp_id,0 ,depth);
+    if (minc_update_thumbnail(grp_id,0 ,depth) < 0) {
+      return (MI_ERROR);
+    }
   }
 
  return (MI_NOERROR);
@@ -234,13 +237,20 @@ int
 miflush_from_resolution(mihandle_t volume, int depth)
 {
   int i;
-  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth < 0) {
+  
+  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
     return (MI_ERROR);
   }
-  for(i=0; i<depth; i++) {
-    miselect_resolution(volume, i+1);
-  }
   
+  if (depth > volume->create_props->depth) {
+    printf(" THIS RESOLUTION DOES NOT EXIST!!! \n");
+    return (0);
+  }
+  else {
+    if (minc_update_thumbnails(volume->hdf_id) < 0) {
+      return (MI_ERROR);
+    }
+  }
   
  return (MI_NOERROR);
 }
