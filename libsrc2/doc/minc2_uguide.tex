@@ -482,6 +482,44 @@ just pass the dimension handle to the following function:\\
       mifree_dimension_handle(midimhandle_t dim_ptr)
 \end{verbatim}
 
+\subsection{Dimension and voxel ordering}
+Since MINC files may organize data arbitrarily, the MINC 2.0
+programming interface allows the programmer to specify both the
+apparent order of dimensions and the apparent direction of each
+dimension.  This enables programs to specify a that the data be
+presented in whatever fashion is most convenient.
+
+The programmer may set an ``apparent'' dimension order for a given
+volume.  Specifying an apparent dimension order causes the library to
+transform all coordinates and data as if the data was stored in the
+apparent order. If a set of three volumes which must be processed
+simultaneously have the dimensions x,y,z, z,y,x, and y,z,x
+respectively, it may be useful for a program to treat them each as if
+the data was in z,y,x order.
+
+Transforming the dimensions of a block of data causes the block to be
+restructured in memory after it is read or before it is written.  Obviously
+this restructuring takes time and will affect data throughput.
+
+If the apparent dimension order happens to match the volume's file
+dimension order, no special processing is performed.
+
+For each dimension, a programmer may also specify an apparent
+direction.  This apparent direction may be specified in one of four
+ways:
+\begin{enumerate}
+\item Native file order - The dimension's direction is exactly as it
+appears in the file.
+\item Counter file order - The dimension's direction is opposite the
+file order.
+\item Positive order - The dimension's direction in world coordinates
+is guaranteed to be positive along increasing voxel coordinates.  This
+mode inverts the dimension only if the step size is negative.
+\item Negative order - The dimension's direction in world coordinates
+is guaranteed to be negative along increasing voxel coordinates.  This
+mode inverts the dimension only if the step size is positive.
+\end{enumerate}
+
 \section{Volume Attributes}
 Attributes are small datasets, text or numeric, which are used to describe extra information about 
 the variables they are attached to and carry NO information about the medical image itself.
@@ -622,7 +660,7 @@ int miset_voxel_value_hyperslab(mihandle_t volume,
 These two functions read and write a hyperslab of data from the file, 
 performing no data conversions on the individual voxels.  Coordinate
 transformations may be performed, depending upon the apparent direction
-and order of dimensions of the volume dimensions.
+and order of the volume dimensions and voxels.
 
 \subsection{Hyperslab, real data functions}
 \begin{verbatim}
@@ -631,13 +669,27 @@ int miget_real_value_hyperslab(mihandle_t volume,
 			       const unsigned long start[],
 			       const unsigned long count[],
 			       void *buf_ptr);
+\end{verbatim}
 
+{\tt miget\_real\_value\_hyperslab} retrieves a selected hyperslab of
+data from the MINC file.  If the file's class is ``real'', each voxel
+is converted by scaling it with the stored image minimum and maximum
+values.  If the file's class is not ``real'', no conversion is performed.
+
+\begin{verbatim}
 int miset_real_value_hyperslab(mihandle_t volume,
                                mitype_t buf_type,
 			       const unsigned long start[],
 			       const unsigned long count[],
 			       const void *buf_ptr);
+\end{verbatim}
 
+{\tt miset\_real\_value\_hyperslab} saves a selected hyperslab of data
+to the MINC file.  If the file's class is ``real'', each voxel is
+converted by scaling it with the stored image minimum and maximum
+values.  If the file's class is not ``real'', no conversion is performed.
+
+\begin{verbatim}
 int miget_hyperslab_normalized(mihandle_t volume, 
                                mitype_t buffer_data_type,
                                const unsigned long start[], 
@@ -646,6 +698,14 @@ int miget_hyperslab_normalized(mihandle_t volume,
                                double max, 
                                void *buffer);
 \end{verbatim}
+
+{\tt miget\_hyperslab\_normalized} reads a hyperslab of data from the file.
+In addition to performing the standard conversions, the data is normalized
+such that the values are mapped into the full range of the specified 
+{\tt buffer\_data\_type}, such that real voxel values less than or equal to 
+{\tt min} will be mapped to the lowest possible value of the data type, and
+real voxel values greater than or equal to {\tt max} will be mapped to the
+largest possible value of the data type.
 
 \section{Volume creation}
 After all the required dimension handles are defined/assigned with their appropriate 
@@ -728,5 +788,62 @@ main() {
 \end{verbatim}
 
 \section{Multiresolution, blocking and compression}
+This section covers the details of several of the advanced features of
+the MINC 2 library.
+
+\subsection{Multiresolution}
+
+\subsection{Blocking}
+Blocking, also known as chunking, refers to an alternative method of
+organizing the storage of image data.  Most standard operating systems
+represent a file as a one-dimesional array of eight-bit bytes.  In a
+conventional file, multidimensional data is stored in a simple
+continguous array of values.  Each successive value is related to the
+previous value by an increment of the ``fastest-varying'' dimension of
+the file, which is usually the last dimension.  The first dimension is
+the ``slowest-varying'' dimension of the file.  For example, given a
+three dimensional image with dimensions $X$,$Y$,and $Z$ with lengths
+$L_X$, $L_Y$, and $L_Z$, a the correct storage index of any 
+voxel at position $(x,y,z)$ can be calculated as:
+\begin{equation}
+I = ((x * L_X) + y * L_Y) + z
+\end{equation}
+
+This storage method has the virtue of simplicity, and also
+conveniently mimics the memory organization of arrays in the ``C''
+programming language.  However, it has two major drawbacks.  First, it
+assumes that all of the data is stored in a contiguous block.  This
+reduces flexibility, making it extremely difficult to implement data
+compression, for example, since compression may remove the predictable
+relationship between adjacent data values.  Second, this storage
+method inherently favors input and output which read entire sections
+along the fastest-varying dimension. In the above example, if your
+program wants to read a slice of data which varies in $x$ and $y$ but
+which is at a fixed $z$, it must read through most of the file to
+collect the required data.
+
+In a file with ``blocking'' enabled, data is stored in a more complex
+fashion.  A block with the same dimensionality as the overall file is
+defined, and each block contains a fixed-size chunk of the overall data.
+For example, if a file has the overall dimensionality of $X = Y = Z = 100$,
+and a block size of $10$, then the file's data will be grouped into 1000 blocks
+of data, each holding 1000 values each.  The ``first'' block contains all 
+data points for $0 \le X < 10$, $0 \le Y < 10$, and $0 \le Z < 10$.  Within
+a block, the storage layout is the same as for the contiguous case described
+above.
+
+To complicate matters, the file may contain some sort of translation
+table which defines the physical storage location of each of these
+blocks, so that blocks may not be stored in a specific order.
+
+The advantage of a block-structured file is that in freeing the system from
+a strictly-ordered storage arrangement, it becomes possible for individual
+blocks to vary in location and size.  If a compression algorithm is applied,
+some blocks will prove highly compressible and thus will be quite small, 
+whereas relatively uncompressible blocks will be relatively large.  In the
+case of a sparse array, it may be possible to avoid allocating space for 
+those blocks which consist of only the default value.
+
+\subsection{Compression}
 \end{document}
 
