@@ -190,8 +190,8 @@ language also supports the infix exponentiation operator ^ and the
 usual boolean operators <, <=, >, >=, ==, != as well as && (and), ||
 (or) and ! (not). Note that the && and || boolean operators always
 evaluate both operands, unlike C. Mathematical operations include abs,
-sqrt, exp, log, sin, and cos. There are also some specialized
-functions:
+sqrt, exp, log, sin, cos, tan, asin, acos and atan. There are also some
+specialized functions:
 
    isnan(v) - 1 if v is invalid and 0 otherwise
    clamp(v1,v2,v3) - v1 bounded by [v2, v3]

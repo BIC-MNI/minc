@@ -216,6 +216,18 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
    
          case NODETYPE_COS:
             result->vals[ivalue] = cos(vals[0]); break;
+         
+         case NODETYPE_TAN:
+            result->vals[ivalue] = tan(vals[0]); break;
+   
+         case NODETYPE_ASIN:
+            result->vals[ivalue] = asin(vals[0]); break;
+   
+         case NODETYPE_ACOS:
+            result->vals[ivalue] = acos(vals[0]); break;
+         
+         case NODETYPE_ATAN:
+            result->vals[ivalue] = atan(vals[0]); break;
    
          case NODETYPE_CLAMP:
             if (vals[0] < vals[1]) result->vals[ivalue] = vals[1];

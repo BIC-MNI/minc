@@ -1495,9 +1495,11 @@ public  void  set_minc_input_vector_to_scalar_flag(
     BOOLEAN             flag )
 \end{verbatim}}
 
-\desc{By default, any volume which contains a dimension which is of
-type vector, for instance, an RGB colour volume, is converted to a
-scalar volume by averaging the components of each vector.  This can be
+\desc{MINC and Volume\_IO treat a volume with MIvector\_dimension
+as the last (i.e.\ fastest varying) dimension as a \emph{vector volume}.
+By default, such a vector volume is converted to a scalar volume
+on input.  The value at each voxel becomes the mean of the vector
+components for that voxel.  This conversion can be
 disabled by passing the \name{flag} as \name{FALSE}.}
 
 {\bf\begin{verbatim}
@@ -1512,14 +1514,15 @@ public  void  set_minc_input_colour_indices(
     int                 indices[4] )
 \end{verbatim}}
 
-\desc{By default, any volume which contains a dimension which is of
-type vector, for instance, an RGB colour volume, is converted to a
-scalar volume by averaging the components of each vector.  If this
-option is set to true, any vector volume with the number of components
-specified by \name{set\_minc\_input\_colour\_dimension\_size}
-(default 3) is converted to a colour volume, using the
-indices specified by \name{set\-\_minc\-\_input\-\_colour\-\_indices}
-(default 0, 1, 2).}
+\desc{MINC and Volume\_IO treat a volume with MIvector\_dimension
+as the last (i.e. fastest varying) dimension as a \emph{vector
+volume}.  Such a volume may be converted on input to a \emph{colour
+volume} by calling \name{set\-\_minc\-\_input\-\_vector\-\_to\-\_colour\-\_flag}
+with \name{flag} set to \name{TRUE}.  If this option is set to true,
+any vector volume with the number of components specified by
+\name{set\_minc\_input\_colour\_dimension\_size} (default 3) is
+converted to a colour volume, using the indices specified by
+\name{set\-\_minc\-\_input\-\_colour\-\_indices} (default 0, 1, 2).}
 
 {\bf\begin{verbatim}
 public  void  set_minc_input_user_real_range(

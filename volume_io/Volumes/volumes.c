@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.71 2001-04-24 13:38:49 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.72 2002-08-23 03:16:44 stever Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -2255,6 +2255,7 @@ public  void  set_volume_real_range(
         }
         else
         {
+	    // FIXME: is scale = 0 correct??
             volume->real_value_scale = 0.0;
             volume->real_value_translation = real_min;
         }

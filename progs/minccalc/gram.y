@@ -21,14 +21,14 @@ ident_t  ident;
 
 %token      NAN
 %token      IN TO IDENT REAL AVG PROD SUM LET NEG LEN MAX MIN
-%token      ISNAN SQRT ABS EXP LOG SIN COS CLAMP SEGMENT
+%token      ISNAN SQRT ABS EXP LOG SIN COS TAN ASIN ACOS ATAN CLAMP SEGMENT
 %token      LT LE GT GE EQ NE NOT AND OR
 %token      IF ELSE FOR
 
 %type<ident>   IDENT 
 %type<real>    REAL
 %type<pos>     IN TO AVG SUM PROD LET NEG LEN IF ELSE FOR
-%type<pos>     ISNAN SQRT ABS MAX MIN EXP LOG SIN COS
+%type<pos>     ISNAN SQRT ABS MAX MIN EXP LOG SIN COS TAN ASIN ACOS ATAN
 %type<pos>     CLAMP SEGMENT
 %type<pos>     NOT LT LE GT GE EQ NE AND OR
 %type<pos>     '+' '-' '*' '/' '(' ')' '[' ']' '.' '=' '^' '{' '}' ',' '|' ';'
@@ -46,7 +46,7 @@ ident_t  ident;
 %left    '*' '/'
 %right   NEG NOT
 %right   '^'
-%right   AVG SUM PROD LEN ISNAN SQRT ABS MAX MIN EXP LOG SIN COS
+%right   AVG SUM PROD LEN ISNAN SQRT ABS MAX MIN EXP LOG SIN COS TAN ASIN ACOS ATAN
 
 %%
 
@@ -336,6 +336,34 @@ expr   :   '(' expr ')'
       { $$ = new_scalar_node(1);
         $$->pos = $1;
         $$->type = NODETYPE_COS;
+        $$->flags |= ALLARGS_SCALAR;
+        $$->expr[0] = $2; }
+
+   |   TAN expr
+      { $$ = new_scalar_node(1);
+        $$->pos = $1;
+        $$->type = NODETYPE_TAN;
+        $$->flags |= ALLARGS_SCALAR;
+        $$->expr[0] = $2; }
+
+   |   ASIN expr
+      { $$ = new_scalar_node(1);
+        $$->pos = $1;
+        $$->type = NODETYPE_ASIN;
+        $$->flags |= ALLARGS_SCALAR;
+        $$->expr[0] = $2; }
+
+   |   ACOS expr
+      { $$ = new_scalar_node(1);
+        $$->pos = $1;
+        $$->type = NODETYPE_ACOS;
+        $$->flags |= ALLARGS_SCALAR;
+        $$->expr[0] = $2; }
+
+   |   ATAN expr
+      { $$ = new_scalar_node(1);
+        $$->pos = $1;
+        $$->type = NODETYPE_ATAN;
         $$->flags |= ALLARGS_SCALAR;
         $$->expr[0] = $2; }
 

@@ -1,3 +1,16 @@
+2002-08-22  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* volume_io/Documentation/volume_io.tex (section{Volume Input}): 
+	Clarify notion of vector volume and vector-to-scalar conversion.
+
+	* progs/minccalc/eval.c: 
+	* progs/minccalc/gram.y:
+	* progs/minccalc/lex.l:
+	* progs/minccalc/minccalc.man1: 
+	* progs/minccalc/node.c:
+	* progs/minccalc/node.h: Add support for tan, asin, acos, and
+	atan, courtesy of Andrew Janke.
+
 2002-02-22  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* libsrc/ParseArgv.h: Declare code with "C" linkage when included
