@@ -16,19 +16,17 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.3 2004-02-02 18:22:07 bert Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4 2004-04-15 21:18:56 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
 #include "config.h"
+#include "minc_private.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <ParseArgv.h>
-
-#define TRUE  1
-#define FALSE 0
 
 /*
  * Default table of argument descriptors.  These are normally available
@@ -60,7 +58,8 @@ static void     PrintVersion(ArgvInfo *argTable);
  *	command-line options.  See the manual page for more details.
  *
  * Results:
- *	The return value is a Boolean value with TRUE indicating an error.  
+ *	The return value is a Boolean value with non-zero indicating an 
+ *      error.  
  *	If an error occurs then an error message is printed on stderr.
  *	Under normal conditions, both *argcPtr and *argv are modified
  *	to return the arguments that couldn't be processed here (they
