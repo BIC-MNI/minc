@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.3 1993-06-07 15:03:03 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.4 1993-06-10 10:18:55 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -65,15 +65,16 @@ typedef struct {
 } Option_type;
 
 /* Macros */
-#define CHK_ERR(code) if ((code) == MI_ERROR) report_error();
+#define REPORT_ERROR {report_error(); goto error_label;}
+#define CHK_ERR(code) if ((code) == MI_ERROR) {REPORT_ERROR}
+#define RTN_ERR(code) if ((code) == MI_ERROR) {return MI_ERROR;}
 
 /* Function prototypes */
 public int main(int argc, char *argv[]);
 public int get_option(char *dst, char *key, char *nextarg);
 public void report_error(void);
-public void get_attname(int mincid, char *string, int *varid, char *name);
-public void print_image_info(char *filename, int mincid);
-
+public int get_attname(int mincid, char *string, int *varid, char *name);
+public int print_image_info(char *filename, int mincid);
 /* Variables used for argument parsing */
 char *error_string = NULL;
 Option_type option_list[MAX_NUM_OPTIONS] = {ENDLIST};
@@ -155,7 +156,7 @@ public int main(int argc, char *argv[])
       string = option_list[option].value;
       switch (option_list[option].code) {
       case IMAGE_INFO:
-         print_image_info(filename, mincid);
+         CHK_ERR(print_image_info(filename, mincid));
          break;
       case DIMNAMES:
          CHK_ERR(ncinquire(mincid, &ndims, NULL, NULL, NULL));
@@ -240,17 +241,17 @@ public int main(int argc, char *argv[])
          }
          break;
       case ATTTYPE:
-         get_attname(mincid, string, &varid, name);
+         CHK_ERR(get_attname(mincid, string, &varid, name));
          CHK_ERR(ncattinq(mincid, varid, name, &datatype, NULL));
          (void) printf("%s\n", type_names[datatype]);
          break;
       case ATTVALUE:
-         get_attname(mincid, string, &varid, name);
+         CHK_ERR(get_attname(mincid, string, &varid, name));
          CHK_ERR(ncattinq(mincid, varid, name, &datatype, &att_length));
          if (datatype == NC_CHAR) {
             cdata = malloc((att_length+1)*sizeof(char));
             if (miattgetstr(mincid, varid, name, att_length+1, cdata)==NULL)
-               report_error();
+               {REPORT_ERROR;}
             (void) printf("%s\n", cdata);
          }
          else {
@@ -267,6 +268,7 @@ public int main(int argc, char *argv[])
          (void) fprintf(stderr, "%s: Program bug!\n", argv[0]);
          return EXIT_FAILURE;
       }
+   error_label: ;
    }
 
    /* Close the file */
@@ -341,7 +343,7 @@ public void report_error(void)
    }
    else {
       (void) fprintf(stdout, "%s\n", error_string);
-      exit(EXIT_SUCCESS);
+      return;
    }
 }
 
@@ -351,7 +353,7 @@ public void report_error(void)
               string - string giving varname:attname
 @OUTPUT     : varid - pointer to variale id
               name - name of attribute
-@RETURNS    : (none)
+@RETURNS    : MI_ERROR if an error occurs
 @DESCRIPTION: Gets variable id and attribute name from a string of the
               form "varname:attname"
 @METHOD     : 
@@ -360,14 +362,14 @@ public void report_error(void)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_attname(int mincid, char *string, int *varid, char *name)
+public int get_attname(int mincid, char *string, int *varid, char *name)
 {
    char *cptr;
 
    /* Check for : */
    cptr = strchr(string, ':');
    if (cptr == NULL) {
-      if (error_string != NULL) report_error();
+      if (error_string != NULL) return MI_ERROR;
       (void) fprintf(stderr, "Invalid attribute name '%s'\n",
                      string);
       exit(EXIT_FAILURE);
@@ -380,11 +382,11 @@ public void get_attname(int mincid, char *string, int *varid, char *name)
       *varid = NC_GLOBAL;
    }
    else {
-      CHK_ERR(*varid=ncvarid(mincid, string));
+      RTN_ERR(*varid=ncvarid(mincid, string));
    }
    (void) strncpy(name, cptr, MAX_NC_NAME-1);
 
-   return;
+   return MI_NOERROR;
 
 }
 
@@ -392,7 +394,7 @@ public void get_attname(int mincid, char *string, int *varid, char *name)
 @NAME       : print_image_info
 @INPUT      : mincid - id of minc file
 @OUTPUT     : (none)
-@RETURNS    : (none)
+@RETURNS    : MI_ERROR if an error occurs
 @DESCRIPTION: Prints information about image data in file.
 @METHOD     : 
 @GLOBALS    : 
@@ -400,7 +402,7 @@ public void get_attname(int mincid, char *string, int *varid, char *name)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void print_image_info(char *filename, int mincid)
+public int print_image_info(char *filename, int mincid)
 {
    int imgid, ndims, dim[MAX_VAR_DIMS], varid;
    nc_type datatype;
@@ -415,8 +417,8 @@ public void print_image_info(char *filename, int mincid)
    double dim_start, dim_step;
 
    /* Get information about variable */
-   CHK_ERR(imgid = ncvarid(mincid, MIimage));
-   CHK_ERR(ncvarinq(mincid, imgid, NULL, &datatype, &ndims, dim, NULL));
+   RTN_ERR(imgid = ncvarid(mincid, MIimage));
+   RTN_ERR(ncvarinq(mincid, imgid, NULL, &datatype, &ndims, dim, NULL));
 
    oldncopts = ncopts;
    ncopts = 0;
@@ -454,7 +456,7 @@ public void print_image_info(char *filename, int mincid)
    /* Write out dimension names */
    (void) printf("image dimensions:");
    for (idim=0; idim<ndims; idim++) {
-      CHK_ERR(ncdiminq(mincid, dim[idim], name, NULL));
+      RTN_ERR(ncdiminq(mincid, dim[idim], name, NULL));
       (void) printf(" %s", name);
    }
    (void) printf("\n");
@@ -482,6 +484,7 @@ public void print_image_info(char *filename, int mincid)
    }
    ncopts = oldncopts;
 
-   return;
+   return MI_NOERROR;
+
 }
 
