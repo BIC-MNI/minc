@@ -32,7 +32,8 @@ CC_PROG_LIB   = $(PROG_LIB_DIR)/lib$(PROG_LIB).a
 LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln
 
 # Include directories
-INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
+INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(PROG_LIB_DIR)/dave_includes \
+	      -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
 
 # MINC loader options
 MINC_LDOPT = $(CC_MINC_LIB) $(NETCDF_LIB_DIR)/libnetcdf.a $(MACHINE_LDOPT)
