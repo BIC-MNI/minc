@@ -1,7 +1,5 @@
-
-
-/************************************************************************
- * MINC 2.0 "DIMENSION" FUNCTIONS
+/** \file dimension.c
+ * \brief MINC 2.0 "dimension" functions
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
@@ -1216,10 +1214,6 @@ int main(int argc, char **argv)
   double widths[3];
   int n;
   midimhandle_t dimens[3];
-   /* Turn off automatic error reporting - we'll take care of this
-   * ourselves, thanks!
-   */
-  H5Eset_auto(NULL, NULL);
   
   r = minew_volume_props(&props);
   r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
