@@ -1,0 +1,347 @@
+.\" Copyright 1994 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.man1,v 1.1 1994-11-02 16:22:08 neelin Exp $
+.\"
+.TH MINCRESHAPE 1 "MINC Image File Format"
+
+.SH NAME
+mincreshape - cuts a hyperslab out of a minc file (with dimension re-ordering)
+
+.SH SYNOPSIS
+.B mincreshape
+[<options>] <infile>.mnc <outfile>.mnc
+
+.SH DESCRIPTION 
+.I Mincreshape's
+main job is to chop a hyperslab out of a minc file and put it into a
+new minc file. "What is a hyperslab?", you ask. It is simply a
+multi-dimensional box specified with a starting index (a vector giving
+a voxel coordinate) and a count vector (a number of voxels along each
+axis). A single slice out of a volume is a hyperslab (with a count of
+1 in the slice direction), a small block pulled out of a large volume
+is a hyperslab, a single echo volume out of a multi-echo MRI dataset
+is a hyperslab, one time point out of a dynamic acquisition is a
+hyperslab - you get the idea.  Check out the -start, -count and
+-dimrange options for more details on how to do this (and look at the
+examples!). If you are pulling out only one point along a dimension,
+you have the option of making the dimension disappear, so mincreshape
+gives you the ability to reduce the dimensionality of a minc file. As
+well, you aren't constrained to specify a hyperslab that is only
+within the input file, you can extend beyond the bounds of the
+dimensions in the input file, and furthermore you can give a count
+that will flip the data along a dimension.
+
+As if all that is not enough
+.I mincreshape
+has the ability to re-order dimensions. The most obvious case is
+converting a transverse image into a coronal image. But you can
+type a list of dimension names to get an arbitrary order of
+dimensions.
+
+You want more!?! Okay, okay.
+.I mincreshape
+makes all of the minc library icv conversions available on the command
+line. The include changing type, range and normalization of the pixel
+values, expanding or contracting images (by pixel duplication or
+averaging) to give a specified image size, and converting vector
+images to scalar.
+
+Just so you don't get confused let me tell you clearly here:
+.I Mincreshape
+does all of the icv conversions first and then the hyperslab and
+dimension re-ordering stuff is applied to the result of that. So if
+you want to mix them together (like -imgsize, -start, -count), get it
+clear in your head first.
+
+Okay, hold on to your seat: here's a list of options.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied
+(default). A chunk varies in size depending mostly on whether you're
+re-ordering dimensions or not and how big the internal buffer is
+allowed to be.
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.I -max_chunk_size_in_kb:
+Specify the maximum size of the copy buffer (in kbytes). Default is
+4096 kbytes.
+
+.SH Image conversion options (pixel type and range):
+The default for type, sign and valid range is to use those of the input
+file. If type is specified, then both sign and valid range are set to
+the default for that type. If sign is specified, then valid range is
+set to the default for the type and sign.
+.P
+.I -filetype:
+Don't do any type conversion (default).
+.P
+.I -byte:
+Write out bytes values.
+.P
+.I -short:
+Write out short integer values.
+.P
+.I -long:
+Write out long integer values.
+.P
+.I -float:
+Write out single-precision floating point values.
+.P
+.I -double:
+Write out double-precision floating point values.
+.P
+.I -signed:
+Write out values as signed integers (default for short and long). Ignored for
+floating point types.
+.P
+.I -unsigned:
+Write out values as unsigned integers (default for byte). Ignored for
+floating point types.
+.P
+.I -valid_range 
+<min> <max>:
+specifies the valid range of output voxel values in their integer
+representation. Default is the full range
+for the type and sign. This option is ignored for floating point
+values.
+.P
+.I -image_range:
+<min> <max>
+Normalize images to a given minimum and maximum real value (not voxel
+value).
+.P
+.I -normalize:
+Normalize images to real minimum and maximum for the entire input
+file.
+.P
+.I -nonormalize:
+Do not normalize images (default).
+.P
+.I -nopixfill:
+Do not convert out-of-range values in input file, just copy them
+through.
+.P
+.I -pixfill:
+Replace out-of-range values in input file by the smallest possible
+value (default). 
+.P
+.I -pixfillvalue
+<value>:
+Specify a new pixel value to replace out-of-range values in the input
+file.
+
+.SH Image conversion options (dimension direction and size):
+.P
+.I -scalar:
+Convert vector images to scalar images (a vector image is one with
+vector_dimension as the fastest varying dimension). The vector
+dimension is removed and values are averaged.
+.P
+.I -noscalar:
+Do not convert vector images to scalar images (default).
+.P
+.I +direction:
+Flip images to give positive step value for spatial axes.
+Note that the flipping of spatial axes only applies to "image
+dimensions". These are the two fastest varying (non-vector) dimensions
+in the file. If you want to flip a non-image dimension, you can
+convert it to an image dimension with -dimsize <dimname>=-1 (the -1
+means don't really change the size). Check out the examples.
+.P
+.I -direction:
+Flip images to give negative step value for spatial axes.
+.P
+.I -anydirection:
+Don't flip images along spatial axes (default).
+.P
+.I +xdirection:
+Flip images to give positive xspace:step value (left-to-right).
+.P
+.I -xdirection:
+Flip images to give negative xspace:step value (right-to-left).
+.P
+.I -xanydirection:
+Don't flip images along x-axis.
+.P
+.I +ydirection:
+Flip images to give positive yspace:step value (posterior-to-anterior).
+.P
+.I -ydirection:
+Flip images to give negative yspace:step value (anterior-to-posterior).
+.P
+.I -yanydirection:
+Don't flip images along y-axis.
+.P
+.I +zdirection:
+Flip images to give positive zspace:step value (inferior-to-superior).
+.P
+.I -zdirection:
+Flip images to give negative zspace:step value (superior-to-inferior).
+.P
+.I -zanydirection:
+Don't flip images along z-axis.
+.P
+.I -keepaspect:
+Preserve aspect ratio when resizing images. This means that voxels are
+replicated (or averaged) the same number of times along each image
+dimension.
+.P
+.I -nokeepaspect:
+Do not force preservation of aspect ratio when resizing images (default).
+.P
+.I -imgsize
+<size>:
+Specify the desired image size (used if -rowsize or -colsize not
+given).
+.P
+.I -rowsize
+<size>:
+Specify the desired number of rows in the image.
+.P
+.I -colsize
+<size>:
+Specify the desired number of columns in the image.
+.P
+.I -dimsize
+<dimension>=<size>
+Specify the size of a named dimension (<dimension>=<size>). Note that
+the resizing only applies to "image dimensions" - usually the two
+fastest-varying (non-vector) dimensions. To do dimension resizing, all
+fastest-varying dimensions up to the named dimension are turned into
+image dimensions, and these are then affected by the direction
+options. The dimension name and size must be in one command-line
+argument, so if you use spaces (which is okay), remember to use quotes
+to hide them from the shell.
+
+.SH Reshaping options:
+.P
+.I -transverse:
+Write out transverse slices.
+.P
+.I -sagittal:
+Write out sagittal slices.
+.P
+.I -coronal:
+Write out coronal slices.
+.P
+.I -dimorder
+<dim1>,<dim2>,<dim3>,...:
+Specify dimension order, where <dim?> are the names of the dimensions.
+You can give fewer dimensions than exist in the file: they are assumed
+to be the fastest varying dimensions in the output file (so
+-transverse is exactly equivalent to -dimorder zspace,yspace,xspace).
+Again, spaces are allowed between names, but remember to hide them
+from the shell with quotes.
+.P
+.I -dimrange
+<dim>=<start>[,<count>]:
+Specify the range of dimension subscripts for dimension <dim>. If
+<count> is missing or 0, then it is taken to mean 1, but remove the
+dimension from the output file (a count of 1 will keep a dimension of
+size 1). A negative <count> means flip the data along that dimension -
+in this case <start> specifies the highest voxel coordinate for the
+dimension (-dimrange xspace=3,-3 gives a flipped version of -dimrange
+xspace=1,3). The options -start and -count provide an alternative way
+to specify the same information.
+.P
+.I -start
+<coord0>,<coord1>,<coord2>,...:
+Specifies the starting corner of the hyperslab (coordinates go from
+slowest varying dimension to fastest). If fewer coordinates are given than
+dimensions exist in the file, then they are assumed to apply
+to the slowest varying dimensions and the remaining coordinates are
+set to 0. See -dimrange for more details.
+.P
+.I -count
+<size0>,<size1>,<size2>,...:
+Specifies edge lengths of hyperslab to read (coordinates go from
+slowest varying dimension to fastest). If fewer sizes are given than 
+dimensions exist in the file, then they are assumed to apply to the
+slowest varying dimensions and the remaining sizes are set to the full
+size of the dimension. See -dimrange for more details.
+
+.SH Missing data options:
+.P
+.I -nofill:
+Use value zero for points outside of the input volume (default).
+.P
+.I -fill:
+Use a fill value for points outside of input volume (minimum possible
+value).
+.P
+.I -fillvalue
+<fillvalue>:
+Specify a fill value for points outside of the input volume (this is a
+real value, not a pixel value).
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH EXAMPLES:
+
+Assume that we have a volume with dimensions zspace,yspace,xspace and
+sizes 128,256,256. If we want to get slice 40 out of it (keeping the
+coordinate information for the zspace dimension), then we can use
+     mincreshape original.mnc new.mnc \\
+           -dimrange zspace=40,1
+
+Alternatively, we could use
+     mincreshape original.mnc new.mnc \\
+           -start 40,0,0 -count 1,256,256
+
+Or simply
+     mincreshape original.mnc new.mnc \\
+           -start 40 -count 1
+
+If we wanted to get rid of the zspace dimension, we could use
+     mincreshape original.mnc new.mnc \\
+           -dimrange zspace=40,0
+
+Let's get a block out of the middle and flip it along xspace:
+     mincreshape original.mnc new.mnc \\
+           -start 40,10,240 -count 1,200,-200
+
+But why restrain outselves? Let's go out of bounds:
+     mincreshape original.mnc new.mnc \\
+           -start 40,-100,340 -count 1,200,-200
+
+How about some sideways heads - flip x and y. And convert to byte to
+save space while we're at it:
+     mincreshape original.mnc new.mnc \\
+           -dimorder xspace,yspace -byte
+
+Let's make sure that all dimensions have a negative step attribute
+(see option +direction for some details):
+     mincreshape original.mnc new.mnc \\
+           -direction -dimsize zspace=-1
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+\fB\(co\fR\s12 Copyright 1994 by Peter Neelin
