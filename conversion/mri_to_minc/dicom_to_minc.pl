@@ -187,6 +187,20 @@ sub dicom3_read_headers {
        if ($file_offset > 65535) {
           $file_offset = unpack("L", reverse($value));
        }
+
+       # Read all of the meta information to make sure that the offset
+       # is right
+       local($offset) = &dc3_file_offset + length(&dc3_magic_string);
+       local($length) = ($file_offset + 12) * 2;
+       $value = `extract $offset $length $filename | extract_acr_nema -i 2 0`;
+       if (length($value) == 4) {
+          $file_offset = unpack("L", $value);
+          if ($file_offset > 65535) {
+             $file_offset = unpack("L", reverse($value));
+          }
+       }
+
+       # Add the other offsets
        $file_offset += &dc3_file_offset + &dc3_preamble_length;
     }
 
