@@ -19,7 +19,7 @@ OBJS     = \
    Prog_utils/progress.o \
    Geometry/transforms.o Geometry/inverse.o Geometry/points.o \
    Geometry/lubksb.o Geometry/ludcmp.o \
-   MNI_formats/gen_transforms.o MNI_formats/gen_transform_io.o \
+   MNI_formats/gen_xfs.o MNI_formats/gen_xf_io.o \
    MNI_formats/thin_plate_spline.o MNI_formats/tag_points.o \
    MNI_formats/mni_io.o \
    Volumes/volumes.o Volumes/input_mnc.o Volumes/input_volume.o \
