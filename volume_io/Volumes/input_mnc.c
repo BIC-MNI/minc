@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.40 1995-07-31 13:44:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.41 1995-08-15 14:22:19 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -529,7 +529,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     if( prev_nc_type != converted_type )
         different = TRUE;
 
-    if( different && volume->data != (char *) NULL )
+    if( different && volume_is_alloced( volume ) )
         free_volume_data( volume );
 
     return( file );
@@ -968,7 +968,7 @@ public  BOOLEAN  input_more_minc_file(
 
     volume = file->volume;
 
-    if( volume->data == (void *) NULL )
+    if( !volume_is_alloced( volume ) )
         alloc_volume_data( volume );
 
     /* --- set the counts for reading, actually these will be the same
@@ -1071,7 +1071,7 @@ public  BOOLEAN  advance_input_volume(
     {
         file->end_volume_flag = FALSE;
 
-        for_less( ind, 0, file->volume->n_dimensions )
+        for_less( ind, 0, get_volume_n_dimensions( file->volume ) )
             file->indices[file->valid_file_axes[ind]] = 0;
 
         for_less( c, 0, N_DIMENSIONS )
