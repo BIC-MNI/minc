@@ -9,8 +9,8 @@ include $(ROOT)/Makefile_configuration
 
 # Executable names
 PROGS    = acr_nema_test
-EXTRA_OBJS = file_io.o
-HEADERS  = $(EXTRA_OBJS:.o=.h)
+EXTRA_OBJS = file_io.o acr_nema_io.o element.o group.o message.o
+HEADERS  = $(EXTRA_OBJS:.o=.h) acr_nema.h
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(PROG_LDOPT)
 
