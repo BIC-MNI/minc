@@ -1,0 +1,48 @@
+See INSTALL for generic installation instructions.
+
+		Shared or Static libraries?
+		---------------------------
+
+By default, only a static version (i.e. libminc.a) will be produced.
+A shared version of the library may be enabled using the configure
+flag "--enabled-shared".  See also "--disable-static".
+
+
+		Finding NetCDF
+		--------------
+
+The NetCDF library 
+
+    http://www.unidata.ucar.edu/packages/netcdf/
+
+must be built and installed before you can build MINC.
+
+1. This library may already be installed in a location where the
+compiler can find it.  If so, you have nothing to do.
+
+2. Third-party libraries are commonly installed such that the headers
+live in /usr/local/include and the library file lives in
+/usr/local/include.  The prefix may be something else; "/opt" is
+common, too.  If this is the case, you should pass the argument
+"--build-path=/usr/local" (substitute appropriate prefix) to
+configure.
+
+3. Otherwise, you need to pass appropriate -I and -L flags to
+configure using something like 
+
+    ./configure CPPFLAGS="-I/a/b/c" LDFLAGS="-L/d/e/f"
+
+
+
+		FORTRAN Interface
+		-----------------
+
+The fortran interface is no longer built.
+
+The FORTRAN interface is no longer maintained.  Should you need it,
+all the sources and the old Makefiles are located in the fortran
+directory.  Please let us know of your success should you get it
+to build.
+
+The minc fortran interface is only supported under irix.
+

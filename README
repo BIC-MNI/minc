@@ -38,7 +38,9 @@ manual, landmark-based volume registration using a tri-plane interface
 that allows the user to roam simultaneously through two data volumes
 plus the combined volume that overlays the data of the other two. Emma
 is a minc interface to matlab (from The MathWorks) with functions to
-facilitate image processing and display.
+facilitate image processing and display.  Mni_autoreg provides automated
+registration, both linear and nonlinear.
+
 
 GETTING MINC
 ------------
@@ -52,36 +54,6 @@ Pre-compiled versions exist in the compiled subdirectory.
 Minc requires that the NetCDF package be built and installed first. It
 is available through anonymous ftp from the Unidata Program centre at
 the University Corporation for Atmospheric Research (unidata.ucar.edu). 
-You should also be able to get it from the same site that provided
-this package. Automatic registration software may also be available on
-request. 
 
-For building and installation instructions, refer to the general
-autoconf INSTALL file provided in this directory. Please note a few
-changes and additions: 
-
-   1. The default installation directory has changed to /usr/local.
-      This is different from the NetCDF default.
-
-   2. Only a few of the many configure options are used: prefix,
-      exec_prefix, and CC, to name a few. Additionally, you can set
-      NETCDF_PREFIX to tell it where to look for the netcdf stuff (if
-      it is not in .. or /usr/local).
-
-   3. The documentation in the doc subdirectory is only built if you
-      use the command "make docs". Manual pages for programs are 
-      converted by default.
-
-   4. You can selectively "make libs" or "make programs" if you wish 
-      to build the package in separate pieces (for creating shared 
-      libraries, for example).
-
-   5. The fortran interface is no longer built by default. Because of
-      changes to the NetCDF fortran code, the minc fortran interface
-      is now only supported under irix and the C wrappers are no longer 
-      generated for different platforms. In order to force a build of
-      the interface, set the environment variable BUILD_FORTRAN to "yes"
-      before running configure.
-
-   6. The package has not been set up for cross-compiling.
-
+For building and installation instructions, refer to the files
+INSTALL.minc and INSTALL.

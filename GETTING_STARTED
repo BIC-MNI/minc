@@ -14,31 +14,28 @@ with NetCDF routines to do medical-image specific things. It provides
 some enhancements to NetCDF (automatic type conversion, for example),
 as well as image conversion routines for dealing with image pixel
 value issues as well as image size and orientation. Documentation
-consists of a programmer's guide and reference (minc_user.tex (.dvi)
-and minc_reference.tex (.dvi) in the minc/doc directory). An example
-C program exists in minc/progs/mincexample.
+consists of a programmer's guide and reference (minc_user.tex and
+minc_reference.tex in the doc directory).  Example C programs exist
+in progs/mincexample.
 
 3) A high-level C library called volume_io provides a Volume data
 type, with functions like input_volume to give simple access to data
 while handling issues of pixel range conversion and voxel-to-world
-coordinate conversion. There is no documentation for this, but the
-source lives in minc/volume_io. An example program exists in 
-minc/volume_io/example called convert_volume_to_byte.c
+coordinate conversion. Documentation consists of a programmer's
+reference volume_io/Documentation/volume_io.tex.  Example programs
+exist in volume_io/Testing.
 
-4) Generic MINC applications. Check minc/bin/*minc*. All
-applications should take the -help option for a listing of options.
-Man pages exist for mincresample, rawtominc, mincheader and mincinfo (these
-are found in minc/man).
+4) Generic MINC applications. These will be in the top-level build
+directory.  All applications should take the -help option for a
+listing of options.  All have man pages.
 
-5) Specific MINC applications like register (for displaying one or two
-minc volumes and doing point tagging) and postf (display minc images).
-A man page exists for register and postf has -help option (for
-options) and a -describe option for some details. These are available from
-the Montreal Neurological Institute on request (contact 
-Peter Neelin <neelin@pet.mni.mcgill.ca>).
+5) Specific MINC applications like Display and register (for visualization)
+and mni_autoreg -- a.k.a. ANIMAL (for registration) are available from
+the BIC web page, www.bic.mni.mcgill.ca.
 
-The include file for minc is in ../include (just include <minc.h>,
-netcdf.h will automatically be included).  Volume_io includes are in
-../include/volume_io (just include <volume_io.h>). Library
-files are in ../lib.
+Applications that use MINC alone need to #include <minc.h> and
+link with "-lminc -lnetcdf -lm".
+
+Applications built with VolumeIO need to #include <volume_io.h>
+and link with "-lvolume_io -lminc -lnetcdf -lm".
 
