@@ -1,0 +1,46 @@
+#
+# MINC configuration Makefile
+#
+
+# Things to configure:
+#    NETCDF_LIB_DIR = directory in which netcdf library is found
+#    NETCDF_INCLUDE_DIR = directory in which netcdf include file is found
+#    NETCDF_FORTRAN_DIR = directory (or link) in which netcdf fortran jackets
+#        are located
+#    FORTRAN_SUBDIR = "fortran" to get compilation of fortran jackets, or
+#        nothing to leave out fortran jackets
+#
+NETCDF_LIB_DIR = /usr/local/lib
+NETCDF_INCLUDE_DIR = /usr/local/include
+NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf_fortran
+#FORTRAN_SUBDIR = fortran
+FORTRAN_SUBDIR =
+
+# ------------------------------------------------------------
+# You probably shouldn't modify things beyond here
+
+# MINC library
+MINC_LIB_DIR  = $(ROOT)/src
+MINC_LIB      = minc
+CC_MINC_LIB   = $(MINC_LIB_DIR)/lib$(MINC_LIB).a
+LINT_MINC_LIB = $(MINC_LIB_DIR)/llib-l$(MINC_LIB).ln
+
+# MINC program utility library
+PROG_LIB_DIR  = $(ROOT)/progs/Proglib
+PROG_LIB      = mincprog
+CC_PROG_LIB   = $(PROG_LIB_DIR)/lib$(PROG_LIB).a
+LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln
+
+# Volume io library
+VOLIO_LIB_DIR  = $(ROOT)/volume_io
+VOLIO_LIB      = volume_io
+CC_VOLIO_LIB   = $(VOLIO_LIB_DIR)/lib$(VOLIO_LIB).a
+LINT_VOLIO_LIB = $(VOLIO_LIB_DIR)/llib-l$(VOLIO_LIB).ln
+
+# Include directories
+INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(VOLIO_LIB_DIR)/Include \
+	      -I$(MINC_LIB_DIR) -I$(NETCDF_INCLUDE_DIR)
+
+# MINC loader options
+MINC_LDOPT = $(CC_MINC_LIB) $(NETCDF_LIB_DIR)/libnetcdf.a $(MACHINE_LDOPT)
+PROG_LDOPT = $(CC_PROG_LIB) $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)
