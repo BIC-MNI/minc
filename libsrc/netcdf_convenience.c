@@ -34,9 +34,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.5  1995-02-08 19:14:44  neelin
-@MODIFIED   : More changes for irix 5 lint.
+@MODIFIED   : Revision 2.6  1995-03-14 14:36:35  neelin
+@MODIFIED   : Got rid of broken pipe messages from miexpand_file by using exec
+@MODIFIED   : in system call.
 @MODIFIED   :
+ * Revision 2.5  1995/02/08  19:14:44  neelin
+ * More changes for irix 5 lint.
+ *
  * Revision 2.4  1995/02/08  19:01:06  neelin
  * Moved private function declarations from minc_routines.h to appropriate file.
  *
@@ -75,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.5 1995-02-08 19:14:44 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.6 1995-03-14 14:36:35 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -136,7 +140,7 @@ private int execute_decompress_command(char *command, char *infile,
 
    if (!header_only) {        /* Decompress the whole file */
 
-      (void) sprintf(whole_command, "%s %s > %s 2> /dev/null", 
+      (void) sprintf(whole_command, "exec %s %s > %s 2> /dev/null", 
                      command, infile, outfile);
       status = system(whole_command);
    }
@@ -145,7 +149,8 @@ private int execute_decompress_command(char *command, char *infile,
 
       /* Set up the command and open the pipe (we defer opening the output
          file until we have read something) */
-      (void) sprintf(whole_command, "%s %s 2> /dev/null", command, infile);
+      (void) sprintf(whole_command, "exec %s %s 2> /dev/null", 
+                     command, infile);
       pipe = popen(whole_command, "r");
       output_opened = FALSE;
 
@@ -205,14 +210,9 @@ private int execute_decompress_command(char *command, char *infile,
       }       /* End of while, waiting for successful ncopen */
 
       (void) fclose(output);
-      status = fclose(pipe);
+      (void) fclose(pipe);
 
-      if (successful_ncopen) {
-         status = 0;
-      }
-      else {
-         if (status == 0) status = 1;
-      }
+      status = !successful_ncopen;
 
    }          /* End of if !header_only else */
 
