@@ -537,7 +537,7 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
             (datatype==NC_DOUBLE) ? (void *) &fill_d[index] :
                                     (void *) NULL);
    if (fillp != NULL) {
-      MI_CHK_ERR(ncattput(cdfid, varid, MI_FillValue, fillp))
+      MI_CHK_ERR(ncattput(cdfid, varid, MI_FillValue, datatype, 1, fillp))
    }
 
    /* Create pointer from MIimage to max or min if MIimage exists */
