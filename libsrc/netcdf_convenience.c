@@ -36,7 +36,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.9  2003-12-01 22:45:58  stever
+ * Revision 6.10  2004-03-23 21:16:05  bert
+ * Conditionally include fcntl.h
+ *
+ * Revision 6.9  2003/12/01 22:45:58  stever
  * Check for fork(); use for file decompression if available
  *
  * Revision 6.8  2003/03/17 16:15:33  bert
@@ -139,7 +142,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.9 2003-12-01 22:45:58 stever Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.10 2004-03-23 21:16:05 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
@@ -155,6 +158,10 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>           /* For S_IREAD, S_IWRITE */
+#endif
+
+#if HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 /* Private functions */
