@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-06-13 21:27:16  neelin
+@MODIFIED   : Made use of message length to figure out how much to read in -
+@MODIFIED   : previously was not checking it, so if watchpoint was not set, we would
+@MODIFIED   : read indefinitely.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -456,6 +461,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
       if (length_element != NULL) {
          message_length -= 
             acr_get_group_total_length(group, acr_get_vr_encoding(afp));
+         get_more_groups = (message_length > 0);
       }
    }
 
