@@ -1,0 +1,131 @@
+.\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.man1,v 1.1 1995-04-27 12:48:42 neelin Exp $
+.\"
+.TH MINCAVERAGE 1
+
+.SH NAME
+mincaverage - average minc files
+
+.SH SYNOPSIS
+.B mincaverage
+[<options>] <in1>.mnc [<in2>.mnc...] <out>.mnc
+
+.SH DESCRIPTION
+.I Mincaverage
+averages minc files together. A range of optional behaviour is
+permitted as well: pre-normalising volumes, creating a standard
+deviation volume, averaging over a specified dimension of the input
+files.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied
+(default).
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.I -debug:
+Print extra information (e.g. normalisation factors).
+.P
+.I -max_buffer_size_in_kb:
+Specify the maximum size of the internal buffers (in kbytes). Default is
+4096 kbytes.
+
+.SH Output type options
+.P
+.I -filetype:
+Don't do any type conversion (default).
+.P
+.I -byte:
+Write out bytes values.
+.P
+.I -short:
+Write out short integer values.
+.P
+.I -long:
+Write out long integer values.
+.P
+.I -float:
+Write out single-precision floating point values.
+.P
+.I -double:
+Write out double-precision floating point values.
+.P
+.I -signed:
+Write out values as signed integers (default for short and long). Ignored for
+floating point types.
+.P
+.I -unsigned:
+Write out values as unsigned integers (default for byte). Ignored for
+floating point types.
+.P
+.I -range 
+<min> <max>:
+specifies the valid range of output voxel values in their integer
+representation. Default is the full range
+for the type and sign. This option is ignored for floating point
+values. For it to have any effect, you must specify a type.
+
+.SH Averaging options
+.P
+.I -normalise:
+Normalise volumes to their global average before averaging them (based
+on the mean of voxels with value greater than 2 percent of full range
+above the minimum).
+.P
+.I -nonormalise:
+Do not normalise volumes (default).
+.P
+.I -sdfile 
+<sdfile>.mnc:
+Specify the name of an output standard deviation file, to be
+calculated in addition the mean that is normally calculated.
+.P
+.I -copy_header:
+Copy all of the additional header information from the first input
+file.
+.P
+.I -nocopy_header:
+Do not copy additional header information (default).
+.P
+.I -avgdim
+<dimname>:
+Specify the name of a dimension over which we should be averaging (or
+calculating standard deviation). If normalisation is done, it still
+only applies to separate files only - no normalisation is done within
+a file.
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 1995 by Peter Neelin
+ 
+
