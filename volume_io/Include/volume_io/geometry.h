@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.9 2000-01-20 20:22:26 neelin Exp $";
+static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.10 2001-10-31 19:23:25 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,90 +36,90 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 #include  <volume_io/basic.h>
 #include  <volume_io/geom_structs.h>
 
-#define  _P(x) ((Point_coord_type) (x))
-#define  _R(x) ((Real) (x))
+#define  Point_coord_cast(x) ((Point_coord_type) (x))
+#define  Real_cast(x) ((Real) (x))
 
-#define  RPoint_x( p )  _R(Point_x(p))
-#define  RPoint_y( p )  _R(Point_y(p))
-#define  RPoint_z( p )  _R(Point_z(p))
-#define  RPoint_coord( p, c )  _R(Point_coord(p,c))
+#define  RPoint_x( p )  Real_cast(Point_x(p))
+#define  RPoint_y( p )  Real_cast(Point_y(p))
+#define  RPoint_z( p )  Real_cast(Point_z(p))
+#define  RPoint_coord( p, c )  Real_cast(Point_coord(p,c))
 
-#define  RVector_x( p )  _R(Vector_x(p))
-#define  RVector_y( p )  _R(Vector_y(p))
-#define  RVector_z( p )  _R(Point_z(p))
-#define  RVector_coord( p, c )  _R(Vector_coord(p,c))
+#define  RVector_x( p )  Real_cast(Vector_x(p))
+#define  RVector_y( p )  Real_cast(Vector_y(p))
+#define  RVector_z( p )  Real_cast(Point_z(p))
+#define  RVector_coord( p, c )  Real_cast(Vector_coord(p,c))
 
 /* --- private point and vector operations for use by public routines */
 
 #define  POINT_SCALAR_EXP( result, v, op, scalar ) \
          { \
-           Point_x(result) = _P( RPoint_x(v) op _R((scalar)) ); \
-           Point_y(result) = _P( RPoint_y(v) op _R((scalar)) ); \
-           Point_z(result) = _P( RPoint_z(v) op _R((scalar)) ); \
+           Point_x(result) = Point_coord_cast( RPoint_x(v) op Real_cast((scalar)) ); \
+           Point_y(result) = Point_coord_cast( RPoint_y(v) op Real_cast((scalar)) ); \
+           Point_z(result) = Point_coord_cast( RPoint_z(v) op Real_cast((scalar)) ); \
          }
 
 #define  POINT_EXP2( result, v1, op, v2 ) \
          { \
-           Point_x(result) = _P( RPoint_x(v1) op RPoint_x(v2) ); \
-           Point_y(result) = _P( RPoint_y(v1) op RPoint_y(v2) ); \
-           Point_z(result) = _P( RPoint_z(v1) op RPoint_z(v2) ); \
+           Point_x(result) = Point_coord_cast( RPoint_x(v1) op RPoint_x(v2) ); \
+           Point_y(result) = Point_coord_cast( RPoint_y(v1) op RPoint_y(v2) ); \
+           Point_z(result) = Point_coord_cast( RPoint_z(v1) op RPoint_z(v2) ); \
          }
 
 #define  POINT_VECTOR_EXP2( result, p, op, v ) \
          { \
-           Point_x(result) = _P( RPoint_x(p) op RVector_x(v) ); \
-           Point_y(result) = _P( RPoint_y(p) op RVector_y(v) ); \
-           Point_z(result) = _P( RPoint_z(p) op RVector_z(v) ); \
+           Point_x(result) = Point_coord_cast( RPoint_x(p) op RVector_x(v) ); \
+           Point_y(result) = Point_coord_cast( RPoint_y(p) op RVector_y(v) ); \
+           Point_z(result) = Point_coord_cast( RPoint_z(p) op RVector_z(v) ); \
          }
 
 #define  VECTOR_SCALAR_EXP( result, v, op, scalar ) \
          { \
-           Vector_x(result) = _P( RVector_x(v) op _R(scalar) ); \
-           Vector_y(result) = _P( RVector_y(v) op _R(scalar) ); \
-           Vector_z(result) = _P( RVector_z(v) op _R(scalar) ); \
+           Vector_x(result) = Point_coord_cast( RVector_x(v) op Real_cast(scalar) ); \
+           Vector_y(result) = Point_coord_cast( RVector_y(v) op Real_cast(scalar) ); \
+           Vector_z(result) = Point_coord_cast( RVector_z(v) op Real_cast(scalar) ); \
          }
 
 #define  VECTOR_EXP2( result, v1, op, v2 ) \
          { \
-           Vector_x(result) = _P( RVector_x(v1) op RVector_x(v2) ); \
-           Vector_y(result) = _P( RVector_y(v1) op RVector_y(v2) ); \
-           Vector_z(result) = _P( RVector_z(v1) op RVector_z(v2) ); \
+           Vector_x(result) = Point_coord_cast( RVector_x(v1) op RVector_x(v2) ); \
+           Vector_y(result) = Point_coord_cast( RVector_y(v1) op RVector_y(v2) ); \
+           Vector_z(result) = Point_coord_cast( RVector_z(v1) op RVector_z(v2) ); \
          }
 
 /* --- interpolate between two points, 0 results in p1, 1 results in p2 */
 
 #define  INTERPOLATE_POINTS( interp, p1, p2, alpha ) \
          { \
-           Point_x(interp) = _P( (1.0-_R(alpha))*RPoint_x(p1) + \
-                                     _R(alpha)*RPoint_x(p2) );\
-           Point_y(interp) = _P( (1.0-_R(alpha))*RPoint_y(p1) + \
-                                     _R(alpha)*RPoint_y(p2) );\
-           Point_z(interp) = _P( (1.0-_R(alpha))*RPoint_z(p1) + \
-                                     _R(alpha)*RPoint_z(p2) );\
+           Point_x(interp) = Point_coord_cast( (1.0-Real_cast(alpha))*RPoint_x(p1) + \
+                                     Real_cast(alpha)*RPoint_x(p2) );\
+           Point_y(interp) = Point_coord_cast( (1.0-Real_cast(alpha))*RPoint_y(p1) + \
+                                     Real_cast(alpha)*RPoint_y(p2) );\
+           Point_z(interp) = Point_coord_cast( (1.0-Real_cast(alpha))*RPoint_z(p1) + \
+                                     Real_cast(alpha)*RPoint_z(p2) );\
          }
 
 /* --- interpolate between two vectors, 0 results in v1, 1 results in v2 */
 
 #define  INTERPOLATE_VECTORS( interp, v1, v2, alpha ) \
          { \
-           Vector_x(interp)= _P( (1.0-_R(alpha))*RVector_x(v1) + \
-                                      _R(alpha)*RVector_x(v2) );\
-           Vector_y(interp)= _P( (1.0-_R(alpha))*RVector_y(v1) + \
-                                      _R(alpha)*RVector_y(v2) );\
-           Vector_z(interp)= _P( (1.0-_R(alpha))*RVector_z(v1) + \
-                                      _R(alpha)*RVector_z(v2) );\
+           Vector_x(interp)= Point_coord_cast( (1.0-Real_cast(alpha))*RVector_x(v1) + \
+                                      Real_cast(alpha)*RVector_x(v2) );\
+           Vector_y(interp)= Point_coord_cast( (1.0-Real_cast(alpha))*RVector_y(v1) + \
+                                      Real_cast(alpha)*RVector_y(v2) );\
+           Vector_z(interp)= Point_coord_cast( (1.0-Real_cast(alpha))*RVector_z(v1) + \
+                                      Real_cast(alpha)*RVector_z(v2) );\
          }
 
 /* --- get a point on a ray, returning it as 'point' */
 
 #define  GET_POINT_ON_RAY( point, origin, direction, distance ) \
          { \
-           Vector_x(point)= _P( RPoint_x(origin) + \
-                               _R(distance)*RVector_x(direction) );\
-           Vector_y(point)= _P( RPoint_y(origin) + \
-                               _R(distance)*RVector_y(direction) );\
-           Vector_z(point)= _P( RPoint_z(origin) + \
-                               _R(distance)*RVector_z(direction) );\
+           Vector_x(point)= Point_coord_cast( RPoint_x(origin) + \
+                               Real_cast(distance)*RVector_x(direction) );\
+           Vector_y(point)= Point_coord_cast( RPoint_y(origin) + \
+                               Real_cast(distance)*RVector_y(direction) );\
+           Vector_z(point)= Point_coord_cast( RPoint_z(origin) + \
+                               Real_cast(distance)*RVector_z(direction) );\
          }
 
 /* --- add and subtract points and vectors, returning correct type */
@@ -173,11 +173,11 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 
 #define  CROSS_VECTORS( c, v1, v2 ) \
          { \
-             Vector_x(c) = _P( RVector_y(v1) * RVector_z(v2) - \
+             Vector_x(c) = Point_coord_cast( RVector_y(v1) * RVector_z(v2) - \
                               RVector_y(v2) * RVector_z(v1) ); \
-             Vector_y(c) = _P( RVector_z(v1) * RVector_x(v2) - \
+             Vector_y(c) = Point_coord_cast( RVector_z(v1) * RVector_x(v2) - \
                               RVector_z(v2) * RVector_x(v1) ); \
-             Vector_z(c) = _P( RVector_x(v1) * RVector_y(v2) - \
+             Vector_z(c) = Point_coord_cast( RVector_x(v1) * RVector_y(v2) - \
                               RVector_x(v2) * RVector_y(v1) ); \
          }
 
@@ -197,7 +197,7 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
        of the point from the plane, in fractions of the normal length */
 
 #define  DIST_FROM_PLANE( normal, d, point ) \
-         ( DOT_POINT_VECTOR(point,normal) - _R(d) )
+         ( DOT_POINT_VECTOR(point,normal) - Real_cast(d) )
 
 /* --- converts the 'point' to a 'vector' */
 
