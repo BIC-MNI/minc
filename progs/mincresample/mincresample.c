@@ -10,11 +10,15 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.7  1993-08-11 14:28:19  neelin
-@MODIFIED   : Modified get_arginfo and check_imageminmax to modify type of volume (not
-@MODIFIED   : file) so that output volume gets the input volume type by default when
-@MODIFIED   : an icv is used on input.
+@MODIFIED   : Revision 1.8  1993-09-16 09:56:36  neelin
+@MODIFIED   : Added use of open_file_with_default_suffix in get_transformation to
+@MODIFIED   : append appropriate suffix for xfm files.
 @MODIFIED   :
+ * Revision 1.7  93/08/11  14:28:19  neelin
+ * Modified get_arginfo and check_imageminmax to modify type of volume (not
+ * file) so that output volume gets the input volume type by default when
+ * an icv is used on input.
+ * 
  * Revision 1.6  93/08/11  13:27:59  neelin
  * Converted to use Dave MacDonald's General_transform code.
  * Fixed bug in get_slice - for non-linear transformations coord was
@@ -39,7 +43,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.7 1993-08-11 14:28:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.8 1993-09-16 09:56:36 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1144,8 +1148,9 @@ public int get_transformation(char *dst, char *key, char *nextArg)
       rewind(fp);
    }
    else {
-      fp = fopen(nextArg, "r");
-      if (fp==NULL) {
+      if (open_file_with_default_suffix(nextArg,
+                    get_default_transform_file_suffix(),
+                    READ_FILE, ASCII_FORMAT, &fp) != OK) {
          (void) fprintf(stderr, "Error opening transformation file %s.\n",
                         nextArg);
          exit(EXIT_FAILURE);
@@ -1174,7 +1179,7 @@ public int get_transformation(char *dst, char *key, char *nextArg)
       (void) fprintf(stderr, "Error reading transformation file.\n");
       exit(EXIT_FAILURE);
    }
-   (void) fclose(fp);
+   (void) close_file(fp);
 
    /* Get rid of the old one */
    delete_general_transform(transformation);
