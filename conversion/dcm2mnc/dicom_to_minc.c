@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.6  2005-03-29 20:20:42  bert
+   * Revision 1.7  2005-04-05 21:55:33  bert
+   * Update handling of Siemens ASCCONV to reflect value of uc2DInterpolation field for mosaic images.  Additional cleanup of mosaic code and minor tweak to suppress GEMS warning message for PET data.
+   *
+   * Revision 1.6  2005/03/29 20:20:42  bert
    * Add checks for GE Medical Systems proprietary files
    *
    * Revision 1.5  2005/03/14 22:26:40  bert
@@ -129,7 +132,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.6 2005-03-29 20:20:42 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.7 2005-04-05 21:55:33 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -520,11 +523,11 @@ add_siemens_info(Acr_Group group_list)
     short subimage_size[4];
     int subimage_rows, subimage_cols;
     int num_slices, num_partitions;
-    char *field_ptr;
     int num_encodings;
     int enc_ix;
     string_t str_buf;
     char *str_ptr;
+    int interpolation_flag;
 
     /* now fix the group list to provide essential info
      * via standard dicom elements
@@ -626,102 +629,114 @@ add_siemens_info(Acr_Group group_list)
                            SPI_Number_of_3D_raw_partitions_nominal, 1);
     }
 
-    /* now figure out mosaic rows and columns, and put in EXT shadow group
-     * check for interpolation - not supported for mosaics yet
+    /* Now figure out mosaic rows and columns, and put in EXT shadow group
+     * Check for interpolation - will require 2x scaling of rows and columns.
      */
     prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
-    if (strcmp(str_buf, "0")) { /* Not zero - implies interpolation. */
-        /* if interpolated image, assume no mosaic */
-        acr_insert_numeric(&group_list, EXT_Mosaic_rows, 1);
-        acr_insert_numeric(&group_list, EXT_Mosaic_columns, 1);
-        acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
+    interpolation_flag = strtol(str_buf, NULL, 0);
+
+    /* Assign defaults in case something goes wrong below...
+     */
+    subimage_rows = 0;
+    subimage_cols = 0;
+
+    /* Compute mosaic rows and columns
+     * Here is a hack to handle non-square mosaiced images
+     *
+     * WARNING: as far as I can tell, the phase-encoding dir (row/col)
+     * is reversed for mosaic EPI scans (don't know if this is a
+     * mosaic thing, an EPI thing, or whatever).  
+     * Get the array of sizes: freq row/freq col/phase row/phase col
+     */
+
+    element = acr_find_group_element(group_list, ACR_Acquisition_matrix);
+    if (element == NULL) {
+        printf("WARNING: Can't find acquisition matrix\n");
+    }
+    else if (acr_get_element_short_array(element, 4, subimage_size) != 4) {
+        printf("WARNING: Can't read acquisition matrix\n");
+    }
+    else {
+        /* Get subimage dimensions, assuming the OPPOSITE of the
+         * reported phase-encode direction!!
+         */
+        str_ptr = acr_find_string(group_list, ACR_Phase_encoding_direction,"");
+        if (!strncmp(str_ptr, "COL", 3)) {
+            subimage_rows = subimage_size[3];
+            subimage_cols = subimage_size[0];
+        }
+        else if (!strncmp(str_ptr, "ROW", 3)) {
+            subimage_rows = subimage_size[2];
+            subimage_cols = subimage_size[1];
+        }
+
+        /* If interpolation, multiply rows and columns by 2 */
+        if (interpolation_flag) {
+            subimage_rows *= 2;
+            subimage_cols *= 2;
+        }
+    }
+
+    /* If these are not set or still zero, assume this is NOT a mosaic
+     * format file.
+     */
+    if (subimage_rows == 0 || subimage_cols == 0) {
+        subimage_rows = acr_find_int(group_list, ACR_Rows, 1);
+        subimage_cols = acr_find_int(group_list, ACR_Columns, 1);
+        mosaic_rows = 1;
+        mosaic_cols = 1;
+    }
+    else {
+        mosaic_rows = acr_find_int(group_list, ACR_Rows, 1) / subimage_rows;
+        mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
+    }
+
+    acr_insert_numeric(&group_list, EXT_Mosaic_rows, mosaic_rows);
+    acr_insert_numeric(&group_list, EXT_Mosaic_columns, mosaic_cols);
+
+    if (mosaic_rows * mosaic_cols > 1) {
+
+        str_ptr = acr_find_string(group_list, ACR_MR_acquisition_type, "");
+             
+        /* assume any mosaiced file contains all slices
+         * (we now support mosaics for 2D and 3D acquisitions,
+         *  so we may need to use partitions instead of slices)
+         */
+
+        if (!strncmp(str_ptr, "2D", 2)) {
+            acr_insert_numeric(&group_list, EXT_Slices_in_file, num_slices);
+            acr_insert_numeric(&group_list, 
+                               SPI_Number_of_slices_nominal, num_slices);
+        } 
+
+        /* if 3D mosaiced scan, write number of partitions to number of 
+         * slices in dicom group 
+         */
+        else if (!strncmp(str_ptr, "3D", 2)) {
+            acr_insert_numeric(&group_list, EXT_Slices_in_file, 
+                               num_partitions);
+            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
+                               num_partitions);
+            /* also have to provide slice spacing - in case of 3D it's same
+             * as slice thickness (and not provided in dicom header!)
+             */
+            acr_insert_numeric(&group_list, ACR_Spacing_between_slices,
+                               acr_find_double(group_list, 
+                                               ACR_Slice_thickness, 1.0));
+        }
     } 
     else {
-        /* compute mosaic rows and columns
-         * here is a hack to handle non-square mosaiced images
-         * WARNING:  as far as I can tell, the phase-encoding dir
-         * (row/col) is reversed for mosaic EPI scans (don't know
-         * if this is a mosaic thing, an EPI thing, or whatever)
-         * get the array of sizes:
-         *    freq row/freq col/phase row/phase col
-         */
-         element = acr_find_group_element(group_list, ACR_Acquisition_matrix);
-         acr_get_element_short_array(element, 4, subimage_size);
-
-         
-         /* get subimage dimensions, assuming the OPPOSITE of the
-          * reported phase-encode direction!!
-          */
-         if (!strncmp(acr_find_string(group_list, 
-                                      ACR_Phase_encoding_direction, ""),
-                      "COL", 3)) {
-
-             subimage_rows = subimage_size[3];
-             subimage_cols = subimage_size[0];
-         }
-         else if (!strncmp(acr_find_string(group_list,
-                                           ACR_Phase_encoding_direction,""),
-                           "ROW", 3)) {
-
-             subimage_rows = subimage_size[2];
-             subimage_cols = subimage_size[1];
-         }
-
-         mosaic_rows = acr_find_int(group_list, ACR_Rows, 1) / subimage_rows;
-         mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
-
-         acr_insert_numeric(&group_list, EXT_Mosaic_rows, mosaic_rows);
-         acr_insert_numeric(&group_list, EXT_Mosaic_columns, mosaic_cols);
-
-         if (mosaic_rows * mosaic_cols > 1) {
-
-             /* if 3D mosaiced scan, write number of partitions to number of 
-              * slices in dicom group  THIS LOOKS REDUNDANT!!!
-              */
-             if (!strncmp(acr_find_string(group_list, ACR_MR_acquisition_type,
-                                          ""),"3D",2)) {
-                 acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal,
-                                    num_partitions);
-             }
-             
-             /* assume any mosaiced file contains all slices
-              * (we now support mosaics for 2D and 3D acquisitions,
-              *  so we may need to use partitions instead of slices)
-              */
-       
-             if (!strncmp(acr_find_string(group_list,ACR_MR_acquisition_type,""),
-                          "2D",2)) {
-                 acr_insert_numeric(&group_list, EXT_Slices_in_file, num_slices);
-                 acr_insert_numeric(&group_list, 
-                                    SPI_Number_of_slices_nominal,num_slices);
-             } 
-             else if (!strncmp(acr_find_string(group_list, ACR_MR_acquisition_type,
-                                               ""),"3D",2)) {
-                 acr_insert_numeric(&group_list, EXT_Slices_in_file, 
-                                    num_partitions);
-                 acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
-                                    num_partitions);
-                 /* also have to provide slice spacing - in case of 3D it's same
-                  * as slice thickness (and not provided in dicom header!)
-                  */
-                 acr_insert_numeric(&group_list, ACR_Spacing_between_slices,
-                                    acr_find_double(group_list, 
-                                                    ACR_Slice_thickness, 1.0));
-             }
-         } 
-         else {
-             acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
-         }
-
-         /* correct the rows and columns values -
-          * these will reflect those of the subimages in the mosaics
-          * NOT the total image dimensions
-          */
-         acr_insert_short(&group_list, EXT_Sub_image_columns,subimage_cols);
-         acr_insert_short(&group_list, EXT_Sub_image_rows,subimage_rows);
-
-         /* should also correct the image position here? */
+        acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
     }
+
+    /* Correct the rows and columns values -
+     * These will reflect those of the subimages in the mosaics
+     * NOT the total image dimensions
+     */
+    acr_insert_short(&group_list, EXT_Sub_image_columns, subimage_cols);
+    acr_insert_short(&group_list, EXT_Sub_image_rows, subimage_rows);
+
+    /* should also correct the image position here? */
 
     /* correct dynamic scan info if diffusion scan:
      *
@@ -765,13 +780,13 @@ add_siemens_info(Acr_Group group_list)
               * could use this to come up with indices for an encoding
               * dimension
               */
-             field_ptr = strstr(acr_find_string(group_list,
-                                                ACR_Sequence_name,""),"#");
-             if (field_ptr == NULL) {
+             str_ptr = strstr(acr_find_string(group_list,
+                                              ACR_Sequence_name,""), "#");
+             if (str_ptr == NULL) {
                  enc_ix = 0;
              } 
              else {
-                 enc_ix = atoi(field_ptr + sizeof(char));
+                 enc_ix = atoi(str_ptr + sizeof(char));
              }
                 
              /* however with the current sequence, we get usable
@@ -793,14 +808,13 @@ add_siemens_info(Acr_Group group_list)
              /* For multi-series scans, we DO USE THIS BECAUSE global
               * image number may be broken!!
               */
-             field_ptr = strstr(acr_find_string(group_list,
-                                                ACR_Sequence_name, ""),
-                                "#");
-             if (field_ptr == NULL) {
+             str_ptr = strstr(acr_find_string(group_list,
+                                              ACR_Sequence_name, ""), "#");
+             if (str_ptr == NULL) {
                  enc_ix = 0;
              } 
              else {
-                 enc_ix = atoi(field_ptr + sizeof(char));
+                 enc_ix = atoi(str_ptr + sizeof(char));
              }
              acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
          }
@@ -907,7 +921,13 @@ add_gems_info(Acr_Group group_list)
     }
 
     if (!ok) {
-        printf("WARNING: GEMS data not found\n");
+        /* Warn only for non-PET things.  We know the PET scanner doesn't
+         * rely on this proprietary nonsense.
+         */
+        tmp_str = acr_find_string(group_list, ACR_Modality, "");
+        if (strcmp(tmp_str, "PT")) {
+            printf("WARNING: GEMS data not found\n");
+        }
     }
 
     /* Do this only for EPI images for now 
