@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.12  2003-11-14 16:52:24  stever
+ * Revision 6.13  2004-02-02 18:24:58  bert
+ * Include a ARGV_VERINFO record in the argTable[]
+ *
+ * Revision 6.12  2003/11/14 16:52:24  stever
  * More last-minute fixes.
  *
  * Revision 6.11  2003/11/03 19:43:18  bert
@@ -137,9 +140,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.12 2003-11-14 16:52:24 stever Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.13 2004-02-02 18:24:58 bert Exp $";
 #endif
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -262,6 +266,7 @@ char *axis_order[MAX_DIMS+1] = { MItime, MIzspace, MIyspace, MIxspace };
 
 /* Argument table */
 ArgvInfo argTable[] = {
+   {NULL, ARGV_VERINFO, (char *) VERSION, (char *) NULL, NULL},
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "Options to specify input dimension order (from slowest to fastest)."},
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
