@@ -8,6 +8,7 @@
 #include <hdf5.h>
 #include <minc.h>
 #include <limits.h>
+#include <float.h>
 #include "minc2.h"
 #include "minc2_private.h"
 
@@ -985,7 +986,7 @@ miinit_enum(hid_t type_id)
 }
 
 int
-minc_create_thumbnail(hid_t file_id, int grp)
+minc_create_thumbnail(mihandle_t volume, int grp)
 {
     char path[MI2_MAX_PATH];
     hid_t grp_id;
@@ -997,7 +998,7 @@ minc_create_thumbnail(hid_t file_id, int grp)
     }
 
     sprintf(path, "/minc-2.0/image/%d", grp);
-    grp_id = H5Gcreate(file_id, path, 0);
+    grp_id = H5Gcreate(volume->hdf_id, path, 0);
     if (grp_id < 0) {
         return (MI_ERROR);
     }
@@ -1049,10 +1050,140 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
     }
 }
 
-/**
+/** Convert the hyperslab from real to voxel values, calculating and
+ * returning the minimum and maximum real values for the slab.  This
+ * could form the basis for a public function one day, but for now it
+ * is considered private.
+ */
+static void
+miconvert_hyperslab_to_voxel(mihandle_t volume, hssize_t start[], 
+                             hsize_t count[], double *slab_ptr,
+                             double *max_ptr, double *min_ptr)
+{
+    /* This code is not intended to be a general hyperslab-to-voxel
+     * converter yet.  That is why it is not public.
+     */
+    double real_min, real_max;  /* Minimum and maximum values */
+    hsize_t index;
+    hsize_t total;
+    double voxel_range, voxel_offset;
+    double real_range, real_offset;
+    int i;
+    double tmp_val;
+
+    real_min = DBL_MAX;
+    real_max = DBL_MIN;
+
+    total = 1;
+    for (i = 0; i < volume->number_of_dims; i++) {
+        total *= count[i];
+    }
+
+    /* Find the global minimum and maximum for this hyperslab.
+     */
+    for (index = 0; index < total; index++) {
+        tmp_val = slab_ptr[index];
+        if (tmp_val > real_max) {
+            real_max = tmp_val;
+        }
+        if (tmp_val < real_min) {
+            real_min = tmp_val;
+        }
+    }
+
+    voxel_range = volume->valid_max - volume->valid_min;
+    voxel_offset = volume->valid_min;
+    real_range = real_max - real_min;
+    real_offset = real_min;
+
+    for (index = 0; index < total; index++) {
+        tmp_val = slab_ptr[index];
+        tmp_val = (tmp_val - real_offset) / real_range;
+        tmp_val = (tmp_val * voxel_range) + voxel_offset;
+        slab_ptr[index] = rint(tmp_val);
+    }
+
+    if (min_ptr != NULL) {
+        *min_ptr = real_min;
+    }
+    if (max_ptr != NULL) {
+        *max_ptr = real_max;
+    }
+}
+
+/** Convert the hyperslab from voxel to real values.  This could form
+ * the basis for a public function one day, but for now it is
+ * considered private.
+ */
+static void
+miconvert_hyperslab_to_real(mihandle_t volume, hssize_t start[],
+                            hsize_t count[], double *slab_ptr)
+{
+    /* This code is not intended to be a general hyperslab-to-real
+     * converter yet.  That is why it is not public.
+     */
+    double real_min, real_max;  /* Minimum and maximum values */
+    hsize_t index;
+    hsize_t total;
+    double voxel_range, voxel_offset;
+    double real_range, real_offset;
+    int i;
+    double tmp_val;
+    unsigned long pos[MI2_MAX_VAR_DIMS];
+
+    total = 1;
+    for (i = 0; i < volume->number_of_dims; i++) {
+        total *= count[i];
+        pos[i] = start[i];
+    }
+
+    voxel_offset = volume->valid_min;
+    voxel_range = volume->valid_max - volume->valid_min;
+
+    /* Get the initial real minimum & maximum.
+     */
+    miget_slice_range(volume, pos, volume->number_of_dims,
+                      &real_max, &real_min);
+
+    real_offset = real_min;
+    real_range = real_max - real_min;
+
+
+    for (index = 0; index < total; index++) {
+        /* Since this calculation may cross slice boundaries, I need to
+         * grab the correct real minimum and maximum for the coordinates
+         * I happen to be in at the time.
+         *
+         * This next loop attempts to keep track of the current position,
+         * and reloads the minimum and maximum whenever we change any other
+         * than the fastest-varying dimension.
+         */
+        for (i = volume->number_of_dims - 1; i >= 0; i--) {
+            pos[i]++;
+            if (pos[i] >= count[i]) {
+                pos[i] = start[i];
+                miget_slice_range(volume, pos, volume->number_of_dims,
+                                  &real_max, &real_min);
+
+                real_offset = real_min;
+                real_range = real_max - real_min;
+            }
+            else {
+                break;
+            }
+        }
+
+        tmp_val = (slab_ptr[index] - voxel_offset) / voxel_range;
+        slab_ptr[index] = (tmp_val * real_range) + real_offset;
+    }
+}
+
+/** Update an individual thumbnail for the \a volume.  Updates group
+ * number \a ogrp from source group \a igrp.  The whole image tree must
+ * be rooted at \a loc_id.
  */
 int
-minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
+minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 {
     hsize_t isize[MI2_MAX_VAR_DIMS];
     hsize_t osize[MI2_MAX_VAR_DIMS];
@@ -1074,6 +1205,7 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     int slice;
     int in_bytes;
     int out_bytes;
+    double smax, smin;
 
     miinit();
 
@@ -1144,7 +1276,6 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
      */
     for (slice = 0; slice < osize[0]; slice++) {
         
-	fprintf(stderr, "Slice # %d\n", slice);
 	start[0] = slice * scale;
 	start[1] = 0;
 	start[2] = 0;
@@ -1152,8 +1283,15 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 	count[1] = isize[1];
 	count[2] = isize[2];
 
-	H5Sselect_hyperslab(ifspc_id, H5S_SELECT_SET, start, NULL, count, NULL);
-	H5Dread(idst_id, H5T_NATIVE_DOUBLE, imspc_id, ifspc_id, H5P_DEFAULT, in_ptr);
+	H5Sselect_hyperslab(ifspc_id, H5S_SELECT_SET, start, NULL, count,
+                            NULL);
+
+	H5Dread(idst_id, H5T_NATIVE_DOUBLE, imspc_id, ifspc_id, H5P_DEFAULT, 
+                in_ptr);
+
+        /* Scale slice from voxel to real values. */
+
+        miconvert_hyperslab_to_real(volume, start, count, in_ptr);
 
         midownsample_slice(in_ptr, out_ptr, isize, osize, scale);
 	
@@ -1163,8 +1301,12 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 	count[0] = 1;
 	count[1] = osize[1];
 	count[2] = osize[2];
-	H5Sselect_hyperslab(ofspc_id, H5S_SELECT_SET, start, NULL, count, NULL);
+	H5Sselect_hyperslab(ofspc_id, H5S_SELECT_SET, start, NULL, count, 
+                            NULL);
 	
+        miconvert_hyperslab_to_voxel(volume, start, count, out_ptr, 
+                                     &smax, &smin);
+
 	H5Dwrite(odst_id, H5T_NATIVE_DOUBLE, omspc_id, ofspc_id, H5P_DEFAULT, 
                  out_ptr);
     }
@@ -1182,48 +1324,39 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     return (MI_NOERROR);
 }
 
-/**
+/** Cycle through and update each of the lower-resolution images in 
+ * the file.
  */
 int
-minc_update_thumbnails(hid_t file_id)
+minc_update_thumbnails(mihandle_t volume)
 {
     int grp_no, prv_grp_no;
     hid_t grp_id;
     hsize_t n;
     hsize_t i;
-    char name[128];
-    size_t length;
+    char name[MI2_MAX_PATH];
   
-    grp_id = H5Gopen(file_id, "/minc-2.0/image");
-    
-    if (grp_id >= 0) {
-        if (H5Gget_num_objs(grp_id, &n) >= 0) {
-            for (i = 0; i < n; i++) {
-	        length = sizeof(name);
-                if (H5Gget_objname_by_idx(grp_id, i, name, 128) < 0) {
-		  return (MI_ERROR);
-		}
-                fprintf(stderr, "Found group %s\n", name);
-                prv_grp_no = grp_no;
-                grp_no = atoi(name);
-                if (grp_no != 0) {
-                    fprintf(stderr, "Updating group #%d from #%d\n", 
-                            grp_no, prv_grp_no);
-		    minc_update_thumbnail(grp_id, prv_grp_no, grp_no);
-                }
-            }
-        }
-        else {
-            fprintf(stderr, "error getting object count?\n");
-        }
-	
-        H5Gclose(grp_id);
-	
-    } 
-    else {
-        fprintf(stderr, "error opening group?\n");
-	
+    grp_id = H5Gopen(volume->hdf_id, "/minc-2.0/image");
+    if (grp_id < 0) {
+        return (MI_ERROR);      /* Error opening group. */
     }
+
+    if (H5Gget_num_objs(grp_id, &n) < 0) {
+        return (MI_ERROR);      /* Error getting object count. */
+    }
+
+    for (i = 0; i < n; i++) {
+        if (H5Gget_objname_by_idx(grp_id, i, name, MI2_MAX_PATH) < 0) {
+            return (MI_ERROR);
+        }
+        prv_grp_no = grp_no;
+        grp_no = atoi(name);
+        if (grp_no != 0) {
+            minc_update_thumbnail(volume, grp_id, prv_grp_no, grp_no);
+        }
+    }
+
+    H5Gclose(grp_id);
     return (MI_NOERROR);
 
 }
