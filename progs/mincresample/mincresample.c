@@ -11,7 +11,16 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.8  2001-08-16 13:32:39  neelin
+ * Revision 6.9  2001-08-24 19:12:50  neelin
+ * Re-ordered variables so that image variable is last. This fixes a problem
+ * with an uninitialized processing variable that shows up when mincresample
+ * is linked with netcdf 3.5.0 and an older program linked with 2.3.2 dies
+ * when reading the mincresample output file.
+ * It also allows use of large volumes with 64-bit minc: all variables
+ * must have 32-bit offset, but one (the image) can extend beyond the
+ * 32-bit limit.
+ *
+ * Revision 6.8  2001/08/16 13:32:39  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -143,7 +152,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.8 2001-08-16 13:32:39 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.9 2001-08-24 19:12:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1119,6 +1128,7 @@ public void create_output_file(char *filename, int clobber,
                                Transform_Info *transform_info)
 {
    int ndims, in_dims[MAX_VAR_DIMS], out_dims[MAX_VAR_DIMS];
+   int out_maxmin_dims[MAX_VAR_DIMS];
    char dimname[MAX_NC_NAME];
    int nmaxmin_dims, nimage_dims, axis, idim, dimid, varid, itrans;
    int att_length;
@@ -1251,23 +1261,6 @@ public void create_output_file(char *filename, int clobber,
       }       /* If volume dimension */
    }       /* Loop over dimensions */
 
-   /* Create the image variable */
-   out_file->imgid = micreate_std_variable(out_file->mincid, MIimage, 
-                                           out_file->datatype,
-                                           ndims, out_dims);
-   (void) micopy_all_atts(in_file->mincid, in_file->imgid,
-                          out_file->mincid, out_file->imgid);
-   (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete,
-                      MI_FALSE);
-   (void) miset_valid_range(out_file->mincid, out_file->imgid, 
-                            out_file->vrange);
-   if (out_file->is_signed)
-      (void) miattputstr(out_file->mincid, out_file->imgid,
-                         MIsigntype, MI_SIGNED);
-   else
-      (void) miattputstr(out_file->mincid, out_file->imgid,
-                         MIsigntype, MI_UNSIGNED);
-
    /* Create the image max and min variables. These do not vary over
       the volume rows and columns even if they are not image dimensions,
       so we have to copy down the elements of the array (excluding image
@@ -1284,7 +1277,7 @@ public void create_output_file(char *filename, int clobber,
       if ((idim != out_file->indices[COL_AXIS]) &&
           (idim != out_file->indices[ROW_AXIS])) {
          if (idim < ndims-nimage_dims) {
-            out_dims[nmaxmin_dims] = out_dims[idim];
+            out_maxmin_dims[nmaxmin_dims] = out_dims[idim];
             nmaxmin_dims++;
             out_file->images_per_file *= out_file->nelements[idim];
          }
@@ -1300,12 +1293,14 @@ public void create_output_file(char *filename, int clobber,
 
    /* Create the variables */
    out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
-                                           NC_DOUBLE, nmaxmin_dims, out_dims);
+                                           NC_DOUBLE, nmaxmin_dims, 
+                                           out_maxmin_dims);
    if (in_file->maxid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->maxid,
                              out_file->mincid, out_file->maxid);
    out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
-                                           NC_DOUBLE, nmaxmin_dims, out_dims);
+                                           NC_DOUBLE, nmaxmin_dims, 
+                                           out_maxmin_dims);
    if (in_file->minid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->minid,
                              out_file->mincid, out_file->minid);
@@ -1352,6 +1347,23 @@ public void create_output_file(char *filename, int clobber,
       FREE(string);
 
    }         /* If transform specified on command line */
+
+   /* Create the image variable */
+   out_file->imgid = micreate_std_variable(out_file->mincid, MIimage, 
+                                           out_file->datatype,
+                                           ndims, out_dims);
+   (void) micopy_all_atts(in_file->mincid, in_file->imgid,
+                          out_file->mincid, out_file->imgid);
+   (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete,
+                      MI_FALSE);
+   (void) miset_valid_range(out_file->mincid, out_file->imgid, 
+                            out_file->vrange);
+   if (out_file->is_signed)
+      (void) miattputstr(out_file->mincid, out_file->imgid,
+                         MIsigntype, MI_SIGNED);
+   else
+      (void) miattputstr(out_file->mincid, out_file->imgid,
+                         MIsigntype, MI_UNSIGNED);
 
    /* Get into data mode */
    (void) ncsetfill(out_file->mincid, NC_NOFILL);
