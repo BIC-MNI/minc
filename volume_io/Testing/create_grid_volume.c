@@ -13,8 +13,9 @@ int  main(
     int                  ind[MAX_DIMENSIONS], sizes[MAX_DIMENSIONS];
     static  char         *dim_names[] = { MIxspace, MIyspace, MIzspace,
                                           MIvector_dimension };
-    Real                 value;
+    Real                 value, x, y, z, xt, yt, zt;
     Volume               volume;
+    General_transform    transform;
 
     if( argc < 2 )
     {
@@ -45,13 +46,32 @@ int  main(
                 for_less( ind[Z+1], 0, sizes[Z+1] )
                 {
                     value = (Real) ind[ind[Z+1]] / (Real) sizes[ind[Z+1]];
-                    value = 4.0 * value - 2.0;
+                    value = 10.0 * value - 5.0;
                     value = CONVERT_VALUE_TO_VOXEL( volume, value );
                     SET_VOXEL( volume, ind[X], ind[Y], ind[Z], ind[Z+1], 0,
                                value );
                 }
             }
         }
+    }
+
+    create_grid_transform( &transform, volume );
+
+    print( "Enter x, y, z: " );
+    while( input_real( stdin, &x ) == OK &&
+           input_real( stdin, &y ) == OK &&
+           input_real( stdin, &z ) == OK )
+    {
+        general_transform_point( &transform, x, y, z, &xt, &yt, &zt );
+
+        print( "Forward: %g %g %g -> %g %g %g\n", x, y, z, xt, yt, zt );
+        x = xt;
+        y = yt;
+        z = zt;
+
+        general_inverse_transform_point( &transform, x, y, z, &xt, &yt, &zt );
+        print( "Inverse:          -> %g %g %g\n", xt, yt, zt );
+        print( "Enter x, y, z: " );
     }
 
     status = output_volume( output_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
