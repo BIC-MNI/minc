@@ -1,0 +1,215 @@
+.\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 1.1 1993-10-19 11:15:50 neelin Exp $
+.\"
+.TH MINC 1 "MINC Image File Format" "Montreal Neurological Institute"
+
+.SH NAME
+rawtominc - converts a stream of binary image data to a minc format file
+
+.SH SYNOPSIS 
+.B rawtominc 
+[<opts>] <file> [[<sz4>] <sz3>] <sz2> <sz1>
+
+.SH DESCRIPTION
+.I Rawtominc
+reads a stream of binary data (byte, short, long, float or double) and
+writes it into the minc format file <file>. The user specifies the
+dimension sizes from slowest varying to fastest varying. At least two
+dimensions must be given (an image) but there can be up to four.
+Options give the user control over dimension names, data types and
+voxel to world coordinate conversion. Vector type data (such as RGB
+pixel data) can be read in as well.
+
+.SH PIXEL VALUE SPECIFICATION
+
+Pixel values are specified by a type and a sign (e.g. signed short
+integer). They are also characterized by a range of legal values. For
+example, many scanners produce images stored with short integer pixel
+values. Some have values in the range 0 to 4095, others 0 to 32000,
+others -32768 to 32767. This range is the valid range, specified by
+the -range option (for floating point values, the valid range is the
+maximum and minimum of the whole dataset). Rawtominc allows the user
+to specify both the input type, sign and range as well as the output
+type, sign and range (read short values, store byte values, for
+example).
+.P
+There is a further twist. Integer pixel values are generally taken to
+be simply scaled pixel representations of real (meaningful) physical
+values. Floating point values are taken to be the real value itself.
+Thus floating point values are scanned for the maximum and minimum,
+since they could be anything (they are stored in the MINC variables
+image-max and image-min). Integer values, however, are not scanned,
+since their range should be given by an option. To force scanning of
+integer values when the maximum and minimum are not known (some
+scanners produce files with variable ranges), one can convert
+integers to floating point (simple conversion utilities exist) and
+then read values in with -float and write them out with -oshort.
+.\" Alternatively, one can use the option -scan_range.
+
+.SH WORLD COORDINATES
+
+World coordinates refer to millimetric coordinates relative to some physical
+origin (either the scanner or some anatomical structure). Voxel coordinates
+are simply the indices into the image volume of a given voxel.
+It is worth describing briefly how MINC coordinate conversions work
+since this will affect how successful the new MINC file will be. 
+
+Each dimension of MINC image is specified by name - the spatial
+dimensions are xspace, yspace and zspace. The convention is that
+positive xspace coordinates run from the patient's left side to right
+side, positive yspace coordinates run from patient posterior to
+anterior and positive zspace coordinates run from inferior to
+superior. For each of these spatial dimensions, the world coordinate
+conversion is specified by a pair of attributes: step and start. The
+xspace world coordinate, for example, is calculated using x = v*step +
+start, where x is the x world coordinate and v is the voxel count
+(starting at zero).  Thus the magnitude of the step attribute
+specifies the distance between voxels and the sign of the step
+attribute specifies the orientation of the axis. Programs will use
+this information to display images with the correct aspect ratio and
+orientation, so make sure that you get it right. Many scanners store
+transverse images with the first pixel at the patient's anterior/right
+side, so it would be necessary to give negative x and y step values.
+Other conventions have the opposite: first pixel at patient's
+posterior/left, so step values are positive. Sometimes the first slice
+is inferior, so the z step should be positive. Other times it is
+superior, so z step is negative.
+
+.SH OPTIONS
+
+.SH Dimension ordering
+.P
+.I -transverse:
+Transverse images   : [[time] z] y x (Default)
+.P
+.I -sagittal:
+Sagittal images     : [[time] x] z y
+.P
+.I -coronal:
+Coronal images      : [[time] y] z x
+.P
+.I -time:
+Time ordered images : [[z] time] y x
+.P
+.I -vector:
+Gives the size of a vector dimension (always the fastest varying
+dimension). Default is no vector dimension.
+
+.SH Input data type and range
+.P
+.I -byte:
+Byte values (default).
+.P
+.I -short:
+Short integer values.
+.P
+.I -long:
+Long integer values.
+.P
+.I -float:
+Single-precision floating point values.
+.P
+.I -double:
+Double-precision floating point values.
+.P
+.I -signed:
+Values are signed integers (default for short and long). Ignored for
+floating point types.
+.P
+.I -unsigned:
+Values are unsigned integers (default for byte). Ignored for
+floating point types.
+.P
+.I -range <min> <max>:
+specifies the valid range of pixel values. Default is the full range
+for the type and sign. This option is ignored for floating point
+values.
+
+.SH Output data type and range
+.P
+.I -obyte:
+Byte values (default is input type).
+.P
+.I -oshort:
+Short integer values (default is input type).
+.P
+.I -olong:
+Long integer values (default is input type).
+.P
+.I -ofloat:
+Single-precision floating point values (default is input type).
+.P
+.I -odouble:
+Double-precision floating point values (default is input type).
+.P
+.I -osigned:
+Values are signed integers (default for short and long). Ignored for
+floating point types. If output type is not specified, then default
+is input sign type.
+.P
+.I -ounsigned:
+Values are unsigned integers (default for byte). Ignored for
+floating point types. If output type is not specified, then default
+is input sign type.
+.P
+.I -orange <min> <max>:
+specifies the valid range of pixel values. Default is the full range
+for the type and sign. This option is ignored for floating point
+values. If output type and sign are not specified, then the default
+is the input range.
+
+.SH Writing output file
+.P
+.I -clobber:
+Overwrite existing minc file (default).
+.P
+.I -noclobber:
+Don't overwrite existing minc file.
+
+.SH World coordinate conversion
+.P
+.I -xstep:
+Step size for x dimension (default = none).
+.P
+.I -ystep:
+Step size for y dimension (default = none).
+.P
+.I -zstep:
+Step size for z dimension (default = none).
+.P
+.I -xstart:
+Starting coordinate for x dimension (default = none).
+.P
+.I -ystart:
+Starting coordinate for y dimension (default = none).
+.P
+.I -zstart:
+Starting coordinate for z dimension (default = none).
+
+.SH Generic options
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH MISSING FEATURES
+The user should be able to specify time coordinate information,
+including both start time and frame width. The user should also be
+able to specify the imaging modality since this can have an effect on
+the behaviour of display programs. One should be able to force
+scanning of input integers for maximum and minimum.
+
+.SH COPYRIGHTS
+.ps 18
+\fB\(co\fR\s12 Copyright 1993 by Peter Neelin
