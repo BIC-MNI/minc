@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:12  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-08-19 13:57:50  neelin
+@MODIFIED   : Added ARG_SEPARATOR to replace string literal for comma.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:24:12  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:10  neelin
  * Release of minc version 0.5
  *
@@ -45,6 +48,7 @@
 #define NCOPTS_DEFAULT NC_VERBOSE | NC_FATAL
 #define DEFAULT_MAX_CHUNK_SIZE_IN_KB (1024*4)
 #define DIM_WIDTH_SUFFIX "-width"
+#define ARG_SEPARATOR ','
 #define VECTOR_SEPARATOR ','
 #ifndef TRUE
 #  define TRUE 1
