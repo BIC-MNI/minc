@@ -103,7 +103,7 @@ check_dims(mihandle_t vol, midimhandle_t dim[])
     }
 
     for (i = 0; i < NDIMS; i++) {
-        BOOLEAN flag_value;
+        miboolean_t flag_value;
 
         r = miget_dimension_sampling_flag(dim[i], &flag_value);
         if (r < 0) {

@@ -195,7 +195,7 @@ typedef enum {
   MI_COMPRESS_ZLIB = 1          /**< GZIP compression */
 } micompression_t;
 
-typedef int BOOLEAN;
+typedef int miboolean_t;
 
 typedef unsigned int midimattr_t;
 
@@ -295,8 +295,8 @@ extern int miget_dimension_offsets(midimhandle_t dimension, unsigned long array_
 				   unsigned long start_position, double offsets[]);
 extern int miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 
 				   unsigned long start_position, const double offsets[]);
-extern int miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag);
-extern int miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag);
+extern int miget_dimension_sampling_flag(midimhandle_t dimension, miboolean_t *sampling_flag);
+extern int miset_dimension_sampling_flag(midimhandle_t dimension, miboolean_t sampling_flag);
 extern int miget_dimension_separation(midimhandle_t dimension, 
                                       mivoxel_order_t voxel_order, 
 				      double *separation_ptr);
@@ -346,17 +346,17 @@ extern int miopen_volume(const char *filename, int mode, mihandle_t *volume);
 extern int miclose_volume(mihandle_t volume);
 
 extern int miget_slice_scaling_flag(mihandle_t volume, 
-				    BOOLEAN *slice_scaling_flag);
+				    miboolean_t *slice_scaling_flag);
 extern int miset_slice_scaling_flag(mihandle_t volume, 
-				    BOOLEAN slice_scaling_flag);
+				    miboolean_t slice_scaling_flag);
 
 /* VOLUME PROPERTIES FUNCTIONS */
 extern int minew_volume_props(mivolumeprops_t *props);
 extern int mifree_volume_props(mivolumeprops_t props);
 extern int miget_volume_props(mihandle_t vol, mivolumeprops_t *props);
-extern int miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag, 
+extern int miset_props_multi_resolution(mivolumeprops_t props, miboolean_t enable_flag, 
 				int depth);
-extern int miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
+extern int miget_props_multi_resolution(mivolumeprops_t props, miboolean_t *enable_flag,
 				int *depth);
 extern int miselect_resolution(mihandle_t volume, int depth);
 extern int miflush_from_resolution(mihandle_t volume, int depth);

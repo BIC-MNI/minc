@@ -1073,7 +1073,7 @@ miset_dimension_offsets(midimhandle_t dimension,
   */
 
 int 
-miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
+miget_dimension_sampling_flag(midimhandle_t dimension, miboolean_t *sampling_flag)
 {
   if (dimension == NULL) {
     return (MI_ERROR);
@@ -1094,7 +1094,7 @@ miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
   */
 
 int 
-miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
+miset_dimension_sampling_flag(midimhandle_t dimension, miboolean_t sampling_flag)
 {
     if (dimension == NULL) {
         return (MI_ERROR);

@@ -126,6 +126,9 @@ MON DEC 13/2004 Leila\\*
 TUE JAN 18/2005 Leila\\*
 * Added some extra definition to the set hyperslab functions
 
+TUE MAR 08/2005 Leila\\*
+* Changed BOOLEAN to miboolean_t due to conflicts with other libraries
+
 \section{Introduction}
 
 
@@ -1218,10 +1221,10 @@ SYNOPSIS
 #include <minc2.h>
 
 int miget_dimension_sampling_flag ( midimhandle_t       dimension,
-                                    BOOLEAN             *sampling_flag);
+                                    miboolean_t         *sampling_flag);
 
 int miset_dimension_sampling_flag ( midimhandle_t       dimension,
-                                    BOOLEAN             sampling_flag);
+                                    miboolean_t         sampling_flag);
 
 DESCRIPTION
 
@@ -2365,8 +2368,8 @@ SYNOPSIS
 
 #include <minc2.h>
 
-int miget_slice_scaling_flag ( mihandle_t   volume,
-                               Boolean      *scaling_flag)
+int miget_slice_scaling_flag ( mihandle_t    volume,
+                               miboolean_t   *scaling_flag)
                                 
 DESCRIPTION
 
@@ -2390,7 +2393,7 @@ SYNOPSIS
 #include <minc2.h>
 
 int miset_slice_scaling_flag ( mihandle_t       volume,
-                               Boolean          scaling_flag)
+                               miboolean_t      scaling_flag)
                                 
 DESCRIPTION
 
@@ -3338,10 +3341,10 @@ SYNOPSIS
 #include <minc2.h>
 
 int miset_props_multi_resolution(mivolumeprops_t        props, 
-                                 BOOLEAN                enable_flag,
+                                 miboolean_t            enable_flag,
                                  int                    depth);
 int miget_props_multi_resolution(mivolumeprops_t        props, 
-                                 BOOLEAN                *enable_flag,
+                                 miboolean_t            *enable_flag,
                                  int                    *depth);
 
 DESCRIPTION

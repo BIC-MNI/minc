@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   mivolumeprops_t  props;
   int r;
   micompression_t compression_type;
-  BOOLEAN enable_flag;
+  miboolean_t enable_flag;
   int zlib_level;
   int depth;
   int edge_lengths[MI2_MAX_VAR_DIMS];

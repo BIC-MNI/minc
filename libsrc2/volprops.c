@@ -194,7 +194,7 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
  * \ingroup mi2VPrp
  */
 int
-miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
+miset_props_multi_resolution(mivolumeprops_t props, miboolean_t enable_flag,
 			    int depth)
 {
     if (props == NULL || depth > MI2_MAX_RESOLUTION_GROUP || depth <= 0) {
@@ -209,14 +209,14 @@ miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
 /*! Get multi-resolution properties.  Returns the value of the \a enable_flag
  * and \a depth parameters.
  * \param props A volume property list handle
- * \param enable_flag Pointer to a BOOLEAN which will be set to TRUE if 
+ * \param enable_flag Pointer to a boolean which will be set to TRUE if 
  * multiresolution has been enabled.
  * \param depth Pointer to a integer which will contain the maximum resolution
  * depth enabled if multiresolution is enabled.
  * \ingroup mi2VPrp
  */
 int 
-miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
+miget_props_multi_resolution(mivolumeprops_t props, miboolean_t *enable_flag,
 			     int *depth)
 {
   if (props == NULL || enable_flag == NULL || depth == NULL) {

@@ -50,7 +50,7 @@ typedef long long mi_i64_t;
  * Volume properties  
  */
 struct mivolprops {
-    BOOLEAN enable_flag;        /* enable multi-res */
+    miboolean_t enable_flag;        /* enable multi-res */
     int depth;                  /* multi-res depth */
     micompression_t compression_type;
     int zlib_level; 
@@ -88,7 +88,7 @@ struct midimension {
  */
 struct mivolume {
   hid_t hdf_id;
-  BOOLEAN has_slice_scaling;
+  miboolean_t has_slice_scaling;
   int number_of_dims;
   midimhandle_t *dim_handles;   /* file order of dimensions */
   int *dim_indices;             /* apparent order of dimensions */
@@ -109,7 +109,7 @@ struct mivolume {
   hid_t imin_id;                /* Dataset for image-max */
   double scale_min;             /* Global minimum */
   double scale_max;             /* Global maximum */
-  BOOLEAN is_dirty;             /* TRUE if data has been modified. */
+  miboolean_t is_dirty;             /* TRUE if data has been modified. */
 };
 
 /**
