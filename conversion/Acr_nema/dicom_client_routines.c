@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-15 16:50:59  neelin
+@MODIFIED   : Separated out connection timeouts from i/o timeouts and added functions
+@MODIFIED   : to change them.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 1.2  1997/09/11  17:19:49  neelin
  * Modified creation of uids. Replaced cftime with strftime.
  *
@@ -40,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.0 1997-09-12 13:23:59 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.1 1997-09-15 16:50:59 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -73,9 +77,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #ifndef INADDR_NONE
 #  define INADDR_NONE             0xffffffff
 #endif
-
-#define CONNECTION_TIMEOUT (60*5)
-#define PRESENTATION_CONTEXT_ID 1
 
 /* Dicom definitions */
 #define ACR_IMPLICIT_VR_LITTLE_END_UID "1.2.840.10008.1.2"
@@ -118,6 +119,8 @@ DEFINE_ELEMENT(static, ACR_Samples_per_pixel          , 0x0028, 0x0002, US);
 DEFINE_ELEMENT(static, ACR_Photometric_interpretation , 0x0028, 0x0004, CS);
 
 /* Globals for handling connection timeouts */
+static int Timeout_length = 60 * 2 ;       /* Timeout in seconds */
+static int Initial_timeout_length = 10;    /* Timeout for initial connection */
 static int Connection_timeout = FALSE;
 static Acr_File *Alarmed_afp = NULL;
 
@@ -282,11 +285,20 @@ public int acr_connect_to_host(char *host, char *port,
       perror("Error getting socket");
       return FALSE;
    }
+   (void) signal(SIGALRM, timeout_handler);
+   (void) alarm(Initial_timeout_length);
    if (connect(sock, (struct sockaddr *) &server, sizeof (server)) < 0) {
+      (void) alarm(0);
       (void) fprintf(stderr, "Unable to connect to %s: ", host);
-      perror(NULL);
+      if (Connection_timeout) {
+         (void) fprintf(stderr, "connection timed out\n");
+      }
+      else {
+         perror(NULL);
+      }
       return FALSE;
    }
+   (void) alarm(0);
 
    /* Open file handles */
    if ((*fpin = fdopen(sock, "r")) == NULL) {
@@ -653,7 +665,7 @@ private Acr_Status receive_message(Acr_File *afpin, Acr_Message *message)
    Alarmed_afp = afpin;
    Connection_timeout = FALSE;
    (void) signal(SIGALRM, timeout_handler);
-   (void) alarm(CONNECTION_TIMEOUT);
+   (void) alarm(Timeout_length);
    status=acr_input_dicom_message(afpin, message);
    (void) alarm(0);
    if (Connection_timeout) {
@@ -683,7 +695,7 @@ private Acr_Status send_message(Acr_File *afpout, Acr_Message message)
    Alarmed_afp = afpout;
    Connection_timeout = FALSE;
    (void) signal(SIGALRM, timeout_handler);
-   (void) alarm(CONNECTION_TIMEOUT);
+   (void) alarm(Timeout_length);
    status = acr_output_dicom_message(afpout, message);
    (void) alarm(0);
    if (Connection_timeout) {
@@ -691,6 +703,49 @@ private Acr_Status send_message(Acr_File *afpout, Acr_Message message)
    }
 
    return status;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_client_timeout
+@INPUT      : seconds - time in seconds to wait for i/o before timing out
+@OUTPUT     : (none)
+@RETURNS    : 
+@DESCRIPTION: Routine to set the length of network timeouts. This time
+              is used once the connection has been made. Note that although
+              a double-precision argument is given, it is truncated to 
+              integer before being used. A value of zero or less means that
+              no timeout is used.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : September 15, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_client_timeout(double seconds)
+{
+   Timeout_length = (int) seconds;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_client_initial_timeout
+@INPUT      : seconds - time in seconds to wait for initial connection 
+                 before timing out
+@OUTPUT     : (none)
+@RETURNS    : 
+@DESCRIPTION: Routine to set the length of initial network connection 
+              timeouts. This time is used only when the initial connection
+              is made. Note that although a double-precision argument is 
+              given, it is truncated to integer before being used. A value 
+              of zero or less means that no timeout is used.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : September 15, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_client_initial_timeout(double seconds)
+{
+   Initial_timeout_length = (int) seconds;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

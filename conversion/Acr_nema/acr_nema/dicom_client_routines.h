@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:59  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-15 16:50:59  neelin
+@MODIFIED   : Separated out connection timeouts from i/o timeouts and added functions
+@MODIFIED   : to change them.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:59  neelin
+ * Release of minc version 0.6
+ *
  * Revision 1.1  1997/09/08  21:52:21  neelin
  * Initial revision
  *
@@ -45,6 +49,8 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
                                         char *called_ae, char *calling_ae,
                                         char *abstract_syntax_list[], 
                                         char *transfer_syntax_list[]);
+public void acr_set_client_timeout(double seconds);
+public void acr_set_client_initial_timeout(double seconds);
 public int acr_uid_equal(char *uid1, char *uid2);
 public void acr_dicom_error(Acr_Status status, char *string);
 public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout);
