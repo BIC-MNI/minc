@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.56 1996-12-09 20:20:26 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.57 1997-04-17 17:25:47 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -106,7 +106,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     BOOLEAN             different;
     BOOLEAN             min_voxel_found, max_voxel_found, range_specified;
     double              valid_range[2], temp;
-    long                long_size, mindex[MAX_VAR_DIMS];
+    long                long_size;
     BOOLEAN             converted_sign, space_type_consensus;
     nc_type             converted_type;
     char                signed_flag[MI_MAX_ATTSTR_LEN+1], *ptr;
@@ -447,9 +447,6 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     }
 
     set_volume_sizes( volume, sizes );
-
-    for_less( d, 0, file->n_file_dimensions )
-        mindex[d] = 0;
 
     /* --- create the image conversion variable */
 

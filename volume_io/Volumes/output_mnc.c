@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.48 1996-12-09 20:20:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.49 1997-04-17 17:26:02 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -908,7 +908,6 @@ public  Status  output_minc_hyperslab(
     int              tmp_ind, tmp_sizes[MAX_DIMENSIONS];
     int              array_indices[MAX_DIMENSIONS];
     int              array_counts[MAX_VAR_DIMS];
-    int              zero[MAX_VAR_DIMS];
     Status           status;
     multidim_array   buffer_array;
 
@@ -975,10 +974,7 @@ public  Status  output_minc_hyperslab(
         n_tmp_dims = n_file_dims - tmp_ind - 1;
 
         for_less( dim, 0, n_tmp_dims )
-        {
             tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
-            zero[dim] = 0;
-        }
 
         for_less( dim, 0, n_array_dims )
             array_indices[dim] -= tmp_ind + 1;
@@ -1041,7 +1037,6 @@ private  void  output_slab(
     int               to_array[MAX_DIMENSIONS];
     int               volume_start[MAX_DIMENSIONS];
     int               volume_sizes[MAX_DIMENSIONS];
-    int               array_start[MAX_DIMENSIONS];
     int               array_to_volume[MAX_DIMENSIONS];
     int               int_file_count[MAX_DIMENSIONS];
     int               int_file_start[MAX_DIMENSIONS];
@@ -1088,7 +1083,6 @@ private  void  output_slab(
             {
                 to_array[file_ind] = n_slab_dims;
                 array_to_volume[n_slab_dims] = ind;
-                array_start[n_slab_dims] = 0;
                 slab_sizes[n_slab_dims] = int_file_count[file_ind];
                 volume_sizes[ind] = int_file_count[file_ind];
                 ++n_slab_dims;
