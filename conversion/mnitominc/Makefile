@@ -3,7 +3,7 @@
 # MINC Makefile
 #
 
-ROOT = ../..
+ROOT = ../../minc
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
