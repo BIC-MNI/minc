@@ -10,7 +10,10 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxeltoworld.c,v $
- * Revision 6.4  2004-02-02 18:27:51  bert
+ * Revision 6.5  2004-04-27 15:38:47  bert
+ * Added milog_init()
+ *
+ * Revision 6.4  2004/02/02 18:27:51  bert
  * Call ParseArgv() so that version information can be output
  *
  * Revision 6.3  2001/04/24 13:38:41  neelin
@@ -62,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.4 2004-02-02 18:27:51 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.5 2004-04-27 15:38:47 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -104,6 +107,8 @@ int main(int argc, char *argv[])
    double v0, v1, v2, wx, wy, wz;
    static char *dim_names[] =
       {ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION, ANY_SPATIAL_DIMENSION};
+
+   milog_init(argv[0]);
 
    /* Check arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || argc != 5) {
