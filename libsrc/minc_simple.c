@@ -5,7 +5,10 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.2  2004-12-14 23:53:46  bert
+ * Revision 6.3  2005-01-04 22:45:57  bert
+ * Adopt Leila's changes to restructure_array() and make appropriate corrections to the rest of the code
+ *
+ * Revision 6.2  2004/12/14 23:53:46  bert
  * Get rid of compilation warnings
  *
  * Revision 6.1  2004/11/01 22:06:48  bert
@@ -38,9 +41,9 @@
 
 static char *minc_dimnames[] = {
     MItime, 
-    MIxspace,
+    MIzspace,
     MIyspace,
-    MIzspace
+    MIxspace
 };
 
 /* private function from from libminc2.  This function is private partially
@@ -299,21 +302,22 @@ minc_load_data(char *path, void *dataptr, int datatype,
 
     /* We want the data to wind up in t, x, y, z order. */
 
+    for (i = 0; i < MI_S_NDIMS; i++) {
+        map[i] = -1;
+    }
+
     for (i = 0; i < var_ndims; i++) {
         if (var_dims[i] == dim_id[MI_S_T]) {
-            map[i] = MI_S_T;
+            map[MI_S_T] = i;
         }
         else if (var_dims[i] == dim_id[MI_S_X]) {
-            map[i] = MI_S_X;
+            map[MI_S_X] = i;
         }
         else if (var_dims[i] == dim_id[MI_S_Y]) {
-            map[i] = MI_S_Y;
+            map[MI_S_Y] = i;
         }
         else if (var_dims[i] == dim_id[MI_S_Z]) {
-            map[i] = MI_S_Z;
-        }
-        else {
-            map[i] = -1;
+            map[MI_S_Z] = i;
         }
     }
 
@@ -330,7 +334,7 @@ minc_load_data(char *path, void *dataptr, int datatype,
 
     for (i = 0; i < MI_S_NDIMS; i++) {
         if (map[i] >= 0) {
-            count[i] = dim_len[map[i]];
+            count[map[i]] = dim_len[i];
         }
     }
 
@@ -380,10 +384,8 @@ minc_load_data(char *path, void *dataptr, int datatype,
     }
 
     if (var_ndims == 3) {
-        for (i = 0; i < var_ndims; i++) {
-            map[i] = map[i] - 1;
-        }
         for (i = 1; i < MI_S_NDIMS; i++) {
+            map[i-1] = map[i];
             dir[i-1] = dir[i];
         }
     }
@@ -1089,7 +1091,8 @@ restructure_array(int ndims,    /* Dimension count */
      * their "raw" or native order:
      **/
     for (i = 0; i < ndims; i++) {
-        lengths[i] = lengths_perm[map[i]];
+      //lengths[i] = lengths_perm[map[i]];
+        lengths[map[i]] = lengths_perm[i];
     }
 
     /**
@@ -1160,10 +1163,12 @@ restructure_array(int ndims,    /* Dimension count */
 
                 for (i = 0; i < ndims; i++) {
                     if (dir[i] < 0) {
-                        index[i] = lengths[i] - index_perm[map[i]] - 1;
+		      // index[i] = lengths[i] - index_perm[map[i]] - 1;
+		      index[map[i]] = lengths[map[i]] - index_perm[i] - 1;
                     }
                     else {
-                        index[i] = index_perm[map[i]];
+		      //index[i] = index_perm[map[i]];
+		      index[map[i]] = index_perm[i];
                     }
                 }
 
