@@ -28,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.6 1995-07-31 13:44:36 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.7 1995-08-04 15:27:28 david Exp $";
 #endif
 
 #include  <alloc.h>
@@ -56,7 +56,7 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
      {                                                                        \
          if( (new_n_elems) > 0 )                                              \
          {                                                                    \
-             int  _size_required;                                             \
+             size_t  _size_required;                                          \
                                                                               \
              _size_required = (((new_n_elems)+(chunk_size)-1)/(chunk_size))   \
                               * (chunk_size);                                 \
@@ -66,7 +66,7 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
              }                                                                \
              else                                                             \
              {                                                                \
-                 int  _previous_n_elems;                                      \
+                 size_t  _previous_n_elems;                                   \
                                                                               \
                  _previous_n_elems = (((previous_n_elems)+(chunk_size)-1)/    \
                                   (chunk_size)) * (chunk_size);               \
@@ -121,7 +121,7 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 
 #define  DELETE_ELEMENT_FROM_ARRAY( array, n_elems, index_to_remove, chunk_size ) \
          {                                                                     \
-             int    _i_;                                                       \
+             size_t    _i_;                                                    \
              for_less( _i_, index_to_remove, (n_elems) - 1 )                   \
                  (array) [_i_] = (array)[_i_+1];                               \
                                                                                \
