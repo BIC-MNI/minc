@@ -113,6 +113,9 @@ THU AUG 12/2004 Leila\\*
 MON AUG 30/2004 Leila\\*
 * Added Attribute functions
 
+WED OCT 27/2004 Leila\\*
+* Correct the order of parameters in range functions
+
 \section{Introduction}
 
 
@@ -823,7 +826,7 @@ The following example will return up to 3 spatial dimensions:
     mihandle_t volume;
 
     result = miget_vol_dimensions (volume, MI_DIMCLASS_SPATIAL, 
-                                   MI_DIMATTR_ALL, MI_ORDER_FILE, 
+                                   MI_DIMATTR_ALL, MI_DIMORDER_FILE, 
                                    3, dimensions);
 
 
@@ -2248,8 +2251,8 @@ SYNOPSIS
 int miget_slice_range ( mihandle_t      volume,
                         unsigned long   start_positions[],
                         unsigned long   array_length,
-                        double          *slice_min,
-                        double          *slice_max)
+                        double          *slice_max,
+                        double          *slice_min)
                        
                                 
 DESCRIPTION
@@ -2277,8 +2280,8 @@ SYNOPSIS
 int miset_slice_range ( mihandle_t      volume,
                         unsigned long   start_positions[],
                         unsigned long   array_length,
-                        const double    slice_min,
-                        const double    slice_max)
+                        const double    slice_max,
+                        const double    slice_min)
                        
                                 
 DESCRIPTION
