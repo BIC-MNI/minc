@@ -112,16 +112,32 @@ appropriate document (insert reference here).
 
 \subsection{Definitions}
 \begin{itemize}
-\item hyperslab - An N-dimensional block of data.  Known as a
+\item {\bf hyperslab} - An N-dimensional block of data.  Known as a
 ``hypercube'' if all dimensions are equal.
-\item volume - A MINC file. Volume and file can be used interchangeably
-as it is not common to use volume for more than
-3 dimensions and MINC 2 is N dimensional.
-\item voxel - Volume element, analogous to ``pixel'' for ``picture
-element''. A single datapoint in a multidimensional image.
-\item opaque datatype - An object oriented concept used to refer
+\item {\bf opaque datatype} - An object oriented concept used to refer
 to datatypes whose implementation details are explicitly hidden from
 the programmer.
+\item {\bf vector\_dimension} - A dimension (must always be the fastest-varying
+dimension) that specifies the number of data values at a particular 
+point in the image such as RGB images. In MINC2.0 vectors are considered types 
+of records which can be created by setting the flatten\_flag (volume will have 
+an extra dimension which will be set to record) for the volume.
+\item {\bf volume} - A MINC file. Volume and file can be used interchangeably
+as it is not common to use volume for more than
+3 dimensions and MINC 2 is N dimensional.
+\item {\bf voxel} - Volume element, analogous to ``pixel'' for ``picture
+element''. A single datapoint in a multidimensional image.
+\item {\bf voxel and world coordinate systems} -
+MINC 2 defines both ``voxel'' and ``world'' spatial coordinate systems.
+For each dimension, the world coordinate conversion is specified  
+by the following attributes: step, start and direction\_cosines since 
+MINC files are allowed to have non-orthogonal axes with the dimensions 
+not perfectly aligned with the named axis. The xspace world coordinate, for
+example, is calculated using x = (v*step + start) * direction\_cosines, 
+where x is the x world coordinate and v is the voxel count (starting at zero). 
+Assuming that xspace dimension is in line with world x axis, ie. direction\_cosine = (1,0,0), the magnitude of the step attribute specifies the distance between voxels and the sign of the step attribute specifies the orientation of the axis.Otherwise, the direction\_cosines determine the orientation of the data with 
+respect to the world coordinate system, ie. direction\_cosine of (0.9, 0.43589, 0). For detailed formulas please refer to section 2.1 of
+\emph{The MINC 2.0 File Format} by Robert D. Vincent.
 \end{itemize}
 \newpage
 \section{Using the core tools}
@@ -378,8 +394,7 @@ values.  May be used with any integer type.
 the voxels are assumed to be taken from a discrete set.  These values
 may be assigned a sybolic name to clarify the interpretation of the
 data.  May be used with any integer type.
-\item MI\_CLASS\_COMPLEX - Complex data.  May be used with one of the
-complex types only.
+\item MI\_CLASS\_COMPLEX - Complex data with real and imaginary values. May be used with one of the complex types (integer or floating point) only.
 \item MI\_CLASS\_UNIFORM\_RECORD - A uniform record structure, essentially an
 array with named entries.
 \item MI\_CLASS\_NON\_UNIFORM\_RECORD - A non uniform record structure.  This
@@ -396,7 +411,8 @@ Each dimension of a MINC image volume/file is specified by its {\tt name}. MINC2
 standard naming conventions such as {\tt xspace, yspace, zspace} (spatial 
 dimensions), {\tt xfrequency, yfrequency, zfrequency}
 (spatial frequency dimensions), {\tt tfrequency} (temporal frequency dimension), {\tt time} 
-(time dimension) and finally {\tt vector-dimension} (vector or complex data dimension).
+(time dimension) and finally \\
+{\tt vector-dimension} (refer to section 1.2). \\
 It is important to note that in MINC 2 there are certain default interpretations and properties 
 associated with standard named dimensions. However, this does not place 
 any limitations on MINC 2 dimensions definition as the user has full freedom to define new names, 
@@ -451,23 +467,10 @@ The {\tt length} attribute is a number defining the total number of sampled data
 points along a dimension.
 The {\tt direction\_cosines} attribute are a set of three vectors associated with 
 spatial dimensions and define the precise orientation of the axis relative to "true" 
-x, y, or z coordinates.
-** NOT sure whether to list all the attributes or not **
-\subsection{Voxel and World Coordinate Systems}
-MINC 2 defines both ``voxel'' and ``world'' spatial coordinate systems.
-For each dimension, the world  coordinate  conversion is specified  
-by a pair of attributes: step and start. The xspace world coordinate, 
-for example is calculated using x = v*step + start, where x is the x world 
-coordinate and v is the voxel count (starting at zero). Thus the magnitude 
-of the step attribute specifies the distance between voxels and the sign 
-of the step attribute specifies the orientation of the axis. MINC files are 
-allowed to have non-orthogonal axes with the dimensions not perfectly 
-aligned with the named axis. There can be a direction\_cosine attribute that 
-gives the true orientation of the axis. For example, normally the xspace 
-dimension should line up with the world x axis, ie. direction cosine = (1,0,0)
-; however, it is possible to have a direction cosine of (0.9, 0.43589, 0).
-For detailed formulas please refer to APPENDIX A, section 2.1
-\emph{The MINC 2.0 File Format} by Robert D. Vincent.
+x, y, or z coordinates. For a complete list of dimension attributes refer to
+\emph{MINC2.0 PI} at http://www.bic.mni.mcgill.ca/software/minc2/api\_doc/minc\_20.html
+
+
 \subsection{Coding Examples}
 MINC 2 files can define any number of dimensions. In MINC 2 library, a dimension 
 is represented by an opaque datatype
@@ -524,8 +527,8 @@ dimension that is associated with a volume will result in an error.
 Since MINC files may organize data arbitrarily, the MINC 2.0
 programming interface allows the programmer to specify both the
 apparent order of dimensions and the apparent direction of each
-dimension.  This enables programs to specify a that the data be
-presented in whatever fashion is most convenient.
+dimension.  This enables programs to specify ordering in such way 
+that the data can be presented in whatever fashion is most convenient.
 
 The programmer may set an ``apparent'' dimension order for a given
 volume.  Specifying an apparent dimension order causes the library to
@@ -561,17 +564,10 @@ mode inverts the dimension only if the step size is positive.
 Attributes are small datasets, text or numeric, which are used to describe extra information about 
 the variables they are attached to and carry NO information about the medical image itself.
 
-The attributes in MINC 2 are defined in three different categories of
-global, structural and informational. Each category defines a set of predefined standard 
-attributes. Global attributes such as 
-{\tt history} contain information about the entire MINC file. Structural attributes such 
-as {\tt dimorder}: an ordered comma separated list of dimension names, 
-convery information to support the MINC file format format. Finally, informational attributes
-provide information about the medical image itself. For a detailed list of
-all MINC 2 attributes refer to APPENDIX A, section 4.
+Attributes such as {\tt history} and {\tt title} contain information about the entire MINC file and are attached to ``minc-2.0'' group itself. Other attributes such as {\tt vartype} and {\tt version} contain NO information about the image 
+but support the variable that they are attached to, ie. /minc-2.0/dimensions/xpsace/vartype. Finally, attributes such as {\tt valid\_range} which provide additional information about the image data, ie. /minc-2.0/image/0/image/valid\_range. For a complete list ofattributes and their definition, please refer to section 4 of \emph{The MINC 2.0 File Format} by Robert D. Vincent.
  
-The MINC 2 library defines a set of functions for manipulating attributes. To set 
-an attribute's value and
+The MINC 2 library defines a set of functions for manipulating attributes. To set an attribute's value and
 create it , if it does not already exist, use the following:
 \begin{verbatim}
       miset_attr_values(mihandle_t volume, 
@@ -581,7 +577,7 @@ create it , if it does not already exist, use the following:
                         int length, void *values)
 \end{verbatim}
 where file handle, data type, path to the attribute (i.e., where in the hierarchy this
-attribute is created, /minc-2.0/stuff), name of the attribute, its length (i.e., 10 
+attribute is created, /minc-2.0/history), name of the attribute, its length (i.e., 100 
 characters) and finally the attribute's value are passed as parameters. 
 The attribute's value is retrieved using the following,
 \begin{verbatim}
