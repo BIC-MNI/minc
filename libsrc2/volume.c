@@ -4,7 +4,6 @@
  *
  * Functions to create, open, and close MINC volume objects.
  ************************************************************************/
-#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <hdf5.h>
 #include <limits.h>
@@ -927,7 +926,10 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             if (!strcmp(dimname, "time")) {
                 hdim->class = MI_DIMCLASS_TIME;
             }
-            else {
+            else if (!strcmp(dimname, "vector_dimension")) {
+	      hdim->class = MI_DIMCLASS_RECORD;
+	    }
+	    else {
                 hdim->class =  MI_DIMCLASS_SPATIAL;
             }
         }

@@ -99,7 +99,8 @@ restructure_array(int ndims,    /* Dimension count */
      * their "raw" or native order:
      **/
     for (i = 0; i < ndims; i++) {
-        lengths[i] = lengths_perm[map[i]];
+      //lengths[i] = lengths_perm[map[i]];
+        lengths[map[i]] = lengths_perm[i];
     }
 
     /**
@@ -170,10 +171,12 @@ restructure_array(int ndims,    /* Dimension count */
 
                 for (i = 0; i < ndims; i++) {
                     if (dir[i] < 0) {
-                        index[i] = lengths[i] - index_perm[map[i]] - 1;
+		      // index[i] = lengths[i] - index_perm[map[i]] - 1;
+		      index[map[i]] = lengths[i] - index_perm[i] - 1;
                     }
                     else {
-                        index[i] = index_perm[map[i]];
+		      //index[i] = index_perm[map[i]];
+		      index[map[i]] = index_perm[i];
                     }
                 }
 
@@ -285,7 +288,13 @@ mitranslate_hyperslab_origin(mihandle_t volume,
     int n_different = 0;
     int file_i;
     int ndims = volume->number_of_dims;
+    int j;
 
+    for(j=0; j<ndims; j++)
+      {
+	hdf_count[j]=0;
+	hdf_start[j]=0;
+      }
     for (file_i = 0; file_i < ndims; file_i++) {
         midimhandle_t hdim;
         int user_i;
@@ -305,41 +314,49 @@ mitranslate_hyperslab_origin(mihandle_t volume,
         }
 
         hdim = volume->dim_handles[file_i];
-
         switch (hdim->flipping_order) {
         case MI_FILE_ORDER:
-            hdf_start[file_i] = start[user_i];
+	  //hdf_start[file_i] = start[user_i];
+	    hdf_start[user_i] = start[file_i];
             dir[file_i] = 1;    /* Set direction positive */
             break;
 
         case MI_COUNTER_FILE_ORDER:
-            hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+	  //hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+	    hdf_start[user_i] = hdim->length - start[file_i] - count[file_i];
             dir[file_i] = -1;   /* Set direction negative */
             break;
             
         case MI_POSITIVE:
             if (hdim->step > 0) { /* Positive? */
-                hdf_start[file_i] = start[user_i]; /* Use raw file order. */
-                dir[file_i] = 1; /* Set direction positive */
+	      //hdf_start[file_i] = start[user_i]; /* Use raw file order. */
+	      hdf_start[user_i] = start[file_i];
+	      dir[file_i] = 1; /* Set direction positive */
             }
             else {
-                hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1; /* Set direction negative */
+	      //hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+	      hdf_start[user_i] = hdim->length - start[file_i] - count[file_i];
+	      dir[file_i] = -1; /* Set direction negative */
             }
             break;
 
         case MI_NEGATIVE:
             if (hdim->step < 0) { /* Negative? */
-                hdf_start[file_i] = start[user_i]; /* Use raw file order */
-                dir[file_i] = 1; /* Set direction positive */
+	      //hdf_start[file_i] = start[user_i]; /* Use raw file order */
+	      hdf_start[user_i] = start[file_i];
+	      dir[file_i] = 1; /* Set direction positive */
             }
             else {
-                hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1; /* Set direction negative */
+	      //hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+	      hdf_start[user_i] = hdim->length - start[file_i] - count[file_i];
+	      dir[file_i] = -1; /* Set direction negative */
             }
             break;
         }
-        hdf_count[file_i] = count[user_i];
+	
+	//hdf_count[file_i] = count[user_i];
+	hdf_count[user_i] = count[file_i];
+	
     }
     return (n_different);
 }
@@ -355,7 +372,7 @@ mirw_hyperslab_raw(int opcode,
                    const unsigned long start[], 
                    const unsigned long count[],
                    void *buffer)
-{
+{   int j;
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
     hid_t fspc_id = -1;
@@ -366,7 +383,8 @@ mirw_hyperslab_raw(int opcode,
     int dir[MI2_MAX_VAR_DIMS];  /* Direction vector in file order */
     int ndims;
     int n_different = 0;
-
+   
+   
     /* Disallow write operations to anything but the highest resolution.
      */
     if (opcode == MIRW_OP_WRITE && volume->selected_resolution != 0) {
@@ -399,6 +417,7 @@ mirw_hyperslab_raw(int opcode,
         mspc_id = H5Screate(H5S_SCALAR);
     }
     else {
+      
         n_different = mitranslate_hyperslab_origin(volume, 
                                                    start,
                                                    count,
@@ -411,7 +430,7 @@ mirw_hyperslab_raw(int opcode,
             goto cleanup;
         }
     }
-
+    
     result = H5Sselect_hyperslab(fspc_id, H5S_SELECT_SET, hdf_start, NULL, 
                                  hdf_count, NULL);
     if (result < 0) {
@@ -423,16 +442,19 @@ mirw_hyperslab_raw(int opcode,
                          buffer);
         /* Restructure the array after reading the data in file orientation.
          */
+
         if (n_different != 0) {
             restructure_array(ndims, buffer, count, H5Tget_size(type_id), 
                               volume->dim_indices, dir);
         }
     }
     else {
+
         volume->is_dirty = TRUE; /* Mark as modified. */
 
         /* Restructure array before writing to file.
          */
+	
         if (n_different != 0) {
             unsigned long icount[MI2_MAX_VAR_DIMS];
             int idir[MI2_MAX_VAR_DIMS];
@@ -445,9 +467,11 @@ mirw_hyperslab_raw(int opcode,
                 idir[i] = dir[volume->dim_indices[i]];
                 imap[volume->dim_indices[i]] = i;
             }
+
             restructure_array(ndims, buffer, icount, H5Tget_size(type_id), 
                               imap, idir);
         }
+
         result = H5Dwrite(dset_id, type_id, mspc_id, fspc_id, H5P_DEFAULT, 
                           buffer);
     }
