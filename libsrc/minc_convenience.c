@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.10 1992-12-15 09:54:21 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.11 1992-12-15 15:31:41 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -340,7 +340,12 @@ private int MI_create_dim_variable(int cdfid, char *name,
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
 
    /* Dimension attributes */
-   MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
+   if (ndims==0) {
+      MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
+   }
+   else {
+      MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_IRREGULAR))
+   }
    if (STRINGS_EQUAL(name, MItime))
       MI_CHK_ERR(miattputstr(cdfid, varid, MIalignment, MI_START))
    else
@@ -399,6 +404,12 @@ private int MI_create_dimwidth_variable(int cdfid, char *name,
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_DIM_WIDTH))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
+   if (ndims==0) {
+      MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
+   }
+   else {
+      MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_IRREGULAR))
+   }
    MI_CHK_ERR(miattputstr(cdfid, varid, MIfiltertype, MI_SQUARE))
 
    MI_RETURN(varid);
