@@ -23,7 +23,9 @@ Here's a list of some of the tools:
  * mincconcat - concatenating or interleaving images from multiple
       files
  * mincmath - perform simple math on files
+ * minccalc - perform more complicated math on files through an expression
  * mincaverage - average minc files
+ * mincstats - calculate statistics across voxels of a file
  * minclookup - lookup table operations for arbitrary re-mappings of
       intensities
  * worldtovoxel, voxeltoworld - coordinate conversion
