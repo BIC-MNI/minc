@@ -93,8 +93,8 @@ clean:
 	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
 	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
 
-install: build
+install: $(CC_VOLIO_LIB) $(HEADERS)
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
-	$(CP) $(CP_FLAGS) $(HEADERS) $(INSTALL_INCDIR)
+	$(CP) $(CP_FLAGS) $(HEADERS) $(INSTALL_VOLIO_INCDIR)
 	$(CHMOD) $(CHMOD_FLAGS) \
-	      `echo $(HEADERS) | sed 's+Include/+$(INSTALL_INCDIR)/+g'`
+	      `echo $(HEADERS) | sed 's+Include/+$(INSTALL_VOLIO_INCDIR)/+g'`
