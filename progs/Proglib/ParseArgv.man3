@@ -9,7 +9,7 @@
 '\" 
 '\" Modified to be used without tk or tcl (Peter Neelin, November 30,1992)
 '\" Based on tk 2.3 file :
-'\" $Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.man3,v 6.1 1999-08-17 13:34:47 neelin Exp $ SPRITE (Berkeley)
+'\" $Header: /private-cvsroot/minc/progs/Proglib/Attic/ParseArgv.man3,v 6.2 1999-08-17 13:35:10 neelin Exp $ SPRITE (Berkeley)
 '\" 
 .\" The definitions below are for supplemental macros used in Sprite
 .\" manual entries.
