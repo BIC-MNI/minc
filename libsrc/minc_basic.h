@@ -14,7 +14,10 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.2  2001-04-17 18:40:13  neelin
+ * Revision 6.3  2004-04-27 15:48:15  bert
+ * Minor changes
+ *
+ * Revision 6.2  2001/04/17 18:40:13  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -57,7 +60,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.2 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.3 2004-04-27 15:48:15 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */
@@ -92,11 +95,9 @@ extern char *cdf_routine_name ; /* defined in globdef.c */
    defined in minc_globdef.c */
 extern char *minc_routine_name;
 extern int minc_call_depth;
-extern int minc_callers_ncopts;
 extern int minc_trash_var;        /* Just for getting rid of lint messages */
 #define MI_ROUTINE_VAR minc_routine_name
 #define MI_CALL_DEPTH minc_call_depth
-#define MI_CALLERS_NCOPTS minc_callers_ncopts
 #define MI_TRASH_VAR minc_trash_var
 
 /* Macros for logging errors. All routines should start with MI_SAVE_ROUTINE
@@ -114,7 +115,8 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
 #define MI_LOG_PKG_ERROR2(p1,p2) MI_log_pkg_error2(p1, p2)
 #define MI_LOG_PKG_ERROR3(p1,p2,p3) MI_log_pkg_error3(p1, p2, p3)
 #define MI_LOG_SYS_ERROR1(p1) MI_log_sys_error1(p1)
-#define MI_CHK_ERR(expr) {if ((expr)==MI_ERROR) MI_RETURN_ERROR(MI_ERROR);}
+#define MI_CHK_ERR(expr) {if ((expr)<0) MI_RETURN_ERROR(MI_ERROR);}
+
 
 /* Macros for converting data types. These macros are compound statements, 
    so don't put a semi-colon after them. dvalue should be a double, type
@@ -208,5 +210,7 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
       break; \
    }
 
+/**/
+#define _(x) x			/* For future gettext */
 
 #endif
