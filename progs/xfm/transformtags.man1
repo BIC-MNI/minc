@@ -1,0 +1,25 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH TRANSFORMTAGS 1
+.SH NAME
+transformtags \- apply MNI transform to a tag file
+
+.SH SYNOPSIS
+.B transformtags
+.BI [ -vol1 ]
+.BI [ -vol2 ]
+.BI [ "-transformation transform.xfm" ]
+.BI infile.tag
+.BI outfile.tag
+
+.SH DESCRIPTION
+
+.B transformtags
+applies the specified transformation to one of the two
+sets of tags in the tag file.  The default is to apply
+the transformation to the tags of the second volume.
+Use -vol1 to transform the first volume's tag.
+Only one volume at a time may be transformed.
+
+The transformation must be specified using
+the -transformation option.
+

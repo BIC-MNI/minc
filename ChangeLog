@@ -8,6 +8,19 @@
 	* LICENCE: Renamed to ...
 	* COPYING: ... this.  Makes automake happier.
 
+	* progs/coordinates/voxeltoworld.man1:
+	* progs/minccopy/minccopy.man1:
+	* progs/mincdiff/mincdiff.man1:
+	* progs/mincedit/mincedit.man1:
+	* progs/mincextract/mincextract.man1:
+	* progs/minctoraw/minctoraw.man1:
+	* progs/mincview/invert_raw_image.man1:
+	* progs/mincview/mincview.man1:
+	* progs/mincwindow/mincwindow.man1:
+	* progs/xfm/transformtags.man1:
+	* progs/xfm/xfmconcat.man1:
+	* progs/xfm/xfminvert.man1: New.
+
 2002-12-11  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* progs/minccalc/gram.y: Insert missing semicolon at end

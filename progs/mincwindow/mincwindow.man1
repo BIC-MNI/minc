@@ -1,0 +1,40 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCWINDOW 1
+
+.SH NAME
+mincwindow \- limit voxel values to a given range
+
+.SH SYNOPSIS
+.B mincwindow
+.BI [options]
+.BI in.mnc
+.BI out.mnc
+.BI min
+.BI max
+.BI [newvalue]
+
+.SH DESCRIPTION
+.B mincwindow 
+copies 
+.BI in.mnc
+to 
+.BI out.mnc.
+Each voxel value that lies within the window [min,max]
+is copied unmodified.  If the voxel value is outside
+that window and 
+.BI newvalue
+is specified, then that voxel is set to 
+.BI newvalue.
+Otherwise, the voxel value is set to 
+.BI min
+if it is less than 
+.BI min,
+and to 
+.BI max
+if it is higher than
+.BI max.
+
+
+.SH "SEE ALSO"
+.BR mincmath(1),
+.BR minccalc(1)

@@ -1,0 +1,18 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCCOPY 1
+.SH NAME
+minccopy \- copy minc image values from one minc file to another
+.SH SYNOPSIS
+.B minccopy
+.BI [-pixel_values]
+.BI [-real_values]
+.BI infile
+.BI outfile
+.SH DESCRIPTION
+.B minccopy
+Copies image values from one minc file to another.  Both files must
+exist.  By default the 
+.I real
+value of each pixel is copied.  Use
+.BI -pixel_values
+to copy the pixel values instead.

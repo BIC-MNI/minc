@@ -1,0 +1,26 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH VOXELTOWORLD 1
+.SH NAME
+voxeltoworld \- convert voxel coordinates to world coordinates
+
+worldtovoxel \- convert world coordinates to voxel coordinates
+
+.SH SYNOPSIS
+.B voxeltoworld
+.BI image
+.BI v1
+.BI v2
+.BI v3
+
+.B worldtovoxel
+.BI image
+.BI x
+.BI y
+.BI z
+
+.SH DESCRIPTION
+
+Transform coordinates of a point between voxel and world coordinate
+systems.  The voxel coordinate system is aligned with the sampling
+grid of the image volume.
+

@@ -246,11 +246,16 @@ libvolume_io_la_SOURCES = \
 # Using "dist_" should force them to be added the distribution.
 #
 dist_man1_MANS = \
+	progs/coordinates/voxeltoworld.man1 \
 	progs/minc_modify_header/minc_modify_header.man1 \
 	progs/mincaverage/mincaverage.man1 \
 	progs/minccalc/minccalc.man1 \
 	progs/mincconcat/mincconcat.man1 \
+	progs/minccopy/minccopy.man1 \
+	progs/mincdiff/mincdiff.man1 \
+	progs/mincedit/mincedit.man1 \
 	progs/mincexpand/mincexpand.man1 \
+	progs/mincextract/mincextract.man1 \
 	progs/mincheader/mincheader.man1 \
 	progs/mincinfo/mincinfo.man1 \
 	progs/minclookup/minclookup.man1 \
@@ -260,5 +265,13 @@ dist_man1_MANS = \
 	progs/mincresample/mincresample.man1 \
 	progs/mincreshape/mincreshape.man1 \
 	progs/mincstats/mincstats.man1 \
-	progs/rawtominc/rawtominc.man1
+	progs/minctoraw/minctoraw.man1 \
+	progs/mincview/invert_raw_image.man1 \
+	progs/mincview/mincview.man1 \
+	progs/mincwindow/mincwindow.man1 \
+	progs/rawtominc/rawtominc.man1 \
+	progs/xfm/transformtags.man1 \
+	progs/xfm/xfmconcat.man1 \
+	progs/xfm/xfminvert.man1
+
 

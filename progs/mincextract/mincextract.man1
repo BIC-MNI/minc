@@ -1,0 +1,113 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCEXTRACT 1
+
+.SH NAME
+mincextract \- dump a hyperslab of MINC file data
+
+.SH SYNOPSIS
+.B mincedit
+.BI [options]
+.BI mincfile
+
+.SH DESCRIPTION
+.B mincextract
+dumps a chunk of MINC file data to standard output in the
+format of your choice.
+
+.SH OPTIONS
+
+.P
+.BI -ascii
+Write out data as ascii strings (default)
+.P
+.BI -byte
+Write out data as bytes
+.P
+.BI -short
+Write out data as short integers
+.P
+.BI -int
+Write out data as 32-bit integers
+.P
+.BI -long
+Superseded by -int
+.P
+.BI -float
+Write out data as single precision floating-point values
+.P
+.BI -double
+Write out data as double precision floating-point values
+.P
+.BI -filetype
+Write out data in the type of the file
+.P
+.BI -signed
+Write out signed data
+.P
+.BI -unsigned
+Write out unsigned data
+.P
+.BI -range\ low\ high
+Specify the range of output values
+.P
+.BI -normalize
+Normalize integer pixel values to file max and min (Default)
+.P
+.BI -nonormalize
+Turn off pixel normalization
+.P
+.BI -image_range\ low\ high
+Specify the range of real image values for normalization
+.P
+.BI -image_minimum\ min
+Specify the minimum real image value for normalization
+.P
+.BI -image_maximum\ max
+Specify the maximum real image value for normalization
+.P
+.BI -start\ indexvector
+Specifies corner of hyperslab (C conventions for indices).
+Indices are either separated by spaces (enclosed by quotes)
+or commas (no quotes required).
+.P
+.BI -count\ indexvector
+Specifies edge lengths of hyperslab to read.  
+Indices are either separated by spaces (enclosed by quotes)
+or commas (no quotes required).
+.P
+.BI -positive_direction
+Flip images to always have positive direction.
+.P
+.BI -negative_direction
+Flip images to always have negative direction.
+.P
+.BI -any_direction
+Do not flip images (Default).
+.P
+.BI +xdirection
+Flip images to give positive xspace:step value (left-to-right).
+.P
+.BI -xdirection
+Flip images to give negative xspace:step value (right-to-left).
+.P
+.BI -xanydirection
+Don't flip images along x-axis (default).
+.P
+.BI +ydirection
+Flip images to give positive yspace:step value (post-to-ant).
+.P
+.BI -ydirection
+Flip images to give negative yspace:step value (ant-to-post).
+.P
+.BI -yanydirection
+Don't flip images along y-axis (default).
+.P
+.BI +zdirection
+Flip images to give positive zspace:step value (inf-to-sup).
+.P
+.BI -zdirection
+Flip images to give negative zspace:step value (sup-to-inf).
+.P
+.BI -zanydirection
+Don't flip images along z-axis (default).
+

@@ -1,0 +1,22 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH XFMCONCAT 1
+.SH NAME
+xfmconcat \- concatenate MNI transform files
+
+.SH SYNOPSIS
+.B xfmconcat
+.BI input1.xfm
+.BI [ " input2.xfm ... " ]
+.BI result.xfm
+
+.SH DESCRIPTION
+
+.B xfmconcat
+concatenates a number of transforms together.
+The resulting transformation will have the effect
+of applying transformation
+.I input1.xfm
+then
+.I input2.xfm,
+etc, in that order.
+

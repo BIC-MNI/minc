@@ -1,0 +1,17 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCEDIT 1
+.SH NAME
+mincedit \- edit a MINC file header
+.SH SYNOPSIS
+.B mincedit
+.BI mincfile
+.BI [editor]
+.SH DESCRIPTION
+.B mincedit
+converts the MINC file header to a text version which you
+can edit in your favourite editor.  If any changes are made,
+the MINC file is regenerated and the image data is copied.
+The header is presented in netCDF's  common data form
+language (CDL).
+.SH "SEE ALSO"
+.IR ncdump (1),

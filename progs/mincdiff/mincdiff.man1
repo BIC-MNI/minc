@@ -1,0 +1,26 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCDIFF 1
+.SH NAME
+mincdiff \- report differences between minc files
+.SH SYNOPSIS
+.B mincdiff
+.BI [-header|-body]
+.BI [-l]
+.BI [diff\ options]
+.BI file1
+.BI file2
+.SH DESCRIPTION
+.B mincdiff
+runs diff(1) on the headers of the two minc files, and cmp(1)
+on the image variable.  You can view only the header
+differences using
+.BI -header
+or only the body (image variable) differences using
+.BI -body.
+Any diff options (e.g. -u) are passed along to the header diff.
+The option
+.BI -l
+is passed on to cmp of the image variable.
+.SH "SEE ALSO"
+.IR diff (1),
+.IR cmp (1).

@@ -1,0 +1,18 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH XFMINVERT 1
+.SH NAME
+xfminvert \- invert an MNI transform file
+
+.SH SYNOPSIS
+.B xfminvert
+.BI input.xfm
+.BI result.xfm
+
+.SH DESCRIPTION
+
+.B xfminvert
+creates the file
+.I result.xfm
+containing the inverse transformation of
+.I input.xfm.
+

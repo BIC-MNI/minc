@@ -1,0 +1,58 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCTORAW 1
+
+.SH NAME
+minctoraw \- dump MINC file data
+
+.SH SYNOPSIS
+.B minctoraw
+.BI [options]
+.BI mincfile
+
+.SH DESCRIPTION
+.B minctoraw
+dumps a chunk of MINC file data to standard output in the
+format of your choice.
+.P
+This program is largely superceeded by 
+.B mincextract.
+
+
+.SH OPTIONS
+
+.P
+.BI -byte
+Write out data as bytes
+.P
+.BI -short
+Write out data as short integers
+.P
+.BI -int
+Write out data as 32-bit integers
+.P
+.BI -long
+Superseded by -int
+.P
+.BI -float
+Write out data as single precision floating-point values
+.P
+.BI -double
+Write out data as double precision floating-point values
+.P
+.BI -signed
+Write out signed data
+.P
+.BI -unsigned
+Write out unsigned data
+.P
+.BI -range\ low\ high
+Specify the range of output values
+.P
+.BI -normalize
+Normalize integer pixel values to file max and min (Default)
+.P
+.BI -nonormalize
+Turn off pixel normalization
+
+.SH "SEE ALSO"
+.ri mincextract

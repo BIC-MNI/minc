@@ -1,0 +1,21 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH INVERT_RAW_IMAGE 1
+.SH NAME
+invert_raw_image \- invert 2D image along either or both axes
+.SH SYNOPSIS
+.B invert_raw_image
+.BI xsize
+.BI xsize
+.BI [bytesperpixel]
+.SH DESCRIPTION
+.B invert_raw_image
+reads an image from standard input and copies it to standard
+output, inverting along either or both dimensions according 
+to the arguments.
+
+The parameter 
+.BI xsize
+specifies the number of pixels in the x-direction.  Use a negative
+number to flip the image along this axis.  Ditto for 
+.BI ysize.
+The number of bytes per pixel defaults to 1 if not specified.

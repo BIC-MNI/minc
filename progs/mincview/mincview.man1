@@ -1,0 +1,23 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCVIEW 1
+
+.SH NAME
+mincview \- view a MINC file
+
+.SH SYNOPSIS
+.B mincview
+.BI mincfile
+.BI [slicenumber]
+
+.SH DESCRIPTION
+.B mincview
+converts the image into PNM format and loads one or all of the
+slices into 
+.BI xv.  
+This is a very primitive tool, mostly useful for debugging.
+The programs Display or register are more suited for typical use.
+
+.SH "SEE ALSO"
+.BR xv(1),
+.BR Display(1),
+.BR register(1).
