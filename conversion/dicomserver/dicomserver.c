@@ -5,7 +5,11 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.2  2000-05-17 20:25:51  neelin
+ * Revision 6.3  2001-03-19 18:57:45  neelin
+ * Added -nodaemon option to allow server to run with input from a pipe
+ * and without forking or messing with stderr.
+ *
+ * Revision 6.2  2000/05/17 20:25:51  neelin
  * Added ability for server to suspend itself. This allows debugging even when
  * the server is invoked through inetd. Also added code to close file
  * descriptors after a fork to avoid problems with buffer flushing when
@@ -48,7 +52,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.2 2000-05-17 20:25:51 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.3 2001-03-19 18:57:45 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -92,6 +96,9 @@ static int Keep_files =
    TRUE;
 #endif
 
+/* In what directory do we run? */
+static char *run_dir = "/var/tmp";
+
 /* Globals for handling connection timeouts */
 int Connection_timeout = FALSE;
 Acr_File *Alarmed_afp = NULL;
@@ -126,6 +133,15 @@ int main(int argc, char *argv[])
    long maximum_length;
    pid_t server_pid, child_pid;
    int statptr;
+   int do_fork = TRUE;
+   int reopen_log = TRUE;
+
+   /* Check whether we are running as a server or not */
+   if (argc > 1 && strcmp(argv[1], "-nodaemon") == 0) {
+      do_fork = FALSE;
+      reopen_log = FALSE;
+      run_dir = NULL;
+   }
 
    /* Get server process id */
    server_pid = getpid();
@@ -136,7 +152,9 @@ int main(int argc, char *argv[])
    }
 
    /* Change to tmp directory */
-   (void) chdir("/usr/tmp");
+   if (run_dir != NULL) {
+      (void) chdir(run_dir);
+   }
 
    /* Create minc history string */
    {
@@ -146,7 +164,8 @@ int main(int argc, char *argv[])
    }
 
    /* Re-open stderr if we are logging */
-   if (Do_logging > NO_LOGGING) {
+   if (Do_logging > NO_LOGGING && reopen_log) {
+      
       (void) sprintf(logfilename, "dicomserver-%d.log", 
                      (int) getpid());
       (void) freopen(logfilename, "w", stderr);
@@ -412,7 +431,12 @@ int main(int argc, char *argv[])
          if (have_extra_file) num_files--;
 
          /* Fork child to process the files */
-         child_pid = fork();
+         if (do_fork) {
+            child_pid = fork();
+         }
+         else {
+            child_pid = 0;
+         }
          if (child_pid > 0) {      /* Parent process */
             if (Do_logging >= LOW_LOGGING) {
                (void) fprintf(stderr, 
@@ -430,7 +454,7 @@ int main(int argc, char *argv[])
             /* Close file descriptors to avoid buffering problems.
                STDERR is left open, since it is line buffered and may
                be needed. */
-            {
+            if (do_fork) {
                int fd;
                for (fd=getdtablesize()-1; fd >= 0; fd--) {
                   if (fd != 2) {   /* Leave stderr open */
@@ -457,7 +481,9 @@ int main(int argc, char *argv[])
             }
 
             /* Exit from child */
-            exit(EXIT_SUCCESS);
+            if (do_fork) {
+               exit(EXIT_SUCCESS);
+            }
 
          }         /* End of child process */
 
