@@ -179,7 +179,7 @@ miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
     return (MI_NOERROR);
 }
   
-/*! Get Mutli-resolution properties
+/*! Get Multi-resolution properties
  */
 int 
 miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
@@ -217,7 +217,7 @@ miselect_resolution(mihandle_t volume, int depth)
     return (0);
   }
   else {
-    if (minc_update_thumbnail(grp_id,0 ,depth) < 0) {
+    if (minc_update_thumbnail(volume, grp_id, 0, depth) < 0) {
       return (MI_ERROR);
     }
   }
@@ -239,9 +239,10 @@ miflush_from_resolution(mihandle_t volume, int depth)
     return (0);
   }
   else {
-    if (minc_update_thumbnails(volume->hdf_id) < 0) {
+    if (minc_update_thumbnails(volume) < 0) {
       return (MI_ERROR);
     }
+    volume->is_dirty = FALSE;
   }
   
  return (MI_NOERROR);
