@@ -8,7 +8,8 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Object names
-OBJS     = ParseArgv.o vax_conversions.o time_stamp.o tag_io.o
+OBJS     = ParseArgv.o vax_conversions.o time_stamp.o tag_io.o \
+      nrutil.o ludcmp.o lubksb.o
 CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
