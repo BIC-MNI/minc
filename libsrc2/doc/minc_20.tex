@@ -2967,22 +2967,24 @@ Returns MI_ERROR or MI_NOERROR
 
 \end{verbatim}
 
-\subsection{miset\_spatial\_origin\_to\_start}
+\subsection{miset\_world\_origin}
 \begin{verbatim}
 NAME 
 
-miset_spatial_origin_to_start
+miset_world_origin
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int  miset_spatial_origin_to_start( mihandle_t volume,
+int  miset_world_origin( mihandle_t volume,
                          double     world[3])
                        
 DESCRIPTION
 
-
+This function sets the world coordinates of the point (0,0,0) in voxel
+coordinates.  This changes the constant offset of the two coordinate
+systems.
 
 RETURN VALUE
 
@@ -2990,24 +2992,24 @@ Returns MI_ERROR or MI_NOERROR
 
 \end{verbatim}
 
-\subsection{miset\_spatial\_frequency\_origin\_to\_start}
+\subsection{miset\_spatial\_frequency\_origin}
 \begin{verbatim}
 NAME 
 
-miset_spatial_frequency_origin_to_start
+miset_spatial_frequency_origin
 
 SYNOPSIS
 
 #include <minc2.h>
 
-int  miset_spatial_frequency_origin_to_start( mihandle_t volume,
-                                              double     world[3])
+int  miset_spatial_frequency_origin( mihandle_t volume,
+                                     double     world[3])
                        
-                                
 DESCRIPTION
 
-%This function moves the origin for the world coordinate system of the 
-%volume to the 3-dimensional coordinate ``world''.
+This function sets the world coordinates of the point (0,0,0) in voxel
+coordinates.  This changes the constant offset of the two coordinate
+systems.
 
 RETURN VALUE
 
