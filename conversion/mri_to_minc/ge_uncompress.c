@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
       short s;
    } conv;
 
-   /* For figuring out byte order */
    int first_byte;
    int second_byte;
    int base;
