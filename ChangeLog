@@ -1,4 +1,8 @@
 MINC 2:
+2004-12-07 Andrew Janke <rotor@bic.mni.mcgill.ca>
+    * Squashed yet another bug with the BiModalT code
+	    aaargh!  This should now replicate volume_stats even closer!
+
 2004-10-18 Andrew Janke <rotor@cmr.uq.edu.au>
 	* Fixed bug in mincstats -BimodalT code to
            exactly replicate (within reason) volume_stats
