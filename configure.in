@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 2.0.05)
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.15 $)
+AC_REVISION($Revision: 6.16 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -55,6 +55,8 @@ AC_CONFIG_FILES([
 Makefile 
 doc/Makefile
 testdir/Makefile 
+libsrc2/Makefile
+libsrc2/test/Makefile
 volume_io/Makefile
 volume_io/Documentation/Makefile
 volume_io/Testing/Makefile
