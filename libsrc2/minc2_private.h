@@ -23,6 +23,8 @@
 #define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
 
+/** World spatial coordinates should always have this structure.
+ */
 #define MI2_3D 3
 #define MI2_X 0
 #define MI2_Y 1
@@ -69,7 +71,6 @@ struct dimension_struct{
   miflipping_t flipping_order;
   char *name;
   double *offsets;
-  BOOLEAN sampling_flag;
   double step;
   unsigned long length;
   double start;
@@ -95,8 +96,10 @@ struct volumehandle_struct {
   double valid_max;             /* Volume-wide valid max */
   mi_lin_xfm_t v2w_transform;   /* Voxel-to-world transform */
   mi_lin_xfm_t w2v_transform;   /* World-to-voxel transform (inverse) */
-  int selected_resolution;
+  int selected_resolution;      /* The current resolution (0-N) */
   int mode;                     /* Open mode */
+  hid_t type_id;                /* Type ID if record or label type. */
+  hid_t plist_id;             /* Image property list */
 };
 
 extern hid_t midescend_path(hid_t file_id, const char *path);
@@ -106,6 +109,9 @@ extern int mitype_to_nctype(mitype_t, int *is_signed);
 extern int miget_attribute(mihandle_t volume, const char *varpath, 
                            const char *attname, mitype_t data_type, 
                            int maxvals, void *values);
+extern int miset_attr_at_loc(hid_t hdf_loc, const char *attname, 
+                             mitype_t data_type, 
+                             int maxvals, const void *values);
 extern int miset_attribute(mihandle_t volume, const char *varpath, 
                            const char *attname, mitype_t data_type, 
                            int maxvals, const void *values);
@@ -118,3 +124,4 @@ extern void mitransform_coord(double out_coord[],
 extern int miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse);
 
 extern void miinit(void);
+extern void miinit_enum(hid_t);
