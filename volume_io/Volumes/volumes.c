@@ -1,13 +1,9 @@
 #include  <internal_volume_io.h>
 #include  <limits.h>
-#undef FLT_DIG
-#undef DBL_DIG
-#undef DBL_MIN
-#undef DBL_MAX
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.37 1995-02-01 11:26:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.38 1995-02-17 09:46:24 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
