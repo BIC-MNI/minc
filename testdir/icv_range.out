@@ -35,13 +35,13 @@ in : short, out : short, norm : false, imgmax : false, valid : false
    file value = 16383
    icv value = 15000
 in : short, out : double, norm : false, imgmax : true, valid : true
-   file value = 24000
+   file value = 0.75
    icv value = 15000
 in : short, out : double, norm : false, imgmax : true, valid : false
    file value = 0.75
    icv value = 15000
 in : short, out : double, norm : false, imgmax : false, valid : true
-   file value = 24000
+   file value = 0.75
    icv value = 15000
 in : short, out : double, norm : false, imgmax : false, valid : false
    file value = 0.75
@@ -83,13 +83,13 @@ in : double, out : short, norm : false, imgmax : false, valid : false
    file value = -13108
    icv value = 0.299992
 in : double, out : double, norm : false, imgmax : true, valid : true
-   file value = 9600
+   file value = 0.3
    icv value = 0.3
 in : double, out : double, norm : false, imgmax : true, valid : false
    file value = 0.3
    icv value = 0.3
 in : double, out : double, norm : false, imgmax : false, valid : true
-   file value = 9600
+   file value = 0.3
    icv value = 0.3
 in : double, out : double, norm : false, imgmax : false, valid : false
    file value = 0.3
