@@ -5,6 +5,10 @@
 #ifndef _MINC2_H_		/* Avoid multiple inclusions */
 #define _MINC2_H_ 1
 
+#ifdef __cplusplus
+extern "C" {                /* Hey, Mr. Compiler - this is "C" code! */
+#endif /* __cplusplus defined */
+
 /************************************************************************
  * CONSTANTS
  ************************************************************************/
@@ -408,5 +412,8 @@ extern int miset_volume_valid_range(mihandle_t volume,
                                     double valid_max, double valid_min);
 
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus defined */
 
 #endif /* _MINC2_H_ */
