@@ -24,6 +24,7 @@
 #include  <geometry.h>
 #include  <volume.h>
 #include  <transforms.h>
+#include  <compute_xfm.h>
 #include  <volume_io_prototypes.h>
 
 #endif

@@ -1,7 +1,7 @@
 
 #include  <volume_io.h>
 
-public  void   compute_transform_inverse(
+public  BOOLEAN   compute_transform_inverse(
     Transform  *transform,
     Transform  *inverse )
 {
@@ -22,31 +22,36 @@ public  void   compute_transform_inverse(
 
     ludcmp( t, 4, ind, &d );
 
-    for_inclusive( j, 1, 4 )
+    if( d != 0.0 )
     {
-        for_inclusive( i, 1, 4 )
-            col[i] = 0.0;
-        col[j] = 1.0;
-        lubksb( t, 4, ind, col );
-        for_inclusive( i, 1, 4 )
-            inv[i][j] = col[i];
-    }
-
-    for_less( i, 0, 4 )
-    {
-        for_less( j, 0, 4 )
+        for_inclusive( j, 1, 4 )
         {
-            Transform_elem(*inverse,i,j) = inv[i+1][j+1];
+            for_inclusive( i, 1, 4 )
+                col[i] = 0.0;
+            col[j] = 1.0;
+            lubksb( t, 4, ind, col );
+            for_inclusive( i, 1, 4 )
+                inv[i][j] = col[i];
         }
-    }
 
-    concat_transforms( &ident, transform, inverse );
+        for_less( i, 0, 4 )
+        {
+            for_less( j, 0, 4 )
+            {
+                Transform_elem(*inverse,i,j) = inv[i+1][j+1];
+            }
+        }
 
-    if( !close_to_identity(&ident) )
-    {
-        print( "Error in compute_transform_inverse\n" );
+        concat_transforms( &ident, transform, inverse );
+
+        if( !close_to_identity(&ident) )
+        {
+            print( "Error in compute_transform_inverse\n" );
+        }
     }
 
     FREE2D( t );
     FREE2D( inv );
+
+    return( d != 0.0 );
 }

@@ -122,6 +122,15 @@ public  Minc_file  initialize_minc_output(
 
     for_less( i, 0, 3 )
     {
+        if( Vector_coord(axes[i],i) < 0.0 )
+        {
+            SCALE_VECTOR( axes[i], axes[i], -1.0 );
+            separation[i] *= -1.0;
+        }
+    }
+
+    for_less( i, 0, 3 )
+    {
         for_less( j, 0, 3 )
         {
             dir_cosines[i][j] = Vector_coord(axes[i],j);

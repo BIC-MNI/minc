@@ -44,11 +44,11 @@ public  void  create_linear_transform(
 {
     alloc_linear_transform( transform );
 
-    if( linear_transform != (Transform *) NULL )
+    if( linear_transform != (Transform *) NULL &&
+        compute_transform_inverse( linear_transform,
+                                   transform->inverse_linear_transform ) )
     {
         *(transform->linear_transform) = *linear_transform;
-        compute_transform_inverse( linear_transform,
-                                   transform->inverse_linear_transform );
     }
     else
     {

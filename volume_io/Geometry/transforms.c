@@ -664,11 +664,12 @@ public  Status  write_transform_file(
 
     if( status == OK )
     {
-        if( !output_transform( file, comments, &gen_transform ) )
-            status = ERROR;
+        status = output_transform( file, comments, &gen_transform );
 
         (void) close_file( file );
     }
+
+    delete_general_transform( &gen_transform );
 
     return( status );
 }
@@ -694,6 +695,8 @@ public  Status  read_transform_file(
 
     if( status == OK )
         *transform = *get_linear_transform_ptr(&gen_transform);
+
+    delete_general_transform( &gen_transform );
 
     return( status );
 }

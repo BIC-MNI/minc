@@ -3,11 +3,6 @@
 
 #define  MAX_POINTS    30
 
-private  BOOLEAN  point_within_polygon(
-    Point   *pt,
-    int     n_points,
-    Point   points[],
-    Vector  *polygon_normal );
 private  BOOLEAN  point_within_triangle_2d(
     Point   *pt,
     int     i1,
@@ -85,7 +80,7 @@ public  BOOLEAN   intersect_ray_polygon(
     return( intersects );
 }
 
-private  BOOLEAN  point_within_polygon(
+public  BOOLEAN  point_within_polygon(
     Point   *pt,
     int     n_points,
     Point   points[],

@@ -1152,7 +1152,7 @@ public  Status  output_boolean(
     else
         str = "F";
 
-    if( fprintf( file, " %s", str ) > 0 )
+    if( fprintf( file, " %s", str ) <= 0 )
     {
         print( "Error outputting BOOLEAN.\n" );
         status = ERROR;

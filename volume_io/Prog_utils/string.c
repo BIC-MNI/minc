@@ -99,21 +99,20 @@ public  int  find_character(
     char    string[],
     char    ch )
 {
-    int   i, len;
+    int   i;
 
-    len = strlen( string );
+    if( string == (char *) NULL )
+        return( -1 );
 
-    for_less( i, 0, len )
+    i = 0;
+    while( string[i] != (char) 0 )
     {
-        if( string[i] == ch ) break;
+        if( string[i] == ch )
+            return( i );
+        ++i;
     }
 
-    if( i >= len )
-    {
-        i = -1;
-    }
-
-    return( i );
+    return( -1 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
