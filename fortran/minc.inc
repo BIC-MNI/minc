@@ -15,7 +15,17 @@ C                 MI study variable
 C                 MI acquisition variable
 C@CREATED    : March 15, 1993. (Peter Neelin, Montreal Neurological Institute)
 C@MODIFIED   : 
-C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.2 1993-03-19 10:35:18 neelin Exp $ MINC (MNI)
+C@COPYRIGHT  :
+C              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+C              Montreal Neurological Institute, McGill University.
+C              Permission to use, copy, modify, and distribute this
+C              software and its documentation for any purpose and without
+C              fee is hereby granted, provided that the above copyright
+C              notice appear in all copies.  The author and McGill University
+C              make no representations about the suitability of this
+C              software for any purpose.  It is provided "as is" without
+C              express or implied warranty.
+C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.3 1993-07-21 09:33:31 neelin Exp $ MINC (MNI)
 C-----------------------------------------------------------------------------
 
 C     Some useful constants
