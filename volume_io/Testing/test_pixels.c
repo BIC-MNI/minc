@@ -51,7 +51,7 @@ main()
                                 i + COLOUR_MAP_INDEX_OFFSET,
                                 make_Colour(i,i,i) );
 
-    status = initialize_pixels( &pixels, pixels_x_size, pixels_y_size,
+    status = initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
                                 pixel_type );
 
     start = current_realtime_seconds();
@@ -75,7 +75,7 @@ main()
     print( "%g seconds\n", (end - start) / (Real) N_ITER );
 
 #else
-    status = initialize_pixels( &pixels, pixels_x_size, pixels_y_size,
+    status = initialize_pixels( &pixels, 10, 10, pixels_x_size, pixels_y_size,
                                 RGB_PIXEL );
 
     for_less( i, 0, 256 )
@@ -101,7 +101,7 @@ main()
     start = current_realtime_seconds();
 
     for_less( iter, 0, N_ITER )
-        G_draw_pixels( window, 10, 10, 0, &pixels );
+        G_draw_pixels( window, &pixels );
 
     end = current_realtime_seconds();
 

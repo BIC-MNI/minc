@@ -25,7 +25,6 @@ main()
     int               prev_rotation_mouse_x;
     Real              angle_in_degrees;
     int               i, j, pixels_x_size, pixels_y_size;
-    int               pixels_x_position, pixels_y_position;
     Real              x, y;
     Transform         modeling_transform, rotation_transform;
     static Point      origin = { 0.0, 0.0, 2.0 };
@@ -82,8 +81,10 @@ main()
     pixels_x_size = 256;
     pixels_y_size = 256;
 
-    status = initialize_pixels( &pixels, pixels_x_size, pixels_y_size,
-                                RGB_PIXEL );
+    x_position = 10;
+    y_position = 10;
+    status = initialize_pixels( &pixels, x_position, y_position,
+                                pixels_x_size, pixels_y_size, RGB_PIXEL );
 
     for_less( i, 0, pixels_x_size )
     {
@@ -92,9 +93,6 @@ main()
             PIXEL_RGB_COLOUR(pixels,i,j) = make_Colour( i % 256, j % 256, 0 );
         }
     }
-
-    pixels_x_position = 10;
-    pixels_y_position = 10;
 
     /* ------------ define polygons to be drawn  ------------- */
 
@@ -252,8 +250,7 @@ main()
 
         if( update_required )
         {
-            G_draw_pixels( window, pixels_x_position, pixels_y_position,
-                           0, &pixels );
+            G_draw_pixels( window, &pixels );
 
             G_set_view_type( window, MODEL_VIEW );
             G_draw_polygons( window, &polygons );
