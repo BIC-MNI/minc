@@ -34,9 +34,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-06-12 20:43:52  neelin
+@MODIFIED   : Modified miexpand_file and miopen to try adding compression exetensions
+@MODIFIED   : to filenames if the first open fails.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.6  1995/03/14  14:36:35  neelin
  * Got rid of broken pipe messages from miexpand_file by using exec
  * in system call.
@@ -82,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.1 1995-06-12 20:43:52 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -254,9 +258,23 @@ private int execute_decompress_command(char *command, char *infile,
 public char *miexpand_file(char *path, char *tempfile, int header_only,
                            int *created_tempfile)
 {
-   int status, oldncopts, first_ncerr;
-   char *newfile, *extension;
-   enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} compress_type;
+   typedef enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} Compress_type;
+   int status, oldncopts, first_ncerr, iext;
+   char *newfile, *extension, *compfile;
+   FILE *fp;
+   Compress_type compress_type;
+   static struct {
+      char *extension;
+      Compress_type type;
+   } compression_code_list[] = {
+      {".gz", GZIPPED},
+      {".Z", COMPRESSED},
+      {".z", PACKED},
+      {".zip", ZIPPED}
+   };
+   static int complist_length = 
+      sizeof(compression_code_list) / sizeof(compression_code_list[0]);
+   static int max_compression_code_length = 5;
 
    MI_SAVE_ROUTINE_NAME("miexpand_file");
 
@@ -280,6 +298,15 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
    /* Save the error code */
    first_ncerr = ncerr;
 
+   /* Check for the system error that doesn't show */
+   if (first_ncerr == NC_NOERR) {
+      fp = fopen(path, "r");
+      if (fp == NULL) {
+         (void) fclose(fp);
+         first_ncerr = NC_SYSERR;
+      }
+   }
+
    /* Get the file extension */
    extension = strrchr(path, '.');
    if (extension == NULL) {
@@ -287,20 +314,41 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
    }
 
    /* Determine the type */
-   if (STRINGS_EQUAL(extension, ".gz"))
-      compress_type = GZIPPED;
-   else if (STRINGS_EQUAL(extension, ".Z"))
-      compress_type = COMPRESSED;
-   else if (STRINGS_EQUAL(extension, ".z"))
-      compress_type = PACKED;
-   else if (STRINGS_EQUAL(extension, ".zip"))
-      compress_type = ZIPPED;
-   else
-      compress_type = UNKNOWN;
+   compress_type = UNKNOWN;
+   for (iext = 0; iext < complist_length; iext++) {
+      if (STRINGS_EQUAL(extension, compression_code_list[iext].extension)) {
+         compress_type = compression_code_list[iext].type;
+         break;
+      }
+   }
+
+   /* If there was a system error and it's not already a compressed file, 
+      then maybe there exists a compressed version (with appropriate 
+      extension). Loop through the list of extensions. */
+   compfile = NULL;
+   if ((first_ncerr == NC_SYSERR) && (compress_type == UNKNOWN)) {
+      compfile = MALLOC(strlen(path) + max_compression_code_length + 2, char);
+      for (iext=0; iext < complist_length; iext++) {
+         (void) strcat(strcpy(compfile, path), 
+                       compression_code_list[iext].extension);
+         fp = fopen(compfile, "r");
+         if (fp != NULL) {
+            (void) fclose(fp);
+            break;
+         }
+      }
+      if (iext >= complist_length) {
+         FREE(compfile);
+         newfile = strdup(path);
+         MI_RETURN(newfile);
+      }
+      compress_type = compression_code_list[iext].type;
+      path = compfile;
+   }
 
    /* If there was a system error or we don't know what to do 
       with the file, then return the original file name */
-   if ((first_ncerr == NC_SYSERR) || (compress_type == UNKNOWN)) {
+   else if ((first_ncerr == NC_SYSERR) || (compress_type == UNKNOWN)) {
       newfile = strdup(path);
       MI_RETURN(newfile);
    }
@@ -333,6 +381,12 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
          status = execute_decompress_command("pcat", path, newfile, 
                                              header_only);
       }
+   }
+
+   /* Free the compressed file name, if necessary */
+   if (compfile != NULL) {
+      FREE(compfile);
+      path = NULL;
    }
 
    /* Check for failure to uncompress the file */
@@ -382,9 +436,9 @@ public int miopen(char *path, int mode)
       MI_RETURN(status);
    }
 
-   /* If there was a system error, or the user wants to modify the file 
-      then re-generate the error with ncopen */
-   if ((ncerr == NC_SYSERR) || (mode != NC_NOWRITE)) {
+   /* If the user wants to modify the file then re-generate the error 
+      with ncopen */
+   if (mode != NC_NOWRITE) {
       {MI_CHK_ERR(status = ncopen(path, mode))}
       MI_RETURN(status);
    }
