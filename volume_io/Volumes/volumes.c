@@ -220,6 +220,12 @@ public  nc_type  get_volume_nc_data_type(
     return( volume->nc_data_type );
 }
 
+public  Data_types  get_volume_data_type(
+    Volume       volume )
+{
+    return( volume->data_type );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_type_size
 @INPUT      : type

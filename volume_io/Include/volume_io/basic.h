@@ -133,7 +133,7 @@ typedef  char     STRING[MAX_STRING_LENGTH+1];
                                ((x) < 0.0 ? (int)(x) : ((int) (x)+1))       \
                         )
 
-#define  FRACTION( x )  ((x) - (int) (x))
+#define  FRACTION( x )  ((x) - FLOOR(x))
 
 /* for loops */
 
