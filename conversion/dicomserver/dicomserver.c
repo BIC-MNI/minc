@@ -1,0 +1,492 @@
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : dicomserver.c
+@DESCRIPTION: Program to receive images from Siemens Vision.
+@GLOBALS    : 
+@CREATED    : January 28, 1997 (Peter Neelin)
+@MODIFIED   : $Log: dicomserver.c,v $
+@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
+@MODIFIED   : Initial revision
+@MODIFIED   :
+@COPYRIGHT  :
+              Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
+#ifndef lint
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 1.1 1997-03-04 20:56:47 neelin Exp $";
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dicomserver.h>
+
+/* Global for minc history */
+extern char *minc_history;
+
+/* State of server. Note that DISCONNECTING is used for a high-level
+   protocol error and TERMINATING is used for a low-level error or
+   end of input */
+typedef enum {
+   WAITING_FOR_ASSOCIATION, WAITING_FOR_DATA, DISCONNECTING, TERMINATING
+} Server_state;
+
+/* Do we do logging? */
+int Do_logging = 
+#ifndef DO_HIGH_LOGGING
+   LOW_LOGGING;
+#else
+   HIGH_LOGGING;
+#endif
+
+/* Do we keep files or are they temporary? */
+static int Keep_files = 
+#ifndef KEEP_FILES
+   FALSE;
+#else
+   TRUE;
+#endif
+
+int main(int argc, char *argv[])
+{
+   char *pname;
+   Acr_File *afpin, *afpout;
+   Acr_Status status;
+   Server_state state;
+   int acr_command;
+   Acr_Group group_list;
+   Acr_Message input_message, output_message;
+   int exit_status;
+   char *exit_string;
+   char **file_list;
+   Data_Object_Info **file_info_list;
+   int num_files, num_files_alloc;
+   static char file_prefix_string[L_tmpnam+1] = "dicomserver";
+   char *file_prefix = file_prefix_string;
+   char *temp_dir;
+   int continue_looping;
+   FILE *fptemp;
+   char last_file_name[256];
+   char *project_name = NULL;
+   char logfilename[256];
+   int pdu_type;
+   int process_files, have_extra_file;
+   Acr_byte_order byte_order;
+   Acr_VR_encoding_type vr_encoding;
+   int pres_context_id;
+   long maximum_length;
+
+   /* Change to tmp directory */
+   (void) chdir("/usr/tmp");
+
+   /* Create minc history string */
+   {
+      char *string;
+      string = "dicomserver";
+      minc_history = time_stamp(1, &string);
+   }
+
+   /* Re-open stderr if we are logging */
+   if (Do_logging > NO_LOGGING) {
+      (void) sprintf(logfilename, "dicomserver-%d.log", 
+                     (int) getpid());
+      (void) freopen(logfilename, "w", stderr);
+      setbuf(stderr, NULL);
+   }
+
+   /* Print message at start */
+   pname = argv[0];
+   if (Do_logging >= LOW_LOGGING) {
+      (void) fprintf(stderr, "%s: Started dicom server.\n", pname);
+   }
+
+   /* Make connection */
+   open_connection(argc, argv, &afpin, &afpout);
+
+   /* Check that the connection was made */
+   if ((afpin == NULL) || (afpout == NULL)) {
+      (void) fprintf(stderr, "%s: Error opening connection.\n", pname);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Print connection message */
+   if (Do_logging >= HIGH_LOGGING) {
+      (void) fprintf(stderr, "%s: Connection accepted.\n", pname);
+   }
+
+#ifdef DO_INPUT_TRACING
+   /* Enable input tracing */
+   acr_dicom_enable_trace(afpin);
+#endif
+
+   /* Create file prefix. Create the temporary file to avoid file name 
+      clashes */
+   if (! Keep_files) {
+      (void) tmpnam(file_prefix);
+      if (mkdir(file_prefix, (mode_t) 0777)) {
+         (void) fprintf(stderr, 
+            "%s: Unable to create directory for temporary files.\n",
+                        pname);
+         perror(pname);
+         exit(EXIT_FAILURE);
+      }
+      temp_dir = strdup(file_prefix);
+      (void) strcat(file_prefix, "/dicom");
+   }
+
+   /* Get space for file lists */
+   num_files_alloc = FILE_ALLOC_INCREMENT;
+   file_list = MALLOC((size_t) num_files_alloc * sizeof(*file_list));
+   file_info_list = MALLOC(num_files_alloc * sizeof(*file_info_list));
+
+   /* Loop while reading messages */
+   state = WAITING_FOR_ASSOCIATION;
+   continue_looping = TRUE;
+   num_files = 0;
+   while (continue_looping) {
+
+      /* Read in the message */
+      status=acr_input_dicom_message(afpin, &input_message);
+
+      /* Check for error */
+      if (status != ACR_OK) {
+         continue_looping = FALSE;
+         state = TERMINATING;
+         break;
+      }
+
+      /* Set flags indicating whether we should do anything with the files
+         and whether the file lists contain an extra file */
+      process_files = FALSE;
+      have_extra_file = FALSE;
+
+      /* Get group list */
+      group_list = acr_get_message_group_list(input_message);
+
+      /* Get PDU type. Default is data transfer */
+      pdu_type = acr_find_short(group_list, DCM_PDU_Type, ACR_PDU_DATA_TF);
+
+      /* Deal with PDU state */
+      switch (pdu_type) {
+
+      /* Associate request */
+      case ACR_PDU_ASSOC_RQ:
+         if (state != WAITING_FOR_ASSOCIATION) {
+            status = ACR_HIGH_LEVEL_ERROR;
+            state = DISCONNECTING;
+            break;
+         }
+
+         /* Work out reply and get connection info */
+         output_message = associate_reply(input_message, &project_name, 
+                                          &pres_context_id, &byte_order,
+                                          &vr_encoding, &maximum_length);
+
+         /* Modify the input and output streams according to the 
+            connection info */
+         acr_set_byte_order(afpin, byte_order);
+         acr_set_vr_encoding(afpin, vr_encoding);
+         acr_set_byte_order(afpout, byte_order);
+         acr_set_vr_encoding(afpout, vr_encoding);
+         acr_set_dicom_pres_context_id(afpout, pres_context_id);
+         acr_set_dicom_maximum_length(afpout, maximum_length);
+
+         /* Get ready for files */
+         num_files = 0;
+         state = WAITING_FOR_DATA;
+
+         break;
+
+      /* Release */
+      case ACR_PDU_REL_RQ:
+         if (state != WAITING_FOR_DATA) {
+            status = ACR_HIGH_LEVEL_ERROR;
+            state = DISCONNECTING;
+            break;
+         }
+         output_message = release_reply(input_message);
+         state = TERMINATING;
+         process_files = TRUE;
+         break;
+
+      /* Abort */
+      case ACR_PDU_ABORT_RQ:
+         output_message = abort_reply(input_message);
+         state = TERMINATING;
+         break;
+
+      /* Data transfer */
+      case ACR_PDU_DATA_TF:
+
+         /* Check command and state */
+         acr_command = acr_find_short(group_list, ACR_Command, ACR_C_STORE_RQ);
+         if ((state != WAITING_FOR_DATA) || 
+             (acr_command != ACR_C_STORE_RQ)) {
+            status = ACR_HIGH_LEVEL_ERROR;
+            state = DISCONNECTING;
+            break;
+         }
+
+         /* Compose a reply */
+         output_message = data_reply(input_message);
+
+         /* Get rid of the command groups */
+         while ((group_list != NULL) &&
+                ((acr_get_group_group(group_list) == DCM_PDU_GRPID) ||
+                 (acr_get_group_group(group_list) == ACR_MESSAGE_GID))) {
+            group_list = acr_get_group_next(group_list);
+         }
+         if (group_list == NULL) break;
+
+         /* Extend file list if necessary */
+         if (num_files >= num_files_alloc) {
+            num_files_alloc = num_files + FILE_ALLOC_INCREMENT;
+            file_list = REALLOC(file_list, 
+                                num_files_alloc * sizeof(*file_list));
+            file_info_list = 
+               REALLOC(file_info_list, 
+                       num_files_alloc * sizeof(*file_info_list));
+         }
+         file_list[num_files] = NULL;
+         file_info_list[num_files] = 
+            MALLOC(sizeof(*file_info_list[num_files]));
+
+         /* Save the object */
+         save_transferred_object(group_list, 
+                                 file_prefix, &file_list[num_files],
+                                 file_info_list[num_files]);
+         num_files++;
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "   Copied %s\n", file_list[num_files-1]);
+         }
+
+         /* Check whether we have reached the end of a group of files */
+         if (num_files > 1) {
+            if ((file_info_list[num_files-1]->study_id != 
+                 file_info_list[0]->study_id) ||
+                (file_info_list[num_files-1]->acq_id != 
+                 file_info_list[0]->acq_id)) {
+
+               process_files = TRUE;
+               have_extra_file = TRUE;
+
+            }
+         }
+
+         break;
+
+         /* Unknown command */
+         default:
+            status = ACR_HIGH_LEVEL_ERROR;
+            state = DISCONNECTING;
+            break;
+
+      }        /* End of switch on pdu_type */
+
+      /* Delete input message */
+      acr_delete_message(input_message);
+
+      /* Use the files if we have a complete acquisition */
+      if (process_files) {
+
+         /* Log the fact */
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "\nCopied one acquisition.\n");
+         }
+
+         /* Check for file from next acquisition */
+         if (have_extra_file) num_files--;
+
+         /* Do something with the files */
+         use_the_files(project_name, num_files, file_list, 
+                       file_info_list);
+
+         /* Put blank line in log file */
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "\n");
+         }
+
+         /* Remove the temporary files and reset the lists */
+         cleanup_files(num_files, file_list);
+         free_list(num_files, file_list, file_info_list);
+         if (have_extra_file) {
+            file_list[0] = file_list[num_files];
+            file_info_list[0] = file_info_list[num_files];
+            file_list[num_files] = NULL;
+            file_info_list[num_files] = NULL;
+         }
+         num_files = (have_extra_file ? 1 : 0);
+      }
+
+      /* Check for disconnection */
+      if (state == DISCONNECTING) {
+         continue_looping = FALSE;
+         break;
+      }
+
+      /* Send reply */
+      status = acr_output_dicom_message(afpout, output_message);
+
+      /* Delete output message */
+      acr_delete_message(output_message);
+
+      if (status != ACR_OK) {
+         state = TERMINATING;
+         break;
+      }
+
+   }        /* End of loop over messages */
+
+   /* Free the input and output streams */
+   acr_close_dicom_file(afpin);
+   acr_close_dicom_file(afpout);
+
+   /* Save name of first file in last set transferred */
+   if ((num_files > 0) && (file_list[0] != NULL)) {
+      last_file_name[sizeof(last_file_name) - 1] = '\0';
+      (void) strncpy(last_file_name, file_list[0], sizeof(last_file_name)-1);
+   }
+   else {
+      last_file_name[0] = '\0';
+   }
+
+   /* Clean up files, if needed */
+   if (num_files > 0) {
+      cleanup_files(num_files, file_list);
+      free_list(num_files, file_list, file_info_list);
+      num_files = 0;
+   }
+   FREE(file_list);
+   FREE(file_info_list);
+   
+   /* Remove the file prefix directory */
+   cleanup_files(1, &temp_dir);
+   FREE(temp_dir);
+
+   /* Print final message */
+   switch (status) {
+   case ACR_OK:
+   case ACR_END_OF_INPUT:
+      exit_status = EXIT_SUCCESS;
+      exit_string = "Finished transfer.";
+      break;
+   case ACR_REACHED_WATCHPOINT:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Protocol error (reached watchpoint). Disconnecting.";
+      break;
+   case ACR_PROTOCOL_ERROR:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Protocol error. Disconnecting.";
+      break;
+   case ACR_ABNORMAL_END_OF_INPUT:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Abnormal end of input. Disconnecting.";
+      break;
+   case ACR_ABNORMAL_END_OF_OUTPUT:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Abnormal end of output. Disconnecting.";
+      break;
+   case ACR_HIGH_LEVEL_ERROR:
+      exit_status = EXIT_FAILURE;
+      exit_string = "High-level protocol error. Disconnecting";
+      break;
+   case ACR_OTHER_ERROR:
+      exit_status = EXIT_FAILURE;
+      exit_string = "I/O error. Disconnecting.";
+      break;
+   default:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Unknown error. Disconnecting.";
+      break;
+   }
+
+   if (Do_logging >= LOW_LOGGING) {
+      (void) fprintf(stderr, "\n%s: %s\n", pname, exit_string);
+   }
+
+   if ((status != ACR_OK) && (status != ACR_END_OF_INPUT)) {
+      if (SYSTEM_LOG != NULL) {
+         if ((fptemp = fopen(SYSTEM_LOG, "w")) != NULL) {
+            if ((int) strlen(last_file_name) > 0) {
+               (void) fprintf(fptemp, "%s: File \"%s\"\n",
+                              pname, last_file_name);
+            }
+            (void) fprintf(fptemp, "%s: %s\n", pname, exit_string);
+            (void) fclose(fptemp);
+         }
+      }
+   }
+
+   /* Free the project_name string */
+   if (project_name != NULL) FREE(project_name);
+
+   exit(exit_status);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cleanup_files
+@INPUT      : num_files - number of files in list
+              file_list - array of file names
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Removes files.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void cleanup_files(int num_files, char *file_list[])
+{
+   int i;
+
+   if (Keep_files) return;
+
+   for (i=0; i < num_files; i++) {
+      if (file_list[i] != NULL) {
+         (void) remove(file_list[i]);
+      }
+   }
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : free_list
+@INPUT      : num_files - number of files in list
+              file_list - array of file names
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Frees up things pointed to in pointer arrays. Does not free
+              the arrays themselves.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 22, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void free_list(int num_files, char **file_list, 
+                      Data_Object_Info **file_info_list)
+{
+   int i;
+
+   for (i=0; i < num_files; i++) {
+      if (file_list[i] != NULL) {
+         FREE(file_list[i]);
+      }
+      if (file_info_list[i] != NULL) {
+         FREE(file_info_list[i]);
+      }
+   }
+
+   return;
+}
+
