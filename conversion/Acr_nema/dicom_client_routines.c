@@ -6,7 +6,11 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.15  2000-05-17 20:17:46  neelin
+ * Revision 6.16  2000-05-24 14:31:05  neelin
+ * Modified acr_transmit_group_list to remove elements that have been added
+ * so that the group_list is returned unchanged.
+ *
+ * Revision 6.15  2000/05/17 20:17:46  neelin
  * Added mechanism to allow testing of input streams for more data through
  * function acr_file_ismore.
  * This is used in dicom_client_routines to allow asynchronous transfer
@@ -94,7 +98,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.15 2000-05-17 20:17:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.16 2000-05-24 14:31:05 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -1255,6 +1259,10 @@ public int acr_transmit_group_list(Acr_File *afpout,
    Acr_Group output_group_list;
    char uid_buffer[64] = {'\0'};
    char *instance_uid;
+   Acr_Element_Id elements_to_remove[25];
+   int nelements_to_remove = 0;
+   int ielem;
+   Acr_Group group;
 
    /* Get a UID for this object */
    instance_uid = acr_find_string(group_list, ACR_SOP_instance_UID, NULL);
@@ -1288,53 +1296,61 @@ public int acr_transmit_group_list(Acr_File *afpout,
       return FALSE;
    }
 
+   /* Macro to insert a new string element into the group list and record
+      the element id so that it can be removed later */
+   nelements_to_remove = 0;
+#define INSERT_N_SAVE_ELEM(elid, string) \
+   {acr_insert_string(&group_list, elid, string); \
+    elements_to_remove[nelements_to_remove++] = elid;}
+
    /* Add the class and instance UID's to the data group list */
    if (acr_find_group_element(group_list, ACR_SOP_class_UID) == NULL) {
-      acr_insert_string(&group_list, ACR_SOP_class_UID, sop_class_uid);
+      INSERT_N_SAVE_ELEM(ACR_SOP_class_UID, sop_class_uid);
    }
    if (acr_find_group_element(group_list, ACR_SOP_instance_UID) == NULL) {
-      acr_insert_string(&group_list, ACR_SOP_instance_UID, instance_uid);
+      INSERT_N_SAVE_ELEM(ACR_SOP_instance_UID, instance_uid);
    }
 
    /* Add the study and series UID's to the group list */
    if (acr_find_group_element(group_list, ACR_Study_instance_UID) == NULL) {
-      acr_insert_string(&group_list, ACR_Study_instance_UID, 
-                        acr_create_uid());
+      INSERT_N_SAVE_ELEM(ACR_Study_instance_UID, 
+                         acr_create_uid());
    }
    if (acr_find_group_element(group_list, ACR_Series_instance_UID) == NULL) {
-      acr_insert_string(&group_list, ACR_Series_instance_UID, 
-                        acr_create_uid());
+      INSERT_N_SAVE_ELEM(ACR_Series_instance_UID, 
+                         acr_create_uid());
    }
 
    /* Make up some essential data if it is not already in the group list */
    if (acr_find_group_element(group_list, ACR_Image_type) == NULL) {
-      acr_insert_string(&group_list, ACR_Image_type, 
-                        "ORIGINAL\\PRIMARY\\UNDEFINED");
+      INSERT_N_SAVE_ELEM(ACR_Image_type, 
+                         "ORIGINAL\\PRIMARY\\UNDEFINED");
    }
    if (acr_find_group_element(group_list, ACR_Sequence_variant) == NULL) {
-      acr_insert_string(&group_list, ACR_Sequence_variant, 
-                        "NONE\\NONE");
+      INSERT_N_SAVE_ELEM(ACR_Sequence_variant, 
+                         "NONE\\NONE");
    }
    if (acr_find_group_element(group_list, ACR_Image_position) == NULL) {
-      acr_insert_string(&group_list, ACR_Image_position, 
-                        "0\\0\\0");
+      INSERT_N_SAVE_ELEM(ACR_Image_position, 
+                         "0\\0\\0");
    }
    if (acr_find_group_element(group_list, ACR_Image_orientation) == NULL) {
-      acr_insert_string(&group_list, ACR_Image_orientation, 
-                        "1\\0\\0\\0\\1\\0");
+      INSERT_N_SAVE_ELEM(ACR_Image_orientation, 
+                         "1\\0\\0\\0\\1\\0");
    }
    if (acr_find_group_element(group_list, ACR_Frame_of_reference_UID) 
        == NULL) {
-      acr_insert_string(&group_list, ACR_Frame_of_reference_UID, 
-                        acr_create_uid());
+      INSERT_N_SAVE_ELEM(ACR_Frame_of_reference_UID, 
+                         acr_create_uid());
    }
    if (acr_find_group_element(group_list, ACR_Samples_per_pixel) == NULL) {
       acr_insert_short(&group_list, ACR_Samples_per_pixel, 1);
+      elements_to_remove[nelements_to_remove++] = ACR_Samples_per_pixel;
    }
    if (acr_find_group_element(group_list, ACR_Photometric_interpretation) 
        == NULL) {
-      acr_insert_string(&group_list, ACR_Photometric_interpretation, 
-                        "MONOCHROME2");
+      INSERT_N_SAVE_ELEM(ACR_Photometric_interpretation, 
+                         "MONOCHROME2");
    }
    
 
@@ -1344,6 +1360,17 @@ public int acr_transmit_group_list(Acr_File *afpout,
    status = send_message(afpout, message);
    acr_message_reset(message);
    acr_delete_message(message);
+
+   /* Delete the elements that we added */
+   for (ielem=0; ielem < nelements_to_remove; ielem++) {
+      group = acr_find_group(group_list, elements_to_remove[ielem]->group_id);
+      if (group != NULL) {
+         acr_group_remove_element(group, 
+                                  elements_to_remove[ielem]->element_id);
+      }
+   }
+
+   /* Check the status */
    if (status != ACR_OK) {
       acr_dicom_error(status, "Error sending store data");
       return FALSE;
