@@ -442,9 +442,9 @@ sub numaris2_read_file_info {
     # Get interesting values
     $file_info{'numechos'} = &unpack_int(*meas_hdr, 512);
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
-    # We cheat and use patient id for exam, getting rid of weird characters
-    ($file_info{'exam'} = &unpack_value(*patient_hdr, 28, 'A12'))
-        =~ s/^\W//g;
+    # We cheat and use exam date for exam, getting rid of weird characters
+    ($file_info{'exam'} = &unpack_value(*ident_hdr, 52, 'A10'))
+        =~ s/\W//g;
     $file_info{'series'} = &unpack_int(*patient_hdr, 112);
     $file_info{'image'} = &unpack_value(*relat_hdr, 56, 'A6') + 0;
 
@@ -521,10 +521,10 @@ sub numaris2_read_file_info {
     ($file_info{'patient_birthdate'} = &unpack_value(*patient_hdr, 40, 'a10'))
         =~ s/\./-/g;
     local($sex_flag) = &unpack_value(*patient_hdr, 52, 'a2');
-    if ($sex_flag eq 'M_') {
+    if ($sex_flag eq 'M ') {
         $file_info{'patient_sex'} = "male__";
     }
-    elsif ($sex_flag eq 'F_') {
+    elsif ($sex_flag eq 'F ') {
         $file_info{'patient_sex'} = "female";
     }
     $file_info{'patient_id'} = &unpack_value(*patient_hdr, 28, 'A12');
@@ -559,6 +559,224 @@ sub numaris2_get_image_cmd {
 
 # NUMARIS 3 ROUTINES
 
+# Routine to get a string from the header
+sub acr_find_string { 
+   if (scalar(@_) != 3) {
+      die "Argument error in numaris3_find_string";
+   }
+   local(*header, $group, $element) = @_;
+
+   local($grstr) = sprintf("0x%04x", $group);
+   local($elstr) = sprintf("0x%04x", $element);
+
+   return $header{$grstr, $elstr, 'string'};
+}
+
+# Routine to get an array of values from the header
+sub acr_find_numeric {
+   local(@values) = split(/\\/, &acr_find_string(@_));
+   foreach $value (@values) {
+      $value += 0;
+   }
+   return @values;
+}
+
+# Routine to get an integer from the header
+sub acr_find_int { 
+   if (scalar(@_) != 3) {
+      die "Argument error in numaris3_find_int";
+   }
+   local(*header, $group, $element) = @_;
+
+   local($grstr) = sprintf("0x%04x", $group);
+   local($elstr) = sprintf("0x%04x", $element);
+
+   return $header{$grstr, $elstr, 'short'};
+}
+
+# Subroutine to read the siemens Numaris 3 file headers
+sub numaris3_read_headers {
+
+    # Set constants for reading file
+    local($header_maxid) = "0x0029";
+
+    # Check arguements
+    if (scalar(@_) != 2) {
+        &cleanup_and_die("Argument error in numaris3_read_headers",1);
+    }
+    local($filename, *header) = @_;
+
+    # Dump the header
+    local($group, $element, $data);
+    open(DUMP, "dump_acr_nema $filename $header_maxid|");
+    while (<DUMP>) {
+       chop;
+       if (/^\s*(0x[\da-f]{4,4})\s+(0x[\da-f]{4,4})\s+length = \d+ :(.*)$/) {
+          $group = $1;
+          $element = $2;
+          $data = $3;
+          if ($data =~ /string = "(.*)"$/) {
+             $header{$group, $element, 'string'} = $1;
+          }
+          if ($data =~ /short = (\d+)/) {
+             $header{$group, $element, 'short'} = $1;
+          }
+       }
+    }
+    close(DUMP);
+
+    # Check the return status
+    if ($? != 0) {
+       warn "Error dumping header for file $filename";
+       return 1;
+    }
+
+    return 0;
+}
+
+# Routine to get Numaris 3 file info
+sub numaris3_read_file_info {
+    if (scalar(@_) != 3) {
+        &cleanup_and_die("Argument error in read_file_info",1);
+    }
+    local($filename, *file_info, *specific_file_info) = @_;
+
+    # Get headers
+    local(%header);
+    undef(%header);
+    if (&numaris3_read_headers($filename, *header)) {
+        return 1;
+    }
+
+    # Get interesting values
+    $file_info{'numechos'} = &acr_find_numeric(*header, 0x21, 0x1370);
+    if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
+    # We cheat and use study date for exam, getting rid of weird characters
+    ($file_info{'exam'} = &acr_find_string(*header, 0x8, 0x22))
+       =~ s/\W//g;
+    $file_info{'series'} = &acr_find_numeric(*header, 0x20, 0x10);
+    $file_info{'image'} = &acr_find_numeric(*header, 0x20, 0x13);
+
+    $file_info{'echo'} = &acr_find_numeric(*header, 0x18, 0x86);
+    $file_info{'width'} = &acr_find_int(*header, 0x28, 0x11);
+    $file_info{'height'} = &acr_find_int(*header, 0x28, 0x10);
+    local($bits_alloc) = &acr_find_int(*header, 0x28, 0x100);
+    if ($bits_alloc != 16) {
+       warn "Wrong number of bits allocated per image ($bits_alloc)\n";
+       return 1;
+    }
+    $file_info{'pixel_size'} = 2;
+    $file_info{'patient_name'} = &acr_find_string(*header, 0x10, 0x10);
+    local(@normal) = 
+       &convert_coordinates(&acr_find_numeric(*header, 0x21, 0x1161));
+    if (scalar(@normal) != 3) {
+       @normal = (0,0,1);
+    }
+    local($norm_r) = &abs($normal[0]);
+    local($norm_a) = &abs($normal[1]);
+    local($norm_s) = &abs($normal[2]);
+    local($plane) = 'transverse';
+    local($max) = $norm_s;
+    if ($norm_r > $max) {
+        $plane = 'sagittal';
+        $max = $norm_r;
+    }
+    if ($norm_a > $max) {
+        $plane = 'coronal';
+        $max = $norm_a;
+    }
+    $file_info{'orientation'} = $plane;
+
+    # Get coordinate information
+    local(@col_dircos, @row_dircos, @slc_dircos);
+    ($file_info{'rowstep'}, $file_info{'colstep'}) = 
+       &acr_find_numeric(*header, 0x28, 0x30);
+    if (length($file_info{'rowstep'}) <= 0) {
+       $file_info{'colstep'} = $file_info{'rowstep'} = 1;
+    }
+    $file_info{'colstep'} *= -1.0;
+    $file_info{'rowstep'} *= -1.0;
+    @col_dircos = &get_dircos
+       (&convert_coordinates(&acr_find_numeric(*header, 0x21, 0x116a)));
+    @row_dircos = &get_dircos
+       (&convert_coordinates(&acr_find_numeric(*header, 0x21, 0x116b)));
+    @slc_dircos = &get_dircos(@normal);
+    local($xcentre, $ycentre, $zcentre) = 
+       &convert_coordinates(&acr_find_numeric(*header, 0x21, 0x1160));
+    $file_info{'slicepos'} = $xcentre * $slc_dircos[0] + 
+        $ycentre * $slc_dircos[1] + $zcentre * $slc_dircos[2];
+    $file_info{'colstart'} =
+        ($xcentre * $col_dircos[0] + 
+         $ycentre * $col_dircos[1] + 
+         $zcentre * $col_dircos[2]) - 
+             $file_info{'colstep'} * ($file_info{'width'} - 1) / 2;
+    $file_info{'rowstart'} =
+        ($xcentre * $row_dircos[0] + 
+         $ycentre * $row_dircos[1] + 
+         $zcentre * $row_dircos[2]) - 
+             $file_info{'rowstep'} * ($file_info{'height'} - 1) / 2;
+    $file_info{'col_dircos_x'} = $col_dircos[0];
+    $file_info{'col_dircos_y'} = $col_dircos[1];
+    $file_info{'col_dircos_z'} = $col_dircos[2];
+    $file_info{'row_dircos_x'} = $row_dircos[0];
+    $file_info{'row_dircos_y'} = $row_dircos[1];
+    $file_info{'row_dircos_z'} = $row_dircos[2];
+    $file_info{'slc_dircos_x'} = $slc_dircos[0];
+    $file_info{'slc_dircos_y'} = $slc_dircos[1];
+    $file_info{'slc_dircos_z'} = $slc_dircos[2];
+
+    # Get other info
+    $file_info{'tr'} = &acr_find_numeric(*header, 0x18, 0x80)/1000;
+    $file_info{'te'} = &acr_find_numeric(*header, 0x18, 0x81)/1000;
+    $file_info{'ti'} = &acr_find_numeric(*header, 0x18, 0x82)/1000;
+    $file_info{'mr_flip'} = &acr_find_numeric(*header, 0x19, 0x1260);
+#    $file_info{'scan_seq'} = &acr_find_string(*header, 0x18, 0x20);
+#    $file_info{'scan_seq'} =~ s/\0.*$//;
+#    $file_info{'scan_seq'} =~ s/\n//;
+    ($file_info{'patient_birthdate'} = &acr_find_string(*header, 0x10, 0x30))
+        =~ s/\./-/g;
+    local($sex_flag) = &acr_find_string(*header, 0x10, 0x40);
+    if ($sex_flag eq 'M ') {
+        $file_info{'patient_sex'} = "male__";
+    }
+    elsif ($sex_flag eq 'F ') {
+        $file_info{'patient_sex'} = "female";
+    }
+    $file_info{'patient_id'} = &acr_find_string(*header, 0x10, 0x20);
+    $file_info{'institution'} = &acr_find_string(*header, 0x8, 0x80);
+    local($study_date, $study_time);
+    ($study_date = &acr_find_string(*header, 0x8, 0x22)) =~ s/\./-/g;
+    $study_time = &acr_find_string(*header, 0x8, 0x32);
+    $file_info{'start_time'} = "$study_date $study_time";
+
+    # Get specific file info
+    local($compression_code) = &acr_find_string(*header, 0x28, 0x60);
+    if (($compression_code ne "NONE") && ($compression_code ne "")) {
+       warn "File is compressed\n";
+       return 1;
+    }
+    $specific_file_info{'pixel_data_group'} = "0x7fe0";
+    $specific_file_info{'pixel_data_element'} = "0x10";
+
+    return 0;
+}
+
+sub numaris3_get_image_cmd {
+    if (scalar(@_) != 2) {
+        &cleanup_and_die("Argument error in numaris3_get_image_cmd",1);
+    }
+    local($cur_file, *specific_file_info) = @_;
+
+    local($cmd) = 
+        "extract_acr_nema " . 
+        $cur_file . " " .
+        $specific_file_info{'pixel_data_group'} . " " .
+        $specific_file_info{'pixel_data_element'} . " " .
+        " | byte_swap ";
+
+    return $cmd;
+}
+
 # GENERAL SIEMENS ROUTINES
 
 # Routine to initialize tape drive
@@ -579,6 +797,12 @@ sub siemens_read_file_info {
     local($numaris3_magic_id) = "0x0009 0x0012";
 
     local($magic);
+
+    # Check that the file exists and is readable
+    if (! -r $filename) {
+       warn "Unable to open file \"$filename\"";
+       return 1;
+    }
 
     # Check for a numaris 2 file
     $magic = `extract_acr_nema $filename $numaris2_magic_id 2>/dev/null`;
@@ -611,7 +835,7 @@ sub siemens_get_image_cmd {
         return &numaris2_get_image_cmd(@_);
     }
     elsif ($specific_file_info{'siemens_file_type'} eq "Numaris3") {
-        return &numaris2_get_image_cmd(@_);
+        return &numaris3_get_image_cmd(@_);
     }
     else {
         die "Unknown siemens file type";
