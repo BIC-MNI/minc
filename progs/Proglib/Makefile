@@ -9,6 +9,7 @@ include $(ROOT)/Make_configuration
 
 # Object names
 OBJS     = ParseArgv.o vax_conversions.o time_stamp.o nd_loop.o voxel_loop.o
+MANPAGES = ParseArgv.3
 CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
@@ -20,11 +21,16 @@ LINT_OBJS = $(OBJS:.o=.ln)
 
 # --------------------------------------------------------------------
 
+#Suffixes for man pages
+.SUFFIXES: .1 .man1 .3 .man3
+
 default: build
 
 all: build lint
 
-build: $(CC_PROG_LIB)
+build: $(CC_PROG_LIB) man
+
+man: $(MANPAGES)
 
 #Dependency on Makefile
 $(OBJS) $(LINT_OBJS) : Makefile
@@ -47,6 +53,10 @@ lint : $(LINT_PROG_LIB)
 # How to create lint library
 $(LINT_PROG_LIB) : $(LINT_OBJS)
 	$(LINT) -o $(PROG_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_OBJS)
+
+# how to make man pages
+.man3.3:
+	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
 clean:
