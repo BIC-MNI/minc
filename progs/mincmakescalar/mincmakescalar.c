@@ -10,8 +10,8 @@
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakescalar.c,v $
- * Revision 6.4  2004-04-27 15:32:33  bert
- * Added -2 option
+ * Revision 6.3.2.1  2005-01-25 21:01:52  bert
+ * Check for proper placement of vector_dimension
  *
  * Revision 6.3  2001/04/24 13:38:43  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.4 2004-04-27 15:32:33 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.3.2.1 2005-01-25 21:01:52 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -97,9 +97,6 @@ public long get_vector_length(int mincid);
 
 /* Argument variables */
 int clobber = FALSE;
-#ifdef MINC2
-int v2format = FALSE;
-#endif /* MINC2 defined */
 int verbose = TRUE;
 nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
@@ -110,10 +107,6 @@ Double_Array linear_coefficients = {0, NULL};
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
-    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
-       "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -158,6 +151,13 @@ ArgvInfo argTable[] = {
        (char *) &linear_coefficients,
        "Specify comma-separated list of coefficients for linear combination."},
    {NULL, ARGV_END, NULL, NULL, NULL}
+};
+
+const char str_wrong_dimension_order[] = {
+    "Your input file contains an image with a vector dimension, but the\n"
+    "vector dimension isn't the last (i.e. fastest-varying) dimension in\n"
+    "the image. Please restructure the file using mincreshape before\n"
+    "attempting to use mincmakescalar.\n"
 };
 
 /* Main program */
@@ -217,6 +217,10 @@ int main(int argc, char *argv[])
    /* Open the input file and get the vector length */
    inmincid = miopen(infile, NC_NOWRITE);
    input_vector_length = get_vector_length(inmincid);
+   if (input_vector_length < 0) {
+       fprintf(stderr, str_wrong_dimension_order);
+       exit(EXIT_FAILURE);
+   }
    if (input_vector_length < 1) input_vector_length = 1;
 
    /* Check that this length is okay */
@@ -237,9 +241,6 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
-#ifdef MINC2
-   set_loop_v2format(loop_options, v2format);
-#endif /* MINC2 defined */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_output_vector_size(loop_options, 1);
@@ -481,6 +482,7 @@ public long get_vector_length(int mincid)
    int dim[MAX_VAR_DIMS];
    char dimname[MAX_NC_NAME];
    long vector_length;
+   int i;
 
    /* Get image variable id */
    imgid = ncvarid(mincid, MIimage);
@@ -492,6 +494,17 @@ public long get_vector_length(int mincid)
    (void) ncdiminq(mincid, dim[ndims-1], dimname, &vector_length);
    if ((strcmp(dimname, MIvector_dimension) != 0) || (ndims <= 2)) {
       vector_length = 0;
+
+      /* New deal - check for an actual vector_dimension anywhere in the
+       * file.
+       */
+      for (i = 0; i < ndims; i++) {
+          ncdiminq(mincid, dim[i], dimname, NULL);
+          if (!strcmp(dimname, MIvector_dimension)) {
+              vector_length = -1;
+              break;
+          }
+      }
    }
 
    return vector_length;
