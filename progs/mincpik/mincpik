@@ -15,7 +15,6 @@
 #
 # Script for dumping a miff file from a minc file to STDOUT.
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
 # Thu Jun  1 17:46:19 EST 2000 - major rewrite to speed things
 #                                  also added transverse/coronal/sagital
 # Fri Jun  2 19:05:59 EST 2000 - removed pnm code and now use convert
@@ -35,12 +34,11 @@
 #                                  added -dimsize {z,y,z}space=-1
 
 
-
 use strict;
 use warnings "all";
 use Getopt::Tabular;
 use File::Basename;
-$SIG{__DIE__} =  sub { &cleanup; die $_[0]; };
+use File::Temp qw/ tempdir /;
 
 my($Help, $Usage, $me, @opt_table, $tmpdir, %opt);
 my(@args, $args, $infile, $outfile, %ordering, $CODE);
@@ -53,12 +51,12 @@ my(@args, $args, $infile, $outfile, %ordering, $CODE);
    );
 
 $me = &basename($0);
-$tmpdir = "/tmp/$me-$$";
 $CODE = "GRAY";
-$outfile = "MIFF:-";
 %opt = ('verbose' => 0,
+        'clobber' => 0,
         'slice' => undef,
         'scale' => 2,
+        'bitdepth' => 8,
         'range' => undef,
         'image_range' => undef,
         'lookup' => undef,
@@ -94,10 +92,14 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
 @opt_table = (
    ["-verbose", "boolean", 0, \$opt{'verbose'},
       "be verbose"],
+   ["-clobber", "boolean", 0, \$opt{'clobber'},
+      "overwrite existing files"],
    ["-slice", "integer", 1, \$opt{'slice'},
       "slice number to get"],
    ["-scale", "integer", 1, \$opt{'scale'},
-      "scaling factor for resulting image (Default: 2)"], 
+      "scaling factor for resulting image (Default: 2)"],
+   ["-depth", "integer", 1, \$opt{'bitdepth'},
+      "bitdepth for resulting image 8 or 16 (Default: 8) (MSB machines only!)"],
    
    ["Image range and lookup table options", "section" ],
    ["-range", "float",   2, \@{$opt{'range'}},
@@ -117,7 +119,7 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
    ["-sagittal", "arrayconst", ['xspace'], \@{$opt{'dirs'}},
       "get a sagital slice"],
    ["-allthree", "arrayconst", ['zspace', 'xspace', 'yspace'], \@{$opt{'dirs'}},
-      "get all three dimensions"],
+      "get all three directions"],
    );
 
 # Check arguments
@@ -125,18 +127,20 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
 &GetOptions (\@opt_table, \@ARGV) || exit 1;
 die $Usage if ($#ARGV < 0);
 
-if(!-e $tmpdir){
-   system('mkdir', $tmpdir) == 0 or die "$me: Couldn't make tmpdir: $tmpdir\n";
-   }
+# create temporary directory
+$tmpdir = &tempdir( "$me-XXXXXXXX", TMPDIR => 1, CLEANUP => 1 );
 
 # set up file names and do a few checks
 $infile = $ARGV[0];
-if(defined($ARGV[1])){
-   $outfile = $ARGV[1];
-   };
+$outfile = (defined($ARGV[1])) ? $ARGV[1] : 'MIFF:-';
 
-if(!-e $infile){
-   die "$me: Couldn't find $infile\n";
+die "$me: Couldn't find $infile\n\n" if (!-e $infile);
+if($outfile ne 'MIFF:-' && -e $outfile && !$opt{'clobber'}){
+   die "$me: $outfile exists, use -clobber to overwrite\n\n";
+   }
+
+if($opt{'bitdepth'} != 16 && $opt{'bitdepth'} != 8) {
+   die "$me: Invalid bitdepth specified - $opt{'bitdepth'} instead of 8 or 16\n\n";
    }
 
 my ($space, $n_slices, $convert_infile, @extract_args, @convert_args, $dimorder);
@@ -164,7 +168,7 @@ foreach $space (@{$opt{'dirs'}}){
       $opt{'slice'} = int($n_slices/2);
       }
    if($opt{'slice'} >= $n_slices || $opt{'slice'} < 0){ 
-      die "Slice $opt{'slice'} out of range (0-" . ($n_slices-1) . ")\n";
+      die "Slice $opt{'slice'} out of range (0-" . ($n_slices-1) . ")\n\n";
       }
 
    # check if we have a vector_dimension already
@@ -178,14 +182,14 @@ foreach $space (@{$opt{'dirs'}}){
       $dimorder .= ',vector_dimension';
       }
    @args = ('mincreshape', '-clobber', '-quiet',
-            '-byte', '-normalize',
+            '-normalize',
             '+direction',
             '-dimsize', "$space=-1",
             '-dimsize', "$ordering{$space}[0]=-1",
             '-dimsize', "$ordering{$space}[1]=-1",
             '-dimorder', $dimorder,
             '-dimrange', "$space=$opt{'slice'},1",
-	         $infile, "$tmpdir/reshaped.mnc");                  
+            $infile, "$tmpdir/reshaped.mnc");                  
    if(scalar(@{$opt{'range'}}) != 0){
       push(@args, '-valid_range', @{$opt{'range'}}[0], @{$opt{'range'}}[1]);
       }
@@ -210,26 +214,23 @@ foreach $space (@{$opt{'dirs'}}){
       }
 
    # set up mincextract command
-   @extract_args = ('mincextract', $convert_infile, '-byte', '-normalize');
+   @extract_args = ('mincextract', $convert_infile,
+                    '-normalize',
+                    ($opt{'bitdepth'} == 16) ? ('-short', '-unsigned') : '-byte');
    
    # set up convert arguments
    # a flip is 'normal' due to the difference between mnc and most image co-ordinates
-   @convert_args = ('convert', '-depth', 8, '-flip', 
+   @convert_args = ('convert',
+                    '-depth', $opt{'bitdepth'},
+                    '-flip', 
                     '-size', $img_y . 'x' . $img_x,
                     '-geometry', $img_length_y . 'x' . $img_length_x . '!',
                     "$CODE:-", $outfile);
    
    &do_cmd(join(' ', @extract_args, '|', @convert_args));
    }
-&cleanup;
 
 sub do_cmd {
    print STDERR "@_\n" if $opt{'verbose'};
    system(@_) == 0 or die;
-   }
-
-sub cleanup {
-   print STDERR "Cleaning up ......\n" if $opt{'verbose'};
-   @args = ('rm', '-r', '-f', $tmpdir);
-   system(@args);
    }

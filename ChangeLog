@@ -1,3 +1,10 @@
+2003-12-05  Andrew L. Janke <rotor@cmr.uq.edu.au>
+
+    * Changes to mincpik: added -depth option (as per a diff supplied
+    by Jonathan HARLAP); while at it, did a bit of clean-up including
+    replacing home-grown tempdir cleanup with File::Temp; Added -clobber
+    option so that mincpik more closely matches the other minc tools.
+
 2003-11-23  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* configure.in: Set version to 1.3.  Check for headers sys/stat.h,
