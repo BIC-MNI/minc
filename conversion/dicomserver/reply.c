@@ -4,10 +4,13 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 6.1  1998-05-19 19:27:43  neelin
-@MODIFIED   : Test for Siemens Vision machine by looking for implementation uid
-@MODIFIED   : rather than AE title
+@MODIFIED   : Revision 6.2  1999-08-05 20:01:16  neelin
+@MODIFIED   : Check for broken Siemens software using a list of implementation UIDs.
 @MODIFIED   :
+ * Revision 6.1  1998/05/19  19:27:43  neelin
+ * Test for Siemens Vision machine by looking for implementation uid
+ * rather than AE title
+ *
  * Revision 6.0  1997/09/12  13:24:27  neelin
  * Release of minc version 0.6
  *
@@ -38,6 +41,20 @@
 #include <dicomserver.h>
 
 extern int Do_logging;
+
+/* List of implementation UIDs for Siemens Vision scanners with broken 
+   handling of transfer syntax. These should be in ascending order of
+   software version, since the UID for version VB33A is used to identify 
+   a change in element use. */
+static char *SPI_Vision_Implementation_UIDs[] = {
+   "2.16.840.1.113669.2.931128",
+   "1.3.12.2.1107.5.1995.1",          /* Version VB33A */
+   NULL
+};
+/* Index into above array for version VB33A */
+#define SPI_VISION_VB33A_INDEX 1
+/* Global to indicate whether we have a pre VB33A version */
+int SPI_Vision_version_pre33A = TRUE;
 
 /* Macros */
 #define SAVE_SHORT(group, elid, value) \
@@ -143,6 +160,7 @@ public Acr_Message associate_reply(Acr_Message input_message,
    int best_transfer_syntax_priority;
    int use_implicit_little_endian;
    char *best_abstract_syntax, *best_transfer_syntax, *cur_syntax;
+   int impuid;
 
    /* Print log message */
    if (Do_logging >= HIGH_LOGGING) {
@@ -177,10 +195,14 @@ public Acr_Message associate_reply(Acr_Message input_message,
    /* Check for Siemens Vision implementation that lies about its 
       transfer syntaxes */
    use_implicit_little_endian = FALSE;
-   if (uid_equal(acr_find_string(input_group, 
-                                 DCM_PDU_Implementation_class_uid, ""),
-                 SPI_VISION_IMPLEMENTATION_UID)) {
-      use_implicit_little_endian = TRUE;
+   for (impuid=0; SPI_Vision_Implementation_UIDs[impuid] != NULL; impuid++) {
+      if (uid_equal(acr_find_string(input_group, 
+                                    DCM_PDU_Implementation_class_uid, ""),
+                    SPI_Vision_Implementation_UIDs[impuid])) {
+         use_implicit_little_endian = TRUE;
+         SPI_Vision_version_pre33A = (impuid < SPI_VISION_VB33A_INDEX);
+         break;
+      }
    }
 
    /* Get maximum length */
