@@ -9,8 +9,8 @@ include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = mincwindow
-EXTRA_OBJS = voxel_loop.o
-HEADERS  = voxel_loop.h
+EXTRA_OBJS = 
+HEADERS  = 
 CDEFINES = -DDEBUG# cpp defines
 LDOPT    = $(PROG_LDOPT)
 

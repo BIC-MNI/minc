@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:36:27  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-12-14 10:20:23  neelin
+@MODIFIED   : Changed to use standard (Proglib) voxel_loop routines.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:36:27  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.4  94/09/28  10:36:20  neelin
  * Pre-release
  * 
@@ -27,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.0 1994-09-28 10:36:27 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 2.1 1994-12-14 10:20:23 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -57,17 +60,22 @@ typedef struct {
 } Window_Data;
 
 /* Function prototypes */
-public void do_window(void *voxel_data, long nvoxels, double *data);
+public void do_window(void *caller_data, long num_voxels, 
+                      int input_num_buffers, int input_vector_length,
+                      double *input_data[],
+                      int output_num_buffers, int output_vector_length,
+                      double *output_data[],
+                      long start[], long count[]);
 
 /* Argument variables */
-int clobber = NC_NOCLOBBER;
+int clobber = FALSE;
 int verbose = TRUE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
-   {"-clobber", ARGV_CONSTANT, (char *) NC_CLOBBER, (char *) &clobber,
+   {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
-   {"-noclobber", ARGV_CONSTANT, (char *) NC_NOCLOBBER, (char *) &clobber,
+   {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
        "Don't overwrite existing file (default)."},
    {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
        "Print out log messages (default)."},
@@ -81,9 +89,9 @@ public int main(int argc, char *argv[])
 {
    char *infile, *outfile;
    char *arg_string;
-   int inmincid, outmincid;
    Window_Data window_data;
    char *endptr;
+   Loop_Options loop_options;
 
    /* Save time stamp and args */
    arg_string = time_stamp(argc, argv);
@@ -121,19 +129,12 @@ public int main(int argc, char *argv[])
       window_data.newvalue = 0.0;
    }
 
-   /* Open input file */
-   inmincid = miopen(infile, NC_NOWRITE);
-
-   /* Create output file */
-   outmincid = micreate(outfile, clobber);
-
    /* Do loop */
-   voxel_loop(inmincid, outmincid, arg_string, verbose,
+   initialize_loop_options(&loop_options);
+   set_loop_verbose(&loop_options, verbose);
+   set_loop_clobber(&loop_options, clobber);
+   voxel_loop(1, &infile, 1, &outfile, arg_string, &loop_options,
               do_window, (void *) &window_data);
-
-   /* Close the files */
-   (void) miclose(inmincid);
-   (void) miclose(outmincid);
 
    exit(EXIT_SUCCESS);
 }
@@ -153,27 +154,43 @@ public int main(int argc, char *argv[])
 @CREATED    : January 11, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_window(void *voxel_data, long nvoxels, double *data)
+/* ARGSUSED */
+public void do_window(void *caller_data, long num_voxels, 
+                      int input_num_buffers, int input_vector_length,
+                      double *input_data[],
+                      int output_num_buffers, int output_vector_length,
+                      double *output_data[],
+                      long start[], long count[])
 {
    Window_Data *window_data;
    long ivox;
 
    /* Get pointer to window info */
-   window_data = (Window_Data *) voxel_data;
+   window_data = (Window_Data *) caller_data;
+
+   /* Check arguments */
+   if ((input_num_buffers != 1) || (input_vector_length != 1) ||
+       (output_num_buffers != 1) || (output_vector_length != 1)) {
+      (void) fprintf(stderr, "Bad arguments to do_window!\n");
+      exit(EXIT_FAILURE);
+   }
 
    /* Loop through the voxels */
-   for (ivox=0; ivox < nvoxels; ivox++) {
-      if (data[ivox] < window_data->minimum) {
+   for (ivox=0; ivox < num_voxels; ivox++) {
+      if (input_data[0][ivox] < window_data->minimum) {
          if (window_data->use_newvalue)
-            data[ivox] = window_data->newvalue;
+            output_data[0][ivox] = window_data->newvalue;
          else
-            data[ivox] = window_data->minimum;
+            output_data[0][ivox] = window_data->minimum;
       }
-      else if (data[ivox] > window_data->maximum) {
+      else if (input_data[0][ivox] > window_data->maximum) {
          if (window_data->use_newvalue)
-            data[ivox] = window_data->newvalue;
+            output_data[0][ivox] = window_data->newvalue;
          else
-            data[ivox] = window_data->maximum;
+            output_data[0][ivox] = window_data->maximum;
+      }
+      else {
+         output_data[0][ivox] = input_data[0][ivox];
       }
    }
 
