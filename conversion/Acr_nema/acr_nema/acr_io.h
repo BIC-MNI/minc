@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 1.3  1993-11-25 10:37:26  neelin
-@MODIFIED   : Added byte-ordering test.
+@MODIFIED   : Revision 1.4  1994-01-06 13:31:30  neelin
+@MODIFIED   : Changed acr_need_invert to a public function.
 @MODIFIED   :
+ * Revision 1.3  93/11/25  10:37:26  neelin
+ * Added byte-ordering test.
+ * 
  * Revision 1.2  93/11/24  11:26:22  neelin
  * Changed short to unsigned short.
  * 
@@ -37,6 +40,7 @@ typedef enum {
 
 /* Functions */
 public int acr_set_vax_byte_ordering(int has_vax_byte_ordering);
+public int acr_need_invert(void);
 public void acr_get_short(long nvals, void *input_value, 
                           unsigned short *mach_value);
 public void acr_get_long(long nvals, void *input_value, long *mach_value);

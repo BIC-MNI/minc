@@ -5,9 +5,11 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 1.3  1993-12-08 09:07:02  neelin
+@MODIFIED   : Revision 1.4  1994-01-06 13:31:27  neelin
+@MODIFIED   : Changed acr_need_invert to a public function.
 @MODIFIED   :
-@MODIFIED   :
+ * Revision 1.3  93/12/08  09:07:02  neelin
+ * 
  * Revision 1.2  93/11/24  11:26:09  neelin
  * Added TRUE and FALSE.
  * 

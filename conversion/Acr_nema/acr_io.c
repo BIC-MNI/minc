@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.4  1993-11-30 12:18:34  neelin
-@MODIFIED   : Handle MALLOC returning NULL because of extremely large data element length.
+@MODIFIED   : Revision 1.5  1994-01-06 13:30:57  neelin
+@MODIFIED   : Changed acr_need_invert to a public function.
 @MODIFIED   :
+ * Revision 1.4  93/11/30  12:18:34  neelin
+ * Handle MALLOC returning NULL because of extremely large data element length.
+ * 
  * Revision 1.3  93/11/25  10:34:34  neelin
  * Added routine to test byte-ordering of input.
  * 
@@ -44,9 +47,6 @@
 #ifndef private
 #  define private static
 #endif
-
-/* Private functions */
-private int acr_need_invert(void);
 
 /* Private variables */
 static int acr_vax_byte_ordering = TRUE;
@@ -87,7 +87,7 @@ public int acr_set_vax_byte_ordering(int has_vax_byte_ordering)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int acr_need_invert(void)
+public int acr_need_invert(void)
 {
 
 #if (defined(vax))
