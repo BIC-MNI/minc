@@ -3,7 +3,10 @@
 @DESCRIPTION: Header file for routines that read scanditonix image files
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: scx_file.h,v $
+@MODIFIED   : Revision 1.3  1993-08-11 15:27:45  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

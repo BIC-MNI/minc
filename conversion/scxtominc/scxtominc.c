@@ -8,7 +8,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: scxtominc.c,v $
+@MODIFIED   : Revision 1.8  1993-08-11 15:27:34  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.7 1993-07-26 15:48:10 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.8 1993-08-11 15:27:34 neelin Exp $";
 #endif
 
 #include <stdlib.h>

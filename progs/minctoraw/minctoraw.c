@@ -8,7 +8,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 11, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: minctoraw.c,v $
+@MODIFIED   : Revision 1.7  1993-08-11 15:23:15  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.6 1993-07-21 12:50:56 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 1.7 1993-08-11 15:23:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>

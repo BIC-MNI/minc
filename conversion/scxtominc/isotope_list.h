@@ -5,7 +5,10 @@
 @GLOBALS    : isotope_list
 @CALLS      : 
 @CREATED    : January 13, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: isotope_list.h,v $
+@MODIFIED   : Revision 1.2  1993-08-11 15:27:48  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 ---------------------------------------------------------------------------- */
 
 struct {

@@ -3,7 +3,10 @@
 @DESCRIPTION: File containing routines to read scanditronix image files
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: scx_file.c,v $
+@MODIFIED   : Revision 1.4  1993-08-11 15:27:42  neelin
+@MODIFIED   : Added RCS logging in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -17,7 +20,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.3 1993-07-21 12:58:11 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.4 1993-08-11 15:27:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
