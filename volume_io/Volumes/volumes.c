@@ -1,5 +1,86 @@
 #include  <def_mni.h>
 
+private  void  free_auxiliary_data(
+    volume_struct  *volume );
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Assumes that the volume sizes and the data type have been
+              assigned, and allocates the volume data.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  alloc_volume(
+    volume_struct  *volume )
+{
+    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
+    {
+        switch( volume->data_type )
+        {
+        case UNSIGNED_BYTE:
+            ALLOC3D( volume->byte_data, volume->sizes[X], volume->sizes[Y],
+                     volume->sizes[Z] );
+            break;
+
+        case UNSIGNED_SHORT:
+            ALLOC3D( volume->short_data, volume->sizes[X], volume->sizes[Y],
+                     volume->sizes[Z] );
+            break;
+
+        default:
+            HANDLE_INTERNAL_ERROR( "alloc_volume" );
+        }
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the memory associated with the volume.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  delete_volume(
+    volume_struct  *volume )
+{
+    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
+    {
+        switch( volume->data_type )
+        {
+        case UNSIGNED_BYTE:
+            FREE3D( volume->byte_data );
+            break;
+
+        case UNSIGNED_SHORT:
+            FREE3D( volume->short_data );
+            break;
+
+        default:
+            HANDLE_INTERNAL_ERROR( "alloc_volume" );
+        }
+    }
+
+    free_auxiliary_data( volume );
+}
+
+public  void  initialize_volume(
+    volume_struct  *volume )
+{
+    volume->value_scale = 1.0;
+    volume->value_translation = 0.0;
+    volume->sizes[X] = 0;
+    volume->sizes[Y] = 0;
+    volume->sizes[Z] = 0;
+    volume->labels = (unsigned char ***) NULL;
+}
+
 public  void  get_volume_size(
     volume_struct   *volume,
     int             *x_size,
@@ -85,7 +166,6 @@ public  Boolean  cube_is_within_volume(
     int             z )
 {
     int     nx, ny, nz;
-    void    get_volume_size();
 
     get_volume_size( volume, &nx, &ny, &nz );
 
@@ -135,10 +215,46 @@ public  Boolean  voxel_contains_value(
     return( FALSE );
 }
 
+public  void  alloc_auxiliary_data(
+    volume_struct  *volume )
+{
+    ALLOC3D( volume->labels, volume->sizes[X], volume->sizes[Y],
+             volume->sizes[Z] );
+    set_all_volume_auxiliary_data( volume, ACTIVE_BIT );
+}
+
+private  void  check_alloc_auxiliary_data(
+    volume_struct  *volume )
+{
+    if( volume->labels == (unsigned char ***) NULL )
+        alloc_auxiliary_data( volume );
+}
+
+private  void  free_auxiliary_data(
+    volume_struct  *volume )
+{
+    if( volume->labels != (unsigned char ***) NULL )
+        FREE3D( volume->labels );
+}
+
 public  void  set_all_volume_auxiliary_data(
     volume_struct  *volume,
     int            value )
 {
+    int             n_voxels, i, nx, ny, nz;
+    unsigned char   *label_ptr;
+
+    get_volume_size( volume, &nx, &ny, &nz );
+
+    n_voxels = nx * ny * nz;
+
+    label_ptr = volume->labels[0][0];
+
+    for_less( i, 0, n_voxels )
+    {
+        *label_ptr = (unsigned char) value;
+        ++label_ptr;
+    }
 }
 
 public  void  set_all_volume_auxiliary_data_bit(
@@ -146,18 +262,48 @@ public  void  set_all_volume_auxiliary_data_bit(
     int            bit,
     Boolean        value )
 {
+    int             n_voxels, i, nx, ny, nz;
+    unsigned char   *label_ptr;
+
+    get_volume_size( volume, &nx, &ny, &nz );
+
+    n_voxels = nx * ny * nz;
+
+    label_ptr = volume->labels[0][0];
+
+    for_less( i, 0, n_voxels )
+    {
+        if( value )
+            *label_ptr |= bit;
+        else if( (*label_ptr & bit) != 0 )
+            *label_ptr ^= bit;
+
+        ++label_ptr;
+    }
 }
 
 public  void  set_all_voxel_activity_flags(
     volume_struct  *volume,
     Boolean        value )
 {
+    set_all_volume_auxiliary_data_bit( volume, ACTIVE_BIT, value );
 }
 
 public  void  set_all_voxel_label_flags(
     volume_struct  *volume,
     Boolean        value )
 {
+    set_all_volume_auxiliary_data_bit( volume, LABEL_BIT, value );
+}
+
+public  void  set_volume_auxiliary_data(
+    volume_struct   *volume,
+    int             x,
+    int             y,
+    int             z,
+    int             value )
+{
+    volume->labels[x][y][z] = (unsigned char) value;
 }
 
 public  Boolean  get_voxel_activity_flag(
@@ -166,6 +312,7 @@ public  Boolean  get_voxel_activity_flag(
     int             y,
     int             z )
 {
+    return( (volume->labels[x][y][z] & ACTIVE_BIT) != 0 );
 }
 
 public  void  set_voxel_activity_flag(
@@ -175,6 +322,13 @@ public  void  set_voxel_activity_flag(
     int             z,
     Boolean         value )
 {
+    unsigned  char  *ptr;
+
+    ptr = &volume->labels[x][y][z];
+    if( value )
+        *ptr |= ACTIVE_BIT;
+    else if( (*ptr & ACTIVE_BIT) != 0 )
+        *ptr ^= ACTIVE_BIT;
 }
 
 public  Boolean  get_voxel_label_flag(
@@ -183,6 +337,7 @@ public  Boolean  get_voxel_label_flag(
     int             y,
     int             z )
 {
+    return( (volume->labels[x][y][z] & LABEL_BIT) != 0 );
 }
 
 public  void  set_voxel_label_flag(
@@ -192,6 +347,13 @@ public  void  set_voxel_label_flag(
     int             z,
     Boolean         value )
 {
+    unsigned  char  *ptr;
+
+    ptr = &volume->labels[x][y][z];
+    if( value )
+        *ptr |= LABEL_BIT;
+    else if( (*ptr & LABEL_BIT) != 0 )
+        *ptr ^= LABEL_BIT;
 }
 
 public  Status  io_volume_auxiliary_bit(
@@ -200,6 +362,63 @@ public  Status  io_volume_auxiliary_bit(
     volume_struct  *volume,
     int            bit )
 {
+    Status             status;
+    bitlist_3d_struct  bitlist;
+    int                x, y, z, nx, ny, nz;
+    unsigned char      *label_ptr;
+
+    status = OK;
+
+    get_volume_size( volume, &nx, &ny, &nz );
+
+    create_bitlist_3d( nx, ny, nz, &bitlist );
+
+    if( io_type == WRITE_FILE )
+    {
+        label_ptr = volume->labels[0][0];
+
+        for_less( x, 0, nx )
+        {
+            for_less( y, 0, ny )
+            {
+                for_less( z, 0, nz )
+                {
+                    if( (*label_ptr & bit) != 0 )
+                        set_bitlist_bit_3d( &bitlist, x, y, z, TRUE );
+
+                    ++label_ptr;
+                }
+            }
+        }
+    }
+
+    status = io_bitlist_3d( file, io_type, &bitlist );
+
+    if( status == OK && io_type == READ_FILE )
+    {
+        label_ptr = volume->labels[0][0];
+
+        for_less( x, 0, nx )
+        {
+            for_less( y, 0, ny )
+            {
+                for_less( z, 0, nz )
+                {
+                    if( get_bitlist_bit_3d( &bitlist, x, y, z ) )
+                        *label_ptr |= bit;
+                    else if( (*label_ptr & bit) != 0 )
+                        *label_ptr ^= bit;
+
+                    ++label_ptr;
+                }
+            }
+        }
+    }
+
+    if( status == OK )
+        delete_bitlist_3d( &bitlist );
+
+    return( status );
 }
 
 public  Boolean   evaluate_volume_in_world(
@@ -213,9 +432,8 @@ public  Boolean   evaluate_volume_in_world(
     Real           *deriv_y,
     Real           *deriv_z )
 {
-    Real    dx, dy, dz;
     Boolean voxel_is_active;
-    int     activity, n_inactive;
+    int     n_inactive;
     int     i, j, k;
     double  u, v, w;
     double  c000, c001, c010, c011, c100, c101, c110, c111;
@@ -228,15 +446,8 @@ public  Boolean   evaluate_volume_in_world(
     convert_world_to_voxel( volume, x, y, z, &x, &y, &z );
 
     get_volume_size( volume, &nx, &ny, &nz );
-    get_volume_slice_thickness( volume, &dx, &dy, &dz );
 
-    x /= dx;
-    y /= dy;
-    z /= dz;
-
-    if( x < 0.0 || x > (double) (nx-1) ||
-        y < 0.0 || y > (double) (ny-1) ||
-        z < 0.0 || z > (double) (nz-1) )
+    if( !voxel_is_within_volume( volume, x, y, z ) )
     {
         *value = 0.0;
         if( deriv_x != (Real *) 0 )
@@ -310,9 +521,9 @@ public  Boolean   evaluate_volume_in_world(
         du0 = INTERPOLATE( v, du00, du10 );
         du1 = INTERPOLATE( v, du01, du11 );
 
-        *deriv_x = INTERPOLATE( w, du0, du1 ) / dx;
-        *deriv_y = INTERPOLATE( w, dv0, dv1 ) / dy;
-        *deriv_z = (c1 - c0) / dz;
+        *deriv_x = INTERPOLATE( w, du0, du1 );
+        *deriv_y = INTERPOLATE( w, dv0, dv1 );
+        *deriv_z = (c1 - c0);
     }
 
     if( n_inactive == 0 )
