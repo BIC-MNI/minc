@@ -8,6 +8,11 @@ echo Testing test_icv_range
 test_icv_range > junk.out
 diff test_icv_range.out junk.out
 
+echo Testing test_icv
+test_icv > junk.out
+diff test_icv.out junk.out
+diff test_icv.mnc test.mnc
+
 echo Testing test_icv_dim
 test_icv_dim > junk.out
 diff test_icv_dim.out junk.out

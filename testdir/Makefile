@@ -8,8 +8,8 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = minc_test test_mconv minc_test_types test_icv_range test_icv_dim \
-   test_speed test_icv_dim1 test_icv_fillvalue
+PROGS    = minc_test test_mconv minc_test_types test_icv test_icv_range \
+	test_icv_dim test_speed test_icv_dim1 test_icv_fillvalue
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(MINC_LDOPT)
 
