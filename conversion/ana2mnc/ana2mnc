@@ -131,7 +131,7 @@ if($#ARGV != $#files){ die $Usage; }
 
 # Get the history string
 chomp($history = `date`);
-$history .= '>>>> ' . join(' ', $me, @ARGV);
+$history .= '>>>> ' . join(' ', $me, @ARGV) . "\n";
 
 # then do whatever we are supposed to be doing
 if($me eq "ana2mnc"){
@@ -771,7 +771,7 @@ sub write_minc{
                '-zstart', $gen_hdr->{zstart});
    
    # history
-   push(@args, '-sattribute', ":history='$history'");
+   push(@args, '-sattribute', ":history=$history");
 
 
    # files and sizes
@@ -793,8 +793,8 @@ sub read_minc{
    my($h) = create_analyze_header();
 #   ($h->{cal_min}, $h->{cal_max}) = volume_minmax($mncfile);
    
-   $h->{glmin} = 0;
-   $h->{glmax} = 65535;
+#   $h->{glmin} = 0;
+#   $h->{glmax} = 65535;
    
    $args = "mincinfo -error_string 0 ".
            "-attval xspace:start -attval yspace:start -attval zspace:start ".
