@@ -6,7 +6,10 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.20  2004-10-29 13:08:41  rotor
+ * Revision 6.21  2005-02-16 19:22:32  bert
+ * Autoconfiscation
+ *
+ * Revision 6.20  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -116,7 +119,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.20 2004-10-29 13:08:41 rotor Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.21 2005-02-16 19:22:32 bert Exp $";
 #endif
 
 #include <stdio.h>
@@ -138,7 +141,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <ctype.h>
 #include <time.h>
 #include <acr_nema.h>
-#include <dicom_network.h>
 
 /* Constants */
 #ifndef public

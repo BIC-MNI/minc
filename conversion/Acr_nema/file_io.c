@@ -6,7 +6,10 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.5  2004-10-29 13:08:41  rotor
+ * Revision 6.6  2005-02-16 19:22:32  bert
+ * Autoconfiscation
+ *
+ * Revision 6.5  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -94,7 +97,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
-#include <file_io.h>
+#include <acr_nema/file_io.h>
 
 /* these are pinched from minc_def.h */
 #define MALLOC(size) ((void *) malloc(size))

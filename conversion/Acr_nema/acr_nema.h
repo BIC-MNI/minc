@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_nema.h,v $
- * Revision 6.2  2004-10-29 13:08:41  rotor
+ * Revision 6.3  2005-02-16 19:22:32  bert
+ * Autoconfiscation
+ *
+ * Revision 6.2  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -81,14 +84,14 @@
 #endif
 
 /* Include files */
-#include <file_io.h>
-#include <acr_io.h>
-#include <value_repr.h>
-#include <element.h>
-#include <group.h>
-#include <message.h>
-#include <dicom_network.h>
-#include <dicom_client_routines.h>
+#include <acr_nema/file_io.h>
+#include <acr_nema/acr_io.h>
+#include <acr_nema/value_repr.h>
+#include <acr_nema/element.h>
+#include <acr_nema/group.h>
+#include <acr_nema/message.h>
+#include <acr_nema/dicom_network.h>
+#include <acr_nema/dicom_client_routines.h>
 
 /* these are pinched from minc_def.h */
 #define MALLOC(size) ((void *) malloc(size))
