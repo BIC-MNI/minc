@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 3.1  1995-11-16 13:11:16  neelin
-@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
+@MODIFIED   : Revision 3.2  1996-06-19 18:24:16  neelin
+@MODIFIED   : Check errors on fopen when -input is used.
+@MODIFIED   : Try opening input before creating minc file.
 @MODIFIED   :
+ * Revision 3.1  1995/11/16  13:11:16  neelin
+ * Added include of math.h to get declaration of strtod under SunOs
+ *
  * Revision 3.0  1995/05/15  19:31:00  neelin
  * Release of minc version 0.3
  *
@@ -75,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.1 1995-11-16 13:11:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.2 1996-06-19 18:24:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -387,7 +391,20 @@ main(int argc, char *argv[])
 
    /* Did the user provide a real range */
    do_real_range = (real_range[0] != DEF_RANGE) && !floating_type;
-   
+
+   /* Open the input file */
+   if (inputfile == NULL) {
+      instream=stdin;
+   }
+   else {
+      instream = fopen(inputfile, "r");
+      if (instream == NULL) {
+         (void) fprintf(stderr, "Error opening input file \"%s\"\n", 
+                        inputfile);
+         exit(ERROR_STATUS);
+      }
+   }
+
    /* Create an icv */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, type);
@@ -558,12 +575,6 @@ main(int argc, char *argv[])
    image=MALLOC(image_size);
 
    /* Loop through the images */
-   if (inputfile == NULL) {
-      instream=stdin;
-   }
-   else {
-      instream = fopen(inputfile, "r");
-   }
    fastdim=ndims-image_dims-1;
    if (fastdim<0) fastdim=0;
    if (do_vrange) {
