@@ -1,9 +1,17 @@
 MINC 2:
+2004-06-09 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add netcdf and HDF5 versions to the -version list.
+	
 2004-06-08 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Avoid printing HDF5 errors on excessively long attributes.  Still
 	have to decide how best to deal with this situations - truncate, 
 	drop, or somehow convert the attribute into a dataset?  Right now
-	we will drop.
+	we will drop excessively large attributes from HDF5 files, which is
+	probably bad.
+	* Fix bug (mentioned in previous entries) which caused mincdump
+	(as derived from ncdump) to print zero-length attributes as an 
+	erroneous string of length one instead of as an empty string.
+	* Eliminate bogus "not implemented yet" message from volume_io
 	
 2004-06-07 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fix setting of length in hdf_vardef/hdf_dimdef
@@ -11,6 +19,11 @@ MINC 2:
 	a minor bug in "ncdump" which makes zero-length strings appear to
 	have length one (the bogus character will appear to match the first 
 	character in the preceding string).
+	
+2004-06-04 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Changed volume_io/Volumes/volume_cache.c to increase both the
+	cache size and the default cached volume size (i.e. the size which
+	turns on caching).
 	
 2004-06-01 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fixed endian-ness issues in MINC 2.0 format.
