@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 1.8  1993-08-11 15:44:54  neelin
-@MODIFIED   : Functions called by ParseArgv must check that nextArg is not NULL.
+@MODIFIED   : Revision 1.9  1993-08-11 15:49:49  neelin
+@MODIFIED   : get_arg_vector must return a value (TRUE if all goes well).
 @MODIFIED   :
+ * Revision 1.8  93/08/11  15:44:54  neelin
+ * Functions called by ParseArgv must check that nextArg is not NULL.
+ * 
  * Revision 1.7  93/08/11  15:20:02  neelin
  * Added RCS logging in source.
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.8 1993-08-11 15:44:54 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.9 1993-08-11 15:49:49 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -384,4 +387,5 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
       vector[i] = LONG_MIN;
    }
 
+   return TRUE;
 }
