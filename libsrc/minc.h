@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.7  2001-08-20 13:19:14  neelin
+ * Revision 6.8  2001-11-13 14:15:17  neelin
+ * Added functions miget_image_range and mivar_exists
+ *
+ * Revision 6.7  2001/08/20 13:19:14  neelin
  * Added function miattget_with_sign to allow the caller to specify the sign
  * of the input attribute since this information is ambiguous. This is
  * necessary for the valid_range attribute which should have the same sign
@@ -107,7 +110,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.7 2001-08-20 13:19:14 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.8 2001-11-13 14:15:17 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -467,6 +470,8 @@ public int miget_default_range(nc_type datatype, int is_signed,
                                double default_range[]);
 public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
 public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
+public int miget_image_range(int cdfid, double image_range[]);
+public int mivar_exists(int cdfid, char *varname);
 public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);
 public int miattget_pointer(int cdfid, int varid, char *name);
 public int miadd_child(int cdfid, int parent_varid, int child_varid);

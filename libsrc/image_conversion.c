@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.6  2001-08-20 13:16:53  neelin
+ * Revision 6.7  2001-11-13 14:15:17  neelin
+ * Added functions miget_image_range and mivar_exists
+ *
+ * Revision 6.6  2001/08/20 13:16:53  neelin
  * Removed extraneous variables from MI_icv_get_vrange.
  *
  * Revision 6.5  2001/08/16 19:24:11  neelin
@@ -130,7 +133,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.6 2001-08-20 13:16:53 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.7 2001-11-13 14:15:17 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1027,16 +1030,11 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 {
    int oldncopts;             /* For saving value of ncopts */
    int vid[2];                /* Variable ids for max and min */
-   double *immptr[2];         /* Pointers to imgmax and imgmin */
    int ndims;                 /* Number of dimensions for image max and min */
    int dim[MAX_VAR_DIMS];     /* Dimensions */
-   long start[MAX_VAR_DIMS];  /* Start of variable */
-   long count[MAX_VAR_DIMS];  /* Dimensions sizes */
-   long size;                 /* Size of max and min variables */
    int imm;                   /* Counter for looping through max and min */
-   double *buffer;            /* Pointer to buffer for max/min values */
+   double image_range[2];
    int idim, i;
-   long ientry;
 
    MI_SAVE_ROUTINE_NAME("MI_icv_get_norm");
 
@@ -1065,87 +1063,36 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       icvp->derv_imgmin = MI_DEFAULT_MIN;
    }
    else {
-      /* Get image max, min variable ids */
-      vid[0]=icvp->imgmaxid;
-      vid[1]=icvp->imgminid;
 
-      /* No max/min variables, so use valid_range values for floats 
-         if it set and defaults otherwise */
-      if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
-         if (icvp->derv_var_float &&
-             (icvp->var_vmax != FLT_MAX) &&
-             (icvp->var_vmax != DBL_MAX)) {
-            icvp->derv_imgmax = icvp->var_vmax;
-            icvp->derv_imgmin = icvp->var_vmin;
-         }
-         else {
-            icvp->derv_imgmax = MI_DEFAULT_MAX;
-            icvp->derv_imgmin = MI_DEFAULT_MIN;
-         }
-      }
-
-      /* If the variables are there then get the max and min and fastest 
-         varying dimension */
-      else {
-         immptr[0] = &(icvp->derv_imgmax);
-         immptr[1] = &(icvp->derv_imgmin);
-         for (imm=0; imm<2; imm++) {    /* Loop through max, then min */
-            MI_CHK_ERR(ncvarinq(cdfid, vid[imm], NULL, NULL, 
-                                &ndims, dim, NULL))
-
-            /* Loop through dimensions, checking dimensions against image,
-               getting dimension sizes and total max/min variable size */
-            size=1;     /* Size of MIimagemax/min variable */
-            for (idim=0; idim<ndims; idim++) {
-               /* Look to see where this dimension falls as an image 
-                  dimension */
-               for (i=0; i<icvp->var_ndims; i++) {
-                  if (icvp->var_dim[i]==dim[idim])
-                     icvp->derv_firstdim = MAX(icvp->derv_firstdim, i);
-               }
-               /* Get the dimension size */
-               MI_CHK_ERR(ncdiminq(cdfid, dim[idim], NULL, &(count[idim])))
-               size *= count[idim];
-            }
-
-            /* Don't bother reading variable if user set image range */
-
-            if (!icvp->user_user_norm) {
-               /* Get space */
-               if ((buffer=MALLOC(size, double))==NULL) {
-                  MI_LOG_SYS_ERROR1("MI_icv_get_norm");
-                  MI_RETURN_ERROR(MI_ERROR);
-               }
-               /* Get values */
-               if (mivarget(cdfid, vid[imm], 
-                            miset_coords(ndims, 0L, start),
-                            count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
-                  FREE(buffer);
-                  MI_RETURN_ERROR(MI_ERROR);
-               }
-               /* Loop through values, getting max/min */
-               *immptr[imm] = buffer[0];
-               for (ientry=1; ientry<size; ientry++) {
-                  if (imm==0)
-                     *immptr[imm] = MAX(*immptr[imm], buffer[ientry]);
-                  else
-                     *immptr[imm] = MIN(*immptr[imm], buffer[ientry]);
-               }
-               FREE(buffer);
-            }         /* End if (!icvp->user_user_norm) */
-         }         /* End for (imm=0; imm<2; imm++) */
-      }         /* End if {} else {} no max/min vars */
+      /* Get the image min and max, either from the user definition or 
+         from the file. */
       if (icvp->user_user_norm) {
          icvp->derv_imgmax = icvp->user_imgmax;
          icvp->derv_imgmin = icvp->user_imgmin;
       }
-   }
+      else {
+         MI_CHK_ERR(miget_image_range(cdfid, image_range))
+         icvp->derv_imgmin = image_range[0];
+         icvp->derv_imgmax = image_range[1];
+      }
 
-   /* Handle possible rounding errors in having double image-max for
-      float image type */
-   if (icvp->var_type == NC_FLOAT) {
-      icvp->derv_imgmax = (float) icvp->derv_imgmax;
-      icvp->derv_imgmin = (float) icvp->derv_imgmin;
+      /* Check each of the dimensions of image-min/max variables to see
+         which is the fastest varying dimension of the image variable. */
+      vid[0]=icvp->imgminid;
+      vid[1]=icvp->imgmaxid;
+      if ((vid[0] != MI_ERROR) && (vid[1] != MI_ERROR)) {
+         for (imm=0; imm < 2; imm++) {
+            MI_CHK_ERR(ncvarinq(cdfid, vid[imm], NULL, NULL, 
+                                &ndims, dim, NULL))
+            for (idim=0; idim<ndims; idim++) {
+               for (i=0; i<icvp->var_ndims; i++) {
+                  if (icvp->var_dim[i]==dim[idim])
+                     icvp->derv_firstdim = MAX(icvp->derv_firstdim, i);
+               }
+            }
+         }
+      }
+
    }
 
    MI_RETURN(MI_NOERROR);

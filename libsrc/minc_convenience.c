@@ -7,6 +7,8 @@
                  miget_default_range
                  miget_valid_range
                  miset_valid_range
+                 miget_image_range
+                 mivar_exists
                  miattput_pointer
                  miattget_pointer
                  miadd_child
@@ -25,7 +27,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.8  2001-10-17 14:32:20  neelin
+ * Revision 6.9  2001-11-13 14:15:18  neelin
+ * Added functions miget_image_range and mivar_exists
+ *
+ * Revision 6.8  2001/10/17 14:32:20  neelin
  * Modified miset_valid_range to write out valid_range as double in all
  * cases except float. Unfortunately, writing out values in a type that
  * matched the type of the image variable caused problems with programs
@@ -101,7 +106,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.8 2001-10-17 14:32:20 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.9 2001-11-13 14:15:18 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -387,6 +392,173 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
 
    MI_RETURN(status);
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miget_image_range
+@INPUT      : cdfid    - cdf file id
+@OUTPUT     : image_range - array containing min and max of image-min/max
+                 for the entire file
+@RETURNS    : MI_ERROR when an error occurs.
+@DESCRIPTION: Gets the image range for a file - that is, the maximum 
+              image-max value and the minimum image-min value.
+              For float images, ensures that values are cast to float to 
+              ensure that they are correctly truncated. If the range cannot 
+              be found, then use the default values for int images and 
+              valid_range for floating-point images.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : October 19, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miget_image_range(int cdfid, double image_range[])
+{
+   int oldncopts;                /* For saving value of ncopt */
+   int vid[2];                   /* Variable ids for min and max */
+   int imgid;                    /* Image variable id */
+   nc_type datatype;             /* Type of image variable */
+   int is_signed;                /* Indicates if image variable is signed */
+   int is_float, no_range_found; /* Flags */
+   int imm;                      /* For looping over min and max */
+   int ndims;                    /* Number of dimensions of variable */
+   int idim;                     /* For looping over dimensions */
+   int dim[MAX_VAR_DIMS];        /* Dimension ids of variable */
+   long ientry;                  /* For stepping through values */
+   long size;                    /* Size of min and max variables */
+   long start[MAX_VAR_DIMS];     /* Start of variable */
+   long count[MAX_VAR_DIMS];     /* Dimension sizes */
+   double *buffer;               /* Pointer to buffer for min/max values */
+
+   MI_SAVE_ROUTINE_NAME("miget_image_range");
+
+   /* Set default values for image_range */
+   image_range[0] = MI_DEFAULT_MIN;
+   image_range[1] = MI_DEFAULT_MAX;
+
+   /* Get the image-min/max variable ids */
+   oldncopts=ncopts; ncopts=0;
+   vid[0] = ncvarid(cdfid, MIimagemin);
+   vid[1] = ncvarid(cdfid, MIimagemax);
+   ncopts = oldncopts;
+
+   /* Get the type information for the image variable */
+   if ( ((imgid = ncvarid(cdfid, MIimage)) == MI_ERROR) ||
+        (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR) )
+      MI_RETURN(MI_ERROR);
+
+   /* No max/min variables, so use valid_range values for floats 
+      if it is set and defaults otherwise */
+   if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
+
+      /* Check for a floating-point type - if it is, try to get the
+         valid_range. If the valid_range was set to full range
+         for the type, then that means that the valid range was probably
+         not set (and if it was, it was not particularly reasonable). */
+      is_float = (datatype == NC_FLOAT || datatype == NC_DOUBLE);
+      no_range_found = FALSE;
+      if (is_float) {
+         if (miget_valid_range(cdfid, imgid, image_range) == MI_ERROR)
+            MI_RETURN(MI_ERROR);
+         no_range_found = 
+            (datatype == NC_FLOAT  && image_range[1] == FLT_MAX) ||
+            (datatype == NC_DOUBLE && image_range[1] == DBL_MAX);
+      }
+
+      /* If it is not a float, or if the valid range was not set, then use 
+         the default. */ 
+      if (!is_float || no_range_found) {
+         image_range[0] = MI_DEFAULT_MIN;
+         image_range[1] = MI_DEFAULT_MAX;
+      }
+
+   }
+
+   /* If the variables are there then get the max and min and fastest 
+      varying dimension */
+   else {
+
+      /* Set initial values */
+      image_range[0] = DBL_MAX;
+      image_range[1] = -DBL_MAX;
+
+      /* Loop over min and max */
+      for (imm=0; imm<2; imm++) {
+
+         /* Get dimension list */
+         MI_CHK_ERR(ncvarinq(cdfid, vid[imm], NULL, NULL, 
+                             &ndims, dim, NULL))
+
+         /* Loop through dimensions, getting dimension sizes and 
+            total min/max variable size */
+         size=1;     /* Size of MIimagemin/max variable */
+         for (idim=0; idim<ndims; idim++) {
+            MI_CHK_ERR(ncdiminq(cdfid, dim[idim], NULL, &(count[idim])))
+            size *= count[idim];
+         }
+
+         /* Get space */
+         if ((buffer=MALLOC(size, double))==NULL) {
+            MI_LOG_SYS_ERROR1("miget_image_range");
+            MI_RETURN_ERROR(MI_ERROR);
+         }
+
+         /* Get values */
+         if (mivarget(cdfid, vid[imm], 
+                      miset_coords(ndims, 0L, start),
+                      count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
+            FREE(buffer);
+            MI_RETURN_ERROR(MI_ERROR);
+         }
+
+         /* Loop through values, getting max/min */
+         for (ientry=0; ientry<size; ientry++) {
+            image_range[0] = MIN(image_range[0], buffer[ientry]);
+            image_range[1] = MAX(image_range[1], buffer[ientry]);
+         }
+         FREE(buffer);
+
+      }         /* End for (imm=0; imm<2; imm++) */
+
+   }         /* End if {} else {} no min/max vars */
+
+
+   /* Handle possible rounding errors in having double image-min/max for
+      float image type */
+   if (datatype == NC_FLOAT) {
+      image_range[0] = (float) image_range[0];
+      image_range[1] = (float) image_range[1];
+   }
+
+   MI_RETURN(MI_NOERROR);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : mivar_exists
+@INPUT      : cdfid    - cdf file id
+              varname  - name of variable
+@OUTPUT     : (none)
+@RETURNS    : TRUE if variable exists, false otherwise
+@DESCRIPTION: Checks for the existence of a variable.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : October 22, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int mivar_exists(int cdfid, char *varname)
+{
+   int oldncopts;                /* For saving value of ncopt */
+   int exists;                   /* Flag */
+
+   MI_SAVE_ROUTINE_NAME("mivar_exists");
+
+   oldncopts = ncopts;
+   ncopts = 0;
+   exists = (ncvarid(cdfid, varname) != MI_ERROR);
+   ncopts = oldncopts;
+
+   return exists;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
