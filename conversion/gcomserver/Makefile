@@ -8,7 +8,7 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = gcomserver gyrotominc
+PROGS    = gcomserver gcomserver-debug gyrotominc
 EXTRA_OBJS = spi_element_defs.o open_connection.o reply.o spi_message.o \
              save_transferred_object.o use_the_files.o \
              gyro_to_minc.o gyro_read.o minc_file.o \
