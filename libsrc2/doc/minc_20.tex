@@ -103,6 +103,9 @@ FRI  OCT 31/2003 Bert\\*
 SUN FEB 01/2004 Leila\\*
 * Updated the entire document according to the current cvs
 
+THU JUL 22/2004 Leila\\*
+* Updated miget_slice_scaling_flag : missing parameter
+
 \section{Introduction}
 
 
@@ -2159,7 +2162,8 @@ SYNOPSIS
 
 #include <minc2.h>
 
-int miget_slice_scaling_flag ( Boolean      *scaling_flag)
+int miget_slice_scaling_flag ( mihandle_t   volume,
+                               Boolean      *scaling_flag)
                                 
 DESCRIPTION
 
