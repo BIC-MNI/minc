@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.70 2001-04-17 18:40:31 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.71 2001-04-24 13:38:49 neelin Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -244,7 +244,7 @@ public  void  set_volume_type(
 {
     Data_types      data_type;
 
-    if( nc_data_type != NC_NAT )
+    if( nc_data_type != MI_ORIGINAL_TYPE )
     {
         switch( nc_data_type )
         {
@@ -2276,7 +2276,7 @@ public  void  set_volume_real_range(
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Copies the volume to a new volume, optionally changing type
-              (if nc_data_type is not NC_NAT), but not allocating
+              (if nc_data_type is not MI_ORIGINAL_TYPE), but not allocating
               the volume voxel data (alloc_volume_data() must subsequently
               be called).
 @METHOD     : 
@@ -2299,7 +2299,7 @@ public  Volume   copy_volume_definition_no_alloc(
     Real               dir_cosine[N_DIMENSIONS];
     Volume             copy;
 
-    if( nc_data_type == NC_NAT )
+    if( nc_data_type == MI_ORIGINAL_TYPE )
     {
         nc_data_type = volume->nc_data_type;
         signed_flag = volume->signed_flag;
@@ -2347,7 +2347,7 @@ public  Volume   copy_volume_definition_no_alloc(
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Copies the volume to a new volume, optionally changing type
-              (if nc_data_type is not NC_NAT), allocating
+              (if nc_data_type is not MI_ORIGINAL_TYPE), allocating
               the volume voxel data, but not initializing the data.
 @METHOD     : 
 @GLOBALS    : 
@@ -2401,7 +2401,7 @@ public  Volume  copy_volume(
         return( NULL );
     }
 
-    copy = copy_volume_definition( volume, NC_NAT, FALSE, 0.0, 0.0 );
+    copy = copy_volume_definition( volume, MI_ORIGINAL_TYPE, FALSE, 0.0, 0.0 );
 
     /* --- find out how many voxels are in the volume */
 

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.60 2001-04-17 18:40:30 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.61 2001-04-24 13:38:48 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -600,7 +600,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 @RETURNS    : Minc_file
 @DESCRIPTION: Initializes the input of a MINC file, passing back a MINC
               file pointer.  It assumes that the volume has been created,
-              with the desired type, or NC_NAT type if it is desired
+              with the desired type, or MI_ORIGINAL_TYPE type if it is desired
               to use whatever type is in the file.
 @METHOD     : 
 @GLOBALS    : 

@@ -1448,15 +1448,15 @@ reference to voxel indices.}
 \name{volume\_voxel\_max} can be used to specified the desired storage
 type within the volume variable, automatically converted from the
 storage type in the file.  The \name{volume\_nc\_data\_type} is one of
-\name{NC\_NAT} (not-a-type), \name{NC\_BYTE}, \name{NC\_SHORT},
-\name{NC\-\_LONG}, \name{NC\_FLOAT}, or \name{NC\_DOUBLE}.
-For the integer types, the
+\name{MI\_ORIGINAL\_TYPE},
+\name{NC\_BYTE}, \name{NC\_SHORT}, \name{NC\-\_LONG},
+\name{NC\_FLOAT}, or \name{NC\_DOUBLE}.  For the integer types, the
 \name{volume\-\_signed\-\_flag} is \name{TRUE} if a signed type is
 desired, otherwise, it is \name{FALSE}.  The \name{volume\_voxel\_min}
 and \name{volume\_voxel\_max} specify the range of valid voxel values,
 and are usually set equal to indicate to use the full range of the
-type, e.g. zero to 255.0 for unsigned \name{NC\_BYTE}.
-If \name{NC\_NAT} is passed, then the type, sign, and voxel
+type, e.g. zero to 255.0 for unsigned \name{NC\_BYTE}.  If
+\name{MI\_ORIGINAL\_TYPE} is passed, then the type, sign, and voxel
 range in the file are used.}
 
 \desc{If the \name{create\_volume\_flag} is \name{TRUE}, the usual
@@ -1613,7 +1613,7 @@ public  Status  output_volume(
 \end{verbatim}}
 
 \desc{Outputs the specified volume to the specified filename.  If the
-argument \name{file\_nc\_data\_type} is \name{NC\_NAT} then the
+argument \name{file\_nc\_data\_type} is \name{MI\_ORIGINAL\_TYPE} then the
 volume is stored in the MINC file in the same type as in the volume
 variable.  Otherwise, the four arguments, \name{file\_nc\_data\_type},
 \name{file\_signed\_flag}, \name{file\_voxel\_min}, and
@@ -2248,7 +2248,7 @@ public  Volume   copy_volume_definition_no_alloc(
 \desc{Both functions creates and returns a new volume which has the same
 definition
 (sizes, voxel-to-world space transform, etc.), as an existing volume.
-If the argument \name{nc\_data\_type} is not \name{NC\_NAT},
+If the argument \name{nc\_data\_type} is not \name{MI\_ORIGINAL\_TYPE},
 then the storage type of the new volume differs from the original and
 is specified by \name{nc\_data\_type}, \name{signed\_flag},
 \name{voxel\_min}, and \name{voxel\_max}.  In the first function, the voxel
@@ -2435,7 +2435,7 @@ int  main(
 
     /*--- input the volume */
 
-    if( input_volume( "volume.mnc", 3, NULL, NC_NAT, FALSE,
+    if( input_volume( "volume.mnc", 3, NULL, MI_ORIGINAL_TYPE, FALSE,
             0.0, 0.0, TRUE, &volume,
             (minc_input_options *) NULL ) != OK )
         return( 1 );
@@ -2460,7 +2460,7 @@ int  main(
 
     /*--- output the modified volume */
 
-    if( output_modified_volume( "output.mnc", NC_NAT,
+    if( output_modified_volume( "output.mnc", MI_ORIGINAL_TYPE,
              FALSE, 0.0, 0.0, volume, "volume.mnc",
              "Modified by clamping to 100",
              (minc_output_options *) NULL ) != OK )
@@ -3306,12 +3306,12 @@ int  main()
 
     /*--- input the two volumes */
 
-    if( input_volume( "volume1.mnc", 3, NULL, NC_NAT, FALSE,
+    if( input_volume( "volume1.mnc", 3, NULL, MI_ORIGINAL_TYPE, FALSE,
             0.0, 0.0, TRUE, &volume1,
             (minc_input_options *) NULL ) != OK )
         return( 1 );
 
-    if( input_volume( "volume2.mnc", 3, NULL, NC_NAT, FALSE,
+    if( input_volume( "volume2.mnc", 3, NULL, MI_ORIGINAL_TYPE, FALSE,
             0.0, 0.0, TRUE, &volume2,
             (minc_input_options *) NULL ) != OK )
         return( 1 );

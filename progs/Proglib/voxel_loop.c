@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.3  2001-04-17 18:40:15  neelin
+ * Revision 6.4  2001-04-24 13:38:40  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.3  2001/04/17 18:40:15  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.3 2001-04-17 18:40:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.4 2001-04-24 13:38:40 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -987,7 +990,7 @@ private void setup_variables(int inmincid, int outmincid,
    update_history(outmincid, arg_string);
  
    /* Create the image and image-min/max variables */
-   if (loop_options->datatype != NC_NAT) {
+   if (loop_options->datatype != MI_ORIGINAL_TYPE) {
       datatype = loop_options->datatype;
    }
    loop_options->is_floating_type = 
@@ -1004,7 +1007,7 @@ private void setup_variables(int inmincid, int outmincid,
       (void) ncattput(outmincid, outimgid, MIvalid_range, NC_DOUBLE, 2,
                       (void *) valid_range);
    }
-   else if (loop_options->datatype != NC_NAT) {
+   else if (loop_options->datatype != MI_ORIGINAL_TYPE) {
       if (loop_options->is_signed)
          (void) miattputstr(outmincid, outimgid, MIsigntype, MI_SIGNED);
       else
@@ -2588,7 +2591,7 @@ public Loop_Options *create_loop_options(void)
    /* Fill in the defaults */
    loop_options->clobber = FALSE;
    loop_options->verbose = TRUE;
-   loop_options->datatype = NC_NAT;
+   loop_options->datatype = MI_ORIGINAL_TYPE;
    loop_options->is_signed = TRUE;
    loop_options->valid_range[0] = 0.0;
    loop_options->valid_range[1] = 0.0;
@@ -2678,7 +2681,7 @@ public void set_loop_verbose(Loop_Options *loop_options,
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_datatype
 @INPUT      : loop_options - user options for looping
-              datatype - NetCDF datatype for output (NC_NAT means
+              datatype - NetCDF datatype for output (MI_ORIGINAL_TYPE means
                  use input type)
               is_signed - TRUE if type is signed
               valid_min - valid minimum for type (if valid_min >= valid_max,

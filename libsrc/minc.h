@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.3  2001-04-17 18:40:13  neelin
+ * Revision 6.4  2001-04-24 13:38:40  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.3  2001/04/17 18:40:13  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -86,25 +89,29 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.3 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.4 2001-04-24 13:38:40 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
 
-/* For forwards and backwards compatibility between NetCDF 2.x and 
-   3.x and beyond. NC_NAT (not-a-type) replaces NC_UNSPECIFIED, 
-   and NC_INT replaces NC_LONG. 
-   Since NC_UNSPECIFIED and NC_NAT are defined in enums, and there is 
-   no version flag, we use NC_FILL_INT as a flag for NetCDF 3.x and beyond. 
-   Note that the NC_UNSPECIFIED definition can conflicts with an internal 
-   NetCDF 3.x definition in nc.h, but this should not matter since minc 
-   programs should not include nc.h and NetCDF internals should not 
-   include minc.h. */
-#ifdef NC_FILL_INT
-#  define NC_UNSPECIFIED NC_NAT
-#else
-#  define NC_NAT NC_UNSPECIFIED
+/* For compatibility with NetCDF 2.x which uses NC_LONG rather than NC_INT.
+   Since NC_INT is defined in an enum, and since there are no version macros,
+   we use NC_FILL_INT as an indicator of whether NC_INT is defined. */
+#ifndef NC_FILL_INT
 #  define NC_INT NC_LONG
+#endif
+
+/* Constant used with nc_type variables to indicate that the data type 
+   should be taken from the source object or file. This replaces earlier
+   use of NC_UNSPECIFIED and is equivalent to NetCDF NC_NAT in version 3.5
+   and later. */
+#define MI_ORIGINAL_TYPE ((nc_type) 0) 
+
+/* NC_UNSPECIFIED is defined here for backwards compatibility. With 
+   NetCDF 2.x, NC_UNSPECIFIED may already be defined either through a macro
+   or an enum. In the latter case, this macro will override the enum. */
+#ifndef NC_UNSPECIFIED
+#  define NC_UNSPECIFIED MI_ORIGINAL_TYPE
 #endif
 
 /* Some useful constants */

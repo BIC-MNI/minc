@@ -13,7 +13,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.4  2001-04-17 18:40:24  neelin
+ * Revision 6.5  2001-04-24 13:38:45  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.4  2001/04/17 18:40:24  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -71,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.4 2001-04-17 18:40:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.5 2001-04-24 13:38:45 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -128,7 +131,7 @@ public void get_arginfo(int argc, char *argv[],
    /* Argument variables */
    static int clobber = FALSE;
    static int verbose = TRUE;
-   static nc_type datatype = NC_NAT;
+   static nc_type datatype = MI_ORIGINAL_TYPE;
    static int is_signed = INT_MIN;
    static double valid_range[2] = {DBL_MAX,DBL_MAX};
    static double image_range[2] = {DBL_MAX,DBL_MAX};
@@ -169,7 +172,7 @@ public void get_arginfo(int argc, char *argv[],
 
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "Image conversion options (pixel type and range):"},
-      {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
+      {"-filetype", ARGV_CONSTANT, (char *) MI_ORIGINAL_TYPE, (char *) &datatype,
           "Don't do any type conversion (default)."},
       {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
           "Convert to  byte data"},
@@ -806,7 +809,7 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
               valid_range - DBL_MAX if not known
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to get the datatype info from a file. If datatype
-              is not NC_NAT, then is_signed only is set to its 
+              is not MI_ORIGINAL_TYPE, then is_signed only is set to its 
               default. Otherwise, is_signed is only modified if it is set 
               to INT_MIN and valid_range is only modified if it is set to 
               DBL_MAX.
@@ -829,7 +832,7 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
    imgid = ncvarid(mincid, MIimage);
 
    /* Check that datatype is not specified */
-   if (*datatype != NC_NAT) {
+   if (*datatype != MI_ORIGINAL_TYPE) {
       if (*is_signed == INT_MIN) {
          *is_signed = ((*datatype == NC_BYTE) ? FALSE : TRUE);
       }

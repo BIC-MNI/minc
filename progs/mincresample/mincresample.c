@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.6  2001-04-17 18:40:22  neelin
+ * Revision 6.7  2001-04-24 13:38:45  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.6  2001/04/17 18:40:22  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -136,7 +139,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.6 2001-04-17 18:40:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.7 2001-04-24 13:38:45 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -215,7 +218,7 @@ public void get_arginfo(int argc, char *argv[],
    static Arg_Data args={
       FALSE,                  /* Clobber */
       FALSE,                  /* Keep scale */
-      NC_NAT,         /* Flag that type not set */
+      MI_ORIGINAL_TYPE,         /* Flag that type not set */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
@@ -530,7 +533,7 @@ public void get_arginfo(int argc, char *argv[],
    *program_flags = args.flags;
 
    /* Set the default output file datatype */
-   if (args.datatype == NC_NAT)
+   if (args.datatype == MI_ORIGINAL_TYPE)
       args.datatype = in_vol->file->datatype;
 
    /* Explicitly force output files to have regular spacing */

@@ -11,7 +11,10 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.2  2001-04-17 18:40:20  neelin
+ * Revision 6.3  2001-04-24 13:38:43  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.2  2001/04/17 18:40:20  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.2 2001-04-17 18:40:20 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.3 2001-04-24 13:38:43 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -189,7 +192,7 @@ static Lookup_Table hotmetal_lookup = {
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
-nc_type datatype = NC_NAT;
+nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int buffer_size = 10 * 1024;
@@ -215,7 +218,7 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-buffer_size", ARGV_INT, (char *) 1, (char *) &buffer_size,
        "Set the internal buffer size (in kb)."},
-   {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
+   {"-filetype", ARGV_CONSTANT, (char *) MI_ORIGINAL_TYPE, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
        "Write out byte data."},

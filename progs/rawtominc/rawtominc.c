@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.4  2001-04-17 18:40:25  neelin
+ * Revision 6.5  2001-04-24 13:38:46  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.4  2001/04/17 18:40:25  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -107,7 +110,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.4 2001-04-17 18:40:25 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.5 2001-04-24 13:38:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -200,7 +203,7 @@ int default_signs[] = {
 
 /* Information converting types for argument processing to NetCDF types */
 nc_type convert_types[] = {
-   NC_NAT, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE
+   MI_ORIGINAL_TYPE, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE
 };
 
 /* Argument variables */

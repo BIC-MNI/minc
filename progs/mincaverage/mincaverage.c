@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.3  2001-04-17 18:40:17  neelin
+ * Revision 6.4  2001-04-24 13:38:42  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.3  2001/04/17 18:40:17  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -62,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.3 2001-04-17 18:40:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.4 2001-04-24 13:38:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -155,7 +158,7 @@ int normalize = -1;
 int normalize = FALSE;
 #endif
 char *sdfile = NULL;
-nc_type datatype = NC_NAT;
+nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int copy_all_header = DEFAULT_BOOLEAN;
@@ -191,7 +194,7 @@ ArgvInfo argTable[] = {
    {"-max_buffer_size_in_kb", ARGV_INT, (char *) 1, 
        (char *) &max_buffer_size_in_kb,
        "Specify the maximum size of the internal buffers (in kbytes)."},
-   {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
+   {"-filetype", ARGV_CONSTANT, (char *) MI_ORIGINAL_TYPE, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
        "Write out byte data."},

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.55 2001-04-23 13:20:22 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.56 2001-04-24 13:38:49 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -279,7 +279,7 @@ public  Minc_file  initialize_minc_output(
         dim_names = default_dim_names;
     }
 
-    if( file_nc_data_type == NC_NAT )
+    if( file_nc_data_type == MI_ORIGINAL_TYPE )
     {
         file_nc_data_type = get_volume_nc_data_type( volume_to_attach,
                                                      &file_signed_flag );

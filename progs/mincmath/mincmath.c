@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.4  2001-04-17 18:40:22  neelin
+ * Revision 6.5  2001-04-24 13:38:44  neelin
+ * Replaced NC_NAT with MI_ORIGINAL_TYPE.
+ *
+ * Revision 6.4  2001/04/17 18:40:22  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.4 2001-04-17 18:40:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.5 2001-04-24 13:38:44 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,7 +187,7 @@ public char **read_file_names(char *filelist, int *num_files);
 int clobber = FALSE;
 int verbose = TRUE;
 int debug = FALSE;
-nc_type datatype = NC_NAT;
+nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
 int copy_all_header = DEFAULT_BOOL;
@@ -221,7 +224,7 @@ ArgvInfo argTable[] = {
        "Copy all of the header from the first file."},
    {"-nocopy_header", ARGV_CONSTANT, (char *) FALSE, (char *) &copy_all_header,
        "Do not copy all of the header from the first file."},
-   {"-filetype", ARGV_CONSTANT, (char *) NC_NAT, (char *) &datatype,
+   {"-filetype", ARGV_CONSTANT, (char *) MI_ORIGINAL_TYPE, (char *) &datatype,
        "Use data type of first file (default)."},
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &datatype,
        "Write out byte data."},

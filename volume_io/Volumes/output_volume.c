@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.21 2001-04-17 18:40:31 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.22 2001-04-24 13:38:49 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -45,7 +45,7 @@ public  Status   get_file_dimension_names(
     Volume                tmp_volume;
 
     status = start_volume_input( filename, -1, File_order_dimension_names,
-                                 NC_NAT, FALSE, 0.0, 0.0,
+                                 MI_ORIGINAL_TYPE, FALSE, 0.0, 0.0,
                                  TRUE, &tmp_volume, (minc_input_options *) NULL,
                                  &volume_input );
 
@@ -284,7 +284,7 @@ public  Status   copy_volume_auxiliary_and_history(
 @DESCRIPTION: Creates a Minc file and outputs the volume to it.  The data
               type of the file is either specified by the second through fifth
               parameters, or by the volume, if file_nc_data_type is
-              NC_NAT.  The volume is assumed to be derived, in some
+              MI_ORIGINAL_TYPE.  The volume is assumed to be derived, in some
               fashion, from an existing MINC file, and the auxiliary data
               from the existing MINC file, 'original_filename', is
               copied to the output file, along with the 'history' string.
