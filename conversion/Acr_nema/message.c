@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 1.2  1993-11-22 13:12:09  neelin
-@MODIFIED   : Changed to use new Acr_Element_Id stuff
+@MODIFIED   : Revision 1.3  1993-11-24 11:25:59  neelin
+@MODIFIED   : Added dump_message.
 @MODIFIED   :
+ * Revision 1.2  93/11/22  13:12:09  neelin
+ * Changed to use new Acr_Element_Id stuff
+ * 
  * Revision 1.1  93/11/19  12:49:09  neelin
  * Initial revision
  * 
@@ -343,3 +346,23 @@ public Acr_Status acr_output_message(Acr_File *afp, Acr_Message message)
 
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_dump_message
+@INPUT      : file_pointer - where output should go
+              group_list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Dump information from an acr-nema message
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 24, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_dump_message(FILE *file_pointer, Acr_Message message)
+{
+
+   acr_dump_group_list(file_pointer, acr_get_message_group_list(message));
+
+   return;
+}
