@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.4  1993-08-11 15:27:42  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.5  1993-08-31 12:08:28  neelin
+@MODIFIED   : Added conditional definition of SEEK_SET.
 @MODIFIED   :
+ * Revision 1.4  93/08/11  15:27:42  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -20,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.4 1993-08-11 15:27:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.5 1993-08-31 12:08:28 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -29,6 +32,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_fil
 #include <scx_header_def.h>
 #include <scx_file.h>
 #include <vax_conversions.h>
+
+#ifndef SEEK_SET
+#  define SEEK_SET 0
+#endif
 
 /* Private functions */
 private void scx_get_value(unsigned char *header, long position, 
