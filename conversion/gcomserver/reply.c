@@ -5,7 +5,11 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: reply.c,v $
- * Revision 6.2  1999-10-29 17:52:05  neelin
+ * Revision 6.3  2000-01-31 13:57:39  neelin
+ * Added keyword to project file to allow definition of the local AEtitle.
+ * A simple syntax allows insertion of the host name into the AEtitle.
+ *
+ * Revision 6.2  1999/10/29 17:52:05  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1997/09/12 23:13:28  neelin
@@ -209,6 +213,87 @@ private Acr_Group spi_reply(Acr_Message input_message)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_ae_title
+@INPUT      : title_format - string to be copied into ae_title, with 
+                 substitutions. Currently, only %% (%) and %H (hostname in
+                 uppercase) are recognized.
+              max_ae_len - maximum length of output AE title. Does not
+                 include terminating NUL
+@OUTPUT     : ae_title - new AE title with substitutions
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to create an AE title give a format string that specifies
+              substitutions:
+                 %H = hostname in uppercase (first part only)
+                 %% = %
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 17, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+void set_ae_title(char *ae_title, char *title_format, int max_ae_len)
+{
+   char host_name[128];
+   int iin, iout, iname;
+
+   /* Check if local AE title format is defined */
+   if ((title_format == NULL) || (strlen(title_format) == 0)) {
+      (void) strncpy(ae_title, "GCOMTODICOM", max_ae_len);
+   }
+   else {
+
+      /* Copy the format */
+      for (iin=0, iout=0; (title_format[iin]!='\0') && (iout<max_ae_len); 
+           iin++, iout++) {
+
+         /* Check for special formats */
+         if (title_format[iin] == '%') {
+
+            /* Get host name */
+            if (title_format[iin+1] == 'H') {
+               if (gethostname(host_name, sizeof(host_name)-1) != 0) {
+                  host_name[0] = '\0';
+               }
+
+               /* Take only first part and convert to uppercase */
+               for (iname=0; ((iname < max_ae_len-iout) &&
+                              (host_name[iname] != '.') &&
+                              (host_name[iname] != '\0')); iname++) {
+                  ae_title[iout+iname] = 
+                     (char) toupper((int) host_name[iname]);
+               }
+               iout += iname-1;
+
+            }
+
+            /* Replace %% with % */
+            else if (title_format[iin+1] == '%') {
+               ae_title[iout] = '%';
+            }
+
+            /* Copy other formats as is */
+            else {
+               ae_title[iout] = title_format[iin];
+               iin--;
+            }
+            iin++;
+         }
+
+         /* Copy normal characters */
+         else {
+            ae_title[iout] = title_format[iin];
+         }
+
+      }
+
+      /* Terminate the string */
+      ae_title[iout] = '\0';
+
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : gcbegin_reply
 @INPUT      : input_message
 @OUTPUT     : num_files - number of files needed
@@ -229,6 +314,7 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
    Acr_Group group, group_list;
    Acr_Element element;
    char operator_string[512];
+   char ae_title[MAX_AE_LEN+1];
    void *ptr;
    int index;
 
@@ -308,11 +394,22 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
    /* Check for a dicom-type project */
    else if (project_info->type == PROJECT_DICOM) {
 
+      /* Get the AE title */
+      set_ae_title(ae_title, project_info->info.dicom.LocalAEtitle, 
+                   MAX_AE_LEN);
+
+      /* Write message in log file */
+      (void) fprintf(stderr, "Connecting to host %s, port %s\n",
+                     project_info->info.dicom.hostname,
+                     project_info->info.dicom.port);
+      (void) fprintf(stderr, "with AE title %s and local AE title %s\n",
+                     project_info->info.dicom.AEtitle, ae_title);
+
       /* Make the dicom connection */
       if (!acr_open_dicom_connection(project_info->info.dicom.hostname,
                                      project_info->info.dicom.port,
                                      project_info->info.dicom.AEtitle,
-                                     "GCOMTODICOM",
+                                     ae_title,
                                      ACR_MR_IMAGE_STORAGE_UID,
                                      ACR_IMPLICIT_VR_LITTLE_END_UID,
                                      &project_info->info.dicom.afpin,

@@ -8,7 +8,11 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.2  1999-10-29 17:52:04  neelin
+ * Revision 6.3  2000-01-31 13:57:38  neelin
+ * Added keyword to project file to allow definition of the local AEtitle.
+ * A simple syntax allows insertion of the host name into the AEtitle.
+ *
+ * Revision 6.2  1999/10/29 17:52:04  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1997/09/12 23:13:28  neelin
@@ -219,6 +223,7 @@ public int read_project_file(char *project_name,
                   project_info->info.dicom.hostname[0] = '\0';
                   project_info->info.dicom.port[0] = '\0';
                   project_info->info.dicom.AEtitle[0] = '\0';
+                  project_info->info.dicom.LocalAEtitle[0] = '\0';
                   project_info->info.dicom.afpin = NULL;
                   project_info->info.dicom.afpout = NULL;
                }
@@ -272,6 +277,10 @@ public int read_project_file(char *project_name,
                }
                else if (STREQ("AEtitle", keyword)) {
                   STRCOPY(project_info->info.dicom.AEtitle,
+                          value, SHORT_LINE);
+               }
+               else if (STREQ("LocalAEtitle", keyword)) {
+                  STRCOPY(project_info->info.dicom.LocalAEtitle,
                           value, SHORT_LINE);
                }
                else {

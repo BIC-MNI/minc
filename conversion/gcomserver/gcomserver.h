@@ -6,7 +6,11 @@
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.h,v $
- * Revision 6.2  1999-10-29 17:52:03  neelin
+ * Revision 6.3  2000-01-31 13:57:38  neelin
+ * Added keyword to project file to allow definition of the local AEtitle.
+ * A simple syntax allows insertion of the host name into the AEtitle.
+ *
+ * Revision 6.2  1999/10/29 17:52:03  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1997/09/12 23:13:28  neelin
@@ -88,7 +92,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include <memory.h>
 #include <limits.h>
 #ifdef FLT_DIG
@@ -128,6 +134,7 @@
 /* String lengths */
 #define SHORT_LINE 64
 #define LONG_LINE 512
+#define MAX_AE_LEN 16
 
 /* System log file (set to NULL for no logging of error) */
 #define SYSTEM_LOG "/dev/log"
@@ -166,6 +173,7 @@ typedef struct {
          char hostname[SHORT_LINE];
          char port[SHORT_LINE];
          char AEtitle[SHORT_LINE];
+         char LocalAEtitle[SHORT_LINE];
          Acr_File *afpin;
          Acr_File *afpout;
       } dicom;
