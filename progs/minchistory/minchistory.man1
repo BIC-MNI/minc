@@ -1,0 +1,32 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\"
+.TH MINCHISTORY 1 "$Date: 2004-05-13 23:04:04 $" "" "MINC User's Guide"
+
+.SH NAME
+minchistory - prints out history information for a minc file
+
+.SH SYNOPSIS
+.B minchistory
+[-data] <infile>
+
+.SH DESCRIPTION 
+\fIMinchistory\fR is a \fBperl\fR script that prints the history 
+information in a collection of MINC files.  Most MINC files contain an
+internal "audit trail" that lists the commands used to create the 
+MINC file.  This tool provides a convenient way to examine this information.
+
+For each file, \fIminchistory\fR prints a title line of the format:
+.IP
+--- History of \fIfilename\fR ---
+.PP
+Followed by a series of lines which list the history information for
+that file.
+
+.SH OPTIONS
+There are no options.
+
+.SH AUTHOR
+Andrew Janke
+
+.SH COPYRIGHTS
+Copyright \(co 2000 by Andrew Janke
