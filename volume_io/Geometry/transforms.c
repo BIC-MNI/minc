@@ -610,7 +610,7 @@ public  Real  compute_clockwise_rotation( Real x, Real y )
             return( PI );
     }
     else
-        return( (Real) atan2( (double) y, (double) x ) );
+        return( - (Real) atan2( (double) y, (double) x ) );
 }
 
 public  void  make_identity_transform_2d( Transform_2d *transform )
