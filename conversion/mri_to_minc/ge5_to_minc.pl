@@ -16,15 +16,6 @@ sub time_to_string {
                    $hour, $min, $sec);
 }
 
-# Routine to take absolute value
-sub abs {
-    local(@new, $val);
-    foreach $val (@_) {
-        push(@new, ($val<=>0) * $val);
-    }
-    return @new;
-}
-
 # Routine to initialize tape drive
 sub ge5_initialize_tape_drive {
     local($tapedrive) = @_;
@@ -116,7 +107,6 @@ sub ge5_read_file_info {
     }
 
     # Get interesting values
-    local($fovx, $fovy);
     $file_info{'numechos'} = &unpack_value(*image_hdr, 210, 's');
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
     $file_info{'exam'} = &unpack_value(*image_hdr, 8, 'S');
@@ -158,6 +148,7 @@ sub ge5_read_file_info {
     }
 
     # Get coordinate information
+    local($fovx, $fovy);
     $fovx = &unpack_value(*image_hdr, 34, 'f');
     $fovy = &unpack_value(*image_hdr, 38, 'f');
     if ($fovy == 0) {$fovy = $fovx};

@@ -7,6 +7,15 @@
 
 sub numeric_order { $a <=> $b;}
 
+# Routine to take absolute value
+sub abs {
+    local(@new, $val);
+    foreach $val (@_) {
+        push(@new, ($val<=>0) * $val);
+    }
+    return @new;
+}
+
 # Subroutine to clean up files and exit
 sub cleanup_and_die {
 
@@ -71,6 +80,25 @@ sub create_tmpdir {
     $SIG{'QUIT'} = 'cleanup_and_die';
 }
 
+# Routine to execute external tape commands, returning the error
+sub catch_tape_command {
+    local($tapedrive) = shift(@_);
+    close(TAPEHANDLE);
+    local($status) = system(@_);
+    open(TAPEHANDLE, $tapedrive);
+    return $status;
+}
+
+# Routine to execute external tape commands, dying on error
+sub execute_tape_command {
+    local($status) = &catch_tape_command(@_);
+    if ($status != 0) {
+        shift(@_);
+        &cleanup_and_die("Error executing command \"".join(" ",@_)."\".\n",
+                         $status);
+    }
+}
+
 # Routine to get the current tape position
 sub get_tape_position {
     if (defined($counter_for_read_next_file)) {
@@ -92,10 +120,12 @@ sub set_tape_position {
     local($tmp_status);
     foreach $reposloop (0..$nreposition_retries-1) {
         select(undef, undef, undef, $repos_sleep);
-        $tmp_status = system("mt -t $tapedrive rewind");
+        $tmp_status = &catch_tape_command($tapedrive, 
+                                          "mt -t $tapedrive rewind");
         select(undef, undef, undef, $repos_sleep);
         if ($position > 0) {
-            $tmp_status = system("mt -t $tapedrive fsf $position")
+            $tmp_status = &catch_tape_command($tapedrive, 
+                                              "mt -t $tapedrive fsf $position")
                 unless ($tmp_status != 0);
         }
         if ($tmp_status == 0) {last;}
@@ -127,14 +157,16 @@ sub read_next_file {
 
     # Get next value from list if no tape drive
     if (length($tapedrive) == 0) {
-        return shift(@input_list);
+        local($filename) = shift(@input_list);
+        print "Reading header for file $filename\n";
+        return $filename;
     }
 
     # Create file counting variable if it does not exist and rewind tape
-    # drive
+    # drive. Note that the rewind implicitly opens the TAPEHANDLE
     if (!defined($counter_for_read_next_file)) {
         print STDERR "Rewinding tape drive $tapedrive\n";
-        &execute("mt -t $tapedrive rewind");
+        &execute_tape_command($tapedrive, "mt -t $tapedrive rewind");
         $counter_for_read_next_file = 0;
     }
 
@@ -145,14 +177,17 @@ sub read_next_file {
 
     # Try reading from the tape drive. We will try repeatedly if necessary
     print STDERR "Retrieving file $filename from drive $tapedrive\n";
-    local($status);
+    local($status, $oldsep, $filedata);
     foreach $retryloop (0..$nretries-1) {
 
         # Sleep for a moment, then read from tape drive (don't ask me why,
         # it just works!)
         select(undef, undef, undef, $tape_sleep);
-        $status = system("dd if=$tapedrive of=$filename ".
-                         "bs=$tape_block_size >/dev/null 2>/dev/null");
+        $oldsep = $/; undef($/);
+        $! = "";
+        $filedata=<TAPEHANDLE>;
+        $status = $!+0;
+        $/ = $oldsep;
         if ($status == 0) {last;}
 
         # If we get to here then the read failed. Try to reposition the tape.
@@ -167,7 +202,7 @@ sub read_next_file {
 
     # We've finished trying to read. Test to see if we failed or if
     # we've reached the end of the tape.
-    if (($status!=0) || -z $filename) {
+    if (($status!=0) || (length($filedata) <= 0)) {
         if ($status != 0) {
             warn "\n\nWARNING!!!!! ".
                 "Error occurred while reading tape. Giving up.\n\n\n";
@@ -176,10 +211,13 @@ sub read_next_file {
         else {
             print STDERR "End of tape.\n";
         }
-        &remove_file($filename);
         return "";
     }
     else {
+        open(OUTFILE, ">$filename") ||
+            die "Unable to open to temporary file $filename.\n";
+        print OUTFILE $filedata;
+        close(OUTFILE);
         return $filename;
     }
 
@@ -779,7 +817,7 @@ sub mri_to_minc {
 
     # Rewind the tape
     if (length($tapedrive) > 0) {
-        &execute("mt -t $tapedrive rewind");
+        &execute_tape_command($tapedrive, "mt -t $tapedrive rewind");
     }
 
     &cleanup_and_die();
