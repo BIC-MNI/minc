@@ -8,8 +8,36 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.13 1995-06-23 14:24:22 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.14 1995-07-10 18:02:32 david Exp $";
 #endif
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_clock_ticks_per_second
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : number clock ticks per second
+@DESCRIPTION: Returns the number of clock ticks per second in a system
+              independent fashion
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Jul 3, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  Real  get_clock_ticks_per_second()
+{
+    static  BOOLEAN  initialized = FALSE;
+    static  Real     clock_ticks_per_second;
+
+    if( !initialized )
+    {
+        initialized = TRUE;
+        clock_ticks_per_second = (Real) sysconf( _SC_CLK_TCK );
+    }
+
+    return( clock_ticks_per_second );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : current_cpu_seconds
@@ -28,19 +56,37 @@ public  Real  current_cpu_seconds( void )
 {
     Real            cpu_time;
 
-#ifdef OLD
-    struct  tms  buffer;
+#ifdef USE_REALTIME_FOR_CPU_TIME
 
-    (void) times( &buffer );
+    /*--- use this code if neither of the two methods below work for getting
+          the cpu time usage of a program, and you cannot manufacture one
+          yourself */
 
-    cpu_time = (Real) buffer.tms_utime / (Real) CLK_TCK;
+    static  BOOLEAN initialized = FALSE;
+    static  Real    first_real_time;
+
+    if( !initialized )     /*--- first call will return about 1 microsecond */
+    {
+        initialized = TRUE;
+        first_real_time = current_realtime_seconds();
+    }
+
+    cpu_time = current_realtime_seconds() - first_real_time;
 #else
+#ifdef USE_GETRUSAGE
     struct  rusage  buffer;
 
     (void) getrusage( RUSAGE_SELF, &buffer );
 
     cpu_time = (Real) buffer.ru_utime.tv_sec +
                (Real) buffer.ru_utime.tv_usec / 1.0e6;
+#else
+    struct  tms  buffer;
+
+    (void) times( &buffer );
+
+    cpu_time = (Real) buffer.tms_utime / get_clock_ticks_per_second();
+#endif
 #endif
 
     return( cpu_time );

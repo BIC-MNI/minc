@@ -244,6 +244,8 @@ private  void    trilinear_interpolate(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#define  MAX_DERIV_SIZE  100
+
 private  void   interpolate_volume(
     int      n_dims,
     Real     parameters[],
@@ -255,6 +257,7 @@ private  void   interpolate_volume(
     Real     ***second_deriv )
 {
     int       v, d, d2, n_derivs, derivs_per_value, mult, mult2;
+    Real      fixed_size_derivs[MAX_DERIV_SIZE];
     Real      *derivs;
 
     /*--- determine how many derivatives should be computed */
@@ -274,7 +277,14 @@ private  void   interpolate_volume(
 
     /*--- make storage for the spline routines to place the answers */
 
-    ALLOC( derivs, n_values * derivs_per_value );
+    if( n_values * derivs_per_value <= MAX_DERIV_SIZE )
+    {
+        derivs = fixed_size_derivs;
+    }
+    else
+    {
+        ALLOC( derivs, n_values * derivs_per_value );
+    }
 
     /*--- evaluate the interpolating spline */
 
@@ -345,7 +355,10 @@ private  void   interpolate_volume(
         }
     }
 
-    FREE( derivs );
+    if( n_values * derivs_per_value > MAX_DERIV_SIZE )
+    {
+        FREE( derivs );
+    }
 }
 
 private  void   extract_coefficients(
@@ -518,6 +531,8 @@ private  void   extract_coefficients(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+#define MAX_COEF_SPACE   1000
+
 public  int   evaluate_volume(
     Volume         volume,
     Real           voxel[],
@@ -538,6 +553,7 @@ public  int   evaluate_volume(
     int      interp_dims[MAX_DIMENSIONS];
     int      n_coefs;
     Real     fraction[MAX_DIMENSIONS], bound, *coefs, pos;
+    Real     fixed_size_coefs[MAX_COEF_SPACE];
     BOOLEAN  fully_inside, fully_outside;
 
     /*--- check if the degrees continuity is between nearest neighbour
@@ -675,7 +691,12 @@ public  int   evaluate_volume(
 
     /*--- make room for the coeficients */
 
-    ALLOC( coefs, n_values * n_coefs );
+    if( n_values * n_coefs > MAX_COEF_SPACE )
+    {
+        ALLOC( coefs, n_values * n_coefs );
+    }
+    else
+        coefs = fixed_size_coefs;
 
     /*--- compute the increments in the coefs[] array for each dimension,
           in order to simulate a multidimensional array with a single dim
@@ -728,7 +749,7 @@ public  int   evaluate_volume(
     case 0:
     case 1:
     case 2:
-        /*--- check for the common case which must be done fast */
+        /*--- check for the common case trilinear interpolation of 1 value */
 
         if( degrees_continuity == 0 && n_interp_dims == 3 && n_values == 1 )
         {
@@ -752,7 +773,10 @@ public  int   evaluate_volume(
         break;
     }
 
-    FREE( coefs );
+    if( n_values * n_coefs > MAX_COEF_SPACE )
+    {
+        FREE( coefs );
+    }
 
     return( n_values );
 }
