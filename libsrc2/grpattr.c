@@ -1,10 +1,285 @@
 /** \file grpattr.c
  * \brief MINC 2.0 group/attribute functions
+ * \author Bert Vincent and Leila Baghdadi
+ *
+ * Functions to manipulate attributes and groups.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
 #include "minc2.h"
 #include "minc2_private.h"
+
+#define MILIST_MAX_PATH 256
+#define MILIST_RECURSE 0x0001
+
+struct milistframe {
+    struct milistframe *next;
+    hid_t grp_id;
+    int att_idx;
+    int grp_idx;
+    char relpath[MILIST_MAX_PATH];
+};
+
+struct milistdata {
+    int flags;
+    char *name_ptr;
+    int name_len;
+    struct milistframe *frame_ptr; /* recursive frame */
+};
+
+
+/*! Start listing the objects in a group.
+ */
+int
+milist_start(mihandle_t vol, const char *path, int flags,
+	     milisthandle_t *handle)
+{
+    hid_t grp_id;
+    char fullpath[256];
+    struct milistdata *data;
+    struct milistframe *frame;
+    
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+   
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
+    grp_id = H5Gopen(vol->hdf_id, fullpath);
+    if (grp_id < 0) {
+        return (MI_ERROR);
+    }
+
+    data = (struct milistdata *) malloc(sizeof (struct milistdata));
+    if (data == NULL) {
+        return (MI_ERROR);
+    }
+    
+    frame = (struct milistframe *) malloc(sizeof (struct milistframe));
+    frame->next = NULL;
+    frame->grp_id = grp_id;
+    frame->att_idx = 0;
+    frame->grp_idx = 0;
+    strcpy(frame->relpath, path);
+    data->frame_ptr = frame;
+
+    data->flags = flags;
+
+    *handle = data;
+
+    return (MI_NOERROR);
+}
+
+static int
+milist_recursion(milisthandle_t handle, char *path)
+{
+  struct milistdata *data = (struct milistdata *) handle;
+  
+
+  herr_t r;
+  int i=0;
+  
+  for(;;){
+    ;
+  struct milistframe *frame;
+  H5E_BEGIN_TRY {
+    
+    r = H5Gget_objtype_by_idx(data->frame_ptr->grp_id,
+			      data->frame_ptr->grp_idx);
+  } H5E_END_TRY;
+ 
+  if (r < 0) {
+    
+    /* End of this group, need to pop the frame. */
+    frame = data->frame_ptr->next;
+    H5Gclose(data->frame_ptr->grp_id);
+    free(data->frame_ptr);
+    data->frame_ptr = frame;
+    if (frame == NULL) {
+      return (MI_ERROR);
+    }
+  }
+  else {
+    
+    data->frame_ptr->grp_idx++;
+    /* If the object is a group, we need to recurse into it.
+     */
+    if (r == H5G_GROUP) {
+      char tmp[256];
+      int l;
+
+      H5Gget_objname_by_idx(data->frame_ptr->grp_id,
+			    data->frame_ptr->grp_idx - 1,
+			    tmp, sizeof(tmp));
+      frame = malloc(sizeof(struct milistframe));
+      if (frame == NULL) {
+	return (MI_ERROR);
+      }
+      
+      frame->grp_idx = 0;
+      frame->att_idx = 0;
+      frame->grp_id = H5Gopen(data->frame_ptr->grp_id, tmp);
+			
+      strcpy(frame->relpath, data->frame_ptr->relpath);
+      l = strlen(frame->relpath);
+                            
+      if (l > 0 && frame->relpath[l - 1] != '/') {
+	strcat(frame->relpath, "/");
+      }
+      strcat(frame->relpath, tmp);
+
+      /* Start working on the next frame.
+       */
+      frame->next = data->frame_ptr;
+      data->frame_ptr = frame;
+      strncpy(path, data->frame_ptr->relpath, MILIST_MAX_PATH);
+      break;  /* Out of inner for(;;) */
+    }
+  }       
+   }  
+}
+
+
+static herr_t
+milist_attr_op(hid_t loc_id, const char *attr_name, void *op_data)
+{
+    struct milistdata *data = (struct milistdata *) op_data;
+    strncpy(data->name_ptr, attr_name, data->name_len);
+    return (1);
+}
+
+/*! Get attributes at a given path
+ */ 
+int
+milist_attr_next(mihandle_t vol, milisthandle_t handle, 
+                 char *path, int maxpath,
+                 char *name, int maxname)
+{
+    struct milistdata *data = (struct milistdata *) handle;
+    herr_t r;
+    
+    data->name_ptr = name;
+    data->name_len = maxname;
+
+    for (;;) {
+      
+     
+        H5E_BEGIN_TRY {
+            r = H5Aiterate(data->frame_ptr->grp_id, 
+                           &data->frame_ptr->att_idx, milist_attr_op, data);
+        } H5E_END_TRY;
+        if (r > 0) {
+	  
+	  strncpy(path, data->frame_ptr->relpath, maxpath);
+	  return (MI_NOERROR);
+        }
+        else if (data->flags & MILIST_RECURSE) {
+	  
+          r = milist_recursion(handle, path);
+          if ( r == MI_ERROR)
+	    {
+	      return(MI_ERROR);
+	    }
+            
+        }
+        else {
+            return (MI_ERROR);
+        }
+    }
+
+    return (MI_NOERROR);
+}
+
+/*! Finish listing attributes or groups
+ */
+int
+milist_finish(milisthandle_t handle)
+{
+    struct milistdata *data = (struct milistdata *) handle;
+    struct milistframe *frame;
+
+    if (data == NULL) {
+        return (MI_ERROR);
+    }
+
+    while ((frame = data->frame_ptr) != NULL) {
+        data->frame_ptr = frame->next;
+        H5Gclose(frame->grp_id);
+        free(frame);
+    }
+
+    free(data);
+    return (MI_NOERROR);
+}
+
+static herr_t
+milist_grp_op(hid_t loc_id, const char *name, void *op_data)
+{
+  struct milistdata *data = (struct milistdata *) op_data;
+  H5G_stat_t statbuf;
+  
+  H5Gget_objinfo(loc_id,name, FALSE, &statbuf);
+  if (statbuf.type == H5G_GROUP)
+    {
+      int l;
+      l = strlen(data->frame_ptr->relpath);
+      if (l > 0 && data->frame_ptr->relpath[l-1] != '/') {
+	strcat(data->frame_ptr->relpath, "/");
+      }
+      strcat(data->frame_ptr->relpath, name);
+    }
+  return(1);
+}
+
+/*! Get the group at given path
+ */
+int
+milist_grp_next(milisthandle_t handle, char *path, int maxpath)
+{
+  struct milistdata *data = (struct milistdata *) handle;
+  herr_t r;
+  
+  if (!(data->flags & MILIST_RECURSE))
+      {
+	char fullpath[256];
+	char tmp[256];
+	
+	strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+	strncat(fullpath, data->frame_ptr->relpath, sizeof (fullpath) - strlen(fullpath));
+	strcpy(tmp, data->frame_ptr->relpath);
+
+	H5E_BEGIN_TRY {
+	  r = H5Giterate(data->frame_ptr->grp_id,fullpath,
+			 &data->frame_ptr->grp_idx, milist_grp_op, data);
+      
+	} H5E_END_TRY;
+	if ( r > 0 )
+	  {
+	    strncpy(path, data->frame_ptr->relpath, maxpath);
+	    strncpy(data->frame_ptr->relpath, tmp, maxpath);
+	    return (MI_NOERROR);
+	  }
+	else
+      	  {
+	    return (MI_ERROR);	   
+	  }
+      }
+
+  else if (data->flags & MILIST_RECURSE) {
+    
+    r = milist_recursion(handle, path);
+    if ( r == MI_ERROR) {
+	return(MI_ERROR);
+    }
+  }
+  else {
+    return (MI_ERROR);
+  }
+   
+  return (MI_NOERROR);
+}
 
 /*! Create a group at "path" using "name".
  */
@@ -14,6 +289,7 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
     hid_t hdf_file;
     hid_t hdf_grp;
     hid_t hdf_new_grp;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -22,9 +298,15 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -52,6 +334,7 @@ midelete_attr(mihandle_t vol, const char *path, const char *name)
     hid_t hdf_file;
     hid_t hdf_grp;
     herr_t hdf_result;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -60,9 +343,15 @@ midelete_attr(mihandle_t vol, const char *path, const char *name)
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -89,6 +378,7 @@ midelete_group(mihandle_t vol, const char *path, const char *name)
     hid_t hdf_file;
     hid_t hdf_grp;
     herr_t hdf_result;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -97,9 +387,15 @@ midelete_group(mihandle_t vol, const char *path, const char *name)
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -135,6 +431,7 @@ miget_attr_length(mihandle_t vol, const char *path, const char *name,
     hsize_t hdf_dims[1];   /* TODO: symbolic constant for "1" here? */
     hid_t hdf_space;
     hid_t hdf_type;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -143,9 +440,15 @@ miget_attr_length(mihandle_t vol, const char *path, const char *name,
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -207,6 +510,7 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
     hid_t hdf_grp;
     hid_t hdf_attr;
     hid_t hdf_type;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -215,9 +519,15 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -257,6 +567,7 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     hid_t mtyp_id;
     hid_t hdf_space;
     hid_t hdf_attr;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -265,9 +576,15 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
@@ -332,6 +649,7 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     hid_t hdf_file;
     hid_t hdf_grp;
     int result;
+    char fullpath[256];
 
     /* Get a handle to the actual HDF file 
      */
@@ -340,9 +658,15 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	return (MI_ERROR);
     }
 
+    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (*path != '/') {
+        strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
+    }
+    strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
+
     /* Search through the path, descending into each group encountered.
      */
-    hdf_grp = midescend_path(hdf_file, path);
+    hdf_grp = midescend_path(hdf_file, fullpath);
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }

@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     float fltarr[TESTARRAYSIZE];
     int intarr[TESTARRAYSIZE];
     char valstr[128];
+    milisthandle_t hlist, h1list;
 
     r = micreate_volume("tst-grpa.mnc", 0, NULL, MI_TYPE_UINT, 
                         MI_CLASS_INT, NULL, &hvol);
@@ -31,51 +32,88 @@ int main(int argc, char **argv)
 	return (-1);
     }
 
-    r = micreate_group(hvol, "/minc-2.0", "test1");
+    r = micreate_group(hvol, "/", "test1");
     if (r < 0) {
         TESTRPT("micreate_group failed", r);
     }
 
-    r = micreate_group(hvol, "/minc-2.0", "test2");
+    r = micreate_group(hvol, "/", "test2");
     if (r < 0) {
         TESTRPT("micreate_group failed", r);
     }
-
-    r = micreate_group(hvol, "/minc-2.0/test1", "stuff");
+    r = micreate_group(hvol, "/", "test3");
+    if (r < 0) {
+        TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/", "test4");
+    if (r < 0) {
+        TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/test2", "stuff2");
     if (r < 0) {
 	TESTRPT("micreate_group failed", r);
     }
-
-    r = micreate_group(hvol, "/minc-2.0/test1/stuff", "hello");
+    r = micreate_group(hvol, "/test1", "stuff");
     if (r < 0) {
 	TESTRPT("micreate_group failed", r);
     }
-
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff/hello", 
+    r = micreate_group(hvol, "/test1", "otherstuff");
+    if (r < 0) {
+	TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/test1", "theotherstuff");
+    if (r < 0) {
+	TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/test1/theotherstuff", "thisstuff");
+    if (r < 0) {
+	TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/test1/stuff", "hello");
+    if (r < 0) {
+	TESTRPT("micreate_group failed", r);
+    }
+    r = micreate_group(hvol, "/test1/stuff", "helloleila");
+    if (r < 0) {
+	TESTRPT("micreate_group failed", r);
+    }
+    
+    r = miset_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff/hello", 
 			  "animal", 8, "fruitbat");
     if (r < 0) {
 	TESTRPT("miset_attr_values failed", r);
     }
 
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
+    r = miset_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff", 
 			  "objtype", 10, "automobile");
     if (r < 0) {
 	TESTRPT("miset_attr_values failed", r);
     }
 
-    r = miset_attr_values(hvol, MI_TYPE_DOUBLE, "/minc-2.0/test2", 
+    r = miset_attr_values(hvol, MI_TYPE_STRING, "/test3", 
+			  "objtype", 10, "automobile");
+    if (r < 0) {
+	TESTRPT("miset_attr_values failed", r);
+    }
+
+    r = miset_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff", 
+			  "objname", 10, "automobile");
+    if (r < 0) {
+	TESTRPT("miset_attr_values failed", r);
+    }
+    r = miset_attr_values(hvol, MI_TYPE_DOUBLE, "/test2", 
 			  "maxvals", TESTARRAYSIZE, tstarr);
     if (r < 0) {
 	TESTRPT("miset_attr_values failed", r);
     }
 
-    r = miget_attr_type(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
+    r = miget_attr_type(hvol, "/test1/stuff/hello", "animal", 
 			&data_type);
     if (r < 0) {
 	TESTRPT("miget_attr_type failed", r);
     }
 
-    r = miget_attr_length(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
+    r = miget_attr_length(hvol, "/test1/stuff/hello", "animal", 
 			  &length);
     if (r < 0) {
 	TESTRPT("miget_attr_length failed", r);
@@ -87,20 +125,20 @@ int main(int argc, char **argv)
     if (length != 8) {
 	TESTRPT("miget_attr_length failed", length);
     }
-
-    r = midelete_group(hvol, "/minc-2.0/test1/stuff", "goodbye");
+    
+    r = midelete_group(hvol, "/test1/stuff", "goodbye");
     if (r >= 0) {
 	TESTRPT("midelete_group failed", r);
     }
 
-    r = midelete_group(hvol, "/minc-2.0/test1/stuff", "hello");
+    r = midelete_group(hvol, "/test1/stuff", "hello");
     /* This should succeed.
      */
     if (r < 0) {
 	TESTRPT("midelete_group failed", r);
     }
 
-    r = miget_attr_length(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
+    r = miget_attr_length(hvol, "/test1/stuff/hello", "animal", 
 			  &length);
     /* This should fail since we deleted the group.
      */
@@ -108,7 +146,7 @@ int main(int argc, char **argv)
 	TESTRPT("miget_attr_length failed", r);
     }
 
-    r = miget_attr_values(hvol, MI_TYPE_DOUBLE, "/minc-2.0/test2", "maxvals", 
+    r = miget_attr_values(hvol, MI_TYPE_DOUBLE, "/test2", "maxvals", 
 			  TESTARRAYSIZE, dblarr);
     if (r < 0) {
 	TESTRPT("miget_attr_values failed", r);
@@ -122,7 +160,7 @@ int main(int argc, char **argv)
 
     /* Get the values again in float rather than double format.
      */
-    r = miget_attr_values(hvol, MI_TYPE_FLOAT, "/minc-2.0/test2", "maxvals", 
+    r = miget_attr_values(hvol, MI_TYPE_FLOAT, "/test2", "maxvals", 
 			  TESTARRAYSIZE, fltarr);
     if (r < 0) {
 	TESTRPT("miget_attr_values failed", r);
@@ -138,7 +176,7 @@ int main(int argc, char **argv)
 
     /* Get the values again in int rather than double format.
      */
-    r = miget_attr_values(hvol, MI_TYPE_INT, "/minc-2.0/test2", "maxvals", 
+    r = miget_attr_values(hvol, MI_TYPE_INT, "/test2", "maxvals", 
 			  TESTARRAYSIZE, intarr);
     if (r < 0) {
 	TESTRPT("miget_attr_values failed", r);
@@ -152,7 +190,7 @@ int main(int argc, char **argv)
 	}
     }
 
-    r = miget_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
+    r = miget_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff", 
 			  "objtype", 128, valstr);
     if (r < 0) {
 	TESTRPT("miget_attr_values failed", r);
@@ -162,14 +200,14 @@ int main(int argc, char **argv)
 	TESTRPT("miget_attr_values failed", 0);
     }
 
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff",
+    r = miset_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff",
 			  "objtype", 8, "bicycle");
 
     if (r < 0) {
 	TESTRPT("miset_attr_values failed on rewrite", r);
     }
 
-    r = miget_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
+    r = miget_attr_values(hvol, MI_TYPE_STRING, "/test1/stuff", 
 			  "objtype", 128, valstr);
     if (r < 0) {
 	TESTRPT("miget_attr_values failed", r);
@@ -177,6 +215,36 @@ int main(int argc, char **argv)
 
     if (strcmp(valstr, "bicycle") != 0) {
 	TESTRPT("miget_attr_values failed", 0);
+    }
+
+    {
+        char pathbuf[256];
+        char namebuf[256];
+	int count=0;
+        r = milist_start(hvol, "/", 1, &hlist);
+        if (r == MI_NOERROR) {
+	  count++;
+            while (milist_attr_next(hvol, hlist, pathbuf, sizeof(pathbuf),
+                                    namebuf, sizeof(namebuf)) == MI_NOERROR) {
+                printf(" %s %s\n", pathbuf, namebuf);
+            }
+        }
+        milist_finish(hlist);
+
+	printf("***************** \n");
+
+	char pathbuf1[256];
+        
+        r = milist_start(hvol, "/", 1, &h1list);
+        if (r == MI_NOERROR) {
+	  while( milist_grp_next(h1list, pathbuf1, sizeof(pathbuf1)) == MI_NOERROR) {
+	      printf("%s \n", pathbuf1);
+	  }
+   
+        }
+	
+        milist_finish(h1list);
+	
     }
 
     miclose_volume(hvol);
