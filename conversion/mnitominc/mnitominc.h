@@ -116,6 +116,7 @@ char *pname;
 char *infilename;
 char *outfilename;
 int clobber = TRUE;
+int verbose = TRUE;
 char *dimname[MAX_VAR_DIMS] = {MItime, NULL, NULL, NULL};
 long dimlength[MAX_VAR_DIMS] = {0};
 int dimfixed[MAX_VAR_DIMS] = {FALSE, FALSE, TRUE, TRUE};
@@ -149,6 +150,12 @@ ArgvInfo argTable[] = {
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
        "Don't overwrite existing file"},
+   {NULL, ARGV_HELP, NULL, NULL,
+       "Options for logging progress. Default = -verbose."},
+   {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
+       "Write messages indicating progress"},
+   {"-quiet", ARGV_CONSTANT, (char *) FALSE, (char *) &verbose,
+       "Do not write log messages"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Other options."},
    {"-field_of_view", ARGV_FLOAT, (char *) 1, (char *) &field_of_view,

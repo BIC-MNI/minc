@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.4 1993-02-15 12:13:57 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.5 1993-03-03 14:33:07 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -189,12 +189,24 @@ main(int argc, char *argv[])
    mni_image.image_size=mni_image.image_pix*mni_image.pix_size;
    mni_image.image=malloc(mni_image.image_size);
 
+   /* Write log message if needed */
+   if (verbose) {
+      (void) fprintf(stderr, "Converting slices:");
+      (void) fflush(stderr);
+   }
+
    /* Loop through the images */
    fastdim=ndims-IMAGE_DIMS-1;
    if (fastdim<0) fastdim=0;
    z_regular = t_regular = TRUE;
    for (iframe=0; iframe<nframes; iframe++) {
       for (islice=0; islice<nslices; islice++) {
+
+         /* Print log message */
+         if (verbose) {
+            (void) fprintf(stderr, ".");
+            (void) fflush(stderr);
+         }
 
          /* Read in image */
          image_num = islice*nframes + iframe;
@@ -288,6 +300,12 @@ main(int argc, char *argv[])
          (void) miattputstr(cdfid, dimvar[tdim], MIspacing, MI_REGULAR);
       else
          (void) miattputstr(cdfid, dimvar[tdim], MIspacing, MI_IRREGULAR);
+   }
+
+   /* Print end of log message */
+   if (verbose) {
+      (void) fprintf(stderr, "Done\n");
+      (void) fflush(stderr);
    }
 
    /* Free the memory */
