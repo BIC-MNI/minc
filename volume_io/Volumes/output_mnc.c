@@ -544,11 +544,11 @@ public  Status  output_minc_volume(
     /*--- now write entire volume in contiguous chunks (possibly only 1 req'd)*/
 
     n_steps = 1;
-    for_less( i, 0, first_vol_index )
-        n_steps *= sizes[i];
+    for_less( d, 0, first_vol_index )
+        n_steps *= sizes[d];
     step = 0;
 
-    initialize_progress( &progress, FALSE, n_steps,"Outputting Volume" );
+    initialize_progress_report( &progress, FALSE, n_steps,"Outputting Volume" );
 
     increment = FALSE;
     while( !increment )
@@ -612,7 +612,8 @@ public  Status  output_minc_volume(
 
         ++step;
 
-        update_progress_report( &progress, step );
+        if( n_steps > 1 )
+            update_progress_report( &progress, step );
     }
 
     terminate_progress_report( &progress );
