@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.3  1995-01-23 08:59:31  neelin
-@MODIFIED   : Changed nccreate to micreate
+@MODIFIED   : Revision 2.4  1995-01-23 09:07:46  neelin
+@MODIFIED   : changed ncclose to miclose.
 @MODIFIED   :
+ * Revision 2.3  95/01/23  08:59:31  neelin
+ * Changed nccreate to micreate
+ * 
  * Revision 2.2  95/01/03  13:09:24  neelin
  * Added direction cosine support.
  * 
@@ -57,7 +60,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.3 1995-01-23 08:59:31 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.4 1995-01-23 09:07:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -637,7 +640,7 @@ main(int argc, char *argv[])
 
    /* Close the file */
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_TRUE);
-   (void) ncclose(cdfid);
+   (void) miclose(cdfid);
    
    exit(NORMAL_STATUS);
 }
