@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.33 1995-08-21 04:36:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.34 1995-09-19 14:44:04 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -182,7 +182,7 @@ public  Minc_file  initialize_minc_output(
     file->ignoring_because_cached = FALSE;
 
     if( volume_to_attach->is_cached_volume &&
-        volume_to_attach->cache.has_been_modified &&
+        volume_to_attach->cache.output_file_is_open &&
         strcmp( volume_to_attach->cache.output_filename, filename ) == 0 )
     {
         file->ignoring_because_cached = TRUE;
@@ -751,6 +751,7 @@ public  void  check_minc_output_variables(
 
 public  Status  output_minc_hyperslab(
     Minc_file           file,
+    BOOLEAN             one_d_array_flag,
     multidim_array      *array,
     int                 array_start[],
     int                 to_array[],
@@ -792,7 +793,7 @@ public  Status  output_minc_hyperslab(
         long_file_start[file_ind] = (long) file_start[file_ind];
         long_file_count[file_ind] = (long) file_count[file_ind];
         ind = to_array[file_ind];
-        if( ind != INVALID_AXIS )
+        if( !one_d_array_flag && ind != INVALID_AXIS )
         {
             array_counts[ind] = file_count[file_ind];
 
@@ -969,14 +970,14 @@ private  void  output_slab(
                                  v[volume_to_array[4]], value );
         }
 
-        (void) output_minc_hyperslab( file, &array, array_start,
+        (void) output_minc_hyperslab( file, FALSE, &array, array_start,
                                       to_array, int_file_start,
                                       int_file_count );
         delete_multidim_array( &array );
     }
     else
     {
-        (void) output_minc_hyperslab( file, &volume->array, volume_start,
+        (void) output_minc_hyperslab( file, FALSE, &volume->array, volume_start,
                                    to_volume, int_file_start, int_file_count );
     }
 }
