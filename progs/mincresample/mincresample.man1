@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 1.1 1993-10-19 15:38:50 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 1.2 1994-03-15 16:50:41 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1 "MINC Image File Format"
 
@@ -89,10 +89,10 @@ they are unique) and can be given anywhere on the command line.
 .SH General options
 .P
 .I -clobber:
-Overwrite an existing file (default).
+Overwrite an existing file.
 .P
 .I -noclobber:
-Don't overwrite an existing file.
+Don't overwrite an existing file (default).
 .P
 .I -verbose:
 Print out progress information for each slice computed (default).
