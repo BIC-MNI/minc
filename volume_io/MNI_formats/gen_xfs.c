@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.12 1994-11-25 14:20:20 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.13 1995-03-08 17:09:26 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -107,6 +107,81 @@ public  void  create_thin_plate_transform(
         for_less( d, 0, n_dimensions )
             transform->displacements[p][d] = displacements[p][d];
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_grid_transform
+@INPUT      : displacement_volume
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform of type grid.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Feb. 21, 1995            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  create_grid_transform(
+    General_transform    *transform,
+    Volume               displacement_volume )
+{
+    int       dim, sizes[MAX_DIMENSIONS];
+    char      **dim_names;
+    BOOLEAN   volume_ok, dim_found[N_DIMENSIONS];
+
+    volume_ok = TRUE;
+    if( get_volume_n_dimensions(displacement_volume) != 4 )
+    {
+        volume_ok = FALSE;
+        print( "Grid transform must be 4 dimensional.\n" );
+    }
+    else
+    {
+        dim_names = get_volume_dimension_names( displacement_volume );
+        get_volume_sizes( displacement_volume, sizes );
+
+        dim_found[X] = FALSE;
+        dim_found[Y] = FALSE;
+        dim_found[Z] = FALSE;
+
+        for_less( dim, 0, 4 )
+        {
+            if( strcmp( dim_names[dim], MIxspace ) == 0 )
+                dim_found[X] = TRUE;
+            else if( strcmp( dim_names[dim], MIyspace ) == 0 )
+                dim_found[Y] = TRUE;
+            else if( strcmp( dim_names[dim], MIzspace ) == 0 )
+                dim_found[Z] = TRUE;
+            else if( sizes[dim] != 3 )
+            {
+                print( "displacement_volume must have 3 components on " );
+                print( "the non-spatial axis.\n" );
+                volume_ok = FALSE;
+            }
+        }
+
+        if( !dim_found[X] || !dim_found[Y] || !dim_found[Z] )
+        {
+            print(
+              "Must have an x, y, and z dimension in displacement volume.\n" );
+            volume_ok = FALSE;
+        }
+
+        delete_dimension_names( dim_names );
+    }
+
+    if( !volume_ok )
+    {
+        create_linear_transform( transform, NULL );  /*--- make identity */
+        return;
+    }
+
+    transform->type = GRID_TRANSFORM;
+    transform->inverse_flag = FALSE;
+
+    transform->displacement_volume = (void *)
+                                     copy_volume( displacement_volume );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -295,7 +370,7 @@ public  Transform  *get_inverse_linear_transform_ptr(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
 private  void  transform_or_invert_point(
@@ -343,6 +418,23 @@ private  void  transform_or_invert_point(
                                          x, y, z,
                                          x_transformed, y_transformed,
                                          z_transformed );
+        }
+        break;
+
+    case GRID_TRANSFORM:
+        if( inverse_flag )
+        {
+            grid_inverse_transform_point( transform,
+                                          x, y, z,
+                                          x_transformed, y_transformed,
+                                          z_transformed );
+        }
+        else
+        {
+            grid_transform_point( transform,
+                                  x, y, z,
+                                  x_transformed, y_transformed,
+                                  z_transformed );
         }
         break;
 
@@ -471,6 +563,7 @@ public  void  general_inverse_transform_point(
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : 
+@MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
 private  void  copy_and_invert_transform(
@@ -519,6 +612,15 @@ private  void  copy_and_invert_transform(
 
         if( invert_it )
             copy->inverse_flag = !copy->inverse_flag;
+        break;
+
+    case GRID_TRANSFORM:
+        copy->displacement_volume = (void *) copy_volume(
+                                    (Volume) transform->displacement_volume );
+
+        if( invert_it )
+            copy->inverse_flag = !copy->inverse_flag;
+
         break;
 
     case USER_TRANSFORM:
@@ -754,6 +856,7 @@ public  void  concat_general_transforms(
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : 
+@MODIFIED   : Feb. 27, 1995   D. MacDonald  - added grid transforms
 ---------------------------------------------------------------------------- */
 
 public  void  delete_general_transform(
@@ -774,6 +877,10 @@ public  void  delete_general_transform(
             FREE2D( transform->points );
             FREE2D( transform->displacements );
         }
+        break;
+
+    case GRID_TRANSFORM:
+        delete_volume( (Volume) transform->displacement_volume );
         break;
 
     case USER_TRANSFORM:
