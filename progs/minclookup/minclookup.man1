@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 1.1 1996-07-10 16:59:17 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 1.2 1996-07-10 17:06:07 neelin Exp $
 .\"
 .TH MINCLOOKUP 1
 
@@ -84,6 +84,7 @@ Do not print out progress information.
 <size>:
 Specify the maximum size of the internal buffers (in kbytes). Default
 is 10 MB.
+.P
 .I -filetype:
 Create an output file with the same type as the first input file
 (default).
@@ -200,7 +201,7 @@ To get hot-metal RGB images from an MRI file:
 
    minclookup -hotmetal input.mnc output.mnc
 
-To convert the labels a minc label file, use -discrete:
+To convert the labels in a minc label file, use -discrete:
 
    minclookup -discrete -lookup_table lookupfile \\
       in_labels.mnc out_labels.mnc
