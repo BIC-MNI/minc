@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.4  1998-03-23 20:22:37  neelin
-@MODIFIED   : Added includes for new functions.
+@MODIFIED   : Revision 6.5  1998-11-11 17:05:03  neelin
+@MODIFIED   : Added pointer for client data to dicom structure.
 @MODIFIED   :
+ * Revision 6.4  1998/03/23  20:22:37  neelin
+ * Added includes for new functions.
+ *
  * Revision 6.3  1998/03/23  20:16:16  neelin
  * Moved some general-purpose functions from dicom_client_routines and
  * added one for implementation uid.
@@ -107,6 +110,7 @@ typedef struct {
    long maximum_length;          /* Maximum PDU length (excluding header) */
    int writing_command;          /* True if writing command portion */
    long data_length;             /* Length of data portion of message */
+   void *client_data;      /* Pointer to client data, if any */
 } Acr_Dicom_IO;
 
 /* Private functions */
@@ -2169,6 +2173,7 @@ private Acr_File *initialize_dicom_stream(void *io_data, int maxlength,
    stream_data->maximum_length = LONG_MAX;
    stream_data->writing_command = FALSE;
    stream_data->data_length = 0;
+   stream_data->client_data = NULL;
 
    /* Create the virtual input stream */
    if (stream_type == DICOM_INPUT) {
@@ -2378,8 +2383,57 @@ public int acr_get_dicom_pres_context_id(Acr_File *afp)
    stream_data = get_dicom_io_pointer(afp);
    if (stream_data == NULL) return 0;
 
-   /* Set the id */
+   /* Return the id */
    return stream_data->presentation_context_id;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_dicom_client_data
+@INPUT      : afp
+              client_data - pointer to client data to store
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Stores a pointer to client data
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 11, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_dicom_client_data(Acr_File *afp, void *client_data)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get the structure pointer */
+   stream_data = get_dicom_io_pointer(afp);
+   if (stream_data == NULL) return;
+
+   /* Set the pointer */
+   stream_data->client_data = client_data;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_get_dicom_client_data
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : pointer to client data
+@DESCRIPTION: Gets the pointer to the client data
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 11, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void *acr_get_dicom_client_data(Acr_File *afp)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get the structure pointer */
+   stream_data = get_dicom_io_pointer(afp);
+   if (stream_data == NULL) return 0;
+
+   /* Return the pointer */
+   return stream_data->client_data;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

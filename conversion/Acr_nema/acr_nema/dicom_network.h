@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 6.2  1998-03-23 20:16:37  neelin
-@MODIFIED   : Added functions.
+@MODIFIED   : Revision 6.3  1998-11-11 17:05:03  neelin
+@MODIFIED   : Added pointer for client data to dicom structure.
 @MODIFIED   :
+ * Revision 6.2  1998/03/23  20:16:37  neelin
+ * Added functions.
+ *
  * Revision 6.1  1997/10/20  22:52:46  neelin
  * Added support for implementation user information in association request.
  *
@@ -102,3 +105,5 @@ public void acr_set_dicom_maximum_length(Acr_File *afp,
 public void acr_set_dicom_pres_context_id(Acr_File *afp, 
                                           int presentation_context_id);
 public int acr_get_dicom_pres_context_id(Acr_File *afp);
+public void acr_set_dicom_client_data(Acr_File *afp, void *client_data);
+public void *acr_get_dicom_client_data(Acr_File *afp);
