@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.5  2004-04-27 15:38:15  bert
+ * Revision 6.6  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.5  2004/04/27 15:38:15  bert
  * Added -2 option
  *
  * Revision 6.4  2001/04/24 13:38:42  neelin
@@ -68,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.5 2004-04-27 15:38:15 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.6 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -81,14 +84,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverag
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
 
 /* Constants */
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -125,30 +123,29 @@ typedef struct {
 } Norm_Data;
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
-public void do_normalization(void *caller_data, long num_voxels, 
+static void do_normalization(void *caller_data, long num_voxels, 
                              int input_num_buffers, int input_vector_length,
                              double *input_data[],
                              int output_num_buffers, int output_vector_length,
                              double *output_data[],
                              Loop_Info *loop_info);
-public void find_mincfile_range(int mincid, double *minimum, double *maximum);
-public void do_average(void *caller_data, long num_voxels, 
+static void find_mincfile_range(int mincid, double *minimum, double *maximum);
+static void do_average(void *caller_data, long num_voxels, 
                        int input_num_buffers, int input_vector_length,
                        double *input_data[],
                        int output_num_buffers, int output_vector_length,
                        double *output_data[],
                        Loop_Info *loop_info);
-public void start_average(void *caller_data, long num_voxels, 
+static void start_average(void *caller_data, long num_voxels, 
                           int output_num_buffers, int output_vector_length,
                           double *output_data[],
                           Loop_Info *loop_info);
-public void finish_average(void *caller_data, long num_voxels, 
+static void finish_average(void *caller_data, long num_voxels, 
                           int output_num_buffers, int output_vector_length,
                           double *output_data[],
                           Loop_Info *loop_info);
-public int get_double_list(char *dst, char *key, char *nextarg);
-public char **read_file_names(char *filelist, int *num_files);
+static int get_double_list(char *dst, char *key, char *nextarg);
+static char **read_file_names(char *filelist, int *num_files);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -252,7 +249,7 @@ ArgvInfo argTable[] = {
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    char **infiles, *outfiles[2];
    int nfiles, nout;
@@ -367,12 +364,12 @@ public int main(int argc, char *argv[])
       /* Save the weights */
       average_data.num_weights = weights.numvalues;
       average_data.weights = 
-         MALLOC(sizeof(*average_data.weights) * average_data.num_weights);
+         malloc(sizeof(*average_data.weights) * average_data.num_weights);
       for (iweight=0; iweight < average_data.num_weights; iweight++) {
          average_data.weights[iweight] = weights.values[iweight];
       }
 
-      FREE(weights.values);
+      free(weights.values);
    }
 
    /* Check for width weighting */
@@ -420,7 +417,7 @@ public int main(int argc, char *argv[])
          (void) ncdiminq(first_mincid, dim[0], NULL, &count);
          average_data.num_weights = count;
          average_data.weights = 
-            MALLOC(sizeof(*average_data.weights) * average_data.num_weights);
+            malloc(sizeof(*average_data.weights) * average_data.num_weights);
 
          /* Read in the widths */
          start = 0;
@@ -484,9 +481,9 @@ public int main(int argc, char *argv[])
 
    /* Do normalization if needed */
    average_data.norm_factor = 
-      MALLOC(sizeof(*average_data.norm_factor) * nfiles);
+      malloc(sizeof(*average_data.norm_factor) * nfiles);
    if (normalize) {
-      vol_mean = MALLOC(sizeof(*vol_mean) * nfiles);
+      vol_mean = malloc(sizeof(*vol_mean) * nfiles);
       loop_options = create_loop_options();
       set_loop_verbose(loop_options, FALSE);
 #ifdef MINC2
@@ -547,7 +544,7 @@ public int main(int argc, char *argv[])
                            ifile, average_data.norm_factor[ifile]);
          }
       }
-      FREE(vol_mean);
+      free(vol_mean);
    }
    else {
       for (ifile=0; ifile < nfiles; ifile++) {
@@ -576,8 +573,8 @@ public int main(int argc, char *argv[])
    free_loop_options(loop_options);
 
    /* Free stuff */
-   FREE(average_data.weights);
-   FREE(average_data.norm_factor);
+   free(average_data.weights);
+   free(average_data.norm_factor);
 
    exit(EXIT_SUCCESS);
 }
@@ -595,7 +592,7 @@ public int main(int argc, char *argv[])
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_normalization(void *caller_data, long num_voxels, 
+static void do_normalization(void *caller_data, long num_voxels, 
                              int input_num_buffers, int input_vector_length,
                              double *input_data[],
                              int output_num_buffers, int output_vector_length,
@@ -649,7 +646,7 @@ public void do_normalization(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void find_mincfile_range(int mincid, double *minimum, double *maximum)
+static void find_mincfile_range(int mincid, double *minimum, double *maximum)
 {
    int varid;
    char *varname;
@@ -724,7 +721,7 @@ public void find_mincfile_range(int mincid, double *minimum, double *maximum)
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_average(void *caller_data, long num_voxels, 
+static void do_average(void *caller_data, long num_voxels, 
                        int input_num_buffers, int input_vector_length,
                        double *input_data[],
                        int output_num_buffers, int output_vector_length,
@@ -808,7 +805,7 @@ public void do_average(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void start_average(void *caller_data, long num_voxels, 
+static void start_average(void *caller_data, long num_voxels, 
                           int output_num_buffers, int output_vector_length,
                           double *output_data[],
                           Loop_Info *loop_info)
@@ -851,7 +848,7 @@ public void start_average(void *caller_data, long num_voxels,
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void finish_average(void *caller_data, long num_voxels, 
+static void finish_average(void *caller_data, long num_voxels, 
                           int output_num_buffers, int output_vector_length,
                           double *output_data[],
                           Loop_Info *loop_info)
@@ -918,7 +915,7 @@ public void finish_average(void *caller_data, long num_voxels,
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_double_list(char *dst, char *key, char *nextarg)
+static int get_double_list(char *dst, char *key, char *nextarg)
 {
 #define VECTOR_SEPARATOR ','
 
@@ -967,11 +964,11 @@ public int get_double_list(char *dst, char *key, char *nextarg)
          num_alloc += 20;
          if (double_list == NULL) {
             double_list = 
-               MALLOC(num_alloc * sizeof(*double_list));
+               malloc(num_alloc * sizeof(*double_list));
          }
          else {
             double_list = 
-               REALLOC(double_list, num_alloc * sizeof(*double_list));
+               realloc(double_list, num_alloc * sizeof(*double_list));
          }
       }
       double_list[num_elements-1] = dvalue;
@@ -987,7 +984,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    double_array->numvalues = num_elements;
    if (double_array->values != NULL) {
-      FREE(double_array->values);
+      free(double_array->values);
    }
    double_array->values = double_list;
 
@@ -1009,7 +1006,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char **read_file_names(char *filelist, int *num_files)
+static char **read_file_names(char *filelist, int *num_files)
 {
 #define FILE_NAME_ALLOC_SIZE 10
    char **files;
@@ -1033,7 +1030,7 @@ public char **read_file_names(char *filelist, int *num_files)
 
    /* Allocate an initial array and NULL-terminate it */
    array_size = FILE_NAME_ALLOC_SIZE;
-   files = MALLOC(sizeof(*files) * array_size);
+   files = malloc(sizeof(*files) * array_size);
    if (files == NULL) {
       (void) fprintf(stderr, "Error allocating memory\n");
       return NULL;
@@ -1055,7 +1052,7 @@ public char **read_file_names(char *filelist, int *num_files)
       /* Make room for names if needed */
       while (nfiles >= array_size-1) {
          array_size += FILE_NAME_ALLOC_SIZE;
-         files = REALLOC(files, sizeof(*files) * array_size);
+         files = realloc(files, sizeof(*files) * array_size);
          if (files == NULL) {
             (void) fprintf(stderr, "Error allocating memory\n");
             return NULL;

@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.16  2004-10-18 08:20:35  rotor
+ * Revision 1.17  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 1.16  2004/10/18 08:20:35  rotor
  *  * Changes to mincstats
  *     - Fixed bug in calculation of BiModalT
  *     - changed default # of histogram bins to 65536 (from 10000)
@@ -91,16 +94,20 @@
  *               of a histogram.
  */
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <limits.h>
+#if HAVE_FLOAT_H
 #include <float.h>
+#endif /* HAVE_FLOAT_H */
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
 
 #ifndef TRUE
@@ -432,24 +439,24 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
 
-   if(access(infiles[0], F_OK) != 0) {
+   if(access(infiles[0], 0) != 0) {
       (void)fprintf(stderr, "%s: Couldn't find %s\n", argv[0], infiles[0]);
       exit(EXIT_FAILURE);
    }
 
-   if(infiles[1] != NULL && access(infiles[1], F_OK) != 0) {
+   if(infiles[1] != NULL && access(infiles[1], 0) != 0) {
       (void)fprintf(stderr, "%s: Couldn't find mask file: %s\n", argv[0], infiles[1]);
       exit(EXIT_FAILURE);
    }
 
-   if(hist_file != NULL && !clobber && access(hist_file, F_OK) != -1) {
+   if(hist_file != NULL && !clobber && access(hist_file, 0) != -1) {
       (void)fprintf(stderr, "%s: Histogram %s exists! (use -clobber to overwrite)\n",
                     argv[0], hist_file);
       exit(EXIT_FAILURE);
    }
 
    /* Open the file to get some information */
-   mincid = miopen(infiles[0], NC_NOWRITE);
+   mincid = miopen(infiles[0], NC_NOWRITE | 0x8000);
    imgid = ncvarid(mincid, MIimage);
    nvoxels = get_minc_nvoxels(mincid);
    voxel_volume = get_minc_voxel_volume(mincid);
@@ -537,9 +544,9 @@ int main(int argc, char *argv[])
    }
 
    /* Initialize the stats structure */
-   stats_info = MALLOC(num_ranges * sizeof(*stats_info));
+   stats_info = malloc(num_ranges * sizeof(*stats_info));
    for(irange = 0; irange < num_ranges; irange++) {
-      stats_info[irange] = MALLOC(num_masks * sizeof(**stats_info));
+      stats_info[irange] = malloc(num_masks * sizeof(**stats_info));
       for(imask = 0; imask < num_masks; imask++) {
          stats = &stats_info[irange][imask];
          init_stats(stats, hist_bins);
@@ -612,9 +619,9 @@ int main(int argc, char *argv[])
             double   max_var = 0.0;
 
             /* Allocate space for histograms */
-            hist_centre = CALLOC(hist_bins, sizeof(float));
-            pdf = CALLOC(hist_bins, sizeof(float));
-            cdf = CALLOC(hist_bins, sizeof(float));
+            hist_centre = calloc(hist_bins, sizeof(float));
+            pdf = calloc(hist_bins, sizeof(float));
+            cdf = calloc(hist_bins, sizeof(float));
             if(hist_centre == NULL || pdf == NULL || cdf == NULL) {
                (void)fprintf(stderr, "Memory allocation error\n");
                exit(EXIT_FAILURE);
@@ -649,12 +656,12 @@ int main(int argc, char *argv[])
                if(c > 0) {
                   var = SQR((stats->mean * zero_moment) - first_moment) /
                      (zero_moment * (1 - zero_moment));
-                  
+
                   if(var > max_var) {
                      bimodalt_bin = c;
                      max_var = var;
                   }
-               }  
+               }
 
                /* pct Threshold */
                if(cdf[c] < pctT) {
@@ -709,9 +716,9 @@ int main(int argc, char *argv[])
             }
 
             /* Free the space */
-            FREE(hist_centre);
-            FREE(pdf);
-            FREE(cdf);
+            free(hist_centre);
+            free(pdf);
+            free(cdf);
 
          }                             /* end histogram calculations */
 
@@ -843,9 +850,9 @@ int main(int argc, char *argv[])
       for(imask = 0; imask < num_masks; imask++) {
          free_stats(&stats_info[irange][imask]);
       }
-      FREE(stats_info[irange]);
+      free(stats_info[irange]);
    }
-   FREE(stats_info);
+   free(stats_info);
 
    return EXIT_SUCCESS;
 }
@@ -1287,10 +1294,10 @@ int get_double_list(char *dst, char *key, char *nextarg)
       if(num_elements > num_alloc) {
          num_alloc += 20;
          if(double_list == NULL) {
-            double_list = MALLOC(num_alloc * sizeof(*double_list));
+            double_list = malloc(num_alloc * sizeof(*double_list));
          }
          else {
-            double_list = REALLOC(double_list, num_alloc * sizeof(*double_list));
+            double_list = realloc(double_list, num_alloc * sizeof(*double_list));
          }
       }
       double_list[num_elements - 1] = dvalue;
@@ -1308,7 +1315,7 @@ int get_double_list(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    double_array->numvalues = num_elements;
    if(double_array->values != NULL) {
-      FREE(double_array->values);
+      free(double_array->values);
    }
    double_array->values = double_list;
 
@@ -1377,11 +1384,11 @@ void verify_range_options(Double_Array * min, Double_Array * max,
    /* Allocate the space */
    if(min->numvalues <= 0) {
       min->numvalues = num_values;
-      min->values = MALLOC(num_values * sizeof(double));
+      min->values = malloc(num_values * sizeof(double));
    }
    if(max->numvalues <= 0) {
       max->numvalues = num_values;
-      max->values = MALLOC(num_values * sizeof(double));
+      max->values = malloc(num_values * sizeof(double));
    }
    if(min->values == NULL || max->values == NULL) {
       (void)fprintf(stderr, "Memory allocation error\n");
@@ -1433,7 +1440,7 @@ void init_stats(Stats_Info * stats, int hist_bins)
    stats->mask_range[0] = -DBL_MAX;
    stats->mask_range[1] = DBL_MAX;
    if(Hist && hist_bins > 0) {
-      stats->histogram = CALLOC(hist_bins, sizeof(float));
+      stats->histogram = calloc(hist_bins, sizeof(float));
       if(stats->histogram == NULL) {
          (void)fprintf(stderr, "Memory allocation error\n");
          exit(EXIT_FAILURE);
@@ -1474,5 +1481,5 @@ void init_stats(Stats_Info * stats, int hist_bins)
 void free_stats(Stats_Info * stats)
 {
    if(stats->histogram != NULL)
-      FREE(stats->histogram);
+      free(stats->histogram);
 }

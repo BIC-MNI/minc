@@ -13,7 +13,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.9  2004-04-27 15:30:02  bert
+ * Revision 6.10  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.9  2004/04/27 15:30:02  bert
  * Add -2 flag
  *
  * Revision 6.8  2001/11/13 14:16:50  neelin
@@ -92,7 +95,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.9 2004-04-27 15:30:02 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.10 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -105,12 +108,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshap
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include "mincreshape.h"
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    Reshape_info reshape_info;
 
@@ -142,7 +144,7 @@ public int main(int argc, char *argv[])
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         Reshape_info *reshape_info)
 {
 
@@ -468,7 +470,7 @@ public void get_arginfo(int argc, char *argv[],
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_fillvalue(char *dst, char *key, char *nextArg)
+static int get_fillvalue(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    double *dptr;
@@ -503,7 +505,7 @@ public int get_fillvalue(char *dst, char *key, char *nextArg)
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_dimsize(char *dst, char *key, char *nextArg)
+static int get_dimsize(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Dimsize_list *dimsize_list;
@@ -589,7 +591,7 @@ public int get_dimsize(char *dst, char *key, char *nextArg)
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_axis_order(char *dst, char *key, char *nextArg)
+static int get_axis_order(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    char **axis_order;
@@ -680,7 +682,7 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_axis_range(char *dst, char *key, char *nextArg)
+static int get_axis_range(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Axis_ranges *axis_ranges;
@@ -780,7 +782,7 @@ public int get_axis_range(char *dst, char *key, char *nextArg)
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_arg_vector(char *dst, char *key, char *nextArg)
+static int get_arg_vector(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
 
@@ -855,7 +857,7 @@ public int get_arg_vector(char *dst, char *key, char *nextArg)
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
+static void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
                                  double valid_range[2])
 {
    int imgid;
@@ -953,7 +955,7 @@ public void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
 @CREATED    : May 18, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list)
+static void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list)
 {
    int ientry, idim;
    int imgid, dimid;
@@ -1023,7 +1025,7 @@ public void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list)
 @CREATED    : May 26, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_reshaping_info(int icvid, int mincid, 
+static void setup_reshaping_info(int icvid, int mincid, 
                                  int do_norm, double fillvalue, int do_scalar,
                                  char *axis_order[], Axis_ranges *axis_ranges,
                                  long hs_start[], long hs_count[],
@@ -1311,7 +1313,7 @@ public void setup_reshaping_info(int icvid, int mincid,
 @CREATED    : June 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_output_file(int mincid, char *history, 
+static void setup_output_file(int mincid, char *history, 
                               Reshape_info *reshape_info)
 {
    int output_ndims, output_dim[MAX_VAR_DIMS];
@@ -1439,13 +1441,13 @@ public void setup_output_file(int mincid, char *history,
         == MI_ERROR) || (datatype != NC_CHAR))
       att_length = 0;
    att_length += strlen(history) + 1;
-   string = MALLOC(att_length);
+   string = malloc(att_length);
    string[0] = '\0';
    (void) miattgetstr(mincid, NC_GLOBAL, MIhistory, att_length, string);
    ncopts = NCOPTS_DEFAULT;
    (void) strcat(string, history);
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, string);
-   FREE(string);
+   free(string);
 
    /* Get into data mode */
    (void) ncsetfill(mincid, NC_NOFILL);
@@ -1485,7 +1487,7 @@ public void setup_output_file(int mincid, char *history,
 @CREATED    : June 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void create_dim_var(int outmincid, int outdimid,
+static void create_dim_var(int outmincid, int outdimid,
                            int inicvid, int cur_image_dim, int inmincid, 
                            long input_start, long input_count)
 {
@@ -1598,7 +1600,7 @@ public void create_dim_var(int outmincid, int outdimid,
 @CREATED    : June 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void copy_dimension_values(int outmincid, int outdimid, int inmincid,
+static void copy_dimension_values(int outmincid, int outdimid, int inmincid,
                                   long input_start, long input_count)
 {
    char dimname[MAX_NC_NAME];
@@ -1637,7 +1639,7 @@ public void copy_dimension_values(int outmincid, int outdimid, int inmincid,
 @CREATED    : June 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void copy_dim_var_values(int outmincid, char *dimname, char *varname,
+static void copy_dim_var_values(int outmincid, char *dimname, char *varname,
                                 int inmincid,
                                 long input_start, long input_count)
 {

@@ -10,7 +10,10 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.7  2003-10-28 20:32:09  bert
+ * Revision 6.8  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.7  2003/10/28 20:32:09  bert
  * Get rid of a few compiler warnings
  *
  * Revision 6.6  2001/08/16 16:41:36  neelin
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.7 2003-10-28 20:32:09 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.8 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -89,7 +92,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #include <limits.h>
 #include <float.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -228,7 +230,7 @@ int main(int argc, char *argv[])
    }
 
    /* Allocate space */
-   data = MALLOC(size);
+   data = malloc(size);
 
    /* Loop over input slices */
 
@@ -257,7 +259,7 @@ int main(int argc, char *argv[])
    /* Clean up */
    (void) miclose(mincid);
    (void) miicv_free(icvid);
-   FREE(data);
+   free(data);
 
    exit(EXIT_SUCCESS);
 }

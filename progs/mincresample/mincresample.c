@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.15  2004-04-30 19:53:40  bert
+ * Revision 6.16  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.15  2004/04/30 19:53:40  bert
  * Remove unused variable
  *
  * Revision 6.14  2004/04/30 18:52:49  bert
@@ -171,7 +174,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.15 2004-04-30 19:53:40 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.16 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,7 +187,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <volume_io.h>
-#include <minc_def.h>
 #include <convert_origin_to_start.h>
 #include "mincresample.h"
 
@@ -199,7 +201,7 @@ int Specified_transform = FALSE;
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    VVolume in_vol_struct, out_vol_struct;
    VVolume *in_vol = &in_vol_struct, *out_vol = &out_vol_struct;
@@ -236,7 +238,7 @@ public int main(int argc, char *argv[])
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_arginfo(int argc, char *argv[],
+static void get_arginfo(int argc, char *argv[],
                         Program_Flags *program_flags,
                         VVolume *in_vol, VVolume *out_vol, 
                         General_transform *transformation)
@@ -491,7 +493,7 @@ public void get_arginfo(int argc, char *argv[],
    delete_general_transform(&input_transformation);
 
    /* Check input file for default argument information */
-   in_vol->file = MALLOC(sizeof(File_Info));
+   in_vol->file = malloc(sizeof(File_Info));
    get_file_info(infile, FALSE, &input_volume_def, in_vol->file);
    transform_volume_def((transform_input_sampling ? 
                          &args.transform_info : NULL), 
@@ -521,15 +523,15 @@ public void get_arginfo(int argc, char *argv[],
    }
 
    /* Save the voxel_to_world transformation information */
-   in_vol->voxel_to_world = MALLOC(sizeof(General_transform));
-   in_vol->world_to_voxel = MALLOC(sizeof(General_transform));
+   in_vol->voxel_to_world = malloc(sizeof(General_transform));
+   in_vol->world_to_voxel = malloc(sizeof(General_transform));
    get_voxel_to_world_transf(&input_volume_def, in_vol->voxel_to_world);
    create_inverse_general_transform(in_vol->voxel_to_world,
                                     in_vol->world_to_voxel);
 
    /* Get input volume data information */
    in_vol->slice = NULL;
-   in_vol->volume = MALLOC(sizeof(Volume_Data));
+   in_vol->volume = malloc(sizeof(Volume_Data));
    in_vol->volume->datatype = in_vol->file->datatype;
    in_vol->volume->is_signed = in_vol->file->is_signed;
    in_vol->volume->vrange[0] = in_vol->file->vrange[0];
@@ -575,14 +577,14 @@ public void get_arginfo(int argc, char *argv[],
       total_size *= size;
       in_vol->volume->size[index] = size;
    }
-   in_vol->volume->data = MALLOC((size_t) total_size * 
+   in_vol->volume->data = malloc((size_t) total_size * 
                                  nctypelen(in_vol->volume->datatype));
 
    /* Get space for slice scale and offset */
    in_vol->volume->scale = 
-      MALLOC(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
+      malloc(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
    in_vol->volume->offset = 
-      MALLOC(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
+      malloc(sizeof(double) * in_vol->volume->size[SLC_AXIS]);
 
    /* Save the program flags */
    *program_flags = args.flags;
@@ -594,7 +596,7 @@ public void get_arginfo(int argc, char *argv[],
    /* Explicitly force output files to have regular spacing */
    for (idim=0; idim < WORLD_NDIMS; idim++) {
       if (args.volume_def.coords[idim] != NULL) {
-         FREE(args.volume_def.coords[idim]);
+         free(args.volume_def.coords[idim]);
          args.volume_def.coords[idim] = NULL;
       }
    }
@@ -622,7 +624,7 @@ public void get_arginfo(int argc, char *argv[],
    }
 
    /* Set up the file description for the output file */
-   out_vol->file = MALLOC(sizeof(File_Info));
+   out_vol->file = malloc(sizeof(File_Info));
    out_vol->file->ndims = in_vol->file->ndims;
    out_vol->file->datatype = args.datatype;
    out_vol->file->is_signed = args.is_signed;
@@ -636,7 +638,7 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Get space for output slice */
    out_vol->volume = NULL;
-   out_vol->slice = MALLOC(sizeof(Slice_Data));
+   out_vol->slice = malloc(sizeof(Slice_Data));
 
    /* Loop through list of axes, getting size of volume and slice */
    total_size = 1;
@@ -659,7 +661,7 @@ public void get_arginfo(int argc, char *argv[],
          total_size *= size;
       }
    }
-   out_vol->slice->data = MALLOC((size_t) total_size * sizeof(double));
+   out_vol->slice->data = malloc((size_t) total_size * sizeof(double));
 
    /* Create the output file */
    if (args.clobber) {
@@ -678,14 +680,14 @@ public void get_arginfo(int argc, char *argv[],
                       tm_stamp, &args.transform_info);
    
    /* Save the voxel_to_world transformation information */
-   out_vol->voxel_to_world = MALLOC(sizeof(General_transform));
-   out_vol->world_to_voxel = MALLOC(sizeof(General_transform));
+   out_vol->voxel_to_world = malloc(sizeof(General_transform));
+   out_vol->world_to_voxel = malloc(sizeof(General_transform));
    get_voxel_to_world_transf(&args.volume_def, out_vol->voxel_to_world);
    create_inverse_general_transform(out_vol->voxel_to_world,
                                     out_vol->world_to_voxel);
 
    /* Free the time stamp */
-   FREE(tm_stamp);
+   free(tm_stamp);
 
 }
 
@@ -704,7 +706,7 @@ public void get_arginfo(int argc, char *argv[],
 @CREATED    : August 5, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void check_imageminmax(File_Info *fp, Volume_Data *volume)
+static void check_imageminmax(File_Info *fp, Volume_Data *volume)
 {
    int ndims, idim, dim[MAX_VAR_DIMS], imgdim[MAX_VAR_DIMS];
    int ivar, varid;
@@ -767,7 +769,7 @@ public void check_imageminmax(File_Info *fp, Volume_Data *volume)
 @CREATED    : February 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_file_info(char *filename, int initialized_volume_def, 
+static void get_file_info(char *filename, int initialized_volume_def, 
                           Volume_Definition *volume_def,
                           File_Info *file_info)
 {
@@ -817,7 +819,7 @@ public void get_file_info(char *filename, int initialized_volume_def,
             volume_def->dircos[idim][jdim] = 0.0;
       }
       if (initialized_volume_def && (volume_def->coords[idim] != NULL)) {
-         FREE(volume_def->coords[idim]);
+         free(volume_def->coords[idim]);
       }
       volume_def->coords[idim] = NULL;
       (void) strcpy(volume_def->units[idim], "mm");
@@ -910,14 +912,14 @@ public void get_file_info(char *filename, int initialized_volume_def,
          coord_spacing = REGULAR;
       }
       if (coord_spacing == IRREGULAR) {
-         volume_def->coords[cur_axis] = MALLOC(sizeof(double) * dimlength);
+         volume_def->coords[cur_axis] = malloc(sizeof(double) * dimlength);
          varstart = 0;
          varcount = dimlength;
          if (mivarget(file_info->mincid, dimid, &varstart, &varcount,
                       NC_DOUBLE, MI_SIGNED, volume_def->coords[cur_axis])
                    == MI_ERROR) {
             ncopts = NC_VERBOSE | NC_FATAL;
-            FREE(volume_def->coords[cur_axis]);
+            free(volume_def->coords[cur_axis]);
             volume_def->coords[cur_axis] = NULL;
             continue;
          }
@@ -960,7 +962,7 @@ public void get_file_info(char *filename, int initialized_volume_def,
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_args_volume_def(Volume_Definition *input_volume_def,
+static void get_args_volume_def(Volume_Definition *input_volume_def,
                                 Volume_Definition *args_volume_def)
 {
    int idim, jdim;
@@ -1008,7 +1010,7 @@ public void get_args_volume_def(Volume_Definition *input_volume_def,
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void transform_volume_def(Transform_Info *transform_info,
+static void transform_volume_def(Transform_Info *transform_info,
                                  Volume_Definition *input_volume_def,
                                  Volume_Definition *transformed_volume_def)
 {
@@ -1112,7 +1114,7 @@ public void transform_volume_def(Transform_Info *transform_info,
 @CREATED    : November 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int is_zero_vector(double vector[])
+static int is_zero_vector(double vector[])
 {
    return ((vector[0] == 0.0) &&
            (vector[1] == 0.0) &&
@@ -1131,7 +1133,7 @@ public int is_zero_vector(double vector[])
 @CREATED    : November 9, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void normalize_vector(double vector[])
+static void normalize_vector(double vector[])
 {
    int idim;
    double magnitude;
@@ -1169,7 +1171,7 @@ public void normalize_vector(double vector[])
 @CREATED    : February 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void create_output_file(char *filename, int cflags, 
+static void create_output_file(char *filename, int cflags, 
                                Volume_Definition *volume_def,
                                File_Info *in_file,
                                File_Info *out_file,
@@ -1221,14 +1223,14 @@ public void create_output_file(char *filename, int cflags,
        (datatype != NC_CHAR))
       att_length = 0;
    att_length += strlen(tm_stamp) + 1;
-   string = MALLOC(att_length);
+   string = malloc(att_length);
    string[0] = '\0';
    (void) miattgetstr(out_file->mincid, NC_GLOBAL, MIhistory, att_length, 
                       string);
    ncopts=NC_VERBOSE | NC_FATAL;
    (void) strcat(string, tm_stamp);
    (void) miattputstr(out_file->mincid, NC_GLOBAL, MIhistory, string);
-   FREE(string);
+   free(string);
 
    /* Get the dimension ids from the input file */
    (void) ncvarinq(in_file->mincid, in_file->imgid, NULL, NULL, 
@@ -1273,7 +1275,7 @@ public void create_output_file(char *filename, int cflags,
          size, then we must rename it */
       if (is_volume_dimension && dim_exists && 
           (out_file->nelements[out_index] != in_file->nelements[in_index])) {
-         string = MALLOC(MAX_NC_NAME);
+         string = malloc(MAX_NC_NAME);
          ncopts = 0;
          idim = 0;
          do {
@@ -1282,7 +1284,7 @@ public void create_output_file(char *filename, int cflags,
          } while (ncdimid(out_file->mincid, string) != MI_ERROR);
          ncopts = NC_VERBOSE | NC_FATAL;
          (void) ncdimrename(out_file->mincid, out_dims[out_index], string);
-         FREE(string);
+         free(string);
          out_dims[out_index] = ncdimdef(out_file->mincid, dimname, 
                                         out_file->nelements[out_index]);
       }
@@ -1369,7 +1371,7 @@ public void create_output_file(char *filename, int cflags,
       }
 
       /* Look for an unused transformation attribute */
-      string = MALLOC(MI_MAX_ATTSTR_LEN);
+      string = malloc(MI_MAX_ATTSTR_LEN);
       itrans = 0;
       do {
          (void) sprintf(string, "transformation%d-filename", itrans);
@@ -1392,7 +1394,7 @@ public void create_output_file(char *filename, int cflags,
          (void) miattputstr(out_file->mincid, varid, string, MI_TRUE);
       }
 
-      FREE(string);
+      free(string);
 
    }         /* If transform specified on command line */
 
@@ -1445,7 +1447,7 @@ public void create_output_file(char *filename, int cflags,
 @CREATED    : February 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_voxel_to_world_transf(Volume_Definition *volume_def, 
+static void get_voxel_to_world_transf(Volume_Definition *volume_def, 
                                       General_transform *voxel_to_world)
 {
    int idim, jdim, cur_dim, vol_axis;
@@ -1488,7 +1490,7 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
    /* If we have an irregularly spaced dimension, then create the appropriate
       transform */
    if (irregular) {
-      irreg_transf_data = MALLOC(sizeof(*irreg_transf_data));
+      irreg_transf_data = malloc(sizeof(*irreg_transf_data));
 
       /* Loop through the axes */
       for (idim=0; idim < WORLD_NDIMS; idim++) {
@@ -1508,7 +1510,7 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
             dimlength = volume_def->nelements[idim];
             irreg_transf_data->nelements[vol_axis] = dimlength;
             irreg_transf_data->coords[vol_axis] =
-               MALLOC(sizeof(double) * dimlength);
+               malloc(sizeof(double) * dimlength);
 
             /* Normalize the coordinates to give first coord 0 and
                last coord n-1 (so that we can concat with the linear
@@ -1529,7 +1531,7 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
                             sizeof(*irreg_transf_data),
                             irregular_transform_function,
                             irregular_inverse_transform_function);
-      FREE(irreg_transf_data);
+      free(irreg_transf_data);
 
       /* Concatenate the linear transform with the irregular transform */
       copy_general_transform(voxel_to_world, &linear_transf);
@@ -1556,7 +1558,7 @@ public void get_voxel_to_world_transf(Volume_Definition *volume_def,
 @CREATED    : November 4, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void irregular_transform_function(void *user_data,
+static void irregular_transform_function(void *user_data,
                                          Real x,
                                          Real y,
                                          Real z,
@@ -1618,7 +1620,7 @@ public void irregular_transform_function(void *user_data,
 @CREATED    : November 4, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void irregular_inverse_transform_function(void *user_data,
+static void irregular_inverse_transform_function(void *user_data,
                                                  Real x,
                                                  Real y,
                                                  Real z,
@@ -1712,7 +1714,7 @@ public void irregular_inverse_transform_function(void *user_data,
 @MODIFIED   : February 10, 1993 (Peter Neelin)
                  - ripped off from MINC code
 ---------------------------------------------------------------------------- */
-public double get_default_range(char *what, nc_type datatype, int is_signed)
+static double get_default_range(char *what, nc_type datatype, int is_signed)
 {
    double limit;
 
@@ -1753,7 +1755,7 @@ public double get_default_range(char *what, nc_type datatype, int is_signed)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void finish_up(VVolume *in_vol, VVolume *out_vol)
+static void finish_up(VVolume *in_vol, VVolume *out_vol)
 {
    File_Info *in_file, *out_file;
 
@@ -1792,7 +1794,7 @@ public void finish_up(VVolume *in_vol, VVolume *out_vol)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_transformation(char *dst, char *key, char *nextArg)
+static int get_transformation(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Transform_Info *transform_info;
@@ -1838,14 +1840,14 @@ public int get_transformation(char *dst, char *key, char *nextArg)
 
    /* Read in the file for later use */
    if (transform_info->file_contents == NULL) {
-      transform_info->file_contents = MALLOC(TRANSFORM_BUFFER_INCREMENT);
+      transform_info->file_contents = malloc(TRANSFORM_BUFFER_INCREMENT);
       transform_info->buffer_length = TRANSFORM_BUFFER_INCREMENT;
    }
    for (index = 0; (ch=getc(fp)) != EOF; index++) {
       if (index >= transform_info->buffer_length-1) {
          transform_info->buffer_length += TRANSFORM_BUFFER_INCREMENT;
          transform_info->file_contents = 
-            REALLOC(transform_info->file_contents, 
+            realloc(transform_info->file_contents, 
                     transform_info->buffer_length);
       }
       transform_info->file_contents[index] = (char) ch;
@@ -1886,7 +1888,7 @@ public int get_transformation(char *dst, char *key, char *nextArg)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_model_file(char *dst, char *key, char *nextArg)
+static int get_model_file(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Volume_Definition *volume_def;
@@ -1931,7 +1933,7 @@ public int get_model_file(char *dst, char *key, char *nextArg)
 @CREATED    : November 14, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int set_standard_sampling(char *dst, char *key, char *nextArg)
+static int set_standard_sampling(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Volume_Definition *volume_def;
@@ -1967,7 +1969,7 @@ public int set_standard_sampling(char *dst, char *key, char *nextArg)
 @CREATED    : December 12, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int set_spacetype(char *dst, char *key, char *nextArg)
+static int set_spacetype(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Volume_Definition *volume_def;
@@ -2024,7 +2026,7 @@ public int set_spacetype(char *dst, char *key, char *nextArg)
 @CREATED    : December 12, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int set_units(char *dst, char *key, char *nextArg)
+static int set_units(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Volume_Definition *volume_def;
@@ -2067,7 +2069,7 @@ public int set_units(char *dst, char *key, char *nextArg)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_axis_order(char *dst, char *key, char *nextArg)
+static int get_axis_order(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    Volume_Definition *volume_def;
@@ -2109,7 +2111,7 @@ public int get_axis_order(char *dst, char *key, char *nextArg)
 @CREATED    : February 15, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_fillvalue(char *dst, char *key, char *nextArg)
+static int get_fillvalue(char *dst, char *key, char *nextArg)
      /* ARGSUSED */
 {
    double *dptr;

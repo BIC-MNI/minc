@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.3  2001-08-16 13:32:39  neelin
+ * Revision 6.4  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.3  2001/08/16 13:32:39  neelin
  * Partial fix for valid_range of different type from image (problems
  * arising from double to float conversion/rounding). NOT COMPLETE.
  *
@@ -84,7 +87,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.3 2001-08-16 13:32:39 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.4 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -94,7 +97,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 #include <math.h>
 #include <minc.h>
 #include <volume_io.h>
-#include <minc_def.h>
 #include "mincresample.h"
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -113,9 +115,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void resample_volumes(Program_Flags *program_flags,
-                             VVolume *in_vol, VVolume *out_vol, 
-                             General_transform *transformation)
+void resample_volumes(Program_Flags *program_flags,
+                      VVolume *in_vol, VVolume *out_vol, 
+                      General_transform *transformation)
 {
    long in_start[MAX_VAR_DIMS], in_count[MAX_VAR_DIMS], in_end[MAX_VAR_DIMS];
    long out_start[MAX_VAR_DIMS], out_count[MAX_VAR_DIMS];
@@ -132,9 +134,9 @@ public void resample_volumes(Program_Flags *program_flags,
 
    /* Allocate slice min/max arrays if needed */
    if (ofp->do_slice_renormalization) {
-      slice_min = MALLOC(ofp->images_per_file * ofp->slices_per_image *
+      slice_min = malloc(ofp->images_per_file * ofp->slices_per_image *
                          sizeof(double));
-      slice_max = MALLOC(ofp->images_per_file * ofp->slices_per_image *
+      slice_max = malloc(ofp->images_per_file * ofp->slices_per_image *
                          sizeof(double));
    }
 
@@ -264,8 +266,8 @@ public void resample_volumes(Program_Flags *program_flags,
    /* Recompute slices and free vectors, if needed */
    if (ofp->do_slice_renormalization) {
       renormalize_slices(program_flags, out_vol, slice_min, slice_max);
-      FREE(slice_min);
-      FREE(slice_max);
+      free(slice_min);
+      free(slice_max);
    }
 
 }
@@ -285,8 +287,8 @@ public void resample_volumes(Program_Flags *program_flags,
 @CREATED    : February 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void load_volume(File_Info *file, long start[], long count[], 
-                        Volume_Data *volume)
+void load_volume(File_Info *file, long start[], long count[], 
+                 Volume_Data *volume)
 {
    long nread, islice, mm_start[MAX_VAR_DIMS], mm_count[MAX_VAR_DIMS];
    int varid, ivar, idim, ndims;
@@ -420,9 +422,9 @@ public void load_volume(File_Info *file, long start[], long count[],
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol, 
-                      General_transform *transformation, 
-                      double *minimum, double *maximum)
+void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol, 
+               General_transform *transformation, 
+               double *minimum, double *maximum)
 {
    Slice_Data *slice;
    Volume_Data *volume;
@@ -541,8 +543,8 @@ public void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol,
 @CREATED    : February 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int trilinear_interpolant(Volume_Data *volume, 
-                                 Coord_Vector coord, double *result)
+int trilinear_interpolant(Volume_Data *volume, 
+                          Coord_Vector coord, double *result)
 {
    long slcind, rowind, colind, slcmax, rowmax, colmax;
    long slcnext, rownext, colnext;
@@ -658,8 +660,8 @@ public int trilinear_interpolant(Volume_Data *volume,
 @CREATED    : February 12, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int tricubic_interpolant(Volume_Data *volume, 
-                                Coord_Vector coord, double *result)
+int tricubic_interpolant(Volume_Data *volume, 
+                         Coord_Vector coord, double *result)
 {
    long slcind, rowind, colind, slcmax, rowmax, colmax, index[VOL_NDIMS];
    double frac[VOL_NDIMS];
@@ -716,9 +718,9 @@ public int tricubic_interpolant(Volume_Data *volume,
 @CREATED    : February 12, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int do_Ncubic_interpolation(Volume_Data *volume, 
-                                   long index[], int cur_dim, 
-                                   double frac[], double *result)
+int do_Ncubic_interpolation(Volume_Data *volume, 
+                            long index[], int cur_dim, 
+                            double frac[], double *result)
 {
    long base_index;
    double v0, v1, v2, v3, u;
@@ -817,8 +819,8 @@ public int do_Ncubic_interpolation(Volume_Data *volume,
 @CREATED    : February 12, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int nearest_neighbour_interpolant(Volume_Data *volume, 
-                                         Coord_Vector coord, double *result)
+int nearest_neighbour_interpolant(Volume_Data *volume, 
+                                  Coord_Vector coord, double *result)
 {
    long slcind, rowind, colind, slcmax, rowmax, colmax;
 
@@ -866,7 +868,7 @@ public int nearest_neighbour_interpolant(Volume_Data *volume,
 @CREATED    : October 29, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
+static void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
                                double slice_min[], double slice_max[])
 {
    File_Info *ofp;
@@ -899,8 +901,8 @@ public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
    }
 
    /* Find the max/min for each image */
-   image_maximum = MALLOC( sizeof(double) * ofp->images_per_file);
-   image_minimum = MALLOC( sizeof(double) * ofp->images_per_file);
+   image_maximum = malloc( sizeof(double) * ofp->images_per_file);
+   image_minimum = malloc( sizeof(double) * ofp->images_per_file);
    for (image=0; image < ofp->images_per_file; image++) {
       image_maximum[image] = -DBL_MAX;
       image_minimum[image] =  DBL_MAX;
@@ -996,8 +998,8 @@ public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
    }
 
    /* Free the image max/min arrays */
-   FREE(image_maximum);
-   FREE(image_minimum);
+   free(image_maximum);
+   free(image_minimum);
 
    return;
 }

@@ -6,7 +6,10 @@
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: copy_data.c,v $
- * Revision 6.3  2001-04-17 18:40:24  neelin
+ * Revision 6.4  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.3  2001/04/17 18:40:24  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.3 2001-04-17 18:40:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.4 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -73,9 +76,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.
 #include <string.h>
 #include <math.h>
 #include <minc.h>
-#include <minc_def.h>
 #include <nd_loop.h>
 #include "mincreshape.h"
+
+#define ROUND( x ) ((long) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) ))
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : copy_data
@@ -90,7 +94,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void copy_data(Reshape_info *reshape_info)
+void copy_data(Reshape_info *reshape_info)
 {
    int idim, odim, out_ndims;
    long block_begin[MAX_VAR_DIMS], block_end[MAX_VAR_DIMS];
@@ -123,7 +127,7 @@ public void copy_data(Reshape_info *reshape_info)
    for (odim=0; odim < out_ndims; odim++) {
       total_size *= reshape_info->chunk_count[odim];
    }
-   chunk_data = MALLOC(total_size);
+   chunk_data = malloc(total_size);
 
    /* Get enough space for image-min and max values for a block */
    get_num_minmax_values(reshape_info, NULL, block_count, 
@@ -131,7 +135,7 @@ public void copy_data(Reshape_info *reshape_info)
    num_values = ((num_min_values > num_max_values) ?
                  num_min_values : num_max_values);
    if (num_values > 0)
-      minmax_buffer = MALLOC(num_values * sizeof(double));
+      minmax_buffer = malloc(num_values * sizeof(double));
    else
       minmax_buffer = NULL;
 
@@ -195,11 +199,11 @@ public void copy_data(Reshape_info *reshape_info)
    }
 
    /* Free the chunk space */
-   FREE(chunk_data);
+   free(chunk_data);
 
    /* Free minmax buffer */
    if (minmax_buffer != NULL) {
-      FREE(minmax_buffer);
+      free(minmax_buffer);
    }
 
    /* Print ending log message */
@@ -231,7 +235,7 @@ public void copy_data(Reshape_info *reshape_info)
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void get_num_minmax_values(Reshape_info *reshape_info,
+static void get_num_minmax_values(Reshape_info *reshape_info,
                                   long *block_start, long *block_count,
                                   long *num_min_values, long *num_max_values)
 {
@@ -315,7 +319,7 @@ public void get_num_minmax_values(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void handle_normalization(Reshape_info *reshape_info,
+static void handle_normalization(Reshape_info *reshape_info,
                                  long *block_start,
                                  long *block_count,
                                  double *minmax_buffer,
@@ -413,7 +417,7 @@ public void handle_normalization(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void get_block_min_and_max(Reshape_info *reshape_info,
+static void get_block_min_and_max(Reshape_info *reshape_info,
                                   long *block_start,
                                   long *block_count,
                                   double *minmax_buffer,
@@ -519,7 +523,7 @@ public void get_block_min_and_max(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void truncate_input_vectors(Reshape_info *reshape_info,
+static void truncate_input_vectors(Reshape_info *reshape_info,
                                    long *input_start,
                                    long *input_count)
 {
@@ -565,7 +569,7 @@ public void truncate_input_vectors(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void translate_output_to_input(Reshape_info *reshape_info,
+static void translate_output_to_input(Reshape_info *reshape_info,
                                       long *output_start,
                                       long *output_count,
                                       long *input_start,
@@ -611,7 +615,7 @@ public void translate_output_to_input(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void translate_input_to_output(Reshape_info *reshape_info,
+static void translate_input_to_output(Reshape_info *reshape_info,
                                       long *input_start,
                                       long *input_count,
                                       long *output_start,
@@ -654,7 +658,7 @@ public void translate_input_to_output(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void copy_the_chunk(Reshape_info *reshape_info,
+static void copy_the_chunk(Reshape_info *reshape_info,
                            long chunk_start[],
                            long chunk_count[],
                            void *chunk_data,
@@ -772,7 +776,7 @@ public void copy_the_chunk(Reshape_info *reshape_info,
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
-public void convert_value_from_double(double dvalue, 
+static void convert_value_from_double(double dvalue, 
                                       nc_type datatype, int is_signed,
                                       void *ptr)
 {

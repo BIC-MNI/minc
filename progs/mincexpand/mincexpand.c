@@ -10,7 +10,10 @@
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexpand.c,v $
- * Revision 6.1  1999-10-19 14:45:22  neelin
+ * Revision 6.2  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.1  1999/10/19 14:45:22  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:16  neelin
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.1 1999-10-19 14:45:22 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.2 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -58,7 +61,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.
 #include <string.h>
 #include <minc.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE
@@ -122,7 +124,7 @@ int main(int argc, char *argv[])
    }
 
    /* Free the temporary file name string */
-   FREE(newfile);
+   free(newfile);
 
    exit(EXIT_SUCCESS);
 }

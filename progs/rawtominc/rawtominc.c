@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.14  2004-04-27 15:26:34  bert
+ * Revision 6.15  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.14  2004/04/27 15:26:34  bert
  * Added -2 option
  *
  * Revision 6.13  2004/02/02 18:24:58  bert
@@ -143,7 +146,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.14 2004-04-27 15:26:34 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.15 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include "config.h"
@@ -158,7 +161,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <convert_origin_to_start.h>
-#include <minc_def.h>
 
 /* Some constants */
 
@@ -193,11 +195,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
 
 /* Function declarations */
-void parse_args(int argc, char *argv[]);
-void usage_error(char *pname);
-int get_attribute(char *dst, char *key, char *nextarg);
-int get_times(char *dst, char *key, char *nextarg);
-int get_axis_order(char *dst, char *key, char *nextArg);
+static void parse_args(int argc, char *argv[]);
+static void usage_error(char *pname);
+static int get_attribute(char *dst, char *key, char *nextarg);
+static int get_times(char *dst, char *key, char *nextarg);
+static int get_axis_order(char *dst, char *key, char *nextArg);
 
 /* Array containing information about signs. It is subscripted by
    [signtype][type]. Note that the first row should never be used, since
@@ -718,7 +720,7 @@ int main(int argc, char *argv[])
       image_pix *= end[ndims-i];
    pix_size=nctypelen(datatype);
    image_size=image_pix*pix_size;
-   image=MALLOC(image_size);
+   image=malloc(image_size);
 
    /* Loop through the images */
    fastdim=ndims-image_dims-1;
@@ -897,7 +899,7 @@ int main(int argc, char *argv[])
    }
 
    /* Free the memory */
-   FREE(image);
+   free(image);
 
    /* Write the valid max and min */
    if (do_vrange) {
@@ -941,7 +943,7 @@ int main(int argc, char *argv[])
 @CREATED    : December 3, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-void parse_args(int argc, char *argv[])
+static void parse_args(int argc, char *argv[])
 {
    char *ptr;
    int time_size;
@@ -1050,7 +1052,7 @@ void parse_args(int argc, char *argv[])
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : December 2, 1992 (P.N.)
 ---------------------------------------------------------------------------- */
-void usage_error(char *progname)
+static void usage_error(char *progname)
 {
    (void) fprintf(stderr, "\nUsage: %s [<options>] <output.mnc> ", 
                   progname);
@@ -1076,7 +1078,7 @@ void usage_error(char *progname)
 @CREATED    : May 3, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-int get_attribute(char *dst, char *key, char *nextarg)
+static int get_attribute(char *dst, char *key, char *nextarg)
      /* ARGSUSED */
 {
    int need_string, need_double;
@@ -1127,11 +1129,11 @@ int get_attribute(char *dst, char *key, char *nextarg)
       attribute_list_alloc += 10;
       if (attribute_list == NULL) {
          attribute_list = 
-            MALLOC(attribute_list_alloc * sizeof(*attribute_list));
+            malloc(attribute_list_alloc * sizeof(*attribute_list));
       }
       else {
          attribute_list = 
-            REALLOC(attribute_list, 
+            realloc(attribute_list, 
                     attribute_list_alloc * sizeof(*attribute_list));
       }
    }
@@ -1172,7 +1174,7 @@ int get_attribute(char *dst, char *key, char *nextarg)
 @CREATED    : May 3, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-int get_times(char *dst, char *key, char *nextarg)
+static int get_times(char *dst, char *key, char *nextarg)
      /* ARGSUSED */
 {
    int *num_elements_ptr;
@@ -1232,11 +1234,11 @@ int get_times(char *dst, char *key, char *nextarg)
          num_alloc += 20;
          if (time_list == NULL) {
             time_list = 
-               MALLOC(num_alloc * sizeof(*time_list));
+               malloc(num_alloc * sizeof(*time_list));
          }
          else {
             time_list = 
-               REALLOC(time_list, num_alloc * sizeof(*time_list));
+               realloc(time_list, num_alloc * sizeof(*time_list));
          }
       }
       time_list[num_elements-1] = dvalue;
@@ -1252,7 +1254,7 @@ int get_times(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    *num_elements_ptr = num_elements;
    if (*time_list_ptr != NULL) {
-      FREE(*time_list_ptr);
+      free(*time_list_ptr);
    }
    *time_list_ptr = time_list;
 
@@ -1288,7 +1290,7 @@ int get_times(char *dst, char *key, char *nextarg)
 #define YXZ_ORIENTATION 5
 #define ZXY_ORIENTATION 6
 #define STD_ORIENTATION_COUNT 7
-public int get_axis_order(char *dst, char *key, char *nextArg)
+static int get_axis_order(char *dst, char *key, char *nextArg)
 {
     char **dim_name_array;
     char *argp;

@@ -10,7 +10,10 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxeltoworld.c,v $
- * Revision 6.5  2004-04-27 15:38:47  bert
+ * Revision 6.6  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.5  2004/04/27 15:38:47  bert
  * Added milog_init()
  *
  * Revision 6.4  2004/02/02 18:27:51  bert
@@ -65,7 +68,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.5 2004-04-27 15:38:47 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltoworld.c,v 6.6 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -73,7 +76,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/voxeltowor
 #include <string.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE

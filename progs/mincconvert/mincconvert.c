@@ -10,7 +10,10 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.2  2004-09-09 19:25:32  bert
+ * Revision 1.3  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 1.2  2004/09/09 19:25:32  bert
  * Force V1 file format creation if -2 not specified
  *
  * Revision 1.1  2004/04/27 15:27:57  bert
@@ -29,7 +32,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.2 2004-09-09 19:25:32 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.3 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -37,7 +40,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconver
 #include <string.h>
 #include <minc.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 #include <time_stamp.h>
 
 int clobber = 0;

@@ -10,7 +10,10 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.4  2001-10-31 19:40:21  neelin
+ * Revision 6.5  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.4  2001/10/31 19:40:21  neelin
  * Fixed bug in printing of sign for default output - this was introduced
  * in the change to miget_datatype.
  *
@@ -79,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.4 2001-10-31 19:40:21 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -89,10 +92,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 
 #include <float.h>
 #include <minc.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
-#define public
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
@@ -124,12 +125,11 @@ typedef struct {
 #define RTN_ERR(code) if ((code) == MI_ERROR) {return MI_ERROR;}
 
 /* Function prototypes */
-public int main(int argc, char *argv[]);
-public int process_file( char* filename, int header_only );
-public int get_option(char *dst, char *key, char *nextarg);
-public int report_error(void);
-public int get_attname(int mincid, char *string, int *varid, char *name);
-public int print_image_info(char *filename, int mincid);
+static int process_file( char* filename, int header_only );
+static int get_option(char *dst, char *key, char *nextarg);
+static int report_error(void);
+static int get_attname(int mincid, char *string, int *varid, char *name);
+static int print_image_info(char *filename, int mincid);
 /* Variables used for argument parsing */
 char *error_string = NULL;
 Option_type option_list[MAX_NUM_OPTIONS] = {ENDLIST};
@@ -164,7 +164,7 @@ ArgvInfo argTable[] = {
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    int ioption, ifile, header_only;
    int ret_value = EXIT_SUCCESS;
@@ -224,7 +224,7 @@ public int main(int argc, char *argv[])
 @CREATED    : April 25, 2000 (Steve Robbins)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int process_file( char* filename, int header_only )
+static int process_file( char* filename, int header_only )
 {
    int mincid, varid, dimid;
    int ndims, dims[MAX_VAR_DIMS];
@@ -330,23 +330,23 @@ public int process_file( char* filename, int header_only )
                row_length = length;
          }
          if (datatype==NC_CHAR) {
-            cdata = MALLOC(var_length*sizeof(char));
+            cdata = malloc(var_length*sizeof(char));
             CHK_ERR(ncvarget(mincid, varid, start, count, cdata));
             for (ival=0; ival<var_length; ival++) {
                (void) putchar((int) cdata[ival]);
                if (((ival+1) % row_length) == 0)
                   (void) putchar((int)'\n');
             }
-            FREE(cdata);
+            free(cdata);
          }
          else {
-            ddata = MALLOC(var_length*sizeof(double));
+            ddata = malloc(var_length*sizeof(double));
             CHK_ERR(mivarget(mincid, varid, start, count, 
                              NC_DOUBLE, NULL, ddata));
             for (ival=0; ival<var_length; ival++) {
                (void) printf("%.20g\n", ddata[ival]);
             }
-            FREE(ddata);
+            free(ddata);
          }
          break;
       case ATTTYPE:
@@ -358,21 +358,21 @@ public int process_file( char* filename, int header_only )
          CHK_ERR(get_attname(mincid, string, &varid, name));
          CHK_ERR(ncattinq(mincid, varid, name, &datatype, &att_length));
          if (datatype == NC_CHAR) {
-            cdata = MALLOC((att_length+1)*sizeof(char));
+            cdata = malloc((att_length+1)*sizeof(char));
             if (miattgetstr(mincid, varid, name, att_length+1, cdata)==NULL)
                {REPORT_ERROR}
             (void) printf("%s\n", cdata);
-            FREE(cdata);
+            free(cdata);
          }
          else {
-            ddata = MALLOC(att_length * sizeof(double));
+            ddata = malloc(att_length * sizeof(double));
             CHK_ERR(miattget(mincid, varid, name, NC_DOUBLE, att_length,
                              ddata, NULL));
             for (iatt=0; iatt<att_length; iatt++) {
                (void) printf("%.20g ", ddata[iatt]);
             }
             (void) printf("\n");
-            FREE(ddata);
+            free(ddata);
          }
          break;
       default:
@@ -402,7 +402,7 @@ public int process_file( char* filename, int header_only )
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_option(char *dst, char *key, char *nextarg)
+static int get_option(char *dst, char *key, char *nextarg)
      /* ARGSUSED */
 {
    Option_code code;
@@ -454,7 +454,7 @@ public int get_option(char *dst, char *key, char *nextarg)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int report_error(void)
+static int report_error(void)
 {
    if (error_string == NULL) {
       (void) fprintf(stderr, "Error reading file.\n");
@@ -481,7 +481,7 @@ public int report_error(void)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_attname(int mincid, char *string, int *varid, char *name)
+static int get_attname(int mincid, char *string, int *varid, char *name)
 {
 
 #define ATT_SEP_CHAR ':'
@@ -530,7 +530,7 @@ public int get_attname(int mincid, char *string, int *varid, char *name)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int print_image_info(char *filename, int mincid)
+static int print_image_info(char *filename, int mincid)
 {
    int imgid, ndims, dim[MAX_VAR_DIMS], varid;
    nc_type datatype;

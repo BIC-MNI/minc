@@ -10,7 +10,10 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: worldtovoxel.c,v $
- * Revision 6.4  2004-02-02 18:27:51  bert
+ * Revision 6.5  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.4  2004/02/02 18:27:51  bert
  * Call ParseArgv() so that version information can be output
  *
  * Revision 6.3  2001/04/24 13:38:41  neelin
@@ -62,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.4 2004-02-02 18:27:51 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -70,7 +73,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovox
 #include <string.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
-#include <minc_def.h>
 
 /* Constants */
 #ifndef TRUE

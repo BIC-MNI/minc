@@ -10,7 +10,10 @@
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakescalar.c,v $
- * Revision 6.4  2004-04-27 15:32:33  bert
+ * Revision 6.5  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.4  2004/04/27 15:32:33  bert
  * Added -2 option
  *
  * Revision 6.3  2001/04/24 13:38:43  neelin
@@ -40,7 +43,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.4 2004-04-27 15:32:33 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -52,12 +55,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmak
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -87,13 +85,13 @@ typedef struct {
 } Program_Data;
 
 /* Function prototypes */
-public void do_makescalar(void *caller_data, long num_voxels,
+static void do_makescalar(void *caller_data, long num_voxels,
                           int input_num_buffers, int input_vector_length,
                           double *input_data[],
                           int output_num_buffers, int output_vector_length,
                           double *output_data[], Loop_Info *loop_info);
-public int get_double_list(char *dst, char *key, char *nextarg);
-public long get_vector_length(int mincid);
+static int get_double_list(char *dst, char *key, char *nextarg);
+static long get_vector_length(int mincid);
 
 /* Argument variables */
 int clobber = FALSE;
@@ -206,7 +204,7 @@ int main(int argc, char *argv[])
       program_data.conversion_type = conversion_type;
       program_data.num_coefficients = linear_coefficients.numvalues;
       program_data.linear_coefficients = 
-         MALLOC(linear_coefficients.numvalues * 
+         malloc(linear_coefficients.numvalues * 
                 sizeof(*program_data.linear_coefficients));
       for (ivalue=0; ivalue < linear_coefficients.numvalues; ivalue++) {
          program_data.linear_coefficients[ivalue] =
@@ -252,10 +250,10 @@ int main(int argc, char *argv[])
 
    /* Free stuff */
    if (program_data.linear_coefficients != NULL) {
-      FREE(program_data.linear_coefficients);
+      free(program_data.linear_coefficients);
    }
    if (linear_coefficients.values != NULL) {
-      FREE(linear_coefficients.values);
+      free(linear_coefficients.values);
    }
 
    exit(EXIT_SUCCESS);
@@ -282,7 +280,7 @@ int main(int argc, char *argv[])
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_makescalar(void *caller_data, long num_voxels,
+static void do_makescalar(void *caller_data, long num_voxels,
                           int input_num_buffers, int input_vector_length,
                           double *input_data[],
                           int output_num_buffers, int output_vector_length,
@@ -386,7 +384,7 @@ public void do_makescalar(void *caller_data, long num_voxels,
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_double_list(char *dst, char *key, char *nextarg)
+static int get_double_list(char *dst, char *key, char *nextarg)
 {
 #define VECTOR_SEPARATOR ','
 
@@ -435,11 +433,11 @@ public int get_double_list(char *dst, char *key, char *nextarg)
          num_alloc += 20;
          if (double_list == NULL) {
             double_list = 
-               MALLOC(num_alloc * sizeof(*double_list));
+               malloc(num_alloc * sizeof(*double_list));
          }
          else {
             double_list = 
-               REALLOC(double_list, num_alloc * sizeof(*double_list));
+               realloc(double_list, num_alloc * sizeof(*double_list));
          }
       }
       double_list[num_elements-1] = dvalue;
@@ -455,7 +453,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
    /* Update the global variables */
    double_array->numvalues = num_elements;
    if (double_array->values != NULL) {
-      FREE(double_array->values);
+      free(double_array->values);
    }
    double_array->values = double_list;
 
@@ -474,7 +472,7 @@ public int get_double_list(char *dst, char *key, char *nextarg)
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long get_vector_length(int mincid)
+static long get_vector_length(int mincid)
 {
    int imgid;
    int ndims;

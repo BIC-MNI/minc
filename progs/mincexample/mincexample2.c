@@ -12,7 +12,10 @@
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexample2.c,v $
- * Revision 6.4  2001-09-18 15:32:46  neelin
+ * Revision 6.5  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.4  2001/09/18 15:32:46  neelin
  * Create image variable last to allow big images and to fix compatibility
  * problems with 2.3 and 3.x.
  *
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.4 2001-09-18 15:32:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -69,22 +72,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexampl
 #include <minc.h>
 #include <time_stamp.h>
 
-/* Include the standard minc definitions for cross-platform compilation
-   if we are compiling the package, otherwise, just define MALLOC,
-   FREE, EXIT_SUCCESS and EXIT_FAILURE */
-#ifdef COMPILING_MINC_PACKAGE
-#  include <minc_def.h>
-#else
-#  define MALLOC(size) ((void *) malloc(size))
-#  define FREE(ptr) free(ptr)
-#  ifndef EXIT_SUCCESS
-#    define EXIT_SUCCESS 0
-#    define EXIT_FAILURE 1
-#  endif
-#endif
-
 /* Constants */
-#define public
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
@@ -113,29 +101,29 @@ typedef struct {
 } Volume_Info;
 
 /* Function prototypes */
-public int get_volume_info(char *infile, Volume_Info *volume_info);
-public void setup_input_icv(int icvid);
-public void get_dimension_info(char *infile, int icvid, 
+static int get_volume_info(char *infile, Volume_Info *volume_info);
+static void setup_input_icv(int icvid);
+static void get_dimension_info(char *infile, int icvid, 
                                Volume_Info *volume_info);
-public void close_volume(int icvid);
-public void get_volume_slice(int icvid, Volume_Info *volume_info, 
+static void close_volume(int icvid);
+static void get_volume_slice(int icvid, Volume_Info *volume_info, 
                              int slice_num, unsigned char *image);
-public int save_volume_info(int input_icvid, char *outfile, char *arg_string, 
+static int save_volume_info(int input_icvid, char *outfile, char *arg_string, 
                             Volume_Info *volume_info);
-public void setup_output_icv(int icvid);
-public void setup_variables(int inmincid, int mincid, 
+static void setup_output_icv(int icvid);
+static void setup_variables(int inmincid, int mincid, 
                             Volume_Info *volume_info, 
                             char *arg_string);
-public void setup_image_variables(int inmincid, int mincid, 
+static void setup_image_variables(int inmincid, int mincid, 
                                   int ndims, int dim[]);
-public void update_history(int mincid, char *arg_string);
-public void save_volume_slice(int icvid, Volume_Info *volume_info, 
+static void update_history(int mincid, char *arg_string);
+static void save_volume_slice(int icvid, Volume_Info *volume_info, 
                               int slice_num, unsigned char *image,
                               double slice_min, double slice_max);
 
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    char *infile, *outfile;
    Volume_Info volume_info;
@@ -181,7 +169,7 @@ public int main(int argc, char *argv[])
                                    &volume_info);
 
    /* Loop through slices, copying them */
-   image = MALLOC(volume_info.nrows * volume_info.ncolumns * sizeof(*image));
+   image = malloc(volume_info.nrows * volume_info.ncolumns * sizeof(*image));
    for (islice=0; islice < volume_info.nslices; islice++) {
       get_volume_slice(input_icvid, &volume_info, islice, image);
       save_volume_slice(output_icvid, &volume_info, islice, image,
@@ -191,7 +179,7 @@ public int main(int argc, char *argv[])
    /* Free up image and close files */
    close_volume(input_icvid);
    close_volume(output_icvid);
-   FREE(image);
+   free(image);
 
    exit(EXIT_SUCCESS);
 }
@@ -208,7 +196,7 @@ public int main(int argc, char *argv[])
 @CREATED    : August 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_volume_info(char *infile, Volume_Info *volume_info)
+static int get_volume_info(char *infile, Volume_Info *volume_info)
 {
    int icvid, mincid;
 
@@ -244,7 +232,7 @@ public int get_volume_info(char *infile, Volume_Info *volume_info)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_input_icv(int icvid)
+static void setup_input_icv(int icvid)
 {
    /* Set desired type */
    (void) miicv_setint(icvid, MI_ICV_TYPE, NC_BYTE);
@@ -286,7 +274,7 @@ public void setup_input_icv(int icvid)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_dimension_info(char *infile, int icvid, 
+static void get_dimension_info(char *infile, int icvid, 
                                Volume_Info *volume_info)
 {
    int mincid, imgid, varid;
@@ -384,7 +372,7 @@ public void get_dimension_info(char *infile, int icvid,
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void close_volume(int icvid)
+static void close_volume(int icvid)
 {
    int mincid;
 
@@ -414,7 +402,7 @@ public void close_volume(int icvid)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_volume_slice(int icvid, Volume_Info *volume_info, 
+static void get_volume_slice(int icvid, Volume_Info *volume_info, 
                              int slice_num, unsigned char *image)
 {
    long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
@@ -461,7 +449,7 @@ public void get_volume_slice(int icvid, Volume_Info *volume_info,
 @CREATED    : August 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int save_volume_info(int input_icvid, char *outfile, char *arg_string, 
+static int save_volume_info(int input_icvid, char *outfile, char *arg_string, 
                             Volume_Info *volume_info)
 {
    int mincid, icvid, inmincid;
@@ -500,7 +488,7 @@ public int save_volume_info(int input_icvid, char *outfile, char *arg_string,
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_output_icv(int icvid)
+static void setup_output_icv(int icvid)
 {
    /* Set desired type */
    (void) miicv_setint(icvid, MI_ICV_TYPE, NC_BYTE);
@@ -530,7 +518,7 @@ public void setup_output_icv(int icvid)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_variables(int inmincid, int mincid, 
+static void setup_variables(int inmincid, int mincid, 
                             Volume_Info *volume_info, 
                             char *arg_string)
 {
@@ -619,7 +607,7 @@ public void setup_variables(int inmincid, int mincid,
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void setup_image_variables(int inmincid, int mincid, 
+static void setup_image_variables(int inmincid, int mincid, 
                                   int ndims, int dim[])
 {
    int imgid, maxid, minid;
@@ -665,7 +653,7 @@ public void setup_image_variables(int inmincid, int mincid,
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void update_history(int mincid, char *arg_string)
+static void update_history(int mincid, char *arg_string)
 {
    nc_type datatype;
    int att_length;
@@ -680,7 +668,7 @@ public void update_history(int mincid, char *arg_string)
    att_length += strlen(arg_string) + 1;
 
    /* Allocate a string and get the old history */
-   string = MALLOC(att_length);
+   string = malloc(att_length);
    string[0] = '\0';
    (void) miattgetstr(mincid, NC_GLOBAL, MIhistory, att_length, 
                       string);
@@ -689,7 +677,7 @@ public void update_history(int mincid, char *arg_string)
    /* Add the new command and put the new history. */
    (void) strcat(string, arg_string);
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory, string);
-   FREE(string);
+   free(string);
 
 }
 
@@ -711,7 +699,7 @@ public void update_history(int mincid, char *arg_string)
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void save_volume_slice(int icvid, Volume_Info *volume_info, 
+static void save_volume_slice(int icvid, Volume_Info *volume_info, 
                               int slice_num, unsigned char *image,
                               double slice_min, double slice_max)
 {

@@ -10,7 +10,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.2  2004-04-27 15:28:39  bert
+ * Revision 6.3  2004-11-01 22:38:39  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 6.2  2004/04/27 15:28:39  bert
  * Added -2 option
  *
  * Revision 6.1  1999/10/19 14:45:30  neelin
@@ -64,7 +67,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.2 2004-04-27 15:28:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.3 2004-11-01 22:38:39 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -74,12 +77,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.
 #include <minc.h>
 #include <ParseArgv.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include <voxel_loop.h>
-
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -95,7 +93,7 @@ typedef struct {
 } Window_Data;
 
 /* Function prototypes */
-public void do_window(void *caller_data, long num_voxels, 
+static void do_window(void *caller_data, long num_voxels, 
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,
@@ -127,7 +125,7 @@ ArgvInfo argTable[] = {
 };
 /* Main program */
 
-public int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    char *infile, *outfile;
    char *arg_string;
@@ -201,7 +199,7 @@ public int main(int argc, char *argv[])
 @CREATED    : January 11, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_window(void *caller_data, long num_voxels, 
+static void do_window(void *caller_data, long num_voxels, 
                       int input_num_buffers, int input_vector_length,
                       double *input_data[],
                       int output_num_buffers, int output_vector_length,

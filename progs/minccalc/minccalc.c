@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.10  2004-06-11 20:55:37  bert
+ * Revision 1.11  2004-11-01 22:38:38  bert
+ * Eliminate all references to minc_def.h
+ *
+ * Revision 1.10  2004/06/11 20:55:37  bert
  * Fix for nasty bug which causes lots of bogus zero values to be inserted when minccalc is used with a file with a vector_dimension
  *
  * Revision 1.9  2004/04/27 15:37:52  bert
@@ -69,7 +72,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.10 2004-06-11 20:55:37 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.11 2004-11-01 22:38:38 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -84,13 +87,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 
 #include <ParseArgv.h>
 #include <voxel_loop.h>
 #include <time_stamp.h>
-#include <minc_def.h>
 #include "node.h"
 
 /* Constants */
-#ifndef public
-#  define public
-#endif
 
 #ifndef TRUE
 #  define TRUE 1
@@ -106,14 +105,14 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 
 #define DEFAULT_BOOL -1
 
 /* Function prototypes */
-public void do_math(void *caller_data, long num_voxels, 
+static void do_math(void *caller_data, long num_voxels, 
                     int input_num_buffers, 
                     int input_vector_length, double *input_data[],
                     int output_num_buffers, int output_vector_length,
                     double *output_data[], Loop_Info *loop_info);
-public char **read_file_names(char *filelist, int *num_files);
-public char *read_expression_file(char *filename);
-public int get_list_option(char *dst, char *key, int argc, char **argv);
+static char **read_file_names(char *filelist, int *num_files);
+static char *read_expression_file(char *filename);
+static int get_list_option(char *dst, char *key, int argc, char **argv);
 
 /* Argument variables */
 int Output_list_size = 0;
@@ -229,7 +228,7 @@ vector_t   A;
 scalar_t   *Output_values;
 
 /* Main program */
-public int main(int argc, char *argv[]){
+int main(int argc, char *argv[]){
    char **infiles, **outfiles;
    int nfiles, nout;
    char *arg_string;
@@ -255,7 +254,7 @@ public int main(int argc, char *argv[]){
 
    /* Get output file names */
    nout = (Output_list == NULL ? 1 : Output_list_size);
-   outfiles = MALLOC(nout * sizeof(*outfiles));
+   outfiles = malloc(nout * sizeof(*outfiles));
    if (Output_list == NULL) {
       outfiles[0] = argv[argc-1];
    }
@@ -343,7 +342,7 @@ public int main(int argc, char *argv[]){
       Output_values = NULL;
    }
    else {
-      Output_values = MALLOC(Output_list_size * sizeof(*Output_values));
+      Output_values = malloc(Output_list_size * sizeof(*Output_values));
       for (i=0; i < Output_list_size; i++) {
          ident = ident_lookup(Output_list[i].symbol);
          scalar = new_scalar(eval_width);
@@ -384,10 +383,10 @@ public int main(int argc, char *argv[]){
    /* Clean up */
    vector_free(A);
    sym_leave_scope(rootsym);
-   if (expr_file != NULL) FREE(expression);
-   FREE(outfiles);
-   if (Output_list != NULL) FREE(Output_list);
-   if (Output_values != NULL) FREE(Output_values);
+   if (expr_file != NULL) free(expression);
+   free(outfiles);
+   if (Output_list != NULL) free(Output_list);
+   if (Output_values != NULL) free(Output_values);
    exit(EXIT_SUCCESS);
 }
 
@@ -403,7 +402,7 @@ public int main(int argc, char *argv[]){
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : Thu Dec 21 17:08:40 EST 2000 (Andrew Janke - rotor@cmr.uq.edu.au)
 ---------------------------------------------------------------------------- */
-public void do_math(void *caller_data, long num_voxels, 
+static void do_math(void *caller_data, long num_voxels, 
                     int input_num_buffers, int input_vector_length,
                     double *input_data[],
                     int output_num_buffers, int output_vector_length,
@@ -492,7 +491,7 @@ public void do_math(void *caller_data, long num_voxels,
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char **read_file_names(char *filelist, int *num_files)
+static char **read_file_names(char *filelist, int *num_files)
 {
 #define FILE_NAME_ALLOC_SIZE 10
    char **files;
@@ -516,7 +515,7 @@ public char **read_file_names(char *filelist, int *num_files)
 
    /* Allocate an initial array and NULL-terminate it */
    array_size = FILE_NAME_ALLOC_SIZE;
-   files = MALLOC(sizeof(*files) * array_size);
+   files = malloc(sizeof(*files) * array_size);
    if (files == NULL) {
       (void) fprintf(stderr, "Error allocating memory\n");
       return NULL;
@@ -538,7 +537,7 @@ public char **read_file_names(char *filelist, int *num_files)
       /* Make room for names if needed */
       while (nfiles >= array_size-1) {
          array_size += FILE_NAME_ALLOC_SIZE;
-         files = REALLOC(files, sizeof(*files) * array_size);
+         files = realloc(files, sizeof(*files) * array_size);
          if (files == NULL) {
             (void) fprintf(stderr, "Error allocating memory\n");
             return NULL;
@@ -576,7 +575,7 @@ public char **read_file_names(char *filelist, int *num_files)
 @CREATED    : May 3, 2001 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *read_expression_file(char *filename)
+static char *read_expression_file(char *filename)
 {
    struct stat statbuf;
    size_t size;
@@ -617,7 +616,7 @@ public char *read_expression_file(char *filename)
    if (size == 0) size = ALLOC_SIZE;
 
    /* Get space */
-   expression = MALLOC(size * sizeof(*expression));
+   expression = malloc(size * sizeof(*expression));
 
    /* Read the expression */
    ichar = 0;
@@ -648,7 +647,7 @@ public char *read_expression_file(char *filename)
          /* Check whether we need more space */
          if (ichar >= size-1) {
             size += ALLOC_SIZE;
-            expression = REALLOC(expression, size * sizeof(expression));
+            expression = realloc(expression, size * sizeof(expression));
          }
 
          /* Save the character */
@@ -683,7 +682,7 @@ public char *read_expression_file(char *filename)
 @CREATED    : May 3, 2001 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_list_option(char *dst, char *key, int argc, char **argv)
+static int get_list_option(char *dst, char *key, int argc, char **argv)
      /* ARGSUSED */
 {
    enum {OPT_OUTPUT_SYMBOL} option_type;
@@ -721,11 +720,11 @@ public int get_list_option(char *dst, char *key, int argc, char **argv)
       *list_alloc += 10;
       if (*list == NULL) {
          *list = 
-            MALLOC(*list_alloc * entry_size);
+            malloc(*list_alloc * entry_size);
       }
       else {
          *list = 
-            REALLOC(*list, 
+            realloc(*list, 
                     *list_alloc * entry_size);
       }
    }
