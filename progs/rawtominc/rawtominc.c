@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.3 1993-02-01 16:00:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.4 1993-03-08 11:51:43 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -214,6 +214,7 @@ main(int argc, char *argv[])
 
    /* Create the image */
    imgid=micreate_std_variable(cdfid, MIimage, otype, ndims, dim);
+   (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
    (void) miattputstr(cdfid, imgid, MIsigntype, osign);
    if (ovrange_set) 
       (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, ovalid_range);
@@ -301,6 +302,7 @@ main(int argc, char *argv[])
    }
 
    /* Close the file */
+   (void) miattputstr(cdfid, imgid, MIcomplete, MI_TRUE);
    (void) ncclose(cdfid);
    
    return NORMAL_STATUS;

@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.5 1993-03-03 14:33:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.6 1993-03-08 11:47:28 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -137,6 +137,7 @@ main(int argc, char *argv[])
    imgid=micreate_std_variable(cdfid, MIimage, 
                                (mni_header.pix_size==1 ? NC_BYTE : NC_SHORT),
                                ndims, dim);
+   (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
    (void) miattputstr(cdfid, imgid, MIsigntype, 
                       (mni_header.pix_size==1 ? MI_UNSIGNED : MI_SIGNED));
    (void) ncattput(cdfid, imgid, MIvalid_range, NC_DOUBLE, 2, 
@@ -312,6 +313,7 @@ main(int argc, char *argv[])
    free(mni_image.image);
 
    /* Close the file */
+   (void) miattputstr(cdfid, imgid, MIcomplete, MI_TRUE);
    (void) ncclose(cdfid);
    
    return NORMAL_STATUS;
