@@ -65,11 +65,19 @@ changes and additions:
       NETCDF_PREFIX to tell it where to look for the netcdf stuff (if
       it is not in .. or /usr/local).
 
-   3. The host type information is only needed for compiling the
+   3. The documentation in the doc subdirectory is only built if you
+      use the command "make docs". Manual pages for programs are 
+      converted by default.
+
+   4. You can selectively "make libs" or "make programs" if you wish 
+      to build the package in separate pieces (for creating shared 
+      libraries, for example).
+
+   5. The host type information is only needed for compiling the
       fortran interface. This is only done if f77 exists on your system
       and the OS type is irix. You can force the fortran compilation by
       setting BUILD_FORTRAN to "yes" before running configure. The fortran 
       interface has only been tested under irix 4 and 5.
 
-   4. The package has not been set up for cross-compiling.
+   6. The package has not been set up for cross-compiling.
 
