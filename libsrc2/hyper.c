@@ -73,16 +73,16 @@ offset_to_index(int ndims,
 /** The main restructuring code.
  */
 void
-restructure_array(int ndims, 
-                  unsigned char *array, 
-                  const unsigned long *lengths, 
-                  int el_size,
-                  const int *map,
-                  const int *dir)
+restructure_array(int ndims,    /* Dimension count */
+                  unsigned char *array, /* Raw data */
+                  const unsigned long *lengths_perm, /* Permuted lengths */
+                  int el_size,  /* Element size, in bytes */
+                  const int *map, /* Mapping array */
+                  const int *dir) /* Direction array, in permuted order */
 {
-    unsigned long index[MI2_MAX_VAR_DIMS];
-    unsigned long index_perm[MI2_MAX_VAR_DIMS];
-    unsigned long lengths_perm[MI2_MAX_VAR_DIMS];
+    unsigned long index[MI2_MAX_VAR_DIMS]; /* Raw indices */
+    unsigned long index_perm[MI2_MAX_VAR_DIMS]; /* Permuted indices */
+    unsigned long lengths[MI2_MAX_VAR_DIMS]; /* Raw (unpermuted) lengths */
     unsigned char *temp;
     mioffset_t offset_start;
     mioffset_t offset_next;
@@ -93,6 +93,14 @@ restructure_array(int ndims,
 
     if ((temp = malloc(el_size)) == NULL) {
         return;
+    }
+
+    /**
+     * Permute the lengths from their "output" configuration back into
+     * their "raw" or native order:
+     **/
+    for (i = 0; i < ndims; i++) {
+        lengths[i] = lengths_perm[map[i]];
     }
 
     /**
@@ -108,12 +116,8 @@ restructure_array(int ndims,
      * element in the array.
      **/
     bitmap = calloc((total + 8 - 1) / 8, 1); /* bit array */
-
-    /**
-     * Permute the lengths into their "output" configuration.
-     **/
-    for (i = 0; i < ndims; i++) {
-        lengths_perm[i] = lengths[map[i]];
+    if (bitmap == NULL) {
+        return;
     }
 
     for (offset_start = 0; offset_start < total; offset_start++) {
@@ -159,7 +163,7 @@ restructure_array(int ndims,
                  * Compute the index from the offset and permuted length.
                  **/
 
-                offset_to_index(ndims, lengths_perm, offset, index);
+                offset_to_index(ndims, lengths_perm, offset, index_perm);
         
                 /**
                  * Permute the index into the alternate arrangement.
@@ -167,10 +171,10 @@ restructure_array(int ndims,
 
                 for (i = 0; i < ndims; i++) {
                     if (dir[i] < 0) {
-                        index_perm[map[i]] = lengths_perm[i] - index[i] - 1;
+                        index[i] = lengths[i] - index_perm[map[i]] - 1;
                     }
                     else {
-                        index_perm[map[i]] = index[i];
+                        index[i] = index_perm[map[i]];
                     }
                 }
 
@@ -178,8 +182,17 @@ restructure_array(int ndims,
                  * Calculate the next offset from the permuted index.
                  **/
 
-                offset_next = index_to_offset(ndims, lengths, index_perm);
-
+                offset_next = index_to_offset(ndims, lengths, index);
+#ifdef DEBUG
+                if (offset_next >= total) {
+                    printf("Fatal - offset %ld out of bounds!\n", offset_next);
+                    printf("lengths %ld,%ld,%ld\n",
+                           lengths[0],lengths[1],lengths[2]);
+                    printf("index %ld,%ld,%ld\n",
+                           index_perm[0], index_perm[0], index_perm[2]);
+                    exit(-1);
+                }
+#endif
                 /**
                  * If we are not at the end of the cycle...
                  **/
@@ -268,7 +281,7 @@ mitranslate_hyperslab_origin(mihandle_t volume,
                              const unsigned long count[],
                              hssize_t hdf_start[],
                              hsize_t hdf_count[],
-                             int dir[])
+                             int dir[]) /* direction vector in file order */
 {
     int n_different = 0;
     int file_i;
@@ -297,33 +310,33 @@ mitranslate_hyperslab_origin(mihandle_t volume,
         switch (hdim->flipping_order) {
         case MI_FILE_ORDER:
             hdf_start[file_i] = start[user_i];
-            dir[file_i] = 1;
+            dir[file_i] = 1;    /* Set direction positive */
             break;
 
         case MI_COUNTER_FILE_ORDER:
             hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-            dir[file_i] = -1;
+            dir[file_i] = -1;   /* Set direction negative */
             break;
             
         case MI_POSITIVE:
             if (hdim->step > 0) { /* Positive? */
                 hdf_start[file_i] = start[user_i]; /* Use raw file order. */
-                dir[file_i] = 1;
+                dir[file_i] = 1; /* Set direction positive */
             }
             else {
                 hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1;
+                dir[file_i] = -1; /* Set direction negative */
             }
             break;
 
         case MI_NEGATIVE:
             if (hdim->step < 0) { /* Negative? */
                 hdf_start[file_i] = start[user_i]; /* Use raw file order */
-                dir[file_i] = 1;
+                dir[file_i] = 1; /* Set direction positive */
             }
             else {
                 hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1;
+                dir[file_i] = -1; /* Set direction negative */
             }
             break;
         }
@@ -352,7 +365,7 @@ mirw_hyperslab_raw(int opcode,
     int result = MI_ERROR;
     hssize_t hdf_start[MI2_MAX_VAR_DIMS];
     hsize_t hdf_count[MI2_MAX_VAR_DIMS];
-    int dir[MI2_MAX_VAR_DIMS];
+    int dir[MI2_MAX_VAR_DIMS];  /* Direction vector in file order */
     int ndims;
     int n_different = 0;
 
@@ -407,7 +420,6 @@ mirw_hyperslab_raw(int opcode,
         result = H5Dread(dset_id, type_id, mspc_id, fspc_id, H5P_DEFAULT, 
                          buffer);
         /* Restructure the array after reading the data in file orientation.
-         * Count must be in raw order here.
          */
         if (n_different != 0) {
             restructure_array(ndims, buffer, count, H5Tget_size(type_id), 
@@ -416,11 +428,21 @@ mirw_hyperslab_raw(int opcode,
     }
     else {
         /* Restructure array before writing to file.
-         * Count must be in raw order here.
          */
         if (n_different != 0) {
-            restructure_array(ndims, buffer, count, H5Tget_size(type_id), 
-                              volume->dim_indices, dir);
+            unsigned long icount[MI2_MAX_VAR_DIMS];
+            int idir[MI2_MAX_VAR_DIMS];
+            int imap[MI2_MAX_VAR_DIMS];
+            int i;
+
+            /* Invert before calling */
+            for (i = 0; i < ndims; i++) {
+                icount[i] = count[volume->dim_indices[i]];
+                idir[i] = dir[volume->dim_indices[i]];
+                imap[volume->dim_indices[i]] = i;
+            }
+            restructure_array(ndims, buffer, icount, H5Tget_size(type_id), 
+                              imap, idir);
         }
         result = H5Dwrite(dset_id, type_id, mspc_id, fspc_id, H5P_DEFAULT, 
                           buffer);
@@ -458,7 +480,7 @@ mirw_hyperslab_icv(int opcode,
     int result = MI_ERROR;
     long icv_start[MI2_MAX_VAR_DIMS];
     long icv_count[MI2_MAX_VAR_DIMS];
-    int dir[MI2_MAX_VAR_DIMS];  /* Direction, either +1 or -1 */
+    int dir[MI2_MAX_VAR_DIMS];  /* Direction, 1 or -1, in file order */
     int n_different = 0;
 
     miicv_inqint(icv, MI_ICV_TYPE, &nc_type);
@@ -768,5 +790,3 @@ miset_voxel_value_hyperslab(mihandle_t volume,
     return mirw_hyperslab_raw(MIRW_OP_WRITE, volume, buffer_data_type, 
                               start, count, (void *) buffer);
 }
-
-
