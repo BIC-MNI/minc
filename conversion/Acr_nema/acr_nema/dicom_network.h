@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.h,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-09 20:01:40  neelin
+@MODIFIED   : Added function acr_dicom_get_io_data.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -73,6 +76,7 @@ public Acr_File *acr_initialize_dicom_output(void *io_data,
                                             int maxlength,
                                             Acr_Io_Routine io_routine);
 public void acr_close_dicom_file(Acr_File *afp);
+public void *acr_dicom_get_io_data(Acr_File *afp);
 public void acr_dicom_enable_trace(Acr_File *afp);
 public void acr_dicom_disable_trace(Acr_File *afp);
 public void acr_dicom_set_eof(Acr_File *afp);
