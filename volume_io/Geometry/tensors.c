@@ -1,5 +1,42 @@
 #include  <internal_volume_io.h>
 
+private  void  multiply_basis_matrices(
+    int    n_derivs,
+    int    n_degs,
+    Real   m1[],
+    Real   m2[],
+    Real   prod[] )
+{
+    int   i, j, k;
+    Real  *m1_ptr, *m1_ptr1;
+    Real  *m2_ptr, *m2_ptr1;
+    Real  sum, *prod_ptr;
+
+    m1_ptr = m1;
+    prod_ptr = prod;
+    for_less( i, 0, n_derivs )
+    {
+        m2_ptr = m2;
+        for_less( j, 0, n_degs )
+        {
+            sum = 0.0;
+            m1_ptr1 = m1_ptr;
+            m2_ptr1 = m2_ptr;
+            for_less( k, 0, n_degs )
+            {
+                sum += (*m1_ptr1) * (*m2_ptr1);
+                ++m1_ptr1;
+                m2_ptr1 += n_degs;
+            }
+            ++m2_ptr;
+            *prod_ptr = sum;
+            ++prod_ptr;
+        }
+
+        m1_ptr += n_degs;
+    }
+}
+
 private  void  multiply_matrices(
     int    x1,
     int    y1,
@@ -15,25 +52,34 @@ private  void  multiply_matrices(
     int    sbp )
 {
     int   i, j, k;
-    Real  sum, *m1_ptr, *m2_ptr, *prod_ptr;
+    Real  *m1_ptr, *m1_ptr1, *m2_ptr, *m2_ptr1;
+    Real  sum, *prod_ptr, *prod_ptr1;
 
+    m1_ptr = m1;
+    prod_ptr = prod;
     for_less( i, 0, x1 )
     {
-        prod_ptr = &prod[i*sap];
+        m2_ptr = m2;
+        prod_ptr1 = prod_ptr;
         for_less( j, 0, y2 )
         {
             sum = 0.0;
-            m1_ptr = &m1[i*sa1];
-            m2_ptr = &m2[j*sb2];
+            m1_ptr1 = m1_ptr;
+            m2_ptr1 = m2_ptr;
             for_less( k, 0, y1 )
             {
-                sum += (*m1_ptr) * (*m2_ptr);
-                m1_ptr += sb1;
-                m2_ptr += sa2;
+                sum += (*m1_ptr1) * (*m2_ptr1);
+                m1_ptr1 += sb1;
+                m2_ptr1 += sa2;
             }
-            *prod_ptr = sum;
-            prod_ptr += sbp;
+
+            *prod_ptr1 = sum;
+
+            prod_ptr1 += sbp;
+            m2_ptr += sb2;
         }
+        m1_ptr += sa1;
+        prod_ptr += sap;
     }
 }
 
@@ -150,9 +196,7 @@ public  void  spline_tensor_product(
             }
         }
 
-        multiply_matrices( n_derivs_plus_1, deg, us, deg, 1,
-                           deg, bases[d], deg, 1,
-                           weights, deg, 1 );
+        multiply_basis_matrices( n_derivs_plus_1, deg, us, bases[d], weights );
 
         total_values /= deg;
 
