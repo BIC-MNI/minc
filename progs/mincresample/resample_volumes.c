@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.13  1994-03-01 14:33:48  neelin
-@MODIFIED   : Fixed error in calculating valid minimum for float volumes.
+@MODIFIED   : Revision 1.14  1994-03-15 10:58:47  neelin
+@MODIFIED   : Fixed tricubic interpolation (wasn't initializing variable for fillvalue
+@MODIFIED   : detection).
 @MODIFIED   :
+ * Revision 1.13  94/03/01  14:33:48  neelin
+ * Fixed error in calculating valid minimum for float volumes.
+ * 
  * Revision 1.12  93/11/02  11:23:52  neelin
  * Handle imagemax/min potentially varying over slices (for vector data, etc.)
  * 
@@ -51,7 +55,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.13 1994-03-01 14:33:48 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.14 1994-03-15 10:58:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -681,6 +685,7 @@ public int do_Ncubic_interpolation(Volume_Data *volume,
    base_index = index[cur_dim];
 
    /* If last dimension, then just get the values */
+   found_fillvalue = FALSE;
    if (cur_dim == VOL_NDIMS-1) {
       VOLUME_VALUE(volume, index[0] ,index[1], index[2], v0);
       index[cur_dim]++;
