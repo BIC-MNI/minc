@@ -9,7 +9,7 @@ include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = mincreshape
-EXTRA_OBJS = copy_data.o nd_loop.o
+EXTRA_OBJS = copy_data.o
 HEADERS  = $(PROGS:=.h)
 MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.h,v $
-@MODIFIED   : Revision 1.2  1994-11-23 11:47:08  neelin
-@MODIFIED   : Handle image-min/max properly when using icv for normalization.
+@MODIFIED   : Revision 1.3  1994-12-02 09:08:57  neelin
+@MODIFIED   : Moved nd_loop to proglib.
 @MODIFIED   :
+ * Revision 1.2  94/11/23  11:47:08  neelin
+ * Handle image-min/max properly when using icv for normalization.
+ * 
  * Revision 1.1  94/11/02  16:22:00  neelin
  * Initial revision
  * 
@@ -149,12 +152,3 @@ public void copy_the_chunk(Reshape_info *reshape_info,
 public void convert_value_from_double(double dvalue, 
                                       nc_type datatype, int is_signed,
                                       void *ptr);
-public void nd_begin_looping(long start[], long current[], int ndims);
-public int nd_end_of_loop(long start[], long end[], int ndims);
-public void nd_update_current_count(long current[], 
-                                    long increment[], long end[],
-                                    long current_count[],
-                                    int ndims);
-public void nd_increment_loop(long current[], 
-                              long start[], long increment[], long end[],
-                              int ndims);
