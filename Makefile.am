@@ -5,6 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 AM_CPPFLAGS = -DMINC2
 AM_CFLAGS = 
+AM_YFLAGS = -d
 
 SUBDIRS = . volume_io testdir doc libsrc2
 
@@ -72,7 +73,11 @@ noinst_HEADERS = \
 	libsrc2/minc2_private.h \
 	progs/mincdump/mincdump.h \
 	progs/mincdump/dumplib.h \
-	progs/mincdump/vardata.h
+	progs/mincdump/vardata.h \
+	progs/mincgen/generic.h \
+	progs/mincgen/genlib.h \
+	progs/mincgen/ncgen.h \
+	progs/mincgen/ncgentab.h
 
 # Libraries which must be built and installed.
 #
@@ -101,6 +106,7 @@ bin_PROGRAMS = \
 	minccopy \
 	mincexpand \
 	mincextract \
+	mincgen \
 	mincinfo \
 	minclookup \
 	mincmakescalar \
@@ -181,6 +187,17 @@ mincexample2_SOURCES = progs/mincexample/mincexample2.c
 mincexpand_SOURCES = progs/mincexpand/mincexpand.c
 
 mincextract_SOURCES = progs/mincextract/mincextract.c
+
+mincgen_SOURCES = \
+	progs/mincgen/escapes.c \
+	progs/mincgen/genlib.c \
+	progs/mincgen/getfill.c \
+	progs/mincgen/init.c \
+	progs/mincgen/load.c \
+	progs/mincgen/main.c \
+	progs/mincgen/ncgentab.y \
+	progs/mincgen/ncgenyy.l
+
 
 mincinfo_SOURCES = progs/mincinfo/mincinfo.c
 
@@ -306,6 +323,7 @@ dist_man1_MANS = \
 	progs/mincedit/mincedit.man1 \
 	progs/mincexpand/mincexpand.man1 \
 	progs/mincextract/mincextract.man1 \
+	progs/mincgen/mincgen.man1 \
 	progs/mincheader/mincheader.man1 \
 	progs/mincinfo/mincinfo.man1 \
 	progs/minclookup/minclookup.man1 \
