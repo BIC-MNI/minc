@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincexample1.c,v $
-@MODIFIED   : Revision 1.2  1993-08-26 11:57:00  neelin
-@MODIFIED   : Removed include of ParseArgv stuff and added MALLOC and FREE definitions
-@MODIFIED   : from minc_def.h so that it is not always needed.
+@MODIFIED   : Revision 1.3  1993-08-26 12:31:17  neelin
+@MODIFIED   : Added define so that minc_def.h is optionally included.
 @MODIFIED   :
+ * Revision 1.2  93/08/26  11:57:00  neelin
+ * Removed include of ParseArgv stuff and added MALLOC and FREE definitions
+ * from minc_def.h so that it is not always needed.
+ * 
  * Revision 1.1  93/08/26  11:45:49  neelin
  * Initial revision
  * 
@@ -30,30 +33,30 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.2 1993-08-26 11:57:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.3 1993-08-26 12:31:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <minc.h>
-
-/* Include prototype for time_stamp routine */
 #include <time_stamp.h>
 
-/* Include header to make code compile across platforms - without this,
-   mincexample will compile on SGI's, but not necessarily elsewhere */
-#include <minc_def.h>
+/* Include the standard minc definitions for cross-platform compilation
+   if we are compiling the package, otherwise, just define MALLOC and
+   FREE */
+#ifdef COMPILING_MINC_PACKAGE
+#  include <minc_def.h>
+#else
+#  define MALLOC(size) ((void *) malloc(size))
+#  define FREE(ptr) free(ptr)
+#endif
 
 /* Constants */
 #define public
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
-#endif
-#ifndef MALLOC
-#  define MALLOC(size) ((void *) malloc(size))
-#  define FREE(ptr) free(ptr)
 #endif
 
 #define NUMBER_OF_DIMENSIONS 3

@@ -10,7 +10,7 @@ include $(ROOT)/Makefile_configuration
 # Executable names
 PROGS    = mincexample
 HEADERS  = 
-CDEFINES = -DDEBUG#                        cpp defines
+CDEFINES = -DCOMPILING_MINC_PACKAGE -DDEBUG# cpp defines
 LDOPT    = $(CC_PROG_LIB) $(MINC_LDOPT)
 
 # --------------------------------------------------------------------
