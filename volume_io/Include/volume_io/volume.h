@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.45 1996-02-28 16:03:52 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.46 1996-05-17 19:36:11 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -154,43 +154,65 @@ typedef  volume_struct  *Volume;
 
 /* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
 
-#define  GET_VOXEL_1D( value, volume, x )       \
+#define  GET_VOXEL_1D_TYPED( value, vtype, volume, x )       \
            if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, 0, 0, 0, 0 ); \
+               (value) = vtype get_cached_volume_voxel( volume, x, 0, 0, 0, 0 ); \
            else \
-               GET_MULTIDIM_1D( value, (volume)->array, x )
+               GET_MULTIDIM_1D( value, vtype, (volume)->array, x )
+
+#define  GET_VOXEL_2D_TYPED( value, vtype, volume, x, y )       \
+           if( (volume)->is_cached_volume ) \
+               (value) = vtype get_cached_volume_voxel( volume, x, y, 0, 0, 0 ); \
+           else \
+               GET_MULTIDIM_2D( value, vtype, (volume)->array, x, y )
+
+#define  GET_VOXEL_3D_TYPED( value, vtype, volume, x, y, z )       \
+           if( (volume)->is_cached_volume ) \
+               (value) = vtype get_cached_volume_voxel( volume, x, y, z, 0, 0 ); \
+           else \
+               GET_MULTIDIM_3D( value, vtype, (volume)->array, x, y, z )
+
+#define  GET_VOXEL_4D_TYPED( value, vtype, volume, x, y, z, t )       \
+           if( (volume)->is_cached_volume ) \
+               (value) = vtype get_cached_volume_voxel( volume, x, y, z, t, 0 ); \
+           else \
+               GET_MULTIDIM_4D( value, vtype, (volume)->array, x, y, z, t )
+
+#define  GET_VOXEL_5D_TYPED( value, vtype, volume, x, y, z, t, v )       \
+           if( (volume)->is_cached_volume ) \
+               (value) = vtype get_cached_volume_voxel( volume, x, y, z, t, v ); \
+           else \
+               GET_MULTIDIM_5D( value, vtype, (volume)->array, x, y, z, t, v )
+
+/* --- same as previous, but no need to know volume dimensions */
+
+#define  GET_VOXEL_TYPED( value, vtype, volume, x, y, z, t, v )       \
+           if( (volume)->is_cached_volume ) \
+               (value) = vtype get_cached_volume_voxel( volume, x, y, z, t, v ); \
+           else \
+               GET_MULTIDIM( value, vtype, (volume)->array, x, y, z, t, v )
+
+/* --- public macros to place the [x][y]...'th voxel of 'volume' in 'value' */
+
+#define  GET_VOXEL_1D( value, volume, x )       \
+         GET_VOXEL_1D_TYPED( value, , volume, x )
 
 #define  GET_VOXEL_2D( value, volume, x, y )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, 0, 0, 0 ); \
-           else \
-               GET_MULTIDIM_2D( value, (volume)->array, x, y )
+         GET_VOXEL_2D_TYPED( value, , volume, x, y )
 
 #define  GET_VOXEL_3D( value, volume, x, y, z )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, 0, 0 ); \
-           else \
-               GET_MULTIDIM_3D( value, (volume)->array, x, y, z )
+         GET_VOXEL_3D_TYPED( value, , volume, x, y, z )
 
 #define  GET_VOXEL_4D( value, volume, x, y, z, t )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, 0 ); \
-           else \
-               GET_MULTIDIM_4D( value, (volume)->array, x, y, z, t )
+         GET_VOXEL_4D_TYPED( value, , volume, x, y, z, t )
 
 #define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
-           else \
-               GET_MULTIDIM_5D( value, (volume)->array, x, y, z, t, v )
+         GET_VOXEL_5D_TYPED( value, , volume, x, y, z, t, v )
 
 /* --- same as previous, but no need to know volume dimensions */
 
 #define  GET_VOXEL( value, volume, x, y, z, t, v )       \
-           if( (volume)->is_cached_volume ) \
-               (value) = get_cached_volume_voxel( volume, x, y, z, t, v ); \
-           else \
-               GET_MULTIDIM( value, (volume)->array, x, y, z, t, v )
+         GET_VOXEL_TYPED( value, , volume, x, y, z, t, v )
 
 /* ------------------------- get voxel ptr ------------------------ */
 
@@ -247,47 +269,69 @@ typedef  volume_struct  *Volume;
 
 /* --- assigns 'value' the value of the [x][y]...'th voxel of 'volume' */
 
-#define  GET_VALUE_1D( value, volume, x )       \
+#define  GET_VALUE_1D_TYPED( value, vtype, volume, x )       \
          { \
-             GET_VOXEL_1D( value, volume, x ); \
+             GET_VOXEL_1D_TYPED( value, vtype, volume, x ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
-#define  GET_VALUE_2D( value, volume, x, y )       \
+#define  GET_VALUE_2D_TYPED( value, vtype, volume, x, y )       \
          { \
-             GET_VOXEL_2D( value, volume, x, y ); \
+             GET_VOXEL_2D_TYPED( value, vtype, volume, x, y ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
-#define  GET_VALUE_3D( value, volume, x, y, z )       \
+#define  GET_VALUE_3D_TYPED( value, vtype, volume, x, y, z )       \
          { \
-             GET_VOXEL_3D( value, volume, x, y, z ); \
+             GET_VOXEL_3D_TYPED( value, vtype, volume, x, y, z ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
-#define  GET_VALUE_4D( value, volume, x, y, z, t )       \
+#define  GET_VALUE_4D_TYPED( value, vtype, volume, x, y, z, t )       \
          { \
-             GET_VOXEL_4D( value, volume, x, y, z, t ); \
+             GET_VOXEL_4D_TYPED( value, vtype, volume, x, y, z, t ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
-#define  GET_VALUE_5D( value, volume, x, y, z, t, v )       \
+#define  GET_VALUE_5D_TYPED( value, vtype, volume, x, y, z, t, v )       \
          { \
-             GET_VOXEL_5D( value, volume, x, y, z, t, v ); \
+             GET_VOXEL_5D_TYPED( value, vtype, volume, x, y, z, t, v ); \
              value = CONVERT_VOXEL_TO_VALUE( volume, value ); \
          }
 
 /* --- same as previous, without knowing number of dimensions of volume */
 
-#define  GET_VALUE( value, volume, x, y, z, t, v )       \
+#define  GET_VALUE_TYPED( value, vtype, volume, x, y, z, t, v )       \
          switch( (volume)->n_dimensions ) \
          { \
-         case 1:  GET_VALUE_1D( value, volume, x );              break; \
-         case 2:  GET_VALUE_2D( value, volume, x, y );           break; \
-         case 3:  GET_VALUE_3D( value, volume, x, y, z );        break; \
-         case 4:  GET_VALUE_4D( value, volume, x, y, z, t );     break; \
-         case 5:  GET_VALUE_5D( value, volume, x, y, z, t, v );  break; \
+         case 1:  GET_VALUE_1D_TYPED( value, vtype, volume, x );              break; \
+         case 2:  GET_VALUE_2D_TYPED( value, vtype, volume, x, y );           break; \
+         case 3:  GET_VALUE_3D_TYPED( value, vtype, volume, x, y, z );        break; \
+         case 4:  GET_VALUE_4D_TYPED( value, vtype, volume, x, y, z, t );     break; \
+         case 5:  GET_VALUE_5D_TYPED( value, vtype, volume, x, y, z, t, v );  break; \
          }
+
+/* --- assigns 'value' the value of the [x][y]...'th voxel of 'volume' */
+
+#define  GET_VALUE_1D( value, volume, x )       \
+         GET_VALUE_1D_TYPED( value, , volume, x )
+
+#define  GET_VALUE_2D( value, volume, x, y )       \
+         GET_VALUE_2D_TYPED( value, , volume, x, y )
+
+#define  GET_VALUE_3D( value, volume, x, y, z )       \
+         GET_VALUE_3D_TYPED( value, , volume, x, y, z )
+
+#define  GET_VALUE_4D( value, volume, x, y, z, t )       \
+         GET_VALUE_4D_TYPED( value, , volume, x, y, z, t )
+
+#define  GET_VALUE_5D( value, volume, x, y, z, t, v )       \
+         GET_VALUE_5D_TYPED( value, , volume, x, y, z, t, v )
+
+/* --- same as previous, without knowing number of dimensions of volume */
+
+#define  GET_VALUE( value, volume, x, y, z, t, v )       \
+         GET_VALUE_TYPED( value, , volume, x, y, z, t, v )
 
 /* -------------------- minc file struct -------------------- */
 
@@ -315,7 +359,7 @@ typedef  struct
     int                cdfid;
     int                img_var;
     int                n_file_dimensions;
-    int                sizes_in_file[MAX_VAR_DIMS];
+    long               sizes_in_file[MAX_VAR_DIMS];
     long               indices[MAX_VAR_DIMS];
     STRING             dim_names[MAX_VAR_DIMS];
     Volume             volume;
@@ -371,7 +415,7 @@ typedef struct
 
     FILE                 *volume_file;
     int                  slice_index;
-    int                  sizes_in_file[MAX_DIMENSIONS];
+    long                 sizes_in_file[MAX_DIMENSIONS];
     int                  axis_index_from_file[MAX_DIMENSIONS];
     Data_types           file_data_type;
     BOOLEAN              one_file_per_slice;

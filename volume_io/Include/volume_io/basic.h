@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.26 1996-04-10 17:19:38 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.27 1996-05-17 19:36:12 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -74,7 +74,9 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
              i.e, ABS( ++x );                          ------------------ */
 
 #define  ABS( x )   ( ((x) > 0) ? (x) : (-(x)) )
+#define  FABS( x )   fabs( (double) x )
 #define  SIGN( x )  ( ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0) )
+#define  FSIGN( x )  ( ((x) > 0.0) ? 1.0 : (((x) < 0.0) ? -1.0 : 0.0) )
 
 #ifdef   MAX
 #undef   MAX
@@ -136,7 +138,7 @@ typedef  char            *STRING;
 
 #define  CEILING( x )   ((int) ceil(x))
 
-#define  FRACTION( x )  ((x) - FLOOR(x))
+#define  FRACTION( x )  ((double) (x) - (double) FLOOR(x))
 
 /* for loops */
 

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.20 1995-12-19 15:47:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc_check.c,v 1.21 1996-05-17 19:36:15 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -71,7 +71,7 @@ typedef  void      *alloc_ptr;
 
 #define  ALLOC_SKIP_STRUCT( ptr, n_level )                                    \
      (ptr) = (skip_entry *) malloc(                                          \
-                 (sizeof(skip_entry)+((n_level)-1) * sizeof(skip_entry *)) );
+          (sizeof(skip_entry)+((size_t)(n_level)-1) * sizeof(skip_entry *)) );
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_alloc_list
@@ -212,7 +212,7 @@ private   void  insert_ptr_in_alloc_list(
     }
 
     ALLOC_SKIP_STRUCT( x, new_level );
-    skip_alloc_size += sizeof(skip_entry)+(new_level-1) *
+    skip_alloc_size += sizeof(skip_entry)+((size_t)new_level-1) *
                        sizeof(skip_entry *);
 
     x->ptr = ptr;
@@ -323,7 +323,8 @@ private   BOOLEAN  remove_ptr_from_alloc_list(
             update.update[i]->forward[i] = x->forward[i];
         }
 
-        skip_alloc_size -= sizeof(skip_entry) + (i-1) * sizeof(skip_entry *);
+        skip_alloc_size -= sizeof(skip_entry) +
+                           (size_t) (i-1) * sizeof(skip_entry *);
 
         free( (alloc_ptr) x );
 
@@ -624,7 +625,7 @@ private  BOOLEAN  size_display_enabled( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_stop_sequence_number()
+private  int  get_stop_sequence_number( void )
 {
     static   int   first = TRUE;
     static   int   stop_sequence_number = -1;
@@ -657,7 +658,7 @@ private  int  get_stop_sequence_number()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_current_sequence_number()
+private  int  get_current_sequence_number( void )
 {
     static   int  current_sequence_number = 0;
 

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.9 1995-10-19 15:47:19 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.10 1996-05-17 19:36:27 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -271,7 +271,7 @@ public  void  grid_inverse_transform_point(
 
     tries = 0;
 
-    error = smallest_e = ABS(error_x) + ABS(error_y) + ABS(error_z);
+    error = smallest_e = FABS(error_x) + FABS(error_y) + FABS(error_z);
 
     best_x = tx;
     best_y = ty;
@@ -289,7 +289,7 @@ public  void  grid_inverse_transform_point(
         error_y = y - gy;
         error_z = z - gz;
     
-        error = ABS(error_x) + ABS(error_y) + ABS(error_z);
+        error = FABS(error_x) + FABS(error_y) + FABS(error_z);
 
         if( error < smallest_e )
         {
@@ -425,7 +425,7 @@ private  void   evaluate_grid_volume(
                 fraction[id] = 1.0;
             }
             else
-                fraction[id] = pos - start[d];
+                fraction[id] = pos - (Real) start[d];
 
             end[d] = start[d] + degrees_continuity + 2;
             ++id;
@@ -478,7 +478,8 @@ private  void   evaluate_grid_volume(
             {
                 for_less( v3, start3, end3 )
                 {
-                    GET_VALUE_4D( coefs[ind0], volume, v0, v1, v2, v3 );
+                    GET_VALUE_4D_TYPED( coefs[ind0], (Real), volume,
+                                        v0, v1, v2, v3 );
                     ind0 += inc3;
                 }
                 ind0 += inc2;

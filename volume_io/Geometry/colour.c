@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.c,v 1.2 1995-07-31 13:44:30 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.c,v 1.3 1996-05-17 19:36:10 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -58,7 +58,7 @@ public  Colour  make_Colour(
 public  Real  get_Colour_r_0_1(
     Colour   colour )
 {
-    return( get_Colour_r(colour) / 255.0 );
+    return( (Real) get_Colour_r(colour) / 255.0 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -78,7 +78,7 @@ public  Real  get_Colour_r_0_1(
 public  Real  get_Colour_g_0_1(
     Colour   colour )
 {
-    return( get_Colour_g(colour) / 255.0 );
+    return( (Real) get_Colour_g(colour) / 255.0 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -98,7 +98,7 @@ public  Real  get_Colour_g_0_1(
 public  Real  get_Colour_b_0_1(
     Colour   colour )
 {
-    return( get_Colour_b(colour) / 255.0 );
+    return( (Real) get_Colour_b(colour) / 255.0 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -118,7 +118,7 @@ public  Real  get_Colour_b_0_1(
 public  Real  get_Colour_a_0_1(
     Colour   colour )
 {
-    return( get_Colour_a(colour) / 255.0 );
+    return( (Real) get_Colour_a(colour) / 255.0 );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

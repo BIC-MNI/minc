@@ -19,13 +19,13 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.31 1996-04-10 17:19:39 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.32 1996-05-17 19:36:15 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
 private  STRING   compressed_endings[] = { ".z", ".Z", ".gz" };
 
-private  void  print_system_error()
+private  void  print_system_error( void )
 {
     char   *error;
 
@@ -47,9 +47,9 @@ private  void  print_system_error()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  real_is_double()
+public  BOOLEAN  real_is_double( void )
 {
-    static  const  int constant_8 = 8;
+    static  const  size_t  constant_8 = sizeof(double);
     return( sizeof(Real) == constant_8 );
 }
 
@@ -301,6 +301,8 @@ public  STRING  expand_filename(
     n_alloced = 0;
 
     n_env_alloced = 0;
+    env = NULL;
+    expanded = NULL;
 
     while( i < len+1 )
     {
@@ -979,7 +981,7 @@ public  Status  unget_character(
     Status   status;
     int      c;
 
-    c = ungetc( ch, file );
+    c = ungetc( (int) ch, file );
 
     if( c == EOF )
         status = ERROR;
@@ -1037,7 +1039,7 @@ public  Status  output_character(
 {
     Status   status;
 
-    if( fputc( ch, file ) != ch )
+    if( fputc( (int) ch, file ) != ch )
     {
         status = ERROR;
     }
@@ -1325,7 +1327,7 @@ public  Status  input_binary_data(
 
     status = OK;
 
-    n_done = fread( data, element_size, n, file );
+    n_done = (int) fread( data, element_size, (size_t) n, file );
     if( n_done != n )
     {
         print_error( "Error inputting binary data.\n" );
@@ -1365,7 +1367,7 @@ public  Status  output_binary_data(
 
     status = OK;
 
-    n_done = fwrite( data, element_size, n, file );
+    n_done = (int) fwrite( data, element_size, (size_t) n, file );
     if( n_done != n )
     {
         print_error( "Error outputting binary data.\n" );

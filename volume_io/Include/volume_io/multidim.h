@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.2 1995-12-19 15:47:13 david Exp $";
+static char multidim_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.3 1996-05-17 19:36:13 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -154,65 +154,65 @@ typedef  struct
 
 /* --- private macros */
 
-#define  GET_ONE( value, array, type, asterisks, subscripts )   \
-         (value) = (((type asterisks) ((array).data))  subscripts)
+#define  GET_ONE( value, vtype, array, type, asterisks, subscripts )   \
+         (value) = vtype (((type asterisks) ((array).data))  subscripts)
 
-#define  GET_GIVEN_DIM( value, array, asterisks, subscripts )   \
+#define  GET_GIVEN_DIM( value, vtype, array, asterisks, subscripts )   \
          switch( (array).data_type )  \
          {  \
          case UNSIGNED_BYTE:  \
-             GET_ONE( value, array, unsigned char, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, unsigned char, asterisks, subscripts );\
              break;  \
          case SIGNED_BYTE:  \
-             GET_ONE( value, array, signed char, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, signed char, asterisks, subscripts );\
              break;  \
          case UNSIGNED_SHORT:  \
-             GET_ONE( value, array, unsigned short, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, unsigned short, asterisks, subscripts );\
              break;  \
          case SIGNED_SHORT:  \
-             GET_ONE( value, array, signed short, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, signed short, asterisks, subscripts );\
              break;  \
          case UNSIGNED_LONG:  \
-             GET_ONE( value, array, unsigned long, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, unsigned long, asterisks, subscripts );\
              break;  \
          case SIGNED_LONG:  \
-             GET_ONE( value, array, signed long, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, signed long, asterisks, subscripts );\
              break;  \
          case FLOAT:  \
-             GET_ONE( value, array, float, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, float, asterisks, subscripts );\
              break;  \
          case DOUBLE:  \
-             GET_ONE( value, array, double, asterisks, subscripts );\
+             GET_ONE( value, vtype, array, double, asterisks, subscripts );\
              break;  \
          }
 
 /* --- public macros to place the [x][y]...'th voxel of 'array' in 'value' */
 
-#define  GET_MULTIDIM_1D( value, array, x )       \
-           GET_GIVEN_DIM( value, array, *, [x] )
+#define  GET_MULTIDIM_1D( value, vtype, array, x )       \
+           GET_GIVEN_DIM( value, vtype, array, *, [x] )
 
-#define  GET_MULTIDIM_2D( value, array, x, y )       \
-           GET_GIVEN_DIM( value, array, **, [x][y] )
+#define  GET_MULTIDIM_2D( value, vtype, array, x, y )       \
+           GET_GIVEN_DIM( value, vtype, array, **, [x][y] )
 
-#define  GET_MULTIDIM_3D( value, array, x, y, z )       \
-           GET_GIVEN_DIM( value, array, ***, [x][y][z] )
+#define  GET_MULTIDIM_3D( value, vtype, array, x, y, z )       \
+           GET_GIVEN_DIM( value, vtype, array, ***, [x][y][z] )
 
-#define  GET_MULTIDIM_4D( value, array, x, y, z, t )       \
-           GET_GIVEN_DIM( value, array, ****, [x][y][z][t] )
+#define  GET_MULTIDIM_4D( value, vtype, array, x, y, z, t )       \
+           GET_GIVEN_DIM( value, vtype, array, ****, [x][y][z][t] )
 
-#define  GET_MULTIDIM_5D( value, array, x, y, z, t, v )       \
-           GET_GIVEN_DIM( value, array, *****, [x][y][z][t][v] )
+#define  GET_MULTIDIM_5D( value, vtype, array, x, y, z, t, v )       \
+           GET_GIVEN_DIM( value, vtype, array, *****, [x][y][z][t][v] )
 
 /* --- same as previous, but no need to know array dimensions */
 
-#define  GET_MULTIDIM( value, array, x, y, z, t, v )       \
+#define  GET_MULTIDIM( value, vtype, array, x, y, z, t, v )       \
          switch( (array).n_dimensions ) \
          { \
-         case 1:  GET_MULTIDIM_1D( value, array, x );              break; \
-         case 2:  GET_MULTIDIM_2D( value, array, x, y );           break; \
-         case 3:  GET_MULTIDIM_3D( value, array, x, y, z );        break; \
-         case 4:  GET_MULTIDIM_4D( value, array, x, y, z, t );     break; \
-         case 5:  GET_MULTIDIM_5D( value, array, x, y, z, t, v );  break; \
+         case 1:  GET_MULTIDIM_1D( value, vtype, array, x );              break; \
+         case 2:  GET_MULTIDIM_2D( value, vtype, array, x, y );           break; \
+         case 3:  GET_MULTIDIM_3D( value, vtype, array, x, y, z );        break; \
+         case 4:  GET_MULTIDIM_4D( value, vtype, array, x, y, z, t );     break; \
+         case 5:  GET_MULTIDIM_5D( value, vtype, array, x, y, z, t, v );  break; \
          }
 
 /* ------------------------- get multidim ptr ------------------------ */

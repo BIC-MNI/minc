@@ -19,7 +19,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.17 1995-12-19 15:47:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.18 1996-05-17 19:36:16 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,7 +36,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Real  get_clock_ticks_per_second()
+private  Real  get_clock_ticks_per_second( void )
 {
     static  BOOLEAN  initialized = FALSE;
     static  Real     clock_ticks_per_second;
@@ -184,7 +184,7 @@ public  STRING  format_time(
         }
     }
 
-    seconds = ROUND( 10.0 * seconds ) / 10.0;
+    seconds = (Real) ROUND( 10.0 * seconds ) / 10.0;
 
     if( negative )  seconds = -seconds;
 
@@ -233,7 +233,7 @@ public  void  print_time(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_clock_time()
+public  STRING  get_clock_time( void )
 {
     time_t           clock_time;
     struct  tm       *time_tm;
@@ -305,7 +305,7 @@ public  void  sleep_program( Real seconds )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_date()
+public  STRING  get_date( void )
 {
     time_t           clock_time;
     struct  tm       *time_tm;

@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.17 1995-12-19 15:47:12 david Exp $";
+static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.18 1996-05-17 19:36:11 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -51,9 +51,11 @@ static char geom_structs_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Inc
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+typedef  float   Point_coord_type;
+
 typedef  struct
 {
-    float   coords[N_DIMENSIONS];
+    Point_coord_type   coords[N_DIMENSIONS];
 } Point;
 
 /* --- access the given coordinate of the point */
@@ -70,9 +72,9 @@ typedef  struct
 
 #define  fill_Point( point, x, y, z ) \
             { \
-                Point_x(point) = (x); \
-                Point_y(point) = (y); \
-                Point_z(point) = (z); \
+                Point_x(point) = (Point_coord_type) (x); \
+                Point_y(point) = (Point_coord_type) (y); \
+                Point_z(point) = (Point_coord_type) (z); \
             }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -90,7 +92,7 @@ typedef  struct
 
 typedef  struct
 {
-    float   coords[N_DIMENSIONS];
+    Point_coord_type   coords[N_DIMENSIONS];
 } Vector;
 
 /* --- access the given coordinate of the vector */
@@ -107,9 +109,9 @@ typedef  struct
 
 #define  fill_Vector( vector, x, y, z ) \
             { \
-                Vector_x(vector) = (x); \
-                Vector_y(vector) = (y); \
-                Vector_z(vector) = (z); \
+                Vector_x(vector) = (Point_coord_type) (x); \
+                Vector_y(vector) = (Point_coord_type) (y); \
+                Vector_z(vector) = (Point_coord_type) (z); \
             }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -179,11 +181,13 @@ typedef  unsigned  long    Colour;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+typedef  float  Spr_type;
+
 typedef  struct
 {
-    float   a, d, s;
-    float   se;
-    float   t;
+    Spr_type   a, d, s;
+    Spr_type   se;
+    Spr_type   t;
 } Surfprop;
 
 /* --- access the given element of the surface property */
@@ -198,11 +202,11 @@ typedef  struct
 
 #define  fill_Surfprop( s, amb, diff, spec, spec_exp, trans ) \
          { \
-             Surfprop_a(s) = (amb); \
-             Surfprop_d(s) = (diff); \
-             Surfprop_s(s) = (spec); \
-             Surfprop_se(s) = (spec_exp); \
-             Surfprop_t(s) = (trans); \
+             Surfprop_a(s) = (Spr_type) (amb); \
+             Surfprop_d(s) = (Spr_type) (diff); \
+             Surfprop_s(s) = (Spr_type) (spec); \
+             Surfprop_se(s) = (Spr_type) (spec_exp); \
+             Surfprop_t(s) = (Spr_type) (trans); \
          }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -218,9 +222,11 @@ typedef  struct
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
+typedef  double  Transform_elem_type;
+
 typedef  struct
 {
-    double    m2d[2][3];
+    Transform_elem_type    m2d[2][3];
 } Transform_2d;
 
 #define  Transform_2d_elem( t, i, j ) ((t).m2d[i][j])
@@ -240,7 +246,7 @@ typedef  struct
 
 typedef  struct
 {
-    double    m[4][4];
+    Transform_elem_type    m[4][4];
 } Transform;
 
 #define  Transform_elem( t, i, j ) ((t).m[j][i])

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.4 1995-07-31 13:44:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.5 1996-05-17 19:36:09 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -49,6 +49,7 @@ public  Colour  make_rgba_Colour(
     Colour          c;
     unsigned  char  *byte_ptr;
 
+    c = 0;    /* to avoid used-before-set compiler messages */
     byte_ptr = (void *) &c;
 
     byte_ptr[0] = (unsigned char) a;

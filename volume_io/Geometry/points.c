@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.12 1996-02-28 16:03:50 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.13 1996-05-17 19:36:08 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -39,9 +39,9 @@ public  void  create_orthogonal_vector(
 {
     Real   x, y, z;
 
-    x = Vector_x(*v);
-    y = Vector_y(*v);
-    z = Vector_z(*v);
+    x = (Real) Vector_x(*v);
+    y = (Real) Vector_y(*v);
+    z = (Real) Vector_z(*v);
 
     fill_Vector( *ortho, y+z, -x-z, y-x );
 }

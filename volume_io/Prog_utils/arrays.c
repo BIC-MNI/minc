@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/arrays.c,v 1.2 1995-10-19 15:46:47 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/arrays.c,v 1.3 1996-05-17 19:36:17 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -53,8 +53,8 @@ public  void  set_array_size(
         new_chunk = ((new_n_elems+chunk_size-1) / chunk_size) * chunk_size;
         if( previous_n_elems == 0 )
         {
-            alloc_memory_1d( array, new_chunk, type_size
-                             _ALLOC_SOURCE_LINE_ARGUMENTS );
+            *array = alloc_memory_1d( new_chunk, type_size
+                                      _ALLOC_SOURCE_LINE_ARGUMENTS );
         }
         else
         {

@@ -16,7 +16,7 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.11 1995-10-19 15:46:45 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.12 1996-05-17 19:36:16 david Exp $";
 #endif
 
 #define  MAX_PRINT_STACK  100
@@ -65,7 +65,7 @@ public  void  set_print_function( void  (*function) ( STRING ) )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  push_print_function()
+public  void  push_print_function( void )
 {
     if( top_of_stack < MAX_PRINT_STACK - 1 )
     {
@@ -89,7 +89,7 @@ public  void  push_print_function()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  pop_print_function()
+public  void  pop_print_function( void )
 {
     if( top_of_stack > 0 )
         --top_of_stack;
@@ -164,7 +164,7 @@ public  void  set_print_error_function( void  (*function) ( char [] ) )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  push_print_error_function()
+public  void  push_print_error_function( void )
 {
     if( top_of_error_stack < MAX_PRINT_STACK - 1 )
     {
@@ -188,7 +188,7 @@ public  void  push_print_error_function()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  pop_print_error_function()
+public  void  pop_print_error_function( void )
 {
     if( top_of_error_stack > 0 )
         --top_of_error_stack;
@@ -269,7 +269,7 @@ public  void  abort_if_allowed( void )
         print_error( "Do you wish to abort (y/n): " );
         do
         {
-            ch = getchar();
+            ch = (char) getchar();
         }
         while( ch != 'y' && ch != 'n' );
 

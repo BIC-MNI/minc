@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.7 1995-07-31 13:44:35 david Exp $";
+static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/geometry.h,v 1.8 1996-05-17 19:36:12 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,82 +36,90 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 #include  <basic.h>
 #include  <geom_structs.h>
 
+#define  _P(x) ((Point_coord_type) (x))
+#define  _R(x) ((Real) (x))
+
+#define  RPoint_x( p )  _R(Point_x(p))
+#define  RPoint_y( p )  _R(Point_y(p))
+#define  RPoint_z( p )  _R(Point_z(p))
+#define  RPoint_coord( p, c )  _R(Point_coord(p,c))
+
+#define  RVector_x( p )  _R(Vector_x(p))
+#define  RVector_y( p )  _R(Vector_y(p))
+#define  RVector_z( p )  _R(Point_z(p))
+#define  RVector_coord( p, c )  _R(Vector_coord(p,c))
+
 /* --- private point and vector operations for use by public routines */
 
 #define  POINT_SCALAR_EXP( result, v, op, scalar ) \
          { \
-           Point_x(result) = Point_x(v) op (scalar); \
-           Point_y(result) = Point_y(v) op (scalar); \
-           Point_z(result) = Point_z(v) op (scalar); \
+           Point_x(result) = _P( RPoint_x(v) op _R((scalar)) ); \
+           Point_y(result) = _P( RPoint_y(v) op _R((scalar)) ); \
+           Point_z(result) = _P( RPoint_z(v) op _R((scalar)) ); \
          }
 
 #define  POINT_EXP2( result, v1, op, v2 ) \
          { \
-           Point_x(result) = Point_x(v1) op Point_x(v2); \
-           Point_y(result) = Point_y(v1) op Point_y(v2); \
-           Point_z(result) = Point_z(v1) op Point_z(v2); \
-         }
-
-#define  POINT_EXP3( result, v1, op1, v2, op2, v3 ) \
-         { \
-           Point_x(result) = Point_x(v1) op1 Point_x(v2) op2 Point_x(v3); \
-           Point_y(result) = Point_y(v1) op1 Point_y(v2) op2 Point_y(v3); \
-           Point_z(result) = Point_z(v1) op1 Point_z(v2) op2 Point_z(v3); \
+           Point_x(result) = _P( RPoint_x(v1) op RPoint_x(v2) ); \
+           Point_y(result) = _P( RPoint_y(v1) op RPoint_y(v2) ); \
+           Point_z(result) = _P( RPoint_z(v1) op RPoint_z(v2) ); \
          }
 
 #define  POINT_VECTOR_EXP2( result, p, op, v ) \
          { \
-           Point_x(result) = Point_x(p) op Vector_x(v); \
-           Point_y(result) = Point_y(p) op Vector_y(v); \
-           Point_z(result) = Point_z(p) op Vector_z(v); \
+           Point_x(result) = _P( RPoint_x(p) op RVector_x(v) ); \
+           Point_y(result) = _P( RPoint_y(p) op RVector_y(v) ); \
+           Point_z(result) = _P( RPoint_z(p) op RVector_z(v) ); \
          }
 
 #define  VECTOR_SCALAR_EXP( result, v, op, scalar ) \
          { \
-           Vector_x(result) = Vector_x(v) op (scalar); \
-           Vector_y(result) = Vector_y(v) op (scalar); \
-           Vector_z(result) = Vector_z(v) op (scalar); \
+           Vector_x(result) = _P( RVector_x(v) op _R(scalar) ); \
+           Vector_y(result) = _P( RVector_y(v) op _R(scalar) ); \
+           Vector_z(result) = _P( RVector_z(v) op _R(scalar) ); \
          }
 
 #define  VECTOR_EXP2( result, v1, op, v2 ) \
          { \
-           Vector_x(result) = Vector_x(v1) op Vector_x(v2); \
-           Vector_y(result) = Vector_y(v1) op Vector_y(v2); \
-           Vector_z(result) = Vector_z(v1) op Vector_z(v2); \
-         }
-
-#define  VECTOR_EXP3( result, v1, op1, v2, op2, v3 ) \
-         { \
-           Vector_x(result) = Vector_x(v1) op1 Vector_x(v2) op2 Vector_x(v3); \
-           Vector_y(result) = Vector_y(v1) op1 Vector_y(v2) op2 Vector_y(v3); \
-           Vector_z(result) = Vector_z(v1) op1 Vector_z(v2) op2 Vector_z(v3); \
+           Vector_x(result) = _P( RVector_x(v1) op RVector_x(v2) ); \
+           Vector_y(result) = _P( RVector_y(v1) op RVector_y(v2) ); \
+           Vector_z(result) = _P( RVector_z(v1) op RVector_z(v2) ); \
          }
 
 /* --- interpolate between two points, 0 results in p1, 1 results in p2 */
 
 #define  INTERPOLATE_POINTS( interp, p1, p2, alpha ) \
          { \
-           Point_x(interp) = (1.0-(alpha))*Point_x(p1) + (alpha)*Point_x(p2);\
-           Point_y(interp) = (1.0-(alpha))*Point_y(p1) + (alpha)*Point_y(p2);\
-           Point_z(interp) = (1.0-(alpha))*Point_z(p1) + (alpha)*Point_z(p2);\
+           Point_x(interp) = _P( (1.0-_R(alpha))*RPoint_x(p1) + \
+                                     _R(alpha)*RPoint_x(p2) );\
+           Point_y(interp) = _P( (1.0-_R(alpha))*RPoint_y(p1) + \
+                                     _R(alpha)*RPoint_y(p2) );\
+           Point_z(interp) = _P( (1.0-_R(alpha))*RPoint_z(p1) + \
+                                     _R(alpha)*RPoint_z(p2) );\
          }
 
 /* --- interpolate between two vectors, 0 results in v1, 1 results in v2 */
 
 #define  INTERPOLATE_VECTORS( interp, v1, v2, alpha ) \
          { \
-           Vector_x(interp)= (1.0-(alpha))*Vector_x(v1) + (alpha)*Vector_x(v2);\
-           Vector_y(interp)= (1.0-(alpha))*Vector_y(v1) + (alpha)*Vector_y(v2);\
-           Vector_z(interp)= (1.0-(alpha))*Vector_z(v1) + (alpha)*Vector_z(v2);\
+           Vector_x(interp)= _P( (1.0-_R(alpha))*RVector_x(v1) + \
+                                      _R(alpha)*RVector_x(v2) );\
+           Vector_y(interp)= _P( (1.0-_R(alpha))*RVector_y(v1) + \
+                                      _R(alpha)*RVector_y(v2) );\
+           Vector_z(interp)= _P( (1.0-_R(alpha))*RVector_z(v1) + \
+                                      _R(alpha)*RVector_z(v2) );\
          }
 
 /* --- get a point on a ray, returning it as 'point' */
 
 #define  GET_POINT_ON_RAY( point, origin, direction, distance ) \
          { \
-           Vector_x(point)= Point_x(origin) + (distance)*Vector_x(direction);\
-           Vector_y(point)= Point_y(origin) + (distance)*Vector_y(direction);\
-           Vector_z(point)= Point_z(origin) + (distance)*Vector_z(direction);\
+           Vector_x(point)= _P( RPoint_x(origin) + \
+                               _R(distance)*RVector_x(direction) );\
+           Vector_y(point)= _P( RPoint_y(origin) + \
+                               _R(distance)*RVector_y(direction) );\
+           Vector_z(point)= _P( RPoint_z(origin) + \
+                               _R(distance)*RVector_z(direction) );\
          }
 
 /* --- add and subtract points and vectors, returning correct type */
@@ -126,19 +134,19 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 /* --- return the dot product of two points, two vectors, or one of each */
 
 #define  DOT_POINTS( p1, p2 ) \
-            ( Point_x(p1)*Point_x(p2) + \
-              Point_y(p1)*Point_y(p2) + \
-              Point_z(p1)*Point_z(p2) )
+            ( RPoint_x(p1)*RPoint_x(p2) + \
+              RPoint_y(p1)*RPoint_y(p2) + \
+              RPoint_z(p1)*RPoint_z(p2) )
 
 #define  DOT_VECTORS( v1, v2 ) \
-            ( Vector_x(v1)*Vector_x(v2) + \
-              Vector_y(v1)*Vector_y(v2) + \
-              Vector_z(v1)*Vector_z(v2) )
+            ( RVector_x(v1)*RVector_x(v2) + \
+              RVector_y(v1)*RVector_y(v2) + \
+              RVector_z(v1)*RVector_z(v2) )
 
 #define  DOT_POINT_VECTOR( p, v ) \
-            ( Point_x(p)*Vector_x(v) + \
-              Point_y(p)*Vector_y(v) + \
-              Point_z(p)*Vector_z(v) )
+            ( RPoint_x(p)*RVector_x(v) + \
+              RPoint_y(p)*RVector_y(v) + \
+              RPoint_z(p)*RVector_z(v) )
 
 /* --- component-wise scaling of points and vectors, result is in ps/vs */
 
@@ -148,7 +156,7 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 
 /* --- return the magnitude of a vector */
 
-#define  MAGNITUDE( v ) (Real) sqrt( (double) DOT_VECTORS(v,v) )
+#define  MAGNITUDE( v ) (Real) sqrt( DOT_VECTORS(v,v) )
 
 /* --- set vn to the value of the vector v, normalized to length 1 */
 
@@ -165,12 +173,12 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
 
 #define  CROSS_VECTORS( c, v1, v2 ) \
          { \
-             Vector_x(c) = Vector_y(v1) * Vector_z(v2) - \
-                           Vector_y(v2) * Vector_z(v1); \
-             Vector_y(c) = Vector_z(v1) * Vector_x(v2) - \
-                           Vector_z(v2) * Vector_x(v1); \
-             Vector_z(c) = Vector_x(v1) * Vector_y(v2) - \
-                           Vector_x(v2) * Vector_y(v1); \
+             Vector_x(c) = _P( RVector_y(v1) * RVector_z(v2) - \
+                              RVector_y(v2) * RVector_z(v1) ); \
+             Vector_y(c) = _P( RVector_z(v1) * RVector_x(v2) - \
+                              RVector_z(v2) * RVector_x(v1) ); \
+             Vector_z(c) = _P( RVector_x(v1) * RVector_y(v2) - \
+                              RVector_x(v2) * RVector_y(v1) ); \
          }
 
 /* --- returns TRUE if the points/vectors are equal */
@@ -189,7 +197,7 @@ static char geometry_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include
        of the point from the plane, in fractions of the normal length */
 
 #define  DIST_FROM_PLANE( normal, d, point ) \
-         ( DOT_POINT_VECTOR(point,normal) - (d) )
+         ( DOT_POINT_VECTOR(point,normal) - _R(d) )
 
 /* --- converts the 'point' to a 'vector' */
 

@@ -16,7 +16,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.20 1996-04-16 14:26:56 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.21 1996-05-17 19:36:14 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -225,10 +225,11 @@ private  Status  private_alloc_memory_5d(
 @INPUT      : n_bytes
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
+@OUTPUT     : 
+@RETURNS    : void *
 @DESCRIPTION: Allocates the specified amount of memory, and if successful,
-              calls the routine to record the memory allocated.
+              calls the routine to record the memory allocated, and returns
+              the pointer.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -236,12 +237,13 @@ private  Status  private_alloc_memory_5d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_in_bytes(
-    void         **ptr,
+public  void  *alloc_memory_in_bytes(
     size_t       n_bytes
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory( ptr, n_bytes ) != OK )
+    void         *ptr;
+
+    if( private_alloc_memory( &ptr, n_bytes ) != OK )
     {
         print_error( "Cannot alloc 1D array of %d bytes.\n", n_bytes );
         PRINT_ALLOC_SOURCE_LINE
@@ -249,8 +251,10 @@ public  void  alloc_memory_in_bytes(
     }
 #ifndef  NO_DEBUG_ALLOC
     else
-        record_ptr_alloc_check( *ptr, n_bytes, filename, line_number );
+        record_ptr_alloc_check( ptr, n_bytes, filename, line_number );
 #endif
+
+    return( ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -259,23 +263,24 @@ public  void  alloc_memory_in_bytes(
               type_size
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
-@DESCRIPTION: Allocates a 1D array.
+@OUTPUT     : 
+@RETURNS    : void *
+@DESCRIPTION: Allocates a 1D array and returns it.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Aug. 2, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Apr. 16, 1996   D. MacDonald    : returns the pointer
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_1d(
-    void         **ptr,
+public  void  *alloc_memory_1d(
     size_t       n_elements,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory( ptr, n_elements * type_size ) != OK )
+    void   *ptr;
+
+    if( private_alloc_memory( &ptr, n_elements * type_size ) != OK )
     {
         print_error( "Cannot alloc 1D array of %d elements of %d bytes.\n",
                      n_elements, type_size );
@@ -284,9 +289,11 @@ public  void  alloc_memory_1d(
     }
 #ifndef  NO_DEBUG_ALLOC
     else
-        record_ptr_alloc_check( *ptr, n_elements * type_size,
+        record_ptr_alloc_check( ptr, n_elements * type_size,
                                 filename, line_number );
 #endif
+
+    return( ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -296,9 +303,9 @@ public  void  alloc_memory_1d(
               type_size
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
-@DESCRIPTION: Allocates a 2D array.
+@OUTPUT     : 
+@RETURNS    : void *
+@DESCRIPTION: Allocates a 2D array and returns a pointer to it.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -306,14 +313,15 @@ public  void  alloc_memory_1d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_2d(
-    void         ***ptr,
+public  void  *alloc_memory_2d(
     size_t       n1,
     size_t       n2,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory_2d( ptr, n1, n2, type_size ) != OK )
+    void   **ptr;
+
+    if( private_alloc_memory_2d( &ptr, n1, n2, type_size ) != OK )
     {
         print_error( "Cannot alloc 2D array of %d by %d elements of %d bytes.\n",
                      n1, n2, type_size );
@@ -323,12 +331,14 @@ public  void  alloc_memory_2d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * type_size,
+        record_ptr_alloc_check( *ptr, n1 * n2 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    return( (void *) ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -339,8 +349,8 @@ public  void  alloc_memory_2d(
               type_size
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
+@OUTPUT     : 
+@RETURNS    : void *
 @DESCRIPTION: Allocates a 3D array.
 @METHOD     : 
 @GLOBALS    : 
@@ -349,15 +359,16 @@ public  void  alloc_memory_2d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_3d(
-    void         ****ptr,
+public  void  *alloc_memory_3d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory_3d( ptr, n1, n2, n3, type_size ) != OK )
+    void         ***ptr;
+
+    if( private_alloc_memory_3d( &ptr, n1, n2, n3, type_size ) != OK )
     {
         print_error( "Cannot alloc 3D array of %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, type_size );
@@ -367,14 +378,16 @@ public  void  alloc_memory_3d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * type_size,
+        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    return( (void *) ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -386,8 +399,8 @@ public  void  alloc_memory_3d(
               type_size
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
+@OUTPUT     : 
+@RETURNS    : void *
 @DESCRIPTION: Allocates a 4D array.
 @METHOD     : 
 @GLOBALS    : 
@@ -396,8 +409,7 @@ public  void  alloc_memory_3d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_4d(
-    void         *****ptr,
+public  void  *alloc_memory_4d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -405,7 +417,9 @@ public  void  alloc_memory_4d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory_4d( ptr, n1, n2, n3, n4, type_size ) != OK )
+    void         ****ptr;
+
+    if( private_alloc_memory_4d( &ptr, n1, n2, n3, n4, type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, type_size );
@@ -415,16 +429,18 @@ public  void  alloc_memory_4d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * sizeof(****ptr),
+        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * sizeof(***ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * type_size,
+        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * n4 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    return( (void *) ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -437,8 +453,8 @@ public  void  alloc_memory_4d(
               type_size
               filename
               line_number
-@OUTPUT     : ptr
-@RETURNS    : 
+@OUTPUT     : 
+@RETURNS    : void *
 @DESCRIPTION: Allocates a 5D array.
 @METHOD     : 
 @GLOBALS    : 
@@ -447,8 +463,7 @@ public  void  alloc_memory_4d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_memory_5d(
-    void         ******ptr,
+public  void  *alloc_memory_5d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -457,7 +472,9 @@ public  void  alloc_memory_5d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
-    if( private_alloc_memory_5d( ptr, n1, n2, n3, n4, n5, type_size ) != OK )
+    void         *****ptr;
+
+    if( private_alloc_memory_5d( &ptr, n1, n2, n3, n4, n5, type_size ) != OK )
     {
         print_error( "Cannot alloc 4D array of %d by %d by %d by %d by %d elements of %d bytes.\n",
                      n1, n2, n3, n4, n5, type_size );
@@ -467,18 +484,20 @@ public  void  alloc_memory_5d(
 #ifndef  NO_DEBUG_ALLOC
     else
     {
-        record_ptr_alloc_check( *ptr, n1 * sizeof(**ptr),
+        record_ptr_alloc_check( ptr, n1 * sizeof(*ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( **ptr, n1 * n2 * sizeof(***ptr),
+        record_ptr_alloc_check( *ptr, n1 * n2 * sizeof(**ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * sizeof(****ptr),
+        record_ptr_alloc_check( **ptr, n1 * n2 * n3 * sizeof(***ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * sizeof(*****ptr),
+        record_ptr_alloc_check( ***ptr, n1 * n2 * n3 * n4 * sizeof(****ptr),
                                 filename, line_number );
-        record_ptr_alloc_check( *****ptr, n1 * n2 * n3 * n4 * n5 * type_size,
+        record_ptr_alloc_check( ****ptr, n1 * n2 * n3 * n4 * n5 * type_size,
                                 filename, line_number );
     }
 #endif
+
+    return( (void *) ptr );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -54,11 +54,11 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
 
     for_less( i, 0, n )
     {
-        s[i] = ABS( a[i][0] );
+        s[i] = FABS( a[i][0] );
         for_less( j, 1, n )
         {
-            if( ABS(a[i][j]) > s[i] )
-               s[i] = ABS(a[i][j]);
+            if( FABS(a[i][j]) > s[i] )
+               s[i] = FABS(a[i][j]);
         }
 
         if( s[i] == 0.0 )
@@ -75,11 +75,11 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     {
         p = i;
         best_val = a[row[i]][i] / s[row[i]];
-        best_val = ABS( best_val );
+        best_val = FABS( best_val );
         for_less( j, i+1, n )
         {
             val = a[row[j]][i] / s[row[j]];
-            val = ABS( val );
+            val = FABS( val );
             if( val > best_val )
             {
                 best_val = val;

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.62 1996-04-10 17:19:41 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.63 1996-05-17 19:36:21 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -387,13 +387,13 @@ public  BOOLEAN  is_an_rgb_volume(
 public  void  alloc_volume_data(
     Volume   volume )
 {
-    unsigned int   data_size;
+    unsigned long   data_size;
 
-    data_size = get_volume_total_n_voxels( volume ) *
-                (unsigned int) get_type_size( get_volume_data_type( volume ) );
+    data_size = (unsigned long) get_volume_total_n_voxels( volume ) *
+                (unsigned long) get_type_size( get_volume_data_type( volume ) );
 
-    if( data_size > get_n_bytes_cache_threshold() &&
-        get_n_bytes_cache_threshold() >= 0 )
+    if( get_n_bytes_cache_threshold() >= 0 &&
+        data_size > (unsigned long) get_n_bytes_cache_threshold() )
     {
         volume->is_cached_volume = TRUE;
         initialize_volume_cache( &volume->cache, volume );
@@ -1448,21 +1448,29 @@ public  void  set_volume_voxel_range(
         switch( get_volume_data_type( volume ) )
         {
         case UNSIGNED_BYTE:
-            voxel_min = 0.0;          voxel_max = UCHAR_MAX;     break;
+            voxel_min = 0.0;
+            voxel_max = (Real) UCHAR_MAX;     break;
         case SIGNED_BYTE:
-            voxel_min = SCHAR_MIN;    voxel_max = SCHAR_MAX;     break;
+            voxel_min = (Real) SCHAR_MIN;
+            voxel_max = (Real) SCHAR_MAX;     break;
         case UNSIGNED_SHORT:
-            voxel_min = 0.0;          voxel_max = USHRT_MAX;     break;
+            voxel_min = 0.0;
+            voxel_max = (Real) USHRT_MAX;     break;
         case SIGNED_SHORT:
-            voxel_min = SHRT_MIN;     voxel_max = SHRT_MAX;      break;
+            voxel_min = (Real) SHRT_MIN;
+            voxel_max = (Real) SHRT_MAX;      break;
         case UNSIGNED_LONG:
-            voxel_min = 0.0;          voxel_max = ULONG_MAX;     break;
+            voxel_min = 0.0;
+            voxel_max = (Real) ULONG_MAX;     break;
         case SIGNED_LONG:
-            voxel_min = LONG_MIN;     voxel_max = LONG_MAX;      break;
+            voxel_min = (Real) LONG_MIN;
+            voxel_max = (Real) LONG_MAX;      break;
         case FLOAT:
-            voxel_min = -FLT_MAX;     voxel_max = FLT_MAX;       break;
+            voxel_min = (Real) -FLT_MAX;
+            voxel_max = (Real) FLT_MAX;       break;
         case DOUBLE:
-            voxel_min = -DBL_MAX;     voxel_max = DBL_MAX;       break;
+            voxel_min = (Real) -DBL_MAX;
+            voxel_max = (Real) DBL_MAX;       break;
         }
     }
 

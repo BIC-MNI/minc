@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.45 1996-05-07 13:24:50 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.46 1996-05-17 19:36:22 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -1103,11 +1103,11 @@ private  void  output_slab(
         size3 = volume_sizes[3];
         size4 = volume_sizes[4];
 
-        for_less( v[4], 0, size4 )
-        for_less( v[3], 0, size3 )
-        for_less( v[2], 0, size2 )
-        for_less( v[1], 0, size1 )
         for_less( v[0], 0, size0 )
+        for_less( v[1], 0, size1 )
+        for_less( v[2], 0, size2 )
+        for_less( v[3], 0, size3 )
+        for_less( v[4], 0, size4 )
         {
             value = get_volume_voxel_value( volume,
                                             volume_start[0] + v[0],

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.26 1995-10-19 15:46:59 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.27 1996-05-17 19:36:20 david Exp $";
 #endif
 
 #define  DEFAULT_SUFFIX  "fre"
@@ -47,12 +47,13 @@ public  Status  initialize_free_format_input(
 {
     Status         status, file_status;
     STRING         volume_filename, abs_volume_filename, slice_filename;
-    int            slice, sizes[N_DIMENSIONS];
-    int            c, volume_byte_offset;
+    int            sizes[N_DIMENSIONS];
+    int            c, volume_byte_offset, int_size;
     int            n_bytes_per_voxel, min_value, max_value, i;
     int            n_slices, n_voxels_in_slice;
+    long           slice;
     nc_type        desired_data_type;
-    unsigned short value;
+    int            value;
     char           ch;
     Real           file_separations[MAX_DIMENSIONS];
     Real           volume_separations[MAX_DIMENSIONS];
@@ -136,8 +137,10 @@ public  Status  initialize_free_format_input(
     {
         status = ERROR;
 
-        if( input_int( file, &volume_input->sizes_in_file[axis] ) != OK )
+        if( input_int( file, &int_size ) != OK )
             break;
+
+        volume_input->sizes_in_file[axis] = (long) int_size;
 
         if( input_real( file, &file_separations[axis] ) != OK )
             break;
@@ -221,7 +224,7 @@ public  Status  initialize_free_format_input(
             ++n_slices;
         }
 
-        volume_input->sizes_in_file[0] = n_slices;
+        volume_input->sizes_in_file[0] = (long) n_slices;
         volume_input->one_file_per_slice = TRUE;
     }
     else
@@ -247,7 +250,7 @@ public  Status  initialize_free_format_input(
         for_less( axis, 0, N_DIMENSIONS )
         {
             sizes[volume_input->axis_index_from_file[axis]] =
-                                 volume_input->sizes_in_file[axis];
+                                 (int) volume_input->sizes_in_file[axis];
             volume_separations[volume_input->axis_index_from_file[axis]] =
                                                      file_separations[axis];
 
@@ -270,8 +273,8 @@ public  Status  initialize_free_format_input(
 
     /* allocate the slice buffer */
 
-    n_voxels_in_slice = volume_input->sizes_in_file[1] *
-                        volume_input->sizes_in_file[2];
+    n_voxels_in_slice = (int) volume_input->sizes_in_file[1] *
+                        (int) volume_input->sizes_in_file[2];
 
     if( status == OK )
     switch( volume_input->file_data_type )
@@ -317,12 +320,11 @@ public  Status  initialize_free_format_input(
             for_less( i, 0, n_voxels_in_slice )
             {
                 value = (int) volume_input->short_slice_buffer[i];
-                if( slice == 0 && i == 0 || (int) value < min_value )
+                if( slice == 0 && i == 0 || value < min_value )
                     min_value = value;
-                if( slice == 0 && i == 0 || (int) value > max_value )
+                if( slice == 0 && i == 0 || value > max_value )
                     max_value = value;
             }
-
         }
 
         set_volume_voxel_range( volume, (Real) min_value, (Real) max_value );
@@ -362,7 +364,7 @@ public  Status  initialize_free_format_input(
 public  void  delete_free_format_input(
     volume_input_struct   *volume_input )
 {
-    int   slice;
+    long   slice;
 
     if( volume_input->file_data_type == UNSIGNED_BYTE )
     {
@@ -409,7 +411,7 @@ private  Status  input_slice(
 
     status = OK;
 
-    if( volume_input->slice_index < volume_input->sizes_in_file[0] )
+    if( (long) volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
         if( volume_input->one_file_per_slice )
         {
@@ -436,16 +438,16 @@ private  Status  input_slice(
             status = io_binary_data( file, READ_FILE,
                                  (void *) volume_input->byte_slice_buffer,
                                  sizeof(volume_input->byte_slice_buffer[0]),
-                                 volume_input->sizes_in_file[1] *
-                                 volume_input->sizes_in_file[2] );
+                                 (int) volume_input->sizes_in_file[1] *
+                                 (int) volume_input->sizes_in_file[2] );
             break;
 
         case  UNSIGNED_SHORT:
             status = io_binary_data( file, READ_FILE,
                                  (void *) volume_input->short_slice_buffer,
                                  sizeof(volume_input->short_slice_buffer[0]),
-                                 volume_input->sizes_in_file[1] *
-                                 volume_input->sizes_in_file[2] );
+                                 (int) volume_input->sizes_in_file[1] *
+                                 (int) volume_input->sizes_in_file[2] );
             break;
 
         default:
@@ -482,17 +484,18 @@ public  BOOLEAN  input_more_free_format_file(
     volume_input_struct   *volume_input,
     Real                  *fraction_done )
 {
-    int             min_value, max_value;
+    Real            min_value, max_value, value;
     int             x, y, z, sizes[MAX_DIMENSIONS];
+    long            i;
     Status          status;
     BOOLEAN         more_to_do, scaling_flag;
     Real            value_translation, value_scale;
     Real            original_min_voxel, original_max_voxel;
-    int             *inner_index, i, value, indices[MAX_DIMENSIONS];
+    int             *inner_index, indices[MAX_DIMENSIONS];
     unsigned char   *byte_buffer_ptr;
     unsigned short  *short_buffer_ptr;
 
-    if( volume_input->slice_index < volume_input->sizes_in_file[0] )
+    if( (long) volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
         if( !volume_is_alloced( volume ) )
             alloc_volume_data( volume );
@@ -522,26 +525,25 @@ public  BOOLEAN  input_more_free_format_file(
             byte_buffer_ptr = volume_input->byte_slice_buffer;
             for_less( i, 0, volume_input->sizes_in_file[1] )
             {
-                indices[volume_input->axis_index_from_file[1]] = i;
-                for_less( *inner_index, 0, volume_input->sizes_in_file[2] )
+                indices[volume_input->axis_index_from_file[1]] = (int) i;
+                for_less( *inner_index, 0, (int) volume_input->sizes_in_file[2] )
                 {
                     if( scaling_flag )
                     {
-                        value = (int)(
-                         ((Real) (*byte_buffer_ptr) - value_translation) /
-                                   value_scale );
+                        value = ((Real) (*byte_buffer_ptr) - value_translation)/
+                                   value_scale;
 
-                        if( value < 0 )
-                            value = 0;
-                        else if( value > 255 )
-                            value = 255;
+                        if( value < 0.0 )
+                            value = 0.0;
+                        else if( value > 255.0 )
+                            value = 255.0;
                     }
                     else
-                        value = (int) (*byte_buffer_ptr);
+                        value = (Real) (*byte_buffer_ptr);
 
                     set_volume_voxel_value( volume,
                                indices[X], indices[Y], indices[Z], 0, 0,
-                               (Real) value );
+                               value );
 
                     ++byte_buffer_ptr;
                 }
@@ -552,21 +554,21 @@ public  BOOLEAN  input_more_free_format_file(
             short_buffer_ptr = volume_input->short_slice_buffer;
             for_less( i, 0, volume_input->sizes_in_file[1] )
             {
-                indices[volume_input->axis_index_from_file[1]] = i;
-                for_less( *inner_index, 0, volume_input->sizes_in_file[2] )
+                indices[volume_input->axis_index_from_file[1]] = (int) i;
+                for_less( *inner_index, 0, (int) volume_input->sizes_in_file[2])
                 {
                     if( scaling_flag )
                     {
-                        value = (int)(
+                        value = 
                          ((Real) (*short_buffer_ptr) - value_translation) /
-                                               value_scale );
+                                               value_scale;
                     }
                     else
-                        value = (int) (*short_buffer_ptr);
+                        value = (Real) (*short_buffer_ptr);
 
                     set_volume_voxel_value( volume,
                                indices[X], indices[Y], indices[Z], 0, 0,
-                               (Real) value );
+                               value );
 
                     ++short_buffer_ptr;
                 }
@@ -599,7 +601,7 @@ public  BOOLEAN  input_more_free_format_file(
             {
                 for_less( z, 0, sizes[Z] )
                 {
-                    value = get_volume_voxel_value( volume, x, y, z, 0, 0 );
+                    value = get_volume_voxel_value( volume, x, y, z, 0,0);
                     if( value < min_value )
                         min_value = value;
                     else if( value > max_value )
@@ -608,7 +610,7 @@ public  BOOLEAN  input_more_free_format_file(
             }
         }
 
-        set_volume_voxel_range( volume, (Real) min_value, (Real) max_value );
+        set_volume_voxel_range( volume, min_value, max_value );
 
         if( get_volume_data_type(volume) != volume_input->file_data_type )
         {

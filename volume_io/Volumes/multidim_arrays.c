@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.11 1996-04-10 17:19:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.12 1996-05-17 19:36:23 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -206,8 +206,9 @@ public  BOOLEAN  multidim_array_is_alloced(
 public  void  alloc_multidim_array(
     multidim_array   *array )
 {
-    int    type_size, *sizes;
-    void   *p1, **p2, ***p3, ****p4, *****p5;
+    int     dim;
+    size_t  type_size, sizes[5];
+    void    *p1, **p2, ***p3, ****p4, *****p5;
 
     if( multidim_array_is_alloced( array ) )
         delete_multidim_array( array );
@@ -219,34 +220,35 @@ public  void  alloc_multidim_array(
         return;
     }
 
-    sizes = array->sizes;
+    for_less( dim, 0, array->n_dimensions )
+        sizes[dim] = (size_t) array->sizes[dim];
 
-    type_size = get_type_size( array->data_type );
+    type_size = (size_t) get_type_size( array->data_type );
 
     switch( array->n_dimensions )
     {
     case  1:
-        alloc_memory_1d( &p1, sizes[0], type_size _ALLOC_SOURCE_LINE );
+        p1 = alloc_memory_1d( sizes[0], type_size _ALLOC_SOURCE_LINE );
         array->data = (void *) p1;
         break;
     case  2:
-        alloc_memory_2d( &p2, sizes[0], sizes[1], type_size _ALLOC_SOURCE_LINE);
+        p2 = alloc_memory_2d( sizes[0], sizes[1], type_size _ALLOC_SOURCE_LINE);
         array->data = (void *) p2;
         break;
     case  3:
-        alloc_memory_3d( &p3, sizes[0], sizes[1], sizes[2], type_size
-                         _ALLOC_SOURCE_LINE );
+        p3 = alloc_memory_3d( sizes[0], sizes[1], sizes[2], type_size
+                             _ALLOC_SOURCE_LINE );
         array->data = (void *) p3;
         break;
     case  4:
-        alloc_memory_4d( &p4, sizes[0], sizes[1],
-                         sizes[2], sizes[3], type_size _ALLOC_SOURCE_LINE );
+        p4 = alloc_memory_4d( sizes[0], sizes[1],
+                             sizes[2], sizes[3], type_size _ALLOC_SOURCE_LINE );
         array->data = (void *) p4;
         break;
     case  5:
-        alloc_memory_5d( &p5, sizes[0], sizes[1],
-                         sizes[2], sizes[3], sizes[4], type_size
-                         _ALLOC_SOURCE_LINE );
+        p5 = alloc_memory_5d( sizes[0], sizes[1],
+                              sizes[2], sizes[3], sizes[4], type_size
+                              _ALLOC_SOURCE_LINE );
         array->data = (void *) p5;
         break;
     }
@@ -518,7 +520,7 @@ public  void  copy_multidim_data_reordered(
                 {
                     for_less( v4, 0, size4 )
                     {
-                        (void) memcpy( dest_ptr, src_ptr, type_size );
+                        (void) memcpy( dest_ptr, src_ptr, (size_t) type_size );
                         src_ptr += src_offset4;
                         dest_ptr += dest_offset4;
                     }

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.c,v 1.5 1995-07-31 13:44:28 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.c,v 1.6 1996-05-17 19:36:09 david Exp $";
 #endif
 
 #define  STEP_RATIO  1.0
@@ -51,8 +51,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.
 
 public  BOOLEAN  newton_root_find(
     int    n_dimensions,
-    void   (*function) ( void *function_data,
-                         Real parameters[],  Real values[], Real **derivatives),
+    void   (*function) ( void *, Real [],  Real [], Real ** ),
     void   *function_data,
     Real   initial_guess[],
     Real   desired_values[],
@@ -94,7 +93,7 @@ public  BOOLEAN  newton_root_find(
         for_less( dim, 0, n_dimensions )
         {
             values[dim] = desired_values[dim] - values[dim];
-            error += ABS( values[dim] );
+            error += FABS( values[dim] );
         }
 
         /*--- if this is best so far, record it */
@@ -124,7 +123,7 @@ public  BOOLEAN  newton_root_find(
         for_less( dim, 0, n_dimensions )
         {
             position[dim] += STEP_RATIO * delta[dim];
-            step_size += ABS( delta[dim] );
+            step_size += FABS( delta[dim] );
         }
 
         if( step_size < delta_tolerance )

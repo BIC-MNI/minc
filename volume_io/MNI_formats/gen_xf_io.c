@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.17 1995-10-19 15:47:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.18 1996-05-17 19:36:26 david Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
@@ -49,7 +49,7 @@ static   const STRING      DISPLACEMENT_VOLUME = "Displacement_Volume";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_default_transform_file_suffix()
+public  STRING  get_default_transform_file_suffix( void )
 {
     return( "xfm" );
 }

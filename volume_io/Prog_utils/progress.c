@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.8 1995-12-19 15:47:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.9 1996-05-17 19:36:17 david Exp $";
 #endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
@@ -120,9 +120,9 @@ public  void  update_progress_report(
 
     current_time = current_realtime_seconds();
 
-    n_seconds_per = progress->check_every *
+    n_seconds_per = (Real) progress->check_every *
                     (current_time - progress->last_check_time) /
-                    (current_step - progress->last_check_step);
+                    (Real) (current_step - progress->last_check_step);
 
     if( n_seconds_per < DOUBLE_THRESHOLD )
         progress->check_every *= 2;

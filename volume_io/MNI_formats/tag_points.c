@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.20 1996-04-10 17:19:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.21 1996-05-17 19:36:26 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -35,7 +35,7 @@ static   const char      *TAG_POINTS_STRING = "Points";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_default_tag_file_suffix()
+public  STRING  get_default_tag_file_suffix( void )
 {
     return( "tag" );
 }

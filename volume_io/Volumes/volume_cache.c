@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.24 1996-04-10 17:19:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.25 1996-05-17 19:36:23 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -96,7 +96,7 @@ public  void  set_n_bytes_cache_threshold(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_n_bytes_cache_threshold()
+public  int  get_n_bytes_cache_threshold( void )
 {
     int   n_bytes;
 
@@ -148,7 +148,7 @@ public  void  set_default_max_bytes_in_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_default_max_bytes_in_cache()
+public  int  get_default_max_bytes_in_cache( void )
 {
     int   n_bytes;
 
@@ -851,10 +851,11 @@ public  void  open_cache_volume_input_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  open_cache_volume_output_file(
+private  Status  open_cache_volume_output_file(
     volume_cache_struct   *cache,
     Volume                volume )
 {
+    Status     status;
     int        dim, n_dims;
     int        out_sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
     Real       min_value, max_value;
@@ -862,7 +863,6 @@ private  void  open_cache_volume_output_file(
     char       tmp_name[L_tmpnam+1];
     STRING     *vol_dim_names;
     STRING     *out_dim_names, output_filename;
-
 
     n_dims = get_volume_n_dimensions( volume );
 
@@ -903,7 +903,7 @@ private  void  open_cache_volume_output_file(
                                                  &cache->options, out_sizes );
 
         if( out_dim_names == NULL )
-            return;
+            return( ERROR );
     }
 
     get_volume_real_range( volume, &min_value, &max_value );
@@ -922,12 +922,14 @@ private  void  open_cache_volume_output_file(
                                         volume, &cache->options );
 
     if( out_minc_file == NULL )
-        return;
+        return( ERROR );
 
-    if( copy_volume_auxiliary_and_history( out_minc_file, output_filename,
-                                           cache->original_filename,
-                                           cache->history ) != OK )
-        return;
+    status = copy_volume_auxiliary_and_history( out_minc_file, output_filename,
+                                                cache->original_filename,
+                                                cache->history );
+
+    if( status != OK )
+        return( status );
 
     out_minc_file->converting_to_colour = FALSE;
 
@@ -936,7 +938,10 @@ private  void  open_cache_volume_output_file(
     if( string_length( cache->output_filename ) == 0 )
         remove_file( output_filename );
 
-    set_minc_output_random_order( out_minc_file );
+    status = set_minc_output_random_order( out_minc_file );
+
+    if( status != OK )
+        return( status );
 
     /*--- if the volume was previously reading a file, copy the volume to
           the output and close the input file */
@@ -955,6 +960,8 @@ private  void  open_cache_volume_output_file(
     delete_dimension_names( volume, out_dim_names );
 
     delete_string( output_filename );
+
+    return( OK );
 }
 
 public  void  cache_volume_range_has_changed(
@@ -1411,7 +1418,7 @@ public  Real  get_cached_volume_voxel(
 
     block = get_cache_block_for_voxel( volume, x, y, z, t, v, &offset );
 
-    GET_MULTIDIM_1D( value, block->array, offset );
+    GET_MULTIDIM_1D( value, (Real), block->array, offset );
 
     return( value );
 }
@@ -1449,7 +1456,7 @@ public  void  set_cached_volume_voxel(
 
     if( !volume->cache.output_file_is_open )
     {
-        open_cache_volume_output_file( &volume->cache, volume );
+        (void) open_cache_volume_output_file( &volume->cache, volume );
         volume->cache.output_file_is_open = TRUE;
     }
 

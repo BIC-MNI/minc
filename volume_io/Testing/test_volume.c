@@ -15,7 +15,10 @@ int  main(
     int                  continuity, arg;
     Real                 x, y, z;
     char                 *input_filename;
-    static char          *dim_names[] = { MIxspace, MIzspace, MIyspace };
+    static char          *dim_names[] = { MIxspace, MIyspace, MIzspace };
+/*
+    char          **dim_names = File_order_dimension_names;
+*/
 
     if( argc < 2 )
     {

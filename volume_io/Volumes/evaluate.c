@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.30 1996-05-07 13:22:38 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.31 1996-05-17 19:36:19 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -238,10 +238,9 @@ private  void    trilinear_interpolate(
     Real     *value,
     Real     derivs[] )
 {
-    int    i, j, k, sizes[N_DIMENSIONS], dx, dy, dz;
+    int    c, i, j, k, sizes[N_DIMENSIONS], dx, dy, dz;
     Real   x, y, z, u, v, w;
-    Real   coefs[2][2][2];
-    Real   c000, c001, c010, c011, c100, c101, c110, c111;
+    Real   coefs[8];
     Real   du00, du01, du10, du11, c00, c01, c10, c11, c0, c1, du0, du1;
     Real   dv0, dv1, dw, scale_factor;
 
@@ -259,23 +258,24 @@ private  void    trilinear_interpolate(
         j = (int) y;
         k = (int) z;
 
-        GET_VOXEL_3D_TYPED( c000, (Real), volume, i  , j  , k );
-        GET_VOXEL_3D_TYPED( c001, (Real), volume, i  , j  , k+1 );
-        GET_VOXEL_3D_TYPED( c010, (Real), volume, i  , j+1, k );
-        GET_VOXEL_3D_TYPED( c011, (Real), volume, i  , j+1, k+1 );
-        GET_VOXEL_3D_TYPED( c100, (Real), volume, i+1, j  , k );
-        GET_VOXEL_3D_TYPED( c101, (Real), volume, i+1, j  , k+1 );
-        GET_VOXEL_3D_TYPED( c110, (Real), volume, i+1, j+1, k );
-        GET_VOXEL_3D_TYPED( c111, (Real), volume, i+1, j+1, k+1 );
+        GET_VOXEL_3D_TYPED( coefs[0], (Real), volume, i  , j  , k   );
+        GET_VOXEL_3D_TYPED( coefs[1], (Real), volume, i  , j  , k+1 );
+        GET_VOXEL_3D_TYPED( coefs[2], (Real), volume, i  , j+1, k   );
+        GET_VOXEL_3D_TYPED( coefs[3], (Real), volume, i  , j+1, k+1 );
+        GET_VOXEL_3D_TYPED( coefs[4], (Real), volume, i+1, j  , k   );
+        GET_VOXEL_3D_TYPED( coefs[5], (Real), volume, i+1, j  , k+1 );
+        GET_VOXEL_3D_TYPED( coefs[6], (Real), volume, i+1, j+1, k   );
+        GET_VOXEL_3D_TYPED( coefs[7], (Real), volume, i+1, j+1, k+1 );
     }
     else
     {
+        outside_value = convert_value_to_voxel( volume, outside_value );
+
         i = FLOOR( x );
         j = FLOOR( y );
         k = FLOOR( z );
 
-        outside_value = convert_value_to_voxel( volume, outside_value );
-
+        c = 0;
         for_less( dx, 0, 2 )
         for_less( dy, 0, 2 )
         for_less( dz, 0, 2 )
@@ -284,21 +284,12 @@ private  void    trilinear_interpolate(
                 j + dy >= 0 && j + dy < sizes[1] &&
                 k + dz >= 0 && k + dz < sizes[2] )
             {
-                GET_VOXEL_3D_TYPED( coefs[dx][dy][dz], (Real),
-                                    volume, i+dx, j+dy, k+dz );
+                GET_VOXEL_3D_TYPED( coefs[c], (Real), volume, i+dx, j+dy, k+dz);
             }
             else
-                coefs[dx][dy][dz] = outside_value;
+                coefs[c] = outside_value;
+            ++c;
         }
-
-        c000 = coefs[0][0][0];
-        c001 = coefs[0][0][1];
-        c010 = coefs[0][1][0];
-        c011 = coefs[0][1][1];
-        c100 = coefs[1][0][0];
-        c101 = coefs[1][0][1];
-        c110 = coefs[1][1][0];
-        c111 = coefs[1][1][1];
     }
 
     u = x - (Real) i;
@@ -307,17 +298,17 @@ private  void    trilinear_interpolate(
 
     /*--- get the 4 differences in the u direction */
 
-    du00 = c100 - c000;
-    du01 = c101 - c001;
-    du10 = c110 - c010;
-    du11 = c111 - c011;
+    du00 = coefs[4] - coefs[0];
+    du01 = coefs[5] - coefs[1];
+    du10 = coefs[6] - coefs[2];
+    du11 = coefs[7] - coefs[3];
 
     /*--- reduce to a 2D problem, by interpolating in the u direction */
 
-    c00 = c000 + u * du00;
-    c01 = c001 + u * du01;
-    c10 = c010 + u * du10;
-    c11 = c011 + u * du11;
+    c00 = coefs[0] + u * du00;
+    c01 = coefs[1] + u * du01;
+    c10 = coefs[2] + u * du10;
+    c11 = coefs[3] + u * du11;
 
     /*--- get the 2 differences in the v direction for the 2D problem */
 
@@ -922,25 +913,24 @@ public  int   evaluate_volume(
     else
         coefs = fixed_size_coefs;
 
-    /*--- compute the increments in the coefs[] array for each dimension,
-          in order to simulate a multidimensional array with a single dim
-          array, coefs */
-
-    inc[interp_dims[n_dims-1]] = 1;
-    for_down( d, n_dims-2, 0 )
-    {
-        next_d = interp_dims[d+1];
-        inc[interp_dims[d]] = inc[next_d] * (end[next_d] - start[next_d]);
-    }
-
     /*--- figure out the offset within coefs.  If we are inside, the offset
           is zero, since all coefs must be filled in.  If we are partially
           inside, set the offset to the first coef within the volume. */
 
-    start_index = 0;
-
     if( !fully_inside )
     {
+        /*--- compute the increments in the coefs[] array for each dimension,
+              in order to simulate a multidimensional array with a single dim
+              array, coefs */
+
+        inc[interp_dims[n_dims-1]] = 1;
+        for_down( d, n_dims-2, 0 )
+        {
+            next_d = interp_dims[d+1];
+            inc[interp_dims[d]] = inc[next_d] * (end[next_d] - start[next_d]);
+        }
+
+        start_index = 0;
         for_less( d, 0, n_dims )
         {
             if( start[d] < 0 )
@@ -955,11 +945,21 @@ public  int   evaluate_volume(
 
         for_less( v, 0, n_values * n_coefs )
             coefs[v] = outside_value;
+
+        /*--- get the necessary coeficients from the volume */
+
+        extract_coefficients( volume, start, end, &coefs[start_index], inc );
     }
+    else
+    {
+        /*--- get the necessary coeficients from the volume */
 
-    /*--- get the necessary coeficients from the volume */
-
-    extract_coefficients( volume, start, end, &coefs[start_index], inc );
+        get_volume_value_hyperslab( volume,
+                         start[0], start[1], start[2], start[3], start[4],
+                         end[0] - start[0], end[1] - start[1],
+                         end[2] - start[2], end[3] - start[3],
+                         end[4] - start[4], coefs );
+    }
 
     /*--- now that we have the coeficients, do the interpolation */
 

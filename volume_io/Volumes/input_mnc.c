@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.53 1996-02-28 16:03:55 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.54 1996-05-17 19:36:20 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -160,7 +160,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     {
         (void) ncdiminq( file->cdfid, dim_vars[d], dim_name, &long_size );
         file->dim_names[d] = create_string( dim_name );
-        file->sizes_in_file[d] = (int) long_size;
+        file->sizes_in_file[d] = long_size;
     }
 
     file->converting_to_colour = FALSE;
@@ -170,15 +170,15 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     {
         if( options->convert_vector_to_colour_flag &&
             file->sizes_in_file[file->n_file_dimensions-1] >=
-            options->dimension_size_for_colour_data &&
+            (long) options->dimension_size_for_colour_data &&
             file->sizes_in_file[file->n_file_dimensions-1] <=
-            options->max_dimension_size_for_colour_data )
+            (long) options->max_dimension_size_for_colour_data )
         {
             for_less( i, 0, 4 )
             {
                 file->rgba_indices[i] = options->rgba_indices[i];
 
-                if( options->rgba_indices[i] >=
+                if( (long) options->rgba_indices[i] >=
                     file->sizes_in_file[file->n_file_dimensions-1] )
                 {
                     file->rgba_indices[i] = -1;
@@ -328,11 +328,11 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
         if( file->to_volume_index[d] == INVALID_AXIS )
         {
-            file->n_volumes_in_file *= file->sizes_in_file[d];
+            file->n_volumes_in_file *= (int) file->sizes_in_file[d];
         }
         else
         {
-            sizes[file->to_volume_index[d]] = file->sizes_in_file[d];
+            sizes[file->to_volume_index[d]] = (int) file->sizes_in_file[d];
             volume_separations[file->to_volume_index[d]] =
                                           file_separations[d];
         }
@@ -361,9 +361,9 @@ public  Minc_file  initialize_minc_input_from_minc_id(
         }
     }
 
-    world_space[X] = Point_x(origin);
-    world_space[Y] = Point_y(origin);
-    world_space[Z] = Point_z(origin);
+    world_space[X] = (Real) Point_x(origin);
+    world_space[Y] = (Real) Point_y(origin);
+    world_space[Z] = (Real) Point_z(origin);
 
     compute_world_transform( file->spatial_axes, file_separations,
                              zero_voxel, world_space, dir_cosines,
@@ -431,7 +431,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     file->minc_icv = miicv_create();
 
-    (void) miicv_setint( file->minc_icv, MI_ICV_TYPE, converted_type );
+    (void) miicv_setint( file->minc_icv, MI_ICV_TYPE, (int) converted_type );
     (void) miicv_setstr( file->minc_icv, MI_ICV_SIGN,
                          converted_sign ? MI_SIGNED : MI_UNSIGNED );
     (void) miicv_setint( file->minc_icv, MI_ICV_DO_NORM, TRUE );
@@ -559,7 +559,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
         if( file->to_volume_index[d] != INVALID_AXIS )
         {
             ++file->n_slab_dims;
-            slab_size *= file->sizes_in_file[d];
+            slab_size *= (int) file->sizes_in_file[d];
         }
         --d;
     }
@@ -762,7 +762,7 @@ public  Status  input_minc_hyperslab(
         if( ind != INVALID_AXIS )
         {
             if( !non_full_size_found &&
-                count[file_ind] < file->sizes_in_file[file_ind] )
+                (long) count[file_ind] < file->sizes_in_file[file_ind] )
                 non_full_size_found = TRUE;
             else if( non_full_size_found && count[file_ind] > 1 )
                 direct_to_array = FALSE;
@@ -861,7 +861,7 @@ public  Status  input_minc_hyperslab(
                     else
                     {
                          voxel[n_tmp_dims] = file->rgba_indices[i];
-                         GET_MULTIDIM( rgb[i], rgb_array,
+                         GET_MULTIDIM( rgb[i], (Real), rgb_array,
                                        voxel[0], voxel[1],
                                        voxel[2], voxel[3], voxel[4] );
                     }
@@ -1034,8 +1034,8 @@ public  BOOLEAN  input_more_minc_file(
                     else
                         file->indices[d] = 0;
                 }
-                n_done += total * file->indices[d];
-                total *= file->sizes_in_file[d];
+                n_done += total * (int) file->indices[d];
+                total *= (int) file->sizes_in_file[d];
             }
 
             if( file->to_volume_index[d] != INVALID_AXIS )
@@ -1102,7 +1102,7 @@ public  BOOLEAN  advance_input_volume(
         {
             axis = file->spatial_axes[c];
             if( axis != INVALID_AXIS )
-                voxel[c] = file->indices[axis];
+                voxel[c] = (Real) file->indices[axis];
             else
                 voxel[c] = 0.0;
         }

@@ -1,11 +1,14 @@
+#include  "alloc.h"
 #include  <volume_io.h>
 
-int  main()
+int  main(
+    int   argc,
+    char   *argv[] )
 {
-    int    *p;
+    double    *p;
     int    i, n;
 
-    ALLOC( p, 20 );
+    ALLOC_NEW( p, 20 );
     REALLOC( p, 30 );
     FREE( p );
 
@@ -20,6 +23,7 @@ int  main()
     p = NULL;
     FREE( p );
 
+/*
     n = 0;
 
     ADD_ELEMENT_TO_ARRAY( p, n, 34, DEFAULT_CHUNK_SIZE );
@@ -31,6 +35,7 @@ int  main()
     
     for_less( i, 0, n )
         print( "%d\n", p[i] );
+*/
 
     return( 0 );
 }

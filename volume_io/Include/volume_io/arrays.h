@@ -28,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.8 1995-08-14 18:08:22 david Exp $";
+static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.9 1996-05-17 19:36:13 david Exp $";
 #endif
 
 #include  <alloc.h>
@@ -100,11 +100,11 @@ static char arrays_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 
 #define  DELETE_ELEMENT_FROM_ARRAY( array, n_elems, index_to_remove, chunk_size ) \
      {                                                                        \
-         (void) memmove( (void *) ((long) (array) +                           \
-                         (index_to_remove) * sizeof(*(array))),               \
-                  (void *) ((long) (array) +                                  \
-                         ((index_to_remove)+1)* sizeof(*(array))),            \
-                  ((n_elems) - (index_to_remove) - 1) * sizeof(*(array)) );   \
+         (void) memmove( (void *) ((unsigned long) (array) +                  \
+      (unsigned long) (index_to_remove) * (unsigned long) sizeof(*(array))),  \
+      (void *) ((unsigned long) (array) +                                     \
+     ((unsigned long) (index_to_remove)+1)* (unsigned long) sizeof(*(array))),\
+   ((size_t) (n_elems) - (size_t) (index_to_remove) - 1) * sizeof(*(array)) );\
                                                                               \
          --(n_elems);                                                         \
                                                                               \

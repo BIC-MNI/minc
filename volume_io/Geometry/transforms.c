@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.17 1995-07-31 13:44:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/transforms.c,v 1.18 1996-05-17 19:36:08 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -136,9 +136,9 @@ public  void  set_transform_origin(
     Transform   *transform,
     Point       *origin )
 {
-    Transform_elem(*transform,0,3) = Point_x(*origin);
-    Transform_elem(*transform,1,3) = Point_y(*origin);
-    Transform_elem(*transform,2,3) = Point_z(*origin);
+    Transform_elem(*transform,0,3) = (Transform_elem_type) Point_x(*origin);
+    Transform_elem(*transform,1,3) = (Transform_elem_type) Point_y(*origin);
+    Transform_elem(*transform,2,3) = (Transform_elem_type) Point_z(*origin);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -183,9 +183,9 @@ public  void  set_transform_x_axis(
     Transform   *transform,
     Vector      *x_axis )
 {
-    Transform_elem(*transform,0,0) = Vector_x(*x_axis);
-    Transform_elem(*transform,1,0) = Vector_y(*x_axis);
-    Transform_elem(*transform,2,0) = Vector_z(*x_axis);
+    Transform_elem(*transform,0,0) = (Transform_elem_type) Vector_x(*x_axis);
+    Transform_elem(*transform,1,0) = (Transform_elem_type) Vector_y(*x_axis);
+    Transform_elem(*transform,2,0) = (Transform_elem_type) Vector_z(*x_axis);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -230,9 +230,9 @@ public  void  set_transform_y_axis(
     Transform   *transform,
     Vector      *y_axis )
 {
-    Transform_elem(*transform,0,1) = Vector_x(*y_axis);
-    Transform_elem(*transform,1,1) = Vector_y(*y_axis);
-    Transform_elem(*transform,2,1) = Vector_z(*y_axis);
+    Transform_elem(*transform,0,1) = (Transform_elem_type) Vector_x(*y_axis);
+    Transform_elem(*transform,1,1) = (Transform_elem_type) Vector_y(*y_axis);
+    Transform_elem(*transform,2,1) = (Transform_elem_type) Vector_z(*y_axis);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -277,9 +277,9 @@ public  void  set_transform_z_axis(
     Transform   *transform,
     Vector      *z_axis )
 {
-    Transform_elem(*transform,0,2) = Vector_x(*z_axis);
-    Transform_elem(*transform,1,2) = Vector_y(*z_axis);
-    Transform_elem(*transform,2,2) = Vector_z(*z_axis);
+    Transform_elem(*transform,0,2) = (Transform_elem_type) Vector_x(*z_axis);
+    Transform_elem(*transform,1,2) = (Transform_elem_type) Vector_y(*z_axis);
+    Transform_elem(*transform,2,2) = (Transform_elem_type) Vector_z(*z_axis);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -307,22 +307,22 @@ public  void   make_change_to_bases_transform(
     Vector     *z_axis,
     Transform  *transform )
 {
-    Transform_elem( *transform, 0, 0 ) = Vector_x( *x_axis );
-    Transform_elem( *transform, 0, 1 ) = Vector_x( *y_axis );
-    Transform_elem( *transform, 0, 2 ) = Vector_x( *z_axis );
-    Transform_elem( *transform, 0, 3 ) = Point_x( *origin );
-    Transform_elem( *transform, 1, 0 ) = Vector_y( *x_axis );
-    Transform_elem( *transform, 1, 1 ) = Vector_y( *y_axis );
-    Transform_elem( *transform, 1, 2 ) = Vector_y( *z_axis );
-    Transform_elem( *transform, 1, 3 ) = Point_y( *origin );
-    Transform_elem( *transform, 2, 0 ) = Vector_z( *x_axis );
-    Transform_elem( *transform, 2, 1 ) = Vector_z( *y_axis );
-    Transform_elem( *transform, 2, 2 ) = Vector_z( *z_axis );
-    Transform_elem( *transform, 2, 3 ) = Point_z( *origin );
-    Transform_elem( *transform, 3, 0 ) = 0.0;
-    Transform_elem( *transform, 3, 1 ) = 0.0;
-    Transform_elem( *transform, 3, 2 ) = 0.0;
-    Transform_elem( *transform, 3, 3 ) = 1.0;
+    Transform_elem( *transform,0,0 ) = (Transform_elem_type)Vector_x( *x_axis );
+    Transform_elem( *transform,0,1 ) = (Transform_elem_type)Vector_x( *y_axis );
+    Transform_elem( *transform,0,2 ) = (Transform_elem_type)Vector_x( *z_axis );
+    Transform_elem( *transform,0,3 ) = (Transform_elem_type)Point_x( *origin );
+    Transform_elem( *transform,1,0 ) = (Transform_elem_type)Vector_y( *x_axis );
+    Transform_elem( *transform,1,1 ) = (Transform_elem_type)Vector_y( *y_axis );
+    Transform_elem( *transform,1,2 ) = (Transform_elem_type)Vector_y( *z_axis );
+    Transform_elem( *transform,1,3 ) = (Transform_elem_type)Point_y( *origin );
+    Transform_elem( *transform,2,0 ) = (Transform_elem_type)Vector_z( *x_axis );
+    Transform_elem( *transform,2,1 ) = (Transform_elem_type)Vector_z( *y_axis );
+    Transform_elem( *transform,2,2 ) = (Transform_elem_type)Vector_z( *z_axis );
+    Transform_elem( *transform,2,3 ) = (Transform_elem_type)Point_z( *origin );
+    Transform_elem( *transform,3,0 ) = 0.0;
+    Transform_elem( *transform,3,1 ) = 0.0;
+    Transform_elem( *transform,3,2 ) = 0.0;
+    Transform_elem( *transform,3,3 ) = 1.0;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -350,22 +350,25 @@ public  void   make_change_from_bases_transform(
     Vector     *z_axis,
     Transform  *transform )
 {
-    Transform_elem( *transform, 0, 0 ) = Vector_x( *x_axis );
-    Transform_elem( *transform, 0, 1 ) = Vector_y( *x_axis );
-    Transform_elem( *transform, 0, 2 ) = Vector_z( *x_axis );
-    Transform_elem( *transform, 0, 3 ) = - DOT_POINT_VECTOR( *origin, *x_axis );
-    Transform_elem( *transform, 1, 0 ) = Vector_x( *y_axis );
-    Transform_elem( *transform, 1, 1 ) = Vector_y( *y_axis );
-    Transform_elem( *transform, 1, 2 ) = Vector_z( *y_axis );
-    Transform_elem( *transform, 1, 3 ) = - DOT_POINT_VECTOR( *origin, *y_axis );
-    Transform_elem( *transform, 2, 0 ) = Vector_x( *z_axis );
-    Transform_elem( *transform, 2, 1 ) = Vector_y( *z_axis );
-    Transform_elem( *transform, 2, 2 ) = Vector_z( *z_axis );
-    Transform_elem( *transform, 2, 3 ) = - DOT_POINT_VECTOR( *origin, *z_axis );
-    Transform_elem( *transform, 3, 0 ) = 0.0;
-    Transform_elem( *transform, 3, 1 ) = 0.0;
-    Transform_elem( *transform, 3, 2 ) = 0.0;
-    Transform_elem( *transform, 3, 3 ) = 1.0;
+    Transform_elem(*transform,0,0) = (Transform_elem_type)Vector_x( *x_axis );
+    Transform_elem(*transform,0,1) = (Transform_elem_type)Vector_y( *x_axis );
+    Transform_elem(*transform,0,2) = (Transform_elem_type)Vector_z( *x_axis );
+    Transform_elem(*transform,0,3) = (Transform_elem_type)
+                                        - DOT_POINT_VECTOR( *origin, *x_axis );
+    Transform_elem(*transform,1,0) = (Transform_elem_type)Vector_x( *y_axis );
+    Transform_elem(*transform,1,1) = (Transform_elem_type)Vector_y( *y_axis );
+    Transform_elem(*transform,1,2) = (Transform_elem_type)Vector_z( *y_axis );
+    Transform_elem(*transform,1,3) = (Transform_elem_type)
+                                        - DOT_POINT_VECTOR( *origin, *y_axis );
+    Transform_elem(*transform,2,0) = (Transform_elem_type)Vector_x( *z_axis );
+    Transform_elem(*transform,2,1) = (Transform_elem_type)Vector_y( *z_axis );
+    Transform_elem(*transform,2,2) = (Transform_elem_type)Vector_z( *z_axis );
+    Transform_elem(*transform,2,3) = (Transform_elem_type)
+                                        - DOT_POINT_VECTOR( *origin, *z_axis );
+    Transform_elem(*transform,3,0) = 0.0;
+    Transform_elem(*transform,3,1) = 0.0;
+    Transform_elem(*transform,3,2) = 0.0;
+    Transform_elem(*transform,3,3) = 1.0;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
