@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-08 23:15:09  neelin
+@MODIFIED   : Added support for C_ECHO command.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:06:20  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.1  1997/03/04  20:56:47  neelin
  * Initial revision
  *
@@ -473,6 +476,7 @@ public Acr_Message abort_reply(Acr_Message input_message)
 public Acr_Message data_reply(Acr_Message input_message)
 {
    Acr_Group group, input_group;
+   int reply_command;
 
    /* Print log message */
    if (Do_logging >= HIGH_LOGGING) {
@@ -483,6 +487,16 @@ public Acr_Message data_reply(Acr_Message input_message)
    /* Get the input group list */
    input_group = acr_get_message_group_list(input_message);
 
+   /* Figure out the reply that we need */
+   switch (acr_find_short(input_group, ACR_Command, -1)) {
+   case ACR_C_STORE_RQ:
+      reply_command = ACR_C_STORE_RSP; break;
+   case ACR_C_ECHO_RQ:
+      reply_command = ACR_C_ECHO_RSP; break;
+   default:
+      reply_command = ACR_C_ECHO_RSP; break;
+   }
+
    /* Create the reply */
    group = acr_create_group(ACR_MESSAGE_GID);
 
@@ -490,14 +504,16 @@ public Acr_Message data_reply(Acr_Message input_message)
    acr_group_add_element(group,
       acr_create_element_string(ACR_Affected_SOP_class_UID, 
          acr_find_string(input_group, ACR_Affected_SOP_class_UID, "")));
-   SAVE_SHORT(group, ACR_Command, ACR_C_STORE_RSP);
+   SAVE_SHORT(group, ACR_Command, reply_command);
    SAVE_SHORT(group, ACR_Message_id_brt, 
               acr_find_short(input_group, ACR_Message_id, 0));
    SAVE_SHORT(group, ACR_Dataset_type, ACR_NULL_DATASET);
    SAVE_SHORT(group, ACR_Status, ACR_SUCCESS);
-   acr_group_add_element(group,
-      acr_create_element_string(ACR_Affected_SOP_instance_UID, 
-         acr_find_string(input_group, ACR_Affected_SOP_instance_UID, "")));
+   if (reply_command == ACR_C_STORE_RSP) {
+      acr_group_add_element(group,
+         acr_create_element_string(ACR_Affected_SOP_instance_UID, 
+            acr_find_string(input_group, ACR_Affected_SOP_instance_UID, "")));
+   }
 
    return make_message(group);
 

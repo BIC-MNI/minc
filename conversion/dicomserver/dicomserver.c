@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicomserver.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-08 23:15:09  neelin
+@MODIFIED   : Added support for C_ECHO command.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:06:20  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1997/03/11  13:10:48  neelin
  * Working version of dicomserver.
  *
@@ -26,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 4.0 1997-05-07 20:06:20 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 4.1 1997-07-08 23:15:09 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -255,17 +258,28 @@ int main(int argc, char *argv[])
       /* Data transfer */
       case ACR_PDU_DATA_TF:
 
-         /* Check command and state */
-         acr_command = acr_find_short(group_list, ACR_Command, -1);
-         if ((state != WAITING_FOR_DATA) || 
-             (acr_command != ACR_C_STORE_RQ)) {
+         /* Check state */
+         if (state != WAITING_FOR_DATA) {
             status = ACR_HIGH_LEVEL_ERROR;
             state = DISCONNECTING;
             break;
          }
 
-         /* Compose a reply */
-         output_message = data_reply(input_message);
+         /* Check command and compose a reply */
+         acr_command = acr_find_short(group_list, ACR_Command, -1);
+         switch (acr_command) {
+         case ACR_C_STORE_RQ:
+         case ACR_C_ECHO_RQ:
+            output_message = data_reply(input_message);
+            break;
+         default:
+            status = ACR_HIGH_LEVEL_ERROR;
+            state = DISCONNECTING;
+            break;
+         }
+
+         /* Carry on only if we have a store command */
+         if (acr_command != ACR_C_STORE_RQ) break;
 
          /* Get rid of the command groups */
          group_list = skip_command_groups(group_list);

@@ -42,6 +42,8 @@
 /* Define commands */
 #define ACR_C_STORE_RQ    0x0001
 #define ACR_C_STORE_RSP   0x8001
+#define ACR_C_ECHO_RQ     0x0030
+#define ACR_C_ECHO_RSP    0x8030
 
 /* Define dataset type */
 #define ACR_NULL_DATASET 0x0101
