@@ -116,7 +116,7 @@ public  void  expand_filename(
     dest = 0;
     while( i < len+1 )
     {
-        if( filename[i] == '~' || filename[i] == '$' )
+        if( (i == 0 && filename[i] == '~') || filename[i] == '$' )
         {
             use_home = (filename[i] == '~');
             ++i;

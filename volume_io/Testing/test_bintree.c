@@ -86,7 +86,8 @@ int  main(
             ++n_good_rays;
             if( intersect_ray_with_bintree( &origin, &direction,
                                             polygons->bintree, polygons,
-                                            &poly_index, &dist ) )
+                                            &poly_index, &dist,
+                                            (Real **) NULL ) > 0 )
                 ++n_intersections;
         }
     }

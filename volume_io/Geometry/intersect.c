@@ -117,11 +117,13 @@ private  BOOLEAN  point_within_polygon(
         i2 = Y;
     }
 
+#ifdef DO_I_TRUST_THE_TRIANGLE_CODE
     if( n_points == 3 )
     {
         intersects = point_within_triangle_2d( pt, i1, i2, points );
     }
     else
+#endif
     {
         intersects = point_within_polygon_2d( pt, i1, i2, n_points, points );
     }
