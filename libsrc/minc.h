@@ -18,9 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-06-12 17:37:05  neelin
+@MODIFIED   : Added MI_LABEL modality.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.4  1995/01/24  08:34:30  neelin
  * Added optional tempfile argument to miexpand_file.
  *
@@ -61,12 +64,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 3.1 1995-06-12 17:37:05 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 3.1 1995-06-12 17:37:05 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -240,6 +243,7 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 3.0
 #define MI_CT    "CT___"
 #define MI_DSA   "DSA__"
 #define MI_DR    "DR___"
+#define MI_LABEL "label"
 
 /* The acquisition variable and its attributes */
 #define MIacquisition           "acquisition"
