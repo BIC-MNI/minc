@@ -584,9 +584,14 @@ Read an integer image with normalization:
 
 Read a floating point image :
 \begin{verbatim}
-   /* Create the icv */
+   /* Create the icv. We don't have to set MI_ICV_USER_NORM to TRUE,
+      but doing so ensures that the conversion is done properly
+      without looking at file values (the defaults for
+      MI_ICV_IMAGE_MAX and MI_ICV_IMAGE_MIN are 1 and 0) */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, NC_FLOAT);
+   (void) miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
+   (void) miicv_setint(icv, MI_ICV_USER_NORM, TRUE);
    ...
 \end{verbatim}
 
