@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 1.2  1997-04-21 20:21:09  neelin
-@MODIFIED   : Updated the library to handle dicom messages.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.2  1997/04/21  20:21:09  neelin
+ * Updated the library to handle dicom messages.
+ *
  * Revision 1.1  1997/02/20  16:38:17  neelin
  * Initial revision
  *

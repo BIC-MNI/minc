@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 3.2  1997-04-21 20:21:09  neelin
-@MODIFIED   : Updated the library to handle dicom messages.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.2  1997/04/21  20:21:09  neelin
+ * Updated the library to handle dicom messages.
+ *
  * Revision 3.1  1995/11/16  13:13:49  neelin
  * Added include of math.h to get declaration of strtod under SunOs
  *
