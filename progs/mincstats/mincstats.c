@@ -5,8 +5,9 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.3  2001-12-05 13:09:08  neelin
- * Correct in initialization of PctT variables from Andrew Janke.
+ * Revision 1.4  2001-12-05 17:20:13  neelin
+ * Lots of fixes to get it working. Also fixed up centre of mass calculation
+ * and display.
  *
  * Revision 1.2  2001/11/28 21:59:39  neelin
  * Significant modifications. Removed dependencies on volume_io.
@@ -47,6 +48,7 @@
 #include <limits.h>
 #include <float.h>
 #include <math.h>
+#include <string.h>
 #include <ParseArgv.h>
 #include <minc_def.h>
 #include <voxel_loop.h>
@@ -79,10 +81,14 @@ double get_minc_voxel_volume(int mincid);
 void get_minc_attribute(int mincid, char *varname, char *attname, 
                        int maxvals, double vals[]);
 int get_minc_ndims(int mincid);
-void find_minc_spatial_dims(int mincid, int space_to_dim[]);
+void find_minc_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[]);
 void get_minc_voxel_to_world(int mincid, 
                              double voxel_to_world[WORLD_NDIMS][WORLD_NDIMS+1]);
 void normalize_vector(double vector[]);
+void transform_coord(double out_coord[], 
+                     double transform[WORLD_NDIMS][WORLD_NDIMS+1],
+                     double in_coord[]);
+void print_com(void);
 
 /* Argument variables */
 int max_buffer_size_in_kb = 4 * 1024;
@@ -140,9 +146,11 @@ double sum2     =  0.0;
 double mean     =  0.0;
 double variance =  0.0;
 double stddev   =  0.0;
-double com_sum[WORLD_NDIMS]      = {0.0, 0.0, 0.0};
-double com[WORLD_NDIMS]          = {0.0, 0.0, 0.0};
+double voxel_com_sum[WORLD_NDIMS]      = {0.0, 0.0, 0.0};
+double voxel_com[WORLD_NDIMS]          = {0.0, 0.0, 0.0};
+double world_com[WORLD_NDIMS]          = {0.0, 0.0, 0.0};
 int    space_to_dim[WORLD_NDIMS] = {-1, -1, -1};
+int    dim_to_space[MAX_VAR_DIMS];
 int    file_ndims = 0;
 double median   =  0.0;
 double majority =  0.0;
@@ -251,7 +259,7 @@ int main(int argc, char *argv[])
    /* if nothing selected, do everything */
    if (!Vol_Count && !Vol_Per && !Vol && !Min && !Max && !Sum && !Sum2 && 
        !Mean && !Variance && !Stddev && !Hist_Count && !Hist_Per && 
-       !Median && !Majority && !BiModalT && !PctT && !Entropy) {
+       !Median && !Majority && !BiModalT && !PctT && !Entropy && !CoM) {
       All = TRUE;
       Hist = TRUE;
    }
@@ -263,22 +271,22 @@ int main(int argc, char *argv[])
       
    /* do checking on arguments */
    if (hist_bins < 1) {
-      fprintf(stderr, "%s: Must have one or more bins for a histogram\n", argv[0]);
+      (void) fprintf(stderr, "%s: Must have one or more bins for a histogram\n", argv[0]);
       exit(EXIT_FAILURE);
    }
    
    if (access(infiles[0], F_OK) != 0 ) {
-      fprintf(stderr, "%s: Couldn't find %s\n", argv[0], infiles[0]);
+      (void) fprintf(stderr, "%s: Couldn't find %s\n", argv[0], infiles[0]);
       exit(EXIT_FAILURE);
    }
    
    if (infiles[1] != NULL && access(infiles[1], F_OK) != 0 ) {
-      fprintf(stderr, "%s: Couldn't find mask file: %s\n", argv[0], infiles[1]);
+      (void) fprintf(stderr, "%s: Couldn't find mask file: %s\n", argv[0], infiles[1]);
       exit(EXIT_FAILURE);
    }
    
    if (hist_file != NULL && !clobber && access(hist_file, F_OK) != -1 ) {
-      fprintf(stderr, "%s: Histogram %s exists! (use -clobber to overwrite)\n", argv[0], hist_file);
+      (void) fprintf(stderr, "%s: Histogram %s exists! (use -clobber to overwrite)\n", argv[0], hist_file);
       exit(EXIT_FAILURE);
    }
 
@@ -286,19 +294,23 @@ int main(int argc, char *argv[])
    mincid = miopen(infiles[0], NC_NOWRITE);
    nvoxels = get_minc_nvoxels(mincid);
    volume = get_minc_voxel_volume(mincid);
-   miget_image_range(mincid, real_range);
+   (void) miget_image_range(mincid, real_range);
    file_ndims = get_minc_ndims(mincid);
-   find_minc_spatial_dims(mincid, space_to_dim);
+   find_minc_spatial_dims(mincid, space_to_dim, dim_to_space);
    get_minc_voxel_to_world(mincid, voxel_to_world);
    
    if (verbose) {
-      fprintf(stdout, "Volume Range:     %g\t%g\n", vol_range[0], vol_range[1]);
-      fprintf(stdout, "Mask Range:       %g\t%g\n", mask_range[0], mask_range[1]);
+      (void) fprintf(stdout, "Volume Range:     %g\t%g\n", vol_range[0], vol_range[1]);
+      (void) fprintf(stdout, "Mask Range:       %g\t%g\n", mask_range[0], mask_range[1]);
    }
       
    /* set up the histogram if we are doing one */
    if (Hist) {
-      histogram = (float*)calloc(hist_bins, sizeof(float));
+      histogram = CALLOC(hist_bins, sizeof(float));
+      if (histogram == NULL) {
+         (void) fprintf(stderr, "Memory allocation error\n");
+         exit(EXIT_FAILURE);
+      }
       
       if (hist_range[0] == -DBL_MAX) { 
          if (vol_range[0] != -DBL_MAX) { hist_range[0] = vol_range[0];  }
@@ -313,8 +325,8 @@ int main(int argc, char *argv[])
       hist_sep = (hist_range[1] - hist_range[0])/hist_bins;
       
       if (verbose) {
-         fprintf(stdout, "Histogram Range:  %g\t%g\n", hist_range[0], hist_range[1]);
-         fprintf(stdout, "Histogram bins:   %i  of Width (separation): %f\n", hist_bins, hist_sep);
+         (void) fprintf(stdout, "Histogram Range:  %g\t%g\n", hist_range[0], hist_range[1]);
+         (void) fprintf(stdout, "Histogram bins:   %i  of Width (separation): %f\n", hist_bins, hist_sep);
       }
    }
    
@@ -334,17 +346,18 @@ int main(int argc, char *argv[])
    stddev   = sqrt(variance);
    for (idim=0; idim < WORLD_NDIMS; idim++) {
       if (sum != 0.0) 
-         com[idim] = com_sum[idim] / sum;
+         voxel_com[idim] = voxel_com_sum[idim] / sum;
       else
-         com[idim] = 0.0;
+         voxel_com[idim] = 0.0;
    }
+   transform_coord(world_com, voxel_to_world, voxel_com);
    
    /* Do the histogram calculations */
    if (Hist) {
       int    c;
-      float  hist_center[hist_bins];
-      float  pdf[hist_bins];                 /* probability density Function */
-      float  cdf[hist_bins];                 /* cumulative density Function  */
+      float  *hist_center;
+      float  *pdf;                 /* probability density Function */
+      float  *cdf;                 /* cumulative density Function  */
       
       int    majority_bin = 0;
       int    median_bin   = 0;
@@ -356,6 +369,15 @@ int main(int argc, char *argv[])
       double first_moment = 0.0;
       double var          = 0.0;
       double max_var      = 0.0;
+
+      /* Allocate space for histograms */
+      hist_center = CALLOC(hist_bins, sizeof(float));
+      pdf =         CALLOC(hist_bins, sizeof(float));
+      cdf =         CALLOC(hist_bins, sizeof(float));
+      if (hist_center == NULL || pdf == NULL || cdf == NULL) {
+         (void) fprintf(stderr, "Memory allocation error\n");
+         exit(EXIT_FAILURE);
+      }
       
       for (c=0; c < hist_bins; c++) {
          hist_center[c] = (c*hist_sep) + (hist_sep/2);
@@ -419,59 +441,64 @@ int main(int argc, char *argv[])
       if (hist_file != NULL) {
          
          FILE *FP = fopen(hist_file, "w");
-         fprintf(FP, "# histogram for: %s\n",     infiles[0]);
-         fprintf(FP, "#  mask file:    %s\n",     infiles[1]);
-         fprintf(FP, "#  domain:       %g  %g\n", hist_range[0], hist_range[1]);
-         fprintf(FP, "#  entropy:      %g\n",     entropy);;
-         fprintf(FP, "#  bin centers     counts\n");
+         (void) fprintf(FP, "# histogram for: %s\n",     infiles[0]);
+         (void) fprintf(FP, "#  mask file:    %s\n",     infiles[1]);
+         (void) fprintf(FP, "#  domain:       %g  %g\n", hist_range[0], hist_range[1]);
+         (void) fprintf(FP, "#  entropy:      %g\n",     entropy);;
+         (void) fprintf(FP, "#  bin centers     counts\n");
          for (c=0; c < hist_bins; c++)
-            fprintf(FP, "  %f       %f\n", hist_center[c], histogram[c]);
-         fclose(FP);
+            (void) fprintf(FP, "  %f       %f\n", hist_center[c], histogram[c]);
+         (void) fclose(FP);
       }
+
+      /* Free the space */
+      FREE(hist_center);
+      FREE(pdf);
+      FREE(cdf);
+      FREE(histogram);
+      
+
    }  /* end histogram calculations */
    
    if (!quiet && real_range[0] != min && vol_range[0] == -DBL_MAX) { 
-      fprintf(stderr, "*** %s - reported min (%g) doesn't equal header (%g)\n", argv[0], min, real_range[0]);
+      (void) fprintf(stderr, "*** %s - reported min (%g) doesn't equal header (%g)\n", argv[0], min, real_range[0]);
    } 
    if (!quiet && real_range[1] != max && vol_range[0] == DBL_MAX) { 
-      fprintf(stderr, "*** %s - reported max (%g) doesn't equal header (%g)\n", argv[0], max, real_range[1]);
+      (void) fprintf(stderr, "*** %s - reported max (%g) doesn't equal header (%g)\n", argv[0], max, real_range[1]);
    }
       
    /* Output stats */
-   if (All && !quiet)       { fprintf(stdout, "File:         %s\n", infiles[0]);}
-   if (All && !quiet)       { fprintf(stdout, "Mask file:    %s\n", infiles[1]);}
-   if (All && !quiet)       {    print_result("Total voxels: ", nvoxels  );     }
-   if (All || Vol_Count)    {    print_result("# voxels:     ", vvoxels  );     }
-   if (All || Vol_Per)      {    print_result("% of total:   ", vol_per  );     }
-   if (All || Vol)          {    print_result("Volume (mm3): ", volume   );     }
-   if (All || Min)          {    print_result("Min:          ", min      );     }
-   if (All || Max)          {    print_result("Max:          ", max      );     }
-   if (All || Sum)          {    print_result("Sum:          ", sum      );     }
-   if (All || Sum2)         {    print_result("Sum^2:        ", sum2     );     }
-   if (All || Mean)         {    print_result("Mean:         ", mean     );     }
-   if (All || Variance)     {    print_result("Variance:     ", variance );     }
-   if (All || Stddev)       {    print_result("Stddev:       ", stddev   );     }
+   if (All && !quiet)       { (void) fprintf(stdout, "File:         %s\n", infiles[0]);}
+   if (All && !quiet)       { (void) fprintf(stdout, "Mask file:    %s\n", infiles[1]);}
+   if (All && !quiet)       {    print_result("Total voxels:      ", nvoxels  );     }
+   if (All || Vol_Count)    {    print_result("# voxels:          ", vvoxels  );     }
+   if (All || Vol_Per)      {    print_result("% of total:        ", vol_per  );     }
+   if (All || Vol)          {    print_result("Volume (mm3):      ", volume   );     }
+   if (All || Min)          {    print_result("Min:               ", min      );     }
+   if (All || Max)          {    print_result("Max:               ", max      );     }
+   if (All || Sum)          {    print_result("Sum:               ", sum      );     }
+   if (All || Sum2)         {    print_result("Sum^2:             ", sum2     );     }
+   if (All || Mean)         {    print_result("Mean:              ", mean     );     }
+   if (All || Variance)     {    print_result("Variance:          ", variance );     }
+   if (All || Stddev)       {    print_result("Stddev:            ", stddev   );     }
    if (All || CoM)          {
-      if (!quiet) {
-         (void) fprintf(stdout, "CoM:          ");
-      }
-      (void) fprintf(stdout, "%.10g %.10g %.10g\n", com[0], com[1], com[2]);
+      print_com();
    }
    
    if (Hist){
-      if (All && !quiet)    {fprintf(stdout,"\nHistogram:    %s\n", hist_file); }
-      if (All && !quiet)    {    print_result("Total voxels: ", nvoxels  );     }
-      if (All || Hist_Count){    print_result("# voxels:     ", hvoxels  );     }
-      if (All || Hist_Per)  {    print_result("% of total:   ", hist_per );     }
-      if (All || Median)    {    print_result("Median:       ", median   );     }
-      if (All || Majority)  {    print_result("Majority:     ", majority );     }
-      if (All || BiModalT)  {    print_result("BiModalT:     ", biModalT );     }
+      if (All && !quiet)    {(void) fprintf(stdout,"\nHistogram:         %s\n", hist_file); }
+      if (All && !quiet)    {    print_result("Total voxels:      ", nvoxels  );     }
+      if (All || Hist_Count){    print_result("# voxels:          ", hvoxels  );     }
+      if (All || Hist_Per)  {    print_result("% of total:        ", hist_per );     }
+      if (All || Median)    {    print_result("Median:            ", median   );     }
+      if (All || Majority)  {    print_result("Majority:          ", majority );     }
+      if (All || BiModalT)  {    print_result("BiModalT:          ", biModalT );     }
       if (All || PctT)      {    char str[100];
-                                 sprintf(str, "PctT [%3d%%]:  ", (int)(pctT * 100));
+                                 (void) sprintf(str, "PctT [%3d%%]:       ", (int)(pctT * 100));
                                  print_result(str,              pct_T);         }
-      if (All || Entropy)   {    print_result("Entropy :     ", entropy  );     }
-      }
-      
+      if (All || Entropy)   {    print_result("Entropy :          ", entropy  );     }
+   }
+
    return EXIT_SUCCESS;
 }
 
@@ -480,6 +507,7 @@ void do_math(void *caller_data, long num_voxels,
              double *input_data[], 
              int output_num_buffers, int output_vector_length,
              double *output_data[], Loop_Info *loop_info)
+/* ARGSUSED */
 {
    long ivox;
    long index[MAX_VAR_DIMS];
@@ -509,6 +537,7 @@ void do_math(void *caller_data, long num_voxels,
 void do_stats(double value, long index[]) 
 {
    int idim;
+   int hist_index;
 
    /* Check for NaNs */
    if (value == -DBL_MAX) {
@@ -530,13 +559,15 @@ void do_stats(double value, long index[])
       /* Get voxel index */
       for (idim=0; idim < WORLD_NDIMS; idim++) {
          if (space_to_dim[idim] >= 0) {
-            com_sum[idim] += value * index[space_to_dim[idim]];
+            voxel_com_sum[idim] += value * index[space_to_dim[idim]];
          }
       }
       
       if (Hist && (value >= hist_range[0]) && (value <= hist_range[1])) {
          /*lower limit <= value < upper limit */
-         histogram[(int)floor((value - hist_range[0])/hist_sep)]++;
+         hist_index = (int)floor((value - hist_range[0])/hist_sep);
+         if (hist_index >= hist_bins) hist_index = hist_bins-1;
+         histogram[hist_index]++;
          hvoxels++;
       }
    }
@@ -544,8 +575,8 @@ void do_stats(double value, long index[])
    
 void print_result(char* title, double result)
 {
-   if (!quiet){ fprintf(stdout, "%s", title); }
-   fprintf(stdout, "%.10g\n", result);
+   if (!quiet){ (void) fprintf(stdout, "%s", title); }
+   (void) fprintf(stdout, "%.10g\n", result);
 }
 
 /* Get the number of voxels in the file - this is the total number,
@@ -606,20 +637,19 @@ double get_minc_voxel_volume(int mincid)
    return volume;
 }
 
-/* Get an attribute from a minc file */
+/* Get a double attribute from a minc file */
 void get_minc_attribute(int mincid, char *varname, char *attname, 
-                       int maxvals, double vals[])
+                        int maxvals, double vals[])
 {
    int varid;
    int old_ncopts;
-   int status;
    int att_length;
 
    if (!mivar_exists(mincid, varname)) return;
    varid = ncvarid(mincid, varname);
    old_ncopts = ncopts; ncopts = 0;
-   status = miattget(mincid, varid, attname, NC_DOUBLE, maxvals, vals, 
-                     &att_length);
+   (void) miattget(mincid, varid, attname, NC_DOUBLE, maxvals, vals, 
+                   &att_length);
    ncopts = old_ncopts;
 }
 
@@ -635,16 +665,19 @@ int get_minc_ndims(int mincid)
    return ndims;
 }
 
-/* Get the mapping from spatial dimension - x, y, z - to file dimensions */
-void find_minc_spatial_dims(int mincid, int space_to_dim[])
+/* Get the mapping from spatial dimension - x, y, z - to file dimensions
+   and vice-versa. */
+void find_minc_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[])
 {
    int imgid, dim[MAX_VAR_DIMS];
-   int idim, ndims;
+   int idim, ndims, world_index;
    char dimname[MAX_NC_NAME];
 
    /* Set default values */
-   for (idim=0; idim < 3; idim++) 
+   for (idim=0; idim < 3; idim++)
       space_to_dim[idim] = -1;
+   for (idim=0; idim < MAX_VAR_DIMS; idim++)
+      dim_to_space[idim] = -1;
 
    /* Get the dimension ids for the image variable */
    imgid = ncvarid(mincid, MIimage);
@@ -662,15 +695,20 @@ void find_minc_spatial_dims(int mincid, int space_to_dim[])
       /* Look for the spatial dimensions*/
       switch (dimname[0]) {
          case 'x':
-            space_to_dim[0] = idim;
+            world_index = 0;
             break;
          case 'y':
-            space_to_dim[1] = idim;
+            world_index = 1;
             break;
          case 'z':
-            space_to_dim[2] = idim;
+            world_index = 2;
+            break;
+         default:
+            world_index = 0;
             break;
       }
+      space_to_dim[world_index] = idim;
+      dim_to_space[idim] = world_index;
    }
 }
 
@@ -699,9 +737,9 @@ void get_minc_voxel_to_world(int mincid,
       dircos[jdim] = 1.0;
 
       /* Get the attributes */
-      get_minc_attribute(mincid, dimensions[idim], MIstart, 1, &start);
-      get_minc_attribute(mincid, dimensions[idim], MIstep,  1, &step);
-      get_minc_attribute(mincid, dimensions[idim], MIdirection_cosines, 
+      get_minc_attribute(mincid, dimensions[jdim], MIstart, 1, &start);
+      get_minc_attribute(mincid, dimensions[jdim], MIstep,  1, &step);
+      get_minc_attribute(mincid, dimensions[jdim], MIdirection_cosines, 
                          WORLD_NDIMS, dircos);
       normalize_vector(dircos);
 
@@ -730,4 +768,73 @@ void normalize_vector(double vector[])
          vector[idim] /= magnitude;
       }
    }
+}
+
+/* Prints out centre of mass with correct file order */
+void print_com(void)
+{
+   int spatial_dims[WORLD_NDIMS] = {-1,-1,-1};         /* In file order */
+   char *spatial_codes[WORLD_NDIMS] = {"x", "y", "z"}; /* In x,y,z order */
+   int idim, jdim;
+   int first;
+
+   /* Get array of world axis in file order, including only spatial dims.
+      Do this by just collapsing the dim_to_space array. */
+   for (idim = jdim = 0; idim < MAX_VAR_DIMS; idim++) {
+      if (dim_to_space[idim] >= 0 && jdim < WORLD_NDIMS) {
+         spatial_dims[jdim] = dim_to_space[idim];
+         jdim++;
+      }
+   }
+
+   /* Print out voxel coord info */
+   if (!quiet) {
+      (void) fprintf(stdout, "CoM_voxel(");
+      first = TRUE;
+      for (idim=0; idim < MAX_VAR_DIMS; idim++) {
+         if (dim_to_space[idim] >= 0) {
+            if (first) first = FALSE;
+            else (void) fprintf(stdout, ",");
+            (void) fprintf(stdout, "%s", spatial_codes[dim_to_space[idim]]);
+         }
+      }
+      (void) fprintf(stdout, "):  ");
+   }
+   first = TRUE;
+   for (idim=0; idim < MAX_VAR_DIMS; idim++) {
+      if (dim_to_space[idim] >= 0) {
+         if (first) first = FALSE;
+         else (void) fprintf(stdout, " ");
+         (void) fprintf(stdout, "%.10g", voxel_com[dim_to_space[idim]]);
+      }
+   }
+   (void) fprintf(stdout, "\n");
+
+   /* Print out world coord infor */
+   if (!quiet) {
+      (void) fprintf(stdout, "CoM_real(x,y,z):   ");
+   }
+   (void) fprintf(stdout, "%.10g %.10g %.10g\n", world_com[0], world_com[1], world_com[2]);
+}
+
+/* Transforms a coordinate through a linear transform */
+void transform_coord(double out_coord[], 
+                     double transform[WORLD_NDIMS][WORLD_NDIMS+1],
+                     double in_coord[])
+{
+   int idim, jdim;
+   double homogeneous_coord[WORLD_NDIMS+1];
+
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      homogeneous_coord[idim] = in_coord[idim];
+   }
+   homogeneous_coord[WORLD_NDIMS] = 1.0;
+
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      out_coord[idim] = 0.0;
+      for (jdim=0; jdim < WORLD_NDIMS+1; jdim++) {
+         out_coord[idim] += transform[idim][jdim] * homogeneous_coord[jdim];
+      }
+   }
+
 }
