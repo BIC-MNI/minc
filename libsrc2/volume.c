@@ -162,24 +162,30 @@ miset_volume_world_indices(mihandle_t hvol)
 {
     int i;
 
-    hvol->world_indices = malloc(hvol->number_of_dims * sizeof(short));
-    if (hvol->world_indices == NULL) {
-        return (MI_ERROR);
-    }
-
     for (i = 0; i < hvol->number_of_dims; i++) {
-        hvol->world_indices[i] = -1;
-        if (hvol->dim_handles[i]->class == MI_DIMCLASS_SPATIAL) {
-            char *tmp_ptr = hvol->dim_handles[i]->name;
-            
-            if (!strcmp(tmp_ptr, MIxspace)) {
-                hvol->world_indices[i] = MI2_X;
+        midimhandle_t hdim = hvol->dim_handles[i];
+
+        hdim->world_index = -1;
+        if (hdim->class == MI_DIMCLASS_SPATIAL) {
+            if (!strcmp(hdim->name, MIxspace)) {
+                hdim->world_index = MI2_X;
             }
-            else if (!strcmp(tmp_ptr, MIyspace)) {
-                hvol->world_indices[i] = MI2_Y;
+            else if (!strcmp(hdim->name, MIyspace)) {
+                hdim->world_index = MI2_Y;
             }
-            else if (!strcmp(tmp_ptr, MIzspace)) {
-                hvol->world_indices[i] = MI2_Z;
+            else if (!strcmp(hdim->name, MIzspace)) {
+                hdim->world_index = MI2_Z;
+            }
+        }
+        else if (hdim->class == MI_DIMCLASS_SFREQUENCY) {
+            if (!strcmp(hdim->name, MIxfrequency)) {
+                hdim->world_index = MI2_X;
+            }
+            else if (!strcmp(hdim->name, MIyfrequency)) {
+                hdim->world_index = MI2_Y;
+            }
+            else if (!strcmp(hdim->name, MIzfrequency)) {
+                hdim->world_index = MI2_Z;
             }
         }
     }
@@ -596,8 +602,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
      Note, each volume handle is associated with an array of
      dimension handles in the order that they were create (i.e, file order)
    */
-  handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions*sizeof(int));
-  
+  handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions * 
+                                                sizeof(midimhandle_t));  
   
   if (handle->dim_handles == NULL) {
     return (MI_ERROR);
@@ -894,6 +900,10 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
         if (!strcmp(temp, "irregular")) {
             hdim->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
         }
+        else {
+            hdim->attr |= MI_DIMATTR_REGULARLY_SAMPLED;
+        }
+
 	/* Get the attribute (class) from a minc file */
         r = miget_attribute(volume, path, "class", MI_TYPE_STRING, 
                             MI2_CHAR_LENGTH, temp);
@@ -1196,8 +1206,10 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 int
 miflush_volume(mihandle_t volume)
 {
-    H5Fflush(volume->hdf_id, H5F_SCOPE_GLOBAL);
-    misave_valid_range(volume);
+    if ((volume->mode & MI2_OPEN_RDWR) != 0) {
+        H5Fflush(volume->hdf_id, H5F_SCOPE_GLOBAL);
+        misave_valid_range(volume);
+    }
     return (MI_NOERROR);
 }
 
@@ -1249,9 +1261,6 @@ miclose_volume(mihandle_t volume)
     }
     if (volume->create_props != NULL) {
       mifree_volume_props(volume->create_props);
-    }
-    if (volume->world_indices != NULL) {
-        free(volume->world_indices);
     }
     free(volume);
 
