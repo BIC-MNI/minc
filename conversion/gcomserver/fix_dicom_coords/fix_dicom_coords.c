@@ -30,7 +30,7 @@ typedef enum { XCOORD = 0, YCOORD, ZCOORD, WORLD_NDIMS } World_Index;
 /* Define other constants */
 #define private static
 
-/* Function prototypes */
+/* Public Function prototypes */
 void calculate_dicom_coords(int orientation,
                             double angulation_lr, double angulation_ap,
                             double angulation_cc,
@@ -41,6 +41,8 @@ void calculate_dicom_coords(int orientation,
                             double row_dircos[], double col_dircos[],
                             double *location);
 int convert_imagenum(char *string);
+
+/* Private function prototypes */
 private void convert_coordinate(double coord[WORLD_NDIMS]);
 private void get_direction_cosines(int orientation,
                                    double angulation_ap, double angulation_lr,
