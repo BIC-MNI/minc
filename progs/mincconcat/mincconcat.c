@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 3.3  1996-04-11 19:31:43  neelin
-@MODIFIED   : Added -sequential and -interleaved options.
+@MODIFIED   : Revision 3.4  1997-04-21 20:28:45  neelin
+@MODIFIED   : Changed width suffix from _width to -width.
 @MODIFIED   :
+ * Revision 3.3  1996/04/11  19:31:43  neelin
+ * Added -sequential and -interleaved options.
+ *
  * Revision 3.2  1995/11/16  13:18:16  neelin
  * Added include of math.h to get declaration of strtod under SunOs
  *
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.3 1996-04-11 19:31:43 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.4 1997-04-21 20:28:45 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1189,7 +1192,7 @@ public void create_concat_file(int inmincid, Concat_Info *concat_info)
    (void) strcpy(dimname, concat_info->dimension_name);
    excluded_vars[nexcluded] = ncvarid(inmincid, dimname);
    if (excluded_vars[nexcluded] != MI_ERROR) nexcluded++;
-   (void) strcat(dimname, "_width");
+   (void) strcat(dimname, "-width");
    excluded_vars[nexcluded] = ncvarid(inmincid, dimname);
    if (excluded_vars[nexcluded] != MI_ERROR) nexcluded++;
 
