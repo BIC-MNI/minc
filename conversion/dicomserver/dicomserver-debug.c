@@ -1,8 +1,12 @@
-#define DO_INPUT_TRACING
-#define KEEP_FILES
-#define DO_HIGH_LOGGING
-#if 0
-#undef KEEP_FILES
+#if 1
+#  define DO_INPUT_TRACING
 #endif
-#undef DO_HIGH_LOGGING
+
+#if 1
+#  define KEEP_FILES
+#endif
+
+#if 1
+#  define DO_HIGH_LOGGING
+#endif
 #include "dicomserver.c"
