@@ -134,7 +134,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   else {
     handle->name = malloc(MI2_CHAR_LENGTH);
   }
-  strcpy(handle->name, name);
+  strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
   
   switch (class) {
   case MI_DIMCLASS_ANY:
@@ -142,12 +142,52 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
     break;
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
+    if (name == "xspace") {
+      handle->cosines[MI2_X] = 1.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
+    else if (name == "yspace") {
+      handle->cosines[MI2_X] = 0.0;
+      handle->cosines[MI2_Y] = 1.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
+    else if (name == "zspace") {
+      handle->cosines[MI2_X] = 0.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 1.0;
+    }
+    else {
+      handle->cosines[MI2_X] = 1.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
     break;
   case MI_DIMCLASS_TIME:
     handle->class  = MI_DIMCLASS_TIME;
     break;
   case MI_DIMCLASS_SFREQUENCY:
     handle->class  = MI_DIMCLASS_SFREQUENCY;
+    if (name == "xfrequency") {
+      handle->cosines[MI2_X] = 1.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
+    else if (name == "yfrequency") {
+      handle->cosines[MI2_X] = 0.0;
+      handle->cosines[MI2_Y] = 1.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
+    else if (name == "zfrequency") {
+      handle->cosines[MI2_X] = 0.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 1.0;
+    }
+    else {
+      handle->cosines[MI2_X] = 1.0;
+      handle->cosines[MI2_Y] = 0.0;
+      handle->cosines[MI2_Z] = 0.0;
+    }
     break;
   case MI_DIMCLASS_TFREQUENCY:
     handle->class  = MI_DIMCLASS_TFREQUENCY;
@@ -178,9 +218,11 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   handle->separation = 1.0;
   handle->width = 1.0;
   handle->flipping_order = MI_FILE_ORDER;
-  handle->cosines[0] = 0.0;
-  handle->cosines[1] = 0.0;
-  handle->cosines[2] = 0.0;
+  if (class != MI_DIMCLASS_SPATIAL && class != MI_DIMCLASS_SFREQUENCY ) {
+    handle->cosines[MI2_X] = 1.0;
+    handle->cosines[MI2_Y] = 0.0;
+    handle->cosines[MI2_Z] = 0.0;
+  }
   handle->size = size;
   handle->offsets = NULL;
   handle->widths = NULL;
@@ -521,6 +563,9 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipp
     dimension->flipping_order  = MI_COUNTER_FILE_ORDER;
     break;
   case MI_POSITIVE:
+    dimension->flipping_order  = MI_POSITIVE;
+    break;
+    /*
     if (dimension->separation > 0) {
       dimension->flipping_order  = MI_FILE_ORDER;
     }
@@ -528,7 +573,11 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipp
       dimension->flipping_order  = MI_COUNTER_FILE_ORDER;
     }
     break;
+    */
   case MI_NEGATIVE:
+    dimension->flipping_order  = MI_NEGATIVE;
+    break;
+    /*
     if (dimension->separation > 0) {
       dimension->flipping_order  = MI_COUNTER_FILE_ORDER;
     }
@@ -536,6 +585,7 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipp
       dimension->flipping_order  = MI_FILE_ORDER;
     }
     break;
+    */
   default:
     return (MI_ERROR);
   }
@@ -626,7 +676,8 @@ miset_dimension_class(midimhandle_t dimension, midimclass_t class)
 int 
 miget_dimension_cosines(midimhandle_t dimension, double cosines[3])
 {
-  if (dimension == NULL || dimension->class != MI_DIMCLASS_SPATIAL ) {
+  if (dimension == NULL || (dimension->class != MI_DIMCLASS_SPATIAL &&
+                            dimension->class != MI_DIMCLASS_SFREQUENCY)){
     return (MI_ERROR);
   }
   
@@ -810,7 +861,7 @@ miget_dimension_separation(midimhandle_t dimension, mivoxel_order_t voxel_order,
     *separation_ptr = dimension->separation;
   }
   else {
-    *separation_ptr = -1 *dimension->separation;
+    *separation_ptr = -1 * dimension->separation;
   }
   return (MI_NOERROR);
 }
@@ -831,7 +882,7 @@ miset_dimension_separation(midimhandle_t dimension, double separation)
   /* If not explicitly set, the width will be assumed to be equal to the
      dimension's step size.
   */
-  dimension->width = separation;
+  //dimension->width = separation;
 
   return (MI_NOERROR);
 }
@@ -1175,7 +1226,7 @@ int main(int argc, char **argv)
   midimhandle_t dimh, dimh1,dimh2, dimh3; 
   midimhandle_t dim[4];
   mivolumeprops_t props;
-  
+  double cosines[3];
   int n;
   
    /* Turn off automatic error reporting - we'll take care of this
@@ -1185,26 +1236,37 @@ int main(int argc, char **argv)
   
   r = minew_volume_props(&props);
   
-  r = micreate_dimension("MIxspace",MI_DIMCLASS_SPATIAL,1, 10,&dimh);
+  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,1, 10,&dimh);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[0]=dimh;
   
-  r = micreate_dimension("MIyspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh1);
+  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension("MIzspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh2);
+  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  r = miget_dimension_cosines(dimh1, cosines);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  printf( " %f %f %f \n", cosines[0], cosines[1], cosines[2]);
   dim[2]=dimh2;
-   r = micreate_dimension("MIwspace",MI_DIMCLASS_ANY,1, 12,&dimh3);
+   r = micreate_dimension("zfrequency",MI_DIMCLASS_SFREQUENCY,1, 12,&dimh3);
   if (r < 0) {
     TESTRPT("failed", r);
   }
+  r = miget_dimension_cosines(dimh3, cosines);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  printf( " %f %f %f \n", cosines[0], cosines[1], cosines[2]);
+  
   dim[3]=dimh3;
   r = micreate_volume("test.h5", 4, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
   if (r < 0) {
