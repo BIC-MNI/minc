@@ -5,7 +5,7 @@
 \title{MINC 2.0 User's Guide}
 \author{John G. Sled \\
 Robert D. Vincent \\
-et al.}
+Leila Baghdadi}
 \date{\today}
 \begin{document}
 \maketitle
@@ -320,7 +320,8 @@ main() {
     int result;
     mihandle_t hvol;
 
-    result = miopen_volume("/home/sparky/test.mnc", MI_OPEN_RDONLY, &hvol);
+    result = miopen_volume("/home/sparky/test.mnc", 
+                            MI_OPEN_RDONLY, &hvol);
     if (result != MI_NOERROR) {
         fprintf(stderr, "Error opening the input file.\n");
     }
@@ -376,39 +377,107 @@ array with named entries.
 is not yet implemented.
 \end{enumerate}
 \section{Dimensions and coordinate systems}
-MINC 2 files can define any number of dimensions.  A dimension is simply
-an axis or index along which the data is stored.  Typical scans might be
-two dimensional or three dimensional, while functional data may be stored
-in a four dimensional file with three spatial and one temporal dimension.
+A dimension is simply an axis or index along which the data is stored.  
+Typical scans might be two dimensional or three dimensional, while functional 
+data may be stored in a four dimensional file with three spatial and one temporal 
+dimension.
 
-Dimensions in a MINC file can have a number of properties that specify
-how the data should be interpreted.  For example, each dimension can
-have a ``unit'' value assigned to it.  This value is a text string
-(e.g. ``mm'', ``seconds'') which specifies the units along the
-dimension's axis.  Dimensions can also be regularly or irregularly
-sampled.  A regularly sampled dimension is defined by an origin or
-``start'' value and a ``step'' value that defines the distance between
-points on the axis.  An irregularly sampled dimension must define an
-array of values that specify the position of each sample along the
-axis.
+Each dimension of a MINC image volume/file \footnote {volume and file can 
+be used interchangeably as it is not common to use volume for more than
+3 dimensions and MINC 2 is N dimensional.} is specified by its ``name''. MINC2 defines
+standard naming conventions such as ``xspace'', ``yspace'', ``zspace'' (spatial 
+dimensions), ``xfrequency'', ``yfrequency'', ``zfrequency'' 
+(spatial frequency dimensions), ``tfrequency'' (temporal frequency dimension), ``time'' 
+(time dimension) and finally ``vector-dimension'' (vector or complex data dimension).
+``class'' which specifies a general type for the dimensions, is defined as spatial, 
+temporal, spatial frequency, temporal frequency or user-defined (i.e. arbitrary) dimension.
+So the above defintion creates a more flexible naming convention where any name can be defined
+as spatial dimension or vice versa. 
+Apart from ``name'' and ``class'' which are both defined as dimension properties, 
+in MINC 2 each dimension has a number 
+of other properties defined that specify how the data should be interpreted.
+For example, the convention for spatial dimensions which is positive xspace coordinates 
+run from the patient's left side to right side, 
+positive yspace coordinates run from patient posterior to anterior 
+and positive zspace coordinates run from inferior to superior is defined in 
+``description'' property. The description for any other dimension must be set by the user 
+or will be set to empty by default. Each dimension can have a ``unit'' 
+value assigned to it which is a text string (e.g. ``mm'', ``seconds'') that 
+specifies the units along the dimension's axis. The dimension attribute ``attr''
+defines whether the dimension is regularly or irregularly sampled. A regularly 
+sampled dimension is defined by an origin or ``start'' value and a ``step'' 
+value that defines the distance between points on the axis. An irregularly 
+sampled dimension must define an array of step values that specify 
+the position of each sample along the axis.``length'' defines the size of the dimension
+and ``direction\_cosines'' are a set of three vectors associated with spatial dimensions
+and define the precise orientation of the axis relative to "true" x, y, or z coordinates.
 
-In the MINC 2 library, a dimension is represented by an opaque datatype
+For each dimension, the world  coordinate  conversion is specified  
+by a pair of attributes: step and start. The xspace world coordinate, 
+for example is calculated using x = v*step + start, where x is the x world 
+coordinate and v is the voxel count (starting at zero). Thus the magnitude 
+of the step attribute specifies the distance between voxels and the sign 
+of the step attribute specifies the orientation of the axis. MINC files are 
+allowed to have non-orthogonal axes with the dimensions not perfectly 
+aligned with the named axis. There can be a direction\_cosine attribute that 
+gives the true orientation of the axis. For example, normally the xspace 
+dimension should line up with the world x axis, ie. direction cosine = (1,0,0)
+; however, it is possible to have a direction cosine of (0.9, 0.43589, 0).
+For detailed formulas please refer to \emph{The MINC 2.0 File Format by Robert D. 
+Vincent}.
+
+MINC 2 files can define any number of dimensions. In MINC 2 library, a dimension 
+is represented by an opaque \footnote {An object oriented
+concept used for OOP programming in C mainly defined in the internal header files and only 
+used and NOT changed by the user} datatype
 called a \emph{dimension handle}, which is defined by the ``C'' typedef
-{\tt midimhandle\_t}.
+{\tt midimhandle\_t}. Through the use of the dimension handle, the user can access and 
+modify all dimension properties. 
 
-Each dimension has a class, which specifies whether the dimension is 
-a spatial dimension, a temporal dimension, a spatial frequency dimension,
-a temporal frequency dimension, or a user-defined (i.e. arbitrary) dimension.
+Only four essential properties must be specified prior to creating a new dimension. 
+Other properties will be set to default values which can be 
+changed individually after the dimension is created.
+\begin{verbatim}
+ micreate_dimension(const char *name, midimclass_t class, 
+                    midimattr_t attr,unsigned long length, 
+                    midimhandle_t *new_dim_ptr);
+\end{verbatim}
+Accessing or modifying any of the dimension properties is done by using \\
+\\
+{\tt miget\_dimension\_ property() }\\
+{\tt miset\_dimension\_ property() } 
+\\
+where ``property'' can be replaced with any of the dimension properties. 
+For Example,
 
-You can retrieve the dimensions associated with an open MINC file using
+\begin{verbatim}
+miget_dimension_units(midimhandle_t dimension, 
+                      char **units_ptr);
+miset_dimension_units(midimhandle_t dimension, 
+                      const char *units);
+\end{verbatim}
+
+you can retrieve the dimensions associated with an open MINC file using
 the function:\\
+
 \begin{verbatim}
 miget_volume_dimensions(mihandle_t hvol, midimclass_t class,
                         midimattr_t attr, miorder_t order,
                         int max_dims, midimhandle_t dims[]);
 \end{verbatim}
-                             
-\section{Volume attributes}
+   
+where miorder\_t is an enumerated type flag which determines whether the
+dimension order is determined by the file (i.e., the order the dimensions
+were created) or by the apparent order (i.e., any order other than the file
+order) which must be set by the user.       
+     
+Finally, to delete the entire dimension defintion and its corresponding handle
+just pass the dimension handle to the following function:\\
+\begin{verbatim}
+      mifree_dimension_handle(midimhandle_t dim_ptr)
+\end{verbatim}
+
+\section{Volume Properties}
 \section{Reading and writing data}
 \section{Volume creation}
 \section{Multiresolution, blocking and compression}

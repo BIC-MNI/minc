@@ -134,6 +134,9 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
    */
   handle->comments = NULL;  
   switch (class) {
+  case MI_DIMCLASS_ANY:
+    handle->class  = MI_DIMCLASS_ANY;
+    break;
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
     if (strcmp(name, "xspace") == 0) {
@@ -196,7 +199,6 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   case MI_DIMCLASS_RECORD:
     handle->class  = MI_DIMCLASS_RECORD;
     break;
-  case MI_DIMCLASS_ANY:
   default:
     return (MI_ERROR);
   }
@@ -247,28 +249,23 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
   if (dim_ptr == NULL) {
     return (MI_ERROR);
   }
-  if (dim_ptr->name != NULL) {
-      free(dim_ptr->name);
-  }
-  if (dim_ptr->offsets != NULL) {
+  free(dim_ptr->name);
+  //if (dim_ptr->offsets != NULL) {
     free(dim_ptr->offsets);
-  }
-  if (dim_ptr->units != NULL) {
-      free(dim_ptr->units);
-  }
-  if (dim_ptr->widths !=NULL) {
+    //}
+  free(dim_ptr->units);
+  //if (dim_ptr->widths !=NULL) {
     free(dim_ptr->widths);
-  }
+    // }
   free(dim_ptr);
   
   return (MI_NOERROR);
 }
 
-/** Retrieve the list of dimensions defined in a MINC volume, 
- *  with the same class \a class and attribute \a attr.
- * \retval The number of dimensions returned.
- * \retval MI_ERROR on failure.
+/*! Retrieve the list of dimensions defined in a MINC volume, 
+    with the same class and attribute as given.
  */
+
 int 
 miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 			miorder_t order, int array_length, 
@@ -278,8 +275,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   // THIS FUNCTION. MUST FIGURE OUT WHAT TO DO WITH IT
   
   hsize_t number_of_dims; 
-  int i=0, max_dims;
-  int num_ret_dims = 0;
+  int i=0, j=0, max_dims;
   
   if (volume == NULL) {
     return (MI_ERROR);
@@ -301,11 +297,12 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
       midimhandle_t hdim = volume->dim_handles[i];
       if (class == MI_DIMCLASS_ANY || class == hdim->class) {
           if (hdim->attr == attr || attr ==  MI_DIMATTR_ALL) {
-              dimensions[num_ret_dims++] = hdim;
+              dimensions[j] = hdim;
+              j++;
           }
       }
   }
-  return (num_ret_dims);
+  return (MI_NOERROR);
 }
 
 /*! Set apparent dimension order.
@@ -1194,4 +1191,129 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   }
   return (MI_NOERROR);
 }
+
+
+#ifdef M2_TEST
+#define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
+                                  "Error reported on line #%d, %s: %d\n", \
+                                  __LINE__, msg, val))
+
+static int error_cnt = 0;
+
+#define CX 10
+#define CY 10
+#define CZ 6
+#define NDIMS 3
+
+int main(int argc, char **argv)
+{
+  mihandle_t vol;
+  int r;
+  midimhandle_t dimh, dimh1,dimh2; 
+  midimhandle_t dim[3];
+  mivolumeprops_t props;
+  double cosines[3];
+  double offsets[3];
+  double widths[3];
+  int n;
+  midimhandle_t dimens[3];
+  unsigned long coords[NDIMS];
+    unsigned long count[NDIMS];
+    int i,j,k;
+    struct test {
+        int r;
+        int g;
+        int b;
+    } voxel;
+    int result = 1;
+  /* Write data one voxel at a time. */
+    for (i = 0; i < NDIMS; i++) {
+        count[i] = 1;
+    }
+
+    r = minew_volume_props(&props);
+    r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
+    r = miset_props_zlib_compression(props, 3);
+     r = miset_props_multi_resolution(props, 1, 3);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  
+  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  dim[0]=dimh;
+  
+  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 10,&dimh1);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  dim[1]=dimh1;
+  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 6,&dimh2);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  
+  dim[2]=dimh2;
+ 
+  r = micreate_volume("test_multi_h5.mnc", 3, dim, MI_TYPE_UINT, MI_CLASS_REAL,props,&vol);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+
+  r = micreate_volume_image(vol);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  
+  r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  printf( " N is %d \n", n);
+
+  for (i = 0; i < CX; i++) {
+        for (j = 0; j < CY; j++) {
+            for (k = 0; k < CZ; k++) {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+
+                voxel.r = i;
+                voxel.g = j;
+                voxel.b = k;
+                
+                result = miset_voxel_value_hyperslab(vol, MI_TYPE_UINT,
+						     coords, count, &voxel);
+                if (result < 0) {
+                    TESTRPT("Error writing voxel", result);
+                }
+            }
+        }
+    }
+
+  /* call miselect_resolution() 
+   */
+  r = miselect_resolution(vol,1);
+  //r = miflush_from_resolution(vol, 3);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  r = miclose_volume(vol);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  
+  if (error_cnt != 0) {
+    fprintf(stderr, "%d error%s reported\n", 
+	    error_cnt, (error_cnt == 1) ? "" : "s");
+  }
+  else {
+    fprintf(stderr, "No errors\n");
+   
+  }
+  return (error_cnt);
+}
+#endif
 
