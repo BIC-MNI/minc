@@ -22,12 +22,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.6 1993-07-21 12:58:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.7 1993-07-26 15:48:10 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
@@ -70,6 +69,7 @@ typedef struct {
    int image_size;
    int ordered_file;
    int *ordered_slices;
+   char image_type[16];
 } scx_file_info_type;
 
 typedef struct {
@@ -173,6 +173,10 @@ double decay_correction(double scan_time, double measure_time,
 #define SCX_RIN  "RIN"
 #define SCX_CAR  "CAR"
 #define SCX_ACT  "ACT"
+#define SCX_IMTP "IMTP"
+
+/* Scanditronix constants */
+#define SCX_ACTIVITY ""
 
 /* Main program */
 
@@ -228,7 +232,7 @@ int main(int argc, char *argv[])
    scx_general_info_type *scx_general_info;
    long count[MAX_DIMS], start[MAX_DIMS];
    int ndims;
-   int mincid, icvid;
+   int mincid, icvid, varid;
    int islice, ifile, i, slice_num;
    long pixel_max;
    float image_max;
@@ -237,6 +241,7 @@ int main(int argc, char *argv[])
    scx_file *scx_fp;
    int status;
    char *tm_stamp;
+   double first_z, last_z, zstep;
 
    /* Get time stamp */
    tm_stamp = time_stamp(argc, argv);
@@ -344,7 +349,8 @@ int main(int argc, char *argv[])
 
       /* Get decay correction (scan time is already measured from injection
          time) */
-      if (decay_correct) 
+      if (decay_correct && 
+          (strcmp(scx_file_info[ifile].image_type, SCX_ACTIVITY) == 0))
          scale = decay_correction(scx_file_info[ifile].scan_time, 
                                   scx_file_info[ifile].time_width,
                                   0.0,
@@ -390,6 +396,24 @@ int main(int argc, char *argv[])
 
    }         /* End file loop */
 
+   /* Write out average z step and start for irregularly spaced slices */
+   if ((ndims!=MAX_DIMS) && (num_scx_files>1)) {
+      start[0] = 0;
+      varid = ncvarid(mincid, MIzspace);
+      (void) mivarget1(mincid, varid, start, NC_DOUBLE, NULL,
+                       &first_z);
+      start[0] = scx_general_info->num_scx_slices - 1;
+      (void) mivarget1(mincid, varid, start, NC_DOUBLE, NULL,
+                       &last_z);
+      if (start[0] > 0)
+         zstep = (last_z - first_z) / ((double) start[0]);
+      else
+         zstep = 1.0;
+      (void) miattputdbl(mincid, varid, MIstep, zstep);
+      (void) miattputdbl(mincid, varid, MIstart, first_z);
+   }
+
+   /* Close minc file */
    (void) miattputstr(mincid, ncvarid(mincid, MIimage), MIcomplete, MI_TRUE);
    (void) ncclose(mincid);
 
@@ -458,10 +482,9 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
    int *num_scx_slices, *max_nslices, *max_size;
    scx_file *fp;
    scx_file_info_type *sfip;
-   long lvalue, timh, timm, tims, tihu, daty, datm, datd;
+   long lvalue, timh, timm, tims, tihu;
    float fvalue;
    char svalue[40];
-   struct tm the_time;
    double inj_time;
    int ifile, i, imnem, imult, length;
    scx_mnem_types mtype;
@@ -505,24 +528,14 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
       if (lvalue > *max_size) *max_size = lvalue;
 
       /* Get time (in seconds) */
-      if (scx_get_mnem(fp, SCX_DATY, 0, &daty, NULL, NULL) ||
-          scx_get_mnem(fp, SCX_DATM, 0, &datm, NULL, NULL) ||
-          scx_get_mnem(fp, SCX_DATD, 0, &datd, NULL, NULL) ||
-          scx_get_mnem(fp, SCX_TIMH, 0, &timh, NULL, NULL) ||
+      if (scx_get_mnem(fp, SCX_TIMH, 0, &timh, NULL, NULL) ||
           scx_get_mnem(fp, SCX_TIMM, 0, &timm, NULL, NULL) ||
           scx_get_mnem(fp, SCX_TIMS, 0, &tims, NULL, NULL) ||
           scx_get_mnem(fp, SCX_TIHU, 0, &tihu, NULL, NULL)) {
          return ifile;
       }
-      the_time.tm_sec  = tims;
-      the_time.tm_min  = timm;
-      the_time.tm_hour = timh;
-      the_time.tm_mday = datd;
-      the_time.tm_mon  = datm;
-      the_time.tm_year = daty;
-      the_time.tm_isdst= FALSE;
-      sfip->scan_time = 
-         (double) mktime(&the_time) + (double) tihu/100.0;
+      sfip->scan_time = (timh * MIN_PER_HOUR + timm) * SEC_PER_MIN 
+         + tims + ((double) tihu)/100.0;
 
       /* Get injection time (in seconds) (use date from before and check
          for time before inj_time) */
@@ -531,11 +544,7 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
           scx_get_mnem(fp, SCX_ITMS, 0, &tims, NULL, NULL)) {
          return ifile;
       }
-      the_time.tm_sec  = tims;
-      the_time.tm_min  = timm;
-      the_time.tm_hour = timh;
-      the_time.tm_isdst= FALSE;
-      inj_time = (double) mktime(&the_time);
+      inj_time = (timh * MIN_PER_HOUR + timm) * SEC_PER_MIN + tims;
 
       /* Set scan time to be from injection time. Check for scans over 
          midnight (cannot deal with scans longer than 1 day */
@@ -547,6 +556,10 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
       if (scx_get_mnem(fp, SCX_MTM, 0, NULL, &fvalue, NULL))
          return ifile;
       sfip->time_width = fvalue;
+
+      /* Get scan type */
+      if (scx_get_mnem(fp, SCX_IMTP, 0, NULL, NULL, sfip->image_type))
+         return ifile;
 
       /* Get isotope and half-life */
       if (scx_get_mnem(fp, SCX_ISO, 0, NULL, NULL, 
@@ -898,12 +911,12 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
 
       /* Add attributes to the dimension variables */
       if (strcmp(dim_names[idim], MIzspace)==0) {
-         if ((ndims==MAX_DIMS) || (num_scx_files==1)) {
-            (void) miattputdbl(mincid, dimvarid, MIstep, 
-                               scx_file_info[0].zstep);
-            (void) miattputdbl(mincid, dimvarid, MIstart, 
-                               scx_file_info[0].zstart);
-         }
+         /* Write out step and start. We will rewrite this for irregularly
+            spaced files */
+         (void) miattputdbl(mincid, dimvarid, MIstep, 
+                            scx_file_info[0].zstep);
+         (void) miattputdbl(mincid, dimvarid, MIstart, 
+                            scx_file_info[0].zstart);
          (void) miattputstr(mincid, dimvarid, MIunits, "mm");
          (void) miattputstr(mincid, dimvarid, MIspacetype, MI_NATIVE);
          (void) miattputdbl(mincid, widvarid, MIwidth, 
