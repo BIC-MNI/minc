@@ -4,7 +4,18 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: resample_volumes.c,v $
+@MODIFIED   : Revision 1.7  1993-08-11 13:34:15  neelin
+@MODIFIED   : Converted to use Dave MacDonald's General_transform code.
+@MODIFIED   : Fixed bug in get_slice - for non-linear transformations coord was
+@MODIFIED   : transformed, then used again as a starting coordinate.
+@MODIFIED   : Handle files that have image-max/min that doesn't vary over slices.
+@MODIFIED   : Handle files that have image-max/min varying over row/cols.
+@MODIFIED   : Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
+@MODIFIED   : Handle out-of-range values (-fill values from a previous mincresample, for
+@MODIFIED   : example).
+@MODIFIED   : Save transformation file as a string attribute to processing variable.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -18,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.6 1993-07-21 12:49:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.7 1993-08-11 13:34:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -28,16 +39,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_
 #include <math.h>
 #include <minc.h>
 #include <recipes.h>
+#include <def_mni.h>
 #include <minc_def.h>
 #include "mincresample.h"
-
-/* Some external functions used in this file */
-void lubksb(float **a, int n, int *indx, float *b);
-void ludcmp(float **a, int n, int *indx, float *d);
-
-
-#define public
-#define private static
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : resample_volumes
@@ -56,8 +60,8 @@ void ludcmp(float **a, int n, int *indx, float *d);
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public void resample_volumes(Program_Flags *program_flags,
-                             Volume *in_vol, Volume *out_vol, 
-                             Transformation *transformation)
+                             VVolume *in_vol, VVolume *out_vol, 
+                             General_transform *transformation)
 {
    long in_start[MAX_VAR_DIMS], in_count[MAX_VAR_DIMS], in_end[MAX_VAR_DIMS];
    long out_start[MAX_VAR_DIMS], out_count[MAX_VAR_DIMS];
@@ -197,22 +201,54 @@ public void resample_volumes(Program_Flags *program_flags,
 public void load_volume(File_Info *file, long start[], long count[], 
                         Volume_Data *volume)
 {
-   long islice, mm_start[MAX_VAR_DIMS], mm_count[MAX_VAR_DIMS];
-   int varid, ivar;
+   long nread, islice, mm_start[MAX_VAR_DIMS], mm_count[MAX_VAR_DIMS];
+   int varid, ivar, idim, ndims;
    double *values, maximum, minimum, denom;
 
    /* Load the file */
-   (void) ncvarget(file->mincid, file->imgid, 
-                   start, count, volume->data);
+   if (file->using_icv) {
+      (void) miicv_get(file->icvid, start, count, volume->data);
+   }
+   else {
+      (void) ncvarget(file->mincid, file->imgid, 
+                      start, count, volume->data);
+   }
 
    /* Read the max and min from the file into the scale and offset variables 
-      (maxima into scale and minima into offset */
+      (maxima into scale and minima into offset) if datatype is not
+      floating point */
 
-   if ((file->maxid != MI_ERROR) && (file->minid != MI_ERROR)) {
+   /* Don't do it ourselves if the icv is doing it for us */
+   if (file->using_icv) {
+      for (islice=1; islice < volume->size[SLC_AXIS]; islice++) {
+         (void) miicv_inqdbl(file->icvid, MI_ICV_NORM_MAX, 
+                             &volume->scale[islice]);
+         (void) miicv_inqdbl(file->icvid, MI_ICV_NORM_MIN, 
+                             &volume->offset[islice]);
+      }
+   }
+
+   /* If either max/min variable doesn't exist, or if type is floating
+      point, then set max to 1 and min to 0 */
+   else if ((file->maxid == MI_ERROR) || (file->minid == MI_ERROR) ||
+            (file->datatype == NC_FLOAT) || (file->datatype == NC_DOUBLE)) {
+      for (islice=0; islice < volume->size[SLC_AXIS]; islice++) {
+         volume->scale[islice] = DEFAULT_MAX;
+         volume->offset[islice] = DEFAULT_MIN;
+      }
+   }
+
+   /* Otherwise the imagemax/min variables exist - use them for integer
+      types */
+   else {
 
       for (ivar=0; ivar<2; ivar++) {
+
+         /* Set up variables */
          varid  = (ivar == 0 ? file->maxid   : file->minid);
          values = (ivar == 0 ? volume->scale : volume->offset);
+
+         /* Read max or min */
          (void) mivarget(file->mincid, varid, 
                          mitranslate_coords(file->mincid, file->imgid, start,
                                             varid,
@@ -221,21 +257,30 @@ public void load_volume(File_Info *file, long start[], long count[],
                                             varid,
                                miset_coords(MAX_VAR_DIMS, 1L, mm_count)),
                       NC_DOUBLE, NULL, values);
+
+         /* Check for number of values read */
+         (void) ncvarinq(file->mincid, varid, NULL, NULL, &ndims, NULL, NULL);
+         for (nread=1, idim=0; idim<ndims; idim++) nread *= mm_count[idim];
+
+         /* If only one value read, then copy it for each slice */
+         if (nread==1) {
+            for (islice=1; islice < volume->size[SLC_AXIS]; islice++) {
+               values[islice] = values[0];
+            }
+         }
+         else if (nread != volume->size[SLC_AXIS]) {
+            (void) fprintf(stderr, 
+                           "Program bug while reading image max/min\n");
+            exit(EXIT_FAILURE);
+         }
+
       }        /* Loop over max/min variables */
 
    }        /* If max/min variables both exist */
 
-   /* If max/min variables don't exist, set max to 1 and min to 0 */
-   else {
-      for (islice=0; islice < volume->size[0]; islice++) {
-         volume->scale[islice] = DEFAULT_MAX;
-         volume->offset[islice] = DEFAULT_MIN;
-      }
-   }
-                                                      
 
    /* Calculate the scale and offset */
-   for (islice=0; islice < volume->size[0]; islice++) {
+   for (islice=0; islice < volume->size[SLC_AXIS]; islice++) {
 
       /* If the variables type is floating point, then don't scale */
       if ((volume->datatype==NC_FLOAT) || (volume->datatype==NC_DOUBLE)) {
@@ -278,71 +323,49 @@ public void load_volume(File_Info *file, long start[], long count[],
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol, 
-                      Transformation *transformation, 
+public void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol, 
+                      General_transform *transformation, 
                       double *minimum, double *maximum)
 {
    Slice_Data *slice;
    Volume_Data *volume;
    double *dptr;
    long irow, icol;
-   int voxel_to_world_done, world_to_world_done, world_to_voxel_done;
    int all_linear;
+   int idim;
 
    /* Coordinate vectors for stepping through slice */
    Coord_Vector zero = {0, 0, 0};
    Coord_Vector column = {0, 0, 1};
    Coord_Vector row = {0, 1, 0};
-   Coord_Vector start = {0, 0, 0};    /* start.z set later to slice_num */
-   Coord_Vector coord;
+   Coord_Vector start = {0, 0, 0};    /* start[SLICE] set later to slice_num */
+   Coord_Vector coord, transf_coord;
 
-   /* Identity transformation */
-   static Linear_Transformation identity_transformation = {
-      {{1, 0, 0, 0},
-       {0, 1, 0, 0},
-       {0, 0, 1, 0}}
-   };
-   Transformation first_transf_struct;
-   Transformation *first_transf = &first_transf_struct;
-   Linear_Transformation *matrx;
-
-   /* Set up first transformation */
-   matrx = MALLOC(sizeof(*matrx));
-   *matrx = identity_transformation;
-   first_transf->linear = TRUE;
-   first_transf->transform = do_linear_transformation;
-   first_transf->trans_data = matrx;
+   /* Transformation stuff */
+   General_transform total_transf, temp_transf;
 
    /* Get slice and volume pointers */
    volume = in_vol->volume;
    slice = out_vol->slice;
 
-   /* Check for linear transformations */
-   voxel_to_world_done = FALSE;
-   world_to_world_done = FALSE; 
-   world_to_voxel_done = FALSE;
-   if (IS_LINEAR(out_vol->voxel_to_world)) {
-      voxel_to_world_done = TRUE;
-      mult_linear_transform(first_transf, 
-                            out_vol->voxel_to_world, first_transf);
-      if (IS_LINEAR(transformation)) {
-         world_to_world_done = TRUE; 
-         mult_linear_transform(first_transf, transformation, first_transf);
-         if (IS_LINEAR(in_vol->world_to_voxel)) {
-            world_to_voxel_done = TRUE;
-            mult_linear_transform(first_transf, 
-                                  in_vol->world_to_voxel, first_transf);
-         }
-      }
-   }
-   all_linear = world_to_voxel_done;
+   /* Concatenate transforms */
+   concat_general_transforms(out_vol->voxel_to_world, 
+                             transformation, &temp_transf);
+   concat_general_transforms(&temp_transf, in_vol->world_to_voxel,
+                             &total_transf);
+   delete_general_transform(&temp_transf);
 
-   /* Transform vectors with first transformation */
-   start.x = slice_num;
-   DO_TRANSFORM(&zero, first_transf, &zero);
-   DO_TRANSFORM(&column, first_transf, &column);
-   DO_TRANSFORM(&row, first_transf, &row);
-   DO_TRANSFORM(&start, first_transf, &start);
+   /* Check for complete linear transformation */
+   all_linear = (get_transform_type(&total_transf) == LINEAR);
+
+   /* Transform vectors for linear transformation */
+   start[SLICE] = slice_num;
+   if (all_linear) {
+      DO_TRANSFORM(zero, &total_transf, zero);
+      DO_TRANSFORM(column, &total_transf, column);
+      DO_TRANSFORM(row, &total_transf, row);
+      DO_TRANSFORM(start, &total_transf, start);
+   }
 
    /* Make sure that row and column are vectors and not points */
    VECTOR_DIFF(row, row, zero);
@@ -354,7 +377,7 @@ public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol,
 
    /* Loop over rows of slice */
 
-   for (irow=0; irow < slice->size[0]; irow++) {
+   for (irow=0; irow < slice->size[SLICE_ROW]; irow++) {
 
       /* Set starting coordinate of row */
       VECTOR_SCALAR_MULT(coord, row, irow);
@@ -362,25 +385,19 @@ public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol,
 
       /* Loop over columns */
 
-      dptr = slice->data + irow*slice->size[1];
-      for (icol=0; icol < slice->size[1]; icol++) {
+      dptr = slice->data + irow*slice->size[SLICE_COL];
+      for (icol=0; icol < slice->size[SLICE_COL]; icol++) {
 
          /* If transformation is not completely linear, then transform 
             voxel to world, world to world and world to voxel, as needed */
+         for (idim=0; idim<WORLD_NDIMS; idim++) 
+            transf_coord[idim]=coord[idim];
          if (!all_linear) {
-            if (!voxel_to_world_done) {
-               DO_TRANSFORM(&coord, out_vol->voxel_to_world, &coord);
-            }
-            if (!world_to_world_done) {
-               DO_TRANSFORM(&coord, transformation, &coord);
-            }
-            if (!world_to_voxel_done) {
-               DO_TRANSFORM(&coord, in_vol->world_to_voxel, &coord);
-            }
+            DO_TRANSFORM(transf_coord, &total_transf, transf_coord);
          }
 
          /* Do interpolation */
-         if (INTERPOLATE(volume, &coord, dptr) || volume->use_fill) {
+         if (INTERPOLATE(volume, transf_coord, dptr) || volume->use_fill) {
             if (*dptr > *maximum) *maximum = *dptr;
             if (*dptr < *minimum) *minimum = *dptr;
          }
@@ -407,124 +424,9 @@ public void get_slice(long slice_num, Volume *in_vol, Volume *out_vol,
          *maximum = 2.0 * (*minimum);
    }
 
-   /* Free matrix */
-   FREE(matrx);
+   /* Delete the transformation */
+   delete_general_transform(&total_transf);
 
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : invert_transformation
-@INPUT      : transformation - transformation to invert
-@OUTPUT     : result - resultant transformation
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to invert a transformation. Currently only works on
-              linear transformations.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : February 9, 1993 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public void invert_transformation(Transformation *result, 
-                                  Transformation *transformation)
-{
-   Linear_Transformation *matrx, *result_matrix;
-   float **nrmatrix, **nrresult, nrd, nrcol[MAT_NDIMS+1];
-   int nrindex[MAT_NDIMS+1], idim, jdim;
-
-   /* Check that transformation is linear */
-   if (!IS_LINEAR(transformation)) {
-      (void) fprintf(stderr, "Unable to invert non-linear transformations!\n");
-      exit(EXIT_FAILURE);
-   }
-   matrx = transformation->trans_data;
-
-   /* Set up numerical recipes matrices */
-   nrmatrix = matrix(1, MAT_NDIMS, 1, MAT_NDIMS);
-   nrresult = matrix(1, MAT_NDIMS, 1, MAT_NDIMS);
-
-   for (idim=1; idim<=MAT_NDIMS; idim++) {
-      for (jdim=1; jdim<=MAT_NDIMS; jdim++) {
-         if (idim<=WORLD_NDIMS)
-            nrmatrix[idim][jdim] = matrx->mat[idim-1][jdim-1];
-         else if (jdim<=WORLD_NDIMS)
-            nrmatrix[idim][jdim] = 0.0;
-         else 
-            nrmatrix[idim][jdim] = 1.0;
-      }
-   }
-
-   /* Invert matrix */
-   ludcmp( nrmatrix, MAT_NDIMS, nrindex, &nrd );
-
-   for (jdim=1; jdim<=MAT_NDIMS; jdim++) {
-      for (idim=1; idim<=MAT_NDIMS; idim++)
-         nrcol[idim] = 0.0;
-      nrcol[jdim] = 1.0;
-      lubksb( nrmatrix, MAT_NDIMS, nrindex, nrcol );
-      for (idim=1; idim<=MAT_NDIMS; idim++)
-         nrresult[idim][jdim] = nrcol[idim];
-   }
-
-   /* Save the result */
-   if (result->trans_data != NULL) FREE(result->trans_data);
-   *result = *transformation;
-   matrx = MALLOC(sizeof(*result_matrix));
-   result->trans_data = matrx;
-   for (idim=1; idim<=WORLD_NDIMS; idim++)
-      for (jdim=1; jdim<=MAT_NDIMS; jdim++)
-         matrx->mat[idim-1][jdim-1] = nrresult[idim][jdim];
-
-   /* free the nr matrices */
-   free_matrix(nrmatrix, 1, MAT_NDIMS, 1, MAT_NDIMS);
-   free_matrix(nrresult, 1, MAT_NDIMS, 1, MAT_NDIMS);
-
-
-   return;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : do_linear_transformation
-@INPUT      : trans_data - pointer to transformation data
-              coordinate - point to be transformed
-@OUTPUT     : result - resulting coordinate
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to apply a linear transformation. 
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : February 10, 1993 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public void do_linear_transformation(Coord_Vector *result, void *trans_data, 
-                                     Coord_Vector *coordinate)
-{
-   Linear_Transformation *matrx;
-   int idim, jdim;
-   double lcoord[WORLD_NDIMS], lresult[WORLD_NDIMS];
-
-   /* Get linear transformation info */
-   matrx = trans_data;
-
-   /* Make our own coord vector */
-   lcoord[X] = coordinate->x;
-   lcoord[Y] = coordinate->y;
-   lcoord[Z] = coordinate->z;
-
-   /* Calculate transformation */
-   for (idim=0; idim<WORLD_NDIMS; idim++) {
-      lresult[idim] = matrx->mat[idim][MAT_NDIMS-1];
-      for (jdim=0; jdim<WORLD_NDIMS; jdim++) {
-         lresult[idim] += matrx->mat[idim][jdim] * lcoord[jdim];
-      }
-   }
-
-   /* Save the result */
-   result->x = lresult[X];
-   result->y = lresult[Y];
-   result->z = lresult[Z];
-
-   return;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -543,45 +445,58 @@ public void do_linear_transformation(Coord_Vector *result, void *trans_data,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int trilinear_interpolant(Volume_Data *volume, 
-                                 Coord_Vector *coord, double *result)
+                                 Coord_Vector coord, double *result)
 {
-   long ind0, ind1, ind2, max0, max1, max2;
+   long slcind, rowind, colind, slcmax, rowmax, colmax;
    static double f0, f1, f2, r0, r1, r2, r1r2, r1f2, f1r2, f1f2;
    static double v000, v001, v010, v011, v100, v101, v110, v111;
 
    /* Check that the coordinate is inside the volume */
-   max0 = volume->size[0] - 1;
-   max1 = volume->size[1] - 1;
-   max2 = volume->size[2] - 1;
-   if ((coord->x < 0) || (coord->x > max0) ||
-       (coord->y < 0) || (coord->y > max1) ||
-       (coord->z < 0) || (coord->z > max2)) {
+   slcmax = volume->size[SLC_AXIS] - 1;
+   rowmax = volume->size[ROW_AXIS] - 1;
+   colmax = volume->size[COL_AXIS] - 1;
+   if ((coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
+       (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
+       (coord[COLUMN] < 0) || (coord[COLUMN] > colmax)) {
       *result = volume->fillvalue;
       return FALSE;
    }
 
    /* Get the whole part of the coordinate */ 
-   ind0 = (long) coord->x;
-   ind1 = (long) coord->y;
-   ind2 = (long) coord->z;
-   if (ind0 >= max0-1) ind0 = max0-1;
-   if (ind1 >= max1-1) ind1 = max1-1;
-   if (ind2 >= max2-1) ind2 = max2-1;
+   slcind = (long) coord[SLICE];
+   rowind = (long) coord[ROW];
+   colind = (long) coord[COLUMN];
+   if (slcind >= slcmax-1) slcind = slcmax-1;
+   if (rowind >= rowmax-1) rowind = rowmax-1;
+   if (colind >= colmax-1) colind = colmax-1;
 
    /* Get the relevant voxels */
-   VOLUME_VALUE(volume, ind0  , ind1  , ind2  , v000);
-   VOLUME_VALUE(volume, ind0  , ind1  , ind2+1, v001);
-   VOLUME_VALUE(volume, ind0  , ind1+1, ind2  , v010);
-   VOLUME_VALUE(volume, ind0  , ind1+1, ind2+1, v011);
-   VOLUME_VALUE(volume, ind0+1, ind1  , ind2  , v100);
-   VOLUME_VALUE(volume, ind0+1, ind1  , ind2+1, v101);
-   VOLUME_VALUE(volume, ind0+1, ind1+1, ind2  , v110);
-   VOLUME_VALUE(volume, ind0+1, ind1+1, ind2+1, v111);
+   VOLUME_VALUE(volume, slcind  , rowind  , colind  , v000);
+   VOLUME_VALUE(volume, slcind  , rowind  , colind+1, v001);
+   VOLUME_VALUE(volume, slcind  , rowind+1, colind  , v010);
+   VOLUME_VALUE(volume, slcind  , rowind+1, colind+1, v011);
+   VOLUME_VALUE(volume, slcind+1, rowind  , colind  , v100);
+   VOLUME_VALUE(volume, slcind+1, rowind  , colind+1, v101);
+   VOLUME_VALUE(volume, slcind+1, rowind+1, colind  , v110);
+   VOLUME_VALUE(volume, slcind+1, rowind+1, colind+1, v111);
+
+   /* Check that the values are not fill values */
+   if ((v000 < volume->vrange[0]) || (v000 > volume->vrange[1]) ||
+       (v001 < volume->vrange[0]) || (v001 > volume->vrange[1]) ||
+       (v010 < volume->vrange[0]) || (v010 > volume->vrange[1]) ||
+       (v011 < volume->vrange[0]) || (v011 > volume->vrange[1]) ||
+       (v100 < volume->vrange[0]) || (v100 > volume->vrange[1]) ||
+       (v101 < volume->vrange[0]) || (v101 > volume->vrange[1]) ||
+       (v110 < volume->vrange[0]) || (v110 > volume->vrange[1]) ||
+       (v111 < volume->vrange[0]) || (v111 > volume->vrange[1])) {
+      *result = volume->fillvalue;
+      return FALSE;
+   }
 
    /* Get the fraction parts */
-   f0 = coord->x - ind0;
-   f1 = coord->y - ind1;
-   f2 = coord->z - ind2;
+   f0 = coord[SLICE]  - slcind;
+   f1 = coord[ROW]    - rowind;
+   f2 = coord[COLUMN] - colind;
    r0 = 1.0 - f0;
    r1 = 1.0 - f1;
    r2 = 1.0 - f2;
@@ -592,17 +507,17 @@ public int trilinear_interpolant(Volume_Data *volume,
    f1r2 = f1 * r2;
    f1f2 = f1 * f2;
    *result =
-      r0 * (volume->scale[ind0] *
+      r0 * (volume->scale[slcind] *
             (r1r2 * v000 +
              r1f2 * v001 +
              f1r2 * v010 +
-             f1f2 * v011) + volume->offset[ind0]);
+             f1f2 * v011) + volume->offset[slcind]);
    *result +=
-      f0 * (volume->scale[ind0+1] *
+      f0 * (volume->scale[slcind+1] *
             (r1r2 * v100 +
              r1f2 * v101 +
              f1r2 * v110 +
-             f1f2 * v111) + volume->offset[ind0+1]);
+             f1f2 * v111) + volume->offset[slcind+1]);
    
    return TRUE;
 
@@ -624,45 +539,43 @@ public int trilinear_interpolant(Volume_Data *volume,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int tricubic_interpolant(Volume_Data *volume, 
-                                Coord_Vector *coord, double *result)
+                                Coord_Vector coord, double *result)
 {
-   long ind0, ind1, ind2, max0, max1, max2, index[VOL_NDIMS];
+   long slcind, rowind, colind, slcmax, rowmax, colmax, index[VOL_NDIMS];
    double frac[VOL_NDIMS];
 
    /* Check that the coordinate is inside the volume */
-   max0 = volume->size[0] - 1;
-   max1 = volume->size[1] - 1;
-   max2 = volume->size[2] - 1;
-   if ((coord->x < 0) || (coord->x > max0) ||
-       (coord->y < 0) || (coord->y > max1) ||
-       (coord->z < 0) || (coord->z > max2)) {
+   slcmax = volume->size[SLC_AXIS] - 1;
+   rowmax = volume->size[ROW_AXIS] - 1;
+   colmax = volume->size[COL_AXIS] - 1;
+   if ((coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
+       (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
+       (coord[COLUMN] < 0) || (coord[COLUMN] > colmax)) {
       *result = volume->fillvalue;
       return FALSE;
    }
 
    /* Get the whole and fractional part of the coordinate */
-   ind0 = (long) coord->x;
-   ind1 = (long) coord->y;
-   ind2 = (long) coord->z;
-   frac[0] = coord->x - ind0;
-   frac[1] = coord->y - ind1;
-   frac[2] = coord->z - ind2;
-   ind0--;
-   ind1--;
-   ind2--;
+   slcind = (long) coord[SLICE];
+   rowind = (long) coord[ROW];
+   colind = (long) coord[COLUMN];
+   frac[0] = coord[SLICE]  - slcind;
+   frac[1] = coord[ROW]    - rowind;
+   frac[2] = coord[COLUMN] - colind;
+   slcind--;
+   rowind--;
+   colind--;
 
    /* Check for edges - do linear interpolation at edges */
-   if ((ind0 > max0-3) || (ind0 < 0) ||
-       (ind1 > max1-3) || (ind1 < 0) ||
-       (ind2 > max2-3) || (ind2 < 0)) {
+   if ((slcind > slcmax-3) || (slcind < 0) ||
+       (rowind > rowmax-3) || (rowind < 0) ||
+       (colind > colmax-3) || (colind < 0)) {
       return trilinear_interpolant(volume, coord, result);
    }
-   index[0]=ind0; index[1]=ind1; index[2]=ind2;
+   index[0]=slcind; index[1]=rowind; index[2]=colind;
 
-   /* Do the interpolation */
-   do_Ncubic_interpolation(volume, index, 0, frac, result);
-
-   return TRUE;
+   /* Do the interpolation and return its value */
+   return do_Ncubic_interpolation(volume, index, 0, frac, result);
 
 }
 
@@ -674,7 +587,7 @@ public int tricubic_interpolant(Volume_Data *volume,
               cur_dim - dimension to be interpolated (0 = volume, 1 = slice,
                  2 = line)
 @OUTPUT     : result - interpolated value.
-@RETURNS    : (nothing)
+@RETURNS    : TRUE if coord is within the volume, FALSE otherwise.
 @DESCRIPTION: Routine to interpolate a volume, slice or line (specified by
               cur_dim).
 @METHOD     : 
@@ -683,12 +596,13 @@ public int tricubic_interpolant(Volume_Data *volume,
 @CREATED    : February 12, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void do_Ncubic_interpolation(Volume_Data *volume, 
-                                    long index[], int cur_dim, 
-                                    double frac[], double *result)
+public int do_Ncubic_interpolation(Volume_Data *volume, 
+                                   long index[], int cur_dim, 
+                                   double frac[], double *result)
 {
    long base_index;
    double v0, v1, v2, v3, u;
+   int found_fillvalue;
 
    /* Save index that we will change */
    base_index = index[cur_dim];
@@ -702,21 +616,43 @@ public void do_Ncubic_interpolation(Volume_Data *volume,
       VOLUME_VALUE(volume, index[0] ,index[1], index[2], v2);
       index[cur_dim]++;
       VOLUME_VALUE(volume, index[0] ,index[1], index[2], v3);
+
+      /* Check for fillvalues */
+      if ((v0 < volume->vrange[0]) || (v0 > volume->vrange[1]) ||
+          (v1 < volume->vrange[0]) || (v1 > volume->vrange[1]) ||
+          (v2 < volume->vrange[0]) || (v2 > volume->vrange[1]) ||
+          (v3 < volume->vrange[0]) || (v3 > volume->vrange[1])) {
+         found_fillvalue = TRUE;
+      }
    }
 
    /* Otherwise, recurse */
    else {
-      do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v0);
+      if (!do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v0)) {
+         found_fillvalue = TRUE;
+      }
       index[cur_dim]++;
-      do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v1);
+      if (!do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v1)) {
+         found_fillvalue = TRUE;
+      }
       index[cur_dim]++;
-      do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v2);
+      if (!do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v2)) {
+         found_fillvalue = TRUE;
+      }
       index[cur_dim]++;
-      do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v3);
+      if (!do_Ncubic_interpolation(volume, index, cur_dim+1, frac, &v3)) {
+         found_fillvalue = TRUE;
+      }
    }
 
    /* Restore index */
    index[cur_dim] = base_index;
+
+   /* Check for fill value found */
+   if (found_fillvalue) {
+      *result = volume->fillvalue;
+      return FALSE;
+   }
 
    /* Scale values for slices */
    if (cur_dim==0) {
@@ -741,7 +677,7 @@ public void do_Ncubic_interpolation(Volume_Data *volume,
                     )
      );
 
-   return;
+   return TRUE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -752,7 +688,8 @@ public void do_Ncubic_interpolation(Volume_Data *volume,
 @OUTPUT     : result - interpolated value.
 @RETURNS    : TRUE if coord is within the volume, FALSE otherwise.
 @DESCRIPTION: Routine to interpolate a volume at a point with nearest
-              neighbour interpolation.
+              neighbour interpolation. Allows the coord to be outside
+              the volume by up to 1/2 a pixel.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -760,86 +697,36 @@ public void do_Ncubic_interpolation(Volume_Data *volume,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public int nearest_neighbour_interpolant(Volume_Data *volume, 
-                                         Coord_Vector *coord, double *result)
+                                         Coord_Vector coord, double *result)
 {
-   long ind0, ind1, ind2, max0, max1, max2;
+   long slcind, rowind, colind, slcmax, rowmax, colmax;
 
    /* Check that the coordinate is inside the volume */
-   max0 = volume->size[0] - 1;
-   max1 = volume->size[1] - 1;
-   max2 = volume->size[2] - 1;
-   if ((coord->x < 0) || (coord->x > max0) ||
-       (coord->y < 0) || (coord->y > max1) ||
-       (coord->z < 0) || (coord->z > max2)) {
+   slcmax = volume->size[SLC_AXIS] - 1;
+   rowmax = volume->size[ROW_AXIS] - 1;
+   colmax = volume->size[COL_AXIS] - 1;
+   slcind = ROUND(coord[SLICE]);
+   rowind = ROUND(coord[ROW]);
+   colind = ROUND(coord[COLUMN]);
+   if ((slcind < 0) || (slcind > slcmax) ||
+       (rowind < 0) || (rowind > rowmax) ||
+       (colind < 0) || (colind > colmax)) {
       *result = volume->fillvalue;
       return FALSE;
    }
 
-   /* Get the whole part of the coordinate */
-   ind0 = (long) (coord->x + 0.5);
-   ind1 = (long) (coord->y + 0.5);
-   ind2 = (long) (coord->z + 0.5);
-
    /* Get the value */
-   VOLUME_VALUE(volume, ind0  , ind1  , ind2  , *result);
+   VOLUME_VALUE(volume, slcind  , rowind  , colind  , *result);
 
-   *result = volume->scale[ind0] * (*result) + volume->offset[ind0];
+   /* Check for fillvalue on input */
+   if ((*result < volume->vrange[0]) || (*result > volume->vrange[1])) {
+      *result = volume->fillvalue;
+      return FALSE;
+   }
+
+   *result = volume->scale[slcind] * (*result) + volume->offset[slcind];
 
    return TRUE;
 
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : mult_linear_transform
-@INPUT      : transform1 - first transformation
-              transform2 - second transformation
-@OUTPUT     : result - resulting transformation
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to multiply two linear matrices.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : February 10, 1993 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public void mult_linear_transform(Transformation *result, 
-                                  Transformation *transform1, 
-                                  Transformation *transform2)
-{
-   int idim, jdim, kdim;
-   Linear_Transformation *matrix1, *matrix2, *result_matrix;
-
-   /* Check for linear transformations */
-   if (!IS_LINEAR(transform1) || !IS_LINEAR(transform2)) {
-      (void) fprintf(stderr, 
-                     "Unable to multiply two non-linear transformations.\n");
-      exit(EXIT_FAILURE);
-   }
-   matrix1 = transform1->trans_data;
-   matrix2 = transform2->trans_data;
-
-   /* Get space for the result */
-   result_matrix = MALLOC(sizeof(*result_matrix));
-
-   /* Multiply the matrices */
-   for (idim=0; idim < WORLD_NDIMS; idim++) {
-      for (jdim=0; jdim < MAT_NDIMS; jdim++) {
-         if (jdim < WORLD_NDIMS) 
-            result_matrix->mat[idim][jdim] = 0.0;
-         else
-            result_matrix->mat[idim][jdim] = 
-               matrix1->mat[idim][MAT_NDIMS-1];
-         for (kdim=0; kdim < WORLD_NDIMS; kdim++) {
-            result_matrix->mat[idim][jdim] += 
-               matrix1->mat[idim][kdim] * matrix2->mat[kdim][jdim];
-         }
-      }
-   }
-
-   /* Save the result */
-   if (result->trans_data != NULL) FREE(result->trans_data);
-   *result = *transform1;
-   result->trans_data = result_matrix;
-
-   return;
-}
