@@ -12,7 +12,7 @@ include $(ROOT)/Makefile_configuration
 default : build
 
 all build clean : 
-	@TARGET=$@; export TARGET; $(MAKE) subdirs
+	$(MAKE) 'TARGET=$@' subdirs
 
 subdirs : 
 	@for dir in $(PROG_LIB_DIR) [a-z]*; \
