@@ -1,0 +1,536 @@
+#! /usr/local/bin/perl
+#
+# Script to read files from a GE signa 4.x DAT tape and convert to minc
+# format
+#
+# Based on an original written for GE signa 5.x by Peter Neelin.
+# Modification for 4.x by Gabriel Leger.
+#
+
+sub numeric_order { $a - $b;}
+
+# Subroutine to clean up files and exit
+sub cleanup_and_die {
+
+    # Get message to print and exit status
+    local($message,$status) = @_;
+    if (!defined($status)) {$status = 0;}
+    if (defined($message)) {
+        print STDERR $message;
+        if ($message !~ /\n$/) {print STDERR "\n";}
+    }
+
+    $SIG{'INT'}  = 'IGNORE';
+    $SIG{'TERM'} = 'IGNORE';
+    $SIG{'QUIT'} = 'IGNORE';
+    # Check for temp files
+    if (defined($tmpdir) && -e $tmpdir) {
+        print STDERR "Cleaning up temporary files.\n";
+        system "rm -rf $tmpdir";
+    }
+
+    exit($status);
+}
+
+# Subroutine to execute commands and check return status
+sub execute {
+    local($status);
+    if ($print_execution_statements) {
+        print join(' ',@_),"\n";
+    }
+    $status = system @_;
+    if ($status != 0) {
+        &cleanup_and_die("Error executing command \"".join(" ",@_)."\".\n",
+                         $status);
+    }
+}
+
+# Subroutine to remove a list of files
+sub remove_file {
+    unlink @_;
+}
+
+# Subroutine to create a temporary directory (global variable $tmpdir
+# is created)
+sub create_tmpdir {
+    local($subdir);
+    if (scalar(@_) >= 1) {
+        $subdir = $_[0];
+    }
+    else {
+        $subdir = $$;
+    }
+    if (defined($ENV{TMPDIR})) {
+        $tmpdir = $ENV{TMPDIR};
+    }
+    else {
+        $tmpdir = "/usr/tmp";
+    }
+    $tmpdir .= "/$subdir";
+    mkdir($tmpdir,0777) || die "Unable to create directory $tmpdir: $!";
+    $SIG{'INT'}  = 'cleanup_and_die';
+    $SIG{'TERM'} = 'cleanup_and_die';
+    $SIG{'QUIT'} = 'cleanup_and_die';
+}
+
+# Subroutine to read a file from tape
+sub read_next_file {
+    local($tapedrive, *input_list) = @_;
+    if (!defined($tapedrive) && !defined(@input_list)) {
+        $tapedrive = "/dev/tape";
+    }
+
+    # Constants
+    $tape_block_size = 8192;
+    $tape_sleep = 1;
+
+    # Get next value from list if no tape drive
+    if (length($tapedrive) == 0) {
+        return shift(@input_list);
+    }
+
+    # Create file counting variable if it does not exist
+    if (!defined($counter_for_read_next_file)) {
+        $counter_for_read_next_file = 0;
+    }
+
+    # Create the filename
+    local($filename) = "$tmpdir/datafile_".$counter_for_read_next_file;
+    $counter_for_read_next_file++;
+
+    # Sleep for a moment, then read from tape drive (don't ask me why,
+    # it just works!)
+    print STDERR "Retrieving file $filename from drive $tapedrive\n";
+    select(undef, undef, undef, $tape_sleep);
+    local($status) = system("dd if=$tapedrive of=$filename ".
+                            "ibs=$tape_block_size >/dev/null 2>/dev/null");
+    if (($status!=0) || -z $filename) {
+        print STDERR "End of tape.\n";
+        &remove_file($filename);
+        return "";
+    }
+    else {
+        return $filename;
+    }
+
+}
+
+# Subroutine to read the ge DAT headers
+sub read_gedat_headers {
+
+    # Set constants for reading file
+    local($suite_hdr_len) = 3072;
+    local($study_hdr_len) = 1024;
+    local($series_hdr_len) = 1024;
+    local($image_hdr_len) = 1024;
+    local($raw_hdr_len) = 2048;
+
+    # Check arguements
+    if (scalar(@_) != 7) {
+        &cleanup_and_die("Argument error in read_gedat_headers",1);
+    }
+    local($filename, *suite_hdr, *study_hdr, *series_hdr, 
+          *image_hdr, *raw_hdr, *pixel_data_offset)
+        = @_;
+
+    # Read in file headers
+    if (!open(GEF, "<".$filename)) {
+        warn "Can't open file $filename: $!";
+        return 1;
+    }
+    return 1
+        if (read(GEF, $suite_hdr, $suite_hdr_len) != $suite_hdr_len);
+    return 1
+        if (read(GEF, $study_hdr, $study_hdr_len) != $study_hdr_len);
+    return 1
+        if (read(GEF, $series_hdr, $series_hdr_len) != $series_hdr_len);
+    return 1
+        if (read(GEF, $image_hdr, $image_hdr_len) != $image_hdr_len);
+    return 1
+        if (read(GEF, $raw_hdr, $raw_hdr_len) != $raw_hdr_len);
+
+    # Calculate the offset to pixel data
+    $pixel_data_offset = 14336;
+
+    # Close input file
+    close(GEF);
+
+    return 0;
+}
+
+# Routine to convert data general float to ieee
+sub convert_dg_float_to_ieee {
+    local($packed_float, $ival, $exponent, $mantissa, @result, $int_result);
+    @result = ();
+    foreach $packed_float (@_) {
+        $ival = unpack('L',$packed_float);
+        if ($ival == 0.0) {
+            push(@result, 0.0);
+        }
+        else {
+            $exponent = (((($ival >> 24) & 0x7f) - 64) * 4) + 127;
+            $mantissa = $ival & 0x00ffffff;
+            while ($mantissa && (!( $mantissa & 0x00800000))) {
+                $exponent--;
+                $mantissa = $mantissa << 1;
+            }
+            $exponent--;
+            $exponent = $exponent << 23;
+            $mantissa &= 0x007fffff;       
+
+            $int_result = ($ival & 0x80000000) | $exponent | $mantissa;
+            push(@result, unpack('f',pack('L', $int_result)));
+        }
+                                      
+    }
+    return @result;
+}
+
+# Subroutine to unpack a value from a string
+sub unpack_value {
+    local(*string, $offset, $type) = @_;
+    if ($dump_unpack_value) {
+        print "unpack_value: length, offset, type = ",length($string), 
+        " $offset $type\n";
+    }
+    return unpack("x$offset $type", $string);
+}
+
+# Subroutine to unpack a data general float from a string
+sub unpack_float {
+    local(*string, $offset) = @_;
+    if ($dump_unpack_value) {
+        print "unpack_value: length, offset = ",length($string), 
+        " $offset\n";
+    }
+    return &convert_dg_float_to_ieee(substr($string, $offset, 4));
+}
+
+# Subroutine to create a minc file
+sub create_mincfile {
+    if (scalar(@_) != 6) {
+        die "Argument error in create_mincfile";
+    }
+    local($mincfile, *file_list, *fileinfo, $firstslice, $lastslice, $echo) 
+        = @_;
+
+    # Get number of slices
+    local($nslices) = $lastslice - $firstslice + 1;
+    if ($nslices <= 0) {
+        warn "No images to copy for minc file \"$mincfile\"";
+        return;
+    }
+
+    # Check for existence of file - create a new name if it exists
+    local($filebase);
+    if ($mincfile =~ /^(.*)\.mnc$/) {
+        $filebase = $1;
+    }
+    else {
+        $filebase = $mincfile;
+    }
+    local($version) = 1;
+    while (-e $mincfile) {
+        $version++;
+        $mincfile = $filebase."_version$version.mnc";
+        print STDERR "Minc file already exists. Trying name \"$mincfile\".\n";
+    }
+
+    # Set up rawtominc command
+    local($nrows, $ncols, $orientation, $pixel_size, $slicestep);
+    local($xstep, $ystep, $zstep, $xstart, $ystart, $zstart);
+    local($orient_flag);
+    $pixel_size = $fileinfo{'depth'} / 8;
+    if ($nslices > 1) {
+        $slicestep = ($fileinfo{'sliceend'} - $fileinfo{'slicestart'}) /
+            ($nslices - 1);
+    }
+    else {
+        $slicestep = 1;
+    }
+    $nrows = $fileinfo{'height'};
+    $ncols = $fileinfo{'width'};
+    $xstep = $fileinfo{'colstep'};
+    $ystep = $fileinfo{'rowstep'};
+    $zstep = $slicestep;
+    $orient_flag = $fileinfo{'orientation'};
+    if ($orient_flag == 1) {    # Sagittal
+        ($ystep, $zstep, $xstep) = 
+            ($fileinfo{'colstep'}, $fileinfo{'rowstep'}, $slicestep);
+        ($ystart, $zstart, $xstart) = (0, 0, $fileinfo{'slicestart'});
+        $orientation = "-sagittal";
+    }
+    elsif ($orient_flag == 2) { # Coronal
+        ($xstep, $zstep, $ystep) = 
+            ($fileinfo{'colstep'}, $fileinfo{'rowstep'}, $slicestep);
+        ($xstart, $zstart, $ystart) = (0, 0, $fileinfo{'slicestart'});
+        $orientation = "-coronal";
+    }
+    else {                      # Transverse
+        ($xstep, $ystep, $zstep) = 
+            ($fileinfo{'colstep'}, $fileinfo{'rowstep'}, $slicestep);
+        ($xstart, $ystart, $zstart) = (0, 0, $fileinfo{'slicestart'});
+        $orientation = "-transverse";
+    }
+    open(MINC, "|itof |rawtominc $mincfile $nslices $nrows $ncols -noclobber ".
+         "-float -obyte $orientation ".
+         "-xstep $xstep -ystep $ystep -zstep $zstep ".
+         "-xstart $xstart -ystart $ystart -zstart $zstart ".
+         "-mri -attribute patient:full_name='".$fileinfo{'patient_name'}."' ".
+         "-attribute acquisition:repetition_time='".$fileinfo{'tr'}."' ".
+         "-attribute acquisition:echo_time='".$fileinfo{'te',$echo}."' ".
+         "-attribute acquisition:inversion_time='".$fileinfo{'ti'}."' ".
+         "-attribute acquisition:flip_angle='".$fileinfo{'mr_flip'}."' ".
+         "-attribute acquisition:scanning_sequence='".$fileinfo{'psdname'}.
+         "' ".
+         "-attribute ge_mrimage:pseq='".$fileinfo{'pseq'}."' ".
+         "-attribute ge_mrimage:pseqmode='".$fileinfo{'pseqmode'}."' ".
+         "");
+
+    # Loop through slices
+    local($cur_file);
+    foreach $slice ($firstslice..$lastslice) {
+
+        # Get file name
+        $cur_file = $file_list{$slice, $echo};
+
+        # Print log message
+        if (length($cur_file) > 0) {
+            print STDERR 
+                "Getting data from file \"$cur_file\" for slice $slice.\n";
+        }
+        else {
+            print STDERR "Using blank image for slice $slice.\n";
+        }
+
+        # Set up variables for getting the image
+        $image_data_len = $nrows * $ncols * $pixel_size;
+        if ($fileinfo{'compress'} == 0) { # No compression
+            $decompress_cmd = "";
+        }
+        else {
+            close(MINC);
+            warn "Bad compression code while creating minc file \"$mincfile\"";
+            return;
+        }
+
+        # Read the image (if not defined, create a blank image)
+        if (length($cur_file) <= 0) {
+            $image_data = pack("x$image_data_len",());
+        }
+        else {
+            open(GEDAT, "extract ".
+                 $fileinfo{$slice, $echo, 'pixel_data_offset'} . " " .
+                 $fileinfo{$slice, $echo, 'pixel_data_len'} . " " . 
+                 $cur_file . 
+                 $decompress_cmd . " |");
+            read(GEDAT, $image_data, $image_data_len);
+            close(GEDAT);
+            if (length($image_data) != $image_data_len) {
+                close(MINC);
+                warn "Error decompresssing from $cur_file ".
+                    "while creating minc file \"$mincfile\"";
+                return;
+            }
+        }
+
+        # Write out the image
+        print MINC $image_data;
+    }
+
+    # Close the minc file
+    close(MINC);
+
+}
+
+# MAIN PROGRAM
+
+$| = 1;
+$outputdir = shift;
+if (!defined($outputdir)) {
+    die "Usage: $0 <outputdir> [/dev/<tape device> | <file1> <file2> ...]";
+}
+
+# Get arguments
+if (!defined($ARGV[0])) {
+    $tapedrive = "/dev/nrtape";
+    @input_list = ();
+}
+elsif ($ARGV[0] =~ m+^/dev/+) {
+    $tapedrive = shift;
+    @input_list = ();
+    if (scalar(@ARGV) > 0) {
+        die "Do not specify tapedrive and input file list, stopped";
+    }
+}
+else {
+    $tapedrive = '';
+    @input_list = @ARGV;
+}
+
+# Should we delete the files?
+$delete_files = (length($tapedrive) > 0);
+
+# Create a temporary directory
+&create_tmpdir("read_ge_dat_$$");
+
+# Rewind the tape
+if (length($tapedrive) > 0) {
+    &execute("mt -t $tapedrive rewind");
+}
+
+# Skip the first file on the tape
+$nextfile = &read_next_file($tapedrive);
+if ($delete_files) {
+    &remove_file($nextfile);
+}
+
+# Loop through files on tape
+$keep_looping = 1;
+while ($keep_looping) {
+
+    # Get next file
+    $nextfile = &read_next_file($tapedrive, *input_list);
+    if ($nextfile eq "") {
+        $keep_looping = 0;
+    }
+
+    # Read in headers
+    if ($keep_looping) {
+        $image_hdr = 1;
+        if (&read_gedat_headers($nextfile, *suite_hdr, *study_hdr, *series_hdr,
+                                *image_hdr, *pixel_hdr, *pixel_data_offset)) {
+            warn "Error reading file \"$nextfile\". Skipping to next.";
+            next;
+        }
+
+        # Get interesting values
+        $cur_numechos = &unpack_value(*image_hdr, 196, 's');
+        if ($cur_numechos <= 0) {$cur_numechos = 1;}
+        $cur_study = &unpack_value(*study_hdr, 64, 'A6')+0;
+        $cur_series = &unpack_value(*image_hdr, 92, 'A4')+0;
+        $cur_image = int((&unpack_value(*image_hdr, 88, 'A4')-1)/$cur_numechos);
+        $cur_echo = &unpack_value(*image_hdr, 198, 's');
+        $cur_width = &unpack_value(*image_hdr, 274, 's');
+        $cur_height = &unpack_value(*image_hdr, 276, 's');
+        $cur_depth = &unpack_value(*image_hdr, 284, 's');
+        if ($cur_depth <= 0) {$cur_depth = 16;}
+        $cur_compress = &unpack_value(*image_hdr, 282, 's');
+        $cur_slicepos = &unpack_float(*image_hdr, 146);
+    }
+
+    # Check if number study or series has changed or if this is the last file
+    if ((scalar(keys(%file_list)) > 0) &&
+        (!$keep_looping || 
+         ($fileinfo{'study'} != $cur_study) || 
+         ($fileinfo{'series'} != $cur_series))) {
+
+        # Loop through echos
+        @echos = sort(numeric_order keys(%echo_list));
+        foreach $echo (@echos) {
+
+            # Create minc file
+            ($patient_name = $fileinfo{'patient_name'}) =~
+                tr/a-zA-Z0-9_\-/_/cs;
+            $patient_name =~ tr/A-Z/a-z/;
+            $mincfile = "$outputdir/".$patient_name."_".
+                $fileinfo{'study'}."_".$fileinfo{'series'};
+            if (scalar(@echos) > 1) {
+                $mincfile .= "_e$echo";
+            }
+            $mincfile .= "_mri.mnc";
+            print STDERR "Creating minc file \"$mincfile\"\n";
+            &create_mincfile($mincfile, *file_list, *fileinfo, 
+                             $fileinfo{'firstslice'},
+                             $fileinfo{'lastslice'}, $echo);
+        }
+
+        # Delete files (if needed) and reset variables
+        if ($delete_files) {
+            &remove_file(values(%file_list));
+        }
+        undef(%file_list, %echo_list, %fileinfo);
+    }
+
+    # Break out here if stopping loop
+    if (!$keep_looping) {next;}
+
+    # Check for unusable compression code and depth
+    if ($cur_compress != 0) {
+        warn "Unusable compression scheme ($cur_compress) in \"$nextfile\". ".
+            "Skipping.";
+        next;
+    }
+    if ($cur_depth != 16) {
+        warn "Unusable pixel depth ($cur_depth) in \"$nextfile\". Skipping.";
+        next;
+    }
+
+    # Save info for all files
+    $fileinfo{$cur_image, $cur_echo, 'pixel_data_offset'} = 
+        $pixel_data_offset;
+    $fileinfo{$cur_image, $cur_echo, 'pixel_data_len'} = 
+        $cur_width * $cur_height * $cur_depth;
+
+    # If first file, then save appropriate info
+    if (scalar(keys(%file_list)) <= 0) {
+        $fileinfo{'study'} = $cur_study;
+        $fileinfo{'series'} = $cur_series;
+        $fileinfo{'width'} = $cur_width;
+        $fileinfo{'height'} = $cur_height;
+        $fileinfo{'depth'} = $cur_depth;
+        $fileinfo{'compress'} = $cur_compress;
+        $fileinfo{'patient_name'} = &unpack_value(*study_hdr, 108, "A25");
+        $fileinfo{'orientation'} = &unpack_value(*series_hdr, 276, 's');
+        $fovx = &unpack_float(*series_hdr, 302);
+        $fovy = $fovx;
+        $fileinfo{'colstep'} = -$fovx / $fileinfo{'width'};
+        $fileinfo{'rowstep'} = -(($fovy != 0) ? $fovy : $fovx)
+            / $fileinfo{'height'};
+        $fileinfo{'firstslice'} = $cur_image;
+        $fileinfo{'slicestart'} = $cur_slicepos;
+        $fileinfo{'lastslice'} = $cur_image;
+        $fileinfo{'sliceend'} = $cur_slicepos;
+        $fileinfo{'tr'} = &unpack_float(*image_hdr, 164)/1000000;
+        $fileinfo{'ti'} = &unpack_float(*image_hdr, 176)/1000000;
+        $fileinfo{'mr_flip'} = &unpack_value(*image_hdr, 350, 's');
+        $fileinfo{'pseq'} = &unpack_value(*series_hdr, 298, 's');
+        $fileinfo{'pseqmode'} = &unpack_value(*series_hdr, 408, 's');
+        $fileinfo{'psdname'} = &unpack_value(*series_hdr, 410, 'A12');
+        $fileinfo{'psdname'} =~ s/\0.*$//;
+        $fileinfo{'psdname'} =~ s/\n//;
+    }
+    else {
+        if (($cur_width != $fileinfo{'width'}) || 
+            ($cur_height != $fileinfo{'height'}) || 
+            ($cur_compress != $fileinfo{'compress'})) {
+            warn "Width, height or compression do not match first file ".
+                "for file $nextfile. Skipping to next.";
+            next;
+        }
+        if ($cur_image < $fileinfo{'firstslice'}) {
+            $fileinfo{'firstslice'} = $cur_image;
+            $fileinfo{'slicestart'} = $cur_slicepos;
+        }
+        if ($cur_image > $fileinfo{'lastslice'}) {
+            $fileinfo{'lastslice'} = $cur_image;
+            $fileinfo{'sliceend'} = $cur_slicepos;
+        }
+    }
+    if (!defined($fileinfo{'te', $cur_echo})) {
+        $fileinfo{'te', $cur_echo} =
+            &unpack_float(*image_hdr, 172)/1000000;
+    }
+
+    # Keep track of files, image numbers and echo numbers
+    $file_list{$cur_image, $cur_echo} = $nextfile;
+    $echo_list{$cur_echo} = '';
+
+}
+
+# Rewind the tape
+if (length($tapedrive) > 0) {
+    &execute("mt -t $tapedrive rewind");
+}
+
+&cleanup_and_die;
