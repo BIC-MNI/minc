@@ -1,6 +1,6 @@
 /* Functions for enabling/disabling error messages from the library.
  */
-extern int MI2typelen(nc_type);
+extern int MI2typelen(int);
 
 extern int MI2varname(int fd, int varid, char *varnm);
 

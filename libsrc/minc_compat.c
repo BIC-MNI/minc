@@ -304,7 +304,7 @@ MI2attcopy(int infd, int invarid, const char *name, int outfd,
 }
 
 int
-MI2typelen(nc_type type_id)
+MI2typelen(int type_id)
 {
     switch (type_id) {
     case NC_BYTE:
@@ -318,9 +318,10 @@ MI2typelen(nc_type type_id)
     case NC_DOUBLE:
         return (8);
     default:
-        fprintf(stderr, _("Unknown type %d"), type_id);
-        exit(-1);			/* Surrender */
+        break;
     }
+    fprintf(stderr, _("Unknown type %d"), type_id);
+    return (-1);
 }
 
 #endif /* MINC2 defined */
