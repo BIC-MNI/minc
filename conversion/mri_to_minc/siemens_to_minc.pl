@@ -563,6 +563,7 @@ sub numaris2_get_image_cmd {
 
 # Routine to initialize tape drive
 sub siemens_initialize_tape_drive {
+   &cleanup_and_die("siemens_to_minc does not support tape reading.\n",1);
 }
 
 # Routine to read the file info
