@@ -3,7 +3,7 @@
 #define  DEF_BASIC
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.17 1994-12-08 08:49:53 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.18 1995-02-21 08:31:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -59,7 +59,8 @@ static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/vo
              and therefore may be inefficient, or incorrect,
              i.e, ABS( ++x );                          ------------------ */
 
-#define  ABS( x )  ( ((x) > (0)) ? (x) : (-(x)) )
+#define  ABS( x )   ( ((x) > 0) ? (x) : (-(x)) )
+#define  SIGN( x )  ( ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0) )
 
 #undef   MAX
 #define  MAX( x, y )  ( ((x) >= (y)) ? (x) : (y) )
