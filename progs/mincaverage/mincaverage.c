@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 1.4  1995-04-27 14:05:38  neelin
-@MODIFIED   : Added binarization options.
+@MODIFIED   : Revision 1.5  1995-05-02 16:08:17  neelin
+@MODIFIED   : Added -check, -nocheck options.
 @MODIFIED   :
+ * Revision 1.4  1995/04/27  14:05:38  neelin
+ * Added binarization options.
+ *
  * Revision 1.3  1995/04/27  12:48:42  neelin
  * Changed order of options.
  *
@@ -24,7 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.4 1995-04-27 14:05:38 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 1.5 1995-05-02 16:08:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -93,6 +96,7 @@ public void finish_average(void *caller_data, long num_voxels,
 int clobber = FALSE;
 int verbose = TRUE;
 int debug = FALSE;
+int check_dimensions = TRUE;
 #define NO_DEFAULT_NORM
 #ifdef NO_DEFAULT_NORM
 int normalize = -1;
@@ -124,6 +128,10 @@ ArgvInfo argTable[] = {
        "Do not print out log messages."},
    {"-debug", ARGV_CONSTANT, (char *) TRUE, (char *) &debug,
        "Print out debugging messages."},
+   {"-check_dimensions", ARGV_CONSTANT, (char *) TRUE, (char *) &check_dimensions,
+       "Check that dimension info matches across files (default)."},
+   {"-nocheck_dimensions", ARGV_CONSTANT, (char *) FALSE, (char *) &check_dimensions,
+       "Do not check dimension info."},
    {"-max_buffer_size_in_kb", ARGV_INT, (char *) 1, 
        (char *) &max_buffer_size_in_kb,
        "Specify the maximum size of the internal buffers (in kbytes)."},
@@ -245,6 +253,7 @@ public int main(int argc, char *argv[])
       set_loop_verbose(loop_options, FALSE);
       set_loop_accumulate(loop_options, TRUE, 0, NULL, NULL);
       set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
+      set_loop_check_dim_info(loop_options, check_dimensions);
       vol_total = 0.0;
       nvols = 0;
       if (verbose) {
@@ -312,6 +321,7 @@ public int main(int argc, char *argv[])
    set_loop_copy_all_header(loop_options, copy_all_header);
    set_loop_dimension(loop_options, averaging_dimension);
    set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
+   set_loop_check_dim_info(loop_options, check_dimensions);
    voxel_loop(nfiles, infiles, nout, outfiles, arg_string, loop_options,
               do_average, (void *) &average_data);
    free_loop_options(loop_options);
