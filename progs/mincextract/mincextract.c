@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.2 1993-07-07 14:54:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.3 1993-07-07 15:01:48 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
       if (arg_odatatype == TYPE_ASCII) {
          dbl_data = data;
          for (ielement=0; ielement<nelements; ielement++) {
-            (void) fprintf(stdout, "%g\n", dbl_data[ielement]);
+            (void) fprintf(stdout, "%.20g\n", dbl_data[ielement]);
          }
       }
       else {
