@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.13  1993-11-04 15:13:13  neelin
-@MODIFIED   : Added support for irregularly spaced dimensions.
+@MODIFIED   : Revision 1.14  1994-03-15 16:44:21  neelin
+@MODIFIED   : Changed default from -clobber to -noclobber.
 @MODIFIED   :
+ * Revision 1.13  93/11/04  15:13:13  neelin
+ * Added support for irregularly spaced dimensions.
+ * 
  * Revision 1.12  93/11/03  14:32:44  neelin
  * Turn off fill for output file.
  * 
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.13 1993-11-04 15:13:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.14 1994-03-15 16:44:21 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -120,7 +123,7 @@ public void get_arginfo(int argc, char *argv[],
 {
    /* Argument parsing information */
    static Arg_Data args={
-      TRUE,                   /* Clobber */
+      FALSE,                  /* Clobber */
       NC_SHORT,               /* Type will be modified anyway */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
@@ -147,10 +150,10 @@ public void get_arginfo(int argc, char *argv[],
    static ArgvInfo argTable[] = {
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, 
           (char *) &args.clobber,
-          "Overwrite existing file (default)."},
+          "Overwrite existing file."},
       {"-noclobber", ARGV_CONSTANT, (char *) FALSE, 
           (char *) &args.clobber,
-          "Do not overwrite existing file."},
+          "Do not overwrite existing file (default)."},
       {"-verbose", ARGV_CONSTANT, (char *) TRUE,
           (char *) &args.flags.verbose,
           "Print out log messages as processing is being done (default).\n"},
