@@ -675,7 +675,7 @@ private int MI_add_stdgroup(int cdfid, int varid)
    root_varid=ncvarid(cdfid, MIrootvariable);
    ncopts=oldncopts;
    if (root_varid==MI_ERROR) {
-      MI_CHK_ERR(root_varid=micreate_group_variable(cdfid, MIrootvariable))
+      MI_CHK_ERR(root_varid=MI_create_root_variable(cdfid, MIrootvariable))
    }
 
    /* Add group as child of root */
