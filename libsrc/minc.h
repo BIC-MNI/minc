@@ -18,9 +18,13 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:00  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1994-11-25 15:32:32  neelin
+@MODIFIED   : Added #undef for public if it wasn't previously defined so that C++
+@MODIFIED   : code won't get upset.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:38:00  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.29  94/09/28  10:37:24  neelin
  * Pre-release
  * 
@@ -45,12 +49,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 2.0 1994-09-28 10:38:00 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 2.1 1994-11-25 15:32:32 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.0 1994-09-28 10:38:00 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.1 1994-11-25 15:32:32 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -345,6 +349,7 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.0
 /* Define public constant */
 #ifndef public
 #define public
+#define MINC_NEED_TO_UNDEF_PUBLIC
 #endif
 
 /* From netcdf_convenience.c */
@@ -449,6 +454,11 @@ public int miicv_put
 public int miicv_attach
    PROTO((int icvid, int cdfid, int varid));
 
+/* Undefine public if needed */
+#ifdef MINC_NEED_TO_UNDEF_PUBLIC
+#undef public
+#undef MINC_NEED_TO_UNDEF_PUBLIC
+#endif
 
 /* End ifndef MINC_HEADER_FILE */
 #endif
