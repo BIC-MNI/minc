@@ -79,6 +79,20 @@ public  void  remove_file(
     (void) system( command );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : unlink_file
+@INPUT      : filename
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Unlinks the given file, which will result in it being deleted
+              when all references to it are closed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  unlink_file(
     char  filename[] )
 {
@@ -177,13 +191,13 @@ public  BOOLEAN  filename_extension_matches(
     int       len;
     STRING    filename_no_z, ending;
 
-    (void) strcpy( filename_no_z, filename );
+    expand_filename( filename, filename_no_z );
 
-    len = strlen( filename );
+    len = strlen( filename_no_z );
     if( len >= 2 )
     {
-        if( filename[len-2] == '.' &&
-            (filename[len-1] == 'z' || filename[len-1] == 'Z') )
+        if( filename_no_z[len-2] == '.' &&
+            (filename_no_z[len-1] == 'z' || filename_no_z[len-1] == 'Z') )
         {
             filename_no_z[len-2] = (char) 0;
         }
@@ -213,19 +227,19 @@ public  void  remove_directories_from_filename(
     char  filename[],
     char  filename_no_directories[] )
 {
-    int   i;
+    STRING   expanded;
+    int      i;
 
-    i = strlen( filename );
+    expand_filename( filename, expanded );
 
-    while( i > 0 && filename[i] != '/' )
-    {
+    i = strlen( expanded );
+
+    while( i >= 0 && expanded[i] != '/' )
         --i;
-    }
 
-    if( filename[i] == '/' )
-        ++i;
+    ++i;
 
-    (void) strcpy( filename_no_directories, &filename[i] );
+    (void) strcpy( filename_no_directories, &expanded[i] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -442,9 +456,13 @@ public  Status  set_file_position(
 public  Status  close_file(
     FILE     *file )
 {
-    (void) fclose( file );
-
-    return( OK );
+    if( file != (FILE *) NULL )
+    {
+        (void) fclose( file );
+        return( OK );
+    }
+    else
+        return( ERROR );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -526,36 +544,6 @@ public  void  get_absolute_filename(
     }
 
     (void) strcat( abs_filename, save_filename );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : strip_off_directories
-@INPUT      : filename
-@OUTPUT     : no_dirs
-@RETURNS    : 
-@DESCRIPTION: Strips off the directories from filename putting the result in
-            : no_dirs.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  strip_off_directories(
-    char    filename[],
-    char    no_dirs[] )
-{
-    int    i;
-
-    i = strlen( filename ) - 1;
-
-    while( i >= 0 && filename[i] != '/' )
-    {
-        --i;
-    }
-
-    (void) strcpy( no_dirs, &filename[i+1] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1294,7 +1282,9 @@ public  Status  output_unsigned_short(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_int( FILE * file, int * i )
+public  Status  input_int(
+    FILE  *file,
+    int   *i )
 {
     Status   status;
 
