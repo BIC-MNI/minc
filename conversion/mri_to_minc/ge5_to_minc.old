@@ -420,7 +420,7 @@ while ($keep_looping) {
             if (scalar(@echos) > 1) {
                 $mincfile .= "_e$echo";
             }
-            $mincfile .= ".mnc";
+            $mincfile .= "_mri.mnc";
             print STDERR "Creating minc file \"$mincfile\"\n";
             &create_mincfile($mincfile, *file_list, *fileinfo, 
                              $fileinfo{'firstslice'},
