@@ -348,6 +348,143 @@ private  void   interpolate_volume(
     FREE( derivs );
 }
 
+private  void   extract_coefficients(
+    Volume         volume,
+    int            start[],
+    int            end[],
+    Real           coefs[],
+    int            inc[] )
+{
+    int      inc0, inc1, inc2, inc3, inc4;
+    int      ind;
+    int      start0, start1, start2, start3, start4;
+    int      end0, end1, end2, end3, end4, n_dims;
+    int      v0, v1, v2, v3, v4;
+
+    /*--- for speed, use non-array variables for the loops */
+
+    start0 = start[0];
+    start1 = start[1];
+    start2 = start[2];
+    start3 = start[3];
+    start4 = start[4];
+
+    end0 = end[0];
+    end1 = end[1];
+    end2 = end[2];
+    end3 = end[3];
+    end4 = end[4];
+
+    inc0 = inc[0];
+    inc1 = inc[1];
+    inc2 = inc[2];
+    inc3 = inc[3];
+    inc4 = inc[4];
+
+    /*--- adjust the inc stride for stepping through coefs to account
+          for the additions of the inner loops */
+
+    n_dims = get_volume_n_dimensions(volume);
+
+    if( n_dims >= 2 )
+        inc0 -= inc1 * (end1 - start1);
+    if( n_dims >= 3 )
+        inc1 -= inc2 * (end2 - start2);
+    if( n_dims >= 4 )
+        inc2 -= inc3 * (end3 - start3);
+    if( n_dims >= 5 )
+        inc3 -= inc4 * (end4 - start4);
+
+    /*--- get the coefs[] from the volume.  For speed, do each dimension
+          separately */
+
+    ind = 0;
+
+    switch( n_dims )
+    {
+    case 1:
+        for_less( v0, start0, end0 )
+        {
+            GET_VALUE_1D( coefs[ind], volume, v0 );
+            ind += inc0;
+        }
+        break;
+
+    case 2:
+        for_less( v0, start0, end0 )
+        {
+            for_less( v1, start1, end1 )
+            {
+                GET_VALUE_2D( coefs[ind], volume, v0, v1 );
+                ind += inc1;
+            }
+            ind += inc0;
+        }
+        break;
+
+    case 3:
+        for_less( v0, start0, end0 )
+        {
+            for_less( v1, start1, end1 )
+            {
+                for_less( v2, start2, end2 )
+                {
+                    GET_VALUE_3D( coefs[ind], volume, v0, v1, v2 );
+                    ind += inc2;
+                }
+                ind += inc1;
+            }
+            ind += inc0;
+        }
+        break;
+
+    case 4:
+        for_less( v0, start0, end0 )
+        {
+            for_less( v1, start1, end1 )
+            {
+                for_less( v2, start2, end2 )
+                {
+                    for_less( v3, start3, end3 )
+                    {
+                        GET_VALUE_4D( coefs[ind], volume, v0, v1, v2, v3 );
+                        ind += inc3;
+                    }
+                    ind += inc2;
+                }
+                ind += inc1;
+            }
+            ind += inc0;
+        }
+        break;
+
+    case 5:
+        for_less( v0, start0, end0 )
+        {
+            for_less( v1, start1, end1 )
+            {
+                for_less( v2, start2, end2 )
+                {
+                    for_less( v3, start3, end3 )
+                    {
+                        for_less( v4, start4, end4 )
+                        {
+                            GET_VALUE_5D( coefs[ind], volume,
+                                          v0, v1, v2, v3, v4 );
+                            ind += inc4;
+                        }
+                        ind += inc3;
+                    }
+                    ind += inc2;
+                }
+                ind += inc1;
+            }
+            ind += inc0;
+        }
+        break;
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : evaluate_volume
 @INPUT      : volume
@@ -392,11 +529,9 @@ public  int   evaluate_volume(
     Real           **first_deriv,
     Real           ***second_deriv )
 {
-    int      inc0, inc1, inc2, inc3, inc4, inc[MAX_DIMENSIONS];
-    int      ind0, spline_degree;
-    int      start0, start1, start2, start3, start4;
-    int      end0, end1, end2, end3, end4;
-    int      v0, v1, v2, v3, v4, next_d;
+    int      inc[MAX_DIMENSIONS];
+    int      start_index, spline_degree;
+    int      next_d;
     int      n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims;
     int      start[MAX_DIMENSIONS], n_interp_dims;
     int      end[MAX_DIMENSIONS];
@@ -557,7 +692,7 @@ public  int   evaluate_volume(
           is zero, since all coefs must be filled in.  If we are partially
           inside, set the offset to the first coef within the volume. */
 
-    ind0 = 0;
+    start_index = 0;
 
     if( !fully_inside )
     {
@@ -565,7 +700,7 @@ public  int   evaluate_volume(
         {
             if( start[d] < 0 )
             {
-                ind0 += -start[d] * inc[d];
+                start_index += -start[d] * inc[d];
                 start[d] = 0;
             }
 
@@ -577,118 +712,9 @@ public  int   evaluate_volume(
             coefs[v] = outside_value;
     }
 
-    /*--- adjust the inc stride for stepping through coefs to account
-          for the additions of the inner loops */
+    /*--- get the necessary coeficients from the volume */
 
-    for_less( d, 0, n_dims-1 )
-        inc[d] -= inc[d+1] * (end[d+1] - start[d+1]);
-
-    /*--- for speed, use non-array variables for the loops */
-
-    start0 = start[0];
-    start1 = start[1];
-    start2 = start[2];
-    start3 = start[3];
-    start4 = start[4];
-
-    end0 = end[0];
-    end1 = end[1];
-    end2 = end[2];
-    end3 = end[3];
-    end4 = end[4];
-
-    inc0 = inc[0];
-    inc1 = inc[1];
-    inc2 = inc[2];
-    inc3 = inc[3];
-    inc4 = inc[4];
-
-    /*--- get the coefs[] from the volume.  For speed, do each dimension
-          separately */
-
-    switch( n_dims )
-    {
-    case 1:
-        for_less( v0, start0, end0 )
-        {
-            GET_VALUE_1D( coefs[ind0], volume, v0 );
-            ind0 += inc0;
-        }
-        break;
-
-    case 2:
-        for_less( v0, start0, end0 )
-        {
-            for_less( v1, start1, end1 )
-            {
-                GET_VALUE_2D( coefs[ind0], volume, v0, v1 );
-                ind0 += inc1;
-            }
-            ind0 += inc0;
-        }
-        break;
-
-    case 3:
-        for_less( v0, start0, end0 )
-        {
-            for_less( v1, start1, end1 )
-            {
-                for_less( v2, start2, end2 )
-                {
-                    GET_VALUE_3D( coefs[ind0], volume, v0, v1, v2 );
-                    ind0 += inc2;
-                }
-                ind0 += inc1;
-            }
-            ind0 += inc0;
-        }
-        break;
-
-    case 4:
-        for_less( v0, start0, end0 )
-        {
-            for_less( v1, start1, end1 )
-            {
-                for_less( v2, start2, end2 )
-                {
-                    for_less( v3, start3, end3 )
-                    {
-                        GET_VALUE_4D( coefs[ind0], volume, v0, v1, v2, v3 );
-                        ind0 += inc3;
-                    }
-                    ind0 += inc2;
-                }
-                ind0 += inc1;
-            }
-            ind0 += inc0;
-        }
-        break;
-
-    case 5:
-        for_less( v0, start0, end0 )
-        {
-            for_less( v1, start1, end1 )
-            {
-                for_less( v2, start2, end2 )
-                {
-                    for_less( v3, start3, end3 )
-                    {
-                        for_less( v4, start4, end4 )
-                        {
-                            GET_VALUE_5D( coefs[ind0], volume,
-                                          v0, v1, v2, v3, v4 );
-                            ind0 += inc4;
-                        }
-                        ind0 += inc3;
-                    }
-                    ind0 += inc2;
-                }
-                ind0 += inc1;
-            }
-            ind0 += inc0;
-        }
-        break;
-    }
+    extract_coefficients( volume, start, end, &coefs[start_index], inc );
 
     /*--- now that we have the coeficients, do the interpolation */
 
