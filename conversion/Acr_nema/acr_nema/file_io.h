@@ -6,7 +6,16 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.h,v $
- * Revision 6.1  1999-10-29 17:51:53  neelin
+ * Revision 6.2  2000-05-17 20:17:48  neelin
+ * Added mechanism to allow testing of input streams for more data through
+ * function acr_file_ismore.
+ * This is used in dicom_client_routines to allow asynchronous transfer
+ * of data, with testing for more input done before sending new messages.
+ * Previous use of select for this was misguided, since select may report that
+ * no data is waiting on the file descriptor while data is store in the file
+ * pointer buffer (or Acr file pointer buffer).
+ *
+ * Revision 6.1  1999/10/29 17:51:53  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -64,11 +73,17 @@
 typedef int (*Acr_Io_Routine)
      (void *io_data, void *buffer, int nbytes);
 
+/* Define prototype for io routine that tests for more input */
+
+typedef int (*Acr_Ismore_Function)
+     (void *io_data);
+
 /* Structure used for reading and writing in acr_nema routines */
 
 typedef struct {
    void *io_data;
    Acr_Io_Routine io_routine;
+   Acr_Ismore_Function ismore_function;
    int maxlength;               /* Maximum length of read request */
    unsigned char *start;
    unsigned char *end;
@@ -103,6 +118,8 @@ public Acr_File *acr_file_initialize(void *io_data,
                                      Acr_Io_Routine io_routine);
 public void acr_file_free(Acr_File *afp);
 public void acr_file_reset(Acr_File *afp);
+public void acr_file_set_ismore_function(Acr_File *afp, 
+                                         Acr_Ismore_Function ismore_function);
 public void acr_file_set_eof(Acr_File *afp);
 public void acr_file_set_client_data(Acr_File *afp, void *client_data);
 public void *acr_file_get_client_data(Acr_File *afp);
@@ -113,5 +130,7 @@ public int acr_ungetc(int c, Acr_File *afp);
 public void *acr_file_get_io_data(Acr_File *afp);
 public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint);
 public long acr_get_io_watchpoint(Acr_File *afp);
+public int acr_file_ismore(Acr_File *afp);
 public int acr_stdio_read(void *io_data, void *buffer, int nbytes);
 public int acr_stdio_write(void *io_data, void *buffer, int nbytes);
+public int acr_stdio_ismore(void *io_data);

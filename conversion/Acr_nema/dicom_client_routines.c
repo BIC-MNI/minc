@@ -6,7 +6,16 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.14  1999-10-29 17:51:50  neelin
+ * Revision 6.15  2000-05-17 20:17:46  neelin
+ * Added mechanism to allow testing of input streams for more data through
+ * function acr_file_ismore.
+ * This is used in dicom_client_routines to allow asynchronous transfer
+ * of data, with testing for more input done before sending new messages.
+ * Previous use of select for this was misguided, since select may report that
+ * no data is waiting on the file descriptor while data is store in the file
+ * pointer buffer (or Acr file pointer buffer).
+ *
+ * Revision 6.14  1999/10/29 17:51:50  neelin
  * Fixed Log keyword
  *
  * Revision 6.13  1998/11/16 19:35:51  neelin
@@ -85,7 +94,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.14 1999-10-29 17:51:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.15 2000-05-17 20:17:46 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -271,6 +280,9 @@ public int acr_open_dicom_connection(char *host, char *port,
    }
    *afpin = acr_initialize_dicom_input(fpin, 0, acr_stdio_read);
    *afpout = acr_initialize_dicom_output(fpout, 0, acr_stdio_write);
+
+   /* Add ismore function to input */
+   acr_dicom_set_ismore_function(*afpin, acr_stdio_ismore);
 
    /* Establish association */
    abstract_syntax_list[0] = abstract_syntax;
@@ -1134,12 +1146,8 @@ private int read_replies(Acr_File *afpin)
 {
    int result;
    Dicom_client_data *client_data;
-   struct timeval timeout, *timeout_ptr;
-   FILE *fp;
    int num_outstanding, max_outstanding;
-   int fd;
-   int nfds;
-   fd_set readfds;
+   int keep_looping;
 
    /* Get the client_data */
    client_data = get_client_data_ptr(afpin);
@@ -1147,46 +1155,39 @@ private int read_replies(Acr_File *afpin)
    /* Check whether there are any outstanding responses */
    if (client_data->last_message_id > client_data->last_answered_id) {
 
+      /* Get the maximum number of outstanding responses permitted.
+         Make sure that max_outstanding is not negative so that we
+         don't block waiting for a responses to an unsent message. */
+      max_outstanding = client_data->max_outstanding_responses;
+      if (max_outstanding < 0) max_outstanding = 0;
+
+
       /* Loop until there is nothing left waiting */
-      do {
+      keep_looping = TRUE;
+      while (keep_looping) {
 
-         /* Get file descriptor */
-         fp = (FILE *) acr_dicom_get_io_data(afpin);
-         fd = fileno(fp);
-         FD_ZERO(&readfds);
-         FD_SET(fd, &readfds);
-
-         /* Check for anything to read. Block if we have too many 
-            outstanding responses. Make sure that max_outstanding is
-            not negative or we could block waiting for a reply to a
-            message that has not yet been sent. */
+         /* Figure out how many outstanding responses there are */
          num_outstanding = 
             client_data->last_message_id - client_data->last_answered_id;
-         max_outstanding = client_data->max_outstanding_responses;
-         if (max_outstanding < 0) max_outstanding = 0;
-         if (num_outstanding > max_outstanding) {
-            timeout_ptr = NULL;         /* This will make select block */
-         }
-         else {
-            timeout_ptr = &timeout;
-         }
-         timeout.tv_sec = 0;
-         timeout.tv_usec = 0;
-         nfds = select(fd+1, &readfds, NULL, NULL, timeout_ptr);
 
-         /* Read in a message */
-         if ((nfds > 0) && FD_ISSET(fd, &readfds)) {
-            result = acr_receive_reply(afpin);
-            if (result < 0) return FALSE;
-            if (result != (client_data->last_answered_id+1)) {
-               (void) fprintf(stderr, "Received reply to wrong message\n");
-               return FALSE;
-            }
-            client_data->last_answered_id++;
+         /* Get out of the loop if there is nothing to read and the
+            number of outstanding responses is not too large */
+         if (!acr_file_ismore(afpin) && 
+             (num_outstanding <= max_outstanding)) {
+            keep_looping = FALSE;
+            break;
          }
 
-      } while ((nfds > 0) && (client_data->last_message_id >
-                              client_data->last_answered_id));
+         /* Read in a reply and keep track of id of answered message */
+         result = acr_receive_reply(afpin);
+         if (result < 0) return FALSE;
+         if (result != (client_data->last_answered_id+1)) {
+            (void) fprintf(stderr, "Received reply to wrong message\n");
+            return FALSE;
+         }
+         client_data->last_answered_id = result;
+
+      }      /* End loop over responses */
 
    }      /* End if outstanding responses */
 

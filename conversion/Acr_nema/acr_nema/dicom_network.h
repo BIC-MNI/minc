@@ -6,7 +6,16 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.h,v $
- * Revision 6.4  1999-10-29 17:51:51  neelin
+ * Revision 6.5  2000-05-17 20:17:48  neelin
+ * Added mechanism to allow testing of input streams for more data through
+ * function acr_file_ismore.
+ * This is used in dicom_client_routines to allow asynchronous transfer
+ * of data, with testing for more input done before sending new messages.
+ * Previous use of select for this was misguided, since select may report that
+ * no data is waiting on the file descriptor while data is store in the file
+ * pointer buffer (or Acr file pointer buffer).
+ *
+ * Revision 6.4  1999/10/29 17:51:51  neelin
  * Fixed Log keyword
  *
  * Revision 6.3  1998/11/11 17:05:03  neelin
@@ -96,6 +105,8 @@ public Acr_Status acr_output_dicom_message(Acr_File *dicom_afp,
 public Acr_File *acr_initialize_dicom_input(void *io_data,
                                             int maxlength,
                                             Acr_Io_Routine io_routine);
+public void acr_dicom_set_ismore_function(Acr_File *afp, 
+                                          Acr_Ismore_Function ismore_function);
 public Acr_File *acr_initialize_dicom_output(void *io_data,
                                             int maxlength,
                                             Acr_Io_Routine io_routine);

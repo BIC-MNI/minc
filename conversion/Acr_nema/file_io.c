@@ -6,7 +6,16 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.2  1999-10-29 17:51:53  neelin
+ * Revision 6.3  2000-05-17 20:17:48  neelin
+ * Added mechanism to allow testing of input streams for more data through
+ * function acr_file_ismore.
+ * This is used in dicom_client_routines to allow asynchronous transfer
+ * of data, with testing for more input done before sending new messages.
+ * Previous use of select for this was misguided, since select may report that
+ * no data is waiting on the file descriptor while data is store in the file
+ * pointer buffer (or Acr file pointer buffer).
+ *
+ * Revision 6.2  1999/10/29 17:51:53  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1998/11/11 16:26:49  neelin
@@ -69,6 +78,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include <limits.h>
 #include <minc_def.h>
 #include <file_io.h>
@@ -160,6 +172,7 @@ public Acr_File *acr_file_initialize(void *io_data,
    /* Initialize fields */
    afp->io_data = io_data;
    afp->io_routine = io_routine;
+   afp->ismore_function = NULL;
    if ((maxlength < ACR_MAX_BUFFER_LENGTH) && (maxlength > 0))
       afp->maxlength = maxlength;
    else
@@ -239,6 +252,29 @@ public void acr_file_reset(Acr_File *afp)
    afp->end = afp->start;
    afp->ptr = afp->end;
    afp->reached_eof = FALSE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_set_ismore_function
+@INPUT      : afp
+              ismore_function
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Sets the function to be used for testing if there is more
+              data waiting on an input stream. This must be set if
+              acr_file_ismore is to be used.
+              The ismore function should return 1 if there is data waiting,
+              0 if there is none, and -1 if EOF is reached or an error occurs.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 17, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_set_ismore_function(Acr_File *afp, 
+                                         Acr_Ismore_Function ismore_function)
+{
+   afp->ismore_function = ismore_function;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -676,6 +712,67 @@ public long acr_get_io_watchpoint(Acr_File *afp)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_ismore
+@INPUT      : afp - Acr_File pointer
+@OUTPUT     : (none)
+@RETURNS    : FALSE if no data is waiting on the input stream, but the ismore
+              function has been set for that stream, and the stream
+              is otherwise okay. TRUE in other cases (data waiting, EOF 
+              reached, no ismore function set, invalid file pointer).
+@DESCRIPTION: Checks to see if more data is waiting in the buffer, or calls
+              the io-specific function to test whether more data is available.
+              This call should be non-blocking, but that will depend on the
+              implementation of the io ismore function.
+              The io-specific ismore function should return 1 if there is data
+              waiting, 0 is there is none and -1 if EOF is reached or error 
+              occurs.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 17, 2000 (P.N.)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_file_ismore(Acr_File *afp)
+{
+   int retval;
+
+   /* Check that the ismore function is set */
+   if (afp->ismore_function == NULL) return TRUE;
+
+   /* Check that we have a read stream */
+   switch (afp->stream_type) {
+   case ACR_UNKNOWN_STREAM:
+      afp->stream_type = ACR_READ_STREAM; break;
+   case ACR_READ_STREAM:
+      break;
+   case ACR_WRITE_STREAM:
+   default:
+      return TRUE;
+   }
+
+   /* Check if there is data in the buffer */
+   if (afp->ptr < afp->end) {
+      return TRUE;
+   }
+
+   /* Call the io ismore function */
+   retval = afp->ismore_function(afp->io_data);
+
+   /* Check for and end of file condition */
+   if (retval < 0) {
+      acr_file_set_eof(afp);
+      return TRUE;
+   }
+   else if (retval > 0) {
+      return TRUE;
+   }
+   else {
+      return FALSE;
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_stdio_read
 @INPUT      : io_data - should be a FILE * pointer
               nbytes - number of bytes to read
@@ -739,3 +836,53 @@ public int acr_stdio_write(void *io_data, void *buffer, int nbytes)
    return nwritten;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_stdio_ismore
+@INPUT      : io_data - should be a FILE * pointer
+@OUTPUT     : (nothing)
+@RETURNS    : 1 if more data is waiting, 0 if not, and -1 if EOF or error.
+@DESCRIPTION: Acr io routine for testing for waiting data on a stdio input 
+              FILE pointer. This function is non-blocking.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 17, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_stdio_ismore(void *io_data)
+{
+   FILE *fp;
+   int val;
+   int old_flags, new_flags;
+   int fd;
+
+   /* Get file pointer */
+   if (io_data == NULL) return -1;
+   fp = (FILE *) io_data;
+
+   /* Set non-blocking i/o */
+   fd = fileno(fp);
+   old_flags = fcntl(fd, F_GETFL, 0);
+   new_flags = old_flags | O_NONBLOCK;
+   if (fcntl(fd, F_SETFL, new_flags) < 0) return -1;
+
+   /* Read in a character */
+   val = getc(fp);
+
+   /* Reset to old flags */
+   if (fcntl(fd, F_SETFL, old_flags) < 0) return -1;
+
+   /* Test the return value to see if anything is waiting */
+   if (val != EOF) {
+      if (ungetc(val, fp) == EOF) return -1;
+      return 1;
+   }
+   else if (feof(fp)) {
+      return -1;
+   }
+   else if (ferror(fp) && (errno != EAGAIN)) {
+      return -1;
+   }
+   return 0;
+
+}

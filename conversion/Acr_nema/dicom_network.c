@@ -6,7 +6,16 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.c,v $
- * Revision 6.8  2000-02-03 13:30:30  neelin
+ * Revision 6.9  2000-05-17 20:17:47  neelin
+ * Added mechanism to allow testing of input streams for more data through
+ * function acr_file_ismore.
+ * This is used in dicom_client_routines to allow asynchronous transfer
+ * of data, with testing for more input done before sending new messages.
+ * Previous use of select for this was misguided, since select may report that
+ * no data is waiting on the file descriptor while data is store in the file
+ * pointer buffer (or Acr file pointer buffer).
+ *
+ * Revision 6.8  2000/02/03 13:30:30  neelin
  * Changed initial value of counter for acr_create_uid so that uid does not ever
  * contain a zero.
  *
@@ -185,6 +194,7 @@ private void dicom_setup_output(Acr_File *afp,
                                 long command_length, long data_length);
 private int dicom_input_routine(void *io_data, void *buffer, int nbytes);
 private int dicom_output_routine(void *io_data, void *buffer, int nbytes);
+private int dicom_ismore(void *io_data);
 
 /* Macros */
 #define EXTRACT_UID(group, elid, value, length) \
@@ -2006,6 +2016,43 @@ public Acr_File *acr_initialize_dicom_input(void *io_data,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_dicom_set_ismore_function
+@INPUT      : afp
+              ismore_function
+@OUTPUT     : (none)
+@RETURNS    : (none)
+@DESCRIPTION: Sets the function to be used for testing if there is more
+              data waiting on the input stream.
+              stream.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 17, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_dicom_set_ismore_function(Acr_File *afp, 
+                                          Acr_Ismore_Function ismore_function)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get the structure pointer */
+   stream_data = get_dicom_io_pointer(afp);
+
+   /* Set the dicom ismore function on the virtual stream and the
+      user-supplied one on the real stream */
+   if (stream_data == NULL) {
+      acr_file_set_ismore_function(afp, ismore_function);
+   }
+   else {
+      acr_file_set_ismore_function(stream_data->virtual_afp, 
+                                   dicom_ismore);
+      acr_file_set_ismore_function(stream_data->real_afp, 
+                                   ismore_function);
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_initialize_dicom_output
 @INPUT      : io_data - pointer to data for read and write routines
               maxlength - maximum length for a single read or write
@@ -2527,7 +2574,7 @@ private void dicom_setup_output(Acr_File *afp,
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : dicom_input_routine
-@INPUT      : io_data - should be a FILE * pointer
+@INPUT      : io_data
               nbytes - number of bytes to read
 @OUTPUT     : buffer - buffer into which we will read
 @RETURNS    : Number of bytes read.
@@ -2620,7 +2667,7 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : dicom_output_routine
-@INPUT      : io_data - should be a FILE * pointer
+@INPUT      : io_data
               nbytes - number of bytes to write
 @OUTPUT     : buffer - buffer into which we will write
 @RETURNS    : Number of bytes written.
@@ -2777,3 +2824,26 @@ private int dicom_output_routine(void *io_data, void *buffer, int nbytes)
    return total_written;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : dicom_ismore
+@INPUT      : io_data
+@OUTPUT     : (nothing)
+@RETURNS    : 1 if more data is waiting, 0 if not, and -1 if EOF or error.
+@DESCRIPTION: Routine for testing for waiting data on a dicom input stream.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 17, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int dicom_ismore(void *io_data)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get file pointer */
+   if (io_data == NULL) return -1;
+   stream_data = (Acr_Dicom_IO *) io_data;
+
+   /* Call ismore function for real stream */
+   return acr_file_ismore(stream_data->real_afp);
+}
