@@ -4,9 +4,6 @@
 
 #define  LIGHT_INDEX       0
 
-#define  UPDATE_INTERVAL                     0.1
-#define  MIN_TIME_BETWEEN_EVENT_PROCESSING   0.01
-
 main()
 {
     Status            status;
@@ -14,35 +11,36 @@ main()
     text_struct       text;
     lines_struct      lines;
     polygons_struct   polygons;
-    static Surfprop   spr = { 0.4, 0.5, 0.0, 20.0, 1.0 };
-    Point             point;
+    pixels_struct     pixels;
+    static Surfprop   spr = { 0.3, 0.5, 0.5, 20.0, 1.0 };
+    Point             point, centre_of_rotation;
     Vector            normal, light_direction;
     Event_types       event_type;
     Boolean           update_required, done;
     Status            initialize_text();
     Status            initialize_lines();
-    Status            begin_adding_points_to_line();
-    Status            add_point_to_line();
-    Status            delete_lines();
     Status            initialize_polygons();
-    Status            begin_adding_points_to_polygon();
-    Status            add_point_to_polygon();
+    Status            initialize_pixels();
+    Status            delete_lines();
     Status            delete_polygons();
+    Status            delete_pixels();
+    Status            start_new_polygon();
+    Status            add_point_to_polygon();
     int               key_pressed;
     int               mouse_x, mouse_y;
     int               current_mouse_x, current_mouse_y;
     int               x_position, y_position, x_size, y_size;
+    int               x_pixel, y_pixel;
+    int               i, j, pixels_x_size, pixels_y_size;
+    int               pixels_x_position, pixels_y_position;
     Real              x, y;
-    Real              time_since_last_events;
-    Real              current_time, end_event_processing, previous_event_time;
-    Real              current_realtime_seconds();
-    void              sleep_program();
     Transform         modeling_transform;
     Transform         rotate_clockwise_transform;
     Transform         rotate_counter_clockwise_transform;
     void              make_identity_transform();
     void              make_rotation_transform();
     void              concat_transforms();
+    void              make_transform_relative_to_point();
     static Point      origin = { 0.0, 0.0, 2.0 };
     static Vector     up_direction = { 0.0, 1.0, 0.0 };
     static Vector     line_of_sight = { 0.0, 0.0, -1.0 };
@@ -51,6 +49,13 @@ main()
 
     G_set_3D_view( window, &origin, &line_of_sight, &up_direction,
                    0.01, 4.0, ON, 2.0, 2.0, 2.0 );
+
+    fill_Point( point, -0.3, 0.3, 0.0 );
+    G_transform_point( window, &point, MODEL_VIEW, &x_pixel, &y_pixel );
+
+    (void) printf( "(%g,%g,%g) maps to %d %d in pixels\n",
+                   Point_x(point), Point_y(point), Point_z(point),
+                   x_pixel, y_pixel );
 
     /* ------- define text to be drawn (text.string filled in later ----- */
 
@@ -86,23 +91,42 @@ main()
     lines.indices[4] = 0;
     lines.indices[5] = 3;
 
+    /* ------------ define pixels to be drawn  ------------- */
+
+    pixels_x_size = 256;
+    pixels_y_size = 256;
+
+    status = initialize_pixels( &pixels, pixels_x_size, pixels_y_size,
+                                RGB_PIXEL );
+
+    for_less( i, 0, pixels_x_size )
+    {
+        for_less( j, 0, pixels_y_size )
+        {
+            PIXEL_RGB_COLOUR(pixels,i,j) = make_Colour( i % 256, j % 256, 0 );
+        }
+    }
+
+    pixels_x_position = 10;
+    pixels_y_position = 10;
+
     /* ------------ define polygons to be drawn  ------------- */
 
     status = initialize_polygons( &polygons, make_Colour(0,255,255), &spr );
 
-    status = begin_adding_points_to_polygon( &polygons );
+    status = start_new_polygon( &polygons );
 
     fill_Point( point, -0.3, -0.3, 0.0 );
-    fill_Vector( normal, -1.0, -1.0, 1.0 );
+    fill_Vector( normal, -0.3, -0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, -0.3, 0.0 );
-    fill_Vector( normal, 1.0, -1.0, 1.0 );
+    fill_Vector( normal, 0.3, -0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, 0.3, 0.3, 0.0 );
-    fill_Vector( normal, 1.0, 1.0, 1.0 );
+    fill_Vector( normal, 0.3, 0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
     fill_Point( point, -0.3, 0.3, 0.0 );
-    fill_Vector( normal, -1.0, 1.0, 1.0 );
+    fill_Vector( normal, -0.3, 0.3, 1.0 );
     status = add_point_to_polygon( &polygons, &point, &normal );
 
     /* ------------ define lights ----------------- */
@@ -125,31 +149,21 @@ main()
     make_rotation_transform( -5.0 * DEG_TO_RAD, Y,
                              &rotate_counter_clockwise_transform );
 
+    fill_Point( centre_of_rotation, 0.5, 0.5, 0.0 );
+    make_transform_relative_to_point( &centre_of_rotation,
+                                      &rotate_clockwise_transform,
+                                      &rotate_clockwise_transform );
+    make_transform_relative_to_point( &centre_of_rotation,
+                                      &rotate_counter_clockwise_transform,
+                                      &rotate_counter_clockwise_transform );
+
     update_required = TRUE;
     done = FALSE;
 
     (void) printf( "Hit middle mouse button to exit\n" );
 
-    previous_event_time = -1000.0;
-
     do
     {
-        /* to avoid using cpu time to do a busy wait, go to sleep before
-           processing events */
-
-        current_time = current_realtime_seconds();
-        time_since_last_events = current_time - previous_event_time;
-
-        if( time_since_last_events < MIN_TIME_BETWEEN_EVENT_PROCESSING )
-        {
-            sleep_program( MIN_TIME_BETWEEN_EVENT_PROCESSING -
-                           time_since_last_events );
-        }
-
-        /* process events for up to UPDATE_INTERVAL seconds */
-
-        end_event_processing = current_time + UPDATE_INTERVAL;
-
         do
         {
             event_type = G_get_event( &event_window, &key_pressed,
@@ -164,7 +178,6 @@ main()
                     break;
 
                 case LEFT_MOUSE_DOWN_EVENT:
-                    (void) printf( "Left mouse DOWN\n" );
                     concat_transforms( &modeling_transform, &modeling_transform,
                                        &rotate_clockwise_transform );
                     G_set_modeling_transform( window, &modeling_transform );
@@ -172,11 +185,9 @@ main()
                     break;
 
                 case LEFT_MOUSE_UP_EVENT:
-                    (void) printf( "Left mouse UP\n" );
                     break;
 
                 case RIGHT_MOUSE_DOWN_EVENT:
-                    (void) printf( "Right mouse DOWN\n" );
                     concat_transforms( &modeling_transform, &modeling_transform,
                                        &rotate_counter_clockwise_transform );
                     G_set_modeling_transform( window, &modeling_transform );
@@ -184,7 +195,6 @@ main()
                     break;
 
                 case RIGHT_MOUSE_UP_EVENT:
-                    (void) printf( "Right mouse UP\n" );
                     break;
 
                 case MIDDLE_MOUSE_DOWN_EVENT:
@@ -218,16 +228,16 @@ main()
                     break;
                 }
             }
-        }
-        while( event_type != NO_EVENT &&
-               current_realtime_seconds() < end_event_processing );
-
-        previous_event_time = current_realtime_seconds();
+        }                  /* break to do update when no events */
+        while( event_type != NO_EVENT );
 
         /* if one or more events caused an update, redraw the screen */
 
         if( update_required )
         {
+            G_draw_pixels( window, pixels_x_position, pixels_y_position,
+                           &pixels );
+
             G_set_view_type( window, MODEL_VIEW );
             G_draw_polygons( window, &polygons );
             G_draw_lines( window, &lines );
@@ -246,6 +256,8 @@ main()
     status = delete_lines( &lines );
 
     status = delete_polygons( &polygons );
+
+    status = delete_pixels( &pixels );
 
     status = G_delete_window( window );
 
