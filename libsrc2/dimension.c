@@ -127,17 +127,11 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   if (handle == NULL) {
     return (MI_ERROR);
   }
-  /* Figure out whether the length of the name is valid
-     before allocating
-  */
-  if (strlen(name) < MI2_CHAR_LENGTH) {
-    handle->name = strdup(name);
-  }
-  else {
-    handle->name = malloc(MI2_CHAR_LENGTH);
-    /* copy (MI2_CHAR_LENGTH - 1) chars to handle->name */
-    strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
-  }
+
+
+  /* Explicitly allocate storage for name
+   */
+  handle->name = strdup(name);
 
   switch (class) {
   case MI_DIMCLASS_ANY:
@@ -285,51 +279,16 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 {
   // THE PARAMETER "miorder_t order" WAS NOT CONSIDERED WHEW WRITING
   // THIS FUNCTION. MUST FIGURE OUT WHAT TO DO WITH IT
-  dimension *handle;
   
-  hid_t hdf_file, hdf_type;	
-  hid_t hdf_dims_grp;
-  hid_t dataset, attribute;
-  hid_t dataset_width;
   hsize_t number_of_dims; 
-  herr_t status;
-  char *name;
-  char *name_width;
-  ssize_t size_of_obj;
-  midimclass_t dim_class;
-  midimattr_t  dim_attr;
-  double *direction_cosines;
-  ssize_t name_len;   /* Length of an object's name */
-
   int i=0, j=0, max_dims;
   
   if (volume == NULL) {
     return (MI_ERROR);
   }
  
-  /* Get a handle to the actual HDF file 
-   */
-  hdf_file = volume->hdf_id;  
-  if (hdf_file < 0) {
-    return (MI_ERROR);
-  }
+  number_of_dims = volume->number_of_dims;
 
-  /* Try opening the DIMENSIONS GROUP /minc-2.0/dimensions
-   */
-  hdf_dims_grp = H5Gopen(hdf_file, MI_FULLDIMENSIONS_PATH);
-  if (hdf_dims_grp < 0 ) {
-    return (MI_ERROR);
-  }
-  
-  /* How many dimensions (i.e., objects) are part of this dimensions group.
-   */
-  status = H5Gget_num_objs(hdf_dims_grp, &number_of_dims);
-  if (status < 0) {
-    return (MI_ERROR);
-  }
-  
-  /* Figure out if the array_length provided is legal.
-   */
   if (array_length > number_of_dims) {
     max_dims = number_of_dims;
   }
@@ -340,215 +299,17 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   /* Go through each dimension separately and figure out
      which one has a matching class and attirbute.
    */
-  for (i=0; i< max_dims; i++) {
-    /* Get the length of the name of the dimension by providing its index
-       to the following function.
-     */
-    name_len=H5Gget_objname_by_idx(hdf_dims_grp, i, NULL, 0);
-    
-    if (name_len < MI2_CHAR_LENGTH) {
-      name = malloc(name_len + 1);
-    }
-    else {
-      name = malloc(MI2_CHAR_LENGTH);
-    }
-    size_of_obj = H5Gget_objname_by_idx(hdf_dims_grp, i, name, MI2_CHAR_LENGTH);
-    
-    if (size_of_obj < 0 || name == NULL) {
-      return (MI_ERROR);
-    }
-    
-    /* Open the dataset /minc-2.0/dimensions/"name"
-     */
-    dataset = H5Dopen(hdf_dims_grp, name);
-    if (dataset < 0) {
-      return (MI_ERROR);
-    }
-    
-    /* Attach to class attribute using its name
-     */
-    attribute = H5Aopen_name(dataset, "class");
-    if (attribute < 0) {
-      return (MI_ERROR);
-    }
-    status = H5Aread(attribute, H5T_NATIVE_INT, &dim_class);
-    if (status < 0) {
-      return (MI_ERROR);
-    }
-
-    if(dim_class == class) {
-      
-      /* Attach to attr attribute using its name
-       */
-      attribute = H5Aopen_name(dataset, "attr");
-      if (attribute < 0) {
-      return (MI_ERROR);
+  for (i=0; i < max_dims; i++) {
+      midimhandle_t hdim = volume->dim_handles[i];
+      if (class == MI_DIMCLASS_ANY || class == hdim->class) {
+          if (hdim->attr == attr || attr ==  MI_DIMATTR_ALL) {
+              dimensions[j] = hdim;
+              j++;
+          }
       }
-      status = H5Aread(attribute, H5T_NATIVE_INT, &dim_attr);
-      if (status < 0) {
-      return (MI_ERROR);
-      }
-      
-      if (dim_attr == attr || attr ==  MI_DIMATTR_ALL) {
-	handle =  (dimension *)malloc(sizeof(*handle));
-	if (handle == NULL) {
-	  return (MI_ERROR);
-	}
-
-	handle->attr = dim_attr;
-	handle->class = dim_class;
-
-	/* Attach to direction_cosines attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "direction_cosines");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	direction_cosines = (double *) malloc(3 *sizeof(double));
-	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, direction_cosines);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-	handle->direction_cosines[MI2_X] = direction_cosines[0];
-	handle->direction_cosines[MI2_Y] = direction_cosines[1];
-	handle->direction_cosines[MI2_Z] = direction_cosines[2];
-
-	/* Attach to flipping_order attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "flipping_order");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_INT, &handle->flipping_order);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-
-	if (strlen(name) < MI2_CHAR_LENGTH) {
-	  handle->name = strdup(name);
-	} 
-	else {
-	  handle->name = malloc(MI2_CHAR_LENGTH);
-	  strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
-	}
-
-	/* Attach to length attribute using its name
-	 */
-	attribute = H5Aopen_name(dataset, "length");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_ULONG, &handle->length);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-	
-	if ( dim_attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
-
-	  handle->offsets = (double *) malloc(handle->length *sizeof(double));
-	  status = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, 
-			 H5P_DEFAULT, handle->offsets);
-	  if (status < 0) {
-	    return (MI_ERROR);
-	  }
-	  printf( " OFFSETS %f %f %f \n", handle->offsets[0], handle->offsets[1], handle->offsets[2]);
-	  
-	  name_len = strlen(name) + 6;
-	  if (name_len < MI2_CHAR_LENGTH) {
-	    name_width = malloc(name_len);
-	  }
-	  else {
-	    name_width = malloc(MI2_CHAR_LENGTH);
-	  }
-	  strcpy(name_width, name);
-	  strcat(name_width, "-width");
-	  dataset_width = H5Dopen(hdf_dims_grp, name_width);
-	  if (dataset_width < 0) {
-	     return (MI_ERROR);
-	  }
-	  handle->widths = (double *) malloc(handle->length *sizeof(double));
-	  status = H5Dread(dataset_width, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, 
-			 H5P_DEFAULT, handle->widths);
-	  if (status < 0) {
-	    return (MI_ERROR);
-	  }
-	  printf( " WIDTHS %f %f %f \n", handle->widths[0], handle->widths[1], handle->widths[2]);
-	  
-	}
-	/* Attach to sampling_flag attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "sampling_flag");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_INT, &handle->sampling_flag);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-
-	/* Attach to step attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "step");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->step);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-	
-	/* Attach to start attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "start");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->start);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-	
-	/* Attach to width attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "width");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->width);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-
-	/* Attach to units attribute using its name
-         */
-	attribute = H5Aopen_name(dataset, "units");
-	if (attribute < 0) {
-	  return (MI_ERROR);
-	}
-	hdf_type = H5Tcopy(H5T_C_S1);
-	           H5Tset_size(hdf_type, MI2_CHAR_LENGTH);
-	handle->units = malloc(MI2_CHAR_LENGTH);
-	status = H5Aread(attribute, hdf_type, handle->units);
-	if (status < 0) {
-	  return (MI_ERROR);
-	}
-	printf(" UNITS IS %s \n", handle->units);
-
-	/* Set volume_handle (the volume each dimension
-	   is associated with). This is the only attribute of
-	   each dimension which is actually independent of HDF5  
-	 */
-	handle->volume_handle = volume;
-
-	dimensions[j] = handle;
-	j++;
-      }
-    }
   }
-  
   return (MI_NOERROR);
-
-  }
+}
 
 /*! Set apparent dimension order.
  */
@@ -607,7 +368,7 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
   /* Note that all dimension names must be different or an error occurs.
    */
   for (i=0;i<array_length;i++) {
-    for (j=i; j<array_length;j++) {
+    for (j=i+1;j<array_length;j++) {
       if (strcmp(names[i],names[j]) == 0) {
 	return (MI_ERROR);
       }
@@ -624,12 +385,14 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
    */
   if (volume->dim_indices == NULL) {
     volume->dim_indices = (int *)malloc(volume->number_of_dims*sizeof(int));
-    memset(volume->dim_indices, -1, sizeof(volume->number_of_dims));
+    for (i = 0; i < volume->number_of_dims; i++) {
+        volume->dim_indices[i] = -1;
+    }
   }
   for (i=0; i < volume->number_of_dims; i++) {
     for (j=0; j < array_length; j++) {
-      if ( strcmp(volume->dim_handles[i]->name,names[j])) {
-	volume->dim_indices[j+diff] = i;
+      if (!strcmp(volume->dim_handles[i]->name,names[j])) {
+          volume->dim_indices[i+diff] = j;
 	break;
       }
       if (j == (array_length-1)) {
