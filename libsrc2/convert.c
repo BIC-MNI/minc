@@ -22,11 +22,33 @@ int
 miconvert_real_to_voxel(mihandle_t volume,
                         const unsigned long location[],
                         int ndims,
-                        double value,
-                        double *voxel_ptr
+                        double real_value,
+                        double *voxel_value_ptr
                         )
 {
     int result = MI_NOERROR;
+    double valid_min, valid_max;
+    double slice_min, slice_max;
+    double voxel_range, voxel_offset;
+    double real_range, real_offset;
+
+    /* get valid min/max, image min/max 
+     */
+    miget_volume_valid_range(volume, &valid_max, &valid_min);
+    
+    /* get image min/max 
+     */
+    miget_slice_range(volume, location, ndims, &slice_max, &slice_min);
+    
+    /* Calculate the actual conversion.
+     */
+    voxel_offset = valid_min;
+    real_offset = slice_min;
+    voxel_range = valid_max - valid_min;
+    real_range = slice_max - slice_min;
+    
+    real_value = (real_value - real_offset) / real_range;
+    *voxel_value_ptr = (real_value + voxel_offset) * voxel_range;
 
     return (result);
 }
@@ -39,13 +61,34 @@ miconvert_real_to_voxel(mihandle_t volume,
  */
 int
 miconvert_voxel_to_real(mihandle_t volume,
-                        const unsigned long location[],
+                        const unsigned long voxel_coords[],
                         int ndims,
-                        double *voxel,
-                        double *value_ptr)
+                        double voxel_value,
+                        double *real_value_ptr)
 {
     int result = MI_NOERROR;
+    double valid_min, valid_max;
+    double slice_min, slice_max;
+    double voxel_range, voxel_offset;
+    double real_range, real_offset;
 
+    /* get valid min/max, image min/max 
+     */
+    miget_volume_valid_range(volume, &valid_max, &valid_min);
+    
+    /* get image min/max 
+     */
+    miget_slice_range(volume, voxel_coords, ndims, &slice_max, &slice_min);
+
+    /* Calculate the actual conversion.
+     */
+    voxel_offset = valid_min;
+    real_offset = slice_min;
+    voxel_range = valid_max - valid_min;
+    real_range = slice_max - slice_min;
+    
+    voxel_value = (voxel_value - voxel_offset) / voxel_range;
+    *real_value_ptr = (voxel_value + real_offset) * real_range;
     return (result);
 }
 
@@ -383,8 +426,8 @@ miconvert_3D_voxel_to_world(mihandle_t volume,
  * 3-dimensional position in voxel coordinates.
  */
 int miconvert_3D_world_to_voxel(mihandle_t volume,
-                                const double world[3],
-                                double voxel[3])
+                                const double world[MI2_3D],
+                                double voxel[MI2_3D])
 {
     int result = MI_NOERROR;    /* Return code */
     hid_t file_id;              /* HDF5 file ID */
@@ -441,6 +484,7 @@ miconvert_3D_spatial_frequency_to_voxel(mihandle_t volume,
 
 int
 miconvert_voxel_to_world(midimhandle_t dimensions[],
+                         int ndims,
                          const double voxel[],
                          double world[])
 {
@@ -457,6 +501,7 @@ miconvert_voxel_to_world(midimhandle_t dimensions[],
 
 int
 miconvert_world_to_voxel(midimhandle_t dimensions[],
+                         int ndims,
                          const double voxel[],
                          double world[])
 {
@@ -464,29 +509,47 @@ miconvert_world_to_voxel(midimhandle_t dimensions[],
 }
 
 /** This function retrieves the real values of a position in the
-    MINC volume.  The "real" value is the value at the given location 
-    after scaling has been applied.
-*/
+ *  MINC volume.  The "real" value is the value at the given location 
+ *  after scaling has been applied.
+ */
 int
 miget_real_value(mihandle_t volume,
-                 const unsigned long location[],
+                 const unsigned long coords[],
                  int ndims,
                  double *value_ptr)
 {
-    return (MI_NOERROR);
+    int result;
+    unsigned long count[ndims]; /*  */
+    int i;
+
+    for (i = 0; i < ndims; i++) {
+        count[i] = 1;
+    }
+    result = miget_real_value_hyperslab(volume, MI_TYPE_DOUBLE,
+                                        coords, count, value_ptr);
+    return (result);
 }
 
 /** This function sets the  real value of a position in the MINC
-    volume. The "real" value is the value at the given location 
-    after scaling has been applied.
-*/
+ *  volume. The "real" value is the value at the given location 
+ *  after scaling has been applied.
+ */
 int
 miset_real_value(mihandle_t volume,
-                 const unsigned long location[],
+                 const unsigned long coords[],
                  int ndims,
                  double value)
 {
-    return (MI_NOERROR);
+    int result;
+    unsigned long count[ndims]; /*  */
+    int i;
+
+    for (i = 0; i < ndims; i++) {
+        count[i] = 1;
+    }
+    result = miset_real_value_hyperslab(volume, MI_TYPE_DOUBLE,
+                                        coords, count, &value);
+    return (result);
 }
 
 
@@ -520,9 +583,13 @@ miset_spatial_frequency_origin_to_start(mihandle_t volume,
     return (MI_NOERROR);
 }
 
+/** This function retrieves the voxel values of a position in the
+ * MINC volume. The voxel value is the unscaled value, and corresponds
+ * to the value actually stored in the file.
+ */
 int
 miget_voxel_value(mihandle_t volume,
-                  const unsigned long location[],
+                  const unsigned long coords[],
                   int ndims,
                   double *voxel_ptr)
 {
@@ -532,16 +599,20 @@ miget_voxel_value(mihandle_t volume,
     file_id = miget_volume_file_handle(volume);
     result = mivarget1(file_id, /* The file handle */
                        MI2varid(file_id, MIimage), /* The variable ID */
-                       (long *) location, /* The voxel coordinates */
+                       (long *) coords, /* The voxel coordinates */
                        NC_DOUBLE, /* The datatype */
                        MI_SIGNED, /* Ignored for floating point data */
                        voxel_ptr); /* Location to store result */
     return (result);
 }
 
+/** This function sets the voxel value of a position in the MINC
+ * volume.  The voxel value is the unscaled value, and corresponds to the
+ * value actually stored in the file.
+ */
 int
 miset_voxel_value(mihandle_t volume,
-                  const unsigned long location[],
+                  const unsigned long coords[],
                   int ndims,
                   double voxel)
 {
@@ -551,7 +622,7 @@ miset_voxel_value(mihandle_t volume,
     file_id = miget_volume_file_handle(volume);
     result = mivarput1(file_id, /* The file handle */
                        MI2varid(file_id, MIimage), /* The variable ID */
-                       (long *) location, /* The voxel coordinates */
+                       (long *) coords, /* The voxel coordinates */
                        NC_DOUBLE, /* The datatype */
                        MI_SIGNED, /* Ignored for floating point data */
                        &voxel); /* Location from which to store result */
@@ -572,14 +643,23 @@ main(int argc, char **argv)
     double voxel[3];
     double world[3];
     double new_voxel[3];
+    unsigned long coords[3];
+    unsigned long count[3] = {1,1,1};
     int i;
     mihandle_t hvol;
+    double v1, v2;
+    double r1, r2;
+    double f;
 
     result = miopen_volume(argv[1], MI2_OPEN_READ, &hvol);
 
-    voxel[0] = atof(argv[2]);
-    voxel[1] = atof(argv[3]);
-    voxel[2] = atof(argv[4]);
+    coords[0] = atof(argv[2]);
+    coords[1] = atof(argv[3]);
+    coords[2] = atof(argv[4]);
+
+    voxel[0] = coords[0];
+    voxel[1] = coords[1];
+    voxel[2] = coords[2];
 
     miconvert_3D_voxel_to_world(hvol, voxel, world);
 
@@ -593,7 +673,36 @@ main(int argc, char **argv)
         printf("%.20g ", new_voxel[i]);
     }
     printf("\n");
-    
+
+
+    /* Get a voxel value.
+     */
+    miget_voxel_value_hyperslab(hvol, MI_TYPE_DOUBLE,
+                                coords, count, &v1);
+
+    /* Convert from voxel to real.
+     */
+    miconvert_voxel_to_real(hvol, coords, 3, v1, &r1);
+    printf("voxel %f => real %f\n", v1, r1);
+
+    /* Convert it back to voxel.
+     */
+    miconvert_real_to_voxel(hvol, coords, 3, r1, &v2);
+    printf("real %f => voxel %f\n", r1, v2);
+
+    /* Compare to the value read via the ICV
+     */
+    miget_real_value(hvol, coords, 3, &r2);
+
+    printf("real from ICV: %f\n", r2);
+    printf("\n");
+
+    if (v1 != v2) {
+        TESTRPT("Voxel value mismatch", 0);
+    }
+    if (r1 != r2) {
+        TESTRPT("Real value mismatch", 0);
+    }
     return (error_cnt);
 }
 
