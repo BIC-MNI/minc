@@ -17,8 +17,8 @@ main()
     Event_types       event_type;
     Boolean           update_required, done;
     int               key_pressed;
-    int               mouse_x, mouse_y;
-    int               current_mouse_x, current_mouse_y;
+    int               mouse_x, mouse_y, prev_mouse_x, prev_mouse_y;
+    Boolean           mouse_in_window, prev_mouse_in_window;
     int               x_position, y_position, x_size, y_size;
     int               x_pixel, y_pixel;
     Boolean           in_rotation_mode;
@@ -40,9 +40,8 @@ main()
     fill_Point( point, -0.3, 0.3, 0.0 );
     G_transform_point( window, &point, MODEL_VIEW, &x_pixel, &y_pixel );
 
-    (void) printf( "(%g,%g,%g) maps to %d %d in pixels\n",
-                   Point_x(point), Point_y(point), Point_z(point),
-                   x_pixel, y_pixel );
+    print( "(%g,%g,%g) maps to %d %d in pixels\n",
+            Point_x(point), Point_y(point), Point_z(point), x_pixel, y_pixel );
 
     /* ------- define text to be drawn (text.string filled in later ----- */
 
@@ -128,16 +127,17 @@ main()
     /* ------------ do main loop ------------- */
     /* --------------------------------------- */
 
-    current_mouse_x = 0;
-    current_mouse_y = 0;
-
     make_identity_transform( &modeling_transform );
     update_required = TRUE;
 
     in_rotation_mode = FALSE;
 
-    (void) printf( "Hold down left button and move mouse to rotate\n" );
-    (void) printf( "Hit middle mouse button to exit\n" );
+    prev_mouse_x = -1;
+    prev_mouse_y = -1;
+    prev_mouse_in_window = -100;
+
+    print( "Hold down left button and move mouse to rotate\n" );
+    print( "Hit middle mouse button to exit\n" );
 
     done = FALSE;
 
@@ -145,19 +145,19 @@ main()
     {
         do
         {
-            event_type = G_get_event( &event_window, &key_pressed,
-                                      &mouse_x, &mouse_y );
+            event_type = G_get_event( &event_window, &key_pressed );
 
             if( event_window == window )
             {
                 switch( event_type )
                 {
                 case KEYBOARD_EVENT:
-                    (void) printf( "Key pressed: \"%c\"\n", key_pressed );
+                    print( "Key pressed: \"%c\"\n", key_pressed );
                     break;
 
                 case LEFT_MOUSE_DOWN_EVENT:
-                    prev_rotation_mouse_x = current_mouse_x;
+                    (void) G_get_mouse_position( window, &prev_rotation_mouse_x,
+                                                 &mouse_y );
                     in_rotation_mode = TRUE;
                     break;
 
@@ -173,32 +173,25 @@ main()
                     break;
 
                 case MIDDLE_MOUSE_DOWN_EVENT:
-                    (void) printf( "Middle mouse DOWN\n" );
+                    print( "Middle mouse DOWN\n" );
                     done = TRUE;
                     break;
 
                 case MIDDLE_MOUSE_UP_EVENT:
-                    (void) printf( "Middle mouse UP\n" );
+                    print( "Middle mouse UP\n" );
                     break;
 
-                case MOUSE_MOVEMENT_EVENT:
-                    current_mouse_x = mouse_x;
-                    current_mouse_y = mouse_y;
-                    G_convert_mouse_pixels_to_0_1( window,
-                                               current_mouse_x, current_mouse_y,
-                                               &x, &y );
-                    (void) sprintf( text.string,
-                                "Mouse: %4d,%4d pixels   %4.2f,%4.2f window",
-                                current_mouse_x, current_mouse_y, x, y );
+                case WINDOW_REDRAW_EVENT:
+                    print( "Window needs to be redrawn.\n" );
                     update_required = TRUE;
                     break;
 
                 case WINDOW_RESIZE_EVENT:
                     G_get_window_position( window, &x_position, &y_position );
                     G_get_window_size( window, &x_size, &y_size );
-                    (void) printf( "Window resized, moved, or popped." );
-                    (void) printf( "  New position: %d %d   New size: %d %d\n",
-                                   x_position, y_position, x_size, y_size );
+                    print( "Window resized, " );
+                    print( " new position: %d %d   New size: %d %d\n",
+                            x_position, y_position, x_size, y_size );
                     update_required = TRUE;
                     break;
                 }
@@ -208,9 +201,11 @@ main()
 
         /* check if in rotation mode and moved mouse horizontally */
 
-        if( in_rotation_mode && current_mouse_x != prev_rotation_mouse_x )
+        if( in_rotation_mode &&
+            G_get_mouse_position( window, &mouse_x, &mouse_y ) &&
+            mouse_x != prev_rotation_mouse_x )
         {
-            angle_in_degrees = (prev_rotation_mouse_x - current_mouse_x);
+            angle_in_degrees = (prev_rotation_mouse_x - mouse_x);
 
             make_rotation_transform( angle_in_degrees * DEG_TO_RAD, Y,
                                      &rotation_transform );
@@ -223,7 +218,32 @@ main()
                                &rotation_transform );
             G_set_modeling_transform( window, &modeling_transform );
 
-            prev_rotation_mouse_x = current_mouse_x;
+            prev_rotation_mouse_x = mouse_x;
+
+            update_required = TRUE;
+        }
+
+        mouse_in_window = G_get_mouse_position( window, &mouse_x, &mouse_y );
+
+        if( mouse_in_window != prev_mouse_in_window ||
+            mouse_in_window && (mouse_x != prev_mouse_x ||
+                                mouse_y != prev_mouse_y) )
+        {
+            prev_mouse_in_window = mouse_in_window;
+
+            if( mouse_in_window )
+            {
+                (void) G_get_mouse_position_0_to_1( window, &x, &y );
+                (void) sprintf( text.string,
+                                "Mouse: %4d,%4d pixels   %4.2f,%4.2f window",
+                                mouse_x, mouse_y, x, y );
+                prev_mouse_x = mouse_x;
+                prev_mouse_y = mouse_y;
+            }
+            else
+            {
+                (void) sprintf( text.string, "Mouse:  out of window.\n" );
+            }
 
             update_required = TRUE;
         }
@@ -233,7 +253,7 @@ main()
         if( update_required )
         {
             G_draw_pixels( window, pixels_x_position, pixels_y_position,
-                           &pixels );
+                           0, &pixels );
 
             G_set_view_type( window, MODEL_VIEW );
             G_draw_polygons( window, &polygons );

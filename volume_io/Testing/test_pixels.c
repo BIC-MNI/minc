@@ -1,7 +1,7 @@
 
 #include  <def_mni.h>
 
-#define  N_ITER   200
+#define  N_ITER   1
 
 #undef  COLOUR_MAP_MODE
 #define  COLOUR_MAP_MODE
@@ -9,7 +9,8 @@
 #define  COLOUR_8BIT
 #undef   COLOUR_8BIT
 
-#define  COLOUR_MAP_INDEX_OFFSET  0
+#define  COLOUR_MAP_INDEX_OFFSET  128
+#define  BACKGROUND_INDEX         0
 
 main()
 {
@@ -38,9 +39,12 @@ main()
 #ifdef COLOUR_MAP_MODE
     G_set_colour_map_state( window, ON );
 
-    G_set_background_colour( window, 64 );
+    G_set_background_colour( window, BACKGROUND_INDEX );
 
-    G_set_colour_map_entry( window, NORMAL_PLANES, 64, make_Colour(60,60,60) );
+/*
+    G_set_colour_map_entry( window, NORMAL_PLANES, BACKGROUND_INDEX,
+                            make_Colour(60,60,60) );
+*/
 
     for_less( i, 0, 256 )
         G_set_colour_map_entry( window, NORMAL_PLANES,
@@ -68,7 +72,7 @@ main()
 
     end = current_realtime_seconds();
 
-    (void) printf( "%g seconds\n", (end - start) / (Real) N_ITER );
+    print( "%g seconds\n", (end - start) / (Real) N_ITER );
 
 #else
     status = initialize_pixels( &pixels, pixels_x_size, pixels_y_size,
@@ -91,19 +95,19 @@ main()
     }
     end = current_realtime_seconds();
 
-    (void) printf( "%g seconds\n", (end - start) / (Real) N_ITER );
+    print( "%g seconds\n", (end - start) / (Real) N_ITER );
 #endif
 
     start = current_realtime_seconds();
 
     for_less( iter, 0, N_ITER )
-        G_draw_pixels( window, 10, 10, COLOUR_MAP_INDEX_OFFSET, &pixels );
+        G_draw_pixels( window, 10, 10, 0, &pixels );
 
     end = current_realtime_seconds();
 
     G_update_window( window );
 
-    (void) printf( "%g seconds\n", (end - start) / (Real) N_ITER );
+    print( "%g seconds\n", (end - start) / (Real) N_ITER );
 
     (void) getchar();
 
