@@ -608,6 +608,7 @@ sub get_arguments {
     local($do_compression) = 0;
     local($need_diskfiles) = 0;
     local($ignore_image_errors) = 0;
+    local($inputdir) = '';
 
     # Loop through arguments
     while (@_) {
@@ -615,6 +616,7 @@ sub get_arguments {
         if (/^-list$/) { $listfile = shift;}
         elsif (/^-tape$/) { $tapedrive = shift;}
         elsif (/^-notape$/) {$need_diskfiles = 1;}
+        elsif (/^-inputdir$/) {$inputdir = shift;}
         elsif (/^-nominc$/) { $nominc = 1;}
         elsif (/^-first$/) { $tape_position = shift;}
         elsif (/^-last$/) {$tape_end = shift;}
@@ -626,7 +628,8 @@ sub get_arguments {
 "Command-specific options:
  -list:\t\t\tSpecify a file for listing contents of tape
  -tape:\t\t\tSpecify an input tape drive (default=/dev/nrtape if no files given)
- -notape:\t\t\tDo not try to use the tape drive
+ -notape:\t\tDo not try to use the tape drive
+ -inputdir:\t\tSpecify directory from which input file names should be read
  -nominc:\t\tDo not produce output minc files
  -first:\t\tSpecify a starting tape position (# files to skip)
  -last:\t\t\tSpecify an ending tape position
@@ -650,6 +653,21 @@ $usage
                 push(@input_list, $_);
             }
         }
+    }
+
+    # Get input file names from inputdir if needed
+    if ((length($inputdir) > 0) && (scalar(@input_list) > 0)) {
+       die "Do not use -inputdir option with input files\n";
+    }
+    if (length($inputdir) > 0) {
+       opendir(DIR, $inputdir) || 
+          die "Error opening input directory \"$inputdir\": $!\n";
+       @input_list = sort(grep(/^[^\.]/, readdir(DIR)));
+       closedir(DIR);
+       local($file);
+       foreach $file (@input_list) {
+          $file = "$inputdir/$file";
+       }
     }
 
     # Check expected values
