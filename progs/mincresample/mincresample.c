@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.11  1993-11-03 12:32:17  neelin
-@MODIFIED   : Change ncopen, nccreate and ncclose to miopen, micreate and miclose.
+@MODIFIED   : Revision 1.12  1993-11-03 14:32:44  neelin
+@MODIFIED   : Turn off fill for output file.
 @MODIFIED   :
+ * Revision 1.11  93/11/03  12:32:17  neelin
+ * Change ncopen, nccreate and ncclose to miopen, micreate and miclose.
+ * 
  * Revision 1.10  93/11/02  11:23:06  neelin
  * Handle imagemax/min potentially varying over slices (for vector data, etc.)
  * 
@@ -52,7 +55,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.11 1993-11-03 12:32:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.12 1993-11-03 14:32:44 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -918,6 +921,7 @@ public void create_output_file(char *filename, int clobber,
    }         /* If transform specified on command line */
 
    /* Get into data mode */
+   (void) ncsetfill(out_file->mincid, NC_NOFILL);
    (void) ncendef(out_file->mincid);
 
    /* Copy all the other data */
