@@ -882,7 +882,7 @@ minc_create_thumbnail(hid_t file_id, int grp)
  * \param in_ptr the 3D input slice, scale x isize[1] x isize[2]
  * \param out_ptr the 2D output slice, osize[1] x osize[2]
  */
-void
+static void
 midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[], 
                    hsize_t osize[], int scale)
 {
@@ -925,13 +925,15 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
     }
 }
 
+/**
+ */
 int
 minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 {
     hsize_t isize[MI2_MAX_VAR_DIMS];
     hsize_t osize[MI2_MAX_VAR_DIMS];
     hsize_t count[MI2_MAX_VAR_DIMS];
-    hsize_t start[MI2_MAX_VAR_DIMS];
+    hssize_t start[MI2_MAX_VAR_DIMS];
     hid_t idst_id;              /* Input dataset */
     hid_t odst_id;              /* Output dataset */
     hid_t ifspc_id;             /* Input "file" dataspace */
@@ -948,8 +950,6 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     int slice;
     int in_bytes;
     int out_bytes;
-    
-
 
     miinit();
 
@@ -1012,9 +1012,9 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     count[2] = osize[2];
     omspc_id = H5Screate_simple(ndims, count, NULL);
 
-    //
-    // read image & TODO: convert to "real" range.
-    //
+    /*
+     * read image & TODO: convert to "real" range.
+     */
     for (slice = 0; slice < osize[0]; slice++) {
         
 	fprintf(stderr, "Slice # %d\n", slice);
@@ -1052,6 +1052,8 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     return (MI_NOERROR);
 }
 
+/**
+ */
 int
 minc_update_thumbnails(hid_t file_id)
 {
@@ -1273,8 +1275,10 @@ miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse )
     return ( result );
 }
 
-/** Function to read a scalar variable.
+/** Function to read a scalar variable of HDF5 type \a type_id from the given
+ *  \a path relative to the HDF5 file or group \a loc_id.
  */
+int
 miget_scalar(hid_t loc_id, hid_t type_id, const char *path, void *data)
 {
     hid_t dset_id;
