@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-10 17:14:38  neelin
+@MODIFIED   : Added more status codes and function to return status string.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -702,7 +705,7 @@ public Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
 
    /* Return the status */
    if (i >= 0) {
-      return ACR_OTHER_ERROR;
+      return ACR_IO_ERROR;
    }
    else {
       return ACR_OK;
@@ -1024,7 +1027,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
               element_id - ACR-NEMA element id
               vr_name - 2 character string giving value representation.
                  It is an error to pass in two NULs if explicit VR is used
-                 (ACR_OTHER_ERROR is returned).
+                 (ACR_NO_VR_SPECIFIED is returned).
               data_length - length of data to follow. If set to 
                  ACR_VARIABLE_LENGTH, then the data portion is not written out.
               data_pointer - pointer to data. If NULL, then no data is
@@ -1077,7 +1080,7 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
       offset += ACR_SIZEOF_LONG;
    }
    else {
-      if (vr_name[0] == '\0') return ACR_OTHER_ERROR;
+      if (vr_name[0] == '\0') return ACR_NO_VR_SPECIFIED;
       buffer[offset++] = vr_name[0];
       buffer[offset++] = vr_name[1];
       if (!is_special_vr(vr_name)) {
@@ -1109,5 +1112,51 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
    if (status != ACR_OK) return status;
 
    return ACR_OK;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_status_string
+@INPUT      : status - status code to look up
+@OUTPUT     : (nothing)
+@RETURNS    : Pointer to string describing status.
+@DESCRIPTION: Routine to get a string that describes a status value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : July 10, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *acr_status_string(Acr_Status status)
+{
+   char *status_string;
+
+   switch (status) {
+   case ACR_OK:
+      status_string = "No error"; break;
+   case ACR_END_OF_INPUT:
+      status_string = "End of input"; break;
+   case ACR_PROTOCOL_ERROR:
+      status_string = "Protocol error"; break;
+   case ACR_OTHER_ERROR:
+      status_string = "Other error"; break;
+   case ACR_ABNORMAL_END_OF_INPUT:
+      status_string = "Abnormal end of input"; break;
+   case ACR_HIGH_LEVEL_ERROR:
+      status_string = "High-level error"; break;
+   case ACR_ABNORMAL_END_OF_OUTPUT: 
+      status_string = "Abnormal end of output"; break;
+   case ACR_REACHED_WATCHPOINT:
+      status_string = "Reached watchpoint"; break;
+   case ACR_IO_ERROR:
+      status_string = "I/O error"; break;
+   case ACR_NO_VR_SPECIFIED:
+      status_string = "VR not specified on output"; break;
+   case ACR_PDU_UID_TOO_LONG:
+      status_string = "Input PDU UID too long"; break;
+   default:
+      status_string = "Unknown status"; break;
+   }
+
+   return status_string;
 }
 

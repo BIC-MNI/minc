@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-10 17:14:38  neelin
+@MODIFIED   : Added more status codes and function to return status string.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -87,9 +90,17 @@ typedef enum {
 
 /* Status for io */
 typedef enum {
-   ACR_OK, ACR_END_OF_INPUT, ACR_PROTOCOL_ERROR, ACR_OTHER_ERROR, 
-   ACR_ABNORMAL_END_OF_INPUT, ACR_HIGH_LEVEL_ERROR,
-   ACR_ABNORMAL_END_OF_OUTPUT, ACR_REACHED_WATCHPOINT
+   ACR_OK, 
+   ACR_END_OF_INPUT, 
+   ACR_PROTOCOL_ERROR, 
+   ACR_OTHER_ERROR, 
+   ACR_ABNORMAL_END_OF_INPUT, 
+   ACR_HIGH_LEVEL_ERROR,
+   ACR_ABNORMAL_END_OF_OUTPUT, 
+   ACR_REACHED_WATCHPOINT,
+   ACR_IO_ERROR,
+   ACR_NO_VR_SPECIFIED,
+   ACR_PDU_UID_TOO_LONG
 } Acr_Status;
 
 /* Functions */
@@ -142,3 +153,4 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
                                         int group_id, int element_id,
                                         char vr_name[],
                                         long data_length, char *data_pointer);
+public char *acr_status_string(Acr_Status status);

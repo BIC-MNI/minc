@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-07-10 17:14:38  neelin
+@MODIFIED   : Added more status codes and function to return status string.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.1  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -119,22 +122,7 @@ int main(int argc, char *argv[])
 
    /* Print status information */
    if ((status != ACR_END_OF_INPUT) && (status != ACR_OK)) {
-      switch (status) {
-      case ACR_OK:
-         status_string = "No error"; break;
-      case ACR_END_OF_INPUT:
-         status_string = "End of input"; break;
-      case ACR_PROTOCOL_ERROR:
-         status_string = "Protocol error"; break;
-      case ACR_OTHER_ERROR:
-         status_string = "Other error"; break;
-      case ACR_ABNORMAL_END_OF_INPUT:
-         status_string = "Abnormal end of input"; break;
-      case ACR_ABNORMAL_END_OF_OUTPUT:
-         status_string = "Abnormal end of output"; break;
-      default:
-         status_string = "Unknown status"; break;
-      }
+      status_string = acr_status_string(status);
       (void) fprintf(stderr, "Finished with status '%s'\n", status_string);
    }
 

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 4.1  1997-07-09 17:38:55  neelin
-@MODIFIED   : Added function acr_dicom_get_io_data.
+@MODIFIED   : Revision 4.2  1997-07-10 17:14:38  neelin
+@MODIFIED   : Added more status codes and function to return status string.
 @MODIFIED   :
+ * Revision 4.1  1997/07/09  17:38:55  neelin
+ * Added function acr_dicom_get_io_data.
+ *
  * Revision 4.0  1997/05/07  20:01:23  neelin
  * Release of minc version 0.4
  *
@@ -677,7 +680,7 @@ private Acr_Status read_uid_item(Acr_File *afp, Acr_Element_Id elid,
 
    /* Figure out how much data to read */
    length = acr_get_io_watchpoint(afp);
-   if (length > MAX_PDU_STRING_LENGTH) return ACR_OTHER_ERROR;
+   if (length > MAX_PDU_STRING_LENGTH) return ACR_PDU_UID_TOO_LONG;
 
    /* Read in the buffer */
    status = acr_read_buffer(afp, buffer, length, NULL);
