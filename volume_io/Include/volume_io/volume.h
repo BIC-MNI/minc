@@ -1,96 +1,212 @@
 #ifndef  DEF_VOLUME
 #define  DEF_VOLUME
 
-#include  <def_basic.h>
-#include  <def_geom_structs.h>
+#include  <netcdf.h>
+#include  <minc.h>
 
-/* recognized file formats */
+#define  MAX_DIMENSIONS     5
 
-typedef  enum  { MNC_FORMAT, FREE_FORMAT }       Volume_file_types;
-
-/* internal storage of a volume is one of these types */
-
-typedef  enum  { UNSIGNED_BYTE, UNSIGNED_SHORT } Data_types;
+/* -------------------------- volume struct --------------------- */
 
 #define  LABEL_BIT                 128
 #define  ACTIVE_BIT                64
 #define  LOWER_AUXILIARY_BITS      63
 
-/* -------------------------- volume struct --------------------- */
+
+typedef  enum  { NO_DATA_TYPE,
+                 UNSIGNED_BYTE,
+                 SIGNED_BYTE,
+                 UNSIGNED_SHORT,
+                 SIGNED_SHORT,
+                 UNSIGNED_LONG,
+                 SIGNED_LONG,
+                 FLOAT,
+                 DOUBLE,
+                 MAX_DATA_TYPE }   Data_types;
+
+#define  ANY_SPATIAL_DIMENSION   "any_spatial_dimension"
 
 typedef  struct
 {
-    String          filename;                    /* name of volume file */
-    Data_types      data_type;                   /* BYTE or SHORT */
+    int             n_dimensions;
+    String          dimension_names[MAX_DIMENSIONS];
+    Data_types      data_type;
+    nc_type         nc_data_type;
+    Boolean         signed_flag;
 
-    unsigned char   ***byte_data;                /* only one of these is used */
-    unsigned short  ***short_data;               /* at a time (could be union)*/
+    void            *data;
 
-    int             min_value;                   /* minimum value in file */
-    int             max_value;                   /* maximum value in file */
-    Real            value_scale;                 /* if values scaled on input,*/
-    Real            value_translation;           /* orig = new * scale + trans*/
-    int             sizes[N_DIMENSIONS];         /* n voxels in 3 directions */
-    Real            thickness[N_DIMENSIONS];     /* voxel thickness in 3 dirs */
-                                                 /* can be + or -ve           */
-    Transform       world_to_voxel_transform;    /* transform from world space*/
-    Transform       voxel_to_world_transform;    /* inverse of above */
+    Real            min_value;
+    Real            max_value;
+    Real            value_scale;
+    Real            value_translation;
+    int             sizes[MAX_DIMENSIONS];
+    Real            separation[MAX_DIMENSIONS];
 
-    int             axis_index_from_file[N_DIMENSIONS];
+    Transform       world_to_voxel_transform;
+    Transform       voxel_to_world_transform;
 
-    unsigned char   ***labels;                   /* labelling, activity, etc. */
+    unsigned char   ***labels;
 } volume_struct;
 
-#define  ASSIGN_VOLUME_DATA( volume, x, y, z, val )                           \
-         if( (volume).data_type == UNSIGNED_BYTE )                            \
-             (volume).byte_data[x][y][z] = (unsigned char) (val);             \
-         else                                                                 \
-             (volume).short_data[x][y][z] = (unsigned short) (val)
+typedef  volume_struct  *Volume;
 
-#define  GET_VOLUME_DATA( volume, x, y, z )                                   \
-         ( ((volume).data_type == UNSIGNED_BYTE) ?                            \
-             ((volume).byte_data[x][y][z]) : ((volume).short_data[x][y][z]) )
+/* ------------------------- set voxel value ------------------------ */
+
+#define  SET_ONE( volume, type, asterisks, subscripts, value )   \
+         (((type asterisks) ((volume)->data))  subscripts = (type) (value))
+
+#define  SET_GIVEN_DIM( volume, asterisks, subscripts, value )   \
+         switch( (volume)->data_type )  \
+         {  \
+         case UNSIGNED_BYTE:  \
+             SET_ONE( volume, unsigned char, asterisks, subscripts, value);\
+             break;  \
+         }
+
+#define  SET_VOXEL_1D( volume, x, value )       \
+           SET_GIVEN_DIM( volume, *, [x], value )
+
+#define  SET_VOXEL_2D( volume, x, y, value )       \
+           SET_GIVEN_DIM( volume, **, [x][y], value )
+
+#define  SET_VOXEL_3D( volume, x, y, z, value )       \
+           SET_GIVEN_DIM( volume, ***, [x][y][z], value )
+
+#define  SET_VOXEL_4D( volume, x, y, z, t, value )       \
+           SET_GIVEN_DIM( volume, ****, [x][y][z][t], value )
+
+#define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
+           SET_GIVEN_DIM( volume, *****, [x][y][z][t][v], value )
+
+#define  SET_VOXEL( volume, x, y, z, t, v, value )       \
+         switch( (volume)->n_dimensions ) \
+         { \
+         case 1:  SET_VOXEL_1D( volume, x, value );              break; \
+         case 2:  SET_VOXEL_2D( volume, x, y, value );           break; \
+         case 3:  SET_VOXEL_3D( volume, x, y, z, value );        break; \
+         case 4:  SET_VOXEL_4D( volume, x, y, z, t, value );     break; \
+         case 5:  SET_VOXEL_5D( volume, x, y, z, t, v, value );  break; \
+         }
+
+/* ------------------------- get voxel value ------------------------ */
+
+#define  GET_ONE( value, volume, type, asterisks, subscripts )   \
+         (value) = (((type asterisks) ((volume)->data))  subscripts)
+
+#define  GET_GIVEN_DIM( value, volume, asterisks, subscripts )   \
+         switch( (volume)->data_type )  \
+         {  \
+         case UNSIGNED_BYTE:  \
+             GET_ONE( value, volume, unsigned char, asterisks, subscripts );\
+             break;  \
+         }
+
+#define  GET_VOXEL_1D( value, volume, x )       \
+           GET_GIVEN_DIM( value, volume, *, [x] )
+
+#define  GET_VOXEL_2D( value, volume, x, y )       \
+           GET_GIVEN_DIM( value, volume, **, [x][y] )
+
+#define  GET_VOXEL_3D( value, volume, x, y, z )       \
+           GET_GIVEN_DIM( value, volume, ***, [x][y][z] )
+
+#define  GET_VOXEL_4D( value, volume, x, y, z, t )       \
+           GET_GIVEN_DIM( value, volume, ****, [x][y][z][t] )
+
+#define  GET_VOXEL_5D( value, volume, x, y, z, t, v )       \
+           GET_GIVEN_DIM( value, volume, *****, [x][y][z][t][v] )
+
+/* ------------------------- get voxel ptr ------------------------ */
+
+#define  GET_ONE_PTR( ptr, volume, type, asterisks, subscripts )   \
+         (ptr) = (void *) (&(((type asterisks) ((volume)->data))  subscripts))
+
+#define  GET_GIVEN_DIM_PTR( ptr, volume, asterisks, subscripts )   \
+         switch( (volume)->data_type )  \
+         {  \
+         case UNSIGNED_BYTE:  \
+             GET_ONE_PTR( ptr, volume, unsigned char, asterisks, subscripts );\
+             break;  \
+         }
+
+#define  GET_VOXEL_PTR_1D( ptr, volume, x )       \
+           GET_GIVEN_DIM_PTR( ptr, volume, *, [x] )
+
+#define  GET_VOXEL_PTR_2D( ptr, volume, x, y )       \
+           GET_GIVEN_DIM_PTR( ptr, volume, **, [x][y] )
+
+#define  GET_VOXEL_PTR_3D( ptr, volume, x, y, z )       \
+           GET_GIVEN_DIM_PTR( ptr, volume, ***, [x][y][z] )
+
+#define  GET_VOXEL_PTR_4D( ptr, volume, x, y, z, t )       \
+           GET_GIVEN_DIM_PTR( ptr, volume, ****, [x][y][z][t] )
+
+#define  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v )       \
+           GET_GIVEN_DIM_PTR( ptr, volume, *****, [x][y][z][t][v] )
+
+#define  GET_VOXEL_PTR( ptr, volume, x, y, z, t, v )       \
+         switch( (volume)->n_dimensions ) \
+         { \
+         case 1:  GET_VOXEL_PTR_1D( ptr, volume, x );              break; \
+         case 2:  GET_VOXEL_PTR_2D( ptr, volume, x, y );           break; \
+         case 3:  GET_VOXEL_PTR_3D( ptr, volume, x, y, z );        break; \
+         case 4:  GET_VOXEL_PTR_4D( ptr, volume, x, y, z, t );     break; \
+         case 5:  GET_VOXEL_PTR_5D( ptr, volume, x, y, z, t, v );  break; \
+         }
 
 #define  CONVERT_VOXEL_TO_VALUE( volume, voxel )    \
-            ((volume).value_scale * (Real) (voxel) + (volume).value_translation)
+            ((volume)->value_scale * (Real) (voxel) + \
+             (volume)->value_translation)
 
 #define  CONVERT_VALUE_TO_VOXEL( volume, value )    \
-          ROUND( ((Real) value - (volume).value_translation) / \
-                 (volume).value_scale )
+          (((Real) value - (volume)->value_translation) / (volume)->value_scale)
 
-#define  GET_VOLUME_SCALED_DATA( volume, x, y, z )                            \
-         CONVERT_VOXEL_TO_VALUE( volume, GET_VOLUME_DATA( volume, x, y, z ) )
-
-#define  GET_VOLUME_DATA_PTR( volume, x, y, z )                               \
-         ( ((volume).data_type == UNSIGNED_BYTE) ?                            \
-             ((void *)(&(volume).byte_data[x][y][z])) :                       \
-             ((void *)(&(volume).short_data[x][y][z])) )
-
-/* -------------- volume input struct (during input only) -------------- */
+/* -------------------- minc file struct -------------------- */
 
 typedef  struct
 {
-    Volume_file_types  file_type;
-
-    int                sizes_in_file[N_DIMENSIONS];
-    int                slice_index;
-
-    unsigned char      *byte_slice_buffer;
-    unsigned short     *short_slice_buffer;
-
-/* for mnc files only */
-
+    Boolean            file_is_being_read;
+    Boolean            end_volume_flag;
+    int                n_volumes_in_file;
+    int                n_file_dimensions;
     int                cdfid;
     int                icv;
+    Volume             volume;
 
-/* for free format files only */
+    int                sizes_in_file[MAX_VAR_DIMS];
+    int                axis_index_in_file[MAX_VAR_DIMS];
+    int                valid_file_axes[MAX_DIMENSIONS];
+    long               input_indices[MAX_VAR_DIMS];
 
-    FILE               *volume_file;
-    Data_types         file_data_type;
-    Boolean            convert_to_byte;
-    Boolean            one_file_per_slice;
-    String             *slice_filenames;
-    int                *slice_byte_offsets;
+    int                n_slab_dims;
+} minc_file_struct;
+
+typedef  minc_file_struct  *Minc_file;
+
+/* recognized file formats */
+
+typedef  enum  { MNC_FORMAT, FREE_FORMAT }       Volume_file_formats;
+
+typedef struct
+{
+    Volume_file_formats  file_format;
+
+    Minc_file            minc_file;
+
+    /* for free format files only */
+
+    FILE                 *volume_file;
+    int                  slice_index;
+    int                  sizes_in_file[MAX_DIMENSIONS];
+    int                  axis_index_from_file[MAX_DIMENSIONS];
+    Data_types           file_data_type;
+    Boolean              one_file_per_slice;
+    String               directory;
+    String               *slice_filenames;
+    int                  *slice_byte_offsets;
+    unsigned char        *byte_slice_buffer;
+    unsigned short       *short_slice_buffer;
 
 } volume_input_struct;
 
@@ -99,8 +215,8 @@ typedef  struct
 typedef struct
 {
     int            x, y;
-    volume_struct  *src_volume;
-    volume_struct  *dest_volume;
+    Volume         src_volume;
+    Volume         dest_volume;
     Transform      transform;
 } resample_struct;
 
