@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.8  1998-03-17 17:05:16  neelin
-@MODIFIED   : Set default maximum length to 1MB for servers that do not handle
-@MODIFIED   : length 0 (unlimited).
+@MODIFIED   : Revision 6.9  1998-03-23 20:17:04  neelin
+@MODIFIED   : Moved some general-purpose functions to dicom_network.c.
 @MODIFIED   :
+ * Revision 6.8  1998/03/17  17:05:16  neelin
+ * Set default maximum length to 1MB for servers that do not handle
+ * length 0 (unlimited).
+ *
  * Revision 6.7  1998/02/20  17:28:42  neelin
  * Removed unused variables.
  *
@@ -65,7 +68,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.8 1998-03-17 17:05:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.9 1998-03-23 20:17:04 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -500,7 +503,6 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
    char **syntax_list;
    int iabstract, itransfer, num_syntax;
    int cur_presentation_context_id;
-   char string[64];
    static char *standard_transfer_syntax[] = {
       ACR_IMPLICIT_VR_LITTLE_END_UID,
       ACR_EXPLICIT_VR_LITTLE_END_UID,
@@ -585,11 +587,9 @@ private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
    acr_group_add_element(group, 
                          acr_create_element_long(DCM_PDU_Maximum_length, 
                                                  1048576L));
-   (void) sprintf(string, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
-                  (int) 'M', (int) 'N', (int) 'I');
    acr_group_add_element(group, 
       acr_create_element_string(DCM_PDU_Implementation_class_uid,
-                                string));
+                                acr_implementation_uid()));
 
    /* Make a message and add this group */
    message = acr_create_message();
@@ -822,39 +822,6 @@ private void timeout_handler(int sig)
       acr_dicom_set_eof(Alarmed_afp);
    }
    return;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_uid_equal
-@INPUT      : uid1
-              uid2
-@OUTPUT     : (nothing)
-@RETURNS    : TRUE if uid's are equal, FALSE otherwise
-@DESCRIPTION: Responds to READYq message
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : February 21, 1997 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public int acr_uid_equal(char *uid1, char *uid2)
-{
-   int len1, len2, i;
-
-   /* Skip leading blanks */
-   while (isspace(*uid1)) {uid1++;}
-   while (isspace(*uid2)) {uid2++;}
-
-   /* Skip trailing blanks */
-   len1 = strlen(uid1);
-   for (i=len1-1; (i >= 0) && isspace(uid1[i]); i--) {}
-   if (isspace(uid1[i+1])) uid1[i+1] = '\0';
-   len2 = strlen(uid2);
-   for (i=len2-1; (i >= 0) && isspace(uid1[i]); i--) {}
-   if (isspace(uid1[i+1])) uid1[i+1] = '\0';
-
-   /* Compare the strings */
-   return (strcmp(uid1, uid2) == 0);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1186,45 +1153,3 @@ private Acr_Message make_message(Acr_Group group_list)
 
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_create_uid
-@INPUT      : (none)
-@OUTPUT     : (none)
-@RETURNS    : pointer to internal buffer containing uid
-@DESCRIPTION: Routine to generate a unique uid. The string is returned in
-              an internal buffer space and will be overwritten by 
-              subsequent calls.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : August 25, 1997 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public char *acr_create_uid(void)
-{
-   static char uid[64];
-   time_t current_time;
-   int offset;
-   int maxlen;
-   union {
-      unsigned char ch[4];
-      int ul;
-   } host_id;
-   static int counter = 0;
-
-   /* Make up a new UID */
-   host_id.ul = gethostid();
-   current_time = time(NULL);
-   (void) sprintf(uid, "1.%d.%d.%d.%d.%d.%d.%d", 
-                  (int) 'I',(int) 'P',
-                  (int) host_id.ch[0], (int) host_id.ch[1], 
-                  (int) host_id.ch[2], (int) host_id.ch[3],
-                  (int) getpid());
-   offset = strlen(uid);
-   maxlen = sizeof(uid) - 1 - offset;
-   (void) strftime(&uid[offset], (size_t) maxlen, ".%Y%m%d%H%M%S", 
-                   localtime(&current_time));
-   (void) sprintf(&uid[strlen(uid)], ".%08d", counter++);
-
-   return uid;
-}
