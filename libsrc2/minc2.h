@@ -400,6 +400,31 @@ extern int miget_volume_range(mihandle_t volume, double *slice_max,
 extern int miset_volume_range(mihandle_t volume, double slice_max, 
 			      double slice_min);
 /* HYPERSLAB FUNCTIONS */
+extern int miget_hyperslab_size(mitype_t volume_data_type, int n_dimensions, 
+				const unsigned long count[], 
+				misize_t *size_ptr);
+
+extern int miget_hyperslab_normalized(mihandle_t volume, 
+                                      mitype_t buffer_data_type,
+                                      const unsigned long start[], 
+                                      const unsigned long count[],
+                                      double min, 
+                                      double max, 
+                                      void *buffer);
+
+extern int miget_hyperslab_with_icv(mihandle_t volume, 
+				    int icv,
+				    mitype_t buffer_data_type, 
+				    const unsigned long start[], 
+				    const unsigned long count[], 
+				    void *buffer);
+
+extern int miset_hyperslab_with_icv(mihandle_t volume,
+				    int icv, 
+				    mitype_t buffer_data_type, 
+				    const unsigned long start[],
+				    const unsigned long count[],
+				    void *buffer);
 
 extern int miget_real_value_hyperslab(mihandle_t volume,
                                       mitype_t buffer_data_type,
@@ -411,7 +436,7 @@ extern int miset_real_value_hyperslab(mihandle_t volume,
                                       mitype_t buffer_data_type,
                                       const unsigned long start[],
                                       const unsigned long count[],
-                                      const void *buffer);
+                                      void *buffer);
 
 extern int miget_voxel_value_hyperslab(mihandle_t volume,
                                        mitype_t buffer_data_type,
@@ -423,15 +448,9 @@ extern int miset_voxel_value_hyperslab(mihandle_t volume,
                                        mitype_t buffer_data_type,
                                        const unsigned long start[],
                                        const unsigned long count[],
-                                       const void *buffer);
+                                       void *buffer);
 
-extern int miget_hyperslab_normalized(mihandle_t volume, 
-                                      mitype_t buffer_data_type,
-                                      const unsigned long start[], 
-                                      const unsigned long count[],
-                                      double min, 
-                                      double max, 
-                                      void *buffer);
+
 
 /* CONVERT FUNCTIONS */
 extern int miconvert_real_to_voxel(mihandle_t volume,

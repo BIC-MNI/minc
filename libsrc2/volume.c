@@ -269,6 +269,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   if (handle == NULL) {
     return (MI_ERROR);
   }
+  
   /* Initialize some of the variables associated with the volume handle.
    */
   handle->mode = MI2_OPEN_RDWR;
@@ -389,6 +390,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
      and if yes set the type of storage used to store the 
      raw data for a dataset.
    */
+  
   if (create_props != NULL &&
       (create_props->compression_type == MI_COMPRESS_ZLIB ||
        create_props->edge_count != 0)) {
@@ -420,6 +422,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
       if (stat < 0) {
           return (MI_ERROR);
       }
+      
   }
   else { /* No COMPRESSION or CHUNKING is enabled */
     stat = H5Pset_layout(hdf_plist, H5D_CONTIGUOUS); /*  CONTIGUOUS data */
@@ -449,6 +452,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   }
   /* Once the DIMENSIONS GROUP is opened, create each dimension.
   */
+  
   for (i=0; i < number_of_dimensions ; i++) {
     
     /* First create the dataspace required to create a 
@@ -481,11 +485,13 @@ micreate_volume(const char *filename, int number_of_dimensions,
     /* Check for irregular dimension and make sure
        offset values are provided for this dimension 
      */
+    
     if (dimensions[i]->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
       if (dimensions[i]->offsets == NULL) {
 	return (MI_ERROR);
       }
       else {
+	
 	/* If dimension is regularly sampled */
 	fspc_id = H5Dget_space(dataset_id);
 	if (fspc_id < 0) {
@@ -544,7 +550,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
      */
     miset_attr_at_loc(dataset_id, "spacing", MI_TYPE_STRING,
                       strlen(name), name);
-
+    
     switch (dimensions[i]->class) {
     case MI_DIMCLASS_SPATIAL:
         name = "spatial";
@@ -570,6 +576,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
          */
         return (MI_ERROR);
     }
+     
     miset_attr_at_loc(dataset_id, "class", MI_TYPE_STRING, strlen(name),
                       name);
 
@@ -588,7 +595,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
     /* Save start value. */
     miset_attr_at_loc(dataset_id, "start", MI_TYPE_DOUBLE,
                       1, &dimensions[i]->start);
-   
+    
     /* Save units. */
     miset_attr_at_loc(dataset_id, "units", MI_TYPE_STRING,
                       strlen(dimensions[i]->units), dimensions[i]->units);
@@ -600,13 +607,13 @@ micreate_volume(const char *filename, int number_of_dimensions,
     /* Save comments. If user has not specified
        any comments, do not add this attribute
      */
-
+ 
     if (dimensions[i]->comments != NULL) {
       miset_attr_at_loc(dataset_id, "comments", MI_TYPE_STRING,
 			strlen(dimensions[i]->comments),
                         dimensions[i]->comments);
     }
-
+ 
     /* Close the dataset with the specified Id
      */
     H5Dclose(dataset_id);
@@ -624,7 +631,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    */
   handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions * 
                                                 sizeof(midimhandle_t));  
-  
+   
   if (handle->dim_handles == NULL) {
     return (MI_ERROR);
   }
@@ -905,6 +912,7 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
     memset(hdim, 0, sizeof (*hdim));
 
     hdim->name = strdup(dimname);
+    printf(" dimname %s \n", dimname);
     /* hdf5 macro can temporarily disable the automatic error printing */
     H5E_BEGIN_TRY {
         int r;
@@ -928,6 +936,7 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             }
             else if (!strcmp(dimname, "vector_dimension")) {
 	      hdim->class = MI_DIMCLASS_RECORD;
+	      hdim->step = 0.0;
 	    }
 	    else {
                 hdim->class =  MI_DIMCLASS_SPATIAL;
@@ -961,16 +970,18 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
         if (r < 0) {
             fprintf(stderr, "Can't get length\n");
         }
-	/* Get the attribute (start) from a minc file */
-        r = miget_attribute(volume, path, "start", MI_TYPE_DOUBLE, 1, &hdim->start);
-        if (r < 0) {
+	/* Get the attribute (start) from a minc file for NON vector_dimension only */
+	if (strcmp(dimname, "vector_dimension")) {
+	  r = miget_attribute(volume, path, "start", MI_TYPE_DOUBLE, 1, &hdim->start);
+	  if (r < 0) {
             hdim->start = 0.0;
-        }
-        /* Get the attribute (step) from a minc file */
-        r = miget_attribute(volume, path, "step", MI_TYPE_DOUBLE, 1, &hdim->step);
-        if (r < 0) {
+	  }
+	  /* Get the attribute (step) from a minc file */
+	  r = miget_attribute(volume, path, "step", MI_TYPE_DOUBLE, 1, &hdim->step);
+	  if (r < 0) {
             hdim->step = 1.0;
-        }
+	  }
+	}
 	/* Get the attribute (direction_cosines) from a minc file */
         r = miget_attribute(volume, path, "direction_cosines", MI_TYPE_DOUBLE, 3, 
                             hdim->direction_cosines);

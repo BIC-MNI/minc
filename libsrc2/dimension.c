@@ -96,13 +96,19 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   else {
     handle->offsets = NULL;
   }
-  handle->start = dim_ptr->start;
-  handle->step = dim_ptr->step;
-  if (dim_ptr->units != NULL) {
-    handle->units = strdup(dim_ptr->units);
+  // check to make sure start and step are defined!
+  if ( dim_ptr->step != 0) {
+    handle->start = dim_ptr->start;
+    handle->step = dim_ptr->step;
   }
   else {
-    handle->units = NULL;
+    handle->step = 0.0;
+  }
+  if (dim_ptr->units == NULL) {
+    handle->units = strdup("mm");
+  }
+  else {
+    handle->units = strdup(dim_ptr->units);
   }
   handle->width = dim_ptr->width;
   if (dim_ptr->widths != NULL) {
@@ -117,6 +123,14 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   else {
     handle->widths = NULL;
   }
+
+  if(dim_ptr->comments == NULL) {
+    handle->comments = NULL;
+  }
+  else {
+    handle->comments = strdup(dim_ptr->comments);
+  }
+    
   handle->volume_handle = dim_ptr->volume_handle;
 
   *new_dim_ptr = handle;
@@ -256,8 +270,15 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   else {
     handle->widths = NULL;
   }
-  handle->start = 0.0;
-  handle->step = 1.0;
+  // do not set start and step if vector_dimension present
+  if (strcmp(name,"vector_dimension")) {
+    handle->start = 0.0;
+    handle->step = 1.0;
+  }
+  else{
+    handle->step = 0.0;
+  }
+
   handle->width = 1.0;
 
   handle->flipping_order = MI_FILE_ORDER;
@@ -407,7 +428,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
 {
   int diff;
   int i=0, j=0, k=0;
-
+  
   if (volume == NULL || array_length <= 0 ) {
     return (MI_ERROR);
   }
@@ -433,7 +454,7 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
 	  break;
 	}
       }
-      if (j == array_length) {
+      if ( j == array_length) {
 	volume->dim_indices[k] = i;
 	k++;
       }
@@ -450,7 +471,13 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
       
     }
   }
-
+  /*
+  printf(" apparent dimension order \n");
+  for(i=0; i < volume->number_of_dims; i++) {
+    printf(" %d ", volume->dim_indices[i]);
+  }
+  printf("\n");
+  */
   return (MI_NOERROR);
 }
 
@@ -518,7 +545,7 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
 	  break;
 	}
       }
-      if (j == array_length) {
+      if (j == 3) {
 	volume->dim_indices[k] = i;
 	k++;
       }
@@ -1100,7 +1127,7 @@ miget_dimension_separation(midimhandle_t dimension,
                            mivoxel_order_t voxel_order, 
 			   double *separation_ptr)
 {
-    if (dimension == NULL) {
+    if (dimension == NULL || dimension->step == 0) {
         return (MI_ERROR);
     }
     if (voxel_order == MI_ORDER_FILE) {
@@ -1147,7 +1174,7 @@ miset_dimension_separation(midimhandle_t dimension, double separation)
 {
   /* file-order of voxels is assumed.
    */
-  if (dimension == NULL) {
+  if (dimension == NULL || dimension->step == 0) {
     return (MI_ERROR);
   }
   
@@ -1299,9 +1326,11 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
   /* If voxel_order is set to apparent file order (i.e., 1)
      start = start + step * (n-1)
    */
-  if (dimension == NULL) {
+  if (dimension == NULL || dimension->step == 0) {
     return (MI_ERROR);
   }
+  
+ 
   if (voxel_order == 0) {
     *start_ptr = dimension->start;
   }
@@ -1324,7 +1353,7 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
 int 
 miset_dimension_start(midimhandle_t dimension, double start)
 {
-  if (dimension == NULL) {
+  if (dimension == NULL || dimension->step == 0) {
     return (MI_ERROR);
   }
   dimension->start = start;

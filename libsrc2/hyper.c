@@ -681,8 +681,8 @@ miset_hyperslab_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
 			  int icv, /**< The ICV to use */
 			  mitype_t buffer_data_type, /**< Output datatype */
 			  const unsigned long start[], /**< Start coordinates  */
-			  const unsigned long count[], /**< Lengths of edges  */
-			  const void *buffer) /**< Output memory buffer */
+			 const unsigned long count[], /**< Lengths of edges  */
+			 void *buffer) /**< Output memory buffer */
 {
     hid_t file_id;
     int var_id;
@@ -768,7 +768,7 @@ miset_real_value_hyperslab(mihandle_t volume,
 			    mitype_t buffer_data_type,
 			    const unsigned long start[],
 			    const unsigned long count[],
-			    const void *buffer)
+			    void *buffer)
 {
     hid_t file_id;
     int var_id;
@@ -828,7 +828,7 @@ miset_voxel_value_hyperslab(mihandle_t volume,
 			     mitype_t buffer_data_type,
 			     const unsigned long start[],
 			     const unsigned long count[],
-			     const void *buffer)
+			     void *buffer)
 {
     return mirw_hyperslab_raw(MIRW_OP_WRITE, volume, buffer_data_type, 
                               start, count, (void *) buffer);
