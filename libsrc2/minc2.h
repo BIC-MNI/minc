@@ -27,13 +27,19 @@
 #define MI_DIMATTR_REGULARLY_SAMPLED 0x1
 #define MI_DIMATTR_NOT_REGULARLY_SAMPLED 0x2
 
+/** Maximum length of a standard string.
+ */
 #define MI2_CHAR_LENGTH 128
 
-#define MI2_MAX_BLOCK_EDGES 3   /* Don't do 4D or greater chunks for now */
+/** Maximum number of dimensions a variable can have.
+ */
+#define MI2_MAX_VAR_DIMS 100
+
 #define MI2_CHUNK_SIZE 32	/* Length of chunk, per dimension */
+#define MI2_DEFAULT_ZLIB_LEVEL 4
 #define MAX_ZLIB_LEVEL 9
 
-#define MAX_PATH 32
+#define MI2_MAX_PATH 128
 #define MAX_RESOLUTION_GROUP 16
 #define MAX_CD_ELEMENTS 100
 

@@ -47,6 +47,7 @@ miset_volume_valid_max(mihandle_t volume, /**< MINC 2.0 volume handle */
      * to valid_min?
      */
     volume->valid_max = valid_max;
+    misave_valid_range(volume);
     return (MI_NOERROR);
 }
 
@@ -79,6 +80,7 @@ miset_volume_valid_min(mihandle_t volume,  /**< MINC 2.0 volume handle */
         return (MI_ERROR);       /* Invalid arguments */
     }
     volume->valid_min = valid_min;
+    misave_valid_range(volume);
     return (MI_NOERROR);
 }
 
@@ -119,6 +121,7 @@ miset_volume_valid_range(mihandle_t volume, /**< MINC 2.0 volume handle */
      */
     volume->valid_min = valid_min;
     volume->valid_max = valid_max;
+    misave_valid_range(volume);
     return (MI_NOERROR);
 }
 

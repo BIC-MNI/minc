@@ -1,5 +1,7 @@
-/************************************************************************
- * MINC 2.0 PRIVATE UTILITY FUNCTIONS
+/** \file m2util.c
+ * \brief MINC 2.0 Private utility functions
+ * \author Leila Baghdadi, Bert Vincent
+ *
  ************************************************************************/
 #include <stdlib.h>
 #include <math.h>
@@ -47,6 +49,26 @@ mitype_to_hdftype(mitype_t mitype)
     case MI_TYPE_UINT:
 	type_id = H5Tcopy(H5T_NATIVE_UINT);
 	break;
+    case MI_TYPE_SCOMPLEX:
+        type_id = H5Tcreate(H5T_COMPOUND, 4);
+        H5Tinsert(type_id, "real", 0, H5T_NATIVE_SHORT);
+        H5Tinsert(type_id, "imag", 2, H5T_NATIVE_SHORT);
+        break;
+    case MI_TYPE_ICOMPLEX:
+        type_id = H5Tcreate(H5T_COMPOUND, 8);
+        H5Tinsert(type_id, "real", 0, H5T_NATIVE_INT);
+        H5Tinsert(type_id, "imag", 4, H5T_NATIVE_INT);
+        break;
+    case MI_TYPE_FCOMPLEX:
+        type_id = H5Tcreate(H5T_COMPOUND, 8);
+        H5Tinsert(type_id, "real", 0, H5T_NATIVE_FLOAT);
+        H5Tinsert(type_id, "imag", 4, H5T_NATIVE_FLOAT);
+        break;
+    case MI_TYPE_DCOMPLEX:
+        type_id = H5Tcreate(H5T_COMPOUND, 16);
+        H5Tinsert(type_id, "real", 0, H5T_NATIVE_DOUBLE);
+        H5Tinsert(type_id, "imag", 8, H5T_NATIVE_DOUBLE);
+        break;
     default:
         type_id = H5Tcopy(mitype); /* Else it is a standard HDF type handle */
 	break;
@@ -134,7 +156,7 @@ mi_i64_t
 miget_voxel_count(int mincid)
 {
     int imgid;
-    int dim[MAX_VAR_DIMS];
+    int dim[MI2_MAX_VAR_DIMS];
     int idim;
     int ndims;
     mi_i64_t nvoxels;
@@ -276,7 +298,9 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 	return (MI_ERROR);
     }
     
-    hdf_attr = H5Aopen_name(hdf_loc, name);
+    H5E_BEGIN_TRY {
+        hdf_attr = H5Aopen_name(hdf_loc, name);
+    } H5E_END_TRY;
     if (hdf_attr < 0) {
 	return (MI_ERROR);
     }
@@ -342,7 +366,7 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 void
 mifind_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[])
 {
-    int imgid, dim[MAX_VAR_DIMS];
+    int imgid, dim[MI2_MAX_VAR_DIMS];
     int idim, ndims, world_index;
     char dimname[MAX_NC_NAME];
 
@@ -350,7 +374,7 @@ mifind_spatial_dims(int mincid, int space_to_dim[], int dim_to_space[])
     for (idim = 0; idim < 3; idim++)
         space_to_dim[idim] = -1;
     
-    for (idim = 0; idim < MAX_VAR_DIMS; idim++)
+    for (idim = 0; idim < MI2_MAX_VAR_DIMS; idim++)
         dim_to_space[idim] = -1;
 
     /* Get the dimension ids for the image variable 
@@ -839,7 +863,7 @@ miinit_enum(hid_t type_id)
 int
 minc_create_thumbnail(hid_t file_id, int grp)
 {
-    char path[MAX_PATH];
+    char path[MI2_MAX_PATH];
     hid_t grp_id;
 
     /* Don't handle negative or overly large numbers!
@@ -907,10 +931,10 @@ midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[],
 int
 minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
 {
-    hsize_t isize[MAX_VAR_DIMS];
-    hsize_t osize[MAX_VAR_DIMS];
-    hsize_t count[MAX_VAR_DIMS];
-    hsize_t start[MAX_VAR_DIMS];
+    hsize_t isize[MI2_MAX_VAR_DIMS];
+    hsize_t osize[MI2_MAX_VAR_DIMS];
+    hsize_t count[MI2_MAX_VAR_DIMS];
+    hsize_t start[MI2_MAX_VAR_DIMS];
     hid_t idst_id;              /* Input dataset */
     hid_t odst_id;              /* Output dataset */
     hid_t ifspc_id;             /* Input "file" dataspace */
@@ -918,7 +942,7 @@ minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
     hid_t typ_id;               /* Type ID */
     hid_t imspc_id;
     hid_t omspc_id;
-    char path[MAX_PATH];
+    char path[MI2_MAX_PATH];
     int ndims;
     int scale;
     int i;
@@ -1250,4 +1274,29 @@ miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse )
         mimake_identity_transform(inverse);
     }
     return ( result );
+}
+
+/** Function to read a scalar variable.
+ */
+miget_scalar(hid_t loc_id, hid_t type_id, const char *path, void *data)
+{
+    hid_t dset_id;
+    hid_t spc_id;
+    int result = MI_ERROR;
+
+    dset_id = H5Dopen(loc_id, path);
+    if (dset_id >= 0) {
+        spc_id = H5Dget_space(dset_id);
+        if (spc_id >= 0) {
+            if (H5Sget_simple_extent_ndims(spc_id) == 0) {
+                if (H5Dread(dset_id, type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, 
+                            data) >= 0) {
+                    result = MI_NOERROR;
+                }
+            }
+            H5Sclose(spc_id);
+        }
+        H5Dclose(dset_id);
+    }
+    return (result);
 }

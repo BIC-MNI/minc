@@ -1,5 +1,17 @@
-/************************************************************************
- * MINC 2.0 "VOLUME_PROPERTIES" FUNCTIONS
+/** \file volprops.c
+ * \brief MINC 2.0 Volume properties functions
+ * \author Leila Baghdadi
+ * 
+ * These functions manipulate "volume properties" objects, which are
+ * used to control several options related to MINC 2.0 volume structure.
+ * These include compression, blocking, multi-resolution, and record s
+ * structure.
+ *
+ * This approach was adopted with the intent that it would make the 
+ * default volume creation as simple as possible, while allowing a
+ * lot of control for more advanced applications.  This approach to 
+ * managing properties is also believed to be more readily extensible than 
+ * any obvious alternative.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
@@ -25,7 +37,7 @@ minew_volume_props(mivolumeprops_t  *props)
   handle->depth = 0;
   handle->compression_type = MI_COMPRESS_NONE;
   handle->zlib_level = 0;
-  handle->edge_count = 1;
+  handle->edge_count = 0;
   handle->edge_lengths = NULL;
   handle->max_lengths = 0;
   handle->record_length = 0;
@@ -88,10 +100,10 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
   /* Get the layout of the raw data for a dataset.
    */
   if (H5Pget_layout(hdf_plist) == H5D_CHUNKED) {
-      hsize_t dims[MI2_MAX_BLOCK_EDGES];
+      hsize_t dims[MI2_MAX_VAR_DIMS];
       int i;
       /* Returns chunk dimensionality */
-      handle->edge_count = H5Pget_chunk(hdf_plist, MI2_MAX_BLOCK_EDGES, dims);
+      handle->edge_count = H5Pget_chunk(hdf_plist, MI2_MAX_VAR_DIMS, dims);
       if (handle->edge_count < 0) {
 	return (MI_ERROR);
       }
@@ -240,9 +252,9 @@ miflush_from_resolution(mihandle_t volume, int depth)
 int
 miset_props_compression_type(mivolumeprops_t props, micompression_t compression_type)
 {
- 
-  int edge_lengths[MI2_MAX_BLOCK_EDGES] = {MI2_CHUNK_SIZE, MI2_CHUNK_SIZE, MI2_CHUNK_SIZE};
- 
+    int i;
+    int edge_lengths[MI2_MAX_VAR_DIMS];
+
  if (props == NULL) {
     return (MI_ERROR);
   }
@@ -252,7 +264,11 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
    break;
  case MI_COMPRESS_ZLIB:
    props->compression_type = MI_COMPRESS_ZLIB;
-   miset_props_blocking(props, MI2_MAX_BLOCK_EDGES, edge_lengths);
+   props->zlib_level = MI2_DEFAULT_ZLIB_LEVEL;
+   for (i = 0; i < MI2_MAX_VAR_DIMS; i++) {
+       edge_lengths[i] = MI2_CHUNK_SIZE;
+   }
+   miset_props_blocking(props, MI2_MAX_VAR_DIMS, edge_lengths);
    break;
  default:
    return (MI_ERROR);
@@ -307,7 +323,7 @@ miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_leng
 {
   int i;
   
-  if (props == NULL || edge_count > MI2_MAX_BLOCK_EDGES) {
+  if (props == NULL || edge_count > MI2_MAX_VAR_DIMS) {
     return (MI_ERROR);
   }
   
@@ -412,7 +428,7 @@ int main(int argc, char **argv)
   BOOLEAN enable_flag;
   int zlib_level;
   int depth;
-  int edge_lengths[MI2_MAX_BLOCK_EDGES];
+  int edge_lengths[MI2_MAX_VAR_DIMS];
   int edge_count;
   int i;
  /* Turn off automatic error reporting - we'll take care of this
@@ -480,7 +496,7 @@ int main(int argc, char **argv)
 	  TESTRPT("failed", r);
       }
       r = miget_props_blocking(props, &edge_count, edge_lengths, 
-			       MI2_MAX_BLOCK_EDGES);
+			       MI2_MAX_VAR_DIMS);
       if (r < 0) {
 	  TESTRPT("failed", r);
       }

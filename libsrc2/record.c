@@ -137,6 +137,7 @@ main(int argc, char **argv)
 
     micreate_volume_image(hvol);
 
+
     miclose_volume(hvol);
 
     if (error_cnt != 0) {

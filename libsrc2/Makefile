@@ -12,7 +12,8 @@ OBJS = \
 	hyper.o \
 	label.o \
 	slice.o \
-	valid.o 
+	valid.o \
+	record.o
 
 LIBS = -lminc -lnetcdf -lhdf5 -lm
 
@@ -27,7 +28,8 @@ test:	full-test \
 	hyper-test \
 	slice-test \
 	valid-test \
-	convert-test
+	convert-test \
+	record-test
 
 libminc2.a: $(OBJS)
 	ar r libminc2.a $(OBJS)
@@ -156,6 +158,17 @@ valid-test.o: valid.c minc2.h minc2_private.h
 
 valid.o: valid.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o valid.o valid.c
+
+record-test-objs = record-test.o libminc2.a
+
+record-test: $(record-test-objs)
+	gcc $(LDFLAGS) -Wall -g -o record-test $(record-test-objs) $(LIBS)
+
+record-test.o: record.c minc2.h minc2_private.h
+	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o record-test.o record.c
+
+record.o: record.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o record.o record.c
 
 volume.o: volume.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volume.o volume.c

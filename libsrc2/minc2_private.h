@@ -99,7 +99,9 @@ struct volumehandle_struct {
   int selected_resolution;      /* The current resolution (0-N) */
   int mode;                     /* Open mode */
   hid_t type_id;                /* Type ID if record or label type. */
-  hid_t plist_id;             /* Image property list */
+  hid_t plist_id;               /* Image property list */
+  double scale_min;             /* Global minimum */
+  double scale_max;             /* Global maximum */
 };
 
 extern hid_t midescend_path(hid_t file_id, const char *path);
@@ -125,3 +127,12 @@ extern int miinvert_transform(mi_lin_xfm_t transform, mi_lin_xfm_t inverse);
 
 extern void miinit(void);
 extern void miinit_enum(hid_t);
+
+extern int mitranslate_hyperslab_origin(mihandle_t volume, 
+                                        const long start[], 
+                                        const long count[],
+                                        hsize_t hdf_start[],
+                                        hsize_t hdf_count[],
+                                        int dir[]);
+extern int miget_scalar(hid_t loc_id, hid_t type_id, const char *path, 
+                        void *data);

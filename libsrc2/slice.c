@@ -51,7 +51,7 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     }
 
     if (!volume->has_slice_scaling) {
-        mirw_volume_minmax(opcode, volume, value);
+        return mirw_volume_minmax(opcode, volume, value);
     }
 
     file_id = volume->hdf_id;
@@ -263,7 +263,16 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
     if (volume->has_slice_scaling) {
 	return (MI_ERROR);
     }
-
+    if ((opcode & MIRW_SCALE_SET) == 0) {
+        if (opcode & MIRW_SCALE_MIN) {
+            *value = volume->scale_min;
+            return (MI_NOERROR);
+        }
+        else {
+            *value = volume->scale_max;
+            return (MI_NOERROR);
+        }
+    }
     file_id = volume->hdf_id;
     if (opcode & MIRW_SCALE_MIN) {
 	sprintf(path, "/minc-2.0/image/%d/image-min", 
@@ -304,6 +313,15 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
 
     if (result < 0) {
 	return (MI_ERROR);
+    }
+
+    /* Update the "cached" values.
+     */
+    if (opcode & MIRW_SCALE_MIN) {
+        volume->scale_min = *value;
+    }
+    else {
+        volume->scale_max = *value;
     }
 
     H5Sclose(fspc_id);
@@ -398,7 +416,7 @@ miset_volume_range(mihandle_t volume, double vol_max, double vol_min)
 	return (MI_ERROR);
     }
 
-    r = mirw_volume_minmax(MIRW_SCALE_MIN + MIRW_SCALE_MIN, volume, &vol_min);
+    r = mirw_volume_minmax(MIRW_SCALE_MIN + MIRW_SCALE_SET, volume, &vol_min);
     if (r < 0) {
 	return (MI_ERROR);
     }

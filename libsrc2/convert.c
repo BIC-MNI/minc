@@ -48,7 +48,7 @@ miconvert_real_to_voxel(mihandle_t volume,
     real_range = slice_max - slice_min;
     
     real_value = (real_value - real_offset) / real_range;
-    *voxel_value_ptr = (real_value + voxel_offset) * voxel_range;
+    *voxel_value_ptr = (real_value * voxel_range) + voxel_offset;
 
     return (result);
 }
@@ -88,7 +88,7 @@ miconvert_voxel_to_real(mihandle_t volume,
     real_range = slice_max - slice_min;
     
     voxel_value = (voxel_value - voxel_offset) / voxel_range;
-    *real_value_ptr = (voxel_value + real_offset) * real_range;
+    *real_value_ptr = (voxel_value * real_range) + real_offset;
     return (result);
 }
 
@@ -161,16 +161,15 @@ miget_real_value(mihandle_t volume,
                  int ndims,
                  double *value_ptr)
 {
+    double voxel;
     int result;
-    unsigned long count[ndims]; /*  */
-    int i;
 
-    for (i = 0; i < ndims; i++) {
-        count[i] = 1;
+    result = miget_voxel_value(volume, coords, ndims, &voxel);
+    if (result != MI_NOERROR) {
+        return (result);
     }
-    result = miget_real_value_hyperslab(volume, MI_TYPE_DOUBLE,
-                                        coords, count, value_ptr);
-    return (result);
+    miconvert_voxel_to_real(volume, coords, ndims, voxel, value_ptr);
+    return (MI_NOERROR);
 }
 
 /** This function sets the  real value of a position in the MINC
@@ -183,16 +182,10 @@ miset_real_value(mihandle_t volume,
                  int ndims,
                  double value)
 {
-    int result;
-    unsigned long count[ndims]; /*  */
-    int i;
+    double voxel;
 
-    for (i = 0; i < ndims; i++) {
-        count[i] = 1;
-    }
-    result = miset_real_value_hyperslab(volume, MI_TYPE_DOUBLE,
-                                        coords, count, &value);
-    return (result);
+    miconvert_real_to_voxel(volume, coords, ndims, value, &voxel);
+    return (miset_voxel_value(volume, coords, ndims, voxel));
 }
 
 
@@ -237,14 +230,13 @@ miget_voxel_value(mihandle_t volume,
                   double *voxel_ptr)
 {
     int result;
-    unsigned long count[MAX_VAR_DIMS];
+    long count[MI2_MAX_VAR_DIMS];
     int i;
 
-    for (i = 0; i < ndims; i++) {
+    for (i = 0; i < volume->number_of_dims; i++) {
         count[i] = 1;
     }
-    
-    result = miget_voxel_value_hyperslab(volume, MI_TYPE_DOUBLE, 
+    result = miset_voxel_value_hyperslab(volume, MI_TYPE_DOUBLE, 
                                          coords, count, voxel_ptr);
     return (result);
 }
@@ -260,7 +252,7 @@ miset_voxel_value(mihandle_t volume,
                   double voxel)
 {
     int result;
-    unsigned long count[MAX_VAR_DIMS];
+    unsigned long count[MI2_MAX_VAR_DIMS];
     int i;
 
     for (i = 0; i < ndims; i++) {

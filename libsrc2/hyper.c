@@ -80,9 +80,9 @@ restructure_array(int ndims,
                   const int *map,
                   const int *dir)
 {
-    long index[MAX_VAR_DIMS];
-    long index_perm[MAX_VAR_DIMS];
-    long lengths_perm[MAX_VAR_DIMS];
+    long index[MI2_MAX_VAR_DIMS];
+    long index_perm[MI2_MAX_VAR_DIMS];
+    long lengths_perm[MI2_MAX_VAR_DIMS];
     unsigned char *temp;
     mioffset_t offset_start;
     mioffset_t offset_next;
@@ -260,6 +260,78 @@ miget_hyperslab_size(mitype_t volume_data_type, /**< Data type of a voxel. */
     return (MI_NOERROR);
 }
 
+/** "semiprivate" function for translating coordinates.
+ */
+int
+mitranslate_hyperslab_origin(mihandle_t volume,
+                             const long start[],
+                             const long count[],
+                             hsize_t hdf_start[],
+                             hsize_t hdf_count[],
+                             int dir[])
+{
+    int n_different = 0;
+    int file_i;
+    int ndims = volume->number_of_dims;
+
+    for (file_i = 0; file_i < ndims; file_i++) {
+        midimhandle_t hdim;
+        int user_i;
+
+        /* Set up the basic translations of dimensions, for
+         * flipping directions and swapping indices.
+         */
+        if (volume->dim_indices != NULL) {
+            /* Have to swap indices */
+            user_i = volume->dim_indices[file_i];  
+            if (user_i != file_i) {
+                n_different++;
+            }
+        }
+        else {
+            user_i = file_i;
+        }
+
+        hdim = volume->dim_handles[file_i];
+
+        switch (hdim->flipping_order) {
+        case MI_FILE_ORDER:
+            hdf_start[file_i] = start[user_i];
+            dir[file_i] = 1;
+            break;
+
+        case MI_COUNTER_FILE_ORDER:
+            hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+            dir[file_i] = -1;
+            break;
+            
+        case MI_POSITIVE:
+            if (hdim->step > 0) { /* Positive? */
+                hdf_start[file_i] = start[user_i]; /* Use raw file order. */
+                dir[file_i] = 1;
+            }
+            else {
+                hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+                dir[file_i] = -1;
+            }
+            break;
+
+        case MI_NEGATIVE:
+            if (hdim->step < 0) { /* Negative? */
+                hdf_start[file_i] = start[user_i]; /* Use raw file order */
+                dir[file_i] = 1;
+            }
+            else {
+                hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
+                dir[file_i] = -1;
+            }
+            break;
+        }
+        hdf_count[file_i] = count[user_i];
+    }
+    return (n_different);
+}
+
 /** Read/write a hyperslab of data.  This is the simplified function
  * which performs no value conversion.  It is much more efficient than
  * mirw_hyperslab_icv()
@@ -277,13 +349,12 @@ mirw_hyperslab_raw(int opcode,
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
     hid_t fspc_id = -1;
-    char path[128];
+    char path[MI2_MAX_PATH];
     int result = MI_ERROR;
-    hsize_t hdf_start[MAX_VAR_DIMS];
-    hsize_t hdf_count[MAX_VAR_DIMS];
-    int dir[MAX_VAR_DIMS];
+    hsize_t hdf_start[MI2_MAX_VAR_DIMS];
+    hsize_t hdf_count[MI2_MAX_VAR_DIMS];
+    int dir[MI2_MAX_VAR_DIMS];
     int ndims;
-    int file_i;
     int n_different = 0;
 
     file_id = volume->hdf_id;
@@ -311,61 +382,13 @@ mirw_hyperslab_raw(int opcode,
         mspc_id = H5Screate(H5S_SCALAR);
     }
     else {
-        for (file_i = 0; file_i < ndims; file_i++) {
-            midimhandle_t hdim;
-            int user_i;
+        n_different = mitranslate_hyperslab_origin(volume, 
+                                                   start,
+                                                   count,
+                                                   hdf_start,
+                                                   hdf_count,
+                                                   dir);
 
-            /* Set up the basic translations of dimensions, for
-             * flipping directions and swapping indices.
-             */
-            if (volume->dim_indices != NULL) {
-                /* Have to swap indices */
-                user_i = volume->dim_indices[file_i];  
-                if (user_i != file_i) {
-                    n_different++;
-                }
-            }
-            else {
-                user_i = file_i;
-            }
-
-            hdim = volume->dim_handles[file_i];
-
-            switch (hdim->flipping_order) {
-            case MI_FILE_ORDER:
-                hdf_start[file_i] = start[user_i];
-                dir[file_i] = 1;
-                break;
-
-            case MI_COUNTER_FILE_ORDER:
-                hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1;
-                break;
-
-            case MI_POSITIVE:
-                if (hdim->step > 0) { /* Positive? */
-                    hdf_start[file_i] = start[user_i]; /* Use raw file order. */
-                    dir[file_i] = 1;
-                }
-                else {
-                    hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                    dir[file_i] = -1;
-                }
-                break;
-
-            case MI_NEGATIVE:
-                if (hdim->step < 0) { /* Negative? */
-                    hdf_start[file_i] = start[user_i]; /* Use raw file order */
-                    dir[file_i] = 1;
-                }
-                else {
-                    hdf_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                    dir[file_i] = -1;
-                }
-                break;
-            }
-            hdf_count[file_i] = count[user_i];
-        }
         mspc_id = H5Screate_simple(ndims, hdf_count, NULL);
         if (mspc_id < 0) {
             goto cleanup;
@@ -434,10 +457,9 @@ mirw_hyperslab_icv(int opcode,
     int nc_type;
     int file_id;
     int result = MI_ERROR;
-    long icv_start[MAX_VAR_DIMS];
-    long icv_count[MAX_VAR_DIMS];
-    int dir[MAX_VAR_DIMS];      /* Direction, either +1 or -1 */
-    int file_i;
+    long icv_start[MI2_MAX_VAR_DIMS];
+    long icv_count[MI2_MAX_VAR_DIMS];
+    int dir[MI2_MAX_VAR_DIMS];  /* Direction, either +1 or -1 */
     int n_different = 0;
 
     miicv_inqint(icv, MI_ICV_TYPE, &nc_type);
@@ -449,81 +471,19 @@ mirw_hyperslab_icv(int opcode,
     ndims = volume->number_of_dims;
 
     if (ndims != 0) {
-        for (file_i = 0; file_i < ndims; file_i++) {
-            midimhandle_t hdim;
-            int user_i;
+        int i;
+        hsize_t hdf_start[MI2_MAX_VAR_DIMS];
+        hsize_t hdf_count[MI2_MAX_VAR_DIMS];
 
-            /* Set up the basic translations of dimensions, for
-             * flipping directions and swapping indices.
-             */
-            if (volume->dim_indices != NULL) {
-                /* Have to swap indices */
-                user_i = volume->dim_indices[file_i];  
-                if (user_i != file_i) {
-                    n_different++;
-                }
-            }
-            else {
-                user_i = file_i;
-            }
-
-            hdim = volume->dim_handles[file_i];
-
-            switch (hdim->flipping_order) {
-            case MI_FILE_ORDER:
-                /* 
-                 * Always use raw file order.
-                 */
-                icv_start[file_i] = start[user_i];
-                dir[file_i] = 1;
-                break;
-
-            case MI_COUNTER_FILE_ORDER:
-                /* 
-                 * Always use reverse file order.
-                 */
-                icv_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                dir[file_i] = -1;
-                n_different++;
-                break;
-
-            case MI_POSITIVE:
-                if (hdim->step > 0) { /* Positive? */
-                    /* 
-                     * Use raw file order.
-                     */
-                    icv_start[file_i] = start[user_i];
-                    dir[file_i] = 1;
-                }
-                else {
-                    /*
-                     * Use reverse file order.
-                     */
-                    icv_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                    dir[file_i] = -1;
-                    n_different++;
-                }
-                break;
-
-            case MI_NEGATIVE:
-                if (hdim->step < 0) { /* Negative? */
-                    /*
-                     * Use raw file order.
-                     */
-                    icv_start[file_i] = start[user_i]; /* Use raw file order */
-                    dir[file_i] = 1;
-                }
-                else {
-                    /*
-                     * Use reverse file order.
-                     */
-                    icv_start[file_i] = hdim->length - start[user_i] - count[user_i];
-                    dir[file_i] = -1;
-                    n_different++;
-                }
-                break;
-            }
-            icv_count[file_i] = count[user_i];
+        n_different = mitranslate_hyperslab_origin(volume, 
+                                                   start,
+                                                   count,
+                                                   hdf_start,
+                                                   hdf_count,
+                                                   dir);
+        for (i = 0; i < ndims; i++) {
+            icv_start[i] = hdf_start[i];
+            icv_count[i] = hdf_count[i];
         }
     }
 
