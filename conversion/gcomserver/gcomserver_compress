@@ -1,0 +1,11 @@
+#! /bin/csh -f
+
+if ($#argv != 1) then
+   exit -1
+endif
+
+gzip $1 < /dev/null > /dev/null
+
+if ($status) exit $status
+
+ls -t $1* |head -1
