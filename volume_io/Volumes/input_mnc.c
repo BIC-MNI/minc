@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.41 1995-08-15 14:22:19 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.42 1995-08-15 18:20:10 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -785,6 +785,181 @@ public  void  copy_volumes_reordered(
             --d;
         }
     }
+}
+
+public  Status  input_minc_hyperslab(
+    Minc_file        file,
+    multidim_array   *array,
+    int              array_start[],
+    int              to_array[],
+    int              start[],
+    int              count[] )
+{
+    Status           status;
+    int              ind, expected_ind, n_array_dims, file_ind, d, i, dim;
+    int              size0, size1, size2, size3, size4;
+    int              used_array_start[MAX_DIMENSIONS];
+    int              n_tmp_dims, n_file_dims;
+    void             *void_ptr;
+    BOOLEAN          direct_to_array, non_full_size_found;
+    int              tmp_ind, tmp_sizes[MAX_VAR_DIMS];
+    int              vol1_indices[MAX_DIMENSIONS];
+    int              zero[MAX_VAR_DIMS];
+    int              v[MAX_DIMENSIONS], voxel[MAX_DIMENSIONS];
+    long             used_start[MAX_VAR_DIMS], used_count[MAX_VAR_DIMS];
+    Real             rgb[4];
+    Colour           colour;
+    multidim_array   buffer_array, rgb_array, *array_to_read;
+    Data_types       data_type;
+
+    n_array_dims = get_multidim_n_dimensions( array );
+    n_file_dims = file->n_file_dimensions;
+    expected_ind = n_array_dims-1;
+    tmp_ind = n_file_dims-1;
+    non_full_size_found = FALSE;
+
+    for_less( ind, 0, n_array_dims )
+        vol1_indices[ind] = -1;
+
+    direct_to_array = TRUE;
+
+    for( file_ind = n_file_dims-1;  file_ind >= 0;  --file_ind )
+    {
+        used_start[file_ind] = (long) start[file_ind];
+        used_count[file_ind] = (long) count[file_ind];
+
+        ind = to_array[file_ind];
+        if( ind != INVALID_AXIS )
+        {
+            if( !non_full_size_found &&
+                count[file_ind] < file->sizes_in_file[file_ind] )
+                non_full_size_found = TRUE;
+            else if( non_full_size_found && count[file_ind] > 1 )
+                direct_to_array = FALSE;
+
+            if( count[file_ind] > 1 && ind != expected_ind )
+                direct_to_array = FALSE;
+
+            if( count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
+            {
+                tmp_sizes[tmp_ind] = count[file_ind];
+                vol1_indices[tmp_ind] = ind;
+                --tmp_ind;
+            }
+
+            --expected_ind;
+        }
+    }
+
+    n_tmp_dims = n_file_dims - tmp_ind - 1;
+
+    if( !direct_to_array || file->converting_to_colour )
+    {
+        for_less( dim, 0, n_tmp_dims )
+        {
+            tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
+            vol1_indices[dim] = vol1_indices[dim+tmp_ind+1];
+            zero[dim] = 0;
+        }
+
+        data_type = get_multidim_data_type( array );
+        create_multidim_array( &buffer_array, n_tmp_dims, tmp_sizes, data_type);
+
+        if( file->converting_to_colour )
+        {
+            used_start[n_file_dims] = 0;
+            used_count[n_file_dims] = file->sizes_in_file[n_file_dims];
+            tmp_sizes[n_tmp_dims] = (int) used_count[n_file_dims];
+
+            create_multidim_array( &rgb_array, n_tmp_dims+1, tmp_sizes, FLOAT );
+
+            array_to_read = &rgb_array;
+        }
+        else
+            array_to_read = &buffer_array;
+
+        for_less( dim, 0, n_tmp_dims+1 )
+            used_array_start[dim] = 0;
+    }
+    else
+    {
+        array_to_read = array;
+        for_less( dim, 0, n_array_dims )
+            used_array_start[dim] = array_start[dim];
+    }
+
+    GET_MULTIDIM_PTR( void_ptr, *array_to_read,
+                      used_array_start[0], used_array_start[1],
+                      used_array_start[2], used_array_start[3],
+                      used_array_start[4] );
+
+    if( miicv_get( file->icv, used_start, used_count, void_ptr ) == MI_ERROR )
+    {
+        status = ERROR;
+        if( file->converting_to_colour )
+            delete_multidim_array( &rgb_array );
+        if( !direct_to_array || file->converting_to_colour )
+            delete_multidim_array( &buffer_array );
+    }
+    else
+        status = OK;
+
+    if( status == OK && (!direct_to_array || file->converting_to_colour) )
+    {
+        if( file->converting_to_colour )
+        {
+            for_less( dim, n_tmp_dims, MAX_DIMENSIONS )
+                tmp_sizes[dim] = 1;           
+
+            size0 = tmp_sizes[0];
+            size1 = tmp_sizes[1];
+            size2 = tmp_sizes[2];
+            size3 = tmp_sizes[3];
+            size4 = tmp_sizes[4];
+
+            for_less( v[4], 0, size4 )
+            for_less( v[3], 0, size3 )
+            for_less( v[2], 0, size2 )
+            for_less( v[1], 0, size1 )
+            for_less( v[0], 0, size0 )
+            {
+                for_less( d, 0, n_tmp_dims )
+                    voxel[d] = v[d];
+
+                for_less( i, 0, 4 )
+                {
+                    if( file->rgba_indices[i] < 0 )
+                    {
+                        if( i < 3 )
+                            rgb[i] = 0.0;
+                        else
+                            rgb[i] = 1.0;
+                    }
+                    else
+                    {
+                         voxel[n_tmp_dims] = file->rgba_indices[i];
+                         GET_MULTIDIM( rgb[i], rgb_array,
+                                       voxel[0], voxel[1],
+                                       voxel[2], voxel[3], voxel[4] );
+                    }
+                }
+
+                colour = make_rgba_Colour_0_1( rgb[0], rgb[1], rgb[2], rgb[3] );
+                SET_MULTIDIM( buffer_array,
+                              voxel[0], voxel[1],
+                              voxel[2], voxel[3], voxel[4], colour );
+            }
+
+            delete_multidim_array( &rgb_array );
+        }
+
+        copy_multidim_reordered( array, array_start,
+                                 &buffer_array, zero, vol1_indices );
+
+        delete_multidim_array( &buffer_array );
+    }
+
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
