@@ -1,3 +1,8 @@
+Mon Jun 22 10:06:29 EDT 1998
+   - Fixed bug in rawtominc in handling of default types and signs. This
+     bug showed up when options -short and -scan_range were used with data 
+     containing negative values.
+
 Wed Apr 22 16:23:06 EDT 1998
    - Fixed a bug in fortran test program minc_ftest.f in which an 
      insufficient number of arguments were being passed to miclos.
