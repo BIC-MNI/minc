@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 1.1)
 AM_CONFIG_HEADER([config.h])
 
-AC_REVISION($Revision: 6.5 $)
+AC_REVISION($Revision: 6.6 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -36,6 +36,13 @@ AC_REPLACE_FUNCS(strdup)
 dnl This link is needed to allow <volume_io/foo.h> style includes.
 AC_CONFIG_LINKS(volume_io/Include/volume_io:volume_io/Include)
 
-AC_CONFIG_FILES([Makefile testdir/Makefile doc/Makefile])
+AC_CONFIG_FILES([
+Makefile 
+doc/Makefile
+testdir/Makefile 
+volume_io/Makefile
+volume_io/Documentation/Makefile
+volume_io/Testing/Makefile
+])
 AC_OUTPUT
 

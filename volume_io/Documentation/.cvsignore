@@ -3,3 +3,4 @@
 *.aux
 *.log
 *.toc
+Makefile.in

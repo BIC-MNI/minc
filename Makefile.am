@@ -3,8 +3,7 @@
 AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
-
-SUBDIRS = . testdir doc
+SUBDIRS = . testdir doc volume_io
 
 
 # Add these to the include searches.
@@ -280,5 +279,3 @@ dist_man1_MANS = \
 	progs/xfm/xfminvert.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
-
-

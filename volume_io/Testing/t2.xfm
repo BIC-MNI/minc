@@ -1,0 +1,13 @@
+MNI Transform File
+% Concatenation of two linear transforms.
+
+Transform_Type = Linear;
+Linear_Transform =
+ 1 0 0 10
+ 0 1 0 20
+ 0 0 1 30;
+Transform_Type = Linear;
+Linear_Transform =
+ 1 0 0 3
+ 0 1 0 2
+ 0 0 1 1;

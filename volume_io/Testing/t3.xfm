@@ -1,0 +1,15 @@
+MNI Transform File
+% Concatenation including a grid transform.
+
+Transform_Type = Linear;
+Linear_Transform =
+ 1 0 0 -87
+ 0 1 0 -45
+ 0 0 1 55;
+Transform_Type = Grid_Transform;
+Displacement_Volume = t3_grid_0.mnc;
+Transform_Type = Linear;
+Linear_Transform =
+ 1 0 0 63
+ 0 1 0 37
+ 0 0 1 -55;

@@ -8,8 +8,6 @@
 * files missing from distribution
 
 Only in .: fortran
-Only in ./volume_io: Documentation
-Only in ./volume_io: Testing
 
 
 * remove the old build system's Makefiles from CVS

@@ -1,5 +1,20 @@
 2003-01-09  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+	* volume_io/Makefile.am: New.
+
+	* volume_io/Documentation/Makefile.am: New.
+	
+	* volume_io/Testing/check_xfm.sh: 
+	* volume_io/Testing/check_xfm.sh
+	* volume_io/Testing/t1.xfm:
+	* volume_io/Testing/t2.xfm:
+	* volume_io/Testing/t3.xfm:
+	* volume_io/Testing/t3_grid_0.mnc:
+	* volume_io/Testing/Makefile.am: New.
+
+	* volume_io/Testing/test-xfm.c: Allow tolerance specified on
+	command line.  Exit with nonzero status if point out of tolerance.
+
 	* Makefile.am (dist_man3_MANS): Distribute and install ParseArgv(3).
 	(EXTRA_DIST): Distribute get_image_offset.c (not built).
 	(noinst_HEADERS): Remove vax_conversions.h (not used).
