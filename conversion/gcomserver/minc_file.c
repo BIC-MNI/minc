@@ -6,10 +6,13 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.6  1994-01-18 15:08:57  neelin
-@MODIFIED   : Cast enumerated types to int when they can be negative for gcc on sun.
-@MODIFIED   : (For decrementing loop on Mri_index).
+@MODIFIED   : Revision 1.7  1994-03-14 16:45:28  neelin
+@MODIFIED   : Moved ncendef up a level so that we can catch errors.
 @MODIFIED   :
+ * Revision 1.6  94/01/18  15:08:57  neelin
+ * Cast enumerated types to int when they can be negative for gcc on sun.
+ * (For decrementing loop on Mri_index).
+ * 
  * Revision 1.5  94/01/17  15:06:22  neelin
  * Added some acquisition parameters (flip angle) and fixed error in writing
  * of scanning sequence.
@@ -142,6 +145,11 @@ public int create_minc_file(char *minc_file, int clobber,
 
    /* Set up variables */
    setup_minc_variables(mincid, general_info);
+
+   /* Put the file in data mode */
+   if (ncendef(mincid) == MI_ERROR) {
+      return MI_ERROR;
+   }
 
    /* Create the icv */
    icvid = miicv_create();
@@ -411,9 +419,6 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    string = "gcomserver";
    (void) miattputstr(mincid, NC_GLOBAL, MIhistory,
                       time_stamp(1, &string));
-
-   /* Put the file in data mode */
-   (void) ncendef(mincid);
 
    return;
 }
