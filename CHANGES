@@ -1,3 +1,7 @@
+Wed Sep 17 09:24:32 EDT 1997
+   - Modified gcomserver to do conversions to dicom and retransmit data
+     to a dicom server.
+
 Thu Sep 11 10:54:41 EDT 1997
    - Copied in new version of volume_io. The version released with minc 0.5
      was missing function set_volume_translation. It has been re-instated.
