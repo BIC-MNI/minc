@@ -1,3 +1,8 @@
+Mon Aug 13 09:44:13 EDT 2001
+   - Changed use of floorf to floor in macro SCALAR_ROUND of node.h in
+     minccalc.
+   - Added invocation of ranlib when installing minc and volume_io libraries.
+
 ************************************************************************
 
 Fri Aug 10 08:49:54 EDT 2001 *** RELEASE OF MINC 0.8
