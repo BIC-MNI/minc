@@ -15,6 +15,7 @@ public  Status  start_volume_input(
     volume_input_struct  *input )
 {
     Status       status;
+    String       expanded_filename;
     char         name[MAX_NC_NAME];
     double       slice_separation[N_DIMENSIONS];
     double       start_position[N_DIMENSIONS];
@@ -29,6 +30,8 @@ public  Status  start_volume_input(
 
     status = OK;
 
+    expand_filename( filename, expanded_filename );
+
     input->icv = miicv_create();
 
     (void) miicv_setint( input->icv, MI_ICV_TYPE, NC_BYTE );
@@ -37,12 +40,12 @@ public  Status  start_volume_input(
     (void) miicv_setdbl( input->icv, MI_ICV_VALID_MIN, 0.0 );
 
     ncopts = 0;
-    input->cdfid = ncopen( filename, NC_NOWRITE );
+    input->cdfid = ncopen( expanded_filename, NC_NOWRITE );
     ncopts = NC_VERBOSE | NC_FATAL;
 
     if( input->cdfid == MI_ERROR )
     {
-        print( "Error opening volume file \"%s\".\n", filename );
+        print( "Error opening volume file \"%s\".\n", expanded_filename );
         return( ERROR );
     }
 
@@ -56,7 +59,7 @@ public  Status  start_volume_input(
     {
         print(
           "Error:  input volume file \"%s\" does not have exactly 3 dimensions.\n",
-          filename );
+          expanded_filename );
         status = ERROR;
         return( status );
     }
@@ -113,7 +116,7 @@ public  Status  start_volume_input(
         input->axis_index[Z] == -1 )
     {
         print( "Error:  missing some of the 3 dimensions in \"%s\".\n",
-                filename );
+                expanded_filename );
         status = ERROR;
         return( status );
     }
