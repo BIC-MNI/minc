@@ -1,3 +1,14 @@
+2003-01-09  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* testdir/run_tests.csh: Use -e flag to stop on error.  Look
+	for expected output files in $srcdir.
+
+	* testdir/Makefile: Removed.
+	* testdir/Makefile.am: New.
+
+	* configure.in: 
+	* Makefile.am: Adjust for testdir/Makefile.
+
 2003-01-07  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* autogen.sh: New.

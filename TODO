@@ -4,3 +4,17 @@
   - minccalc (new functions)
 
 * check addition in rev 1.72 of volume_io/Volumes/volumes.c
+
+* files missing from distribution
+
+Only in .: GETTING_STARTED
+Only in .: doc
+Only in .: fortran
+Only in ./libsrc: ParseArgv.man3
+Only in ./progs: Get_image_offset
+Only in ./progs/Proglib: vax_conversions.c
+Only in ./volume_io: Documentation
+Only in ./volume_io: Testing
+
+
+* remove the old build system's Makefiles from CVS

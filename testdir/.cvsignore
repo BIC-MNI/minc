@@ -9,3 +9,4 @@ icv_dim1
 icv_fillvalue
 junk.out
 test.mnc
+Makefile.in

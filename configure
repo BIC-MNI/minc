@@ -8766,7 +8766,7 @@ done
           ac_config_links="$ac_config_links volume_io/Include/volume_io:volume_io/Include"
 
 
-          ac_config_files="$ac_config_files Makefile"
+                    ac_config_files="$ac_config_files Makefile testdir/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -9320,6 +9320,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+  "testdir/Makefile" ) CONFIG_FILES="$CONFIG_FILES testdir/Makefile" ;;
   "volume_io/Include/volume_io" ) CONFIG_LINKS="$CONFIG_LINKS volume_io/Include/volume_io:volume_io/Include" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;

@@ -3,6 +3,10 @@
 AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
+
+SUBDIRS = . testdir
+
+
 # Add these to the include searches.
 #
 INCLUDES = \
