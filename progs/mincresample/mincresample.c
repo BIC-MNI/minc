@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.9  2001-08-24 19:12:50  neelin
+ * Revision 6.10  2002-10-30 13:53:02  jason
+ * Added a ARGV_LONG argument type to ParseArgv. Used that type for the nelements variable in mincresample
+ *
+ * Revision 6.9  2001/08/24 19:12:50  neelin
  * Re-ordered variables so that image variable is last. This fixes a problem
  * with an uninitialized processing variable that shows up when mincresample
  * is linked with netcdf 3.5.0 and an older program linked with 2.3.2 dies
@@ -152,7 +155,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.9 2001-08-24 19:12:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.10 2002-10-30 13:53:02 jason Exp $";
 #endif
 
 #include <stdlib.h>
@@ -298,16 +301,16 @@ public void get_arginfo(int argc, char *argv[],
       {"-units", ARGV_FUNC, (char *) set_units, 
           (char *) &args.volume_def,
           "Specify the units of the output sampling."},
-      {"-nelements", ARGV_INT, (char *) 3, 
+      {"-nelements", ARGV_LONG, (char *) 3, 
           (char *) args.volume_def.nelements,
           "Number of elements along each dimension (X, Y, Z)"},
-      {"-xnelements", ARGV_INT, (char *) 0, 
+      {"-xnelements", ARGV_LONG, (char *) 0, 
           (char *) &args.volume_def.nelements[X],
           "Number of elements along the X dimension"},
-      {"-ynelements", ARGV_INT, (char *) 0, 
+      {"-ynelements", ARGV_LONG, (char *) 0, 
           (char *) &args.volume_def.nelements[Y],
           "Number of elements along the Y dimension"},
-      {"-znelements", ARGV_INT, (char *) 0, 
+      {"-znelements", ARGV_LONG, (char *) 0, 
           (char *) &args.volume_def.nelements[Z],
           "Number of elements along the Z dimension"},
       {"-step", ARGV_FLOAT, (char *) 3, 

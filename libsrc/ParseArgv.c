@@ -16,7 +16,7 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.1 2002-01-14 21:28:25 neelin Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.2 2002-10-30 13:53:02 jason Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
@@ -197,6 +197,29 @@ ParseArgv(argcPtr, argv, argTable, flags)
             }
          }
          break;
+      case ARGV_LONG:
+         nargs = (int) infoPtr->src;
+         if (nargs<1) nargs=1;
+         for (i=0; i<nargs; i++) {
+            if (argc == 0) {
+               goto missingArg;
+            } else {
+               char *endPtr;
+
+               *(((long *) infoPtr->dst)+i) =
+                  strtol(argv[srcIndex], &endPtr, 0);
+               if ((endPtr == argv[srcIndex]) || (*endPtr != 0)) {
+                  FPRINTF(stderr, 
+                  "expected integer argument for \"%s\" but got \"%s\"",
+                          infoPtr->key, argv[srcIndex]);
+                  return TRUE;
+               }
+               srcIndex++;
+               argc--;
+            }
+         }
+         break;
+
       case ARGV_STRING:
          nargs = (int) infoPtr->src;
          if (nargs<1) nargs=1;
