@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.h,v $
-@MODIFIED   : Revision 1.2  1993-11-25 10:37:43  neelin
-@MODIFIED   : Added file free and ungetc and trace.
+@MODIFIED   : Revision 1.3  1994-04-08 10:32:10  neelin
+@MODIFIED   : Fixed io tracing.
 @MODIFIED   :
+ * Revision 1.2  93/11/25  10:37:43  neelin
+ * Added file free and ungetc and trace.
+ * 
  * Revision 1.1  93/11/10  10:33:33  neelin
  * Initial revision
  * 
@@ -45,6 +48,7 @@ typedef struct {
    unsigned char *ptr;
    int length;
    int stream_type;
+   FILE *tracefp;
 } Acr_File;
 
 /* Macros for getting and putting a character */

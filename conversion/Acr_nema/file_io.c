@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.4  1993-11-25 10:36:14  neelin
-@MODIFIED   : Added file free and ungetc
+@MODIFIED   : Revision 1.5  1994-04-08 10:32:00  neelin
+@MODIFIED   : Fixed io tracing.
 @MODIFIED   :
+ * Revision 1.4  93/11/25  10:36:14  neelin
+ * Added file free and ungetc
+ * 
  * Revision 1.3  93/11/23  16:02:12  neelin
  * Corrected header comment in acr_file_flush.
  * 
@@ -49,12 +52,10 @@
 #define ACR_WRITE_STREAM   2
 
 /* Stuff for input and output tracing */
-static char *Input_trace_file = "acr_file.input";
-static char *Output_trace_file = "acr_file.output";
+static char *Input_trace_file = "acr_file_input_XXXXXX";
+static char *Output_trace_file = "acr_file_output_XXXXXX";
 static int Do_input_trace = FALSE;
 static int Do_output_trace = FALSE;
-static FILE *Input_trace = NULL;
-static FILE *Output_trace = NULL;
 
 public void acr_enable_input_trace(void)
 {
@@ -128,6 +129,9 @@ public Acr_File *acr_file_initialize(void *user_data,
    afp->end = afp->start;
    afp->ptr = afp->end;
 
+   /* Set the trace file pointer to null */
+   afp->tracefp = NULL;
+
    return afp;
 }
 
@@ -152,6 +156,9 @@ public void acr_file_free(Acr_File *afp)
       if (afp->start != NULL) {
          FREE(afp->start);
       }
+      if (afp->tracefp != NULL) {
+         (void) fclose(afp->tracefp);
+      }
       FREE(afp);
    }
    return;
@@ -172,6 +179,7 @@ public void acr_file_free(Acr_File *afp)
 public int acr_file_read_more(Acr_File *afp)
 {
    int nread;
+   char trace_file[128];
 
    /* Check the pointer */
    if (afp == NULL) {
@@ -194,21 +202,25 @@ public int acr_file_read_more(Acr_File *afp)
 
    /* Do tracing */
    if (Do_input_trace) {
-      if (Input_trace == NULL) {
-         Input_trace = fopen(Input_trace_file, "w");
-         if (Input_trace != NULL) {
+      if (afp->tracefp == NULL) {
+         (void) strcpy(trace_file, Input_trace_file);
+         (void) mktemp(trace_file);
+         afp->tracefp = fopen(trace_file, "w");
+         if (afp->tracefp != NULL) {
             (void) fprintf(stderr, "Opened input trace file %s.\n", 
-                           Input_trace_file);
+                           trace_file);
             (void) fflush(stderr);
          }
          else {
             (void) fprintf(stderr, "Error opening input trace file %s.\n",
-                           Input_trace_file);
+                           trace_file);
             (void) fflush(stderr);
          }
       }
-      (void) fwrite(afp->start, sizeof(char), nread, Input_trace);
-      (void) fflush(Input_trace);
+      if (nread > 0) {
+         (void) fwrite(afp->start, sizeof(char), nread, afp->tracefp);
+         (void) fflush(afp->tracefp);
+      }
    }
 
    /* Check for EOF */
@@ -272,6 +284,7 @@ public int acr_file_write_more(Acr_File *afp, int character)
 public int acr_file_flush(Acr_File *afp)
 {
    int length;
+   char trace_file[128];
 
    /* Check the pointer */
    if (afp == NULL) {
@@ -298,21 +311,23 @@ public int acr_file_flush(Acr_File *afp)
 
       /* Do trace, if needed */
       if (Do_output_trace) {
-         if (Output_trace == NULL) {
-            Output_trace = fopen(Output_trace_file, "w");
-            if (Output_trace != NULL) {
+         if (afp->tracefp == NULL) {
+            (void) strcpy(trace_file, Output_trace_file);
+            (void) mktemp(trace_file);
+            afp->tracefp = fopen(trace_file, "w");
+            if (afp->tracefp != NULL) {
                (void) fprintf(stderr, "Opened output trace file %s.\n", 
-                              Output_trace_file);
+                              trace_file);
                (void) fflush(stderr);
             }
             else {
                (void) fprintf(stderr, "Error opening output trace file %s.\n",
-                              Output_trace_file);
+                              trace_file);
                (void) fflush(stderr);
             }
          }
-         (void) fwrite(afp->start, sizeof(char), length, Output_trace);
-         (void) fflush(Output_trace);
+         (void) fwrite(afp->start, sizeof(char), length, afp->tracefp);
+         (void) fflush(afp->tracefp);
       }
 
    }
