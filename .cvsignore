@@ -1,9 +1,11 @@
+autom4te.cache
+aclocal.m4
+configure
+libtool
 config.log
 config.cache
 config.status
 .deps
-config.h.in
-Makefile.in
-aclocal.m4
-autom4te.cache
-configure
+config.h.in config.h
+Makefile.in Makefile
+stamp-h1

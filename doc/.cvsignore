@@ -3,4 +3,5 @@
 *.aux
 *.log
 *.toc
-Makefile.in
+Makefile.in Makefile
+
