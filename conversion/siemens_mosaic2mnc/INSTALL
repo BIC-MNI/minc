@@ -1,0 +1,23 @@
+
+To install the script and man pages in the standard areas, 
+give the sequence of commands
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+If you want to install the script in your own private space, use
+
+  perl Makefile.PL PREFIX=/my/private/perllib \
+       INSTALLMAN1DIR=/my/private/perllib/man/man1 \
+       INSTALLMAN3DIR=/my/private/perllib/man/man3      
+  make
+  make test
+  make install
+
+Any libraries installed in such non-standard places may then
+need to have the appropriate path to them specified in the script.
+
+Note that `make test` may not necessarily be enabled.
+

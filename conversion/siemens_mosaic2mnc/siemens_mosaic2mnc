@@ -1,33 +1,28 @@
 #! /usr/bin/env perl
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# siemens_mosaic2mnc
+#
+# Andrew Janke - rotor@cmr.uq.edu DOT au
 # Center for Magnetic Resonance
 # The University of Queensland
 # http://www.cmr.uq.edu.au/~rotor
 #
-# Copyright Andrew Janke, The University of Queensland.
-# Permission to use, copy, modify, and distribute this software and its
-# documentation for any purpose and without fee is hereby granted,
-# provided that the above copyright notice appear in all copies.  The
-# author and the University of Queensland make no representations about the
-# suitability of this software for any purpose.  It is provided "as is"
-# without express or implied warranty.
-#
-# Thu Oct 24 16:24:41 EST 2002 - initial version based upon guesswork
-# Thu Oct 31 16:27:10 EST 2002 - somewhat working version with starts and steps
-#                                  a fair bit of testing is going to be needed!
+# See POD section for LICENCE
 
 
 $| = 1;
-# use strict;
+use strict;
 use warnings "all";
 use Getopt::Tabular;
 use File::Basename;
-use Data::Dumper;
 use File::Temp qw/ tempdir /;
 
+use vars qw($VERSION);
+$VERSION = '0.9';
+
+
 my($Help, $Usage, $me, $infile, $outfile, $history);
-my(@opt_table, %opt, $tmpdir, @args);
+my(@opt_table, %opt, $tmpdir, @args, $args);
 
 $me = basename($0);
 %opt = (
@@ -39,17 +34,21 @@ $me = basename($0);
    ); 
 
 $Help = <<HELP;
- | Siemens 'Mosaic' file format converter MKI
+ | Siemens Dicom Mosaic file format converter
  |
  | $me works primarily by using the ##ASC_CONV## section
  |    of a siemens Mosaic file.
  |
- | Problems or comments should be sent to: rotor\@cmr.uq.edu.au
+ | Problems/comments to: rotor\@cmr.uq.edu DOT au
 HELP
+
 $Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
          "       $me -help to list options\n\n";
 
 @opt_table = (
+   ["General Options", "section" ],
+   ["-version", "call", 0, \&print_version_info,
+      "print version and exit" ],
    ["-verbose", "boolean", 0, \$opt{verbose},
       "be verbose" ],
    ["-quiet", "boolean", 0, \$opt{quiet},
@@ -61,9 +60,6 @@ $Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
    ["-fake", "boolean", 0, \$opt{fake},
       "do a dry run, (echo cmds only)" ],
    );
-
-$Usage = "Usage: $me [options] <in_mosaic.IMA> <outfile.mnc>\n".
-         "       $me -help to list options\n\n";
 
 # Get the history string
 chomp($history = `date`);
@@ -87,121 +83,110 @@ if(-e $outfile && !$opt{clobber}){
    die "$me: $outfile exists! use -clobber to overwrite\n"; 
    }
 
+# variables
+my($buf, $i, $j, $n, $gen_hdr, %siemens_hdr);
+my(@dimcodes, @dimnames, @dim_idx, @slice_pos, @slice_nrm);
+
 # have a hunt for the ASCCONV header
-print STDOUT " +++ Seeking ASCCONV header in $infile\n" if !$quiet;
+my($ref, $hsh, $idx, $text);
+print STDOUT " +++ Seeking ASCCONV header in $infile\n" if !$opt{quiet};
 open(FH, "<$infile");
 do {
-   chomp($line = <FH>);   
-   } until (index($line, "### ASCCONV BEGIN ###") != -1);
+   chomp($buf = <FH>);   
+   } until (index($buf, "### ASCCONV BEGIN ###") != -1);
 
 # copy the header into a hash
-print STDOUT " +++ Getting ASCCONV elements: " if !$quiet;
-$line = <FH>;
-for($c=0; (index($line, "### ASCCONV END ###") == -1); $line = <FH>, $c++){
-    
-   chomp($line);
-   ($key, $value) = split(/\s*\=\s*/, $line, 2);
+print STDOUT " +++ Getting ASCCONV elements: " if !$opt{quiet};
+$buf = <FH>;
+for($i=0; (index($buf, "### ASCCONV END ###") == -1); $buf = <FH>, $i++){
+   my($key, $value);
+   
+   chomp($buf);
+   ($key, $value) = split(/\s*\=\s*/, $buf, 2);
    
    $ref = '$siemens_hdr';
-   foreach $k (split(/\./, $key)){
-      if($k =~ m/\[\d*\]$/){
-         ($hsh, $idx) = ($k =~ m/(.*?)\[(\d*)\]$/);
+   foreach (split(/\./, $key)){
+      if($_ =~ m/\[\d*\]$/){
+         ($hsh, $idx) = ($_ =~ m/(.*?)\[(\d*)\]$/);
          $text = "{'$hsh'}[$idx]";
          }
       else{
-         $text = "{'$k'}";
+         $text = "{'$_'}";
          }
       $ref .= $text;
       }   
    $ref .= " = $value";
    eval($ref);
    
-   print STDOUT "." if !$quiet;
+   print STDOUT "." if !$opt{quiet};
    }
 close(FH);
-print STDOUT "Done. ($c elements read)\n" if !$quiet;
+print STDOUT "Done. ($i elements read)\n" if !$opt{quiet};
 
 if($opt{debug}){
-   $ptr = \%siemens_hdr;
+   use Data::Dumper;
+   
+   my($ptr) = \%siemens_hdr;
    $Data::Dumper::Deepcopy = 1;
    print STDOUT Dumper(\$ptr);
    }
 
 # Read in ASCCONV header slice positions and normals (and fill in the blanks!)
-$c = 0;
 foreach (@{$siemens_hdr{sSliceArray}{asSlice}}){
    
    # fill in "missing" (default?) co-ordinates.
    if(!defined($_->{sPosition}{dSag})){
       $_->{sPosition}{dSag} = 0;
-      print "Completed position for slice in Sag\n" if $opt{debug};
+      print "Completed position for slice in Sag\n" if $opt{verbose};
       }
    if(!defined($_->{sPosition}{dCor})){
       $_->{sPosition}{dCor} = 0;
-      print "Completed position for slice in Cor\n" if $opt{debug};
+      print "Completed position for slice in Cor\n" if $opt{verbose};
       }
    if(!defined($_->{sPosition}{dTra})){
       $_->{sPosition}{dTra} = 0;
-      print "Completed position for slice in Tra\n" if $opt{debug};
+      print "Completed position for slice in Tra\n" if $opt{verbose};
       }
    
-   $slice_pos[$c] = [$_->{sPosition}{dSag}, 
-                     $_->{sPosition}{dCor},
-                     $_->{sPosition}{dTra}];
-                     
-    
    # Damn LPS and Radiological vs Neurological Stupidity!
-   $slice_pos[$c][0] *= -1;
-   $slice_pos[$c][1] *= -1;
+   $_->{sPosition}{dSag} *= -1;
+   $_->{sPosition}{dCor} *= -1;
    
-   # fill in sNormal -- 1 defined (perpendicular slice normal)
-   if(defined($_->{sNormal}{dSag}) && $_->{sNormal}{dSag} == 1){
-      $_->{sNormal}{dCor} = 0;
-      $_->{sNormal}{dTra} = 0;
-      print "Perp slice in Sag\n" if $opt{debug};
-      }
-   elsif(defined($_->{sNormal}{dCor}) && $_->{sNormal}{dCor} == 1){
-      $_->{sNormal}{dSag} = 0;
-      $_->{sNormal}{dTra} = 0;
-      print "Perp slice in Cor\n" if $opt{debug};
-      }
-   elsif(defined($_->{sNormal}{dTra}) && $_->{sNormal}{dTra} == 1){
-      $_->{sNormal}{dSag} = 0;
-      $_->{sNormal}{dCor} = 0;
-      print "Perp slice in Tra\n" if $opt{debug};
-      }
+   push(@slice_pos, [$_->{sPosition}{dSag}, 
+                     $_->{sPosition}{dCor},
+                     $_->{sPosition}{dTra}]);
    
-   # fill in sNormal -- 2 defined
+   # fill in "missing" (default?) normals.
    if(!defined($_->{sNormal}{dSag})){
-      $_->{sNormal}{dSag} = 1 - sqrt($_->{sNormal}{dCor}**2 + $_->{sNormal}{dTra}**2);
-      print "Completed normal for slice in Sag\n" if $opt{debug};
+      $_->{sNormal}{dSag} = 0;
+      print "Completed normal for Sag\n" if $opt{verbose};
       }
-   elsif(!defined($_->{sNormal}{dCor})){
-      $_->{sNormal}{dCor} = 1 - sqrt($_->{sNormal}{dSag}**2 + $_->{sNormal}{dTra}**2);
-      print "Completed normal for slice in Cor\n" if $opt{debug};
+   if(!defined($_->{sNormal}{dCor})){
+      $_->{sNormal}{dCor} = 0;
+      print "Completed normal for Cor\n" if $opt{verbose};
       }
-   elsif(!defined($_->{sNormal}{dTra})){
-      $_->{sNormal}{dTra} = 1 - sqrt($_->{sNormal}{dSag}**2 + $_->{sNormal}{dCor}**2);
-      print "Completed normal for slice in Tra\n" if $opt{debug};
+   if(!defined($_->{sNormal}{dTra})){
+      $_->{sNormal}{dTra} = 0;
+      print "Completed normal for Tra\n" if $opt{verbose};
       }
    
-   $slice_nrm[$c] = [$_->{sNormal}{dSag}, 
+   push(@slice_nrm, [$_->{sNormal}{dSag}, 
                      $_->{sNormal}{dCor}, 
-                     $_->{sNormal}{dTra}];
-   $c++;
+                     $_->{sNormal}{dTra}]);
    }
 
-
 # convert the image data using dicom_to_minc
-print STDOUT " +++ Converting using dicom_to_minc: \n" if !$quiet;
+my($conv_fn);
+print STDOUT " +++ Converting using dicom_to_minc: \n" if !$opt{quiet};
 &do_cmd('dicom3_to_minc', $tmpdir, $infile);
 chomp($conv_fn = `ls -1 $tmpdir/*.mnc`);
-print STDOUT " +++ Found file $conv_fn\n" if !$quiet;
+print STDOUT " +++ Found file $conv_fn\n" if !$opt{quiet};
 
 # get the file dimension order
-chomp($tmp = `mincinfo -dimnames $conv_fn`);
-$tmp =~ s/\ $//;
-($dimnames[2], $dimnames[1], $dimnames[0]) = split(/\ /, $tmp, 3);
+my($code);
+chomp($buf = `mincinfo -dimnames $conv_fn`);
+$buf =~ s/\ $//;
+($dimnames[2], $dimnames[1], $dimnames[0]) = split(/\ /, $buf, 3);
 for($i=0; $i<3; $i++){
    $code = substr($dimnames[$i], 0, 1);
    $dimcodes[$i] = $code;
@@ -218,6 +203,7 @@ for($i=0; $i<3; $i++){
 print STDOUT "Dimension order: @dimnames - (@dimcodes)\n" if $opt{verbose};
 
 # get the tile size
+my(@tile_size, $ntiles);
 $tile_size[0] = $siemens_hdr{sKSpace}{lPhaseEncodingLines};
 $tile_size[1] = $siemens_hdr{sKSpace}{lBaseResolution};
 
@@ -230,29 +216,40 @@ if($ntiles == 1){
    }
 
 # get the mosaic size
+my(@mosaic_size, @concat_files);
 chomp($mosaic_size[0] = `mincinfo -dimlength $dimnames[0] $conv_fn`);
 chomp($mosaic_size[1] = `mincinfo -dimlength $dimnames[1] $conv_fn`);
 
 # extract the mosaic tiles
 print STDOUT " +++ Extracting Mosaic tiles ($tile_size[0] x $tile_size[1])" .
-             " from ($mosaic_size[0] x $mosaic_size[1]): " if !$quiet;
-$c = 0;
-for($y=0; $y<$mosaic_size[1]; $y += $tile_size[1]){
-   for($x=0; $x<$mosaic_size[0]; $x += $tile_size[0]){
+             " from ($mosaic_size[0] x $mosaic_size[1]): " if !$opt{quiet};
+$n = 0;
+for($j=0; $j<$mosaic_size[1]; $j += $tile_size[1]){
+   for($i=0; $i<$mosaic_size[0]; $i += $tile_size[0]){
       
-      $tmpfile = sprintf("$tmpdir/slice_%05d.mnc", $c);
+      my($tmpfile) = sprintf("$tmpdir/slice_%05d.mnc", $n);
       &do_cmd('mincreshape', '-quiet', '-clobber',
-              '-dimrange', "$dimnames[0]=$x,$tile_size[0]",
-              '-dimrange', "$dimnames[1]=$y,$tile_size[1]",
+              '-dimrange', "$dimnames[0]=$i,$tile_size[0]",
+              '-dimrange', "$dimnames[1]=$j,$tile_size[1]",
               '-dimrange', "$dimnames[2]=0,0",
               $conv_fn, $tmpfile);
       
       push(@concat_files, $tmpfile);
-      $c++;
-      print STDOUT "." if !$quiet;
+      $n++;
+      print STDOUT "." if !$opt{quiet};
+      
+      # stop after $ntiles
+      if($n >= $ntiles){
+         last;
+         }
+      }
+   
+   # stop after $ntiles
+   if($n >= $ntiles){
+      last;
       }
    }
-print STDOUT "Done. ($c Frames)\n" if !$quiet;
+print STDOUT "Done. ($n Frames)\n" if !$opt{quiet};
 
 # put them back together in the correct order...
 # currently broken until I get some docco from siemens
@@ -295,7 +292,7 @@ if(defined($siemens_hdr{sGroupArray}{asGroup}[0]{dDistFact})){
 # check against the ASCCONV header
 $args = "mincinfo -attvalue $dimnames[0]:step ".
                  "-attvalue $dimnames[1]:step $conv_fn";
-@steps = split(' ', `$args`);
+my(@steps) = split(' ', `$args`);
 if(($steps[0] != $gen_hdr->{xstep}) ||
    ($steps[1] != $gen_hdr->{ystep})){
    warn "\n$me: ASCCONV slice steps (" .
@@ -314,7 +311,7 @@ $gen_hdr->{ydircos} = [split(' ', `mincinfo -attvalue yspace:direction_cosines $
 $gen_hdr->{zdircos} = [split(' ', `mincinfo -attvalue zspace:direction_cosines $conv_fn`)];
 
 # check slice norm against the ASCCONV header
-$delta = 0.0000001;
+my($delta) = 0.0000001;
 if((abs($slice_nrm[0][0]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[0]) > $delta) ||
    (abs($slice_nrm[0][1]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[1]) > $delta) ||
    (abs($slice_nrm[0][2]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[2]) > $delta)){
@@ -324,6 +321,7 @@ if((abs($slice_nrm[0][0]) - abs($gen_hdr->{"$dimcodes[2]dircos"}[0]) > $delta) |
 
 
 # calculate origin
+my(@origin, $scale, @tmp);
 for $i (0..2){
    $origin[$i] = $slice_pos[0][$i];
    }
@@ -447,24 +445,6 @@ sub vector_add {
    return @result;
    }
 
-
-# Routine to calculate a vector that is orthogonal to 2 other
-# vectors by doing a cross product. The vectors are copied
-# before the calculation so the result vector can be one of
-# the input vectors.
-sub calculate_orthogonal_vector {
-   my($vec1, $vec2) = @_;
-   my(@result);
-   $#result = 2;
-   
-   for $i (0..2) {
-      $result[$i] = 
-         $$vec1[($i+1) % 3] * $$vec2[($i+2) % 3] -
-         $$vec2[($i+1) % 3] * $$vec1[($i+2) % 3];
-      }
-   return @result;
-   }
-
 # Routine to scale a vector
 sub vector_scale {
    my($scale, $vec1) = @_;
@@ -478,11 +458,14 @@ sub vector_scale {
 
 
 # Routine to convert an origin specified in world coordinates
-# to an array of minc start positions by projecting the point
-# along the edges of the parallelopiped formed by the
-# 3 direction cosines. Direction cosines are normalized.
+#    to an array of minc start positions by projecting the
+#    point along the edges of the parallelopiped formed by the
+#    3 direction cosines. Direction cosines are normalized.
+# This is converted from convert_origin_to_start.c in the base
+#   minc package
 sub convert_origin_to_start {
    my($origin, $xdircos, $ydircos, $zdircos) = @_;
+   my(@axes, @normal, @lengths, $normal_length, $numerator, $denominator);
    my(@start);
    $#start = 2;
 
@@ -541,3 +524,73 @@ sub convert_origin_to_start {
 
    return @start;
    }
+
+
+# Routine to calculate a vector that is orthogonal to 2 other
+# vectors by doing a cross product. The vectors are copied
+# before the calculation so the result vector can be one of
+# the input vectors.
+sub calculate_orthogonal_vector {
+   my($vec1, $vec2) = @_;
+   my(@result);
+   $#result = 2;
+   
+   for $i (0..2) {
+      $result[$i] = 
+         $$vec1[($i+1) % 3] * $$vec2[($i+2) % 3] -
+         $$vec2[($i+1) % 3] * $$vec1[($i+2) % 3];
+      }
+   return @result;
+   }
+
+sub print_version_info {
+   my($package, $version, $package_bugreport);
+
+   $package = '@PACKAGE@';
+#   $version = '@VERSION@';
+   $version = $VERSION;
+   $package_bugreport = '@PACKAGE_BUGREPORT@';
+
+   print STDOUT "\n$package version $version\n".
+                "Comments to $package_bugreport\n\n";
+   exit;
+   }
+
+__END__
+
+# POD time
+=pod
+
+=head1 NAME
+
+siemens_mosaic2mnc - perl script to convert a single siemens DICOM mosaic file (.IMA) 
+to a MINC file preserving coordinate information
+
+=head1 SYNOPSIS
+
+   siemens_mosaic2mnc [options] <in_mosaic.IMA> <outfile.mnc>
+   siemens_mosaic2mnc -help
+
+=head1 PREREQUISITES
+
+This script requires the <Getopt::Tabular> module.
+
+=head1 AUTHOR
+
+Andrew Janke E<lt>rotor@cmr.uq.edu AT auE<gt>
+
+=head1 SEE ALSO
+
+dicom3_to_minc(1).
+
+=head1 COPYRIGHT
+ 
+Copyright Andrew Janke, The University of Queensland.
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies.  The
+author and the University of Queensland make no representations about the
+suitability of this software for any purpose.  It is provided "as is" 
+without express or implied warranty.
+
+=cut
