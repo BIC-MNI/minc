@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.10  1993-11-02 11:23:06  neelin
-@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
+@MODIFIED   : Revision 1.11  1993-11-03 12:32:17  neelin
+@MODIFIED   : Change ncopen, nccreate and ncclose to miopen, micreate and miclose.
 @MODIFIED   :
+ * Revision 1.10  93/11/02  11:23:06  neelin
+ * Handle imagemax/min potentially varying over slices (for vector data, etc.)
+ * 
  * Revision 1.9  93/10/12  12:47:50  neelin
  * Use volume_io.h instead of def_mni.h
  * 
@@ -49,7 +52,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.10 1993-11-02 11:23:06 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.11 1993-11-03 12:32:17 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -511,7 +514,7 @@ public void get_file_info(char *filename,
    double vrange[2];
 
    /* Open the minc file */
-   file_info->mincid = ncopen(filename, NC_NOWRITE);
+   file_info->mincid = miopen(filename, NC_NOWRITE);
    file_info->name = filename;
 
    /* Get variable identifiers */
@@ -717,7 +720,7 @@ public void create_output_file(char *filename, int clobber,
    ncopts = NC_VERBOSE | NC_FATAL;
 
    /* Create the file */
-   out_file->mincid = nccreate(filename, 
+   out_file->mincid = micreate(filename, 
                                (clobber ? NC_CLOBBER : NC_NOCLOBBER));
  
    /* Copy all other variable definitions */
@@ -1048,13 +1051,13 @@ public void finish_up(VVolume *in_vol, VVolume *out_vol)
    if (out_file->using_icv) {
       (void) miicv_free(out_file->icvid);
    }
-   (void) ncclose(out_file->mincid);
+   (void) miclose(out_file->mincid);
 
    /* Close the input file */
    if (in_file->using_icv) {
       (void) miicv_free(in_file->icvid);
    }
-   (void) ncclose(in_file->mincid);
+   (void) miclose(in_file->mincid);
 
    return;
 }
@@ -1186,7 +1189,7 @@ public int get_model_file(char *dst, char *key, char *nextArg)
    get_file_info(nextArg, volume_def, &file);
 
    /* Close the file */
-   (void) ncclose(file.mincid);
+   (void) miclose(file.mincid);
 
    return TRUE;
 }
