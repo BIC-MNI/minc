@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: xfminvert.c,v $
-@MODIFIED   : Revision 1.1  1993-08-13 15:26:53  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-09-01 15:59:05  neelin
+@MODIFIED   : Cast return of fclose to (void).
 @MODIFIED   :
+ * Revision 1.1  93/08/13  15:26:53  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 1.1 1993-08-13 15:26:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 1.2 1993-09-01 15:59:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -65,7 +68,7 @@ int main(int argc, char *argv[])
                      argv[0], argv[1]);
       exit(EXIT_FAILURE);
    }
-   fclose(fp);
+   (void) fclose(fp);
 
    /* Invert the transform */
    create_inverse_general_transform(&transform, &inverse);
@@ -77,7 +80,7 @@ int main(int argc, char *argv[])
                      argv[0], argv[2]);
       exit(EXIT_FAILURE);
    }
-   fclose(fp);
+   (void) fclose(fp);
 
    exit(EXIT_SUCCESS);
 }
