@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussian.c,v 1.8 2003-09-18 14:35:47 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
