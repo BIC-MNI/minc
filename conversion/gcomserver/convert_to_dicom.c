@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : $Log: convert_to_dicom.c,v $
-@MODIFIED   : Revision 1.2  1997-09-17 13:15:54  neelin
-@MODIFIED   : Changes to unpack packed images and to get coordinate directions right.
+@MODIFIED   : Revision 1.3  1997-10-21 00:06:53  neelin
+@MODIFIED   : Fixed coordinate stuff.
 @MODIFIED   :
+ * Revision 1.2  1997/09/17  13:15:54  neelin
+ * Changes to unpack packed images and to get coordinate directions right.
+ *
  * Revision 1.1  1997/09/12  23:14:11  neelin
  * Initial revision
  *
@@ -23,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.2 1997-09-17 13:15:54 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.3 1997-10-21 00:06:53 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -595,6 +598,7 @@ private void calculate_image_position(int orientation,
                                       double position[WORLD_NDIMS])
 {
    double coord[WORLD_NDIMS], pos_dircos[WORLD_NDIMS][WORLD_NDIMS];
+   double row_offset, column_offset;
    double biggest;
    int slice_world, row_world, column_world;
    World_Index iloop, jloop;
@@ -619,26 +623,40 @@ private void calculate_image_position(int orientation,
       break;
    }
 
-   /* Work out positive direction cosines */
+   /* Work out positive direction cosines and direction of row and column
+      offsets */
    for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
+
+      /* Find biggest component */
       biggest = dircos[iloop][0];
       for (jloop=1; jloop < WORLD_NDIMS; jloop++) {
          if (fabs(biggest) < fabs(dircos[iloop][jloop])) {
             biggest = dircos[iloop][jloop];
          }
       }
+
+      /* Save positive direction cosines */
       for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
          if (biggest >= 0.0)
             pos_dircos[iloop][jloop] = dircos[iloop][jloop];
          else
             pos_dircos[iloop][jloop] = -dircos[iloop][jloop];
       }
+
+      /* Work out direction of row and column offsets */
+      if (iloop == row_world) {
+         row_offset = ((biggest >= 0.0) ? +1.0 : -1.0) * row_fov / 2.0;
+      }
+      if (iloop == column_world) {
+         column_offset = ((biggest >= 0.0) ? +1.0 : -1.0) * column_fov / 2.0;
+      }
+
    }
 
    /* Calculate position - note that centres are given in rotated frame */
    coord[slice_world] = centre[slice_world];
-   coord[row_world] = centre[row_world] - row_fov/2.0;
-   coord[column_world] = centre[column_world] - column_fov/2.0;
+   coord[row_world] = centre[row_world] - row_offset;
+   coord[column_world] = centre[column_world] - column_offset;
 
    /* Rotate the coordinate according to the direction cosines */
    for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
