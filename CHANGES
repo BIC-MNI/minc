@@ -1,3 +1,7 @@
+Thu Feb 19 09:06:38 EDT 1998
+   - Fixes to internals of mincreshape that had not yet shown symptoms,
+     but appeared with insure++.
+
 Thu Aug 13 15:35:15 EDT 1998
    - Modified mincconcat so that the coordinate variable corresponding
      to the concatenation dimension is always created, subscripted
