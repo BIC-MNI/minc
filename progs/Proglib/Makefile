@@ -1,34 +1,24 @@
 # --------------------------------------------------------------------
 #
-# MINC Makefile
+# MINC Makefile for program library
 #
 
-# Object names
-OBJS     = ParseArgv.o vax_conversions.o time_stamp.o
-PROG_LIB  = mincprog
-CDEFINES = #                        cpp defines
-OPT      = -O#                             compiler options
-INCLUDES = -I. # include directories
+ROOT = ../..
+include $(ROOT)/Makefile_machine_specific
+include $(ROOT)/Makefile_configuration
 
-# Options for creating library
-RM       = rm
-RM_FLAGS = -f
-AR       = ar
-AR_FLAGS = -r
-RANLIB   = true
+# Object names
+OBJS     = ParseArgv.o vax_conversions.o time_stamp.o tag_io.o
+CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
 
 CFLAGS    = $(CDEFINES) $(INCLUDES) $(OPT)# CFLAGS and LINTFLAGS should
 LINTFLAGS = $(CDEFINES) $(INCLUDES)#        be same, except for -g/-O
 
-CC_PROG_LIB= lib$(PROG_LIB).a#            library for objs
 LINT_OBJS = $(OBJS:.o=.ln)
-LINT_PROG_LIB = llib-l$(PROG_LIB).ln#
 
 # --------------------------------------------------------------------
-
-.SUFFIXES: .ln#                           tell make to watch for .ln's
 
 default: $(CC_PROG_LIB)
 
@@ -58,5 +48,5 @@ $(LINT_PROG_LIB) : $(LINT_OBJS)
 
 # Remove all derived files in this directory
 clean:
-	\rm -f   $(OBJS) $(LINT_OBJS)
+	\rm -f $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
 
