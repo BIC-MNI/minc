@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincexpand.c,v $
-@MODIFIED   : Revision 1.2  1995-01-24 08:48:57  neelin
-@MODIFIED   : Added optional output file argument.
+@MODIFIED   : Revision 1.3  1995-01-24 09:06:19  neelin
+@MODIFIED   : Added -name_only option.
 @MODIFIED   :
+ * Revision 1.2  95/01/24  08:48:57  neelin
+ * Added optional output file argument.
+ * 
  * Revision 1.1  95/01/23  08:33:31  neelin
  * Initial revision
  * 
@@ -31,7 +34,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 1.2 1995-01-24 08:48:57 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 1.3 1995-01-24 09:06:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -49,6 +52,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.
 
 /* Variables used for argument parsing */
 int header_only = FALSE;
+int name_only = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -56,6 +60,8 @@ ArgvInfo argTable[] = {
        "Expand only enough file to get the header."},
    {"-all_data", ARGV_CONSTANT, (char *) FALSE, (char *) &header_only,
        "Expand the whole file (default)."},
+   {"-name_only", ARGV_CONSTANT, (char *) TRUE, (char *) &name_only,
+       "Print out only the file name."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -90,11 +96,13 @@ int main(int argc, char *argv[])
 
    /* Print out file name and message about temporary file */
    (void) printf("%s\n", newfile);
-   if (created_tempfile) {
-      (void) printf("Temporary\n");
-   }
-   else {
-      (void) printf("Original\n");
+   if (!name_only) {
+      if (created_tempfile) {
+         (void) printf("Temporary\n");
+      }
+      else {
+         (void) printf("Original\n");
+      }
    }
 
    /* Free the temporary file name string */
