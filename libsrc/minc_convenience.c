@@ -25,7 +25,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.4  2001-08-16 16:41:32  neelin
+ * Revision 6.5  2001-08-16 19:24:11  neelin
+ * Fixes to the code handling valid_range values.
+ *
+ * Revision 6.4  2001/08/16 16:41:32  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -83,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.4 2001-08-16 16:41:32 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.5 2001-08-16 19:24:11 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -126,6 +129,7 @@ public int miget_datatype(int cdfid, int imgid,
                           nc_type *datatype, int *is_signed)
 {
    int old_ncopts;
+   int use_default_sign;
    char attstr[MI_MAX_ATTSTR_LEN];
 
    MI_SAVE_ROUTINE_NAME("miget_datatype");
@@ -142,15 +146,24 @@ public int miget_datatype(int cdfid, int imgid,
    if ((miattgetstr(cdfid, imgid, MIsigntype, 
                     MI_MAX_ATTSTR_LEN, attstr) != NULL)) {
       
+      use_default_sign = FALSE;
       if (strcmp(attstr, MI_SIGNED) == 0)
          *is_signed = TRUE;
       else if (strcmp(attstr, MI_UNSIGNED) == 0)
          *is_signed = FALSE;
-      else if (*datatype == NC_BYTE)
+      else
+         use_default_sign = TRUE;
+   }
+   else {
+      use_default_sign = TRUE;
+   }
+
+   /* Set a default sign if needed */
+   if (use_default_sign) {
+      if (*datatype == NC_BYTE)
          *is_signed = FALSE;
       else
          *is_signed = TRUE;
-      
    }
 
    /* Restore ncopts */
@@ -337,38 +350,38 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    switch (datatype) {
    case NC_BYTE:
       if (is_signed) {
-         ubval[0] = valid_range[0];
-         ubval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, ubval);
-      }
-      else {
          sbval[0] = valid_range[0];
          sbval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, sbval);
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) sbval);
+      }
+      else {
+         ubval[0] = valid_range[0];
+         ubval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) ubval);
       }
       break;
    case NC_SHORT:
       if (is_signed) {
-         usval[0] = valid_range[0];
-         usval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, usval);
-      }
-      else {
          ssval[0] = valid_range[0];
          ssval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, ssval);
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) ssval);
+      }
+      else {
+         usval[0] = valid_range[0];
+         usval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) usval);
       }
       break;
    case NC_INT:
       if (is_signed) {
-         uival[0] = valid_range[0];
-         uival[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, uival);
-      }
-      else {
          sival[0] = valid_range[0];
          sival[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, sival);
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) sival);
+      }
+      else {
+         uival[0] = valid_range[0];
+         uival[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) uival);
       }
       break;
    case NC_FLOAT:

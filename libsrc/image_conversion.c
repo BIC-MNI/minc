@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.4  2001-08-16 16:41:31  neelin
+ * Revision 6.5  2001-08-16 19:24:11  neelin
+ * Fixes to the code handling valid_range values.
+ *
+ * Revision 6.4  2001/08/16 16:41:31  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -124,7 +127,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.4 2001-08-16 16:41:31 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.5 2001-08-16 19:24:11 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1066,10 +1069,12 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       vid[0]=icvp->imgmaxid;
       vid[1]=icvp->imgminid;
 
-      /* No max/min variables, so use valid_range values for floats and
-         defaults for integers */
+      /* No max/min variables, so use valid_range values for floats 
+         if it set and defaults otherwise */
       if ((vid[0] == MI_ERROR) || (vid[1] == MI_ERROR)) {
-         if (icvp->derv_var_float) {
+         if (icvp->derv_var_float &&
+             (icvp->var_vmax != FLT_MAX) &&
+             (icvp->var_vmax != DBL_MAX)) {
             icvp->derv_imgmax = icvp->var_vmax;
             icvp->derv_imgmin = icvp->var_vmin;
          }
