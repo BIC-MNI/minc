@@ -1,4 +1,11 @@
 MINC 2:
+2004-05-25  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Added -dappend, -sappend to minc_modify_header
+	
+2004-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Revised man pages
+	* Added -2 option to minclookup
+	
 2004-04-30  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Further reduce compiler issues for IRIX MIPSpro compiler.
 	* Tagged version 2.0.06
