@@ -1,4 +1,7 @@
 MINC 2:
+2004-12-15 Andrew Janke <rotor@bic.mni.mcgill.ca>
+    * added epm-header.in, removed mni_minc.epm.header
+
 2004-12-07 Andrew Janke <rotor@bic.mni.mcgill.ca>
     * Squashed yet another bug with the BiModalT code
 	    aaargh!  This should now replicate volume_stats even closer!

@@ -141,7 +141,8 @@ EXTRA_DIST = GETTING_STARTED \
 	README.binary_packaging \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
-	WHATSNEW-2.0
+	WHATSNEW-2.0 \
+	epm-header.in
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS
