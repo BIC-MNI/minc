@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CPPFLAGS = -DMINC2
+AM_CFLAGS = 
 
 SUBDIRS = . volume_io testdir doc libsrc2
 
