@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:12  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-08-19 13:05:28  neelin
+@MODIFIED   : Added code to free minmax buffer.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:24:12  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:10  neelin
  * Release of minc version 0.5
  *
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.0 1997-09-12 13:24:12 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.1 1998-08-19 13:05:28 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -183,6 +186,11 @@ public void copy_data(Reshape_info *reshape_info)
 
    /* Free the chunk space */
    FREE(chunk_data);
+
+   /* Free minmax buffer */
+   if (minmax_buffer != NULL) {
+      FREE(minmax_buffer);
+   }
 
    /* Print ending log message */
    if (reshape_info->verbose) {
