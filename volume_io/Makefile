@@ -7,39 +7,18 @@ ROOT = ..
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
-# Example program
-PROGS = Testing/example_volume_io
-CDEFINES = -DDEBUG#                        cpp defines
+# Compiler options
 LDOPT    = $(CC_VOLIO_LIB) -lm $(MINC_LDOPT)
 
+# Source definitions 
+include ProgFiles
+include SourceFiles
+include HeaderFiles
+include DocFiles
+
 # Object names
-OBJS     = \
-   Prog_utils/alloc.o Prog_utils/alloc_check.o Prog_utils/print.o \
-   Prog_utils/files.o Prog_utils/time.o Prog_utils/string.o \
-   Prog_utils/progress.o \
-   Geometry/transforms.o Geometry/inverse.o Geometry/points.o \
-   Geometry/gaussian.o Geometry/colour.o Geometry/colour_def.o \
-   Geometry/newton.o Geometry/splines.o Geometry/tensors.o \
-   MNI_formats/gen_xfs.o MNI_formats/gen_xf_io.o \
-   MNI_formats/thin_plate_spline.o MNI_formats/tag_points.o \
-   MNI_formats/mni_io.o MNI_formats/grid_transforms.o \
-   Volumes/volumes.o Volumes/input_mnc.o Volumes/input_volume.o \
-   Volumes/output_mnc.o Volumes/output_volume.o \
-   Volumes/input_free.o Volumes/evaluate.o
-
-# Header files
-HEADERS  = \
-   Include/volume_io.h Include/vol_io_prototypes.h \
-   Include/basic.h Include/string_funcs.h Include/files.h \
-   Include/arrays.h Include/geom_structs.h Include/progress.h \
-   Include/geometry.h Include/volume.h Include/transforms.h \
-   Include/alloc.h Include/alloc_check.h Include/def_math.h \
-   Include/system_dependent.h
-
-DOCDIR = Documentation
-DOCS = $(DOCDIR)/volume_io.ps
-
-CDEFINES = #                        cpp defines
+PROGS = $(PROGSRCS:.c=)
+OBJS = $(SRCS:.c=.o)
 
 # --------------------------------------------------------------------
 
@@ -60,7 +39,7 @@ default: build
 
 all: build lint
 
-build: $(CC_VOLIO_LIB) $(PROGS) $(DOCS)
+build: $(CC_VOLIO_LIB) $(PROGS)
 
 #Dependency on Makefile
 $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
@@ -74,15 +53,6 @@ $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
-
-$(DOCS) : $(DOCS:.ps=.dvi)
-
-.tex.dvi :
-	-(cd $(DOCDIR); file=`echo $< | sed -e 's/.*\///'`; \
-	   latex $$file; latex $$file)
-
-.dvi.ps :
-	-dvips $< -o $@
 
 # How to create library
 $(CC_VOLIO_LIB): $(OBJS)
@@ -106,11 +76,10 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
 clean: mostlyclean
-	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) $(DOCDIR)/*.dvi
+	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB)
 
 mostlyclean:
-	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST) \
-	         $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
+	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
 
 install:
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
