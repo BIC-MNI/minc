@@ -7,7 +7,11 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.8  2001-11-28 18:39:16  neelin
+ * Revision 6.9  2002-01-14 20:02:39  neelin
+ * Force the input buffers to have a minimum size so that large images do
+ * not force excessive reading of the input file.
+ *
+ * Revision 6.8  2001/11/28 18:39:16  neelin
  * Added get_info_vxoel_index to allow users to get the full multi-dimensional
  * file index of the current voxel.
  * Modifications to allow arg_string to be NULL.
@@ -103,7 +107,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.8 2001-11-28 18:39:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.9 2002-01-14 20:02:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -119,6 +123,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_lo
 #  define TRUE 1
 #  define FALSE 0
 #endif
+
+/* Minimum number of voxels to put in a buffer. If this is too small,
+   then for large images excessive reading can result. If it is
+   too large, then for large images too much memory will be used. */
+#define MIN_VOXELS_IN_BUFFER 1024
 
 /* Default ncopts values for error handling */
 #define NC_OPTS_VAL NC_VERBOSE | NC_FATAL
@@ -1736,7 +1745,7 @@ private void setup_looping(Loop_Options *loop_options,
       chunk_incr[idim] = block_incr[idim];
    }
 
-   /* Figure out chunk size */
+   /* Figure out chunk size. Enforce a minimum chunk size. */
    *chunk_num_voxels = 1;
    num_input_buffers = (loop_options->do_accumulate ? 1 : 
                         loop_options->num_all_inputs);
@@ -1746,6 +1755,9 @@ private void setup_looping(Loop_Options *loop_options,
        output_vector_length) / 
           (num_input_buffers * input_vector_length + 
            loop_options->num_extra_buffers * output_vector_length);
+   if (max_voxels_in_buffer < MIN_VOXELS_IN_BUFFER) {
+      max_voxels_in_buffer = MIN_VOXELS_IN_BUFFER;
+   }
    if (max_voxels_in_buffer > 0) {
       for (idim=scalar_ndims-1; idim >= 0; idim--) {
          chunk_incr[idim] = max_voxels_in_buffer / *chunk_num_voxels;
