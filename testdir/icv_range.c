@@ -26,6 +26,7 @@ main()
    static int numdims=sizeof(diminfo)/sizeof(diminfo[0]);
    static long coord[]={0,0,0};
    static long count[]={1,1,1};
+   static double max_values[] = {0.4, 0.6, 0.8};
    double dvalue;
    short int ivalue;
    int i, intype, inorm, outtype, imax, ival;
@@ -64,7 +65,7 @@ main()
                   ncendef(cdfid);
                   if (maxpresent[imax]) {
                      for (i=0; i<3; i++) {
-                        dvalue = 0.6/(i+1);
+                        dvalue = max_values[i];
                         coord[0]=i;
                         ncvarput1(cdfid, max, coord, &dvalue);
                         dvalue = -dvalue;
@@ -74,11 +75,11 @@ main()
                   }
                   miicv_attach(icv, cdfid, img);
                   if (intypes[intype]==NC_DOUBLE) {
-                     dvalue = 0.3;
+                     dvalue = 0.2;
                      miicv_put(icv, coord, count, &dvalue);
                   }
                   else {
-                     ivalue = 15000;
+                     ivalue = 12500;
                      miicv_put(icv, coord, count, &ivalue);
                   }
                   dvalue = 0;
