@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.3  1997-10-20 22:52:46  neelin
-@MODIFIED   : Added support for implementation user information in association request.
+@MODIFIED   : Revision 6.4  1997-10-20 23:22:38  neelin
+@MODIFIED   : Added routine acr_dicom_close_no_release to close a connection that does
+@MODIFIED   : not have an association.
 @MODIFIED   :
+ * Revision 6.3  1997/10/20  22:52:46  neelin
+ * Added support for implementation user information in association request.
+ *
  * Revision 6.2  1997/10/20  21:46:02  neelin
  * Delete answering message when making association.
  *
@@ -50,7 +54,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.3 1997-10-20 22:52:46 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.4 1997-10-20 23:22:38 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -187,11 +191,42 @@ public int acr_open_dicom_connection(char *host, char *port,
    if (!acr_make_dicom_association(*afpin, *afpout, called_ae, calling_ae,
                                    abstract_syntax_list, 
                                    transfer_syntax_list)) {
-      acr_close_dicom_connection(*afpin, *afpout);
+      acr_close_dicom_no_release(*afpin, *afpout);
       return FALSE;
    }
 
    return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_close_dicom_no_release
+@INPUT      : afpin - dicom file handle for input
+              afpout - dicom file handle for output
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to close a dicom connection without releasing the
+              association.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 20, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout)
+{
+   FILE *fpin, *fpout;
+
+   /* Get the file handles */
+   fpin = (FILE *) acr_dicom_get_io_data(afpin);
+   fpout = (FILE *) acr_dicom_get_io_data(afpout);
+
+   /* Close the dicom streams */
+   acr_close_dicom_file(afpin);
+   acr_close_dicom_file(afpout);
+
+   /* Close the file handles */
+   (void) fclose(fpin);
+   (void) fclose(fpout);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -214,17 +249,9 @@ public void acr_close_dicom_connection(Acr_File *afpin, Acr_File *afpout)
    /* Release the association */
    (void) acr_release_dicom_association(afpin, afpout);
 
-   /* Get the file handles */
-   fpin = (FILE *) acr_dicom_get_io_data(afpin);
-   fpout = (FILE *) acr_dicom_get_io_data(afpout);
+   /* Close the connection */
+   acr_close_dicom_no_release(afpin, afpout);
 
-   /* Close the dicom streams */
-   acr_close_dicom_file(afpin);
-   acr_close_dicom_file(afpout);
-
-   /* Close the file handles */
-   (void) fclose(fpin);
-   (void) fclose(fpout);
 }
 
 /* ----------------------------- MNI Header -----------------------------------

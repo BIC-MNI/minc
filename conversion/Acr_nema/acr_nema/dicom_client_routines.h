@@ -4,10 +4,14 @@
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 6.1  1997-09-15 16:50:59  neelin
-@MODIFIED   : Separated out connection timeouts from i/o timeouts and added functions
-@MODIFIED   : to change them.
+@MODIFIED   : Revision 6.2  1997-10-20 23:22:38  neelin
+@MODIFIED   : Added routine acr_dicom_close_no_release to close a connection that does
+@MODIFIED   : not have an association.
 @MODIFIED   :
+ * Revision 6.1  1997/09/15  16:50:59  neelin
+ * Separated out connection timeouts from i/o timeouts and added functions
+ * to change them.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *
@@ -42,6 +46,7 @@ public int acr_open_dicom_connection(char *host, char *port,
                                      char *abstract_syntax,
                                      char *transfer_syntax,
                                      Acr_File **afpin, Acr_File **afpout);
+public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout);
 public void acr_close_dicom_connection(Acr_File *afpin, Acr_File *afpout);
 public int acr_connect_to_host(char *host, char *port,
                                FILE **fpin, FILE **fpout);
