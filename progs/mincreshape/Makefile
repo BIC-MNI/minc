@@ -9,7 +9,7 @@ include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = mincreshape
-EXTRA_OBJS = nd_loop.o
+EXTRA_OBJS = copy_data.o nd_loop.o
 HEADERS  = $(PROGS:=.h)
 MANSECT  = 1
 CDEFINES = -DDEBUG#                        cpp defines
@@ -65,7 +65,7 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 
 # how to make man pages
 .man1.1:
-#	$(NROFF) $(NROFF_FLAGS) $< > $@
+	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
 clean:
