@@ -38,13 +38,13 @@ build: $(PROGS)
 
 
 # How to make executables
-$(PROGS) : $$@.o  $(CC_MINC_LIB) Makefile
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o  $(CC_MINC_LIB) Makefile
 	$(CC) $@.o -o $@ $(CFLAGS) $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_MINC_LIB)
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_MINC_LIB)
 	lint -u $(LINTFLAGS) $@ln $(LINT_MINC_LIB)
 
 # Run tests

@@ -56,13 +56,13 @@ $(PROG_OBJ) $(EXTRA_OBJS) : $(HEADERS)
 $(LINT_LIST) $(LINT_EXTRA) : $(HEADERS)
 
 # How to make executables
-$(PROGS) : $$@.o $(EXTRA_OBJS) $(CC_PROG_LIB) $(CC_MINC_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(EXTRA_OBJS) $(CC_PROG_LIB) $(CC_MINC_LIB)
 	$(CC) -o $@ $@.o $(EXTRA_OBJS) $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 	lint -u $(LINTFLAGS) $@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 
 # how to make man pages

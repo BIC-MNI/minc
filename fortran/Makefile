@@ -44,7 +44,7 @@ $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
 	$(FC) $(FFLAGS) -c $< -o $@
 
 # How to make executables
-$(PROGS) : $$@.o $(JACKETS_OBJ) $(CC_MINC_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(JACKETS_OBJ) $(CC_MINC_LIB)
 	$(FC) -o $@ $@.o $(JACKETS_OBJ) $(FFLAGS) $(LDOPT)
 
 # How to run test

@@ -56,7 +56,7 @@ $(CC_ACR_LIB): $(OBJS)
 	$(RANLIB) $(CC_ACR_LIB)
 
 # How to make executables
-$(PROGS) : $$@.o $(CC_ACR_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(CC_ACR_LIB)
 	$(CC) -o $@ $@.o $(CC_ACR_LIB) $(MACHINE_LDOPT)
 
 #  how to lint the executable source
@@ -66,7 +66,7 @@ lint: $(LINT_ACR_LIB) $(LINT_LIST_EXE)
 $(LINT_ACR_LIB) : $(LINT_OBJS)
 	lint -o $(ACR_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_ACR_LIB)
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_ACR_LIB)
 	lint -u $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
 
 # how to make man pages

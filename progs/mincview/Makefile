@@ -47,13 +47,13 @@ $(PROG_OBJ) $(LINT_LIST) : Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # How to make executables
-$(PROGS) : $$@.o
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o
 	$(CC) -o $@ $@.o $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln
 	lint -u $(LINTFLAGS) $@ln
 
 # how to make man pages

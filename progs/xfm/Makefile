@@ -45,13 +45,13 @@ $(PROG_OBJ) : $(HEADERS)
 $(LINT_LIST) : $(HEADERS)
 
 # How to make executables
-$(PROGS) : $$@.o $(CC_PROG_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(CC_PROG_LIB)
 	$(CC) $@.o -o $@ $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB)
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_PROG_LIB)
 	lint -u $(LINTFLAGS) $@ln $(LINT_PROG_LIB)
 
 # Remove all derived files in this directory

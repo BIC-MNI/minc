@@ -74,7 +74,7 @@ $(CC_VOLIO_LIB): $(OBJS)
 	$(AR) $(AR_FLAGS) $(CC_VOLIO_LIB) $(OBJS)
 	$(RANLIB) $(CC_VOLIO_LIB)
 
-$(PROGS) : $$@.o $(CC_VOLIO_LIB) $(CC_MINC_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(CC_VOLIO_LIB) $(CC_MINC_LIB)
 	$(CC) $@.o -o $@ $(LDOPT)
 
 # Lint
@@ -84,7 +84,7 @@ lint : $(LINT_VOLIO_LIB) $(LINT_LIST_EXE)
 $(LINT_VOLIO_LIB) : $(LINT_OBJS)
 	lint -o $(VOLIO_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
 
-$(LINT_LIST_EXE) : $$@ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
+$(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 	lint -u $(LINTFLAGS) $@ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
