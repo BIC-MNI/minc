@@ -271,7 +271,7 @@ extern int micreate_volume(const char *filename, int number_of_dimensions,
 extern int micreate_volume_image(mihandle_t volume);
 extern int miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
 					midimattr_t attr, int *number_of_dimensions);
-
+extern int miget_volume_voxel_count(mihandle_t volume, int *number_of_voxels);
 extern int miopen_volume(const char *filename, int mode, mihandle_t *volume);
 extern int miclose_volume(mihandle_t volume);
 
@@ -394,6 +394,8 @@ extern int miset_voxel_value(mihandle_t volume,
                              const unsigned long coords[],
                              int ndims,
                              double voxel);
+
+extern int miget_volume_real_range(mihandle_t volume, double real_range[2]);
 
 /* VALID functions */
 extern int miget_volume_valid_max(mihandle_t volume, double *valid_max);
