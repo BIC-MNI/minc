@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.2  1993-11-23 13:21:42  neelin
-@MODIFIED   : Added fflush for stdio write routine.
+@MODIFIED   : Revision 1.3  1993-11-23 16:02:12  neelin
+@MODIFIED   : Corrected header comment in acr_file_flush.
 @MODIFIED   :
+ * Revision 1.2  93/11/23  13:21:42  neelin
+ * Added fflush for stdio write routine.
+ * 
  * Revision 1.1  93/11/10  10:33:22  neelin
  * Initial revision
  * 
@@ -178,7 +181,7 @@ public int acr_file_write_more(Acr_File *afp, int character)
 @NAME       : acr_file_flush
 @INPUT      : afp - Acr_File pointer
 @OUTPUT     : (none)
-@RETURNS    : (nothing)
+@RETURNS    : EOF if an error occurs, otherwise 0.
 @DESCRIPTION: Flushes the buffer.
 @METHOD     : 
 @GLOBALS    : 
