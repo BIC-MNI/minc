@@ -1,7 +1,7 @@
 \documentstyle{article}
 \title{MINC Reference Manual}
 \author{Peter Neelin}
-\date{February 1, 1993}
+\date{February 2, 1993}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -747,7 +747,9 @@ and dimension width variables, \code{MIspacing} is set to
 \code{MI\_REGULAR} if the number of dimensions is zero and
 \code{MI\_IRREGULAR} otherwise. For dimension variables,
 \code{MIalignment} is set to \code{MI\_CENTRE} unless the variable is
-\code{MItime}, then it is set to \code{MI\_START}. For dimension
+\code{MItime}, then it is set to \code{MI\_START}. As well, 
+MIcomments is set to a string describing the direction of the world
+coordinates of spatial dimensions. For dimension
 width variables, \code{MIfiltertype} is set to \code{MI\_SQUARE}. For
 \code{MIimage} and for \code{MIimagemax} and \code{MIimagemin},
 dimensions are checked to ensure that the last two do not vary over
