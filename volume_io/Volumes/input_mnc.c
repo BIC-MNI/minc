@@ -574,6 +574,15 @@ public  void  copy_volumes_reordered(
     for_less( d, 0, n_src_dims )
         ind[d] = src_ind[d];
 
+    /*--- check if we can transfer more than one at once */
+
+    while( n_src_dims > 0 && to_dest_index[n_src_dims-1] == n_dest_dims-1 )
+    {
+        type_size *= src_sizes[n_src_dims-1];
+        --n_src_dims;
+        --n_dest_dims;
+    }
+
     done = FALSE;
     while( !done )
     {
