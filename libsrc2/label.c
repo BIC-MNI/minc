@@ -17,7 +17,7 @@ midefine_label(mihandle_t volume, int value, const char *name)
     hid_t type_id;
     int result;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (file_id < 0) {
 	return (MI_ERROR);
     }
@@ -66,7 +66,7 @@ miget_label_name(mihandle_t volume, int value, char **name)
     hid_t type_id;
     int result;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (file_id < 0) {
 	return (MI_ERROR);
     }
@@ -100,7 +100,7 @@ miget_label_value(mihandle_t volume, const char *name, int *value_ptr)
     hid_t type_id;
     int result;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (file_id < 0) {
 	return (MI_ERROR);
     }
@@ -139,12 +139,12 @@ main(int argc, char **argv)
     char *name;
     int result;
     int value;
-
+    
     /* Turn off automatic error reporting - we'll take care of this
      * ourselves, thanks!
      */
     H5Eset_auto(NULL, NULL);
-
+    
     result = micreate_volume("test.h5", 0, NULL, 0, 0, NULL, &hvol);
     if (result < 0) {
 	fprintf(stderr, "Unable to create test file %x", result);

@@ -25,7 +25,7 @@ miget_data_type(mihandle_t volume, mitype_t *data_type)
     size_t nbytes;
     int is_signed;
     int result = MI_NOERROR;
-    hid_t file_id = miget_volume_file_handle(volume);
+    hid_t file_id = volume->hdf_id;
 
     grp_id = midescend_path(file_id, MI_FULLIMAGE_PATH);
     if (grp_id < 0) {
@@ -92,7 +92,7 @@ miget_data_type_size(mihandle_t volume, misize_t *voxel_size)
     hid_t grp_id;
     hid_t dset_id;
     hid_t type_id;
-    hid_t file_id = miget_volume_file_handle(volume);
+    hid_t file_id = volume->hdf_id;
 
     grp_id = midescend_path(file_id, MI_FULLIMAGE_PATH);
     if (grp_id < 0) {

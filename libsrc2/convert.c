@@ -404,7 +404,7 @@ miconvert_3D_voxel_to_world(mihandle_t volume,
     hid_t file_id;              /* HDF5 file ID */
     mi_lin_xfm_t v2w_transform; /* Voxel-to-world transform */
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     miget_voxel_to_world(file_id, v2w_transform);
 
@@ -415,7 +415,7 @@ miconvert_3D_voxel_to_world(mihandle_t volume,
     hid_t file_id;
     mi_lin_xfm_t v2w_transform;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     miget_voxel_to_world(file_id, v2w_transform);
     mitransform_coord(world, v2w_transform, voxel);
 #endif
@@ -434,7 +434,7 @@ int miconvert_3D_world_to_voxel(mihandle_t volume,
     mi_lin_xfm_t v2w_transform; /* Voxel-to-world transform */
     mi_lin_xfm_t w2v_transform; /* World-to-voxel transform */
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     miget_voxel_to_world(file_id, v2w_transform );
 
@@ -596,9 +596,9 @@ miget_voxel_value(mihandle_t volume,
     hid_t file_id;
     int result;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     result = mivarget1(file_id, /* The file handle */
-                       MI2varid(file_id, MIimage), /* The variable ID */
+                       //MI2varid(file_id, MIimage), /* The variable ID */
                        (long *) coords, /* The voxel coordinates */
                        NC_DOUBLE, /* The datatype */
                        MI_SIGNED, /* Ignored for floating point data */
@@ -619,9 +619,9 @@ miset_voxel_value(mihandle_t volume,
     hid_t file_id;
     int result;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     result = mivarput1(file_id, /* The file handle */
-                       MI2varid(file_id, MIimage), /* The variable ID */
+                       //MI2varid(file_id, MIimage), /* The variable ID */
                        (long *) coords, /* The voxel coordinates */
                        NC_DOUBLE, /* The datatype */
                        MI_SIGNED, /* Ignored for floating point data */

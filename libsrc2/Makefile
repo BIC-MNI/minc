@@ -1,9 +1,9 @@
 # temporary makefile
 
-CPPFLAGS = -I/localhome/bert/projects/junk/minc/libsrc -I/localhome/bert/include
-LDFLAGS = -L/localhome/bert/projects/junk/minc/.libs -L/localhome/bert/lib
+CPPFLAGS = -I/home/bic/baghdadi/include -I/usr/local/include
+LDFLAGS = -L/home/bic/baghdadi/lib -L/usr/local/lib
 
-LIBS = -lminc -lnetcdf -lhdf5
+LIBS = -lminc -lnetcdf -lhdf5 -lm
 
 all: dimension-test grpattr-test datatype-test label-test volprops-test \
      hyper-test slice-test valid-test convert-test
@@ -26,6 +26,8 @@ slice-test: $(slice-test-objs)
 slice-test.o: slice.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o slice-test.o slice.c
 
+slice.o: slice.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o slice.o slice.c
 # hyper.c
 hyper-test-objs = hyper-test.o m2util.o free.o volume.o
 
@@ -35,8 +37,11 @@ hyper-test: $(hyper-test-objs)
 hyper-test.o: hyper.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o hyper-test.o hyper.c
 
+hyper.o: hyper.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o hyper.o hyper.c
+
 # dimension.c
-dimension-test-objs = dimension-test.o m2util.o free.o
+dimension-test-objs = dimension-test.o m2util.o volume.o volprops.o free.o
 
 dimension-test: $(dimension-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o dimension-test $(dimension-test-objs) $(LIBS)
@@ -78,13 +83,16 @@ label-test.o: label.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o label-test.o label.c
 
 # volprops.c
-volprops-test-objs = volprops-test.o m2util.o free.o volume.o
+volprops-test-objs = volprops-test.o dimension.o m2util.o free.o volume.o
 
 volprops-test: $(volprops-test-objs)
 	gcc $(LDFLAGS) -Wall -g -o volprops-test $(volprops-test-objs) $(LIBS)
 
 volprops-test.o: volprops.c minc2.h minc2_private.h
 	gcc -DM2_TEST $(CPPFLAGS) -Wall -g -c -o volprops-test.o volprops.c
+
+volprops.o: volprops.c minc2.h minc2_private.h
+	gcc $(CPPFLAGS) -Wall -g -c -o volprops.o volprops.c
 
 valid-test-objs = valid-test.o m2util.o volume.o free.o
 
@@ -101,7 +109,7 @@ volume.o: volume.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o volume.o volume.c
 
 m2util.o: m2util.c minc2.h minc2_private.h
-	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c
+	gcc $(CPPFLAGS) -Wall -g -c -o m2util.o m2util.c -lm
 
 free.o: free.c minc2.h minc2_private.h
 	gcc $(CPPFLAGS) -Wall -g -c -o free.o free.c

@@ -12,18 +12,12 @@
 
 /** The fixed path to the full-resolution image data.
  */
-#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/1"
+#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
 
-struct mivolume {
-    hid_t hdf_id;
-    BOOLEAN has_slice_scaling;
-};
-
-typedef struct mivolume mivolume_struct;
-typedef struct mivolume *mivolume_ptr;
-
+/*! Volume properties  
+ */
 struct volprops_struct{
-  BOOLEAN enable_flag;
+  BOOLEAN enable_flag; //enable multi-res 
   int depth;
   micompression_t compression_type;
   int zlib_level; 
@@ -33,23 +27,39 @@ struct volprops_struct{
   long record_length;
   char *record_name;
   int  template_flag;
-};  
+}; 
 
-struct dimension {
-  const char *name;
-  midimclass_t class;
+/*! Dimension handle  
+ */
+struct dimension_struct{
   midimattr_t attr;
-  unsigned long size;
+  midimclass_t class;
   double cosines[3];
-  unsigned long start;
+  miflipping_t flipping_order;
+  char *name;
+  double *offsets;
   BOOLEAN sampling_flag;
   double separation;
-  const char *units;
-  double width;  
+  unsigned long size;
+  double start;
+  char *units;
+  double width; 
+  double *widths;
   mihandle_t *volume_handle;
 };
 
-typedef struct dimension dimension_struct;
+/*! Volume handle  
+ */
+struct volumehandle_struct {
+  hid_t hdf_id;
+  BOOLEAN has_slice_scaling;
+  int number_of_dims;
+  midimhandle_t *dim_handles;  // file order of dimensions
+  int *dim_indices; // apparent order of dimensions
+  mitype_t volume_type;
+  miclass_t volume_class;
+  mivolumeprops_t create_props;
+};
 
 /** Standard linear transform, a 4x4 matrix.
  */
@@ -58,7 +68,7 @@ typedef double mi_lin_xfm_t[MI2_LIN_XFM_SIZE][MI2_LIN_XFM_SIZE];
 typedef long long mi_i64_t;
 
 extern hid_t midescend_path(hid_t file_id, const char *path);
-extern hid_t  miget_volume_file_handle(mihandle_t volume);
+extern hid_t miget_volume_file_handle(mihandle_t volume);
 extern hid_t mitype_to_hdftype(mitype_t);
 extern int mitype_to_nctype(mitype_t, int *is_signed);
 

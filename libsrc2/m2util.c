@@ -8,12 +8,6 @@
 #include "minc2.h"
 #include "minc2_private.h"
 
-hid_t
-miget_volume_file_handle(mihandle_t volume)
-{
-    return ((mivolume_ptr) volume)->hdf_id;
-}
-
 /*! Convert a MINC 2 datatype into a HDF5 datatype.  Actually returns a copy
  * of the datatype, so the returned value must be explicitly freed with a
  * call to H5Tclose().
@@ -531,5 +525,241 @@ miinit(void)
     
     H5Tregister(H5T_PERS_SOFT, "d2i", H5T_NATIVE_DOUBLE, H5T_NATIVE_INT,
                 mi2_dbl_to_int);
+}
+
+
+int
+minc_create_thumbnail(hid_t file_id, int grp)
+{
+    char path[MAX_PATH];
+    hid_t grp_id;
+
+    /* Don't handle negative or overly large numbers!
+     */
+    if (grp <= 0 || grp > MAX_RESOLUTION_GROUP) {
+	return (MI_ERROR);
+    }
+
+    sprintf(path, "/minc-2.0/image/%d", grp);
+    grp_id = H5Gcreate(file_id, path, 0);
+    if (grp_id < 0) {
+        return (MI_ERROR);
+    }
+    H5Gclose(grp_id);
+    return (MI_NOERROR);
+}
+
+/** Function to downsample a single slice of an image.
+ * \param in_ptr the 3D input slice, scale x isize[1] x isize[2]
+ * \param out_ptr the 2D output slice, osize[1] x osize[2]
+ */
+void
+midownsample_slice(double *in_ptr, double *out_ptr, hsize_t isize[], 
+                   hsize_t osize[], int scale)
+{
+    int j, k;
+    int x, y, z;
+    double d;
+    hsize_t total;
+
+    total = scale * scale * scale;
+
+    /* These two loops iterate over all of the voxels in the 2D output
+     * image.
+     */
+    for (j = 0; j < osize[1]; j++) {
+        for (k = 0; k < osize[2]; k++) {
+            /* The three inner loops iterate all scale^3 
+             * voxels in the input image which will be averaged
+             * to form the output image.
+             */
+            d = 0;
+            for (x = 0; x < scale; x++) {
+                for (y = 0; y < scale; y++) {
+                    for (z = 0; z < scale; z++) {
+                        int x1,y1,z1;
+                        double t;
+
+                        x1 = x;
+                        y1 = y + (j * scale);
+                        z1 = z + (k * scale);
+
+                        t = in_ptr[((x1 * isize[1]) + y1) * isize[2] + z1];
+                        d += t;
+                    }
+                }
+            }
+
+            d /= total;
+            out_ptr[(j * osize[1]) + k] = d;
+        }
+    }
+}
+
+int
+minc_update_thumbnail(hid_t loc_id, int igrp, int ogrp)
+{
+    hsize_t isize[MAX_DIMS];
+    hsize_t osize[MAX_DIMS];
+    hsize_t count[MAX_DIMS];
+    hsize_t start[MAX_DIMS];
+    hid_t idst_id;              /* Input dataset */
+    hid_t odst_id;              /* Output dataset */
+    hid_t ifspc_id;             /* Input "file" dataspace */
+    hid_t ofspc_id;             /* Output "file" dataspace */
+    hid_t typ_id;               /* Type ID */
+    hid_t imspc_id;
+    hid_t omspc_id;
+    char path[MAX_PATH];
+    int ndims;
+    int scale;
+    int i;
+    double *in_ptr;
+    double *out_ptr;
+    int slice;
+    int in_bytes;
+    int out_bytes;
+    
+
+
+    miinit();
+
+    /* Calculate scale factor (always a power of 2) */
+    for (i = igrp, scale = 1; i < ogrp; i++, scale <<= 1)
+	;
+
+    /* Open the input path.
+     */
+    sprintf(path, "%d/image", igrp);
+    idst_id = H5Dopen(loc_id, path);
+    if (idst_id < 0) {
+        return (MI_ERROR);
+    }
+
+    /* Get the input type.
+     */
+    typ_id = H5Dget_type(idst_id);
+
+    /* Get the input dataspace.
+     */
+    ifspc_id = H5Dget_space(idst_id);
+
+    ndims = H5Sget_simple_extent_ndims(ifspc_id);
+    H5Sget_simple_extent_dims(ifspc_id, isize, NULL);
+
+    /* Calculate the size of the new thumbnail.
+     */
+    for (i = 0; i < ndims; i++) {
+	osize[i] = isize[i] / scale; 
+	if (osize[i] == 0) {	/* Too small? */
+	    return (MI_ERROR);
+	}
+    }
+
+    ofspc_id = H5Screate_simple(ndims, osize, NULL);
+
+    sprintf(path, "%d/image", ogrp);
+    /* TODO: Non-default properties */
+    odst_id = H5Dcreate(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
+    if (odst_id < 0) {
+        odst_id = H5Dopen(loc_id, path);
+    }
+
+    /* Calculate the input buffer size - scale slices.
+     */
+    in_bytes = scale * isize[1] * isize[2] * sizeof(double);
+    in_ptr = malloc(in_bytes);
+
+    out_bytes = osize[1] * osize[2] * sizeof(double);
+    out_ptr = malloc(out_bytes);
+
+    count[0] = scale;
+    count[1] = isize[1];
+    count[2] = isize[2];
+    imspc_id = H5Screate_simple(ndims, count, NULL);
+
+    count[0] = 1;
+    count[1] = osize[1];
+    count[2] = osize[2];
+    omspc_id = H5Screate_simple(ndims, count, NULL);
+
+    //
+    // read image & TODO: convert to "real" range.
+    //
+    for (slice = 0; slice < osize[0]; slice++) {
+        
+	fprintf(stderr, "Slice # %d\n", slice);
+	start[0] = slice * scale;
+	start[1] = 0;
+	start[2] = 0;
+	count[0] = scale;
+	count[1] = isize[1];
+	count[2] = isize[2];
+
+	H5Sselect_hyperslab(ifspc_id, H5S_SELECT_SET, start, NULL, count, NULL);
+	H5Dread(idst_id, H5T_NATIVE_DOUBLE, imspc_id, ifspc_id, H5P_DEFAULT, in_ptr);
+
+        midownsample_slice(in_ptr, out_ptr, isize, osize, scale);
+
+	start[0] = slice;
+	start[1] = 0;
+	start[2] = 0;
+	count[0] = 1;
+	count[1] = osize[1];
+	count[2] = osize[2];
+	H5Sselect_hyperslab(ofspc_id, H5S_SELECT_SET, start, NULL, count, NULL);
+	H5Dwrite(odst_id, H5T_NATIVE_DOUBLE, omspc_id, ofspc_id, H5P_DEFAULT, 
+                 out_ptr);
+    }
+
+    free(in_ptr);
+    free(out_ptr);
+    H5Sclose(omspc_id);
+    H5Sclose(imspc_id);
+    H5Dclose(odst_id);
+    H5Tclose(typ_id);
+    H5Sclose(ofspc_id);
+    H5Sclose(ifspc_id);
+    return (MI_NOERROR);
+}
+
+int
+minc_update_thumbnails(hid_t file_id)
+{
+    int grp_no, prv_grp_no;
+    hid_t grp_id;
+    hsize_t n;
+    hsize_t i;
+    char name[128];
+    size_t length;
+
+    grp_id = H5Gopen(file_id, "/minc-2.0/image");
+    if (grp_id >= 0) {
+        if (H5Gget_num_objs(grp_id, &n) != 0) {
+            for (i = 0; i < n; i++) {
+                length = sizeof(name);
+                H5Gget_objname_by_idx(grp_id, i, name, length);
+                fprintf(stderr, "Found group %s\n", name);
+                prv_grp_no = grp_no;
+                grp_no = atoi(name);
+                if (grp_no != 0) {
+                    fprintf(stderr, "Updating group #%d from #%d\n", 
+                            grp_no, prv_grp_no);
+                    minc_update_thumbnail(grp_id, prv_grp_no, grp_no);
+                }
+            }
+        }
+        else {
+            fprintf(stderr, "error getting object count?\n");
+        }
+
+        H5Gclose(grp_id);
+    }
+    else {
+        fprintf(stderr, "error opening group?\n");
+	
+    }
+    return (MI_NOERROR);
+
 }
 

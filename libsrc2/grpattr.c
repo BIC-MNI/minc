@@ -17,7 +17,7 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -55,7 +55,7 @@ midelete_attr(mihandle_t vol, const char *path, const char *name)
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -90,7 +90,7 @@ midelete_group(mihandle_t vol, const char *path, const char *name)
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -132,7 +132,7 @@ miget_attr_length(mihandle_t vol, const char *path, const char *name,
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -202,7 +202,7 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -249,7 +249,7 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -324,7 +324,7 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 
     /* Get a handle to the actual HDF file 
      */
-    hdf_file = miget_volume_file_handle(vol);
+    hdf_file = vol->hdf_id;
     if (hdf_file < 0) {
 	return (MI_ERROR);
     }
@@ -406,19 +406,24 @@ int main(int argc, char **argv)
     float fltarr[TESTARRAYSIZE];
     int intarr[TESTARRAYSIZE];
     char valstr[128];
-
+    volumehandle *handle;
     /* Turn off automatic error reporting - we'll take care of this
      * ourselves, thanks!
      */
     // H5Eset_auto(NULL, NULL);
-
+    handle = (volumehandle *)malloc(sizeof(*handle));
+    if (handle == NULL) {
+      return (MI_ERROR);
+    }
+    handle->hdf_id = file_id;
+    hvol = handle;
     r = micreate_volume("test.h5", 0, NULL, 0, 0, NULL, &hvol);
     if (r < 0) {
 	TESTRPT("Unable to create test file", r);
 	return (-1);
     }
 
-    file_id = miget_volume_file_handle(hvol);
+    file_id = 
 
     g1_id = H5Gopen(file_id, "minc-2.0");
 

@@ -28,9 +28,9 @@ miget_volume_valid_max(mihandle_t volume, /**< MINC 2.0 volume handle */
     int result;
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
-    result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
     if (result == MI_NOERROR) {
         *valid_max = range[1];
     }
@@ -50,12 +50,12 @@ miset_volume_valid_max(mihandle_t volume, /**< MINC 2.0 volume handle */
     int result;
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
-    result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
     if (result == MI_NOERROR) {
         range[1] = valid_max;
-        result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+        //result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
     }
     return (result);
 }
@@ -73,9 +73,9 @@ miget_volume_valid_min(mihandle_t volume, /**< MINC 2.0 volume handle */
     int result;
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
-    result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
     if (result == MI_NOERROR) {
         *valid_min = range[0];
     }
@@ -95,12 +95,12 @@ miset_volume_valid_min(mihandle_t volume,  /**< MINC 2.0 volume handle */
     int result;
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
-    result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
     if (result == MI_NOERROR) {
         range[0] = valid_min;
-        result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+	// result = miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
     }
     return (result);
 }
@@ -119,9 +119,9 @@ miget_volume_valid_range(mihandle_t volume,  /**< MINC 2.0 volume handle */
     int result;
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
-    result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //result = miget_valid_range(file_id, MI2varid(file_id, MIimage), range);
     if (result == MI_NOERROR) {
         *valid_min = range[0];
         *valid_max = range[1];
@@ -142,11 +142,11 @@ miset_volume_valid_range(mihandle_t volume, /**< MINC 2.0 volume handle */
     double range[2];
     hid_t file_id;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     range[0] = valid_min;
     range[1] = valid_max;
-    return miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
+    //return miset_valid_range(file_id, MI2varid(file_id, MIimage), range);
 }
 
 #ifdef M2_TEST
@@ -215,9 +215,9 @@ main(int argc, char **argv)
             TESTRPT("error changing volume maximum", 0);
         }
 
-        file_id = miget_volume_file_handle(hvol);
-        r = miattget(file_id, MI2varid(file_id, MIimage),
-                     MIvalid_range, NC_DOUBLE, 2, range, &length);
+        file_id = hvol->hdf_id;
+        //r = miattget(file_id, MI2varid(file_id, MIimage),
+	//MIvalid_range, NC_DOUBLE, 2, range, &length);
         if (r < 0 || length != 2) {
             TESTRPT("error reading attribute", r);
         }

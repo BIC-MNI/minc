@@ -31,7 +31,7 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
 	return (MI_ERROR);
     }
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (opcode & MIRW_SCALE_MIN) {
 	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-min");
     }
@@ -186,7 +186,7 @@ mirw_volume_minmax(int opcode, mihandle_t volume, double *value)
 	return (MI_ERROR);
     }
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (opcode & MIRW_SCALE_MIN) {
 	dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-min");
     }

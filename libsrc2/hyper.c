@@ -107,7 +107,7 @@ mirw_hyperslab(int opcode,
     int ndims;
     int i;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     type_id = mitype_to_hdftype(midatatype);
 
@@ -209,7 +209,7 @@ mirw_hyperslab_mapped(int opcode,
                               buffer);
     }
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     type_id = mitype_to_hdftype(midatatype);
 
@@ -459,7 +459,8 @@ mirw_hyperslab_mapped_icv(int opcode,
     miicv_inqint(icv, MI_ICV_TYPE, &nc_type);
     miicv_inqint(icv, MI_ICV_CDFID, &file_id);
 
-    nbytes = MI2typelen(nc_type);
+    //nbytes = MI2typelen(nc_type);
+    nbytes = 1;
 
     ncvarinq(file_id, var_id, NULL, NULL, &ndims, dimids, NULL);
 
@@ -635,7 +636,7 @@ miget_hyperslab_normalized(mihandle_t volume,
         return (MI_ERROR);
     }
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
     if (file_id < 0) {
         return (MI_ERROR);
     }
@@ -689,7 +690,7 @@ miget_hyperslab_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
     int is_signed;
     int nctype;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     var_id = ncvarid(file_id, MIimage);
 
@@ -724,7 +725,7 @@ miset_hyperslab_with_icv(mihandle_t volume, /**< A MINC 2.0 volume handle */
     int is_signed;
     int nctype;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     var_id = ncvarid(file_id, MIimage);
 
@@ -765,7 +766,7 @@ miget_real_value_hyperslab(mihandle_t volume,
     int is_signed;
     int nctype;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     var_id = ncvarid(file_id, MIimage);
 
@@ -813,7 +814,7 @@ miset_real_value_hyperslab(mihandle_t volume,
     int is_signed;
     int nctype;
 
-    file_id = miget_volume_file_handle(volume);
+    file_id = volume->hdf_id;
 
     var_id = ncvarid(file_id, MIimage);
 
@@ -892,16 +893,16 @@ main(int argc, char **argv)
     int result;
     long start[NDIMS];
     static long count[NDIMS] = {CX,CY,CZ};
-    int itemp[CX][CY][CZ];
+    //int itemp[CX][CY][CZ];
     double dtemp[CX][CY][CZ];
-    int itemp2[CX][CY][CZ];
-    double dtemp2[CX][CY][CZ];
+    //int itemp2[CX][CY][CZ];
+    //double dtemp2[CX][CY][CZ];
     unsigned short stemp[CX][CY][CZ];
     unsigned char btemp[CX][CY][CZ];
     unsigned short stmp2[CX][CY][CZ];
     int i,j,k;
-    int n;
-    misize_t nbytes;
+    //int n;
+    //misize_t nbytes;
     hid_t file_id;
     long imap[NDIMS];
     long offset;
@@ -984,7 +985,7 @@ main(int argc, char **argv)
         fflush(stdout);
   
 
-        file_id = miget_volume_file_handle(hvol);
+        file_id = hvol->hdf_id;
         i = mirw_hyperslab_mapped(MIRW_OP_READ, hvol, MI_TYPE_USHORT, start, 
                                   count, NULL, imap, 
                                   (short *)stmp2 + offset);
@@ -1022,7 +1023,7 @@ main(int argc, char **argv)
         fflush(stdout);
   
 
-        file_id = miget_volume_file_handle(hvol);
+        file_id = hvol->hdf_id;
         start[0] = start[1] = start[2] = 1;
         count[0] = count[1] = count[2] = 2;
         i = mirw_hyperslab_mapped(MIRW_OP_READ, hvol, MI_TYPE_USHORT, start, 
