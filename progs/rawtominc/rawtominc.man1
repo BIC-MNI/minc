@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.2 2003-01-10 05:25:16 stever Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 6.3 2003-10-22 15:34:24 bert Exp $
 .\"
 .TH RAWTOMINC 1
 
@@ -170,6 +170,13 @@ values of option -range. Default is to not store the real image
 minimum and maximum. If -scan_range is used, then the image minimum
 and maximum corresponding to the scanned pixel minimum and maximum are
 calculated and stored. This option is ignored for floating point values.
+.P
+.I -swap_bytes:
+Input values (either -short or -int) need to be converted between
+Motorola (big-endian) and Intel (little-endian) data format.  If
+"short" input is specified, adjacent bytes are swapped.  If "int"
+input is specified, inner and outer byte pairs are swapped.  This
+option has no effect with other input types.
 
 .SH Output data type and range
 .P
