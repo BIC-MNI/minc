@@ -29,7 +29,7 @@ int  main(
     if( arg >= argc || sscanf( argv[arg++], "%d", &continuity ) != 1 )
         continuity = 0;
 
-    if( input_volume( input_filename, 3, dim_names, NC_UNSPECIFIED, FALSE,
+    if( input_volume( input_filename, -1, dim_names, NC_UNSPECIFIED, FALSE,
                       0.0, 0.0, TRUE, &volume,
                       (minc_input_options *) NULL ) != OK )
         return( 1 );

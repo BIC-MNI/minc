@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.55 1995-10-19 15:47:03 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.56 1995-11-17 20:25:41 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -325,6 +325,30 @@ public  Data_types  get_volume_data_type(
     Volume       volume )
 {
     return( get_multidim_data_type( &volume->array ) );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_rgb_volume_flag
+@INPUT      : volume
+              flag
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the flag indicating that the volume is an RGB volume.
+              Can only set the flag to TRUE if the volume is an unsigned
+              long volume.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov 13, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_rgb_volume_flag(
+    Volume   volume,
+    BOOLEAN  flag )
+{
+    if( !flag || get_volume_data_type(volume) == UNSIGNED_LONG )
+        volume->is_rgba_data = flag;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -22,6 +22,9 @@ private  int  compute_voxel(
 #define  X_SIZE  81
 #define  Y_SIZE  88
 #define  Z_SIZE  82
+#define  X_SIZE  31
+#define  Y_SIZE  38
+#define  Z_SIZE  32
 
 #define  BLOCK_SIZE_0  8
 #define  BLOCK_SIZE_1  9
@@ -128,7 +131,7 @@ int  main(
         return( 1 );
 
     set_cache_output_volume_parameters( volume, output_filename2,
-                                        NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                                        NC_SHORT, FALSE, 0.0, 0.0,
                                         output_filename,
                                         "Testing Virtual Volumes\n", NULL );
 

@@ -753,6 +753,18 @@ a string, the next character available from the file is the one just
 after the ending quotation mark.}
 
 {\bf\begin{verbatim}
+public  Status  input_possibly_quoted_string(
+    FILE            *file,
+    STRING          *str )
+\end{verbatim}}
+
+\desc{Inputs a string from a file, delimited by quotation marks or white
+space,
+returning \name{OK} or \name{ERROR}.  After successful reading of
+a string, the next character available from the file is the one just
+after the ending quotation mark or last non-white space character.}
+
+{\bf\begin{verbatim}
 public  Status  input_line(
     FILE    *file,
     STRING  line )
@@ -1095,6 +1107,39 @@ one memory allocation for each dimension required.}
 
 \desc{Frees the memory associated with the multi-dimensional array.}
 
+{\bf\begin{verbatim}
+public  void  set_alloc_checking(
+    BOOLEAN state )
+\end{verbatim}}
+
+\desc{Enables or disables allocation checking.  It is usually called at
+the beginning of a program to provide double-checking of allocation.  It
+incurs an extra allocation every time one of the previous allocation
+macros is invoked.  If this function is not called, allocation checking
+can be turned on by setting the environment variable \name{DEBUG\_ALLOC}
+to anything.  Allocation checking detects three types of memory programming
+errors:
+\begin{itemize}
+\item[] freeing a pointer that was not allocated,
+\item[] by checking that memory chunks returned from the
+system malloc routine do not overlap existing ones, sometimes detects when
+the system memory has become corrupted, and
+\item[] by recording all memory allocated and printing out what is
+currently allocated, can detect memory leaks.
+\end{itemize}
+}
+
+{\bf\begin{verbatim}
+public  void  output_alloc_to_file(
+    STRING   filename )
+\end{verbatim}}
+
+\desc{If memory checking was enabled, this function can be used to detect
+memory leaks.  At the end of a program, the programmer should free up all
+memory that is known, then call this function.  Any remaining allocated memory
+is printed out to a file, indicating the file and line number where the
+memory was allocated.}
+
 \subsection{Higher Level Array Allocation}
 
 In addition to the basic memory allocation macros described previously,
@@ -1384,7 +1429,9 @@ the volume if the \name{create\_volume\_flag} is specified as
 number of dimensions is the desired number of dimensions for the
 volume.  If this is less than the number of dimensions in the file,
 then only the first part of the file, corresponding to this number of
-dimensions, is read.  The argument \name{dim\_names} specifies in what
+dimensions, is read.  If the number of dimensions specified is less than 1,
+then the number of dimensions in the file is used.
+The argument \name{dim\_names} specifies in what
 order the volume is to be stored in the volume variable.  For each
 dimension in the stored volume, there is a corresponding name, which
 is one of \name{MIxspace}, \name{MIyspace}, \name{MIzspace},
@@ -1430,7 +1477,7 @@ public  void  set_default_minc_input_options(
 \end{verbatim}}
 
 \desc{Fills in the default options into an \name{options} structure
-which will subsequently be passed to \name{input\_volume}.}
+which will subsequently be passed to \name{input\_volume()}.}
 
 {\bf\begin{verbatim}
 public  void  set_minc_input_promote_invalid_to_min_flag(
@@ -1474,6 +1521,79 @@ specified by \name{set\_minc\_input\_colour\_dimension\_size}
 indices specified by \name{set\-\_minc\-\_input\-\_colour\-\_indices}
 (default 0, 1, 2).}
 
+\section{Alternative Volume Input Methods}
+
+Rather than using the \name{input\_volume()} function to input a volume in one
+shot, there is another method which will allow interspersing volume
+input with other processing tasks.  The following is the set of
+routines which the \name{input\_volume()} function calls in order to
+input a volume.
+
+{\bf\begin{verbatim}
+public  Status  start_volume_input(
+    STRING               filename,
+    int                  n_dimensions,
+    STRING               dim_names[],
+    nc_type              volume_nc_data_type,
+    BOOLEAN              volume_signed_flag,
+    Real                 volume_voxel_min,
+    Real                 volume_voxel_max,
+    BOOLEAN              create_volume_flag,
+    Volume               *volume,
+    minc_input_options   *options,
+    volume_input_struct  *input_info )
+\end{verbatim}}
+
+\desc{This initializes a filename for inputting the volume
+incrementally.   The arguments to this are identical to those for
+the \name{input\_volume()} function, with the addition of the
+\name{input\_info}
+structure which is initialized for use in the remaining functions.
+The volume is created if necessary, but not allocated, and no part of
+the volume is read in.}
+
+{\bf\begin{verbatim}
+public  void  delete_volume_input(
+    volume_input_struct   *input_info )
+\end{verbatim}}
+
+\desc{Closes the file and terminates the input of the volume.  By
+calling the \name{start\_volume\_input()} function followed by the
+\name{delete\_volume\_input()} function, a volume can be created that
+has all the information about the file volume, without the voxels
+being allocated.}
+
+{\bf\begin{verbatim}
+public  void  cancel_volume_input(
+    Volume                volume,
+    volume_input_struct   *input_info )
+\end{verbatim}}
+
+\desc{Closes the file, terminates the input of the volume, and deletes
+the volume.  Simply calls \name{delete\_volume\_input()} followed by
+\name{delete\_volume()}.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  input_more_of_volume(
+    Volume                volume,
+    volume_input_struct   *input_info,
+    Real                  *fraction_done )
+\end{verbatim}}
+
+\desc{Inputs a small chunk of the volume, calculated to be efficient,
+yet not be so large that one cannot usably intersperse calls to do
+other processing with calls to this function.  Returns \name{TRUE} if
+there is more to do, i.e., this function should be called again.  The
+fraction done is passed back as a number between 0 and 1.}
+
+{\bf\begin{verbatim}
+public  Minc_file   get_volume_input_minc_file(
+    volume_input_struct   *volume_input )
+\end{verbatim}}
+
+\desc{The \name{Minc\_file} structure from the volume input is passed
+back, to allow use of this in routines that require this type.}
+
 \section{Volume Output}
 
 Volume output is accomplished by one of two routines, depending on
@@ -1514,6 +1634,13 @@ public  void  set_default_minc_output_options(
 user can then override the default values and pass the structure to
 the \name{output\_volume()} function.  Currently, there is only one
 output option:}
+
+{\bf\begin{verbatim}
+public  void  delete_minc_output_options(
+    minc_output_options  *options           )
+\end{verbatim}}
+
+\desc{Deletes the \name{options} data.}
 
 {\bf\begin{verbatim}
 public  void  set_minc_output_dimensions_order(
@@ -1737,7 +1864,35 @@ public  STRING  *get_volume_dimension_names(
     Volume   volume )
 \end{verbatim}}
 
-\desc{Returns a pointer to the list of names of each dimension.}
+\desc{Returns a pointer to the list of names of each dimension.  This
+memory must be freed by the calling function using the following
+function.}
+
+{\bf\begin{verbatim}
+public  void  delete_dimension_names(
+    Volume   volume,
+    STRING   dimension_names[] )
+\end{verbatim}}
+
+\desc{Frees the memory allocated for the dimension names.}
+
+{\bf\begin{verbatim}
+public  void  set_rgb_volume_flag(
+    Volume   volume,
+    BOOLEAN  flag )
+\end{verbatim}}
+
+\desc{Sets the volume flag indicating whether the volume is
+of type red-green-blue colour.  Only volumes whose data type is
+unsigned long may be rgb volumes.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  is_an_rgb_volume(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the volume is a red-green-blue colour
+volume, as can be created on volume input.}
 
 \subsection{Volume Coordinate Systems}
 
@@ -1806,6 +1961,27 @@ public  void  convert_3D_world_to_voxel(
 
 \desc{Same as \name{convert\_world\_to\_voxel} except it applies only
 to three dimensional volumes.}
+
+{\bf\begin{verbatim}
+public  void  convert_voxel_vector_to_world(
+    Volume          volume,
+    Real            voxel_vector[],
+    Real            *x_world,
+    Real            *y_world,
+    Real            *z_world )
+
+public  void  convert_world_vector_to_voxel(
+    Volume          volume,
+    Real            x_world,
+    Real            y_world,
+    Real            z_world,
+    Real            voxel_vector[] )
+\end{verbatim}}
+
+\desc{These two functions convert vectors between the voxel and world
+spaces.  This is done by transforming the point (0,0,0) to the other
+space, in addition to treating the vector as a point and transforming
+it to the other space, and passing back the vector between the two results.}
 
 {\bf\begin{verbatim}
 public  void  convert_voxel_normal_vector_to_world(
@@ -2019,15 +2195,24 @@ public  Volume   copy_volume_definition(
     BOOLEAN  signed_flag,
     Real     voxel_min,
     Real     voxel_max )
+
+public  Volume   copy_volume_definition_no_alloc(
+    Volume   volume,
+    nc_type  nc_data_type,
+    BOOLEAN  signed_flag,
+    Real     voxel_min,
+    Real     voxel_max )
 \end{verbatim}}
 
-\desc{Creates and returns a new volume which has the same definition
+\desc{Both functions creates and returns a new volume which has the same
+definition
 (sizes, voxel-to-world space transform, etc.), as an existing volume.
 If the argument \name{nc\_data\_type} is not \name{NC\_UNSPECIFIED},
 then the storage type of the new volume differs from the original and
 is specified by \name{nc\_data\_type}, \name{signed\_flag},
-\name{voxel\_min}, and \name{voxel\_max}.  The voxel values are allocated
-but not initialized.}
+\name{voxel\_min}, and \name{voxel\_max}.  In the first function, the voxel
+values are allocated but not initialized.  In the second function,
+they are not allocated.}
 
 {\bf\begin{verbatim}
 public  Volume   copy_volume(
@@ -2134,12 +2319,16 @@ calling the function \name{set\_volume\_cache\_block\_sizes}, there
 may be a temporary speed loss in accessing pixels.}
 
 {\bf\begin{verbatim}
-public  void  set_cache_volume_output_filename(
-    Volume      volume,
-    STRING      filename )
-public  void  set_cache_volume_output_dimension_names(
-    Volume      volume,
-    STRING      dimension_names[] )
+public  void  set_cache_output_volume_parameters(
+    Volume                      volume,
+    STRING                      filename,
+    nc_type                     file_nc_data_type,
+    BOOLEAN                     file_signed_flag,
+    Real                        file_voxel_min,
+    Real                        file_voxel_max,
+    STRING                      original_filename,
+    STRING                      history,
+    minc_output_options         *options )
 \end{verbatim}}
 
 \desc{When a cached volume is modified, a temporary file is created to
@@ -2151,10 +2340,23 @@ storage, especially for large volumes.  To avoid this, an application
 can specify a filename where to place the voxel values, which
 overrides the use of a temporary file.  When the volume is deleted,
 this file is closed and remains on the disk, obviating the need for
-the application to output the volume.  If the application tries to
-output this volume to a file of the same name as that set by this
-function, the request to output will be ignored, because the volume
-already exists in this file.}
+the application to output the volume.  If the application later calls
+\name{output\_volume()} to output this volume to a file of the same name
+as that set by this function, the request to output will be ignored, because
+the volume already exists in this file.  Basically, the programmer should
+call \name{set\_cache\_output\_volume\_parameters()} with the same
+parameters that will be passed to the eventual call to
+\name{output\_volume()}.  If the volume is a cached volume, then the
+output file will be created as soon as a volume voxel is set, and the
+later call to \name{output\_volume()} will not recreate the file, but
+simply flush the cache buffer to make the file fully up to date.  If the volume
+is not a cached volume, the call to
+\name{set\_cache\_output\_volume\_parameters()} will be ignored, and the
+later call to \name{output\_volume()} will create the file as
+specified.  Note that when calling this function, it is important to
+delete the volume before exitting the program, so that cached volumes
+will flush their buffer and close the file,  Otherwise, the most
+recent changes to the volume will not be written to the file.}
 
 \section{Source Code Example}
 
@@ -2536,6 +2738,14 @@ arguments, \name{weights}, \name{structure\_ids}, or
 three pieces or information is written to the file.  Similarly, if
 the \name{labels} argument is \name{NULL}, then no labels are written
 to the file.}
+
+{\bf\begin{verbatim}
+public  STRING  get_default_tag_file_suffix()
+\end{verbatim}}
+
+\desc{Returns a pointer to a string consisting of the default suffix
+for tag point files, currently \name{``tag''}.  This pointer should not
+be freed or its contents modified.}
 
 {\bf\begin{verbatim}
 public  Status  initialize_tag_file_output(
@@ -2988,6 +3198,14 @@ the file has already been opened for input, and will later be closed.
 The second form opens the file for input, with a default extension of
 \name{.xfm}, reads the transform, then closes the file.  Both functions
 return \name{ERROR} or \name{OK}.}
+
+{\bf\begin{verbatim}
+public  STRING  get_default_transform_file_suffix()
+\end{verbatim}}
+
+\desc{Returns a pointer to a string consisting of the default suffix
+for transform files, currently \name{``xfm''}.  This pointer should not
+be freed or its contents modified.}
 
 \chapter{Final Source Code Example}
 

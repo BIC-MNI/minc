@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.41 1995-11-10 20:23:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.42 1995-11-17 20:25:42 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -69,6 +69,21 @@ private  BOOLEAN  is_default_direction_cosine(
 
     return( is_default );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_world_transform
+@INPUT      : file
+              voxel_to_world_transform
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the voxel to world transformation, in terms of MINC
+              starts, steps, and direction cosines.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 24, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  Status  output_world_transform(
     Minc_file              file,
@@ -276,6 +291,7 @@ public  Minc_file  initialize_minc_output(
         equal_strings( volume_to_attach->cache.output_filename, file->filename))
     {
         file->ignoring_because_cached = TRUE;
+        flush_volume_cache( volume_to_attach );
         return( file );
     }
 
@@ -1517,6 +1533,19 @@ public  void  set_default_minc_output_options(
     options->global_image_range[0] = 0.0;
     options->global_image_range[1] = -1.0;
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_minc_output_options
+@INPUT      : src
+@OUTPUT     : dest
+@RETURNS    : 
+@DESCRIPTION: Copies the minc output options to a new structure.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov. 12, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  copy_minc_output_options(
     minc_output_options  *src,

@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.17 1995-11-10 20:23:18 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.18 1995-11-17 20:25:44 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -412,7 +412,6 @@ private  void  get_block_start(
 @INPUT      : cache
               volume
               block
-              block_start
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Writes out a cache block to the appropriate position in the
@@ -427,17 +426,19 @@ private  void  get_block_start(
 private  void  write_cache_block(
     volume_cache_struct  *cache,
     Volume               volume,
-    cache_block_struct   *block,
-    int                  block_start[] )
+    cache_block_struct   *block )
 {
     Minc_file        minc_file;
     int              dim, ind, n_dims;
     int              file_start[MAX_DIMENSIONS];
     int              file_count[MAX_DIMENSIONS];
     int              volume_sizes[MAX_DIMENSIONS];
+    int              block_start[MAX_DIMENSIONS];
     void             *array_data_ptr;
 
     minc_file = (Minc_file) cache->minc_file;
+
+    get_block_start( cache, block->block_index, block_start );
 
     get_volume_sizes( volume, volume_sizes );
 
@@ -473,11 +474,11 @@ private  void  write_cache_block(
 @NAME       : flush_cache_blocks
 @INPUT      : cache
               volume
-              deleting_volume_flag  - TRUE if deleting the volume
+              deleting_volume_flag
 @OUTPUT     : 
 @RETURNS    : 
-@DESCRIPTION: Deletes all cache blocks, writing out all blocks, if the volume
-              has been modified.
+@DESCRIPTION: Writes out all blocks that have been modified, unless we are
+              writing to a temporary file and the volume is being deleted.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -490,28 +491,88 @@ private  void  flush_cache_blocks(
     Volume                volume,
     BOOLEAN               deleting_volume_flag )
 {
-    int                 block, block_index;
-    int                 block_start[MAX_DIMENSIONS];
-    cache_block_struct  *this, *next;
+    cache_block_struct  *block;
+
+    /*--- don't bother flushing if deleting volume and just writing to temp */
+
+    if( cache->writing_to_temp_file && deleting_volume_flag )
+        return;
 
     /*--- step through linked list, freeing blocks */
 
-    this = cache->head;
-    while( this != NULL )
+    block = cache->head;
+    while( block != NULL )
     {
-        if( this->modified_flag &&
-            (!cache->writing_to_temp_file || !deleting_volume_flag) )
+        if( block->modified_flag )
         {
-            block_index = this->block_index;
-            get_block_start( cache, block_index, block_start );
-            write_cache_block( cache, volume, this, block_start );
+            write_cache_block( cache, volume, block );
+            block->modified_flag = FALSE;
         }
 
-        next = this->next_used;
-        delete_multidim_array( &this->array );
-        FREE( this );
-        this = next;
+        block = block->next_used;
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : flush_volume_cache
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Writes out all blocks that have been modified.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  flush_volume_cache(
+    Volume                volume )
+{
+    flush_cache_blocks( &volume->cache, volume, FALSE );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_cache_blocks
+@INPUT      : cache
+              volume
+              deleting_volume_flag  - TRUE if deleting the volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Deletes all cache blocks, writing out all blocks, if the volume
+              has been modified.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  delete_cache_blocks(
+    volume_cache_struct   *cache,
+    Volume                volume,
+    BOOLEAN               deleting_volume_flag )
+{
+    int                 block;
+    cache_block_struct  *current, *next;
+
+    /*--- if required, write out cache blocks */
+
+    if( !cache->writing_to_temp_file || !deleting_volume_flag )
+        flush_cache_blocks( cache, volume, deleting_volume_flag );
+
+    /*--- step through linked list, freeing blocks */
+
+    current = cache->head;
+    while( current != NULL )
+    {
+        next = current->next_used;
+        delete_multidim_array( &current->array );
+        FREE( current );
+        current = next;
+    }
+
+    /*--- initialize cache to no blocks present */
 
     cache->n_blocks = 0;
 
@@ -543,7 +604,7 @@ public  void  delete_volume_cache(
 {
     int   dim, n_dims;
 
-    flush_cache_blocks( cache, volume, TRUE );
+    delete_cache_blocks( cache, volume, TRUE );
 
     FREE( cache->hash_table );
 
@@ -620,7 +681,7 @@ public  void  set_volume_cache_block_sizes(
     if( !changed )
         return;
 
-    flush_cache_blocks( cache, volume, FALSE );
+    delete_cache_blocks( cache, volume, FALSE );
 
     FREE( cache->hash_table );
 
@@ -668,7 +729,7 @@ public  void  set_volume_cache_size(
 
     cache = &volume->cache;
 
-    flush_cache_blocks( cache, volume, FALSE );
+    delete_cache_blocks( cache, volume, FALSE );
 
     FREE( cache->hash_table );
 
@@ -681,6 +742,29 @@ public  void  set_volume_cache_size(
 
     alloc_volume_cache( cache, volume );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_cache_output_volume_parameters
+@INPUT      : volume
+              filename
+              file_nc_data_type
+              file_signed_flag
+              file_voxel_min
+              file_voxel_max
+              original_filename  - if non-NULL copies auxiliary info from this
+              history
+              options
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Indicates that rather than using a temporary file for the
+              cached volume, read and write to this file with the associated
+              parameters (similar to output_modified_volume()).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov.  4, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  set_cache_output_volume_parameters(
     Volume                      volume,
@@ -888,7 +972,7 @@ public  void  set_cache_volume_file_offset(
     }
 
     if( changed )
-        flush_cache_blocks( cache, volume, FALSE );
+        delete_cache_blocks( cache, volume, FALSE );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -948,8 +1032,6 @@ private  void  read_cache_block(
                                  n_dims, cache->block_sizes, array_data_ptr,
                                  minc_file->to_volume_index,
                                  file_start, file_count );
-
-    block->modified_flag = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -971,7 +1053,6 @@ private  cache_block_struct  *appropriate_a_cache_block(
     volume_cache_struct  *cache,
     Volume               volume )
 {
-    int                 block_start[MAX_DIMENSIONS];
     cache_block_struct  *block;
 
     /*--- if can allocate more blocks, do so */
@@ -990,10 +1071,7 @@ private  cache_block_struct  *appropriate_a_cache_block(
         block = cache->tail;
 
         if( block->modified_flag )
-        {
-            get_block_start( cache, block->block_index, block_start );
-            write_cache_block( cache, volume, block, block_start );
-        }
+            write_cache_block( cache, volume, block );
 
         /*--- remove from used list */
 
@@ -1013,6 +1091,8 @@ private  cache_block_struct  *appropriate_a_cache_block(
         if( block->next_hash != NULL )
             block->next_hash->prev_hash = block->prev_hash;
     }
+
+    block->modified_flag = FALSE;
 
     return( block );
 }

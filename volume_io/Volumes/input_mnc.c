@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.49 1995-11-10 20:23:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.50 1995-11-17 20:25:40 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -31,6 +31,19 @@ private  BOOLEAN  match_dimension_names(
     STRING            file_dimension_names[],
     int               to_volume_index[] );
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_minc_file_n_dimensions
+@INPUT      : filename
+@OUTPUT     : 
+@RETURNS    : n_dims
+@DESCRIPTION: Returns the number of dimensions in the minc file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov. 4, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  int   get_minc_file_n_dimensions(
     STRING   filename )
 {
@@ -43,7 +56,7 @@ public  int   get_minc_file_n_dimensions(
 
     expanded = expand_filename( filename );
 
-    cdfid =  miopen( expanded, NC_NOWRITE );
+    cdfid = miopen( expanded, NC_NOWRITE );
 
     if( cdfid == MI_ERROR )
     {
@@ -60,6 +73,8 @@ public  int   get_minc_file_n_dimensions(
 
     ncvarinq( cdfid, img_var, (char *) NULL, &file_datatype,
               &n_dims, dim_vars, (int *) NULL );
+
+    (void) miclose( cdfid );
 
     return( n_dims );
 }
@@ -170,7 +185,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             }
 
             set_volume_type( volume, NC_LONG, FALSE, 0.0, 0.0 );
-            volume->is_rgba_data = TRUE;
+            set_rgb_volume_flag( volume, TRUE );
             file->converting_to_colour = TRUE;
             delete_string( file->dim_names[file->n_file_dimensions-1] );
             --file->n_file_dimensions;

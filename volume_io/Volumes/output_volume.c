@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.18 1995-11-10 20:23:16 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.19 1995-11-17 20:25:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,24 +36,29 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_v
 
 public  Status   get_file_dimension_names(
     STRING   filename,
-    int      n_dims,
-    STRING   dim_names[] )
+    int      *n_dims,
+    STRING   *dim_names[] )
 {
     int                   i;
     Status                status;
     volume_input_struct   volume_input;
     Volume                tmp_volume;
 
-    status = start_volume_input( filename, n_dims, File_order_dimension_names,
+    status = start_volume_input( filename, -1, File_order_dimension_names,
                                  NC_UNSPECIFIED, FALSE, 0.0, 0.0,
                                  TRUE, &tmp_volume, (minc_input_options *) NULL,
                                  &volume_input );
 
     if( status == OK )
     {
-        for_less( i, 0, n_dims )
+        *n_dims = get_volume_n_dimensions( tmp_volume );
+
+        ALLOC( *dim_names, *n_dims );
+
+        for_less( i, 0, *n_dims )
         {
-            dim_names[i] = create_string( volume_input.minc_file->dim_names[i]);
+            (*dim_names)[i] = create_string(
+                           volume_input.minc_file->dim_names[i]);
         }
 
         delete_volume_input( &volume_input );
@@ -63,17 +68,39 @@ public  Status   get_file_dimension_names(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_output_dim_names
+@INPUT      : volume
+              original_filename
+              options
+@OUTPUT     : file_sizes
+@RETURNS    : array of names
+@DESCRIPTION: Creates an array of dimension names for file output.  If the
+              options contains a set of names, they are used.  Otherwise,
+              if the original_filename is specified (non-NULL), then the
+              dimension names from it are used, if they contain all the
+              dimension names in the volume.  Otherwise, those from the
+              volume are used.  The file_sizes[] array is set to match
+              the sizes in the volume cross-referenced with the dimension
+              names.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov. 4, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  STRING  *create_output_dim_names(
     Volume                volume,
     STRING                original_filename,
     minc_output_options   *options,
     int                   file_sizes[] )
 {
-    int                  n_dims;
+    int                  n_dims, n_file_dims, dim_index;
     int                  vol_sizes[MAX_DIMENSIONS];
     int                  i, j, n_found;
+    STRING               *file_dim_names;
     STRING               *vol_dimension_names;
-    BOOLEAN              done[MAX_DIMENSIONS];
     STRING               *dim_names;
 
     get_volume_sizes( volume, vol_sizes );
@@ -93,51 +120,112 @@ public  STRING  *create_output_dim_names(
     }
     else
     {
-        if( original_filename != NULL && file_exists(original_filename) )
+        if( original_filename != NULL && file_exists(original_filename) &&
+            get_file_dimension_names( original_filename, &n_file_dims,
+                                      &file_dim_names ) == OK )
         {
-            if( get_file_dimension_names( original_filename, n_dims,
-                                          dim_names ) != OK )
-                return( NULL );
+            /*--- extract the dimension names from the file which match
+                  those of the volume, so a 3D volume of z, y, x with a 4D file
+                  of x y z t, will generate a list of dim_names: x y z */
+
+            dim_index = 0;
+
+            for_less( i, 0, n_file_dims )
+            {
+                for_less( j, 0, n_dims )
+                {
+                    if( equal_strings( vol_dimension_names[j],
+                                       file_dim_names[i] ) )
+                    {
+                        dim_names[dim_index] = create_string(
+                                                  vol_dimension_names[j] );
+                        ++dim_index;
+                        break;
+                    }
+                }
+
+                if( dim_index == n_dims )  /*--- save time */
+                    break;
+            }
+
+            /*--- check that all volume dimensions exist in the file */
+
+            if( dim_index != n_dims )
+            {
+                for_less( i, 0, dim_index )
+                    delete_string( dim_names[i] );
+
+                for_less( i, 0, n_dims )
+                    dim_names[i] = create_string( vol_dimension_names[i] );
+            }
+
+            /*--- free up the file dimension names */
+
+            for_less( i, 0, n_file_dims )
+                delete_string( file_dim_names[i] );
+
+            FREE( file_dim_names );
         }
-        else
+        else   /*--- no original file specified, use the volumes own list */
         {
             for_less( i, 0, n_dims )
                 dim_names[i] = create_string( vol_dimension_names[i] );
         }
     }
 
+    /*--- check that the set of dimension names are simply a permutation
+          of the ones in the volume */
+
     n_found = 0;
-    for_less( i, 0, n_dims )
-        done[i] = FALSE;
 
     for_less( i, 0, n_dims )
     {
         for_less( j, 0, n_dims )
         {
-            if( !done[j] &&
-                equal_strings( vol_dimension_names[i], dim_names[j] ) )
+            if( equal_strings( dim_names[j], vol_dimension_names[i] ) )
             {
                 file_sizes[j] = vol_sizes[i];
                 ++n_found;
-                done[j] = TRUE;
             }
         }
     }
 
-    delete_dimension_names( volume, vol_dimension_names );
+    /*--- act on whether the set of names was a permutation or not */
 
     if( n_found != n_dims )
     {
         print_error(
-               "create_output_dim_names: invalid dimension name.\n" );
+               "create_output_dim_names: dimension name mismatch.\n" );
 
         delete_dimension_names( volume, dim_names );
 
-        return( NULL );
+        dim_names = NULL;
     }
+
+    /*--- no longer need the volume dimension names */
+
+    delete_dimension_names( volume, vol_dimension_names );
 
     return( dim_names );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : copy_volume_auxiliary_and_history
+@INPUT      : minc_file
+              filename
+              original_filename
+              history
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: If the original_filename is specified, Copies the auxiliary
+              data from it.  If the history is specified, adds the history
+              line.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Oct. 24, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status   copy_volume_auxiliary_and_history(
     Minc_file   minc_file,
