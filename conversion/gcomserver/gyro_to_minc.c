@@ -7,10 +7,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 1.3  1994-01-14 11:37:21  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.4  1994-01-18 13:36:11  neelin
+@MODIFIED   : Added command line options to gyrotominc and fixed error message bug in
+@MODIFIED   : gyro_to_minc.
 @MODIFIED   :
+ * Revision 1.3  94/01/14  11:37:21  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.2  93/12/08  09:13:27  neelin
  * Delete group list.
  * 
@@ -68,6 +72,7 @@ public int gyro_to_minc(int num_files, char *file_list[],
    int icvid;
    int ifile;
    Mri_Index imri;
+   char *out_file_name;
 
    /* Allocate space for the file information */
    file_info = MALLOC(num_files * sizeof(*file_info));
@@ -107,15 +112,17 @@ public int gyro_to_minc(int num_files, char *file_list[],
    /* Create the output file */
    if (general_info.initialized) {
       icvid = create_minc_file(minc_file, clobber, &general_info,
-                               file_prefix, output_file_name);
+                               file_prefix, &out_file_name);
    }
+   if (output_file_name != NULL)
+      *output_file_name = out_file_name;
 
    /* Check that we found the general info and that the minc file was
       created okay */
    if ((!general_info.initialized) || (icvid == MI_ERROR)) {
       if (general_info.initialized) {
          (void) fprintf(stderr, "Error creating minc file %s.\n",
-                        *output_file_name);
+                        out_file_name);
       }
       free_info(&general_info, file_info, num_files);
       FREE(file_info);

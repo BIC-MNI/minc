@@ -4,10 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 1.2  1994-01-14 11:37:22  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.3  1994-01-18 13:36:42  neelin
+@MODIFIED   : Added command line options to gyrotominc and fixed error message bug in
+@MODIFIED   : gyro_to_minc.
 @MODIFIED   :
+ * Revision 1.2  94/01/14  11:37:22  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.1  93/11/30  14:41:33  neelin
  * Initial revision
  * 
@@ -24,19 +28,41 @@
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
+#include <ParseArgv.h>
 
+/* Argument variables */
 int Do_logging = LOW_LOGGING;
+int clobber = FALSE;
+char *outputfile = NULL;
+
+/* Argument table */
+ArgvInfo argTable[] = {
+   {"-nologging", ARGV_CONSTANT, (char *) NO_LOGGING, (char *) &Do_logging,
+       "Don't print log messages."},
+   {"-lowlogging", ARGV_CONSTANT, (char *) LOW_LOGGING, (char *) &Do_logging,
+       "Print some log messages (default)."},
+   {"-highlogging", ARGV_CONSTANT, (char *) HIGH_LOGGING, (char *) &Do_logging,
+       "Print all log messages."},
+   {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
+       "Overwrite existing file."},
+   {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
+       "Don't overwrite existing file (default)."},
+   {"-output", ARGV_STRING, (char *) 1, (char *) &outputfile,
+       "Specify name of output file (default = make up name)."},
+   {NULL, ARGV_END, NULL, NULL, NULL}
+};
 
 int main(int argc, char *argv[])
 {
    int exit_status;
 
-   if (argc < 2) {
-      (void) fprintf(stderr, "Usage: %s files...\n", argv[0]);
+   if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
+      (void) fprintf(stderr, "\nUsage: %s [<options>] files...\n", argv[0]);
+      (void) fprintf(stderr, "       %s -help\n\n", argv[0]);
       exit(EXIT_FAILURE);
    }
 
-   exit_status = gyro_to_minc(argc-1, &argv[1], NULL, FALSE,
+   exit_status = gyro_to_minc(argc-1, &argv[1], outputfile, clobber,
                               "", NULL);
 
    exit(exit_status);
