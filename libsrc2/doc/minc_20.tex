@@ -123,6 +123,9 @@ MON DEC 13/2004 Leila\\*
 * Added some minor changes to the convert functions
 * Some are not yet implemented. 
 
+TUE JAN 18/2005 Leila\\*
+* Added some extra definition to the set hyperslab functions
+
 \section{Introduction}
 
 
@@ -1718,6 +1721,13 @@ int miset_hyperslab_with_icv ( int             icv,
 DESCRIPTION
 
 This method sets the hyperslab with the specified icv.
+It is important to mention that if the apparent dimension order of 
+the volume has been set (miset_apparent_dimension_order or 
+miset_apparent_dimension_order_by_name) and is different from 
+the dimension order of the file, then the buffer will
+be re-ordered in-place before the hyperslab is written.  
+Hence, the ordering of the data in the buffer is *NOT* preserved 
+by this function call.
 
 RETURN VALUE
 
@@ -1773,9 +1783,17 @@ int miset_real_value_hyperslab( mihandle_t     volume,
 
 DESCRIPTION
 
-This method sets a real value hyperslab with the specified type and size. The 
-void pointer would get casted to the appropriate type once it is used. The data_type
-argument will be used to ensure type compatibility with the hyperslab data type. 
+This method sets a real value hyperslab with the specified type and size. 
+The void pointer would get casted to the appropriate type once it is used. 
+The data_type argument will be used to ensure type compatibility with the 
+hyperslab data type. 
+It is important to mention that if the apparent dimension order of 
+the volume has been set (miset_apparent_dimension_order or 
+miset_apparent_dimension_order_by_name) and is different from 
+the dimension order of the file, then the buffer will
+be re-ordered in-place before the hyperslab is written.  
+Hence, the ordering of the data in the buffer is *NOT* preserved 
+by this function call.
 
 RETURN VALUE
 
@@ -1830,6 +1848,14 @@ DESCRIPTION
 
 This method sets a voxel value hyperslab with the specified type and size. If
 the type does not match a simple C cast will be applied.
+It is important to mention that if the apparent dimension order of 
+the volume has been set (miset_apparent_dimension_order or 
+miset_apparent_dimension_order_by_name) and is different from 
+the dimension order of the file, then the buffer will
+be re-ordered in-place before the hyperslab is written.  
+Hence, the ordering of the data in the buffer is *NOT* preserved 
+by this function call.
+
 
 RETURN VALUE
 
