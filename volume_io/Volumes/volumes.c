@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.66 1997-08-13 13:21:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.67 1998-02-17 21:30:29 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -1460,6 +1460,182 @@ public  void  get_volume_direction_cosine(
         dir[Y] = volume->direction_cosines[axis][Y];
         dir[Z] = volume->direction_cosines[axis][Z];
     }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_translation
+@INPUT      : volume
+              voxel
+              world_space_voxel_maps_to
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the translation portion of the volume so that the given
+              voxel maps to the given world space position.  Rewrote this
+              to provide backwards compatibility.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Aug. 31, 1997    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_translation(
+    Volume  volume,
+    Real    voxel[],
+    Real    world_space_voxel_maps_to[] )
+{
+    int         dim, dim2, axis, n_axes, a1, a2;
+    Real        world_space_origin[N_DIMENSIONS], len;
+    Real        starts[MAX_DIMENSIONS], starts_3d[N_DIMENSIONS];
+    Transform   transform, inverse;
+
+    /*--- find the world position where ( 0, 0, 0 ) maps to by taking
+          the world position - voxel[x_axis] * Xaxis - voxel[y_axis] * Yaxis
+          ..., and fill in the transform defined by Xaxis, Yaxis, Zaxis */
+
+    make_identity_transform( &transform );
+
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        world_space_origin[dim] = world_space_voxel_maps_to[dim];
+
+        for_less( dim2, 0, N_DIMENSIONS )
+        {
+            axis = volume->spatial_axes[dim2];
+            if( axis >= 0 )
+            {
+                world_space_origin[dim] -= volume->separations[axis] *
+                           volume->direction_cosines[axis][dim] * voxel[axis];
+
+                Transform_elem( transform, dim, dim2 ) =
+                                           volume->direction_cosines[axis][dim];
+            }
+        }
+    }
+
+    n_axes = 0;
+
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        axis = volume->spatial_axes[dim];
+        if( axis >= 0 )
+            ++n_axes;
+    }
+
+    /*--- if only one spatial axis, make a second orthogonal vector */
+
+    if( n_axes == 1 )
+    {
+        /*--- set dim to the spatial axis */
+
+        if( volume->spatial_axes[0] >= 0 )
+            dim = 0;
+        else if( volume->spatial_axes[1] >= 0 )
+            dim = 1;
+        else if( volume->spatial_axes[2] >= 0 )
+            dim = 2;
+
+        /*--- set a1 to the lowest occuring non-spatial axis, and create
+              a unit vector normal to that of the spatial axis */
+
+        if( dim == 0 )
+            a1 = 1;
+        else
+            a1 = 0;
+
+        Transform_elem( transform, 0, a1 ) = Transform_elem(transform,1,dim) +
+                                             Transform_elem(transform,2,dim);
+        Transform_elem( transform, 1, a1 ) = -Transform_elem(transform,0,dim) -
+                                              Transform_elem(transform,2,dim);
+        Transform_elem( transform, 2, a1 ) = Transform_elem(transform,1,dim) -
+                                             Transform_elem(transform,0,dim);
+
+        len = Transform_elem(transform,0,a1)*Transform_elem(transform,0,a1) +
+              Transform_elem(transform,1,a1)*Transform_elem(transform,1,a1) +
+              Transform_elem(transform,2,a1)*Transform_elem(transform,2,a1);
+
+        if( len == 0.0 )
+            len = 1.0;
+        else
+            len = sqrt( len );
+
+        Transform_elem(transform,0,a1) /= len;
+        Transform_elem(transform,1,a1) /= len;
+        Transform_elem(transform,2,a1) /= len;
+    }
+
+    /*--- if only two spatial axis, make a third orthogonal vector */
+
+    if( n_axes == 1 || n_axes == 2 )
+    {
+        /*--- set dim to the one axis that does not have a vector associated
+              with it yet, and make one that is the unit cross product of 
+              the other two */
+
+        if( volume->spatial_axes[2] < 0 )
+            dim = 2;
+        else if( volume->spatial_axes[1] < 0 )
+            dim = 1;
+        else if( volume->spatial_axes[0] < 0 )
+            dim = 0;
+
+        a1 = (dim + 1) % N_DIMENSIONS;
+        a2 = (dim + 2) % N_DIMENSIONS;
+
+        /*--- take cross product */
+
+        Transform_elem( transform, 0, dim ) = Transform_elem(transform,1,a1) *
+                                              Transform_elem(transform,2,a2) -
+                                              Transform_elem(transform,1,a2) *
+                                              Transform_elem(transform,2,a1);
+        Transform_elem( transform, 1, dim ) = Transform_elem(transform,2,a1) *
+                                              Transform_elem(transform,0,a2) -
+                                              Transform_elem(transform,2,a2) *
+                                              Transform_elem(transform,0,a1);
+        Transform_elem( transform, 2, dim ) = Transform_elem(transform,0,a1) *
+                                              Transform_elem(transform,1,a2) -
+                                              Transform_elem(transform,0,a2) *
+                                              Transform_elem(transform,1,a1);
+
+        /*--- normalize vector */
+
+        len = Transform_elem(transform,0,dim)*Transform_elem(transform,0,dim) +
+              Transform_elem(transform,1,dim)*Transform_elem(transform,1,dim) +
+              Transform_elem(transform,2,dim)*Transform_elem(transform,2,dim);
+
+        if( len == 0.0 )
+            len = 1.0;
+        else
+            len = sqrt( len );
+
+        Transform_elem(transform,0,dim) /= len;
+        Transform_elem(transform,1,dim) /= len;
+        Transform_elem(transform,2,dim) /= len;
+    }
+
+    /*--- find the voxel that maps to the world space origin, when there is
+          no translation, and this is the starts */
+
+    compute_transform_inverse( &transform, &inverse );
+
+    transform_point( &inverse, world_space_origin[X],
+                               world_space_origin[Y],
+                               world_space_origin[Z],
+                               &starts_3d[X], &starts_3d[Y], &starts_3d[Z] );
+
+    /*--- map the X Y Z starts into the arbitrary axis ordering of the volume */
+
+    for_less( dim, 0, get_volume_n_dimensions(volume) )
+        starts[dim] = 0.0;
+
+    for_less( dim, 0, N_DIMENSIONS )
+    {
+        axis = volume->spatial_axes[dim];
+        if( axis >= 0 )
+            starts[axis] = starts_3d[dim];
+    }
+
+    set_volume_starts( volume, starts );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
