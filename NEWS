@@ -1,3 +1,10 @@
+                New in Release 2.0.09
+                ---------------------
+* Many updates and fixes to upet2mnc (Concorde microPET conversion)
+* Fixes to the MINC 2.0 library (libminc2) courtesy of Leila Baghdadi
+* Some progress on documentation
+* Improved nii2mnc, Analyze and NIfTI-1 conversion utility
+
                 New in Release 2.0.08
                 ---------------------
 * Added conversion subdirectory with PRELIMINARY converters for ECAT, 

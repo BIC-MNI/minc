@@ -1,4 +1,8 @@
 MINC 2:
+2005-03-11 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Improve nii2mnc's support for functional (time-varying) data, and
+	support qform as well as sform transforms in the header.
+	
 2005-01-28 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Incorporate NIfTI-1 converters, nii2mnc and mnc2nii
 	* Incorporate upet2mnc, converter for Concorde microPET data.
