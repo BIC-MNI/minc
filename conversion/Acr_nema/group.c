@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.4  1993-11-24 12:05:12  neelin
-@MODIFIED   : Changed format of dump.
+@MODIFIED   : Revision 1.5  1993-11-25 10:36:57  neelin
+@MODIFIED   : Fixed input_group_list (wasn't checking max properly).
 @MODIFIED   :
+ * Revision 1.4  93/11/24  12:05:12  neelin
+ * Changed format of dump.
+ * 
  * Revision 1.3  93/11/24  11:25:38  neelin
  * Added some group list stuff (dump, input_group_list).
  * 
@@ -112,6 +115,9 @@ public void acr_delete_group(Acr_Group group)
 public void acr_delete_group_list(Acr_Group group_list)
 {
    Acr_Group next, cur;
+
+   /* Check for null group */
+   if (group_list == NULL) return;
 
    /* Loop through the list, deleting groups */
    next = group_list;
@@ -442,7 +448,9 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
    *group_list = cur_group = next_group;
 
    /* Loop, reading groups */
-   while ((status == ACR_OK) && (next_group != NULL)) {
+   while ((status == ACR_OK) && (cur_group != NULL) && 
+          ((max_group_id <= 0) ||
+           (acr_get_group_group(cur_group) < max_group_id))) {
 
       status = acr_input_group_with_max(afp, &next_group, max_group_id);
 
