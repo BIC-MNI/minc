@@ -172,7 +172,7 @@ sub ge5_read_file_info {
         warn "Unusable pixel depth ($depth).";
         return 1;
     }
-    
+
     return 0;
 }
 

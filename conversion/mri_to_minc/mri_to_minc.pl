@@ -5,7 +5,7 @@
 # file format.
 #
 
-sub numeric_order { $a - $b;}
+sub numeric_order { $a <=> $b;}
 
 # Subroutine to clean up files and exit
 sub cleanup_and_die {
@@ -131,8 +131,10 @@ sub create_mincfile {
     local($cur_image, %pos_to_image, @positions, $cur_slicepos);
     foreach $cur_image (split($;, $image_list{$echo})) {
         $cur_slicepos = $mincinfo{$cur_image, 'slicepos'};
-        $pos_to_image{$cur_slicepos} = $cur_image;
-        push(@positions, $cur_slicepos);
+        if (!defined($pos_to_image{$cur_slicepos})) {
+            $pos_to_image{$cur_slicepos} = $cur_image;
+            push(@positions, $cur_slicepos);
+        }
     }
     @positions = sort(numeric_order @positions);
 
