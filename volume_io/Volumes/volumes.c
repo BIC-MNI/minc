@@ -44,12 +44,14 @@ public  void  convert_world_to_voxel(
 
 public  Boolean  voxel_is_within_volume(
     volume_struct   *volume,
-    Real            position[N_DIMENSIONS] )
+    Real            x, 
+    Real            y, 
+    Real            z )
 {
-    return( position[X] >= -0.5 &&
-            position[X] <= (Real) volume->sizes[X] - 0.5 &&
-            position[Y] >= -0.5 &&
-            position[Y] <= (Real) volume->sizes[Y] - 0.5 &&
-            position[Z] >= -0.5 &&
-            position[Z] <= (Real) volume->sizes[Z] - 0.5 );
+    return( x >= -0.5 &&
+            x < (Real) volume->sizes[X] - 0.5 &&
+            y >= -0.5 &&
+            y < (Real) volume->sizes[Y] - 0.5 &&
+            z >= -0.5 &&
+            z < (Real) volume->sizes[Z] - 0.5 );
 }

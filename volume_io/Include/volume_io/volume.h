@@ -3,26 +3,33 @@
 
 #include  <def_mni.h>
 
+/* recognized file formats */
+
 typedef  enum  { MNC_FORMAT, FREE_FORMAT }       Volume_file_types;
+
+/* internal storage of a volume is one of these types */
+
 typedef  enum  { UNSIGNED_BYTE, UNSIGNED_SHORT } Data_types;
 
-typedef  unsigned  char  Volume_type;
+/* -------------------------- volume struct --------------------- */
 
 typedef  struct
 {
-    String          filename;
-    Data_types      data_type;
+    String          filename;                    /* name of volume file */
+    Data_types      data_type;                   /* BYTE or SHORT */
 
-    unsigned char   ***byte_data;
-    unsigned short  ***short_data;
+    unsigned char   ***byte_data;                /* only one of these is used */
+    unsigned short  ***short_data;               /* at a time (could be union)*/
 
-    Real            value_scale;
-    Real            value_translation;
-    int             sizes[N_DIMENSIONS];
-    Real            thickness[N_DIMENSIONS];
-    Boolean         flip_axis[N_DIMENSIONS];
-    Transform       world_to_voxel_transform;
-    Transform       voxel_to_world_transform;
+    Real            value_scale;                 /* if values scaled on input,*/
+    Real            value_translation;           /* orig = new * scale + trans*/
+    int             sizes[N_DIMENSIONS];         /* n voxels in 3 directions */
+    Real            thickness[N_DIMENSIONS];     /* voxel thickness in 3 dirs */
+    Boolean         flip_axis[N_DIMENSIONS];     /* whether axis is flipped */
+    Transform       world_to_voxel_transform;    /* transform from world space*/
+    Transform       voxel_to_world_transform;    /* inverse of above */
+
+    int             axis_index_from_file[N_DIMENSIONS];
 } volume_struct;
 
 #define  ASSIGN_VOLUME_DATA( volume, x, y, z, val )                           \
@@ -40,12 +47,13 @@ typedef  struct
              ((void *)(&(volume).byte_data[x][y][z])) :                       \
              ((void *)(&(volume).short_data[x][y][z])) )
 
+/* -------------- volume input struct (during input only) -------------- */
+
 typedef  struct
 {
     Volume_file_types  file_type;
 
     int                sizes_in_file[N_DIMENSIONS];
-    int                axis_index[N_DIMENSIONS];
     int                slice_index;
 
     unsigned char      *byte_slice_buffer;
@@ -61,8 +69,13 @@ typedef  struct
     FILE               *volume_file;
     Data_types         file_data_type;
     Boolean            convert_to_byte;
+    Boolean            one_file_per_slice;
+    String             *slice_filenames;
+    int                *slice_byte_offsets;
 
 } volume_input_struct;
+
+/* --------------------- resample struct (used during resampling) ------- */
 
 typedef struct
 {

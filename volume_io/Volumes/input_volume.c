@@ -77,12 +77,12 @@ public  Status  start_volume_input(
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : delete_volume_input
 @INPUT      : input_info
-@OUTPUT     : 
-@RETURNS    : 
+@OUTPUT     :
+@RETURNS    :
 @DESCRIPTION: Frees up any memory allocated for the volume input, i.e., any
               temporary_buffer.
 @CREATED    :                      David MacDonald
-@MODIFIED   : 
+@MODIFIED   :
 ---------------------------------------------------------------------------- */
 
 public  void  delete_volume_input(
@@ -101,6 +101,19 @@ public  void  delete_volume_input(
         break;
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_more_of_volume
+@INPUT      : volume
+              input_info
+@OUTPUT     : fraction_done    - number between 0 and 1
+@RETURNS    : TRUE - if there is remains more to input after this call
+@DESCRIPTION: Reads in more of the volume file.  This routine is provided,
+              rather than a read_entire_volume(), so that programs can
+              multiprocess loading with other tasks.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Boolean  input_more_of_volume(
     volume_struct         *volume,
@@ -126,6 +139,18 @@ public  Boolean  input_more_of_volume(
     return( more_to_do );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : cancel_volume_input
+@INPUT      : volume
+              input_info
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Cancels loading the volume.  Merely deletes the volume, then
+              deletes the input buffer.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  cancel_volume_input(
     volume_struct         *volume,
     volume_input_struct   *input_info )
@@ -135,6 +160,16 @@ public  void  cancel_volume_input(
     delete_volume_input( input_info );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_volume
+@INPUT      : filename
+@OUTPUT     : volume
+@RETURNS    : OK if loaded alright
+@DESCRIPTION: Inputs the entire volume.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  input_volume(
     char           filename[],
     volume_struct  *volume )
@@ -143,7 +178,7 @@ public  Status  input_volume(
     Real                 amount_done;
     volume_input_struct  input_info;
 
-    status = start_volume_input( filename, volume, FALSE, &input_info );
+    status = start_volume_input( filename, FALSE, volume, &input_info );
 
     while( input_more_of_volume( volume, &input_info, &amount_done ) )
     {
@@ -152,30 +187,67 @@ public  Status  input_volume(
     return( status );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : alloc_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Assumes that the volume sizes and the data type have been
+              assigned, and allocates the volume data.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  alloc_volume(
     volume_struct  *volume )
 {
-    if( volume->data_type == UNSIGNED_BYTE )
+    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
     {
-        ALLOC3D( volume->byte_data, volume->sizes[X], volume->sizes[Y],
-                 volume->sizes[Z] );
-    }
-    else
-    {
-        ALLOC3D( volume->short_data, volume->sizes[X], volume->sizes[Y],
-                 volume->sizes[Z] );
+        switch( volume->data_type )
+        {
+        case UNSIGNED_BYTE:
+            ALLOC3D( volume->byte_data, volume->sizes[X], volume->sizes[Y],
+                     volume->sizes[Z] );
+            break;
+
+        case UNSIGNED_SHORT:
+            ALLOC3D( volume->short_data, volume->sizes[X], volume->sizes[Y],
+                     volume->sizes[Z] );
+            break;
+
+        default:
+            HANDLE_INTERNAL_ERROR( "alloc_volume" );
+        }
     }
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_volume
+@INPUT      : volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the memory associated with the volume.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  delete_volume(
     volume_struct  *volume )
 {
-    if( volume->data_type == UNSIGNED_BYTE )
+    if( volume->sizes[X] > 0 && volume->sizes[Y] > 0 && volume->sizes[Z] > 0 )
     {
-        FREE3D( volume->byte_data );
-    }
-    else
-    {
-        FREE3D( volume->short_data );
+        switch( volume->data_type )
+        {
+        case UNSIGNED_BYTE:
+            FREE3D( volume->byte_data );
+            break;
+
+        case UNSIGNED_SHORT:
+            FREE3D( volume->short_data );
+            break;
+
+        default:
+            HANDLE_INTERNAL_ERROR( "alloc_volume" );
+        }
     }
 }
