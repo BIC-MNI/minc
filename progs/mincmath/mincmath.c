@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincmath.c,v $
-@MODIFIED   : Revision 3.1  1995-12-13 16:22:24  neelin
-@MODIFIED   : Added -check_dimensions and -nocheck_dimensions options.
+@MODIFIED   : Revision 3.2  1996-01-16 13:29:31  neelin
+@MODIFIED   : Added -invert option.
 @MODIFIED   :
+ * Revision 3.1  1995/12/13  16:22:24  neelin
+ * Added -check_dimensions and -nocheck_dimensions options.
+ *
  * Revision 3.0  1995/05/15  19:32:42  neelin
  * Release of minc version 0.3
  *
@@ -24,7 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.1 1995-12-13 16:22:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 3.2 1996-01-16 13:29:31 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -58,7 +61,7 @@ typedef enum {
 UNSPECIFIED_OP = 0, ADD_OP, SUB_OP, MULT_OP, DIV_OP, SQRT_OP, SQUARE_OP,
 SCALE_OP, CLAMP_OP, SEGMENT_OP, NSEGMENT_OP, PERCENTDIFF_OP, 
 EQ_OP, NE_OP, GT_OP, GE_OP, LT_OP, LE_OP, AND_OP, OR_OP, NOT_OP, 
-ISNAN_OP, NISNAN_OP
+ISNAN_OP, NISNAN_OP, INVERT_OP
 } Operation;
 
 typedef enum {
@@ -91,6 +94,7 @@ Num_Operands OperandTable[][3] = {
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* NOT_OP */
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ISNAN_OP */
    UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* NISNAN_OP */
+   UNARY_NUMOP,   UNARY_NUMOP,   ILLEGAL_NUMOP,       /* INVERT_OP */
    ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP        /* nothing */
 };
 
@@ -217,6 +221,8 @@ ArgvInfo argTable[] = {
        "Multiply N volumes or volume * constant."},
    {"-div", ARGV_CONSTANT, (char *) DIV_OP, (char *) &operation,
        "Divide 2 volumes or volume / constant."},
+   {"-invert", ARGV_CONSTANT, (char *) INVERT_OP, (char *) &operation,
+       "Calculate 1/x at each voxel (use -constant for c/x)."},
    {"-sqrt", ARGV_CONSTANT, (char *) SQRT_OP, (char *) &operation,
        "Take square root of a volume."},
    {"-square", ARGV_CONSTANT, (char *) SQUARE_OP, (char *) &operation,
@@ -420,6 +426,8 @@ public void do_math(void *caller_data, long num_voxels,
    for (iconst=0; iconst < sizeof(constants)/sizeof(constants[0]); iconst++) {
       if (iconst < num_constants)
          constants[iconst] = math_data->constants[iconst];
+      else if (operation == INVERT_OP)
+         constants[iconst] = 1.0;
       else
          constants[iconst] = 0.0;
    }
@@ -460,9 +468,15 @@ public void do_math(void *caller_data, long num_voxels,
             else
                output_data[0][ivox] = illegal_value;
             break;
+         case INVERT_OP:
+            if (value1 == 0.0)
+               output_data[0][ivox] = illegal_value;
+            else
+               output_data[0][ivox] = value2 / value1;
+            break;
          case SQRT_OP:
             if (value1 < 0.0)
-               output_data[0][ivox] = 0.0;
+               output_data[0][ivox] = illegal_value;
             else
                output_data[0][ivox] = sqrt(value1);
             break;

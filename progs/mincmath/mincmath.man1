@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.1 1995-12-13 16:22:24 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 3.2 1996-01-16 13:29:31 neelin Exp $
 .\"
 .TH MINCMATH 1
 
@@ -156,6 +156,10 @@ Cumulatively multiply two or more volumes, or multiply a volume and a constant.
 .P
 .I -div:
 Divide two volumes or a volume divided by a constant.
+.P
+.I -invert:
+Calculate 1/x at each voxel, where x is the input voxel value. If a 
+constant c is specified (with -constant), then calculate c/x at each voxel.
 .P
 .I -sqrt:
 Calculate the square root of a volume.
