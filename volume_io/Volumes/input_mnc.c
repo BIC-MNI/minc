@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.50 1995-11-17 20:25:40 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.51 1996-02-14 16:03:34 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -579,7 +579,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     if( prev_nc_type != converted_type )
         different = TRUE;
 
-    if( different && volume_is_alloced( volume ) )
+    if( different && volume_is_alloced( volume ) && !volume_is_cached(volume) )
         free_volume_data( volume );
 
     return( file );
