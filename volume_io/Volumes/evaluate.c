@@ -232,13 +232,13 @@ public  int   evaluate_volume(
     int      ind0, ind1, ind2, ind3, ind4;
     int      start0, start1, start2, start3, start4;
     int      end0, end1, end2, end3, end4;
-    int      v0, v1, v2, v3, v4;
+    int      v0, v1, v2, v3, v4, next_d;
     int      n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims;
     int      start[MAX_DIMENSIONS], n_interp_dims;
     int      end[MAX_DIMENSIONS];
     int      interp_dims[MAX_DIMENSIONS];
     int      n_coefs;
-    Real     fraction[MAX_DIMENSIONS], bound, *coefs;
+    Real     fraction[MAX_DIMENSIONS], bound, *coefs, pos;
     BOOLEAN  fully_inside, fully_outside;
 
     if( degrees_continuity < -1 || degrees_continuity > 2 )
@@ -264,8 +264,9 @@ public  int   evaluate_volume(
         if( interpolating_dimensions == NULL || interpolating_dimensions[d])
         {
             interp_dims[n_interp_dims] = d;
-            start[d] =       FLOOR( voxel[d] - bound );
-            fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
+            pos = voxel[d] - bound;
+            start[d] =       FLOOR( pos );
+            fraction[n_interp_dims] = FRACTION( pos );
             end[d] = start[d] + degrees_continuity + 2;
             n_coefs *= 2 + degrees_continuity;
 
@@ -316,20 +317,13 @@ public  int   evaluate_volume(
         }
     }
 
-    for_less( d, n_dims, MAX_DIMENSIONS )
-    {
-        start[d] = 0;
-        end[d] = 1;
-        interp_dims[d] = d;
-    }
-
     ALLOC( coefs, n_values * n_coefs );
 
-    inc[interp_dims[MAX_DIMENSIONS-1]] = 1;
-    for_down( d, MAX_DIMENSIONS-2, 0 )
+    inc[interp_dims[n_dims-1]] = 1;
+    for_down( d, n_dims-2, 0 )
     {
-        inc[interp_dims[d]] = inc[interp_dims[d+1]] * (end[interp_dims[d+1]] -
-                                                     start[interp_dims[d+1]]);
+        next_d = interp_dims[d+1];
+        inc[interp_dims[d]] = inc[next_d] * (end[next_d] - start[next_d]);
     }
 
     ind0 = 0;
@@ -370,30 +364,98 @@ public  int   evaluate_volume(
     inc3 = inc[3];
     inc4 = inc[4];
 
-    for_less( v0, start0, end0 )
+    switch( n_dims )
     {
-        ind1 = ind0;
-        for_less( v1, start1, end1 )
+    case 1:
+        for_less( v0, start0, end0 )
         {
-            ind2 = ind1;
-            for_less( v2, start2, end2 )
-            {
-                ind3 = ind2;
-                for_less( v3, start3, end3 )
-                {
-                    ind4 = ind3;
-                    for_less( v4, start4, end4 )
-                    {
-                        GET_VALUE( coefs[ind4], volume, v0, v1, v2, v3, v4 );
-                        ind4 += inc4;
-                    }
-                    ind3 += inc3;
-                }
-                ind2 += inc2;
-            }
-            ind1 += inc1;
+            GET_VALUE_1D( coefs[ind0], volume, v0 );
+            ind0 += inc0;
         }
-        ind0 += inc0;
+        break;
+
+    case 2:
+        for_less( v0, start0, end0 )
+        {
+            ind1 = ind0;
+            for_less( v1, start1, end1 )
+            {
+                GET_VALUE_2D( coefs[ind1], volume, v0, v1 );
+                ind1 += inc1;
+            }
+            ind0 += inc0;
+        }
+        break;
+
+    case 3:
+        for_less( v0, start0, end0 )
+        {
+            ind1 = ind0;
+            for_less( v1, start1, end1 )
+            {
+                ind2 = ind1;
+                for_less( v2, start2, end2 )
+                {
+                    GET_VALUE_3D( coefs[ind2], volume, v0, v1, v2 );
+                    ind2 += inc2;
+                }
+                ind1 += inc1;
+            }
+            ind0 += inc0;
+        }
+        break;
+
+    case 4:
+        for_less( v0, start0, end0 )
+        {
+            ind1 = ind0;
+            for_less( v1, start1, end1 )
+            {
+                ind2 = ind1;
+                for_less( v2, start2, end2 )
+                {
+                    ind3 = ind2;
+                    for_less( v3, start3, end3 )
+                    {
+                        GET_VALUE_4D( coefs[ind3], volume, v0, v1, v2, v3 );
+                        ind3 += inc3;
+                    }
+                    ind2 += inc2;
+                }
+                ind1 += inc1;
+            }
+            ind0 += inc0;
+        }
+        break;
+
+    case 5:
+        for_less( v0, start0, end0 )
+        {
+            ind1 = ind0;
+            for_less( v1, start1, end1 )
+            {
+                ind2 = ind1;
+                for_less( v2, start2, end2 )
+                {
+                    ind3 = ind2;
+                    for_less( v3, start3, end3 )
+                    {
+                        ind4 = ind3;
+                        for_less( v4, start4, end4 )
+                        {
+                            GET_VALUE_5D( coefs[ind4], volume,
+                                          v0, v1, v2, v3, v4 );
+                            ind4 += inc4;
+                        }
+                        ind3 += inc3;
+                    }
+                    ind2 += inc2;
+                }
+                ind1 += inc1;
+            }
+            ind0 += inc0;
+        }
+        break;
     }
 
     switch( degrees_continuity )
