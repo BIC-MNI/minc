@@ -26,8 +26,11 @@ public  Boolean  file_exists(
 {
     Boolean  exists;
     FILE     *file;
+    String   expanded;
 
-    file = fopen( filename, "r" );
+    expand_filename( filename, expanded );
+
+    file = fopen( expanded, "r" );
 
     if( file != (FILE *) 0 )
     {
@@ -63,6 +66,55 @@ public  void  remove_file(
     (void) system( command );
 }
 
+public  void  expand_filename(
+    char  filename[],
+    char  expanded_filename[] )
+{
+    int      i, dest, len, env_index;
+    Boolean  use_home;
+    char     *env_value;
+    String   env;
+
+    len = strlen( filename );
+
+    i = 0;
+    dest = 0;
+    while( i < len+1 )
+    {
+        if( filename[i] == '~' || filename[i] == '$' )
+        {
+            use_home = (filename[i] == '~');
+            ++i;
+            env_index = 0;
+            while( filename[i] != '/' && filename[i] != (char) 0 )
+            {
+                env[env_index] = filename[i];
+                ++env_index;
+                ++i;
+            }
+
+            env[env_index] = (char) 0;
+
+            if( use_home )
+                (void) strcpy( env, "HOME" );
+
+            env_value = getenv( env );
+
+            if( env_value != (char *) NULL )
+            {
+                (void) strcpy( &expanded_filename[dest], env_value );
+                dest += strlen( env_value );
+            }
+        }
+        else
+        {
+            expanded_filename[dest] = filename[i];
+            ++dest;
+            ++i;
+        }
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : open_file
 @INPUT      : filename
@@ -85,7 +137,7 @@ public  Status  open_file(
     FILE               **file )
 {
     Status   status;
-    String   access_str;
+    String   access_str, expanded;
 
     switch( io_type )
     {
@@ -100,7 +152,9 @@ public  Status  open_file(
     if( file_format == BINARY_FORMAT )
         (void) strcat( access_str, "b" );
 
-    *file = fopen( filename, access_str );
+    expand_filename( filename, expanded );
+
+    *file = fopen( expanded, access_str );
 
     if( *file != (FILE *) 0 )
     {
@@ -108,7 +162,7 @@ public  Status  open_file(
     }
     else
     {
-        print( "Error:  could not open file \"%s\".\n", filename );
+        print( "Error:  could not open file \"%s\".\n", expanded );
         *file = (FILE *) 0;
         status = ERROR;
     }
@@ -143,26 +197,28 @@ public  Status  open_file_with_default_suffix(
     FILE               **file )
 {
     Boolean  suffix_added;
-    String   used_filename;
+    String   used_filename, expanded;
+
+    expand_filename( filename, expanded );
 
     if( io_type == READ_FILE )
     {
         suffix_added = FALSE;
 
-        if( !file_exists(filename) && has_no_extension( filename ) )
+        if( !file_exists(expanded) && has_no_extension( expanded ) )
         {
-            (void) sprintf( used_filename, "%s.%s", filename, default_suffix );
+            (void) sprintf( used_filename, "%s.%s", expanded, default_suffix );
             if( file_exists( used_filename ) )
                 suffix_added = TRUE;
         }
 
         if( !suffix_added )
-            (void) strcpy( used_filename, filename );
+            (void) strcpy( used_filename, expanded );
     }
-    else if( has_no_extension( filename ) )
-        (void) sprintf( used_filename, "%s.%s", filename, default_suffix );
+    else if( has_no_extension( expanded ) )
+        (void) sprintf( used_filename, "%s.%s", expanded, default_suffix );
     else
-        (void) strcpy( used_filename, filename );
+        (void) strcpy( used_filename, expanded );
 
     return( open_file( used_filename, io_type, file_format, file ) );
 }
