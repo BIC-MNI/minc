@@ -42,6 +42,7 @@ public  Status  start_volume_input(
 {
     Status          status;
     Real            mni_scale, mni_translation;
+    Real            min_voxel, max_voxel, real_min, real_max;
     Boolean         mni_format;
     nc_type         data_type;
     static String   default_dim_names[N_DIMENSIONS] =
@@ -58,8 +59,7 @@ public  Status  start_volume_input(
     else
         data_type = NC_UNSPECIFIED;
 
-    *volume = create_volume( 3, dim_names, data_type, FALSE,
-                             0.0, 0.0 );
+    *volume = create_volume( 3, dim_names, data_type, FALSE );
 
     expand_filename( filename, expanded_filename );
     mni_format = FALSE;
@@ -69,6 +69,7 @@ public  Status  start_volume_input(
     {
         get_mni_scaling( expanded_filename, &mni_scale, &mni_translation );
         setup_input_mni_as_free_format( expanded_filename );
+        set_volume_voxel_range( *volume, 0.0, 255.0 );
         input_info->file_format = FREE_FORMAT;
         mni_format = TRUE;
     }
@@ -83,7 +84,8 @@ public  Status  start_volume_input(
 #ifndef  NO_MNC_FILES
     case  MNC_FORMAT:
         input_info->minc_file = initialize_minc_input( expanded_filename,
-                                                       *volume );
+                                                 *volume,
+                                                 (minc_input_options *) NULL );
         if( input_info->minc_file == (Minc_file) NULL )
             status = ERROR;
         break;
@@ -97,8 +99,10 @@ public  Status  start_volume_input(
 
     if( mni_format )
     {
-        (*volume)->value_scale = mni_scale;
-        (*volume)->value_translation = - mni_scale * mni_translation;
+        get_volume_voxel_range( *volume, &min_voxel, &max_voxel );
+        real_min = mni_scale * (min_voxel - mni_translation);
+        real_max = mni_scale * (max_voxel - mni_translation);
+        set_volume_real_range( *volume, real_min, real_max );
     }
 
     return( status );

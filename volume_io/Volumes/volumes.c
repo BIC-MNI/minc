@@ -43,7 +43,7 @@ private  void  free_volume_data(
 
 public   Volume   create_volume(
     int         n_dimensions,
-    String      dimension_names[],
+    char        *dimension_names[],
     nc_type     nc_data_type,
     Boolean     signed_flag )
 {
@@ -91,7 +91,7 @@ public   Volume   create_volume(
         sizes[i] = 0;
         volume->separations[i] = 1.0;
 
-        if( dimension_names != (String *) NULL )
+        if( dimension_names != (char **) NULL )
             (void) strcpy( volume->dimension_names[i], dimension_names[i] );
         else
             (void) strcpy( volume->dimension_names[i],
