@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 1.5  1995-03-21 14:00:10  neelin
-@MODIFIED   : Changed calls to voxel_loop routines.
+@MODIFIED   : Revision 1.6  1995-03-21 14:26:42  neelin
+@MODIFIED   : changed usage message.
 @MODIFIED   :
+ * Revision 1.5  1995/03/21  14:00:10  neelin
+ * Changed calls to voxel_loop routines.
+ *
  * Revision 1.4  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.5 1995-03-21 14:00:10 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 1.6 1995-03-21 14:26:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -219,7 +222,9 @@ int main(int argc, char *argv[])
 
    /* Get arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc != 3)) {
-      (void) fprintf(stderr, "Usage: %s [options] <in.mnc> <out.mnc>\n",
+      (void) fprintf(stderr, "\nUsage: %s [options] <in.mnc> <out.mnc>\n",
+                     argv[0]);
+      (void) fprintf(stderr,   "       %s -help\n\n",
                      argv[0]);
       exit(EXIT_FAILURE);
    }
