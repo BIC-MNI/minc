@@ -1,0 +1,44 @@
+Very briefly, MINC (Medical Image NetCDF) is built on the general data
+format NetCDF (from the UCAR - University Corporation for Atmospheric
+Research). When programming with minc, there are a number of levels to
+deal with: 
+
+1) NetCDF is the basis of it all, providing a C and Fortran callable
+library for accessing data structures in a file at a low-level. Two
+applications exist for dumping data to text and converting that text
+back into a NetCDF file.  Documentation exists in the form of a NetCDF
+User's Guide and of an emacs info page.
+
+2) The low-level MINC library (again C and Fortran callable) is used
+with NetCDF routines to do medical-image specific things. It provides
+some enhancements to NetCDF (automatic type conversion, for example),
+as well as image conversion routines for dealing with image pixel
+value issues as well as image size and orientation. Documentation
+consists of a programmer's guide and reference (minc_user.tex (.dvi)
+and minc_reference.tex (.dvi) in the minc/doc directory). An example
+C program exists in minc/progs/mincexample.
+
+3) A high-level C library called volume_io provides a Volume data
+type, with functions like input_volume to give simple access to data
+while handling issues of pixel range conversion and voxel-to-world
+coordinate conversion. There is no documentation for this, but the
+source lives in minc/volume_io. An example program exists in 
+minc/volume_io/example called convert_volume_to_byte.c
+
+4) Generic MINC applications. Check minc/bin/*minc*. All
+applications should take the -help option for a listing of options.
+Man pages exist for mincresample, rawtominc, mincheader and mincinfo (these
+are found in minc/man).
+
+5) Specific MINC applications like register (for displaying one or two
+minc volumes and doing point tagging) and postf (display minc images).
+A man page exists for register and postf has -help option (for
+options) and a -describe option for some details. These are available from
+the Montreal Neurological Institute on request (contact 
+alan@pet.mni.mcgill.ca).
+
+The include file for minc is in minc/include (just include <minc.h>,
+netcdf.h will automatically be included).  Volume_io includes are in
+minc/include/volume_io (just include <volume_io.h>). Library
+files are in minc/lib.
+
