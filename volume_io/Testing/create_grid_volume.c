@@ -9,7 +9,8 @@ int  main(
     char  *argv[] )
 {
     Status               status;
-    char                 *output_filename;
+    char                 *output_prefix;
+    STRING               transform_filename;
     int                  ind[MAX_DIMENSIONS], sizes[MAX_DIMENSIONS];
     static  char         *dim_names[] = { MIxspace, MIyspace, MIzspace,
                                           MIvector_dimension };
@@ -23,7 +24,8 @@ int  main(
         return( 1 );
     }
 
-    output_filename = argv[1];
+    output_prefix = argv[1];
+    (void) sprintf( transform_filename, "%s", output_prefix );
 
     volume = create_volume( 4, dim_names, NC_SHORT, TRUE, 0.0, 0.0 );
 
@@ -57,6 +59,8 @@ int  main(
 
     create_grid_transform( &transform, volume );
 
+    status = output_transform_file( transform_filename, NULL, &transform );
+
     print( "Enter x, y, z: " );
     while( input_real( stdin, &x ) == OK &&
            input_real( stdin, &y ) == OK &&
@@ -73,9 +77,6 @@ int  main(
         print( "Inverse:          -> %g %g %g\n", xt, yt, zt );
         print( "Enter x, y, z: " );
     }
-
-    status = output_volume( output_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
-                            volume, "", NULL );
 
     return( status != OK );
 }
