@@ -13,8 +13,8 @@
 ---------------------------------------------------------------------------- */
 
 #include "config.h"
+
 #include  <sys/types.h>
-#include  <sys/times.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -30,7 +30,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.20 2003-09-18 14:45:25 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.21 2004-03-23 21:36:33 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -55,7 +55,7 @@ private  Real  get_clock_ticks_per_second( void )
     if( !initialized )
     {
         initialized = TRUE;
-        clock_ticks_per_second = (Real) sysconf( _SC_CLK_TCK );
+        clock_ticks_per_second = (Real) CLK_TCK;
     }
 
     return( clock_ticks_per_second );
@@ -76,42 +76,23 @@ private  Real  get_clock_ticks_per_second( void )
 
 public  Real  current_cpu_seconds( void )
 {
-    Real            cpu_time;
+    static BOOLEAN first_call = TRUE;
+    static clock_t first;
+    clock_t current;
+    Real secs;
 
-#ifdef USE_REALTIME_FOR_CPU_TIME
-
-    /*--- use this code if neither of the two methods below work for getting
-          the cpu time usage of a program, and you cannot manufacture one
-          yourself */
-
-    static  BOOLEAN initialized = FALSE;
-    static  Real    first_real_time;
-
-    if( !initialized )     /*--- first call will return about 1 microsecond */
+    if (first_call)
     {
-        initialized = TRUE;
-        first_real_time = current_realtime_seconds();
+        first_call = FALSE;
+        first = clock();
+        secs = (Real) first / get_clock_ticks_per_second();
     }
-
-    cpu_time = current_realtime_seconds() - first_real_time;
-#else
-#ifdef USE_GETRUSAGE
-    struct  rusage  buffer;
-
-    (void) getrusage( RUSAGE_SELF, &buffer );
-
-    cpu_time = (Real) buffer.ru_utime.tv_sec +
-               (Real) buffer.ru_utime.tv_usec / 1.0e6;
-#else
-    struct  tms  buffer;
-
-    (void) times( &buffer );
-
-    cpu_time = (Real) buffer.tms_utime / get_clock_ticks_per_second();
-#endif
-#endif
-
-    return( cpu_time );
+    else
+    {
+        current = clock();
+        secs = (Real) (current - first) / get_clock_ticks_per_second();
+    }
+    return (secs);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -130,22 +111,21 @@ public  Real  current_cpu_seconds( void )
 
 public  Real  current_realtime_seconds( void )
 {
-    static  BOOLEAN          first_call = TRUE;
-    static  struct  timeval  first;
-    struct  timeval          current;
-    Real                     secs;
+    static BOOLEAN first_call = TRUE;
+    static time_t first;
+    time_t current;
+    Real secs;
 
     if( first_call )
     {
         first_call = FALSE;
-        (void) gettimeofday( &first, (struct timezone *) 0 );
+        first = time(NULL);
         secs = 0.0;
     }
     else
     {
-        (void) gettimeofday( &current, (struct timezone *) 0 );
-        secs = (double) current.tv_sec - (double) first.tv_sec +
-               1.0e-6 * (double) (current.tv_usec - first.tv_usec);
+        current = time(NULL);
+        secs = (double) (current - first);
     }
 
     return( secs );
@@ -274,29 +254,15 @@ public  STRING  get_clock_time( void )
 
 public  void  sleep_program( Real seconds )
 {
+#if HAVE_SELECT
     struct  timeval  timeout;
 
     timeout.tv_sec = (long) seconds;
     timeout.tv_usec = (long) (1.0e6 * (seconds - (Real) timeout.tv_sec) + 0.5);
 
     (void) select( 0, NULL, NULL, NULL, &timeout );
-#ifdef OLD
-#ifdef __sgi
-    struct timespec  rqtp, rmtp;
-
-    rqtp.tv_sec = FLOOR( seconds );
-    rqtp.tv_nsec = (long) (1.0e9 * FRACTION(seconds));
-    (void) nanosleep( &rqtp, &rmtp );
 #else
-    unsigned long  n_seconds, n_microseconds;
-
-    n_seconds = FLOOR( seconds );
-    if( n_seconds != 0 )
-        (void) sleep( FLOOR( seconds ) );
-
-    n_microseconds = ROUND( 1.0e6 * FRACTION(seconds) );
-    usleep( n_microseconds );
-#endif
+    sleep((unsigned int) seconds);
 #endif
 }
 
