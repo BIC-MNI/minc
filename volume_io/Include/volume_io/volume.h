@@ -25,7 +25,7 @@ typedef  struct
     Real            value_translation;           /* orig = new * scale + trans*/
     int             sizes[N_DIMENSIONS];         /* n voxels in 3 directions */
     Real            thickness[N_DIMENSIONS];     /* voxel thickness in 3 dirs */
-    Boolean         flip_axis[N_DIMENSIONS];     /* whether axis is flipped */
+                                                 /* can be + or -ve           */
     Transform       world_to_voxel_transform;    /* transform from world space*/
     Transform       voxel_to_world_transform;    /* inverse of above */
 

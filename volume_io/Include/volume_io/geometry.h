@@ -133,10 +133,10 @@
          ( DOT_POINT_VECTOR(point,normal) - (d) )
 
 #define  CONVERT_POINT_TO_VECTOR( vector, point ) \
-            fill_Point( point, \
-                        Vector_x(vector), Vector_y(vector), Vector_z(vector) )
-
-#define  CONVERT_VECTOR_TO_POINT( point, vector ) \
             fill_Vector( vector, \
                          Point_x(point), Point_y(point), Point_z(point) )
+
+#define  CONVERT_VECTOR_TO_POINT( point, vector ) \
+            fill_Point( point, \
+                        Vector_x(vector), Vector_y(vector), Vector_z(vector) )
 #endif

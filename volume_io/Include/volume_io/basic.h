@@ -137,20 +137,22 @@ typedef  char     String[MAX_STRING_LENGTH+1];
 
 #define  for_enum( e, max, type )  for( e = (type) 0;  e < max;  e = (type) ((int) e + 1) )
 
+#define  CONVERT_INTEGER_RANGE( x1, min1, max1, min2, max2 )                  \
+              ((min2) + (2 * (x1) + 1 - 2 * (min1)) * ((max2) - (min2) + 1) / \
+                                                      ((max1) - (min1) + 1) / 2)
+
 /* -------------------- Status --------------------- */
 
 typedef enum { 
                OK,
                ERROR,
-               WARNING,
-               OUT_OF_MEMORY,
-               INTERNAL_ERROR,
-               QUIT
+               INTERNAL_ERROR
              } Status;
 
 #define  HANDLE_INTERNAL_ERROR( X )                                           \
          {                                                                    \
-             print( "Internal error:  %s\n", X );                            \
+             set_print_function( NULL );                                      \
+             print( "Internal error:  %s\n", X );                             \
              abort_if_allowed();                                              \
          }
 

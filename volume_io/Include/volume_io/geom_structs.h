@@ -42,10 +42,10 @@ typedef  struct
 typedef  unsigned  long    Colour;
 
 #define  make_Colour( r, g, b )                  \
-          ( (unsigned long) (r) |                \
-           ((unsigned long) (g) << 8) |          \
-           ((unsigned long) (b) << 16) |         \
-           ((unsigned long) (255 << 24)) )
+          ( (Colour) (r) |                \
+           ((Colour) (g) << (Colour) 8) |          \
+           ((Colour) (b) << (Colour) 16) |         \
+           ((Colour) 255 << (Colour) 24) )
 
 #define  get_Colour_r( colour ) ((colour) & 255)
 #define  get_Colour_g( colour ) (((colour) >> 8) & 255)

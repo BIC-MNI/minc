@@ -34,12 +34,4 @@ typedef  struct
     int            level;
 } skiplist_struct;
 
-Status   initialize_skiplist();
-Status   delete_skiplist();
-Boolean  search_skiplist();
-Boolean  insert_in_skiplist();
-Boolean  delete_from_skiplist();
-Boolean  get_first_skiplist_entry();
-Boolean  get_next_skiplist_entry();
-
 #endif
