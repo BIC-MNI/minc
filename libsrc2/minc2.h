@@ -364,6 +364,14 @@ extern int miset_voxel_value_hyperslab(mihandle_t volume,
                                        const unsigned long count[],
                                        const void *buffer);
 
+extern int miget_hyperslab_normalized(mihandle_t volume, 
+                                      mitype_t buffer_data_type,
+                                      const unsigned long start[], 
+                                      const unsigned long count[],
+                                      double min, 
+                                      double max, 
+                                      void *buffer);
+
 /* CONVERT FUNCTIONS */
 extern int miconvert_real_to_voxel(mihandle_t volume,
                                    const unsigned long location[],
