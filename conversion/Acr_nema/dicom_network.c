@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.3  1998-03-23 20:16:16  neelin
-@MODIFIED   : Moved some general-purpose functions from dicom_client_routines and
-@MODIFIED   : added one for implementation uid.
+@MODIFIED   : Revision 6.4  1998-03-23 20:22:37  neelin
+@MODIFIED   : Added includes for new functions.
 @MODIFIED   :
+ * Revision 6.3  1998/03/23  20:16:16  neelin
+ * Moved some general-purpose functions from dicom_client_routines and
+ * added one for implementation uid.
+ *
  * Revision 6.2  1998/03/10  17:05:30  neelin
  * Fixed handling of PDV control header last fragment bit (it should be
  * set for both command and data parts of the message). Re-organized code
@@ -56,9 +59,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <limits.h>
 #include <ctype.h>
 #include <string.h>
+#include <time.h>
 #include <minc_def.h>
 #include <acr_nema.h>
 
@@ -285,7 +290,7 @@ public char *acr_implementation_uid(void)
    static char uid[64];
 
    /* Set the uid */
-   (void) sprintf(string, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
+   (void) sprintf(uid, "1.%d.%d.%d.%d.%d", (int) 'I', (int) 'P',
                   (int) 'M', (int) 'N', (int) 'I');
 
    return uid;
