@@ -25,7 +25,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.7  2001-09-18 15:44:27  neelin
+ * Revision 6.8  2001-10-17 14:32:20  neelin
+ * Modified miset_valid_range to write out valid_range as double in all
+ * cases except float. Unfortunately, writing out values in a type that
+ * matched the type of the image variable caused problems with programs
+ * linked against old minc libraries.
+ *
+ * Revision 6.7  2001/09/18 15:44:27  neelin
  * When output type is NC_BYTE, valid_range attribute should have type NC_SHORT.
  *
  * Revision 6.6  2001/08/20 13:19:14  neelin
@@ -95,7 +101,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.7 2001-09-18 15:44:27 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.8 2001-10-17 14:32:20 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -352,10 +358,6 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    int is_signed;
    int status;
    char *attname;
-   unsigned short usval[2];
-   short ssval[2];
-   unsigned int uival[2];
-   int sival[2];
    float fval[2];
 
    MI_SAVE_ROUTINE_NAME("miset_valid_range");
@@ -364,34 +366,15 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
    if (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR)
       MI_RETURN(MI_ERROR);
 
-   /* Cast to the appropriate type and save */
+   /* Cast to the appropriate type and save. Originally, it was thought
+      that casting to the type of the image variable would be a good idea 
+      because NetCDF says that it should. Unfortunately, this breaks 
+      compatibility in some cases with programs linked with old minc 
+      libraries, so we only cast for floats to avoid rounding problems
+      (cast from double to float can put values out of range) - for
+      everything else double is used. */
    attname = MIvalid_range;
    switch (datatype) {
-   case NC_BYTE:
-   case NC_SHORT:
-      if (is_signed) {
-         ssval[0] = valid_range[0];
-         ssval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, NC_SHORT, 2, (void *) ssval);
-      }
-      else {
-         usval[0] = valid_range[0];
-         usval[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, NC_SHORT, 2, (void *) usval);
-      }
-      break;
-   case NC_INT:
-      if (is_signed) {
-         sival[0] = valid_range[0];
-         sival[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) sival);
-      }
-      else {
-         uival[0] = valid_range[0];
-         uival[1] = valid_range[1];
-         status = ncattput(cdfid, imgid, attname, datatype, 2, (void *) uival);
-      }
-      break;
    case NC_FLOAT:
       fval[0] = valid_range[0];
       fval[1] = valid_range[1];
