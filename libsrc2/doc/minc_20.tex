@@ -2731,7 +2731,7 @@ the valid range values or MI_ERROR otherwise
 \begin{verbatim}
 NAME
 
-micreate_volume_image - 
+micreate_volume_image - create the actual image data for volume.
 
 SYNOPSIS
 
@@ -2797,6 +2797,27 @@ DESCRIPTION
 
 This function may be used to determine the number of dimensions with the
 given class and attributes.
+
+RETURN VALUE
+
+MI_NOERROR if the call succeeds, or MI_ERROR if an error is detected.
+\end{verbatim}
+
+\subsection{miget\_volume\_voxel\_count}
+\begin{verbatim}
+NAME
+
+miget_volume_voxel_count - get the number of voxels in the volume.
+SYNOPSIS
+
+#include <minc2.h>
+
+int miget_volume_voxel_count ( mihandle_t           volume, 
+                               int                  *number_of_voxels );
+
+DESCRIPTION
+
+This function returns the number of voxels in the volume.
 
 RETURN VALUE
 

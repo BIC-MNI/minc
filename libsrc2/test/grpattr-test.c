@@ -217,36 +217,33 @@ int main(int argc, char **argv)
 	TESTRPT("miget_attr_values failed", 0);
     }
 
-    {
-        char pathbuf[256];
-        char namebuf[256];
-	int count=0;
-        r = milist_start(hvol, "/", 1, &hlist);
-        if (r == MI_NOERROR) {
-	  count++;
-            while (milist_attr_next(hvol, hlist, pathbuf, sizeof(pathbuf),
-                                    namebuf, sizeof(namebuf)) == MI_NOERROR) {
-                printf(" %s %s\n", pathbuf, namebuf);
-            }
-        }
-        milist_finish(hlist);
-
-	printf("***************** \n");
-
-	char pathbuf1[256];
-        
-        r = milist_start(hvol, "/", 1, &h1list);
-        if (r == MI_NOERROR) {
-	  while( milist_grp_next(h1list, pathbuf1, sizeof(pathbuf1)) == MI_NOERROR) {
-	      printf("%s \n", pathbuf1);
-	  }
-   
-        }
-	
-        milist_finish(h1list);
-	
+    char pathbuf[256];
+    char namebuf[256];
+    int count=0;
+    r = milist_start(hvol, "/", 1, &hlist);
+    if (r == MI_NOERROR) {
+      count++;
+      while (milist_attr_next(hvol, hlist, pathbuf, sizeof(pathbuf),
+			      namebuf, sizeof(namebuf)) == MI_NOERROR) {
+	printf(" %s %s\n", pathbuf, namebuf);
+      }
     }
-
+    milist_finish(hlist);
+    
+    printf("***************** \n");
+    
+    char pathbuf1[256];
+    
+    r = milist_start(hvol, "/", 1, &h1list);
+    if (r == MI_NOERROR) {
+      while( milist_grp_next(h1list, pathbuf1, sizeof(pathbuf1)) == MI_NOERROR) {
+	printf("%s \n", pathbuf1);
+      }
+      
+    }
+    
+    milist_finish(h1list);
+	
     miclose_volume(hvol);
 
     if (error_cnt != 0) {
