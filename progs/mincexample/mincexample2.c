@@ -11,13 +11,16 @@
 @CALLS      : 
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincexample2.c,v $
-@MODIFIED   : Revision 1.1  1994-03-16 12:00:59  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-03-17 08:36:29  neelin
+@MODIFIED   : Added support for 2-d files.
 @MODIFIED   :
+ * Revision 1.1  94/03/16  12:00:59  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 1.1 1994-03-16 12:00:59 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 1.2 1994-03-17 08:36:29 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -223,6 +226,7 @@ public void setup_input_icv(int icvid)
       bottom up. If we wanted patient right on left and drawing from
       top down, we would set to MI_ICV_NEGATIVE. */
    (void) miicv_setint(icvid, MI_ICV_DO_DIM_CONV, TRUE);
+   (void) miicv_setint(icvid, MI_ICV_DO_SCALAR, TRUE);
    (void) miicv_setint(icvid, MI_ICV_XDIM_DIR, MI_ICV_POSITIVE);
    (void) miicv_setint(icvid, MI_ICV_YDIM_DIR, MI_ICV_POSITIVE);
    (void) miicv_setint(icvid, MI_ICV_ZDIM_DIR, MI_ICV_POSITIVE);
@@ -250,6 +254,8 @@ public void get_dimension_info(char *infile, int icvid,
    int dim[MAX_VAR_DIMS];
    long *dimlength;
    char *dimname;
+   int offset;
+   int missing_one_dimension;
 
    /* Get the minc file id and the image variable id */
    (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
@@ -262,28 +268,42 @@ public void get_dimension_info(char *infile, int icvid,
 
    /* Get the list of dimensions subscripting the image variable */
    (void) ncvarinq(mincid, imgid, NULL, NULL, &ndims, dim, NULL);
+   (void) miicv_inqint(icvid, MI_ICV_NUM_DIMS, &ndims);
 
-   /* Check that we only have three dimensions */
-   if (ndims != NUMBER_OF_DIMENSIONS) {
+   /* Check that we have two or three dimensions */
+   if ((ndims != NUMBER_OF_DIMENSIONS) &&
+       (ndims != NUMBER_OF_DIMENSIONS-1)) {
       (void) fprintf(stderr, 
-                     "File %s does not have exactly %d dimensions\n",
-                     infile, NUMBER_OF_DIMENSIONS);
+                     "File %s does not have %d or %d dimensions\n",
+                     infile, NUMBER_OF_DIMENSIONS,
+                     NUMBER_OF_DIMENSIONS-1);
       exit(EXIT_FAILURE);
    }
+
+   /* Pretend that we have three dimensions */
+   offset = ndims - NUMBER_OF_DIMENSIONS;
+   missing_one_dimension = (offset < 0);
+   ndims = NUMBER_OF_DIMENSIONS;
 
    /* Loop through dimensions, checking them and getting their sizes */
    for (idim=0; idim<ndims; idim++) {
 
-      /* Get a pointer to the appropriate dimension size */
+      /* Get pointers to the appropriate dimension size and name */
       switch (idim) {
       case 0: dimlength = &(volume_info->nslices) ; break;
       case 1: dimlength = &(volume_info->nrows) ; break;
       case 2: dimlength = &(volume_info->ncolumns) ; break;
       }
+      dimname = volume_info->dimension_names[idim];
 
       /* Get dimension name and size */
-      dimname = volume_info->dimension_names[idim];
-      (void) ncdiminq(mincid, dim[idim], dimname, dimlength);
+      if (missing_one_dimension && (idim==0)) {
+         (void) strcpy(dimname, "unknown");
+         *dimlength = 1;
+      }
+      else {
+         (void) ncdiminq(mincid, dim[idim+offset], dimname, dimlength);
+      }
 
    }
 
@@ -358,13 +378,27 @@ public void get_volume_slice(int icvid, Volume_Info *volume_info,
                              int slice_num, unsigned char *image)
 {
    long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+   int offset, ndims;
+
+   /* Get number of dimensions */
+   (void) miicv_inqint(icvid, MI_ICV_NUM_DIMS, &ndims);
+   offset = ndims - NUMBER_OF_DIMENSIONS;
+
+   /* Check slice_num */
+   if (slice_num >= volume_info->nslices) {
+      (void) fprintf(stderr, "Slice %d is not in the file.\n",
+                     slice_num);
+      exit(EXIT_FAILURE);
+   }
 
    /* Set up the start and count variables for reading the volume */
    (void) miset_coords(3, 0, start);
-   start[0] = slice_num;
-   count[0] = 1;
-   count[1] = volume_info->nrows;
-   count[2] = volume_info->ncolumns;
+   if (offset >= 0) {
+      start[offset] = slice_num;
+      count[offset] = 1;
+   }
+   count[1+offset] = volume_info->nrows;
+   count[2+offset] = volume_info->ncolumns;
 
    /* Read in the volume */
    (void) miicv_get(icvid, start, count, image);
