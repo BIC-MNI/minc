@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.man1,v 1.1 1994-11-02 16:22:08 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.man1,v 1.2 1994-11-03 08:49:12 neelin Exp $
 .\"
 .TH MINCRESHAPE 1 "MINC Image File Format"
 
@@ -47,9 +47,13 @@ type a list of dimension names to get an arbitrary order of
 dimensions.
 
 You want more!?! Okay, okay.
-.I mincreshape
+.I Mincreshape
 makes all of the minc library icv conversions available on the command
-line. The include changing type, range and normalization of the pixel
+line. For those who like things defined, an icv is an image
+conversion variable (don't ask me why I called it that) which
+basically lets you tell the data what it's going to look like. In
+other words, it does a bunch of conversions for you. These conversions
+include changing type, range and normalization of the pixel 
 values, expanding or contracting images (by pixel duplication or
 averaging) to give a specified image size, and converting vector
 images to scalar.
@@ -272,7 +276,9 @@ Specifies the starting corner of the hyperslab (coordinates go from
 slowest varying dimension to fastest). If fewer coordinates are given than
 dimensions exist in the file, then they are assumed to apply
 to the slowest varying dimensions and the remaining coordinates are
-set to 0. See -dimrange for more details.
+set to 0. See -dimrange for more details. Both -start and -count give
+vectors that correspond to input file dimensions after the image
+conversion (icv) options have been applied.
 .P
 .I -count
 <size0>,<size1>,<size2>,...:
@@ -280,7 +286,9 @@ Specifies edge lengths of hyperslab to read (coordinates go from
 slowest varying dimension to fastest). If fewer sizes are given than 
 dimensions exist in the file, then they are assumed to apply to the
 slowest varying dimensions and the remaining sizes are set to the full
-size of the dimension. See -dimrange for more details.
+size of the dimension. See -dimrange for more details. Both -start and
+-count give vectors that correspond to input file dimensions after the
+image conversion (icv) options have been applied.
 
 .SH Missing data options:
 .P
@@ -303,9 +311,10 @@ Print summary of command-line options and abort.
 
 .SH EXAMPLES:
 
-Assume that we have a volume with dimensions zspace,yspace,xspace and
-sizes 128,256,256. If we want to get slice 40 out of it (keeping the
-coordinate information for the zspace dimension), then we can use
+Assume that we have a volume with dimensions zspace,yspace,xspace
+(that's transverse) and sizes 128,256,256. If we want to get slice 40
+out of it (keeping the coordinate information for the zspace
+dimension), then we can use 
      mincreshape original.mnc new.mnc \\
            -dimrange zspace=40,1
 
@@ -329,10 +338,23 @@ But why restrain outselves? Let's go out of bounds:
      mincreshape original.mnc new.mnc \\
            -start 40,-100,340 -count 1,200,-200
 
+If you want a sagittal volume, use this:
+     mincreshape original.mnc new.mnc -sagittal
+
 How about some sideways heads - flip x and y. And convert to byte to
 save space while we're at it:
      mincreshape original.mnc new.mnc \\
            -dimorder xspace,yspace -byte
+
+You like to store volumes in x,y,z order (that's z varying fastest! I
+know some people who do it!)? Okay.
+     mincreshape original.mnc new.mnc \\
+           -dimorder xspace,yspace,zspace
+
+But you're a minimalist (and don't mind taking a chance). Here's the
+same thing (but it might break for another file):
+     mincreshape original.mnc new.mnc \\
+           -dimorder zspace
 
 Let's make sure that all dimensions have a negative step attribute
 (see option +direction for some details):
