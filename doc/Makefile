@@ -4,7 +4,7 @@ include $(ROOT)/Make_configuration
 
 DOCS = prog_ref.ps prog_guide.ps
 
-.SUFFIXES : .tex .dvi .ps
+.SUFFIXES: .tex .dvi .ps
 
 default : build
 
@@ -12,12 +12,15 @@ all : build
 
 build : $(DOCS)
 
-.tex.dvi :
+.tex.dvi:
 	-latex $<
 	-latex $<
 
-.dvi.ps :
-	-dvips $< -o $@
+prog_ref.ps: prog_ref.dvi
+	-dvips $? -o $@
+
+prog_guide.ps: prog_guide.dvi
+	-dvips $? -o $@
 
 clean: mostlyclean
 	$(RM) $(RM_FLAGS) *.aux *.log *.toc
