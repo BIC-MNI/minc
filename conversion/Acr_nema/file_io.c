@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:36:13  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 21:16:06  neelin
+@MODIFIED   : Changes to make irix 5 lint happy.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:36:13  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.7  94/09/28  10:35:42  neelin
  * Pre-release
  * 
@@ -376,7 +379,7 @@ public int acr_ungetc(int c, Acr_File *afp)
    /* Check to see if we can put the character back */
    if (afp->ptr > afp->start) {
       afp->ptr--;
-      *afp->ptr = c;
+      *afp->ptr = (unsigned char) c;
    }
    else {
       return EOF;

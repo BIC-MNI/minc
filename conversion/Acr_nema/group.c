@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 2.1  1995-01-04 08:10:16  neelin
-@MODIFIED   : Improved string printing in dump function (longer strings and replace
-@MODIFIED   : carriage returns, linefeeds and formfeeds by spaces).
+@MODIFIED   : Revision 2.2  1995-02-08 21:16:06  neelin
+@MODIFIED   : Changes to make irix 5 lint happy.
 @MODIFIED   :
+ * Revision 2.1  1995/01/04  08:10:16  neelin
+ * Improved string printing in dump function (longer strings and replace
+ * carriage returns, linefeeds and formfeeds by spaces).
+ *
  * Revision 2.0  94/09/28  10:36:16  neelin
  * Release of minc version 0.2
  * 
@@ -62,6 +65,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <minc_def.h>
 #include <acr_nema.h>
 

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:36:06  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 21:16:06  neelin
+@MODIFIED   : Changes to make irix 5 lint happy.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:36:06  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.9  94/09/28  10:35:39  neelin
  * Pre-release
  * 
@@ -310,7 +313,7 @@ public Acr_Status acr_test_byte_ordering(Acr_File *afp)
          else
             return ACR_ABNORMAL_END_OF_INPUT;
       }
-      buffer[i] = ch;
+      buffer[i] = (unsigned char) ch;
    }
 
    /* Test data length (the first element should be a group length).
@@ -377,7 +380,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
          else
             return ACR_ABNORMAL_END_OF_INPUT;
       }
-      buffer[i] = ch;
+      buffer[i] = (unsigned char) ch;
    }
    acr_get_short(1, &buffer[0], &grpid);
    *group_id = grpid;
@@ -402,7 +405,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
          FREE(*data_pointer);
          return ACR_ABNORMAL_END_OF_INPUT;
       }
-      (*data_pointer)[i] = ch;
+      (*data_pointer)[i] = (char) ch;
    }
 
    return ACR_OK;
@@ -435,9 +438,9 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
    buflen = sizeof(buffer)/sizeof(buffer[0]);
 
    /* Write out group id, element id and length of data */
-   grpid = group_id;
+   grpid = (unsigned short) group_id;
    acr_put_short(1, &grpid, &buffer[0]);
-   elid = element_id;
+   elid = (unsigned short) element_id;
    acr_put_short(1, &elid, &buffer[2]);
    acr_put_long(1, &data_length, &buffer[4]);
    for (i=0; i < buflen; i++) {

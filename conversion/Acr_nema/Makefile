@@ -64,10 +64,10 @@ lint: $(LINT_ACR_LIB) $(LINT_LIST_EXE)
 
 # How to create lint library
 $(LINT_ACR_LIB) : $(LINT_OBJS)
-	lint -o $(ACR_LIB) -x -u $(LINTFLAGS) $(LINT_OBJS)
+	lint -o $(ACR_LIB) -m -x -u $(LINTFLAGS) $(LINT_OBJS)
 
 $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_ACR_LIB)
-	lint -u $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
+	lint -u -m $(LINTFLAGS) $@ln $(LINT_ACR_LIB)
 
 # how to make man pages
 .man1.1:
