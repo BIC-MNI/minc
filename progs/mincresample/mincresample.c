@@ -10,15 +10,18 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.2  1995-11-21 14:13:20  neelin
-@MODIFIED   : Transform input sampling with transformation and use this as default.
-@MODIFIED   : Added -tfm_input_sampling to specify above option.
-@MODIFIED   : Added -use_input_sampling to get old behaviour (no longer the default).
-@MODIFIED   : Added -origin option (to specify coordinate instead of start values).
-@MODIFIED   : Added -standard_sampling option (to set standard values of start, step
-@MODIFIED   : and direction cosines).
-@MODIFIED   : Added -invert_transformation option.
+@MODIFIED   : Revision 3.3  1995-12-12 19:15:35  neelin
+@MODIFIED   : Added -spacetype, -talairach and -units options.
 @MODIFIED   :
+ * Revision 3.2  1995/11/21  14:13:20  neelin
+ * Transform input sampling with transformation and use this as default.
+ * Added -tfm_input_sampling to specify above option.
+ * Added -use_input_sampling to get old behaviour (no longer the default).
+ * Added -origin option (to specify coordinate instead of start values).
+ * Added -standard_sampling option (to set standard values of start, step
+ * and direction cosines).
+ * Added -invert_transformation option.
+ *
  * Revision 3.1  1995/11/07  15:04:02  neelin
  * Modified argument parsing so that only one pass is done.
  *
@@ -95,7 +98,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.2 1995-11-21 14:13:20 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.3 1995-12-12 19:15:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -218,6 +221,15 @@ public void get_arginfo(int argc, char *argv[],
       {"-standard_sampling", ARGV_FUNC, (char *) set_standard_sampling, 
           (char *) &args.volume_def,
           "Set the sampling to standard values (step, start and dircos)."},
+      {"-spacetype", ARGV_FUNC, (char *) set_spacetype, 
+          (char *) &args.volume_def,
+          "Set the spacetype attribute to a specified string."},
+      {"-talairach", ARGV_FUNC, (char *) set_spacetype, 
+          (char *) &args.volume_def,
+          "Output is in Talairach space."},
+      {"-units", ARGV_FUNC, (char *) set_units, 
+          (char *) &args.volume_def,
+          "Specify the units of the output sampling."},
       {"-nelements", ARGV_INT, (char *) 3, 
           (char *) args.volume_def.nelements,
           "Number of elements along each dimension (X, Y, Z)"},
@@ -1815,6 +1827,107 @@ public int set_standard_sampling(char *dst, char *key, char *nextArg)
    }
 
    return FALSE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_spacetype
+@INPUT      : dst - Pointer to client data from argument table
+              key - argument key
+              nextArg - argument following key
+@OUTPUT     : (nothing) 
+@RETURNS    : TRUE if nextArg should be discarded, FALSE otherwise
+@DESCRIPTION: Routine called by ParseArgv to set the space type of the
+              output sampling.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 12, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int set_spacetype(char *dst, char *key, char *nextArg)
+     /* ARGSUSED */
+{
+   Volume_Definition *volume_def;
+   char *spacetype;
+   int idim;
+   int return_value;
+
+   /* Get pointer to client data */
+   volume_def = (Volume_Definition *) dst;
+
+   /* Check key for spacetype */
+   return_value = FALSE;
+   if (strcmp(key, "-talairach") == 0) {
+      spacetype = MI_TALAIRACH;
+   }
+   else {
+
+      /* Check for following argument */
+      if (nextArg == NULL) {
+         (void) fprintf(stderr, 
+                        "\"%s\" option requires an additional argument\n",
+                        key);
+         exit(EXIT_FAILURE);
+      }
+
+      spacetype = nextArg;
+
+      return_value = TRUE;
+   }
+
+   /* Copy the strings */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      (void) strncpy(volume_def->spacetype[idim], spacetype, 
+                     MI_MAX_ATTSTR_LEN);
+      volume_def->spacetype[idim][MI_MAX_ATTSTR_LEN-1] = '\0';
+   }
+
+   return return_value;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_units
+@INPUT      : dst - Pointer to client data from argument table
+              key - argument key
+              nextArg - argument following key
+@OUTPUT     : (nothing) 
+@RETURNS    : TRUE if nextArg should be discarded, FALSE otherwise
+@DESCRIPTION: Routine called by ParseArgv to set the units of the
+              output sampling.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : December 12, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int set_units(char *dst, char *key, char *nextArg)
+     /* ARGSUSED */
+{
+   Volume_Definition *volume_def;
+   char *units;
+   int idim;
+
+   /* Get pointer to client data */
+   volume_def = (Volume_Definition *) dst;
+
+   /* Check for following argument */
+   if (nextArg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   units = nextArg;
+
+   /* Copy the strings */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      (void) strncpy(volume_def->units[idim], units, MI_MAX_ATTSTR_LEN);
+      volume_def->units[idim][MI_MAX_ATTSTR_LEN-1] = '\0';
+   }
+
+   return TRUE;
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------

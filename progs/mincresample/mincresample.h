@@ -6,15 +6,18 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 3.2  1995-11-21 14:13:20  neelin
-@MODIFIED   : Transform input sampling with transformation and use this as default.
-@MODIFIED   : Added -tfm_input_sampling to specify above option.
-@MODIFIED   : Added -use_input_sampling to get old behaviour (no longer the default).
-@MODIFIED   : Added -origin option (to specify coordinate instead of start values).
-@MODIFIED   : Added -standard_sampling option (to set standard values of start, step
-@MODIFIED   : and direction cosines).
-@MODIFIED   : Added -invert_transformation option.
+@MODIFIED   : Revision 3.3  1995-12-12 19:15:35  neelin
+@MODIFIED   : Added -spacetype, -talairach and -units options.
 @MODIFIED   :
+ * Revision 3.2  1995/11/21  14:13:20  neelin
+ * Transform input sampling with transformation and use this as default.
+ * Added -tfm_input_sampling to specify above option.
+ * Added -use_input_sampling to get old behaviour (no longer the default).
+ * Added -origin option (to specify coordinate instead of start values).
+ * Added -standard_sampling option (to set standard values of start, step
+ * and direction cosines).
+ * Added -invert_transformation option.
+ *
  * Revision 3.1  1995/11/07  15:04:02  neelin
  * Modified argument parsing so that only one pass is done.
  *
@@ -332,6 +335,8 @@ public void finish_up(VVolume *in_vol, VVolume *out_vol);
 public int get_transformation(char *dst, char *key, char *nextArg);
 public int get_model_file(char *dst, char *key, char *nextArg);
 public int set_standard_sampling(char *dst, char *key, char *nextArg);
+public int set_spacetype(char *dst, char *key, char *nextArg);
+public int set_units(char *dst, char *key, char *nextArg);
 public int get_axis_order(char *dst, char *key, char *nextArg);
 public int get_fillvalue(char *dst, char *key, char *nextArg);
 public void resample_volumes(Program_Flags *program_flags,
