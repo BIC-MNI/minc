@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:05  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1996-01-04 13:41:48  neelin
+@MODIFIED   : Added missing exit when user specifies a bad slice range.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:05  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.5  1995/02/09  14:11:43  neelin
  * Mods to make irix 5 lint happy.
  *
@@ -59,7 +62,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 3.0 1995-05-15 19:31:05 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 3.1 1996-01-04 13:41:48 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -303,6 +306,7 @@ int main(int argc, char *argv[])
        (slice_range[1] < slice_range[0])) {
       (void) fprintf(stderr, "%s: Error in slice range: %d to %d.\n",
                      pname, slice_range[0], slice_range[1]);
+      exit(EXIT_FAILURE);
    }
 
    /* Get file names */
