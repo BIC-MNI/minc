@@ -242,12 +242,13 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 
    /* Check to see if it is a standard dimension */
    if (MI_is_in_list(name, dimvarlist)) {
-      MI_CHK_ERR(varid=MI_create_dim_variable(cdfid, name))
+      MI_CHK_ERR(varid=MI_create_dim_variable(cdfid, name, datatype, ndims))
    }
 
    /* Check for a dimension width */
    else if (MI_is_in_list(name, dimwidthlist)) {
-      MI_CHK_ERR(varid=MI_create_dimwidth_variable(cdfid, name))
+      MI_CHK_ERR(varid=MI_create_dimwidth_variable(cdfid, name, 
+                                                   datatype, ndims))
    }
 
    /* Check for a standard variable or group */
@@ -290,6 +291,8 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 @NAME       : MI_create_dim_variable
 @INPUT      : cdfid    - cdf file id
               name     - name of standard variable to create
+              datatype - type of data to store
+              ndims    - number of dimensions - must be 0 or 1
 @OUTPUT     : (none)
 @RETURNS    : id of created variable, or MI_ERROR if an error occurs
 @DESCRIPTION: Creates a standard MINC dimension variable by calling ncvardef
@@ -301,12 +304,11 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_dim_variable(int cdfid, char *name)
+private int MI_create_dim_variable(int cdfid, char *name, 
+                                   nc_type datatype, int ndims)
 {
    int dimid;                /* Dimension id (for dimensions variables) */
    int varid;                /* Created variable id */
-   /* Vector of direction cosines */
-   double dircos[MI_NUM_SPACE_DIMS];
 
    MI_SAVE_ROUTINE_NAME("MI_create_dim_variable");
 
@@ -317,9 +319,16 @@ private int MI_create_dim_variable(int cdfid, char *name)
       MI_RETURN_ERROR(MI_ERROR);
    }
 
+   /* Check for ndims being 0 or 1 */
+   if (ndims>1) {
+      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
+                        "Too many dimensions for a dimension variable");
+      MI_RETURN_ERROR(MI_ERROR);
+   }
+
    /* Look for dimension and create the variable */
    MI_CHK_ERR(dimid=ncdimid(cdfid, name))
-   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_DOUBLE, 1, &dimid))
+   MI_CHK_ERR(varid=ncvardef(cdfid, name, datatype, ndims, &dimid))
 
    /* Standard attributes */
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
@@ -327,35 +336,11 @@ private int MI_create_dim_variable(int cdfid, char *name)
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
 
    /* Dimension attributes */
-   dircos[0] = dircos[1] = dircos[2] = 0.0;
    MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
-   MI_CHK_ERR(miattputdbl(cdfid, varid, MIstep, 1.0))
-   MI_CHK_ERR(miattputdbl(cdfid, varid, MIstart, 0.0))
-   MI_CHK_ERR(miattputstr(cdfid, varid, MIspacetype, MI_NATIVE))
    if (STRINGS_EQUAL(name, MItime))
       MI_CHK_ERR(miattputstr(cdfid, varid, MIalignment, MI_START))
    else
       MI_CHK_ERR(miattputstr(cdfid, varid, MIalignment, MI_CENTRE))
-
-   /* Direction cosines */
-   if ((STRINGS_EQUAL(name, MIxspace)) || 
-       (STRINGS_EQUAL(name, MIxfrequency))) {
-      dircos[0]=1.0;
-      MI_CHK_ERR(ncattput(cdfid, varid, MIdirection_cosines, NC_DOUBLE,
-                          3, dircos))
-   }
-   else if ((STRINGS_EQUAL(name, MIyspace)) || 
-           (STRINGS_EQUAL(name, MIyfrequency))) {
-      dircos[1]=1.0;
-      MI_CHK_ERR(ncattput(cdfid, varid, MIdirection_cosines, NC_DOUBLE,
-                          3, dircos))
-   }
-   else if ((STRINGS_EQUAL(name, MIzspace)) || 
-            (STRINGS_EQUAL(name, MIzfrequency))) {
-      dircos[2]=1.0;
-      MI_CHK_ERR(ncattput(cdfid, varid, MIdirection_cosines, NC_DOUBLE,
-                          3, dircos))
-   }
 
    MI_RETURN(varid);
 }
@@ -365,6 +350,8 @@ private int MI_create_dim_variable(int cdfid, char *name)
 @NAME       : MI_create_dimwidth_variable
 @INPUT      : cdfid    - cdf file id
               name     - name of standard variable to create
+              datatype - type of data to store
+              ndims    - number of dimensions - must be 0 or 1
 @OUTPUT     : (none)
 @RETURNS    : id of created variable, or MI_ERROR if an error occurs
 @DESCRIPTION: Creates a standard MINC dimension width variable by calling 
@@ -377,7 +364,8 @@ private int MI_create_dim_variable(int cdfid, char *name)
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_dimwidth_variable(int cdfid, char *name)
+private int MI_create_dimwidth_variable(int cdfid, char *name, 
+                                        nc_type datatype, int ndims)
 {
    int dimid;                /* Dimension id (for dimensions variables) */
    int varid;                /* Created variable id */
@@ -393,15 +381,21 @@ private int MI_create_dimwidth_variable(int cdfid, char *name)
    }
    *str='\0';
 
+   /* Check for ndims being 0 or 1 */
+   if (ndims>1) {
+      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
+                        "Too many dimensions for a dimension variable");
+      MI_RETURN_ERROR(MI_ERROR);
+   }
+
    /* Look for the dimension */
    MI_CHK_ERR(dimid=ncdimid(cdfid, string))
    /* Create the variable and set defaults */
-   MI_CHK_ERR(varid=ncvardef(cdfid, name, NC_DOUBLE, 1, &dimid))
+   MI_CHK_ERR(varid=ncvardef(cdfid, name, datatype, ndims, &dimid))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_DIM_WIDTH))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
-   MI_CHK_ERR(miattputdbl(cdfid, varid, MIwidth, 1.0))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIfiltertype, MI_SQUARE))
 
    MI_RETURN(varid);

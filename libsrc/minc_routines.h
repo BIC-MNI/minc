@@ -49,8 +49,10 @@ private int MI_vcopy_action(int ndims, long start[], long count[],
                             long nvalues, void *var_buffer, void *caller_data);
 
 /* From minc_convenience.c */
-private int MI_create_dim_variable(int cdfid, char *name);
-private int MI_create_dimwidth_variable(int cdfid, char *name);
+private int MI_create_dim_variable(int cdfid, char *name, 
+                                   nc_type datatype, int ndims);
+private int MI_create_dimwidth_variable(int cdfid, char *name, 
+                                        nc_type datatype, int ndims);
 private int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
                                      int ndims, int dim[]);
 private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
