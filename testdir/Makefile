@@ -9,7 +9,7 @@ include $(ROOT)/Makefile_configuration
 
 # Executable names
 PROGS    = minc_test test_mconv minc_test_types test_icv_range test_icv_dim \
-   test_speed test_icv_dim1
+   test_speed test_icv_dim1 test_icv_fillvalue
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(MINC_LDOPT)
 
@@ -26,7 +26,7 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 .SUFFIXES: .ln#                           tell make to watch for .ln's
 
-default: all
+default: $(PROGS)
 
 all: $(PROGS) test
 
