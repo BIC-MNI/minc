@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.20 1996-01-15 17:38:53 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.21 1996-02-27 15:11:23 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -44,6 +44,20 @@ static  int      default_block_sizes[MAX_DIMENSIONS] = {
 private  void  alloc_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume );
+
+#ifdef  CACHE_DEBUGGING
+private  void  initialize_cache_debug(
+    volume_cache_struct  *cache );
+
+private  void  record_cache_hit(
+    volume_cache_struct  *cache );
+
+private  void  record_cache_prev_hit(
+    volume_cache_struct  *cache );
+
+private  void  record_cache_no_hit(
+    volume_cache_struct  *cache );
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_n_bytes_cache_threshold
@@ -302,6 +316,10 @@ public  void  initialize_volume_cache(
     cache->max_cache_bytes = get_default_max_bytes_in_cache();
 
     alloc_volume_cache( cache, volume );
+
+#ifdef CACHE_DEBUGGING
+    initialize_cache_debug( cache );
+#endif
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -376,6 +394,12 @@ private  void  alloc_volume_cache(
     cache->head = NULL;
     cache->tail = NULL;
     cache->n_blocks = 0;
+}
+
+public  BOOLEAN  volume_cache_is_alloced(
+    volume_cache_struct   *cache )
+{
+    return( cache->hash_table != NULL );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -607,6 +631,7 @@ public  void  delete_volume_cache(
     delete_cache_blocks( cache, volume, TRUE );
 
     FREE( cache->hash_table );
+    cache->hash_table = NULL;
 
     n_dims = cache->n_dimensions;
     for_less( dim, 0, n_dims )
@@ -1246,7 +1271,12 @@ private  cache_block_struct  *get_cache_block_for_voxel(
           block accessed */
 
     if( block_index == cache->previous_block_index )
+    {
+#ifdef  CACHE_DEBUGGING
+        record_cache_prev_hit( cache );
+#endif
         return( cache->previous_block );
+    }
 
     /*--- search the hash table for the block index */
 
@@ -1263,6 +1293,10 @@ private  cache_block_struct  *get_cache_block_for_voxel(
 
     if( block == NULL )
     {
+#ifdef  CACHE_DEBUGGING
+        record_cache_no_hit( cache );
+#endif
+
         /*--- find a block to use */
 
         block = appropriate_a_cache_block( cache, volume );
@@ -1298,6 +1332,10 @@ private  cache_block_struct  *get_cache_block_for_voxel(
     }
     else   /*--- block was found in hash table */
     {
+#ifdef  CACHE_DEBUGGING
+        record_cache_hit( cache );
+#endif
+
         /*--- move block to head of used list */
 
         if( block != cache->head )
@@ -1445,3 +1483,104 @@ public  BOOLEAN  cached_volume_has_been_modified(
 {
     return( cache->minc_file != NULL );
 }
+
+public  BOOLEAN  volume_is_cached(
+    Volume  volume )
+{
+    return( volume->is_cached_volume );
+}
+
+#ifndef  CACHE_DEBUGGING
+/* ARGSUSED */
+#endif
+
+public  void   set_volume_cache_debugging(
+    Volume   volume,
+    int      output_every )
+{
+#ifdef  CACHE_DEBUGGING
+    if( output_every >= 1 )
+    {
+        volume->cache.debugging_on = TRUE;
+        volume->cache.output_every = output_every;
+    }
+    else
+    {
+        volume->cache.debugging_on = FALSE;
+    }
+#endif
+}
+
+#ifdef  CACHE_DEBUGGING
+
+private  void  initialize_cache_debug(
+    volume_cache_struct  *cache )
+{
+    int      output_every;
+    STRING   debug;
+
+    debug = getenv( "VOLUME_CACHE_DEBUG" );
+
+    cache->debugging_on = (debug != NULL);
+
+    if( debug == NULL || sscanf( debug, "%d", &output_every ) != 1 ||
+        output_every < 1 )
+    {
+        output_every = 1000;
+    }
+
+    cache->output_every = output_every;
+    cache->n_accesses = 0;
+    cache->n_hits = 0;
+    cache->n_prev_hits = 0;
+}
+
+private  void  increment_n_accesses(
+    volume_cache_struct  *cache )
+{
+    ++cache->n_accesses;
+
+    if( cache->n_accesses >= cache->output_every )
+    {
+        print( "Volume cache:  Hit ratio: %g   Prev ratio: %g\n",
+               (Real) (cache->n_hits + cache->n_prev_hits) /
+               (Real) cache->n_accesses,
+               (Real) cache->n_prev_hits /
+               (Real) cache->n_accesses );
+
+        cache->n_accesses = 0;
+        cache->n_hits = 0;
+        cache->n_prev_hits = 0;
+    }
+}
+
+private  void  record_cache_hit(
+    volume_cache_struct  *cache )
+{
+    if( cache->debugging_on )
+    {
+        ++cache->n_hits;
+        increment_n_accesses( cache );
+    }
+}
+
+private  void  record_cache_prev_hit(
+    volume_cache_struct  *cache )
+{
+    if( cache->debugging_on )
+    {
+        ++cache->n_prev_hits;
+        increment_n_accesses( cache );
+    }
+}
+
+private  void  record_cache_no_hit(
+    volume_cache_struct  *cache )
+{
+    if( cache->debugging_on )
+    {
+        increment_n_accesses( cache );
+    }
+}
+
+#endif

@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.59 1996-02-08 17:40:14 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.60 1996-02-27 15:11:23 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -711,9 +711,9 @@ public  void  compute_world_transform(
     {
         axis = N_DIMENSIONS - axis_list[0] - axis_list[1];
 
-        create_orthogonal_vector( &directions[(axis+1) % N_DIMENSIONS],
-                                  &directions[(axis+2) % N_DIMENSIONS],
-                                  &directions[axis] );
+        CROSS_VECTORS( directions[axis],
+                       directions[(axis+1) % N_DIMENSIONS],
+                       directions[(axis+2) % N_DIMENSIONS] );
     }
 
     if( EQUAL_VECTORS( directions[0], directions[1] ) ||

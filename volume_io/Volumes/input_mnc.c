@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.51 1996-02-14 16:03:34 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.52 1996-02-27 15:11:23 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -169,19 +169,22 @@ public  Minc_file  initialize_minc_input_from_minc_id(
                        MIvector_dimension ) )
     {
         if( options->convert_vector_to_colour_flag &&
-            options->dimension_size_for_colour_data ==
-                                file->sizes_in_file[file->n_file_dimensions-1] )
+            file->sizes_in_file[file->n_file_dimensions-1] >=
+            options->dimension_size_for_colour_data &&
+            file->sizes_in_file[file->n_file_dimensions-1] <=
+            options->max_dimension_size_for_colour_data )
         {
             for_less( i, 0, 4 )
             {
-                if( options->rgba_indices[i] >=
-                    options->dimension_size_for_colour_data )
-                {
-                    print_error( "Error: rgba indices out of range.\n" );
-                    FREE( file );
-                    return( (Minc_file) NULL );
-                }
                 file->rgba_indices[i] = options->rgba_indices[i];
+
+                if( options->rgba_indices[i] >=
+                    file->sizes_in_file[file->n_file_dimensions-1] )
+                {
+                    file->rgba_indices[i] = -1;
+                    if( i != 3 )
+                        print_error( "Warning: rgba indices out of range.\n" );
+                }
             }
 
             set_volume_type( volume, NC_LONG, FALSE, 0.0, 0.0 );
@@ -1293,12 +1296,13 @@ public  int  get_minc_file_id(
 public  void  set_default_minc_input_options(
     minc_input_options  *options )
 {
-    static  int     default_rgba_indices[4] = { 0, 1, 2, -1 };
+    static  int     default_rgba_indices[4] = { 0, 1, 2, 3 };
 
     set_minc_input_promote_invalid_to_min_flag( options, TRUE );
     set_minc_input_vector_to_scalar_flag( options, TRUE );
     set_minc_input_vector_to_colour_flag( options, FALSE );
     set_minc_input_colour_dimension_size( options, 3 );
+    set_minc_input_colour_max_dimension_size( options, 4 );
     set_minc_input_colour_indices( options, default_rgba_indices );
 }
 
@@ -1387,6 +1391,33 @@ public  void  set_minc_input_colour_dimension_size(
     else
     {
         print_error( "Warning: set_minc_input_colour_dimension_size:\n" );
+        print_error( "         illegal size: %d\n", size );
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_colour_max_dimension_size
+@INPUT      : size
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the maximum number of vector components in a file that
+              contains colour data.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_colour_max_dimension_size(
+    minc_input_options  *options,
+    int                 size )
+{
+    if( size > 0 )
+        options->max_dimension_size_for_colour_data = size;
+    else
+    {
+        print_error( "Warning: set_minc_input_colour_max_dimension_size:\n" );
         print_error( "         illegal size: %d\n", size );
     }
 }
