@@ -7,7 +7,11 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.3  2001-04-17 18:40:23  neelin
+ * Revision 6.4  2002-11-06 13:32:23  jason
+ * Fixes to mincresample: setting the interpolation type is now done
+ * through an enum rather than function pointers.
+ *
+ * Revision 6.3  2001/04/17 18:40:23  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -136,6 +140,8 @@
 #endif
 
 /* Types used in program */
+enum Interpolant_type { TRILINEAR, TRICUBIC, N_NEIGHBOUR };
+
 typedef double Coord_Vector[WORLD_NDIMS];
 
 typedef struct {
@@ -188,7 +194,7 @@ struct Volume_Data_Struct {
    void *data;               /* Pointer to volume data */
    double *scale;            /* Pointer to array of scales for slices */
    double *offset;           /* Pointer to array of offsets for slices */
-   Interpolating_Function interpolant;
+   Interpolating_Function interpolant; /* Function Pointer */
 };
 
 typedef struct {
@@ -232,7 +238,7 @@ typedef struct {
    double fillvalue;
    double origin[3];
    Program_Flags flags;
-   Interpolating_Function interpolant;
+   enum Interpolant_type interpolant_type;  /* Type of interpolation */
    Transform_Info transform_info;
    Volume_Definition volume_def;
 } Arg_Data;

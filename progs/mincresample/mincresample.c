@@ -11,7 +11,11 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.10  2002-10-30 13:53:02  jason
+ * Revision 6.11  2002-11-06 13:32:23  jason
+ * Fixes to mincresample: setting the interpolation type is now done
+ * through an enum rather than function pointers.
+ *
+ * Revision 6.10  2002/10/30 13:53:02  jason
  * Added a ARGV_LONG argument type to ParseArgv. Used that type for the nelements variable in mincresample
  *
  * Revision 6.9  2001/08/24 19:12:50  neelin
@@ -155,7 +159,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.10 2002-10-30 13:53:02 jason Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.11 2002-11-06 13:32:23 jason Exp $";
 #endif
 
 #include <stdlib.h>
@@ -240,7 +244,7 @@ public void get_arginfo(int argc, char *argv[],
       FILL_DEFAULT,           /* Flag indicating that fillvalue not set */
       {NO_VALUE, NO_VALUE, NO_VALUE}, /* Flag indicating that origin not set */
       {TRUE},                 /* Verbose */
-      trilinear_interpolant,
+      {TRILINEAR},            /* use trilinear interpolation by default */
       {FALSE, NULL, NULL, 0, NULL}, /* Transformation info is empty at start.
                                  Transformation must be set before invoking
                                  argument parsing */
@@ -393,14 +397,15 @@ public void get_arginfo(int argc, char *argv[],
       {"-fillvalue", ARGV_FLOAT, (char *) 0, 
           (char *) &args.fillvalue,
           "Specify a fill value for points outside of input volume"},
-      {"-trilinear", ARGV_CONSTANT, (char *) trilinear_interpolant, 
-          (char *) &args.interpolant,
+      {"-trilinear", ARGV_CONSTANT, (char *) TRILINEAR, 
+          (char *) &args.interpolant_type,
           "Do trilinear interpolation"},
-      {"-tricubic", ARGV_CONSTANT, (char *) tricubic_interpolant, 
-          (char *) &args.interpolant,
+      {"-tricubic", ARGV_CONSTANT, (char *) TRICUBIC, 
+          (char *) &args.interpolant_type,
           "Do tricubic interpolation"},
       {"-nearest_neighbour", ARGV_CONSTANT, 
-          (char *) nearest_neighbour_interpolant, (char *) &args.interpolant,
+          (char *) N_NEIGHBOUR, 
+          (char *) &args.interpolant_type,
           "Do nearest neighbour interpolation"},
       {NULL, ARGV_END, NULL, NULL, NULL}
    };
@@ -518,7 +523,22 @@ public void get_arginfo(int argc, char *argv[],
       in_vol->volume->fillvalue = args.fillvalue;
       in_vol->volume->use_fill = (args.fillvalue != -DBL_MAX);
    }
-   in_vol->volume->interpolant = args.interpolant;
+
+   /* set the function pointer defining the type of interpolation */
+   switch (args.interpolant_type ) {
+   case TRICUBIC:
+     in_vol->volume->interpolant = tricubic_interpolant;
+     break;
+   case TRILINEAR:
+     in_vol->volume->interpolant = trilinear_interpolant;
+     break;
+   case N_NEIGHBOUR:
+     in_vol->volume->interpolant = nearest_neighbour_interpolant;
+     break;
+   default:
+     (void) fprintf(stderr, "Error determining interpolation type\n");
+     exit(EXIT_FAILURE);
+   }
 
    /* Check min/max variables */
    fp = in_vol->file;

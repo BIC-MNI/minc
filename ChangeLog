@@ -1,3 +1,10 @@
+2002-11-05  Jason Lerch	      <jason@bic.mni.mcgill.ca>
+
+	* progs/mincresample/mincresample.{c,h}: changed the setting of
+	the interpolation type to go through an enum rather than directly
+	to a function pointer, as that is the behaviour that ParseArgv
+	expects and also makes mincresample 64 bit safe.
+
 2002-10-30  Jason Lerch       <jason@bic.mni.mcgill.ca>
 
 	* libsrc/ParseArgv: added the ARGV_LONG argument type.
