@@ -1,13 +1,13 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.1 1995-03-13 13:41:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.2 1995-03-16 13:34:47 david Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
 
-#define   INVERSE_FUNCTION_TOLERANCE     0.001
-#define   INVERSE_DELTA_TOLERANCE        -1.0
+#define   INVERSE_FUNCTION_TOLERANCE     0.01
+#define   INVERSE_DELTA_TOLERANCE        1.0e-5
 #define   MAX_INVERSE_ITERATIONS         20
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -44,7 +44,7 @@ public  void  grid_transform_point(
            resulting offset to the given position */
 
     evaluate_volume_in_world( transform->displacement_volume,
-                              x, y, z, DEGREES_CONTINUITY, 0.0,
+                              x, y, z, DEGREES_CONTINUITY, TRUE, 0.0,
                               values, NULL, NULL, NULL,
                               NULL, NULL, NULL, NULL, NULL, NULL );
     
@@ -88,7 +88,7 @@ private  void  forward_function(
 
     evaluate_volume_in_world( transform->displacement_volume,
                               parameters[X], parameters[Y], parameters[Z],
-                              DEGREES_CONTINUITY, 0.0,
+                              DEGREES_CONTINUITY, TRUE, 0.0,
                               values, deriv_x, deriv_y, deriv_z,
                               NULL, NULL, NULL, NULL, NULL, NULL );
 
@@ -102,6 +102,10 @@ private  void  forward_function(
         derivatives[c][X] = deriv_x[c];
         derivatives[c][Y] = deriv_y[c];
         derivatives[c][Z] = deriv_z[c];
+/*derivatives[c][X] = 0.0;
+derivatives[c][Y] = 0.0;
+derivatives[c][Z] = 0.0;
+*/
         derivatives[c][c] += 1.0;    /* deriv of (x,y,z) w.r.t. x or y or z  */
     }
 }
@@ -126,7 +130,7 @@ private  void  forward_function(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  grid_inverse_transform_point(
+public  void  my_grid_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -169,4 +173,98 @@ public  void  grid_inverse_transform_point(
         *y_transformed = y;
         *z_transformed = z;
     }
+}
+
+#define  NUMBER_TRIES  10
+
+public  void  louis_grid_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed )
+{
+    int    tries;
+    Real   best_x, best_y, best_z;
+    Real   tx, ty, tz;
+    Real   gx, gy, gz;
+    Real   error_x, error_y, error_z, error, smallest_e;
+    Real   ftol;
+
+    ftol = 0.05;
+
+    grid_transform_point( transform, x, y, z, &tx, &ty, &tz );
+
+    tx = x - (tx - x);
+    ty = y - (ty - y);
+    tz = z - (tz - z);
+
+    grid_transform_point( transform, tx, ty, tz, &gx, &gy, &gz );
+
+    error_x = x - gx;
+    error_y = y - gy;
+    error_z = z - gz;
+
+    tries = 0;
+
+    error = smallest_e = ABS(error_x) + ABS(error_y) + ABS(error_z);
+
+    best_x = tx;
+    best_y = ty;
+    best_z = tz;
+
+    while( ++tries < NUMBER_TRIES && smallest_e > ftol )
+    {
+        tx += 0.67 * error_x;
+        ty += 0.67 * error_y;
+        tz += 0.67 * error_z;
+
+        grid_transform_point( transform, tx, ty, tz, &gx, &gy, &gz );
+
+        error_x = x - gx;
+        error_y = y - gy;
+        error_z = z - gz;
+    
+        error = ABS(error_x) + ABS(error_y) + ABS(error_z);
+
+        if( error < smallest_e )
+        {
+            smallest_e = error;
+            best_x = tx;
+            best_y = ty;
+            best_z = tz;
+        }
+    }
+
+    *x_transformed = best_x;
+    *y_transformed = best_y;
+    *z_transformed = best_z;
+}
+
+/* ---------------------------------------------------------------------------
+
+     Above are two different versions of the grid inverse function.  I would
+have hoped that my version worked best, since it uses first derivatives and
+Newton's method.  However, Louis' version seems to work better, perhaps since
+it matches the code he uses in minctracc to generate the grid transforms.
+
+- David MacDonald
+
+---------------------------------------------------------------------------- */
+
+public  void  grid_inverse_transform_point(
+    General_transform   *transform,
+    Real                x,
+    Real                y,
+    Real                z,
+    Real                *x_transformed,
+    Real                *y_transformed,
+    Real                *z_transformed )
+{
+    louis_grid_inverse_transform_point( transform, x, y, z,
+                                        x_transformed,
+                                        y_transformed,
+                                        z_transformed );
 }
