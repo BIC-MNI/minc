@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 1.1  1993-11-23 14:12:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 12:10:06  neelin
 @MODIFIED   :
+@MODIFIED   :
+ * Revision 1.1  93/11/23  14:12:47  neelin
+ * Initial revision
+ * 
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
@@ -99,6 +102,12 @@ public Acr_Status spi_output_message(Acr_File *afp, Acr_Message message)
          status = ACR_OTHER_ERROR;
          return status;
       }
+   }
+
+   /* Flush the buffer */
+   if (acr_file_flush(afp) == EOF) {
+      status = ACR_OTHER_ERROR;
+      return status;
    }
 
    return status;
