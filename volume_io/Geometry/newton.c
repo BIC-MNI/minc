@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.c,v 1.6 1996-05-17 19:36:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.c,v 1.7 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 #define  STEP_RATIO  1.0
@@ -49,7 +49,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  newton_root_find(
+VIOAPI  BOOLEAN  newton_root_find(
     int    n_dimensions,
     void   (*function) ( void *, Real [],  Real [], Real ** ),
     void   *function_data,

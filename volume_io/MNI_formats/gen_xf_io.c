@@ -15,26 +15,26 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.22 2003-06-02 02:49:36 stever Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.23 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 /*--------------------- file format keywords ------------------------------ */
 
-static   const STRING      TRANSFORM_FILE_HEADER = "MNI Transform File";
-static   const STRING      TYPE_STRING = "Transform_Type";
-static   const STRING      LINEAR_TRANSFORM_STRING = "Linear_Transform";
-static   const STRING      LINEAR_TYPE = "Linear";
-static   const STRING      THIN_PLATE_SPLINE_STRING =
+static const STRING      TRANSFORM_FILE_HEADER = "MNI Transform File";
+static const STRING      TYPE_STRING = "Transform_Type";
+static const STRING      LINEAR_TRANSFORM_STRING = "Linear_Transform";
+static const STRING      LINEAR_TYPE = "Linear";
+static const STRING      THIN_PLATE_SPLINE_STRING =
                                               "Thin_Plate_Spline_Transform";
-static   const STRING      INVERT_FLAG_STRING = "Invert_Flag";
-static   const STRING      TRUE_STRING = "True";
-static   const STRING      FALSE_STRING = "False";
-static   const STRING      N_DIMENSIONS_STRING = "Number_Dimensions";
-static   const STRING      POINTS_STRING = "Points";
-static   const STRING      DISPLACEMENTS_STRING = "Displacements";
+static const STRING      INVERT_FLAG_STRING = "Invert_Flag";
+static const STRING      TRUE_STRING = "True";
+static const STRING      FALSE_STRING = "False";
+static const STRING      N_DIMENSIONS_STRING = "Number_Dimensions";
+static const STRING      POINTS_STRING = "Points";
+static const STRING      DISPLACEMENTS_STRING = "Displacements";
 
-static   const STRING      GRID_TRANSFORM_STRING = "Grid_Transform";
-static   const STRING      DISPLACEMENT_VOLUME = "Displacement_Volume";
+static const STRING      GRID_TRANSFORM_STRING = "Grid_Transform";
+static const STRING      DISPLACEMENT_VOLUME = "Displacement_Volume";
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_default_transform_file_suffix
@@ -49,7 +49,7 @@ static   const STRING      DISPLACEMENT_VOLUME = "Displacement_Volume";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_default_transform_file_suffix( void )
+VIOAPI  STRING  get_default_transform_file_suffix( void )
 {
     return( "xfm" );
 }
@@ -72,7 +72,7 @@ public  STRING  get_default_transform_file_suffix( void )
 @MODIFIED   : Feb 21, 1995    David MacDonald : added grid transforms 
 ---------------------------------------------------------------------------- */
 
-private  void  output_one_transform(
+static  void  output_one_transform(
     FILE                *file,
     STRING              filename,
     int                 *volume_count,
@@ -258,7 +258,7 @@ private  void  output_one_transform(
 @MODIFIED   : Feb. 21, 1995   D. MacDonald
 ---------------------------------------------------------------------------- */
 
-public  Status  output_transform(
+VIOAPI  Status  output_transform(
     FILE                *file,
     STRING              filename,
     int                 *volume_count_ptr,
@@ -309,20 +309,20 @@ public  Status  output_transform(
 @MODIFIED   : Feb. 21, 1995   David MacDonald - added grid transforms
 ---------------------------------------------------------------------------- */
 
-private  Status  input_one_transform(
+static Status input_one_transform(
     FILE                *file,
     STRING              filename,
     General_transform   *transform )
 {
-    Status            status;
+    Status        status;
     int               i, j, n_points, n_dimensions;
-    Real              **points, **displacements;
-    Real              value, *points_1d;
-    STRING            type_name, str, volume_filename, directory, tmp_filename;
-    Volume            volume;
-    Transform         linear_transform;
+    Real          **points, **displacements;
+    Real          value, *points_1d;
+    STRING           type_name, str, volume_filename, directory, tmp_filename;
+    Volume        volume;
+    Transform     linear_transform;
     Transform_types   type;
-    BOOLEAN           inverse_flag;
+    BOOLEAN          inverse_flag;
     General_transform inverse;
     minc_input_options  options;
 
@@ -606,7 +606,7 @@ private  Status  input_one_transform(
 @MODIFIED   : Feb. 21, 1995   D. MacDonald
 ---------------------------------------------------------------------------- */
 
-public  Status  input_transform(
+VIOAPI  Status  input_transform(
     FILE                *file,
     STRING              filename,
     General_transform   *transform )
@@ -686,7 +686,7 @@ public  Status  input_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_transform_file(
+VIOAPI  Status  output_transform_file(
     STRING              filename,
     STRING              comments,
     General_transform   *transform )
@@ -724,7 +724,7 @@ public  Status  output_transform_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_transform_file(
+VIOAPI  Status  input_transform_file(
     STRING              filename,
     General_transform   *transform )
 {

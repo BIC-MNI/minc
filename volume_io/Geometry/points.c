@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.13 1996-05-17 19:36:08 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.c,v 1.14 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -33,7 +33,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/points.
                                                 orthogonal
 ---------------------------------------------------------------------------- */
 
-public  void  create_orthogonal_vector(
+VIOAPI  void  create_orthogonal_vector(
     Vector  *v,
     Vector  *ortho )
 {
@@ -61,7 +61,7 @@ public  void  create_orthogonal_vector(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  create_two_orthogonal_vectors(
+VIOAPI  void  create_two_orthogonal_vectors(
     Vector   *v,
     Vector   *v1,
     Vector   *v2 )

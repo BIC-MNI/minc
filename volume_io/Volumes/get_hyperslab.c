@@ -15,10 +15,10 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.9 2001-04-17 18:40:29 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/get_hyperslab.c,v 1.10 2004-10-04 20:23:52 bert Exp $";
 #endif
 
-public  void  convert_voxels_to_values(
+VIOAPI  void  convert_voxels_to_values(
     Volume   volume,
     int      n_voxels,
     Real     voxels[],
@@ -44,7 +44,7 @@ public  void  convert_voxels_to_values(
         values[v] = scale * voxels[v] + trans;
 }
 
-public  void  get_volume_value_hyperslab(
+VIOAPI  void  get_volume_value_hyperslab(
     Volume   volume,
     int      v0,
     int      v1,
@@ -80,7 +80,7 @@ public  void  get_volume_value_hyperslab(
     }
 }
 
-public  void  get_volume_value_hyperslab_5d(
+VIOAPI  void  get_volume_value_hyperslab_5d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -100,7 +100,7 @@ public  void  get_volume_value_hyperslab_5d(
     convert_voxels_to_values( volume, n0 * n1 * n2 * n3 * n4, values, values );
 }
 
-public  void  get_volume_value_hyperslab_4d(
+VIOAPI  void  get_volume_value_hyperslab_4d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -118,7 +118,7 @@ public  void  get_volume_value_hyperslab_4d(
     convert_voxels_to_values( volume, n0 * n1 * n2 * n3, values, values );
 }
 
-public  void  get_volume_value_hyperslab_3d(
+VIOAPI  void  get_volume_value_hyperslab_3d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -133,7 +133,7 @@ public  void  get_volume_value_hyperslab_3d(
     convert_voxels_to_values( volume, n0 * n1 * n2, values, values );
 }
 
-public  void  get_volume_value_hyperslab_2d(
+VIOAPI  void  get_volume_value_hyperslab_2d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -146,7 +146,7 @@ public  void  get_volume_value_hyperslab_2d(
     convert_voxels_to_values( volume, n0 * n1, values, values );
 }
 
-public  void  get_volume_value_hyperslab_1d(
+VIOAPI  void  get_volume_value_hyperslab_1d(
     Volume   volume,
     int      v0,
     int      n0,
@@ -157,7 +157,7 @@ public  void  get_volume_value_hyperslab_1d(
     convert_voxels_to_values( volume, n0, values, values );
 }
 
-private  void  slow_get_volume_voxel_hyperslab(
+static  void  slow_get_volume_voxel_hyperslab(
     Volume   volume,
     int      v0,
     int      v1,
@@ -198,9 +198,9 @@ private  void  slow_get_volume_voxel_hyperslab(
     }
 }
 
-private  Real  *int_to_real_conversion = NULL;
+static  Real  *int_to_real_conversion = NULL;
 
-private  void  check_real_conversion_lookup( void )
+static  void  check_real_conversion_lookup( void )
 {
     Real   min_value1, max_value1, min_value2, max_value2;
     long   i, long_min, long_max;
@@ -226,7 +226,7 @@ private  void  check_real_conversion_lookup( void )
         int_to_real_conversion[i] = (Real) i;
 }
 
-public  void  get_voxel_values_5d(
+VIOAPI  void  get_voxel_values_5d(
     Data_types  data_type,
     void        *void_ptr,
     int         steps[],
@@ -478,7 +478,7 @@ public  void  get_voxel_values_5d(
     }
 }
 
-public  void  get_voxel_values_4d(
+VIOAPI  void  get_voxel_values_4d(
     Data_types  data_type,
     void        *void_ptr,
     int         steps[],
@@ -693,7 +693,7 @@ public  void  get_voxel_values_4d(
     }
 }
 
-public  void  get_voxel_values_3d(
+VIOAPI  void  get_voxel_values_3d(
     Data_types  data_type,
     void        *void_ptr,
     int         steps[],
@@ -903,7 +903,7 @@ public  void  get_voxel_values_3d(
     }
 }
 
-public  void  get_voxel_values_2d(
+VIOAPI  void  get_voxel_values_2d(
     Data_types  data_type,
     void        *void_ptr,
     int         steps[],
@@ -1045,7 +1045,7 @@ public  void  get_voxel_values_2d(
     }
 }
 
-public  void  get_voxel_values_1d(
+VIOAPI  void  get_voxel_values_1d(
     Data_types  data_type,
     void        *void_ptr,
     int         step0,
@@ -1148,7 +1148,7 @@ public  void  get_voxel_values_1d(
     }
 }
 
-private  void  get_voxel_values(
+static  void  get_voxel_values(
     Volume   volume,
     void     *void_ptr,
     int      n_dims,
@@ -1182,7 +1182,7 @@ private  void  get_voxel_values(
     }
 }
 
-public  void  get_volume_voxel_hyperslab_5d(
+VIOAPI  void  get_volume_voxel_hyperslab_5d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -1259,7 +1259,7 @@ public  void  get_volume_voxel_hyperslab_5d(
                       values );
 }
 
-public  void  get_volume_voxel_hyperslab_4d(
+VIOAPI  void  get_volume_voxel_hyperslab_4d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -1326,7 +1326,7 @@ public  void  get_volume_voxel_hyperslab_4d(
                       values );
 }
 
-public  void  get_volume_voxel_hyperslab_3d(
+VIOAPI  void  get_volume_voxel_hyperslab_3d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -1383,7 +1383,7 @@ public  void  get_volume_voxel_hyperslab_3d(
                       values );
 }
 
-public  void  get_volume_voxel_hyperslab_2d(
+VIOAPI  void  get_volume_voxel_hyperslab_2d(
     Volume   volume,
     int      v0,
     int      v1,
@@ -1430,7 +1430,7 @@ public  void  get_volume_voxel_hyperslab_2d(
                       values );
 }
 
-public  void  get_volume_voxel_hyperslab_1d(
+VIOAPI  void  get_volume_voxel_hyperslab_1d(
     Volume   volume,
     int      v0,
     int      n0,
@@ -1466,7 +1466,7 @@ public  void  get_volume_voxel_hyperslab_1d(
                       values );
 }
 
-public  void  get_volume_voxel_hyperslab(
+VIOAPI  void  get_volume_voxel_hyperslab(
     Volume   volume,
     int      v0,
     int      v1,

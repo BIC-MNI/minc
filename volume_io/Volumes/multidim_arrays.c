@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.15 2001-04-17 18:40:30 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.16 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -34,7 +34,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public   void   create_empty_multidim_array(
+VIOAPI   void   create_empty_multidim_array(
     multidim_array  *array,
     int             n_dimensions,
     Data_types      data_type )
@@ -64,7 +64,7 @@ public   void   create_empty_multidim_array(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Data_types  get_multidim_data_type(
+VIOAPI  Data_types  get_multidim_data_type(
     multidim_array       *array )
 {
     return( array->data_type );
@@ -84,7 +84,7 @@ public  Data_types  get_multidim_data_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_multidim_data_type(
+VIOAPI  void  set_multidim_data_type(
     multidim_array       *array,
     Data_types           data_type )
 {
@@ -104,7 +104,7 @@ public  void  set_multidim_data_type(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_type_size(
+VIOAPI  int  get_type_size(
     Data_types   type )
 {
     int   size;
@@ -124,7 +124,7 @@ public  int  get_type_size(
     return( size );
 }
 
-public  void  get_type_range(
+VIOAPI  void  get_type_range(
     Data_types   type,
     Real         *min_value,
     Real         *max_value )
@@ -172,7 +172,7 @@ public  void  get_type_range(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_multidim_sizes(
+VIOAPI  void  set_multidim_sizes(
     multidim_array   *array,
     int              sizes[] )
 {
@@ -195,7 +195,7 @@ public  void  set_multidim_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_multidim_sizes(
+VIOAPI  void  get_multidim_sizes(
     multidim_array   *array,
     int              sizes[] )
 {
@@ -218,7 +218,7 @@ public  void  get_multidim_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  multidim_array_is_alloced(
+VIOAPI  BOOLEAN  multidim_array_is_alloced(
     multidim_array   *array )
 {
     return( array->data != NULL );
@@ -237,7 +237,7 @@ public  BOOLEAN  multidim_array_is_alloced(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  alloc_multidim_array(
+VIOAPI  void  alloc_multidim_array(
     multidim_array   *array )
 {
     int     dim;
@@ -306,7 +306,7 @@ public  void  alloc_multidim_array(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public   void   create_multidim_array(
+VIOAPI   void   create_multidim_array(
     multidim_array  *array,
     int             n_dimensions,
     int             sizes[],
@@ -330,7 +330,7 @@ public   void   create_multidim_array(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_multidim_array(
+VIOAPI  void  delete_multidim_array(
     multidim_array   *array )
 {
     if( array->data == NULL )
@@ -369,7 +369,7 @@ public  void  delete_multidim_array(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_multidim_n_dimensions(
+VIOAPI  int  get_multidim_n_dimensions(
     multidim_array   *array )
 {
     return( array->n_dimensions );
@@ -401,7 +401,7 @@ public  int  get_multidim_n_dimensions(
 @MODIFIED   : Feb. 27, 1996   D. MacDonald  - made more efficient
 ---------------------------------------------------------------------------- */
 
-public  void  copy_multidim_data_reordered(
+VIOAPI  void  copy_multidim_data_reordered(
     int                 type_size,
     void                *void_dest_ptr,
     int                 n_dest_dims,
@@ -593,7 +593,7 @@ public  void  copy_multidim_data_reordered(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  copy_multidim_reordered(
+VIOAPI  void  copy_multidim_reordered(
     multidim_array      *dest,
     int                 dest_ind[],
     multidim_array      *src,

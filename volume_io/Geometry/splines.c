@@ -15,26 +15,26 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/splines.c,v 1.5 1995-07-31 13:44:29 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/splines.c,v 1.6 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 /*--- Weighting functions which define the splines, all of which are
       interpolation splines, with the exception of the quadratic spline */
 
-private  Real   constant_coefs[1][1] = {   { 1.0 }  };
+static Real   constant_coefs[1][1] = {   { 1.0 }  };
 
-private  Real   linear_coefs[2][2] = {
+static Real   linear_coefs[2][2] = {
                                            {  1.0,  0.0 },
                                            { -1.0,  1.0 }
                                       };
 
-private  Real   quadratic_coefs[3][3] = {
+static Real   quadratic_coefs[3][3] = {
                                            {  0.5,  0.5,  0.0 },
                                            { -1.0,  1.0,  0.0 },
                                            {  0.5, -1.0,  0.5 }
                                         };
 
-private  Real   cubic_coefs[4][4] = {
+static Real   cubic_coefs[4][4] = {
                                         {  0.0,  1.0,  0.0,  0.0 },
                                         { -0.5,  0.0,  0.5,  0.0 },
                                         {  1.0, -2.5,  2.0, -0.5 },
@@ -54,7 +54,7 @@ private  Real   cubic_coefs[4][4] = {
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_linear_spline_coefs(
+VIOAPI  void  get_linear_spline_coefs(
     Real  **coefs )
 {
     int    i, j;
@@ -77,7 +77,7 @@ public  void  get_linear_spline_coefs(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_quadratic_spline_coefs(
+VIOAPI  void  get_quadratic_spline_coefs(
     Real  **coefs )
 {
     int    i, j;
@@ -101,7 +101,7 @@ public  void  get_quadratic_spline_coefs(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_cubic_spline_coefs(
+VIOAPI  void  get_cubic_spline_coefs(
     Real  **coefs )
 {
     int    i, j;
@@ -130,7 +130,7 @@ public  void  get_cubic_spline_coefs(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  cubic_interpolate(
+VIOAPI  Real  cubic_interpolate(
     Real   u,
     Real   v0,
     Real   v1,
@@ -166,7 +166,7 @@ public  Real  cubic_interpolate(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  evaluate_univariate_interpolating_spline(
+VIOAPI  void  evaluate_univariate_interpolating_spline(
     Real    u,
     int     degree,
     Real    coefs[],
@@ -199,7 +199,7 @@ public  void  evaluate_univariate_interpolating_spline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  evaluate_bivariate_interpolating_spline(
+VIOAPI  void  evaluate_bivariate_interpolating_spline(
     Real    u,
     Real    v,
     int     degree,
@@ -241,7 +241,7 @@ public  void  evaluate_bivariate_interpolating_spline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  evaluate_trivariate_interpolating_spline(
+VIOAPI  void  evaluate_trivariate_interpolating_spline(
     Real    u,
     Real    v,
     Real    w,
@@ -291,7 +291,7 @@ public  void  evaluate_trivariate_interpolating_spline(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  evaluate_interpolating_spline(
+VIOAPI  void  evaluate_interpolating_spline(
     int     n_dims,
     Real    parameters[],
     int     degree,

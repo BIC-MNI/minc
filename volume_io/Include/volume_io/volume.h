@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.53 2001-12-14 17:12:28 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.54 2004-10-04 20:23:51 bert Exp $
 ---------------------------------------------------------------------------- */
 
 
@@ -30,24 +30,22 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#define  cmode  nc_cmode
 #include  <minc.h>
-#undef  cmode
 #include  <volume_io/transforms.h>
 #include  <volume_io/multidim.h>
 
 typedef  struct
 {
-    Real     global_image_range[2];
-    STRING   dimension_names[MAX_DIMENSIONS];
-    BOOLEAN  use_starts_set;
-    BOOLEAN  use_volume_starts_and_steps;
+    VIO_Real global_image_range[2];
+    VIO_STR  dimension_names[VIO_MAX_DIMENSIONS];
+    VIO_BOOL use_starts_set;
+    VIO_BOOL use_volume_starts_and_steps;
 } minc_output_options;
 
 #include  <volume_io/volume_cache.h>
 
-extern  STRING   XYZ_dimension_names[];
-extern  STRING   File_order_dimension_names[];
+extern  VIO_STR   XYZ_dimension_names[];
+extern  VIO_STR   File_order_dimension_names[];
 
 /* -------------------------- volume struct --------------------- */
 
@@ -57,44 +55,48 @@ extern  STRING   File_order_dimension_names[];
 
 typedef  struct
 {
-    BOOLEAN                 is_cached_volume;
-    volume_cache_struct     cache;
+    VIO_BOOL                is_cached_volume;
+    VIO_volume_cache_struct cache;
 
-    multidim_array          array;
+    VIO_multidim_array      array;
 
-    STRING                  dimension_names[MAX_DIMENSIONS];
-    int                     spatial_axes[N_DIMENSIONS];
+    VIO_STR                 dimension_names[VIO_MAX_DIMENSIONS];
+    int                     spatial_axes[VIO_N_DIMENSIONS];
     nc_type                 nc_data_type;
-    BOOLEAN                 signed_flag;
-    BOOLEAN                 is_rgba_data;
+    VIO_BOOL                signed_flag;
+    VIO_BOOL                is_rgba_data;
 
-    Real                    voxel_min;
-    Real                    voxel_max;
-    BOOLEAN                 real_range_set;
-    Real                    real_value_scale;
-    Real                    real_value_translation;
+    VIO_Real                voxel_min;
+    VIO_Real                voxel_max;
+    VIO_BOOL                real_range_set;
+    VIO_Real                real_value_scale;
+    VIO_Real                real_value_translation;
 
-    Real                    separations[MAX_DIMENSIONS];
-    Real                    starts[MAX_DIMENSIONS];
-    Real                    direction_cosines[MAX_DIMENSIONS][N_DIMENSIONS];
+    VIO_Real                separations[VIO_MAX_DIMENSIONS];
+    VIO_Real                starts[VIO_MAX_DIMENSIONS];
+    VIO_Real                direction_cosines[VIO_MAX_DIMENSIONS][VIO_N_DIMENSIONS];
 
-    BOOLEAN                 voxel_to_world_transform_uptodate;
-    General_transform       voxel_to_world_transform;
+    VIO_BOOL                voxel_to_world_transform_uptodate;
+    VIO_General_transform   voxel_to_world_transform;
 
-    STRING                  coordinate_system_name;
+    VIO_STR                  coordinate_system_name;
 } volume_struct;
 
-typedef  volume_struct  *Volume;
+typedef  volume_struct  *VIO_Volume;
+
+#ifndef MINC_PLAY_NICE
+typedef VIO_Volume Volume;
+#endif /* MINC_PLAY_NICE */
 
 /* ---- macro for stepping through entire volume */
 
 #define  BEGIN_ALL_VOXELS( volume, v0, v1, v2, v3, v4 )                       \
          {                                                                    \
-             int  _i_, _sizes_[MAX_DIMENSIONS];                               \
+             int  _i_, _sizes_[VIO_MAX_DIMENSIONS];                           \
              int  _size0_, _size1_, _size2_, _size3_, _size4_;                \
                                                                               \
              get_volume_sizes( volume, _sizes_ );                             \
-             for_less( _i_, get_volume_n_dimensions(volume), MAX_DIMENSIONS ) \
+             for_less( _i_, get_volume_n_dimensions(volume), VIO_MAX_DIMENSIONS ) \
                  _sizes_[_i_] = 1;                                            \
              _size0_ = _sizes_[0];                                            \
              _size1_ = _sizes_[1];                                            \
@@ -345,9 +347,9 @@ typedef  struct
 
 typedef  struct
 {
-    BOOLEAN     promote_invalid_to_zero_flag;
-    BOOLEAN     convert_vector_to_scalar_flag;
-    BOOLEAN     convert_vector_to_colour_flag;
+    VIO_BOOL    promote_invalid_to_zero_flag;
+    VIO_BOOL    convert_vector_to_scalar_flag;
+    VIO_BOOL    convert_vector_to_colour_flag;
     int         dimension_size_for_colour_data;
     int         max_dimension_size_for_colour_data;
     int         rgba_indices[4];
@@ -356,7 +358,7 @@ typedef  struct
 
 typedef  struct
 {
-    BOOLEAN            file_is_being_read;
+    VIO_BOOL           file_is_being_read;
 
     /* input and output */
 
@@ -365,26 +367,26 @@ typedef  struct
     int                n_file_dimensions;
     long               sizes_in_file[MAX_VAR_DIMS];
     long               indices[MAX_VAR_DIMS];
-    STRING             dim_names[MAX_VAR_DIMS];
-    Volume             volume;
+    VIO_STR            dim_names[MAX_VAR_DIMS];
+    VIO_Volume         volume;
     int                to_volume_index[MAX_VAR_DIMS];
-    int                to_file_index[MAX_DIMENSIONS];
+    int                to_file_index[VIO_MAX_DIMENSIONS];
     int                minc_icv;
-    STRING             filename;
+    VIO_STR            filename;
 
     /* input only */
 
-    BOOLEAN            end_volume_flag;
-    BOOLEAN            converting_to_colour;
+    VIO_BOOL           end_volume_flag;
+    VIO_BOOL           converting_to_colour;
     int                rgba_indices[4];
     int                n_volumes_in_file;
 
-    int                valid_file_axes[MAX_DIMENSIONS];
+    int                valid_file_axes[VIO_MAX_DIMENSIONS];
 
     int                n_slab_dims;
 
-    int                spatial_axes[N_DIMENSIONS];
-    General_transform  voxel_to_world_transform;
+    int                spatial_axes[VIO_N_DIMENSIONS];
+    VIO_General_transform  voxel_to_world_transform;
     minc_input_options original_input_options;
 
     /* output only */
@@ -393,14 +395,14 @@ typedef  struct
     int                min_id;
     int                max_id;
     double             image_range[2];
-    BOOLEAN            end_def_done;
-    BOOLEAN            ignoring_because_cached;
-    BOOLEAN            variables_written;
+    VIO_BOOL           end_def_done;
+    VIO_BOOL           ignoring_because_cached;
+    VIO_BOOL           variables_written;
     int                dim_ids[MAX_VAR_DIMS];
-    BOOLEAN            outputting_in_order;
-    BOOLEAN            entire_file_written;
+    VIO_BOOL           outputting_in_order;
+    VIO_BOOL           entire_file_written;
     nc_type            nc_data_type;
-    BOOLEAN            signed_flag;
+    VIO_BOOL           signed_flag;
     double             valid_range[2];
     int                image_dims[MAX_VAR_DIMS];
     int                src_cdfid;
@@ -425,12 +427,12 @@ typedef struct
 
     FILE                 *volume_file;
     int                  slice_index;
-    long                 sizes_in_file[MAX_DIMENSIONS];
-    int                  axis_index_from_file[MAX_DIMENSIONS];
-    Data_types           file_data_type;
-    BOOLEAN              one_file_per_slice;
-    STRING               directory;
-    STRING               *slice_filenames;
+    long                 sizes_in_file[VIO_MAX_DIMENSIONS];
+    int                  axis_index_from_file[VIO_MAX_DIMENSIONS];
+    VIO_Data_types       file_data_type;
+    VIO_BOOL             one_file_per_slice;
+    VIO_STR              directory;
+    VIO_STR              *slice_filenames;
     int                  *slice_byte_offsets;
     unsigned char        *byte_slice_buffer;
     unsigned short       *short_slice_buffer;

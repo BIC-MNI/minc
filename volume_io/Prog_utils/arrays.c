@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/arrays.c,v 1.3 1996-05-17 19:36:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/arrays.c,v 1.4 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -38,7 +38,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/array
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_array_size(
+VIOAPI  void  set_array_size(
     void      **array,
     size_t    type_size,
     size_t    previous_n_elems,

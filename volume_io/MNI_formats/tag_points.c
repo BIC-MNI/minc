@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.22 1996-11-15 16:09:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.23 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -35,7 +35,7 @@ static   const char      *TAG_POINTS_STRING = "Points";
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  STRING  get_default_tag_file_suffix( void )
+VIOAPI  STRING  get_default_tag_file_suffix( void )
 {
     return( "tag" );
 }
@@ -55,7 +55,7 @@ public  STRING  get_default_tag_file_suffix( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  initialize_tag_file_output(
+VIOAPI  Status  initialize_tag_file_output(
     FILE      *file,
     STRING    comments,
     int       n_volumes )
@@ -115,7 +115,7 @@ public  Status  initialize_tag_file_output(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_one_tag(
+VIOAPI  Status  output_one_tag(
     FILE      *file,
     int       n_volumes,
     Real      tag_volume1[],
@@ -188,7 +188,7 @@ public  Status  output_one_tag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  terminate_tag_file_output(
+VIOAPI  void  terminate_tag_file_output(
     FILE    *file )
 {
     (void) fprintf( file, ";\n" );
@@ -220,7 +220,7 @@ public  void  terminate_tag_file_output(
                               tags_volume2 with n_volumes==1
 ---------------------------------------------------------------------------- */
 
-public  Status  output_tag_points(
+VIOAPI  Status  output_tag_points(
     FILE      *file,
     STRING    comments,
     int       n_volumes,
@@ -274,7 +274,7 @@ public  Status  output_tag_points(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   void  free_tags(
+static void free_tags(
     Real    **tags,
     int     n_tag_points )
 {
@@ -307,7 +307,7 @@ private   void  free_tags(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_tag_points(
+VIOAPI  void  free_tag_points(
     int       n_volumes,
     int       n_tag_points,
     Real      **tags_volume1,
@@ -360,7 +360,7 @@ public  void  free_tag_points(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  STRING  extract_label(
+static STRING extract_label(
     STRING     str )
 {
     BOOLEAN  quoted;
@@ -411,7 +411,7 @@ private  STRING  extract_label(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  initialize_tag_file_input(
+VIOAPI  Status  initialize_tag_file_input(
     FILE      *file,
     int       *n_volumes_ptr )
 {
@@ -492,7 +492,7 @@ public  Status  initialize_tag_file_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  read_one_tag(
+static Status read_one_tag(
     FILE      *file,
     int       n_volumes,
     Real      tags_volume1_ptr[],
@@ -659,7 +659,7 @@ private  Status  read_one_tag(
 @MODIFIED   : Oct. 19, 1995   D. MacDonald    - now calls the 1 at a time funcs
 ---------------------------------------------------------------------------- */
 
-public  Status  output_tag_file(
+VIOAPI  Status  output_tag_file(
     STRING    filename,
     STRING    comments,
     int       n_volumes,
@@ -709,7 +709,7 @@ public  Status  output_tag_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_tag_file(
+VIOAPI  Status  input_tag_file(
     STRING    filename,
     int       *n_volumes,
     int       *n_tag_points,
@@ -758,7 +758,7 @@ public  Status  input_tag_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  input_one_tag(
+VIOAPI  BOOLEAN  input_one_tag(
     FILE      *file,
     int       n_volumes,
     Real      tag_volume1[],
@@ -807,7 +807,7 @@ public  BOOLEAN  input_one_tag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_tag_points(
+VIOAPI  Status  input_tag_points(
     FILE      *file,
     int       *n_volumes_ptr,
     int       *n_tag_points,

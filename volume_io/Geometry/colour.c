@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.c,v 1.3 1996-05-17 19:36:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.c,v 1.4 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -34,7 +34,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Colour  make_Colour(
+VIOAPI  Colour  make_Colour(
     int   r,
     int   g,
     int   b )
@@ -55,7 +55,7 @@ public  Colour  make_Colour(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_Colour_r_0_1(
+VIOAPI  Real  get_Colour_r_0_1(
     Colour   colour )
 {
     return( (Real) get_Colour_r(colour) / 255.0 );
@@ -75,7 +75,7 @@ public  Real  get_Colour_r_0_1(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_Colour_g_0_1(
+VIOAPI  Real  get_Colour_g_0_1(
     Colour   colour )
 {
     return( (Real) get_Colour_g(colour) / 255.0 );
@@ -95,7 +95,7 @@ public  Real  get_Colour_g_0_1(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_Colour_b_0_1(
+VIOAPI  Real  get_Colour_b_0_1(
     Colour   colour )
 {
     return( (Real) get_Colour_b(colour) / 255.0 );
@@ -115,7 +115,7 @@ public  Real  get_Colour_b_0_1(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_Colour_a_0_1(
+VIOAPI  Real  get_Colour_a_0_1(
     Colour   colour )
 {
     return( (Real) get_Colour_a(colour) / 255.0 );
@@ -137,7 +137,7 @@ public  Real  get_Colour_a_0_1(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Colour  make_Colour_0_1(
+VIOAPI  Colour  make_Colour_0_1(
     Real   r,
     Real   g,
     Real   b )
@@ -164,7 +164,7 @@ public  Colour  make_Colour_0_1(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Colour  make_rgba_Colour_0_1(
+VIOAPI  Colour  make_rgba_Colour_0_1(
     Real   r,
     Real   g,
     Real   b,

@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.10 1996-05-17 19:36:27 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid_transforms.c,v 1.11 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
@@ -29,7 +29,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/grid
 #define   INVERSE_DELTA_TOLERANCE        1.0e-5
 #define   MAX_INVERSE_ITERATIONS         20
 
-private  void   evaluate_grid_volume(
+static void   evaluate_grid_volume(
     Volume         volume,
     Real           x,
     Real           y,
@@ -58,7 +58,7 @@ private  void   evaluate_grid_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  grid_transform_point(
+VIOAPI  void  grid_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -171,7 +171,7 @@ it matches the code he uses in minctracc to generate the grid transforms.
 
 ---------------------------------------------------------------------------- */
 
-public  void  grid_inverse_transform_point(
+VIOAPI  void  grid_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -238,7 +238,7 @@ public  void  grid_inverse_transform_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  grid_inverse_transform_point(
+VIOAPI  void  grid_inverse_transform_point(
     General_transform   *transform,
     Real                x,
     Real                y,
@@ -321,7 +321,7 @@ public  void  grid_inverse_transform_point(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void   evaluate_grid_volume(
+static  void   evaluate_grid_volume(
     Volume         volume,
     Real           x,
     Real           y,

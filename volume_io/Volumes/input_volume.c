@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.41 2000-10-23 19:04:24 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.42 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #include  <minc.h>
@@ -40,7 +40,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_vo
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  start_volume_input(
+VIOAPI  Status  start_volume_input(
     STRING               filename,
     int                  n_dimensions,
     STRING               dim_names[],
@@ -131,7 +131,7 @@ public  Status  start_volume_input(
 @MODIFIED   :
 ---------------------------------------------------------------------------- */
 
-public  void  delete_volume_input(
+VIOAPI  void  delete_volume_input(
     volume_input_struct   *input_info )
 {
     switch( input_info->file_format )
@@ -159,7 +159,7 @@ public  void  delete_volume_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  input_more_of_volume(
+VIOAPI  BOOLEAN  input_more_of_volume(
     Volume                volume,
     volume_input_struct   *input_info,
     Real                  *fraction_done )
@@ -194,7 +194,7 @@ public  BOOLEAN  input_more_of_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  cancel_volume_input(
+VIOAPI  void  cancel_volume_input(
     Volume                volume,
     volume_input_struct   *input_info )
 {
@@ -215,7 +215,7 @@ public  void  cancel_volume_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_volume(
+VIOAPI  Status  input_volume(
     STRING               filename,
     int                  n_dimensions,
     STRING               dim_names[],
@@ -271,7 +271,7 @@ public  Status  input_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Minc_file   get_volume_input_minc_file(
+VIOAPI  Minc_file   get_volume_input_minc_file(
     volume_input_struct   *volume_input )
 {
     return( volume_input->minc_file );

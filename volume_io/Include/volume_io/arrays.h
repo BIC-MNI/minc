@@ -12,7 +12,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.12 2001-12-14 17:12:24 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/arrays.h,v 1.13 2004-10-04 20:23:51 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -140,4 +140,4 @@
              ++(n_elems);                                                     \
          }
 
-#endif
+#endif /* DEF_ARRAYS */

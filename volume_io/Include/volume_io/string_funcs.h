@@ -13,11 +13,11 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.7 2001-12-14 17:12:27 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/string_funcs.h,v 1.8 2004-10-04 20:23:51 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : string.h
+@NAME       : string_funcs.h
 @INPUT      : 
 @OUTPUT     : 
 @RETURNS    : 
@@ -31,6 +31,7 @@
 
 #include  <string.h>
 
+#ifndef MINC_PLAY_NICE
 #define  EXTREMELY_LARGE_STRING_SIZE  10000
 
 #define  END_OF_STRING                  ((char) 0)
@@ -38,5 +39,6 @@
 #define  COPY_MEMORY( dest, src, n_items )                                  \
          (void) memcpy( (void *) (dest), (void *) (src),                    \
                         (size_t) (n_items) * sizeof((src)[0]) )
+#endif /* MINC_PLAY_NICE */
 
-#endif
+#endif /* DEF_STRING */

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.65 2003-09-18 14:35:03 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.66 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -24,7 +24,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mn
 #define  MIN_SLAB_SIZE    10000     /* at least 10000 entries per read */
 #define  MAX_SLAB_SIZE   400000     /* no more than 200 K at a time */
 
-private  BOOLEAN  match_dimension_names(
+static  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
     STRING            volume_dimension_names[],
     int               n_file_dims,
@@ -44,7 +44,7 @@ private  BOOLEAN  match_dimension_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int   get_minc_file_n_dimensions(
+VIOAPI  int   get_minc_file_n_dimensions(
     STRING   filename )
 {
     int       cdfid, img_var, n_dims;
@@ -97,7 +97,7 @@ public  int   get_minc_file_n_dimensions(
                                              store starts/steps/dircos
 ---------------------------------------------------------------------------- */
 
-public  Minc_file  initialize_minc_input_from_minc_id(
+VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
     int                  minc_id,
     Volume               volume,
     minc_input_options   *options )
@@ -581,7 +581,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Minc_file  initialize_minc_input(
+VIOAPI  Minc_file  initialize_minc_input(
     STRING               filename,
     Volume               volume,
     minc_input_options   *options )
@@ -629,7 +629,7 @@ public  Minc_file  initialize_minc_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_n_input_volumes(
+VIOAPI  int  get_n_input_volumes(
     Minc_file  file )
 {
     return( file->n_volumes_in_file );
@@ -648,7 +648,7 @@ public  int  get_n_input_volumes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  close_minc_input(
+VIOAPI  Status  close_minc_input(
     Minc_file   file )
 {
     int  d;
@@ -693,7 +693,7 @@ public  Status  close_minc_input(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_minc_hyperslab(
+VIOAPI  Status  input_minc_hyperslab(
     Minc_file        file,
     Data_types       data_type,
     int              n_array_dims,
@@ -881,7 +881,7 @@ public  Status  input_minc_hyperslab(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  input_slab(
+static  void  input_slab(
     Minc_file   file,
     Volume      volume,
     int         to_volume[],
@@ -934,7 +934,7 @@ private  void  input_slab(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  input_more_minc_file(
+VIOAPI  BOOLEAN  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done )
 {
@@ -1046,7 +1046,7 @@ public  BOOLEAN  input_more_minc_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  advance_input_volume(
+VIOAPI  BOOLEAN  advance_input_volume(
     Minc_file   file )
 {
     int                 ind, c, axis;
@@ -1135,7 +1135,7 @@ public  BOOLEAN  advance_input_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  reset_input_volume(
+VIOAPI  void  reset_input_volume(
     Minc_file   file )
 {
     int   d;
@@ -1172,7 +1172,7 @@ public  void  reset_input_volume(
                                                 to the volume
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  match_dimension_names(
+static  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
     STRING            volume_dimension_names[],
     int               n_file_dims,
@@ -1268,7 +1268,7 @@ private  BOOLEAN  match_dimension_names(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_minc_file_id(
+VIOAPI  int  get_minc_file_id(
     Minc_file  file )
 {
     return( file->cdfid );
@@ -1287,7 +1287,7 @@ public  int  get_minc_file_id(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_default_minc_input_options(
+VIOAPI  void  set_default_minc_input_options(
     minc_input_options  *options )
 {
     static  int     default_rgba_indices[4] = { 0, 1, 2, 3 };
@@ -1315,7 +1315,7 @@ public  void  set_default_minc_input_options(
                                                 used to be min_valid
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_promote_invalid_to_zero_flag(
+VIOAPI  void  set_minc_input_promote_invalid_to_zero_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
@@ -1337,7 +1337,7 @@ public  void  set_minc_input_promote_invalid_to_zero_flag(
 @MODIFIED   : Oct. 25, 1996   D. MacDonald    - replaced with above function
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_promote_invalid_to_min_flag(
+VIOAPI  void  set_minc_input_promote_invalid_to_min_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
@@ -1357,7 +1357,7 @@ public  void  set_minc_input_promote_invalid_to_min_flag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_vector_to_scalar_flag(
+VIOAPI  void  set_minc_input_vector_to_scalar_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
@@ -1379,7 +1379,7 @@ public  void  set_minc_input_vector_to_scalar_flag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_vector_to_colour_flag(
+VIOAPI  void  set_minc_input_vector_to_colour_flag(
     minc_input_options  *options,
     BOOLEAN             flag )
 {
@@ -1400,7 +1400,7 @@ public  void  set_minc_input_vector_to_colour_flag(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_colour_dimension_size(
+VIOAPI  void  set_minc_input_colour_dimension_size(
     minc_input_options  *options,
     int                 size )
 {
@@ -1427,7 +1427,7 @@ public  void  set_minc_input_colour_dimension_size(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_colour_max_dimension_size(
+VIOAPI  void  set_minc_input_colour_max_dimension_size(
     minc_input_options  *options,
     int                 size )
 {
@@ -1454,7 +1454,7 @@ public  void  set_minc_input_colour_max_dimension_size(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_colour_indices(
+VIOAPI  void  set_minc_input_colour_indices(
     minc_input_options  *options,
     int                 indices[4] )
 {
@@ -1481,7 +1481,7 @@ public  void  set_minc_input_colour_indices(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_minc_input_user_real_range(
+VIOAPI  void  set_minc_input_user_real_range(
     minc_input_options  *options,
     double              minimum,
     double              maximum )

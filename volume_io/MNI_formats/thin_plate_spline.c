@@ -15,7 +15,7 @@
 #include <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.13 1997-03-23 21:11:33 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.14 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #define   INVERSE_FUNCTION_TOLERANCE     0.01
@@ -54,13 +54,13 @@ typedef  struct
 
 /*------------ private functions -----------------*/
 
-private  void   newton_function(
+static  void   newton_function(
     void     *function_data,
     Real     parameters[],
     Real     values[],
     Real     **first_derivs );
 
-private  Real  thin_plate_spline_U_deriv(
+static  Real  thin_plate_spline_U_deriv(
    Real   pos[],
    Real   landmark[],
    int    n_dims,
@@ -92,7 +92,7 @@ private  Real  thin_plate_spline_U_deriv(
               Louis Collins
 ---------------------------------------------------------------------------- */
 
-public  void  evaluate_thin_plate_spline(
+VIOAPI  void  evaluate_thin_plate_spline(
     int     n_dims,
     int     n_values,
     int     n_points,
@@ -198,7 +198,7 @@ public  void  evaluate_thin_plate_spline(
                     reorganized to call evaluate_thin_plane_spline()
 ---------------------------------------------------------------------------- */
 
-public  void  thin_plate_spline_transform(
+VIOAPI  void  thin_plate_spline_transform(
     int     n_dims,
     int     n_points,
     Real    **points,
@@ -256,7 +256,7 @@ public  void  thin_plate_spline_transform(
                     reorganized to call evaluate_thin_plane_spline()
 ---------------------------------------------------------------------------- */
 
-public  void  thin_plate_spline_inverse_transform(
+VIOAPI  void  thin_plate_spline_inverse_transform(
     int     n_dims,
     int     n_points,
     Real    **points,
@@ -325,7 +325,7 @@ public  void  thin_plate_spline_inverse_transform(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void   newton_function(
+static  void   newton_function(
     void     *function_data,
     Real     parameters[],
     Real     values[],
@@ -359,7 +359,7 @@ private  void   newton_function(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  thin_plate_spline_U(
+VIOAPI  Real  thin_plate_spline_U(
     Real   pos[],
     Real   landmark[],
     int    n_dims )
@@ -420,7 +420,7 @@ public  Real  thin_plate_spline_U(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Real  thin_plate_spline_U_deriv(
+static  Real  thin_plate_spline_U_deriv(
    Real   pos[],
    Real   landmark[],
    int    n_dims,

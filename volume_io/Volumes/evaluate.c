@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.34 2001-11-08 14:44:23 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.35 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -32,7 +32,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  convert_voxel_to_value(
+VIOAPI  Real  convert_voxel_to_value(
     Volume   volume,
     Real     voxel )
 {
@@ -57,7 +57,7 @@ public  Real  convert_voxel_to_value(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  convert_value_to_voxel(
+VIOAPI  Real  convert_value_to_voxel(
     Volume   volume,
     Real     value )
 {
@@ -86,7 +86,7 @@ public  Real  convert_value_to_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_voxel_value(
+VIOAPI  Real  get_volume_voxel_value(
     Volume   volume,
     int      v0,
     int      v1,
@@ -119,7 +119,7 @@ public  Real  get_volume_voxel_value(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_volume_real_value(
+VIOAPI  Real  get_volume_real_value(
     Volume   volume,
     int      v0,
     int      v1,
@@ -155,7 +155,7 @@ public  Real  get_volume_real_value(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_voxel_value(
+VIOAPI  void  set_volume_voxel_value(
     Volume   volume,
     int      v0,
     int      v1,
@@ -186,7 +186,7 @@ public  void  set_volume_voxel_value(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_real_value(
+VIOAPI  void  set_volume_real_value(
     Volume   volume,
     int      v0,
     int      v1,
@@ -231,7 +231,7 @@ public  void  set_volume_real_value(
                                               done inside this procedure
 ---------------------------------------------------------------------------- */
 
-private  void    trilinear_interpolate(
+static void trilinear_interpolate(
     Volume   volume,
     Real     voxel[],
     Real     outside_value,
@@ -375,7 +375,7 @@ private  void    trilinear_interpolate(
 
 #define  MAX_DERIV_SIZE  100
 
-private  void   interpolate_volume(
+static void   interpolate_volume(
     int      n_dims,
     Real     parameters[],
     int      n_values,
@@ -506,7 +506,7 @@ private  void   interpolate_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void   extract_coefficients(
+static void   extract_coefficients(
     Volume         volume,
     int            start[],
     int            end[],
@@ -661,7 +661,7 @@ static  Real   interpolation_tolerance = 0.0;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_interpolation_tolerance(
+VIOAPI  void  set_volume_interpolation_tolerance(
     Real   tolerance )
 {
     interpolation_tolerance = tolerance;
@@ -702,7 +702,7 @@ public  void  set_volume_interpolation_tolerance(
 
 #define MAX_COEF_SPACE   1000
 
-public  int   evaluate_volume(
+VIOAPI  int   evaluate_volume(
     Volume         volume,
     Real           voxel[],
     BOOLEAN        interpolating_dimensions[],
@@ -1027,7 +1027,7 @@ public  int   evaluate_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void   evaluate_volume_in_world(
+VIOAPI  void   evaluate_volume_in_world(
     Volume         volume,
     Real           x,
     Real           y,

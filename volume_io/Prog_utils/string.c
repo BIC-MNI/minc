@@ -15,12 +15,12 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.9 1995-11-10 20:23:11 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.10 2004-10-04 20:23:52 bert Exp $";
 #endif
 
-private  const  STRING  empty_string = "";
+static const  STRING  empty_string = "";
 
-public  STRING  alloc_string(
+VIOAPI  STRING  alloc_string(
     int   length )
 {
     STRING   str;
@@ -30,7 +30,7 @@ public  STRING  alloc_string(
     return( str );
 }
 
-public  STRING  create_string(
+VIOAPI  STRING  create_string(
     STRING    initial )
 {
     STRING   str;
@@ -45,14 +45,14 @@ public  STRING  create_string(
     return( str );
 }
 
-public  void  delete_string(
+VIOAPI  void  delete_string(
     STRING   string )
 {
     if( string != NULL )
         FREE( string );
 }
 
-public  STRING  concat_strings(
+VIOAPI  STRING  concat_strings(
     STRING   str1,
     STRING   str2 )
 {
@@ -72,7 +72,7 @@ public  STRING  concat_strings(
     return( str );
 }
 
-public  void  replace_string(
+VIOAPI  void  replace_string(
     STRING   *string,
     STRING   new_string )
 {
@@ -80,7 +80,7 @@ public  void  replace_string(
     *string = new_string;
 }
 
-public  void  concat_char_to_string(
+VIOAPI  void  concat_char_to_string(
     STRING   *string,
     char     ch )
 {
@@ -97,7 +97,7 @@ public  void  concat_char_to_string(
     (*string)[len+1] = END_OF_STRING;
 }
 
-public  void  concat_to_string(
+VIOAPI  void  concat_to_string(
     STRING   *string,
     STRING   str2 )
 {
@@ -107,7 +107,7 @@ public  void  concat_to_string(
     replace_string( string, new_string );
 }
 
-public  int  string_length(
+VIOAPI  int  string_length(
     STRING   string )
 {
     if( string == NULL )
@@ -116,7 +116,7 @@ public  int  string_length(
         return( (int) strlen( string ) );
 }
 
-public  BOOLEAN  equal_strings(
+VIOAPI  BOOLEAN  equal_strings(
     STRING   str1,
     STRING   str2 )
 {
@@ -128,19 +128,19 @@ public  BOOLEAN  equal_strings(
     return( strcmp( str1, str2 ) == 0 );
 }
 
-public  BOOLEAN  is_lower_case(
+VIOAPI  BOOLEAN  is_lower_case(
     char  ch )
 {
     return( ch >= 'a' && ch <= 'z' );
 }
 
-public  BOOLEAN  is_upper_case(
+VIOAPI  BOOLEAN  is_upper_case(
     char  ch )
 {
     return( ch >= 'A' && ch <= 'Z' );
 }
 
-public  char  get_lower_case(
+VIOAPI  char  get_lower_case(
     char   ch )
 {
     if( is_upper_case( ch ) )
@@ -149,7 +149,7 @@ public  char  get_lower_case(
         return( ch );
 }
 
-public  char  get_upper_case(
+VIOAPI  char  get_upper_case(
     char   ch )
 {
     if( is_lower_case( ch ) )
@@ -173,7 +173,7 @@ public  char  get_upper_case(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  string_ends_in(
+VIOAPI  BOOLEAN  string_ends_in(
     STRING   string,
     STRING   ending )
 {
@@ -206,7 +206,7 @@ public  BOOLEAN  string_ends_in(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public    STRING   strip_outer_blanks(
+VIOAPI    STRING   strip_outer_blanks(
     STRING  str )
 {
     STRING  stripped;
@@ -259,7 +259,7 @@ public    STRING   strip_outer_blanks(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  find_character(
+VIOAPI  int  find_character(
     STRING    string,
     char      ch )
 {
@@ -292,7 +292,7 @@ public  int  find_character(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  make_string_upper_case(
+VIOAPI  void  make_string_upper_case(
     STRING    string )
 {
     int   i, len;
@@ -319,7 +319,7 @@ public  void  make_string_upper_case(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  blank_string(
+VIOAPI  BOOLEAN  blank_string(
     STRING   string )
 {
     int      i;

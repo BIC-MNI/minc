@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.28 2004-06-08 16:20:24 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.29 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -41,21 +41,21 @@ static  int      default_block_sizes[MAX_DIMENSIONS] = {
                                                      DEFAULT_BLOCK_SIZE,
                                                      DEFAULT_BLOCK_SIZE };
 
-private  void  alloc_volume_cache(
+static  void  alloc_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume );
 
 #ifdef  CACHE_DEBUGGING
-private  void  initialize_cache_debug(
+static  void  initialize_cache_debug(
     volume_cache_struct  *cache );
 
-private  void  record_cache_hit(
+static  void  record_cache_hit(
     volume_cache_struct  *cache );
 
-private  void  record_cache_prev_hit(
+static  void  record_cache_prev_hit(
     volume_cache_struct  *cache );
 
-private  void  record_cache_no_hit(
+static  void  record_cache_no_hit(
     volume_cache_struct  *cache );
 #endif
 
@@ -74,7 +74,7 @@ private  void  record_cache_no_hit(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_n_bytes_cache_threshold(
+VIOAPI  void  set_n_bytes_cache_threshold(
     int  threshold )
 {
     n_bytes_cache_threshold = threshold;
@@ -96,7 +96,7 @@ public  void  set_n_bytes_cache_threshold(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_n_bytes_cache_threshold( void )
+VIOAPI  int  get_n_bytes_cache_threshold( void )
 {
     int   n_bytes;
 
@@ -127,7 +127,7 @@ public  int  get_n_bytes_cache_threshold( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_default_max_bytes_in_cache(
+VIOAPI  void  set_default_max_bytes_in_cache(
     int   max_bytes )
 {
     default_cache_size_set = TRUE;
@@ -148,7 +148,7 @@ public  void  set_default_max_bytes_in_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_default_max_bytes_in_cache( void )
+VIOAPI  int  get_default_max_bytes_in_cache( void )
 {
     int   n_bytes;
 
@@ -181,7 +181,7 @@ public  int  get_default_max_bytes_in_cache( void )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_default_cache_block_sizes(
+VIOAPI  void  set_default_cache_block_sizes(
     int                      block_sizes[] )
 {
     int   dim;
@@ -207,7 +207,7 @@ public  void  set_default_cache_block_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_cache_block_sizes_hint(
+VIOAPI  void  set_cache_block_sizes_hint(
     Cache_block_size_hints  hint )
 {
     block_size_hint = hint;
@@ -229,7 +229,7 @@ public  void  set_cache_block_sizes_hint(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  get_default_cache_block_sizes(
+static  void  get_default_cache_block_sizes(
     int    n_dims,
     int    volume_sizes[],
     int    block_sizes[] )
@@ -288,7 +288,7 @@ private  void  get_default_cache_block_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  initialize_volume_cache(
+VIOAPI  void  initialize_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
@@ -338,7 +338,7 @@ public  void  initialize_volume_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  alloc_volume_cache(
+static  void  alloc_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
@@ -396,7 +396,7 @@ private  void  alloc_volume_cache(
     cache->n_blocks = 0;
 }
 
-public  BOOLEAN  volume_cache_is_alloced(
+VIOAPI  BOOLEAN  volume_cache_is_alloced(
     volume_cache_struct   *cache )
 {
     return( cache->hash_table != NULL );
@@ -416,7 +416,7 @@ public  BOOLEAN  volume_cache_is_alloced(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  get_block_start(
+static  void  get_block_start(
     volume_cache_struct  *cache,
     int                  block_index,
     int                  block_start[] )
@@ -447,7 +447,7 @@ private  void  get_block_start(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  write_cache_block(
+static  void  write_cache_block(
     volume_cache_struct  *cache,
     Volume               volume,
     cache_block_struct   *block )
@@ -510,7 +510,7 @@ private  void  write_cache_block(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  flush_cache_blocks(
+static  void  flush_cache_blocks(
     volume_cache_struct   *cache,
     Volume                volume,
     BOOLEAN               deleting_volume_flag )
@@ -550,7 +550,7 @@ private  void  flush_cache_blocks(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  flush_volume_cache(
+VIOAPI  void  flush_volume_cache(
     Volume                volume )
 {
     flush_cache_blocks( &volume->cache, volume, FALSE );
@@ -572,7 +572,7 @@ public  void  flush_volume_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  delete_cache_blocks(
+static  void  delete_cache_blocks(
     volume_cache_struct   *cache,
     Volume                volume,
     BOOLEAN               deleting_volume_flag )
@@ -622,7 +622,7 @@ private  void  delete_cache_blocks(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_volume_cache(
+VIOAPI  void  delete_volume_cache(
     volume_cache_struct   *cache,
     Volume                volume )
 {
@@ -675,7 +675,7 @@ public  void  delete_volume_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_cache_block_sizes(
+VIOAPI  void  set_volume_cache_block_sizes(
     Volume    volume,
     int       block_sizes[] )
 {
@@ -737,7 +737,7 @@ public  void  set_volume_cache_block_sizes(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_volume_cache_size(
+VIOAPI  void  set_volume_cache_size(
     Volume    volume,
     int       max_memory_bytes )
 {
@@ -786,7 +786,7 @@ public  void  set_volume_cache_size(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_cache_output_volume_parameters(
+VIOAPI  void  set_cache_output_volume_parameters(
     Volume                      volume,
     STRING                      filename,
     nc_type                     file_nc_data_type,
@@ -824,7 +824,7 @@ public  void  set_cache_output_volume_parameters(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  open_cache_volume_input_file(
+VIOAPI  void  open_cache_volume_input_file(
     volume_cache_struct   *cache,
     Volume                volume,
     STRING                filename,
@@ -851,7 +851,7 @@ public  void  open_cache_volume_input_file(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  open_cache_volume_output_file(
+static  Status  open_cache_volume_output_file(
     volume_cache_struct   *cache,
     Volume                volume )
 {
@@ -961,7 +961,7 @@ private  Status  open_cache_volume_output_file(
     return( OK );
 }
 
-public  void  cache_volume_range_has_changed(
+VIOAPI  void  cache_volume_range_has_changed(
     Volume   volume )
 {
     if( !volume->is_cached_volume )
@@ -991,7 +991,7 @@ public  void  cache_volume_range_has_changed(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_cache_volume_file_offset(
+VIOAPI  void  set_cache_volume_file_offset(
     volume_cache_struct   *cache,
     Volume                volume,
     long                  file_offset[] )
@@ -1029,7 +1029,7 @@ public  void  set_cache_volume_file_offset(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  read_cache_block(
+static  void  read_cache_block(
     volume_cache_struct  *cache,
     Volume               volume,
     cache_block_struct   *block,
@@ -1087,7 +1087,7 @@ private  void  read_cache_block(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  cache_block_struct  *appropriate_a_cache_block(
+static  cache_block_struct  *appropriate_a_cache_block(
     volume_cache_struct  *cache,
     Volume               volume )
 {
@@ -1150,7 +1150,7 @@ private  cache_block_struct  *appropriate_a_cache_block(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  hash_block_index(
+static  int  hash_block_index(
     int  key,
     int  table_size )
 {
@@ -1186,7 +1186,7 @@ private  int  hash_block_index(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  cache_block_struct  *get_cache_block_for_voxel(
+static  cache_block_struct  *get_cache_block_for_voxel(
     Volume   volume,
     int      x,
     int      y,
@@ -1400,7 +1400,7 @@ private  cache_block_struct  *get_cache_block_for_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  get_cached_volume_voxel(
+VIOAPI  Real  get_cached_volume_voxel(
     Volume   volume,
     int      x,
     int      y,
@@ -1441,7 +1441,7 @@ public  Real  get_cached_volume_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_cached_volume_voxel(
+VIOAPI  void  set_cached_volume_voxel(
     Volume   volume,
     int      x,
     int      y,
@@ -1479,13 +1479,13 @@ public  void  set_cached_volume_voxel(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  cached_volume_has_been_modified(
+VIOAPI  BOOLEAN  cached_volume_has_been_modified(
     volume_cache_struct  *cache )
 {
     return( cache->minc_file != NULL );
 }
 
-public  BOOLEAN  volume_is_cached(
+VIOAPI  BOOLEAN  volume_is_cached(
     Volume  volume )
 {
     return( volume->is_cached_volume );
@@ -1495,7 +1495,7 @@ public  BOOLEAN  volume_is_cached(
 /* ARGSUSED */
 #endif
 
-public  void   set_volume_cache_debugging(
+VIOAPI  void   set_volume_cache_debugging(
     Volume   volume,
     int      output_every )
 {
@@ -1514,7 +1514,7 @@ public  void   set_volume_cache_debugging(
 
 #ifdef  CACHE_DEBUGGING
 
-private  void  initialize_cache_debug(
+static  void  initialize_cache_debug(
     volume_cache_struct  *cache )
 {
     int      output_every;
@@ -1536,7 +1536,7 @@ private  void  initialize_cache_debug(
     cache->n_prev_hits = 0;
 }
 
-private  void  increment_n_accesses(
+static  void  increment_n_accesses(
     volume_cache_struct  *cache )
 {
     ++cache->n_accesses;
@@ -1555,7 +1555,7 @@ private  void  increment_n_accesses(
     }
 }
 
-private  void  record_cache_hit(
+static  void  record_cache_hit(
     volume_cache_struct  *cache )
 {
     if( cache->debugging_on )
@@ -1565,7 +1565,7 @@ private  void  record_cache_hit(
     }
 }
 
-private  void  record_cache_prev_hit(
+static  void  record_cache_prev_hit(
     volume_cache_struct  *cache )
 {
     if( cache->debugging_on )
@@ -1575,7 +1575,7 @@ private  void  record_cache_prev_hit(
     }
 }
 
-private  void  record_cache_no_hit(
+static  void  record_cache_no_hit(
     volume_cache_struct  *cache )
 {
     if( cache->debugging_on )

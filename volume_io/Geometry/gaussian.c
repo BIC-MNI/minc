@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussian.c,v 1.8 2003-09-18 14:35:47 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussian.c,v 1.9 2004-10-04 20:23:51 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,7 +36,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussia
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
+VIOAPI  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     int   n,
     int   row[],
     Real  **a,
@@ -161,7 +161,7 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
+static BOOLEAN scaled_maximal_pivoting_gaussian_elimination_real(
     int   n,
     Real  **coefs,
     int   n_values,
@@ -219,7 +219,7 @@ private  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination_real(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  solve_linear_system(
+VIOAPI  BOOLEAN  solve_linear_system(
     int   n,
     Real  **coefs,
     Real  values[],
@@ -248,7 +248,7 @@ public  BOOLEAN  solve_linear_system(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN  invert_square_matrix(
+VIOAPI  BOOLEAN  invert_square_matrix(
     int   n,
     Real  **matrix,
     Real  **inverse )

@@ -16,7 +16,7 @@
 #include  <stdlib.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.24 1998-04-30 19:17:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc.c,v 1.25 2004-10-04 20:23:52 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,7 +36,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/alloc
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  set_up_array_pointers_2D(
+static  void  set_up_array_pointers_2D(
     void      **ptr,
     size_t    n1,
     size_t    n2,
@@ -61,7 +61,7 @@ private  void  set_up_array_pointers_2D(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory(
+static  Status  private_alloc_memory(
     void         **ptr,
     size_t       n_bytes )
 {
@@ -93,7 +93,7 @@ private  Status  private_alloc_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_2d(
+static  Status  private_alloc_memory_2d(
     void         ***ptr,
     size_t       n1,
     size_t       n2,
@@ -126,7 +126,7 @@ private  Status  private_alloc_memory_2d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_3d(
+static Status private_alloc_memory_3d(
     void         ****ptr,
     size_t       n1,
     size_t       n2,
@@ -161,7 +161,7 @@ private  Status  private_alloc_memory_3d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_4d(
+static Status private_alloc_memory_4d(
     void         *****ptr,
     size_t       n1,
     size_t       n2,
@@ -199,7 +199,7 @@ private  Status  private_alloc_memory_4d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Status  private_alloc_memory_5d(
+static Status private_alloc_memory_5d(
     void         ******ptr,
     size_t       n1,
     size_t       n2,
@@ -237,7 +237,7 @@ private  Status  private_alloc_memory_5d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_in_bytes(
+VIOAPI  void  *alloc_memory_in_bytes(
     size_t       n_bytes
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
@@ -273,7 +273,7 @@ public  void  *alloc_memory_in_bytes(
 @MODIFIED   : Apr. 16, 1996   D. MacDonald    : returns the pointer
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_1d(
+VIOAPI  void  *alloc_memory_1d(
     size_t       n_elements,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF )
@@ -313,7 +313,7 @@ public  void  *alloc_memory_1d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_2d(
+VIOAPI  void  *alloc_memory_2d(
     size_t       n1,
     size_t       n2,
     size_t       type_size
@@ -359,7 +359,7 @@ public  void  *alloc_memory_2d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_3d(
+VIOAPI  void  *alloc_memory_3d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -409,7 +409,7 @@ public  void  *alloc_memory_3d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_4d(
+VIOAPI  void  *alloc_memory_4d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -463,7 +463,7 @@ public  void  *alloc_memory_4d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  *alloc_memory_5d(
+VIOAPI  void  *alloc_memory_5d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -517,7 +517,7 @@ public  void  *alloc_memory_5d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  realloc_memory(
+VIOAPI  void  realloc_memory(
     void      **ptr,
     size_t    n_elements,
     size_t    type_size
@@ -565,7 +565,7 @@ public  void  realloc_memory(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  private_free_memory_1d(
+static  void  private_free_memory_1d(
     void   **ptr)
 {
     if( *ptr != NULL )
@@ -589,7 +589,7 @@ private  void  private_free_memory_1d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  private_free_memory_2d(
+static  void  private_free_memory_2d(
     void   ***ptr)
 {
     private_free_memory_1d( *ptr );
@@ -609,7 +609,7 @@ private  void  private_free_memory_2d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  private_free_memory_3d(
+static  void  private_free_memory_3d(
     void   ****ptr)
 {
     private_free_memory_1d( **ptr );
@@ -629,7 +629,7 @@ private  void  private_free_memory_3d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  private_free_memory_4d(
+static  void  private_free_memory_4d(
     void   *****ptr)
 {
     private_free_memory_1d( ***ptr );
@@ -649,7 +649,7 @@ private  void  private_free_memory_4d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  private_free_memory_5d(
+static  void  private_free_memory_5d(
     void   ******ptr)
 {
     private_free_memory_1d( ****ptr );
@@ -671,7 +671,7 @@ private  void  private_free_memory_5d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory_1d(
+VIOAPI  void  free_memory_1d(
     void   **ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
@@ -696,7 +696,7 @@ public  void  free_memory_1d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory_2d(
+VIOAPI  void  free_memory_2d(
     void   ***ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
@@ -722,7 +722,7 @@ public  void  free_memory_2d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory_3d(
+VIOAPI  void  free_memory_3d(
     void   ****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
@@ -749,7 +749,7 @@ public  void  free_memory_3d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory_4d(
+VIOAPI  void  free_memory_4d(
     void   *****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {
@@ -777,7 +777,7 @@ public  void  free_memory_4d(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  free_memory_5d(
+VIOAPI  void  free_memory_5d(
     void   ******ptr
     _ALLOC_SOURCE_LINE_ARG_DEF )
 {

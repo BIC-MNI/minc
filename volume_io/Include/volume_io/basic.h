@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.33 2003-11-23 16:07:11 stever Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.34 2004-10-04 20:23:51 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -52,6 +52,37 @@
 #define  TRUE   1
 #endif
 
+/* These are the internal typedefs, which are aliased to their "classic"
+ * volume_io names below, if the new MINC_PLAY_NICE macro is not installed
+ */
+typedef char *VIO_STR;
+typedef int VIO_BOOL;
+typedef double VIO_Real;
+typedef signed char VIO_SCHAR;
+typedef unsigned char VIO_UCHAR;
+typedef enum { 
+               OK,
+               ERROR,
+               INTERNAL_ERROR,
+               END_OF_FILE,
+               QUIT
+             } VIO_Status;
+
+
+#ifndef MINC_PLAY_NICE          /* Play nice with others */
+
+#ifndef __cplusplus
+#ifndef private
+#define private static
+#endif /* private */
+#ifndef public
+#define public
+#endif /* public */
+#ifndef semiprivate
+#define semiprivate
+#endif /* semiprivate */
+#endif /* __cplusplus */
+
 #define  OFF     FALSE
 #define  ON      TRUE
 
@@ -68,7 +99,6 @@
 /* --------- PI, and angles -------------------------------- */
 
 #define  PI           M_PI                  /* from math.h */
-
 #define  DEG_TO_RAD   (PI / 180.0)
 #define  RAD_TO_DEG   (180.0 / PI)
 
@@ -122,17 +152,15 @@
 
 /* Basic types */
 
-typedef  signed char     Smallest_int;
-
-typedef  unsigned char   unsigned_byte;
-
-typedef  int             BOOLEAN;
-
-typedef  double          Real;
+typedef VIO_SCHAR Smallest_int;
+typedef VIO_UCHAR unsigned_byte;
+typedef VIO_BOOL BOOLEAN;
+typedef VIO_Real Real;
+typedef VIO_STR STRING;
+typedef VIO_Status Status;
 
 #define  REAL_MAX        DBL_MAX
 
-typedef  char            *STRING;
 
 /* --------------- */
 
@@ -162,17 +190,9 @@ typedef  char            *STRING;
               ((min2) + (2 * (x1) + 1 - 2 * (min1)) * ((max2) - (min2) + 1) / \
                                                       ((max1) - (min1) + 1) / 2)
 
-/* -------------------- Status --------------------- */
-
-typedef enum { 
-               OK,
-               ERROR,
-               INTERNAL_ERROR,
-               END_OF_FILE,
-               QUIT
-             } Status;
-
 #define  HANDLE_INTERNAL_ERROR( X )                                           \
          handle_internal_error( X )
 
-#endif
+#endif /* MINC_PLAY_NICE */
+
+#endif /* DEF_BASIC */

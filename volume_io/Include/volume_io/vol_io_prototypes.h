@@ -1,89 +1,89 @@
 #ifndef  DEF_vol_io_prototypes
 #define  DEF_vol_io_prototypes
 
-public  Real  convert_voxel_to_value(
-    Volume   volume,
-    Real     voxel );
+VIOAPI  VIO_Real  convert_voxel_to_value(
+    VIO_Volume   volume,
+    VIO_Real     voxel );
 
-public  Real  convert_value_to_voxel(
-    Volume   volume,
-    Real     value );
+VIOAPI  VIO_Real  convert_value_to_voxel(
+    VIO_Volume   volume,
+    VIO_Real     value );
 
-public  Real  get_volume_voxel_value(
-    Volume   volume,
+VIOAPI  VIO_Real  get_volume_voxel_value(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      v3,
     int      v4 );
 
-public  Real  get_volume_real_value(
-    Volume   volume,
+VIOAPI  VIO_Real  get_volume_real_value(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      v3,
     int      v4 );
 
-public  void  set_volume_voxel_value(
-    Volume   volume,
+VIOAPI  void  set_volume_voxel_value(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      v3,
     int      v4,
-    Real     voxel );
+    VIO_Real     voxel );
 
-public  void  set_volume_real_value(
-    Volume   volume,
+VIOAPI  void  set_volume_real_value(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      v3,
     int      v4,
-    Real     value );
+    VIO_Real     value );
 
-public  void  set_volume_interpolation_tolerance(
-    Real   tolerance );
+VIOAPI  void  set_volume_interpolation_tolerance(
+    VIO_Real   tolerance );
 
-public  int   evaluate_volume(
-    Volume         volume,
-    Real           voxel[],
-    BOOLEAN        interpolating_dimensions[],
+VIOAPI  int   evaluate_volume(
+    VIO_Volume         volume,
+    VIO_Real           voxel[],
+    VIO_BOOL       interpolating_dimensions[],
     int            degrees_continuity,
-    BOOLEAN        use_linear_at_edge,
-    Real           outside_value,
-    Real           values[],
-    Real           **first_deriv,
-    Real           ***second_deriv );
+    VIO_BOOL       use_linear_at_edge,
+    VIO_Real           outside_value,
+    VIO_Real           values[],
+    VIO_Real           **first_deriv,
+    VIO_Real           ***second_deriv );
 
-public  void   evaluate_volume_in_world(
-    Volume         volume,
-    Real           x,
-    Real           y,
-    Real           z,
+VIOAPI  void   evaluate_volume_in_world(
+    VIO_Volume         volume,
+    VIO_Real           x,
+    VIO_Real           y,
+    VIO_Real           z,
     int            degrees_continuity,
-    BOOLEAN        use_linear_at_edge,
-    Real           outside_value,
-    Real           values[],
-    Real           deriv_x[],
-    Real           deriv_y[],
-    Real           deriv_z[],
-    Real           deriv_xx[],
-    Real           deriv_xy[],
-    Real           deriv_xz[],
-    Real           deriv_yy[],
-    Real           deriv_yz[],
-    Real           deriv_zz[] );
+    VIO_BOOL       use_linear_at_edge,
+    VIO_Real           outside_value,
+    VIO_Real           values[],
+    VIO_Real           deriv_x[],
+    VIO_Real           deriv_y[],
+    VIO_Real           deriv_z[],
+    VIO_Real           deriv_xx[],
+    VIO_Real           deriv_xy[],
+    VIO_Real           deriv_xz[],
+    VIO_Real           deriv_yy[],
+    VIO_Real           deriv_yz[],
+    VIO_Real           deriv_zz[] );
 
-public  void  convert_voxels_to_values(
-    Volume   volume,
+VIOAPI  void  convert_voxels_to_values(
+    VIO_Volume   volume,
     int      n_voxels,
-    Real     voxels[],
-    Real     values[] );
+    VIO_Real     voxels[],
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -94,10 +94,10 @@ public  void  get_volume_value_hyperslab(
     int      n2,
     int      n3,
     int      n4,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab_5d(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab_5d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -108,10 +108,10 @@ public  void  get_volume_value_hyperslab_5d(
     int      n2,
     int      n3,
     int      n4,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab_4d(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab_4d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -120,69 +120,69 @@ public  void  get_volume_value_hyperslab_4d(
     int      n1,
     int      n2,
     int      n3,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab_3d(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab_3d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      n0,
     int      n1,
     int      n2,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab_2d(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab_2d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      n0,
     int      n1,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_value_hyperslab_1d(
-    Volume   volume,
+VIOAPI  void  get_volume_value_hyperslab_1d(
+    VIO_Volume   volume,
     int      v0,
     int      n0,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_voxel_values_5d(
-    Data_types  data_type,
+VIOAPI  void  get_voxel_values_5d(
+    VIO_Data_types data_type,
     void        *void_ptr,
     int         steps[],
     int         counts[],
-    Real        values[] );
+    VIO_Real        values[] );
 
-public  void  get_voxel_values_4d(
-    Data_types  data_type,
+VIOAPI  void  get_voxel_values_4d(
+    VIO_Data_types  data_type,
     void        *void_ptr,
     int         steps[],
     int         counts[],
-    Real        values[] );
+    VIO_Real        values[] );
 
-public  void  get_voxel_values_3d(
-    Data_types  data_type,
+VIOAPI  void  get_voxel_values_3d(
+    VIO_Data_types  data_type,
     void        *void_ptr,
     int         steps[],
     int         counts[],
-    Real        values[] );
+    VIO_Real        values[] );
 
-public  void  get_voxel_values_2d(
-    Data_types  data_type,
+VIOAPI  void  get_voxel_values_2d(
+    VIO_Data_types  data_type,
     void        *void_ptr,
     int         steps[],
     int         counts[],
-    Real        values[] );
+    VIO_Real        values[] );
 
-public  void  get_voxel_values_1d(
-    Data_types  data_type,
+VIOAPI  void  get_voxel_values_1d(
+    VIO_Data_types  data_type,
     void        *void_ptr,
     int         step0,
     int         n0,
-    Real        values[] );
+    VIO_Real        values[] );
 
-public  void  get_volume_voxel_hyperslab_5d(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab_5d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -193,10 +193,10 @@ public  void  get_volume_voxel_hyperslab_5d(
     int      n2,
     int      n3,
     int      n4,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_voxel_hyperslab_4d(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab_4d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -205,34 +205,34 @@ public  void  get_volume_voxel_hyperslab_4d(
     int      n1,
     int      n2,
     int      n3,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_voxel_hyperslab_3d(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab_3d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      n0,
     int      n1,
     int      n2,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_voxel_hyperslab_2d(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab_2d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      n0,
     int      n1,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_voxel_hyperslab_1d(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab_1d(
+    VIO_Volume   volume,
     int      v0,
     int      n0,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  get_volume_voxel_hyperslab(
-    Volume   volume,
+VIOAPI  void  get_volume_voxel_hyperslab(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -243,43 +243,43 @@ public  void  get_volume_voxel_hyperslab(
     int      n2,
     int      n3,
     int      n4,
-    Real     voxels[] );
+    VIO_Real     voxels[] );
 
-public  Status  initialize_free_format_input(
-    STRING               filename,
-    Volume               volume,
+VIOAPI  VIO_Status  initialize_free_format_input(
+    VIO_STR               filename,
+    VIO_Volume               volume,
     volume_input_struct  *volume_input );
 
-public  void  delete_free_format_input(
+VIOAPI  void  delete_free_format_input(
     volume_input_struct   *volume_input );
 
-public  BOOLEAN  input_more_free_format_file(
-    Volume                volume,
+VIOAPI  VIO_BOOL input_more_free_format_file(
+    VIO_Volume                volume,
     volume_input_struct   *volume_input,
-    Real                  *fraction_done );
+    VIO_Real                  *fraction_done );
 
-public  int   get_minc_file_n_dimensions(
-    STRING   filename );
+VIOAPI  int   get_minc_file_n_dimensions(
+    VIO_STR   filename );
 
-public  Minc_file  initialize_minc_input_from_minc_id(
+VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
     int                  minc_id,
-    Volume               volume,
+    VIO_Volume               volume,
     minc_input_options   *options );
 
-public  Minc_file  initialize_minc_input(
-    STRING               filename,
-    Volume               volume,
+VIOAPI  Minc_file  initialize_minc_input(
+    VIO_STR               filename,
+    VIO_Volume               volume,
     minc_input_options   *options );
 
-public  int  get_n_input_volumes(
+VIOAPI  int  get_n_input_volumes(
     Minc_file  file );
 
-public  Status  close_minc_input(
+VIOAPI  VIO_Status  close_minc_input(
     Minc_file   file );
 
-public  Status  input_minc_hyperslab(
+VIOAPI  VIO_Status  input_minc_hyperslab(
     Minc_file        file,
-    Data_types       data_type,
+    VIO_Data_types   data_type,
     int              n_array_dims,
     int              array_sizes[],
     void             *array_data_ptr,
@@ -287,142 +287,142 @@ public  Status  input_minc_hyperslab(
     int              start[],
     int              count[] );
 
-public  BOOLEAN  input_more_minc_file(
+VIOAPI  VIO_BOOL input_more_minc_file(
     Minc_file   file,
-    Real        *fraction_done );
+    VIO_Real        *fraction_done );
 
-public  BOOLEAN  advance_input_volume(
+VIOAPI  VIO_BOOL advance_input_volume(
     Minc_file   file );
 
-public  void  reset_input_volume(
+VIOAPI  void  reset_input_volume(
     Minc_file   file );
 
-public  int  get_minc_file_id(
+VIOAPI  int  get_minc_file_id(
     Minc_file  file );
 
-public  void  set_default_minc_input_options(
+VIOAPI  void  set_default_minc_input_options(
     minc_input_options  *options );
 
-public  void  set_minc_input_promote_invalid_to_zero_flag(
+VIOAPI  void  set_minc_input_promote_invalid_to_zero_flag(
     minc_input_options  *options,
-    BOOLEAN             flag );
+    VIO_BOOL            flag );
 
-public  void  set_minc_input_promote_invalid_to_min_flag(
+VIOAPI  void  set_minc_input_promote_invalid_to_min_flag(
     minc_input_options  *options,
-    BOOLEAN             flag );
+    VIO_BOOL            flag );
 
-public  void  set_minc_input_vector_to_scalar_flag(
+VIOAPI  void  set_minc_input_vector_to_scalar_flag(
     minc_input_options  *options,
-    BOOLEAN             flag );
+    VIO_BOOL            flag );
 
-public  void  set_minc_input_vector_to_colour_flag(
+VIOAPI  void  set_minc_input_vector_to_colour_flag(
     minc_input_options  *options,
-    BOOLEAN             flag );
+    VIO_BOOL            flag );
 
-public  void  set_minc_input_colour_dimension_size(
-    minc_input_options  *options,
-    int                 size );
-
-public  void  set_minc_input_colour_max_dimension_size(
+VIOAPI  void  set_minc_input_colour_dimension_size(
     minc_input_options  *options,
     int                 size );
 
-public  void  set_minc_input_colour_indices(
+VIOAPI  void  set_minc_input_colour_max_dimension_size(
+    minc_input_options  *options,
+    int                 size );
+
+VIOAPI  void  set_minc_input_colour_indices(
     minc_input_options  *options,
     int                 indices[4] );
 
-public  void  set_minc_input_user_real_range(
+VIOAPI  void  set_minc_input_user_real_range(
     minc_input_options  *options,
     double              minimum,
     double              maximum );
 
-public  Status  start_volume_input(
-    STRING               filename,
+VIOAPI  VIO_Status  start_volume_input(
+    VIO_STR               filename,
     int                  n_dimensions,
-    STRING               dim_names[],
+    VIO_STR               dim_names[],
     nc_type              volume_nc_data_type,
-    BOOLEAN              volume_signed_flag,
-    Real                 volume_voxel_min,
-    Real                 volume_voxel_max,
-    BOOLEAN              create_volume_flag,
-    Volume               *volume,
+    VIO_BOOL             volume_signed_flag,
+    VIO_Real                 volume_voxel_min,
+    VIO_Real                 volume_voxel_max,
+    VIO_BOOL             create_volume_flag,
+    VIO_Volume               *volume,
     minc_input_options   *options,
     volume_input_struct  *input_info );
 
-public  void  delete_volume_input(
+VIOAPI  void  delete_volume_input(
     volume_input_struct   *input_info );
 
-public  BOOLEAN  input_more_of_volume(
-    Volume                volume,
+VIOAPI  VIO_BOOL input_more_of_volume(
+    VIO_Volume                volume,
     volume_input_struct   *input_info,
-    Real                  *fraction_done );
+    VIO_Real                  *fraction_done );
 
-public  void  cancel_volume_input(
-    Volume                volume,
+VIOAPI  void  cancel_volume_input(
+    VIO_Volume                volume,
     volume_input_struct   *input_info );
 
-public  Status  input_volume(
-    STRING               filename,
+VIOAPI  VIO_Status  input_volume(
+    VIO_STR               filename,
     int                  n_dimensions,
-    STRING               dim_names[],
+    VIO_STR               dim_names[],
     nc_type              volume_nc_data_type,
-    BOOLEAN              volume_signed_flag,
-    Real                 volume_voxel_min,
-    Real                 volume_voxel_max,
-    BOOLEAN              create_volume_flag,
-    Volume               *volume,
+    VIO_BOOL             volume_signed_flag,
+    VIO_Real                 volume_voxel_min,
+    VIO_Real                 volume_voxel_max,
+    VIO_BOOL             create_volume_flag,
+    VIO_Volume               *volume,
     minc_input_options   *options );
 
-public  Minc_file   get_volume_input_minc_file(
+VIOAPI  Minc_file   get_volume_input_minc_file(
     volume_input_struct   *volume_input );
 
-public   void   create_empty_multidim_array(
-    multidim_array  *array,
+VIOAPI   void   create_empty_multidim_array(
+    VIO_multidim_array  *array,
     int             n_dimensions,
-    Data_types      data_type );
+    VIO_Data_types  data_type );
 
-public  Data_types  get_multidim_data_type(
-    multidim_array       *array );
+VIOAPI  VIO_Data_types  get_multidim_data_type(
+    VIO_multidim_array       *array );
 
-public  void  set_multidim_data_type(
-    multidim_array       *array,
-    Data_types           data_type );
+VIOAPI  void  set_multidim_data_type(
+    VIO_multidim_array   *array,
+    VIO_Data_types       data_type );
 
-public  int  get_type_size(
-    Data_types   type );
+VIOAPI  int  get_type_size(
+    VIO_Data_types   type );
 
-public  void  get_type_range(
-    Data_types   type,
-    Real         *min_value,
-    Real         *max_value );
+VIOAPI  void  get_type_range(
+    VIO_Data_types   type,
+    VIO_Real         *min_value,
+    VIO_Real         *max_value );
 
-public  void  set_multidim_sizes(
-    multidim_array   *array,
+VIOAPI  void  set_multidim_sizes(
+    VIO_multidim_array   *array,
     int              sizes[] );
 
-public  void  get_multidim_sizes(
-    multidim_array   *array,
+VIOAPI  void  get_multidim_sizes(
+    VIO_multidim_array   *array,
     int              sizes[] );
 
-public  BOOLEAN  multidim_array_is_alloced(
-    multidim_array   *array );
+VIOAPI  VIO_BOOL multidim_array_is_alloced(
+    VIO_multidim_array   *array );
 
-public  void  alloc_multidim_array(
-    multidim_array   *array );
+VIOAPI  void  alloc_multidim_array(
+    VIO_multidim_array   *array );
 
-public   void   create_multidim_array(
-    multidim_array  *array,
+VIOAPI   void   create_multidim_array(
+    VIO_multidim_array  *array,
     int             n_dimensions,
     int             sizes[],
-    Data_types      data_type );
+    VIO_Data_types  data_type );
 
-public  void  delete_multidim_array(
-    multidim_array   *array );
+VIOAPI  void  delete_multidim_array(
+    VIO_multidim_array   *array );
 
-public  int  get_multidim_n_dimensions(
-    multidim_array   *array );
+VIOAPI  int  get_multidim_n_dimensions(
+    VIO_multidim_array   *array );
 
-public  void  copy_multidim_data_reordered(
+VIOAPI  void  copy_multidim_data_reordered(
     int                 type_size,
     void                *void_dest_ptr,
     int                 n_dest_dims,
@@ -432,49 +432,49 @@ public  void  copy_multidim_data_reordered(
     int                 src_sizes[],
     int                 counts[],
     int                 to_dest_index[],
-    BOOLEAN             use_src_order );
+    VIO_BOOL            use_src_order );
 
-public  void  copy_multidim_reordered(
-    multidim_array      *dest,
+VIOAPI  void  copy_multidim_reordered(
+    VIO_multidim_array  *dest,
     int                 dest_ind[],
-    multidim_array      *src,
+    VIO_multidim_array  *src,
     int                 src_ind[],
     int                 counts[],
     int                 to_dest_index[] );
 
-public  Minc_file  initialize_minc_output(
-    STRING                 filename,
+VIOAPI  Minc_file  initialize_minc_output(
+    VIO_STR                 filename,
     int                    n_dimensions,
-    STRING                 dim_names[],
+    VIO_STR                 dim_names[],
     int                    sizes[],
     nc_type                file_nc_data_type,
-    BOOLEAN                file_signed_flag,
-    Real                   file_voxel_min,
-    Real                   file_voxel_max,
-    General_transform      *voxel_to_world_transform,
-    Volume                 volume_to_attach,
+    VIO_BOOL               file_signed_flag,
+    VIO_Real                   file_voxel_min,
+    VIO_Real                   file_voxel_max,
+    VIO_General_transform      *voxel_to_world_transform,
+    VIO_Volume                 volume_to_attach,
     minc_output_options    *options );
 
-public  Status  copy_auxiliary_data_from_minc_file(
+VIOAPI  VIO_Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
-    STRING      filename,
-    STRING      history_string );
+    VIO_STR      filename,
+    VIO_STR      history_string );
 
-public  Status  copy_auxiliary_data_from_open_minc_file(
+VIOAPI  VIO_Status  copy_auxiliary_data_from_open_minc_file(
     Minc_file   file,
     int         src_cdfid,
-    STRING      history_string );
+    VIO_STR      history_string );
 
-public  Status  add_minc_history(
+VIOAPI  VIO_Status  add_minc_history(
     Minc_file   file,
-    STRING      history_string );
+    VIO_STR      history_string );
 
-public  Status  set_minc_output_random_order(
+VIOAPI  VIO_Status  set_minc_output_random_order(
     Minc_file   file );
 
-public  Status  output_minc_hyperslab(
+VIOAPI  VIO_Status  output_minc_hyperslab(
     Minc_file           file,
-    Data_types          data_type,
+    VIO_Data_types      data_type,
     int                 n_array_dims,
     int                 array_sizes[],
     void                *array_data_ptr,
@@ -482,88 +482,88 @@ public  Status  output_minc_hyperslab(
     int                 file_start[],
     int                 file_count[] );
 
-public  Status  output_volume_to_minc_file_position(
+VIOAPI  VIO_Status  output_volume_to_minc_file_position(
     Minc_file   file,
-    Volume      volume,
+    VIO_Volume      volume,
     int         volume_count[],
     long        file_start[] );
 
-public  Status  output_minc_volume(
+VIOAPI  VIO_Status  output_minc_volume(
     Minc_file   file );
 
-public  Status  close_minc_output(
+VIOAPI  VIO_Status  close_minc_output(
     Minc_file   file );
 
-public  void  set_default_minc_output_options(
+VIOAPI  void  set_default_minc_output_options(
     minc_output_options  *options           );
 
-public  void  copy_minc_output_options(
+VIOAPI  void  copy_minc_output_options(
     minc_output_options  *src,
     minc_output_options  *dest );
 
-public  void  delete_minc_output_options(
+VIOAPI  void  delete_minc_output_options(
     minc_output_options  *options           );
 
-public  void  set_minc_output_dimensions_order(
+VIOAPI  void  set_minc_output_dimensions_order(
     minc_output_options  *options,
     int                  n_dimensions,
-    STRING               dimension_names[] );
+    VIO_STR               dimension_names[] );
 
-public  void  set_minc_output_real_range(
+VIOAPI  void  set_minc_output_real_range(
     minc_output_options  *options,
-    Real                 real_min,
-    Real                 real_max );
+    VIO_Real                 real_min,
+    VIO_Real                 real_max );
 
-public  void  set_minc_output_use_volume_starts_and_steps_flag(
+VIOAPI  void  set_minc_output_use_volume_starts_and_steps_flag(
     minc_output_options  *options,
-    BOOLEAN              flag );
+    VIO_BOOL             flag );
 
-public  Status   get_file_dimension_names(
-    STRING   filename,
+VIOAPI  VIO_Status   get_file_dimension_names(
+    VIO_STR   filename,
     int      *n_dims,
-    STRING   *dim_names[] );
+    VIO_STR   *dim_names[] );
 
-public  STRING  *create_output_dim_names(
-    Volume                volume,
-    STRING                original_filename,
+VIOAPI  VIO_STR  *create_output_dim_names(
+    VIO_Volume                volume,
+    VIO_STR                original_filename,
     minc_output_options   *options,
     int                   file_sizes[] );
 
-public  Status   copy_volume_auxiliary_and_history(
+VIOAPI  VIO_Status   copy_volume_auxiliary_and_history(
     Minc_file   minc_file,
-    STRING      filename,
-    STRING      original_filename,
-    STRING      history );
+    VIO_STR      filename,
+    VIO_STR      original_filename,
+    VIO_STR      history );
 
-public  Status  output_modified_volume(
-    STRING                filename,
+VIOAPI  VIO_Status  output_modified_volume(
+    VIO_STR                filename,
     nc_type               file_nc_data_type,
-    BOOLEAN               file_signed_flag,
-    Real                  file_voxel_min,
-    Real                  file_voxel_max,
-    Volume                volume,
-    STRING                original_filename,
-    STRING                history,
+    VIO_BOOL              file_signed_flag,
+    VIO_Real                  file_voxel_min,
+    VIO_Real                  file_voxel_max,
+    VIO_Volume                volume,
+    VIO_STR                original_filename,
+    VIO_STR                history,
     minc_output_options   *options );
 
-public  Status  output_volume(
-    STRING                filename,
+VIOAPI  VIO_Status  output_volume(
+    VIO_STR                filename,
     nc_type               file_nc_data_type,
-    BOOLEAN               file_signed_flag,
-    Real                  file_voxel_min,
-    Real                  file_voxel_max,
-    Volume                volume,
-    STRING                history,
+    VIO_BOOL              file_signed_flag,
+    VIO_Real                  file_voxel_min,
+    VIO_Real                  file_voxel_max,
+    VIO_Volume                volume,
+    VIO_STR                history,
     minc_output_options   *options );
 
-public  void  convert_values_to_voxels(
-    Volume   volume,
+VIOAPI  void  convert_values_to_voxels(
+    VIO_Volume   volume,
     int      n_voxels,
-    Real     values[],
-    Real     voxels[] );
+    VIO_Real     values[],
+    VIO_Real     voxels[] );
 
-public  void  set_volume_value_hyperslab(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -574,10 +574,10 @@ public  void  set_volume_value_hyperslab(
     int      n2,
     int      n3,
     int      n4,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_value_hyperslab_5d(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab_5d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -588,10 +588,10 @@ public  void  set_volume_value_hyperslab_5d(
     int      n2,
     int      n3,
     int      n4,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_value_hyperslab_4d(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab_4d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -600,84 +600,34 @@ public  void  set_volume_value_hyperslab_4d(
     int      n1,
     int      n2,
     int      n3,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_value_hyperslab_3d(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab_3d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
     int      n0,
     int      n1,
     int      n2,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_value_hyperslab_2d(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab_2d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      n0,
     int      n1,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_value_hyperslab_1d(
-    Volume   volume,
+VIOAPI  void  set_volume_value_hyperslab_1d(
+    VIO_Volume   volume,
     int      v0,
     int      n0,
-    Real     values[] );
+    VIO_Real     values[] );
 
-public  void  set_volume_voxel_hyperslab_5d(
-    Volume   volume,
-    int      v0,
-    int      v1,
-    int      v2,
-    int      v3,
-    int      v4,
-    int      n0,
-    int      n1,
-    int      n2,
-    int      n3,
-    int      n4,
-    Real     values[] );
-
-public  void  set_volume_voxel_hyperslab_4d(
-    Volume   volume,
-    int      v0,
-    int      v1,
-    int      v2,
-    int      v3,
-    int      n0,
-    int      n1,
-    int      n2,
-    int      n3,
-    Real     values[] );
-
-public  void  set_volume_voxel_hyperslab_3d(
-    Volume   volume,
-    int      v0,
-    int      v1,
-    int      v2,
-    int      n0,
-    int      n1,
-    int      n2,
-    Real     values[] );
-
-public  void  set_volume_voxel_hyperslab_2d(
-    Volume   volume,
-    int      v0,
-    int      v1,
-    int      n0,
-    int      n1,
-    Real     values[] );
-
-public  void  set_volume_voxel_hyperslab_1d(
-    Volume   volume,
-    int      v0,
-    int      n0,
-    Real     values[] );
-
-public  void  set_volume_voxel_hyperslab(
-    Volume   volume,
+VIOAPI  void  set_volume_voxel_hyperslab_5d(
+    VIO_Volume   volume,
     int      v0,
     int      v1,
     int      v2,
@@ -688,920 +638,970 @@ public  void  set_volume_voxel_hyperslab(
     int      n2,
     int      n3,
     int      n4,
-    Real     voxels[] );
+    VIO_Real     values[] );
 
-public  void  set_n_bytes_cache_threshold(
+VIOAPI  void  set_volume_voxel_hyperslab_4d(
+    VIO_Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    VIO_Real     values[] );
+
+VIOAPI  void  set_volume_voxel_hyperslab_3d(
+    VIO_Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      n0,
+    int      n1,
+    int      n2,
+    VIO_Real     values[] );
+
+VIOAPI  void  set_volume_voxel_hyperslab_2d(
+    VIO_Volume   volume,
+    int      v0,
+    int      v1,
+    int      n0,
+    int      n1,
+    VIO_Real     values[] );
+
+VIOAPI  void  set_volume_voxel_hyperslab_1d(
+    VIO_Volume   volume,
+    int      v0,
+    int      n0,
+    VIO_Real     values[] );
+
+VIOAPI  void  set_volume_voxel_hyperslab(
+    VIO_Volume   volume,
+    int      v0,
+    int      v1,
+    int      v2,
+    int      v3,
+    int      v4,
+    int      n0,
+    int      n1,
+    int      n2,
+    int      n3,
+    int      n4,
+    VIO_Real     voxels[] );
+
+VIOAPI  void  set_n_bytes_cache_threshold(
     int  threshold );
 
-public  int  get_n_bytes_cache_threshold( void );
+VIOAPI  int  get_n_bytes_cache_threshold( void );
 
-public  void  set_default_max_bytes_in_cache(
+VIOAPI  void  set_default_max_bytes_in_cache(
     int   max_bytes );
 
-public  int  get_default_max_bytes_in_cache( void );
+VIOAPI  int  get_default_max_bytes_in_cache( void );
 
-public  void  set_default_cache_block_sizes(
+VIOAPI  void  set_default_cache_block_sizes(
     int                      block_sizes[] );
 
-public  void  set_cache_block_sizes_hint(
-    Cache_block_size_hints  hint );
+VIOAPI  void  set_cache_block_sizes_hint(
+    VIO_Cache_block_size_hints  hint );
 
-public  void  initialize_volume_cache(
-    volume_cache_struct   *cache,
-    Volume                volume );
+VIOAPI  void  initialize_volume_cache(
+    VIO_volume_cache_struct   *cache,
+    VIO_Volume                volume );
 
-public  BOOLEAN  volume_cache_is_alloced(
-    volume_cache_struct   *cache );
+VIOAPI  VIO_BOOL volume_cache_is_alloced(
+    VIO_volume_cache_struct   *cache );
 
-public  void  flush_volume_cache(
-    Volume                volume );
+VIOAPI  void  flush_volume_cache(
+    VIO_Volume                volume );
 
-public  void  delete_volume_cache(
-    volume_cache_struct   *cache,
-    Volume                volume );
+VIOAPI  void  delete_volume_cache(
+    VIO_volume_cache_struct   *cache,
+    VIO_Volume                volume );
 
-public  void  set_volume_cache_block_sizes(
-    Volume    volume,
+VIOAPI  void  set_volume_cache_block_sizes(
+    VIO_Volume    volume,
     int       block_sizes[] );
 
-public  void  set_volume_cache_size(
-    Volume    volume,
+VIOAPI  void  set_volume_cache_size(
+    VIO_Volume    volume,
     int       max_memory_bytes );
 
-public  void  set_cache_output_volume_parameters(
-    Volume                      volume,
-    STRING                      filename,
+VIOAPI  void  set_cache_output_volume_parameters(
+    VIO_Volume                      volume,
+    VIO_STR                      filename,
     nc_type                     file_nc_data_type,
-    BOOLEAN                     file_signed_flag,
-    Real                        file_voxel_min,
-    Real                        file_voxel_max,
-    STRING                      original_filename,
-    STRING                      history,
+    VIO_BOOL                    file_signed_flag,
+    VIO_Real                        file_voxel_min,
+    VIO_Real                        file_voxel_max,
+    VIO_STR                      original_filename,
+    VIO_STR                      history,
     minc_output_options         *options )
 ;
 
-public  void  open_cache_volume_input_file(
-    volume_cache_struct   *cache,
-    Volume                volume,
-    STRING                filename,
+VIOAPI  void  open_cache_volume_input_file(
+    VIO_volume_cache_struct   *cache,
+    VIO_Volume                volume,
+    VIO_STR                filename,
     minc_input_options    *options );
 
-public  void  cache_volume_range_has_changed(
-    Volume   volume );
+VIOAPI  void  cache_volume_range_has_changed(
+    VIO_Volume   volume );
 
-public  void  set_cache_volume_file_offset(
-    volume_cache_struct   *cache,
-    Volume                volume,
+VIOAPI  void  set_cache_volume_file_offset(
+    VIO_volume_cache_struct *cache,
+    VIO_Volume            volume,
     long                  file_offset[] );
 
-public  Real  get_cached_volume_voxel(
-    Volume   volume,
+VIOAPI  VIO_Real  get_cached_volume_voxel(
+    VIO_Volume   volume,
     int      x,
     int      y,
     int      z,
     int      t,
     int      v );
 
-public  void  set_cached_volume_voxel(
-    Volume   volume,
+VIOAPI  void  set_cached_volume_voxel(
+    VIO_Volume   volume,
     int      x,
     int      y,
     int      z,
     int      t,
     int      v,
-    Real     value );
+    VIO_Real     value );
 
-public  BOOLEAN  cached_volume_has_been_modified(
-    volume_cache_struct  *cache );
+VIOAPI  VIO_BOOL cached_volume_has_been_modified(
+    VIO_volume_cache_struct  *cache );
 
-public  BOOLEAN  volume_is_cached(
-    Volume  volume );
+VIOAPI  VIO_BOOL volume_is_cached(
+    VIO_Volume  volume );
 
-public  void   set_volume_cache_debugging(
-    Volume   volume,
+VIOAPI  void   set_volume_cache_debugging(
+    VIO_Volume   volume,
     int      output_every );
 
-public  STRING  *get_default_dim_names(
+VIOAPI  VIO_STR  *get_default_dim_names(
     int    n_dimensions );
 
-public  BOOLEAN  convert_dim_name_to_spatial_axis(
-    STRING  name,
+VIOAPI  VIO_BOOL convert_dim_name_to_spatial_axis(
+    VIO_STR  name,
     int     *axis );
 
-public   Volume   create_volume(
+VIOAPI   VIO_Volume   create_volume(
     int         n_dimensions,
-    STRING      dimension_names[],
+    VIO_STR      dimension_names[],
     nc_type     nc_data_type,
-    BOOLEAN     signed_flag,
-    Real        voxel_min,
-    Real        voxel_max );
+    VIO_BOOL    signed_flag,
+    VIO_Real        voxel_min,
+    VIO_Real        voxel_max );
 
-public  void  set_volume_type(
-    Volume       volume,
+VIOAPI  void  set_volume_type(
+    VIO_Volume       volume,
     nc_type      nc_data_type,
-    BOOLEAN      signed_flag,
-    Real         voxel_min,
-    Real         voxel_max );
+    VIO_BOOL     signed_flag,
+    VIO_Real         voxel_min,
+    VIO_Real         voxel_max );
 
-public  nc_type  get_volume_nc_data_type(
-    Volume       volume,
-    BOOLEAN      *signed_flag );
+VIOAPI  nc_type  get_volume_nc_data_type(
+    VIO_Volume       volume,
+    VIO_BOOL     *signed_flag );
 
-public  Data_types  get_volume_data_type(
-    Volume       volume );
+VIOAPI  VIO_Data_types  get_volume_data_type(
+    VIO_Volume       volume );
 
-public  void  set_rgb_volume_flag(
-    Volume   volume,
-    BOOLEAN  flag );
+VIOAPI  void  set_rgb_volume_flag(
+    VIO_Volume   volume,
+    VIO_BOOL flag );
 
-public  BOOLEAN  is_an_rgb_volume(
-    Volume   volume );
+VIOAPI  VIO_BOOL is_an_rgb_volume(
+    VIO_Volume   volume );
 
-public  void  alloc_volume_data(
-    Volume   volume );
+VIOAPI  void  alloc_volume_data(
+    VIO_Volume   volume );
 
-public  BOOLEAN  volume_is_alloced(
-    Volume   volume );
+VIOAPI  VIO_BOOL volume_is_alloced(
+    VIO_Volume   volume );
 
-public  void  free_volume_data(
-    Volume   volume );
+VIOAPI  void  free_volume_data(
+    VIO_Volume   volume );
 
-public  void  delete_volume(
-    Volume   volume );
+VIOAPI  void  delete_volume(
+    VIO_Volume volume );
 
-public  int  get_volume_n_dimensions(
-    Volume   volume );
+VIOAPI  int  get_volume_n_dimensions(
+    VIO_Volume volume );
 
-public  void  get_volume_sizes(
-    Volume   volume,
+VIOAPI  void  get_volume_sizes(
+    VIO_Volume volume,
     int      sizes[] );
 
-public  void  set_volume_sizes(
-    Volume       volume,
+VIOAPI  void  set_volume_sizes(
+    VIO_Volume   volume,
     int          sizes[] );
 
-public  unsigned int  get_volume_total_n_voxels(
-    Volume    volume );
+VIOAPI  unsigned int  get_volume_total_n_voxels(
+    VIO_Volume    volume );
 
-public  void  compute_world_transform(
-    int                 spatial_axes[N_DIMENSIONS],
-    Real                separations[],
-    Real                direction_cosines[][N_DIMENSIONS],
-    Real                starts[],
-    General_transform   *world_transform );
+VIOAPI  void  compute_world_transform(
+    int                 spatial_axes[VIO_N_DIMENSIONS],
+    VIO_Real            separations[],
+    VIO_Real            direction_cosines[][VIO_N_DIMENSIONS],
+    VIO_Real            starts[],
+    VIO_General_transform   *world_transform );
 
-public  void  convert_transform_to_starts_and_steps(
-    General_transform  *transform,
+VIOAPI  void  convert_transform_to_starts_and_steps(
+    VIO_General_transform  *transform,
     int                n_volume_dimensions,
-    Real               step_signs[],
+    VIO_Real           step_signs[],
     int                spatial_axes[],
-    Real               starts[],
-    Real               steps[],
-    Real               dir_cosines[][N_DIMENSIONS] );
+    VIO_Real           starts[],
+    VIO_Real           steps[],
+    VIO_Real           dir_cosines[][VIO_N_DIMENSIONS] );
 
-public  void  set_voxel_to_world_transform(
-    Volume             volume,
-    General_transform  *transform );
+VIOAPI  void  set_voxel_to_world_transform(
+    VIO_Volume             volume,
+    VIO_General_transform  *transform );
 
-public  General_transform  *get_voxel_to_world_transform(
-    Volume   volume );
+VIOAPI  VIO_General_transform  *get_voxel_to_world_transform(
+    VIO_Volume   volume );
 
-public  STRING  *get_volume_dimension_names(
-    Volume   volume );
+VIOAPI  VIO_STR  *get_volume_dimension_names(
+    VIO_Volume   volume );
 
-public  void  delete_dimension_names(
-    Volume   volume,
-    STRING   dimension_names[] );
+VIOAPI  void  delete_dimension_names(
+    VIO_Volume   volume,
+    VIO_STR   dimension_names[] );
 
-public  STRING  get_volume_space_type(
-    Volume   volume );
+VIOAPI  VIO_STR  get_volume_space_type(
+    VIO_Volume   volume );
 
-public  void  set_volume_space_type(
-    Volume   volume,
-    STRING   name );
+VIOAPI  void  set_volume_space_type(
+    VIO_Volume   volume,
+    VIO_STR   name );
 
-public  void  get_volume_separations(
-    Volume   volume,
-    Real     separations[] );
+VIOAPI  void  get_volume_separations(
+    VIO_Volume   volume,
+    VIO_Real     separations[] );
 
-public  void  set_volume_separations(
-    Volume   volume,
-    Real     separations[] );
+VIOAPI  void  set_volume_separations(
+    VIO_Volume   volume,
+    VIO_Real     separations[] );
 
-public  void  set_volume_starts(
-    Volume  volume,
-    Real    starts[] );
+VIOAPI  void  set_volume_starts(
+    VIO_Volume  volume,
+    VIO_Real    starts[] );
 
-public  void  get_volume_starts(
-    Volume  volume,
-    Real    starts[] );
+VIOAPI  void  get_volume_starts(
+    VIO_Volume  volume,
+    VIO_Real    starts[] );
 
-public  void  set_volume_direction_unit_cosine(
-    Volume   volume,
+VIOAPI  void  set_volume_direction_unit_cosine(
+    VIO_Volume   volume,
     int      axis,
-    Real     dir[] );
+    VIO_Real     dir[] );
 
-public  void  set_volume_direction_cosine(
-    Volume   volume,
+VIOAPI  void  set_volume_direction_cosine(
+    VIO_Volume   volume,
     int      axis,
-    Real     dir[] );
+    VIO_Real     dir[] );
 
-public  void  get_volume_direction_cosine(
-    Volume   volume,
+VIOAPI  void  get_volume_direction_cosine(
+    VIO_Volume   volume,
     int      axis,
-    Real     dir[] );
+    VIO_Real     dir[] );
 
-public  void  set_volume_translation(
-    Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] );
+VIOAPI  void  set_volume_translation(
+    VIO_Volume  volume,
+    VIO_Real    voxel[],
+    VIO_Real    world_space_voxel_maps_to[] );
 
-public  void  get_volume_translation(
-    Volume  volume,
-    Real    voxel[],
-    Real    world_space_voxel_maps_to[] );
+VIOAPI  void  get_volume_translation(
+    VIO_Volume  volume,
+    VIO_Real    voxel[],
+    VIO_Real    world_space_voxel_maps_to[] );
 
-public  void  reorder_voxel_to_xyz(
-    Volume   volume,
-    Real     voxel[],
-    Real     xyz[] );
+VIOAPI  void  reorder_voxel_to_xyz(
+    VIO_Volume   volume,
+    VIO_Real     voxel[],
+    VIO_Real     xyz[] );
 
-public  void  reorder_xyz_to_voxel(
-    Volume   volume,
-    Real     xyz[],
-    Real     voxel[] );
+VIOAPI  void  reorder_xyz_to_voxel(
+    VIO_Volume   volume,
+    VIO_Real     xyz[],
+    VIO_Real     voxel[] );
 
-public  void  convert_voxel_to_world(
-    Volume   volume,
-    Real     voxel[],
-    Real     *x_world,
-    Real     *y_world,
-    Real     *z_world );
+VIOAPI  void  convert_voxel_to_world(
+    VIO_Volume   volume,
+    VIO_Real     voxel[],
+    VIO_Real     *x_world,
+    VIO_Real     *y_world,
+    VIO_Real     *z_world );
 
-public  void  convert_3D_voxel_to_world(
-    Volume   volume,
-    Real     voxel1,
-    Real     voxel2,
-    Real     voxel3,
-    Real     *x_world,
-    Real     *y_world,
-    Real     *z_world );
+VIOAPI  void  convert_3D_voxel_to_world(
+    VIO_Volume   volume,
+    VIO_Real     voxel1,
+    VIO_Real     voxel2,
+    VIO_Real     voxel3,
+    VIO_Real     *x_world,
+    VIO_Real     *y_world,
+    VIO_Real     *z_world );
 
-public  void  convert_voxel_normal_vector_to_world(
-    Volume          volume,
-    Real            voxel_vector[],
-    Real            *x_world,
-    Real            *y_world,
-    Real            *z_world );
+VIOAPI  void  convert_voxel_normal_vector_to_world(
+    VIO_Volume          volume,
+    VIO_Real            voxel_vector[],
+    VIO_Real            *x_world,
+    VIO_Real            *y_world,
+    VIO_Real            *z_world );
 
-public  void  convert_voxel_vector_to_world(
-    Volume          volume,
-    Real            voxel_vector[],
-    Real            *x_world,
-    Real            *y_world,
-    Real            *z_world );
+VIOAPI  void  convert_voxel_vector_to_world(
+    VIO_Volume          volume,
+    VIO_Real            voxel_vector[],
+    VIO_Real            *x_world,
+    VIO_Real            *y_world,
+    VIO_Real            *z_world );
 
-public  void  convert_world_vector_to_voxel(
-    Volume          volume,
-    Real            x_world,
-    Real            y_world,
-    Real            z_world,
-    Real            voxel_vector[] );
+VIOAPI  void  convert_world_vector_to_voxel(
+    VIO_Volume          volume,
+    VIO_Real            x_world,
+    VIO_Real            y_world,
+    VIO_Real            z_world,
+    VIO_Real            voxel_vector[] );
 
-public  void  convert_world_to_voxel(
-    Volume   volume,
-    Real     x_world,
-    Real     y_world,
-    Real     z_world,
-    Real     voxel[] );
+VIOAPI  void  convert_world_to_voxel(
+    VIO_Volume   volume,
+    VIO_Real     x_world,
+    VIO_Real     y_world,
+    VIO_Real     z_world,
+    VIO_Real     voxel[] );
 
-public  void  convert_3D_world_to_voxel(
-    Volume   volume,
-    Real     x_world,
-    Real     y_world,
-    Real     z_world,
-    Real     *voxel1,
-    Real     *voxel2,
-    Real     *voxel3 );
+VIOAPI  void  convert_3D_world_to_voxel(
+    VIO_Volume   volume,
+    VIO_Real     x_world,
+    VIO_Real     y_world,
+    VIO_Real     z_world,
+    VIO_Real     *voxel1,
+    VIO_Real     *voxel2,
+    VIO_Real     *voxel3 );
 
-public  Real  get_volume_voxel_min(
-    Volume   volume );
+VIOAPI  VIO_Real  get_volume_voxel_min(
+    VIO_Volume   volume );
 
-public  Real  get_volume_voxel_max(
-    Volume   volume );
+VIOAPI  VIO_Real  get_volume_voxel_max(
+    VIO_Volume   volume );
 
-public  void  get_volume_voxel_range(
-    Volume     volume,
-    Real       *voxel_min,
-    Real       *voxel_max );
+VIOAPI  void  get_volume_voxel_range(
+    VIO_Volume     volume,
+    VIO_Real       *voxel_min,
+    VIO_Real       *voxel_max );
 
-public  void  set_volume_voxel_range(
-    Volume   volume,
-    Real     voxel_min,
-    Real     voxel_max );
+VIOAPI  void  set_volume_voxel_range(
+    VIO_Volume   volume,
+    VIO_Real     voxel_min,
+    VIO_Real     voxel_max );
 
-public  void  get_volume_real_range(
-    Volume     volume,
-    Real       *min_value,
-    Real       *max_value );
+VIOAPI  void  get_volume_real_range(
+    VIO_Volume     volume,
+    VIO_Real       *min_value,
+    VIO_Real       *max_value );
 
-public  Real  get_volume_real_min(
-    Volume     volume );
+VIOAPI  VIO_Real  get_volume_real_min(
+    VIO_Volume     volume );
 
-public  Real  get_volume_real_max(
-    Volume     volume );
+VIOAPI  VIO_Real  get_volume_real_max(
+    VIO_Volume     volume );
 
-public  void  set_volume_real_range(
-    Volume   volume,
-    Real     real_min,
-    Real     real_max );
+VIOAPI  void  set_volume_real_range(
+    VIO_Volume   volume,
+    VIO_Real     real_min,
+    VIO_Real     real_max );
 
-public  Volume   copy_volume_definition_no_alloc(
-    Volume   volume,
+VIOAPI  VIO_Volume   copy_volume_definition_no_alloc(
+    VIO_Volume   volume,
     nc_type  nc_data_type,
-    BOOLEAN  signed_flag,
-    Real     voxel_min,
-    Real     voxel_max );
+    VIO_BOOL signed_flag,
+    VIO_Real     voxel_min,
+    VIO_Real     voxel_max );
 
-public  Volume   copy_volume_definition(
-    Volume   volume,
+VIOAPI  VIO_Volume   copy_volume_definition(
+    VIO_Volume   volume,
     nc_type  nc_data_type,
-    BOOLEAN  signed_flag,
-    Real     voxel_min,
-    Real     voxel_max );
+    VIO_BOOL signed_flag,
+    VIO_Real     voxel_min,
+    VIO_Real     voxel_max );
 
-public  Volume  copy_volume(
-    Volume   volume );
+VIOAPI  VIO_Volume  copy_volume(
+    VIO_Volume   volume );
 
-public  void  grid_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed );
+VIOAPI  void  grid_transform_point(
+    VIO_General_transform   *transform,
+    VIO_Real                x,
+    VIO_Real                y,
+    VIO_Real                z,
+    VIO_Real                *x_transformed,
+    VIO_Real                *y_transformed,
+    VIO_Real                *z_transformed );
 
-public  void  grid_inverse_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed );
+VIOAPI  void  grid_inverse_transform_point(
+    VIO_General_transform   *transform,
+    VIO_Real                x,
+    VIO_Real                y,
+    VIO_Real                z,
+    VIO_Real                *x_transformed,
+    VIO_Real                *y_transformed,
+    VIO_Real                *z_transformed );
 
-public  Status  mni_get_nonwhite_character(
+VIOAPI  VIO_Status  mni_get_nonwhite_character(
     FILE   *file,
     char   *ch );
 
-public  Status  mni_skip_expected_character(
+VIOAPI  VIO_Status  mni_skip_expected_character(
     FILE   *file,
     char   expected_ch );
 
-public  Status  mni_input_line(
+VIOAPI  VIO_Status  mni_input_line(
     FILE     *file,
-    STRING   *string );
+    VIO_STR   *string );
 
-public  Status  mni_input_string(
+VIOAPI  VIO_Status  mni_input_string(
     FILE     *file,
-    STRING   *string,
+    VIO_STR   *string,
     char     termination_char1,
     char     termination_char2 );
 
-public  Status  mni_input_keyword_and_equal_sign(
+VIOAPI  VIO_Status  mni_input_keyword_and_equal_sign(
     FILE         *file,
     const char   keyword[],
-    BOOLEAN      print_error_message );
+    VIO_BOOL     print_error_message );
 
-public  Status  mni_input_real(
+VIOAPI  VIO_Status  mni_input_real(
     FILE    *file,
-    Real    *d );
+    VIO_Real    *d );
 
-public  Status  mni_input_reals(
+VIOAPI  VIO_Status  mni_input_reals(
     FILE    *file,
     int     *n,
-    Real    *reals[] );
+    VIO_Real    *reals[] );
 
-public  Status  mni_input_int(
+VIOAPI  VIO_Status  mni_input_int(
     FILE    *file,
     int     *i );
 
-public  void  output_comments(
+VIOAPI  void  output_comments(
     FILE     *file,
-    STRING   comments );
+    VIO_STR   comments );
 
-public  STRING  get_default_tag_file_suffix( void );
+VIOAPI  VIO_STR  get_default_tag_file_suffix( void );
 
-public  Status  initialize_tag_file_output(
+VIOAPI  VIO_Status  initialize_tag_file_output(
     FILE      *file,
-    STRING    comments,
+    VIO_STR    comments,
     int       n_volumes );
 
-public  Status  output_one_tag(
+VIOAPI  VIO_Status  output_one_tag(
     FILE      *file,
     int       n_volumes,
-    Real      tag_volume1[],
-    Real      tag_volume2[],
-    Real      *weight,
+    VIO_Real      tag_volume1[],
+    VIO_Real      tag_volume2[],
+    VIO_Real      *weight,
     int       *structure_id,
     int       *patient_id,
-    STRING    label );
+    VIO_STR    label );
 
-public  void  terminate_tag_file_output(
+VIOAPI  void  terminate_tag_file_output(
     FILE    *file );
 
-public  Status  output_tag_points(
+VIOAPI  VIO_Status  output_tag_points(
     FILE      *file,
-    STRING    comments,
+    VIO_STR    comments,
     int       n_volumes,
     int       n_tag_points,
-    Real      **tags_volume1,
-    Real      **tags_volume2,
-    Real      weights[],
+    VIO_Real      **tags_volume1,
+    VIO_Real      **tags_volume2,
+    VIO_Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    STRING    *labels );
+    VIO_STR    *labels );
 
-public  void  free_tag_points(
+VIOAPI  void  free_tag_points(
     int       n_volumes,
     int       n_tag_points,
-    Real      **tags_volume1,
-    Real      **tags_volume2,
-    Real      weights[],
+    VIO_Real      **tags_volume1,
+    VIO_Real      **tags_volume2,
+    VIO_Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
     char      **labels );
 
-public  Status  initialize_tag_file_input(
+VIOAPI  VIO_Status  initialize_tag_file_input(
     FILE      *file,
     int       *n_volumes_ptr );
 
-public  Status  output_tag_file(
-    STRING    filename,
-    STRING    comments,
+VIOAPI  VIO_Status  output_tag_file(
+    VIO_STR    filename,
+    VIO_STR    comments,
     int       n_volumes,
     int       n_tag_points,
-    Real      **tags_volume1,
-    Real      **tags_volume2,
-    Real      weights[],
+    VIO_Real      **tags_volume1,
+    VIO_Real      **tags_volume2,
+    VIO_Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    STRING    labels[] );
+    VIO_STR    labels[] );
 
-public  Status  input_tag_file(
-    STRING    filename,
+VIOAPI  VIO_Status  input_tag_file(
+    VIO_STR    filename,
     int       *n_volumes,
     int       *n_tag_points,
-    Real      ***tags_volume1,
-    Real      ***tags_volume2,
-    Real      **weights,
+    VIO_Real      ***tags_volume1,
+    VIO_Real      ***tags_volume2,
+    VIO_Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    STRING    *labels[] );
+    VIO_STR    *labels[] );
 
-public  BOOLEAN  input_one_tag(
+VIOAPI  VIO_BOOL input_one_tag(
     FILE      *file,
     int       n_volumes,
-    Real      tag_volume1[],
-    Real      tag_volume2[],
-    Real      *weight,
+    VIO_Real      tag_volume1[],
+    VIO_Real      tag_volume2[],
+    VIO_Real      *weight,
     int       *structure_id,
     int       *patient_id,
-    STRING    *label,
-    Status    *status );
+    VIO_STR    *label,
+    VIO_Status    *status );
 
-public  Status  input_tag_points(
+VIOAPI  VIO_Status  input_tag_points(
     FILE      *file,
     int       *n_volumes_ptr,
     int       *n_tag_points,
-    Real      ***tags_volume1,
-    Real      ***tags_volume2,
-    Real      **weights,
+    VIO_Real      ***tags_volume1,
+    VIO_Real      ***tags_volume2,
+    VIO_Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    STRING    *labels[] );
+    VIO_STR    *labels[] );
 
-public  void  evaluate_thin_plate_spline(
+VIOAPI  void  evaluate_thin_plate_spline(
     int     n_dims,
     int     n_values,
     int     n_points,
-    Real    **points,
-    Real    **weights,
-    Real    pos[],
-    Real    values[],
-    Real    **derivs );
+    VIO_Real    **points,
+    VIO_Real    **weights,
+    VIO_Real    pos[],
+    VIO_Real    values[],
+    VIO_Real    **derivs );
 
-public  void  thin_plate_spline_transform(
+VIOAPI  void  thin_plate_spline_transform(
     int     n_dims,
     int     n_points,
-    Real    **points,
-    Real    **weights,
-    Real    x,
-    Real    y,
-    Real    z,
-    Real    *x_transformed,
-    Real    *y_transformed,
-    Real    *z_transformed );
+    VIO_Real    **points,
+    VIO_Real    **weights,
+    VIO_Real    x,
+    VIO_Real    y,
+    VIO_Real    z,
+    VIO_Real    *x_transformed,
+    VIO_Real    *y_transformed,
+    VIO_Real    *z_transformed );
 
-public  void  thin_plate_spline_inverse_transform(
+VIOAPI  void  thin_plate_spline_inverse_transform(
     int     n_dims,
     int     n_points,
-    Real    **points,
-    Real    **weights,
-    Real    x,
-    Real    y,
-    Real    z,
-    Real    *x_transformed,
-    Real    *y_transformed,
-    Real    *z_transformed );
+    VIO_Real    **points,
+    VIO_Real    **weights,
+    VIO_Real    x,
+    VIO_Real    y,
+    VIO_Real    z,
+    VIO_Real    *x_transformed,
+    VIO_Real    *y_transformed,
+    VIO_Real    *z_transformed );
 
-public  Real  thin_plate_spline_U(
-    Real   pos[],
-    Real   landmark[],
+VIOAPI  VIO_Real  thin_plate_spline_U(
+    VIO_Real   pos[],
+    VIO_Real   landmark[],
     int    n_dims );
 
-public  STRING  get_default_transform_file_suffix( void );
+VIOAPI  VIO_STR  get_default_transform_file_suffix( void );
 
-public  Status  output_transform(
+VIOAPI  VIO_Status  output_transform(
     FILE                *file,
-    STRING              filename,
+    VIO_STR              filename,
     int                 *volume_count_ptr,
-    STRING              comments,
-    General_transform   *transform );
+    VIO_STR              comments,
+    VIO_General_transform   *transform );
 
-public  Status  input_transform(
+VIOAPI  VIO_Status  input_transform(
     FILE                *file,
-    STRING              filename,
-    General_transform   *transform );
+    VIO_STR              filename,
+    VIO_General_transform   *transform );
 
-public  Status  output_transform_file(
-    STRING              filename,
-    STRING              comments,
-    General_transform   *transform );
+VIOAPI  VIO_Status  output_transform_file(
+    VIO_STR              filename,
+    VIO_STR              comments,
+    VIO_General_transform   *transform );
 
-public  Status  input_transform_file(
-    STRING              filename,
-    General_transform   *transform );
+VIOAPI  VIO_Status  input_transform_file(
+    VIO_STR              filename,
+    VIO_General_transform   *transform );
 
-public  void  create_linear_transform(
-    General_transform   *transform,
-    Transform           *linear_transform );
+VIOAPI  void  create_linear_transform(
+    VIO_General_transform   *transform,
+    VIO_Transform           *linear_transform );
 
-public  void  create_thin_plate_transform_real(
-    General_transform    *transform,
+VIOAPI  void  create_thin_plate_transform_real(
+    VIO_General_transform    *transform,
     int                  n_dimensions,
     int                  n_points,
-    Real                 **points,
-    Real                 **displacements );
+    VIO_Real                 **points,
+    VIO_Real                 **displacements );
 
-public  void  create_thin_plate_transform(
-    General_transform    *transform,
+VIOAPI  void  create_thin_plate_transform(
+    VIO_General_transform    *transform,
     int                  n_dimensions,
     int                  n_points,
     float                **points,
     float                **displacements );
 
-public  void  create_grid_transform(
-    General_transform    *transform,
-    Volume               displacement_volume );
+VIOAPI  void  create_grid_transform(
+    VIO_General_transform    *transform,
+    VIO_Volume               displacement_volume );
 
-public  void  create_grid_transform_no_copy(
-    General_transform    *transform,
-    Volume               displacement_volume );
+VIOAPI  void  create_grid_transform_no_copy(
+    VIO_General_transform    *transform,
+    VIO_Volume               displacement_volume );
 
-public  void  create_user_transform(
-    General_transform         *transform,
+VIOAPI  void  create_user_transform(
+    VIO_General_transform         *transform,
     void                      *user_data,
     size_t                    size_user_data,
-    User_transform_function   transform_function,
-    User_transform_function   inverse_transform_function );
+    VIO_User_transform_function   transform_function,
+    VIO_User_transform_function   inverse_transform_function );
 
-public  Transform_types  get_transform_type(
-    General_transform   *transform );
+VIOAPI  VIO_Transform_types  get_transform_type(
+    VIO_General_transform   *transform );
 
-public  int  get_n_concated_transforms(
-    General_transform   *transform );
+VIOAPI  int  get_n_concated_transforms(
+    VIO_General_transform   *transform );
 
-public  General_transform  *get_nth_general_transform(
-    General_transform   *transform,
+VIOAPI  VIO_General_transform  *get_nth_general_transform(
+    VIO_General_transform   *transform,
     int                 n );
 
-public  Transform  *get_linear_transform_ptr(
-    General_transform   *transform );
+VIOAPI  VIO_Transform  *get_linear_transform_ptr(
+    VIO_General_transform   *transform );
 
-public  Transform  *get_inverse_linear_transform_ptr(
-    General_transform   *transform );
+VIOAPI  VIO_Transform  *get_inverse_linear_transform_ptr(
+    VIO_General_transform   *transform );
 
-public  void  general_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed );
+VIOAPI  void  general_transform_point(
+    VIO_General_transform   *transform,
+    VIO_Real                x,
+    VIO_Real                y,
+    VIO_Real                z,
+    VIO_Real                *x_transformed,
+    VIO_Real                *y_transformed,
+    VIO_Real                *z_transformed );
 
-public  void  general_inverse_transform_point(
-    General_transform   *transform,
-    Real                x,
-    Real                y,
-    Real                z,
-    Real                *x_transformed,
-    Real                *y_transformed,
-    Real                *z_transformed );
+VIOAPI  void  general_inverse_transform_point(
+    VIO_General_transform   *transform,
+    VIO_Real                x,
+    VIO_Real                y,
+    VIO_Real                z,
+    VIO_Real                *x_transformed,
+    VIO_Real                *y_transformed,
+    VIO_Real                *z_transformed );
 
-public  void  copy_general_transform(
-    General_transform   *transform,
-    General_transform   *copy );
+VIOAPI  void  copy_general_transform(
+    VIO_General_transform   *transform,
+    VIO_General_transform   *copy );
 
-public  void  invert_general_transform(
-    General_transform   *transform );
+VIOAPI  void  invert_general_transform(
+    VIO_General_transform   *transform );
 
-public  void  create_inverse_general_transform(
-    General_transform   *transform,
-    General_transform   *inverse );
+VIOAPI  void  create_inverse_general_transform(
+    VIO_General_transform   *transform,
+    VIO_General_transform   *inverse );
 
-public  void  concat_general_transforms(
-    General_transform   *first,
-    General_transform   *second,
-    General_transform   *result );
+VIOAPI  void  concat_general_transforms(
+    VIO_General_transform   *first,
+    VIO_General_transform   *second,
+    VIO_General_transform   *result );
 
-public  void  delete_general_transform(
-    General_transform   *transform );
+VIOAPI  void  delete_general_transform(
+    VIO_General_transform   *transform );
 
-public  Colour  make_rgba_Colour(
+VIOAPI  VIO_Colour  make_rgba_Colour(
     int    r,
     int    g,
     int    b,
     int    a );
 
-public  int  get_Colour_r(
-    Colour   colour );
+VIOAPI  int  get_Colour_r(
+    VIO_Colour   colour );
 
-public  int  get_Colour_g(
-    Colour   colour );
+VIOAPI  int  get_Colour_g(
+    VIO_Colour   colour );
 
-public  int  get_Colour_b(
-    Colour   colour );
+VIOAPI  int  get_Colour_b(
+    VIO_Colour   colour );
 
-public  int  get_Colour_a(
-    Colour   colour );
+VIOAPI  int  get_Colour_a(
+    VIO_Colour   colour );
 
-public  Colour  make_Colour(
+VIOAPI  VIO_Colour  make_Colour(
     int   r,
     int   g,
     int   b );
 
-public  Real  get_Colour_r_0_1(
-    Colour   colour );
+VIOAPI  VIO_Real  get_Colour_r_0_1(
+    VIO_Colour   colour );
 
-public  Real  get_Colour_g_0_1(
-    Colour   colour );
+VIOAPI  VIO_Real  get_Colour_g_0_1(
+    VIO_Colour   colour );
 
-public  Real  get_Colour_b_0_1(
-    Colour   colour );
+VIOAPI  VIO_Real  get_Colour_b_0_1(
+    VIO_Colour   colour );
 
-public  Real  get_Colour_a_0_1(
-    Colour   colour );
+VIOAPI  VIO_Real  get_Colour_a_0_1(
+    VIO_Colour   colour );
 
-public  Colour  make_Colour_0_1(
-    Real   r,
-    Real   g,
-    Real   b );
+VIOAPI  VIO_Colour  make_Colour_0_1(
+    VIO_Real   r,
+    VIO_Real   g,
+    VIO_Real   b );
 
-public  Colour  make_rgba_Colour_0_1(
-    Real   r,
-    Real   g,
-    Real   b,
-    Real   a );
+VIOAPI  VIO_Colour  make_rgba_Colour_0_1(
+    VIO_Real   r,
+    VIO_Real   g,
+    VIO_Real   b,
+    VIO_Real   a );
 
-public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
+VIOAPI  VIO_BOOL scaled_maximal_pivoting_gaussian_elimination(
     int   n,
     int   row[],
-    Real  **a,
+    VIO_Real  **a,
     int   n_values,
-    Real  **solution );
+    VIO_Real  **solution );
 
-public  BOOLEAN  solve_linear_system(
+VIOAPI  VIO_BOOL solve_linear_system(
     int   n,
-    Real  **coefs,
-    Real  values[],
-    Real  solution[] );
+    VIO_Real  **coefs,
+    VIO_Real  values[],
+    VIO_Real  solution[] );
 
-public  BOOLEAN  invert_square_matrix(
+VIOAPI  VIO_BOOL invert_square_matrix(
     int   n,
-    Real  **matrix,
-    Real  **inverse );
+    VIO_Real  **matrix,
+    VIO_Real  **inverse );
 
-public  BOOLEAN  newton_root_find(
+VIOAPI  VIO_BOOL newton_root_find(
     int    n_dimensions,
-    void   (*function) ( void *, Real [],  Real [], Real ** ),
+    void   (*function) ( void *, VIO_Real [],  VIO_Real [], VIO_Real ** ),
     void   *function_data,
-    Real   initial_guess[],
-    Real   desired_values[],
-    Real   solution[],
-    Real   function_tolerance,
-    Real   delta_tolerance,
+    VIO_Real   initial_guess[],
+    VIO_Real   desired_values[],
+    VIO_Real   solution[],
+    VIO_Real   function_tolerance,
+    VIO_Real   delta_tolerance,
     int    max_iterations );
 
-public  void  create_orthogonal_vector(
-    Vector  *v,
-    Vector  *ortho );
+VIOAPI  void  create_orthogonal_vector(
+    VIO_Vector  *v,
+    VIO_Vector  *ortho );
 
-public  void  create_two_orthogonal_vectors(
-    Vector   *v,
-    Vector   *v1,
-    Vector   *v2 );
+VIOAPI  void  create_two_orthogonal_vectors(
+    VIO_Vector   *v,
+    VIO_Vector   *v1,
+    VIO_Vector   *v2 );
 
-public  BOOLEAN   compute_transform_inverse(
-    Transform  *transform,
-    Transform  *inverse );
+VIOAPI  VIO_BOOL  compute_transform_inverse(
+    VIO_Transform  *transform,
+    VIO_Transform  *inverse );
 
-public  void  get_linear_spline_coefs(
-    Real  **coefs );
+VIOAPI  void  get_linear_spline_coefs(
+    VIO_Real  **coefs );
 
-public  void  get_quadratic_spline_coefs(
-    Real  **coefs );
+VIOAPI  void  get_quadratic_spline_coefs(
+    VIO_Real  **coefs );
 
-public  void  get_cubic_spline_coefs(
-    Real  **coefs );
+VIOAPI  void  get_cubic_spline_coefs(
+    VIO_Real  **coefs );
 
-public  Real  cubic_interpolate(
-    Real   u,
-    Real   v0,
-    Real   v1,
-    Real   v2,
-    Real   v3 );
+VIOAPI  VIO_Real  cubic_interpolate(
+    VIO_Real   u,
+    VIO_Real   v0,
+    VIO_Real   v1,
+    VIO_Real   v2,
+    VIO_Real   v3 );
 
-public  void  evaluate_univariate_interpolating_spline(
-    Real    u,
+VIOAPI  void  evaluate_univariate_interpolating_spline(
+    VIO_Real    u,
     int     degree,
-    Real    coefs[],
+    VIO_Real    coefs[],
     int     n_derivs,
-    Real    derivs[] );
+    VIO_Real    derivs[] );
 
-public  void  evaluate_bivariate_interpolating_spline(
-    Real    u,
-    Real    v,
+VIOAPI  void  evaluate_bivariate_interpolating_spline(
+    VIO_Real    u,
+    VIO_Real    v,
     int     degree,
-    Real    coefs[],
+    VIO_Real    coefs[],
     int     n_derivs,
-    Real    derivs[] );
+    VIO_Real    derivs[] );
 
-public  void  evaluate_trivariate_interpolating_spline(
-    Real    u,
-    Real    v,
-    Real    w,
+VIOAPI  void  evaluate_trivariate_interpolating_spline(
+    VIO_Real    u,
+    VIO_Real    v,
+    VIO_Real    w,
     int     degree,
-    Real    coefs[],
+    VIO_Real    coefs[],
     int     n_derivs,
-    Real    derivs[] );
+    VIO_Real    derivs[] );
 
-public  void  evaluate_interpolating_spline(
+VIOAPI  void  evaluate_interpolating_spline(
     int     n_dims,
-    Real    parameters[],
+    VIO_Real    parameters[],
     int     degree,
     int     n_values,
-    Real    coefs[],
+    VIO_Real    coefs[],
     int     n_derivs,
-    Real    derivs[] );
+    VIO_Real    derivs[] );
 
-public  void  spline_tensor_product(
+VIOAPI  void  spline_tensor_product(
     int     n_dims,
-    Real    positions[],
+    VIO_Real    positions[],
     int     degrees[],
-    Real    *bases[],
+    VIO_Real    *bases[],
     int     n_values,
-    Real    coefs[],
+    VIO_Real    coefs[],
     int     n_derivs[],
-    Real    results[] );
+    VIO_Real    results[] );
 
-public  void  make_identity_transform( Transform   *transform );
+VIOAPI  void  make_identity_transform( VIO_Transform   *transform );
 
-public  BOOLEAN  close_to_identity(
-    Transform   *transform );
+VIOAPI  VIO_BOOL close_to_identity(
+    VIO_Transform   *transform );
 
-public  void  get_transform_origin(
-    Transform   *transform,
-    Point       *origin );
+VIOAPI  void  get_transform_origin(
+    VIO_Transform   *transform,
+    VIO_Point       *origin );
 
-public  void  set_transform_origin(
-    Transform   *transform,
-    Point       *origin );
+VIOAPI  void  set_transform_origin(
+    VIO_Transform   *transform,
+    VIO_Point       *origin );
 
-public  void  get_transform_origin_real(
-    Transform   *transform,
-    Real        origin[] );
+VIOAPI  void  get_transform_origin_real(
+    VIO_Transform   *transform,
+    VIO_Real        origin[] );
 
-public  void  get_transform_x_axis(
-    Transform   *transform,
-    Vector      *x_axis );
+VIOAPI  void  get_transform_x_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *x_axis );
 
-public  void  get_transform_x_axis_real(
-    Transform   *transform,
-    Real        x_axis[] );
+VIOAPI  void  get_transform_x_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        x_axis[] );
 
-public  void  set_transform_x_axis(
-    Transform   *transform,
-    Vector      *x_axis );
+VIOAPI  void  set_transform_x_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *x_axis );
 
-public  void  set_transform_x_axis_real(
-    Transform   *transform,
-    Real        x_axis[] );
+VIOAPI  void  set_transform_x_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        x_axis[] );
 
-public  void  get_transform_y_axis(
-    Transform   *transform,
-    Vector      *y_axis );
+VIOAPI  void  get_transform_y_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *y_axis );
 
-public  void  get_transform_y_axis_real(
-    Transform   *transform,
-    Real        y_axis[] );
+VIOAPI  void  get_transform_y_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        y_axis[] );
 
-public  void  set_transform_y_axis(
-    Transform   *transform,
-    Vector      *y_axis );
+VIOAPI  void  set_transform_y_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *y_axis );
 
-public  void  set_transform_y_axis_real(
-    Transform   *transform,
-    Real        y_axis[] );
+VIOAPI  void  set_transform_y_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        y_axis[] );
 
-public  void  get_transform_z_axis(
-    Transform   *transform,
-    Vector      *z_axis );
+VIOAPI  void  get_transform_z_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *z_axis );
 
-public  void  get_transform_z_axis_real(
-    Transform   *transform,
-    Real        z_axis[] );
+VIOAPI  void  get_transform_z_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        z_axis[] );
 
-public  void  set_transform_z_axis(
-    Transform   *transform,
-    Vector      *z_axis );
+VIOAPI  void  set_transform_z_axis(
+    VIO_Transform   *transform,
+    VIO_Vector      *z_axis );
 
-public  void  set_transform_z_axis_real(
-    Transform   *transform,
-    Real        z_axis[] );
+VIOAPI  void  set_transform_z_axis_real(
+    VIO_Transform   *transform,
+    VIO_Real        z_axis[] );
 
-public  void   make_change_to_bases_transform(
-    Point      *origin,
-    Vector     *x_axis,
-    Vector     *y_axis,
-    Vector     *z_axis,
-    Transform  *transform );
+VIOAPI  void   make_change_to_bases_transform(
+    VIO_Point      *origin,
+    VIO_Vector     *x_axis,
+    VIO_Vector     *y_axis,
+    VIO_Vector     *z_axis,
+    VIO_Transform  *transform );
 
-public  void   make_change_from_bases_transform(
-    Point      *origin,
-    Vector     *x_axis,
-    Vector     *y_axis,
-    Vector     *z_axis,
-    Transform  *transform );
+VIOAPI  void   make_change_from_bases_transform(
+    VIO_Point      *origin,
+    VIO_Vector     *x_axis,
+    VIO_Vector     *y_axis,
+    VIO_Vector     *z_axis,
+    VIO_Transform  *transform );
 
-public  void   concat_transforms(
-    Transform   *result,
-    Transform   *t1,
-    Transform   *t2 );
+VIOAPI  void   concat_transforms(
+    VIO_Transform   *result,
+    VIO_Transform   *t1,
+    VIO_Transform   *t2 );
 
-public  void  transform_point(
-    Transform  *transform,
-    Real       x,
-    Real       y,
-    Real       z,
-    Real       *x_trans,
-    Real       *y_trans,
-    Real       *z_trans );
+VIOAPI  void  transform_point(
+    VIO_Transform  *transform,
+    VIO_Real       x,
+    VIO_Real       y,
+    VIO_Real       z,
+    VIO_Real       *x_trans,
+    VIO_Real       *y_trans,
+    VIO_Real       *z_trans );
 
-public  void  transform_vector(
-    Transform  *transform,
-    Real       x,
-    Real       y,
-    Real       z,
-    Real       *x_trans,
-    Real       *y_trans,
-    Real       *z_trans );
+VIOAPI  void  transform_vector(
+    VIO_Transform  *transform,
+    VIO_Real       x,
+    VIO_Real       y,
+    VIO_Real       z,
+    VIO_Real       *x_trans,
+    VIO_Real       *y_trans,
+    VIO_Real       *z_trans );
 
-public  void  *alloc_memory_in_bytes(
+VIOAPI  void  *alloc_memory_in_bytes(
     size_t       n_bytes
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  *alloc_memory_1d(
+VIOAPI  void  *alloc_memory_1d(
     size_t       n_elements,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  *alloc_memory_2d(
+VIOAPI  void  *alloc_memory_2d(
     size_t       n1,
     size_t       n2,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  *alloc_memory_3d(
+VIOAPI  void  *alloc_memory_3d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  *alloc_memory_4d(
+VIOAPI  void  *alloc_memory_4d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -1609,7 +1609,7 @@ public  void  *alloc_memory_4d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  *alloc_memory_5d(
+VIOAPI  void  *alloc_memory_5d(
     size_t       n1,
     size_t       n2,
     size_t       n3,
@@ -1618,64 +1618,64 @@ public  void  *alloc_memory_5d(
     size_t       type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  realloc_memory(
+VIOAPI  void  realloc_memory(
     void      **ptr,
     size_t    n_elements,
     size_t    type_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  free_memory_1d(
+VIOAPI  void  free_memory_1d(
     void   **ptr
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  free_memory_2d(
+VIOAPI  void  free_memory_2d(
     void   ***ptr
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  free_memory_3d(
+VIOAPI  void  free_memory_3d(
     void   ****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  free_memory_4d(
+VIOAPI  void  free_memory_4d(
     void   *****ptr
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  void  free_memory_5d(
+VIOAPI  void  free_memory_5d(
     void   ******ptr
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  size_t  get_total_memory_alloced( void );
+VIOAPI  size_t  get_total_memory_alloced( void );
 
-public  BOOLEAN  alloc_checking_enabled( void );
+VIOAPI  VIO_BOOL alloc_checking_enabled( void );
 
-public  void  set_alloc_checking( BOOLEAN state );
+VIOAPI  void  set_alloc_checking( VIO_BOOL state );
 
-public  void  record_ptr_alloc_check(
+VIOAPI  void  record_ptr_alloc_check(
     void      *ptr,
     size_t    n_bytes,
-    STRING    source_file,
+    VIO_STR    source_file,
     int       line_number );
 
-public  void  change_ptr_alloc_check(
+VIOAPI  void  change_ptr_alloc_check(
     void      *old_ptr,
     void      *new_ptr,
     size_t    n_bytes,
-    STRING    source_file,
+    VIO_STR    source_file,
     int       line_number );
 
-public  BOOLEAN  unrecord_ptr_alloc_check(
+VIOAPI  VIO_BOOL unrecord_ptr_alloc_check(
     void     *ptr,
-    STRING   source_file,
+    VIO_STR   source_file,
     int      line_number );
 
-public  void  output_alloc_to_file(
-    STRING   filename );
+VIOAPI  void  output_alloc_to_file(
+    VIO_STR   filename );
 
-public  void  print_alloc_source_line(
-    STRING  filename,
+VIOAPI  void  print_alloc_source_line(
+    VIO_STR  filename,
     int     line_number );
 
-public  void  set_array_size(
+VIOAPI  void  set_array_size(
     void      **array,
     size_t    type_size,
     size_t    previous_n_elems,
@@ -1683,395 +1683,395 @@ public  void  set_array_size(
     size_t    chunk_size
     _ALLOC_SOURCE_LINE_ARG_DEF );
 
-public  BOOLEAN  real_is_double( void );
+VIOAPI  VIO_BOOL real_is_double( void );
 
-public  BOOLEAN  file_exists(
-    STRING        filename );
+VIOAPI  VIO_BOOL file_exists(
+    VIO_STR        filename );
 
-public  BOOLEAN  file_directory_exists(
-    STRING        filename );
+VIOAPI  VIO_BOOL file_directory_exists(
+    VIO_STR        filename );
 
-public  BOOLEAN  check_clobber_file(
-    STRING   filename );
+VIOAPI  VIO_BOOL check_clobber_file(
+    VIO_STR   filename );
 
-public  BOOLEAN  check_clobber_file_default_suffix(
-    STRING   filename,
-    STRING   default_suffix );
+VIOAPI  VIO_BOOL check_clobber_file_default_suffix(
+    VIO_STR   filename,
+    VIO_STR   default_suffix );
 
-public  Status  make_backup_file(
-    STRING   filename,
-    STRING   *backup_filename );
+VIOAPI  VIO_Status  make_backup_file(
+    VIO_STR   filename,
+    VIO_STR   *backup_filename );
 
-public  void  cleanup_backup_file(
-    STRING   filename,
-    STRING   backup_filename,
-    Status   status_of_write );
+VIOAPI  void  cleanup_backup_file(
+    VIO_STR   filename,
+    VIO_STR   backup_filename,
+    VIO_Status   status_of_write );
 
-public  void  remove_file(
-    STRING  filename );
+VIOAPI  void  remove_file(
+    VIO_STR  filename );
 
-public  Status  copy_file(
-    STRING  src,
-    STRING  dest );
+VIOAPI  VIO_Status  copy_file(
+    VIO_STR  src,
+    VIO_STR  dest );
 
-public  Status  move_file(
-    STRING  src,
-    STRING  dest );
+VIOAPI  VIO_Status  move_file(
+    VIO_STR  src,
+    VIO_STR  dest );
 
-public  STRING  expand_filename(
-    STRING  filename );
+VIOAPI  VIO_STR  expand_filename(
+    VIO_STR  filename );
 
-public  BOOLEAN  filename_extension_matches(
-    STRING   filename,
-    STRING   extension );
+VIOAPI  VIO_BOOL filename_extension_matches(
+    VIO_STR   filename,
+    VIO_STR   extension );
 
-public  STRING  remove_directories_from_filename(
-    STRING  filename );
+VIOAPI  VIO_STR  remove_directories_from_filename(
+    VIO_STR  filename );
 
-public  BOOLEAN  file_exists_as_compressed(
-    STRING       filename,
-    STRING       *compressed_filename );
+VIOAPI  VIO_BOOL file_exists_as_compressed(
+    VIO_STR       filename,
+    VIO_STR       *compressed_filename );
 
-public  STRING  get_temporary_filename( void );
+VIOAPI  VIO_STR  get_temporary_filename( void );
 
-public  Status  open_file(
-    STRING             filename,
-    IO_types           io_type,
-    File_formats       file_format,
+VIOAPI  VIO_Status  open_file(
+    VIO_STR            filename,
+    VIO_IO_types       io_type,
+    VIO_File_formats   file_format,
     FILE               **file );
 
-public  Status  open_file_with_default_suffix(
-    STRING             filename,
-    STRING             default_suffix,
-    IO_types           io_type,
-    File_formats       file_format,
+VIOAPI  VIO_Status  open_file_with_default_suffix(
+    VIO_STR            filename,
+    VIO_STR            default_suffix,
+    VIO_IO_types       io_type,
+    VIO_File_formats   file_format,
     FILE               **file );
 
-public  Status  set_file_position(
+VIOAPI  VIO_Status  set_file_position(
     FILE     *file,
     long     byte_position );
 
-public  Status  close_file(
+VIOAPI  VIO_Status  close_file(
     FILE     *file );
 
-public  STRING  extract_directory(
-    STRING    filename );
+VIOAPI  VIO_STR  extract_directory(
+    VIO_STR    filename );
 
-public  STRING  get_absolute_filename(
-    STRING    filename,
-    STRING    directory );
+VIOAPI  VIO_STR  get_absolute_filename(
+    VIO_STR    filename,
+    VIO_STR    directory );
 
-public  Status  flush_file(
+VIOAPI  VIO_Status  flush_file(
     FILE     *file );
 
-public  Status  input_character(
+VIOAPI  VIO_Status  input_character(
     FILE  *file,
     char   *ch );
 
-public  Status  unget_character(
+VIOAPI  VIO_Status  unget_character(
     FILE  *file,
     char  ch );
 
-public  Status  input_nonwhite_character(
+VIOAPI  VIO_Status  input_nonwhite_character(
     FILE   *file,
     char   *ch );
 
-public  Status  output_character(
+VIOAPI  VIO_Status  output_character(
     FILE   *file,
     char   ch );
 
-public  Status   skip_input_until(
+VIOAPI  VIO_Status   skip_input_until(
     FILE   *file,
     char   search_char );
 
-public  Status  output_string(
+VIOAPI  VIO_Status  output_string(
     FILE    *file,
-    STRING  str );
+    VIO_STR  str );
 
-public  Status  input_string(
+VIOAPI  VIO_Status  input_string(
     FILE    *file,
-    STRING  *str,
+    VIO_STR  *str,
     char    termination_char );
 
-public  Status  input_quoted_string(
+VIOAPI  VIO_Status  input_quoted_string(
     FILE            *file,
-    STRING          *str );
+    VIO_STR          *str );
 
-public  Status  input_possibly_quoted_string(
+VIOAPI  VIO_Status  input_possibly_quoted_string(
     FILE            *file,
-    STRING          *str );
+    VIO_STR          *str );
 
-public  Status  output_quoted_string(
+VIOAPI  VIO_Status  output_quoted_string(
     FILE            *file,
-    STRING          str );
+    VIO_STR          str );
 
-public  Status  input_binary_data(
-    FILE            *file,
-    void            *data,
-    size_t          element_size,
-    int             n );
-
-public  Status  output_binary_data(
+VIOAPI  VIO_Status  input_binary_data(
     FILE            *file,
     void            *data,
     size_t          element_size,
     int             n );
 
-public  Status  input_newline(
+VIOAPI  VIO_Status  output_binary_data(
+    FILE            *file,
+    void            *data,
+    size_t          element_size,
+    int             n );
+
+VIOAPI  VIO_Status  input_newline(
     FILE            *file );
 
-public  Status  output_newline(
+VIOAPI  VIO_Status  output_newline(
     FILE            *file );
 
-public  Status  input_line(
+VIOAPI  VIO_Status  input_line(
     FILE    *file,
-    STRING  *line );
+    VIO_STR  *line );
 
-public  Status  input_boolean(
+VIOAPI  VIO_Status  input_boolean(
     FILE            *file,
-    BOOLEAN         *b );
+    VIO_BOOL        *b );
 
-public  Status  output_boolean(
+VIOAPI  VIO_Status  output_boolean(
     FILE            *file,
-    BOOLEAN         b );
+    VIO_BOOL        b );
 
-public  Status  input_short(
+VIOAPI  VIO_Status  input_short(
     FILE            *file,
     short           *s );
 
-public  Status  output_short(
+VIOAPI  VIO_Status  output_short(
     FILE            *file,
     short           s );
 
-public  Status  input_unsigned_short(
+VIOAPI  VIO_Status  input_unsigned_short(
     FILE            *file,
     unsigned short  *s );
 
-public  Status  output_unsigned_short(
+VIOAPI  VIO_Status  output_unsigned_short(
     FILE            *file,
     unsigned short  s );
 
-public  Status  input_int(
+VIOAPI  VIO_Status  input_int(
     FILE  *file,
     int   *i );
 
-public  Status  output_int(
+VIOAPI  VIO_Status  output_int(
     FILE            *file,
     int             i );
 
-public  Status  input_real(
+VIOAPI  VIO_Status  input_real(
     FILE            *file,
-    Real            *r );
+    VIO_Real            *r );
 
-public  Status  output_real(
+VIOAPI  VIO_Status  output_real(
     FILE            *file,
-    Real            r );
+    VIO_Real            r );
 
-public  Status  input_float(
+VIOAPI  VIO_Status  input_float(
     FILE            *file,
     float           *f );
 
-public  Status  output_float(
+VIOAPI  VIO_Status  output_float(
     FILE            *file,
     float           f );
 
-public  Status  input_double(
+VIOAPI  VIO_Status  input_double(
     FILE            *file,
     double          *d );
 
-public  Status  output_double(
+VIOAPI  VIO_Status  output_double(
     FILE            *file,
     double          d );
 
-public  Status  io_binary_data(
+VIOAPI  VIO_Status  io_binary_data(
     FILE            *file,
-    IO_types        io_flag,
+    VIO_IO_types    io_flag,
     void            *data,
     size_t          element_size,
     int             n );
 
-public  Status  io_newline(
+VIOAPI  VIO_Status  io_newline(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format );
+    VIO_IO_types     io_flag,
+    VIO_File_formats format );
 
-public  Status  io_quoted_string(
+VIOAPI  VIO_Status  io_quoted_string(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
-    STRING          *str );
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
+    VIO_STR          *str );
 
-public  Status  io_boolean(
+VIOAPI  VIO_Status  io_boolean(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
-    BOOLEAN         *b );
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
+    VIO_BOOL        *b );
 
-public  Status  io_short(
+VIOAPI  VIO_Status  io_short(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     short           *short_int );
 
-public  Status  io_unsigned_short(
+VIOAPI  VIO_Status  io_unsigned_short(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     unsigned short  *unsigned_short );
 
-public  Status  io_unsigned_char(
+VIOAPI  VIO_Status  io_unsigned_char(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     unsigned  char  *c );
 
-public  Status  io_int(
+VIOAPI  VIO_Status  io_int(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     int             *i );
 
-public  Status  io_real(
+VIOAPI  VIO_Status  io_real(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
-    Real            *r );
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
+    VIO_Real         *r );
 
-public  Status  io_float(
+VIOAPI  VIO_Status  io_float(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     float           *f );
 
-public  Status  io_double(
+VIOAPI  VIO_Status  io_double(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     double          *d );
 
-public  Status  io_ints(
+VIOAPI  VIO_Status  io_ints(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     int             n,
     int             *ints[] );
 
-public  Status  io_unsigned_chars(
+VIOAPI  VIO_Status  io_unsigned_chars(
     FILE            *file,
-    IO_types        io_flag,
-    File_formats    format,
+    VIO_IO_types     io_flag,
+    VIO_File_formats format,
     int             n,
     unsigned char   *unsigned_chars[] );
 
-public  void  set_print_function( void  (*function) ( STRING ) );
+VIOAPI  void  set_print_function( void  (*function) ( VIO_STR ) );
 
-public  void  push_print_function( void );
+VIOAPI  void  push_print_function( void );
 
-public  void  pop_print_function( void );
+VIOAPI  void  pop_print_function( void );
 
-public  void  print( STRING format, ... );
+VIOAPI  void  print( VIO_STR format, ... );
 
-public  void  set_print_error_function( void  (*function) ( char [] ) );
+VIOAPI  void  set_print_error_function( void  (*function) ( char [] ) );
 
-public  void  push_print_error_function( void );
+VIOAPI  void  push_print_error_function( void );
 
-public  void  pop_print_error_function( void );
+VIOAPI  void  pop_print_error_function( void );
 
-public  void  print_error( char format[], ... );
+VIOAPI  void  print_error( char format[], ... );
 
-public  void   handle_internal_error( char  str[] );
+VIOAPI  void   handle_internal_error( char  str[] );
 
-public  void  abort_if_allowed( void );
+VIOAPI  void  abort_if_allowed( void );
 
-public  void  initialize_progress_report(
-    progress_struct   *progress,
-    BOOLEAN           one_line_only,
+VIOAPI  void  initialize_progress_report(
+    VIO_progress_struct *progress,
+    VIO_BOOL          one_line_only,
     int               n_steps,
-    STRING            title );
+    VIO_STR            title );
 
-public  void  update_progress_report(
-    progress_struct   *progress,
+VIOAPI  void  update_progress_report(
+    VIO_progress_struct   *progress,
     int               current_step );
 
-public  void  terminate_progress_report(
-    progress_struct   *progress );
+VIOAPI  void  terminate_progress_report(
+    VIO_progress_struct   *progress );
 
-public  STRING  alloc_string(
+VIOAPI  VIO_STR  alloc_string(
     int   length );
 
-public  STRING  create_string(
-    STRING    initial );
+VIOAPI  VIO_STR  create_string(
+    VIO_STR    initial );
 
-public  void  delete_string(
-    STRING   string );
+VIOAPI  void  delete_string(
+    VIO_STR   string );
 
-public  STRING  concat_strings(
-    STRING   str1,
-    STRING   str2 );
+VIOAPI  VIO_STR  concat_strings(
+    VIO_STR   str1,
+    VIO_STR   str2 );
 
-public  void  replace_string(
-    STRING   *string,
-    STRING   new_string );
+VIOAPI  void  replace_string(
+    VIO_STR   *string,
+    VIO_STR   new_string );
 
-public  void  concat_char_to_string(
-    STRING   *string,
+VIOAPI  void  concat_char_to_string(
+    VIO_STR   *string,
     char     ch );
 
-public  void  concat_to_string(
-    STRING   *string,
-    STRING   str2 );
+VIOAPI  void  concat_to_string(
+    VIO_STR   *string,
+    VIO_STR   str2 );
 
-public  int  string_length(
-    STRING   string );
+VIOAPI  int  string_length(
+    VIO_STR   string );
 
-public  BOOLEAN  equal_strings(
-    STRING   str1,
-    STRING   str2 );
+VIOAPI  VIO_BOOL equal_strings(
+    VIO_STR   str1,
+    VIO_STR   str2 );
 
-public  BOOLEAN  is_lower_case(
+VIOAPI  VIO_BOOL is_lower_case(
     char  ch );
 
-public  BOOLEAN  is_upper_case(
+VIOAPI  VIO_BOOL is_upper_case(
     char  ch );
 
-public  char  get_lower_case(
+VIOAPI  char  get_lower_case(
     char   ch );
 
-public  char  get_upper_case(
+VIOAPI  char  get_upper_case(
     char   ch );
 
-public  BOOLEAN  string_ends_in(
-    STRING   string,
-    STRING   ending );
+VIOAPI  VIO_BOOL string_ends_in(
+    VIO_STR   string,
+    VIO_STR   ending );
 
-public    STRING   strip_outer_blanks(
-    STRING  str );
+VIOAPI    VIO_STR   strip_outer_blanks(
+    VIO_STR  str );
 
-public  int  find_character(
-    STRING    string,
+VIOAPI  int  find_character(
+    VIO_STR    string,
     char      ch );
 
-public  void  make_string_upper_case(
-    STRING    string );
+VIOAPI  void  make_string_upper_case(
+    VIO_STR    string );
 
-public  BOOLEAN  blank_string(
-    STRING   string );
+VIOAPI  VIO_BOOL blank_string(
+    VIO_STR   string );
 
-public  Real  current_cpu_seconds( void );
+VIOAPI  VIO_Real  current_cpu_seconds( void );
 
-public  Real  current_realtime_seconds( void );
+VIOAPI  VIO_Real  current_realtime_seconds( void );
 
-public  STRING  format_time(
-    STRING   format,
-    Real     seconds );
+VIOAPI  VIO_STR  format_time(
+    VIO_STR   format,
+    VIO_Real     seconds );
 
-public  void  print_time(
-    STRING   format,
-    Real     seconds );
+VIOAPI  void  print_time(
+    VIO_STR   format,
+    VIO_Real     seconds );
 
-public  STRING  get_clock_time( void );
+VIOAPI  VIO_STR  get_clock_time( void );
 
-public  void  sleep_program( Real seconds );
+VIOAPI  void  sleep_program( VIO_Real seconds );
 
-public  STRING  get_date( void );
+VIOAPI  VIO_STR  get_date( void );
 #endif
