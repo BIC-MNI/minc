@@ -29,10 +29,11 @@ default: build
 
 all: build lint library test
 
-build : $(PROGS) library
+# Make sure that we build the jackets first
+build : $(JACKETS_OBJ) $(PROGS) library
 
 #Dependency on Makefile
-$(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
+$(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
 	$(LINT) $(LINTFLAGS) -c $< -o $@
@@ -44,20 +45,16 @@ $(JACKETS_C) $(JACKETS_OBJ) $(JACKETS_LN) $(PROG_OBJ) : Makefile
 	$(FC) $(FFLAGS) -c $< -o $@
 
 # How to make executables
-$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(JACKETS_OBJ) $(CC_MINC_LIB)
+$(PROGS) : $(TARGET_IN_DEPENDENCY).o $(CC_MINC_LIB)
 	$(FC) -o $@ $@.o $(JACKETS_OBJ) $(FFLAGS) $(LDOPT)
 
 # How to run test
 test: $(PROGS)
 	minc_ftest
 
-$(JACKETS_C): $(JACKETS_SRC) \
-              $(NETCDF_FORTRAN_DIR)/fortc1.sed \
-              $(NETCDF_FORTRAN_DIR)/fortc2.sed \
-              $(NETCDF_FORTRAN_DIR)/common.m4 \
-              $(NETCDF_FORTRAN_DIR)/$(OS_TYPE).m4
+$(JACKETS_C): $(JACKETS_SRC) 
 	$(NETCDF_FORTRAN_DIR)/fortc -L $(NETCDF_FORTRAN_DIR) -O $(OS_TYPE) \
-	              $(JACKETS_SRC) > $@
+	              $(JACKETS_SRC) > $@.new && mv $@.new $@
 
 #  how to lint the executable source
 lint: $(JACKETS_LN)

@@ -24,6 +24,8 @@ AC_CHECK_PROGS(MAKE, make gmake)
 # Check for an ANSI'ish C compiler, starting with CC (we really just look for
 # void's, prototypes and enum's because you can't always 
 # trust __STDC__ and those are the main things that we need)
+# If CC is not defined, then use cc. If either of those fail, then
+# look for gcc with AC_PROG_CC.
 #------------------------------------------------------------------------
 AC_CHECKING(for ANSI-ish compiler)
 : ${CC=cc}
@@ -50,22 +52,21 @@ void minc_test(void *ptr, enum_type enum_arg)
         fi],:)
 
 #------------------------------------------------------------------------
-# Set up libraries
-#------------------------------------------------------------------------
-AC_CHECK_LIB(c, xdr_long,:,AC_CHECK_LIB(sun, xdr_long))
-AC_CHECK_LIB(c_s, main)
-
-#------------------------------------------------------------------------
 # Look for netcdf header, etc
 #------------------------------------------------------------------------
-AC_CHECKING(for netcdf package)
+AC_MSG_CHECKING(for netcdf package)
 ROOT=.
-for testdir in '${ROOT}/..' /usr/local
+latest_netcdf=`find .. -name 'netcdf-*' -type d -prune -print |sort |tail -1`
+if test "x$latest_netcdf" != x
+then
+   latest_netcdf='${ROOT}/'"$latest_netcdf"
+fi
+for testdir in "$latest_netcdf" '${ROOT}/..' /usr/local
 do
    if test -z "$NETCDF_PREFIX"
    then
       thedir=`eval echo $testdir`
-      if test -r "$thedir/include/netcdf.h"
+      if test -d "$thedir" -a -r "$thedir/include/netcdf.h"
       then
          NETCDF_PREFIX=`echo "$testdir" |sed -e s'/{/(/' -e s'/}/)/'`
       fi
@@ -73,8 +74,10 @@ do
 done
 if test -z "$NETCDF_PREFIX"
 then
+   AC_MSG_RESULT("")
    AC_MSG_ERROR(Cannot find the netcdf package - define NETCDF_PREFIX)
 fi
+AC_MSG_RESULT(found in $NETCDF_PREFIX)
 AC_SUBST(NETCDF_PREFIX)
 
 #------------------------------------------------------------------------
@@ -108,29 +111,27 @@ AC_SUBST(TARGET_IN_DEPENDENCY)
 rm -f conftest.Make
 
 #------------------------------------------------------------------------
-# Check os type (should match netcdf os type)
+# Check to see if we should use fortran.
+# We now only support fortran on irix since netcdf has abandoned its
+# m4 approach to wrapper building as of 3.x
+# We still set the OS_TYPE just in case it is useful to someone
 #------------------------------------------------------------------------
-AC_CANONICAL_HOST
-changequote(<<, >>)dnl
-OS_TYPE=`echo $host_os | sed 's/^\([^0-9\]*\)[0-9].*$/\1/'`
-changequote([, ])dnl
-AC_SUBST(OS_TYPE)
-
-#------------------------------------------------------------------------
-# Check to see if we should use fortran
-#------------------------------------------------------------------------
-AC_CHECK_PROGS(FC, f77)
 AC_MSG_CHECKING(whether to build fortran jackets)
-if test "$BUILD_FORTRAN" = "yes" || 
-   ( test "$OS_TYPE" = "irix" && test "$FC" = "f77" &&
-     test "$BUILD_FORTRAN" != "no" )
+if test "$BUILD_FORTRAN" = "yes"
 then
    FORTRAN_SUBDIR=fortran
    FORTRAN_OBJ='$(ROOT)/$(FORTRAN_SUBDIR)/minc_jackets.o'
+   AC_CANONICAL_HOST
+   changequote(<<, >>)dnl
+   OS_TYPE=`echo $host_os | sed 's/^\([^0-9\]*\)[0-9].*$/\1/'`
+   changequote([, ])dnl
+   AC_CHECK_PROGS(FC, f77)
 else
+   OS_TYPE=
    FORTRAN_SUBDIR=
    FORTRAN_OBJ=
 fi
+AC_SUBST(OS_TYPE)
 AC_SUBST(FORTRAN_SUBDIR)
 AC_SUBST(FORTRAN_OBJ)
 if test "$FORTRAN_SUBDIR"
@@ -143,11 +144,9 @@ fi
 #------------------------------------------------------------------------
 # Look for library functions
 #------------------------------------------------------------------------
-#AC_CHECK_FUNC(strerror, GLOBAL_CDEFINES="", GLOBAL_CDEFINES=-DNO_STRERROR)
 GLOBAL_CDEFINES=""
 AC_SUBST(GLOBAL_CDEFINES)
 
-
-AC_PREFIX_DEFAULT('$(ROOT)/..')
+AC_PREFIX_DEFAULT('/usr/local')
 
 AC_OUTPUT(Make_machine_specific Make_configuration)
