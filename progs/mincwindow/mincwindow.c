@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:20  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-10-25 17:36:49  neelin
+@MODIFIED   : Fixed check of arguments: comparing char to NULL.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:20  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.4  1995/03/21  14:35:25  neelin
  * Changed usage message and handle vector volumes properly.
  *
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 3.0 1995-05-15 19:32:20 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 3.1 1995-10-25 17:36:49 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -121,19 +124,19 @@ public int main(int argc, char *argv[])
    infile = argv[1];
    outfile = argv[2];
    window_data.minimum = strtod(argv[3], &endptr);
-   if ((endptr == argv[3]) || (*endptr != NULL)) {
+   if ((endptr == argv[3]) || (*endptr != '\0')) {
       (void) fprintf(stderr, "Cannot get min value from %s\n", argv[3]);
       exit(EXIT_FAILURE);
    }
    window_data.maximum = strtod(argv[4], &endptr);
-   if ((endptr == argv[4]) || (*endptr != NULL)) {
+   if ((endptr == argv[4]) || (*endptr != '\0')) {
       (void) fprintf(stderr, "Cannot get max value from %s\n", argv[4]);
       exit(EXIT_FAILURE);
    }
    if (argc == 6) {
       window_data.use_newvalue = TRUE;
       window_data.newvalue = strtod(argv[5], &endptr);
-      if ((endptr == argv[5]) || (*endptr != NULL)) {
+      if ((endptr == argv[5]) || (*endptr != '\0')) {
          (void) fprintf(stderr, "Cannot get newvalue from %s\n", argv[5]);
          exit(EXIT_FAILURE);
       }
