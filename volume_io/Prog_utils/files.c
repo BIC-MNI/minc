@@ -158,10 +158,16 @@ public  BOOLEAN  filename_extension_matches(
     STRING    filename_no_z, ending;
 
     (void) strcpy( filename_no_z, filename );
-    len = strlen( filename );
 
-    if( filename[len-2] == '.' && filename[len-1] == 'Z' )
-        filename_no_z[len-2] = (char) 0;
+    len = strlen( filename );
+    if( len >= 2 )
+    {
+        if( filename[len-2] == '.' &&
+            (filename[len-1] == 'z' || filename[len-1] == 'Z') )
+        {
+            filename_no_z[len-2] = (char) 0;
+        }
+    }
 
     (void) sprintf( ending, ".%s", extension );
 
@@ -224,7 +230,8 @@ public  Status  open_file(
     FILE               **file )
 {
     Status   status;
-    STRING   access_str, expanded;
+    STRING   access_str, expanded, tmp_name, command;
+    BOOLEAN  gzipped;
 
     switch( io_type )
     {
@@ -241,7 +248,33 @@ public  Status  open_file(
 
     expand_filename( filename, expanded );
 
+    gzipped = FALSE;
+
+    if( io_type == READ_FILE &&
+        (string_ends_in( expanded, ".z" ) ||
+         string_ends_in( expanded, ".gz" )) )
+    {
+        gzipped = TRUE;
+
+        /* --- uncompress to a temporary file */
+
+        (void) tmpnam( tmp_name );
+
+        (void) sprintf( command, "gunzip -c %s > %s", expanded, tmp_name );
+        if( system( command ) != 0 )
+        {
+            print( "Error uncompressing %s into %s using gunzip\n",
+                   expanded, tmp_name );
+            return( ERROR );
+        }
+
+        (void) strcpy( expanded, tmp_name );
+    }
+
     *file = fopen( expanded, access_str );
+
+    if( gzipped && *file != (FILE *) NULL )
+        unlink_file( expanded ); /* --- make sure file disappears when closed */
 
     if( *file != (FILE *) 0 )
     {

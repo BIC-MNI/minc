@@ -120,12 +120,14 @@ public   Volume   create_volume(
     volume->real_value_translation = 0.0;
 
     for_less( i, 0, N_DIMENSIONS )
+    {
         volume->world_space_for_translation_voxel[i] = 0.0;
+        volume->spatial_axes[i] = -1;
+    }
 
     for_less( i, 0, n_dimensions )
     {
         volume->translation_voxel[i] = 0.0;
-        volume->spatial_axes[i] = -1;
         volume->separations[i] = 1.0;
         volume->direction_cosines[i][X] = 0.0;
         volume->direction_cosines[i][Y] = 0.0;

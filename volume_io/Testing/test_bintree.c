@@ -5,11 +5,12 @@ private  void  get_random_point_on_sphere(
     Real       radius,
     Point      *point );
 private  void  get_random_ray(
-    range_struct  *limits,
     Point         *centre,
     Real          radius,
     Point         *origin,
     Vector        *direction );
+private  void  get_random_direction(
+    Vector      *dir );
 
 int  main(
     int    argc,
@@ -18,7 +19,7 @@ int  main(
     Status           status;
     char             *input_filename;
     int              i, c, n_objects, max_nodes, n_rays, n_intersections;
-    int              poly_index;
+    int              poly_index, n_good_rays;
     Real             dist, radius, delta;
     Point            origin, centre;
     Vector           direction;
@@ -58,8 +59,6 @@ int  main(
         create_polygons_bintree( polygons, max_nodes );
     }
 
-    n_intersections = 0;
-
     radius = 0.0;
     for_less( c, 0, N_DIMENSIONS )
     {
@@ -70,20 +69,30 @@ int  main(
         radius += delta * delta;
     }
 
-    radius = 10.0 * sqrt( radius );
+    radius = sqrt( radius );
+
+    n_intersections = 0;
+    n_good_rays = 0;
 
     for_less( i, 0, n_rays )
     {
-        get_random_ray( &polygons->bintree->range, &centre, radius,
-                        &origin, &direction );
-        if( intersect_ray_with_bintree( &origin, &direction,
-                                        polygons->bintree, polygons,
-                                        &poly_index, &dist ) )
-            ++n_intersections;
+        Real   t_min, t_max;
+
+        get_random_ray( &centre, radius, &origin, &direction );
+
+        if( ray_intersects_range( &polygons->bintree->range,
+                                  &origin, &direction, &t_min, &t_max ) )
+        {
+            ++n_good_rays;
+            if( intersect_ray_with_bintree( &origin, &direction,
+                                            polygons->bintree, polygons,
+                                            &poly_index, &dist ) )
+                ++n_intersections;
+        }
     }
 
-    print( "%d/%d: ", n_intersections, n_rays );
-    print_bintree_stats( n_rays );
+    print( "%d/%d/%d: ", n_intersections, n_good_rays, n_rays );
+    print_bintree_stats( n_good_rays );
 
     if( status == OK )
         delete_object_list( n_objects, object_list );
@@ -92,26 +101,14 @@ int  main(
 }
 
 private  void  get_random_ray(
-    range_struct  *limits,
     Point         *centre,
     Real          radius,
     Point         *origin,
     Vector        *direction )
 {
-    int    c;
-    Real   alpha;
-    Point  dest;
-
     get_random_point_on_sphere( centre, radius, origin );
 
-    for_less( c, 0, N_DIMENSIONS )
-    {
-        alpha = get_random_0_to_1();
-        Point_coord( dest, c ) = alpha * limits->limits[c][0] +
-                                 (1.0 - alpha) * limits->limits[c][1];
-    }
-
-    SUB_POINTS( *direction, dest, *origin );
+    get_random_direction( direction );
 }
 
 private  void  get_random_point_on_sphere(
@@ -144,4 +141,16 @@ private  void  get_random_point_on_sphere(
         offset *= factor;
         Point_coord( *point, c ) = Point_coord( *centre, c ) + offset;
     }
+}
+
+private  void  get_random_direction(
+    Vector      *dir )
+{
+    Point   centre, point;
+
+    fill_Point( centre, 0.0, 0.0, 0.0 );
+
+    get_random_point_on_sphere( &centre, 1.0, &point );
+
+    fill_Vector( *dir, Point_x(point), Point_y(point), Point_z(point) );
 }

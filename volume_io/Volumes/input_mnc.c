@@ -89,7 +89,7 @@ public  Minc_file  initialize_minc_input(
     /* --- open the file */
 
     ncopts = 0;
-    file->cdfid =  ncopen( filename, NC_NOWRITE );
+    file->cdfid =  miopen( filename, NC_NOWRITE );
 
     if( file->cdfid == MI_ERROR )
     {
@@ -116,14 +116,14 @@ public  Minc_file  initialize_minc_input(
     {
         print( "Error: MINC file has only %d dims, volume requires %d.\n",
                file->n_file_dimensions, volume->n_dimensions );
-        (void) ncclose( file->cdfid );
+        (void) miclose( file->cdfid );
         return( (Minc_file) 0 );
     }
     else if( file->n_file_dimensions > MAX_VAR_DIMS )
     {
         print( "Error: MINC file has %d dims, can only handle %d.\n",
                file->n_file_dimensions, MAX_VAR_DIMS );
-        (void) ncclose( file->cdfid );
+        (void) miclose( file->cdfid );
         return( (Minc_file) NULL );
     }
 
@@ -154,7 +154,7 @@ public  Minc_file  initialize_minc_input(
         for_less( d, 0, file->n_file_dimensions )
             print( "%d: %s\n", d+1, dim_names[d] );
 
-        (void) ncclose( file->cdfid );
+        (void) miclose( file->cdfid );
         return( (Minc_file) NULL );
     }
 
@@ -510,7 +510,7 @@ public  Status  close_minc_input(
         return( ERROR );
     }
 
-    (void) ncclose( file->cdfid );
+    (void) miclose( file->cdfid );
     (void) miicv_free( file->icv );
 
     delete_general_transform( &file->voxel_to_world_transform );

@@ -90,7 +90,7 @@ public  Minc_file  initialize_minc_output(
     file->n_file_dimensions = n_dimensions;
 
     ncopts = NC_VERBOSE;
-    file->cdfid =  nccreate( filename, NC_CLOBBER );
+    file->cdfid =  micreate( filename, NC_CLOBBER );
 
     if( file->cdfid == MI_ERROR )
     {
@@ -207,7 +207,7 @@ public  Status  copy_auxiliary_data_from_minc_file(
     int     src_cdfid;
 
     ncopts = NC_VERBOSE;
-    src_cdfid =  ncopen( filename, NC_NOWRITE );
+    src_cdfid =  miopen( filename, NC_NOWRITE );
 
     if( src_cdfid == MI_ERROR )
     {
@@ -218,7 +218,7 @@ public  Status  copy_auxiliary_data_from_minc_file(
     status = copy_auxiliary_data_from_open_minc_file( file, src_cdfid,
                                                       history_string );
 
-    (void) ncclose( src_cdfid );
+    (void) miclose( src_cdfid );
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
@@ -498,7 +498,7 @@ public  Status  close_minc_output(
         return( ERROR );
     }
 
-    (void) ncclose( file->cdfid );
+    (void) miclose( file->cdfid );
     (void) miicv_free( file->icv );
 
     for_less( d, 0, file->n_file_dimensions )

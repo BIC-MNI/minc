@@ -1,5 +1,5 @@
 
-#include  <module.h>
+#include  <mni.h>
 
 #define  MAX_POINTS    30
 
