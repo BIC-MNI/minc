@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 1.3  1993-11-30 14:42:13  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.4  1994-01-18 14:23:41  neelin
+@MODIFIED   : Changed bzero to memset.
 @MODIFIED   :
+ * Revision 1.3  93/11/30  14:42:13  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.2  93/11/25  13:26:55  neelin
  * Working version.
  * 
@@ -27,7 +30,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <bstring.h>
+#include <memory.h>
 #include <dn/defs.h>
 #include <acr_nema.h>
 #include <minc_def.h>
@@ -123,7 +126,7 @@ public int open_connection(int argc, char *argv[],
 
    /* Accept the connection and get the maximum buffer length */
    link = fileno(stdin);
-   bzero((void *) &sd, (int) sizeof(sd));
+   (void) memset((void *) &sd, 0, sizeof(sd));
    (void) ioctl(link, SES_ACCEPT, &sd);
    (void) ioctl(link, SES_MAX_IO, &maxlength);
 
