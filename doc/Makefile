@@ -4,12 +4,14 @@ include $(ROOT)/Makefile_configuration
 
 .SUFFIXES: .tex .dvi
 
-default : all
+default : build
 
-all: minc_reference.dvi minc_user.dvi
+all : build
+
+build : minc_reference.dvi minc_user.dvi
 
 .tex.dvi :
 	latex $<
 
 clean:
-	rm -f *.aux *.dvi *.log
+	$(RM) $(RM_FLAGS) *.aux *.dvi *.log
