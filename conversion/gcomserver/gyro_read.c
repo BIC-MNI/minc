@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.1  1993-11-30 14:41:04  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-12-10 15:35:07  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.1  93/11/30  14:41:04  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -535,48 +540,24 @@ public void get_gyro_image(Acr_Group group_list, Image_Data *image)
 public int find_short(Acr_Group group_list, Acr_Element_Id elid, 
                       int default_value)
 {
-   Acr_Element element;
-
-   element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
-      return (int) acr_get_element_short(element);
-   else
-      return default_value;
+   return acr_find_short(group_list, elid, default_value);
 }
 
 public int find_int(Acr_Group group_list, Acr_Element_Id elid, 
                     int default_value)
 {
-   Acr_Element element;
-
-   element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
-      return (int) acr_get_element_numeric(element);
-   else
-      return default_value;
+   return acr_find_int(group_list, elid, default_value);
 }
 
 public double find_double(Acr_Group group_list, Acr_Element_Id elid, 
                           double default_value)
 {
-   Acr_Element element;
-
-   element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
-      return acr_get_element_numeric(element);
-   else
-      return default_value;
+   return acr_find_double(group_list, elid, default_value);
 }
 
 public char *find_string(Acr_Group group_list, Acr_Element_Id elid, 
                          char *default_value)
 {
-   Acr_Element element;
-
-   element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
-      return acr_get_element_string(element);
-   else
-      return default_value;
+   return acr_find_string(group_list, elid, default_value);
 }
 

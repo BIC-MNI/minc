@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.2  1993-11-30 14:42:28  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.3  1993-12-10 15:35:16  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.2  93/11/30  14:42:28  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.1  93/11/25  13:27:00  neelin
  * Initial revision
  * 
@@ -70,7 +75,8 @@ public void save_transferred_object(Acr_Group group_list, char *file_prefix,
    /* Look for patient name */
    element = acr_find_group_element(group_list, ACR_Patient_name);
    if (element != NULL) {
-      (void) sscanf(acr_get_element_string(element), "%s", patient_name);
+      string_to_filename(acr_get_element_string(element), patient_name,
+                         sizeof(patient_name));
    }
    if ((element == NULL) || (strlen(patient_name) == 0))
       (void) strcpy(patient_name, "unknown");

@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.1  1993-11-30 14:42:43  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-12-10 15:35:48  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.1  93/11/30  14:42:43  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -26,13 +31,8 @@
 /* Default value for ncopts */
 #define NCOPTS_DEFAULT NC_VERBOSE
 
-/* Directory for output files (if names created internally). Note that
-   the final "/" is necessary. */
-#define OUTPUT_MINC_DIR "/usr/people/mritrans/images/"
-
-/* Owner for newly created minc files */
-#define MINC_FILE_OWNER 1100
-#define MINC_FILE_GROUP 200
+/* MINC variable for spi elements */
+#define SPI_ROOT_VAR "spi_groups"
 
 /* Possible MRI dimensions */
 typedef enum { SLICE = 0, ECHO, TIME, PHASE, CHEM_SHIFT, MRI_NDIMS } Mri_Index;

@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.1  1993-11-30 14:41:43  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-12-10 15:35:12  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.1  93/11/30  14:41:43  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,6 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
+#include <ctype.h>
 
 /* Define mri dimension names */
 static char *mri_dim_names[] = {
@@ -58,7 +64,6 @@ public int create_minc_file(char *minc_file, int clobber,
    int minc_clobber;
    int mincid, icvid;
    Mri_Index imri;
-   int i;
    char scan_label[MRI_NDIMS][20];
 
    /* Prefixes for creating file name */
@@ -74,10 +79,8 @@ public int create_minc_file(char *minc_file, int clobber,
    }
    else {
       /* Get patient name */
-      (void) sscanf(general_info->patient.name, "%s", patient_name);
-      for (i=0; i < strlen(patient_name); i++) {
-         patient_name[i] = tolower((int) patient_name[i]);
-      }
+      string_to_filename(general_info->patient.name, patient_name,
+                         sizeof(patient_name));
       if (strlen(patient_name) == 0) {
          (void) strcpy(patient_name, "unknown");
       }
@@ -164,11 +167,19 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    int dim[MAX_VAR_DIMS];
    long dimsize;
    char *dimname;
-   int varid, imgid;
+   int varid, imgid, spivar;
    double valid_range[2];
+   char name[MAX_NC_NAME];
    char *string;
    int index, last;
    int regular;
+   Acr_Group cur_group;
+   Acr_Element cur_element;
+   int length;
+   char *data;
+   nc_type datatype;
+   int is_char;
+   int ich;
 
    /* Define the spatial dimension names */
    static char *spatial_dimnames[VOL_NDIMS] = {MIxspace, MIyspace, MIzspace};
@@ -322,6 +333,46 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (strlen(general_info->acq.imaged_nucl) > 0)
       (void) miattputstr(mincid, varid, MIscanning_sequence, 
                          general_info->acq.imaged_nucl);
+
+   /* Put group info in header */
+   cur_group = general_info->group_list;
+   spivar = ncvardef(mincid, SPI_ROOT_VAR, NC_LONG, 0, NULL);
+   (void) miattputstr(mincid, spivar, MIvartype, MI_GROUP);
+   (void) miattputstr(mincid, spivar, MIvarid, "MNI SPI variable");
+   (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), spivar);
+   while (cur_group != NULL) {
+
+      /* Create variable for group */
+      (void) sprintf(name, "spi_0x%04x", acr_get_group_group(cur_group));
+      varid = ncvardef(mincid, name, NC_LONG, 0, NULL);
+      (void) miattputstr(mincid, varid, MIvartype, MI_GROUP);
+      (void) miattputstr(mincid, varid, MIvarid, "MNI SPI variable");
+      (void) miadd_child(mincid, spivar, varid);
+
+      /* Loop through elements of group */
+      cur_element = acr_get_group_element_list(cur_group);
+      while (cur_element != NULL) {
+         (void) sprintf(name, "el_0x%04x", 
+                        acr_get_element_element(cur_element));
+         is_char = TRUE;
+         length = acr_get_element_length(cur_element);
+         data = acr_get_element_data(cur_element);
+         for (ich=0; ich < length; ich++) {
+            if (!isprint((int) data[ich])) {
+               is_char = FALSE;
+               break;
+            }
+         }
+         if (is_char)
+            datatype = NC_CHAR;
+         else
+            datatype = NC_BYTE;
+         ncattput(mincid, varid, name, datatype, length, data);
+         
+         cur_element = acr_get_element_next(cur_element);
+      }
+      cur_group = acr_get_group_next(cur_group);
+   }
 
    /* Create the history attribute */
    string = "gcomserver";

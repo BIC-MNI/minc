@@ -5,9 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 1.3  1993-11-30 14:42:41  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.4  1993-12-10 15:35:46  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.3  93/11/30  14:42:41  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.2  93/11/25  13:27:25  neelin
  * Working version.
  * 
@@ -60,6 +65,17 @@
 #define NO_LOGGING   0
 #define LOW_LOGGING  1
 #define HIGH_LOGGING 2
+
+/* Directory for output files (if names created internally). Note that
+   the final "/" is necessary. */
+#define OUTPUT_MINC_DIR "/usr/people/mritrans/images/"
+
+/* Owner for newly created minc files */
+#define MINC_FILE_OWNER 1100
+#define MINC_FILE_GROUP 200
+
+/* File containing defaults for gcomserver */
+#define OUTPUT_DEFAULT_FILE "/usr/local/lib/gcomserver.defaults"
 
 /* Type for carrying around object information */
 typedef struct {

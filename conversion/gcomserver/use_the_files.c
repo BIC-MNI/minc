@@ -6,9 +6,14 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.3  1993-11-30 14:42:34  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.4  1993-12-10 15:35:41  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.3  93/11/30  14:42:34  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.2  93/11/25  13:27:23  neelin
  * Working version.
  * 
@@ -57,6 +62,18 @@ public void use_the_files(int num_files, char *file_list[],
    int cur_acq;
    int exit_status;
    char *output_file_name;
+   char file_prefix[256];
+   int output_uid, output_gid;
+   FILE *fp;
+
+   /* Look for defaults file */
+   (void) strcpy(file_prefix, OUTPUT_MINC_DIR);
+   output_uid = MINC_FILE_OWNER;
+   output_gid = MINC_FILE_GROUP;
+   if ((fp=fopen(OUTPUT_DEFAULT_FILE, "r")) != NULL) {
+      (void) fscanf(fp, "%s %d %d", file_prefix, &output_uid, &output_gid);
+      (void) fclose(fp);
+   }
 
    /* Allocate space for acquisition file list */
    acq_file_list = MALLOC(num_files * sizeof(*acq_file_list));
@@ -93,19 +110,6 @@ public void use_the_files(int num_files, char *file_list[],
 
       if (found_first) {
 
-         /* Create minc file */
-         exit_status = gyro_to_minc(num_acq_files, acq_file_list, NULL,
-                                    FALSE, OUTPUT_MINC_DIR, 
-                                    &output_file_name);
-         if (exit_status != EXIT_SUCCESS) {
-            (void) fprintf(stderr, "Error creating minc file %s.\n",
-                           output_file_name);
-         }
-
-         /* Change the ownership */
-         (void) chown(output_file_name, (uid_t) MINC_FILE_OWNER, 
-                      (gid_t) MINC_FILE_GROUP);
-
          /* Print out the file names */
          if (Do_logging >= LOW_LOGGING) {
             (void) fprintf(stderr, "\nFiles copied:\n");
@@ -113,6 +117,19 @@ public void use_the_files(int num_files, char *file_list[],
                (void) fprintf(stderr, "     %s\n", acq_file_list[ifile]);
             }
          }
+
+         /* Create minc file */
+         exit_status = gyro_to_minc(num_acq_files, acq_file_list, NULL,
+                                    FALSE, file_prefix, 
+                                    &output_file_name);
+         if (exit_status != EXIT_SUCCESS) {
+            (void) fprintf(stderr, "Error creating minc file %s.\n",
+                           output_file_name);
+         }
+
+         /* Change the ownership */
+         (void) chown(output_file_name, (uid_t) output_uid,
+                      (gid_t) output_gid);
 
       }
 

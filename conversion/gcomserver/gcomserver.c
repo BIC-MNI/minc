@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.6  1993-12-08 09:35:06  neelin
-@MODIFIED   : changed logging level.
+@MODIFIED   : Revision 1.7  1993-12-10 15:31:25  neelin
+@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
+@MODIFIED   : Added spi group list to minc header.
+@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
 @MODIFIED   :
+ * Revision 1.6  93/12/08  09:35:06  neelin
+ * changed logging level.
+ * 
  * Revision 1.5  93/12/08  09:12:53  neelin
  * Delete group list.
  * 
@@ -71,6 +76,7 @@ int main(int argc, char *argv[])
    /* Re-open stderr if we are logging */
    if (Do_logging > NO_LOGGING) {
       (void) freopen("gcomserver.log", "w", stderr);
+      (void) setbuf(stderr, NULL);
    }
 
 #if 0

@@ -40,3 +40,4 @@ public void setup_minc_variables(int mincid, General_Info *general_info);
 public void save_minc_image(int icvid, General_Info *general_info, 
                             File_Info *file_info, Image_Data *image);
 public void close_minc_file(int icvid);
+public void string_to_filename(char *string, char *filename, int maxlen);
