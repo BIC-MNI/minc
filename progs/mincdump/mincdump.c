@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.2 2004-04-30 20:06:56 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.3 2004-06-08 16:13:12 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -306,16 +306,17 @@ pr_att(
 
     if (att.len == 0) {	/* show 0-length attributes as empty strings */
 	att.type = NC_CHAR;
-	att.len = 1;
+        /* att.len = 1; */
     }
     switch (att.type) {
     case NC_CHAR:
-	att.string = (char *) malloc(att.len);
+	att.string = (char *) malloc(att.len + 1); /* + 1 for null byte */
 	if (!att.string) {
 	    error("Out of memory!");
 	    NC_CHECK( ncclose(ncid) );
 	    return;
 	}
+        *att.string = '\0';     /* Initialize in case att.len == 0 */
 	ncattget(ncid, varid, att.name, att.string );
         pr_att_string(att.len, att.string);
 	free(att.string);
