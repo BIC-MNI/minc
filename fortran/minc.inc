@@ -14,10 +14,7 @@ C                 MI patient variable
 C                 MI study variable
 C                 MI acquisition variable
 C@CREATED    : March 15, 1993. (Peter Neelin, Montreal Neurological Institute)
-C@MODIFIED   : $Log: minc.inc,v $
-C@MODIFIED   : Revision 1.4  1993-08-11 15:15:17  neelin
-C@MODIFIED   : Added RCS logging in source.
-C@MODIFIED   :
+C@MODIFIED   : 
 C@COPYRIGHT  :
 C              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
 C              Montreal Neurological Institute, McGill University.
@@ -28,7 +25,7 @@ C              notice appear in all copies.  The author and McGill University
 C              make no representations about the suitability of this
 C              software for any purpose.  It is provided "as is" without
 C              express or implied warranty.
-C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.4 1993-08-11 15:15:17 neelin Exp $ MINC (MNI)
+C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.5 1993-10-04 14:51:57 neelin Exp $ MINC (MNI)
 C-----------------------------------------------------------------------------
 
 C     Some useful constants
@@ -246,6 +243,7 @@ C     Icv properties
       INTEGER MI_ICV_NUM_DIMS, MI_ICV_CDFID, MI_ICV_VARID
       INTEGER MI_ICV_MAXVAR, MI_ICV_MINVAR, MI_ICV_DIM_SIZE
       INTEGER MI_ICV_DIM_STEP, MI_ICV_DIM_START
+      INTEGER MI_ICV_DO_FILLVALUE, MI_ICV_FILLVALUE
 
 C     For converting data type
       PARAMETER (MI_ICV_TYPE            =1)
@@ -289,6 +287,9 @@ C     Id of file and image variable (read-only properties)
 C     Names of MIimagemax and MIimagemin variables
       PARAMETER (MI_ICV_MAXVAR         =28)
       PARAMETER (MI_ICV_MINVAR         =29)
+C     For setting input values to a specified fillvalue
+      PARAMETER (MI_ICV_DO_FILLVALUE   =30)
+      PARAMETER (MI_ICV_FILLVALUE      =31)
 C     Image dimension properties. for each dimension, add the dimension
 C     number (counting from fastest to slowest).
       PARAMETER (MI_ICV_DIM_SIZE       =1000)
