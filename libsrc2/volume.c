@@ -1165,7 +1165,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 
     switch (class) {
     case H5T_INTEGER:
-	is_signed = (H5Tget_size(handle->ftype_id) == H5T_SGN_2);
+	is_signed = (H5Tget_sign(handle->ftype_id) == H5T_SGN_2);
 
 	switch (nbytes) {
 	case 1:
