@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.6 1993-03-08 11:47:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.7 1993-04-30 13:03:56 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -467,6 +467,8 @@ void parse_args(int argc, char *argv[], mni_header_type *mni_header)
             mni_header->xstart = -(npix/2.0 + 0.5) * mni_header->xstep;
             mni_header->ystart = -(npix/2.0 + 0.5) * mni_header->ystep;
          }
+         mni_header->xstart -= MNI_STX_XACLOC;
+         mni_header->ystart -= MNI_STX_YACLOC;
          break;
       case SAGITTAL:
          mni_header->xstep = 
