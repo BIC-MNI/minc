@@ -42,7 +42,7 @@ $(OBJS) $(CC_MINC_LIB) $(LINT_LIST) $(LINT_MINC_LIB) : Makefile
 # define the rule for creating .ln
 $(LINT_LIST) : $(HEADERS)
 .c.ln:
-	lint $(LINTFLAGS) -c $< -o $@
+	$(LINT) $(LINTFLAGS) -c $< -o $@
 
 # define the rule for creating .o
 $(OBJS) : $(HEADERS)
@@ -59,7 +59,7 @@ $(CC_MINC_LIB): $(OBJS)
 lint: $(LINT_MINC_LIB)
 
 $(LINT_MINC_LIB) : $(LINT_LIST)
-	lint -o $(MINC_LIB) -m -x -u $(LINTFLAGS) $(LINT_LIST)
+	$(LINT) -o $(MINC_LIB) $(LINT_LIBOPTS) $(LINTFLAGS) $(LINT_LIST)
 
 # Remove all derived files
 clean:
