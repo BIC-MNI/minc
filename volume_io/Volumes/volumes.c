@@ -784,3 +784,42 @@ public  void  set_volume_real_range(
 
     volume->real_range_set = TRUE;
 }
+
+public  Volume   copy_volume(
+    Volume   volume,
+    nc_type  nc_data_type,
+    Boolean  signed_flag )
+{
+    int      sizes[MAX_DIMENSIONS];
+    Real     separations[MAX_DIMENSIONS];
+    Volume   copy;
+
+    get_volume_sizes( volume, sizes );
+    get_volume_separations( volume, separations );
+
+    if( nc_data_type == NC_UNSPECIFIED )
+    {
+        nc_data_type = volume->nc_data_type;
+        signed_flag = volume->signed_flag;
+    }
+
+    copy = create_volume( get_volume_n_dimensions(volume),
+                          volume->dimension_names, nc_data_type, signed_flag );
+
+    set_volume_size( copy, NC_UNSPECIFIED, FALSE, sizes );
+    alloc_volume_data( copy );
+
+    set_volume_voxel_range( copy,
+                            get_volume_min_voxel(volume),
+                            get_volume_max_voxel(volume) );
+    set_volume_real_range( copy,
+                           get_volume_real_min(volume),
+                           get_volume_real_max(volume) );
+
+    set_volume_separations( copy, separations );
+
+    copy_general_transform( get_voxel_to_world_transform(volume),
+                            get_voxel_to_world_transform(copy) );
+
+    return( copy );
+}

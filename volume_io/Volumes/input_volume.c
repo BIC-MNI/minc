@@ -35,21 +35,22 @@ private  void  get_mni_scaling(
 
 public  Status  start_volume_input(
     char                 filename[],
-    String               dim_names[],
+    char                 *dim_names[],
     Boolean              convert_to_byte_flag,
     Volume               *volume,
     volume_input_struct  *input_info )
 {
     Status          status;
+    int             d;
     Real            mni_scale, mni_translation;
     Real            min_voxel, max_voxel, real_min, real_max;
     Boolean         mni_format;
     nc_type         data_type;
-    static String   default_dim_names[N_DIMENSIONS] =
+    static char     *default_dim_names[N_DIMENSIONS] =
                                          { MIzspace, MIyspace, MIxspace };
     String          expanded_filename;
 
-    if( dim_names == (String *) NULL )
+    if( dim_names == (char **) NULL )
         dim_names = default_dim_names;
 
     status = OK;
@@ -88,6 +89,9 @@ public  Status  start_volume_input(
                                                  (minc_input_options *) NULL );
         if( input_info->minc_file == (Minc_file) NULL )
             status = ERROR;
+
+        for_less( d, 0, MAX_DIMENSIONS )
+            input_info->axis_index_from_file[d] = d;
         break;
 #endif
 
@@ -209,7 +213,7 @@ public  void  cancel_volume_input(
 
 public  Status  input_volume(
     char           filename[],
-    String         dim_names[],
+    char           *dim_names[],
     Boolean        convert_to_byte_flag,
     Volume         *volume )
 {

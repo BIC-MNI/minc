@@ -15,9 +15,9 @@ private  void  create_world_transform(
     Transform   *transform );
 private  int  match_dimension_names(
     int               n_volume_dims,
-    String            *volume_dimension_names,
+    char              *volume_dimension_names[],
     int               n_file_dims,
-    String            *file_dimension_names,
+    char              *file_dimension_names[],
     int               axis_index_in_file[] );
 
 private  Boolean  is_default_direction_cosine(
@@ -42,17 +42,18 @@ private  Boolean  is_default_direction_cosine(
 }
 
 public  Minc_file  initialize_minc_output(
-    char       filename[],
-    int        n_dimensions,
-    String     dim_names[],
-    int        sizes[],
-    nc_type    nc_data_type,
-    Boolean    signed_flag,
-    Real       min_voxel,
-    Real       max_voxel,
-    Real       real_min,
-    Real       real_max,
-    Transform  *voxel_to_world_transform )
+    char                   filename[],
+    int                    n_dimensions,
+    char                   *dim_names[],
+    int                    sizes[],
+    nc_type                nc_data_type,
+    Boolean                signed_flag,
+    Real                   min_voxel,
+    Real                   max_voxel,
+    Real                   real_min,
+    Real                   real_max,
+    General_transform      *voxel_to_world_transform,
+    minc_output_options    *options )
 {
     minc_file_struct    *file;
     int                 dim_vars[MAX_VAR_DIMS];
@@ -62,9 +63,17 @@ public  Minc_file  initialize_minc_output(
     int                 i, j, d, axis;
     Point               origin;
     Vector              axes[N_DIMENSIONS];
-    static  String      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+    static  char        *default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+    Transform           transform;
+    minc_output_options default_options;
 
-    if( dim_names == (String *) NULL )
+    if( options == (minc_output_options *) NULL )
+    {
+        get_default_minc_output_options( &default_options );
+        options = &default_options;
+    }
+
+    if( dim_names == (char **) NULL )
     {
         if( n_dimensions != 3 )
         {
@@ -89,10 +98,20 @@ public  Minc_file  initialize_minc_output(
         return( (Minc_file) 0 );
     }
 
-    get_transform_origin( voxel_to_world_transform, &origin );
-    get_transform_x_axis( voxel_to_world_transform, &axes[X] );
-    get_transform_y_axis( voxel_to_world_transform, &axes[Y] );
-    get_transform_z_axis( voxel_to_world_transform, &axes[Z] );
+    if( get_transform_type( voxel_to_world_transform ) == LINEAR )
+    {
+        transform = *(get_linear_transform_ptr( voxel_to_world_transform ));
+    }
+    else
+    {
+        print( "Cannot output non-linear transforms.  Using identity.\n" );
+        make_identity_transform( &transform );
+    }
+
+    get_transform_origin( &transform, &origin );
+    get_transform_x_axis( &transform, &axes[X] );
+    get_transform_y_axis( &transform, &axes[Y] );
+    get_transform_z_axis( &transform, &axes[Z] );
 
     separation[X] = MAGNITUDE( axes[X] );
     separation[Y] = MAGNITUDE( axes[Y] );
@@ -117,6 +136,7 @@ public  Minc_file  initialize_minc_output(
     {
         file->sizes_in_file[d] = sizes[d];
         file->indices[d] = 0;
+        ALLOC( file->dim_names[d], strlen( dim_names[d] + 1 ) );
         (void) strcpy( file->dim_names[d], dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
@@ -157,11 +177,6 @@ public  Minc_file  initialize_minc_output(
         valid_range[1] = max_voxel;
         (void) ncattput( file->cdfid, file->img_var_id, MIvalid_range,
                          NC_DOUBLE, 2, (void *) valid_range );
-    }
-    else
-    {
-        print(
-          "initialize_minc_output:  min voxel must be less than max voxel.\n" );
     }
 
     file->image_range[0] = real_min;
@@ -329,7 +344,7 @@ public  Status  output_minc_volume(
     int    d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
     long   start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
     long   start_index, mindex[MAX_VAR_DIMS];
-    Real   min_value, max_value;
+    Real   min_voxel, max_voxel;
     double dim_value;
     void   *data_ptr;
 
@@ -369,11 +384,11 @@ public  Status  output_minc_volume(
         (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MIN, file->image_range[0]);
         (void) miicv_setdbl( file->icv, MI_ICV_IMAGE_MAX, file->image_range[1]);
 
-        get_volume_voxel_range( volume, &min_value, &max_value );
-        if( min_value < max_value )
+        get_volume_voxel_range( volume, &min_voxel, &max_voxel );
+        if( min_voxel < max_voxel )
         {
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, min_value );
-            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, max_value );
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, min_voxel );
+            (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, max_voxel );
         }
         else
             print( "Volume has invalid min and max voxel value\n" );
@@ -462,6 +477,8 @@ public  Status  output_minc_volume(
 public  Status  close_minc_output(
     Minc_file   file )
 {
+    int    d;
+
     if( file == (Minc_file) NULL )
     {
         print( "close_minc_output(): NULL file.\n" );
@@ -471,7 +488,15 @@ public  Status  close_minc_output(
     (void) ncclose( file->cdfid );
     (void) miicv_free( file->icv );
 
+    for_less( d, 0, file->n_file_dimensions )
+        FREE( file->dim_names[d] );
+
     FREE( file );
 
     return( OK );
+}
+
+public  void  get_default_minc_output_options(
+    minc_output_options  *options           /* ARGSUSED */ )
+{
 }

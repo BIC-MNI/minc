@@ -216,8 +216,10 @@ private  Status  input_one_transform(
     String            type_name, str;
     Transform         linear_transform;
     Transform_types   type;
+    Boolean           inverse_flag;
+    General_transform inverse;
 
-    transform->inverse_flag = FALSE;
+    inverse_flag = FALSE;
 
     /* --- read the type of transform */
 
@@ -259,9 +261,9 @@ private  Status  input_one_transform(
             return( ERROR );
 
         if( strcmp( str, TRUE_STRING ) == 0 )
-            transform->inverse_flag = TRUE;
+            inverse_flag = TRUE;
         else if( strcmp( str, FALSE_STRING ) == 0 )
-            transform->inverse_flag = FALSE;
+            inverse_flag = FALSE;
         else
         {
             print( "Expected %s or %s after %s =\n", TRUE_STRING, FALSE_STRING,
@@ -381,6 +383,13 @@ private  Status  input_one_transform(
                                      displacements );
     }
 
+    if( inverse_flag )
+    {
+        create_inverse_general_transform( transform, &inverse );
+        delete_general_transform( transform );
+        *transform = inverse;
+    }
+
     return( OK );
 }
 
@@ -450,4 +459,45 @@ public  Status  input_transform(
     }
 
     return( OK );
+}
+
+public  Status  output_transform_file(
+    char                filename[],
+    char                comments[],
+    General_transform   *transform )
+{
+    Status  status;
+    FILE    *file;
+
+    status = open_file_with_default_suffix( filename,
+                      get_default_transform_file_suffix(),
+                      WRITE_FILE, ASCII_FORMAT, &file );
+
+    if( status == OK )
+        status = output_transform( file, comments, transform );
+
+    if( status == OK )
+        status = close_file( file );
+
+    return( status );
+}
+
+public  Status  input_transform_file(
+    char                filename[],
+    General_transform   *transform )
+{
+    Status  status;
+    FILE    *file;
+
+    status = open_file_with_default_suffix( filename,
+                      get_default_transform_file_suffix(),
+                      READ_FILE, ASCII_FORMAT, &file );
+
+    if( status == OK )
+        status = input_transform( file, transform );
+
+    if( status == OK )
+        status = close_file( file );
+
+    return( status );
 }

@@ -13,9 +13,9 @@ private  void  create_world_transform(
     Transform   *transform );
 private  int  match_dimension_names(
     int               n_volume_dims,
-    String            *volume_dimension_names,
+    char              *volume_dimension_names[],
     int               n_file_dims,
-    String            *file_dimension_names,
+    char              *file_dimension_names[],
     int               axis_index_in_file[] );
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,8 +36,9 @@ private  int  match_dimension_names(
 ---------------------------------------------------------------------------- */
 
 public  Minc_file  initialize_minc_input(
-    char       filename[],
-    Volume     volume )
+    char                 filename[],
+    Volume               volume,
+    minc_input_options   *options )
 {
     minc_file_struct    *file;
     int                 img_var, dim_vars[MAX_VAR_DIMS];
@@ -48,20 +49,30 @@ public  Minc_file  initialize_minc_input(
     Boolean             converted_sign;
     nc_type             converted_type;
     String              signed_flag;
-    String              dim_names[MAX_VAR_DIMS];
+    char                *dim_names[MAX_VAR_DIMS];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
-    double              separation[MAX_VAR_DIMS];
-    Real                axis_separation[MI_NUM_SPACE_DIMS];
+    double              file_separations[MAX_VAR_DIMS];
+    Real                axis_separations[MI_NUM_SPACE_DIMS];
+    Real                volume_separations[MI_NUM_SPACE_DIMS];
     double              start_position[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
     Vector              axes[MI_NUM_SPACE_DIMS];
     Boolean             spatial_dim_flags[MAX_VAR_DIMS];
     Vector              offset;
     Point               origin;
-    double              min_voxel, max_voxel, real_min, real_max;
+    double              real_min, real_max;
     int                 d, dimvar, which_valid_axis;
     int                 spatial_axis_indices[MAX_VAR_DIMS];
+    Transform           voxel_to_world_transform;
+    General_transform   general_transform;
+    minc_input_options  default_options;
+
+    if( options == (minc_input_options *) NULL )
+    {
+        get_default_minc_input_options( &default_options );
+        options = &default_options;
+    }
 
     ALLOC( file, 1 );
 
@@ -103,8 +114,9 @@ public  Minc_file  initialize_minc_input(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        (void) ncdiminq( file->cdfid, dim_vars[d], dim_names[d],
-                         &long_size );
+        ALLOC( dim_names[d], MAX_STRING_LENGTH + 1 );
+
+        (void) ncdiminq( file->cdfid, dim_vars[d], dim_names[d], &long_size );
         file->sizes_in_file[d] = long_size;
     }
 
@@ -160,7 +172,7 @@ public  Minc_file  initialize_minc_input(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        separation[d] = 1.0;
+        file_separations[d] = 1.0;
         start_position[d] = 0.0;
 
         if( spatial_dim_flags[d] )
@@ -175,7 +187,7 @@ public  Minc_file  initialize_minc_input(
         if( dimvar != MI_ERROR )
         {
             (void) miattget1( file->cdfid, dimvar, MIstep, NC_DOUBLE,
-                              (void *) (&separation[d]) );
+                              (void *) (&file_separations[d]) );
 
             if( spatial_dim_flags[d] )
             {
@@ -194,9 +206,12 @@ public  Minc_file  initialize_minc_input(
         else
         {
             sizes[file->axis_index_in_file[d]] = file->sizes_in_file[d];
-            volume->separation[file->axis_index_in_file[d]] = separation[d];
+            volume_separations[file->axis_index_in_file[d]] =
+                                          file_separations[d];
         }
     }
+
+    set_volume_separations( volume, volume_separations );
 
     /* --- create the world transform from slice separation, cosines, etc. */
 
@@ -204,9 +219,9 @@ public  Minc_file  initialize_minc_input(
     fill_Vector( axes[Y], 0.0, 1.0, 0.0 );
     fill_Vector( axes[Z], 0.0, 0.0, 1.0 );
 
-    axis_separation[X] = 1.0;
-    axis_separation[Y] = 1.0;
-    axis_separation[Z] = 1.0;
+    axis_separations[X] = 1.0;
+    axis_separations[Y] = 1.0;
+    axis_separations[Z] = 1.0;
 
     fill_Point( origin, 0.0, 0.0, 0.0 );
 
@@ -225,14 +240,14 @@ public  Minc_file  initialize_minc_input(
                           start_position[d] );
             ADD_POINT_VECTOR( origin, origin, offset );
 
-            axis_separation[spatial_axis_indices[d]] = separation[d];
+            axis_separations[spatial_axis_indices[d]] = file_separations[d];
         }
     }
 
-    create_world_transform( &origin, axes, axis_separation,
-                            &volume->voxel_to_world_transform );
-    compute_transform_inverse( &volume->voxel_to_world_transform,
-                               &volume->world_to_voxel_transform );
+    create_world_transform( &origin, axes, axis_separations,
+                            &voxel_to_world_transform );
+    create_linear_transform( &general_transform, &voxel_to_world_transform );
+    set_voxel_to_world_transform( volume, &general_transform );
 
     /* --- decide on type conversion */
 
@@ -272,6 +287,9 @@ public  Minc_file  initialize_minc_input(
     max_voxel_found = FALSE;
     min_voxel_found = FALSE;
 
+    valid_range[0] = 0.0;
+    valid_range[1] = 0.0;
+
     if( volume->data_type == NO_DATA_TYPE )
     {
         if( miattget( file->cdfid, img_var, MIvalid_range, NC_DOUBLE,
@@ -300,22 +318,16 @@ public  Minc_file  initialize_minc_input(
             min_voxel_found = TRUE;
             max_voxel_found = TRUE;
         }
-
-        if( min_voxel_found )
-            volume->min_voxel = valid_range[0];
-
-        if( max_voxel_found )
-            volume->max_voxel = valid_range[1];
     }
 
     if( volume->data_type == NO_DATA_TYPE || !range_specified )
     {
         if( !min_voxel_found )
         {
-            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &min_voxel )
+            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MIN, &valid_range[0] )
                                != MI_ERROR )
             {
-                volume->min_voxel = min_voxel;
+                min_voxel_found = TRUE;
             }
             else
             {
@@ -325,10 +337,10 @@ public  Minc_file  initialize_minc_input(
 
         if( !max_voxel_found )
         {
-            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &max_voxel )
+            if( miicv_inqdbl( file->icv, MI_ICV_VALID_MAX, &valid_range[1] )
                                != MI_ERROR )
             {
-                volume->max_voxel = max_voxel;
+                max_voxel_found = TRUE;
             }
             else
             {
@@ -337,8 +349,17 @@ public  Minc_file  initialize_minc_input(
         }
     }
 
-    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, volume->min_voxel );
-    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, volume->max_voxel );
+    if( min_voxel_found && max_voxel_found )
+        set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
+    else if( min_voxel_found && !max_voxel_found )
+        set_volume_voxel_range( volume, valid_range[0], valid_range[0] + 1.0 );
+    else if( !min_voxel_found && max_voxel_found )
+        set_volume_voxel_range( volume, valid_range[1] - 1.0, valid_range[0] );
+
+    get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
+
+    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, valid_range[0] );
+    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, valid_range[1] );
 
     (void) miicv_attach( file->icv, file->cdfid, img_var );
 
@@ -348,34 +369,16 @@ public  Minc_file  initialize_minc_input(
     (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
 
     if( volume->data_type == FLOAT || volume->data_type == DOUBLE )
-    {
-        volume->min_voxel = real_min;
-        volume->max_voxel = real_max;
-        volume->value_scale = 1.0;
-        volume->value_translation = 0.0;
-    }
-    else if( volume->max_voxel <= volume->min_voxel )
-    {
-        volume->value_scale = 0.0;
-        volume->value_translation = real_min;
-    }
+        set_volume_voxel_range( volume, real_min, real_max );
     else
-    {
-        volume->value_scale = (real_max - real_min) /
-                              (volume->max_voxel - volume->min_voxel);
+        set_volume_real_range( volume, real_min, real_max );
 
-        volume->value_translation = real_min -
-                                    volume->min_voxel * volume->value_scale;
-    }
-
-#ifdef LATER
     if( options->promote_invalid_to_min_flag )
     {
         (void) miicv_detach( file->icv );
         (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, volume->min_voxel );
         (void) miicv_attach( file->icv, file->cdfid, img_var );
     }
-#endif
 
     for_less( d, 0, file->n_file_dimensions )
         file->indices[d] = 0;
@@ -404,6 +407,9 @@ public  Minc_file  initialize_minc_input(
     }
 
     set_volume_size( volume, converted_type, converted_sign, sizes );
+
+    for_less( d, 0, file->n_file_dimensions )
+        FREE( dim_names[d] );
 
     return( file );
 }
@@ -786,9 +792,9 @@ public  Boolean  is_spatial_dimension(
 
 private  int  match_dimension_names(
     int               n_volume_dims,
-    String            *volume_dimension_names,
+    char              *volume_dimension_names[],
     int               n_file_dims,
-    String            *file_dimension_names,
+    char              *file_dimension_names[],
     int               axis_index_in_file[] )
 {
     int      i, j, iteration, n_matches, dummy;
@@ -817,11 +823,11 @@ private  int  match_dimension_names(
                         {
                         case 0:
                             match = strcmp( volume_dimension_names[i],
-                                             file_dimension_names[j] ) == 0;
+                                            file_dimension_names[j] ) == 0;
                             break;
                         case 1:
                             match = (strcmp( volume_dimension_names[i],
-                                            ANY_SPATIAL_DIMENSION ) == 0) &&
+                                             ANY_SPATIAL_DIMENSION ) == 0) &&
                                 is_spatial_dimension( file_dimension_names[j],
                                                       &dummy );
                             break;
@@ -844,4 +850,23 @@ private  int  match_dimension_names(
     }
 
     return( n_matches == n_volume_dims );
+}
+
+public  int  get_minc_file_id(
+    Minc_file  file )
+{
+    return( file->cdfid );
+}
+
+public  void  get_default_minc_input_options(
+    minc_input_options  *options )
+{
+    set_minc_input_promote_invalid_to_min_flag( options, TRUE );
+}
+
+public  void  set_minc_input_promote_invalid_to_min_flag(
+    minc_input_options  *options,
+    Boolean             flag )
+{
+    options->promote_invalid_to_min_flag = flag;
 }

@@ -608,6 +608,9 @@ public  void  concat_general_transforms(
     int                  second_start, second_end, second_step;
     int                  i, trans;
     Boolean              crunching_linear;
+    Boolean              first_inverted_concat, second_inverted_concat;
+    Transform            *first_transform, *first_inverse;
+    Transform            *second_transform, *second_inverse;
     General_transform    result_tmp, *result_ptr;
     General_transform    *transform;
 
@@ -615,6 +618,12 @@ public  void  concat_general_transforms(
         result_ptr = &result_tmp;
     else
         result_ptr = result;
+    
+
+    first_inverted_concat = first->type == CONCATENATED_TRANSFORM &&
+                            first->inverse_flag;
+    second_inverted_concat = second->type == CONCATENATED_TRANSFORM &&
+                             second->inverse_flag;
 
     if( first->inverse_flag )
     {
@@ -669,7 +678,7 @@ public  void  concat_general_transforms(
     for( i = first_start;  i != first_end + first_step;  i += first_step )
     {
         copy_and_invert_transform( get_nth_general_transform( first, i ),
-                                   first->inverse_flag,
+                                   first_inverted_concat,
                                    get_nth_general_transform(result_ptr,trans));
         ++trans;
     }
@@ -679,17 +688,41 @@ public  void  concat_general_transforms(
         transform = get_nth_general_transform( result_ptr, trans );
         alloc_linear_transform( transform );
 
+        if( first_inverted_concat )
+        {
+            first_inverse = get_linear_transform_ptr(
+                      get_nth_general_transform(first,first_end+first_step));
+            first_transform = get_inverse_linear_transform_ptr(
+                      get_nth_general_transform(first,first_end+first_step));
+        }
+        else
+        {
+            first_transform = get_linear_transform_ptr(
+                      get_nth_general_transform(first,first_end+first_step));
+            first_inverse = get_inverse_linear_transform_ptr(
+                      get_nth_general_transform(first,first_end+first_step));
+        }
+
+        if( second_inverted_concat )
+        {
+            second_inverse = get_linear_transform_ptr(
+                   get_nth_general_transform(second,second_start-second_step));
+            second_transform = get_inverse_linear_transform_ptr(
+                   get_nth_general_transform(second,second_start-second_step));
+        }
+        else
+        {
+            second_transform = get_linear_transform_ptr(
+                   get_nth_general_transform(second,second_start-second_step));
+            second_inverse = get_inverse_linear_transform_ptr(
+                   get_nth_general_transform(second,second_start-second_step));
+        }
+
         concat_transforms( get_linear_transform_ptr(transform),
-          get_linear_transform_ptr(
-             get_nth_general_transform(first,first_end+first_step)),
-          get_linear_transform_ptr(
-             get_nth_general_transform(second,second_start-second_step)) );
+                           first_transform, second_transform );
 
         concat_transforms( get_inverse_linear_transform_ptr(transform),
-          get_inverse_linear_transform_ptr(
-             get_nth_general_transform(second,second_start-second_step)),
-          get_inverse_linear_transform_ptr(
-             get_nth_general_transform(first,first_end+first_step)) );
+                           second_inverse, first_inverse );
 
         ++trans;
     }
@@ -697,7 +730,7 @@ public  void  concat_general_transforms(
     for( i = second_start;  i != second_end + second_step;  i += second_step )
     {
         copy_and_invert_transform( get_nth_general_transform( second, i ),
-                                   second->inverse_flag,
+                                   second_inverted_concat,
                                    get_nth_general_transform(result_ptr,trans));
         ++trans;
     }

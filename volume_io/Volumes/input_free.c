@@ -37,8 +37,9 @@ public  Status  initialize_free_format_input(
     nc_type        desired_data_type;
     unsigned short value;
     char           ch;
-    Real           separation[N_DIMENSIONS];
-    Point          origin;
+    Real           file_separations[MAX_DIMENSIONS];
+    Real           volume_separations[MAX_DIMENSIONS];
+    Real           origin_voxel[N_DIMENSIONS];
     Real           trans[N_DIMENSIONS];
     FILE           *file;
     Boolean        axis_valid;
@@ -108,7 +109,7 @@ public  Status  initialize_free_format_input(
         if( input_int( file, &volume_input->sizes_in_file[axis] ) != OK )
             break;
 
-        if( input_real( file, &separation[axis] ) != OK )
+        if( input_real( file, &file_separations[axis] ) != OK )
             break;
 
         if( input_nonwhite_character( file, &ch ) != OK )
@@ -205,28 +206,21 @@ public  Status  initialize_free_format_input(
         {
             sizes[volume_input->axis_index_from_file[axis]] =
                                  volume_input->sizes_in_file[axis];
-            volume->separation[volume_input->axis_index_from_file[axis]] =
-                                                     separation[axis];
-        }
+            volume_separations[volume_input->axis_index_from_file[axis]] =
+                                                     file_separations[axis];
 
-        for_less( axis, 0, N_DIMENSIONS )
-        {
-            if( volume->separation[axis] < 0.0 )
+            if( volume_separations[axis] < 0.0 )
             {
-                trans[axis] += -volume->separation[axis] *
+                trans[axis] += -volume_separations[axis] *
                                (Real) (sizes[axis]-1);
             }
         }
 
-        make_scale_transform( volume->separation[X],
-                              volume->separation[Y],
-                              volume->separation[Z],
-                              &volume->voxel_to_world_transform );
-        fill_Point( origin, trans[X], trans[Y], trans[Z] );
-        set_transform_origin( &volume->voxel_to_world_transform, &origin );
+        for_less( axis, 0, N_DIMENSIONS )
+            origin_voxel[axis] = 0.0;
 
-        compute_transform_inverse( &volume->voxel_to_world_transform,
-                                   &volume->world_to_voxel_transform );
+        set_volume_separations( volume, volume_separations );
+        set_volume_translation( volume, origin_voxel, trans );
     }
 
     set_volume_size( volume, desired_data_type, FALSE, sizes );
@@ -287,15 +281,11 @@ public  Status  initialize_free_format_input(
 
         }
 
-        volume->min_voxel = min_value;
-        volume->max_voxel = max_value;
+        set_volume_voxel_range( volume, min_value, max_value );
 
         if( status == OK && !volume_input->one_file_per_slice )
             status = close_file( volume_input->volume_file );
     }
-
-    volume->value_scale = 1.0;
-    volume->value_translation = 0.0;
 
     if( status == OK && !volume_input->one_file_per_slice )
     {
@@ -440,6 +430,8 @@ public  Boolean  input_more_free_format_file(
     int             x, y, z, sizes[N_DIMENSIONS];
     Status          status;
     Boolean         more_to_do, scaling_flag;
+    Real            value_translation, value_scale;
+    Real            original_min_voxel, original_max_voxel;
     int             *inner_index, i, value, indices[N_DIMENSIONS];
     unsigned char   *byte_buffer_ptr;
     unsigned short  *short_buffer_ptr;
@@ -455,15 +447,11 @@ public  Boolean  input_more_free_format_file(
         if( volume->data_type != volume_input->file_data_type )
         {
             scaling_flag = TRUE;
-            volume->value_translation = (Real) volume->min_voxel;
-            if( volume->min_voxel == volume->max_voxel )
-                volume->value_scale = 1.0;
-            else
-            {
-                volume->value_scale = (Real) (volume->max_voxel -
-                                              volume->min_voxel) /
+            get_volume_voxel_range( volume, &original_min_voxel,
+                                    &original_max_voxel );
+            value_translation = (Real) volume->min_voxel;
+            value_scale = (Real) (volume->max_voxel - volume->min_voxel) /
                                       (Real) (NUM_BYTE_VALUES - 1);
-            }
         }
 
         inner_index = &indices[volume_input->axis_index_from_file[2]];
@@ -484,8 +472,8 @@ public  Boolean  input_more_free_format_file(
                     if( scaling_flag )
                     {
                         value = (int)(
-                         ((Real) (*byte_buffer_ptr) -
-                            volume->value_translation) / volume->value_scale );
+                         ((Real) (*byte_buffer_ptr) - value_translation) /
+                                   value_scale );
 
                         if( value < 0 )
                             value = 0;
@@ -513,8 +501,8 @@ public  Boolean  input_more_free_format_file(
                     if( scaling_flag )
                     {
                         value = (int)(
-                         ((Real) (*short_buffer_ptr) -
-                            volume->value_translation) / volume->value_scale );
+                         ((Real) (*short_buffer_ptr) - value_translation) /
+                                               value_scale );
                     }
                     else
                         value = (int) (*short_buffer_ptr);
@@ -561,8 +549,13 @@ public  Boolean  input_more_free_format_file(
             }
         }
 
-        volume->min_voxel = (Real) min_value;
-        volume->max_voxel = (Real) max_value;
+        set_volume_voxel_range( volume, min_value, max_value );
+
+        if( volume->data_type != volume_input->file_data_type )
+        {
+            set_volume_real_range( volume, original_min_voxel,
+                                   original_max_voxel );
+        }
     }
 
     return( more_to_do );

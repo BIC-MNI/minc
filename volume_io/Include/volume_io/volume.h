@@ -7,6 +7,8 @@
 
 #define  MAX_DIMENSIONS     5
 
+extern  char   *XYZ_dimension_names[];
+
 /* -------------------------- volume struct --------------------- */
 
 #define  LABEL_BIT                 128
@@ -30,7 +32,7 @@ typedef  enum  { NO_DATA_TYPE,
 typedef  struct
 {
     int                     n_dimensions;
-    String                  dimension_names[MAX_DIMENSIONS];
+    char                    *dimension_names[MAX_DIMENSIONS];
     Data_types              data_type;
     nc_type                 nc_data_type;
     Boolean                 signed_flag;
@@ -295,7 +297,7 @@ typedef  struct
     Boolean            end_def_done;
     Boolean            variables_written;
     int                dim_ids[MAX_VAR_DIMS];
-    String             dim_names[MAX_VAR_DIMS];
+    char               *dim_names[MAX_VAR_DIMS];
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;

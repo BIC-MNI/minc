@@ -490,3 +490,62 @@ public  Status  input_tag_points(
 
     return( OK );
 }
+
+public  Status  output_tag_file(
+    char      filename[],
+    char      comments[],
+    int       n_volumes,
+    int       n_tag_points,
+    Real      **tags_volume1,
+    Real      **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
+    char      **labels )
+{
+    Status  status;
+    FILE    *file;
+
+    status = open_file_with_default_suffix( filename,
+                                            get_default_tag_file_suffix(),
+                                            WRITE_FILE, ASCII_FORMAT, &file );
+
+    if( status == OK )
+        status = output_tag_points( file, comments, n_volumes, n_tag_points,
+                                    tags_volume1, tags_volume2, weights,
+                                    structure_ids, patient_ids, labels );
+
+    if( status == OK )
+        status = close_file( file );
+
+    return( status );
+}
+
+public  Status  input_tag_file(
+    char      filename[],
+    int       *n_volumes,
+    int       *n_tag_points,
+    Real      ***tags_volume1,
+    Real      ***tags_volume2,
+    Real      **weights,
+    int       **structure_ids,
+    int       **patient_ids,
+    char      ***labels )
+{
+    Status  status;
+    FILE    *file;
+
+    status = open_file_with_default_suffix( filename,
+                                            get_default_tag_file_suffix(),
+                                            READ_FILE, ASCII_FORMAT, &file );
+
+    if( status == OK )
+        status = input_tag_points( file, n_volumes, n_tag_points,
+                                   tags_volume1, tags_volume2, weights,
+                                   structure_ids, patient_ids, labels );
+
+    if( status == OK )
+        status = close_file( file );
+
+    return( status );
+}
