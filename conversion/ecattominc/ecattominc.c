@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecattominc.c,v $
-@MODIFIED   : Revision 1.1  1996-01-18 14:52:14  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1996-03-26 15:58:18  neelin
+@MODIFIED   : Various changes including changed coordinates in x and y and computing
+@MODIFIED   : FWHM from cutoff frequency.
 @MODIFIED   :
+ * Revision 1.1  1996/01/18  14:52:14  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1996 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,12 +29,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 1.1 1996-01-18 14:52:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 1.2 1996-03-26 15:58:18 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 #include <limits.h>
 #include <float.h>
@@ -56,6 +61,7 @@ typedef struct {
    double half_life;
    double zstart;
    double zstep;
+   double decay_correction;
    char isotope[16];
    int image_xsize;
    int image_ysize;
@@ -71,11 +77,13 @@ typedef struct {
    int max_nslices;
    int max_xsize;
    int max_ysize;
-   double zwidth;
+   double xstart;
+   double ystart;
    double xstep;
    double ystep;
    double xwidth;
    double ywidth;
+   double zwidth;
    int decay_corrected;
    char img_units[16];
    char patient_name[40];
@@ -96,6 +104,7 @@ typedef struct {
    long injection_minute;
    double injection_seconds;
    double injection_dose;
+   int septa_retracted;
    ecat_header_data_type *main_field_list;
    int num_main_fields;
    ecat_header_data_type *subhdr_field_list;
@@ -141,11 +150,17 @@ void FillBloodStructures (int mincHandle, int bloodHandle);
 #define FALSE 0
 #define MAX_DIMS 4
 #define ECAT_ACTIVITY "ACTIVITY"
+#define ECAT_CALIB_UNITS_UNKNOWN 0
+#define ECAT_CALIB_UNITS_BECQUEREL 1
 #define ECAT_CALIB_UNITS_CPS 3
 #define MM_PER_CM 10.0
-#define BECQUEREL_PER_MCURIE 3.7e7
+#define BECQUEREL_PER_NCURIE 37
+#define BECQUEREL_PER_MCURIE (BECQUEREL_PER_NCURIE * 1e6)
+#define NCURIE_PER_CC_STRING "nCi/cc"
 #define SECONDS_PER_HOUR 3600
 #define DEFAULT_RANGE INT_MIN
+#define MINIMUM_HALFLIFE 0.1
+#define FWHM_SCALE_FOR_HANN 1.082
 
 /* Main program */
 
@@ -157,7 +172,7 @@ int main(int argc, char *argv[])
    static int verbose = TRUE;
    static int decay_correct = TRUE;
    static int slice_range[2] = {DEFAULT_RANGE, DEFAULT_RANGE};
-   static int copy_all_header = FALSE;
+   static int copy_all_header = TRUE;
    static char *blood_file = NULL;
    static int frame_range[2] = {DEFAULT_RANGE, DEFAULT_RANGE};
 
@@ -187,9 +202,9 @@ int main(int argc, char *argv[])
           "Single frame to copy (counting from 0)."},
       {"-small_header", ARGV_CONSTANT, (char *) FALSE, 
           (char *) &copy_all_header,
-          "Copy only basic header information (default)."},
+          "Copy only basic header information."},
       {"-all_header", ARGV_CONSTANT, (char *) TRUE, (char *) &copy_all_header,
-          "Copy all header information."},
+          "Copy all header information (default)."},
       {"-bloodfile", ARGV_STRING, (char *) 1, (char *) &blood_file,
           "Insert blood data from this file."},
       {NULL, ARGV_END, NULL, NULL, NULL}
@@ -383,6 +398,9 @@ int main(int argc, char *argv[])
                                   0.0,
                                   frame_info[iframe].half_life);
       }
+      else if (!decay_correct && general_info->decay_corrected) {
+         scale = 1.0 / frame_info[iframe].decay_correction;
+      }
       else {
          scale = 1.0;
       }
@@ -541,6 +559,10 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
    Ecat_field_name field;
    char *description;
    time_t the_time;
+   char *ptr;
+   int isotope_name_okay;
+   int septa_state;
+   double cutoff, binsize;
 
    /* Initialize number of slices */
    num_slices = &(general_info->num_slices);
@@ -596,7 +618,9 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
       /* Get scan type */
       if (ecat_get_main_value(ecat_fp, ECAT_Calibration_Units, 0,
                               &lvalue, NULL, NULL)) return curframe;
-      if (lvalue == ECAT_CALIB_UNITS_CPS) {
+      if ((lvalue == ECAT_CALIB_UNITS_BECQUEREL) ||
+          (lvalue == ECAT_CALIB_UNITS_UNKNOWN) ||
+          (lvalue == ECAT_CALIB_UNITS_CPS)) {
          (void) strcpy(fip->image_type, ECAT_ACTIVITY);
       }
       else {
@@ -610,6 +634,23 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
       if (ecat_get_main_value(ecat_fp, ECAT_Isotope_Halflife, 0,
                               NULL, &fip->half_life, NULL))
          return curframe;
+
+      /* Check that they are reasonable */
+      isotope_name_okay = TRUE;
+      for (ptr=fip->isotope; 
+           (*ptr != '\0') && (ptr < &fip->isotope[sizeof(fip->isotope)]); 
+           ptr++) {
+         if (!isprint((int) *ptr)) {
+            isotope_name_okay = FALSE;
+         }
+      }
+      if (ptr == fip->isotope)
+         isotope_name_okay = FALSE;
+      if (!isotope_name_okay || (fip->half_life < MINIMUM_HALFLIFE)) {
+         (void) fprintf(stderr, "Ignoring bad isotope name or half-life.\n");
+         fip->isotope[0] = '\0';
+         fip->half_life = 0.0;
+      }
 
       /* Get z start and step (correct start for non-zero first slice */
       if (ecat_get_main_value(ecat_fp, ECAT_Plane_Separation, 0,
@@ -627,8 +668,13 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
       fip->zstart += fip->low_slice * fip->zstep;
 
       /* Check to see if file has been decay corrected */
-      if (!ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_Decay_Corr_Fctr, 0,
-                                 NULL, &fvalue, NULL) && fvalue != 1.0) {
+      fvalue = 1.0;
+      (void) ecat_get_subhdr_value(ecat_fp, curframe, 0, 
+                                   ECAT_Decay_Corr_Fctr, 0,
+                                   NULL, &fvalue, NULL);
+      if (fvalue <= 0.0) fvalue = 1.0;
+      fip->decay_correction = fvalue;
+      if (fip->decay_correction != 1.0) {
          general_info->decay_corrected = TRUE;
       }
 
@@ -645,6 +691,20 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
          general_info->xstep *= MM_PER_CM;
          general_info->ystep *= MM_PER_CM;
 
+         /* Get location of first voxel */
+         if (ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_X_Offset, 0,
+                                   NULL, &general_info->xstart, NULL))
+            return curframe;
+         if (ecat_get_subhdr_value(ecat_fp, curframe, 0, ECAT_Y_Offset, 0,
+                                   NULL, &general_info->ystart, NULL))
+            return curframe;
+         general_info->xstart *= -MM_PER_CM;
+         general_info->ystart *= MM_PER_CM;
+         general_info->xstart -= 
+            general_info->xstep * ((double) fip->image_xsize - 1.0) / 2.0;
+         general_info->ystart -= 
+            general_info->ystep * ((double) fip->image_ysize - 1.0) / 2.0;
+
          /* Get resolution in each direction (or zero if not found) */
          general_info->xwidth = general_info->ywidth = 
             general_info->zwidth = -1.0;
@@ -658,11 +718,44 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
          general_info->ywidth *= MM_PER_CM;
          general_info->zwidth *= MM_PER_CM;
 
+         /* If resolution is not found, then use cutoff frequency and 
+            assume FWHM for Hann filter */
+         cutoff = -1.0;
+         binsize = -1.0;
+         (void) ecat_get_subhdr_value(ecat_fp, curframe, 0, 
+                                      ECAT_Rfilter_Cutoff,
+                                      0, NULL, &cutoff, NULL);
+         if (cutoff <= 0) {
+            (void) ecat_get_subhdr_value(ecat_fp, curframe, 0, 
+                                         ECAT_Filter_Cutoff_Frequency,
+                                         0, NULL, &cutoff, NULL);
+         }
+         (void) ecat_get_main_value(ecat_fp, ECAT_Bin_Size, 0,
+                                    NULL, &binsize, NULL);
+         binsize *= MM_PER_CM;
+         if ((general_info->xwidth <= 0.0) && 
+             (cutoff > 0.0) && (binsize > 0.0)) {
+            general_info->xwidth = FWHM_SCALE_FOR_HANN * binsize / cutoff;
+         }
+         if ((general_info->ywidth <= 0.0) && 
+             (cutoff > 0.0) && (binsize > 0.0)) {
+            general_info->ywidth = FWHM_SCALE_FOR_HANN * binsize / cutoff;
+         }
+         if ((general_info->zwidth <= 0.0) &&
+             !ecat_get_subhdr_value(ecat_fp, curframe, 0, 
+                                    ECAT_Zfilter_Cutoff,
+                                    0, NULL, &cutoff, NULL) &&
+             !ecat_get_main_value(ecat_fp, ECAT_Plane_Separation, 0, 
+                                  NULL, &binsize, NULL)) {
+            binsize *= MM_PER_CM;
+            general_info->zwidth = FWHM_SCALE_FOR_HANN * binsize / cutoff;
+         }
+
          /* Get image range and units */
          if (ecat_get_main_value(ecat_fp, ECAT_Calibration_Units, 0,
                                  &lvalue, NULL, NULL)) return curframe;
-         if (lvalue == ECAT_CALIB_UNITS_CPS) {
-            (void) strcpy(general_info->img_units, "nCi/cc");
+         if (lvalue == ECAT_CALIB_UNITS_BECQUEREL) {
+            (void) strcpy(general_info->img_units, NCURIE_PER_CC_STRING);
          }
          else {
             (void) strcpy(general_info->img_units, "");
@@ -754,9 +847,14 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
                         (int) general_info->start_hour,
                         (int) general_info->start_minute,
                         (int) general_info->start_seconds);
-         if (ecat_get_main_value(ecat_fp, ECAT_Radiopharmaceutical, 0,
-                                 NULL, NULL, general_info->tracer))
-            return curframe;
+         if ((int) strlen(fip->isotope) > 0) {
+            if (ecat_get_main_value(ecat_fp, ECAT_Radiopharmaceutical, 0,
+                                    NULL, NULL, general_info->tracer))
+               return curframe;
+         }
+         else {
+            general_info->tracer[0] = '\0';
+         }
          if (!ecat_get_main_value(ecat_fp, ECAT_Dose_Start_Time, 0,
                                   &lvalue, NULL, NULL) && (lvalue != 0)) {
             the_time = (time_t) lvalue;
@@ -776,6 +874,13 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
          }
          else {
             general_info->injection_dose = -1.0;
+         }
+
+         /* Get septa state */
+         septa_state = 0;
+         if (!ecat_get_main_value(ecat_fp, ECAT_Septa_State, 0, 
+                                  &septa_state, NULL, NULL)) {
+            general_info->septa_retracted = (septa_state == 1);
          }
 
          /* Get list of header values */
@@ -1031,11 +1136,13 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    int dim[MAX_DIMS];
    int img, imgmax, imgmin, dimvarid, widvarid, icv, varid, ecat_var;
    int bloodid;
-   int idim, ifield, num_fields, iheader;
+   int idim, ifield, num_fields, iheader, iframe;
    double vrange[2];
    char varname[MAX_NC_NAME];
    ecat_header_data_type *field_list;
    double dimwidths[MAX_DIMS];
+   double *frame_times;
+   double *frame_lengths;
 
    /* Set up dimension arrays for looping */
    dim_names = dim_names_array + MAX_DIMS - ndims;
@@ -1053,7 +1160,7 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    for (idim=0; idim<ndims; idim++) {
       dim[idim]=ncdimdef(mincid, dim_names[idim], count[idim]);
       dimvarid=micreate_std_variable(mincid, dim_names[idim], NC_DOUBLE, 
-                                     ((idim==0) && (num_frames>1)) ? 1 : 0, 
+                                     (((idim==0) && (num_frames>1)) ? 1 : 0), 
                                      &dim[idim]);
       if (dimwidths[idim] > 0) {
          widvarid=micreate_std_variable(mincid, dimwidth_names[idim], 
@@ -1084,6 +1191,8 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       }
       else if (strcmp(dim_names[idim], MIyspace)==0) {
          (void) miattputstr(mincid, dimvarid, MIunits, "mm");
+         (void) miattputdbl(mincid, dimvarid, MIstart, 
+                            (double) general_info->ystart);
          (void) miattputdbl(mincid, dimvarid, MIstep, 
                             (double) general_info->ystep);
          (void) miattputstr(mincid, dimvarid, MIspacetype, MI_NATIVE);
@@ -1095,6 +1204,8 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       }
       else if (strcmp(dim_names[idim], MIxspace)==0) {
          (void) miattputstr(mincid, dimvarid, MIunits, "mm");
+         (void) miattputdbl(mincid, dimvarid, MIstart, 
+                            (double) general_info->xstart);
          (void) miattputdbl(mincid, dimvarid, MIstep, 
                             (double) general_info->xstep);
          (void) miattputstr(mincid, dimvarid, MIspacetype, MI_NATIVE);
@@ -1173,14 +1284,18 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
 
    /* Save acquisition info */
    varid = micreate_group_variable(mincid, MIacquisition);
-   (void) miattputstr(mincid, varid, MIradionuclide,
-                      frame_info[0].isotope);
+   if ((int) strlen(frame_info[0].isotope) > 0) {
+      (void) miattputstr(mincid, varid, MIradionuclide,
+                         frame_info[0].isotope);
+   }
    if (frame_info[0].half_life > 0.0) {
       (void) miattputdbl(mincid, varid, MIradionuclide_halflife,
                          (double) frame_info[0].half_life);
    }
-   (void) miattputstr(mincid, varid, MItracer, 
-                      general_info->tracer);
+   if ((int) strlen(general_info->tracer) > 0) {
+      (void) miattputstr(mincid, varid, MItracer, 
+                         general_info->tracer);
+   }
    if ((int) strlen(general_info->injection_time) > 0) {
       (void) miattputstr(mincid, varid, MIinjection_time,
                          general_info->injection_time);
@@ -1195,6 +1310,28 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
       (void) ncattput(mincid, varid, MIinjection_dose, NC_DOUBLE, 1,
                       &general_info->injection_dose);
       (void) miattputstr(mincid, varid, MIdose_units, "mCurie");
+   }
+
+   /* Save the septa state in a special ECAT variable, along with frame
+      starts and lengths if we are not creating a time dimension. */
+   varid = ncvardef(mincid, "ecat_acquisition", NC_LONG, 0, NULL);
+   (void) miattputstr(mincid, varid, MIvartype, MI_GROUP);
+   (void) miattputstr(mincid, varid, MIvarid, 
+                      "ECAT-specific acquisition information");
+   (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), varid);
+   (void) miattputstr(mincid, varid, "septa_retracted", 
+                      (general_info->septa_retracted ? MI_TRUE : MI_FALSE));
+   if (ndims < MAX_DIMS) {
+      frame_times = MALLOC(sizeof(*frame_times) * num_frames);
+      frame_lengths = MALLOC(sizeof(*frame_lengths) * num_frames);
+      for (iframe=0; iframe < num_frames; iframe++) {
+         frame_times[iframe] = frame_info[iframe].scan_time;
+         frame_lengths[iframe] = frame_info[iframe].time_width;
+      }
+      (void) ncattput(mincid, varid, "frame_times", NC_DOUBLE, num_frames,
+                      frame_times);
+      (void) ncattput(mincid, varid, "frame_lengths", NC_DOUBLE, num_frames,
+                      frame_lengths);
    }
 
    /* If we want all of the values from the header, get them */
@@ -1277,6 +1414,7 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
 {
    long npix, ix, iy, y_offset, off1, off2;
    int pmax;
+   int lvalue;
    short temp;
    double scale, global_scale;
 
@@ -1302,10 +1440,20 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
        ecat_get_subhdr_value(ecat_fp, frame_num, slice_num, 
                              ECAT_Scale_Factor, 0, NULL, &scale, NULL))
       return TRUE;
-   global_scale = 1.0;
-   (void) ecat_get_main_value(ecat_fp, ECAT_Calibration_Factor, 0, 
-                              NULL, &global_scale, NULL);
-   if (global_scale <= 0.0) global_scale = 1.0;
+   if (!ecat_get_main_value(ecat_fp, ECAT_Calibration_Factor, 0, 
+                            NULL, &global_scale, NULL) && 
+       (global_scale > 0.0)) {
+      if (!ecat_get_main_value(ecat_fp, ECAT_Calibration_Units, 0,
+                               &lvalue, NULL, NULL) &&
+          (lvalue == ECAT_CALIB_UNITS_BECQUEREL)) {
+         global_scale /= BECQUEREL_PER_NCURIE;
+      }
+   }
+   else if (ecat_get_subhdr_value(ecat_fp, frame_num, slice_num,
+                                  ECAT_Calibration_Factor, 0, 
+                                  NULL, &global_scale, NULL)) {
+      global_scale = 1.0;
+   }
    *pixel_max = pmax;
    *image_max = (double) pmax * scale * global_scale;
 
@@ -1342,7 +1490,7 @@ int get_slice(Ecat_file *ecat_fp, int frame_num, int slice_num,
 ---------------------------------------------------------------------------- */
 int write_minc_slice(double scale, int write_byte_data,
                      int mincid, int icvid, 
-                     int ndims,long start[], long count[], 
+                     int ndims, long start[], long count[], 
                      short *image, int image_xsize, int image_ysize,
                      long pixel_max, double image_max,
                      double scan_time, double time_width, double zpos)
@@ -1382,7 +1530,7 @@ int write_minc_slice(double scale, int write_byte_data,
    (void) ncvarput1(mincid, ncvarid(mincid, MIimagemin), start, &minimum);
 
    /* Write out time and z position */
-   if (ndims==MAX_DIMS) {
+   if (ndims == MAX_DIMS) {
       (void) mivarput1(mincid, ncvarid(mincid, MItime), start, 
                        NC_DOUBLE, NULL, &scan_time);
       (void) mivarput1(mincid, ncvarid(mincid, MItime_width), start,
