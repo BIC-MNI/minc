@@ -9,10 +9,13 @@
 @CALLS      : 
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: transformtags.c,v $
-@MODIFIED   : Revision 1.3  1993-09-16 09:39:00  neelin
-@MODIFIED   : Use dave's open_file_with_default_suffix and input_transform_file and
-@MODIFIED   : output_transform_file to add suffixes to file names.
+@MODIFIED   : Revision 1.4  1993-10-12 12:52:16  neelin
+@MODIFIED   : Replaced def_mni.h with volume_io.h
 @MODIFIED   :
+ * Revision 1.3  93/09/16  09:39:00  neelin
+ * Use dave's open_file_with_default_suffix and input_transform_file and
+ * output_transform_file to add suffixes to file names.
+ * 
  * Revision 1.2  93/09/14  09:50:20  neelin
  * changed name to from tagtransform to transformtags
  * 
@@ -22,13 +25,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 1.3 1993-09-16 09:39:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 1.4 1993-10-12 12:52:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <def_mni.h>
+#include <volume_io.h>
 #include <ParseArgv.h>
 #include <minc_def.h>
 
