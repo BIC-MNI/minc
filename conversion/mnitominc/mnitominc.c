@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.8 1993-07-13 16:35:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.9 1993-07-13 17:00:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -26,7 +26,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitomi
 #include <time_stamp.h>
 #include <minc_def.h>
 #include "mnitominc.h"
-
 
 /* Main program */
 
@@ -780,7 +779,7 @@ int get_mni_image(mni_header_type *mni_header, mni_image_type *mni_image,
    }
    if (zero < valid_range[0]) zero = valid_range[0];
    if (zero > valid_range[1]) zero = valid_range[1];
-   zero = rint(zero);
+   zero = ROUND(zero);
    for (j=0; j < MNI_CORNER_YSIZE; j++)
       for (i=0; i < MNI_CORNER_XSIZE; i += mni_image->pix_size)
          if (mni_image->pix_size == 1) {
