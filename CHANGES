@@ -1,6 +1,9 @@
 ************************************************************************
 
-Thu Aug  9 11:44:01 EDT 2001 *** RELEASE OF MINC 0.8
+Fri Aug 10 08:49:54 EDT 2001 *** RELEASE OF MINC 0.8
+
+Fri Aug 10 08:49:34 EDT 2001
+   - Fixed Makefiles in doc directories so that they build properly
 
 Tue Apr 24 14:18:07 EDT 2001
    - Added minccalc from Andrew Janke to progs directory.
