@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE(minc, 2.0.08)
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.19 $)
+AC_REVISION($Revision: 6.20 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -31,6 +31,7 @@ smr_WITH_BUILD_PATH
 # Check for required C libraries
 mni_REQUIRE_LIB(m,[#include <math.h>],[double x = sqrt(3.);])
 mni_REQUIRE_LIB(netcdf,[#include <netcdf.h>],[int i = ncopen("",0);])
+mni_REQUIRE_LIB(z, [#include <zlib.h>],[compress2;])
 mni_REQUIRE_LIB(hdf5,[#include <hdf5.h>],[int f = H5Fopen("",0,H5P_DEFAULT);])
 
 dnl Replacement implementations for systems that lack the function.
