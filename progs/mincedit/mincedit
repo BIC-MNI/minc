@@ -1,0 +1,98 @@
+#! /bin/csh -f
+#
+# Script to allow editing of minc files
+#
+# Usage: mincedit <minc file> [<editor>]
+
+# Constants
+set working_dir = /tmp
+
+# Set default editor
+set editor = emacs
+
+# Check arguments
+switch ("$#argv")
+case 1:
+   if ($?EDITOR) then
+      set editor = $EDITOR
+   endif
+   breaksw
+case 2:
+   set editor = "$2"
+   breaksw
+default:
+   echo "Usage: $0 <minc file> [<editor>]"
+   exit
+endsw
+
+# Set up the file names
+set filename = $1
+set backup_filename = ${filename}~
+set cdl_prefix = mincedit-$$
+set cdl_orig = $working_dir/${cdl_prefix}-orig.cdl
+set cdl_edit = $working_dir/${cdl_prefix}-edit.cdl
+
+# Set interrupt handling
+onintr cleanup
+
+# Dump the file
+ncdump -e image $filename > $cdl_orig
+if ($status) then
+   echo "${0}: Error reading file '$filename'"
+   goto cleanup
+endif
+cp $cdl_orig $cdl_edit
+
+# Loop until successful file generation
+set do_edit = 1
+while ($do_edit)
+
+#  Edit the cdl file
+   $editor $cdl_edit
+   if ($status) then
+      echo "${0}: Error editing with editor '$editor'"
+      goto cleanup
+   endif
+   set do_edit = 0
+
+#  Compare the files for difference
+   diff $cdl_orig $cdl_edit >& /dev/null
+   if ($status == 0) then
+      echo "File $filename not modified"
+      goto cleanup
+   endif
+
+#  Rename the original file and generate a new one
+   mv $filename $backup_filename
+   ncgen -o $filename $cdl_edit
+   if ($status) then
+      mv $backup_filename $filename
+      echo -n "Error generating new file. Redit the file (y/n)? (def=n):"
+      set answer = $<
+      if ("$answer" =~ y*) then
+         set do_edit = 1
+         continue
+      endif
+      goto cleanup
+   endif
+
+#  Copy the data
+   minccopy $backup_filename $filename
+   if ($status) then
+      mv $backup_filename $filename
+      echo -n "Error copying image data. Redit the file (y/n)? (def=n):"
+      set answer = $<
+      if ("$answer" =~ y*) then
+         set do_edit = 1
+         continue
+      endif
+      goto cleanup
+   endif
+
+# End while loop
+end
+
+cleanup:
+   rm -f $working_dir/*${cdl_prefix}*
+   exit
+
