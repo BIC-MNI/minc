@@ -5,7 +5,11 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.11  2000-10-30 22:03:50  neelin
+ * Revision 1.12  2000-10-31 00:53:13  neelin
+ * Changed largest and smallest pixel values to largest and smallest
+ * pixel values in series.
+ *
+ * Revision 1.11  2000/10/30 22:03:50  neelin
  * Modifications to set correct direction cosines and position.
  *
  * Revision 1.10  2000/06/14 18:24:07  neelin
@@ -66,7 +70,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.11 2000-10-30 22:03:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.12 2000-10-31 00:53:13 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -148,8 +152,6 @@ DEFINE_ELEMENT(static, ACR_Modified_Image_Date        , 0x0020, 0x3403, LO);
 DEFINE_ELEMENT(static, ACR_Modified_Image_Time        , 0x0020, 0x3405, LO);
 DEFINE_ELEMENT(static, ACR_Image_Dimensions           , 0x0028, 0x0005, US);
 DEFINE_ELEMENT(static, ACR_Compression_Code           , 0x0028, 0x0060, SH);
-DEFINE_ELEMENT(static, ACR_Smallest_Valid_Pixel_Value , 0x0028, 0x0104, US);
-DEFINE_ELEMENT(static, ACR_Largest_Valid_Pixel_Value  , 0x0028, 0x0105, US);
 DEFINE_ELEMENT(static, ACR_Image_Location             , 0x0028, 0x0200, US);
 
 /* Retired elements to remove from group list */
@@ -165,8 +167,6 @@ static Acr_Element_Id *Elements_to_remove[] = {
    &ACR_Modified_Image_Time,
    &ACR_Image_Dimensions,
    &ACR_Compression_Code,
-   &ACR_Smallest_Valid_Pixel_Value,
-   &ACR_Largest_Valid_Pixel_Value,
    &ACR_Image_Location,
    NULL
 };
@@ -380,6 +380,20 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    value = acr_find_int(group_list, SPI_Number_of_echoes, -1);
    if (value >= 0) {
       acr_insert_numeric(&group_list, ACR_Echo_train_length, value);
+   }
+
+   /* Rename smallest and largest pixel value elements */
+   element = acr_find_group_element(group_list, ACR_Smallest_pixel_value);
+   if (element != NULL) {
+      acr_set_element_id(element, 
+                         ACR_Smallest_pixel_value_in_series->group_id,
+                         ACR_Smallest_pixel_value_in_series->element_id);
+   }
+   element = acr_find_group_element(group_list, ACR_Largest_pixel_value);
+   if (element != NULL) {
+      acr_set_element_id(element, 
+                         ACR_Largest_pixel_value_in_series->group_id,
+                         ACR_Largest_pixel_value_in_series->element_id);
    }
 
    /* Remove some retired elements */
