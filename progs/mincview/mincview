@@ -33,15 +33,10 @@ set workingdir = $workingdir/mincview-$$
 onintr cleanup
 mkdir $workingdir
 
-# Uncompress the file if needed
-set ext = $filename:e
-if (("$ext" == "z") || ("$ext" == "Z") || ("$ext" == "gz")) then
-   set newfilename = $filename:t
-   set newfilename = $workingdir/temp_$newfilename:r
-   echo "Unzipping file..."
-   gunzip -c $filename > $newfilename
-   set filename = $newfilename
-endif
+# Expand the file if needed
+set newfilename = $filename:t
+set newfilename = $workingdir/temp_$newfilename:r
+set filename = `mincexpand $filename $newfilename -name_only`
 
 # Get dimension names
 set dims = `mincinfo $filename -vardims image`
