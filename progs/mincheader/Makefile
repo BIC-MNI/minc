@@ -21,7 +21,11 @@ default: build
 
 all: build
 
-build: man
+build: $(PROGS) man
+
+$(PROGS):
+	@echo Cannot create $(PROGS)
+	@false
 
 man: $(MANPAGES)
 
