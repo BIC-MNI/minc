@@ -2,3 +2,4 @@
 #define KEEP_FILES
 #define DO_HIGH_LOGGING
 #include "gcomserver.c"
+#undef DO_HIGH_LOGGING
