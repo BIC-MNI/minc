@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.11  2002-09-05 00:41:57  rotor
+ * Revision 1.12  2003-08-20 05:45:10  rotor
+ * * Fixed broken calculation of Median value from histogram.
+ *
+ * Revision 1.11  2002/09/05 00:41:57  rotor
  * ----------------------------------------------------------------------
  * Fixed clash of C/L arguments in mincstats (-max and -max_bins)
  *    -max_bins has now been changed to -int_max_bins
@@ -572,10 +575,10 @@ int main(int argc, char *argv[])
 
             for (c=0; c < hist_bins; c++) {
                hist_centre[c] = (c*hist_sep) + hist_range[0] + (hist_sep/2);
-               pdf[c] = (stats->hvoxels > 0) ? 
-                  stats->histogram[c]/stats->hvoxels : 0.0;
-               if (c == 0) { cdf[c] = pdf[c];            }
-               else        { cdf[c] = cdf[c-1] + pdf[c]; }
+               
+               /* Probability and Cumulative density functions */
+               pdf[c] = (stats->hvoxels > 0) ? stats->histogram[c]/stats->hvoxels : 0.0;
+               cdf[c] = (c == 0) ? pdf[c] : cdf[c-1] + pdf[c];
 
                /* Majority */
                if (stats->histogram[c] > stats->histogram[majority_bin]) {
@@ -613,21 +616,26 @@ int main(int argc, char *argv[])
             }
          
             /* median */
-            if (median_bin == 0)
+            if (median_bin == 0){
                stats->median = 0.5 * pdf[median_bin] *  hist_sep;
-            else
+               }
+            else{
                stats->median = ((double)median_bin + (0.5 - cdf[median_bin]) 
                                 * pdf[median_bin + 1]) *  hist_sep;
-      
+               }
+            stats->median += hist_centre[0];
+
             stats->majority = hist_centre[majority_bin];
             stats->biModalT = hist_centre[bimodalt_bin];
       
             /* pct Threshold */
-            if (pctt_bin == 0)
+            if (pctt_bin == 0){
                stats->pct_T = pctT * pdf[pctt_bin] *  hist_sep;
-            else
+               }
+            else{
                stats->pct_T = ((double)pctt_bin + (pctT - cdf[pctt_bin]) 
                                * pdf[pctt_bin + 1]) *  hist_sep;
+               }
       
             /* output the histogram */
             if (hist_file != NULL) {
@@ -724,8 +732,9 @@ int main(int argc, char *argv[])
    }   /* End of loop over ranges */
 
    /* Close the histogram file */
-   if (FP != NULL)
+   if (FP != NULL){
      (void) fclose(FP);
+     }
 
    /* Free things up */
    for (irange=0; irange < num_ranges; irange++) {
@@ -836,7 +845,9 @@ void do_stats(double value, long index[], Stats_Info *stats)
       if (Hist && (value >= hist_range[0]) && (value <= hist_range[1])) {
          /*lower limit <= value < upper limit */
          hist_index = (int)floor((value - hist_range[0])/hist_sep);
-         if (hist_index >= hist_bins) hist_index = hist_bins-1;
+         if (hist_index >= hist_bins){
+            hist_index = hist_bins-1;
+            }
          stats->histogram[hist_index]++;
          stats->hvoxels++;
       }
