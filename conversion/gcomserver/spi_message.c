@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 1.4  1993-11-30 14:42:32  neelin
-@MODIFIED   : Copies to minc format.
+@MODIFIED   : Revision 1.5  1994-04-07 11:03:32  neelin
+@MODIFIED   : Changed error handling to be more explicit about errors.
+@MODIFIED   : When the server terminates due to an error, a message is printed to /dev/log.
+@MODIFIED   : Changed handling of file cleanup.
 @MODIFIED   :
+ * Revision 1.4  93/11/30  14:42:32  neelin
+ * Copies to minc format.
+ * 
  * Revision 1.3  93/11/25  13:27:21  neelin
  * Working version.
  * 
@@ -59,7 +64,7 @@ private Acr_Status input_end_of_message(Acr_File *afp)
 
          /* Kludge to handle EOS */
          if ((i != 2) || (ch != 'S')) {
-            status = ACR_PROTOCOL_ERROR;
+            status = ACR_HIGH_LEVEL_ERROR;
          }
 
       }
@@ -102,7 +107,7 @@ public Acr_Status spi_input_message(Acr_File *afp, Acr_Message *message)
    element = acr_find_group_element(group_list, ACR_Recognition_code);
    if ((element == NULL) || 
        strncmp(string, acr_get_element_string(element), strlen(string)) != 0) {
-      status = ACR_PROTOCOL_ERROR;
+      status = ACR_HIGH_LEVEL_ERROR;
       return status;
    }
 
@@ -114,7 +119,7 @@ public Acr_Status spi_input_message(Acr_File *afp, Acr_Message *message)
       if ((element == NULL) || 
           strncmp(string, acr_get_element_string(element), 
                   strlen(string)) != 0) {
-         status = ACR_PROTOCOL_ERROR;
+         status = ACR_HIGH_LEVEL_ERROR;
          return status;
       }
    }
@@ -201,13 +206,13 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list)
 
    /* Locate the last group in the list */
    cur = *group_list;
-   if (cur == NULL) return ACR_PROTOCOL_ERROR;
+   if (cur == NULL) return ACR_HIGH_LEVEL_ERROR;
    while (acr_get_group_next(cur) != NULL) 
       cur = acr_get_group_next(cur);
 
    /* Look for data set type */
    element = acr_find_group_element(*group_list, ACR_Data_set_type);
-   if (element == NULL) return ACR_PROTOCOL_ERROR;
+   if (element == NULL) return ACR_HIGH_LEVEL_ERROR;
    data_set_type = acr_get_element_short(element);
 
    /* If we have an image, then read up to image */
@@ -222,7 +227,7 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list)
 
       /* Get image actual group id */
       element = acr_find_group_element(cur, ACR_Image_location);
-      if (element == NULL) return ACR_PROTOCOL_ERROR;
+      if (element == NULL) return ACR_HIGH_LEVEL_ERROR;
       final_group = acr_get_element_short(element);
 
    }
@@ -233,7 +238,7 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list)
 
       /* Look for data set sub-type */
       element = acr_find_group_element(*group_list, ACR_Data_set_subtype);
-      if (element == NULL) return ACR_PROTOCOL_ERROR;
+      if (element == NULL) return ACR_HIGH_LEVEL_ERROR;
       data_set_subtype = acr_get_element_string(element);
 
       /* Which data set is it? */
@@ -256,7 +261,7 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list)
    /* Check that we got the last group */
    if (status != ACR_OK) return status;
    if (acr_get_group_group(cur) != final_group) 
-      return ACR_PROTOCOL_ERROR;
+      return ACR_HIGH_LEVEL_ERROR;
 
    /* Read end of message sequence */
    status = input_end_of_message(afp);

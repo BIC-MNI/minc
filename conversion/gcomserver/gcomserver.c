@@ -4,9 +4,14 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.10  1994-04-06 11:12:01  neelin
-@MODIFIED   : Added switch to increase logging on debug.
+@MODIFIED   : Revision 1.11  1994-04-07 11:02:17  neelin
+@MODIFIED   : Changed error handling to be more explicit about errors.
+@MODIFIED   : When the server terminates due to an error, a message is printed to /dev/log.
+@MODIFIED   : Changed handling of file cleanup.
 @MODIFIED   :
+ * Revision 1.10  94/04/06  11:12:01  neelin
+ * Added switch to increase logging on debug.
+ * 
  * Revision 1.9  94/01/14  10:45:04  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.
@@ -52,9 +57,12 @@
 
 #include <gcomserver.h>
 
+/* State of server. Note that DISCONNECTING is used for a high-level
+   protocol error and TERMINATING is used for a low-level error or
+   end of input */
 typedef enum {
    WAITING_FOR_GROUP, WAITING_FOR_OBJECT, READY_FOR_OBJECT, 
-   END_OF_GROUP, DISCONNECTING
+   END_OF_GROUP, DISCONNECTING, TERMINATING
 } Server_state;
 
 /* Do we do logging? */
@@ -130,6 +138,7 @@ int main(int argc, char *argv[])
    /* Loop while reading messages */
    state = WAITING_FOR_GROUP;
    continue_looping = TRUE;
+   num_files = 0;
    while (continue_looping) {
 
       /* Read in the message */
@@ -138,6 +147,7 @@ int main(int argc, char *argv[])
       /* Check for error */
       if (status != ACR_OK) {
          continue_looping = FALSE;
+         status = TERMINATING;
          break;
       }
 
@@ -167,12 +177,15 @@ int main(int argc, char *argv[])
             /* Begin group copy */
          case GCBEGINq:
             if (state != WAITING_FOR_GROUP) {
-               status = ACR_PROTOCOL_ERROR;
+               status = ACR_HIGH_LEVEL_ERROR;
                state = DISCONNECTING;
                break;
             }
             output_message = gcbegin_reply(input_message, &num_files);
             file_list = MALLOC((size_t) num_files * sizeof(*file_list));
+            for (cur_file=0; cur_file < num_files; cur_file++) {
+               file_list[cur_file] = NULL;
+            }
             file_info_list = MALLOC(num_files * sizeof(*file_info_list));
             cur_file = -1;
             state = WAITING_FOR_OBJECT;
@@ -184,7 +197,7 @@ int main(int argc, char *argv[])
             /* Ready */
          case READYq:
             if (state != WAITING_FOR_OBJECT) {
-               status = ACR_PROTOCOL_ERROR;
+               status = ACR_HIGH_LEVEL_ERROR;
                state = DISCONNECTING;
                break;
             }
@@ -196,7 +209,7 @@ int main(int argc, char *argv[])
          case SENDq:
             if ((state != WAITING_FOR_OBJECT) &&
                  (state != READY_FOR_OBJECT)) {
-               status = ACR_PROTOCOL_ERROR;
+               status = ACR_HIGH_LEVEL_ERROR;
                state = DISCONNECTING;
                break;
             }
@@ -213,7 +226,7 @@ int main(int argc, char *argv[])
             /* GCENDq */
          case GCENDq:
             if (state != END_OF_GROUP) {
-               status = ACR_PROTOCOL_ERROR;
+               status = ACR_HIGH_LEVEL_ERROR;
                state = DISCONNECTING;
                break;
             }
@@ -226,6 +239,7 @@ int main(int argc, char *argv[])
             /* Remove the temporary files */
             cleanup_files(num_files, file_list);
             free_list(num_files, file_list, file_info_list);
+            num_files = 0;
             /* Create the output message */
             output_message = gcend_reply(input_message);
             state = WAITING_FOR_GROUP;
@@ -236,7 +250,7 @@ int main(int argc, char *argv[])
 
             /* Unknown command */
          default:
-            status = ACR_PROTOCOL_ERROR;
+            status = ACR_HIGH_LEVEL_ERROR;
             state = DISCONNECTING;
             break;
          }        /* End of switch on spi_command */
@@ -248,6 +262,7 @@ int main(int argc, char *argv[])
          if ((state == WAITING_FOR_OBJECT) || (state == READY_FOR_OBJECT)) {
             cleanup_files(num_files, file_list);
             free_list(num_files, file_list, file_info_list);
+            num_files = 0;
          }
          output_message = cancel_reply(input_message);
          state = WAITING_FOR_GROUP;
@@ -255,7 +270,7 @@ int main(int argc, char *argv[])
 
       /* Illegal command */
       else {
-         status = ACR_PROTOCOL_ERROR;
+         status = ACR_HIGH_LEVEL_ERROR;
          state = DISCONNECTING;
       }
 
@@ -264,6 +279,7 @@ int main(int argc, char *argv[])
 
       /* Check for disconnection */
       if (state == DISCONNECTING) {
+         continue_looping = FALSE;
          break;
       }
 
@@ -273,7 +289,10 @@ int main(int argc, char *argv[])
       /* Delete output message */
       acr_delete_message(output_message);
 
-      if (status != ACR_OK) break;
+      if (status != ACR_OK) {
+         state = TERMINATING;
+         break;
+      }
 
       /* Read in groups for SENDq command */
       if ((acr_command == SENDq) && (spi_command == SENDq)) {
@@ -282,7 +301,10 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr, "\n\nReceived data object:\n");
             acr_dump_group_list(stderr, group_list);
          }
-         if (status != ACR_OK) break;
+         if (status != ACR_OK) {
+            state = TERMINATING;
+            break;
+         }
          save_transferred_object(group_list, 
                                  file_prefix, &file_list[cur_file],
                                  &file_info_list[cur_file]);
@@ -299,9 +321,10 @@ int main(int argc, char *argv[])
    acr_file_free(afpout);
 
    /* Clean up files, if needed */
-   if ((state == WAITING_FOR_OBJECT) || (state == READY_FOR_OBJECT)) {
+   if (num_files > 0) {
       cleanup_files(num_files, file_list);
       free_list(num_files, file_list, file_info_list);
+      num_files = 0;
    }
    
    /* Remove the file prefix file */
@@ -320,6 +343,14 @@ int main(int argc, char *argv[])
       exit_status = EXIT_FAILURE;
       exit_string = "Protocol error. Disconnecting.";
       break;
+   case ACR_ABNORMAL_END_OF_INPUT:
+      exit_status = EXIT_FAILURE;
+      exit_string = "Abnormal end of input. Disconnecting.";
+      break;
+   case ACR_HIGH_LEVEL_ERROR:
+      exit_status = EXIT_FAILURE;
+      exit_string = "High-level protocol error. Disconnecting";
+      break;
    case ACR_OTHER_ERROR:
       exit_status = EXIT_FAILURE;
       exit_string = "I/O error. Disconnecting.";
@@ -330,8 +361,18 @@ int main(int argc, char *argv[])
       break;
    }
 
-   if ((Do_logging >= LOW_LOGGING) || (status != ACR_END_OF_INPUT)) {
+   if ((Do_logging >= LOW_LOGGING) || 
+       ((status != ACR_END_OF_INPUT) && (status != ACR_OK))) {
       (void) fprintf(stderr, "%s: %s\n", pname, exit_string);
+   }
+
+   if ((status != ACR_OK) && (status != ACR_END_OF_INPUT)) {
+      if (SYSTEM_LOG != NULL) {
+         if ((fptemp = fopen(SYSTEM_LOG, "w")) != NULL) {
+            (void) fprintf(fptemp, "%s: %s\n", pname, exit_string);
+            (void) fclose(fptemp);
+         }
+      }
    }
 
    exit(exit_status);
@@ -358,7 +399,9 @@ public void cleanup_files(int num_files, char *file_list[])
    if (Keep_files) return;
 
    for (i=0; i < num_files; i++) {
-      (void) remove(file_list[i]);
+      if (file_list[i] != NULL) {
+         (void) remove(file_list[i]);
+      }
    }
 
    return;

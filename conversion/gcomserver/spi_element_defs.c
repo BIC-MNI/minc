@@ -18,8 +18,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-#  define GLOBAL_ELEMENT_DEFINITION
-#endif
+#define GLOBAL_ELEMENT_DEFINITION
 
 #include <gcomserver.h>

@@ -5,10 +5,15 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 1.6  1994-01-14 11:37:40  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.7  1994-04-07 11:03:37  neelin
+@MODIFIED   : Changed error handling to be more explicit about errors.
+@MODIFIED   : When the server terminates due to an error, a message is printed to /dev/log.
+@MODIFIED   : Changed handling of file cleanup.
 @MODIFIED   :
+ * Revision 1.6  94/01/14  11:37:40  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.5  94/01/11  12:38:42  neelin
  * Modified handling of output directory and user id.
  * Defaults are current dir and no chown.
@@ -77,6 +82,9 @@
 
 /* File containing defaults for gcomserver */
 #define OUTPUT_DEFAULT_FILE "/usr/local/lib/gcomserver."
+
+/* System log file (set to NULL for no logging of error) */
+#define SYSTEM_LOG "/dev/log"
 
 /* Type for carrying around object information */
 typedef struct {
