@@ -14,7 +14,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.2  2001-04-17 18:40:14  neelin
+ * Revision 6.3  2003-09-18 16:17:23  bert
+ * Use fabs instead of ABS
+ *
+ * Revision 6.2  2001/04/17 18:40:14  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -76,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.2 2001-04-17 18:40:14 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.3 2003-09-18 16:17:23 bert Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -578,7 +581,7 @@ semiprivate int MI_convert_type(long number_of_values,
       dmax = icvp->fill_valid_max;
       dmin = icvp->fill_valid_min;
       epsilon = (dmax - dmin) * FILLVALUE_EPSILON;
-      epsilon = ABS(epsilon);
+      epsilon = fabs(epsilon);
       dmax += epsilon;
       dmin -= epsilon;
    }
