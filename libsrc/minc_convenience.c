@@ -497,7 +497,14 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
    int image_varid;          /* Variable id for image */
    int image_ndims;          /* Number of image dimensions */
    int image_dim[MAX_VAR_DIMS]; /* Image dimensions */
+   void *fillp;              /* Pointer to fill value */
    int oldncopts;            /* For saving and restoring ncopts */
+   int index;
+   static char fill_b[]={0,1};
+   static short fill_s[]={0,1};
+   static long fill_l[]={0,1};
+   static float fill_f[]={0.0,1.0};
+   static double fill_d[]={0.0,1.0};
 
    MI_SAVE_ROUTINE_NAME("MI_create_imaxmin_variable");
 
@@ -520,6 +527,18 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_VARATT))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
+
+   /* Attribute for setting default values to something reasonable */
+   index = STRINGS_EQUAL(name, MIimagemax) ? 1 : 0;
+   fillp = ((datatype==NC_BYTE) ?   (void *) &fill_b[index] :
+            (datatype==NC_SHORT) ?  (void *) &fill_s[index] :
+            (datatype==NC_LONG) ?   (void *) &fill_l[index] :
+            (datatype==NC_FLOAT) ?  (void *) &fill_f[index] :
+            (datatype==NC_DOUBLE) ? (void *) &fill_d[index] :
+                                    (void *) NULL);
+   if (fillp != NULL) {
+      MI_CHK_ERR(ncattput(cdfid, varid, MI_FillValue, fillp))
+   }
 
    /* Create pointer from MIimage to max or min if MIimage exists */
    if (image_varid != MI_ERROR) 
