@@ -8,7 +8,7 @@ include $(ROOT)/Makefile_machine_specific
 include $(ROOT)/Makefile_configuration
 
 # Executable names
-PROGS    = xfminvert xfmconcat
+PROGS    = xfminvert xfmconcat tagtransform
 HEADERS  = 
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(CC_PROG_LIB) -lm $(MACHINE_LDOPT)
