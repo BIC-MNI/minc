@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 3.2  1995-11-16 13:18:16  neelin
-@MODIFIED   : Added include of math.h to get declaration of strtod under SunOs
+@MODIFIED   : Revision 3.3  1996-04-11 19:31:43  neelin
+@MODIFIED   : Added -sequential and -interleaved options.
 @MODIFIED   :
+ * Revision 3.2  1995/11/16  13:18:16  neelin
+ * Added include of math.h to get declaration of strtod under SunOs
+ *
  * Revision 3.1  1995/09/29  12:59:06  neelin
  * Fixed bug in handling of image-min/max when these variables are not
  * present in the input file.
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.2 1995-11-16 13:18:16 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.3 1996-04-11 19:31:43 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -136,6 +139,7 @@ private void update_history(int mincid, char *arg_string);
 
 /* Globals */
 static int Sort_ascending = TRUE;
+static int Sort_sequential = FALSE;
 
 /* Main program */
 
@@ -305,6 +309,12 @@ public void get_arginfo(int argc, char *argv[],
       {"-descending", ARGV_CONSTANT, (char *) FALSE, 
           (char *) &Sort_ascending,
           "Sort coordinates in descending order."},
+      {"-interleaved", ARGV_CONSTANT, (char *) FALSE, 
+          (char *) &Sort_sequential,
+          "Sort coordinates in coordinate order, interleaving if necessary (default)."},
+      {"-sequential", ARGV_CONSTANT, (char *) TRUE, 
+          (char *) &Sort_sequential,
+          "Sort coordinates in sequential file order."},
 
       {NULL, ARGV_END, NULL, NULL, NULL}
    };
@@ -638,14 +648,20 @@ public void get_input_file_info(void *caller_data, int input_mincid,
          MALLOC(sizeof(double) * dimlength);
 
       /* Set defaults */
-      dimstart = 0;
+      if (!Sort_sequential || (input_curfile < 1)) {
+         dimstart = 0;
+      }
+      else {
+         index = concat_info->num_file_coords[input_curfile-1] - 1;
+         dimstart = concat_info->file_coords[input_curfile-1][index] + 1;
+      }
       dimstep = 1;
       regular = TRUE;
 
       /* Look for dimension variable */
       ncopts = 0;
       varid = ncvarid(input_mincid, dimname);
-      if (varid != MI_ERROR) {
+      if (!Sort_sequential && (varid != MI_ERROR)) {
 
          /* Find out if its regular or irregular */
          (void) ncvarinq(input_mincid, varid, NULL, NULL, &ndims, dim, NULL);

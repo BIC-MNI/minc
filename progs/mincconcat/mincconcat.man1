@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 3.0 1995-05-15 19:32:40 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 3.1 1996-04-11 19:31:43 neelin Exp $
 .\"
 .TH MINCCONCAT 1
 
@@ -132,6 +132,15 @@ Sort coordinates in ascending order (default).
 .P
 .I -descending:
 Sort coordinates in descending order.
+.P
+.I -interleaved:
+Sort slabs by their dimension coordinate, interleaving if necessary
+(default).
+.P
+.I -sequential:
+Don't sort slabs, just concatenate them together. WARNING - this will
+destroy the dimension information along the concatenating dimension,
+replacing the start and step with zero and one.
 
 .SH Generic options for all commands:
 .P
