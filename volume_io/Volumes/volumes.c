@@ -837,8 +837,7 @@ public  void  convert_3D_voxel_to_world(
     convert_voxel_to_world( volume, voxel, x_world, y_world, z_world );
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : convert_voxel_normal_vector_to_world
+/* ----------------------------- MNI Header -----------------------------------@NAME       : convert_voxel_normal_vector_to_world
 @INPUT      : volume
               x_voxel
               y_voxel
@@ -846,14 +845,13 @@ public  void  convert_3D_voxel_to_world(
 @OUTPUT     : x_world
               y_world
               z_world
-@RETURNS    : 
+@RETURNS    :
 @DESCRIPTION: Converts a voxel vector to world coordinates.  Assumes the
               vector is a normal vector (ie. a derivative), so transforms by
               transpose of inverse transform.
 @CREATED    : Mar   1993           David MacDonald
-@MODIFIED   : 
+@MODIFIED   :
 ---------------------------------------------------------------------------- */
-
 public  void  convert_voxel_normal_vector_to_world(
     Volume          volume,
     Real            x_voxel,
@@ -884,6 +882,71 @@ public  void  convert_voxel_normal_vector_to_world(
     *z_world = Transform_elem(*inverse,0,2) * x_voxel +
                Transform_elem(*inverse,1,2) * y_voxel +
                Transform_elem(*inverse,2,2) * z_voxel;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_voxel_vector_to_world
+@INPUT      : volume
+              voxel_vector
+@OUTPUT     : x_world
+              y_world
+              z_world
+@RETURNS    : 
+@DESCRIPTION: Converts a voxel vector to world coordinates.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  convert_voxel_vector_to_world(
+    Volume          volume,
+    Real            voxel_vector[],
+    Real            *x_world,
+    Real            *y_world,
+    Real            *z_world )
+{
+    int         i;
+    Real        origin[MAX_DIMENSIONS], x0, y0, z0, x1, y1, z1;
+
+    for_less( i, 0, MAX_DIMENSIONS )
+        origin[i] = 0.0;
+
+    convert_voxel_to_world( volume, origin, &x0, &y0, &z0 );
+
+    convert_voxel_to_world( volume, voxel_vector, &x1, &y1, &z1 );
+
+    *x_world = x1 - x0;
+    *y_world = y1 - y0;
+    *z_world = z1 - z0;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_world_vector_to_voxel
+@INPUT      : volume
+              x_world
+              y_world
+              z_world
+@OUTPUT     : voxel_vector
+@RETURNS    : 
+@DESCRIPTION: Converts a world vector to voxel coordinates.
+@CREATED    : Mar   1993           David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  convert_world_vector_to_voxel(
+    Volume          volume,
+    Real            x_world,
+    Real            y_world,
+    Real            z_world,
+    Real            voxel_vector[] )
+{
+    int         c;
+    Real        voxel[MAX_DIMENSIONS], origin[MAX_DIMENSIONS];
+
+    convert_world_to_voxel( volume, 0.0, 0.0, 0.0, origin );
+    convert_world_to_voxel( volume, x_world, y_world, z_world, voxel );
+
+    for_less( c, 0, get_volume_n_dimensions(volume) )
+        voxel_vector[c] = voxel[c] - origin[c];
 }
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -51,7 +51,6 @@ public  Minc_file  initialize_minc_input(
     BOOLEAN             converted_sign;
     nc_type             converted_type;
     STRING              signed_flag, last_dim_name;
-    char                *dim_names[MAX_VAR_DIMS];
     nc_type             file_datatype;
     int                 sizes[MAX_VAR_DIMS];
     double              file_separations[MAX_VAR_DIMS];
@@ -94,6 +93,7 @@ public  Minc_file  initialize_minc_input(
     if( file->cdfid == MI_ERROR )
     {
         print( "Error: opening MINC file \"%s\".\n", filename );
+        FREE( file );
         return( (Minc_file) 0 );
     }
 
@@ -119,6 +119,7 @@ public  Minc_file  initialize_minc_input(
         print( "Error: MINC file has only %d dims, volume requires %d.\n",
                file->n_file_dimensions, n_vol_dims );
         (void) miclose( file->cdfid );
+        FREE( file );
         return( (Minc_file) 0 );
     }
     else if( file->n_file_dimensions > MAX_VAR_DIMS )
@@ -126,14 +127,16 @@ public  Minc_file  initialize_minc_input(
         print( "Error: MINC file has %d dims, can only handle %d.\n",
                file->n_file_dimensions, MAX_VAR_DIMS );
         (void) miclose( file->cdfid );
+        FREE( file );
         return( (Minc_file) NULL );
     }
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        ALLOC( dim_names[d], MAX_STRING_LENGTH + 1 );
+        ALLOC( file->dim_names[d], MAX_STRING_LENGTH + 1 );
 
-        (void) ncdiminq( file->cdfid, dim_vars[d], dim_names[d], &long_size );
+        (void) ncdiminq( file->cdfid, dim_vars[d], file->dim_names[d],
+                         &long_size );
         file->sizes_in_file[d] = long_size;
     }
 
@@ -141,7 +144,7 @@ public  Minc_file  initialize_minc_input(
 
     if( !match_dimension_names( get_volume_n_dimensions(volume),
                                 volume->dimension_names,
-                                file->n_file_dimensions, dim_names,
+                                file->n_file_dimensions, file->dim_names,
                                 file->axis_index_in_file ) )
     {
         print( "Error:  dimension names did not match: \n" );
@@ -154,9 +157,10 @@ public  Minc_file  initialize_minc_input(
         print( "\n" );
         print( "In File:\n" );
         for_less( d, 0, file->n_file_dimensions )
-            print( "%d: %s\n", d+1, dim_names[d] );
+            print( "%d: %s\n", d+1, file->dim_names[d] );
 
         (void) miclose( file->cdfid );
+        FREE( file );
         return( (Minc_file) NULL );
     }
 
@@ -183,7 +187,7 @@ public  Minc_file  initialize_minc_input(
 
     for_less( d, 0, file->n_file_dimensions )
     {
-        if( convert_dim_name_to_axis( dim_names[d], &axis ) )
+        if( convert_dim_name_to_axis( file->dim_names[d], &axis ) )
         {
             spatial_axis_indices[d] = axis;
             file->spatial_axes[axis] = d;
@@ -222,7 +226,7 @@ public  Minc_file  initialize_minc_input(
             dir_cosines[d][spatial_axis_indices[d]] = 1.0;
         }
 
-        dimvar = ncvarid( file->cdfid, dim_names[d] );
+        dimvar = ncvarid( file->cdfid, file->dim_names[d] );
         if( dimvar != MI_ERROR )
         {
             (void) miattget1( file->cdfid, dimvar, MIstep, NC_DOUBLE,
@@ -475,9 +479,6 @@ public  Minc_file  initialize_minc_input(
     if( different && volume->data != (char *) NULL )
         free_volume_data( volume );
 
-    for_less( d, 0, file->n_file_dimensions )
-        FREE( dim_names[d] );
-
     return( file );
 }
 
@@ -518,6 +519,8 @@ public  int  get_n_input_volumes(
 public  Status  close_minc_input(
     Minc_file   file )
 {
+    int  d;
+
     if( file == (Minc_file) NULL )
     {
         print( "close_minc_input(): NULL file.\n" );
@@ -526,6 +529,9 @@ public  Status  close_minc_input(
 
     (void) miclose( file->cdfid );
     (void) miicv_free( file->icv );
+
+    for_less( d, 0, file->n_file_dimensions )
+        FREE( file->dim_names[d] );
 
     delete_general_transform( &file->voxel_to_world_transform );
     FREE( file );
@@ -540,6 +546,7 @@ public  void  copy_volumes_reordered(
     int         src_ind[],
     int         to_dest_index[] )
 {
+    int     i, last_src_dim, inner_size, src_inner_step, dest_inner_step;
     int     d, n_src_dims, n_dest_dims, ind[MAX_DIMENSIONS];
     int     type_size, src_sizes[MAX_DIMENSIONS];
     int     dest_offset[MAX_DIMENSIONS], src_offset[MAX_DIMENSIONS];
@@ -583,13 +590,59 @@ public  void  copy_volumes_reordered(
         --n_dest_dims;
     }
 
+    if( n_src_dims > 0 )
+    {
+        last_src_dim = n_src_dims-1;
+        while( to_dest_index[last_src_dim] == INVALID_AXIS )
+            --last_src_dim;
+        inner_size = src_sizes[last_src_dim];
+        src_inner_step = src_offset[last_src_dim];
+        dest_inner_step = dest_offset[to_dest_index[last_src_dim]];
+    }
+    else
+    {
+        last_src_dim = 0;
+        inner_size = 1;
+        src_inner_step = 0;
+        dest_inner_step = 0;
+    }
+
     done = FALSE;
     while( !done )
     {
-        (void) memcpy( dest_ptr, src_ptr, type_size );
+        if( src_inner_step == 1 )
+        {
+            for_less( i, 0, inner_size )
+            {
+                (void) memcpy( dest_ptr, src_ptr, type_size );
+                ++src_ptr;
+                dest_ptr += dest_inner_step;
+            }
+        }
+        else if( dest_inner_step == 1 )
+        {
+            for_less( i, 0, inner_size )
+            {
+                (void) memcpy( dest_ptr, src_ptr, type_size );
+                src_ptr += src_inner_step;
+                ++dest_ptr;
+            }
+        }
+        else
+        {
+            for_less( i, 0, inner_size )
+            {
+                (void) memcpy( dest_ptr, src_ptr, type_size );
+                src_ptr += src_inner_step;
+                dest_ptr += dest_inner_step;
+            }
+        }
+
+        src_ptr -= src_inner_step * inner_size;
+        dest_ptr -= dest_inner_step * inner_size;
 
         done = TRUE;
-        d = n_src_dims-1;
+        d = last_src_dim-1;
         while( d >= 0 && done )
         {
             dest_index = to_dest_index[d];

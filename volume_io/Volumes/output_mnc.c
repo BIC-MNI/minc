@@ -630,7 +630,7 @@ public  Status  output_minc_volume(
 
     for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
-        if( to_volume[d] == INVALID_AXIS || n_slab >= file->n_slab_dims )
+        if( to_volume[d] != INVALID_AXIS && n_slab >= file->n_slab_dims )
             n_steps *= file->sizes_in_file[d];
         if( to_volume[d] != INVALID_AXIS )
             ++n_slab;
@@ -695,7 +695,7 @@ public  Status  output_minc_volume(
           correspond to volume dimensions */
 
     d = file->n_file_dimensions-1;
-    while( increment && d <= 0 )
+    while( increment && d >= 0 )
     {
         if( to_volume[d] == INVALID_AXIS )
         {

@@ -554,12 +554,8 @@ expands them appropriately, storing the resulting expanded filename in
 the second argument, \name{expanded\_filename}, which must be a
 different string pointer.  Any sequence of
 characters starting with a \name{\~\ } up to but not including a slash,
-\name{/}, will be changed to the current users home directory.  Note
-that this will only work properly if the \name{\~\ } is used alone, or
-in conjunction with the current user's user name.  For example,
-if user \name{john} passes this routine a filename of
-\name{\~\ frank/text}, it will be expanded to \name{/usr/people/john/text},
-which is not what was desired.  Any occurrence of a dollar sign,
+\name{/}, will be changed to the specified users home directory.
+Any occurrence of a dollar sign,
 \name{\$}, will result in the following text, up to the next slash,
 being expanded to the environment variable specified by the text.  This
 expansion can be avoided by placing a backslash, \name{$\backslash$},
@@ -1618,7 +1614,8 @@ interval and is independent of the particular storage type.
 
 Since most volumes will be created by reading from a MINC file, this
 method will be presented first, followed by a description of how to
-create a volume from scratch.
+create a volume from scratch.  Finally a lower level of MINC input and
+output for more advanced applications will be presented.
 
 \section{Volume Input}
 
@@ -2225,6 +2222,133 @@ int  main(
 }
 \end{verbatim}
 }
+
+\section{Multiple Volume Input}
+
+The \name{input\_volume} function described previously is intended to
+be a simple single-function interface for reading volumes for most
+applications.  Occasionally, however, an application may not want to
+read the whole volume at once, or may need to break the input file
+into several volumes, for instance, the slices of a 3D volume.  This can
+be facilitated by the following functions:
+
+{\bf\begin{verbatim}
+public  Minc_file  initialize_minc_input(
+    char                 filename[],
+    Volume               volume,
+    minc_input_options   *options )
+\end{verbatim}}
+
+\desc{This functions opens a MINC file for input to the specified
+volume.  The number of
+dimensions in the file must be greater than or equal to the number of
+dimensions in the volume, and each dimension name in the volume must
+have a matching dimension name in the file.  A file handle is
+returned, for use in the following routines.}
+
+{\bf\begin{verbatim}
+public  int  get_n_input_volumes(
+    Minc_file  file )
+\end{verbatim}}
+
+\desc{Determines the total number of volumes in the opened MINC file.
+For instance, if the file contains x, y, z data of size 100 by 200 by
+300 and the file was opened with a two dimensional x-z volume, then
+the number of volumes returned will be 200, the number of y slices.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  input_more_minc_file(
+    Minc_file   file,
+    Real        *fraction_done )
+\end{verbatim}}
+
+\desc{Reads part of the MINC file to the volume specified in
+\name{initialize\_minc\_input}.  This function must be called until it
+returns FALSE, at which point the volume has been fully read in.  In
+order to read the next volume in the file, if any, the following
+function must be called.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  advance_input_volume(
+    Minc_file   file )
+\end{verbatim}}
+
+\desc{Advances the input file to the next volume.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  reset_input_volume(
+    Minc_file   file )
+\end{verbatim}}
+
+\desc{Resets the input to the beginning of the first volume in the
+file.}
+
+{\bf\begin{verbatim}
+public  Status  close_minc_input(
+    Minc_file   file )
+\end{verbatim}}
+
+\desc{Closes the MINC file.}
+
+\section{Multiple Volume Output}
+
+Similarly to the multiple volume input, there are routines for
+providing output to a file by subvolumes.
+
+{\bf\begin{verbatim}
+public  Minc_file  initialize_minc_output(
+    char                   filename[],
+    int                    n_dimensions,
+    STRING                 dim_names[],
+    int                    sizes[],
+    nc_type                file_nc_data_type,
+    BOOLEAN                file_signed_flag,
+    Real                   file_voxel_min,
+    Real                   file_voxel_max,
+    Real                   real_min,
+    Real                   real_max,
+    General_transform      *voxel_to_world_transform,
+    minc_output_options    *options )
+\end{verbatim}}
+
+\desc{Opens a MINC file for creation.  The arguments specify the
+number of dimensions and the names of each dimension, as well as the
+sizes in each dimensions.  The type of the file is controlled by the
+four parameters, \name{file\_nc\_data\_type},
+\name{file\_signed\_flag}, \name{file\_voxel\_min}, and
+\name{file\_voxel\_max}.  The mapping of voxels to real values is
+specified by \name{real\_min} and \name{real\_max}.  The
+transformation to world coordinates is specified by the
+\name{voxel\_to\_world\_transform} argument.  The \name{options} are
+as specified for the \name{output\_volume} function.}
+
+{\bf\begin{verbatim}
+public  Status  copy_auxiliary_data_from_minc_file(
+    Minc_file   file,
+    char        filename[],
+    char        history_string[] )
+\end{verbatim}}
+
+\desc{Copies the auxiliary information from the MINC file specified in
+the \name{filename} argument to the open MINC \name{file}.}
+
+{\bf\begin{verbatim}
+public  Status  output_minc_volume(
+    Minc_file   file,
+    Volume      volume )
+\end{verbatim}}
+
+\desc{Outputs a volume to the MINC file.  The volume must have no more
+dimensions than the file and the names of each dimension must match
+with one of the dimensions in the file (specified by
+\name{initialize\_minc\_output}).}
+
+{\bf\begin{verbatim}
+public  Status  close_minc_output(
+    Minc_file   file )
+\end{verbatim}}
+
+\desc{Closes the MINC file.}
 
 \chapter{Tag Points}
 

@@ -61,9 +61,12 @@ public  Status  output_modified_volume(
     n_dims = get_volume_n_dimensions(volume);
     vol_dimension_names = get_volume_dimension_names( volume );
 
+    /*--- either get the output dim name ordering from the original
+          filename, the volume, or the options */
+
     if( options == NULL || strlen( options->dimension_names[0] ) == 0 )
     {
-        if( original_filename == NULL )
+        if( original_filename != NULL )
         {
             if( get_file_dimension_names( original_filename, n_dims,
                                           dim_names ) != OK )

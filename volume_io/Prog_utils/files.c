@@ -1,5 +1,6 @@
 
 #include  <volume_io.h>
+#include  <pwd.h>
 
 private  BOOLEAN  has_no_extension( char [] );
 
@@ -99,6 +100,19 @@ public  void  unlink_file(
     (void) unlink( filename );
 }
 
+private  char  *get_user_home_directory(
+    char   user_name[] )
+{
+    struct   passwd  *p;
+
+    p = getpwnam( user_name );
+
+    if( p == NULL )
+        return( NULL );
+    else
+        return( p->pw_dir );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : expand_filename
 @INPUT      : filename
@@ -120,8 +134,8 @@ public  void  expand_filename(
     char  expanded_filename[] )
 {
     int      i, new_i, dest, len, env_index;
-    BOOLEAN  use_home, prev_was_backslash;
-    char     *env_value;
+    BOOLEAN  tilde_found, prev_was_backslash;
+    char     *expand_value;
     STRING   env;
 
     len = strlen( filename );
@@ -135,7 +149,7 @@ public  void  expand_filename(
             ((i == 0 && filename[i] == '~') || filename[i] == '$') )
         {
             new_i = i;
-            use_home = (filename[new_i] == '~');
+            tilde_found = (filename[new_i] == '~');
             ++new_i;
             env_index = 0;
             while( filename[new_i] != '/' &&
@@ -149,15 +163,20 @@ public  void  expand_filename(
 
             env[env_index] = (char) 0;
 
-            if( use_home )
-                (void) strcpy( env, "HOME" );
-
-            env_value = getenv( env );
-
-            if( env_value != (char *) NULL )
+            if( tilde_found )
             {
-                (void) strcpy( &expanded_filename[dest], env_value );
-                dest += strlen( env_value );
+                if( strlen( env ) == 0 )
+                    expand_value = getenv( "HOME" );
+                else
+                    expand_value = get_user_home_directory( env );
+            }
+            else
+                expand_value = getenv( env );
+
+            if( expand_value != (char *) NULL )
+            {
+                (void) strcpy( &expanded_filename[dest], expand_value );
+                dest += strlen( expand_value );
                 i = new_i;
             }
             else

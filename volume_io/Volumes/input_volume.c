@@ -94,9 +94,12 @@ public  Status  start_volume_input(
                                                        *volume, options );
         if( input_info->minc_file == (Minc_file) NULL )
             status = ERROR;
+        else
+        {
+            for_less( d, 0, MAX_DIMENSIONS )
+                input_info->axis_index_from_file[d] = d;
+        }
 
-        for_less( d, 0, MAX_DIMENSIONS )
-            input_info->axis_index_from_file[d] = d;
         break;
 #endif
 

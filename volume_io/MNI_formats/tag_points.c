@@ -146,6 +146,9 @@ public  Status  output_tag_points(
         (void) fprintf( file, "\n" );
     }
 
+    if( n_tag_points == 0 )
+        (void) fprintf( file, ";\n" );
+
     return( status );
 }
 

@@ -37,7 +37,7 @@ public  void  alloc_memory(
         {
             set_print_function( NULL );
             print( "Error alloc_memory: out of memory, %d bytes.\n", n_bytes );
-            abort_if_allowed();
+            abort();
         }
     }
     else

@@ -120,9 +120,7 @@ typedef  char     STRING[MAX_STRING_LENGTH+1];
 
 /* --------------- */
 
-#define  ROUND( x )     ((int) ((x) + 0.5))
-
-#define  ROUND_UP( x )     ( (x) < 0.0 ? (int) ((x) - 0.5)      \
+#define  ROUND( x )     ( (x) < 0.0 ? (int) ((x) - 0.5)      \
                                     : (int) ((x) + 0.5) )
 
 #define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))

@@ -64,13 +64,13 @@ typedef  unsigned  long    Colour;
 
 #ifdef lint
 #define  make_Colour_0_1( r, g, b ) ((Colour) ( r + g + b ))
-#define  make_Colour_0_1_alpha( r, g, b, a ) ((Colour) ( r + g + b + a))
+#define  make_rgba_Colour_0_1( r, g, b, a ) ((Colour) ( r + g + b + a))
 #else
 #define  make_Colour_0_1( r, g, b )                       \
             make_Colour( COLOUR_0_1_TO_256(r),            \
                          COLOUR_0_1_TO_256(g),            \
                          COLOUR_0_1_TO_256(b) )
-#define  make_Colour_0_1_alpha( r, g, b, a )              \
+#define  make_rgba_Colour_0_1( r, g, b, a )              \
             make_rgba_Colour( COLOUR_0_1_TO_256(r),            \
                               COLOUR_0_1_TO_256(g),            \
                               COLOUR_0_1_TO_256(b),            \
@@ -78,7 +78,7 @@ typedef  unsigned  long    Colour;
 #endif
 
 #define  get_Colour_luminance( c )                                            \
-            ROUND( 0.288 * (Real) get_Colour_r(c) +                           \
+            ROUND( 0.299 * (Real) get_Colour_r(c) +                           \
                    0.587 * (Real) get_Colour_g(c) +                           \
                    0.114 * (Real) get_Colour_b(c) )
 
@@ -100,7 +100,7 @@ typedef  unsigned  long    Colour;
             r = r1 * r2; \
             g = g1 * g2; \
             b = b1 * b2; \
-            (prod) = make_Colour_0_1_alpha( r, g, b, get_Colour_a_0_1(c1) ); \
+            (prod) = make_rgba_Colour_0_1( r, g, b, get_Colour_a_0_1(c1) ); \
         }
 
 #define  ADD_COLOURS( sum, c1, c2 )                  \

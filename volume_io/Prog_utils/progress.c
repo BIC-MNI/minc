@@ -92,13 +92,11 @@ public  void  update_progress_report(
     Real    current_time, constant, n_seconds_per;
     Real    time_so_far, est_total_time;
 
-    if( current_step < progress->next_check_step )
+    if( current_step < 1 || current_step < progress->next_check_step )
         return;
 
-    if( current_step < 1 || current_step > progress->n_steps )
-    {
-        HANDLE_INTERNAL_ERROR( "update_progress" );
-    }
+    if( current_step > progress->n_steps )
+        current_step = progress->n_steps;
 
     current_time = current_realtime_seconds();
 

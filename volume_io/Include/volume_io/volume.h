@@ -294,6 +294,7 @@ typedef  struct
     int                n_file_dimensions;
     int                sizes_in_file[MAX_VAR_DIMS];
     long               indices[MAX_VAR_DIMS];
+    char               *dim_names[MAX_VAR_DIMS];
 
     /* input only */
 
@@ -302,6 +303,7 @@ typedef  struct
     Volume             volume;
 
     int                axis_index_in_file[MAX_VAR_DIMS];
+    int                to_file_index[MAX_DIMENSIONS];
     int                valid_file_axes[MAX_DIMENSIONS];
 
     int                n_slab_dims;
@@ -318,14 +320,13 @@ typedef  struct
     BOOLEAN            end_def_done;
     BOOLEAN            variables_written;
     int                dim_ids[MAX_VAR_DIMS];
-    char               *dim_names[MAX_VAR_DIMS];
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;
 
 typedef  struct
 {
-    int       arent_any_yet;
+    int         arent_any_yet;
 } volume_creation_options;
 
 typedef  struct
@@ -336,7 +337,7 @@ typedef  struct
 
 typedef  struct
 {
-    int         duh;
+    STRING   dimension_names[MAX_DIMENSIONS];
 } minc_output_options;
 
 /* recognized file formats */
