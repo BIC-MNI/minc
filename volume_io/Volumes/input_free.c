@@ -485,6 +485,11 @@ public  Boolean  input_more_free_format_file(
                         value = (int)(
                          ((Real) (*byte_buffer_ptr) -
                          volume->value_translation) / volume->value_scale );
+
+                        if( value < 0 )
+                            value = 0;
+                        else if( value > 255 )
+                            value = 255;
                     }
                     else
                         value = (int) (*byte_buffer_ptr);
