@@ -58,7 +58,8 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_EXTRA) $(LINT_PROG_LIB) $(LINT_MINC_LIB)
 
 # Remove all derived files in this directory
 clean:
-	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ)
+	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
+      $(LINT_EXTRA) $(EXTRA_OBJS)
 
 install:
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)
