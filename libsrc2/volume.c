@@ -65,6 +65,8 @@ micreate_volume_image(mihandle_t volume)
     if (dset_id < 0) {  
         return (MI_ERROR);
     }
+
+    volume->image_id = dset_id;
     
     hdf_var_declare(volume->hdf_id, "image", "/minc-2.0/image/0/image",
                     volume->number_of_dims, hdf_size);
@@ -74,7 +76,6 @@ micreate_volume_image(mihandle_t volume)
     miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                       strlen(dimorder), dimorder);
 
-    H5Dclose(dset_id);
     H5Sclose(dataspace_id);
     
     if (volume->volume_class == MI_CLASS_REAL) {
@@ -111,7 +112,7 @@ micreate_volume_image(mihandle_t volume)
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
         }
-        H5Dclose(dset_id);
+        volume->imin_id = dset_id;
         hdf_var_declare(volume->hdf_id, "image-min", "/minc-2.0/image/0/image-min", ndims, hdf_size);
         dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-max",
                             H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
@@ -119,8 +120,8 @@ micreate_volume_image(mihandle_t volume)
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
         }
+        volume->imax_id = dset_id;
         hdf_var_declare(volume->hdf_id, "image-max", "/minc-2.0/image/0/image-max", ndims, hdf_size);
-        H5Dclose(dset_id);
         H5Sclose(dataspace_id);
 	
     }
@@ -274,7 +275,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
 	  
           if (hdf_size[i] > dimensions[i]->length) {
               hdf_size[i] = dimensions[i]->length;
-	      
           }
       }
     
@@ -387,9 +387,34 @@ micreate_volume(const char *filename, int number_of_dimensions,
     miset_attr_at_loc(dataset_id, "spacing", MI_TYPE_STRING,
                       strlen(name), name);
 
-    miset_attr_at_loc(dataset_id, "class", MI_TYPE_INT, 1, 
-                      &dimensions[i]->class);
-   
+    switch (dimensions[i]->class) {
+    case MI_DIMCLASS_SPATIAL:
+        name = "spatial";
+        break;
+    case MI_DIMCLASS_TIME:
+        name = "time___";
+        break;
+    case MI_DIMCLASS_SFREQUENCY:
+        name = "sfreq__";
+        break;
+    case MI_DIMCLASS_TFREQUENCY:
+        name = "tfreq__";
+        break;
+    case MI_DIMCLASS_USER:
+        name = "user___";
+        break;
+    case MI_DIMCLASS_RECORD:
+        name = "record_";
+        break;
+    case MI_DIMCLASS_ANY:
+    default:
+        /* These should not be seen in this context!!!
+         */
+        return (MI_ERROR);
+    }
+    miset_attr_at_loc(dataset_id, "class", MI_TYPE_STRING, strlen(name),
+                      name);
+
    /* Create Dimension attribute "direction_cosines"  */
     miset_attr_at_loc(dataset_id, "direction_cosines", MI_TYPE_DOUBLE,
                       3, dimensions[i]->direction_cosines);
@@ -433,6 +458,9 @@ micreate_volume(const char *filename, int number_of_dimensions,
   handle->scale_min = -1.0;
   handle->scale_max = 1.0;
   handle->number_of_dims = number_of_dimensions;
+  handle->image_id = -1;
+  handle->imax_id = -1;
+  handle->imin_id = -1;
   handle->dim_handles = (midimhandle_t *)malloc(number_of_dimensions*sizeof(int));
   
   
@@ -526,23 +554,58 @@ micreate_volume(const char *filename, int number_of_dimensions,
 /** Return the number of dimensions associated with this volume.
  */
 int
-miget_volume_dimension_count(mihandle_t volume, midimclass_t class,
+miget_volume_dimension_count(mihandle_t volume, midimclass_t cls,
 			     midimattr_t attr, int *number_of_dimensions)
 {
-  int i, count=0;
+    int i, count=0;
   
-  if (volume == NULL) {
-    return (MI_ERROR);
-  }
-  for (i=0; i< volume->number_of_dims; i++) {
-   if (volume->dim_handles[i]->class == class && 
-      (attr == MI_DIMATTR_ALL || volume->dim_handles[i]->attr == attr)) {
-      count++;     
-      }
-  }
+    if (volume == NULL || number_of_dimensions == NULL) {
+        return (MI_ERROR);
+    }
+    for (i=0; i< volume->number_of_dims; i++) {
+        if ((cls == MI_DIMCLASS_ANY || volume->dim_handles[i]->class == cls) &&
+            (attr == MI_DIMATTR_ALL || volume->dim_handles[i]->attr == attr)) {
+            count++;
+        }
+    }
 
-  *number_of_dimensions = count;
-  return (MI_NOERROR);
+    *number_of_dimensions = count;
+    return (MI_NOERROR);
+}
+
+/** Returns the number of voxels in the volume.
+ */
+int
+miget_volume_voxel_count(mihandle_t volume, int *number_of_voxels)
+{
+    char path[MI2_MAX_PATH];
+    hid_t dset_id;
+    hid_t fspc_id;
+
+    if (volume == NULL || number_of_voxels == NULL) {
+        return (MI_ERROR);
+    }
+
+    /* Quickest way to do this is with the dataspace identifier of the
+     * volume.
+     */
+    sprintf(path, "/minc-2.0/image/%d/image", volume->selected_resolution);
+
+    dset_id = H5Dopen(volume->hdf_id, path);
+    if (dset_id < 0) {
+        return (MI_ERROR);
+    }
+
+    fspc_id = H5Dget_space(dset_id);
+    if (fspc_id < 0) {
+        return (MI_ERROR);
+    }
+
+    *number_of_voxels = (int) H5Sget_simple_extent_npoints(fspc_id);
+
+    H5Sclose(fspc_id);
+    H5Dclose(dset_id);
+    return (MI_NOERROR);
 }
 
 static int 
@@ -644,12 +707,8 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             hdim->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
         }
 
-
-        r = miget_attribute(volume, path, "class", MI_TYPE_INT, 1, &hdim->class);
-
         r = miget_attribute(volume, path, "class", MI_TYPE_STRING, 
                             MI2_CHAR_LENGTH, temp);
-
         if (r < 0) {
             /* Get the default class. */
             if (!strcmp(dimname, "time")) {
@@ -657,6 +716,29 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             }
             else {
                 hdim->class =  MI_DIMCLASS_SPATIAL;
+            }
+        }
+        else {
+            if (!strcmp(temp, "spatial")) {
+                hdim->class = MI_DIMCLASS_SPATIAL;
+            }
+            else if (!strcmp(temp, "time___")) {
+                hdim->class = MI_DIMCLASS_TIME;
+            }
+            else if (!strcmp(temp, "sfreq__")) {
+                hdim->class = MI_DIMCLASS_SFREQUENCY;
+            }
+            else if (!strcmp(temp, "tfreq__")) {
+                hdim->class = MI_DIMCLASS_TFREQUENCY;
+            }
+            else if (!strcmp(temp, "user___")) {
+                hdim->class = MI_DIMCLASS_USER;
+            }
+            else if (!strcmp(temp, "record_")) {
+                hdim->class = MI_DIMCLASS_RECORD;
+            }
+            else {
+                /* TODO: error message?? */
             }
         }
         r = miget_attribute(volume, path, "length", MI_TYPE_UINT, 1, &hdim->length);
@@ -709,6 +791,9 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     char dimorder[MI2_CHAR_LENGTH];
     int i,r;
     char *p1, *p2;
+    H5T_class_t class;
+    size_t nbytes;
+    int is_signed;
 
     miinit();
     
@@ -734,10 +819,8 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     
     handle->hdf_id = file_id;
     handle->mode = mode;
-
     handle->selected_resolution = 0;
 
-    
     /* Get the volume class.
      */
     _miget_volume_class(handle, &handle->volume_class);
@@ -756,7 +839,6 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     if ( r < 0) {
       return (MI_ERROR);
     }
-    printf( " dimorder is %s\n", dimorder);
     p1 = dimorder;
 
     for (i = 0; i < handle->number_of_dims; i++) {
@@ -772,7 +854,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
      */
     handle->has_slice_scaling = FALSE;
     H5E_BEGIN_TRY {
-        dset_id = midescend_path(file_id, "/minc-2.0/image/0/image-max");
+        dset_id = H5Dopen(file_id, "/minc-2.0/image/0/image-max");
     } H5E_END_TRY;
     if (dset_id >= 0) {
 	space_id = H5Dget_space(dset_id);
@@ -808,6 +890,58 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     /* Initialize the selected resolution. */
     handle->selected_resolution = 0;
     
+    handle->image_id = H5Dopen(file_id, "/minc-2.0/image/0/image");
+    if (handle->image_id < 0) {
+	return (MI_ERROR);
+    }
+    handle->type_id = H5Dget_type(handle->image_id);
+    if (handle->type_id < 0) {
+	return (MI_ERROR);
+    }
+
+    H5E_BEGIN_TRY {
+        handle->imax_id = H5Dopen(file_id, "/minc-2.0/image/0/image-max");
+        handle->imin_id = H5Dopen(file_id, "/minc-2.0/image/0/image-min");
+    } H5E_END_TRY;
+
+    /* Convert the type to a MINC type.
+     */
+    class = H5Tget_class(handle->type_id);
+    nbytes = H5Tget_size(handle->type_id);
+
+    switch (class) {
+    case H5T_INTEGER:
+	is_signed = (H5Tget_size(handle->type_id) == H5T_SGN_2);
+
+	switch (nbytes) {
+	case 1:
+	    handle->volume_type = (is_signed ? MI_TYPE_BYTE : MI_TYPE_UBYTE);
+	    break;
+	case 2:
+	    handle->volume_type = (is_signed ? MI_TYPE_SHORT : MI_TYPE_USHORT);
+	    break;
+	case 4:
+	    handle->volume_type = (is_signed ? MI_TYPE_INT : MI_TYPE_UINT);
+	    break;
+	default:
+            return (MI_ERROR);
+	}
+	break;
+    case H5T_FLOAT:
+	handle->volume_type = (nbytes == 4) ? MI_TYPE_FLOAT : MI_TYPE_DOUBLE;
+	break;
+    case H5T_STRING:
+	handle->volume_type = MI_TYPE_STRING;
+	break;
+    case H5T_ARRAY:
+	/* TODO: handle this case for uniform records (arrays)? */
+	break;
+    case H5T_COMPOUND:
+	/* TODO: handle this case for non-uniform records? */
+	break;
+    default:
+        return (MI_ERROR);
+    }
     *volume = handle;
     return (MI_NOERROR);
 }
@@ -817,6 +951,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 int
 miflush_volume(mihandle_t volume)
 {
+    H5Fflush(volume->hdf_id, H5F_SCOPE_GLOBAL);
     misave_valid_range(volume);
     return (MI_NOERROR);
 }
@@ -834,6 +969,15 @@ miclose_volume(mihandle_t volume)
 
     miflush_volume(volume);
 
+    if (volume->image_id > 0) {
+        H5Dclose(volume->image_id);
+    }
+    if (volume->imax_id > 0) {
+        H5Dclose(volume->imax_id);
+    }
+    if (volume->imin_id > 0) {
+        H5Dclose(volume->imin_id);
+    }
     if (volume->type_id > 0) {
         H5Tclose(volume->type_id);
     }
@@ -843,8 +987,12 @@ miclose_volume(mihandle_t volume)
     if (H5Fclose(volume->hdf_id) < 0) {
       return (MI_ERROR);
     }
-    free(volume->dim_handles);
-    free(volume->dim_indices);
+    if (volume->dim_handles != NULL) {
+        free(volume->dim_handles);
+    }
+    if (volume->dim_indices != NULL) {
+        free(volume->dim_indices);
+    }
     if (volume->create_props != NULL) {
       mifree_volume_props(volume->create_props);
     }
