@@ -269,13 +269,19 @@ sub get_dircos {
 
 # Subroutine to add an optional attribute to an array
 sub add_optional_attribute {
-    if (scalar(@_) != 3) {
+    if (scalar(@_) != 4) {
         die "Argument error in add_optional_attribute\n";
     }
-    local(*array, $name, $value) = @_;
+    local(*array, $type, $name, $value) = @_;
+    local($key);
+
+    if ($type eq "string") {$key = "-sattribute";}
+    elsif ($type eq "double") {$key = "-dattribute";}
+    elsif ($type eq "none") {$key = "-attribute";}
+    else {die "Unknown type \"$type\" in add_optional_attribute\n";}
 
     if (length($value) > 0) {
-        push(@array, "-attribute", $name."=".$value);
+        push(@array, $key, $name."=".$value);
     }
 }
 
@@ -348,7 +354,8 @@ sub create_mincfile {
         $filebase = $mincfile;
     }
     local($version) = 1;
-    while (-e $mincfile) {
+    local(@glob);
+    while (scalar(@glob=<$mincfile*>) > 0) {
         $version++;
         $mincfile = $filebase."_version$version.mnc";
         print STDERR "Minc file already exists. Trying name \"$mincfile\".\n";
@@ -406,41 +413,47 @@ sub create_mincfile {
 
     # Optional attributes
     local(@optional_attributes) = ();
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "double",
                             "acquisition:repetition_time", $mincinfo{'tr'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "double",
                             "acquisition:echo_time", $mincinfo{'te',$echo});
-    &add_optional_attribute(*optional_attributes,
+    &add_optional_attribute(*optional_attributes, "double",
                             "acquisition:inversion_time", $mincinfo{'ti'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "double",
                             "acquisition:flip_angle", $mincinfo{'mr_flip'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "acquisition:scanning_sequence", 
                             $mincinfo{'scan_seq'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "study:study_id", $mincinfo{'exam'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "study:acquisition_id", $mincinfo{'series'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "study:start_time", $mincinfo{'start_time'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "study:institution", $mincinfo{'institution'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "patient:birthdate", 
                             $mincinfo{'patient_birthdate'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "double",
                             "patient:age", $mincinfo{'patient_age'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "patient:sex", $mincinfo{'patient_sex'});
-    &add_optional_attribute(*optional_attributes, 
+    &add_optional_attribute(*optional_attributes, "string",
                             "patient:identification", $mincinfo{'patient_id'});
+
+    # Check for history
+    if (length($history) > 0) {
+       &add_optional_attribute(*optional_attributes, "string",
+                               ":history", $mincinfo{'history'});
+    }
 
     # GE specific stuff
     local(@ge_specific_attributes);
     @ge_specific_attributes = ();
-    &add_optional_attribute(*ge_specific_attributes,
+    &add_optional_attribute(*ge_specific_attributes, "string",
                             "ge_mrimage:pseq", $mincinfo{'ge_pseq'});
-    &add_optional_attribute(*ge_specific_attributes,
+    &add_optional_attribute(*ge_specific_attributes, "string",
                             "ge_mrimage:pseqmode", $mincinfo{'ge_pseqmode'});
 
     # Run rawtominc with appropriate arguments
@@ -526,6 +539,7 @@ sub create_mincfile {
         &cleanup_and_die("Error or signal while writing image.\n", $?);
     }
 
+    return $mincfile;
 }
 
 # Routine to add to the list file
@@ -565,6 +579,7 @@ sub get_arguments {
     local($tape_position) = 0;
     local($tape_end) = -1;
     local(@input_list) = ();
+    local($do_compression) = 0;
 
     # Loop through arguments
     while (@_) {
@@ -574,6 +589,8 @@ sub get_arguments {
         elsif (/^-nominc$/) { $nominc = 1;}
         elsif (/^-first$/) { $tape_position = shift;}
         elsif (/^-last$/) {$tape_end = shift;}
+        elsif (/^-compress$/) {$do_compression = 1;}
+        elsif (/^-nocompress$/) {$do_compression = 0;}
         elsif (/^-h(|elp)$/) {
             die
 "Command-specific options:
@@ -582,6 +599,8 @@ sub get_arguments {
  -nominc:\t\tDo not produce output minc files
  -first:\t\tSpecify a starting tape position (# files to skip)
  -last:\t\tSpecify an ending tape position
+ -compress:\t\tCompress the output minc files
+ -nocompress:\t\tDo not compress the output minc files (default)
 Generic options for all commands:
  -help:\t\tPrint summary of comand-line options and abort
 
@@ -618,7 +637,7 @@ $usage
 
     # Return values
     return($outputdir, $tapedrive, $listfile, $nominc, 
-           $tape_position, $tape_end, @input_list);
+           $tape_position, $tape_end, $do_compression, @input_list);
 }
 
 # Subroutine to do all the work - loops through files collecting info,
@@ -628,9 +647,14 @@ sub mri_to_minc {
 
     $| = 1;
 
+    # Save history
+    chop($history = `date`);
+    $0 =~ /([^\/]+)$/;
+    $history .= ">>>> $1 @ARGV\n";
+
     # Get arguments
     ($outputdir, $tapedrive, $listfile, $nominc, 
-     $tape_position, $tape_end, @input_list) = 
+     $tape_position, $tape_end, $do_compression, @input_list) = 
          &get_arguments(@_);
 
     # Should we delete the files?
@@ -734,8 +758,13 @@ sub mri_to_minc {
                 }
                 if (!$nominc) {
                     print STDERR "Creating minc file \"$mincfile\"\n";
-                    &create_mincfile($mincfile, *file_list, *mincinfo, 
-                                     $image_list{$echo}, $echo);
+                    $mincfile = 
+                       &create_mincfile($mincfile, *file_list, *mincinfo, 
+                                        $image_list{$echo}, $echo);
+                    if ($do_compression) {
+                       print STDERR "Compressing file \"$mincfile\"\n";
+                       system("gzip $mincfile");
+                    }
                 }
                 else {
                     print STDERR "Not creating minc file \"$mincfile\"\n";
@@ -754,6 +783,7 @@ sub mri_to_minc {
 
         # If first file, then save appropriate info
         if (scalar(keys(%file_list)) <= 0) {
+            $mincinfo{'history'} = $history;
             $mincinfo{'tape_position'} = $tape_position;
             $mincinfo{'exam'} = $cur_exam;
             $mincinfo{'series'} = $cur_series;
