@@ -5,7 +5,35 @@ libtool
 config.log
 config.cache
 config.status
-.deps
 config.h.in config.h
 Makefile.in Makefile
 stamp-h1
+.deps
+.libs
+*.la
+invert_raw_image
+minc_modify_header
+mincaverage
+minccalc
+mincconcat
+minccopy
+mincexample1
+mincexample2
+mincexpand
+mincextract
+mincinfo
+minclookup
+mincmakescalar
+mincmakevector
+mincmath
+mincresample
+mincreshape
+mincstats
+minctoraw
+mincwindow
+rawtominc
+transformtags
+voxeltoworld
+worldtovoxel
+xfmconcat
+xfminvert
