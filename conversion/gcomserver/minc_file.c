@@ -1,0 +1,470 @@
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : minc_file.c
+@DESCRIPTION: Code to do minc file handling.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   : $Log: minc_file.c,v $
+@MODIFIED   : Revision 1.1  1993-11-30 14:41:43  neelin
+@MODIFIED   : Initial revision
+@MODIFIED   :
+@COPYRIGHT  :
+              Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
+              Montreal Neurological Institute, McGill University.
+              Permission to use, copy, modify, and distribute this
+              software and its documentation for any purpose and without
+              fee is hereby granted, provided that the above copyright
+              notice appear in all copies.  The author and McGill University
+              make no representations about the suitability of this
+              software for any purpose.  It is provided "as is" without
+              express or implied warranty.
+---------------------------------------------------------------------------- */
+
+#include <gcomserver.h>
+
+/* Define mri dimension names */
+static char *mri_dim_names[] = {
+   NULL, "echo_number", MItime, "phase_number", "chemical_shift_number", NULL};
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_minc_file
+@INPUT      : minc_file - name of file to create. If NULL, a name is 
+                 generated internally.
+              clobber - if TRUE, any existing file will be overwritten.
+              general_info - information for creating the file.
+              file_prefix - string providing any directory or prefix 
+                 for internally generated filename (if it is a directory,
+                 then it must contain the last "/")
+@OUTPUT     : output_file_name - returns a pointer to an internal area
+                 containing the file name of the created file if minc_file
+                 is NULL, or simply a pointer to minc_file. If NULL, then
+                 nothing is returned.
+@RETURNS    : id of image conversion variable (MI_ERROR in case of error).
+@DESCRIPTION: Routine to create the minc file.
+@METHOD     : 
+@GLOBALS    : 
+CALLS       : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+public int create_minc_file(char *minc_file, int clobber, 
+                            General_Info *general_info,
+                            char *file_prefix, char **output_file_name)
+{
+   static char temp_name[256];
+   char patient_name[256];
+   char *filename;
+   int minc_clobber;
+   int mincid, icvid;
+   Mri_Index imri;
+   int i;
+   char scan_label[MRI_NDIMS][20];
+
+   /* Prefixes for creating file name */
+   static char *scan_prefix[MRI_NDIMS] = 
+      {"sl", "e", "t", "p", "cs"};
+
+   /* Turn off fatal errors */
+   ncopts = NCOPTS_DEFAULT;
+
+   /* Create the file name if needed */
+   if (minc_file != NULL) {
+      filename = minc_file;
+   }
+   else {
+      /* Get patient name */
+      (void) sscanf(general_info->patient.name, "%s", patient_name);
+      for (i=0; i < strlen(patient_name); i++) {
+         patient_name[i] = tolower((int) patient_name[i]);
+      }
+      if (strlen(patient_name) == 0) {
+         (void) strcpy(patient_name, "unknown");
+      }
+
+      /* Get strings for echo number, etc. */
+      for (imri=0; imri < MRI_NDIMS; imri++) {
+         if ((general_info->size[imri] < general_info->total_size[imri]) &&
+             (general_info->size[imri] == 1)) {
+            (void) sprintf(scan_label[imri], "_%s%d", scan_prefix[imri],
+                           general_info->first[imri]+1);
+         }
+         else {
+            (void) strcpy(scan_label[imri], "");
+         }
+      }
+
+      /* Create file name */
+      (void) sprintf(temp_name, "%s%s_%s_%s%s%s%s%s%s.mnc", 
+                     file_prefix,
+                     patient_name,
+                     general_info->study.study_id, 
+                     general_info->study.acquisition_id,
+                     scan_label[SLICE],
+                     scan_label[ECHO],
+                     scan_label[TIME],
+                     scan_label[PHASE],
+                     scan_label[CHEM_SHIFT]);
+      filename = temp_name;
+   }
+
+   /* Set output file name */
+   if (output_file_name != NULL)
+      *output_file_name = filename;
+
+   /* Set the clobber value */
+   if (clobber) minc_clobber = NC_CLOBBER;
+   else minc_clobber = NC_NOCLOBBER;
+
+   /* Create the file */
+   mincid = micreate(filename, minc_clobber);
+   if (mincid == MI_ERROR) return MI_ERROR;
+
+   /* Set up variables */
+   setup_minc_variables(mincid, general_info);
+
+   /* Create the icv */
+   icvid = miicv_create();
+
+   /* Set the type and range */
+   (void) miicv_setint(icvid, MI_ICV_TYPE, NC_SHORT);
+   if (general_info->is_signed)
+      (void) miicv_setstr(icvid, MI_ICV_SIGN, MI_SIGNED);
+   else
+      (void) miicv_setstr(icvid, MI_ICV_SIGN, MI_UNSIGNED);
+   (void) miicv_setdbl(icvid, MI_ICV_VALID_MIN, general_info->pixel_min);
+   (void) miicv_setdbl(icvid, MI_ICV_VALID_MAX, general_info->pixel_max);
+
+   /* Attach the icv */
+   (void) miicv_attach(icvid, mincid, ncvarid(mincid, MIimage));
+
+   return icvid;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : setup_minc_variables
+@INPUT      : mincid
+              general_info
+@OUTPUT     : general_info
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to setup minc variables.
+@METHOD     : 
+@GLOBALS    : 
+CALLS       : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+public void setup_minc_variables(int mincid, General_Info *general_info)
+{
+   Mri_Index imri;
+   Volume_Index ivol;
+   World_Index iworld;
+   int ndims;
+   int dim[MAX_VAR_DIMS];
+   long dimsize;
+   char *dimname;
+   int varid, imgid;
+   double valid_range[2];
+   char *string;
+   int index, last;
+   int regular;
+
+   /* Define the spatial dimension names */
+   static char *spatial_dimnames[VOL_NDIMS] = {MIxspace, MIyspace, MIzspace};
+   static World_Index spatial_dimensions[NUM_ORIENTATIONS][VOL_NDIMS] = {
+      ZCOORD, YCOORD, XCOORD,      /* TRANSVERSE */
+      XCOORD, ZCOORD, YCOORD,      /* SAGITTAL */
+      YCOORD, ZCOORD, XCOORD};     /* CORONAL */
+
+   /* Create the dimensions from slowest to fastest */
+
+   ndims=0;
+   /* Create the non-spatial dimensions (from slowest to fastest) */
+   for (imri=MRI_NDIMS-1; imri > SLICE; imri--) {
+      dimsize = general_info->size[imri];
+      if (general_info->size[imri] > 1) {
+         dimname = mri_dim_names[imri];
+         dim[ndims] = ncdimdef(mincid, dimname, dimsize);
+         if (imri == TIME) {
+            varid = micreate_std_variable(mincid, dimname, NC_LONG, 1, 
+                                          &dim[ndims]);
+         }
+         general_info->image_index[imri] = ndims;
+         ndims++;
+      }
+   }
+
+   /* Next the spatial dimensions */
+   for (ivol=0; ivol < VOL_NDIMS; ivol++) {
+      switch (ivol) {
+      case VSLICE: dimsize = general_info->size[SLICE]; break;
+      case VROW: dimsize = general_info->nrows; break;
+      case VCOLUMN: dimsize = general_info->ncolumns; break;
+      }
+      if ((ivol != VSLICE) || (dimsize > 1)) {
+         iworld = spatial_dimensions[general_info->orientation][ivol];
+         dimname = spatial_dimnames[iworld];
+         dim[ndims] = ncdimdef(mincid, dimname, dimsize);
+         if (ivol == VSLICE) {
+            varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 
+                                          1, &dim[ndims]);
+            /* Check for regular slices */
+            regular = TRUE;
+            last = general_info->first[SLICE] + general_info->size[SLICE] - 1;
+            for (index=general_info->first[SLICE]; index < last; index++) {
+               if (general_info->position[SLICE][index] < 0) {
+                  regular = FALSE;
+                  break;
+               }
+            }
+            if (regular)
+               (void) miattputstr(mincid, varid, MIspacing, MI_REGULAR);
+         }
+         else
+            varid = micreate_std_variable(mincid, dimname, NC_LONG, 0, NULL);
+         (void) miattputdbl(mincid, varid, MIstep, 
+                            general_info->step[iworld]);
+         (void) miattputdbl(mincid, varid, MIstart, 
+                            general_info->start[iworld]);
+         (void) miattputstr(mincid, varid, MIspacetype, MI_NATIVE);
+         if (ivol == VSLICE) {
+            general_info->image_index[SLICE] = ndims;
+         }
+         ndims++;
+      }
+   }
+
+   /* Set up image variable */
+   imgid = micreate_std_variable(mincid, MIimage, general_info->datatype,
+                                 ndims, dim);
+   if (general_info->is_signed)
+      (void) miattputstr(mincid, imgid, MIsigntype, MI_SIGNED);
+   else
+      (void) miattputstr(mincid, imgid, MIsigntype, MI_UNSIGNED);
+   valid_range[0] = general_info->pixel_min;
+   valid_range[1] = general_info->pixel_max;
+   (void) ncattput(mincid, imgid, MIvalid_range, NC_DOUBLE, 2, valid_range);
+
+   /* Create image max and min variables */
+   varid = micreate_std_variable(mincid, MIimagemin, NC_DOUBLE, ndims-2, dim);
+   if (strlen(general_info->units) > 0)
+      (void) miattputstr(mincid, varid, MIunits, general_info->units);
+   varid = micreate_std_variable(mincid, MIimagemax, NC_DOUBLE, ndims-2, dim);
+   if (strlen(general_info->units) > 0)
+      (void) miattputstr(mincid, varid, MIunits, general_info->units);
+
+   /* Create the patient variable */
+   varid = micreate_group_variable(mincid, MIpatient);
+   if (strlen(general_info->patient.name) > 0)
+      (void) miattputstr(mincid, varid, MIfull_name, 
+                         general_info->patient.name);
+   if (strlen(general_info->patient.identification) > 0)
+      (void) miattputstr(mincid, varid, MIidentification, 
+                         general_info->patient.identification);
+   if (strlen(general_info->patient.birth_date) > 0)
+      (void) miattputstr(mincid, varid, MIbirthdate, 
+                         general_info->patient.birth_date);
+   if (strlen(general_info->patient.sex) > 0)
+      (void) miattputstr(mincid, varid, MIsex, 
+                         general_info->patient.sex);
+   if (general_info->patient.weight != -DBL_MAX) 
+      (void) miattputdbl(mincid, varid, MIweight, 
+                         general_info->patient.weight);
+
+   /* Create the study variable */
+   varid = micreate_group_variable(mincid, MIstudy);
+   if (strlen(general_info->study.start_time) > 0)
+      (void) miattputstr(mincid, varid, MIstart_time, 
+                         general_info->study.start_time);
+   if (strlen(general_info->study.modality) > 0)
+      (void) miattputstr(mincid, varid, MImodality, 
+                         general_info->study.modality);
+   if (strlen(general_info->study.institution) > 0)
+      (void) miattputstr(mincid, varid, MIinstitution, 
+                         general_info->study.institution);
+   if (strlen(general_info->study.station_id) > 0)
+      (void) miattputstr(mincid, varid, MIstation_id, 
+                         general_info->study.station_id);
+   if (strlen(general_info->study.ref_physician) > 0)
+      (void) miattputstr(mincid, varid, MIreferring_physician, 
+                         general_info->study.ref_physician);
+   if (strlen(general_info->study.procedure) > 0)
+      (void) miattputstr(mincid, varid, MIprocedure, 
+                         general_info->study.procedure);
+   if (strlen(general_info->study.study_id) > 0)
+      (void) miattputstr(mincid, varid, MIstudy_id, 
+                         general_info->study.study_id);
+   if (strlen(general_info->study.acquisition_id) > 0)
+      (void) miattputstr(mincid, varid, "acquisition_id", 
+                         general_info->study.acquisition_id);
+
+   /* Create acquisition variable */
+   varid = micreate_group_variable(mincid, MIacquisition);
+   if (strlen(general_info->acq.scan_seq) > 0)
+      (void) miattputstr(mincid, varid, MIscanning_sequence, 
+                         general_info->acq.scan_seq);
+   if (general_info->acq.rep_time != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, MIrepetition_time, 
+                         general_info->acq.rep_time);
+   if (general_info->acq.echo_time != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, MIecho_time, 
+                         general_info->acq.echo_time);
+   if (general_info->acq.inv_time != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, MIinversion_time, 
+                         general_info->acq.inv_time);
+   if (general_info->acq.num_avg != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, MInum_averages, 
+                         general_info->acq.num_avg);
+   if (general_info->acq.imaging_freq != -DBL_MAX)
+      (void) miattputdbl(mincid, varid, MIimaging_frequency, 
+                         general_info->acq.imaging_freq);
+   if (strlen(general_info->acq.imaged_nucl) > 0)
+      (void) miattputstr(mincid, varid, MIscanning_sequence, 
+                         general_info->acq.imaged_nucl);
+
+   /* Create the history attribute */
+   string = "gcomserver";
+   (void) miattputstr(mincid, NC_GLOBAL, MIhistory,
+                      time_stamp(1, &string));
+
+   /* Put the file in data mode */
+   (void) ncendef(mincid);
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : save_minc_image
+@INPUT      : icvid
+              general_info
+              file_info
+              image
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to save the image in the minc file
+@METHOD     : 
+@GLOBALS    : 
+CALLS       : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+public void save_minc_image(int icvid, General_Info *general_info, 
+                            File_Info *file_info, Image_Data *image)
+{
+   int mincid, imgid;
+   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+   int index;
+   int idim;
+   Mri_Index imri;
+   char *dimname;
+   unsigned short pvalue, pmax, pmin;
+   double dvalue, maximum, minimum, scale, offset;
+   long ipix, imagepix;
+
+   /* Get the minc file id */
+   (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+   (void) miicv_inqint(icvid, MI_ICV_VARID, &imgid);
+
+   /* Create start and count variables */
+   idim = 0;
+   for (imri=MRI_NDIMS-1; imri >= 0; imri--) {
+      if ((general_info->image_index[imri] >= 0) &&
+          (general_info->position[imri] != NULL)) {
+         index = general_info->image_index[imri];
+         start[index] = general_info->position[imri][file_info->index[imri]];
+         count[index] = 1;
+         idim++;
+      }
+   }
+   start[idim] = 0;
+   start[idim+1] = 0;
+   count[idim] = general_info->nrows;
+   count[idim+1] = general_info->ncolumns;
+
+   /* Write out slice position, if needed */
+   if (general_info->size[SLICE] > 1) {
+      switch (general_info->slice_world) {
+      case XCOORD: dimname = MIxspace; break;
+      case YCOORD: dimname = MIyspace; break;
+      case ZCOORD: dimname = MIzspace; break;
+      default: dimname = MIzspace;
+      }
+      (void) mivarput1(mincid, ncvarid(mincid, dimname), 
+                       &start[general_info->image_index[SLICE]], 
+                       NC_DOUBLE, NULL, &file_info->slice_position);
+   }
+
+   /* Write out time of slice, if needed */
+   if (general_info->size[TIME] > 1) {
+      (void) mivarput1(mincid, ncvarid(mincid, MItime), 
+                       &start[general_info->image_index[TIME]], 
+                       NC_DOUBLE, NULL, &file_info->dyn_begin_time);
+   }
+
+   /* Search image for max and min */
+   imagepix = general_info->nrows * general_info->ncolumns;
+   pmax = 0;
+   pmin = USHRT_MAX;
+   for (ipix=0; ipix < imagepix; ipix++) {
+      pvalue = image->data[ipix];
+      if (pvalue > pmax) pmax = pvalue;
+      if (pvalue < pmin) pmin = pvalue;
+   }
+
+   /* Re-scale the images */
+   if (pmax > pmin)
+      scale = (general_info->pixel_max - general_info->pixel_min) /
+         ((double) pmax - (double) pmin);
+   else
+      scale = 0.0;
+   offset = general_info->pixel_min - scale * (double) pmin;
+   for (ipix=0; ipix < imagepix; ipix++) {
+      dvalue = image->data[ipix];
+      image->data[ipix] = dvalue * scale + offset;
+   }
+
+   /* Calculate new intensity max and min */
+   if (general_info->pixel_max > general_info->pixel_min)
+      scale = (file_info->slice_max - file_info->slice_min) /
+         (general_info->pixel_max - general_info->pixel_min);
+   else
+      scale = 0.0;
+   offset = file_info->slice_min - scale * general_info->pixel_min;
+   minimum = (double) pmin * scale + offset;
+   maximum = (double) pmax * scale + offset;
+
+   /* Write out the max and min values */
+   (void) mivarput1(mincid, ncvarid(mincid, MIimagemin), start, NC_DOUBLE,
+                    NULL, &minimum);
+   (void) mivarput1(mincid, ncvarid(mincid, MIimagemax), start, NC_DOUBLE,
+                    NULL, &maximum);
+
+   /* Write out the image */
+   (void) miicv_put(icvid, start, count, image->data);
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : close_minc_file
+@INPUT      : icvid - value returned by create_minc_file
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to close the minc file.
+@METHOD     : 
+@GLOBALS    : 
+CALLS       : 
+@CREATED    : November 30, 1993 (Peter Neelin)
+@MODIFIED   :
+---------------------------------------------------------------------------- */
+public void close_minc_file(int icvid)
+{
+   int mincid;
+
+   (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
+   (void) miclose(mincid);
+   (void) miicv_free(icvid);
+
+   return;
+}
