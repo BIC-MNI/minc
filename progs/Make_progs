@@ -73,7 +73,7 @@ install: $(PROGS) $(SCRIPTS) $(MANPAGES)
 	   if test -r $$manpage ; then \
 	      cmd="$(CP) $(CP_FLAGS) $$manpage $(INSTALL_MANDIR)$(MANSECT)/."; \
 	      echo "$$cmd"; \
-	      eval "$$cmd"; \
+	      $$cmd; \
 	   fi; \
 	done
 
