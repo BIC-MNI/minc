@@ -34,7 +34,15 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.7  2001-11-13 14:15:17  neelin
+ * Revision 6.8  2001-11-13 21:00:24  neelin
+ * Modified icv scaling calculations for no normalization. When the icv
+ * type is double, normalization is always done, regardless of the
+ * normalization setting. When the external type is floating point,
+ * normalization to the slice real range is done (essentially a valid
+ * range scaling, but where the valid range for a float is the slice real
+ * range).
+ *
+ * Revision 6.7  2001/11/13 14:15:17  neelin
  * Added functions miget_image_range and mivar_exists
  *
  * Revision 6.6  2001/08/20 13:16:53  neelin
@@ -133,7 +141,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.7 2001-11-13 14:15:17 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.8 2001-11-13 21:00:24 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1050,12 +1058,10 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
    icvp->derv_firstdim=(-1);
 
    /* Look for image max, image min variables */
-   if (icvp->user_do_norm) {
-      oldncopts=ncopts; ncopts=0;
-      icvp->imgmaxid=ncvarid(cdfid, icvp->user_maxvar);
-      icvp->imgminid=ncvarid(cdfid, icvp->user_minvar);
-      ncopts = oldncopts;
-   }
+   oldncopts=ncopts; ncopts=0;
+   icvp->imgmaxid=ncvarid(cdfid, icvp->user_maxvar);
+   icvp->imgminid=ncvarid(cdfid, icvp->user_minvar);
+   ncopts = oldncopts;
 
    /* Check to see if normalization to variable max, min should be done */
    if (!icvp->user_do_norm) {
@@ -1512,6 +1518,7 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
    double var_imgmax_true, var_imgmin_true;
    double usr_vmax, usr_vmin;
    double var_vmax, var_vmin;
+   double slice_imgmax, slice_imgmin;
    double usr_scale;
    double denom;
 
@@ -1522,33 +1529,52 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
    var_vmin = icvp->var_vmin;
 
    /* Set image max/min for user and variable values depending on whether
-      normalization should be done or not */
-   if (!icvp->user_do_norm) {
+      normalization should be done or not. Whenever floating-point values
+      are involved, some type of normalization is done. When the icv type
+      is floating point, normalization is always done. When the file type
+      is floating point and the icv type is integer, slices are normalized
+      to the real range of the slice (or chunk being read). */
+   if (!icvp->derv_var_float && !icvp->derv_usr_float && !icvp->user_do_norm) {
       usr_imgmax = var_imgmax = MI_DEFAULT_MAX;
       usr_imgmin = var_imgmin = MI_DEFAULT_MIN;
    }
    else {
-      usr_imgmax = icvp->derv_imgmax;
-      usr_imgmin = icvp->derv_imgmin;
-      if (icvp->derv_var_float) {
-         var_imgmax = var_vmax;
-         var_imgmin = var_vmin;
-      }
-      else if ((icvp->imgmaxid==MI_ERROR) || (icvp->imgminid==MI_ERROR)) {
-         var_imgmax = MI_DEFAULT_MAX;
-         var_imgmin = MI_DEFAULT_MIN;
-      }
-      else {
+
+      /* Get the real range for the slice or chunk that is being examined */
+      slice_imgmax = MI_DEFAULT_MAX;
+      slice_imgmin = MI_DEFAULT_MIN;
+      if ((!icvp->derv_var_float || !icvp->user_do_norm) &&
+          (icvp->imgmaxid!=MI_ERROR) && (icvp->imgminid!=MI_ERROR)) {
          if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
                                 icvp->imgmaxid, mmcoords) == NULL)
             MI_RETURN_ERROR(MI_ERROR);
          {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgmaxid, mmcoords,
-                               NC_DOUBLE, NULL, &var_imgmax))}
+                               NC_DOUBLE, NULL, &slice_imgmax))}
          if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
                                 icvp->imgminid, mmcoords) == NULL)
             MI_RETURN_ERROR(MI_ERROR);
          {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgminid, mmcoords,
-                               NC_DOUBLE, NULL, &var_imgmin))}
+                               NC_DOUBLE, NULL, &slice_imgmin))}
+      }
+
+      /* Get the user real range */
+      if (icvp->user_do_norm) {
+         usr_imgmax = icvp->derv_imgmax;
+         usr_imgmin = icvp->derv_imgmin;
+      }
+      else {
+         usr_imgmax = slice_imgmax;
+         usr_imgmin = slice_imgmin;
+      }
+
+      /* Get the file real range */
+      if (icvp->derv_var_float) {
+         var_imgmax = var_vmax;
+         var_imgmin = var_vmin;
+      }
+      else {
+         var_imgmax = slice_imgmax;
+         var_imgmin = slice_imgmin;
       }
    }
 
