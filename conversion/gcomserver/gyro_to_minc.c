@@ -7,9 +7,13 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 1.2  1993-12-08 09:13:27  neelin
-@MODIFIED   : Delete group list.
+@MODIFIED   : Revision 1.3  1994-01-14 11:37:21  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.2  93/12/08  09:13:27  neelin
+ * Delete group list.
+ * 
  * Revision 1.1  93/11/30  14:41:20  neelin
  * Initial revision
  * 
@@ -26,6 +30,8 @@
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
+
+extern int Do_logging;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : gyro_to_minc
@@ -45,7 +51,7 @@
 @DESCRIPTION: Routine to convert a list of gyroscan acr-nema files to minc 
               format.
 @METHOD     : 
-@GLOBALS    : 
+@GLOBALS    : Do_logging
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : 
@@ -61,6 +67,7 @@ public int gyro_to_minc(int num_files, char *file_list[],
    Image_Data image;
    int icvid;
    int ifile;
+   Mri_Index imri;
 
    /* Allocate space for the file information */
    file_info = MALLOC(num_files * sizeof(*file_info));
@@ -68,8 +75,13 @@ public int gyro_to_minc(int num_files, char *file_list[],
    /* Last group needed for first pass */
    max_group = SPI_ACTUAL_IMAGE_GID - 1;
 
-   /* Loop through file list getting information */
+   /* Initialize some values for general info */
    general_info.initialized = FALSE;
+   general_info.group_list = NULL;
+   for (imri=0; imri < MRI_NDIMS; imri++) 
+      general_info.position[imri] = NULL;
+
+   /* Loop through file list getting information */
    for (ifile=0; ifile < num_files; ifile++) {
 
       /* Read the file */
@@ -80,6 +92,15 @@ public int gyro_to_minc(int num_files, char *file_list[],
 
       /* Delete the group list */
       acr_delete_group_list(group_list);
+
+      /* Print log message if not using file */
+      if (!file_info[ifile].valid) {
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "Not using file %s\n",
+                           file_list[ifile]);
+         }
+
+      }
 
    }
 
@@ -92,6 +113,10 @@ public int gyro_to_minc(int num_files, char *file_list[],
    /* Check that we found the general info and that the minc file was
       created okay */
    if ((!general_info.initialized) || (icvid == MI_ERROR)) {
+      if (general_info.initialized) {
+         (void) fprintf(stderr, "Error creating minc file %s.\n",
+                        *output_file_name);
+      }
       free_info(&general_info, file_info, num_files);
       FREE(file_info);
       return EXIT_FAILURE;
@@ -104,7 +129,13 @@ public int gyro_to_minc(int num_files, char *file_list[],
    for (ifile=0; ifile < num_files; ifile++) {
 
       /* Check that we have a valid file */
-      if (!file_info[ifile].valid) continue;
+      if (!file_info[ifile].valid) {
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "Not using file %s\n",
+                           file_list[ifile]);
+         }
+         continue;
+      }
 
       /* Read the file */
       group_list = read_gyro(file_list[ifile], max_group);
@@ -160,7 +191,9 @@ public void free_info(General_Info *general_info, File_Info *file_info,
    }
 
    /* Free the group list */
-   acr_delete_group_list(general_info->group_list);
+   if (general_info->group_list != NULL) {
+      acr_delete_group_list(general_info->group_list);
+   }
 
    return;
 

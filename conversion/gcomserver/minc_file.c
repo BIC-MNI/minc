@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.3  1993-12-14 16:37:18  neelin
-@MODIFIED   : Added MIcomplete attribute to image variable,.
+@MODIFIED   : Revision 1.4  1994-01-14 11:37:24  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.3  93/12/14  16:37:18  neelin
+ * Added MIcomplete attribute to image variable,.
+ * 
  * Revision 1.2  93/12/10  15:35:12  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -101,11 +105,13 @@ public int create_minc_file(char *minc_file, int clobber,
       }
 
       /* Create file name */
-      (void) sprintf(temp_name, "%s%s_%s_%s%s%s%s%s%s.mnc", 
+      (void) sprintf(temp_name, "%s%s_%s_%s_%02d%02d%s%s%s%s%s.mnc", 
                      file_prefix,
                      patient_name,
                      general_info->study.study_id, 
                      general_info->study.acquisition_id,
+                     general_info->rec_num, 
+                     general_info->image_type,
                      scan_label[SLICE],
                      scan_label[ECHO],
                      scan_label[TIME],
@@ -337,6 +343,18 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (strlen(general_info->acq.imaged_nucl) > 0)
       (void) miattputstr(mincid, varid, MIscanning_sequence, 
                          general_info->acq.imaged_nucl);
+
+   /* Create the spi info variable */
+   varid = ncvardef(mincid, "spiinfo", NC_LONG, 0, NULL);
+   (void) miattputstr(mincid, varid, MIvartype, MI_GROUP);
+   (void) miattputstr(mincid, varid, MIvarid, "MNI SPI information variable");
+   (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), varid);
+   (void) miattputint(mincid, varid, "rec_num", general_info->rec_num);
+   if (strlen(general_info->image_type_string) > 0)
+      (void) miattputstr(mincid, varid, "image_type", 
+                         general_info->image_type_string);
+   (void) miattputdbl(mincid, varid, "window_min", general_info->window_min);
+   (void) miattputdbl(mincid, varid, "window_max", general_info->window_max);
 
    /* Put group info in header */
    cur_group = general_info->group_list;

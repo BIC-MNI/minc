@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.3  1993-12-14 16:37:48  neelin
-@MODIFIED   : Modified general_info structure a little bit.
+@MODIFIED   : Revision 1.4  1994-01-14 11:37:42  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.3  93/12/14  16:37:48  neelin
+ * Modified general_info structure a little bit.
+ * 
  * Revision 1.2  93/12/10  15:35:48  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -55,6 +59,11 @@ typedef char Cstring[256];
 /* Structure for general info about files */
 typedef struct {
    int initialized;
+   int study_id;
+   int acq_id;
+   int rec_num;
+   int image_type;
+   Cstring image_type_string;
    int nrows;
    int ncolumns;
    int size[MRI_NDIMS];        /* Size of dimension across these files */
@@ -79,6 +88,8 @@ typedef struct {
    double pixel_min;
    double pixel_max;
    Cstring units;
+   double window_min;
+   double window_max;
    struct {
       Cstring name;
       Cstring identification;
@@ -119,6 +130,8 @@ typedef struct {
    double pixel_min;
    double slice_max;
    double slice_min;
+   double window_max;
+   double window_min;
    double slice_position;
    double dyn_begin_time;
    int index[MRI_NDIMS];

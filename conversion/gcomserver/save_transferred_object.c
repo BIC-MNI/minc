@@ -6,11 +6,15 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.3  1993-12-10 15:35:16  neelin
-@MODIFIED   : Improved file name generation from patient name. No buffering on stderr.
-@MODIFIED   : Added spi group list to minc header.
-@MODIFIED   : Optionally read a defaults file to get output minc directory and owner.
+@MODIFIED   : Revision 1.4  1994-01-14 11:37:30  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.3  93/12/10  15:35:16  neelin
+ * Improved file name generation from patient name. No buffering on stderr.
+ * Added spi group list to minc header.
+ * Optionally read a defaults file to get output minc directory and owner.
+ * 
  * Revision 1.2  93/11/30  14:42:28  neelin
  * Copies to minc format.
  * 
@@ -71,6 +75,16 @@ public void save_transferred_object(Acr_Group group_list, char *file_prefix,
       data_info->acq_id = (int) acr_get_element_numeric(element);
    else
       data_info->acq_id = 0;
+   element = acr_find_group_element(group_list, SPI_Reconstruction_number);
+   if (element != NULL)
+      data_info->rec_num = (int) acr_get_element_numeric(element);
+   else
+      data_info->rec_num = 1;
+   element = acr_find_group_element(group_list, SPI_Image_type);
+   if (element != NULL)
+      data_info->image_type = (int) acr_get_element_numeric(element);
+   else
+      data_info->acq_id = SPI_DEFAULT_IMAGE_TYPE;
 
    /* Look for patient name */
    element = acr_find_group_element(group_list, ACR_Patient_name);

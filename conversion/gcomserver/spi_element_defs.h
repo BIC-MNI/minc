@@ -101,6 +101,8 @@ GLOBAL_ELEMENT(SPI_Number_of_phases        , 0x0019, 0x1069);
 GLOBAL_ELEMENT(SPI_Nr_of_chemical_shifts   , 0x0019, 0x1080);
 GLOBAL_ELEMENT(SPI_Number_of_echoes        , 0x0019, 0x10cf);
 GLOBAL_ELEMENT(SPI_Recon_resolution        , 0x0019, 0x1145);
+GLOBAL_ELEMENT(SPI_Reconstruction_number   , 0x0021, 0x1000);
+GLOBAL_ELEMENT(SPI_Image_type              , 0x0021, 0x1010);
 GLOBAL_ELEMENT(SPI_Slice_number            , 0x0021, 0x1020);
 GLOBAL_ELEMENT(SPI_Echo_number             , 0x0021, 0x1030);
 GLOBAL_ELEMENT(SPI_Chemical_shift_number   , 0x0021, 0x1035);
@@ -111,6 +113,10 @@ GLOBAL_ELEMENT(SPI_Ext_scale_maximum       , 0x0029, 0x1011);
 GLOBAL_ELEMENT(SPI_Ext_scale_units         , 0x0029, 0x1020);
 GLOBAL_ELEMENT(SPI_Fp_min                  , 0x0029, 0x1110);
 GLOBAL_ELEMENT(SPI_Fp_max                  , 0x0029, 0x1120);
+GLOBAL_ELEMENT(SPI_Fp_scaled_minimum       , 0x0029, 0x1130);
+GLOBAL_ELEMENT(SPI_Fp_scaled_maximum       , 0x0029, 0x1140);
+GLOBAL_ELEMENT(SPI_Fp_window_minimum       , 0x0029, 0x1150);
+GLOBAL_ELEMENT(SPI_Fp_window_maximum       , 0x0029, 0x1160);
 
 /* Define group numbers for message stuff */
 #define ACR_MESSAGE_GID 0
@@ -167,4 +173,5 @@ GLOBAL_ELEMENT(SPI_Fp_max                  , 0x0029, 0x1120);
 #define SPI_TRANSVERSE_ORIENTATION 1
 #define SPI_SAGITTAL_ORIENTATION   2
 #define SPI_CORONAL_ORIENTATION    3
+#define SPI_DEFAULT_IMAGE_TYPE     2
 

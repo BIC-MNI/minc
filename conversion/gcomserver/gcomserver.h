@@ -5,11 +5,15 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 1.5  1994-01-11 12:38:42  neelin
-@MODIFIED   : Modified handling of output directory and user id.
-@MODIFIED   : Defaults are current dir and no chown.
-@MODIFIED   : Read from file /usr/local/lib/gcomserver.<hostname>
+@MODIFIED   : Revision 1.6  1994-01-14 11:37:40  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.5  94/01/11  12:38:42  neelin
+ * Modified handling of output directory and user id.
+ * Defaults are current dir and no chown.
+ * Read from file /usr/local/lib/gcomserver.<hostname>
+ * 
  * Revision 1.4  93/12/10  15:35:46  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -78,7 +82,12 @@
 typedef struct {
    int study_id;
    int acq_id;
+   int rec_num;
+   int image_type;
 } Data_Object_Info;
+
+/* Define macro for array size */
+#define ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))
 
 #include <gyro_to_minc.h>
 #include <gcom_prototypes.h>

@@ -6,9 +6,13 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.4  1994-01-06 14:18:44  neelin
-@MODIFIED   : Added image unpacking (3 bytes -> 2 pixels).
+@MODIFIED   : Revision 1.5  1994-01-14 11:37:18  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.4  94/01/06  14:18:44  neelin
+ * Added image unpacking (3 bytes -> 2 pixels).
+ * 
  * Revision 1.3  93/12/14  16:36:49  neelin
  * Fixed axis direction and start position.
  * 
@@ -33,6 +37,41 @@
 ---------------------------------------------------------------------------- */
 
 #include <gcomserver.h>
+
+/* Define strings for spi image types */
+static struct {
+   int image_type;
+   char *name;
+} Spi_image_type_strings[] = {
+   0,  "SE_R",
+   1,  "SE_I",
+   2,  "SE_M",
+   3,  "SE_P",
+   13, "SE/CR",
+   4,  "SE_T2",
+   5,  "SE_RHO",
+   6,  "IR_R",
+   7,  "IR_I",
+   8,  "IR_M",
+   9,  "IR_P",
+   14, "IR/CR",
+   10, "IR_T2",
+   11, "IR_RHO",
+   12, "T1",
+   15, "T2",
+   16, "RHO",
+   17, "FFE/CR",
+   18, "FFE/R",
+   19, "FFE/I",
+   20, "FFE/M",
+   21, "FFE/P",
+   22, "Spectra",
+   23, "PCA_R",
+   24, "PCA_I",
+   25, "PCA_M",
+   26, "PCA_P",
+   27, "Derived"
+};
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : read_gyro
@@ -95,15 +134,19 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    char *string, *end;
    int nrows;
    int ncolumns;
+   int study_id, acq_id, rec_num, image_type;
    int image_group;
    int length, maxlen;
    int cur_index;
    int index;
    double default_slice_pos;
    double diff;
+   char *image_type_string;
+   char image_type_string_buf[20];
    Acr_Element_Id mri_index_list[MRI_NDIMS];
    Acr_Element_Id mri_total_list[MRI_NDIMS];
    Acr_Element_Id off_center_elid[WORLD_NDIMS];
+   double fp_scaled_max, fp_scaled_min, scale;
 
    /* Directions of axes for different orientations */
    static double axis_direction[NUM_ORIENTATIONS][WORLD_NDIMS] = {
@@ -158,6 +201,28 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       return;
    }
 
+   /* Get study, acq, rec, image type id's */
+   element = acr_find_group_element(group_list, ACR_Study);
+   if (element != NULL)
+      study_id = (int) acr_get_element_numeric(element);
+   else
+      study_id = 0;
+   element = acr_find_group_element(group_list, ACR_Acquisition);
+   if (element != NULL)
+      acq_id = (int) acr_get_element_numeric(element);
+   else
+      acq_id = 0;
+   element = acr_find_group_element(group_list, SPI_Reconstruction_number);
+   if (element != NULL)
+      rec_num = (int) acr_get_element_numeric(element);
+   else
+      rec_num = 1;
+   element = acr_find_group_element(group_list, SPI_Image_type);
+   if (element != NULL)
+      image_type = (int) acr_get_element_numeric(element);
+   else
+      acq_id = SPI_DEFAULT_IMAGE_TYPE;
+
    /* Get pixel value information */
    file_info->pixel_min = find_short(group_list, ACR_Smallest_pixel_value, 0);
    file_info->pixel_max = find_short(group_list, ACR_Largest_pixel_value, 
@@ -167,6 +232,23 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
    file_info->slice_max = find_double(group_list, SPI_Ext_scale_maximum, 
                                       (double) file_info->pixel_max);
 
+   /* Get window min and max (doing normalization) */
+   fp_scaled_min = find_double(group_list, SPI_Fp_scaled_minimum, DBL_MAX);
+   fp_scaled_max = find_double(group_list, SPI_Fp_scaled_maximum, 0.0);
+   if ((fp_scaled_min == DBL_MAX) || (fp_scaled_max == 0.0) ||
+       (file_info->slice_max == 0.0)) {
+      file_info->window_min = file_info->slice_min;
+      file_info->window_max = file_info->slice_max;
+   }
+   else {
+      scale = file_info->slice_max / fp_scaled_max;
+      file_info->window_min = scale *
+         find_double(group_list, SPI_Fp_window_minimum, fp_scaled_min);
+      file_info->window_max = scale *
+         find_double(group_list, SPI_Fp_window_maximum, fp_scaled_max);
+   }
+
+   /* Get image indices */
    for (imri=0; imri < MRI_NDIMS; imri++) {
       file_info->index[imri] = 
          find_int(group_list, mri_index_list[imri], 1) - 1;
@@ -180,6 +262,28 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       /* Get row and columns sizes */
       general_info->nrows = nrows;
       general_info->ncolumns = ncolumns;
+
+      /* Save the study, acqusition, reconstruction and image type 
+         identifiers */
+      general_info->study_id = study_id;
+      general_info->acq_id = acq_id;
+      general_info->rec_num = rec_num;
+      general_info->image_type = image_type;
+
+      /* Get a name for the image type (if not found, use the number) */
+      image_type_string = NULL;
+      for (index=0; index < ARRAY_SIZE(Spi_image_type_strings); index++) {
+         if (image_type == Spi_image_type_strings[index].image_type) {
+            image_type_string = Spi_image_type_strings[index].name;
+            break;
+         }            
+      }
+      if (image_type_string == NULL) {
+         image_type_string = image_type_string_buf;
+         (void) sprintf(image_type_string, "%d", image_type);
+      }
+      (void) strncpy(general_info->image_type_string, 
+                     image_type_string, sizeof(Cstring) - 1);
 
       /* Get dimension information */
       for (imri=0; imri < MRI_NDIMS; imri++) {
@@ -291,6 +395,10 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
       general_info->pixel_min = file_info->pixel_min;
       general_info->pixel_max = file_info->pixel_max;
 
+      /* Save display window info */
+      general_info->window_min = file_info->window_min;
+      general_info->window_max = file_info->window_max;
+
       /* Keep track of range of slices */
       general_info->slicepos_first = 
          general_info->start[general_info->slice_world];
@@ -393,6 +501,15 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          return;
       }
 
+      /* Check study, acq, reconstruction and image type id's */
+      if ((general_info->study_id != study_id) ||
+          (general_info->acq_id != acq_id) ||
+          (general_info->rec_num != rec_num) ||
+          (general_info->image_type != image_type)) {
+         file_info->valid = FALSE;
+         return;
+      }
+
       /* Check indices for range */
       for (imri=0; imri < MRI_NDIMS; imri++) {
          cur_index = file_info->index[imri];
@@ -446,6 +563,12 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          }
 
       }              /* Loop over Mri_Index */
+
+      /* Update display window info */
+      if (general_info->window_min > file_info->window_min) 
+         general_info->window_min = file_info->window_min;
+      if (general_info->window_max < file_info->window_max)
+         general_info->window_max = file_info->window_max;
 
    }              /* Update general info for this file */
 

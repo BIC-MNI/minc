@@ -6,11 +6,15 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.5  1994-01-11 12:37:29  neelin
-@MODIFIED   : Modified handling of output directory and user id.
-@MODIFIED   : Defaults are current dir and no chown.
-@MODIFIED   : Read from file /usr/local/lib/gcomserver.<hostname>
+@MODIFIED   : Revision 1.6  1994-01-14 11:37:37  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.5  94/01/11  12:37:29  neelin
+ * Modified handling of output directory and user id.
+ * Defaults are current dir and no chown.
+ * Read from file /usr/local/lib/gcomserver.<hostname>
+ * 
  * Revision 1.4  93/12/10  15:35:41  neelin
  * Improved file name generation from patient name. No buffering on stderr.
  * Added spi group list to minc header.
@@ -69,6 +73,8 @@ public void use_the_files(int num_files, char *file_list[],
    int found_first;
    int cur_study;
    int cur_acq;
+   int cur_rec;
+   int cur_imgtyp;
    int exit_status;
    char *output_file_name;
    char file_prefix[256];
@@ -107,10 +113,14 @@ public void use_the_files(int num_files, char *file_list[],
             found_first = TRUE;
             cur_study = data_info[ifile].study_id;
             cur_acq = data_info[ifile].acq_id;
+            cur_rec = data_info[ifile].rec_num;
+            cur_imgtyp = data_info[ifile].image_type;
             used_file[ifile] = TRUE;
          }
          else if ((data_info[ifile].study_id == cur_study) &&
-                  (data_info[ifile].acq_id == cur_acq)) {
+                  (data_info[ifile].acq_id == cur_acq) &&
+                  (data_info[ifile].rec_num == cur_rec) &&
+                  (data_info[ifile].image_type == cur_imgtyp)) {
             used_file[ifile] = TRUE;
          }
          if (used_file[ifile]) {
@@ -124,7 +134,7 @@ public void use_the_files(int num_files, char *file_list[],
       if (found_first) {
 
          /* Print out the file names */
-         if (Do_logging >= LOW_LOGGING) {
+         if (Do_logging >= HIGH_LOGGING) {
             (void) fprintf(stderr, "\nFiles copied:\n");
             for (ifile=0; ifile < num_acq_files; ifile++) {
                (void) fprintf(stderr, "     %s\n", acq_file_list[ifile]);
@@ -135,15 +145,16 @@ public void use_the_files(int num_files, char *file_list[],
          exit_status = gyro_to_minc(num_acq_files, acq_file_list, NULL,
                                     FALSE, file_prefix, 
                                     &output_file_name);
-         if (exit_status != EXIT_SUCCESS) {
-            (void) fprintf(stderr, "Error creating minc file %s.\n",
-                           output_file_name);
-         }
 
          /* Change the ownership */
-         if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
-            (void) chown(output_file_name, (uid_t) output_uid,
-                         (gid_t) output_gid);
+         if (exit_status == EXIT_SUCCESS) {
+            if (Do_logging >= LOW_LOGGING) 
+               (void) fprintf(stderr, "Created minc file %s.\n",
+                              output_file_name);
+            if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
+               (void) chown(output_file_name, (uid_t) output_uid,
+                            (gid_t) output_gid);
+            }
          }
 
       }

@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 1.1  1993-11-30 14:41:33  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-01-14 11:37:22  neelin
+@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+@MODIFIED   : file name to include reconstruction number and image type number.
 @MODIFIED   :
+ * Revision 1.1  93/11/30  14:41:33  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -21,7 +25,7 @@
 
 #include <gcomserver.h>
 
-int Do_logging = NO_LOGGING;
+int Do_logging = LOW_LOGGING;
 
 int main(int argc, char *argv[])
 {
