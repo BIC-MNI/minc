@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.6  1995-02-15 18:10:35  neelin
-@MODIFIED   : Added check for global attribute specified with -attribute.
+@MODIFIED   : Revision 2.7  1995-03-30 13:00:05  neelin
+@MODIFIED   : Added -sattribute and -dattribute options.
 @MODIFIED   :
+ * Revision 2.6  1995/02/15  18:10:35  neelin
+ * Added check for global attribute specified with -attribute.
+ *
  * Revision 2.5  1995/02/08  19:31:47  neelin
  * Moved ARGSUSED statements for irix 5 lint.
  *
@@ -66,7 +69,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.6 1995-02-15 18:10:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.7 1995-03-30 13:00:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -318,9 +321,13 @@ ArgvInfo argTable[] = {
    {"-dr", ARGV_CONSTANT, MI_DR, (char *) &modality,
        "Digital radiography data."},
    {NULL, ARGV_HELP, NULL, NULL,
-       "Option for specifying attribute values by name."},
+       "Options for specifying attribute values by name."},
+   {"-sattribute", ARGV_FUNC, (char *) get_attribute, NULL,
+       "Set a string attribute (<var>:<attr>=<value>)."},
+   {"-dattribute", ARGV_FUNC, (char *) get_attribute, NULL,
+       "Set a double precision attribute (<var>:<attr>=<value>)."},
    {"-attribute", ARGV_FUNC, (char *) get_attribute, NULL,
-       "Set an attribute (<var>:<attr>=<value>)."},
+       "Set an attribute, guessing the type (<var>:<attr>=<value>)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying time dimension coordinates."},
    {"-frame_times", ARGV_FUNC, (char *) get_times, NULL,
@@ -807,6 +814,7 @@ void usage_error(char *progname)
 int get_attribute(char *dst, char *key, char *nextarg)
      /* ARGSUSED */
 {
+   int need_string, need_double;
    char *variable;
    char *attribute;
    char *value;
@@ -820,6 +828,10 @@ int get_attribute(char *dst, char *key, char *nextarg)
                      key);
       exit(EXIT_FAILURE);
    }
+
+   /* Figure out whether we need a string or a double */
+   need_string = (strcmp(key, "-sattribute") == 0);
+   need_double = (strcmp(key, "-dattribute") == 0);
 
    /* Get the variable name */
    variable = nextarg;
@@ -863,10 +875,18 @@ int get_attribute(char *dst, char *key, char *nextarg)
    attribute_list[attribute_list_size-1].value = value;
 
    /* Try to get a double precision value */
-   dvalue = strtod(value, &end);
-   if ((end != value) && (*end == '\0')) {
-      attribute_list[attribute_list_size-1].value = NULL;
-      attribute_list[attribute_list_size-1].double_value = dvalue;
+   if (!need_string) {
+      dvalue = strtod(value, &end);
+      if ((end != value) && (*end == '\0')) {
+         attribute_list[attribute_list_size-1].value = NULL;
+         attribute_list[attribute_list_size-1].double_value = dvalue;
+      }
+      else if (need_double) {
+         (void) fprintf(stderr, 
+                        "\"%s\" option requires a numeric argument\n",
+                        key);
+         exit(EXIT_FAILURE);
+      }
    }
 
    return TRUE;
