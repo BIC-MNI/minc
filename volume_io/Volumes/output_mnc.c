@@ -2,7 +2,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.20 1994-11-25 14:20:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.21 1995-02-13 13:14:27 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -112,7 +112,7 @@ public  Minc_file  initialize_minc_output(
     int                 i, j, d, axis, vol_index, n_range_dims;
     Point               origin;
     Vector              axes[MAX_DIMENSIONS];
-    static  char        *default_dim_names[] = { MIzspace, MIyspace, MIxspace };
+    static  STRING      default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     char                *file_dim_names[MAX_VAR_DIMS];
     Transform           transform;
     char                **vol_dimension_names;
@@ -124,7 +124,7 @@ public  Minc_file  initialize_minc_output(
         options = &default_options;
     }
 
-    if( dim_names == (char **) NULL )
+    if( dim_names == (STRING *) NULL )
     {
         if( n_dimensions != 3 )
         {
@@ -276,10 +276,11 @@ public  Minc_file  initialize_minc_output(
         (void) strcpy( file->dim_names[d], dim_names[d] );
         dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
+        file->dim_ids[d] = micreate_std_variable( file->cdfid,
+                                  dim_names[d], NC_DOUBLE, 0, NULL);
+
         if( convert_dim_name_to_spatial_axis( dim_names[d], &axis ) )
         {
-            file->dim_ids[d] = micreate_std_variable( file->cdfid,
-                                dim_names[d], NC_DOUBLE, 0, NULL);
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
                                 separation[axis]);
             (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
