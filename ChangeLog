@@ -1,3 +1,11 @@
+2003-06-01  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* testdir/create_grid_xfm.c: New.  Utility to create grid
+	transformation.
+
+	* testdir/xfmconcat_01.sh: New.  Test concatenation of grid
+	transformations.
+
 2003-03-17  Bert Vincent      <bert@bic.mni.mcgill.ca>
 
 	* configure.in: added check for mkstemp(), tempnam(), and tmpnam()

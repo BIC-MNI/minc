@@ -1,3 +1,4 @@
+.deps .libs
 minc
 test_mconv
 minc_types
@@ -9,4 +10,5 @@ icv_dim1
 icv_fillvalue
 junk.out
 test.mnc
-Makefile.in
+Makefile.in Makefile
+
