@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.7  2001-09-18 15:33:00  neelin
+ * Revision 6.8  2002-08-05 00:53:50  neelin
+ * Added slightly modified code from Colin Holmes to support -skip option
+ *
+ * Revision 6.7  2001/09/18 15:33:00  neelin
  * Create image variable last to allow big images and to fix compatibility
  * problems with 2.3 and 3.x.
  *
@@ -122,7 +125,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.7 2001-09-18 15:33:00 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.8 2002-08-05 00:53:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -263,6 +266,7 @@ double *frame_widths = NULL;
 char *inputfile = NULL;
 int do_minmax = FALSE;
 double real_range[2] = {DEF_RANGE, DEF_RANGE};
+long skip_length;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -314,6 +318,8 @@ ArgvInfo argTable[] = {
        "Unsigned values"},
    {NULL, ARGV_HELP, NULL, NULL,
        "Other input value options."},
+   {"-skip", ARGV_INT, (char *) 0, (char *) &skip_length,
+       "Specifies the number of bytes to skip over in the input stream"},
    {"-range", ARGV_FLOAT, (char *) 2, (char *) valid_range, 
        "Valid range of input values (default = full range)."},
    {"-real_range", ARGV_FLOAT, (char *) 2, (char *) real_range, 
@@ -697,6 +703,31 @@ main(int argc, char *argv[])
    if (do_vrange) {
       ovalid_range[0]=DBL_MAX;
       ovalid_range[1]=(-DBL_MAX);
+   }
+   
+   /* CJH - July 02 - Skip over any header bytes  */
+   if (skip_length > 0) {
+
+      /* First try seeking over the header */
+      if (fseek(instream, skip_length, SEEK_SET) == 0) {
+         /* OK instream was a file and we skipped the requested bytes */
+      }
+      else {
+         char buffer[8192];
+         int bytes_copied = 0;
+         while ( bytes_copied < skip_length ) {
+            int bytes_to_read = sizeof(buffer);
+            if ( bytes_to_read + bytes_copied > skip_length )
+               bytes_to_read = skip_length - bytes_copied;
+            nread = fread(buffer, sizeof(char), bytes_to_read, instream);
+            bytes_copied += nread;
+            if (nread != bytes_to_read) {
+               (void) fprintf(stderr, "%s: Premature end of file.\n", pname);
+               perror("While skipping over small header");
+               exit(ERROR_STATUS);
+            }
+         }
+      }
    }
 
    while (start[0] < end[0]) {
