@@ -228,12 +228,16 @@ public  int   evaluate_volume(
     Real           **first_deriv,
     Real           ***second_deriv )
 {
-    int      n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims, ind;
+    int      inc0, inc1, inc2, inc3, inc4, inc[MAX_DIMENSIONS];
+    int      ind0, ind1, ind2, ind3, ind4;
+    int      start0, start1, start2, start3, start4;
+    int      end0, end1, end2, end3, end4;
+    int      v0, v1, v2, v3, v4;
+    int      n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims;
     int      start[MAX_DIMENSIONS], n_interp_dims;
     int      end[MAX_DIMENSIONS];
     int      interp_dims[MAX_DIMENSIONS];
     int      n_coefs;
-    int      vi[MAX_DIMENSIONS];
     Real     fraction[MAX_DIMENSIONS], bound, *coefs;
     BOOLEAN  fully_inside, fully_outside;
 
@@ -260,15 +264,15 @@ public  int   evaluate_volume(
         if( interpolating_dimensions == NULL || interpolating_dimensions[d])
         {
             interp_dims[n_interp_dims] = d;
-            start[n_interp_dims] =       FLOOR( voxel[d] - bound );
+            start[d] =       FLOOR( voxel[d] - bound );
             fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
-            end[n_interp_dims] = start[n_interp_dims] + degrees_continuity + 2;
+            end[d] = start[d] + degrees_continuity + 2;
             n_coefs *= 2 + degrees_continuity;
 
-            if( start[n_interp_dims] < 0 || end[n_interp_dims] > sizes[d] )
+            if( start[d] < 0 || end[d] > sizes[d] )
                 fully_inside = FALSE;
 
-            if( start[n_interp_dims] < sizes[d] && end[n_interp_dims] > 0 )
+            if( start[d] < sizes[d] && end[d] > 0 )
                 fully_outside = FALSE;
 
             ++n_interp_dims;
@@ -306,8 +310,8 @@ public  int   evaluate_volume(
         if( interpolating_dimensions != NULL && !interpolating_dimensions[d] )
         {
             interp_dims[n_interp_dims+n] = d;
-            start[n_interp_dims+n] = 0;
-            end[n_interp_dims+n] = sizes[d];
+            start[d] = 0;
+            end[d] = sizes[d];
             ++n;
         }
     }
@@ -321,46 +325,75 @@ public  int   evaluate_volume(
 
     ALLOC( coefs, n_values * n_coefs );
 
-    if( fully_inside )
+    inc[interp_dims[MAX_DIMENSIONS-1]] = 1;
+    for_down( d, MAX_DIMENSIONS-2, 0 )
     {
-        ind = 0;
-        for_less( vi[interp_dims[0]], start[0], end[0] )
-        for_less( vi[interp_dims[1]], start[1], end[1] )
-        for_less( vi[interp_dims[2]], start[2], end[2] )
-        for_less( vi[interp_dims[3]], start[3], end[3] )
-        for_less( vi[interp_dims[4]], start[4], end[4] )
-        {
-            GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3], vi[4] );
-            ++ind;
-        }
+        inc[interp_dims[d]] = inc[interp_dims[d+1]] * (end[interp_dims[d+1]] -
+                                                     start[interp_dims[d+1]]);
     }
-    else
+
+    ind0 = 0;
+
+    if( !fully_inside )
     {
-        ind = 0;
-        for_less( vi[interp_dims[0]], start[0], end[0] )
-        for_less( vi[interp_dims[1]], start[1], end[1] )
-        for_less( vi[interp_dims[2]], start[2], end[2] )
-        for_less( vi[interp_dims[3]], start[3], end[3] )
-        for_less( vi[interp_dims[4]], start[4], end[4] )
+        for_less( d, 0, n_dims )
         {
-            for_less( d, 0, n_dims )
+            if( start[d] < 0 )
             {
-                if( vi[d] < 0 || vi[d] >= sizes[d] )
-                    break;
+                ind0 += -start[d] * inc[d];
+                start[d] = 0;
             }
 
-            if( d == n_dims )
-            {
-                GET_VALUE( coefs[ind], volume,
-                           vi[0], vi[1], vi[2], vi[3], vi[4] );
-            }
-            else
-                coefs[ind] = outside_value;
-            ++ind;
+            if( end[d] > sizes[d] )
+                end[d] = sizes[d];
         }
 
-        if( ind > n_values * n_coefs )
-            handle_internal_error( "overflow" );
+        for_less( v, 0, n_values * n_coefs )
+            coefs[v] = outside_value;
+    }
+
+    start0 = start[0];
+    start1 = start[1];
+    start2 = start[2];
+    start3 = start[3];
+    start4 = start[4];
+
+    end0 = end[0];
+    end1 = end[1];
+    end2 = end[2];
+    end3 = end[3];
+    end4 = end[4];
+
+    inc0 = inc[0];
+    inc1 = inc[1];
+    inc2 = inc[2];
+    inc3 = inc[3];
+    inc4 = inc[4];
+
+    for_less( v0, start0, end0 )
+    {
+        ind1 = ind0;
+        for_less( v1, start1, end1 )
+        {
+            ind2 = ind1;
+            for_less( v2, start2, end2 )
+            {
+                ind3 = ind2;
+                for_less( v3, start3, end3 )
+                {
+                    ind4 = ind3;
+                    for_less( v4, start4, end4 )
+                    {
+                        GET_VALUE( coefs[ind4], volume, v0, v1, v2, v3, v4 );
+                        ind4 += inc4;
+                    }
+                    ind3 += inc3;
+                }
+                ind2 += inc2;
+            }
+            ind1 += inc1;
+        }
+        ind0 += inc0;
     }
 
     switch( degrees_continuity )
