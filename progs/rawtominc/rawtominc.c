@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 2.5  1995-02-08 19:31:47  neelin
-@MODIFIED   : Moved ARGSUSED statements for irix 5 lint.
+@MODIFIED   : Revision 2.6  1995-02-15 18:10:35  neelin
+@MODIFIED   : Added check for global attribute specified with -attribute.
 @MODIFIED   :
+ * Revision 2.5  1995/02/08  19:31:47  neelin
+ * Moved ARGSUSED statements for irix 5 lint.
+ *
  * Revision 2.4  1995/01/23  09:07:46  neelin
  * changed ncclose to miclose.
  *
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.5 1995-02-08 19:31:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 2.6 1995-02-15 18:10:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -484,16 +487,22 @@ main(int argc, char *argv[])
    /* Create any special attributes */
    ncopts = 0;
    for (iatt=0; iatt < attribute_list_size; iatt++) {
-      varid = ncvarid(cdfid, attribute_list[iatt].variable);
-      if (varid == MI_ERROR) {
-         varid = micreate_group_variable(cdfid, attribute_list[iatt].variable);
+      if (strlen(attribute_list[iatt].variable) == 0) {
+         varid = NC_GLOBAL;
       }
-      if (varid == MI_ERROR) {
-         varid = ncvardef(cdfid, attribute_list[iatt].variable, NC_LONG,
-                          0, NULL);
-      }
-      if (varid == MI_ERROR) {
-         continue;
+      else {
+         varid = ncvarid(cdfid, attribute_list[iatt].variable);
+         if (varid == MI_ERROR) {
+            varid = micreate_group_variable(cdfid, 
+                                            attribute_list[iatt].variable);
+         }
+         if (varid == MI_ERROR) {
+            varid = ncvardef(cdfid, attribute_list[iatt].variable, NC_LONG,
+                             0, NULL);
+         }
+         if (varid == MI_ERROR) {
+            continue;
+         }
       }
       if (attribute_list[iatt].value != NULL) {
          (void) miattputstr(cdfid, varid, attribute_list[iatt].attribute,
