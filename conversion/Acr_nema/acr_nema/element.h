@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 1.2  1993-11-22 13:12:21  neelin
-@MODIFIED   : Added Acr_Element_Id code.
+@MODIFIED   : Revision 1.3  1993-11-23 11:36:21  neelin
+@MODIFIED   : Changed GLOBAL_ELEMENT macro to allow definition or declaration of
+@MODIFIED   : global variables.
 @MODIFIED   :
+ * Revision 1.2  93/11/22  13:12:21  neelin
+ * Added Acr_Element_Id code.
+ * 
  * Revision 1.1  93/11/19  12:50:24  neelin
  * Initial revision
  * 
@@ -42,8 +46,16 @@ typedef struct Acr_Element_Id {
 #define DEFINE_ELEMENT(class, name, group, element) \
    static struct Acr_Element_Id name##_struct = {group, element}; \
    class Acr_Element_Id name = &name##_struct
-#define GLOBAL_ELEMENT(name, group, element) \
-   DEFINE_ELEMENT(,name, group, element)
+
+/* Macro for creating global elements. If GLOBAL_ELEMENT_DEFINITION is
+   defined then we define the variables, otherwise we just declar them */
+#ifdef GLOBAL_ELEMENT_DEFINITION
+#  define GLOBAL_ELEMENT(name, group, element) \
+      DEFINE_ELEMENT(,name, group, element)
+#else
+#  define GLOBAL_ELEMENT(name, group, element) \
+      extern Acr_Element_Id name
+#endif
 
 
 /* Functions */
