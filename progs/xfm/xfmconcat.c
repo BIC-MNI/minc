@@ -10,7 +10,10 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.1  1999-10-19 14:45:32  neelin
+ * Revision 6.2  2004-02-02 18:24:11  bert
+ * Call ParseArgv() so that version information will be available
+ *
+ * Revision 6.1  1999/10/19 14:45:32  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:28  neelin
@@ -57,13 +60,14 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.1 1999-10-19 14:45:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.2 2004-02-02 18:24:11 bert Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <volume_io.h>
+#include <ParseArgv.h>
 #include <minc_def.h>
 
 /* Constants */
@@ -76,6 +80,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.1 
 #  define private static
 #endif
 
+/* Argument table */
+ArgvInfo argTable[] = {
+   {NULL, ARGV_END, NULL, NULL, NULL}
+};
+
 /* Main program */
 
 int main(int argc, char *argv[])
@@ -85,7 +94,7 @@ int main(int argc, char *argv[])
    int iarg, first_arg, last_arg, output_arg;
 
    /* Check arguments */
-   if (argc < 3) {
+   if (ParseArgv(&argc, argv, argTable, 0) || argc < 3) {
       (void) fprintf(stderr, 
                 "Usage: %s <input1.xfm> [<input2.xfm> ...] <result.xfm>\n",
                      argv[0]);
