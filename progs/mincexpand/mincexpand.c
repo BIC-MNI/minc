@@ -10,7 +10,10 @@
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexpand.c,v $
- * Revision 6.2  2004-11-01 22:38:38  bert
+ * Revision 6.3  2004-12-14 23:51:24  bert
+ * Get rid of compilation warning with c99
+ *
+ * Revision 6.2  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.1  1999/10/19 14:45:22  neelin
@@ -53,9 +56,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.2 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.3 2004-12-14 23:51:24 bert Exp $";
 #endif
 
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
