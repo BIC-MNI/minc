@@ -21,7 +21,7 @@ TESTS = run_tests.csh \
 
 check_PROGRAMS = minc test_mconv minc_types icv icv_range \
 	icv_dim test_speed icv_dim1 icv_fillvalue \
-	test_xfm create_grid_xfm mincapi
+	test_xfm create_grid_xfm mincapi test_speed
 
 EXTRA_DIST = $(script_tests) $(expect_files) t1.xfm
 
