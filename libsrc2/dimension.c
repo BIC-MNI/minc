@@ -328,7 +328,10 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
  * whose characteristics match the "class" and "attr" parameters. 
  * The miorder_t is an enumerated type flag which determines whether the
  * dimension order is determined by the file or by the apparent order set by 
- * the user.
+ * the user. This function will fail if the user has not set the apparent 
+ * dimension order by calling either of 
+ * (miset_apparent_dimension_order(_by_name))
+ * before calling this function with MI_DIMORDER_APPARENT flag.
  * \ingroup mi2Dim
  */
 int 
@@ -336,19 +339,24 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 			miorder_t order, int array_length, 
 			midimhandle_t dimensions[])
 {
-  // THE PARAMETER "miorder_t order" WAS NOT CONSIDERED WHEW WRITING
-  // THIS FUNCTION. MUST FIGURE OUT WHAT TO DO WITH IT
   
   hsize_t number_of_dims; 
   int i=0, max_dims;
   int num_ret_dims = 0;
   
+  
   if (volume == NULL) {
     return (MI_ERROR);
   }
  
+  /* make sure the user has set the apparernt order before
+   *  calling this function with MI_DIMORDER_APPARENT
+   */
+  if (order == MI_DIMORDER_APPARENT && volume->dim_indices == NULL) {
+    return (MI_ERROR);
+  }
+      
   number_of_dims = volume->number_of_dims;
-
   if (array_length > number_of_dims) {
     max_dims = number_of_dims;
   }
@@ -357,13 +365,23 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   }
   
   /* Go through each dimension separately and figure out
-     which one has a matching class and attirbute.
+     which one has a matching class and attribute.
+     if the user has set the apparent order use the dim_indices
+     to search the dimensions otherwise use dim_handles
    */
+  midimhandle_t hdim;
+  
   for (i=0; i < max_dims; i++) {
-      midimhandle_t hdim = volume->dim_handles[i];
+      if (order == MI_DIMORDER_APPARENT) {
+	  hdim = volume->dim_handles[volume->dim_indices[i]];
+      }
+      else {
+	  hdim = volume->dim_handles[i];
+      }
       if (class == MI_DIMCLASS_ANY || class == hdim->class) {
-          if (hdim->attr == attr || attr ==  MI_DIMATTR_ALL) {
-              dimensions[num_ret_dims++] = hdim;
+          if (attr ==  MI_DIMATTR_ALL || hdim->attr == attr) {
+	    dimensions[num_ret_dims++] = hdim;
+	      
           }
       }
   }

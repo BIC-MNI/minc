@@ -816,7 +816,10 @@ dimensions into the "dimensions[]" array, returning only those dimension
 whose characteristics match the "class" and "attr" parameters. 
 The miorder_t is an enumerated type flag which determines whether the
 dimension order is determined by the file or by the apparent order set by 
-the user.
+the user. This function will FAIL if the user has not set the apparent 
+dimension order by calling either of 
+miset_apparent_dimension_order() or miset_apparent_dimension_order_by_name()
+before calling this function with MI_DIMORDER_APPARENT flag
 
 
 The following example will return up to 3 spatial dimensions:
@@ -828,7 +831,6 @@ The following example will return up to 3 spatial dimensions:
     result = miget_vol_dimensions (volume, MI_DIMCLASS_SPATIAL, 
                                    MI_DIMATTR_ALL, MI_DIMORDER_FILE, 
                                    3, dimensions);
-
 
 RETURN VALUE
 
