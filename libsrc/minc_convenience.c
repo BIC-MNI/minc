@@ -27,7 +27,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.12  2004-03-24 20:53:48  bert
+ * Revision 6.13  2004-04-27 15:49:17  bert
+ * Use new logging, gettext preparation
+ *
+ * Revision 6.12  2004/03/24 20:53:48  bert
  * Increase att_length by one in miappend_history() in order to read the entire attribute
  *
  * Revision 6.11  2004/02/02 18:22:46  bert
@@ -116,7 +119,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.12 2004-03-24 20:53:48 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.13 2004-04-27 15:49:17 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"
@@ -510,8 +513,8 @@ public int miget_image_range(int cdfid, double image_range[])
 
          /* Get space */
          if ((buffer=MALLOC(size, double))==NULL) {
-            MI_LOG_SYS_ERROR1("miget_image_range");
-            MI_RETURN_ERROR(MI_ERROR);
+	     milog_message(MI_MSG_OUTOFMEM, size);
+	     MI_RETURN(MI_ERROR);
          }
 
          /* Get values */
@@ -519,7 +522,7 @@ public int miget_image_range(int cdfid, double image_range[])
                       miset_coords(ndims, 0L, start),
                       count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
             FREE(buffer);
-            MI_RETURN_ERROR(MI_ERROR);
+            MI_RETURN(MI_ERROR);
          }
 
          /* Loop through values, getting max/min */
@@ -656,10 +659,8 @@ public int miattget_pointer(int cdfid, int varid, char *name)
    /* Check for the prefix */
    for (index=0; prefix_string[index]!='\0'; index++) {
       if (pointer_string[index]!=prefix_string[index]) {
-         MI_LOG_PKG_ERROR3(MI_ERR_NOTPOINTER,
-                           "Attribute %s is not a pointer to a variable",
-                           name);
-         MI_RETURN_ERROR(MI_ERROR);
+	  milog_message(MI_MSG_ATTRNOTPTR, name);
+	  MI_RETURN(MI_ERROR);
       }
    }
 
@@ -709,8 +710,9 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
    /* Allocate space for new child list */
    if ((child_list = MALLOC(child_list_size+MAX_NC_NAME+
                             strlen(MI_CHILD_SEPARATOR), char)) == NULL) {
-      MI_LOG_SYS_ERROR1("miadd_child");
-      MI_RETURN_ERROR(MI_ERROR);
+       milog_message(MI_MSG_OUTOFMEM, 
+                     child_list_size+MAX_NC_NAME+strlen(MI_CHILD_SEPARATOR));
+       MI_RETURN(MI_ERROR);
    }
 
    /* Get the old list if needed and check for terminating null character 
@@ -719,7 +721,8 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
    if (child_list_size>0) {
       if (ncattget(cdfid, parent_varid, MIchildren, child_list) == MI_ERROR) {
          FREE(child_list);
-         MI_RETURN_ERROR(MI_ERROR);
+         milog_message(MI_MSG_READATTR, MIchildren);
+         MI_RETURN(MI_ERROR);
       }
       if (child_list[child_list_size-1] == '\0')
          child_list_size--;
@@ -825,18 +828,15 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
       else if (STRINGS_EQUAL(name, MIacquisition))
          MI_CHK_ERR(varid=MI_create_simple_variable(cdfid, name))
       else {
-         MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR, 
-                           "%s is not recognised as a standard MINC variable",
-                           name);
-         MI_RETURN_ERROR(MI_ERROR);
+	  milog_message(MI_MSG_VARNOTSTD, name);
+         MI_RETURN(MI_ERROR);
       }
    }
 
    /* If not in any list, then return an error */
    else {
-      MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR,
-                        "%s is not a standard MINC variable", name);
-      MI_RETURN_ERROR(MI_ERROR);
+       milog_message(MI_MSG_VARNOTSTD, name);
+       MI_RETURN(MI_ERROR);
    }
 
    MI_RETURN(varid);
@@ -870,16 +870,14 @@ private int MI_create_dim_variable(int cdfid, char *name,
 
    /* Check for MIvector_dimension - no associated variable */
    if (STRINGS_EQUAL(name, MIvector_dimension)) {
-      MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR,
-                        "%s is not a standard MINC variable", name);
-      MI_RETURN_ERROR(MI_ERROR);
+       milog_message(MI_MSG_VARNOTSTD, name);
+       MI_RETURN(MI_ERROR);
    }
 
    /* Check for ndims being 0 or 1 */
    if (ndims>1) {
-      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
-                        "Too many dimensions for a dimension variable");
-      MI_RETURN_ERROR(MI_ERROR);
+       milog_message(MI_MSG_TOOMANYDIMS, 1);
+       MI_RETURN(MI_ERROR);
    }
 
    /* Look for dimension and create the variable */
@@ -894,13 +892,13 @@ private int MI_create_dim_variable(int cdfid, char *name,
    /* Add comments for spatial dimensions */ 
    if (STRINGS_EQUAL(name, MIxspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                     "X increases from patient left to right"))}
+                              _("X increases from patient left to right")))}
    else if (STRINGS_EQUAL(name, MIyspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                     "Y increases from patient posterior to anterior"))}
+                              _("Y increases from patient posterior to anterior")))}
    else if (STRINGS_EQUAL(name, MIzspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                     "Z increases from patient inferior to superior"))}
+                              _("Z increases from patient inferior to superior")))}
 
    /* Dimension attributes */
    if (ndims==0) {
@@ -948,16 +946,15 @@ private int MI_create_dimwidth_variable(int cdfid, char *name,
 
    /* Look for dimension name in name (remove width suffix) */
    if ((str=strstr(strcpy(string, name),MI_WIDTH_SUFFIX)) == NULL) {
-      MI_LOG_PKG_ERROR2(MI_ERR_BADSUFFIX,"Bad dimension width suffix");
-      MI_RETURN_ERROR(MI_ERROR);
+      milog_message(MI_MSG_DIMWIDTH);
+      MI_RETURN(MI_ERROR);
    }
    *str='\0';
 
    /* Check for ndims being 0 or 1 */
    if (ndims>1) {
-      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
-                        "Too many dimensions for a dimension variable");
-      MI_RETURN_ERROR(MI_ERROR);
+      milog_message(MI_MSG_TOOMANYDIMS, 1);
+      MI_RETURN(MI_ERROR);
    }
 
    /* Look for the dimension */
@@ -1167,9 +1164,8 @@ private int MI_verify_maxmin_dims(int cdfid,
    for (i=MAX(0,image_ndims-nbaddims); i<image_ndims; i++)
       for (j=0; j<maxmin_ndims; j++)
          if (image_dim[i]==maxmin_dim[j]) {
-            MI_LOG_PKG_ERROR2(MI_ERR_MAXMIN_DIMS,
-                        "Imagemax/min dimensions vary over image dimensions");
-            MI_RETURN_ERROR(MI_ERROR);
+             milog_message(MI_MSG_MAXMINVARY);
+	     MI_RETURN(MI_ERROR);
          }
 
    MI_RETURN(MI_NOERROR);
@@ -1353,6 +1349,7 @@ miappend_history(int fd, const char *tm_stamp)
     if (att_value == NULL) {
         return (MI_ERROR);
     }
+
     if (miattgetstr(fd, NC_GLOBAL, MIhistory, att_length, att_value) == NULL) {
         return (MI_ERROR);
     }

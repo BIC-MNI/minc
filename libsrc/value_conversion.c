@@ -14,7 +14,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.4  2003-11-14 16:52:24  stever
+ * Revision 6.5  2004-04-27 15:49:51  bert
+ * Use new logging, gettext preparation
+ *
+ * Revision 6.4  2003/11/14 16:52:24  stever
  * More last-minute fixes.
  *
  * Revision 6.3  2003/09/18 16:17:23  bert
@@ -82,7 +85,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.4 2003-11-14 16:52:24 stever Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.5 2004-04-27 15:49:51 bert Exp $ MINC (MNI)";
 #endif
 
 #include <math.h>
@@ -178,8 +181,8 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
 
    /* Check that the variable type is numeric */
    if ((datatype==NC_CHAR) || (strc.var_type==NC_CHAR)) {
-      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC,"Non-numeric datatype");
-      MI_RETURN_ERROR(MI_ERROR);
+      milog_message(MI_MSG_VARNOTNUM);
+      MI_RETURN(MI_ERROR);
    }
 
    /* Try to find out the sign of the variable using MIsigntype.
@@ -207,8 +210,8 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
          MI_CHK_ERR(ncvarput(cdfid, varid, start, count, values))
          break;
       default:
-         MI_LOG_PKG_ERROR2(MI_ERR_BADOP,"Illegal variable access operation");
-         MI_RETURN_ERROR(MI_ERROR);
+         milog_message(MI_MSG_BADOP);
+         MI_RETURN(MI_ERROR);
       }
       MI_RETURN(MI_NOERROR);
    }
@@ -304,7 +307,7 @@ private int MI_var_action(int ndims, long var_start[], long var_count[],
       }
       break;
    default:
-      MI_LOG_PKG_ERROR2(MI_ERR_BADOP,"Illegal variable access operation");
+      milog_message(MI_MSG_BADOP);
       status=MI_ERROR;
    }
 
@@ -399,8 +402,8 @@ semiprivate int MI_var_loop(int ndims, long start[], long count[],
    /* Allocate space for variable values */
    if ((var_buffer = MALLOC(ntimes*nvalues*value_size, char)) 
                                      == NULL) {
-      MI_LOG_SYS_ERROR1("MI_var_loop");
-      MI_RETURN_ERROR(MI_ERROR);
+      milog_message(MI_MSG_OUTOFMEM);
+      MI_RETURN(MI_ERROR);
    }
 
    /* Create a count variable for the var buffer, with 1s for dimensions
@@ -470,8 +473,7 @@ semiprivate int MI_get_sign_from_string(nc_type datatype, char *sign)
    MI_SAVE_ROUTINE_NAME("MI_get_sign_from_string");
 
    MI_RETURN(MI_get_sign(datatype,
-             (sign == NULL) ||
-             (STRINGS_EQUAL(sign, MI_EMPTY_STRING)) ? MI_PRIV_DEFSIGN :
+             (sign == NULL) || (*sign == '\0')      ? MI_PRIV_DEFSIGN :
              (STRINGS_EQUAL(sign, MI_SIGNED))       ? MI_PRIV_SIGNED :
              (STRINGS_EQUAL(sign, MI_UNSIGNED))     ? MI_PRIV_UNSIGNED :
                                                       MI_PRIV_DEFSIGN));
@@ -592,12 +594,12 @@ semiprivate int MI_convert_type(long number_of_values,
 
    /* Check the types and get their size */
    if ((intype==NC_CHAR) || (outtype==NC_CHAR)) {
-      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC,"Non-numeric datatype");
-      MI_RETURN_ERROR(MI_ERROR);
+      milog_message(MI_MSG_VARNOTNUM);
+      MI_RETURN(MI_ERROR);
    }
    if (((inincr =nctypelen(intype ))==MI_ERROR) ||
        ((outincr=nctypelen(outtype))==MI_ERROR)) {
-      MI_RETURN_ERROR(MI_ERROR);
+      MI_RETURN(MI_ERROR);
    }
 
    /* Get the sign of input and output values */
