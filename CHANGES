@@ -1,3 +1,8 @@
+Tue Nov 13 09:17:17 EST 2001
+   - Added functions miget_image_range and mivar_exists to minc_convenience.c.
+   - In mincreshape, set output valid range correctly for conversion from 
+     int to float types.
+
 Wed Oct 31 14:40:30 EST 2001
    - Fixed mincinfo printing of sign for default output. Change to
      miget_datatype had messed this up.
