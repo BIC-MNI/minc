@@ -36,9 +36,9 @@ int  main(
     if( world_space )
     {
         get_volume_separations( volume, separations );
-        x_width /= separations[X];
-        y_width /= separations[Y];
-        z_width /= separations[Z];
+        x_width /= ABS( separations[X] );
+        y_width /= ABS( separations[Y] );
+        z_width /= ABS( separations[Z] );
     }
 
     new_volume = create_box_filtered_volume( volume, x_width, y_width, z_width);
