@@ -1,0 +1,65 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH MINCCONVERT 1
+.SH NAME
+mincconvert \- convert between MINC 1 to MINC 2 format.
+.SH SYNOPSIS
+.B mincconvert
+.BI [-clobber]
+.BI [-2]
+.BI infile
+.BI outfile
+.P
+.B mincconvert
+.BI -help
+
+.SH OPTIONS
+.P
+.I -2
+Create a MINC 2 format file
+.P
+.I -clobber
+Overwrite a pre-existing output file.
+.P
+.I -help
+Print a helpful message.
+.P
+.I -template
+Create a template file.
+
+.I -compress N
+Compress file with compression level N.  The option has no effect if
+the output file is a MINC 1 file.
+
+.I -chunk M
+Store file in a block-structured arrangement, using hypercubes of
+edge length M.  The option has no effect if the output file is a MINC 1
+file.
+
+.SH DESCRIPTION
+.B mincconvert
+copies the input file to the output file, possibly converting the
+file from MINC 1 to MINC 2 format, or vice versa.
+
+With the -template flag, 
+.B mincconvert
+creates a "template" volume from the input MINC
+volume. The template volume preserves all of the structure
+(dimensions, variables, and attributes) of the input MINC volume but
+omits all data.  Any attempt to read data will return zeroes.
+
+The resulting file is typically much shorter than a normal MINC
+volume, and may be useful for scripts which want to carry such
+structural information forward into their output files.
+
+As a hint to future programmers and users, this program places a
+special global attribute in the file, with the name 
+.B class
+and the value 
+.B template.
+
+.SH AUTHOR
+Bert Vincent - bert@bic.mni.mcgill.ca
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 2003 by Robert Vincent and the Montreal Neurological Institute.
