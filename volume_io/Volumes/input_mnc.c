@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.45 1995-08-21 04:36:28 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.46 1995-09-19 13:45:35 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -641,6 +641,7 @@ public  Status  close_minc_input(
 
 public  Status  input_minc_hyperslab(
     Minc_file        file,
+    BOOLEAN          one_d_array_flag,
     multidim_array   *array,
     int              array_start[],
     int              to_array[],
@@ -666,6 +667,9 @@ public  Status  input_minc_hyperslab(
 
     n_array_dims = get_multidim_n_dimensions( array );
     n_file_dims = file->n_file_dimensions;
+
+    direct_to_array = TRUE;
+
     expected_ind = n_array_dims-1;
     tmp_ind = n_file_dims-1;
     non_full_size_found = FALSE;
@@ -673,15 +677,14 @@ public  Status  input_minc_hyperslab(
     for_less( ind, 0, n_array_dims )
         vol1_indices[ind] = -1;
 
-    direct_to_array = TRUE;
-
     for( file_ind = n_file_dims-1;  file_ind >= 0;  --file_ind )
     {
         used_start[file_ind] = (long) start[file_ind];
         used_count[file_ind] = (long) count[file_ind];
 
         ind = to_array[file_ind];
-        if( ind != INVALID_AXIS )
+
+        if( !one_d_array_flag && ind != INVALID_AXIS )
         {
             if( !non_full_size_found &&
                 count[file_ind] < file->sizes_in_file[file_ind] )
@@ -703,15 +706,24 @@ public  Status  input_minc_hyperslab(
         }
     }
 
-    n_tmp_dims = n_file_dims - tmp_ind - 1;
-
     if( !direct_to_array || file->converting_to_colour )
     {
-        for_less( dim, 0, n_tmp_dims )
+        if( one_d_array_flag )
         {
-            tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
-            vol1_indices[dim] = vol1_indices[dim+tmp_ind+1];
-            zero[dim] = 0;
+            n_tmp_dims = 1;
+            get_multidim_sizes( array, tmp_sizes );
+            vol1_indices[0] = 0;
+            zero[0] = 0;
+        }
+        else
+        {
+            n_tmp_dims = n_file_dims - tmp_ind - 1;
+            for_less( dim, 0, n_tmp_dims )
+            {
+                tmp_sizes[dim] = tmp_sizes[dim+tmp_ind+1];
+                vol1_indices[dim] = vol1_indices[dim+tmp_ind+1];
+                zero[dim] = 0;
+            }
         }
 
         data_type = get_multidim_data_type( array );
@@ -856,7 +868,8 @@ private  void  input_slab(
             volume_start[ind] = 0;
     }
 
-    (void) input_minc_hyperslab( file, &volume->array, volume_start, to_volume,
+    (void) input_minc_hyperslab( file, FALSE,
+                                 &volume->array, volume_start, to_volume,
                                  file_start, file_count );
 }
 
