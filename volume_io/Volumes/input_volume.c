@@ -241,6 +241,16 @@ private  void  setup_input_mni_as_free_format(
     Status  status;
     FILE    *file;
     String  tmp_name;
+    String  abs_filename;
+
+    if( filename[0] != '/' )
+    {
+        (void) getwd( abs_filename );
+        (void) strcat( abs_filename, "/" );
+        (void) strcat( abs_filename, filename );
+    }
+    else
+        (void) strcpy( abs_filename, filename );
 
     (void) tmpnam( tmp_name );
 
@@ -251,7 +261,7 @@ private  void  setup_input_mni_as_free_format(
     status = output_string( file, "80   1.5    z\n" );
     status = output_string( file, "256  0.86   y\n" );
     status = output_string( file, "256  0.67   x\n" );
-    status = output_string( file, filename );
+    status = output_string( file, abs_filename );
     status = output_int( file, MNI_BYTE_OFFSET );
     status = output_string( file, "\n" );
 
@@ -340,8 +350,6 @@ private  void  get_mni_scaling(
         *scale_factor = (Real) float_scale_factor;
         *trans_factor = (Real) short_trans_factor;
     }
-
-    print( "Rescaling %g %g\n", *scale_factor, *trans_factor );
 
     status = close_file( file );
 }
