@@ -6,54 +6,18 @@
 private  BOOLEAN  point_within_triangle_2d(
     Point   *pt,
     Point   points[] );
+private  BOOLEAN  point_within_polygon(
+    Point   *pt,
+    int     n_points,
+    Point   points[],
+    Vector  *polygon_normal );
 private  BOOLEAN  point_within_polygon_2d(
     Point   *pt,
     int     n_points,
     Point   points[],
     Vector  *polygon_normal );
 
-public  BOOLEAN   intersect_ray_polygon(
-    Point            *ray_origin,
-    Vector           *ray_direction,
-    Real             *dist,
-    polygons_struct  *polygons,
-    int              poly_index )
-{
-    BOOLEAN  intersects;
-    Point    points[MAX_POINTS];
-    int      ind, p, start_index, end_index, size;
-
-    intersects = FALSE;
-
-    if( polygons->visibilities == (Smallest_int *) 0 ||
-        polygons->visibilities[poly_index] )
-    {
-        start_index = START_INDEX( polygons->end_indices, poly_index );
-        end_index = polygons->end_indices[poly_index];
-
-        size = end_index - start_index;
-
-        if( size > MAX_POINTS )
-        {
-            print( "Warning: awfully big polygon, size = %d\n", size );
-            size = MAX_POINTS;
-            end_index = start_index + size - 1;
-        }
-
-        for_less( p, start_index, end_index )
-        {
-            ind = polygons->indices[p];
-            points[p-start_index] = polygons->points[ind];
-        }
-
-        intersects = intersect_ray_polygon_points( ray_origin, ray_direction,
-                                                   size, points, dist );
-    }
-
-    return( intersects );
-}
-
-public  BOOLEAN   intersect_ray_polygon_points(
+private  BOOLEAN   intersect_ray_polygon_points(
     Point            *ray_origin,
     Vector           *ray_direction,
     int              n_points,
@@ -94,7 +58,48 @@ public  BOOLEAN   intersect_ray_polygon_points(
     return( intersects );
 }
 
-public  BOOLEAN  point_within_polygon(
+private  BOOLEAN   intersect_ray_polygon(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    Real             *dist,
+    polygons_struct  *polygons,
+    int              poly_index )
+{
+    BOOLEAN  intersects;
+    Point    points[MAX_POINTS];
+    int      ind, p, start_index, end_index, size;
+
+    intersects = FALSE;
+
+    if( polygons->visibilities == (Smallest_int *) 0 ||
+        polygons->visibilities[poly_index] )
+    {
+        start_index = START_INDEX( polygons->end_indices, poly_index );
+        end_index = polygons->end_indices[poly_index];
+
+        size = end_index - start_index;
+
+        if( size > MAX_POINTS )
+        {
+            print( "Warning: awfully big polygon, size = %d\n", size );
+            size = MAX_POINTS;
+            end_index = start_index + size - 1;
+        }
+
+        for_less( p, start_index, end_index )
+        {
+            ind = polygons->indices[p];
+            points[p-start_index] = polygons->points[ind];
+        }
+
+        intersects = intersect_ray_polygon_points( ray_origin, ray_direction,
+                                                   size, points, dist );
+    }
+
+    return( intersects );
+}
+
+private  BOOLEAN  point_within_polygon(
     Point   *pt,
     int     n_points,
     Point   points[],
@@ -251,7 +256,7 @@ private  BOOLEAN  point_within_polygon_2d(
     return( intersects );
 }
 
-public  BOOLEAN   intersect_ray_quadmesh(
+private  BOOLEAN   intersect_ray_quadmesh(
     Point            *ray_origin,
     Vector           *ray_direction,
     Real             *dist,
@@ -275,7 +280,7 @@ public  BOOLEAN   intersect_ray_quadmesh(
     return( intersects );
 }
 
-public  BOOLEAN  ray_intersects_sphere(
+private  BOOLEAN  ray_intersects_sphere(
     Point       *origin,
     Vector      *direction,
     Point       *centre,
@@ -311,7 +316,7 @@ public  BOOLEAN  ray_intersects_sphere(
     return( *dist >= 0.0 );
 }
 
-public  BOOLEAN  ray_intersects_tube(
+private  BOOLEAN  ray_intersects_tube(
     Point       *origin,
     Vector      *direction,
     Point       *p1,
@@ -368,7 +373,7 @@ public  BOOLEAN  ray_intersects_tube(
     return( *dist >= 0.0 );
 }
 
-public  BOOLEAN   intersect_ray_tube_segment(
+private  BOOLEAN   intersect_ray_tube_segment(
     Point            *origin,
     Vector           *direction,
     Real             *dist,
@@ -406,4 +411,232 @@ public  BOOLEAN   intersect_ray_tube_segment(
     }
 
     return( found );
+}
+
+private  BOOLEAN  intersect_ray_with_box(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    Point            *centre,
+    Real             size,
+    Real             *dist )
+{
+    int       c, enter, leave;
+    Real      t_int[2], t_min, t_max, delta, box_low, box_high, origin;
+    BOOLEAN   intersects;
+
+    t_min = 0.0;
+    t_max = 1.0e30;
+
+    intersects = TRUE;
+
+    for_less( c, 0, N_DIMENSIONS )
+    {
+        box_low = Point_coord(*centre,c) - size / 2.0;
+        box_high = Point_coord(*centre,c) + size / 2.0;
+
+        origin = Point_coord(*ray_origin,c);
+
+        delta = Point_coord( *ray_direction, c );
+        if( delta == 0.0 )
+        {
+            if( origin < box_low || origin > box_high )
+            {
+                intersects = FALSE;
+                break;
+            }
+        }
+        else
+        {
+            if( delta < 0.0 )
+            {
+                enter = 1;
+                leave = 0;
+            }
+            else
+            {
+                enter = 0;
+                leave = 1;
+            }
+
+            t_int[0] = (box_low - origin) / delta;
+            t_int[1] = (box_high - origin) / delta;
+
+            if( t_int[enter] > t_min )
+            {
+                t_min = t_int[enter];
+                if( t_min > t_max )
+                {
+                    intersects = FALSE;
+                    break;
+                }
+            }
+
+            if( t_int[leave] < t_max )
+            {
+                t_max = t_int[leave];
+                if( t_min > t_max )
+                {
+                    intersects = FALSE;
+                    break;
+                }
+            }
+        }
+    }
+
+    if( intersects )
+        *dist = t_min;
+
+    return( intersects );
+}
+
+private  BOOLEAN  intersect_ray_with_marker(
+    Point            *ray_origin,
+    Vector           *ray_direction,
+    marker_struct    *marker,
+    Real             *dist )
+{
+    if( marker->type == BOX_MARKER )
+    {
+        return( intersect_ray_with_box( ray_origin, ray_direction,
+                                        &marker->position, marker->size, dist));
+    }
+    else
+    {
+        return( ray_intersects_sphere( ray_origin, ray_direction,
+                                       &marker->position, marker->size, dist) );
+    }
+}
+
+public  void  intersect_ray_object(
+    Point                 *origin,
+    Vector                *direction,
+    Real                  t_min,
+    object_struct         *object,
+    int                   obj_index,
+    int                   *closest_obj_index,
+    Real                  *closest_dist,
+    int                   *n_intersections,
+    Real                  *distances[] )
+{
+    BOOLEAN               found;
+    Real                  dist;
+
+    if( get_object_type( object ) == POLYGONS )
+    {
+        found = intersect_ray_polygon( origin, direction, &dist,
+                                       get_polygons_ptr(object), obj_index );
+    }
+    else if( get_object_type( object ) == QUADMESH )
+    {
+        found = intersect_ray_quadmesh( origin, direction, &dist,
+                                        get_quadmesh_ptr(object), obj_index );
+    }
+    else if( get_object_type( object ) == LINES )
+    {
+        found = intersect_ray_tube_segment( origin, direction, &dist,
+                                            get_lines_ptr(object), obj_index );
+    }
+    else if( get_object_type( object ) == MARKER )
+    {
+        found = intersect_ray_with_marker( origin, direction,
+                                           get_marker_ptr(object), &dist );
+    }
+
+    if( found && dist >= t_min )
+    {
+        if( distances != (Real **) NULL )
+        {
+            SET_ARRAY_SIZE( *distances, *n_intersections,
+                            *n_intersections + 1, DEFAULT_CHUNK_SIZE );
+            (*distances)[*n_intersections] = dist;
+        }
+
+        if( closest_obj_index != (int *) NULL &&
+            ((*n_intersections == 0) || dist < *closest_dist ) )
+        {
+            *closest_obj_index = obj_index;
+            *closest_dist = dist;
+        }
+
+        ++(*n_intersections);
+    }
+}
+
+public  int  intersect_ray_with_object(
+    Point           *origin,
+    Vector          *direction,
+    object_struct   *object,
+    int             *obj_index,
+    Real            *dist,
+    Real            *distances[] )
+{
+    lines_struct     *lines;
+    polygons_struct  *polygons;
+    quadmesh_struct  *quadmesh;
+    int              i, n_intersections, m, n, n_objects;
+
+    n_intersections = 0;
+    if( obj_index != (int *) NULL )
+        *obj_index = -1;
+
+    switch( get_object_type( object ) )
+    {
+    case LINES:
+        lines = get_lines_ptr( object );
+        if( lines->n_items == 0 )
+        {
+            n_objects = 0;
+            break;
+        }
+
+        if( lines->bintree != (bintree_struct *) NULL )
+        {
+            return( intersect_ray_with_bintree( origin, direction,
+                                                lines->bintree, object,
+                                                obj_index, dist, distances ) );
+        }
+   
+        n_objects = lines->end_indices[lines->n_items-1] - lines->n_items;
+        break;
+
+    case POLYGONS:
+        polygons = get_polygons_ptr( object );
+        if( polygons->bintree != (bintree_struct *) NULL )
+        {
+            return( intersect_ray_with_bintree( origin, direction,
+                                                polygons->bintree, object,
+                                                obj_index, dist, distances ) );
+        }
+        n_objects = polygons->n_items;
+        break;
+
+    case QUADMESH:
+        quadmesh = get_quadmesh_ptr( object );
+        if( quadmesh->bintree != (bintree_struct *) NULL )
+        {
+            return( intersect_ray_with_bintree( origin, direction,
+                                                quadmesh->bintree, object,
+                                                obj_index, dist, distances ) );
+        }
+        get_quadmesh_n_objects( quadmesh, &m, &n );
+        n_objects = m * n;
+        break;
+
+    case MARKER:
+        n_objects = 1;
+        break;
+
+    default:
+        n_objects = 0;
+        break;
+    }
+
+    for_less( i, 0, n_objects )
+    {
+        intersect_ray_object( origin, direction, 0.0,
+                              object, i, obj_index,
+                              dist, &n_intersections, distances );
+    }
+
+    return( n_intersections );
 }

@@ -77,6 +77,11 @@ typedef  unsigned  long    Colour;
                               COLOUR_0_1_TO_256(a) )
 #endif
 
+#define  get_Colour_luminance( c )                                            \
+            ROUND( 0.288 * (Real) get_Colour_r(c) +                           \
+                   0.587 * (Real) get_Colour_g(c) +                           \
+                   0.114 * (Real) get_Colour_b(c) )
+
 #define  SCALE_COLOUR( col, factor )                  \
           make_rgba_Colour( get_Colour_r(col) * (factor),    \
                             get_Colour_g(col) * (factor),    \
