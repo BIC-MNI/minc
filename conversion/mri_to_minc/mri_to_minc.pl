@@ -150,7 +150,8 @@ sub read_next_file {
 
     # Constants
     $tape_block_size = 8192;
-    $tape_sleep = 1;
+#    $tape_sleep = 1;
+    $tape_sleep = 0;
     $retry_sleep = 1;
     $nretries = 4;
 
@@ -186,10 +187,19 @@ sub read_next_file {
         # it just works!)
         select(undef, undef, undef, $tape_sleep);
         $oldsep = $/; undef($/);
-        $! = "";
-        $filedata=<TAPEHANDLE>;
-        $status = $!+0;
+#        $! = "";
+#        $filedata=<TAPEHANDLE>;
+#        $status = $!+0;
+        close(TAPEHANDLE);
+        $status = 1;
+        if (open(TP, "dd if=$tapedrive bs=1000000 2> /dev/null |")) {
+           $filedata = <TP>;
+           close(TP);
+           $status = $?;
+        }
+        open(TAPEHANDLE, $tapedrive);
         $/ = $oldsep;
+                                      
         if ($status == 0) {last;}
 
         # If we get to here then the read failed. Try to reposition the tape.
