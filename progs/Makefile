@@ -11,11 +11,14 @@ include $(ROOT)/Make_configuration
 
 default : build
 
-all build clean install : 
-	$(MAKE) 'TARGET=$@' subdirs
+all build install : 
+	@$(MAKE) 'TARGET=$@' 'SUBDIRS=$(PROG_LIB_DIR) $(ACR_LIB_DIR) [a-z]*' subdirs
+
+clean :
+	@$(MAKE) 'TARGET=$@' 'SUBDIRS=*' subdirs
 
 subdirs : 
-	@for dir in $(PROG_LIB_DIR) $(ACR_LIB_DIR) [a-z]*; \
+	@for dir in $(SUBDIRS); \
 	   do if [ -d $$dir -a $$dir != RCS ]; \
 	   then \
 	      cd $$dir; \
