@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_routines.h,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:08  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-20 15:21:20  neelin
+@MODIFIED   : Added midecompress_file with ability to decompress only the header of a file.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:38:08  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.9  94/09/28  10:37:29  neelin
  * Pre-release
  * 
@@ -31,7 +34,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 2.0 1994-09-28 10:38:08 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 2.1 1995-01-20 15:21:20 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */
@@ -65,6 +68,8 @@ semiprivate int MI_convert_type(long number_of_values,
                                 mi_icv_type *icvp);
 
 /* From netcdf_convenience.c */
+private int execute_decompress_command(char *command, char *infile, 
+                                       char *outfile, int header_only);
 private int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data);
 

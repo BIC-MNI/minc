@@ -8,6 +8,7 @@
               to determine the sign of an integer variable.
 @METHOD     : Routines included in this file :
               public :
+                 midecompress_file
                  miopen
                  micreate
                  miclose
@@ -29,12 +30,16 @@
                  micopy_all_var_defs
                  micopy_all_var_values
               private :
+                 execute_decompress_command
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:13  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-20 15:20:33  neelin
+@MODIFIED   : Added midecompress_file with ability to decompress only the header of a file.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:38:13  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.11  94/09/28  10:37:19  neelin
  * Pre-release
  * 
@@ -58,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.0 1994-09-28 10:38:13 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.1 1995-01-20 15:20:33 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -66,54 +71,182 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : miopen
-@INPUT      : path  - name of file to open
-              mode  - NC_WRITE or NC_NOWRITE to indicate whether file should
-                 be opened for write or read-only.
-@OUTPUT     : (nothing)
-@RETURNS    : file id or MI_ERROR (=-1) when an error occurs
-@DESCRIPTION: Similar to routine ncopen, but will de-compress (temporarily)
-              read-only files as needed.
+@NAME       : execute_decompress_command
+@INPUT      : command - command to execute
+              infile - input file
+              outfile - output file
+              header_only - TRUE if only header of minc file is needed
+@OUTPUT     : (none)
+@RETURNS    : status of decompress command (zero = success)
+@DESCRIPTION: Routine to execute a decompression command on a minc file.
+              The command must take a file name argument and must send 
+              to standard output.
 @METHOD     : 
 @GLOBALS    : 
-@CALLS      : NetCDF routines
-@CREATED    : November 2, 1993 (Peter Neelin)
+@CALLS      : NetCDF routines, external decompression programs
+@CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miopen(char *path, int mode)
+private int execute_decompress_command(char *command, char *infile, 
+                                       char *outfile, int header_only)
+{
+   int oldncopts;
+   char whole_command[1024];
+   int status;
+   FILE *pipe, *output;
+   int output_opened;
+   char buffer[1024];
+   int successful_ncopen;
+   int ibuf;
+   int nread;
+   int processid;
+
+#define BYTES_PER_OPEN (1024*64)
+#define NUM_BUFFERS_PER_OPEN ((BYTES_PER_OPEN - 1) / sizeof(buffer) + 1)
+
+#ifndef unix
+
+   return 1;
+
+#else      /* Unix */
+
+
+   if (!header_only) {        /* Decompress the whole file */
+
+      (void) sprintf(whole_command, "%s %s > %s 2> /dev/null", 
+                     command, infile, outfile);
+      status = system(whole_command);
+   }
+   else {                     /* We just need to decompress enough for
+                                 the header */
+
+      /* Set up the command and open the pipe (we defer opening the output
+         file until we have read something) */
+      (void) sprintf(whole_command, "%s %s 2> /dev/null", command, infile);
+      pipe = popen(whole_command, "r");
+      output_opened = FALSE;
+
+      /* Loop until we have successfully opened the minc file (the header
+         is all there) */
+      successful_ncopen = FALSE;
+      while (!successful_ncopen && !feof(pipe)) {
+
+         /* Loop, copying buffers from pipe to file. If the file hasn't been
+            opened, then open it */
+         for (ibuf=0; (ibuf < NUM_BUFFERS_PER_OPEN) && 
+              ((nread = 
+                fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0); 
+              ibuf++) {
+            if (!output_opened) {
+               output= fopen(outfile, "w");
+               if (output == NULL) {
+                  (void) fclose(pipe);
+                  return 1;
+               }
+               output_opened = TRUE;
+            }
+            if (fwrite(buffer, sizeof(char), nread, output) != nread) {
+               (void) fclose(output);
+               (void) fclose(pipe);
+               return 1;
+            }
+         }      /* End of for loop, copying from pipe to output */
+         if (fflush(output)) {
+            (void) fclose(output);
+            (void) fclose(pipe);
+            return 1;
+         }
+
+         /* Try to open minc file. There seems to be a bug in NetCDF 2.3.2 -
+            when the header is not all present in the file, we get a core
+            dump if ncopts does not have NC_FATAL set. There error is
+            reported to be in NC_free_var (var.c:54), called from 
+            NC_free_array (array.c:348). This is all called from 
+            NC_new_cdf (cdf.c:84), in NC_free_cdf, just after the error
+            return from xdr_cdf. The work-around is to fork, set fatal
+            and check the return status of the child. */
+         oldncopts = ncopts; ncopts = 0;
+         processid = fork();
+         if (!processid) {           /* Child */
+            ncopts = NC_FATAL;
+            status = ncopen(outfile, NC_NOWRITE);
+            (void) ncclose(status);
+            exit(0);
+         }
+         (void) waitpid(processid, &status, 0);
+         if (status == 0) {
+            successful_ncopen = TRUE;
+         }
+         ncopts = oldncopts;
+
+      }       /* End of while, waiting for successful ncopen */
+
+      (void) fclose(output);
+      status = fclose(pipe);
+
+      if (successful_ncopen) {
+         status = 0;
+      }
+      else {
+         if (status == 0) status = 1;
+      }
+
+   }          /* End of if !header_only else */
+
+   /* Return the status */
+   return status;
+
+#endif         /* ifndef unix else */
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : midecompress_file
+@INPUT      : path  - name of file to open.
+              header_only - TRUE if only the header needs to be decompressed.
+@OUTPUT     : created_tempfile - TRUE if a temporary file was created, FALSE
+                 if no file was created (either because the original file
+                 was not compressed or because of an error).
+@RETURNS    : name of uncompressed file (either original or a temporary file)
+              or NULL if an error occurred during decompression. The caller 
+              must free the string. If a system error occurs on file open or 
+              the decompression type is unknown, then the original file name
+              is returned.
+@DESCRIPTION: Routine to decompress a minc file. If the original file is not
+              compressed then its name is returned. If the name of a temporary
+              file is returned, then created_tempfile is TRUE. If header_only
+              is TRUE, then only the header part of the file is guaranteed,
+              the data part may or may not be present.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines, external decompression programs
+@CREATED    : January 20, 1995 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *midecompress_file(char *path, int header_only,
+                               int *created_tempfile)
 {
    int status, oldncopts, first_ncerr;
    char *tempfile, *extension;
-   char command[256];
    enum {GZIPPED, COMPRESSED, PACKED, ZIPPED, UNKNOWN} compress_type;
 
-   char *command_format = "(%s %s > %s) 2> /dev/null";
+   MI_SAVE_ROUTINE_NAME("midecompress_file");
 
-#define EXECUTE_COMMAND(com, in, out) \
-   { \
-      (void) sprintf(command, command_format, com, in, out); \
-      status = system(command); \
-   }
-   
+   /* We have not created a temporary file yet */
+   *created_tempfile = FALSE;
 
-   MI_SAVE_ROUTINE_NAME("miopen");
-
-#ifdef vms
-
-   /* Call ncopen directly */
-   {MI_CHK_ERR(status = ncopen(path, mode))}
-   MI_RETURN(status);
-
-#else
-
-   /* Try to open the file */
+   /* Try to open the file (close it again immediately) */
    oldncopts = ncopts; ncopts = 0;
-   status = ncopen(path, mode);
+   status = ncopen(path, NC_NOWRITE);
+   if (status != MI_ERROR) {
+      (void) ncclose(status);
+   }
    ncopts = oldncopts;
 
-   /* If there is no error then return */
+   /* If there is no error then return the original file name */
    if (status != MI_ERROR) {
-      MI_RETURN(status);
+      tempfile = strdup(path);
+      MI_RETURN(tempfile);
    }
 
    /* Save the error code */
@@ -137,50 +270,109 @@ public int miopen(char *path, int mode)
    else
       compress_type = UNKNOWN;
 
-   /* If there was a system error, the user wants to modify the file or we
-      don't know what to do with it, then re-generate the error with ncopen */
-   if ((first_ncerr == NC_SYSERR) || (mode != NC_NOWRITE) || 
-       (compress_type == UNKNOWN)) {
-      {MI_CHK_ERR(status = ncopen(path, mode))}
-      MI_RETURN(status);
+   /* If there was a system error or we don't know what to do 
+      with the file, then return the original file name */
+   if ((first_ncerr == NC_SYSERR) || (compress_type == UNKNOWN)) {
+      tempfile = strdup(path);
+      MI_RETURN(tempfile);
    }
 
    /* Create a temporary file name */
-   tempfile = tmpnam(NULL);
+   tempfile = strdup(tmpnam(NULL));
+   *created_tempfile = TRUE;
 
    /* Try to use gunzip */
    if ((compress_type == GZIPPED) || 
        (compress_type == COMPRESSED) ||
        (compress_type == PACKED) ||
        (compress_type == ZIPPED)) {
-      EXECUTE_COMMAND("gunzip -c", path, tempfile);
+      status = execute_decompress_command("gunzip -c", path, tempfile, 
+                                          header_only);
    }
 
    /* If that doesn't work, try something else */
    if (status != 0) {
       if (compress_type == COMPRESSED) {
-         EXECUTE_COMMAND("zcat", path, tempfile);
+         status = execute_decompress_command("zcat", path, tempfile, 
+                                             header_only);
       }
       else if (compress_type == PACKED) {
-         EXECUTE_COMMAND("pcat", path, tempfile);
+         status = execute_decompress_command("pcat", path, tempfile, 
+                                             header_only);
       }
    }
 
    /* Check for failure to uncompress the file */
    if (status != 0) {
-      (void) unlink(tempfile);
+      (void) remove(tempfile);
+      *created_tempfile = FALSE;
+      FREE(tempfile);
       MI_LOG_PKG_ERROR2(MI_ERR_UNCOMPRESS,"Cannot uncompress the file");
+      MI_RETURN_ERROR(NULL);
+   }
+
+   /* Return the new file name */
+   MI_RETURN(tempfile);
+
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miopen
+@INPUT      : path  - name of file to open
+              mode  - NC_WRITE or NC_NOWRITE to indicate whether file should
+                 be opened for write or read-only.
+@OUTPUT     : (nothing)
+@RETURNS    : file id or MI_ERROR (=-1) when an error occurs
+@DESCRIPTION: Similar to routine ncopen, but will de-compress (temporarily)
+              read-only files as needed.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines
+@CREATED    : November 2, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miopen(char *path, int mode)
+{
+   int status, oldncopts, created_tempfile;
+   char *tempfile;
+
+   MI_SAVE_ROUTINE_NAME("miopen");
+
+   /* Try to open the file */
+   oldncopts = ncopts; ncopts = 0;
+   status = ncopen(path, mode);
+   ncopts = oldncopts;
+
+   /* If there is no error then return */
+   if (status != MI_ERROR) {
+      MI_RETURN(status);
+   }
+
+   /* If there was a system error, or the user wants to modify the file 
+      then re-generate the error with ncopen */
+   if ((ncerr == NC_SYSERR) || (mode != NC_NOWRITE)) {
+      {MI_CHK_ERR(status = ncopen(path, mode))}
+      MI_RETURN(status);
+   }
+
+   /* Try to decompress the file */
+   tempfile = midecompress_file(path, FALSE, &created_tempfile);
+
+   /* Check for error */
+   if (tempfile == NULL) {
       MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Open the temporary file and unlink it so that it will disappear when
       the file is closed */
    status = ncopen(tempfile, mode);
-   (void) unlink(tempfile);
+   if (created_tempfile) {
+      (void) remove(tempfile);
+   }
    {MI_CHK_ERR(status)}
    MI_RETURN(status);
 
-#endif         /* ifdef vms else */
 }
 
 

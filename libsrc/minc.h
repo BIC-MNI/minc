@@ -18,10 +18,13 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 2.1  1994-11-25 15:32:32  neelin
-@MODIFIED   : Added #undef for public if it wasn't previously defined so that C++
-@MODIFIED   : code won't get upset.
+@MODIFIED   : Revision 2.2  1995-01-20 15:21:16  neelin
+@MODIFIED   : Added midecompress_file with ability to decompress only the header of a file.
 @MODIFIED   :
+ * Revision 2.1  94/11/25  15:32:32  neelin
+ * Added #undef for public if it wasn't previously defined so that C++
+ * code won't get upset.
+ * 
  * Revision 2.0  94/09/28  10:38:00  neelin
  * Release of minc version 0.2
  * 
@@ -49,12 +52,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 2.1 1994-11-25 15:32:32 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 2.2 1995-01-20 15:21:16 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.1 1994-11-25 15:32:32 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.2 1995-01-20 15:21:16 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -353,6 +356,8 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 2.1
 #endif
 
 /* From netcdf_convenience.c */
+public char *midecompress_file
+   PROTO((char *path, int header_only, int *created_tempfile));
 public int miopen
    PROTO((char *path, int mode));
 public int micreate
