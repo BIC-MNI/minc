@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: load.c,v 1.1 2004-06-15 20:14:41 bert Exp $
+ *   $Id: load.c,v 1.2 2004-12-14 23:48:23 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -466,8 +466,8 @@ load_netcdf(
 {
     int idim;
     int stat;
-    size_t start[NC_MAX_VAR_DIMS];
-    size_t count[NC_MAX_VAR_DIMS];
+    long start[NC_MAX_VAR_DIMS];
+    long count[NC_MAX_VAR_DIMS];
 
     /* load values into variable */
 
