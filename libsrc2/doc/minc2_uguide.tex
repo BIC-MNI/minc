@@ -1,7 +1,7 @@
 \documentclass{article}
 
 \usepackage{times}
-
+\renewcommand{\ttdefault}{cmtt}
 \title{MINC 2.0 User's Guide}
 \author{John G. Sled \\
 Robert D. Vincent \\
@@ -616,6 +616,88 @@ In general it is much more efficient to read and write a file in large
 chunks than in individual voxels, so if speed is important to your
 application it is best to avoid use of the single-voxel functions.
 
+\subsection{Specifying coordinates and lengths}
+All hyperslab operations require the programmer to specify the origin
+and size of the hyperslab.  These parameters as passed as arrays.  The
+{\tt start[]} (sometimes called {\tt voxel\_offsets[]} array
+specifies the origin of the hyperslab.  It can be thought of as the
+point closest to the true origin (0,0,0) in voxel dimensions.  The
+{\tt count[]} (sometimes called {\tt sizes[]} array specifies the length
+of the desired hyperslab along each dimension.
+
+Logically, none of the values of the {\tt count[]} array should ever be
+zero, since that would produce an overall hyperslab volume of zero.  In other
+words, you would read no data.
+
+Another constraint is that the {\tt start} value plus the {\tt count} value
+must always be less than or equal to the length of the dimension in voxels.
+
+Each of the voxel read/write functions assumes that the coordinates
+and lengths specified in the {\tt start[]} and {\tt count[]}
+arrays are in the ``apparent'' order.  By default the apparent order
+is the same as the file order.
+
+By way of an contrived example, suppose you have a four-dimensional
+file structured according to the dimensions {\tt xspace},{\tt
+time},{\tt zspace},{\tt yspace} with their respective lengths set to
+X, T, Z, and Y.
+
+We use {\tt miset\_apparent\_dimension\_order\_by\_name} to assign a 
+more conventional order to these dimensions:
+\begin{verbatim}
+static char *dimorder[] = { "time", "zspace","yspace","xspace" }
+
+miset_apparent_dimension_order_by_name(hvolume, 4, dimorder);
+
+\end{verbatim}
+
+Now suppose we want to read the entire file in one operation.  To do
+this, we might set up the following:
+\begin{verbatim}
+unsigned long start[4], count[4];
+short buffer[T][Z][Y][X];
+
+start[0] = start[1] = start[2] = start[3] = 0;
+count[0] = T;
+count[1] = Z;
+count[2] = Y;
+count[3] = X;
+
+miget_voxel_value_hyperslab(hvolume, MI_TYPE_SHORT, start, count, buffer);
+\end{verbatim}
+
+Alternatively, we might just want to read the data from one time location
+into a three-dimensional array:
+\begin{verbatim}
+unsigned long start[4], count[4];
+short buffer[Z][Y][X];
+
+start[0] = t;                   /* The desired time value */
+start[1] = start[2] = start[3] = 0;
+count[0] = 1;
+count[1] = Z;
+count[2] = Y;
+count[3] = X;
+
+miget_voxel_value_hyperslab(hvolume, MI_TYPE_SHORT, start, count, buffer);
+\end{verbatim}
+
+Another possibility would be to read the entire timecourse of a specific
+spatial location:
+\begin{verbatim}
+unsigned long start[4], count[4];
+short buffer[T];
+
+start[0] = 0;                   /* Start at time=0 */
+start[1] = z;                   /* z,y,x = spatial coordinate */
+start[2] = y;                   
+start[3] = x;
+count[0] = T;
+count[1] = count[2] = count[3] = 1;
+
+miget_voxel_value_hyperslab(hvolume, MI_TYPE_SHORT, start, count, buffer);
+\end{verbatim}
+
 \subsection{Details of voxel conversion}
 Conversion from real to voxel data, or from voxel to real data, can
 be expressed by the following relationships:
@@ -743,7 +825,6 @@ such that the values are mapped into the full range of the specified
 {\tt min} will be mapped to the lowest possible value of the data type, and
 real voxel values greater than or equal to {\tt max} will be mapped to the
 largest possible value of the data type.
-
 
 \section{Volume creation}
 After all the required dimension handles are defined/assigned with their appropriate 
