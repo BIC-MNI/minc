@@ -68,7 +68,7 @@ gcomserver-debug.o gcomserver-debug.ln : gcomserver.c
 
 # How to make executables
 $(PROGS) : $(TARGET_IN_DEPENDENCY).o $(EXTRA_OBJS) $(CC_ACR_LIB) $(CC_PROG_LIB) $(CC_MINC_LIB)
-	$(CC) -o $@ $@.o $(EXTRA_OBJS) $(LDOPT)
+	$(CC) -o $@ $@.o $(EXTRA_OBJS) -ldn $(LDOPT)
 
 #  how to lint the executable source
 lint: $(LINT_LIST_EXE)
