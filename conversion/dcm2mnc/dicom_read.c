@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.3  2005-03-03 18:59:15  bert
+   * Revision 1.4  2005-03-03 20:11:00  bert
+   * Consider patient_id and patient_name when sorting into series.  Fix handling of missing direction cosines
+   *
+   * Revision 1.3  2005/03/03 18:59:15  bert
    * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
    *
    * Revision 1.2  2005/03/02 20:18:09  bert
@@ -743,6 +746,12 @@ get_coordinate_info(Acr_Group group_list,
         printf("get_coordinate_info(%lx, ...)\n", (unsigned long) group_list);
     }
 
+    /* Initialize a few things... */
+    for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
+        found_dircos[ivolume] = FALSE;
+    }
+    found_coordinate = FALSE;
+
 #ifdef SPECIAL_CASE_IMA
     /* TODO: For now this appears to be necessary.  In cases I don't fully
      * understand, the IMA file's simulated image orientation does not
@@ -765,7 +774,6 @@ get_coordinate_info(Acr_Group group_list,
         /* Get direction cosines
          */
         for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
-            found_dircos[ivolume] = FALSE;
             element = acr_find_group_element(group_list, dircos_elid[ivolume]);
             if (element == NULL) {
                 continue;
@@ -792,45 +800,44 @@ get_coordinate_info(Acr_Group group_list,
              */
             element = acr_find_group_element(group_list,
                                              ACR_Image_orientation_patient_old);
-            if (element == NULL) {
-                printf("WARNING: Failed to find patient orientation!\n");
-                return;
-            }
         }
-
-        if (acr_get_element_numeric_array(element, 6, RowColVec) != 6) {
+        if (element == NULL) {
+            printf("WARNING: Failed to find patient orientation!\n");
+        }
+        else if (acr_get_element_numeric_array(element, 6, RowColVec) != 6) {
             printf("WARNING: Failed to read patient orientation!\n");
-            return;
         }
+        else {
+            dircos[VCOLUMN][XCOORD] = RowColVec[0];
+            dircos[VCOLUMN][YCOORD] = RowColVec[1];
+            dircos[VCOLUMN][ZCOORD] = RowColVec[2];
 
-        dircos[VCOLUMN][XCOORD] = RowColVec[0];
-        dircos[VCOLUMN][YCOORD] = RowColVec[1];
-        dircos[VCOLUMN][ZCOORD] = RowColVec[2];
+            dircos[VROW][XCOORD] = RowColVec[3];
+            dircos[VROW][YCOORD] = RowColVec[4];
+            dircos[VROW][ZCOORD] = RowColVec[5];
 
-        dircos[VROW][XCOORD] = RowColVec[3];
-        dircos[VROW][YCOORD] = RowColVec[4];
-        dircos[VROW][ZCOORD] = RowColVec[5];
+            found_dircos[VCOLUMN] = TRUE;
+            found_dircos[VROW] = TRUE;
 
-        found_dircos[VCOLUMN] = TRUE;
-        found_dircos[VROW] = TRUE;
+            convert_dicom_coordinate(dircos[VROW]);
+            convert_dicom_coordinate(dircos[VCOLUMN]);
 
-        convert_dicom_coordinate(dircos[VROW]);
-        convert_dicom_coordinate(dircos[VCOLUMN]);
+            /* slice direction unit vector is cross product of row,
+               col vectors:
+             */
+            dircos[VSLICE][XCOORD] = 
+                dircos[VCOLUMN][YCOORD] * dircos[VROW][ZCOORD] -
+                dircos[VCOLUMN][ZCOORD] * dircos[VROW][YCOORD];
 
-        /* slice direction unit vector is cross product of row, col vectors:
-         */
-        dircos[VSLICE][XCOORD] = 
-            dircos[VCOLUMN][YCOORD] * dircos[VROW][ZCOORD] -
-            dircos[VCOLUMN][ZCOORD] * dircos[VROW][YCOORD];
+            dircos[VSLICE][YCOORD] = 
+                dircos[VCOLUMN][ZCOORD] * dircos[VROW][XCOORD] -
+                dircos[VCOLUMN][XCOORD] * dircos[VROW][ZCOORD];
 
-        dircos[VSLICE][YCOORD] = 
-            dircos[VCOLUMN][ZCOORD] * dircos[VROW][XCOORD] -
-            dircos[VCOLUMN][XCOORD] * dircos[VROW][ZCOORD];
-
-        dircos[VSLICE][ZCOORD] = 
-            dircos[VCOLUMN][XCOORD] * dircos[VROW][YCOORD] -
-            dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
-        found_dircos[VSLICE] = TRUE;
+            dircos[VSLICE][ZCOORD] = 
+                dircos[VCOLUMN][XCOORD] * dircos[VROW][YCOORD] -
+                dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
+            found_dircos[VSLICE] = TRUE;
+        }
 #ifdef SPECIAL_CASE_IMA
     }
 #endif
@@ -874,8 +881,8 @@ get_coordinate_info(Acr_Group group_list,
             printf("Using default direction cosines\n");
         }
 
-        for (ivolume=0; ivolume < VOL_NDIMS; ivolume++) {
-            for (iworld=0; iworld < WORLD_NDIMS; iworld++) {
+        for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
+            for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
                 dircos[ivolume][iworld] = 
                     ((ivolume == (WORLD_NDIMS-iworld-1)) ? -1.0 : 0.0);
             }
@@ -1107,6 +1114,12 @@ convert_numa3_coordinate(double coordinate[WORLD_NDIMS])
 static void
 convert_dicom_coordinate(double coordinate[WORLD_NDIMS])
 {
+    /* Allow the user to override this, if only for debugging purposes...
+     */
+    if (G.opts & OPTS_KEEP_COORD) {
+        return;
+    }
+
     coordinate[XCOORD] = -coordinate[XCOORD];
     coordinate[YCOORD] = -coordinate[YCOORD];
 }
@@ -1613,6 +1626,8 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
 
     get_string_field(di_ptr->sequence_name, group_list, ACR_Sequence_name);
     get_string_field(di_ptr->protocol_name, group_list, ACR_Protocol_name);
+    get_string_field(di_ptr->patient_name, group_list, ACR_Patient_name);
+    get_string_field(di_ptr->patient_id, group_list, ACR_Patient_identification);
 }
 
 
