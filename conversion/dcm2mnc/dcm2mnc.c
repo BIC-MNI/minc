@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.9  2005-04-05 21:52:24  bert
+ * Revision 1.10  2005-04-06 13:26:41  bert
+ * Fix listing option
+ *
+ * Revision 1.9  2005/04/05 21:52:24  bert
  * Add -minmax option to enable use of explicit DICOM pixel min/max information, and updated version number
  *
  * Revision 1.8  2005/03/18 19:10:31  bert
@@ -71,7 +74,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.9 2005-04-05 21:52:24 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.10 2005-04-06 13:26:41 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -668,10 +671,17 @@ use_the_files(int num_files,
      
         /* Print out the file names if we are debugging.
          */
-        if (G.Debug) {
-            printf("\nFiles copied:\n");
+        if (G.Debug || G.List) {
+            printf("\nSeries %4d %20s %20s (%4d files):\n",
+                   cur_acq_id,
+                   cur_patient_name,
+                   di_ptr[acq_file_index[0]]->protocol_name,
+                   acq_num_files);
             for (ifile = 0; ifile < acq_num_files; ifile++) {
                 printf("     %s\n", acq_file_list[ifile]);
+            }
+            if (G.List) {
+                continue;
             }
         }
 
