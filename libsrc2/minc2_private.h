@@ -74,4 +74,4 @@ extern void mitransform_coord(double out_coord[],
                               mi_lin_xfm_t transform,
                               double in_coord[]);
 
-
+extern void miinit(void);
