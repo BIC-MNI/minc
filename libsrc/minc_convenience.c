@@ -353,7 +353,7 @@ private int MI_create_dim_variable(int cdfid, char *name)
    }
    else if ((STRINGS_EQUAL(name, MIzspace)) || 
             (STRINGS_EQUAL(name, MIzfrequency))) {
-      dircos[1]=1.0;
+      dircos[2]=1.0;
       MI_CHK_ERR(ncattput(cdfid, varid, MIdirection_cosines, NC_DOUBLE,
                           3, dircos))
    }
