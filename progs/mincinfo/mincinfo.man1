@@ -8,24 +8,29 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 6.1 2000-04-26 19:35:47 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 6.2 2004-05-12 16:46:05 bert Exp $
 .\"
-.TH MINCINFO 1
+.TH MINCINFO 1 "" "" "MINC User's Guide"
 
 .SH NAME
-mincinfo - print out specified information about a minc file
+mincinfo \- print out specified information about a minc file
 
 .SH SYNOPSIS
 .B mincinfo
 [<options>] <file> [<file> ...]
 
-.SH DESCRIPTION
-.I Mincinfo
-will print out either a general description of a minc file (type,
-sign and range of data, plus a brief description of dimensions and
-their order), or specific information about dimensions, variables or
-attributes in the file. This program can be very useful for building
-shell scripts that access minc files.
+.SH DESCRIPTION 
+
+\fImincinfo\fR will print out either a general description of a minc
+file (type, sign and range of data, plus a brief description of
+dimensions and their order), or specific information about dimensions,
+variables or attributes in the file. This program can be very useful
+for building shell scripts that access minc files.
+
+All information given by \fImincinfo\fR is presented as read from the
+file with no transformation.  This means that start and step values,
+for example, are not in the world coordinate system.  To display the
+start values for a file in world coordinates, use \fIvoxeltoworld\fR.
 
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
@@ -37,82 +42,75 @@ be specified, in which case the return value from each option is
 printed on a separate line (-image_info prints on many lines) in the
 order of the options on the command line.
 
-.I -image_info:
+.TP
+\fB\-image_info\fR
 Print out the default general information about the file. This
 information includes the type, sign and range of the pixel data, the
 order of the dimensions, and a list of dimensions giving name,
 length, start and step for each one.
-.P
-.I -dimnames:
+.TP
+\fB\-dimnames\fR
 Print out a space-separated list of the dimensions in the file.
-.P
-.I -varnames:
+.TP
+\fB\-varnames\fR
 Print out a space-separated list of the variables in the file.
-.P
-.I -dimlength
-<dimension> :
+.TP
+\fB\-dimlength\fR \fIdimension\fR
 Print the length of the specified dimension.
-.P
-.I -vartype
-<variable> :
+.TP
+\fB\-vartype\fR \fIvariable\fR
 Print the type of the variable.
-.P
-.I -vardims 
-<variable> :
+.TP
+\fB\-vardims\fR \fIvariable\fR
 Print a space-separated list of the dimensions that subscript the
 variable (in C order).
-.P
-.I -varatts 
-<variable> :
+.TP
+\fB\-varatts\fR \fIvariable\fR
 Print a space-separated list of the attribute names for the specified
 variable.
-.P
-.I -varvalues 
-<variable> :
+.TP
+\fB\-varvalues\fR \fIvariable\fR
 Print a newline-separated list of the values of the specified variable.
-.P
-.I -atttype 
-<variable>:<attribute> :
+.TP
+\fB\-atttype\fR \fIvariable:attribute\fR
 Print out the type of the specified attribute.
-.P
-.I -attvalue 
-<variable>:<attribute> :
+.TP
+\fB\-attvalue\fR \fIvariable:attribute\fR
 Print out a space-separated list of the values of the specified attribute.
-.P
-.I -error_string 
-<string> :
+.TP
+\fB\-error_string\fR \fIstring\fR
 Specifies a string to print out if an error occurs. This will cause
 the program to exit with normal status. The default is to print an
 appropriate error message and exit with an error status.
-.P
-.I -help:
+.TP
+\fB-help\fR
 Print summary of command-line options and abort.
 
 .SH EXAMPLES
 
 Print out standard information about a minc file.
-
-     mincinfo file.mnc
-
+.IP
+mincinfo file.mnc
+.PP
 Print out contents of global history attribute.
-
-     mincinfo file.mnc -attvalue :history
-
+.IP
+mincinfo file.mnc -attvalue :history
+.PP
 Print out step value for x dimension, setting the default value
 to 1.
-
-     mincinfo file.mnc -attvalue xspace:step -error 1
-
+.IP
+mincinfo file.mnc -attvalue xspace:step -error 1
+.PP
 Print out the step values for x, y and z, setting the default value to
 1.
-
-     mincinfo file.mnc -error 1 \\
-          -attvalue xspace:step \\
-          -attvalue yspace:step \\
-          -attvalue zspace:step
-
+.IP
+mincinfo file.mnc -error 1 \\
+     -attvalue xspace:step \\
+     -attvalue yspace:step \\
+     -attvalue zspace:step
+.PP
 Print out the names of the dimensions subscripting the image variable.
-
+.IP
      mincinfo file.mnc -vardims image
 
 .SH AUTHOR
@@ -120,4 +118,4 @@ Peter Neelin
 
 .SH COPYRIGHTS
 .ps 18
-Copyright 1993 by Peter Neelin
+Copyright \(co 1993 by Peter Neelin
