@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.2 1995-08-19 18:57:07 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.3 1995-08-21 00:27:03 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -277,7 +277,6 @@ public  void  delete_volume_cache(
     {
         if( cache->has_been_modified )
         {
-            (void) miicv_free( ((Minc_file) cache->minc_file)->input_icv );
             (void) close_minc_output( (Minc_file) cache->minc_file );
         }
         else
@@ -326,11 +325,13 @@ private  void  open_cache_volume_output_file(
     int        out_sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
     int        i, j, n_found;
     Real       voxel_min, voxel_max;
+    Real       min_value, max_value;
     nc_type    nc_data_type;
     Minc_file  out_minc_file;
     BOOLEAN    done[MAX_DIMENSIONS], signed_flag;
     char       **vol_dim_names;
     STRING     out_dim_names[MAX_DIMENSIONS], output_filename;
+    minc_output_options  options;
 
     if( strlen( cache->output_filename ) == 0 )
     {
@@ -386,26 +387,17 @@ private  void  open_cache_volume_output_file(
 
     nc_data_type = get_volume_nc_data_type( volume, &signed_flag );
     get_volume_voxel_range( volume, &voxel_min, &voxel_max );
+    get_volume_real_range( volume, &min_value, &max_value );
+
+    set_default_minc_output_options( &options );
+    set_minc_output_real_range( &options, min_value, max_value );
 
     out_minc_file = initialize_minc_output( output_filename,
                                         n_dims, out_dim_names, out_sizes,
                                         nc_data_type, signed_flag,
                                         voxel_min, voxel_max,
                                         get_voxel_to_world_transform(volume),
-                                        volume, NULL );
-
-    out_minc_file->input_icv = miicv_create();
-
-    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_TYPE, nc_data_type );
-    (void) miicv_setstr( out_minc_file->input_icv, MI_ICV_SIGN,
-                         signed_flag ? MI_SIGNED : MI_UNSIGNED );
-    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_DO_NORM, TRUE );
-    (void) miicv_setint( out_minc_file->input_icv, MI_ICV_DO_FILLVALUE, TRUE );
-    (void) miicv_setdbl( out_minc_file->input_icv, MI_ICV_VALID_MIN, voxel_min);
-    (void) miicv_setdbl( out_minc_file->input_icv, MI_ICV_VALID_MAX, voxel_max);
-
-    (void) miicv_attach( out_minc_file->input_icv, out_minc_file->cdfid,
-                         out_minc_file->img_var );
+                                        volume, &options );
 
     out_minc_file->converting_to_colour = FALSE;
 
@@ -420,6 +412,8 @@ private  void  open_cache_volume_output_file(
 
         (void) close_minc_input( (Minc_file) cache->minc_file );
     }
+    else
+        check_minc_output_variables( out_minc_file );
 
     cache->minc_file = out_minc_file;
 }
