@@ -926,6 +926,17 @@ maximum in the variable or the user specified maximum).
 giving the user image minimum when doing normalization (either the
 minimum in the variable or the user specified minimum).
 
+\item \code{MI\_ICV\_DO\_FILLVALUE} (type \code{int}) : If set to 
+\code{TRUE}, then range checking is done on input and values that
+are out of range (value in the file less than \code{MIvalid\_min} or
+greater than \code{MIvalid\_max}) are set to the value of
+\code{MI\_ICV\_FILLVALUE}.  Default = \code{FALSE}.
+
+\item \code{MI\_ICV\_FILLVALUE} (type \code{double}) : Value to
+use when pixels are out of range (on input only). This value is
+written to user's buffer directly without any scaling. 
+Default = \code{-DBL\_MAX}.
+
 \item \code{MI\_ICV\_DO\_DIM\_CONV} (type \code{int}) : If set to 
 \code{TRUE}, then dimension conversions may be done. Default =
 \code{FALSE}.
