@@ -1,0 +1,243 @@
+.\" Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 1.1 1995-05-03 13:19:56 neelin Exp $
+.\"
+.TH MINCMATH 1
+
+.SH NAME
+mincmath - perform simple math operations on minc files
+
+.SH SYNOPSIS
+.B mincmath
+[<options>] <in1>.mnc [<in2>.mnc...] <out>.mnc
+
+.SH DESCRIPTION
+.I Mincmath
+will perform simple, voxel-by-voxel math operations, on one or more
+minc files of the same shape and having the same coordinate sampling,
+producing a single output file. Operations can be unary (operate on
+one file), binary (two input files) or cumulative (operate on two or
+more input files). Cumulative operations can also be performed across
+a specified dimension of the input files.
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -no_clobber:
+Synonym for -noclobber.
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied (default).
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.I -debug:
+Print out debugging information.
+.P
+.I -copy_header:
+Copy all of the header information from the first input file.
+.P
+.I -nocopy_header:
+Do not copy all of the header from the first input file; copy only
+coordinate information (default).
+.P
+.I -filetype:
+Create an output file with the same type as the first input file
+(default).
+.P
+.I -byte:
+Create an output file of type byte.
+.P
+.I -short:
+Create an output file of type short.
+.P
+.I -long:
+Create an output file of type long.
+.P
+.I -float:
+Create an output file of type float.
+.P
+.I -double:
+Create an output file of type double.
+.P
+.I -signed:
+Create an output file with data stored in a signed type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -unsigned:
+Create an output file with data stored in an unsigned type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -range
+<min> <max>:
+Create an output file with integer data stored in the specified
+valid range. This only has an effect if the one of the -byte, -short
+or -long options is specified.
+.P
+.I -max_buffer_size_in_kb
+<size>:
+Specify the maximum size of the internal buffers (in kbytes). Default
+is 4 MB.
+.P
+.I -dimension
+<dimname>:
+Specify a dimension along which we wish to perform a cumulative
+operation.
+.P
+.I -propagate_nan:
+Invalid data (Not-A-Number or NaN) at a voxel in any of the input
+files will produce invalid data in the output file at that voxel
+(default).
+.P
+.I -ignore_nan:
+For cumulative operations, invalid data (NaN) in an input file is
+ignored, ie. treated as though it is not present.
+.P
+.I -nan:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), invalid data (NaN) is stored in the output file (default).
+.P
+.I -zero:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), value zero is stored in the output file.
+
+.SH Options for specifying constants
+.P
+.I -constant
+<value>:
+Specify a single constant.
+.P
+.I -const
+<value>:
+Synonym for -constant.
+.P
+.I -const2
+<value1> <value2>:
+Specify two constants.
+
+.SH Operations
+.P
+.I -add:
+Cumulatively add two or more volumes, or add a volume and a constant.
+.P
+.I -sub:
+Subtract two volumes or a volume minus a constant.
+.P
+.I -mult:
+Cumulatively multiply two or more volumes, or multiply a volume and a constant.
+.P
+.I -div:
+Divide two volumes or a volume divided by a constant.
+.P
+.I -sqrt:
+Calculate the square root of a volume.
+.P
+.I -square:
+Calculate the square of a volume.
+.P
+.I -scale:
+Scale a volume either by multiplying by a single constant (use
+-constant) or by multiplying by the first constant and adding the
+second (use -const2).
+.P
+.I -clamp:
+Clamp a volume to lie between two values specified with -const2.
+.P
+.I -segment:
+Segment (binarize) a volume so that values within the range specified
+by -const2 give value 1 and those outside it give value 0.
+.P
+.I -nsegment:
+Opposite of -segment: values within the range specified by -const2
+give value 0 and those outside it give value 1. 
+.P
+.I -percentdiff:
+Calculate the percent difference between two volumes (normalized to
+the first volume). If the first volume is less than a threshold (or
+zero), then the value specified by -nan or -zero is used. The
+threshold is specified using -constant, with a default of zero.
+.P
+.I -pd:
+Synonym for -percentdiff.
+.P
+.I -eq:
+Test for equality of two volumes or a volume and a constant.
+Values are rounded to the nearest integer before performing the
+test. Output 1 for true and 0 for false at each voxel.
+.P
+.I -ne:
+Test for inequality of two volumes or a volume and a constant. 
+Values are rounded to the nearest integer before performing the test.
+Output 1 for true and 0 for false at each voxel.
+.P
+.I -gt:
+Test for volume 1 > volume 2 or a volume > a constant. Output 1 for
+true and 0 for false at each voxel. 
+.P
+.I -ge:
+Test for volume 1 >= volume 2 or a volume >= a constant. Output 1 for
+true and 0 for false at each voxel. 
+.P
+.I -lt:
+Test for volume 1 < volume 2 or a volume < a constant. Output 1 for
+true and 0 for false at each voxel. 
+.P
+.I -le:
+Test for volume 1 <= volume 2 or a volume <= a constant. Output 1 for
+true and 0 for false at each voxel.
+.P
+.I -and:
+Test for volume 1 && volume 2 or a volume && a constant. Values are
+rounded to the nearest integer before performing the test. Output 1
+for true and 0 for false at each voxel. 
+.P
+.I -or:
+Test for volume 1 || volume 2 or a volume || a constant. Values are
+rounded to the nearest integer before performing the test. Output 1
+for true and 0 for false at each voxel. 
+.P
+.I -not:
+Perform logical negation on a volume: convert non-zero to zero and
+zero to one. Values are rounded to the nearest integer before the
+negation.
+.P
+.I -isnan:
+Test a volume for invalid values (NaN). Output 1 for invalid values
+and 0 for valid values.
+.P
+.I -nisnan:
+Opposite of -isnan. Output 0 for invalid values and 1 for valid values.
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH AUTHOR
+Peter Neelin
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 1995 by Peter Neelin
+ 
+
