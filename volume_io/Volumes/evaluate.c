@@ -111,24 +111,25 @@ public  int   evaluate_volume(
     Real           voxel[],
     BOOLEAN        interpolating_dimensions[],
     int            degrees_continuity,
+    Real           outside_value,
     Real           values[],
     Real           **first_deriv,
-    Real           ***second_deriv,
-    BOOLEAN        *inside )
+    Real           ***second_deriv )
 {
-    int   n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims, ind;
-    int   start[MAX_DIMENSIONS], n_interp_dims;
-    int   end[MAX_DIMENSIONS];
-    int   interp_dims[MAX_DIMENSIONS];
-    int   n_coefs;
-    int   vi[MAX_DIMENSIONS];
-    Real  value, fraction[MAX_DIMENSIONS], bound, *coefs;
+    int      n, v, d, dim, n_values, sizes[MAX_DIMENSIONS], n_dims, ind;
+    int      start[MAX_DIMENSIONS], n_interp_dims;
+    int      end[MAX_DIMENSIONS];
+    int      interp_dims[MAX_DIMENSIONS];
+    int      n_coefs;
+    int      vi[MAX_DIMENSIONS];
+    Real     fraction[MAX_DIMENSIONS], bound, *coefs;
+    BOOLEAN  fully_inside;
 
-    if( degrees_continuity > 2 )
+    if( degrees_continuity < -1 || degrees_continuity > 2 )
     {
-        print( "Warning: evaluate_volume(), degrees too large: %d\n",
+        print( "Warning: evaluate_volume(), degrees invalid: %d\n",
                degrees_continuity );
-        degrees_continuity = 2;
+        degrees_continuity = 0;
     }
 
     n_dims = get_volume_n_dimensions(volume);
@@ -139,39 +140,9 @@ public  int   evaluate_volume(
     for_less( d, 0, n_dims )
     {
         if( interpolating_dimensions == NULL || interpolating_dimensions[d] )
-        {
-            if( degrees_continuity > -2 &&
-                (voxel[d] < (Real) degrees_continuity * 0.5 ||
-                 voxel[d] > (Real)(sizes[d]-1) - (Real)degrees_continuity*0.5) )
-            {
-                --degrees_continuity;
-                for( ; degrees_continuity > -2;  --degrees_continuity )
-                {
-                    if( voxel[d] >= (Real) degrees_continuity * 0.5 &&
-                        voxel[d] <= (Real)(sizes[d]-1) -
-                                    (Real)degrees_continuity * 0.5 )
-                    {
-                        break;
-                    }
-                }
-            }
             ++n_interp_dims;
-        }
         else
-        {
             n_values *= sizes[d];
-        }
-    }
-
-    if( inside != NULL )
-        *inside = degrees_continuity >= -1;
-
-    if( degrees_continuity < -1 )
-    {
-        value = get_volume_real_min( volume );
-
-        for_less( v, 0, n_values )
-            values[v] = value;
     }
 
     if( degrees_continuity < 0 && first_deriv != NULL )
@@ -189,59 +160,55 @@ public  int   evaluate_volume(
                    second_deriv[v][d][dim] = 0.0;
     }
 
-    if( degrees_continuity > -2 )
+    bound = degrees_continuity / 2.0;
+    n_interp_dims = 0;
+    n_coefs = 1;
+
+    fully_inside = TRUE;
+
+    for_less( d, 0, n_dims )
     {
-        bound = degrees_continuity / 2.0;
-        n_interp_dims = 0;
-        n_coefs = 1;
-
-        for_less( d, 0, n_dims )
+        if( interpolating_dimensions == NULL || interpolating_dimensions[d])
         {
-            if( interpolating_dimensions == NULL || interpolating_dimensions[d])
+            interp_dims[n_interp_dims] = d;
+            start[n_interp_dims] =      (int) ( voxel[d] - bound );
+            fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
+            end[n_interp_dims] = start[d] + degrees_continuity + 2;
+            n_coefs *= 2 + degrees_continuity;
+
+            if( start[n_interp_dims] < 0 ||
+                end[n_interp_dims] > sizes[n_interp_dims] )
             {
-                interp_dims[n_interp_dims] = d;
-                n_coefs *= 2 + degrees_continuity;
-                if( voxel[d] >= (Real) sizes[d] - 1.0 - bound )
-                {
-                    start[n_interp_dims] = sizes[d] - degrees_continuity - 2;
-                    fraction[n_interp_dims] = 1.0;
-                }
-                else
-                {
-                    if( voxel[d] < bound )
-                        voxel[d] = bound;
-
-                    start[n_interp_dims] = (int) ( voxel[d] - bound );
-                    fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
-                }
-
-                end[n_interp_dims] = start[d] + degrees_continuity + 2;
-                ++n_interp_dims;
+                fully_inside = FALSE;
             }
-        }
 
-        n = 0;
-        for_less( d, 0, n_dims )
+            ++n_interp_dims;
+        }
+    }
+
+    n = 0;
+    for_less( d, 0, n_dims )
+    {
+        if( interpolating_dimensions != NULL && !interpolating_dimensions[d] )
         {
-            if( interpolating_dimensions != NULL &&
-                !interpolating_dimensions[d] )
-            {
-                interp_dims[n_interp_dims+n] = d;
-                start[n_interp_dims+n] = 0;
-                end[n_interp_dims+n] = sizes[d];
-                ++n;
-            }
+            interp_dims[n_interp_dims+n] = d;
+            start[n_interp_dims+n] = 0;
+            end[n_interp_dims+n] = sizes[d];
+            ++n;
         }
+    }
 
-        for_less( d, n_dims, MAX_DIMENSIONS )
-        {
-            start[d] = 0;
-            end[d] = 1;
-            interp_dims[d] = d;
-        }
+    for_less( d, n_dims, MAX_DIMENSIONS )
+    {
+        start[d] = 0;
+        end[d] = 1;
+        interp_dims[d] = d;
+    }
 
-        ALLOC( coefs, n_values * n_coefs );
+    ALLOC( coefs, n_values * n_coefs );
 
+    if( fully_inside )
+    {
         ind = 0;
         for_less( vi[interp_dims[0]], start[0], end[0] )
         for_less( vi[interp_dims[1]], start[1], end[1] )
@@ -252,25 +219,50 @@ public  int   evaluate_volume(
             GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3], vi[4] );
             ++ind;
         }
-
-        switch( degrees_continuity )
-        {
-        case -1:
-            for_less( v, 0, n_values )
-                values[v] = coefs[v];
-            break;
-
-        case 0:
-        case 1:
-        case 2:
-            interpolate_volume( n_interp_dims, fraction, n_values,
-                                degrees_continuity + 2, coefs,
-                                values, first_deriv, second_deriv );
-            break;
-        }
-
-        FREE( coefs );
     }
+    else
+    {
+        ind = 0;
+        for_less( vi[interp_dims[0]], start[0], end[0] )
+        for_less( vi[interp_dims[1]], start[1], end[1] )
+        for_less( vi[interp_dims[2]], start[2], end[2] )
+        for_less( vi[interp_dims[3]], start[3], end[3] )
+        for_less( vi[interp_dims[4]], start[4], end[4] )
+        {
+            for_less( d, 0, n_dims )
+            {
+                if( vi[d] < 0 || vi[d] >= sizes[d] )
+                    break;
+            }
+
+            if( d == n_dims )
+            {
+                GET_VALUE( coefs[ind], volume, vi[0], vi[1], vi[2], vi[3],
+                                               vi[4] );
+            }
+            else
+                coefs[ind] = outside_value;
+            ++ind;
+        }
+    }
+
+    switch( degrees_continuity )
+    {
+    case -1:
+        for_less( v, 0, n_values )
+            values[v] = coefs[v];
+        break;
+
+    case 0:
+    case 1:
+    case 2:
+        interpolate_volume( n_interp_dims, fraction, n_values,
+                            degrees_continuity + 2, coefs,
+                            values, first_deriv, second_deriv );
+        break;
+    }
+
+    FREE( coefs );
 
     return( n_values );
 }
@@ -295,12 +287,13 @@ public  int   evaluate_volume(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  BOOLEAN   evaluate_volume_in_world(
+public  void   evaluate_volume_in_world(
     Volume         volume,
     Real           x,
     Real           y,
     Real           z,
     int            degrees_continuity,
+    Real           outside_value,
     Real           values[],
     Real           deriv_x[],
     Real           deriv_y[],
@@ -318,7 +311,7 @@ public  BOOLEAN   evaluate_volume_in_world(
     Real      t[MAX_DIMENSIONS][MAX_DIMENSIONS];
     int       c, d, dim, v, n_values, n_interp_dims, n_dims, axis;
     int       sizes[MAX_DIMENSIONS];
-    BOOLEAN   interpolating_dimensions[MAX_DIMENSIONS], inside;
+    BOOLEAN   interpolating_dimensions[MAX_DIMENSIONS];
 
     convert_world_to_voxel( volume, x, y, z, voxel );
     get_volume_sizes( volume, sizes );
@@ -333,7 +326,7 @@ public  BOOLEAN   evaluate_volume_in_world(
         if( axis < 0 )
         {
             print("evaluate_volume_in_world(): must have 3 spatial axes.\n");
-            return( FALSE );
+            return;
         }
 
         interpolating_dimensions[axis] = TRUE;
@@ -362,8 +355,8 @@ public  BOOLEAN   evaluate_volume_in_world(
         second_deriv = NULL;
 
     n_values = evaluate_volume( volume, voxel, interpolating_dimensions,
-                      degrees_continuity, values, first_deriv, second_deriv,
-                      &inside );
+                      degrees_continuity, outside_value,
+                      values, first_deriv, second_deriv );
 
     if( deriv_x != NULL )
     {
@@ -384,6 +377,8 @@ public  BOOLEAN   evaluate_volume_in_world(
             convert_voxel_normal_vector_to_world( volume, voxel,
                                    &deriv_x[v], &deriv_y[v], &deriv_z[v] );
         }
+
+        FREE2D( first_deriv );
     }
 
     if( deriv_xx != (Real *) 0 )
@@ -428,7 +423,7 @@ public  BOOLEAN   evaluate_volume_in_world(
             convert_voxel_normal_vector_to_world( volume, voxel,
                                   &deriv_xz[v], &deriv_yz[v], &deriv_zz[v] );
         }
-    }
 
-    return( inside );
+        FREE3D( second_deriv );
+    }
 }
