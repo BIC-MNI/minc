@@ -4,7 +4,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : July 7, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: minc_def.h,v $
+@MODIFIED   : Revision 1.3  1993-08-04 13:03:30  neelin
+@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,6 +28,19 @@
 #endif
 #ifndef SEEK_SET
 #  define SEEK_SET 0
+#endif
+
+#ifdef MALLOC
+#  undef MALLOC
+#endif
+#ifdef FREE
+#  undef FREE
+#endif
+#ifdef REALLOC
+#  undef REALLOC
+#endif
+#ifdef CALLOC
+#  undef CALLOC
 #endif
 
 #define MALLOC(size) ((void *) malloc(size))

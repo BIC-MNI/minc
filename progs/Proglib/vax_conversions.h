@@ -4,7 +4,10 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 8, 1993
-@MODIFIED   : 
+@MODIFIED   : $Log: vax_conversions.h,v $
+@MODIFIED   : Revision 1.3  1993-08-04 13:04:03  neelin
+@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

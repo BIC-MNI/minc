@@ -3,7 +3,10 @@
 @DESCRIPTION: File containing routine to create a time stamp string.
 @METHOD     : 
 @CREATED    : February 1, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: time_stamp.c,v $
+@MODIFIED   : Revision 1.3  1993-08-04 13:03:56  neelin
+@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -22,7 +25,7 @@
 #include <time_stamp.h>
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/time_stamp.c,v 1.2 1993-07-21 09:41:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/time_stamp.c,v 1.3 1993-08-04 13:03:56 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

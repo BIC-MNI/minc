@@ -3,7 +3,10 @@
 @DESCRIPTION: Header file for time_stamp.c
 @GLOBALS    : 
 @CREATED    : February 1, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: time_stamp.h,v $
+@MODIFIED   : Revision 1.3  1993-08-04 13:04:00  neelin
+@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

@@ -4,7 +4,10 @@
               values.
 @METHOD     : 
 @CREATED    : December 10, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : $Log: vax_conversions.c,v $
+@MODIFIED   : Revision 1.4  1993-08-04 13:04:01  neelin
+@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   :
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -18,7 +21,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.3 1993-07-21 09:41:40 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.4 1993-08-04 13:04:01 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
