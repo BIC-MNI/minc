@@ -5,8 +5,8 @@
 # Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
 #
 # Modifications: $Log: mincdiff,v $
-# Modifications: Revision 1.1  1993-11-01 16:46:07  neelin
-# Modifications: Initial revision
+# Modifications: Revision 1.2  1993-11-01 16:50:03  neelin
+# Modifications: Some fixes.
 # Modifications:
 #
 # Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
@@ -59,7 +59,7 @@ if ($status) then
 endif
 diff $file1tmp.cdl $file2tmp.cdl
 if ($status) then
-   goto cleanup
+   echo "Binary image comparison:"
 endif
 
 # Dump the raw data and compare them
