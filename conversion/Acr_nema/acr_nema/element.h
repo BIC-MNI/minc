@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 1.4  1993-11-24 11:26:35  neelin
-@MODIFIED   : Changed short to unsigned short.
+@MODIFIED   : Revision 1.5  1993-11-26 18:47:48  neelin
+@MODIFIED   : Added element copy routine.
 @MODIFIED   :
+ * Revision 1.4  93/11/24  11:26:35  neelin
+ * Changed short to unsigned short.
+ * 
  * Revision 1.3  93/11/23  11:36:21  neelin
  * Changed GLOBAL_ELEMENT macro to allow definition or declaration of
  * global variables.
@@ -66,6 +69,7 @@ public Acr_Element acr_create_element(int group_id, int element_id,
                                       long data_length, char *data_pointer);
 public void acr_delete_element(Acr_Element element);
 public void acr_delete_element_list(Acr_Element element_list);
+public Acr_Element acr_copy_element(Acr_Element element);
 public void acr_set_element_id(Acr_Element element,
                                int group_id, int element_id);
 public void acr_set_element_data(Acr_Element element,

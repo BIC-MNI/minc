@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.4  1993-11-25 10:35:34  neelin
-@MODIFIED   : Ensure that strings have an even length (pad with space).
+@MODIFIED   : Revision 1.5  1993-11-26 18:47:36  neelin
+@MODIFIED   : Added element copy routine.
 @MODIFIED   :
+ * Revision 1.4  93/11/25  10:35:34  neelin
+ * Ensure that strings have an even length (pad with space).
+ * 
  * Revision 1.3  93/11/24  11:25:14  neelin
  * Changed short to unsigned short.
  * 
@@ -116,6 +119,38 @@ public void acr_delete_element_list(Acr_Element element_list)
    } while (next != NULL);
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_copy_element
+@INPUT      : element
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Copies an acr-nema element structure
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 26, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Element acr_copy_element(Acr_Element element)
+{
+   Acr_Element copy;
+   long length;
+   unsigned char *data;
+
+   /* Copy the data */
+   length = acr_get_element_length(element);
+   data = MALLOC(length+1);
+   data[length] = '\0';
+   (void) memcpy(data, acr_get_element_data(element), length);
+
+   /* Create the new element */
+   copy = acr_create_element(acr_get_element_group(element), 
+                             acr_get_element_element(element),
+                             length, (void *) data);
+
+   return copy;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
