@@ -912,7 +912,7 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
     memset(hdim, 0, sizeof (*hdim));
 
     hdim->name = strdup(dimname);
-    printf(" dimname %s \n", dimname);
+    
     /* hdf5 macro can temporarily disable the automatic error printing */
     H5E_BEGIN_TRY {
         int r;
