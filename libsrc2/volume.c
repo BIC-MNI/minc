@@ -671,12 +671,14 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
     hdim->name = strdup(dimname);
     H5E_BEGIN_TRY {
         int r;
-        r = miget_attribute(volume, path, "spacing", MI_TYPE_STRING, 1, temp);
+        r = miget_attribute(volume, path, "spacing", MI_TYPE_STRING, 
+                            MI2_CHAR_LENGTH, temp);
         if (!strcmp(temp, "irregular")) {
             hdim->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
         }
 
-        r = miget_attribute(volume, path, "class", MI_TYPE_INT, 1, temp);
+        r = miget_attribute(volume, path, "class", MI_TYPE_STRING, 
+                            MI2_CHAR_LENGTH, temp);
         if (r < 0) {
             /* Get the default class. */
             if (!strcmp(dimname, "time")) {
