@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.2  2001-11-28 21:59:39  neelin
+ * Revision 1.3  2001-12-05 13:09:08  neelin
+ * Correct in initialization of PctT variables from Andrew Janke.
+ *
+ * Revision 1.2  2001/11/28 21:59:39  neelin
  * Significant modifications. Removed dependencies on volume_io.
  * Added support for centre-of-mass calculation.
  * Compiles but crashes under linux.
@@ -239,6 +242,12 @@ int main(int argc, char *argv[])
       nfiles++;
    }
 
+   /* init PctT boolean before checking */
+   if (pctT > 0.0) {
+      PctT = TRUE;
+      pctT /= 100;
+   }
+
    /* if nothing selected, do everything */
    if (!Vol_Count && !Vol_Per && !Vol && !Min && !Max && !Sum && !Sum2 && 
        !Mean && !Variance && !Stddev && !Hist_Count && !Hist_Per && 
@@ -252,8 +261,6 @@ int main(int argc, char *argv[])
       Hist = TRUE;
    }
       
-   if (pctT > 0.0) { PctT = TRUE; pctT /= 100; }
-   
    /* do checking on arguments */
    if (hist_bins < 1) {
       fprintf(stderr, "%s: Must have one or more bins for a histogram\n", argv[0]);
