@@ -1,0 +1,151 @@
+#ifndef  MINC_STRUCTURES_HEADER_FILE
+#define  MINC_STRUCTURES_HEADER_FILE
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : minc_structures.h
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Defines structures for use by MINC routines
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : August 28, 1992 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+/* Image conversion variable structure type */
+
+typedef struct mi_icv_struct mi_icv_type;
+
+struct mi_icv_struct {
+
+   /* semiprivate : fields available to the package */
+
+   int     do_scale;       /* Indicates to MI_convert_type that scaling should
+                              be done */
+   double  scale;          /* For scaling in MI_convert_type */
+   double  offset;
+   int     do_dimconvert;  /* Indicates that dimensional conversion function
+                              should be given */
+   int   (*dimconvert_func) (int operation, mi_icv_type *icvp, 
+                             long start[], long count[], void *values,
+                             long bufstart[], long bufcount[], void *buffer);
+
+   /* private : fields available only to icv routines */
+
+   /* Fields that hold values passed by user */
+   nc_type user_type;      /* Type to that user wants */
+   int     user_typelen;   /* Length of type in bytes */
+   int     user_sign;      /* Sign that user wants */
+   int     user_do_range;  /* Does the user want range scaling? */
+   double  user_vmax;      /* Range of values that user wants */
+   double  user_vmin;
+   int     user_do_norm;   /* Indicates that user wants value normalization */
+   int     user_user_norm; /* If TRUE, user specifies range for norm, otherwise
+                                 norm is taken from variable range */
+   double  user_imgmax;    /* Range for normalization */
+   double  user_imgmin;
+   int     user_do_scalar; /* Indicates that user wants scalar fields */
+   int     user_xdim_dir;  /* Direction for x, y and z dimensions */
+   int     user_ydim_dir;
+   int     user_zdim_dir;
+   long    user_dim_size[MI_PRIV_IMGDIMS]; /* Size of fastest varying 
+                                              dimensions for user */
+   int     user_keep_aspect; /* Indicates that user wants to preserve the
+                                aspect ratio when resizing images */
+
+   /* Fields that hold values from real variable */
+   int     cdfid;          /* Id of cdf */
+   int     varid;          /* Id of variable */
+   int     imgmaxid;       /* Id of MIimagemax */
+   int     imgminid;       /* Id of Miimagemin */
+   int     var_ndims;      /* Number of dimensions of variable */
+   int     var_dim[MAX_VAR_DIMS]; /* Dimensions of variable */
+   nc_type var_type;       /* Variable type */
+   int     var_typelen;    /* Length of type in bytes */
+   int     var_sign;       /* Variable sign */
+   double  var_vmax;       /* Range of values in variable */
+   double  var_vmin;
+   int     var_is_vector;  /* Is this variable a vector field */
+   long    var_vector_size; /* Size of vector dimension */
+   long    var_dim_size[MI_PRIV_IMGDIMS]; /* Size of image dimensions in 
+                                             variable */
+
+   /* Fields derived from user values and variable values */
+   double  derv_imgmax;    /* Range for normalization */
+   double  derv_imgmin;
+   int     derv_firstdim;  /* First dimension (counting from fastest, ie.
+                                 backwards) over which MIimagemax or 
+                                 MIimagemin vary */
+   int     derv_do_zero;   /* Indicates if we should zero user's buffer
+                              on GETs */
+   int     derv_do_bufsize_step; /* Indicates if we need to worry about 
+                                    bufsize_step */
+   int     derv_bufsize_step[MAX_VAR_DIMS];  /* Array of convenient multiples
+                                                for buffer allocation */
+   int     derv_var_compress; /* Indicate need for compressing variable or */
+   int     derv_usr_compress;    /* user buffer */
+   int     derv_dimconv_fastdim;  /* Fastest varying dimensions for dimension
+                                     conversion */
+   long    derv_var_pix_num; /* Number of pixels to compress/expand for */
+   long   *derv_var_pix_off;    /* variable and user buffers, as well as */
+   long    derv_usr_pix_num;    /* pointers to arrays of offsets */
+   long   *derv_usr_pix_off;
+
+                           /* Stuff that affects first MI_PRIV_IMGDIMS 
+                              (excluding any vector dimension) as image
+                              dimensions */
+   int     derv_dim_flip[MI_PRIV_IMGDIMS];   /* Flip dimension? */
+   int     derv_dim_grow[MI_PRIV_IMGDIMS];   /* Expand variable to fit user's 
+                                                array? */
+   int     derv_dim_scale[MI_PRIV_IMGDIMS];  /* Grow/shrink scale factor */
+   int     derv_dim_off[MI_PRIV_IMGDIMS];    /* Pixels to skip in user's 
+                                                image */
+   double  derv_dim_step[MI_PRIV_IMGDIMS];   /* Step, start for user's image 
+                                                (analogous to MIstep, 
+                                                MIstart) for first 
+                                                MI_PRIV_IMGDIMS dims */
+   double  derv_dim_start[MI_PRIV_IMGDIMS];
+};
+
+/* Structure for passing values for MI_varaccess */
+typedef struct {
+   int operation;
+   int cdfid;
+   int varid;
+   nc_type var_type, call_type;
+   int var_sign, call_sign;
+   int var_value_size, call_value_size;
+   mi_icv_type *icvp;
+   int do_scale;
+   int do_dimconvert;
+   long *start, *count;
+   void *values;
+} mi_varaccess_type;
+
+/* Structure for passing values for micopy_var_values */
+typedef struct {
+   int value_size;            /* Size of each value */
+   int incdfid, outcdfid;     /* Input and output cdf files */
+   int invarid, outvarid;     /* Input and output variables */
+} mi_vcopy_type;
+
+/* Structure for passing values for MI_icv_dimconvert */
+typedef struct {
+   int fastdim;                 /* Fastest varying dimension */
+   int do_compress, do_expand;
+   long end[MAX_VAR_DIMS];
+   long in_pix_num,     out_pix_num; /* Variables for compressing/expanding */
+   long *in_pix_off,   *out_pix_off;
+   void *in_pix_first, *out_pix_first;
+   void *in_pix_last,  *out_pix_last;
+   nc_type intype, outtype;     /* Variable types and signs */
+   int insign, outsign;
+   long buf_step[MAX_VAR_DIMS];    /* Step sizes for pointers */
+   long usr_step[MAX_VAR_DIMS];
+   long *istep, *ostep;
+   void *istart, *ostart;       /* Beginning of buffers */
+} mi_icv_dimconv_type;
+
+#endif
