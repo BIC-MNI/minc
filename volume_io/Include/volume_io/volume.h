@@ -253,6 +253,15 @@ typedef  struct
 
     /* output only */
 
+    Data_types         output_nc_data_type;
+    Data_types         output_signed_flag;
+    int                img_var_id;
+    int                min_id;
+    int                max_id;
+    double             image_range[2];
+    Boolean            end_def_done;
+    Boolean            variables_written;
+    int                dim_ids[MAX_VAR_DIMS];
     String             dim_names[MAX_VAR_DIMS];
 } minc_file_struct;
 
