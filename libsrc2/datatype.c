@@ -12,8 +12,7 @@
 int
 miget_data_class(mihandle_t volume, miclass_t *volume_class)
 {
-    /* TODO: where do we derive the class?  Is it an attribute? */
-    *volume_class = 0;
+    *volume_class = volume->volume_class;
     return (MI_NOERROR);
 }
 
@@ -22,72 +21,8 @@ miget_data_class(mihandle_t volume, miclass_t *volume_class)
 int
 miget_data_type(mihandle_t volume, mitype_t *data_type)
 {
-    hid_t grp_id;
-    hid_t dset_id;
-    hid_t type_id;
-    H5T_class_t class;
-    size_t nbytes;
-    int is_signed;
-    int result = MI_NOERROR;
-    hid_t file_id = volume->hdf_id;
-
-    grp_id = midescend_path(file_id, MI_FULLIMAGE_PATH);
-    if (grp_id < 0) {
-	return (MI_ERROR);
-    }
-
-    dset_id = H5Dopen(grp_id, "image");
-    if (dset_id < 0) {
-	return (MI_ERROR);
-    }
-    type_id = H5Dget_type(dset_id);
-    if (type_id < 0) {
-	return (MI_ERROR);
-    }
-    /* Convert the type to a MINC type.
-     */
-    class = H5Tget_class(type_id);
-    nbytes = H5Tget_size(type_id);
-
-    switch (class) {
-    case H5T_INTEGER:
-	is_signed = (H5Tget_size(type_id) == H5T_SGN_2);
-
-	switch (nbytes) {
-	case 1:
-	    *data_type = (is_signed ? MI_TYPE_BYTE : MI_TYPE_UBYTE);
-	    break;
-	case 2:
-	    *data_type = (is_signed ? MI_TYPE_SHORT : MI_TYPE_USHORT);
-	    break;
-	case 4:
-	    *data_type = (is_signed ? MI_TYPE_INT : MI_TYPE_UINT);
-	    break;
-	default:
-	    result = MI_ERROR;
-	    break;
-	}
-	break;
-    case H5T_FLOAT:
-	*data_type = (nbytes == 4) ? MI_TYPE_FLOAT : MI_TYPE_DOUBLE;
-	break;
-    case H5T_STRING:
-	*data_type = MI_TYPE_STRING;
-	break;
-    case H5T_ARRAY:
-	/* TODO: handle this case for uniform records (arrays)? */
-	break;
-    case H5T_COMPOUND:
-	/* TODO: handle this case for non-uniform records? */
-	break;
-    default:
-	result = MI_ERROR;
-	break;
-    }
-    H5Tclose(type_id);
-    H5Dclose(dset_id);
-    H5Gclose(grp_id);
-    return (result);
+    *data_type = volume->volume_type;
+    return (MI_NOERROR);
 }
 
 int
