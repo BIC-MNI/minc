@@ -82,6 +82,14 @@ micreate_volume_image(mihandle_t volume)
     
     if (volume->volume_class == MI_CLASS_REAL) {
         int ndims;
+        hid_t dcpl_id;
+        double dtmp;
+
+        dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+        if (dcpl_id < 0) {
+            return (MI_ERROR);
+        }
+
         if (volume->has_slice_scaling) {
             /* TODO: Find the slowest-varying spatial dimension; that forms
              * the basis for the image-min and image-max variables.  Right
@@ -107,20 +115,29 @@ micreate_volume_image(mihandle_t volume)
                 }
             }
         }
+
 	/* Create the image minimum dataset for FULL-RESOLUTION storage of data
 	 */
+        dtmp = 0.0;
+        H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
+
         dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-min",
-                            H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+                            H5T_NATIVE_DOUBLE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
         }
         volume->imin_id = dset_id;
         hdf_var_declare(volume->hdf_id, "image-min", "/minc-2.0/image/0/image-min", ndims, hdf_size);
+
+        
 	/* Create the image maximum dataset for FULL-RESOLUTION storage of data
 	 */
+        dtmp = 1.0;
+        H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
+
         dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-max",
-                            H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+                            H5T_NATIVE_DOUBLE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
                               strlen(dimorder), dimorder);
@@ -128,7 +145,7 @@ micreate_volume_image(mihandle_t volume)
         volume->imax_id = dset_id;
         hdf_var_declare(volume->hdf_id, "image-max", "/minc-2.0/image/0/image-max", ndims, hdf_size);
         H5Sclose(dataspace_id);
-	
+        H5Pclose(dcpl_id);
     }
 
     return (MI_NOERROR);
@@ -187,7 +204,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   handle->is_dirty = FALSE;     /* No writes yet. */
   handle->mode = MI2_OPEN_RDWR;
   handle->has_slice_scaling = FALSE;
-  handle->scale_min = -1.0;
+  handle->scale_min = 0.0;
   handle->scale_max = 1.0;
   handle->number_of_dims = number_of_dimensions;
   handle->image_id = -1;
