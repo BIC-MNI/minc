@@ -1,3 +1,11 @@
+Tue Nov 13 16:04:36 EST 2001
+   - Modified icv normalization handling in minc library. When the icv
+     type is floating point, normalization is always done (scaling to real 
+     values), regardless of the normalization setting. When the file type
+     is floating point, rescaling of internal integers are done using 
+     the slice real range (image-max/min). Thus image-max/min are only
+     completely ignored for integer to integer conversion.
+
 Tue Nov 13 09:17:17 EST 2001
    - Added functions miget_image_range and mivar_exists to minc_convenience.c.
    - In mincreshape, set output valid range correctly for conversion from 
