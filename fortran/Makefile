@@ -10,7 +10,7 @@ include $(ROOT)/Make_configuration
 # Executable names
 PROGS    = minc_ftest
 JACKETS_SRC  = minc_jackets.src
-CDEFINES = -D__STDC__#                        cpp defines
+CDEFINES = #                        cpp defines
 LDOPT    = $(MINC_LDOPT:-lc_s=)
 
 # --------------------------------------------------------------------
