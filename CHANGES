@@ -1,3 +1,9 @@
+Tue Jun  3 10:59:29 EDT 1997
+   - Really corrected dimension width suffix added by mincconcat. 
+     Changed to _width to -width (fix of Aug 27, 1996 was not complete)
+
+************************************************************************
+
 Wed May  7 16:05:05 EDT 1997 *** RELEASE OF MINC 0.4
 
 Wed May  7 15:09:58 EDT 1997
