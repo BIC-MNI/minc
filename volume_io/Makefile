@@ -36,7 +36,7 @@ HEADERS  = \
    Include/alloc.h Include/alloc_check.h Include/def_math.h
 
 DOCDIR = Documentation
-DOCS = $(DOCDIR)/volume_io.dvi
+DOCS = $(DOCDIR)/volume_io.ps
 
 CDEFINES = #                        cpp defines
 
@@ -53,7 +53,7 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)
 
 # --------------------------------------------------------------------
 
-.SUFFIXES: .tex .dvi
+.SUFFIXES: .tex .dvi .ps
 
 default: build
 
@@ -74,9 +74,14 @@ $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(DOCS) : $(DOCS:.ps=.dvi)
+
 .tex.dvi :
 	-(cd $(DOCDIR); file=`echo $< | sed -e 's/.*\///'`; \
 	   latex $$file; latex $$file)
+
+.dvi.ps :
+	-dvips $< -o $@
 
 # How to create library
 $(CC_VOLIO_LIB): $(OBJS)
