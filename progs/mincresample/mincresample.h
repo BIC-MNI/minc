@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 1.8  1993-10-20 14:05:42  neelin
-@MODIFIED   : Added VOXEL_COORD_EPS - an epsilon for doing voxel coordinate comparisons.
+@MODIFIED   : Revision 1.9  1993-11-02 11:23:56  neelin
+@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
 @MODIFIED   :
+ * Revision 1.8  93/10/20  14:05:42  neelin
+ * Added VOXEL_COORD_EPS - an epsilon for doing voxel coordinate comparisons.
+ * 
  * Revision 1.7  93/08/11  14:31:50  neelin
  * Changed prototype for check_imageminmax.
  * 
@@ -98,6 +101,13 @@ typedef struct {
                                 order (value=0,1,2; 0=slowest varying) */
    int using_icv;            /* True if we are using an icv to read data */
    int icvid;                /* Id of icv (if used) */
+   long slices_per_image;    /* Number of volume slices (row, column) per
+                                minc file image */
+   long images_per_file;     /* Number of minc file images in the file */
+   int do_slice_renormalization; /* Flag indicating that we need to 
+                                    loop through the data a second time, 
+                                    recomputing the slices to normalize
+                                    images properly */
 } File_Info;
 
 typedef struct {
@@ -274,4 +284,6 @@ public int do_Ncubic_interpolation(Volume_Data *volume,
                                    double frac[], double *result);
 public int nearest_neighbour_interpolant(Volume_Data *volume, 
                                          Coord_Vector coord, double *result);
+public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
+                               double slice_min[], double slice_max[]);
 

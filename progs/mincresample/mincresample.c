@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.9  1993-10-12 12:47:50  neelin
-@MODIFIED   : Use volume_io.h instead of def_mni.h
+@MODIFIED   : Revision 1.10  1993-11-02 11:23:06  neelin
+@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
 @MODIFIED   :
+ * Revision 1.9  93/10/12  12:47:50  neelin
+ * Use volume_io.h instead of def_mni.h
+ * 
  * Revision 1.8  93/09/16  09:56:36  neelin
  * Added use of open_file_with_default_suffix in get_transformation to
  * append appropriate suffix for xfm files.
@@ -46,7 +49,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.9 1993-10-12 12:47:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.10 1993-11-02 11:23:06 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -685,7 +688,7 @@ public void create_output_file(char *filename, int clobber,
 {
    int ndims, in_dims[MAX_VAR_DIMS], out_dims[MAX_VAR_DIMS];
    char dimname[MAX_NC_NAME];
-   int cur_dim, axis, idim, dimid, varid, itrans;
+   int nmaxmin_dims, nimage_dims, axis, idim, dimid, varid, itrans;
    int att_length;
    nc_type datatype;
    int nexcluded, excluded_vars[10];
@@ -801,8 +804,7 @@ public void create_output_file(char *filename, int clobber,
       if (is_volume_dimension) {
 
          /* Create the variable */
-         dimid = micreate_std_variable(out_file->mincid, dimname, NC_DOUBLE,
-                                       0, NULL);
+         dimid = micreate_group_variable(out_file->mincid, dimname);
          (void) miattputdbl(out_file->mincid, dimid, MIstep, 
                             volume_def->step[axis]);
          (void) miattputdbl(out_file->mincid, dimid, MIstart, 
@@ -834,49 +836,44 @@ public void create_output_file(char *filename, int clobber,
       (void) miattputstr(out_file->mincid, out_file->imgid,
                          MIsigntype, MI_UNSIGNED);
 
-   /* Create the image max and min variables. We have to make sure that
-      these vary over spatial slices (this will violate the MINC standard if
-      there are non-spatial dimensions that vary faster than the fastest two
-      spatial dimensions, but the way the resample code is set up, there's 
-      no easy way around it, except to fix it when finishing up) */
-   cur_dim = out_file->indices[ROW_AXIS];
-   for (idim=out_file->indices[ROW_AXIS]+1; idim<ndims; idim++) {
-      if (idim != out_file->indices[COL_AXIS]) {
-         out_dims[cur_dim] = out_dims[idim];
-         cur_dim++;
+   /* Create the image max and min variables. These do not vary over
+      the volume rows and columns even if they are not image dimensions,
+      so we have to copy down the elements of the array (excluding image
+      dimensions). Compute number of slices (row,columns) in an image
+      (minc file def'n) and number of images in the file. */
+   nimage_dims = 2;
+   ncdiminq(out_file->mincid, out_dims[ndims-1], dimname, NULL);
+   if (strcmp(dimname, MIvector_dimension)==0)
+      nimage_dims++;
+   nmaxmin_dims = 0;
+   out_file->slices_per_image = 1;
+   out_file->images_per_file = 1;
+   for (idim=0; idim<ndims; idim++) {
+      if ((idim != out_file->indices[COL_AXIS]) &&
+          (idim != out_file->indices[ROW_AXIS])) {
+         if (idim < ndims-nimage_dims) {
+            out_dims[nmaxmin_dims] = out_dims[idim];
+            nmaxmin_dims++;
+            out_file->images_per_file *= out_file->nelements[idim];
+         }
+         else {
+            out_file->slices_per_image *= out_file->nelements[idim];
+         }
       }
    }
-   /* To commit our subterfuge, we check for an error creating the variable
-      (it is illegal). If there is an error, we rename MIimage, create the
-      variable, restore MIimage and add the pointer */
-   ncopts = 0;
+   out_file->do_slice_renormalization =
+      ((out_file->datatype != NC_FLOAT) && 
+       (out_file->datatype != NC_DOUBLE) &&
+       (out_file->slices_per_image > 1));
+
+   /* Create the variables */
    out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
-                                           NC_DOUBLE, ndims-2, out_dims);
-   ncopts = NC_VERBOSE | NC_FATAL;
-   if (out_file->maxid == MI_ERROR) {
-      (void) ncvarrename(out_file->mincid, out_file->imgid, TEMP_IMAGE_VAR);
-      out_file->maxid = micreate_std_variable(out_file->mincid, MIimagemax,
-                                              NC_DOUBLE, ndims-2, out_dims);
-      (void) ncvarrename(out_file->mincid, out_file->imgid, MIimage);
-      (void) miattput_pointer(out_file->mincid, out_file->imgid, 
-                              MIimagemax, out_file->maxid);
-   }
+                                           NC_DOUBLE, nmaxmin_dims, out_dims);
    if (in_file->maxid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->maxid,
                              out_file->mincid, out_file->maxid);
-   /* Repeat for min variable */
-   ncopts = 0;
    out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
-                                           NC_DOUBLE, ndims-2, out_dims);
-   ncopts = NC_VERBOSE | NC_FATAL;
-   if (out_file->minid == MI_ERROR) {
-      (void) ncvarrename(out_file->mincid, out_file->imgid, TEMP_IMAGE_VAR);
-      out_file->minid = micreate_std_variable(out_file->mincid, MIimagemin,
-                                              NC_DOUBLE, ndims-2, out_dims);
-      (void) ncvarrename(out_file->mincid, out_file->imgid, MIimage);
-      (void) miattput_pointer(out_file->mincid, out_file->imgid, 
-                              MIimagemin, out_file->minid);
-   }
+                                           NC_DOUBLE, nmaxmin_dims, out_dims);
    if (in_file->minid != MI_ERROR)
       (void) micopy_all_atts(in_file->mincid, in_file->minid,
                              out_file->mincid, out_file->minid);
@@ -1041,49 +1038,10 @@ public double get_default_range(char *what, nc_type datatype, int is_signed)
 public void finish_up(VVolume *in_vol, VVolume *out_vol)
 {
    File_Info *in_file, *out_file;
-   int idim, ndims, dims[MAX_VAR_DIMS];
-   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS], total_length, ival;
-   double *darray, vrange[2];
 
    /* Get file info pointers */
    in_file = in_vol->file;
    out_file = out_vol->file;
-
-   /* If output volume is floating point, then we need to rewrite 
-      valid range */
-   if ((out_file->datatype == NC_FLOAT) ||
-       (out_file->datatype == NC_DOUBLE)) {
-
-      /* Figure out amount of space needed to read image max/min */
-      (void) ncvarinq(out_file->mincid, out_file->maxid, NULL, NULL, 
-                      &ndims, dims, NULL);
-      total_length = sizeof(double);
-      for (idim=0; idim < ndims; idim++) {
-         (void) ncdiminq(out_file->mincid, dims[idim], NULL, &count[idim]);
-         total_length *= count[idim];
-      }
-      darray = MALLOC(total_length);
-      (void) miset_coords(ndims, 0L, start);
-
-      /* Read in max */
-      (void) mivarget(out_file->mincid, out_file->maxid, start, count,
-                      NC_DOUBLE, NULL, darray);
-      vrange[1] = darray[0];
-      for (ival=1; ival<total_length; ival++)
-         if (darray[ival] > vrange[1]) vrange[1] = darray[ival];
-
-      /* Read in min */
-      (void) mivarget(out_file->mincid, out_file->minid, start, count,
-                      NC_DOUBLE, NULL, darray);
-      vrange[0] = darray[0];
-      for (ival=1; ival<total_length; ival++)
-         if (darray[ival] < vrange[0]) vrange[0] = darray[ival];
-
-      /* Save the valid range */
-      ncattput(out_file->mincid, out_file->imgid, MIvalid_range, NC_DOUBLE,
-               2, vrange);
-
-   }
 
    /* Close the output file */
    (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete, MI_TRUE);

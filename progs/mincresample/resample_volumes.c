@@ -5,12 +5,15 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.11  1993-10-20 14:06:36  neelin
-@MODIFIED   : Modified tri-linear interpolation to allow volumes to extend epsilon
-@MODIFIED   : beyond the first voxel.
-@MODIFIED   : Added code to handle volume dimensions of size one (in tri-linear
-@MODIFIED   : interpolation).
+@MODIFIED   : Revision 1.12  1993-11-02 11:23:52  neelin
+@MODIFIED   : Handle imagemax/min potentially varying over slices (for vector data, etc.)
 @MODIFIED   :
+ * Revision 1.11  93/10/20  14:06:36  neelin
+ * Modified tri-linear interpolation to allow volumes to extend epsilon
+ * beyond the first voxel.
+ * Added code to handle volume dimensions of size one (in tri-linear
+ * interpolation).
+ * 
  * Revision 1.10  93/10/15  13:48:22  neelin
  * Removed include of recipes.h
  * 
@@ -45,7 +48,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.11 1993-10-20 14:06:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.12 1993-11-02 11:23:52 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -81,14 +84,23 @@ public void resample_volumes(Program_Flags *program_flags,
    long in_start[MAX_VAR_DIMS], in_count[MAX_VAR_DIMS], in_end[MAX_VAR_DIMS];
    long out_start[MAX_VAR_DIMS], out_count[MAX_VAR_DIMS];
    long mm_start[MAX_VAR_DIMS];   /* Vector for min/max variables */
-   long nslice, islice;
+   long nslice, islice, slice_count;
    int idim, index, slice_index;
    double maximum, minimum, valid_range[2];
+   double *slice_max, *slice_min;
    File_Info *ifp,*ofp;
 
    /* Set pointers to file information */
    ifp = in_vol->file;
    ofp = out_vol->file;
+
+   /* Allocate slice min/max arrays if needed */
+   if (ofp->do_slice_renormalization) {
+      slice_min = MALLOC(ofp->images_per_file * ofp->slices_per_image *
+                         sizeof(double));
+      slice_max = MALLOC(ofp->images_per_file * ofp->slices_per_image *
+                         sizeof(double));
+   }
 
    /* Set input file start, count and end vectors for reading a volume
       at a time */
@@ -119,6 +131,9 @@ public void resample_volumes(Program_Flags *program_flags,
    /* Initialize global max and min */
    valid_range[0] =  DBL_MAX;
    valid_range[1] = -DBL_MAX;
+
+   /* Initialize file max/min slice count */
+   slice_count = 0;
 
    /* Print log message */
    if (program_flags->verbose) {
@@ -171,6 +186,15 @@ public void resample_volumes(Program_Flags *program_flags,
          (void) miicv_put(ofp->icvid, out_start, out_count,
                           out_vol->slice->data);
 
+         /* Save the max, min if needed */
+         if (ofp->do_slice_renormalization) {
+            slice_max[slice_count] = maximum;
+            slice_min[slice_count] = minimum;
+         }
+
+         /* Increment slice count */
+         slice_count++;
+
       }    /* End loop over slices */
 
       /* Increment in_start counter */
@@ -194,6 +218,13 @@ public void resample_volumes(Program_Flags *program_flags,
    if ((ofp->datatype == NC_FLOAT) || (ofp->datatype == NC_DOUBLE)) {
       (void) ncattput(ofp->mincid, ofp->imgid, MIvalid_range, 
                       NC_DOUBLE, 2, valid_range);
+   }
+
+   /* Recompute slices and free vectors, if needed */
+   if (ofp->do_slice_renormalization) {
+      renormalize_slices(program_flags, out_vol, slice_min, slice_max);
+      FREE(slice_min);
+      FREE(slice_max);
    }
 
 }
@@ -767,5 +798,156 @@ public int nearest_neighbour_interpolant(Volume_Data *volume,
 
    return TRUE;
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : renormalize_slices
+@INPUT      : ofp - output file pointer
+              slice_min - array of slice minima
+              slice_max - array of slice maxima
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to loop through the output file and renormalize the
+              slices.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 29, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
+                               double slice_min[], double slice_max[])
+{
+   File_Info *ofp;
+   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS], end[MAX_VAR_DIMS];
+   long mm_start[MAX_VAR_DIMS];
+   long nslice, image, islice, ivolume, image_slice, slice_count;
+   int idim, slice_index, index;
+   double *image_maximum, *image_minimum;
+
+   /* Set pointer to file information */
+   ofp = out_vol->file;
+
+   /* Set output file start, count and end vectors for stepping 
+      a slice at a time */
+   (void) miset_coords(ofp->ndims, (long) 0, start);
+   (void) miset_coords(ofp->ndims, (long) 1, count);
+   for (idim=0; idim < ofp->ndims; idim++) {
+      end[idim] = ofp->nelements[idim];
+   }
+   for (idim=0; idim < VOL_NDIMS; idim++) {
+      index = ofp->indices[idim];
+      if (idim==0) {
+         slice_index = index;
+         nslice = ofp->nelements[index];
+         count[slice_index] = 1;
+      }
+      else {
+         count[index] = ofp->nelements[index];
+      }
+   }
+
+   /* Find the max/min for each image */
+   image_maximum = MALLOC( sizeof(double) * ofp->images_per_file);
+   image_minimum = MALLOC( sizeof(double) * ofp->images_per_file);
+   for (image=0; image < ofp->images_per_file; image++) {
+      image_maximum[image] = -DBL_MAX;
+      image_minimum[image] =  DBL_MAX;
+   }
+   slice_count = 0;
+   for (ivolume=0; ivolume < ofp->images_per_file / nslice; ivolume++) {
+      for (image_slice=0; image_slice<ofp->slices_per_image; image_slice++) {
+         for (islice=0; islice < nslice; islice++) {
+            image = ivolume * nslice + islice;
+            image_maximum[image] = 
+               MAX(image_maximum[image], slice_max[slice_count]);
+            image_minimum[image] = 
+               MIN(image_minimum[image], slice_min[slice_count]);
+            slice_count++;
+         }
+      }
+   }
+
+   /* Initialize file max/min slice count */
+   slice_count = 0;
+
+   /* Print log message */
+   if (program_flags->verbose) {
+      (void) fprintf(stderr, "Renormalizing slices:");
+      (void) fflush(stderr);
+   }
+
+   /* Loop over output volumes */
+
+   while (start[0] < end[0]) {
+
+      /* Loop over slices */
+      for (islice=0; islice < nslice; islice++) {
+
+         /* Print log message */
+         if (program_flags->verbose) {
+            (void) fprintf(stderr, ".");
+            (void) fflush(stderr);
+         }
+
+         /* Set slice number in out_start */
+         start[slice_index] = islice;
+
+         /* Figure out which image, slice, volume, etc we are dealing with */
+         islice = slice_count % nslice;
+         ivolume = slice_count / nslice / ofp->slices_per_image;
+         image = ivolume * nslice + islice;
+
+         /* Get the slice min/max start coordinate */
+         (void) mitranslate_coords(ofp->mincid, 
+                                   ofp->imgid, start,
+                                   ofp->maxid, mm_start),
+
+         /* Write out the slice max and min */
+         (void) mivarput1(ofp->mincid, ofp->maxid, mm_start,
+                          NC_DOUBLE, NULL, &slice_max[slice_count]);
+         (void) mivarput1(ofp->mincid, ofp->minid, mm_start,
+                          NC_DOUBLE, NULL, &slice_min[slice_count]);
+
+         /* Read in the slice */
+         (void) miicv_get(ofp->icvid, start, count, out_vol->slice->data);
+
+         /* Write the image max, min and slice */
+         (void) mivarput1(ofp->mincid, ofp->maxid, mm_start,
+                          NC_DOUBLE, NULL, &image_maximum[image]);
+         (void) mivarput1(ofp->mincid, ofp->minid, mm_start,
+                          NC_DOUBLE, NULL, &image_minimum[image]);
+         (void) miicv_put(ofp->icvid, start, count, out_vol->slice->data);
+
+         /* Increment slice count */
+         slice_count++;
+
+      }    /* End loop over slices */
+
+      /* Set slice counter to ensure that we move to the next volume */
+      start[slice_index] = end[slice_index] - 1;
+
+      /* Increment in_start counter */
+      idim = ofp->ndims-1;
+      start[idim] += count[idim];
+      while ( (idim>0) && (start[idim] >= end[idim])) {
+         start[idim] = 0;
+         idim--;
+         start[idim] += count[idim];
+      }
+
+   }       /* End loop over volumes */
+
+   /* Print end of log message */
+   if (program_flags->verbose) {
+      (void) fprintf(stderr, "Done\n");
+      (void) fflush(stderr);
+   }
+
+   /* Free the image max/min arrays */
+   FREE(image_maximum);
+   FREE(image_minimum);
+
+   return;
 }
 
