@@ -8,7 +8,12 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.6  2001-02-19 22:03:13  neelin
+ * Revision 6.7  2001-04-09 23:02:50  neelin
+ * Modified copyright notice, removing permission statement since copying,
+ * etc. is probably not permitted by our non-disclosure agreement with
+ * Philips.
+ *
+ * Revision 6.6  2001/02/19 22:03:13  neelin
  * Port to linux.
  *
  * Revision 6.5  2000/06/14 18:24:08  neelin
@@ -56,13 +61,6 @@
 @COPYRIGHT  :
               Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #include <sys/types.h>

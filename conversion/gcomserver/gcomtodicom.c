@@ -5,24 +5,22 @@
 @GLOBALS    : 
 @CREATED    : June 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: gcomtodicom.c,v $
-@MODIFIED   : Revision 6.1  2001-03-19 18:39:17  neelin
+@MODIFIED   : Revision 6.2  2001-04-09 23:02:49  neelin
+@MODIFIED   : Modified copyright notice, removing permission statement since copying,
+@MODIFIED   : etc. is probably not permitted by our non-disclosure agreement with
+@MODIFIED   : Philips.
+@MODIFIED   :
+@MODIFIED   : Revision 6.1  2001/03/19 18:39:17  neelin
 @MODIFIED   : Program to convert captured gyrocom files to dicom and forward them to
 @MODIFIED   : a dicom server.
 @MODIFIED   :
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.1 2001-03-19 18:39:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.2 2001-04-09 23:02:49 neelin Exp $";
 #endif
 
 #include <stdio.h>

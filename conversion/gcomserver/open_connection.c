@@ -5,7 +5,12 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: open_connection.c,v $
- * Revision 6.3  2001-02-20 00:55:38  neelin
+ * Revision 6.4  2001-04-09 23:02:50  neelin
+ * Modified copyright notice, removing permission statement since copying,
+ * etc. is probably not permitted by our non-disclosure agreement with
+ * Philips.
+ *
+ * Revision 6.3  2001/02/20 00:55:38  neelin
  * Fixes for port to linux decnet.
  *
  * Revision 6.1  1999/10/29 17:52:04  neelin
@@ -64,13 +69,6 @@
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #include <stdlib.h>

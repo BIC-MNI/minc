@@ -5,7 +5,12 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.c,v $
- * Revision 6.4  2000-06-14 18:24:07  neelin
+ * Revision 6.5  2001-04-09 23:02:48  neelin
+ * Modified copyright notice, removing permission statement since copying,
+ * etc. is probably not permitted by our non-disclosure agreement with
+ * Philips.
+ *
+ * Revision 6.4  2000/06/14 18:24:07  neelin
  * Added UseSafeOrientations keyword to project files to allow forcing of
  * direction cosines to standard (safe) ones, and modified convert_to_dicom
  * so that this is no longer the default behaviour.
@@ -112,17 +117,10 @@
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.4 2000-06-14 18:24:07 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.5 2001-04-09 23:02:48 neelin Exp $";
 #endif
 
 #include <sys/types.h>

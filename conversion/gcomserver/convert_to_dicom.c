@@ -5,7 +5,12 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.15  2001-04-09 22:15:17  neelin
+ * Revision 1.16  2001-04-09 23:02:48  neelin
+ * Modified copyright notice, removing permission statement since copying,
+ * etc. is probably not permitted by our non-disclosure agreement with
+ * Philips.
+ *
+ * Revision 1.15  2001/04/09 22:15:17  neelin
  * Fixed definition of FALSE
  *
  * Revision 1.14  2001/03/19 18:37:33  neelin
@@ -70,17 +75,10 @@
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
-              Permission to use, copy, modify, and distribute this
-              software and its documentation for any purpose and without
-              fee is hereby granted, provided that the above copyright
-              notice appear in all copies.  The author and McGill University
-              make no representations about the suitability of this
-              software for any purpose.  It is provided "as is" without
-              express or implied warranty.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.15 2001-04-09 22:15:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.16 2001-04-09 23:02:48 neelin Exp $";
 #endif
 
 #include <stdio.h>
