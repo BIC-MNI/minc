@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
-@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
+@MODIFIED   : Revision 3.2  1997-04-10 19:22:18  neelin
+@MODIFIED   : Removed redefinition of NULL and added pointer casts in appropriate places.
 @MODIFIED   :
+ * Revision 3.1  1997/04/10  18:14:50  neelin
+ * Fixed handling of invalid data when icv scale is zero.
+ *
  * Revision 3.0  1995/05/15  19:33:12  neelin
  * Release of minc version 0.3
  *
@@ -86,7 +89,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 3.2 1997-04-10 19:22:18 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1686,7 +1689,7 @@ semiprivate mi_icv_type *MI_icv_chkid(int icvid)
    /* Check icv id */
    if ((icvid<0) || (icvid>MI_MAX_NUM_ICV) || (minc_icv_list[icvid]==NULL)) {
       MI_LOG_PKG_ERROR2(MI_ERR_BADICV,"Illegal icv identifier");
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((void *) NULL);
    }
 
    MI_RETURN(minc_icv_list[icvid]);

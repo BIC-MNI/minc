@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 3.2  1995-09-29 14:34:09  neelin
-@MODIFIED   : Modified micopy_all_atts to handle MI_ERROR being passed in as a varid.
+@MODIFIED   : Revision 3.3  1997-04-10 19:22:18  neelin
+@MODIFIED   : Removed redefinition of NULL and added pointer casts in appropriate places.
 @MODIFIED   :
+ * Revision 3.2  1995/09/29  14:34:09  neelin
+ * Modified micopy_all_atts to handle MI_ERROR being passed in as a varid.
+ *
  * Revision 3.1  1995/06/12  20:43:52  neelin
  * Modified miexpand_file and miopen to try adding compression exetensions
  * to filenames if the first open fails.
@@ -89,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.2 1995-09-29 14:34:09 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.3 1997-04-10 19:22:18 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -398,7 +401,7 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
       *created_tempfile = FALSE;
       FREE(newfile);
       MI_LOG_PKG_ERROR2(MI_ERR_UNCOMPRESS,"Cannot uncompress the file");
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Return the new file name */
@@ -667,19 +670,19 @@ public char *miattgetstr(int cdfid, int varid, char *name,
 
    /* Inquire about the attribute */
    if (ncattinq(cdfid, varid, name, &att_type, &att_length)==MI_ERROR)
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((char *) NULL);
 
    /* Check that the attribute type is character */
    if (att_type!=NC_CHAR) {
       MI_LOG_PKG_ERROR2(MI_ERR_NONCHAR,"Non-character datatype");
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Check to see if the attribute length is less than maxlen. 
       If it is, just get the value. */
    if (att_length <= maxlen) {
       if (ncattget(cdfid, varid, name, value) == MI_ERROR)
-         MI_RETURN_ERROR(NULL);
+         MI_RETURN_ERROR((char *) NULL);
       /* Check the last character for a '\0' */
       if (value[att_length-1] != '\0') {
          if (att_length==maxlen)
@@ -694,13 +697,13 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    if ((att_value = MALLOC(att_length * nctypelen(att_type), char))
                       ==NULL) {
       MI_LOG_SYS_ERROR1("miattgetstr");
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Get the attribute */
    if (ncattget(cdfid, varid, name, att_value)==MI_ERROR) {
       FREE(att_value);
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Copy the attribute */
@@ -1008,7 +1011,7 @@ public long *mitranslate_coords(int cdfid,
                     == MI_ERROR) ||
         (ncvarinq(cdfid, outvar, NULL, NULL, &out_ndims, out_dim, NULL)
                     == MI_ERROR)) {
-      MI_RETURN_ERROR(NULL);
+      MI_RETURN_ERROR((long *) NULL);
    }
 
    /* Loop through out_dim, looking for dimensions in in_dim */

@@ -14,9 +14,12 @@
 @CALLS      : 
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   : $Log: minc_useful.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:33:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-10 19:22:18  neelin
+@MODIFIED   : Removed redefinition of NULL and added pointer casts in appropriate places.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:33:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:38:10  neelin
  * Release of minc version 0.2
  *
@@ -39,7 +42,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 3.0 1995-05-15 19:33:12 neelin Rel $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 3.1 1997-04-10 19:22:18 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* ------------ define signed for vaxes ----------------- */
@@ -54,12 +57,6 @@
 #endif
 #define  private     static
 #define  semiprivate
-
-/* --------- define NULL properly -------------------------- */
-#ifdef NULL
-#undef NULL
-#endif
-#define NULL ((void *) 0)
 
 /* --------- define  TRUE and FALSE ------------------------ */
 
