@@ -1,3 +1,42 @@
+                New in Release 2.0.05
+                ---------------------
+* More bugs fixed
+* "make check" expanded to test MINC 2.0 format.
+* "mincdump" added to the distribution.
+* Almost all MINC 2.0 specific changes are now surrounded by "#ifdef MINC2"
+* See "WHATSNEW-2.0" for more information.
+
+                New in Release 2.0.04
+                ---------------------
+* More bugs fixed
+* mincconvert now takes a -compress and -chunk option to force the output
+file to take on a desired structure.
+* User's guide to MINC 2.0 library is now in doc/minc2_uguide.tex.  It's a
+work in progress but it should contain some useful information.
+
+                New in Release 2.0.03
+                ---------------------
+* Actually implemented MINC_COMPRESS
+
+* Many bugs fixed
+
+                New in Release 2.0.02
+                ---------------------
+* Several bug fixes
+
+* Even newer error handling
+
+                New in Release 2.0.01
+                ------------------
+* Support for HDF5 "MINC 2.0" format files.
+
+* Revised error message handling.  Some new, unwanted messages are probably 
+present.
+
+* Tentative .mincrc and environment variable support.
+
+* New programming interface.
+
 	        New in Release 1.3
         	------------------
 
