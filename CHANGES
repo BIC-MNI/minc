@@ -4,7 +4,9 @@ Tue Nov 13 16:04:36 EST 2001
      values), regardless of the normalization setting. When the file type
      is floating point, rescaling of internal integers are done using 
      the slice real range (image-max/min). Thus image-max/min are only
-     completely ignored for integer to integer conversion.
+     completely ignored for integer to integer conversion. This fixes
+     some problems that appeared when converting from int to float or float 
+     to int with mincrehape.
 
 Tue Nov 13 09:17:17 EST 2001
    - Added functions miget_image_range and mivar_exists to minc_convenience.c.
