@@ -12,6 +12,7 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 1.5 1992-12-01 14:04:53 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */

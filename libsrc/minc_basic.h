@@ -13,6 +13,7 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.4 1992-12-01 14:04:42 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */
@@ -30,9 +31,6 @@
 /* Operations for MI_varaccess */
 #define MI_PRIV_GET 10
 #define MI_PRIV_PUT 11
-
-/* Number of image dimensions for image conversion */
-#define MI_PRIV_IMGDIMS 2
 
 /* Suffix for dimension width variable names */
 #define MI_WIDTH_SUFFIX "-width"

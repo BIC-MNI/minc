@@ -12,6 +12,7 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 1.5 1992-12-01 14:04:55 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* Image conversion variable structure type */
@@ -52,7 +53,8 @@ struct mi_icv_struct {
    int     user_xdim_dir;  /* Direction for x, y and z dimensions */
    int     user_ydim_dir;
    int     user_zdim_dir;
-   long    user_dim_size[MI_PRIV_IMGDIMS]; /* Size of fastest varying 
+   int     user_num_imgdims; /* Number of image (fastest varying) dimensions */
+   long    user_dim_size[MI_MAX_IMGDIMS]; /* Size of fastest varying 
                                               dimensions for user */
    int     user_keep_aspect; /* Indicates that user wants to preserve the
                                 aspect ratio when resizing images */
@@ -71,7 +73,7 @@ struct mi_icv_struct {
    double  var_vmin;
    int     var_is_vector;  /* Is this variable a vector field */
    long    var_vector_size; /* Size of vector dimension */
-   long    var_dim_size[MI_PRIV_IMGDIMS]; /* Size of image dimensions in 
+   long    var_dim_size[MI_MAX_IMGDIMS]; /* Size of image dimensions in 
                                              variable */
 
    /* Fields derived from user values and variable values */
@@ -99,20 +101,20 @@ struct mi_icv_struct {
    long    derv_icv_start[MAX_VAR_DIMS]; /* Space for storing parameters to */
    long    derv_icv_count[MAX_VAR_DIMS]; /* MI_icv_access */
 
-                           /* Stuff that affects first MI_PRIV_IMGDIMS 
+                           /* Stuff that affects first user_num_imgdims
                               (excluding any vector dimension) as image
                               dimensions */
-   int     derv_dim_flip[MI_PRIV_IMGDIMS];   /* Flip dimension? */
-   int     derv_dim_grow[MI_PRIV_IMGDIMS];   /* Expand variable to fit user's 
+   int     derv_dim_flip[MI_MAX_IMGDIMS];   /* Flip dimension? */
+   int     derv_dim_grow[MI_MAX_IMGDIMS];   /* Expand variable to fit user's 
                                                 array? */
-   int     derv_dim_scale[MI_PRIV_IMGDIMS];  /* Grow/shrink scale factor */
-   int     derv_dim_off[MI_PRIV_IMGDIMS];    /* Pixels to skip in user's 
+   int     derv_dim_scale[MI_MAX_IMGDIMS];  /* Grow/shrink scale factor */
+   int     derv_dim_off[MI_MAX_IMGDIMS];    /* Pixels to skip in user's 
                                                 image */
-   double  derv_dim_step[MI_PRIV_IMGDIMS];   /* Step, start for user's image 
+   double  derv_dim_step[MI_MAX_IMGDIMS];   /* Step, start for user's image 
                                                 (analogous to MIstep, 
                                                 MIstart) for first 
-                                                MI_PRIV_IMGDIMS dims */
-   double  derv_dim_start[MI_PRIV_IMGDIMS];
+                                                user_num_imgdims dims */
+   double  derv_dim_start[MI_MAX_IMGDIMS];
 };
 
 /* Structure for passing values for MI_varaccess */

@@ -13,6 +13,7 @@
 @CALLS      : 
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 1.3 1992-12-01 14:04:50 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include  <stdlib.h>

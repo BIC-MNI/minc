@@ -5,7 +5,9 @@
 @METHOD     : Note that lists should be NULL terminated.
 @CREATED    : Peter Neelin (August 7, 1992)
 @MODIFIED   : 
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_varlists.h,v 1.2 1992-12-01 14:04:59 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
+
 /* Variables containing list of standard dimension names and variable names */
 
 /* List of dimension variables. Note that MIvector_dimension is not included
