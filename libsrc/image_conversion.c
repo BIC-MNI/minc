@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.9  2001-11-28 15:38:07  neelin
+ * Revision 6.10  2003-09-18 16:17:00  bert
+ * Correctly cast double to nc_type
+ *
+ * Revision 6.9  2001/11/28 15:38:07  neelin
  * Removed limit on number of icvs that can exist at one time.
  *
  * Revision 6.8  2001/11/13 21:00:24  neelin
@@ -144,7 +147,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.9 2001-11-28 15:38:07 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.10 2003-09-18 16:17:00 bert Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -353,7 +356,7 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
    /* Set the property */
    switch (icv_property) {
    case MI_ICV_TYPE:
-      icvp->user_type   = value;
+      icvp->user_type   = (nc_type) (int) value;
       icvp->user_typelen= nctypelen(icvp->user_type);
       icvp->user_vmax   = MI_get_default_range(MIvalid_max, icvp->user_type,
                                                icvp->user_sign);
