@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.27 1996-01-12 19:23:18 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.28 1996-01-15 17:37:54 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -243,7 +243,7 @@ private  void    trilinear_interpolate(
     Real   coefs[2][2][2];
     Real   c000, c001, c010, c011, c100, c101, c110, c111;
     Real   du00, du01, du10, du11, c00, c01, c10, c11, c0, c1, du0, du1;
-    Real   dv0, dv1, dw;
+    Real   dv0, dv1, dw, scale_factor;
 
     get_volume_sizes( volume, sizes );
 
@@ -259,20 +259,22 @@ private  void    trilinear_interpolate(
         j = (int) y;
         k = (int) z;
 
-        GET_VALUE_3D( c000, volume, i  , j  , k );
-        GET_VALUE_3D( c001, volume, i  , j  , k+1 );
-        GET_VALUE_3D( c010, volume, i  , j+1, k );
-        GET_VALUE_3D( c011, volume, i  , j+1, k+1 );
-        GET_VALUE_3D( c100, volume, i+1, j  , k );
-        GET_VALUE_3D( c101, volume, i+1, j  , k+1 );
-        GET_VALUE_3D( c110, volume, i+1, j+1, k );
-        GET_VALUE_3D( c111, volume, i+1, j+1, k+1 );
+        GET_VOXEL_3D( c000, volume, i  , j  , k );
+        GET_VOXEL_3D( c001, volume, i  , j  , k+1 );
+        GET_VOXEL_3D( c010, volume, i  , j+1, k );
+        GET_VOXEL_3D( c011, volume, i  , j+1, k+1 );
+        GET_VOXEL_3D( c100, volume, i+1, j  , k );
+        GET_VOXEL_3D( c101, volume, i+1, j  , k+1 );
+        GET_VOXEL_3D( c110, volume, i+1, j+1, k );
+        GET_VOXEL_3D( c111, volume, i+1, j+1, k+1 );
     }
     else
     {
         i = FLOOR( x );
         j = FLOOR( y );
         k = FLOOR( z );
+
+        outside_value = convert_value_to_voxel( volume, outside_value );
 
         for_less( dx, 0, 2 )
         for_less( dy, 0, 2 )
@@ -282,7 +284,7 @@ private  void    trilinear_interpolate(
                 j + dy >= 0 && j + dy < sizes[1] &&
                 k + dz >= 0 && k + dz < sizes[2] )
             {
-                GET_VALUE_3D( coefs[dx][dy][dz], volume, i+dx, j+dy, k+dz );
+                GET_VOXEL_3D( coefs[dx][dy][dz], volume, i+dx, j+dy, k+dz );
             }
             else
                 coefs[dx][dy][dz] = outside_value;
@@ -333,12 +335,19 @@ private  void    trilinear_interpolate(
     /*--- if the value is desired, interpolate in 1D to get the value */
 
     if( value != NULL )
-        *value = c0 + w * dw;
+    {
+        *value = convert_voxel_to_value( volume, c0 + w * dw );
+    }
 
     /*--- if the derivatives are desired, compute them */
 
     if( derivs != NULL )
     {
+        if( volume->real_range_set )
+            scale_factor = volume->real_value_scale;
+        else
+            scale_factor = 1.0;
+
         /*--- reduce the 2D u derivs to 1D */
 
         du0 = INTERPOLATE( v, du00, du10 );
@@ -346,9 +355,9 @@ private  void    trilinear_interpolate(
 
         /*--- interpolate the 1D problems in w, or for Z deriv, just use dw */
 
-        derivs[X] = INTERPOLATE( w, du0, du1 );
-        derivs[Y] = INTERPOLATE( w, dv0, dv1 );
-        derivs[Z] = dw;
+        derivs[X] = scale_factor * INTERPOLATE( w, du0, du1 );
+        derivs[Y] = scale_factor * INTERPOLATE( w, dv0, dv1 );
+        derivs[Z] = scale_factor * dw;
     }
 }
 
