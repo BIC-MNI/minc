@@ -25,7 +25,7 @@
 #
 NETCDF_LIB_DIR = /usr/local/lib
 NETCDF_INCLUDE_DIR = /usr/local/include
-NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf_fortran
+NETCDF_FORTRAN_DIR = $(ROOT)/../netcdf/fortran
 FORTRAN_SUBDIR = fortran
 #FORTRAN_SUBDIR =
 INSTALL_BINDIR = $(ROOT)/bin
