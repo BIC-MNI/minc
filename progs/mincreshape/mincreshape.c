@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 1.1  1994-11-02 16:21:24  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-11-03 08:48:20  neelin
+@MODIFIED   : Allow chunk_count to have sizes less than full block size.
 @MODIFIED   :
+ * Revision 1.1  94/11/02  16:21:24  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.1 1994-11-02 16:21:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 1.2 1994-11-03 08:48:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -278,6 +281,13 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Save verbose setting */
    reshape_info->verbose = verbose;
+
+   /* Check max chunk size value */
+   if (max_chunk_size_in_kb <= 0) {
+      (void) fprintf(stderr, "Illegal value for max_chunk_size (%d)\n",
+                     max_chunk_size_in_kb);
+      exit(EXIT_FAILURE);
+   }
 
    /* Check the x, y and z directions */
    if (xdirection == INT_MIN) xdirection = direction;
@@ -913,7 +923,6 @@ public void setup_reshaping_info(int icvid, int mincid,
    int has_vector_dimension;
    int num_imgdims;
    int fastest_input_img_dim, fastest_output_img_dim;
-   int no_chunk_dims_found;
    long length;
    long first, last;
 
@@ -1075,7 +1084,6 @@ public void setup_reshaping_info(int icvid, int mincid,
    i2o = reshape_info->map_in_to_out;
    (void) miicv_inqint(reshape_info->icvid, MI_ICV_TYPE, (int *) &datatype);
    total_size = nctypelen(datatype);
-   no_chunk_dims_found = TRUE;
    for (idim=0; idim < output_ndims; idim++) {
       reshape_info->dim_used_in_block[idim] = FALSE;
       reshape_info->chunk_count[idim] = 1;
@@ -1100,12 +1108,11 @@ public void setup_reshaping_info(int icvid, int mincid,
       if (size == 0) idim = -1;
       if ((idim != -1) && !reshape_info->dim_used_in_block[idim]) {
          reshape_info->dim_used_in_block[idim] = TRUE;
-         if (no_chunk_dims_found ||
-             ((total_size * size) <= (max_chunk_size_in_kb * 1024))) {
-            no_chunk_dims_found = FALSE;
-            reshape_info->chunk_count[idim] = size;
-            total_size *= size;
-         }
+         if ((total_size * size) > (max_chunk_size_in_kb * 1024))
+            size = max_chunk_size_in_kb * 1024 / total_size;
+         if (size < 1) size = 1;
+         reshape_info->chunk_count[idim] = size;
+         total_size *= size;
       }
    }
 
