@@ -59,8 +59,11 @@ $(LINT_PROG_LIB) : $(LINT_OBJS)
 	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
-clean:
-	$(RM) $(RM_FLAGS) $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
+clean: mostlyclean
+	$(RM) $(RM_FLAGS) $(CC_PROG_LIB) $(LINT_PROG_LIB)
+
+mostlyclean:
+	$(RM) $(RM_FLAGS) $(OBJS) $(LINT_OBJS)
 
 install: 
 	@echo Nothing to install

@@ -33,7 +33,7 @@ man: $(MANPAGES)
 .man1.1:
 	$(NROFF) $(NROFF_FLAGS) $< > $@
 
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(MANPAGES)
 
 install:

@@ -61,7 +61,7 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln
 	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) $(MANPAGES)
 	            
 install:

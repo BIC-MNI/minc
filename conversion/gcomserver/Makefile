@@ -82,7 +82,7 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_EXTRA) $(LINT_ACR_LIB) $(LIN
 	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
 	            $(EXTRA_OBJS) $(LINT_EXTRA)
 # $(MANPAGES)

@@ -22,7 +22,7 @@ $(PROGS):
 	@echo Cannot create $(PROGS)
 	@false
 
-clean:
+mostlyclean clean:
 	@echo $(PROGS) : nothing to remove
 
 install:

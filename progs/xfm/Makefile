@@ -55,7 +55,7 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_PROG_LIB)
 	$(LINT) $(LINT_PROGOPTS) $(LINTFLAGS) $@ln $(LINT_PROG_LIB)
 
 # Remove all derived files in this directory
-clean:
+mostlyclean clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ)
 
 install:

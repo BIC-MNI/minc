@@ -74,9 +74,11 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_ACR_LIB)
 	$(NROFF) $(NROFF_FLAGS) $< > $@
 
 # Remove all derived files in this directory
-clean:
+clean: mostlyclean
+	$(RM) $(RM_FLAGS) $(CC_ACR_LIB) $(LINT_ACR_LIB)
+
+mostlyclean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
-               $(CC_ACR_LIB) $(LINT_ACR_LIB) \
 	            $(OBJS) $(LINT_OBJS) $(MANPAGES)
 
 install:
