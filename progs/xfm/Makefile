@@ -58,5 +58,5 @@ $(LINT_LIST_EXE) : $$@ln $(LINT_PROG_LIB)
 clean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ)
 
-install: build
+install: $(PROGS)
 	$(CP) $(CP_FLAGS) $(PROGS) $(INSTALL_BINDIR)

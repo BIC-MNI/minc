@@ -52,5 +52,5 @@ $(LINT_PROG_LIB) : $(LINT_OBJS)
 clean:
 	$(RM) $(RM_FLAGS) $(CC_PROG_LIB) $(LINT_PROG_LIB) $(OBJS) $(LINT_OBJS)
 
-install: build
+install: 
 	@echo Nothing to install
