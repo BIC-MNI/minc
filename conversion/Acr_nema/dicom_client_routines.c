@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 1.1  1997-09-08 21:52:21  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-09-11 17:19:49  neelin
+@MODIFIED   : Modified creation of uids. Replaced cftime with strftime.
 @MODIFIED   :
+ * Revision 1.1  1997/09/08  21:52:21  neelin
+ * Initial revision
+ *
  * Revision 1.4  1997/07/11  17:35:58  neelin
  * Changed around send and receive routines for data once again.
  *
@@ -34,11 +37,12 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 1.1 1997-09-08 21:52:21 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 1.2 1997-09-11 17:19:49 neelin Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -1089,6 +1093,8 @@ public char *acr_create_uid(void)
 {
    static char uid[64];
    time_t current_time;
+   int offset;
+   int maxlen;
    union {
       unsigned char ch[4];
       int ul;
@@ -1098,11 +1104,15 @@ public char *acr_create_uid(void)
    /* Make up a new UID */
    host_id.ul = gethostid();
    current_time = time(NULL);
-   (void) sprintf(uid, "1.%d.%d.%d.%d.%d.%d", 
+   (void) sprintf(uid, "1.%d.%d.%d.%d.%d.%d.%d", 
                   (int) 'I',(int) 'P',
                   (int) host_id.ch[0], (int) host_id.ch[1], 
-                  (int) host_id.ch[2], (int) host_id.ch[3]);
-   (void) cftime(&uid[strlen(uid)], ".%Y%m%d%H%M%S", &current_time);
+                  (int) host_id.ch[2], (int) host_id.ch[3],
+                  (int) getpid());
+   offset = strlen(uid);
+   maxlen = sizeof(uid) - 1 - offset;
+   (void) strftime(&uid[offset], (size_t) maxlen, ".%Y%m%d%H%M%S", 
+                   localtime(&current_time));
    (void) sprintf(&uid[strlen(uid)], ".%08d", counter++);
 
    return uid;
