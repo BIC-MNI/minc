@@ -64,7 +64,7 @@ $(CC_LIB): $(OBJS)
 lint: $(LINT_LIB)
 
 $(LINT_LIB) : $(LINT_LIST)
-	lint -o $(LIBRARY) -x $(LINTFLAGS) $(LINT_LIST)
+	lint -o $(LIBRARY) -x -u $(LINTFLAGS) $(LINT_LIST)
 
 # Remove all derived files
 clean:
