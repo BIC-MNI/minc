@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.3  2003-11-14 16:52:24  stever
+ * Revision 6.4  2004-04-27 15:43:29  bert
+ * Support MINC 2.0 format
+ *
+ * Revision 6.3  2003/11/14 16:52:24  stever
  * More last-minute fixes.
  *
  * Revision 6.2  2003/09/18 16:49:46  bert
@@ -117,7 +120,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.3 2003-11-14 16:52:24 stever Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.4 2004-04-27 15:43:29 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -186,10 +189,13 @@ struct Loop_Options {
    Loop_Info *loop_info;
    int is_floating_type;
    AllocateBufferFunction allocate_buffer_function;
+#ifdef MINC2
+   int v2format;
+#endif /* MINC2 defined */
 };
 
 struct Loopfile_Info {
-   int clobber_output;
+   int cflags;			/* creation flags */
    int num_input_files;
    int num_output_files;
    char **input_files;
@@ -1925,7 +1931,18 @@ private Loopfile_Info *initialize_loopfile_info(int num_input_files,
    loopfile_info = MALLOC(sizeof(*loopfile_info));
 
    /* Save clobber info */
-   loopfile_info->clobber_output = loop_options->clobber;
+   if (loop_options->clobber) {
+       loopfile_info->cflags = NC_CLOBBER;
+   }
+   else {
+       loopfile_info->cflags = NC_NOCLOBBER;
+   }
+
+#ifdef MINC2
+   if (loop_options->v2format) {
+       loopfile_info->cflags |= MI2_CREATE_V2;
+   }
+#endif /* MINC2 defined */
 
    /* Save number of input and output files */
    loopfile_info->num_input_files = num_input_files;
@@ -2445,8 +2462,7 @@ private int create_output_file(Loopfile_Info *loopfile_info,
    }
    loopfile_info->output_mincid[index] =
       micreate(loopfile_info->output_files[file_num], 
-               (loopfile_info->clobber_output ? 
-                NC_CLOBBER : NC_NOCLOBBER));
+               loopfile_info->cflags);
 
    return loopfile_info->output_mincid[index];
 }
@@ -2687,6 +2703,10 @@ public Loop_Options *create_loop_options(void)
 
    loop_options->allocate_buffer_function = NULL;
 
+#ifdef MINC2
+   loop_options->v2format = FALSE; /* Use MINC 2.0 file format (HDF5)? */
+#endif /* MINC2 defined */
+
    /* Return the structure pointer */
    return loop_options;
 }
@@ -2729,6 +2749,26 @@ public void set_loop_clobber(Loop_Options *loop_options,
 {
    loop_options->clobber = clobber;
 }
+
+#ifdef MINC2
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_loop_v2format
+@INPUT      : loop_options - user options for looping
+              v2format - TRUE if output files should use MINC 2.0 format
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to turn output clobber on or off
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : October 8, 2003 (Bert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void set_loop_v2format(Loop_Options *loop_options, int v2format)
+{
+   loop_options->v2format = v2format;
+}
+#endif /* MINC2 defined */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_verbose
