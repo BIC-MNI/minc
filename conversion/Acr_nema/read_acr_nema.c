@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : March 14, 1994 (Peter Neelin)
 @MODIFIED   : $Log: read_acr_nema.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:19  neelin
  * Release of minc version 0.2
  *
@@ -46,10 +49,10 @@
 #define ACR_IMAGE_GID 0x7fe0
 
 /* Define element id's */
-DEFINE_ELEMENT(static, ACR_rows          , 0x0028, 0x0010);
-DEFINE_ELEMENT(static, ACR_columns       , 0x0028, 0x0011);
-DEFINE_ELEMENT(static, ACR_bits_allocated, 0x0028, 0x0100);
-DEFINE_ELEMENT(static, ACR_image_location, 0x0028, 0x0200);
+DEFINE_ELEMENT(static, ACR_rows          , 0x0028, 0x0010, US);
+DEFINE_ELEMENT(static, ACR_columns       , 0x0028, 0x0011, US);
+DEFINE_ELEMENT(static, ACR_bits_allocated, 0x0028, 0x0100, US);
+DEFINE_ELEMENT(static, ACR_image_location, 0x0028, 0x0200, US);
 
 int main(int argc, char *argv[])
 {
@@ -90,7 +93,7 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_ordering(afp);
+   (void) acr_test_byte_order(afp);
 
    /* Read in group list up to group */
    (void) acr_input_group_list(afp, &group_list, 0);
@@ -122,8 +125,10 @@ int main(int argc, char *argv[])
    image = (unsigned short *) MALLOC(nrows*ncols*sizeof(*image));
    element = acr_find_group_element(group_list, element_id);
    if (element != NULL) {
-      acr_get_short(nrows*ncols, (void *) acr_get_element_data(element),
-                    image);
+      if (acr_get_element_short_array(element, (long) nrows*ncols, image) != 
+          nrows*ncols) {
+         (void) fprintf(stderr, "Incorrect image size\n");
+      }
       (void) fwrite(image, sizeof(*image),
                     (size_t) nrows*ncols, stdout);
    }

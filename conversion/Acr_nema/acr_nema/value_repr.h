@@ -1,13 +1,16 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : values.h
+@NAME       : value_repr.h
 @DESCRIPTION: Header file for acr-nema VR code
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : $Log: value_repr.h,v $
-@MODIFIED   : Revision 1.1  1997-02-11 16:23:43  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 1.1  1997/02/11  16:23:43  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -53,8 +56,9 @@ typedef enum {
 public char *acr_get_vr_name(Acr_VR_Type vr_code);
 public int acr_test_vr_name(char *vr_name);
 public Acr_VR_Type acr_lookup_vr_name(char *vr_name);
-public double acr_get_numeric_vr(Acr_VR_Type vr_code, char *data,
-                                 long data_length);
-public char *acr_get_string_vr(Acr_VR_Type vr_code, char *data,
-                               long data_length);
-
+public double acr_get_numeric_vr(Acr_VR_Type vr_code, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length);
+public char *acr_get_string_vr(Acr_VR_Type vr_code, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length);

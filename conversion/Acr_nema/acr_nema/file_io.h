@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:14  neelin
  * Release of minc version 0.2
  *
@@ -41,23 +44,32 @@
 #  define public
 #endif
 
+#define ACR_NO_WATCHPOINT LONG_MAX
+
 /* Define io routine prototype */
 
 typedef int (*Acr_Io_Routine)
-     (void *user_data, void *buffer, int nbytes);
+     (void *io_data, void *buffer, int nbytes);
 
 /* Structure used for reading and writing in acr_nema routines */
 
 typedef struct {
-   void *user_data;
+   void *io_data;
    Acr_Io_Routine io_routine;
-   int maxlength;
+   int maxlength;               /* Maximum length of read request */
    unsigned char *start;
    unsigned char *end;
    unsigned char *ptr;
-   int length;
+   int length;                  /* Length of actual data in buffer */
+   int buffer_length;           /* Length of allocated buffer */
    int stream_type;
+   int reached_eof;             /* TRUE if we have reached end of file */
+   int do_trace;                /* TRUE if file should be traced */
    FILE *tracefp;
+   int watchpoint_set;          /* TRUE if a watchpoint is set */
+   long bytes_to_watchpoint;    /* number of bytes from start of buffer
+                                   to watchpoint */
+   void *client_data;           /* Data that can be set by calling routines */
 } Acr_File;
 
 /* Macros for getting and putting a character */
@@ -71,20 +83,22 @@ typedef struct {
                          acr_file_write_more(afp, c) )
 
 /* Function definitions */
-
-public void acr_enable_input_trace(void);
-public void acr_disable_input_trace(void);
-public void acr_enable_output_trace(void);
-public void acr_disable_output_trace(void);
-public Acr_File *acr_file_initialize(void *user_data,
+public void acr_file_enable_trace(Acr_File *afp);
+public void acr_file_disable_trace(Acr_File *afp);
+public Acr_File *acr_file_initialize(void *io_data,
                                      int maxlength,
                                      Acr_Io_Routine io_routine);
 public void acr_file_free(Acr_File *afp);
+public void acr_file_reset(Acr_File *afp);
+public void acr_file_set_eof(Acr_File *afp);
+public void acr_file_set_client_data(Acr_File *afp, void *client_data);
+public void *acr_file_get_client_data(Acr_File *afp);
 public int acr_file_read_more(Acr_File *afp);
 public int acr_file_write_more(Acr_File *afp, int character);
 public int acr_file_flush(Acr_File *afp);
 public int acr_ungetc(int c, Acr_File *afp);
-public int acr_stdio_read(void *user_data, void *buffer, int nbytes);
-public int acr_stdio_write(void *user_data, void *buffer, int nbytes);
-
-                       
+public void *acr_file_get_io_data(Acr_File *afp);
+public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint);
+public long acr_get_io_watchpoint(Acr_File *afp);
+public int acr_stdio_read(void *io_data, void *buffer, int nbytes);
+public int acr_stdio_write(void *io_data, void *buffer, int nbytes);

@@ -1,13 +1,16 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : values.c
+@NAME       : value_repr.c
 @DESCRIPTION: Routines for doing acr_nema VR and value conversion operations.
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : $Log: value_repr.c,v $
-@MODIFIED   : Revision 1.1  1997-02-11 16:23:43  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 1.1  1997/02/11  16:23:43  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -31,9 +34,11 @@
 /* Types for VR table entries and conversion functions */
 typedef struct Acr_VR_Entry Acr_VR_Entry;
 typedef double (*Acr_VR_Numeric_Function)
-     (Acr_VR_Entry *vr_entry, char *data, long data_length);
+     (Acr_VR_Entry *vr_entry, Acr_byte_order byte_order, 
+      char *data, long data_length);
 typedef char * (*Acr_VR_String_Function)
-     (Acr_VR_Entry *vr_entry, char *data, long data_length);
+     (Acr_VR_Entry *vr_entry, Acr_byte_order byte_order, 
+      char *data, long data_length);
 
 struct Acr_VR_Entry {
    Acr_VR_Type vr_code;
@@ -46,26 +51,36 @@ struct Acr_VR_Entry {
 private void check_table_integrity();
 private Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code);
 private Acr_VR_Type find_vr_name(char *vr_name);
-private double return_zero(Acr_VR_Entry *vr_entry,
+private double return_zero(Acr_VR_Entry *vr_entry, 
+                           Acr_byte_order byte_order,
                            char *data, long data_length);
 private double string_to_numeric(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
                                  char *data, long data_length);
 private double get_short(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
                          char *data, long data_length);
 private double get_long(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
                         char *data, long data_length);
 private double get_float(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
                          char *data, long data_length);
 private double get_double(Acr_VR_Entry *vr_entry, 
+                          Acr_byte_order byte_order,
                           char *data, long data_length);
 private double guess_numeric_type(Acr_VR_Entry *vr_entry, 
+                                  Acr_byte_order byte_order,
                                   char *data, long data_length);
 private void extend_internal_buffer(int length);
 private char *return_empty_string(Acr_VR_Entry *vr_entry, 
+                                  Acr_byte_order byte_order,
                                   char *data, long data_length);
 private char *return_the_string(Acr_VR_Entry *vr_entry, 
+                                Acr_byte_order byte_order,
                                 char *data, long data_length);
 private char *numeric_to_string(Acr_VR_Entry *vr_entry, 
+                                Acr_byte_order byte_order,
                                 char *data, long data_length);
 
 /* Table of VRs and conversion routines */
@@ -74,24 +89,24 @@ static Acr_VR_Entry VR_table[] = {
    {ACR_VR_AE, "AE",        return_zero,        return_the_string },
    {ACR_VR_AS, "AS",        string_to_numeric,  return_the_string },
    {ACR_VR_AT, "AT",        get_long,           numeric_to_string },
-   {ACR_VR_CS, "CS",        return_zero,        return_the_string },
-   {ACR_VR_DA, "DA",        return_zero,        return_the_string },
+   {ACR_VR_CS, "CS",        string_to_numeric,  return_the_string },
+   {ACR_VR_DA, "DA",        string_to_numeric,  return_the_string },
    {ACR_VR_DS, "DS",        string_to_numeric,  return_the_string },
-   {ACR_VR_DT, "DT",        return_zero,        return_the_string },
+   {ACR_VR_DT, "DT",        string_to_numeric,  return_the_string },
    {ACR_VR_FL, "FL",        get_float,          numeric_to_string },
    {ACR_VR_FD, "FD",        get_double,         numeric_to_string },
    {ACR_VR_IS, "IS",        string_to_numeric,  return_the_string },
    {ACR_VR_LO, "LO",        string_to_numeric,  return_the_string },
-   {ACR_VR_LT, "LT",        return_zero,        return_the_string },
+   {ACR_VR_LT, "LT",        string_to_numeric,  return_the_string },
    {ACR_VR_OB, "OB",        return_zero,        return_empty_string },
    {ACR_VR_OW, "OW",        return_zero,        return_empty_string },
    {ACR_VR_PN, "PN",        return_zero,        return_the_string },
-   {ACR_VR_SH, "SH",        return_zero,        return_the_string },
+   {ACR_VR_SH, "SH",        string_to_numeric,  return_the_string },
    {ACR_VR_SL, "SL",        get_long,           numeric_to_string },
    {ACR_VR_SQ, "SQ",        return_zero,        return_empty_string },
    {ACR_VR_SS, "SS",        get_short,          numeric_to_string },
-   {ACR_VR_ST, "ST",        return_zero,        return_the_string },
-   {ACR_VR_TM, "TM",        return_zero,        return_the_string },
+   {ACR_VR_ST, "ST",        string_to_numeric,  return_the_string },
+   {ACR_VR_TM, "TM",        string_to_numeric,  return_the_string },
    {ACR_VR_UI, "UI",        return_zero,        return_the_string },
    {ACR_VR_UL, "UL",        get_long,           numeric_to_string },
    {ACR_VR_US, "US",        get_short,          numeric_to_string },
@@ -317,6 +332,7 @@ public Acr_VR_Type acr_lookup_vr_name(char *vr_name)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_get_numeric_vr
 @INPUT      : vr_code - the internal VR code
+              byte_order - ACR_BIG_ENDIAN or ACR_LITTLE_ENDIAN
               data - the data to convert
               data_length - the length of the data
 @OUTPUT     : (none)
@@ -328,20 +344,22 @@ public Acr_VR_Type acr_lookup_vr_name(char *vr_name)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public double acr_get_numeric_vr(Acr_VR_Type vr_code, char *data,
-                                 long data_length)
+public double acr_get_numeric_vr(Acr_VR_Type vr_code, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length)
 {
    Acr_VR_Entry *entry;
 
    if ((entry = get_vr_entry(vr_code)) == NULL) {
-      return return_zero(entry, data, data_length);
+      return return_zero(entry, byte_order, data, data_length);
    }
-   return entry->convert_to_numeric(entry, data, data_length);
+   return entry->convert_to_numeric(entry, byte_order, data, data_length);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_get_string_vr
 @INPUT      : vr_code - the internal VR code
+              byte_order - ACR_BIG_ENDIAN or ACR_LITTLE_ENDIAN
               data - the data to convert
               data_length - the length of the data
 @OUTPUT     : (none)
@@ -354,15 +372,16 @@ public double acr_get_numeric_vr(Acr_VR_Type vr_code, char *data,
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_get_string_vr(Acr_VR_Type vr_code, char *data,
-                               long data_length)
+public char *acr_get_string_vr(Acr_VR_Type vr_code, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length)
 {
    Acr_VR_Entry *entry;
 
    if ((entry = get_vr_entry(vr_code)) == NULL) {
-      return return_empty_string(entry, data, data_length);
+      return return_empty_string(entry, byte_order, data, data_length);
    }
-   return entry->convert_to_string(entry, data, data_length);
+   return entry->convert_to_string(entry, byte_order, data, data_length);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -373,6 +392,7 @@ public char *acr_get_string_vr(Acr_VR_Type vr_code, char *data,
               get_float
               get_double
 @INPUT      : vr_entry - pointer to VR table entry
+              byte_order - ACR_BIG_ENDIAN or ACR_LITTLE_ENDIAN
               data - a pointer to the actual data
               data_length - number of bytes in the data
 @OUTPUT     : (none)
@@ -387,6 +407,7 @@ public char *acr_get_string_vr(Acr_VR_Type vr_code, char *data,
 
 /* ARGSUSED */
 private double return_zero(Acr_VR_Entry *vr_entry, 
+                           Acr_byte_order byte_order,
                            char *data, long data_length)
 {
    return 0.0;
@@ -394,6 +415,7 @@ private double return_zero(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double string_to_numeric(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
                                  char *data, long data_length)
 {
    return atof((char *) data);
@@ -401,12 +423,13 @@ private double string_to_numeric(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double get_short(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
                          char *data, long data_length)
 {
    unsigned short value;
 
    if (data_length == ACR_SIZEOF_SHORT) {
-      acr_get_short(1, data, &value);
+      acr_get_short(byte_order, 1, data, &value);
       return (double) value;
    }
    else {
@@ -416,12 +439,13 @@ private double get_short(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double get_long(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
                         char *data, long data_length)
 {
    long value;
 
    if (data_length == ACR_SIZEOF_LONG) {
-      acr_get_long(1, data, &value);
+      acr_get_long(byte_order, 1, data, &value);
       return (double) value;
    }
    else {
@@ -431,12 +455,13 @@ private double get_long(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double get_float(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
                          char *data, long data_length)
 {
    float value;
 
    if (data_length == ACR_SIZEOF_FLOAT) {
-      acr_get_float(1, data, &value);
+      acr_get_float(byte_order, 1, data, &value);
       return (double) value;
    }
    else {
@@ -446,12 +471,13 @@ private double get_float(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double get_double(Acr_VR_Entry *vr_entry, 
+                          Acr_byte_order byte_order,
                           char *data, long data_length)
 {
    double value;
 
    if (data_length == ACR_SIZEOF_DOUBLE) {
-      acr_get_double(1, data, &value);
+      acr_get_double(byte_order, 1, data, &value);
       return (double) value;
    }
    else {
@@ -461,17 +487,18 @@ private double get_double(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private double guess_numeric_type(Acr_VR_Entry *vr_entry, 
+                                  Acr_byte_order byte_order,
                                   char *data, long data_length)
 {
    switch (data_length) {
    case ACR_SIZEOF_SHORT:
-      return get_short(vr_entry, data, data_length);
+      return get_short(vr_entry, byte_order, data, data_length);
       break;
    case ACR_SIZEOF_LONG:
-      return get_long(vr_entry, data, data_length);
+      return get_long(vr_entry, byte_order, data, data_length);
       break;
    default:
-      return string_to_numeric(vr_entry, data, data_length);
+      return string_to_numeric(vr_entry, byte_order, data, data_length);
    }
 
 }
@@ -481,6 +508,7 @@ private double guess_numeric_type(Acr_VR_Entry *vr_entry,
               return_the_string
               numeric_to_string
 @INPUT      : vr_entry - pointer to VR table entry
+              byte_order - ACR_BIG_ENDIAN or ACR_LITTLE_ENDIAN
               data - a pointer to the actual data
               data_length - number of bytes in the data
 @OUTPUT     : (none)
@@ -514,6 +542,7 @@ private void extend_internal_buffer(int length)
 
 /* ARGSUSED */
 private char *return_empty_string(Acr_VR_Entry *vr_entry, 
+                                  Acr_byte_order byte_order,
                                   char *data, long data_length)
 {
    extend_internal_buffer(LINE_LENGTH);
@@ -525,6 +554,7 @@ private char *return_empty_string(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private char *return_the_string(Acr_VR_Entry *vr_entry, 
+                                Acr_byte_order byte_order,
                                 char *data, long data_length)
 {
    return (char *) data;
@@ -532,11 +562,13 @@ private char *return_the_string(Acr_VR_Entry *vr_entry,
 
 /* ARGSUSED */
 private char *numeric_to_string(Acr_VR_Entry *vr_entry, 
+                                Acr_byte_order byte_order,
                                 char *data, long data_length)
 {
    extend_internal_buffer(LINE_LENGTH);
    (void) sprintf(internal_string_buffer, "%.6g",
-                  vr_entry->convert_to_numeric(vr_entry, data, data_length));
+                  vr_entry->convert_to_numeric(vr_entry, byte_order, 
+                                               data, data_length));
    return internal_string_buffer;
 }
 

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:08  neelin
  * Release of minc version 0.2
  *
@@ -58,6 +61,8 @@
 /* Include files */
 #include <file_io.h>
 #include <acr_io.h>
+#include <value_repr.h>
 #include <element.h>
 #include <group.h>
 #include <message.h>
+#include <dicom_network.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.1  1995/02/06  14:12:55  neelin
  * Added argument to specify maximum group id to dump.
  *
@@ -100,7 +103,7 @@ int main(int argc, char *argv[])
 
    /* Connect to input stream */
    afp=acr_file_initialize(fp, 0, acr_stdio_read);
-   (void) acr_test_byte_ordering(afp);
+   (void) acr_test_byte_order(afp);
 
    /* Read in group list */
    status = acr_input_group_list(afp, &group_list, maxid);

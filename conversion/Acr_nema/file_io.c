@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.1  1995/02/08  21:16:06  neelin
  * Changes to make irix 5 lint happy.
  *
@@ -50,11 +53,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <minc_def.h>
 #include <file_io.h>
 
 /* Define some constants */
 #define ACR_MAX_BUFFER_LENGTH (8*1024)
+#define ACR_BUFFER_MARGIN 64
 #ifndef TRUE
 #  define TRUE 1
 #endif
@@ -70,36 +75,44 @@
 /* Stuff for input and output tracing */
 static char *Input_trace_file = "acr_file_input_XXXXXX";
 static char *Output_trace_file = "acr_file_output_XXXXXX";
-static int Do_input_trace = FALSE;
-static int Do_output_trace = FALSE;
 
-public void acr_enable_input_trace(void)
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_enable_trace
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Turns on tracing for an i/o stream
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 18, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_enable_trace(Acr_File *afp)
 {
-   Do_input_trace = TRUE;
-   return;
+   afp->do_trace = TRUE;
 }
 
-public void acr_disable_input_trace(void)
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_disable_trace
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Turns off tracing for an i/o stream
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 18, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_disable_trace(Acr_File *afp)
 {
-   Do_input_trace = FALSE;
-   return;
-}
-
-public void acr_enable_output_trace(void)
-{
-   Do_output_trace = TRUE;
-   return;
-}
-
-public void acr_disable_output_trace(void)
-{
-   Do_output_trace = FALSE;
-   return;
+   afp->do_trace = FALSE;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_file_initialize
-@INPUT      : user_data - pointer to data for read and write routines
+@INPUT      : io_data - pointer to data for read and write routines
               maxlength - maximum length for a single read or write
                  (zero or negative means use internal maximum).
               io_routine - routine to read or write data
@@ -112,9 +125,9 @@ public void acr_disable_output_trace(void)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 9, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_File *acr_file_initialize(void *user_data,
+public Acr_File *acr_file_initialize(void *io_data,
                                      int maxlength,
                                      Acr_Io_Routine io_routine)
 {
@@ -129,23 +142,29 @@ public Acr_File *acr_file_initialize(void *user_data,
    afp = MALLOC(sizeof(*afp));
 
    /* Initialize fields */
-   afp->user_data = user_data;
+   afp->io_data = io_data;
    afp->io_routine = io_routine;
    if ((maxlength < ACR_MAX_BUFFER_LENGTH) && (maxlength > 0))
       afp->maxlength = maxlength;
    else
       afp->maxlength = ACR_MAX_BUFFER_LENGTH;
    afp->stream_type = ACR_UNKNOWN_STREAM;
+   afp->buffer_length = ACR_MAX_BUFFER_LENGTH+ACR_BUFFER_MARGIN;
+   afp->reached_eof = FALSE;
+   afp->watchpoint_set = FALSE;
+   afp->bytes_to_watchpoint = 0;
+   afp->client_data = NULL;
 
    /* Allocate the buffer */
-   afp->start = MALLOC((size_t) afp->maxlength);
-   afp->length = afp->maxlength;
+   afp->start = MALLOC((size_t) afp->buffer_length);
 
    /* Set ptr and end to start so that we can detect beginning of i/o */
+   afp->length = 0;
    afp->end = afp->start;
    afp->ptr = afp->end;
 
    /* Set the trace file pointer to null */
+   afp->do_trace = FALSE;
    afp->tracefp = NULL;
 
    return afp;
@@ -175,32 +194,131 @@ public void acr_file_free(Acr_File *afp)
       if (afp->tracefp != NULL) {
          (void) fclose(afp->tracefp);
       }
+      if (afp->client_data != NULL) {
+         FREE(afp->client_data);
+      }
       FREE(afp);
    }
    return;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_reset
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Resets the input or output stream, discarding anything that
+              was buffered. Any watchpoint is unset. The eof flag is unset.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 18, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_reset(Acr_File *afp)
+{
+   afp->watchpoint_set = FALSE;
+   afp->bytes_to_watchpoint = 0;
+   afp->length = 0;
+   afp->end = afp->start;
+   afp->ptr = afp->end;
+   afp->reached_eof = FALSE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_set_eof
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Tells the input or output stream that it has reached the end
+              of file so that no more data will be read or written. This can
+              be useful for preventing further reading or writing if an
+              alarm goes off, for example.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : March 10, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_set_eof(Acr_File *afp)
+{
+   afp->reached_eof = TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_set_client_data
+@INPUT      : afp
+              client_data - pointer to data for client use
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Associates some client data with an io stream. The pointer is
+              assumed to point to data that should be freed when the stream
+              is closed. Note that this mechanism is designed only to be
+              used by the acr_io routines and is not a general-purpose
+              mechanism.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 14, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_file_set_client_data(Acr_File *afp, void *client_data)
+{
+   if (afp->client_data != NULL) {
+      FREE(afp->client_data);
+   }
+   afp->client_data = client_data;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_get_client_data
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : pointer to client data
+@DESCRIPTION: Gets the pointer to client data for the given input stream.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 14, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void *acr_file_get_client_data(Acr_File *afp)
+{
+   return afp->client_data;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_file_read_more
 @INPUT      : afp - Acr_File pointer
 @OUTPUT     : (none)
-@RETURNS    : (nothing)
-@DESCRIPTION: Gets more input.
+@RETURNS    : The next character.
+@DESCRIPTION: Gets more input. If the watchpoint is reached, then EOF is 
+              returned. This routine will not read past the watchpoint.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 9, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public int acr_file_read_more(Acr_File *afp)
 {
-   int nread;
+   int nread, ichar;
    char trace_file[128];
+   unsigned char *margin_ptr;
+   long byte_shift, bytes_to_read, watchpoint_distance;
 
    /* Check the pointer */
    if (afp == NULL) {
       return EOF;
    }
+
+   /* Check whether we really need more */
+   if (afp->ptr < afp->end) {
+      return (int) *(afp->ptr++);
+   }
+
+   /* Check for EOF */
+   if (afp->reached_eof) return EOF;
 
    /* Check the stream type */
    switch (afp->stream_type) {
@@ -213,11 +331,49 @@ public int acr_file_read_more(Acr_File *afp)
       return EOF;
    }
 
+   /* Work out the amount to read */
+   bytes_to_read = afp->maxlength;
+   if (afp->watchpoint_set) {
+      watchpoint_distance = (afp->start + afp->bytes_to_watchpoint - afp->end);
+      if (watchpoint_distance <= 0) {
+         return EOF;
+      }
+      else if (watchpoint_distance < bytes_to_read) {
+         bytes_to_read = watchpoint_distance;
+      }
+   }
+
+   /* Check whether we need to start a new buffer for next read */
+   if ((afp->end + bytes_to_read) > (afp->start + afp->buffer_length)) {
+
+      /* Check that things are consistent */
+      if ((afp->end - ACR_BUFFER_MARGIN) <= afp->start) {
+         (void) fprintf(stderr, "Internal error copying afp buffer margin\n");
+         exit(EXIT_FAILURE);
+      }
+
+      /* Copy the data down from the top of the buffer */
+      margin_ptr = afp->end - ACR_BUFFER_MARGIN;
+      for (ichar=0; ichar < ACR_BUFFER_MARGIN; ichar++) {
+         afp->start[ichar] = margin_ptr[ichar];
+      }
+
+      /* Update the structure */
+      byte_shift = margin_ptr - afp->start;
+      afp->end = afp->start + ACR_BUFFER_MARGIN;
+      afp->ptr = afp->end;
+      afp->length = afp->end - afp->start;
+      if (afp->watchpoint_set) {
+         afp->bytes_to_watchpoint -= byte_shift;
+      }
+   }
+
+
    /* Read in another buffer-full */
-   nread=afp->io_routine(afp->user_data, afp->start, afp->maxlength);
+   nread=afp->io_routine(afp->io_data, afp->end, bytes_to_read);
 
    /* Do tracing */
-   if (Do_input_trace) {
+   if (afp->do_trace) {
       if (afp->tracefp == NULL) {
          (void) strcpy(trace_file, Input_trace_file);
          (void) mktemp(trace_file);
@@ -234,23 +390,22 @@ public int acr_file_read_more(Acr_File *afp)
          }
       }
       if (nread > 0) {
-         (void) fwrite(afp->start, sizeof(char), nread, afp->tracefp);
+         (void) fwrite(afp->end, sizeof(char), nread, afp->tracefp);
          (void) fflush(afp->tracefp);
       }
    }
 
    /* Check for EOF */
    if (nread <= 0) {
-      afp->end = afp->start + afp->maxlength;
-      afp->ptr = afp->end;
+      afp->reached_eof = TRUE;
       return EOF;
    }
 
    /* Set up variables */
-   afp->ptr = afp->start;
-   afp->length = nread;
-   afp->end = afp->start + afp->length;
+   afp->end += nread;
+   afp->length += nread;
 
+   /* Return the next value */
    return (int) *(afp->ptr++);
 
 }
@@ -259,13 +414,15 @@ public int acr_file_read_more(Acr_File *afp)
 @NAME       : acr_file_write_more
 @INPUT      : afp - Acr_File pointer
 @OUTPUT     : (none)
-@RETURNS    : (nothing)
-@DESCRIPTION: Writes out the buffer and the character.
+@RETURNS    : The character or EOF.
+@DESCRIPTION: Writes out the buffer and the character. This routine will
+              write past the watchpoint, but will flush the buffer when it
+              reaches the watchpoint.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 9, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public int acr_file_write_more(Acr_File *afp, int character)
 {
@@ -273,6 +430,11 @@ public int acr_file_write_more(Acr_File *afp, int character)
    /* Check the pointer */
    if (afp == NULL) {
       return EOF;
+   }
+
+   /* Check whether we need to flush the buffer */
+   if (afp->ptr < afp->end) {
+      return (int) (*(afp->ptr++) = (unsigned char) character);
    }
 
    /* Flush the buffer */
@@ -295,17 +457,20 @@ public int acr_file_write_more(Acr_File *afp, int character)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 9, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public int acr_file_flush(Acr_File *afp)
 {
-   int length;
+   int length, nwritten;
    char trace_file[128];
 
    /* Check the pointer */
    if (afp == NULL) {
       return EOF;
    }
+
+   /* Check for EOF */
+   if (afp->reached_eof) return EOF;
 
    /* Check the stream type */
    switch (afp->stream_type) {
@@ -321,12 +486,9 @@ public int acr_file_flush(Acr_File *afp)
    /* Check for something to write */
    length = afp->ptr - afp->start;
    if (length > 0) {
-      if (afp->io_routine(afp->user_data, afp->start, length) != length) {
-         return EOF;
-      }
 
       /* Do trace, if needed */
-      if (Do_output_trace) {
+      if (afp->do_trace) {
          if (afp->tracefp == NULL) {
             (void) strcpy(trace_file, Output_trace_file);
             (void) mktemp(trace_file);
@@ -346,11 +508,27 @@ public int acr_file_flush(Acr_File *afp)
          (void) fflush(afp->tracefp);
       }
 
+      /* Write the data */
+      nwritten = afp->io_routine(afp->io_data, afp->start, length);
+      if (nwritten != length) {
+         (void) fprintf(stderr, "Output error: wrote only %d bytes of %d\n",
+                        nwritten, length);
+         afp->reached_eof = TRUE;
+         return EOF;
+      }
+
    }
 
    /* Reset the buffer */
+   if (afp->watchpoint_set) {
+      afp->bytes_to_watchpoint -= length;
+   }
    afp->ptr = afp->start;
    afp->length = afp->maxlength;
+   if ((afp->bytes_to_watchpoint > 0) && 
+       (afp->bytes_to_watchpoint < afp->length)) {
+      afp->length = afp->bytes_to_watchpoint;
+   }
    afp->end = afp->start + afp->length;
 
    return 0;
@@ -369,13 +547,18 @@ public int acr_file_flush(Acr_File *afp)
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public int acr_ungetc(int c, Acr_File *afp)
 {
 
    /* Check the pointer */
    if (afp == NULL) {
+      return EOF;
+   }
+
+   /* Check the stream type */
+   if (afp->stream_type != ACR_READ_STREAM) {
       return EOF;
    }
 
@@ -393,8 +576,92 @@ public int acr_ungetc(int c, Acr_File *afp)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_file_get_io_data
+@INPUT      : afp - Acr_File pointer
+@OUTPUT     : (none)
+@RETURNS    : pointer to io data
+@DESCRIPTION: Gets back pointer that was passed in to acr_file_initialize.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 17, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void *acr_file_get_io_data(Acr_File *afp)
+{
+   return afp->io_data;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_io_watchpoint
+@INPUT      : afp - Acr_File pointer
+              bytes_to_watchpoint - number of bytes from current position
+                 to watchpoint
+@OUTPUT     : (none)
+@RETURNS    : nothing
+@DESCRIPTION: Sets a watchpoint in the i/o stream relative to the current
+              input position. If bytes_to_watchpoint is equal to 
+              ACR_NO_WATCHPOINT, then the watchpoint is unset.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 5, 1997 (P.N.)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint)
+{
+   if (afp == NULL) return;
+
+   /* Unset watchpoint */
+   if (bytes_to_watchpoint == ACR_NO_WATCHPOINT) {
+      afp->watchpoint_set = FALSE;
+      afp->bytes_to_watchpoint = ACR_NO_WATCHPOINT;
+   }
+
+   /* Set watchpoint */
+   else {
+      afp->watchpoint_set = TRUE;
+      afp->bytes_to_watchpoint = bytes_to_watchpoint + afp->ptr - afp->start;
+
+      /* For writing, check if we need to move the end of the buffer to
+         force a flush at the watchpoint */
+      if ((afp->stream_type == ACR_WRITE_STREAM) &&
+          (bytes_to_watchpoint >= 0) &&
+          (afp->bytes_to_watchpoint < afp->length)) {
+         afp->length = afp->bytes_to_watchpoint;
+         afp->end = afp->start + afp->length;
+      }
+   }
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_get_io_watchpoint
+@INPUT      : afp - Acr_File pointer
+@OUTPUT     : (none)
+@RETURNS    : number of bytes from current position to watchpoint
+@DESCRIPTION: Checks the watchpoint and returns the number of bytes between
+              the current position and the watchpoint. If the current position
+              is past the watchpoint, then a negative number is returned. If 
+              the watchpoint is not set, then ACR_NO_WATCHPOINT is returned.
+              This constant is a very large positive number (ie. the 
+              watchpoint is always in the future).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 5, 1997 (P.N.)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public long acr_get_io_watchpoint(Acr_File *afp)
+{
+   if ((afp == NULL) || !afp->watchpoint_set) return ACR_NO_WATCHPOINT;
+
+   return (afp->start + afp->bytes_to_watchpoint - afp->ptr);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_stdio_read
-@INPUT      : user_data - should be a FILE * pointer
+@INPUT      : io_data - should be a FILE * pointer
               nbytes - number of bytes to read
 @OUTPUT     : buffer - buffer into which we will read
 @RETURNS    : Number of bytes read.
@@ -405,14 +672,14 @@ public int acr_ungetc(int c, Acr_File *afp)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_stdio_read(void *user_data, void *buffer, int nbytes)
+public int acr_stdio_read(void *io_data, void *buffer, int nbytes)
 {
    FILE *fp;
    int nread;
 
    /* Get file pointer */
-   if (user_data == NULL) return 0;
-   fp = (FILE *) user_data;
+   if (io_data == NULL) return 0;
+   fp = (FILE *) io_data;
 
    /* Read the data */
    nread = fread(buffer, sizeof(char), (size_t) nbytes, fp);
@@ -423,7 +690,7 @@ public int acr_stdio_read(void *user_data, void *buffer, int nbytes)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_stdio_write
-@INPUT      : user_data - should be a FILE * pointer
+@INPUT      : io_data - should be a FILE * pointer
               buffer - buffer from which we will write
               nbytes - number of bytes to write
 @OUTPUT     : (nothing)
@@ -435,21 +702,24 @@ public int acr_stdio_read(void *user_data, void *buffer, int nbytes)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_stdio_write(void *user_data, void *buffer, int nbytes)
+public int acr_stdio_write(void *io_data, void *buffer, int nbytes)
 {
    FILE *fp;
    int nwritten;
 
    /* Get file pointer */
-   if (user_data == NULL) return 0;
-   fp = (FILE *) user_data;
+   if (io_data == NULL) return 0;
+   fp = (FILE *) io_data;
 
    /* Write the data */
    nwritten = fwrite(buffer, sizeof(char), (size_t) nbytes, fp);
    if (nwritten < 0) nwritten = 0;
 
    /* Flush the buffer */
-   (void) fflush(fp);
+   if (nwritten > 0) {
+      (void) fflush(fp);
+   }
 
    return nwritten;
 }
+

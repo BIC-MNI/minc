@@ -8,8 +8,10 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 # Executable names
-PROGS    = acr_test dump_acr_nema extract_acr_nema read_acr_nema
-OBJS     = file_io.o acr_io.o element.o group.o message.o
+PROGS    = acr_test dump_acr_nema extract_acr_nema read_acr_nema dicom_test
+OBJS     = file_io.o acr_io.o element.o value_repr.o group.o message.o \
+	        dicom_network.o
+EXTRA_OBJS = globals.o
 HEADERS  = $(OBJS:.o=.h) acr_nema.h
 CDEFINES = -DDEBUG#                        cpp defines
 LDOPT    = $(MACHINE_LDOPT)
@@ -21,7 +23,7 @@ LINTFLAGS = $(CDEFINES) $(INCLUDES)#        be same, except for -g/-O
 
 PROG_OBJ  = $(PROGS:=.o)#                 list of objects
 LINT_LIST = $(PROG_OBJ:.o=.ln)
-LINT_OBJS = $(OBJS:.o=.ln)
+LINT_OBJS = $(OBJS:.o=.ln) $(EXTRA_OBJS:.o=.ln)
 LINT_LIST_EXE = $(LINT_LIST:.ln=.)#       list of executable names to lint
 
 # --------------------------------------------------------------------
@@ -36,7 +38,7 @@ all: build lint
 build: $(CC_ACR_LIB) $(PROGS)
 
 #Dependency on Makefile
-$(PROG_OBJ) $(LINT_LIST) $(OBJS) $(LINT_OBJS) : Makefile
+$(PROG_OBJ) $(LINT_LIST) $(OBJS) $(EXTRA_OBJS) $(LINT_OBJS) : Makefile
 
 .c.ln:#                                   defines the rule for creating .ln
 	$(LINT) $(LINTFLAGS) -c $< -o $@
@@ -45,14 +47,14 @@ $(PROG_OBJ) $(LINT_LIST) $(OBJS) $(LINT_OBJS) : Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 #Dependency of .o and .ln on .h
-$(PROG_OBJ) $(OBJS) : $(HEADERS)
+$(PROG_OBJ) $(OBJS) $(EXTRA_OBJS): $(HEADERS)
 
 $(LINT_LIST) $(LINT_OBJS) : $(HEADERS)
 
 #How to create library
-$(CC_ACR_LIB): $(OBJS)
+$(CC_ACR_LIB): $(OBJS) $(EXTRA_OBJS)
 	$(RM) $(RM_FLAGS) $(CC_ACR_LIB)
-	$(AR) $(AR_FLAGS) $(CC_ACR_LIB) $(OBJS)
+	$(AR) $(AR_FLAGS) $(CC_ACR_LIB) $(OBJS) $(EXTRA_OBJS)
 	$(RANLIB) $(CC_ACR_LIB)
 
 # How to make executables
@@ -79,7 +81,7 @@ clean: mostlyclean
 
 mostlyclean:
 	$(RM) $(RM_FLAGS) $(LINT_LIST) $(PROGS) $(PROG_OBJ) \
-	            $(OBJS) $(LINT_OBJS) $(MANPAGES)
+	            $(OBJS) $(EXTRA_OBJS) $(LINT_OBJS) $(MANPAGES)
 
 install:
 	@echo Nothing to install.

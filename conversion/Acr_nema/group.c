@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.2  1995/02/08  21:16:06  neelin
  * Changes to make irix 5 lint happy.
  *
@@ -72,6 +75,13 @@
 #include <minc_def.h>
 #include <acr_nema.h>
 
+/* Private functions */
+private void update_group_length_element(Acr_Group group, 
+                                         Acr_VR_encoding_type vr_encoding);
+private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group, 
+                                            int max_group_id);
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_group
 @INPUT      : group_id 
@@ -82,31 +92,31 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 10, 1993 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : February 4, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
 public Acr_Group acr_create_group(int group_id)
 {
    Acr_Group group;
    Acr_Element length_element;
-   void *group_length_data;
    long group_length = 0;
 
    /* Allocate the group */
    group = MALLOC(sizeof(*group));
 
    /* Create a length element */
-   group_length_data = MALLOC(ACR_SIZEOF_LONG);
-   acr_put_long(1, &group_length, group_length_data);
+   group_length = 0;
    length_element = 
-      acr_create_element(group_id, ACR_EID_GRPLEN, 
-                         (long) ACR_SIZEOF_LONG,
-                         (char *) group_length_data);
+      acr_create_element(group_id, ACR_EID_GRPLEN, ACR_VR_UL,
+                         (long) ACR_SIZEOF_LONG, 
+                         acr_memdup((size_t) ACR_SIZEOF_LONG, &group_length));
 
    /* Assign fields */
    group->group_id = group_id;
    group->nelements = 1;
-   group->total_length = acr_get_element_total_length(length_element);
-   group->group_length_offset = group->total_length;
+   group->implicit_total_length = 
+      acr_get_element_total_length(length_element, ACR_IMPLICIT_VR);
+   group->explicit_total_length = 
+      acr_get_element_total_length(length_element, ACR_EXPLICIT_VR);
    group->list_head = length_element;
    group->list_tail = length_element;
    group->next = NULL;
@@ -243,10 +253,6 @@ public Acr_Group acr_copy_group_list(Acr_Group group_list)
 ---------------------------------------------------------------------------- */
 public void acr_group_add_element(Acr_Group group, Acr_Element element)
 {
-   Acr_Element length_element;
-   long group_length, element_length;
-   void *group_length_data;
-
    /* Check that the element belongs in this group */
    if (group->group_id != acr_get_element_group(element)) {
       (void) fprintf(stderr, 
@@ -261,16 +267,57 @@ public void acr_group_add_element(Acr_Group group, Acr_Element element)
    acr_set_element_next(group->list_tail, element);
    group->list_tail = element;
    group->nelements++;
-   element_length = acr_get_element_total_length(element);
-   group->total_length += element_length;
+   group->implicit_total_length += 
+      acr_get_element_total_length(element, ACR_IMPLICIT_VR);
+   group->explicit_total_length += 
+      acr_get_element_total_length(element, ACR_EXPLICIT_VR);
 
    /* Update the length element */
-   length_element = group->list_head;
-   group_length = group->total_length - group->group_length_offset;
-   group_length_data = acr_get_element_data(length_element);
-   acr_put_long(1, &group_length, group_length_data);
+   update_group_length_element(group, 
+                               acr_get_element_vr_encoding(group->list_head));
 
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : update_group_length_element
+@INPUT      : group
+              vr_encoding - ACR_IMPLICIT_VR or ACR_EXPLICIT_VR
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Update the length element of the group according to the VR type
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 14, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void update_group_length_element(Acr_Group group, 
+                                         Acr_VR_encoding_type vr_encoding)
+{
+   long group_length;
+   Acr_Element length_element;
+   void *group_length_data;
+
+   /* Get the element */
+   length_element = group->list_head;
+   if (length_element == NULL) return;
+
+   /* Calculate the appropriate length */
+   if (vr_encoding == ACR_IMPLICIT_VR) {
+      group_length = group->implicit_total_length - 
+         acr_get_element_total_length(length_element, ACR_IMPLICIT_VR);
+   }
+   else {
+      group_length = group->explicit_total_length -
+         acr_get_element_total_length(length_element, ACR_EXPLICIT_VR);
+   }
+
+   /* Update the element */
+   group_length_data = acr_get_element_data(length_element);
+   acr_put_long(acr_get_element_byte_order(length_element),
+                1, &group_length, group_length_data);
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -329,6 +376,7 @@ public Acr_Element acr_get_group_element_list(Acr_Group group)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_get_group_total_length
 @INPUT      : group
+              vr_encoding - ACR_EXPLICIT_VR or ACR_IMPLICIT_VR
 @OUTPUT     : (none)
 @RETURNS    : total length of group
 @DESCRIPTION: Get total length of group
@@ -338,9 +386,13 @@ public Acr_Element acr_get_group_element_list(Acr_Group group)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_group_total_length(Acr_Group group)
+public long acr_get_group_total_length(Acr_Group group,
+                                       Acr_VR_encoding_type vr_encoding)
 {
-   return group->total_length;
+   if (vr_encoding == ACR_IMPLICIT_VR) 
+      return group->implicit_total_length;
+   else
+      return group->explicit_total_length;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -381,14 +433,13 @@ public Acr_Group acr_get_group_next(Acr_Group group)
 @NAME       : acr_input_group_with_max
 @INPUT      : afp - acr file pointer
               max_group_id - maximum group id to read in. If <= 0 then any
-                 group is read in. If max_group_id is not a group id in the
-                 input stream, then the input stream is left with the first
-                 element of the next group missing (it gets read here and
-                 is not put back), so no more groups can be read in.
+                 group is read in.
 @OUTPUT     : group
 @RETURNS    : status
 @DESCRIPTION: Read in an acr-nema group with an optional maximum group id.
-              If group id exceeds max, then *group is set to NULL.
+              If group id exceeds max, then *group is set to NULL. If an
+              error occurs, then a group may still be returned. This routine
+              will stop reading when it reaches a watchpoint.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -398,59 +449,108 @@ public Acr_Group acr_get_group_next(Acr_Group group)
 private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group, 
                                             int max_group_id)
 {
-   int group_id, element_id;
-   long data_length;
-   char *data_pointer;
+   int group_id, element_id, next_group_id;
    long group_length;
    Acr_Status status;
    Acr_Element element;
+   int have_length_element;
+   int get_more_elements;
+   Acr_VR_encoding_type vr_encoding;
 
    /* Initialize the group pointer */
    *group = NULL;
 
-   /* Read the length element and check it */
-   status = acr_read_one_element(afp, &group_id, &element_id,
-                                 &data_length, &data_pointer);
+   /* Look ahead at the next element */
+   status = acr_peek_at_next_element_id(afp, &group_id, &element_id);
    if (status != ACR_OK) return status;
+
    /* Check for a group past the limit */
    if ((max_group_id > 0) && (group_id > max_group_id)) {
-      FREE(data_pointer);
-      return status;
-   }
-   /* Check for a length element */
-   if ((element_id != ACR_EID_GRPLEN) || 
-       (data_length != ACR_SIZEOF_LONG)) {
-      FREE(data_pointer);
-      status = ACR_PROTOCOL_ERROR;
       return status;
    }
 
-   /* Get the group length from the element */
-   acr_get_long(1, data_pointer, &group_length);
-   FREE(data_pointer);
+   /* Check for a length element */
+   have_length_element = (element_id == ACR_EID_GRPLEN);
+
+   /* Read the length element and check it */
+   if (have_length_element) {
+      status = acr_input_element(afp, &element);
+      if (status != ACR_OK) {
+         acr_delete_element(element);
+         return status;
+      }
+      if ((acr_get_element_element(element) != ACR_EID_GRPLEN) || 
+          (acr_get_element_length(element) != ACR_SIZEOF_LONG)) {
+         acr_delete_element(element);
+         status = ACR_PROTOCOL_ERROR;
+         return status;
+      }
+      group_length = acr_get_element_long(element);
+      acr_delete_element(element);
+   }
 
    /* Create the group */
    *group = acr_create_group(group_id);
 
+   /* Set the VR encoding and the byte ordering for the length element 
+      according to the input stream. If the vr_encoding is implicit, then
+      make the VR unknown. Note that the group will always have a length
+      element even if the input stream does not. */
+   element = acr_get_group_element_list(*group);
+   vr_encoding = acr_get_vr_encoding(afp);
+   acr_set_element_vr_encoding(element, vr_encoding);
+   acr_set_element_byte_order(element, acr_get_byte_order(afp));
+   if (vr_encoding == ACR_IMPLICIT_VR) {
+      acr_set_element_vr(element, ACR_VR_UNKNOWN);
+   }
+
    /* Loop through elements, adding them to the list */
-   while (group_length > 0) {
+   get_more_elements = (have_length_element ? (group_length > 0) : TRUE);
+   while (get_more_elements) {
+
+      /* Check for a watchpoint */
+      if (acr_get_io_watchpoint(afp) <= 0) {
+         get_more_elements = FALSE;
+         break;
+      }
+
+      /* Look ahead at next element */
+      status = acr_peek_at_next_element_id(afp, &next_group_id, &element_id);
+      if ((status != ACR_OK) || (next_group_id != group_id)) {
+         get_more_elements = FALSE;
+         break;
+      }
+
+      /* Read in the next element */
       status = acr_input_element(afp, &element);
       if (status != ACR_OK) {
-         acr_delete_group(*group);
-         *group = NULL;
-         if (status == ACR_END_OF_INPUT) status = ACR_ABNORMAL_END_OF_INPUT;
-         return status;
+         get_more_elements = FALSE;
       }
-      acr_group_add_element(*group, element);
-      group_length -= acr_get_element_total_length(element);
+
+      /* Add it to the group */
+      if (element != NULL) {
+         acr_group_add_element(*group, element);
+         if (have_length_element) {
+            group_length -= 
+               acr_get_element_total_length(element, acr_get_vr_encoding(afp));
+         }
+      }
+
+      /* Check group length */
+      if (have_length_element) {
+         get_more_elements = (group_length > 0);
+      }
+
    }
 
    /* Check that we got a full group */
-   if (group_length != 0) {
-      acr_delete_group(*group);
-      *group = NULL;
-      status = ACR_PROTOCOL_ERROR;
-      return status;
+   if (have_length_element && (group_length != 0)) {
+      switch (status) {
+      case ACR_OK:
+         status = ACR_PROTOCOL_ERROR; break;
+      case ACR_END_OF_INPUT:
+         status = ACR_ABNORMAL_END_OF_INPUT; break;
+      }
    }
 
    return status;
@@ -494,6 +594,9 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
    Acr_Element cur, next;
    Acr_Status status;
 
+   /* Update the length element */
+   update_group_length_element(group, acr_get_vr_encoding(afp));
+
    /* Loop through the elements of the group, writing them out */
    nelements = acr_get_group_nelements(group);
    next = acr_get_group_element_list(group);
@@ -527,7 +630,9 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
                  is not put back), so no more groups can be read in.
 @OUTPUT     : group_list
 @RETURNS    : status
-@DESCRIPTION: Read in a list of acr-nema groups
+@DESCRIPTION: Read in a list of acr-nema groups. If a watchpoint is set
+              on the input handle, then group reading will stop when it is
+              reached, although at least one group will be read in.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -555,8 +660,15 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
           ((max_group_id <= 0) ||
            (acr_get_group_group(cur_group) < max_group_id))) {
 
+      /* Check for a watchpoint */
+      if (acr_get_io_watchpoint(afp) <= 0) {
+         break;
+      }
+
+      /* Read in the next group */
       status = acr_input_group_with_max(afp, &next_group, max_group_id);
 
+      /* Add it to the list */
       acr_set_group_next(cur_group, next_group);
       cur_group = next_group;
 
@@ -583,12 +695,10 @@ public Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid)
 {
    Acr_Group group;
-   Acr_Element element;
-   int next_id, group_id, element_id;
+   int next_id, group_id;
 
    /* Get group and element id */
    group_id = elid->group_id;
-   element_id = elid->element_id;
 
    /* Search through groups for group id */
    group = group_list;
@@ -606,28 +716,8 @@ public Acr_Element acr_find_group_element(Acr_Group group_list,
    if (group == NULL) return NULL;
 
    /* Search through element list for element */
-   element = acr_get_group_element_list(group);
-   next_id = acr_get_element_element(element);
-   while ((next_id != element_id) && (element != NULL)) {
-      element = acr_get_element_next(element);
-      if (element != NULL)
-         next_id = acr_get_element_element(element);
-   }
+   return acr_find_element_id(acr_get_group_element_list(group), elid);
 
-   /* If not found return NULL */
-   if (element == NULL) return NULL;
-
-   /* Check for invalid group id in element */
-   if (acr_get_element_group(element) != group_id) {
-      (void) fprintf(stderr,
-         "ACR error: Found element %d (group %d) in group %d\n",
-                     acr_get_element_element(element),
-                     acr_get_element_group(element),
-                     group_id);
-      exit(EXIT_FAILURE);
-   }
-
-   return element;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -646,11 +736,6 @@ public Acr_Element acr_find_group_element(Acr_Group group_list,
 public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
 {
    Acr_Group cur_group;
-   Acr_Element cur_element;
-   long element_length;
-   int printable;
-   int i;
-   char *string, copy[1024];
 
    /* Check for empty list */
    cur_group = group_list;
@@ -666,63 +751,11 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
       (void) fprintf(file_pointer, "\nGroup 0x%04x :\n\n", 
                      acr_get_group_group(cur_group));
 
-      /* Loop over elements */
-      cur_element = acr_get_group_element_list(cur_group);
-      while (cur_element != NULL) {
+      /* Print the elements */
+      acr_dump_element_list(file_pointer,
+                            acr_get_group_element_list(cur_group));
 
-         /* Print the element id */
-         (void) fprintf(file_pointer, 
-                        "   0x%04x  0x%04x  length = %d :",
-                        acr_get_element_group(cur_element),
-                        acr_get_element_element(cur_element),
-                        (int) acr_get_element_length(cur_element));
-
-         /* Print value if needed */
-         element_length = acr_get_element_length(cur_element);
-         switch (element_length) {
-         case 2:
-            (void) fprintf(file_pointer, " short = %d (0x%04x)",
-                           (int) acr_get_element_short(cur_element),
-                           (int) acr_get_element_short(cur_element));
-            break;
-         case 4:
-            (void) fprintf(file_pointer, " long = %d (0x%08x)",
-                           (int) acr_get_element_long(cur_element),
-                           (int) acr_get_element_long(cur_element));
-            break;
-         }
-
-         /* Print string if short enough and is printable */
-         if ((element_length > 0) && (element_length < sizeof(copy))) {
-            string = acr_get_element_string(cur_element);
-            printable = TRUE;
-            for (i=0; i < element_length; i++) {
-               if (! isprint((int) string[i])) {
-                  printable = FALSE;
-                  copy[i] = ' ';
-               }
-               else if ((string[i] == '\n') ||
-                        (string[i] == '\r') ||
-                        (string[i] == '\f'))
-                  copy[i] = ' ';
-               else
-                  copy[i] = string[i];
-            }
-            copy[i] = '\0';
-
-            if (printable) {
-               (void) fprintf(file_pointer, " string = \"%s\"", copy);
-            }
-
-         }
-
-         /* End line */
-         (void) fprintf(file_pointer, "\n");
-                                                     
-
-         cur_element = acr_get_element_next(cur_element);
-      }
-
+      /* Go to the next group */
       cur_group = acr_get_group_next(cur_group);
    }
 

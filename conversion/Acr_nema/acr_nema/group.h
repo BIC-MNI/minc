@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:17  neelin
  * Release of minc version 0.2
  *
@@ -45,8 +48,8 @@
 typedef struct Acr_Group {
    int group_id;
    int nelements;
-   long total_length;
-   long group_length_offset;
+   long implicit_total_length;
+   long explicit_total_length;
    Acr_Element list_head;
    Acr_Element list_tail;
    struct Acr_Group *next;
@@ -65,7 +68,8 @@ public void acr_group_add_element(Acr_Group group, Acr_Element element);
 public void acr_set_group_next(Acr_Group group, Acr_Group next);
 public int acr_get_group_group(Acr_Group group);
 public Acr_Element acr_get_group_element_list(Acr_Group group);
-public long acr_get_group_total_length(Acr_Group group);
+public long acr_get_group_total_length(Acr_Group group,
+                                       Acr_VR_encoding_type vr_encoding);
 public int acr_get_group_nelements(Acr_Group group);
 public Acr_Group acr_get_group_next(Acr_Group group);
 public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group);

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:18  neelin
  * Release of minc version 0.2
  *
@@ -38,8 +41,10 @@
 /* Group type */
 typedef struct Acr_Message {
    int ngroups;
-   long total_length;
-   long message_length_offset;
+   long implicit_total_length;
+   long explicit_total_length;
+   long message_implicit_offset;
+   long message_explicit_offset;
    Acr_Element message_length_element;
    Acr_Group list_head;
    Acr_Group list_tail;
@@ -48,9 +53,13 @@ typedef struct Acr_Message {
 /* Functions */
 public Acr_Message acr_create_message(void);
 public void acr_delete_message(Acr_Message message);
+public void acr_message_reset(Acr_Message message);
 public void acr_message_add_group(Acr_Message message, Acr_Group group);
+public void acr_message_add_group_list(Acr_Message message, 
+                                       Acr_Group group_list);
 public Acr_Group acr_get_message_group_list(Acr_Message message);
-public long acr_get_message_total_length(Acr_Message message);
+public long acr_get_message_total_length(Acr_Message message,
+                                         Acr_VR_encoding_type vr_encoding);
 public int acr_get_message_ngroups(Acr_Message message);
 public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message);
 public Acr_Status acr_output_message(Acr_File *afp, Acr_Message message);

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 1.1  1997-02-20 16:38:17  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 1.1  1997/02/20  16:38:17  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -84,6 +87,8 @@ private Acr_Status read_uid_item(Acr_File *afp, Acr_Element_Id elid,
                                  Acr_Element *item);
 private Acr_Status read_long_item(Acr_File *afp, Acr_Element_Id elid, 
                                  Acr_Element *item);
+private Acr_Status read_unknown_item(Acr_File *afp, int item_type, 
+                                     Acr_Element *item);
 private Acr_Status read_pres_context_item(Acr_File *afp, Acr_Element *item);
 private Acr_Status read_pres_context_reply_item(Acr_File *afp, 
                                                 Acr_Element *item);
@@ -110,6 +115,9 @@ private Acr_Status write_pres_context_item(Acr_File *afp, Acr_Element item,
                                            int is_request, long *length);
 private Acr_Status write_user_info_item(Acr_File *afp, Acr_Group group,
                                         long *length);
+private Acr_Status write_unknown_item(Acr_File *afp, int item_type,
+                                      long data_length, char *data_pointer, 
+                                      long *length);
 private void pdu_copy_uid(char *string, char *buffer, int length);
 private Acr_File *initialize_dicom_stream(void *io_data, int maxlength,
                                           Acr_Io_Routine io_routine,
@@ -182,16 +190,25 @@ public Acr_Status acr_input_dicom_message(Acr_File *dicom_afp,
       exit(EXIT_FAILURE);
    }
 
+   /* Set a watchpoint before we do anything so that we don't get stuck
+      reading too much */
+   old_watchpoint = acr_get_io_watchpoint(afp);
+   acr_set_io_watchpoint(afp, PDU_HEADER_LEN);
+
    /* Read in PDU type and length */
    status = read_pdu_header(afp, &pdu_type, &pdu_length);
-   if (status != ACR_OK) return status;
+   if (old_watchpoint != ACR_NO_WATCHPOINT)
+      old_watchpoint -= PDU_HEADER_LEN - acr_get_io_watchpoint(afp);
+   if (status != ACR_OK) {
+      acr_set_io_watchpoint(afp, old_watchpoint);
+      return status;
+   }
 
    /* Create the message and add the PDU type */
    group = acr_create_group(DCM_PDU_GRPID);
    SAVE_SHORT(group, DCM_PDU_Type, pdu_type);
 
    /* Set a watchpoint for reading */
-   old_watchpoint = acr_get_io_watchpoint(afp);
    acr_set_io_watchpoint(afp, pdu_length);
 
    /* Call the appropriate routine */
@@ -232,7 +249,7 @@ public Acr_Status acr_input_dicom_message(Acr_File *dicom_afp,
       }
    }
    if (old_watchpoint != ACR_NO_WATCHPOINT)
-      old_watchpoint -= (long) pdu_length - acr_get_io_watchpoint(afp);
+      old_watchpoint -= pdu_length - acr_get_io_watchpoint(afp);
    acr_set_io_watchpoint(afp, old_watchpoint);
 
    /* Create the message */
@@ -339,22 +356,16 @@ private Acr_Status read_assoc_rq_ac(Acr_File *afp, Acr_Group group,
          add it to the appropriate thing */
       for (nextitem = item; nextitem != NULL; 
            nextitem = acr_get_element_next(nextitem)) {
-         if (acr_match_element_id(DCM_PDU_Application_context, item) ||
-             acr_match_element_id(DCM_PDU_Maximum_length, item)) {
-            acr_group_add_element(group, item);
-         }
-         else if (acr_match_element_id(DCM_PDU_Presentation_context, item) ||
-                  acr_match_element_id(DCM_PDU_Presentation_context_reply, 
-                                       item)) {
+         if (acr_match_element_id(DCM_PDU_Presentation_context, nextitem) ||
+             acr_match_element_id(DCM_PDU_Presentation_context_reply, 
+                                  nextitem)) {
             presentation_context_list = 
-               acr_element_list_add(presentation_context_list, item);
+               acr_element_list_add(presentation_context_list, nextitem);
             have_pres_context_request = 
-               acr_match_element_id(DCM_PDU_Presentation_context, item);
+               acr_match_element_id(DCM_PDU_Presentation_context, nextitem);
          }
          else {
-            acr_delete_element_list(item);
-            acr_delete_element_list(presentation_context_list);
-            return ACR_PROTOCOL_ERROR;
+            acr_group_add_element(group, nextitem);
          }
       }
    }
@@ -396,6 +407,12 @@ private Acr_Status read_data_tf(Acr_File *dicom_afp, Acr_Group group)
 
    /* Reset the virtual input stream */
    dicom_reset(dicom_afp);
+
+   /* Set the watchpoint to some very large number (other than 
+      ACR_NO_WATCHPOINT) so that acr_input_message will be happy knowing
+      that there is a watchpoint, even though we don't know what it really
+      is until we get close to it. */
+   acr_set_io_watchpoint(dicom_afp, LONG_MAX-1);
 
    /* Get the real afp */
    real_afp = get_dicom_real_afp(dicom_afp);
@@ -611,8 +628,7 @@ private Acr_Status read_pdu_item(Acr_File *afp, Acr_Element *item)
       status = read_long_item(afp, DCM_PDU_Maximum_length, item);
       break;
    default:
-      *item = NULL;
-      status = acr_skip_input_data(afp, (long) item_length);
+      status = read_unknown_item(afp, item_type, item);
       break;
    }
 
@@ -626,7 +642,7 @@ private Acr_Status read_pdu_item(Acr_File *afp, Acr_Element *item)
       old_watchpoint -= (long) item_length - acr_get_io_watchpoint(afp);
    acr_set_io_watchpoint(afp, old_watchpoint);
 
-   return ACR_OK;
+   return status;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -702,6 +718,57 @@ private Acr_Status read_long_item(Acr_File *afp, Acr_Element_Id elid,
 
    /* Create the item */
    *item = acr_create_element_long(elid, value);
+
+   return ACR_OK;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_unknown_item
+@INPUT      : afp - acr file pointer
+              item_type - type code for item to be read in (should be 
+                 a value between 0 and 255)
+@OUTPUT     : item - element representing value read in
+@RETURNS    : status of input
+@DESCRIPTION: Reads in an item of unknown type and creates an element with
+              element id = item_type + ACR_UNKNOWN_PDU_ITEM_OFFSET
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 12, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private Acr_Status read_unknown_item(Acr_File *afp, int item_type, 
+                                     Acr_Element *item)
+{
+   Acr_Status status;
+   long length;
+   unsigned char *data_pointer;
+
+   /* Set default item */
+   *item = NULL;
+
+   /* Figure out how much data to read */
+   length = acr_get_io_watchpoint(afp);
+
+   /* Get space for the data. Add a NUL character to the end in case it is
+      a string */
+   data_pointer = MALLOC((size_t) length+1);
+   data_pointer[length] = '\0';
+
+   /* Read in the buffer and get the value */
+   status = acr_read_buffer(afp, data_pointer, length, NULL);
+   if (status != ACR_OK) {
+      FREE(data_pointer);
+      return status;
+   }
+
+   /* Figure out the element id */
+   item_type += ACR_UNKNOWN_PDU_ITEM_OFFSET;
+
+   /* Create the item */
+   *item = acr_create_element(DCM_PDU_GRPID, item_type, ACR_VR_UNKNOWN, 
+                              length, (char *) data_pointer);
 
    return ACR_OK;
 
@@ -806,7 +873,7 @@ private Acr_Status read_pres_context_reply_item(Acr_File *afp,
    newitem = acr_create_element_short(DCM_PDU_Presentation_context_id, 
                                       (unsigned short) buffer[0]);
    itemlist = acr_element_list_add(itemlist, newitem);
-   newitem = acr_create_element_short(DCM_PDU_Presentation_context_result, 
+   newitem = acr_create_element_short(DCM_PDU_Result, 
                                       (unsigned short) buffer[2]);
    itemlist = acr_element_list_add(itemlist, newitem);
 
@@ -1042,7 +1109,9 @@ public Acr_Status acr_output_dicom_message(Acr_File *dicom_afp,
    }
 
    /* Flush the output buffer */
-   (void) acr_file_flush(afp);
+   if ((acr_file_flush(afp) == EOF) && (status == ACR_OK)) {
+      status = ACR_ABNORMAL_END_OF_OUTPUT;
+   }
 
    return status;
 }
@@ -1193,7 +1262,8 @@ private Acr_Status write_assoc_rj(Acr_File *afp, Acr_Group group_list)
    source = acr_find_short(group_list, DCM_PDU_Source, 1);
    reason = acr_find_short(group_list, DCM_PDU_Reason, 1);
 
-   return write_fixed_length_pdu(afp, ACR_PDU_REL_RQ, result, source, reason);
+   return write_fixed_length_pdu(afp, ACR_PDU_ASSOC_RJ, 
+                                 result, source, reason);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1254,7 +1324,7 @@ private Acr_Status write_abort_rq(Acr_File *afp, Acr_Group group_list)
    source = acr_find_short(group_list, DCM_PDU_Source, 0);
    reason = acr_find_short(group_list, DCM_PDU_Reason, 0);
 
-   return write_fixed_length_pdu(afp, ACR_PDU_REL_RQ, 0, source, reason);
+   return write_fixed_length_pdu(afp, ACR_PDU_ABORT_RQ, 0, source, reason);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1447,8 +1517,11 @@ private Acr_Status write_uid_item(Acr_File *afp, Acr_Element element,
       *length += sizeof(buffer);
    }
 
-   /* Write out the uid */
+   /* Get the uid length, skipping trailing blanks */
    uid_length = strlen(uid);
+   while ((uid_length > 0) && isspace(uid[uid_length-1])) {uid_length--;}
+
+   /* Write out the uid */
    if (do_write) {
       status = acr_write_buffer(afp, (unsigned char *) uid, uid_length, NULL);
       if (status != ACR_OK) return status;
@@ -1457,6 +1530,7 @@ private Acr_Status write_uid_item(Acr_File *afp, Acr_Element element,
       *length += uid_length;
    }
 
+#if 0
    /* Check that we wrote an even number of bytes */
    if ((uid_length % 2) != 0) {
       if (do_write) {
@@ -1466,6 +1540,7 @@ private Acr_Status write_uid_item(Acr_File *afp, Acr_Element element,
          *length += 1;
       }
    }
+#endif
 
    return ACR_OK;
 }
@@ -1579,6 +1654,8 @@ private Acr_Status write_user_info_item(Acr_File *afp, Acr_Group group,
    Acr_Status status;
    int do_write;
    unsigned short svalue;
+   Acr_Element element;
+   int item_type;
    
    /* Check whether we are writing or counting */
    do_write = (length == NULL);
@@ -1594,7 +1671,7 @@ private Acr_Status write_user_info_item(Acr_File *afp, Acr_Group group,
       PUT_SHORT(&svalue, &buffer[2]);
       buffer[4] = PDU_ITEM_MAXIMUM_LENGTH;
       buffer[5] = 0;
-      svalue = 4;
+      svalue = ACR_SIZEOF_LONG;
       PUT_SHORT(&svalue, &buffer[6]);
       maximum_length = acr_find_long(group, DCM_PDU_Maximum_length, 0);
       PUT_LONG(&maximum_length, &buffer[8]);
@@ -1603,6 +1680,90 @@ private Acr_Status write_user_info_item(Acr_File *afp, Acr_Group group,
    }
    else {
       *length += sizeof(buffer);
+   }
+
+   /* Write any unknown items with an item type > PDU_ITEM_USER_INFORMATION */
+   if (acr_get_group_group(group) == DCM_PDU_GRPID) {
+
+      /* Loop over all elements */
+      for (element = acr_get_group_element_list(group);
+           element != NULL;
+           element = acr_get_element_next(element)) {
+
+         /* Check that the element is unknown and that it is an user 
+            info item */
+         item_type = acr_get_element_element(element);
+         if (item_type < ACR_UNKNOWN_PDU_ITEM_OFFSET) 
+            continue;
+         item_type -= ACR_UNKNOWN_PDU_ITEM_OFFSET;
+         if (item_type < PDU_ITEM_USER_INFORMATION) 
+            continue;
+
+         /* Write out the value */
+         status = write_unknown_item(afp, item_type, 
+                                     acr_get_element_length(element),
+                                     acr_get_element_data(element), length);
+         if (status != ACR_OK) return status;
+      }
+   }
+
+   return ACR_OK;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : write_unknown_item
+@INPUT      : afp - acr file pointer
+              item_type - code identifying item to be written out
+              data_length - length of data to be written
+              data_pointer - pointer to data
+@OUTPUT     : length - if non-NULL, then nothing is written and the value
+                 is incremented by the amount of data written out.
+@RETURNS    : status of output 
+@DESCRIPTION: Writes out an item of unknown type.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 12, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private Acr_Status write_unknown_item(Acr_File *afp, int item_type,
+                                      long data_length, char *data_pointer, 
+                                      long *length)
+{
+   unsigned char buffer[PDU_ITEM_HEADER_LEN];
+   long item_length;
+   int do_write;
+   Acr_Status status;
+   unsigned short svalue;
+
+   /* Check whether we are writing or counting */
+   do_write = (length == NULL);
+
+   /* Write item header */
+   if (do_write) {
+      buffer[0] = (unsigned char) item_type;
+      buffer[1] = 0;
+      item_length = 0;
+      (void) write_unknown_item(afp, item_type, data_length, data_pointer, 
+                                &item_length);
+      item_length -= PDU_ITEM_HEADER_LEN;
+      svalue = (unsigned short) item_length;
+      PUT_SHORT(&svalue, &buffer[2]);
+      status = acr_write_buffer(afp, buffer, sizeof(buffer), NULL);
+      if (status != ACR_OK) return status;
+   }
+   else {
+      *length += sizeof(buffer);
+   }
+
+   /* Write out the data */
+   if (do_write) {
+      status = acr_write_buffer(afp, (unsigned char *) data_pointer,
+                                data_length, NULL);
+      if (status != ACR_OK) return status;
+   }
+   else {
+      *length += data_length;
    }
 
    return ACR_OK;
@@ -1750,6 +1911,34 @@ public void acr_dicom_disable_trace(Acr_File *afp)
    stream_data = get_dicom_io_pointer(afp);
    acr_file_disable_trace((stream_data == NULL) ? 
                           afp : stream_data->real_afp);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_dicom_set_eof
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Tells the input or output stream that it has reached the end
+              of file so that no more data will be read or written. This can
+              be useful for preventing further reading or writing if an
+              alarm goes off, for example.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 18, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_dicom_set_eof(Acr_File *afp)
+{
+   Acr_Dicom_IO *stream_data;
+
+   /* Get the structure pointer */
+   stream_data = get_dicom_io_pointer(afp);
+
+   /* Set eof on both afp's */
+   acr_file_set_eof(afp);
+   acr_file_set_eof(stream_data->real_afp);
 
 }
 
@@ -2109,6 +2298,8 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
 
       /* Do we need to read in a PDU header? */
       if (stream_data->pdu_watchpoint <= 0) {
+         acr_set_io_watchpoint(real_afp, 
+                               PDU_HEADER_LEN + sizeof(header_buffer));
          status = read_pdu_header(real_afp, &pdu_type, &pdu_length);
          if ((status != ACR_OK) || (pdu_type != ACR_PDU_DATA_TF)) {
             return -1;
@@ -2117,6 +2308,7 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
       }
 
       /* Read in the PDV header */
+      acr_set_io_watchpoint(real_afp, sizeof(header_buffer));
       status = acr_read_buffer(real_afp, header_buffer, 
                                sizeof(header_buffer), NULL);
       if (status != ACR_OK) return -1;
@@ -2137,7 +2329,7 @@ private int dicom_input_routine(void *io_data, void *buffer, int nbytes)
 
       /* Check whether this is the last fragment. If it is, set the
          watchpoint. */
-      if (control_header && PDV_LAST_FRAGMENT_MASK) {
+      if (control_header & PDV_LAST_FRAGMENT_MASK) {
          acr_set_io_watchpoint(stream_data->virtual_afp, pdv_length);
       }
    }

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:12  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1997-04-21 20:21:09  neelin
+@MODIFIED   : Updated the library to handle dicom messages.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:12  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:11  neelin
  * Release of minc version 0.2
  *
@@ -54,54 +57,99 @@ typedef struct Acr_Element {
    long data_length;
    char *data_pointer;
    struct Acr_Element *next;
+   short vr_code;
+   unsigned int is_sequence:1;
+   unsigned int has_variable_length:1;
+   unsigned int has_little_endian_order:1;
+   unsigned int uses_explicit_vr:1;
 } *Acr_Element;
 
 /* Structure for specifying element id's */
 typedef struct Acr_Element_Id {
    int group_id;
    int element_id;
+   Acr_VR_Type vr_code;
 } *Acr_Element_Id;
 
 /* Macros for creating element id's (class should be nothing or static) */
 #ifndef lint
-#define DEFINE_ELEMENT(class, name, group, element) \
-   static struct Acr_Element_Id name##_struct = {group, element}; \
+#define DEFINE_ELEMENT(class, name, group, element, vr) \
+   static struct Acr_Element_Id name##_struct = \
+      {group, element, ACR_VR_##vr}; \
    class Acr_Element_Id name = &name##_struct
 #else
-#define DEFINE_ELEMENT(class, name, group, element) \
+#define DEFINE_ELEMENT(class, name, group, element, vr) \
    class Acr_Element_Id name = (void *) 0
 #endif
 
 /* Macro for creating global elements. If GLOBAL_ELEMENT_DEFINITION is
-   defined then we define the variables, otherwise we just declar them */
+   defined then we define the variables, otherwise we just declare them */
 #ifdef GLOBAL_ELEMENT_DEFINITION
-#  define GLOBAL_ELEMENT(name, group, element) \
-      DEFINE_ELEMENT(,name, group, element)
+#  define GLOBAL_ELEMENT(name, group, element, vr) \
+      DEFINE_ELEMENT(,name, group, element, vr)
 #else
-#  define GLOBAL_ELEMENT(name, group, element) \
+#  define GLOBAL_ELEMENT(name, group, element, vr) \
       extern Acr_Element_Id name
 #endif
 
+/* Macro for creating global elements for the ACR-NEMA library. 
+   If ACR_LIBRARY_GLOBAL_ELEMENT_DEFINITION is defined then we define 
+   the variables, otherwise we just declare them */
+#ifdef ACR_LIBRARY_GLOBAL_ELEMENT_DEFINITION
+#  define ACRLIB_GLOBAL_ELEMENT(name, group, element, vr) \
+      DEFINE_ELEMENT(,name, group, element, vr)
+#else
+#  define ACRLIB_GLOBAL_ELEMENT(name, group, element, vr) \
+      extern Acr_Element_Id name
+#endif
+
+/* Global element definition for items */
+ACRLIB_GLOBAL_ELEMENT(ACR_Sequence_Item, ACR_ITEM_GROUP, 
+                      ACR_ITEM_TAG, UNKNOWN);
 
 /* Functions */
 public Acr_Element acr_create_element(int group_id, int element_id, 
+                                      Acr_VR_Type vr_code, 
                                       long data_length, char *data_pointer);
 public void acr_delete_element(Acr_Element element);
 public void acr_delete_element_list(Acr_Element element_list);
-public Acr_Element acr_copy_element(Acr_Element element);
+public Acr_Element acr_element_list_add(Acr_Element element_list, 
+                                        Acr_Element element);
 public void acr_set_element_id(Acr_Element element,
                                int group_id, int element_id);
+public void acr_set_element_vr(Acr_Element element,
+                               Acr_VR_Type vr_code);
+public void acr_set_element_vr_encoding(Acr_Element element,
+                                        Acr_VR_encoding_type vr_encoding);
+public void acr_set_element_byte_order(Acr_Element element,
+                                       Acr_byte_order byte_order);
+public void acr_set_element_variable_length(Acr_Element element,
+                                            int has_variable_length);
 public void acr_set_element_data(Acr_Element element,
                                  long data_length, char *data_pointer);
 public void acr_set_element_next(Acr_Element element, Acr_Element next);
 public int acr_get_element_group(Acr_Element element);
 public int acr_get_element_element(Acr_Element element);
+public Acr_VR_Type acr_get_element_vr(Acr_Element element);
+public Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element);
+public int acr_element_is_sequence(Acr_Element element);
+public Acr_byte_order acr_get_element_byte_order(Acr_Element element);
+public int acr_element_has_variable_length(Acr_Element element);
 public long acr_get_element_length(Acr_Element element);
 public char *acr_get_element_data(Acr_Element element);
-public long acr_get_element_total_length(Acr_Element element);
+public long acr_get_element_total_length(Acr_Element element,
+                                         Acr_VR_encoding_type vr_encoding);
 public Acr_Element acr_get_element_next(Acr_Element element);
+public Acr_Element acr_copy_element(Acr_Element element);
 public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element);
 public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element);
+public void acr_convert_element_byte_order(Acr_Element element, 
+                                           Acr_byte_order byte_order);
+public int acr_match_element_id(Acr_Element_Id elid,
+                                Acr_Element element);
+public Acr_Element acr_find_element_id(Acr_Element element_list,
+                                       Acr_Element_Id elid);
+public void *acr_memdup(size_t value_size, void *value);
 public Acr_Element acr_create_element_short(Acr_Element_Id elid,
                                             unsigned short value);
 public Acr_Element acr_create_element_long(Acr_Element_Id elid,
@@ -110,9 +158,16 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
 public Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value);
+public Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
+                                               Acr_Element itemlist);
 public unsigned short acr_get_element_short(Acr_Element element);
 public long acr_get_element_long(Acr_Element element);
 public double acr_get_element_numeric(Acr_Element element);
 public char *acr_get_element_string(Acr_Element element);
+public long acr_get_element_short_array(Acr_Element element, long max_values, 
+                                        unsigned short values[]);
+public int *acr_element_numeric_array_separator(int character);
 public int acr_get_element_numeric_array(Acr_Element element,
                                          int max_values, double values[]);
+public void acr_dump_element_list(FILE *file_pointer, 
+                                  Acr_Element element_list);
