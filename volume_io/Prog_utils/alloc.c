@@ -8,6 +8,10 @@ typedef  unsigned  alloc_int;
 typedef  char      *alloc_ptr;
 #endif
 
+private    void       record_alloc( int );
+private    void       record_realloc( int );
+private    void       record_free( void );
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_memory
 @INPUT      : n_bytes
@@ -21,12 +25,10 @@ typedef  char      *alloc_ptr;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  alloc_memory( ptr, n_bytes )
-    void   **ptr;
-    int    n_bytes;
+public  Status  alloc_memory(
+    void   **ptr,
+    int    n_bytes )
 {
-    void       abort_if_allowed();
-    void       record_alloc();
     Status     status;
 
     status = OK;
@@ -37,8 +39,7 @@ public  Status  alloc_memory( ptr, n_bytes )
 
         if( *ptr == (void *) 0 )
         {
-            (void) printf( "alloc_memory: out of memory, %d bytes.\n",
-                           n_bytes );
+            print( "Error alloc_memory: out of memory, %d bytes.\n", n_bytes );
             status = OUT_OF_MEMORY;
             abort_if_allowed();
         }
@@ -65,14 +66,11 @@ public  Status  alloc_memory( ptr, n_bytes )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  realloc_memory( ptr, n_bytes )
-    void   **ptr;
-    int    n_bytes;
+public  Status  realloc_memory(
+    void   **ptr,
+    int    n_bytes )
 {
-    void       abort_if_allowed();
     Status     status;
-    Status     free_memory();
-    void       record_realloc();
 
     status = OK;
 
@@ -82,8 +80,8 @@ public  Status  realloc_memory( ptr, n_bytes )
 
         if( *ptr == (void *) 0 )
         {
-            (void) printf( "realloc_memory: out of memory, %d bytes.\n",
-                           n_bytes );
+            print( "Error realloc_memory: out of memory, %d bytes.\n",
+                    n_bytes );
             status = OUT_OF_MEMORY;
             abort_if_allowed();
         }
@@ -107,11 +105,8 @@ public  Status  realloc_memory( ptr, n_bytes )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  free_memory( ptr )
-    void   **ptr;
+public  Status  free_memory( void   **ptr )
 {
-    void  record_free();
-
     record_free();
 
     if( *ptr != (void *) 0 )
@@ -140,13 +135,13 @@ public  Status  free_memory( ptr )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  abort_if_allowed()
+public  void  abort_if_allowed( void )
 {
     char  ch;
 
     if( !ENV_EXISTS( "NO_ABORT" ) )
     {
-        (void) printf( "Do you wish to abort (y/n): " );
+        print( "Do you wish to abort (y/n): " );
         do
         {
             ch = getchar();
@@ -168,7 +163,7 @@ public  void  abort_if_allowed()
 
 private  FILE  *file;
 
-private  Boolean  writing_alloc_debug()
+private  Boolean  writing_alloc_debug( void )
 {
     static   Boolean   first = TRUE;
     static   Boolean   writing = FALSE;
@@ -191,8 +186,7 @@ private  Boolean  writing_alloc_debug()
     return( writing );
 }
 
-private  void  record_alloc( n_bytes )
-    int   n_bytes;
+private  void  record_alloc( int  n_bytes )
 {
     if( writing_alloc_debug() )
     {
@@ -201,8 +195,7 @@ private  void  record_alloc( n_bytes )
     }
 }
 
-private  void  record_realloc( n_bytes )
-    int   n_bytes;
+private  void  record_realloc( int n_bytes )
 {
     if( writing_alloc_debug() )
     {
@@ -211,7 +204,7 @@ private  void  record_realloc( n_bytes )
     }
 }
 
-private  void  record_free()
+private  void  record_free( void )
 {
     if( writing_alloc_debug() )
     {

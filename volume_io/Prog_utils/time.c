@@ -4,7 +4,6 @@
 #include  <sys/param.h>
 #include  <limits.h>
 #include  <def_mni.h>
-#include  <def_string.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : current_cpu_seconds
@@ -19,7 +18,7 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  current_cpu_seconds()
+public  Real  current_cpu_seconds( void )
 {
     struct  tms  buffer;
     Real         cpu_time;
@@ -45,7 +44,7 @@ public  Real  current_cpu_seconds()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Real  current_realtime_seconds()
+public  Real  current_realtime_seconds( void )
 {
     static  Boolean          first_call = TRUE;
     static  struct  timeval  first;
@@ -83,16 +82,16 @@ public  Real  current_realtime_seconds()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  format_time( str, format, seconds )
-    char   str[];
-    char   format[];
-    Real   seconds;
+public  void  format_time(
+    char   str[],
+    char   format[],
+    Real   seconds )
 {
     int     i;
     static  char   *units[] = { "us", "ms", "sec", "min", "hrs",
                                 "days", "years"
                               };
-    static  Real   scale[] = { 1000.0, 1000.0, 60.0, 60.0, 24.0, 365.0 };
+    static  Real   scales[] = { 1000.0, 1000.0, 60.0, 60.0, 24.0, 365.0 };
     Boolean  negative;
 
     negative = seconds < 0.0;
@@ -102,9 +101,9 @@ public  void  format_time( str, format, seconds )
 
     for_less( i, 0, SIZEOF_STATIC_ARRAY(units)-1 )
     {
-        if( seconds > 2.0 * scale[i] )
+        if( seconds > 2.0 * scales[i] )
         {
-            seconds /= scale[i];
+            seconds /= scales[i];
         }
         else
         {
@@ -112,7 +111,7 @@ public  void  format_time( str, format, seconds )
         }
     }
 
-    seconds = (int) (10.0 * seconds + 0.5) / 10.0;
+    seconds = ROUND( 10.0 * seconds ) / 10.0;
 
     if( negative )  seconds = -seconds;
 
@@ -133,15 +132,15 @@ public  void  format_time( str, format, seconds )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  print_time( format, seconds )
-    char   format[];
-    Real   seconds;
+public  void  print_time(
+    char   format[],
+    Real   seconds )
 {
     String  str;
 
     format_time( str, format, seconds );
 
-    (void) printf( "%s", str );
+    print( "%s", str );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -157,8 +156,8 @@ public  void  print_time( format, seconds )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_clock_time( time_str )
-    char  time_str[];
+public  void  get_clock_time(
+    char  time_str[] )
 {
     time_t           clock_time;
     struct  tm       *time_tm;
@@ -176,8 +175,7 @@ public  void  get_clock_time( time_str )
     (void) strcpy( time_str, str );
 }
 
-public  void  sleep_program( seconds )
-    Real   seconds;
+public  void  sleep_program( Real seconds )
 {
 #ifdef sgi
     long  ticks;
@@ -185,4 +183,36 @@ public  void  sleep_program( seconds )
     ticks = (long) ROUND( seconds * CLK_TCK );
     sginap( ticks );
 #endif
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_date
+@INPUT      : 
+@OUTPUT     : date_str
+@RETURNS    : 
+@DESCRIPTION: Fills in the date into the string.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  get_date(
+    char  date_str[] )
+{
+    time_t           clock_time;
+    struct  tm       *time_tm;
+    char             *str;
+#ifndef sgi
+    time_t time();
+#endif
+
+    (void) time( &clock_time );
+
+    time_tm = localtime( &clock_time );
+
+    str = asctime( time_tm );
+
+    (void) strcpy( date_str, str );
 }

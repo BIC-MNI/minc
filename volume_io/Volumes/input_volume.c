@@ -3,17 +3,28 @@
 
 #define  N_VALUES  256
 
+private  void  create_world_transform(
+    Point       *origin,
+    Vector      axes[N_DIMENSIONS],
+    Real        thickness[N_DIMENSIONS],
+    Transform   *transform );
+
 public  Status  input_volume(
     char           filename[],
     volume_struct  *volume )
 {
     Status       status;
     char         name[MAX_NC_NAME];
-    int          x, y, z, volume_axis;
+    int          axis_index[N_DIMENSIONS];
     double       slice_separation[N_DIMENSIONS];
     double       start_position[N_DIMENSIONS];
     double       direction_cosines[N_DIMENSIONS][N_DIMENSIONS];
+    Point        origin;
+    Vector       axes[N_DIMENSIONS];
+    Vector       x_offset, y_offset, z_offset, start_offset;
     Volume_type  *image;
+    int          indices[N_DIMENSIONS], sizes[N_DIMENSIONS];
+    int          index0, index1, index2;
     int          axis;
     long         length;
     int          icv, cdfid, img, dimvar;
@@ -43,63 +54,113 @@ public  Status  input_volume(
         return( status );
     }
 
+    axis_index[X] = -1;
+    axis_index[Y] = -1;
+    axis_index[Z] = -1;
+
     for_less( axis, 0, ndims )
     {
-        volume_axis = 2 - axis;
-
         (void) ncdiminq( cdfid, dim[axis], name, &length );
-        volume->sizes[volume_axis] = length;
+        sizes[axis] = length;
+
+        if( EQUAL_STRINGS( name, MIxspace ) )
+            axis_index[axis] = X;
+        else if( EQUAL_STRINGS( name, MIyspace ) )
+            axis_index[axis] = Y;
+        else if( EQUAL_STRINGS( name, MIzspace ) )
+            axis_index[axis] = Z;
+        else
+        {
+            print("Error:  cannot handle dimensions other than x, y, and z.\n");
+            print("        offending dimension: %s\n", name );
+            status = ERROR;
+            return( status );
+        }
+
+        slice_separation[axis] = 1.0;
+        start_position[axis] = 0.0;
+        direction_cosines[axis][0] = 0.0;
+        direction_cosines[axis][1] = 0.0;
+        direction_cosines[axis][2] = 0.0;
+        direction_cosines[axis][axis_index[axis]] = 1.0;
 
         ncopts = 0;
         dimvar = ncvarid( cdfid, name );
         if( dimvar != MI_ERROR )
         {
-            if( miattget1( cdfid, dimvar, MIstep, NC_DOUBLE,
-                        (void *) &slice_separation[volume_axis] ) == MI_ERROR )
-            {
-                slice_separation[volume_axis] = 1.0;
-            }
+            (void) miattget1( cdfid, dimvar, MIstep, NC_DOUBLE,
+                              (void *) &slice_separation[axis] );
 
-            if( miattget1( cdfid, dimvar, MIstart, NC_DOUBLE,
-                           (void *) &start_position[volume_axis] ) == MI_ERROR )
-            {
-                start_position[volume_axis] = 0.0;
-            }
+            (void) miattget1( cdfid, dimvar, MIstart, NC_DOUBLE,
+                              (void *) &start_position[axis] );
 
-            if( miattget( cdfid, dimvar, MIstart, NC_DOUBLE, N_DIMENSIONS,
-                          (void *) direction_cosines[volume_axis], (int *) 0 )
-                           == MI_ERROR )
-            {
-                direction_cosines[volume_axis][0] = 0.0;
-                direction_cosines[volume_axis][1] = 0.0;
-                direction_cosines[volume_axis][2] = 0.0;
-                direction_cosines[volume_axis][volume_axis] = 1.0;
-            }
+            (void) miattget( cdfid, dimvar, MIdirection_cosines, NC_DOUBLE,
+                             N_DIMENSIONS, (void *) direction_cosines[axis],
+                             (int *) 0 );
         }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
 
+    if( axis_index[X] == -1 || axis_index[Y] == -1 || axis_index[Z] == -1 )
+    {
+        print( "Error:  missing some of the 3 dimensions.\n" );
+        status = ERROR;
+        return( status );
+    }
+
+    for_less( axis, 0, N_DIMENSIONS )
+    {
+        volume->thickness[axis_index[axis]] = (Real) slice_separation[axis];
+        volume->sizes[axis_index[axis]] = sizes[axis];
+        fill_Vector( axes[axis_index[axis]],
+                     direction_cosines[axis][0],
+                     direction_cosines[axis][1],
+                     direction_cosines[axis][2] );
+        NORMALIZE_VECTOR( axes[axis_index[axis]], axes[axis_index[axis]] );
+        if( null_Vector( &axes[axis_index[axis]] ) )
+        {
+            fill_Vector( axes[axis_index[axis]],
+                         0.0, 0.0, 0.0 );
+            Vector_coord(axes[axis_index[axis]],axis_index[axis]) = 1.0;
+        }
+    }
+
+    SCALE_VECTOR( x_offset, axes[X], start_position[axis_index[X]] );
+    SCALE_VECTOR( y_offset, axes[Y], start_position[axis_index[Y]] );
+    SCALE_VECTOR( z_offset, axes[Z], start_position[axis_index[Z]] );
+    ADD_VECTORS( start_offset, x_offset, y_offset );
+    ADD_VECTORS( start_offset, start_offset, z_offset );
+
+    CONVERT_VECTOR_TO_POINT( origin, start_offset );
+
+    create_world_transform( &origin, axes, volume->thickness,
+                            &volume->world_transform );
+
     ALLOC3D( status, volume->data, volume->sizes[X], volume->sizes[Y],
              volume->sizes[Z] );
 
-    ALLOC( status, image, volume->sizes[X] * volume->sizes[Y] );
+    ALLOC( status, image, sizes[1] * sizes[2] );
 
-    for_less( z, 0, volume->sizes[Z] )
+    for_less( index0, 0, sizes[0] )
     {
-        start[0] = z;
+        indices[axis_index[0]] = index0;
+        start[0] = index0;
         start[1] = 0;
         start[2] = 0;
         count[0] = 1;
-        count[1] = volume->sizes[Y];
-        count[2] = volume->sizes[X];
+        count[1] = sizes[1];
+        count[2] = sizes[2];
 
         (void) miicv_get( icv, start, count, (void *) image );
 
-        for_less( y, 0, volume->sizes[Y] )
+        for_less( index1, 0, sizes[1] )
         {
-            for_less( x, 0, volume->sizes[X] )
+            indices[axis_index[1]] = index1;
+            for_less( index2, 0, sizes[2] )
             {
-                volume->data[x][y][z] = image[IJ(y,x,volume->sizes[X])];
+                indices[axis_index[2]] = index2;
+                volume->data[indices[X]][indices[Y]][indices[Z]] =
+                                 image[IJ(index1,index2,sizes[2])];
             }
         }
     }
@@ -109,13 +170,48 @@ public  Status  input_volume(
     (void) ncclose( cdfid );
     (void) miicv_free( icv );
 
-    volume->thickness[X] = (Real) slice_separation[X];
-    volume->thickness[Y] = (Real) slice_separation[Y];
-    volume->thickness[Z] = (Real) slice_separation[Z];
     volume->value_scale = 1.0;
     volume->value_translation = 0.0;
 
     return( status );
+}
+
+private  void  create_world_transform(
+    Point       *origin,
+    Vector      axes[N_DIMENSIONS],
+    Real        thickness[N_DIMENSIONS],
+    Transform   *transform )
+{
+    Vector   x_axis, y_axis, z_axis;
+
+    x_axis = axes[X];
+    y_axis = axes[Y];
+    z_axis = axes[Z];
+
+#ifdef FORCE_ORTHONORMAL
+    CROSS_VECTORS( z_axis, x_axis, y_axis );
+
+    if( DOT_VECTORS(z_axis,axes[Z]) < 0.0 )
+    {
+        SCALE_VECTOR( z_axis, z_axis, -1.0 );
+        CROSS_VECTORS( y_axis, x_axis, z_axis );
+    }
+    else
+    {
+        CROSS_VECTORS( y_axis, z_axis, x_axis );
+    }
+
+    NORMALIZE_VECTOR( x_axis, x_axis );
+    NORMALIZE_VECTOR( y_axis, y_axis );
+    NORMALIZE_VECTOR( z_axis, z_axis );
+#endif
+
+    SCALE_VECTOR( x_axis, x_axis, thickness[X] );
+    SCALE_VECTOR( y_axis, y_axis, thickness[Y] );
+    SCALE_VECTOR( z_axis, z_axis, thickness[Z] );
+
+    make_change_to_bases_transform( origin, &x_axis, &y_axis, &z_axis,
+                                    transform );
 }
 
 public  Status  input_fake_volume(

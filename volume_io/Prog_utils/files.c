@@ -1,8 +1,12 @@
 
 #include  <def_mni.h>
-#include  <def_files.h>
-#include  <def_alloc.h>
-#include  <def_string.h>
+
+private  Boolean  has_no_extension( char [] );
+
+public  Boolean  real_is_double()
+{
+    return( sizeof(Real) == 8 );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : file_exists
@@ -17,8 +21,8 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  file_exists( filename )
-    char        filename[];
+public  Boolean  file_exists(
+    char        filename[] )
 {
     Boolean  exists;
     FILE     *file;
@@ -49,8 +53,8 @@ public  Boolean  file_exists( filename )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  remove_file( filename )
-    char  filename[];
+public  void  remove_file(
+    char  filename[] )
 {
     String  command;
 
@@ -74,11 +78,11 @@ public  void  remove_file( filename )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  open_file( filename, io_type, file_format, file )
-    char               filename[];
-    IO_types           io_type;
-    File_formats       file_format;
-    FILE               **file;
+public  Status  open_file(
+    char               filename[],
+    IO_types           io_type,
+    File_formats       file_format,
+    FILE               **file )
 {
     Status   status;
     String   access_str;
@@ -104,9 +108,7 @@ public  Status  open_file( filename, io_type, file_format, file )
     }
     else
     {
-        PRINT_ERROR( "Could not open file \"" );
-        PRINT_ERROR( filename );
-        PRINT_ERROR( "\".\n" );
+        print( "Error:  could not open file \"%s\".\n", filename );
         *file = (FILE *) 0;
         status = ERROR;
     }
@@ -133,13 +135,12 @@ public  Status  open_file( filename, io_type, file_format, file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  open_file_with_default_suffix( filename, default_suffix,
-                                               io_type, file_format, file )
-    char               filename[];
-    char               default_suffix[];
-    IO_types           io_type;
-    File_formats       file_format;
-    FILE               **file;
+public  Status  open_file_with_default_suffix(
+    char               filename[],
+    char               default_suffix[],
+    IO_types           io_type,
+    File_formats       file_format,
+    FILE               **file )
 {
     Boolean  suffix_added;
     String   used_filename;
@@ -179,8 +180,8 @@ public  Status  open_file_with_default_suffix( filename, default_suffix,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  has_no_extension( filename )
-    char   filename[];
+private  Boolean  has_no_extension(
+    char   filename[] )
 {
     char  *str;
 
@@ -206,9 +207,9 @@ private  Boolean  has_no_extension( filename )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  set_file_position( file, byte_position )
-    FILE     *file;
-    long     byte_position;
+public  Status  set_file_position(
+    FILE     *file,
+    long     byte_position )
 {
     Status   status;
 
@@ -218,7 +219,7 @@ public  Status  set_file_position( file, byte_position )
     }
     else
     {
-        PRINT_ERROR( "Error setting the file position.\n" );
+        print( "Error setting the file position.\n" );
         status = ERROR;
     }
 
@@ -238,8 +239,8 @@ public  Status  set_file_position( file, byte_position )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  close_file( file )
-    FILE     *file;     
+public  Status  close_file(
+    FILE     *file )
 {
     (void) fclose( file );
 
@@ -260,9 +261,9 @@ public  Status  close_file( file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  extract_directory( filename, directory )
-    char    filename[];
-    char    directory[];
+public  void  extract_directory(
+    char    filename[],
+    char    directory[] )
 {
     int   slash_index;
 
@@ -299,10 +300,10 @@ public  void  extract_directory( filename, directory )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  get_absolute_filename( filename, directory, abs_filename )
-    char    filename[];
-    char    directory[];
-    char    abs_filename[];
+public  void  get_absolute_filename(
+    char    filename[],
+    char    directory[],
+    char    abs_filename[] )
 {
     String  save_filename;
 
@@ -341,9 +342,9 @@ public  void  get_absolute_filename( filename, directory, abs_filename )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  strip_off_directories( filename, no_dirs )
-    char    filename[];
-    char    no_dirs[];
+public  void  strip_off_directories(
+    char    filename[],
+    char    no_dirs[] )
 {
     int    i;
 
@@ -370,8 +371,8 @@ public  void  strip_off_directories( filename, no_dirs )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  flush_file( file )
-    FILE     *file;
+public  Status  flush_file(
+    FILE     *file )
 {
     Status   status;
 
@@ -381,7 +382,7 @@ public  Status  flush_file( file )
     }
     else
     {
-        PRINT_ERROR( "Error flushing file.\n" );
+        print( "Error flushing file.\n" );
         status = ERROR;
     }
 
@@ -401,9 +402,9 @@ public  Status  flush_file( file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_character( file, ch )
-    FILE  *file;
-    char   *ch;
+public  Status  input_character(
+    FILE  *file,
+    char   *ch )
 {
     Status   status;
     int      c;
@@ -436,9 +437,9 @@ public  Status  input_character( file, ch )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  unget_character( file, ch )
-    FILE  *file;
-    char  ch;
+public  Status  unget_character(
+    FILE  *file,
+    char  ch )
 {
     Status   status;
     int      c;
@@ -466,9 +467,9 @@ public  Status  unget_character( file, ch )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_nonwhite_character( file, ch )
-    FILE   *file;
-    char   *ch;
+public  Status  input_nonwhite_character(
+    FILE   *file,
+    char   *ch )
 {
     Status   status;
 
@@ -495,9 +496,9 @@ public  Status  input_nonwhite_character( file, ch )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_character( file, ch )
-    FILE   *file;
-    char   ch;
+public  Status  output_character(
+    FILE   *file,
+    char   ch )
 {
     Status   status;
 
@@ -528,9 +529,9 @@ public  Status  output_character( file, ch )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status   skip_input_until( file, search_char )
-    FILE   *file;
-    char   search_char;
+public  Status   skip_input_until(
+    FILE   *file,
+    char   search_char )
 {
     Status   status;
     char     ch;
@@ -560,9 +561,9 @@ public  Status   skip_input_until( file, search_char )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_string( file, str )
-    FILE  *file;
-    char  str[];
+public  Status  output_string(
+    FILE  *file,
+    char  str[] )
 {
     Status   status;
 
@@ -570,7 +571,7 @@ public  Status  output_string( file, str )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting string.\n" );
+        print( "Error outputting string.\n" );
         status = ERROR;
     }
 
@@ -594,11 +595,11 @@ public  Status  output_string( file, str )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_string( file, str, string_length, termination_char )
-    FILE  *file;
-    char  str[];
-    int   string_length;
-    char  termination_char;
+public  Status  input_string(
+    FILE  *file,
+    char  str[],
+    int   string_length,
+    char  termination_char )
 {
     int     i;
     char    ch;
@@ -615,7 +616,7 @@ public  Status  input_string( file, str, string_length, termination_char )
 
         if( i >= string_length - 1 )
         {
-            PRINT_ERROR( "Input string too long.\n" );
+            print( "Input string too long.\n" );
             status = ERROR;
         }
         else
@@ -649,16 +650,14 @@ public  Status  input_string( file, str, string_length, termination_char )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_quoted_string( file, str, str_length )
-    FILE            *file;
-    char            str[];
-    int             str_length;
+public  Status  input_quoted_string(
+    FILE            *file,
+    char            str[],
+    int             str_length )
 {
     int      i;
     char     ch;
     Status   status;
-    Status   input_nonwhite_character();
-    Status   input_character();
 
     status = input_nonwhite_character( file, &ch );
 
@@ -699,9 +698,9 @@ public  Status  input_quoted_string( file, str, str_length )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_quoted_string( file, str )
-    FILE            *file;
-    char            str[];
+public  Status  output_quoted_string(
+    FILE            *file,
+    char            str[] )
 {
     Status   status;
 
@@ -728,11 +727,11 @@ public  Status  output_quoted_string( file, str )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_binary_data( file, data, element_size, n )
-    FILE            *file;
-    VOID            *data;
-    size_t          element_size;
-    int             n;
+public  Status  input_binary_data(
+    FILE            *file,
+    void            *data,
+    size_t          element_size,
+    int             n )
 {
     Status   status;
     int      n_done;
@@ -743,9 +742,9 @@ public  Status  input_binary_data( file, data, element_size, n )
     if( n_done != n )
     {
 #ifdef ERROR_MESSAGES
-        PRINT_ERROR( "Error inputting binary data.\n" );
-        PRINT( "     (%d out of %d items of size %d).\n", n_done, n,
-               (int) element_size );
+        print( "Error inputting binary data.\n" );
+        print( "     (%d out of %d items of size %d).\n", n_done, n,
+                (int) element_size );
 #endif
         status = ERROR;
     }
@@ -769,11 +768,11 @@ public  Status  input_binary_data( file, data, element_size, n )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_binary_data( file, data, element_size, n )
-    FILE            *file;
-    VOID            *data;
-    size_t          element_size;
-    int             n;
+public  Status  output_binary_data(
+    FILE            *file,
+    void            *data,
+    size_t          element_size,
+    int             n )
 {
     Status   status;
     int      n_done;
@@ -783,9 +782,9 @@ public  Status  output_binary_data( file, data, element_size, n )
     n_done = fwrite( data, element_size, n, file );
     if( n_done != n )
     {
-        PRINT_ERROR( "Error outputting binary data.\n" );
-        PRINT( "     (%d out of %d items of size %d).\n", n_done, n,
-               (int) element_size );
+        print( "Error outputting binary data.\n" );
+        print( "     (%d out of %d items of size %d).\n", n_done, n,
+                (int) element_size );
         status = ERROR;
     }
 
@@ -805,17 +804,16 @@ public  Status  output_binary_data( file, data, element_size, n )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_newline( file )
-    FILE            *file;
+public  Status  input_newline(
+    FILE            *file )
 {
     Status   status;
-    Status   skip_input_until();
 
     status = skip_input_until( file, '\n' );
 
-    if( status == END_OF_FILE )
+    if( status != OK )
     {
-        PRINT_ERROR( "Error inputting newline.\n" );
+        print( "Error inputting newline.\n" );
         status = ERROR;
     }
 
@@ -835,8 +833,8 @@ public  Status  input_newline( file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_newline( file )
-    FILE            *file;
+public  Status  output_newline(
+    FILE            *file )
 {
     Status   status;
 
@@ -844,7 +842,7 @@ public  Status  output_newline( file )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting newline.\n" );
+        print( "Error outputting newline.\n" );
         status = ERROR;
     }
 
@@ -865,10 +863,10 @@ public  Status  output_newline( file )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_line( file, line, str_length )
-    FILE    *file;
-    char    line[];
-    int     str_length;
+public  Status  input_line(
+    FILE    *file,
+    char    line[],
+    int     str_length )
 {
     Status   status;
     int      i;
@@ -904,13 +902,12 @@ public  Status  input_line( file, line, str_length )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_boolean( file, b )
-    FILE            *file;
-    Boolean         *b;
+public  Status  input_boolean(
+    FILE            *file,
+    Boolean         *b )
 {
     Status   status;
     char     ch;
-    Status   input_nonwhite_character();
 
     status = input_nonwhite_character( file, &ch );
 
@@ -941,9 +938,9 @@ public  Status  input_boolean( file, b )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_boolean( file, b )
-    FILE            *file;
-    Boolean         b;
+public  Status  output_boolean(
+    FILE            *file,
+    Boolean         b )
 {
     Status   status;
     char     *str;
@@ -957,7 +954,7 @@ public  Status  output_boolean( file, b )
 
     if( fprintf( file, " %s", str ) > 0 )
     {
-        PRINT_ERROR( "Error outputting Boolean.\n" );
+        print( "Error outputting Boolean.\n" );
         status = ERROR;
     }
 
@@ -977,9 +974,9 @@ public  Status  output_boolean( file, b )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_short( file, s )
-    FILE            *file;
-    short           *s;
+public  Status  input_short(
+    FILE            *file,
+    short           *s )
 {
     Status   status;
 
@@ -1005,9 +1002,9 @@ public  Status  input_short( file, s )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_short( file, s )
-    FILE            *file;
-    short           s;
+public  Status  output_short(
+    FILE            *file,
+    short           s )
 {
     Status   status;
 
@@ -1015,7 +1012,7 @@ public  Status  output_short( file, s )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting short.\n" );
+        print( "Error outputting short.\n" );
         status = ERROR;
     }
 
@@ -1035,9 +1032,7 @@ public  Status  output_short( file, s )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_int( file, i )
-    FILE            *file;
-    int             *i;
+public  Status  input_int( FILE * file, int * i )
 {
     Status   status;
 
@@ -1063,9 +1058,9 @@ public  Status  input_int( file, i )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_int( file, i )
-    FILE            *file;
-    int             i;
+public  Status  output_int(
+    FILE            *file,
+    int             i )
 {
     Status   status;
 
@@ -1073,7 +1068,7 @@ public  Status  output_int( file, i )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting int.\n" );
+        print( "Error outputting int.\n" );
         status = ERROR;
     }
 
@@ -1093,20 +1088,19 @@ public  Status  output_int( file, i )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_real( file, r )
-    FILE            *file;
-    Real            *r;
+public  Status  input_real(
+    FILE            *file,
+    Real            *r )
 {
     Status   status;
 
-    if( fscanf( file, "%f", r ) == 1 )
-        status = OK;
+    if( real_is_double() )
+    {
+        status = input_double( file, (double *) r );
+    }
     else
     {
-#ifdef ERROR_MESSAGES
-        PRINT_ERROR( "Error inputting float.\n" );
-#endif
-        status = ERROR;
+        status = input_float( file, (float *) r );
     }
 
     return( status );
@@ -1126,17 +1120,81 @@ public  Status  input_real( file, r )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_real( file, r )
-    FILE            *file;
-    Real            r;
+public  Status  output_real(
+    FILE            *file,
+    Real            r )
 {
     Status   status;
 
-    if( fprintf( file, " %g", r ) > 0 )
+    if( real_is_double() )
+    {
+        status = output_double( file, (double) r );
+    }
+    else
+    {
+        status = output_float( file, (float) r );
+    }
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_float
+@INPUT      : file
+@OUTPUT     : f
+@RETURNS    : Status
+@DESCRIPTION: Inputs an ascii float.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  input_float(
+    FILE            *file,
+    float           *f )
+{
+    Status   status;
+
+    if( fscanf( file, "%f", f ) == 1 )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting float.\n" );
+#ifdef ERROR_MESSAGES
+        print( "Error inputting float.\n" );
+#endif
+        status = ERROR;
+    }
+
+    return( status );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_float
+@INPUT      : file
+            : f
+@OUTPUT     :
+@RETURNS    : Status
+@DESCRIPTION: Outputs an ascii float value.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  Status  output_float(
+    FILE            *file,
+    float           f )
+{
+    Status   status;
+
+    if( fprintf( file, " %g", f ) > 0 )
+        status = OK;
+    else
+    {
+        print( "Error outputting float.\n" );
         status = ERROR;
     }
 
@@ -1156,9 +1214,9 @@ public  Status  output_real( file, r )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  input_double( file, d )
-    FILE            *file;
-    double          *d;
+public  Status  input_double(
+    FILE            *file,
+    double          *d )
 {
     Status   status;
 
@@ -1167,7 +1225,7 @@ public  Status  input_double( file, d )
     else
     {
 #ifdef ERROR_MESSAGES
-        PRINT_ERROR( "Error inputting double.\n" );
+        print( "Error inputting double.\n" );
 #endif
         status = ERROR;
     }
@@ -1189,9 +1247,9 @@ public  Status  input_double( file, d )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  output_double( file, d )
-    FILE            *file;
-    double          d;
+public  Status  output_double(
+    FILE            *file,
+    double          d )
 {
     Status   status;
 
@@ -1199,7 +1257,7 @@ public  Status  output_double( file, d )
         status = OK;
     else
     {
-        PRINT_ERROR( "Error outputting double.\n" );
+        print( "Error outputting double.\n" );
         status = ERROR;
     }
 
@@ -1223,12 +1281,12 @@ public  Status  output_double( file, d )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_binary_data( file, io_flag, data, element_size, n )
-    FILE            *file;
-    IO_types        io_flag;
-    VOID            *data;
-    size_t          element_size;
-    int             n;
+public  Status  io_binary_data(
+    FILE            *file,
+    IO_types        io_flag,
+    void            *data,
+    size_t          element_size,
+    int             n )
 {
     Status   status;
 
@@ -1255,10 +1313,10 @@ public  Status  io_binary_data( file, io_flag, data, element_size, n )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_newline( file, io_flag, format )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
+public  Status  io_newline(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format )
 {
     Status   status;
 
@@ -1292,17 +1350,15 @@ public  Status  io_newline( file, io_flag, format )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_quoted_string( file, io_flag, format, str, str_length )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    char            str[];
-    int             str_length;
+public  Status  io_quoted_string(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    char            str[],
+    int             str_length )
 {
     int      length;
     Status   status;
-    Status   io_int();
-    Status   input_character();
 
     status = OK;
 
@@ -1322,13 +1378,13 @@ public  Status  io_quoted_string( file, io_flag, format, str, str_length )
 
         if( io_flag == READ_FILE && length >= str_length )
         {
-            PRINT( "String too large: " );
+            print( "String too large: " );
             status = ERROR;
         }
 
         if( status == OK )
         {
-            status = io_binary_data( file, io_flag, (VOID *) str,
+            status = io_binary_data( file, io_flag, (void *) str,
                                      sizeof(str[0]), length );
         }
 
@@ -1337,7 +1393,7 @@ public  Status  io_quoted_string( file, io_flag, format, str, str_length )
 
     if( status != OK )
     {
-        PRINT_ERROR( "Error in quoted string in file.\n" );
+        print( "Error in quoted string in file.\n" );
     }
 
     return( status );
@@ -1359,11 +1415,11 @@ public  Status  io_quoted_string( file, io_flag, format, str, str_length )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_boolean( file, io_flag, format, b )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    Boolean         *b;
+public  Status  io_boolean(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    Boolean         *b )
 {
     Status   status;
 
@@ -1377,7 +1433,7 @@ public  Status  io_boolean( file, io_flag, format, b )
             status = output_boolean( file, *b );
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) b, sizeof(*b), 1 );
+        status = io_binary_data( file, io_flag, (void *) b, sizeof(*b), 1 );
 
     return( status );
 }
@@ -1398,11 +1454,11 @@ public  Status  io_boolean( file, io_flag, format, b )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_short( file, io_flag, format, short_int )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    short           *short_int;
+public  Status  io_short(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    short           *short_int )
 {
     Status   status;
 
@@ -1416,7 +1472,7 @@ public  Status  io_short( file, io_flag, format, short_int )
             status = output_short( file, *short_int );
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) short_int,
+        status = io_binary_data( file, io_flag, (void *) short_int,
                                  sizeof(*short_int), 1 );
 
     return( status );
@@ -1438,11 +1494,11 @@ public  Status  io_short( file, io_flag, format, short_int )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_unsigned_char( file, io_flag, format, c )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    unsigned  char  *c;
+public  Status  io_unsigned_char(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    unsigned  char  *c )
 {
     int      i;
     Status   status;
@@ -1457,7 +1513,7 @@ public  Status  io_unsigned_char( file, io_flag, format, c )
                 *c = i;
             else
             {
-                PRINT_ERROR( "Error inputting unsigned char.\n" );
+                print( "Error inputting unsigned char.\n" );
                 status = ERROR;
             }
         }
@@ -1465,13 +1521,13 @@ public  Status  io_unsigned_char( file, io_flag, format, c )
         {
             if( fprintf( file, "%d", (int) *c ) != 1 )
             {
-                PRINT_ERROR( "Error outputting unsigned char.\n" );
+                print( "Error outputting unsigned char.\n" );
                 status = ERROR;
             }
         }
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) c, sizeof(*c), 1 );
+        status = io_binary_data( file, io_flag, (void *) c, sizeof(*c), 1 );
 
     return( status );
 }
@@ -1492,11 +1548,11 @@ public  Status  io_unsigned_char( file, io_flag, format, c )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_int( file, io_flag, format, i )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    int             *i;
+public  Status  io_int(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             *i )
 {
     Status   status;
 
@@ -1510,7 +1566,7 @@ public  Status  io_int( file, io_flag, format, i )
             status = output_int( file, *i );
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) i, sizeof(*i), 1 );
+        status = io_binary_data( file, io_flag, (void *) i, sizeof(*i), 1 );
 
     return( status );
 }
@@ -1531,11 +1587,11 @@ public  Status  io_int( file, io_flag, format, i )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_real( file, io_flag, format, r )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    Real            *r;
+public  Status  io_real(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    Real            *r )
 {
     Status   status;
 
@@ -1549,7 +1605,7 @@ public  Status  io_real( file, io_flag, format, r )
             status = output_real( file, *r );
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) r, sizeof(*r), 1 );
+        status = io_binary_data( file, io_flag, (void *) r, sizeof(*r), 1 );
 
     return( status );
 }
@@ -1570,11 +1626,11 @@ public  Status  io_real( file, io_flag, format, r )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_double( file, io_flag, format, d )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    double          *d;
+public  Status  io_double(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    double          *d )
 {
     Status   status;
 
@@ -1588,7 +1644,7 @@ public  Status  io_double( file, io_flag, format, d )
             status = output_double( file, *d );
     }
     else
-        status = io_binary_data( file, io_flag, (VOID *) d, sizeof(*d), 1 );
+        status = io_binary_data( file, io_flag, (void *) d, sizeof(*d), 1 );
 
     return( status );
 }
@@ -1610,12 +1666,12 @@ public  Status  io_double( file, io_flag, format, d )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_ints( file, io_flag, format, n, ints )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    int             n;
-    int             *ints[];
+public  Status  io_ints(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             n,
+    int             *ints[] )
 {
     Status   status;
     int      i;
@@ -1652,7 +1708,7 @@ public  Status  io_ints( file, io_flag, format, n, ints )
         }
         else
         {
-            status = io_binary_data( file, io_flag, (VOID *) *ints,
+            status = io_binary_data( file, io_flag, (void *) *ints,
                                      sizeof((*ints)[0]), n );
         }
     }
@@ -1677,12 +1733,12 @@ public  Status  io_ints( file, io_flag, format, n, ints )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  io_unsigned_chars( file, io_flag, format, n, unsigned_chars )
-    FILE            *file;
-    IO_types        io_flag;
-    File_formats    format;
-    int             n;
-    unsigned char   *unsigned_chars[];
+public  Status  io_unsigned_chars(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             n,
+    unsigned char   *unsigned_chars[] )
 {
     Status   status;
     int      i;
@@ -1713,7 +1769,7 @@ public  Status  io_unsigned_chars( file, io_flag, format, n, unsigned_chars )
         }
         else
         {
-            status = io_binary_data( file, io_flag, (VOID *) (*unsigned_chars),
+            status = io_binary_data( file, io_flag, (void *) (*unsigned_chars),
                                      sizeof((*unsigned_chars)[0]), n );
         }
     }

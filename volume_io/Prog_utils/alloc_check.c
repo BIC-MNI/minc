@@ -1,7 +1,5 @@
 
-#include  <def_string.h>
 #include  <def_mni.h>
-#include  <def_files.h>
 #include  <stdlib.h>
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -23,14 +21,6 @@
 #define  SKIP_P            0.5
 
 #define  MEMORY_DIFFERENCE  1000000
-
-static    void     update_total_memory();
-static    int      get_random_level();
-static    Real     get_random_0_to_1();
-static    void     output_entry();
-static    Real     current_seconds();
-static    void     get_date();
-void               abort_if_allowed();
 
 typedef  struct skip_struct
 {
@@ -54,6 +44,11 @@ typedef  struct
 {
     skip_struct   *update[MAX_SKIP_LEVELS];
 } update_struct;
+
+private  void     update_total_memory( alloc_struct *, int );
+private  int      get_random_level( void );
+private  void     output_entry( FILE *, skip_struct * );
+private  Boolean  size_display_enabled( void );
 
 #ifdef sgi
 typedef  size_t    alloc_int;
@@ -80,8 +75,8 @@ typedef  char      *alloc_ptr;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   void  initialize_alloc_list( alloc_list )
-    alloc_struct  *alloc_list;
+private   void  initialize_alloc_list(
+    alloc_struct  *alloc_list )
 {
     int   i;
 
@@ -95,8 +90,8 @@ private   void  initialize_alloc_list( alloc_list )
         alloc_list->header->forward[i] = (skip_struct *) 0;
 }
 
-private  void  check_initialized_alloc_list( alloc_list )
-    alloc_struct  *alloc_list;
+private  void  check_initialized_alloc_list(
+    alloc_struct  *alloc_list )
 {
     static   Boolean  first = TRUE;
 
@@ -122,10 +117,10 @@ private  void  check_initialized_alloc_list( alloc_list )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  find_pointer_position( alloc_list, ptr, update )
-    alloc_struct    *alloc_list;
-    void            *ptr;
-    update_struct   *update;
+private  Boolean  find_pointer_position(
+    alloc_struct    *alloc_list,
+    void            *ptr,
+    update_struct   *update )
 {
     int           i;
     skip_struct   *x;
@@ -168,16 +163,14 @@ private  Boolean  find_pointer_position( alloc_list, ptr, update )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   void  insert_ptr_in_alloc_list( alloc_list, update, ptr, n_bytes,
-                                          source_file, line_number,
-                                          time_of_alloc )
-    alloc_struct   *alloc_list;
-    update_struct  *update;
-    void           *ptr;
-    int            n_bytes;
-    char           source_file[];
-    int            line_number;
-    Real           time_of_alloc;
+private   void  insert_ptr_in_alloc_list(
+    alloc_struct   *alloc_list,
+    update_struct  *update,
+    void           *ptr,
+    int            n_bytes,
+    char           source_file[],
+    int            line_number,
+    Real           time_of_alloc )
 {
     int           i, new_level;
     skip_struct   *x;
@@ -224,11 +217,12 @@ private   void  insert_ptr_in_alloc_list( alloc_list, update, ptr, n_bytes,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  check_overlap( update, ptr, n_bytes, entry )
-    update_struct   *update;
-    void            *ptr;
-    int             n_bytes;
-    skip_struct     **entry;
+private  Boolean  check_overlap(
+    alloc_struct       *alloc_list,
+    update_struct      *update,
+    void               *ptr,
+    int                n_bytes,
+    skip_struct        **entry )
 {
     Boolean      overlap;
 
@@ -236,7 +230,7 @@ private  Boolean  check_overlap( update, ptr, n_bytes, entry )
 
     *entry = update->update[0];
 
-    if( *entry != (skip_struct *) 0 )
+    if( *entry != alloc_list->header && *entry != (skip_struct *) 0 )
     {
         if( (void *) ((char *) (*entry)->ptr + (*entry)->n_bytes) > ptr )
              overlap = TRUE;
@@ -270,13 +264,12 @@ private  Boolean  check_overlap( update, ptr, n_bytes, entry )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private   Boolean  remove_ptr_from_alloc_list( alloc_list, ptr, source_file,
-                                           line_number, time_of_alloc )
-    alloc_struct   *alloc_list;
-    void           *ptr;
-    char           *source_file[];
-    int            *line_number;
-    Real           *time_of_alloc;
+private   Boolean  remove_ptr_from_alloc_list(
+    alloc_struct   *alloc_list,
+    void           *ptr,
+    char           *source_file[],
+    int            *line_number,
+    Real           *time_of_alloc )
 {
     int           i;
     Boolean       found;
@@ -329,10 +322,9 @@ private   Boolean  remove_ptr_from_alloc_list( alloc_list, ptr, source_file,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_random_level()
+private  int  get_random_level( void )
 {
     int    level;
-    Real   get_random_0_to_1();
 
     level = 1;
 
@@ -343,8 +335,8 @@ private  int  get_random_level()
 }
 
 #ifdef  NOT_NEEDED
-private   void  delete_alloc_list( alloc_list )
-    alloc_struct  *alloc_list;
+private   void  delete_alloc_list(
+    alloc_struct  *alloc_list )
 
 {
     skip_struct   *ptr, *deleting;
@@ -374,9 +366,9 @@ private   void  delete_alloc_list( alloc_list )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  output_alloc_list( file, alloc_list )
-    FILE          *file;
-    alloc_struct  *alloc_list;
+private  void  output_alloc_list(
+    FILE          *file,
+    alloc_struct  *alloc_list )
 {
     skip_struct  *ptr;
 
@@ -403,9 +395,9 @@ private  void  output_alloc_list( file, alloc_list )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  update_total_memory( alloc_list, n_bytes )
-    alloc_struct  *alloc_list;
-    int           n_bytes;
+private  void  update_total_memory(
+    alloc_struct  *alloc_list,
+    int           n_bytes )
 {
     alloc_list->total_memory_allocated += n_bytes;
 
@@ -415,8 +407,8 @@ private  void  update_total_memory( alloc_list, n_bytes )
     {
         alloc_list->next_memory_threshold = MEMORY_DIFFERENCE *
                 (alloc_list->total_memory_allocated / MEMORY_DIFFERENCE + 1);
-        (void) printf( "Memory allocated =%5.1f Megabytes\n",
-                       (Real) alloc_list->total_memory_allocated / 1000000.0 );
+        print( "Memory allocated =%5.1f Megabytes\n",
+                (Real) alloc_list->total_memory_allocated / 1000000.0 );
     }
 }
 
@@ -435,14 +427,12 @@ private  void  update_total_memory( alloc_list, n_bytes )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  print_source_location( source_file, line_number,
-                                      time_of_alloc )
-    char   source_file[];
-    int    line_number;
-    Real   time_of_alloc;
+private  void  print_source_location(
+    char   source_file[],
+    int    line_number,
+    Real   time_of_alloc )
 {
-    (void) printf( "%s:%d\t%g seconds", source_file, line_number,
-                   time_of_alloc );
+    print( "%s:%d\t%g seconds", source_file, line_number, time_of_alloc );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -459,9 +449,9 @@ private  void  print_source_location( source_file, line_number,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void  output_entry( file, entry )
-    FILE          *file;
-    skip_struct   *entry;
+private  void  output_entry(
+    FILE          *file,
+    skip_struct   *entry )
 {
     (void) fprintf( file, "%s:%d\t%g seconds\n",
                     entry->source_file,
@@ -491,7 +481,7 @@ private   alloc_struct   alloc_list;
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  int  get_total_memory_alloced()
+public  int  get_total_memory_alloced( void )
 {
     return( alloc_list.total_memory_allocated );
 }
@@ -510,7 +500,7 @@ public  int  get_total_memory_alloced()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  alloc_checking_enabled()
+private  Boolean  alloc_checking_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -542,7 +532,7 @@ private  Boolean  alloc_checking_enabled()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  Boolean  size_display_enabled()
+private  Boolean  size_display_enabled( void )
 {
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
@@ -576,48 +566,47 @@ private  Boolean  size_display_enabled()
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  record_ptr( ptr, n_bytes, source_file, line_number )
-    void   *ptr;
-    int    n_bytes;
-    char   source_file[];
-    int    line_number;
+public  void  record_ptr(
+    void   *ptr,
+    int    n_bytes,
+    char   source_file[],
+    int    line_number )
 {
     Real           current_time;
     update_struct  update_ptrs;
-    void           check_initialized_alloc_list();
     skip_struct    *entry;
 
     if( alloc_checking_enabled() )
     {
-        current_time = current_seconds();
+        current_time = current_realtime_seconds();
 
         check_initialized_alloc_list( &alloc_list );
 
         if( n_bytes <= 0 )
         {
             print_source_location( source_file, line_number, current_time );
-            (void) printf( ": Alloc called with zero size.\n" );
+            print( ": Alloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( ptr == (void *) 0 )
         {
             print_source_location( source_file, line_number, current_time );
-            (void) printf( ": Alloc returned a NIL pointer.\n" );
+            print( ": Alloc returned a NIL pointer.\n" );
             abort_if_allowed();
         }
         else
         {
             (void) find_pointer_position( &alloc_list, ptr, &update_ptrs );
 
-            if( check_overlap( &update_ptrs, ptr, n_bytes, &entry ) )
+            if( check_overlap( &alloc_list, &update_ptrs, ptr, n_bytes, &entry))
             {
                 print_source_location( source_file, line_number, current_time );
-                (void) printf(
+                print( 
                  ": Alloc returned a pointer overlapping an existing block:\n"
                  );
                 print_source_location( entry->source_file, entry->line_number,
                                        entry->time_of_alloc );
-                (void) printf( "\n" );
+                print( "\n" );
                 abort_if_allowed();
             }
             else
@@ -647,12 +636,12 @@ public  void  record_ptr( ptr, n_bytes, source_file, line_number )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  change_ptr( old_ptr, new_ptr, n_bytes, source_file, line_number )
-    void   *old_ptr;
-    void   *new_ptr;
-    int    n_bytes;
-    char   source_file[];
-    int    line_number;
+public  void  change_ptr(
+    void   *old_ptr,
+    void   *new_ptr,
+    int    n_bytes,
+    char   source_file[],
+    int    line_number )
 {
     char           *orig_source;
     int            orig_line;
@@ -667,32 +656,32 @@ public  void  change_ptr( old_ptr, new_ptr, n_bytes, source_file, line_number )
         if( n_bytes <= 0 )
         {
             print_source_location( source_file, line_number,
-                                   current_seconds() );
-            (void) printf( ": Realloc called with zero size.\n" );
+                                   current_realtime_seconds() );
+            print( ": Realloc called with zero size.\n" );
             abort_if_allowed();
         }
         else if( !remove_ptr_from_alloc_list( &alloc_list, old_ptr,
                       &orig_source, &orig_line, &time_of_alloc ) )
         {
             print_source_location( source_file, line_number,
-                                   current_seconds() );
-            (void) printf(
-                     ": Tried to realloc a pointer not already alloced.\n");
+                                   current_realtime_seconds() );
+            print( ": Tried to realloc a pointer not already alloced.\n");
             abort_if_allowed();
         }
         else
         {
             (void) find_pointer_position( &alloc_list, new_ptr, &update_ptrs );
 
-            if( check_overlap( &update_ptrs, new_ptr, n_bytes, &entry ) )
+            if( check_overlap( &alloc_list, &update_ptrs, new_ptr, n_bytes,
+                               &entry ) )
             {
                 print_source_location( source_file, line_number,
-                                       current_seconds());
-                (void) printf(
+                                       current_realtime_seconds());
+                print( 
                ": Realloc returned a pointer overlapping an existing block:\n");
                 print_source_location( entry->source_file, entry->line_number,
                                        entry->time_of_alloc );
-                (void) printf( "\n" );
+                print( "\n" );
                 abort_if_allowed();
             }
             else
@@ -720,10 +709,10 @@ public  void  change_ptr( old_ptr, new_ptr, n_bytes, source_file, line_number )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Boolean  unrecord_ptr( ptr, source_file, line_number )
-    void   *ptr;
-    char   source_file[];
-    int    line_number;
+public  Boolean  unrecord_ptr(
+    void   *ptr,
+    char   source_file[],
+    int    line_number )
 {
     Boolean  was_previously_alloced;
     char     *orig_source;
@@ -739,8 +728,8 @@ public  Boolean  unrecord_ptr( ptr, source_file, line_number )
         if( ptr == (void *) 0 )
         {
             print_source_location( source_file, line_number,
-                                   current_seconds() );
-            (void) printf( ": Tried to free a NIL pointer.\n" );
+                                   current_realtime_seconds() );
+            print( ": Tried to free a NIL pointer.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;
         }
@@ -748,8 +737,8 @@ public  Boolean  unrecord_ptr( ptr, source_file, line_number )
                                               &orig_line, &time_of_alloc ) )
         {
             print_source_location( source_file, line_number,
-                                   current_seconds() );
-            (void) printf( ": Tried to free a pointer not alloced.\n" );
+                                   current_realtime_seconds() );
+            print( ": Tried to free a pointer not alloced.\n" );
             abort_if_allowed();
             was_previously_alloced = FALSE;
         }
@@ -773,11 +762,10 @@ public  Boolean  unrecord_ptr( ptr, source_file, line_number )
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  output_alloc_to_file( filename )
-    char   filename[];
+public  void  output_alloc_to_file(
+    char   filename[] )
 {
     FILE     *file;
-    void     output_alloc_list();
     String   date_str;
 
     if( alloc_checking_enabled() )
@@ -801,181 +789,4 @@ public  void  output_alloc_to_file( filename )
                 (void) fclose( file );
         }
     }
-}
-
-#include  <sys/time.h>
-#include  <def_string.h>
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_date
-@INPUT      : 
-@OUTPUT     : date_str
-@RETURNS    : 
-@DESCRIPTION: Fills in the date into the string.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  get_date( date_str )
-    char  date_str[];
-{
-    time_t           clock_time;
-    struct  tm       *time_tm;
-    char             *str;
-#ifndef sgi
-    time_t time();
-#endif
-
-    (void) time( &clock_time );
-
-    time_tm = localtime( &clock_time );
-
-    str = asctime( time_tm );
-
-    (void) strcpy( date_str, str );
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : current_seconds
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : Real
-@DESCRIPTION: Returns the number of seconds since the first call to this.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  Real  current_seconds()
-{
-    static  Boolean          first_call = TRUE;
-    static  struct  timeval  first;
-    struct  timeval          current;
-    Real                     secs;
-
-    if( first_call )
-    {
-        first_call = FALSE;
-        (void) gettimeofday( &first, (struct timezone *) 0 );
-        secs = 0.0;
-    }
-    else
-    {
-        (void) gettimeofday( &current, (struct timezone *) 0 );
-        secs = (double) current.tv_sec - (double) first.tv_sec +
-               1.0e-6 * (double) (current.tv_usec - first.tv_usec);
-    }
-
-    return( secs );
-}
-
-#include  <def_math.h>
-
-#define  MAX_RAND  2147483648.0
-
-private  Boolean  initialized = FALSE;
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_random_seed
-@INPUT      : seed
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Initializes the random number generation.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  set_random_seed( seed )
-    int   seed;
-{
-#ifdef sgi
-    (void) srandom( (unsigned int) seed );
-#else
-    int  srandom();
-    (void) srandom( seed );
-#endif
-
-    initialized = TRUE;
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : check_initialized
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Checks if the random number generator initialized.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  void  check_initialized()
-{
-    struct   timeval   t;
-    int                seed;
-
-    if( !initialized )
-    {
-        (void) gettimeofday( &t, (struct timezone *) 0 );
-
-        seed = (int) t.tv_usec;
-
-        set_random_seed( seed );
-    }
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_random
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : int
-@DESCRIPTION: Gets a random integer.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  int  get_random()
-{
-    check_initialized();
-
-#ifdef sgi
-    return( random() );
-#else
-    {
-        long   random();
-
-        return( (int) random() );
-    }
-#endif
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_random_0_to_1
-@INPUT      : 
-@OUTPUT     : 
-@RETURNS    : Real
-@DESCRIPTION: Returns a random number between 0 and 1.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-private  Real  get_random_0_to_1()
-{
-    return( (Real) get_random() / MAX_RAND );
 }
