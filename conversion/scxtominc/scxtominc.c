@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:33:50  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-09 15:17:37  neelin
+@MODIFIED   : Added code to check for generic reconstructions.
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:33:50  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.12  94/09/28  10:33:30  neelin
  * Pre-release
  * 
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.0 1994-09-28 10:33:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.1 1995-01-09 15:17:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -119,6 +122,7 @@ typedef struct {
    float injection_dose;
    scx_mnem_list_type *mnem_list;
    int num_mnems;
+   int used_MNI_generic_reconstruction;
 } scx_general_info_type;
 
 typedef struct {
@@ -196,9 +200,11 @@ void FillBloodStructures (int mincHandle, int bloodHandle);
 #define SCX_CAR  "CAR"
 #define SCX_ACT  "ACT"
 #define SCX_IMTP "IMTP"
+#define SCX_USC  "USC"
 
 /* Scanditronix constants */
 #define SCX_ACTIVITY ""
+#define SCX_MNI_GENERIC_RECONSTRUCTION_CODE "Generic 8"
 
 /* Main program */
 
@@ -688,6 +694,13 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
                           NULL, &scx_general_info->injection_dose, NULL)) 
             return MI_ERROR;
 
+         /* Find out if MNI generic reconstruction was used */
+         if (scx_get_mnem(fp, SCX_USC, 0, NULL, NULL, svalue))
+            return MI_ERROR;
+         scx_general_info->used_MNI_generic_reconstruction =
+            (strncmp(svalue, SCX_MNI_GENERIC_RECONSTRUCTION_CODE,
+                     strlen(SCX_MNI_GENERIC_RECONSTRUCTION_CODE)) == 0);
+
          /* Get list of header values */
 
          /* Get space for first mnemonic */
@@ -1050,6 +1063,16 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    (void) ncattput(mincid, varid, MIinjection_dose, NC_FLOAT, 1,
                    &scx_general_info->injection_dose);
    (void) miattputstr(mincid, varid, MIdose_units, "mCurie");
+
+   /* If the MNI generic reconstruction was used, indicate the fact */
+   if (scx_general_info->used_MNI_generic_reconstruction) {
+      varid = ncvardef(mincid, "MNI_PET_rec", NC_LONG, 0, NULL);
+      (void) miattputstr(mincid, varid, MIvartype, MI_GROUP);
+      (void) miattputstr(mincid, varid, MIvarid, 
+                         "MNI PET reconstruction info");
+      (void) miadd_child(mincid, ncvarid(mincid, MIrootvariable), varid);
+      (void) miattputstr(mincid, varid, "generic_reconstruction", MI_TRUE);
+   }
 
    /* If we want all of the values from the scanditronix header, get them */
    if (copy_all_header) {
