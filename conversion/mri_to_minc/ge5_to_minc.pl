@@ -153,7 +153,9 @@ sub ge5_read_file_info {
     $fovy = &unpack_value(*image_hdr, 38, 'f');
     if ($fovy == 0) {$fovy = $fovx};
     $file_info{'colstep'} = -$fovx / $file_info{'width'};
-    $file_info{'rowstep'} = -$fovy / $file_info{'height'};
+#   Being fancy doesn't work - just assume square pixels
+#    $file_info{'rowstep'} = -$fovy / $file_info{'height'};
+    $file_info{'rowstep'} = $file_info{'colstep'};
     local($xcentre, $ycentre, $zcentre) = 
         &unpack_value(*image_hdr, 130, 'f3');
     local($xnorm, $ynorm, $znorm) = 
