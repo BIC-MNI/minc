@@ -38,6 +38,7 @@ typedef  struct
 
     Real            min_value;
     Real            max_value;
+    double          fill_value;
     Real            value_scale;
     Real            value_translation;
     int             sizes[MAX_DIMENSIONS];
