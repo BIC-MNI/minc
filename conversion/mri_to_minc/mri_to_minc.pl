@@ -81,7 +81,7 @@ sub read_next_file {
     # Constants
     $tape_block_size = 8192;
     $tape_sleep = 1;
-    $retry_sleep = 2;
+    $retry_sleep = 1;
     $nretries = 4;
     $nreposition_retries = 4;
 
@@ -124,6 +124,7 @@ sub read_next_file {
         foreach $reposloop (0..$nreposition_retries-1) {
             select(undef, undef, undef, $retry_sleep);
             $tmp_status = system("mt -t $tapedrive rewind");
+            select(undef, undef, undef, $retry_sleep);
             $tmp_status = system("mt -t $tapedrive fsf $cur_file_number")
                 unless ($tmp_status != 0);
             if ($tmp_status == 0) {last;}
