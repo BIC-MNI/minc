@@ -6,7 +6,11 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.2  2001-04-02 14:58:10  neelin
+ * Revision 6.3  2001-08-16 13:32:39  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.2  2001/04/02 14:58:10  neelin
  * Added -keep_real_range option to prevent rescaling of slices on output
  *
  * Revision 6.1  1999/10/19 14:45:28  neelin
@@ -80,7 +84,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.2 2001-04-02 14:58:10 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.3 2001-08-16 13:32:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -254,8 +258,7 @@ public void resample_volumes(Program_Flags *program_flags,
 
    /* If output volume is floating point, write out global max and min */
    if ((ofp->datatype == NC_FLOAT) || (ofp->datatype == NC_DOUBLE)) {
-      (void) ncattput(ofp->mincid, ofp->imgid, MIvalid_range, 
-                      NC_DOUBLE, 2, valid_range);
+      (void) miset_valid_range(ofp->mincid, ofp->imgid, valid_range);
    }
 
    /* Recompute slices and free vectors, if needed */

@@ -19,7 +19,11 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.4  2001-04-24 13:38:40  neelin
+ * Revision 6.5  2001-08-16 13:32:18  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.4  2001/04/24 13:38:40  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.3  2001/04/17 18:40:13  neelin
@@ -89,7 +93,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.4 2001-04-24 13:38:40 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.5 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -440,6 +444,12 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
                                  int excluded_vars[]);
 
 /* From minc_convenience.c */
+public int miget_datatype(int cdfid, int imgid, 
+                          nc_type *datatype, int *is_signed);
+public void miget_default_range(nc_type datatype, int is_signed, 
+                                double default_range[]);
+public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
+public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
 public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);
 public int miattget_pointer(int cdfid, int varid, char *name);
 public int miadd_child(int cdfid, int parent_varid, int child_varid);

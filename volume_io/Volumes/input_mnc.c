@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.61 2001-04-24 13:38:48 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.62 2001-08-16 13:32:43 neelin Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -465,6 +465,14 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             }
             min_voxel_found = TRUE;
             max_voxel_found = TRUE;
+        }
+
+        /* Check for float image and cast the valid range to float to
+           handle potential float/double rounding errors */
+        if ( file_datatype == NC_FLOAT )
+        {
+            valid_range[0] = (float) valid_range[0];
+            valid_range[1] = (float) valid_range[1];
         }
     }
 

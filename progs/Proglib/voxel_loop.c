@@ -7,7 +7,11 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.4  2001-04-24 13:38:40  neelin
+ * Revision 6.5  2001-08-16 13:32:27  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.4  2001/04/24 13:38:40  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.3  2001/04/17 18:40:15  neelin
@@ -82,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.4 2001-04-24 13:38:40 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.5 2001-08-16 13:32:27 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1198,6 +1202,7 @@ private void do_voxel_loop(Loop_Options *loop_options,
    int outer_file_loop;
    int dummy_index;
    int input_curfile;
+   nc_type file_datatype;
 
    /* Get number of files, buffers, etc. */
    num_output_files = get_output_numfiles(loopfile_info);
@@ -1536,6 +1541,14 @@ private void do_voxel_loop(Loop_Options *loop_options,
          }
          valid_range[0] = global_minimum[ofile];
          valid_range[1] = global_maximum[ofile];
+
+         /* Force truncation of valid_range to match float image */
+         if ((ncvarinq(outmincid, imgid, NULL, &file_datatype, NULL, NULL,
+                       NULL) != MI_ERROR) && (file_datatype == NC_FLOAT)) {
+            valid_range[0] = (float) valid_range[0];
+            valid_range[1] = (float) valid_range[1];
+         }
+
          (void) ncattput(outmincid, imgid, MIvalid_range, NC_DOUBLE, 2,
                          (void *) valid_range);
       }

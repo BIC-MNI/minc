@@ -11,7 +11,11 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.5  2001-04-24 13:38:42  neelin
+ * Revision 6.6  2001-08-16 13:32:33  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.5  2001/04/24 13:38:42  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.4  2001/04/17 18:40:17  neelin
@@ -75,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.5 2001-04-24 13:38:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.6 2001-08-16 13:32:33 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -190,6 +194,7 @@ public int main(int argc, char *argv[])
    char **input_files;
    int first_mincid, imgid;
    double valid_range[2];
+   nc_type file_datatype;
 
    /* Allocate the concat_info structure */
    concat_info = MALLOC(sizeof(*concat_info));
@@ -234,6 +239,15 @@ public int main(int argc, char *argv[])
       }
       valid_range[0] = concat_info->global_minimum;
       valid_range[1] = concat_info->global_maximum;
+
+      /* Force truncation of valid_range to match float image */
+      if ((ncvarinq(concat_info->output_mincid, imgid, 
+                    NULL, &file_datatype, NULL, NULL, NULL) != MI_ERROR) && 
+          (file_datatype == NC_FLOAT)) {
+         valid_range[0] = (float) valid_range[0];
+         valid_range[1] = (float) valid_range[1];
+      }
+
       (void) ncattput(concat_info->output_mincid, imgid, MIvalid_range, 
                       NC_DOUBLE, 2, (void *) valid_range);
    }

@@ -21,7 +21,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.2  2001-04-17 18:40:13  neelin
+ * Revision 6.3  2001-08-16 13:32:18  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.2  2001/04/17 18:40:13  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -67,9 +71,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.2 2001-04-17 18:40:13 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.3 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)";
 #endif
 
+#include <type_limits.h>
 #include <minc_private.h>
 #include <minc_varlists.h>
 
@@ -91,6 +96,272 @@ private int MI_add_stdgroup(int cdfid, int varid);
 private int MI_is_in_list(char *string, char *list[]);
 
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miget_datatype
+@INPUT      : cdfid    - cdf file id
+              imgid    - image variable id
+@OUTPUT     : datatype
+              is_signed - TRUE if type is signed
+@RETURNS    : MI_ERROR when an error occurs.
+@DESCRIPTION: Gets the datatype and sign of the image variable.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : August 15, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miget_datatype(int cdfid, int imgid, 
+                          nc_type *datatype, int *is_signed)
+{
+   int old_ncopts;
+   char attstr[MI_MAX_ATTSTR_LEN];
+
+   /* Get the type information for the variable */
+   if (ncvarinq(cdfid, imgid, NULL, datatype, NULL, NULL, NULL) == MI_ERROR)
+      return MI_ERROR;
+
+   /* Save the ncopts value */
+   old_ncopts = ncopts;
+   ncopts = 0;
+
+   /* Get the sign information */
+   if ((miattgetstr(cdfid, imgid, MIsigntype, 
+                    MI_MAX_ATTSTR_LEN, attstr) != NULL)) {
+      
+      if (strcmp(attstr, MI_SIGNED) == 0)
+         *is_signed = TRUE;
+      else if (strcmp(attstr, MI_UNSIGNED) == 0)
+         *is_signed = FALSE;
+      else if (*datatype == NC_BYTE)
+         *is_signed = FALSE;
+      else
+         *is_signed = TRUE;
+      
+   }
+
+   /* Restore ncopts */
+   ncopts = old_ncopts;
+
+   return MI_NOERROR;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miget_default_range
+@INPUT      : datatype
+              is_signed - TRUE if type is signed
+@OUTPUT     : default_range - array containing default range for variable
+@RETURNS    : MI_ERROR when an error occurs.
+@DESCRIPTION: Gets the default range for a data type.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : August 15, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void miget_default_range(nc_type datatype, int is_signed, 
+                                double default_range[])
+{
+   switch (datatype) {
+   case NC_INT:
+      default_range[0] = (is_signed) ? INT_MIN : 0;
+      default_range[1] = (is_signed) ? INT_MAX : UINT_MAX; 
+      break;
+   case NC_SHORT:
+      default_range[0] = (is_signed) ? SHRT_MIN : 0;
+      default_range[1] = (is_signed) ? SHRT_MAX : USHRT_MAX; 
+      break;
+   case NC_BYTE:
+      default_range[0] = (is_signed) ? SCHAR_MIN : 0;
+      default_range[1] = (is_signed) ? SCHAR_MAX : UCHAR_MAX; 
+      break;
+   case NC_FLOAT:
+      default_range[0] = -FLT_MAX;
+      default_range[1] = FLT_MAX;
+      break;
+   case NC_DOUBLE:
+      default_range[0] = -DBL_MAX;
+      default_range[1] = DBL_MAX;
+      break;
+   default: 
+      default_range[0]= MI_DEFAULT_MIN;
+      default_range[1]= MI_DEFAULT_MAX;
+      break;
+   }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miget_valid_range
+@INPUT      : cdfid    - cdf file id
+              imgid    - image variable id
+@OUTPUT     : valid_range - array containing valid min and max of image
+@RETURNS    : MI_ERROR when an error occurs.
+@DESCRIPTION: Gets the valid range for an image variable. Ensures that
+              the values are cast to the appropriate type to ensure
+              that they are correctly truncated. This is particularly
+              important for float images. If the range cannot be found,
+              then use the default values.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : August 15, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miget_valid_range(int cdfid, int imgid, double valid_range[])
+{
+   int old_ncopts;
+   int status;
+   int length;
+   nc_type datatype;
+   int is_signed;
+   double temp;
+
+   /* Get the type information for the variable */
+   if (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR)
+      return MI_ERROR;
+
+   /* Save the ncopts value */
+   old_ncopts = ncopts;
+   ncopts = 0;
+
+   /* Get valid range */
+   status=miattget(cdfid, imgid, MIvalid_range, 
+                   NC_DOUBLE, 2, valid_range, &length);
+
+   /* If not there, look for the max and min */
+   if ((status==MI_ERROR) || (length!=2)) {
+
+      /* Get the default range for the type */
+      miget_default_range(datatype, is_signed, valid_range);
+
+      /* Try to read the valid max */
+      (void) miattget1(cdfid, imgid, MIvalid_max, NC_DOUBLE, &valid_range[1]);
+
+      /* Try to read the valid min */
+      (void) miattget1(cdfid, imgid, MIvalid_min, NC_DOUBLE, &valid_range[0]);
+
+   }
+
+   /* Restore the ncopts value */
+   ncopts = old_ncopts;
+
+   /* Make sure that the first element is the minimum */
+   if (valid_range[1] < valid_range[0]) {
+      temp = valid_range[0];
+      valid_range[0] = valid_range[1];
+      valid_range[1] = temp;
+   }
+
+   /* Cast to the appropriate type and back to make sure that things are
+      rounded/truncated properly. This is only really needed for floats */
+   switch (datatype) {
+   case NC_INT:
+   case NC_SHORT:
+   case NC_BYTE:
+      if (is_signed) {
+         valid_range[0] = (int) valid_range[0];
+         valid_range[1] = (int) valid_range[1];
+      }
+      else {
+         valid_range[0] = (unsigned int) valid_range[0];
+         valid_range[1] = (unsigned int) valid_range[1];
+      }
+      break;
+   case NC_FLOAT:
+      valid_range[0] = (float) valid_range[0];
+      valid_range[1] = (float) valid_range[1];
+      break;
+   }
+
+   return MI_NOERROR;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miset_valid_range
+@INPUT      : cdfid    - cdf file id
+              imgid    - image variable id
+              valid_range - array containing valid min and max of image
+@OUTPUT     : (none)
+@RETURNS    : MI_ERROR when an error occurs.
+@DESCRIPTION: Sets the valid range for an image variable. Ensures that
+              the attribute types match the image variable type.
+              This is particularly important for float images because of 
+              potential rounding when going from double to float.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF and MINC routines.
+@CREATED    : August 15, 2001
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miset_valid_range(int cdfid, int imgid, double valid_range[])
+{
+   nc_type datatype;
+   int is_signed;
+   int status;
+   char *attname;
+   unsigned char ubval[2];
+   signed char sbval[2];
+   unsigned short usval[2];
+   short ssval[2];
+   unsigned int uival[2];
+   int sival[2];
+   float fval[2];
+
+   /* Get the type information for the variable */
+   if (miget_datatype(cdfid, imgid, &datatype, &is_signed) == MI_ERROR)
+      return MI_ERROR;
+
+   /* Cast to the appropriate type and save */
+   attname = MIvalid_range;
+   switch (datatype) {
+   case NC_BYTE:
+      if (is_signed) {
+         ubval[0] = valid_range[0];
+         ubval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, ubval);
+      }
+      else {
+         sbval[0] = valid_range[0];
+         sbval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, sbval);
+      }
+      break;
+   case NC_SHORT:
+      if (is_signed) {
+         usval[0] = valid_range[0];
+         usval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, usval);
+      }
+      else {
+         ssval[0] = valid_range[0];
+         ssval[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, ssval);
+      }
+      break;
+   case NC_INT:
+      if (is_signed) {
+         uival[0] = valid_range[0];
+         uival[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, uival);
+      }
+      else {
+         sival[0] = valid_range[0];
+         sival[1] = valid_range[1];
+         status = ncattput(cdfid, imgid, attname, datatype, 2, sival);
+      }
+      break;
+   case NC_FLOAT:
+      fval[0] = valid_range[0];
+      fval[1] = valid_range[1];
+      status = ncattput(cdfid, imgid, attname, datatype, 2, fval);
+      break;
+   default:
+      status = ncattput(cdfid, imgid, attname, NC_DOUBLE, 2, valid_range);
+      break;
+   }
+
+   return status;
+
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattput_pointer

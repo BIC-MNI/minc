@@ -11,7 +11,11 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.7  2001-04-24 13:38:45  neelin
+ * Revision 6.8  2001-08-16 13:32:39  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.7  2001/04/24 13:38:45  neelin
  * Replaced NC_NAT with MI_ORIGINAL_TYPE.
  *
  * Revision 6.6  2001/04/17 18:40:22  neelin
@@ -139,7 +143,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.7 2001-04-24 13:38:45 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.8 2001-08-16 13:32:39 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -728,54 +732,16 @@ public void get_file_info(char *filename, int initialized_volume_def,
    ncopts = NC_VERBOSE | NC_FATAL;
 
    /* Get information about datatype dimensions of variable */
-   (void) ncvarinq(file_info->mincid, file_info->imgid, NULL, 
-                   &file_info->datatype, &file_info->ndims, dim, NULL);
-
-   /* Get sign attriubte */
-   if (file_info->datatype == NC_BYTE)
-      file_info->is_signed = FALSE;
-   else
-      file_info->is_signed = TRUE;
-   ncopts = 0;
-   if ((miattgetstr(file_info->mincid, file_info->imgid, MIsigntype, 
-                    MI_MAX_ATTSTR_LEN, attstr) != NULL)) {
-      if (strcmp(attstr, MI_SIGNED) == 0)
-         file_info->is_signed = TRUE;
-      else if (strcmp(attstr, MI_UNSIGNED) == 0)
-         file_info->is_signed = FALSE;
-   }
-   ncopts = NC_VERBOSE | NC_FATAL;
+   (void) miget_datatype(file_info->mincid, file_info->imgid, 
+                         &file_info->datatype, &file_info->is_signed);
 
    /* Get valid max and min */
-   ncopts = 0;
-   status=miattget(file_info->mincid, file_info->imgid, MIvalid_range, 
-                   NC_DOUBLE, 2, vrange, &length);
-   if ((status!=MI_ERROR) && (length==2)) {
-      if (vrange[1] > vrange[0]) {
-         file_info->vrange[0] = vrange[0];
-         file_info->vrange[1] = vrange[1];
-      }
-      else {
-         file_info->vrange[0] = vrange[1];
-         file_info->vrange[1] = vrange[0];
-      }
-   }
-   else {
-      status=miattget1(file_info->mincid, file_info->imgid, MIvalid_max, 
-                       NC_DOUBLE, &(file_info->vrange[1]));
-      if (status==MI_ERROR)
-         file_info->vrange[1] =
-            get_default_range(MIvalid_max, file_info->datatype, 
-                              file_info->is_signed);
-  
-      status=miattget1(file_info->mincid, file_info->imgid, MIvalid_min, 
-                       NC_DOUBLE, &(file_info->vrange[0]));
-      if (status==MI_ERROR)
-         file_info->vrange[0] =
-            get_default_range(MIvalid_min, file_info->datatype, 
-                              file_info->is_signed);
-   }
-   ncopts = NC_VERBOSE | NC_FATAL;
+   (void) miget_valid_range(file_info->mincid, file_info->imgid, 
+                            file_info->vrange);
+
+   /* Get information about dimensions */
+   (void) ncvarinq(file_info->mincid, file_info->imgid, NULL, NULL,
+                   &file_info->ndims, dim, NULL);
 
    /* Set variables for keeping track of spatial dimensions */
    axis_counter = 0;                   /* Keeps track of values for axes */
@@ -1293,8 +1259,8 @@ public void create_output_file(char *filename, int clobber,
                           out_file->mincid, out_file->imgid);
    (void) miattputstr(out_file->mincid, out_file->imgid, MIcomplete,
                       MI_FALSE);
-   (void) ncattput(out_file->mincid, out_file->imgid, MIvalid_range, 
-                   NC_DOUBLE, 2, out_file->vrange);
+   (void) miset_valid_range(out_file->mincid, out_file->imgid, 
+                            out_file->vrange);
    if (out_file->is_signed)
       (void) miattputstr(out_file->mincid, out_file->imgid,
                          MIsigntype, MI_SIGNED);

@@ -34,7 +34,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.2  2001-04-17 18:40:12  neelin
+ * Revision 6.3  2001-08-16 13:32:18  neelin
+ * Partial fix for valid_range of different type from image (problems
+ * arising from double to float conversion/rounding). NOT COMPLETE.
+ *
+ * Revision 6.2  2001/04/17 18:40:12  neelin
  * Modifications to work with NetCDF 3.x
  * In particular, changed NC_LONG to NC_INT (and corresponding longs to ints).
  * Changed NC_UNSPECIFIED to NC_NAT.
@@ -112,7 +116,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.2 2001-04-17 18:40:12 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.3 2001-08-16 13:32:18 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -967,6 +971,13 @@ private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
    }
    ncopts = oldncopts;
 
+   /* Handle possible rounding errors in having double valid_range for
+      float image type */
+   if (icvp->var_type == NC_FLOAT) {
+      icvp->var_vmax = (float) icvp->var_vmax;
+      icvp->var_vmin = (float) icvp->var_vmin;
+   }
+
    MI_RETURN(MI_NOERROR);
 }
 
@@ -1154,6 +1165,13 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
          icvp->derv_imgmax = icvp->user_imgmax;
          icvp->derv_imgmin = icvp->user_imgmin;
       }
+   }
+
+   /* Handle possible rounding errors in having double image-max for
+      float image type */
+   if (icvp->var_type == NC_FLOAT) {
+      icvp->derv_imgmax = (float) icvp->derv_imgmax;
+      icvp->derv_imgmin = (float) icvp->derv_imgmin;
    }
 
    MI_RETURN(MI_NOERROR);
@@ -1570,6 +1588,7 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
    long mmcoords[MAX_VAR_DIMS];   /* Coordinates for max/min variable */
    double usr_imgmax, usr_imgmin;
    double var_imgmax, var_imgmin;
+   double var_imgmax_true, var_imgmin_true;
    double usr_vmax, usr_vmin;
    double var_vmax, var_vmin;
    double usr_scale;
@@ -1628,6 +1647,26 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
       usr_vmin = icvp->user_vmin;
    }
 
+   /* Save real var_imgmin/max for fillvalue checking later */
+   var_imgmax_true = var_imgmax;
+   var_imgmin_true = var_imgmin;
+
+   /* Even though we have already carefully set the vmax/min and imgmax/min
+      values to handle the floating point case, we can still have problems
+      with the scale calculations (rounding errors) if full range max/min 
+      are used (-FLT_MAX to FLT_MAX). To avoid this, we just force the
+      values to 0 and 1 which will give the correct scale. That is why 
+      we save the true values above. */
+
+   if (icvp->derv_usr_float) {
+      usr_imgmax = usr_vmax = MI_DEFAULT_MAX;
+      usr_imgmin = usr_vmin = MI_DEFAULT_MIN;
+   }
+   if (icvp->derv_var_float) {
+      var_imgmax = var_vmax = MI_DEFAULT_MAX;
+      var_imgmin = var_vmin = MI_DEFAULT_MIN;
+   }
+
    /* Calculate scale and offset for MI_PRIV_GET */
 
    /* Scale */
@@ -1676,14 +1715,14 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
             type is floating point or not */
          if (operation == MI_PRIV_PUT) {
             if (icvp->derv_usr_float) {
-               icvp->fill_valid_min = var_imgmin;
-               icvp->fill_valid_max = var_imgmax;
+               icvp->fill_valid_min = var_imgmin_true;
+               icvp->fill_valid_max = var_imgmax_true;
             }
             else if (usr_scale != 0.0) {
                icvp->fill_valid_min = 
-                  usr_vmin + (var_imgmin - usr_imgmin) / usr_scale;
+                  usr_vmin + (var_imgmin_true - usr_imgmin) / usr_scale;
                icvp->fill_valid_max = 
-                  usr_vmin + (var_imgmax - usr_imgmin) / usr_scale;
+                  usr_vmin + (var_imgmax_true - usr_imgmin) / usr_scale;
             }
             else {
                icvp->fill_valid_min = usr_vmin;
