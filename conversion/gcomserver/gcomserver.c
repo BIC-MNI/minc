@@ -4,10 +4,13 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.9  1994-01-14 10:45:04  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.10  1994-04-06 11:12:01  neelin
+@MODIFIED   : Added switch to increase logging on debug.
 @MODIFIED   :
+ * Revision 1.9  94/01/14  10:45:04  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.8  93/12/14  16:35:57  neelin
  * Set Keep_files and input tracing according to macros so that 
  * gcomserver-debug can turn them on.
@@ -55,7 +58,12 @@ typedef enum {
 } Server_state;
 
 /* Do we do logging? */
-int Do_logging = LOW_LOGGING;
+int Do_logging = 
+#ifndef DO_HIGH_LOGGING
+   LOW_LOGGING;
+#else
+   HIGH_LOGGING;
+#endif
 
 /* Do we keep files or are they temporary? */
 static int Keep_files = 
