@@ -365,28 +365,28 @@ expr   :   '(' expr ')'
         $$->expr[1] = $3;
         $$->expr[2] = $5; }
 
-   |   IF '(' expr ')' '{' exprlist '}' ELSE '{' exprlist '}'
-      { $$ = new_node(3, node_is_scalar($6));
+   |   IF '(' expr ')' expr ELSE expr
+      { $$ = new_node(3, node_is_scalar($5));
         $$->pos = $1;
         $$->type = NODETYPE_IFELSE;
         $$->expr[0] = $3;
-        $$->expr[1] = $6;
-        $$->expr[2] = $10; }
+        $$->expr[1] = $5;
+        $$->expr[2] = $7; }
 
-   |   IF '(' expr ')' '{' exprlist '}'
-      { $$ = new_node(2, node_is_scalar($6));
+   |   IF '(' expr ')' expr
+      { $$ = new_node(2, node_is_scalar($5));
         $$->pos = $1;
         $$->type = NODETYPE_IFELSE;
         $$->expr[0] = $3;
-        $$->expr[1] = $6; }
+        $$->expr[1] = $5; }
 
-   |   FOR IDENT IN expr  '{' exprlist '}'
+   |   FOR '{' IDENT IN expr '}' expr
       { $$ = new_scalar_node(2);
         $$->pos = $1;
         $$->type = NODETYPE_FOR;
-        $$->ident = $2;
-        $$->expr[0] = $4;
-        $$->expr[1] = $6; }
+        $$->ident = $3;
+        $$->expr[0] = $5;
+        $$->expr[1] = $7; }
 
    |   IDENT
       { $$ = new_node(0, ident_is_scalar($1));

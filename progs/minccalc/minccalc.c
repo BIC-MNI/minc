@@ -13,13 +13,14 @@ University of Queensland
 
 This is predominately a rehash of mincmath by Peter Neelin
 
-Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
-Mon May 28 01:00:01 EST 2000 - First minc version - Andrew Janke 
-Thu Oct  5 17:09:12 EST 2000 - First alpha version
-Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
-
  * $Log: minccalc.c,v $
- * Revision 1.6  2001-05-02 16:27:19  neelin
+ * Revision 1.7  2001-05-04 15:40:33  neelin
+ * Added -outfile option.
+ * Changed syntax of for to use curlies around first part.
+ * Changed syntax of for and if to evaluate an expression in the body, rather
+ * than an expression list in curlies.
+ *
+ * Revision 1.6  2001/05/02 16:27:19  neelin
  * Fixed handling of invalid values. Added NaN constant. Force copy of
  * data when assigning to a symbol so that s1 = s2 = expr does the right
  * thing (s1 and s2 should be separate copies of the data). Updated man
@@ -46,10 +47,15 @@ Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
  * Added CVS logging.
  *
 
+Thu Dec 21 17:26:46 EST 2000 - Added use of voxel_loop
+Thu Oct  5 17:09:12 EST 2000 - First alpha version
+Mon May 28 01:00:01 EST 2000 - First minc version - Andrew Janke 
+Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
+
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.6 2001-05-02 16:27:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.7 2001-05-04 15:40:33 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,8 +97,16 @@ public void do_math(void *caller_data, long num_voxels,
                     int output_num_buffers, int output_vector_length,
                     double *output_data[], Loop_Info *loop_info);
 public char **read_file_names(char *filelist, int *num_files);
+public char *read_expression_file(char *filename);
+public int get_list_option(char *dst, char *key, int argc, char **argv);
 
 /* Argument variables */
+int Output_list_size = 0;
+int Output_list_alloc = 0;
+struct {
+   char *symbol;
+   char *file;
+} *Output_list = NULL;
 int      clobber =                     FALSE;
 int      verbose =                     TRUE;
 int      debug =                       FALSE;
@@ -180,6 +194,8 @@ ArgvInfo argTable[] = {
           "Expression to use in calculations."},  
    {"-expfile",  ARGV_STRING,  (char*)1,    (char*) &expr_file,
           "Name of file containing expression."}, 
+   {"-outfile",  ARGV_GENFUNC,  (char*)get_list_option, (char*) &Output_list,
+          "Symbol to save in an output file (2 args)."}, 
    {"-eval_width",  ARGV_INT,  (char*)1,    (char*) &eval_width,
           "Number of voxels to evaluate simultaneously."}, 
    {NULL, ARGV_END, NULL, NULL, NULL}
@@ -188,6 +204,7 @@ ArgvInfo argTable[] = {
 extern int yydebug;
 sym_t      rootsym;
 vector_t   A;
+scalar_t   *Output_values;
 
 /* Main program */
 public int main(int argc, char *argv[]){
@@ -199,7 +216,6 @@ public int main(int argc, char *argv[]){
    int i;
    ident_t ident;
    scalar_t scalar;
-      
 
    /* Save time stamp and args */
    arg_string = time_stamp(argc, argv);
@@ -214,13 +230,26 @@ public int main(int argc, char *argv[]){
         "       %s -help\n\n", pname);
       exit(EXIT_FAILURE);
    }
-   nout = 1;
-   outfiles = &argv[argc-1];
+
+   /* Get output file names */
+   nout = (Output_list == NULL ? 1 : Output_list_size);
+   outfiles = MALLOC(nout * sizeof(*outfiles));
+   if (Output_list == NULL) {
+      outfiles[0] = argv[argc-1];
+   }
+   else {
+      for (i=0; i < Output_list_size; i++) {
+         outfiles[i] = Output_list[i].file;
+      }
+   }
 
    /* Get the list of input files either from the command line or
-      from a file, or report an error if both are specified */
+      from a file, or report an error if both are specified.
+      Note that if -outfile is given then there is no output file name
+      left on argv after option parsing. */
 
    nfiles = argc - 2;
+   if (Output_list != NULL) nfiles++;
    if (filelist == NULL) {
       infiles = &argv[1];
    }
@@ -252,36 +281,7 @@ public int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
    }
    else if (expression == NULL) {
-      struct stat statbuf;
-      size_t size;
-      FILE *fp;
-
-      if (stat(expr_file, &statbuf) < 0) {
-         (void) fprintf(stderr, "Unable to stat expression file \"%s\"\n",
-                        expr_file);
-         exit(EXIT_FAILURE);
-      }
-      size = statbuf.st_size;
-      if (size <= 0) {
-         (void) fprintf(stderr, "Zero-size expression file \"%s\"\n",
-                        expr_file);
-         exit(EXIT_FAILURE);
-      }
-      else {
-         expression = MALLOC(size+1);
-         if ((fp=fopen(expr_file, "r")) == NULL) {
-            (void) fprintf(stderr, "Unable to open expression file \"%s\"\n",
-                           expr_file);
-            exit(EXIT_FAILURE);
-         }
-         if (fread(expression, (size_t) 1, size, fp) != size) {
-            (void) fprintf(stderr, "Error reading expression file \"%s\"\n",
-                           expr_file);
-            exit(EXIT_FAILURE);
-         }
-         fclose(fp);
-         expression[size] = '\0';
-      }
+      expression = read_expression_file(expr_file);
    }
 
    /* Parse expression argument */
@@ -315,7 +315,22 @@ public int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
    }
    vector_incr_ref(A);
-   
+
+   /* Add output symbols to the table */
+   if (Output_list == NULL) {
+      Output_values = NULL;
+   }
+   else {
+      Output_values = MALLOC(Output_list_size * sizeof(*Output_values));
+      for (i=0; i < Output_list_size; i++) {
+         ident = ident_lookup(Output_list[i].symbol);
+         scalar = new_scalar(eval_width);
+         sym_set_scalar(eval_width, NULL, scalar, ident, rootsym);
+         scalar_free(scalar);
+         Output_values[i] = sym_lookup_scalar(ident, rootsym);
+      }
+   }
+
    /* Set default copy_all_header according to number of input files */
    if (copy_all_header == DEFAULT_BOOL)
       copy_all_header = (nfiles == 1);
@@ -331,7 +346,8 @@ public int main(int argc, char *argv[]){
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
-   set_loop_datatype(loop_options, datatype, is_signed, valid_range[0], valid_range[1]);
+   set_loop_datatype(loop_options, datatype, is_signed, 
+                     valid_range[0], valid_range[1]);
    set_loop_copy_all_header(loop_options, copy_all_header);
    set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
    set_loop_check_dim_info(loop_options, check_dim_info);
@@ -343,6 +359,10 @@ public int main(int argc, char *argv[]){
    /* Clean up */
    vector_free(A);
    sym_leave_scope(rootsym);
+   if (expr_file != NULL) FREE(expression);
+   FREE(outfiles);
+   if (Output_list != NULL) FREE(Output_list);
+   if (Output_values != NULL) FREE(Output_values);
    exit(EXIT_SUCCESS);
 }
 
@@ -353,7 +373,7 @@ public int main(int argc, char *argv[]){
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine doing math operations.
 @METHOD     : 
-@GLOBALS    : 
+@GLOBALS    : Output_values, A
 @CALLS      : 
 @CREATED    : April 25, 1995 (Peter Neelin)
 @MODIFIED   : Thu Dec 21 17:08:40 EST 2000 (Andrew Janke - rotor@cmr.uq.edu.au)
@@ -365,10 +385,11 @@ public void do_math(void *caller_data, long num_voxels,
                     double *output_data[],
                     Loop_Info *loop_info){
    long ivox, ibuff, ivalue, nvox;
-   scalar_t scalar;
+   scalar_t scalar, *output_scalars;
+   int num_output, iout;
 
    /* Check arguments */
-   if ((output_num_buffers != 1) || 
+   if ((output_num_buffers < 1) || 
        (output_vector_length != input_vector_length)) {
       (void) fprintf(stderr, "Bad arguments to do_math!\n");
       exit(EXIT_FAILURE);
@@ -377,25 +398,44 @@ public void do_math(void *caller_data, long num_voxels,
    /* Loop through the voxels */
    for (ivox=0; ivox < num_voxels*input_vector_length; ivox+=eval_width) {
 
+      /* Figure out how many voxels to work on at once */
       nvox = eval_width;
       if (ivox + nvox > num_voxels) nvox = num_voxels - ivox;
 
+      /* Copy the data into the A vector */
       for (ivalue=0; ivalue < nvox; ivalue++) {
          for (ibuff=0; ibuff < input_num_buffers; ibuff++){
             A->el[ibuff]->vals[ivalue] = input_data[ibuff][ivox+ivalue];
          }
       }
 
+      /* Some debugging */
       if (debug) {
          (void) fprintf(stderr, "\n===New voxel===\n");
       }
-      
+
+      /* Evaluate the expression */
       scalar = eval_scalar((int) nvox, NULL, root, rootsym);
 
-      for (ivalue=0; ivalue < nvox; ivalue++) {
-         output_data[0][ivox+ivalue] = scalar->vals[ivalue];
+      /* Get the list of scalar values to write out */
+      if (Output_values == NULL) {
+         num_output = 1;
+         output_scalars = &scalar;
+      }
+      else {
+         num_output = Output_list_size;
+         output_scalars = Output_values;
       }
 
+      /* Copy the scalar values into the right buffers */
+      for (iout=0; iout < num_output; iout++) {
+         for (ivalue=0; ivalue < nvox; ivalue++) {
+            output_data[iout][ivox+ivalue] = 
+               output_scalars[iout]->vals[ivalue];
+         }
+      }
+
+      /* Free things up */
       scalar_free(scalar);
 
       if (debug) {
@@ -493,5 +533,143 @@ public char **read_file_names(char *filelist, int *num_files)
    *num_files = nfiles;
 
    return files;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_expression_file
+@INPUT      : filename - Name of file from which to read expression
+@OUTPUT     : (none)
+@RETURNS    : String containing expression - must be freed by caller.
+@DESCRIPTION: Reads in an expression from a file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 3, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public char *read_expression_file(char *filename)
+{
+   struct stat statbuf;
+   size_t size;
+   FILE *fp;
+   char *expression;
+
+   /* Get the size of the file */
+   if (stat(filename, &statbuf) < 0) {
+      (void) fprintf(stderr, "Unable to stat expression file \"%s\"\n",
+                     filename);
+      exit(EXIT_FAILURE);
+   }
+   size = statbuf.st_size;
+   if (size == 0) {
+      (void) fprintf(stderr, "Zero-size expression file \"%s\"\n",
+                     filename);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get space */
+   expression = MALLOC(size+1);
+
+   /* Open the file */
+   if ((fp=fopen(filename, "r")) == NULL) {
+      (void) fprintf(stderr, "Unable to open expression file \"%s\"\n",
+                     filename);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Read the expression */
+   if (fread(expression, (size_t) 1, size, fp) != size) {
+      (void) fprintf(stderr, "Error reading expression file \"%s\"\n",
+                     filename);
+      exit(EXIT_FAILURE);
+   }
+   expression[size] = '\0';
+
+   /* Close the file */
+   (void) fclose(fp);
+
+   /* Return the expression */
+   return expression;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_list_option
+@INPUT      : dst - client data passed by ParseArgv
+              key - matching key in argv
+              argc - number of arguments passed in
+              argv - argument list
+@OUTPUT     : (none)
+@RETURNS    : Number of arguments left in argv list.
+@DESCRIPTION: Gets arguments from the command line and appends them
+              to a list, chosen based on key.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : May 3, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int get_list_option(char *dst, char *key, int argc, char **argv)
+     /* ARGSUSED */
+{
+   enum {OPT_OUTPUT_SYMBOL} option_type;
+   void **list;
+   size_t entry_size;
+   int *list_size, *list_alloc, index;
+   int num_args, iarg;
+
+   /* Check the key */
+   list = (void **) dst;
+   if (strcmp(key, "-outfile") == 0) {
+      option_type = OPT_OUTPUT_SYMBOL;
+      list_size = &Output_list_size;
+      list_alloc = &Output_list_alloc;
+      entry_size = sizeof(Output_list[0]);
+      num_args = 2;
+   }
+   else {
+      (void) fprintf(stderr, 
+                     "Internal error - unrecognized key in get_list_option\n");
+      exit(EXIT_FAILURE);
+   }
+
+   /* Check for following arguments */
+   if (argc < num_args) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires %d additional arguments\n",
+                     key, num_args);
+      exit(EXIT_FAILURE);
+   }
+
+   /* Get more space */
+   (*list_size)++;
+   if (*list_size > *list_alloc) {
+      *list_alloc += 10;
+      if (*list == NULL) {
+         *list = 
+            MALLOC(*list_alloc * entry_size);
+      }
+      else {
+         *list = 
+            REALLOC(*list, 
+                    *list_alloc * entry_size);
+      }
+   }
+   index = *list_size - 1;
+
+   /* Save the values */
+   if (option_type == OPT_OUTPUT_SYMBOL) {
+      Output_list[index].symbol = argv[0];
+      Output_list[index].file = argv[1];
+   }
+
+   /* Modify the argument list */
+   if (num_args > 0) {
+      for (iarg=0; iarg < (argc - num_args); iarg++) {
+         argv[iarg] = argv[iarg + num_args];
+      }
+   }
+
+   return argc - num_args;
+
 }
 

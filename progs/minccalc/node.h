@@ -88,6 +88,7 @@ struct node {
 ident_t       new_ident(const char *);
 const char    *ident_str(ident_t);
 int           ident_is_scalar(ident_t);
+ident_t       ident_lookup(char *string);
 
 node_t      new_node(int, int);
 node_t      new_scalar_node(int);

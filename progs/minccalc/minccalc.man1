@@ -13,7 +13,11 @@ minccalc - perform complex math operations on minc files
 will perform complex, voxel-by-voxel math operations, on one or more
 minc files of the same shape and having the same coordinate sampling,
 producing a single output file. The operations to be performed are
-input using the -expression argument (see EXPRESSIONS).
+input using the -expression argument (see EXPRESSIONS). By default,
+the output file is the last non-option argument. However, if the -outfile 
+option is used, then all non-option arguments are considered input files
+and the output file names come from the -outfile options, of which there
+can be more than one.
 
 .SH OPTIONS
 Note that options can be specified in abbreviated form (as long as
@@ -135,6 +139,14 @@ Specify the expression to evaluate at each voxel (see EXPRESSIONS).
 Specify a file containing an expression to evaluate at each voxel
 (see EXPRESSIONS).
 .P
+.I -outfile
+<symbol> <output file>:
+Specify that output should be written to the specified file, taking values
+from the symbol which should be created in the expression (see the EXAMPLES
+section). If this option is given, then all non-option arguments are
+taken as input files. This option can be used multiple times for multiple
+output files.
+.P
 .I -eval-width
 <value>:
 Specify the number of voxels to process in parallel. Default is 200.
@@ -157,6 +169,10 @@ lists can be used with assignment expressions to make the syntax very
 C-like:
 
    ratio = A[0]/A[1]; A[2]*exp(-ratio)
+
+An expression list in curly brackets is a valid expression and returns
+the value of last expression in the list. This is particularly useful
+in for and if expressions (see below).
 
 There are two types of values in the language: vectors and scalars.
 Scalars literals are floating point numbers or may appear as symbols
@@ -218,31 +234,43 @@ operator, its result can be used in an expression (as in C).
 A few control constructs are provided:
 
 For loops can be created to loop over a vector, assigning each value 
-to a symbol and then evaluating an expression list. This is done with
+to a symbol and then evaluating an expression. This is done with
 expressions of the form
 
-   sum=0; for i in [0:len(A)) {sum=sum+A[i]}
+   sum=0; for {i in [0:len(A))} sum=sum+A[i]; sum
 
 which is equivalent to sum(A). Note that this is similar to using
 
-   sum=0; len{ i in [0:len(A)) | sum=sum+A[i]}
+   sum=0; len{ i in [0:len(A)) | sum=sum+A[i]}; sum
 
 since the for construct is actually an operator (although it is
-usually only used for changing symbol values).
+usually only used for changing symbol values). Note also that without 
+the final "sum", the expression would not be very useful since it would 
+only return the length of the vector. 
+
+As in C, a list of expressions can be specified in curlies:
+
+   sum=sum2=0; 
+   for {i in [0:len(A))} {
+      sum=sum+A[i]; 
+      sum2=sum2+A[i]^2
+   }
 
 There are also a few forms of the if-then-else construct:
 
    A[0]<0 ? 0 : A[0]
 
-   if (A[0]<0) {result=0} else {result=A[0]}
+   if (A[0]<0) result=0 else result=A[0]
 
-The else is optional. Again, the if construct is an operator,
-returning the last value of the expression list that was evaluated. If
-the else expression list is missing, then the value 0 is used when the
-test expression is 0 (false).
+The else is optional. Again, the if construct is an operator, and the 
+then or else expressions can be expression lists in curlies, in which 
+case the value of the last expression is returned. If the else 
+expression is missing, then the value 0 is returned when the test 
+expression is 0 (false).
 
 The principal oddity with the for and if constructs is that unlike C,
-they must be separated from the next expression by a semicolon:
+they must be separated from the next expression by a semicolon, even
+when an expression list in curlies is used:
 
    for i in [0:len(A)) {sum=sum+A[i]} ; sum/len(A)
    if (A[i]>0) {result=2;} else {result=1} ; result*5
@@ -258,26 +286,62 @@ global symbol table is changed.
 
 .SH EXAMPLES
 
-Here is a expression for calculating standard deviation, taking into account
+Here is an expression for calculating standard deviation, taking into account
 the possibility of invalid input data, which is ignored:
 
-   s0 = s1 = s2 = 0;
-   
-   for i in [0:len(A)) {
-      v=A[i];
-      if (!isnan(v)) {
-         s0 = s0 + 1;
-         s1 = s1 + v;
-         s2 = s2 + v*v;
-      }
-   };
-   
-   if (s0 > 1) {
-      sqrt((s2 - s1*s1/s0) / (s0-1));
-   }
-   else {
-      NaN;
-   }; 
+     s0 = s1 = s2 = 0;
+     
+     for { i in [0:len(A)) } {
+        v=A[i];
+        if (!isnan(v)) {
+           s0 = s0 + 1;
+           s1 = s1 + v;
+           s2 = s2 + v*v;
+        }
+     };
+     
+     if (s0 > 1) {
+        sqrt((s2 - s1*s1/s0) / (s0-1));
+     }
+     else {
+        NaN;
+     };
+
+The last if could be changed to return 0 if s0 is > 0 but <= 1. We also
+drop the curly brackets, but then there must not be a ";" between the if
+and the else
+
+     if (s0 > 1)
+        sqrt((s2 - s1*s1/s0) / (s0-1))
+     else if (s0 > 0)
+        0
+     else
+        NaN
+
+If we want both the mean and the standard deviation, we can use the -outfile
+option, invoking the command with
+
+     minccalc -expfile stdev \\
+        -outfile mean mean.mnc \\
+        -outfile stdev stdev.mnc \\
+        infile1.mnc infile2.mnc ...
+
+And using the expression file (with yet another form of if expression):
+
+     s0 = s1 = s2 = 0;
+     
+     for {i in [0:len(A))} {
+        v=A[i];
+        if (!isnan(v)) {
+           s0 = s0 + 1;
+           s1 = s1 + v;
+           s2 = s2 + v*v;
+        }
+     };
+     
+     stdev = (s0 > 1) ? sqrt((s2 - s1*s1/s0) / (s0-1)) : 
+                          (s0 > 0) ? 0 : NaN ;
+     mean  = (s0 > 0) ? s1 / s0 : NaN ;
 
 
 .SH CAVEATS

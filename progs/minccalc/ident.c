@@ -52,3 +52,16 @@ int ident_is_scalar(ident_t id){
    exit(1);
    return 0;
 }
+
+ident_t ident_lookup(char *string)
+{
+   struct intern *i;
+
+   for (i = head; i; i = i->next) {
+      if (strcmp(i->s, string) == 0) {
+         return i->id;
+      }
+   }
+   return -1;
+
+}
