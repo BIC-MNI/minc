@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 AM_CPPFLAGS = -DMINC2
 
-SUBDIRS = . volume_io testdir doc
+SUBDIRS = . volume_io testdir doc libsrc2
 
 # Add these to the include searches.
 #
