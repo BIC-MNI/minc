@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 6.5  1998-11-11 17:05:03  neelin
-@MODIFIED   : Added pointer for client data to dicom structure.
+@MODIFIED   : Revision 6.6  1998-11-11 17:47:38  neelin
+@MODIFIED   : Fixed up freeing of data pointers on file close.
 @MODIFIED   :
+ * Revision 6.5  1998/11/11  17:05:03  neelin
+ * Added pointer for client data to dicom structure.
+ *
  * Revision 6.4  1998/03/23  20:22:37  neelin
  * Added includes for new functions.
  *
@@ -2043,10 +2046,12 @@ public void acr_close_dicom_file(Acr_File *afp)
    /* Close the real stream */
    if (stream_data != NULL) {
       acr_file_free(stream_data->real_afp);
-      FREE(stream_data);
+      if (stream_data->client_data != NULL) {
+         FREE(stream_data->client_data);
+      }
    }
 
-   /* Free the virtual stream */
+   /* Free the virtual stream. This will free the stream data structure. */
    acr_file_free(afp);
 
 }
@@ -2407,6 +2412,11 @@ public void acr_set_dicom_client_data(Acr_File *afp, void *client_data)
    /* Get the structure pointer */
    stream_data = get_dicom_io_pointer(afp);
    if (stream_data == NULL) return;
+
+   /* Check for an old value */
+   if (stream_data->client_data != NULL) {
+      FREE(stream_data->client_data);
+   }
 
    /* Set the pointer */
    stream_data->client_data = client_data;
