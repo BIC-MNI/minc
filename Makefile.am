@@ -113,7 +113,8 @@ LDADD = libvolume_io.la libminc.la
 EXTRA_DIST = GETTING_STARTED $(m4_files) \
 	fortran \
 	libsrc/strdup.c \
-	progs/Get_image_offset/get_image_offset.c
+	progs/Get_image_offset/get_image_offset.c \
+	mni_minc.epm.header
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS
