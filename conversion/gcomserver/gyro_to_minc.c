@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 1.1  1993-11-30 14:41:20  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-12-08 09:13:27  neelin
+@MODIFIED   : Delete group list.
 @MODIFIED   :
+ * Revision 1.1  93/11/30  14:41:20  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -155,6 +158,9 @@ public void free_info(General_Info *general_info, File_Info *file_info,
          FREE(general_info->position[imri]);
       }
    }
+
+   /* Free the group list */
+   acr_delete_group_list(general_info->group_list);
 
    return;
 

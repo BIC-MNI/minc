@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.4  1993-11-30 14:56:18  neelin
-@MODIFIED   : Changed log level.
+@MODIFIED   : Revision 1.5  1993-12-08 09:12:53  neelin
+@MODIFIED   : Delete group list.
 @MODIFIED   :
+ * Revision 1.4  93/11/30  14:56:18  neelin
+ * Changed log level.
+ * 
  * Revision 1.3  93/11/30  14:40:42  neelin
  * Copies to minc format.
  * 
@@ -243,6 +246,7 @@ int main(int argc, char *argv[])
          save_transferred_object(group_list, 
                                  file_prefix, &file_list[cur_file],
                                  &file_info_list[cur_file]);
+         acr_delete_group_list(group_list);
       }
 
    }        /* End of loop over messages */
