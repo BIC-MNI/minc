@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:49:09  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-22 13:12:09  neelin
+@MODIFIED   : Changed to use new Acr_Element_Id stuff
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:49:09  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -24,6 +27,17 @@
 #include <stdio.h>
 #include <minc_def.h>
 #include <acr_nema.h>
+
+/* Message length group and element id */
+#define ACR_GID_MESSLEN 0
+#define ACR_EID_MESSLEN 1
+
+#ifndef lint
+DEFINE_ELEMENT(static, ACR_Message_length, ACR_GID_MESSLEN, ACR_EID_MESSLEN);
+#else
+static Acr_Element_Id ACR_Message_length = NULL;
+#endif
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_message
@@ -240,7 +254,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
 
    /* Check that it contains the message length */
    length_element = 
-      acr_find_group_element(group, ACR_GID_MESSLEN, ACR_EID_MESSLEN);
+      acr_find_group_element(group, ACR_Message_length);
 
    if ((length_element == NULL) ||
        (acr_get_element_length(length_element) != ACR_SIZEOF_LONG)) {

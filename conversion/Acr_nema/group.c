@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:48:52  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-22 13:11:58  neelin
+@MODIFIED   : Changed to use new Acr_Element_Id stuff
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:48:52  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -373,8 +376,7 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_find_element_in_group_list
 @INPUT      : group_list
-              group_id
-              element_id
+              elid
 @OUTPUT     : (none)
 @RETURNS    : element pointer
 @DESCRIPTION: Find an element in a group list
@@ -385,11 +387,15 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public Acr_Element acr_find_group_element(Acr_Group group_list,
-                                          int group_id, int element_id)
+                                          Acr_Element_Id elid)
 {
    Acr_Group group;
    Acr_Element element;
-   int next_id;
+   int next_id, group_id, element_id;
+
+   /* Get group and element id */
+   group_id = elid->group_id;
+   element_id = elid->element_id;
 
    /* Search through groups for group id */
    group = group_list;
