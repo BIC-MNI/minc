@@ -7,7 +7,11 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_file.c,v $
- * Revision 6.1  1999-10-29 17:51:55  neelin
+ * Revision 6.2  2000-03-02 16:20:57  neelin
+ * Clamp maximum voxel to second highest if difference between maximum and
+ * second is greater than difference between second and minimum.
+ *
+ * Revision 6.1  1999/10/29 17:51:55  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:27  neelin
@@ -462,9 +466,9 @@ public void save_minc_image(int icvid, General_Info *general_info,
    int idim;
    Mri_Index imri;
    char *dimname;
-   unsigned short pvalue, pmax, pmin;
+   unsigned short pvalue, pmax, pmin, pmax2;
    double dvalue, maximum, minimum, scale, offset;
-   long ipix, imagepix;
+   long ipix, imagepix, imax;
 
    /* Get the minc file id */
    (void) miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
@@ -521,14 +525,33 @@ public void save_minc_image(int icvid, General_Info *general_info,
                        NC_DOUBLE, NULL, &file_info->coordinate[ECHO]);
    }
 
-   /* Search image for max and min */
+   /* Search image for max and min. If there is a single voxel that is 
+      much brighter than the rest, we want to ignore this. We do this 
+      by finding the two maximum values (pmax and pmax2) and then 
+      comparing the difference between pmin and pmax2 with pmax2 and pmax. 
+      We also keep track of the index of the maximum voxel. If it is too
+      big, then we clamp it to the second largest value. */
    imagepix = general_info->nrows * general_info->ncolumns;
-   pmax = 0;
+   pmax = pmax2 = 0;
    pmin = USHRT_MAX;
+   imax = 0;
    for (ipix=0; ipix < imagepix; ipix++) {
       pvalue = image->data[ipix];
-      if (pvalue > pmax) pmax = pvalue;
-      if (pvalue < pmin) pmin = pvalue;
+      if (pvalue > pmax) {
+         pmax2 = pmax;
+         pmax = pvalue;
+         imax = ipix;
+      }
+      else if (pvalue > pmax2) {
+         pmax2 = pvalue;
+      }
+      if (pvalue < pmin) {
+         pmin = pvalue;
+      }
+   }
+   if (((int) pmax - (int) pmax2) > ((int) pmax2 - (int) pmin)) {
+      pmax = pmax2;
+      image->data[imax] = pmax2;
    }
 
    /* Re-scale the images */
