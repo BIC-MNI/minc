@@ -6,7 +6,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.6  2002-12-08 22:31:34  neelin
+ * Revision 6.7  2004-10-29 13:08:42  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.6  2002/12/08 22:31:34  neelin
  * When a last fragment is received, the dicom watchpoint is only updated when the next read happens, so the peek ahead will fail after the watchpoint test in acr_input_group_with_max.
  *
  * Revision 6.5  2001/11/08 14:17:05  neelin
@@ -113,7 +119,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Private functions */

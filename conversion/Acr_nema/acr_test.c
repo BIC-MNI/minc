@@ -5,7 +5,6 @@
 #define GLOBAL_ELEMENT_DEFINITION
 
 #include <acr_nema.h>
-#include <minc_def.h>
 
 GLOBAL_ELEMENT(ACR_Recognition_code, 0x0, 0x10, LO);
 GLOBAL_ELEMENT(Shadow_Recognition_code, 0x1, 0x10, LO);

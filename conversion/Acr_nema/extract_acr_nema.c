@@ -6,7 +6,13 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: extract_acr_nema.c,v $
- * Revision 6.5  2001-11-08 14:17:05  neelin
+ * Revision 6.6  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.5  2001/11/08 14:17:05  neelin
  * Added acr_test_dicom_file to allow reading of DICOM part 10 format
  * files. This function also calls acr_test_byte_order to set up the stream
  * properly and can be used as a direct replacement for that function.
@@ -71,7 +77,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 #define UNKNOWN_VR_ENCODING ((Acr_VR_encoding_type) -1)

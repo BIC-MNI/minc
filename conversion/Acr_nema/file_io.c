@@ -6,7 +6,13 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.4  2001-11-08 14:17:05  neelin
+ * Revision 6.5  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.4  2001/11/08 14:17:05  neelin
  * Added acr_test_dicom_file to allow reading of DICOM part 10 format
  * files. This function also calls acr_test_byte_order to set up the stream
  * properly and can be used as a direct replacement for that function.
@@ -88,8 +94,13 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
-#include <minc_def.h>
 #include <file_io.h>
+
+/* these are pinched from minc_def.h */
+#define MALLOC(size) ((void *) malloc(size))
+#define FREE(ptr) free(ptr)
+#define REALLOC(ptr, size) ((void *) realloc(ptr, size))
+#define CALLOC(nelem, elsize) ((void *) calloc(nelem, elsize))
 
 /* Define some constants */
 #define ACR_MAX_BUFFER_LENGTH (64*1024)

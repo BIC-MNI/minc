@@ -6,7 +6,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.h,v $
- * Revision 6.1  1999-10-29 17:51:52  neelin
+ * Revision 6.2  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.1  1999/10/29 17:51:52  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -70,6 +76,9 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
+
+#ifndef ELEMENT_H
+#define ELEMENT_H
 
 /* Element type */
 typedef struct Acr_Element {
@@ -192,3 +201,5 @@ public int acr_get_element_numeric_array(Acr_Element element,
                                          int max_values, double values[]);
 public void acr_dump_element_list(FILE *file_pointer, 
                                   Acr_Element element_list);
+
+#endif

@@ -6,7 +6,13 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.19  2001-03-19 18:31:55  neelin
+ * Revision 6.20  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.19  2001/03/19 18:31:55  neelin
  * Modifications to allow opening a stream to stdout (with no input) so
  * that a dicom stream can be captured.
  *
@@ -110,7 +116,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.19 2001-03-19 18:31:55 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.20 2004-10-29 13:08:41 rotor Exp $";
 #endif
 
 #include <stdio.h>
@@ -131,8 +137,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <minc_def.h>
 #include <acr_nema.h>
+#include <dicom_network.h>
 
 /* Constants */
 #ifndef public

@@ -7,7 +7,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.5  2000-08-16 15:53:46  neelin
+ * Revision 6.6  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.5  2000/08/16 15:53:46  neelin
  * Added VR type UN (unknown) which has a length field similar to OB.
  *
  * Revision 6.4  2000/05/01 17:54:02  neelin
@@ -96,7 +102,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Define constants */

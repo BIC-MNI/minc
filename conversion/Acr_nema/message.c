@@ -6,7 +6,13 @@
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: message.c,v $
- * Revision 6.6  2002-12-08 21:43:08  neelin
+ * Revision 6.7  2004-10-29 13:08:42  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.6  2002/12/08 21:43:08  neelin
  * Fixed excessive memory freeing on error when reading message (seen in linux)
  *
  * Revision 6.5  2002/11/13 03:00:27  neelin
@@ -86,7 +92,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Message length group and element id */

@@ -6,7 +6,13 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.3  2002-12-07 01:37:24  neelin
+ * Revision 6.4  2004-10-29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.3  2002/12/07 01:37:24  neelin
  * Added missing type
  *
  * Revision 6.2  2001/12/12 19:00:54  neelin
@@ -93,7 +99,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Private functions */

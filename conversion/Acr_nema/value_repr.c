@@ -6,7 +6,13 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   :  
  * $Log: value_repr.c,v $
- * Revision 6.2  2000-08-16 15:53:46  neelin
+ * Revision 6.3  2004-10-29 13:08:42  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.2  2000/08/16 15:53:46  neelin
  * Added VR type UN (unknown) which has a length field similar to OB.
  *
  * Revision 6.1  1999/10/29 17:51:54  neelin
@@ -47,7 +53,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Types for VR table entries and conversion functions */
