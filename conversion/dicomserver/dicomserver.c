@@ -5,7 +5,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.3  2001-03-19 18:57:45  neelin
+ * Revision 6.4  2001-03-20 16:17:01  neelin
+ * Changed from tmpnam to tempnam so that TMPDIR can be used.
+ *
+ * Revision 6.3  2001/03/19 18:57:45  neelin
  * Added -nodaemon option to allow server to run with input from a pipe
  * and without forking or messing with stderr.
  *
@@ -52,7 +55,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.3 2001-03-19 18:57:45 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.4 2001-03-20 16:17:01 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -117,8 +120,7 @@ int main(int argc, char *argv[])
    char **file_list;
    Data_Object_Info **file_info_list;
    int num_files, num_files_alloc;
-   static char file_prefix_string[L_tmpnam+1] = "dicomserver";
-   char *file_prefix = file_prefix_string;
+   char file_prefix[256] = "dicomserver";
    char *temp_dir;
    int continue_looping;
    FILE *fptemp;
@@ -202,15 +204,15 @@ int main(int argc, char *argv[])
       clashes */
    temp_dir = NULL;
    if (! Keep_files) {
-      (void) tmpnam(file_prefix);
-      if (mkdir(file_prefix, (mode_t) 0777)) {
+      temp_dir = tempnam(NULL, NULL);
+      if (mkdir(temp_dir, (mode_t) 0777)) {
          (void) fprintf(stderr, 
             "%s: Unable to create directory for temporary files.\n",
                         pname);
          perror(pname);
          exit(EXIT_FAILURE);
       }
-      temp_dir = strdup(file_prefix);
+      (void) strcpy(file_prefix, temp_dir);
       (void) strcat(file_prefix, "/dicom");
    }
 
