@@ -5,17 +5,21 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.7  1993-08-11 13:34:15  neelin
-@MODIFIED   : Converted to use Dave MacDonald's General_transform code.
-@MODIFIED   : Fixed bug in get_slice - for non-linear transformations coord was
-@MODIFIED   : transformed, then used again as a starting coordinate.
-@MODIFIED   : Handle files that have image-max/min that doesn't vary over slices.
-@MODIFIED   : Handle files that have image-max/min varying over row/cols.
-@MODIFIED   : Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
-@MODIFIED   : Handle out-of-range values (-fill values from a previous mincresample, for
-@MODIFIED   : example).
-@MODIFIED   : Save transformation file as a string attribute to processing variable.
+@MODIFIED   : Revision 1.8  1993-08-11 14:29:53  neelin
+@MODIFIED   : Use volume->datatype in load_volume instead of file->datatype.
+@MODIFIED   : Loop for slice max/min is from 0, not 1 in load_volume.
 @MODIFIED   :
+ * Revision 1.7  93/08/11  13:34:15  neelin
+ * Converted to use Dave MacDonald's General_transform code.
+ * Fixed bug in get_slice - for non-linear transformations coord was
+ * transformed, then used again as a starting coordinate.
+ * Handle files that have image-max/min that doesn't vary over slices.
+ * Handle files that have image-max/min varying over row/cols.
+ * Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
+ * Handle out-of-range values (-fill values from a previous mincresample, for
+ * example).
+ * Save transformation file as a string attribute to processing variable.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -29,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.7 1993-08-11 13:34:15 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.8 1993-08-11 14:29:53 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -220,7 +224,7 @@ public void load_volume(File_Info *file, long start[], long count[],
 
    /* Don't do it ourselves if the icv is doing it for us */
    if (file->using_icv) {
-      for (islice=1; islice < volume->size[SLC_AXIS]; islice++) {
+      for (islice=0; islice < volume->size[SLC_AXIS]; islice++) {
          (void) miicv_inqdbl(file->icvid, MI_ICV_NORM_MAX, 
                              &volume->scale[islice]);
          (void) miicv_inqdbl(file->icvid, MI_ICV_NORM_MIN, 
@@ -231,7 +235,8 @@ public void load_volume(File_Info *file, long start[], long count[],
    /* If either max/min variable doesn't exist, or if type is floating
       point, then set max to 1 and min to 0 */
    else if ((file->maxid == MI_ERROR) || (file->minid == MI_ERROR) ||
-            (file->datatype == NC_FLOAT) || (file->datatype == NC_DOUBLE)) {
+            (volume->datatype == NC_FLOAT) || 
+            (volume->datatype == NC_DOUBLE)) {
       for (islice=0; islice < volume->size[SLC_AXIS]; islice++) {
          volume->scale[islice] = DEFAULT_MAX;
          volume->offset[islice] = DEFAULT_MIN;
