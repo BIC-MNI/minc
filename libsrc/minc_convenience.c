@@ -14,6 +14,9 @@
                  miadd_child
                  micreate_std_variable
                  micreate_group_variable
+                 miget_version
+                 miappend_history
+                 micreate_ident
               private :
                  MI_create_dim_variable
                  MI_create_dimwidth_variable
@@ -27,7 +30,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.13  2004-04-27 15:49:17  bert
+ * Revision 6.14  2004-06-04 18:15:46  bert
+ * Added micreate_ident()
+ *
+ * Revision 6.13  2004/04/27 15:49:17  bert
  * Use new logging, gettext preparation
  *
  * Revision 6.12  2004/03/24 20:53:48  bert
@@ -119,13 +125,15 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.13 2004-04-27 15:49:17 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.14 2004-06-04 18:15:46 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"
 #include <type_limits.h>
 #include <minc_private.h>
 #include <minc_varlists.h>
+
+#include <time.h>
 
 /* Private functions */
 private int MI_create_dim_variable(int cdfid, char *name, 
@@ -1415,7 +1423,65 @@ private int MI_is_in_list(char *string, char *list[])
 @CREATED    : December 8 2003
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-const char * miget_version(void)
+public const char * miget_version(void)
 {
     return (VERSION);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : micreate_ident
+@INPUT      : (none)
+@OUTPUT     : int
+@RETURNS    : The length of the ID string
+@DESCRIPTION: Creates a (hopefully) unique identifier to associate with a
+              MINC file, by concatenating various information about the
+              system, process, etc.
+              
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 2004-May-11
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+#define MI_IDENT_SEP ':'
+
+public int micreate_ident( char * id_str, size_t length )
+{
+    static int identx = 1;      /* Static ID counter */
+    time_t now;
+    struct tm tm_buf;
+    char host_str[128];
+    char user_str[128];
+    char *temp_ptr;
+    char time_str[26];
+    int result;
+
+    if (gethostname(host_str, sizeof(host_str)) != 0) {
+        strcpy(host_str, "unknown");
+    }
+
+    temp_ptr = getenv("LOGNAME");
+    if (temp_ptr != NULL) {
+        strcpy(user_str, temp_ptr);
+    }
+    else {
+        strcpy(user_str, "nobody");
+    }
+
+
+    time(&now);
+    localtime_r(&now, &tm_buf);
+    strftime(time_str, sizeof(time_str), "%Y.%m.%d.%H.%M.%S", &tm_buf);
+
+    result = snprintf(id_str, length, "%s%c%s%c%s%c%u%c%u", 
+                      user_str, 
+                      MI_IDENT_SEP,
+                      host_str, 
+                      MI_IDENT_SEP,
+                      time_str, 
+                      MI_IDENT_SEP,
+                      getpid(), 
+                      MI_IDENT_SEP,
+                      identx++);
+    return (result);
 }
