@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.3 1993-03-08 11:42:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.4 1993-03-08 14:40:33 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -582,18 +582,18 @@ public int trilinear_interpolant(Volume_Data *volume,
    f1r2 = f1 * r2;
    f1f2 = f1 * f2;
    *result =
-      r0 * volume->scale[ind0] *
-         (r1r2 * v000 +
-          r1f2 * v001 +
-          f1r2 * v010 +
-          f1f2 * v011) + volume->offset[ind0];
+      r0 * (volume->scale[ind0] *
+            (r1r2 * v000 +
+             r1f2 * v001 +
+             f1r2 * v010 +
+             f1f2 * v011) + volume->offset[ind0]);
    *result +=
-      f0 * volume->scale[ind0+1] *
-         (r1r2 * v100 +
-          r1f2 * v101 +
-          f1r2 * v110 +
-          f1f2 * v111) + volume->offset[ind0+1];
-
+      f0 * (volume->scale[ind0+1] *
+            (r1r2 * v100 +
+             r1f2 * v101 +
+             f1r2 * v110 +
+             f1f2 * v111) + volume->offset[ind0+1]);
+   
    return TRUE;
 
 }
@@ -772,6 +772,8 @@ public int nearest_neighbour_interpolant(Volume_Data *volume,
 
    /* Get the value */
    VOLUME_VALUE(volume, ind0  , ind1  , ind2  , *result);
+
+   *result = volume->scale[ind0] * (*result) + volume->offset[ind0];
 
    return TRUE;
 
