@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.7  1993-11-30 08:57:42  neelin
-@MODIFIED   : Added group and group list copy routines.
+@MODIFIED   : Revision 1.8  1993-12-08 09:04:59  neelin
+@MODIFIED   : Fixed memory leak in acr_input_group_with_max.
+@MODIFIED   : Fixed acr_input_group_list (didn't stop reading when reached max group).
 @MODIFIED   :
+ * Revision 1.7  93/11/30  08:57:42  neelin
+ * Added group and group list copy routines.
+ * 
  * Revision 1.6  93/11/26  18:47:51  neelin
  * Added group and group list copy routines.
  * 
@@ -384,7 +388,10 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
                                  &data_length, &data_pointer);
    if (status != ACR_OK) return status;
    /* Check for a group past the limit */
-   if ((max_group_id > 0) && (group_id > max_group_id)) return status;
+   if ((max_group_id > 0) && (group_id > max_group_id)) {
+      FREE(data_pointer);
+      return status;
+   }
    /* Check for a length element */
    if ((element_id != ACR_EID_GRPLEN) || 
        (data_length != ACR_SIZEOF_LONG)) {
@@ -405,6 +412,7 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
       status = acr_input_element(afp, &element);
       if (status != ACR_OK) {
          acr_delete_group(*group);
+         *group = NULL;
          if (status == ACR_END_OF_INPUT) status = ACR_PROTOCOL_ERROR;
          return status;
       }
@@ -415,6 +423,7 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
    /* Check that we got a full group */
    if (group_length != 0) {
       acr_delete_group(*group);
+      *group = NULL;
       status = ACR_PROTOCOL_ERROR;
       return status;
    }
@@ -523,10 +532,8 @@ public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
 
       status = acr_input_group_with_max(afp, &next_group, max_group_id);
 
-      if ((status == ACR_OK) && (next_group != NULL)) {
-         acr_set_group_next(cur_group, next_group);
-         cur_group = next_group;
-      }
+      acr_set_group_next(cur_group, next_group);
+      cur_group = next_group;
 
    }
 
