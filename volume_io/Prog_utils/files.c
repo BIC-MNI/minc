@@ -3,6 +3,19 @@
 
 private  Boolean  has_no_extension( char [] );
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : real_is_double
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : TRUE if real is defined to be type double
+@DESCRIPTION: 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  real_is_double()
 {
     return( sizeof(Real) == 8 );
@@ -66,6 +79,22 @@ public  void  remove_file(
     (void) system( command );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : expand_filename
+@INPUT      : filename
+@OUTPUT     : expanded_filename
+@RETURNS    : 
+@DESCRIPTION: Expands certain strings in the filename, if present:
+
+                  environment variables, e.g.   "$DATA_DIR/filename.txt"
+                  ~                      e.g.   "~/filename.txt"
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  expand_filename(
     char  filename[],
     char  expanded_filename[] )
@@ -115,23 +144,38 @@ public  void  expand_filename(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : remove_directories_from_filename
+@INPUT      : filename
+@OUTPUT     : filename_no_directories
+@RETURNS    : 
+@DESCRIPTION: Creates a new filename with no directories in it.
+              E.G.  if filename equals  "/usr/people/david/test.c"
+              filename_no_directories will be set to "test.c"
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  void  remove_directories_from_filename(
-    char  input_filename[],
-    char  output_filename[] )
+    char  filename[],
+    char  filename_no_directories[] )
 {
     int   i;
 
-    i = strlen( input_filename );
+    i = strlen( filename );
 
-    while( i > 0 && input_filename[i] != '/' )
+    while( i > 0 && filename[i] != '/' )
     {
         --i;
     }
 
-    if( input_filename[i] == '/' )
+    if( filename[i] == '/' )
         ++i;
 
-    (void) strcpy( output_filename, &input_filename[i] );
+    (void) strcpy( filename_no_directories, &filename[i] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
