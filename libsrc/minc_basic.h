@@ -13,9 +13,12 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_basic.h,v $
-@MODIFIED   : Revision 1.6  1993-08-11 12:06:37  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.7  1993-10-28 10:18:23  neelin
+@MODIFIED   : Added FILLVALUE_EPSILON for doing fillvalue checking in icv's.
 @MODIFIED   :
+ * Revision 1.6  93/08/11  12:06:37  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -26,7 +29,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.6 1993-08-11 12:06:37 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.7 1993-10-28 10:18:23 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */
@@ -47,6 +50,9 @@
 
 /* Suffix for dimension width variable names */
 #define MI_WIDTH_SUFFIX "-width"
+
+/* Epsilon for detecting fillvalues */
+#define FILLVALUE_EPSILON (10.0 * FLT_EPSILON)
 
 /* NetCDF routine name variable (for error logging) */
 extern char *cdf_routine_name ; /* defined in globdef.c */
