@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.3  1995-12-12 19:15:35  neelin
-@MODIFIED   : Added -spacetype, -talairach and -units options.
+@MODIFIED   : Revision 3.4  1996-01-30 14:10:24  neelin
+@MODIFIED   : Added check for -transformation without -like, -tfm_input_sampling or
+@MODIFIED   : -use_input_sampling because of change in behaviour.
 @MODIFIED   :
+ * Revision 3.3  1995/12/12  19:15:35  neelin
+ * Added -spacetype, -talairach and -units options.
+ *
  * Revision 3.2  1995/11/21  14:13:20  neelin
  * Transform input sampling with transformation and use this as default.
  * Added -tfm_input_sampling to specify above option.
@@ -98,7 +102,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.3 1995-12-12 19:15:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.4 1996-01-30 14:10:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -114,6 +118,15 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresam
 #include <minc_def.h>
 #include <convert_origin_to_start.h>
 #include "mincresample.h"
+
+/* Kludge to catch use of -transformation without -like and without 
+   -tfm_input_sampling or -use_input_sampling */
+#define TRANSFORM_CHANGE_KLUDGE
+#ifdef TRANSFORM_CHANGE_KLUDGE
+int Specified_like = FALSE;
+int Specified_transform = FALSE;
+#define SAMPLING_ACTION_NOT_SET (-1)
+#endif
 
 /* Main program */
 
@@ -160,7 +173,11 @@ public void get_arginfo(int argc, char *argv[],
                         General_transform *transformation)
 {
    /* Argument parsing information */
+#ifdef TRANSFORM_CHANGE_KLUDGE
+   static int transform_input_sampling = SAMPLING_ACTION_NOT_SET;
+#else
    static int transform_input_sampling = TRUE;
+#endif
    static Arg_Data args={
       FALSE,                  /* Clobber */
       NC_UNSPECIFIED,         /* Flag that type not set */
@@ -357,6 +374,17 @@ public void get_arginfo(int argc, char *argv[],
    }
    infile = argv[1];
    outfile = argv[2];
+
+#ifdef TRANSFORM_CHANGE_KLUDGE
+   if (Specified_transform && 
+       !Specified_like &&
+       (transform_input_sampling == SAMPLING_ACTION_NOT_SET)) {
+      (void) fprintf(stderr, 
+                     "Use -like, -tfm_input_sampling or "
+                     "-use_input_sampling with -transformation\n");
+      exit(EXIT_FAILURE);
+   }
+#endif
 
    /* Check for an inverted transform. This looks backwards because we 
       normally invert the transform. */
@@ -1749,6 +1777,10 @@ public int get_transformation(char *dst, char *key, char *nextArg)
    }
    (void) close_file(fp);
 
+#ifdef TRANSFORM_CHANGE_KLUDGE
+   Specified_transform = TRUE;
+#endif
+
    return TRUE;
 }
 
@@ -1789,6 +1821,10 @@ public int get_model_file(char *dst, char *key, char *nextArg)
 
    /* Close the file */
    (void) miclose(file.mincid);
+
+#ifdef TRANSFORM_CHANGE_KLUDGE
+   Specified_like = TRUE;
+#endif
 
    return TRUE;
 }
