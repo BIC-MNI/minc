@@ -18,12 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.21 1993-02-17 11:17:33 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.22 1993-03-02 11:11:48 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.21 1993-02-17 11:17:33 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.22 1993-03-02 11:11:48 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -306,6 +306,7 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.2
 #define MI_ERR_DIMSIZE          1344  /* Dimensions differ in size */
 #define MI_ERR_ICV_INVCOORDS    1345  /* Invalid icv coordinates */
 #define MI_ERR_WRONGNDIMS       1346  /* Too many dimensions for a dim var */
+#define MI_ERR_BADMATCH         1347  /* Variables do not match for copy */
 
 /* MINC public functions */
 /* Define public constant */
