@@ -22,102 +22,16 @@ static int error_cnt = 0;
 #define ZSTART (22)
 #define ZSTEP (-1.5)
 
-int main(int argc, char **argv)
+int 
+check_dims(mihandle_t vol, midimhandle_t dim[])
 {
-    mihandle_t vol;
+    int i;
     int r;
-    midimhandle_t dim[NDIMS];
     int n;
-    unsigned long coords[NDIMS];
-    unsigned long count[NDIMS];
-    int i,j,k;
-    unsigned int voxel;
-    double offsets[100];
     mihandle_t vol_tmp;
     midimhandle_t dim_tmp[NDIMS];
+    double offsets[100];
 
-    /* Write data one voxel at a time. */
-    for (i = 0; i < NDIMS; i++) {
-        count[i] = 1;
-    }
-
-    r = micreate_dimension("time", MI_DIMCLASS_TIME,
-                           MI_DIMATTR_NOT_REGULARLY_SAMPLED, CT, &dim[0]);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    for (i = 0; i < CT; i++) {
-        offsets[i] = (i * i) + 100.0;
-        r = miset_dimension_offsets(dim[0], 1, i, &offsets[i]);
-        if (r < 0) {
-            TESTRPT("failed", r);
-        }
-    }
-
-    r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,
-                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &dim[1]);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_start(dim[1], XSTART);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_separation(dim[1], XSTEP);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,
-                           MI_DIMATTR_REGULARLY_SAMPLED, CY, &dim[2]);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_start(dim[2], YSTART);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_separation(dim[2], YSTEP);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,
-                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &dim[3]);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_start(dim[3], ZSTART);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = miset_dimension_separation(dim[3], ZSTEP);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = micreate_volume("tst-dim.mnc", NDIMS, dim, MI_TYPE_UINT,
-                        MI_CLASS_REAL, NULL, &vol);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    r = micreate_volume_image(vol);
-    if (r < 0) {
-        TESTRPT("failed", r);
-    }
-
-    check_dims(vol);
-
-    check_dims(mihandle_t vol)
-  
     for (i = 0; i < CT; i++) {
         double tmp = -1;
 
@@ -125,7 +39,7 @@ int main(int argc, char **argv)
         if (r < 0) {
             TESTRPT("failed", r);
         }
-        if (offsets[i] != tmp) {
+        if ((i * i) + 100.0 != tmp) {
             TESTRPT("bad value", i);
         }
     }
@@ -216,7 +130,100 @@ int main(int argc, char **argv)
             TESTRPT("wrong volume returned", i);
         }
     }
+    return (error_cnt);
+}
 
+int main(int argc, char **argv)
+{
+    mihandle_t vol;
+    int r;
+    midimhandle_t dim[NDIMS];
+    int n;
+    unsigned long coords[NDIMS];
+    unsigned long count[NDIMS];
+    int i,j,k;
+    double offset;
+    unsigned int voxel;
+
+    /* Write data one voxel at a time. */
+    for (i = 0; i < NDIMS; i++) {
+        count[i] = 1;
+    }
+
+    r = micreate_dimension("time", MI_DIMCLASS_TIME,
+                           MI_DIMATTR_NOT_REGULARLY_SAMPLED, CT, &dim[0]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    for (i = 0; i < CT; i++) {
+        offset = (i * i) + 100.0;
+        r = miset_dimension_offsets(dim[0], 1, i, &offset);
+        if (r < 0) {
+            TESTRPT("failed", r);
+        }
+    }
+
+    r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &dim[1]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_start(dim[1], XSTART);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_separation(dim[1], XSTEP);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CY, &dim[2]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_start(dim[2], YSTART);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_separation(dim[2], YSTEP);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &dim[3]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_start(dim[3], ZSTART);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miset_dimension_separation(dim[3], ZSTEP);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = micreate_volume("tst-dim.mnc", NDIMS, dim, MI_TYPE_UINT,
+                        MI_CLASS_REAL, NULL, &vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = micreate_volume_image(vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    check_dims(vol, dim);
 
     for (i = 0; i < CX; i++) {
         for (j = 0; j < CY; j++) {
@@ -244,7 +251,67 @@ int main(int argc, char **argv)
     if (r < 0) {
         TESTRPT("failed", r);
     }
-  
+
+    /***** 03-Aug-2004: Added two tests for bugs reported by Leila */
+
+    r = miopen_volume("tst-dim.mnc", MI2_OPEN_RDWR, &vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miget_volume_dimension_count(vol, MI_DIMCLASS_ANY,
+                                     MI_DIMATTR_REGULARLY_SAMPLED, &n);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    if (n != NDIMS - 1) {
+        TESTRPT("wrong result", n);
+    }
+
+    r = miget_volume_dimension_count(vol, MI_DIMCLASS_ANY,
+                                     MI_DIMATTR_NOT_REGULARLY_SAMPLED, &n);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    if (n != 1) {
+        TESTRPT("wrong result", n);
+    }
+
+    r = miclose_volume(vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    /* Test #2 - verify that we don't print anything scary if a user
+     * closes a volume prematurely.
+     */
+    r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &dim[0]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CY, &dim[1]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,
+                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &dim[2]);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    r = micreate_volume("tst-vol.mnc", 3, dim, MI_TYPE_SHORT,
+                        MI_CLASS_LABEL, NULL, &vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miclose_volume(vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+    /** End of tests added 03-Aug-2004 **/
+
     if (error_cnt != 0) {
         fprintf(stderr, "%d error%s reported\n", 
                 error_cnt, (error_cnt == 1) ? "" : "s");
