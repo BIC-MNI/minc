@@ -1,3 +1,11 @@
+                New in Release 2.0.07
+                ---------------------
+* Added automatic creation of "ident" attribute in all MINC files.
+* Added -sappend and -dappend arguments to minc_modify_header
+* Most man pages updated
+* Fixed endian-ness issues which could affect interoperability in 
+  MINC 2.0 format
+
                 New in Release 2.0.06
                 ---------------------
 * No functional changes - this release is intended only to address compilation
