@@ -1,3 +1,6 @@
+Mon Apr  2 11:35:29 EDT 2001
+   - Added -keep_real_range option to mincresample for resampling labels.
+
 Fri Nov  3 11:44:38 EST 2000
    - Modified -dinsert option to minc_modify_header to allow multiple values.
 
