@@ -1,8 +1,17 @@
-#! /bin/csh -f
-
+#! /bin/sh
+#
+# Script to view header info of MINC files.
+#
+# Usage: mincheader [-data] <file.mnc>
+# Exit status: status of `ncdump'
+#
+#
 # Modifications: 
 #   $Log: mincheader,v $
-#   Revision 6.1  1999-10-19 14:45:23  neelin
+#   Revision 6.2  2000-09-12 15:20:07  neelin
+#   Rewrite in Bourne shell by Steve Robbins. Returns exit status from ncdump.
+#
+#   Revision 6.1  1999/10/19 14:45:23  neelin
 #   Fixed Log subsitutions for CVS
 #
 #   Revision 6.0  1997/09/12 13:23:37  neelin
@@ -38,59 +47,53 @@
 #   Revision 1.3  93/08/11  15:20:55  neelin
 #   Added RCS logging in source.
 # 
-#
 
-# Set defaults
-if (! $?TMPDIR) set TMPDIR = /usr/tmp
-set header_opts = "-header_only"
-set header_only = 1
+die () {
+    echo >&2 $@
+    exit 1
+}
 
-# Check arguments
-set usage = "Usage: $0 [-data] <minc file>"
-if (($#argv < 1) || ($#argv > 2)) then
-   echo "$usage"
-   exit -1
-endif
-if ($#argv == 1) then
-   if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
-      echo "$usage"
-      exit -1
-   endif
+usage="Usage: $0 [-data] <minc file>" 
+header_opts='-header_only'
+header_only=yes
+
+while test $# -gt 0; do 
+    case $1 in
+	-h|-help) echo $usage; exit 0 ;;
+	-data) header_opts='-all_data'; header_only=no ;;
+	*) break;
+    esac
+    shift
+done	
+test $# -eq 1 || die $usage
+test -f $1 || die "no such file $1"
+
+
+if test x$TMPDIR = x; then
+    for TMPDIR in /usr/tmp /var/tmp /tmp; do
+	test -d $TMPDIR && break;
+    done
+fi
+test -d $TMPDIR || die "TMPDIR $TMPDIR does not exist."
+
+tmpfile="$TMPDIR/mincheader-$$-tmp"
+trap "/bin/rm -f $tmpfile" 0 1 2 15
+dumpfile=`mincexpand $1 $tmpfile -name_only $header_opts`
+
+# For a compressed file, dump header only unless directed otherwise
+if test $dumpfile = $tmpfile -a $header_only = yes; then
+    ncdump -h $dumpfile
 else
-   if ("$1" != "-data") then
-      echo "$usage"
-      exit -1
-   endif
-   set header_opts = "-all_data"
-   set header_only = 0
-   shift
-endif
-set file = $1
-
-# Set interrupt handling
-onintr cleanup
-
-# Expand file if needed
-set name = $file:t
-set tempfile = $TMPDIR/mincheader-$$-$name:r
-set dumpfile = `mincexpand $file $tempfile -name_only $header_opts`
-
-# Dump header only for compressed file
-if (("$dumpfile" == "$tempfile") && ($header_only)) then
-   ncdump -h $dumpfile
-
-# Dump everything if we've got it
-else
-
 #  Get variables names (excluding image): remove leading "image", remove word 
 #  "image", collapse multiple blanks to one, remove leading blanks, remove
 #  trailing blanks, replace blanks with commas
-   set vars = `mincinfo -varnames $dumpfile | sed -e 's/^image //g' -e 's/ image / /g' -e 's/  */ /g' -e 's/^ //' -e 's/ $//' -e 's/ /,/g'`
-   if ($vars != "") then
-      ncdump -v "$vars" $dumpfile
-   endif
-endif
+    vars=`mincinfo -varnames $dumpfile | \
+	sed -e 's/^image //g' \
+	    -e 's/ image / /g' \
+	    -e 's/  */ /g' \
+	    -e 's/^ //' \
+	    -e 's/ $//' \
+	    -e 's/ /,/g'`
+    test x$vars = x || ncdump -v "$vars" $dumpfile
+fi
 
-
-cleanup:
-   rm -f $tempfile
