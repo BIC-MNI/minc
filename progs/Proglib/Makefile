@@ -8,7 +8,7 @@ include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
 # Object names
-OBJS     = ParseArgv.o vax_conversions.o time_stamp.o
+OBJS     = ParseArgv.o vax_conversions.o time_stamp.o nd_loop.o
 CDEFINES = #                        cpp defines
 
 # --------------------------------------------------------------------
