@@ -5,7 +5,10 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.c,v $
- * Revision 6.5  2001-04-09 23:02:48  neelin
+ * Revision 6.6  2001-04-21 13:29:38  neelin
+ * Added support for PROJECT_CAPTURE project type.
+ *
+ * Revision 6.5  2001/04/09 23:02:48  neelin
  * Modified copyright notice, removing permission statement since copying,
  * etc. is probably not permitted by our non-disclosure agreement with
  * Philips.
@@ -120,7 +123,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.5 2001-04-09 23:02:48 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.6 2001-04-21 13:29:38 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -428,6 +431,17 @@ int main(int argc, char *argv[])
             if (Do_logging >= LOW_LOGGING) {
                (void) fprintf(stderr, "   Copied %s\n", file_list[cur_file]);
             }
+         }
+         else if (project_info.type == PROJECT_CAPTURE) {
+            save_transferred_object(group_list,
+                                    project_info.info.directory.file_prefix,
+                                    &file_list[cur_file],
+                                    &file_info_list[cur_file]);
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "   Saved %s\n", file_list[cur_file]);
+            }
+            FREE(file_list[cur_file]);
+            file_list[cur_file] = NULL;
          }
          else if (project_info.type == PROJECT_DICOM) {
 

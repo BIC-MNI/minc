@@ -6,7 +6,10 @@
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.h,v $
- * Revision 6.6  2001-04-09 23:02:48  neelin
+ * Revision 6.7  2001-04-21 13:29:57  neelin
+ * Added support for PROJECT_CAPTURE project type.
+ *
+ * Revision 6.6  2001/04/09 23:02:48  neelin
  * Modified copyright notice, removing permission statement since copying,
  * etc. is probably not permitted by our non-disclosure agreement with
  * Philips.
@@ -141,6 +144,7 @@
 /* File containing defaults for gcomserver */
 #define OUTPUT_DEFAULT_FILE_DIR "/usr/local/lib"
 #define OUTPUT_DEFAULT_FILE_PREFIX "gcomserver."
+#define OUTPUT_DEFAULT_FILE_SUFFIX "default"
 
 /* String lengths */
 #define SHORT_LINE 64
@@ -166,7 +170,8 @@ typedef struct {
 typedef struct {
 
    /* Type of information stored in project file */
-   enum {PROJECT_DIRECTORY, PROJECT_DICOM, PROJECT_UNKNOWN} type;
+   enum {PROJECT_DIRECTORY, PROJECT_DICOM, PROJECT_CAPTURE, 
+         PROJECT_UNKNOWN} type;
 
    /* Information associated with project */
    union {
