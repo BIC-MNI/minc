@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.h,v $
-@MODIFIED   : Revision 1.3  1993-11-24 11:27:10  neelin
-@MODIFIED   : Added dump message routine./
+@MODIFIED   : Revision 1.4  1994-09-28 10:35:53  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  93/11/24  11:27:10  neelin
+ * Added dump message routine./
+ * 
  * Revision 1.2  93/11/22  13:12:55  neelin
  * Changed to use new Acr_Element_Id stuff.
  * 

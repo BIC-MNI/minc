@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.14  1994-03-15 10:58:47  neelin
-@MODIFIED   : Fixed tricubic interpolation (wasn't initializing variable for fillvalue
-@MODIFIED   : detection).
+@MODIFIED   : Revision 1.15  1994-09-28 10:32:38  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.14  94/03/15  10:58:47  neelin
+ * Fixed tricubic interpolation (wasn't initializing variable for fillvalue
+ * detection).
+ * 
  * Revision 1.13  94/03/01  14:33:48  neelin
  * Fixed error in calculating valid minimum for float volumes.
  * 
@@ -55,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.14 1994-03-15 10:58:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.15 1994-09-28 10:32:38 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 1.2 1994-03-15 16:50:41 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 1.3 1994-09-28 10:32:41 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1 "MINC Image File Format"
 

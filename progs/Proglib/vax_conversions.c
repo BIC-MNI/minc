@@ -5,9 +5,15 @@
 @METHOD     : 
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : $Log: vax_conversions.c,v $
-@MODIFIED   : Revision 1.4  1993-08-04 13:04:01  neelin
-@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   : Revision 1.5  1994-09-28 10:34:18  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.4  93/08/04  13:04:01  neelin
+ * Added RCS $Log: vax_conversions.c,v $
+ * Added RCS Revision 1.5  1994-09-28 10:34:18  neelin
+ * Added RCS Pre-release
+ * Added RCS to keep track of modifications in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -21,7 +27,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.4 1993-08-04 13:04:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 1.5 1994-09-28 10:34:18 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 1.14  1994-09-23 08:30:52  neelin
-@MODIFIED   : Added -xyz, etc options for image/volume orientation.
+@MODIFIED   : Revision 1.15  1994-09-28 10:32:55  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.14  94/09/23  08:30:52  neelin
+ * Added -xyz, etc options for image/volume orientation.
+ * 
  * Revision 1.13  94/06/10  15:24:41  neelin
  * Added option -real_range.
  * 
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.14 1994-09-23 08:30:52 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.15 1994-09-28 10:32:55 neelin Exp $";
 #endif
 
 #include <stdlib.h>

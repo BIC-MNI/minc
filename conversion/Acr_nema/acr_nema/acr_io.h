@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.h,v $
-@MODIFIED   : Revision 1.7  1994-05-18 08:48:17  neelin
-@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+@MODIFIED   : Revision 1.8  1994-09-28 10:35:40  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.7  94/05/18  08:48:17  neelin
+ * Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+ * 
  * Revision 1.6  94/04/07  10:23:28  neelin
  * Added ACR_HIGH_LEVEL_ERROR.
  * 

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 1.3  1993-11-25 13:26:58  neelin
-@MODIFIED   : Working version.
+@MODIFIED   : Revision 1.4  1994-09-28 10:34:51  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  93/11/25  13:26:58  neelin
+ * Working version.
+ * 
  * Revision 1.2  93/11/24  12:09:32  neelin
  * Changed to use new acr-nema dump function. spi_reply returns a group list
  * instead of a message.

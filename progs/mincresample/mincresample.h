@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 1.10  1993-11-04 15:13:40  neelin
-@MODIFIED   : Added support for irregularly spaced dimensions.
+@MODIFIED   : Revision 1.11  1994-09-28 10:32:40  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.10  93/11/04  15:13:40  neelin
+ * Added support for irregularly spaced dimensions.
+ * 
  * Revision 1.9  93/11/02  11:23:56  neelin
  * Handle imagemax/min potentially varying over slices (for vector data, etc.)
  * 

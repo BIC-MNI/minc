@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 1.2  1994-01-12 10:19:17  neelin
-@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
+@MODIFIED   : Revision 1.3  1994-09-28 10:36:22  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.2  94/01/12  10:19:17  neelin
+ * Added logging. Turned off filling. Added miclose for files.
+ * 
  * Revision 1.1  94/01/11  15:08:30  neelin
  * Initial revision
  * 
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/Attic/voxel_loop.c,v 1.2 1994-01-12 10:19:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/Attic/voxel_loop.c,v 1.3 1994-09-28 10:36:22 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: string_to_filename.c,v $
-@MODIFIED   : Revision 1.1  1993-12-10 15:35:18  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-09-28 10:35:05  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.1  93/12/10  15:35:18  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

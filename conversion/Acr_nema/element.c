@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.7  1993-11-30 12:19:15  neelin
-@MODIFIED   : Handle MALLOC returning NULL because of extremely large data element length.
+@MODIFIED   : Revision 1.8  1994-09-28 10:35:44  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.7  93/11/30  12:19:15  neelin
+ * Handle MALLOC returning NULL because of extremely large data element length.
+ * 
  * Revision 1.6  93/11/30  08:57:28  neelin
  * Added element copy routine.
  * 

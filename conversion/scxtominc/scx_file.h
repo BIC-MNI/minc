@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.h,v $
-@MODIFIED   : Revision 1.3  1993-08-11 15:27:45  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.4  1994-09-28 10:33:33  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  93/08/11  15:27:45  neelin
+ * Added RCS logging in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

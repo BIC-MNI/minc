@@ -9,11 +9,14 @@
 @CALLS      : 
 @CREATED    : December 7, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.c,v $
-@MODIFIED   : Revision 1.13  1993-08-30 16:43:47  neelin
-@MODIFIED   : Added -slcstep option.
-@MODIFIED   : Fixed -field_of_view option.
-@MODIFIED   : Changed -xstep/-ystep to -colstep -rowstep.
+@MODIFIED   : Revision 1.14  1994-09-28 10:33:11  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.13  93/08/30  16:43:47  neelin
+ * Added -slcstep option.
+ * Fixed -field_of_view option.
+ * Changed -xstep/-ystep to -colstep -rowstep.
+ * 
  * Revision 1.12  93/08/11  15:24:20  neelin
  * Added RCS logging to source.
  * 
@@ -30,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.13 1993-08-30 16:43:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.14 1994-09-28 10:33:11 neelin Exp $";
 #endif
 
 #include <stdlib.h>

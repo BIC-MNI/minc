@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: xfmconcat.c,v $
-@MODIFIED   : Revision 1.4  1993-10-12 12:52:35  neelin
-@MODIFIED   : Replaced def_mni.h with volume_io.h
+@MODIFIED   : Revision 1.5  1994-09-28 10:33:20  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.4  93/10/12  12:52:35  neelin
+ * Replaced def_mni.h with volume_io.h
+ * 
  * Revision 1.3  93/09/16  09:40:21  neelin
  * Use dave's open_file_with_default_suffix and input_transform_file and
  * output_transform_file to add suffixes to file names.
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 1.4 1993-10-12 12:52:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 1.5 1994-09-28 10:33:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>

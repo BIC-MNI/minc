@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.8  1993-11-03 17:16:19  neelin
-@MODIFIED   : Removed check for DPR==1 when getting images (this applies only to data).
+@MODIFIED   : Revision 1.9  1994-09-28 10:33:28  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.8  93/11/03  17:16:19  neelin
+ * Removed check for DPR==1 when getting images (this applies only to data).
+ * 
  * Revision 1.7  93/10/06  10:15:46  neelin
  * Added include of memory.h for compilation on SUNs
  * 
@@ -33,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.8 1993-11-03 17:16:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.9 1994-09-28 10:33:28 neelin Exp $";
 #endif
 
 #include <stdlib.h>

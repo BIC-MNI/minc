@@ -5,9 +5,12 @@
 @CALLS      : 
 @CREATED    : December 9, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.h,v $
-@MODIFIED   : Revision 1.10  1994-09-26 08:58:12  neelin
-@MODIFIED   : Changed default to -noclobber.
+@MODIFIED   : Revision 1.11  1994-09-28 10:33:13  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.10  94/09/26  08:58:12  neelin
+ * Changed default to -noclobber.
+ * 
  * Revision 1.9  93/08/30  16:44:30  neelin
  * Added -slcstep option.
  * Fixed -field_of_view option.

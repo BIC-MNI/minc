@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.15  1994-05-18 08:54:50  neelin
-@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+@MODIFIED   : Revision 1.16  1994-09-28 10:34:48  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.15  94/05/18  08:54:50  neelin
+ * Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+ * 
  * Revision 1.14  94/04/08  10:35:36  neelin
  * Fixed handling of input trace (don't do trace while using the files).
  * 

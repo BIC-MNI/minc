@@ -32,10 +32,13 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 1.10  1993-11-03 12:28:04  neelin
-@MODIFIED   : Added miopen, micreate, miclose routines.
-@MODIFIED   : miopen will uncompress files before opening them, if needed.
+@MODIFIED   : Revision 1.11  1994-09-28 10:37:19  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.10  93/11/03  12:28:04  neelin
+ * Added miopen, micreate, miclose routines.
+ * miopen will uncompress files before opening them, if needed.
+ * 
  * Revision 1.9  93/08/11  12:06:28  neelin
  * Added RCS logging in source.
  * 
@@ -52,7 +55,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.10 1993-11-03 12:28:04 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.11 1994-09-28 10:37:19 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

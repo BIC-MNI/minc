@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 1.5  1993-12-10 09:20:44  neelin
-@MODIFIED   : Added acr_find_<type> routines.
+@MODIFIED   : Revision 1.6  1994-09-28 10:35:52  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.5  93/12/10  09:20:44  neelin
+ * Added acr_find_<type> routines.
+ * 
  * Revision 1.4  93/11/26  18:48:04  neelin
  * Added group and group list copy routines.
  * 

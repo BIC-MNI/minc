@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.h,v $
-@MODIFIED   : Revision 1.3  1994-04-08 10:32:10  neelin
-@MODIFIED   : Fixed io tracing.
+@MODIFIED   : Revision 1.4  1994-09-28 10:35:43  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  94/04/08  10:32:10  neelin
+ * Fixed io tracing.
+ * 
  * Revision 1.2  93/11/25  10:37:43  neelin
  * Added file free and ungetc and trace.
  * 

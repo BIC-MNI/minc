@@ -6,13 +6,16 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.5  1994-05-24 15:09:47  neelin
-@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
-@MODIFIED   : or 2 frames (put in 1 file for more).
-@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
-@MODIFIED   : Save echo times in dimension variable when appropriate.
-@MODIFIED   : Changed to file names to end in _mri.mnc.
+@MODIFIED   : Revision 1.6  1994-09-28 10:34:58  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.5  94/05/24  15:09:47  neelin
+ * Break up multiple echoes or time frames into separate files for 2 echoes
+ * or 2 frames (put in 1 file for more).
+ * Changed units of repetition time, echo time, etc to seconds.
+ * Save echo times in dimension variable when appropriate.
+ * Changed to file names to end in _mri.mnc.
+ * 
  * Revision 1.4  94/01/14  11:37:30  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : November 3, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxmnem.c,v $
-@MODIFIED   : Revision 1.1  1993-11-03 16:51:41  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1994-09-28 10:33:36  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.1  93/11/03  16:51:41  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +28,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 1.1 1993-11-03 16:51:41 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 1.2 1994-09-28 10:33:36 neelin Exp $";
 #endif
 
 #include <stdlib.h>

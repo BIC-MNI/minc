@@ -9,10 +9,13 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 1.11  1994-09-28 08:23:58  neelin
-@MODIFIED   : Find max and min pixel values for both bytes and shorts.
-@MODIFIED   : (Shorts are rescaled to full range).
+@MODIFIED   : Revision 1.12  1994-09-28 10:33:30  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.11  94/09/28  08:23:58  neelin
+ * Find max and min pixel values for both bytes and shorts.
+ * (Shorts are rescaled to full range).
+ * 
  * Revision 1.10  94/05/31  07:56:42  neelin
  * Added insertblood.c to optionally insert blood data into minc file.
  * 
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.11 1994-09-28 08:23:58 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.12 1994-09-28 10:33:30 neelin Exp $";
 #endif
 
 #include <stdlib.h>

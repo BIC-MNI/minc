@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 1.3  1994-01-12 10:18:33  neelin
-@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
+@MODIFIED   : Revision 1.4  1994-09-28 10:36:20  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  94/01/12  10:18:33  neelin
+ * Added logging. Turned off filling. Added miclose for files.
+ * 
  * Revision 1.2  94/01/11  15:56:17  neelin
  * Added optional newvalue argument.
  * 
@@ -21,7 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.3 1994-01-12 10:18:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 1.4 1994-09-28 10:36:20 neelin Exp $";
 #endif
 
 #include <stdlib.h>

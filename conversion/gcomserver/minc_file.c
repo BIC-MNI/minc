@@ -6,13 +6,16 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.9  1994-05-24 15:09:36  neelin
-@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
-@MODIFIED   : or 2 frames (put in 1 file for more).
-@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
-@MODIFIED   : Save echo times in dimension variable when appropriate.
-@MODIFIED   : Changed to file names to end in _mri.mnc.
+@MODIFIED   : Revision 1.10  1994-09-28 10:35:03  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.9  94/05/24  15:09:36  neelin
+ * Break up multiple echoes or time frames into separate files for 2 echoes
+ * or 2 frames (put in 1 file for more).
+ * Changed units of repetition time, echo time, etc to seconds.
+ * Save echo times in dimension variable when appropriate.
+ * Changed to file names to end in _mri.mnc.
+ * 
  * Revision 1.8  94/03/15  14:25:41  neelin
  * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
  * Added acquisition:comments attribute
@@ -99,7 +102,7 @@ public int create_minc_file(char *minc_file, int clobber,
 
    /* Prefixes for creating file name */
    static char *scan_prefix[MRI_NDIMS] = 
-      {"sl", "e", "t", "p", "cs"};
+      {"sl", "e", "d", "p", "cs"};
 
    /* Turn off fatal errors */
    ncopts = NCOPTS_DEFAULT;

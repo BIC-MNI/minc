@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : June 18, 1993 (Peter Neelin)
 @MODIFIED   : $Log: strdup.c,v $
-@MODIFIED   : Revision 1.2  1993-08-11 12:06:30  neelin
-@MODIFIED   : Added RCS logging in source.
+@MODIFIED   : Revision 1.3  1994-09-28 10:37:36  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.2  93/08/11  12:06:30  neelin
+ * Added RCS logging in source.
+ * 
 ---------------------------------------------------------------------------- */
 char *strdup(const char *string)
 {

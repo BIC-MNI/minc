@@ -9,10 +9,13 @@
 @CALLS      : 
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincexample1.c,v $
-@MODIFIED   : Revision 1.5  1994-03-16 12:10:50  neelin
-@MODIFIED   : Changed ncopen,create,close to miopen,...
-@MODIFIED   : Changed setting of step and start attributes in output file.
+@MODIFIED   : Revision 1.6  1994-09-28 10:34:35  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.5  94/03/16  12:10:50  neelin
+ * Changed ncopen,create,close to miopen,...
+ * Changed setting of step and start attributes in output file.
+ * 
  * Revision 1.4  93/08/30  11:00:55  neelin
  * Added reading of dimension step and start.
  * Added printing of volume information in main program.
@@ -32,7 +35,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.5 1994-03-16 12:10:50 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.6 1994-09-28 10:34:35 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,11 +5,14 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.10  1994-04-07 10:05:04  neelin
-@MODIFIED   : Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
-@MODIFIED   : to that or ACR_OTHER_ERROR.
-@MODIFIED   : Added #ifdef lint to DEFINE_ELEMENT.
+@MODIFIED   : Revision 1.11  1994-09-28 10:35:45  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.10  94/04/07  10:05:04  neelin
+ * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
+ * to that or ACR_OTHER_ERROR.
+ * Added #ifdef lint to DEFINE_ELEMENT.
+ * 
  * Revision 1.9  93/12/10  09:20:32  neelin
  * Added acr_find_<type> routines.
  * 

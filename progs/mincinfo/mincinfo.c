@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 1.9  1993-08-11 15:45:53  neelin
-@MODIFIED   : Functions called by ParseArgv must check that nextArg is not NULL.
+@MODIFIED   : Revision 1.10  1994-09-28 10:34:00  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.9  93/08/11  15:45:53  neelin
+ * Functions called by ParseArgv must check that nextArg is not NULL.
+ * 
  * Revision 1.8  93/08/11  15:22:19  neelin
  * Added RCS logging in source.
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.9 1993-08-11 15:45:53 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 1.10 1994-09-28 10:34:00 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -6,13 +6,16 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.8  1994-05-24 15:09:53  neelin
-@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
-@MODIFIED   : or 2 frames (put in 1 file for more).
-@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
-@MODIFIED   : Save echo times in dimension variable when appropriate.
-@MODIFIED   : Changed to file names to end in _mri.mnc.
+@MODIFIED   : Revision 1.9  1994-09-28 10:34:53  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.8  94/05/24  15:09:53  neelin
+ * Break up multiple echoes or time frames into separate files for 2 echoes
+ * or 2 frames (put in 1 file for more).
+ * Changed units of repetition time, echo time, etc to seconds.
+ * Save echo times in dimension variable when appropriate.
+ * Changed to file names to end in _mri.mnc.
+ * 
  * Revision 1.7  94/03/15  14:25:49  neelin
  * Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
  * Added acquisition:comments attribute

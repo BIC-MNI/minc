@@ -4,10 +4,13 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 1.3  1994-01-18 13:36:42  neelin
-@MODIFIED   : Added command line options to gyrotominc and fixed error message bug in
-@MODIFIED   : gyro_to_minc.
+@MODIFIED   : Revision 1.4  1994-09-28 10:35:02  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  94/01/18  13:36:42  neelin
+ * Added command line options to gyrotominc and fixed error message bug in
+ * gyro_to_minc.
+ * 
  * Revision 1.2  94/01/14  11:37:22  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.

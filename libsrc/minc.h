@@ -18,9 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 1.28  1993-11-03 13:08:37  neelin
-@MODIFIED   : Added prototypes for miopen, miclose, micreate.
+@MODIFIED   : Revision 1.29  1994-09-28 10:37:24  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.28  93/11/03  13:08:37  neelin
+ * Added prototypes for miopen, miclose, micreate.
+ * 
  * Revision 1.27  93/11/03  12:29:11  neelin
  * Added error code for failure to uncompress a file.
  * 
@@ -39,12 +42,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.28 1993-11-03 13:08:37 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.29 1994-09-28 10:37:24 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.28 1993-11-03 13:08:37 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.29 1994-09-28 10:37:24 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 

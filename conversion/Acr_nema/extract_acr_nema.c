@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: extract_acr_nema.c,v $
-@MODIFIED   : Revision 1.3  1994-03-14 16:13:04  neelin
-@MODIFIED   : Changed name in header.
+@MODIFIED   : Revision 1.4  1994-09-28 10:35:54  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.3  94/03/14  16:13:04  neelin
+ * Changed name in header.
+ * 
  * Revision 1.2  93/11/25  10:36:05  neelin
  * Added byte-order test and file free.
  * 

@@ -5,13 +5,16 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 1.8  1994-05-24 15:09:57  neelin
-@MODIFIED   : Break up multiple echoes or time frames into separate files for 2 echoes
-@MODIFIED   : or 2 frames (put in 1 file for more).
-@MODIFIED   : Changed units of repetition time, echo time, etc to seconds.
-@MODIFIED   : Save echo times in dimension variable when appropriate.
-@MODIFIED   : Changed to file names to end in _mri.mnc.
+@MODIFIED   : Revision 1.9  1994-09-28 10:34:56  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.8  94/05/24  15:09:57  neelin
+ * Break up multiple echoes or time frames into separate files for 2 echoes
+ * or 2 frames (put in 1 file for more).
+ * Changed units of repetition time, echo time, etc to seconds.
+ * Save echo times in dimension variable when appropriate.
+ * Changed to file names to end in _mri.mnc.
+ * 
  * Revision 1.7  94/04/07  11:03:37  neelin
  * Changed error handling to be more explicit about errors.
  * When the server terminates due to an error, a message is printed to /dev/log.

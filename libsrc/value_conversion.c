@@ -13,9 +13,12 @@
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 1.8  1993-11-05 09:18:08  neelin
-@MODIFIED   : Improved epsilon calculation for valid range checking.
+@MODIFIED   : Revision 1.9  1994-09-28 10:37:22  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.8  93/11/05  09:18:08  neelin
+ * Improved epsilon calculation for valid range checking.
+ * 
  * Revision 1.7  93/10/28  15:12:06  neelin
  * Fixed fillvalue checking stuff in MI_convert_type.
  * 
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.8 1993-11-05 09:18:08 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.9 1994-09-28 10:37:22 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.h,v $
-@MODIFIED   : Revision 1.2  1994-01-12 10:19:19  neelin
-@MODIFIED   : Added logging. Turned off filling. Added miclose for files.
+@MODIFIED   : Revision 1.3  1994-09-28 10:36:22  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.2  94/01/12  10:19:19  neelin
+ * Added logging. Turned off filling. Added miclose for files.
+ * 
  * Revision 1.1  94/01/11  15:16:09  neelin
  * Initial revision
  * 

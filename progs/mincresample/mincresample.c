@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.15  1994-03-17 14:12:09  neelin
-@MODIFIED   : Exit with failure if no argument given for -transformation or -like.
-@MODIFIED   : .,
+@MODIFIED   : Revision 1.16  1994-09-28 10:32:33  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.15  94/03/17  14:12:09  neelin
+ * Exit with failure if no argument given for -transformation or -like.
+ * .,
+ * 
  * Revision 1.14  94/03/15  16:44:21  neelin
  * Changed default from -clobber to -noclobber.
  * 
@@ -65,7 +68,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.15 1994-03-17 14:12:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.16 1994-09-28 10:32:33 neelin Exp $";
 #endif
 
 #include <stdlib.h>

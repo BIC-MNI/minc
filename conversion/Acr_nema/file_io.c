@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.6  1994-04-08 10:34:47  neelin
-@MODIFIED   : Added include of string.h
+@MODIFIED   : Revision 1.7  1994-09-28 10:35:42  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.6  94/04/08  10:34:47  neelin
+ * Added include of string.h
+ * 
  * Revision 1.5  94/04/08  10:32:00  neelin
  * Fixed io tracing.
  * 

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_io.c,v $
-@MODIFIED   : Revision 1.8  1994-09-23 16:42:35  neelin
-@MODIFIED   : Changed acr_nema_io to acr_io and acr_nema_test to acr_test.
+@MODIFIED   : Revision 1.9  1994-09-28 10:35:39  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.8  94/09/23  16:42:35  neelin
+ * Changed acr_nema_io to acr_io and acr_nema_test to acr_test.
+ * 
  * Revision 1.7  94/05/18  08:47:43  neelin
  * Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
  * 

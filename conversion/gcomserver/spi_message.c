@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 1.6  1994-05-18 08:55:17  neelin
-@MODIFIED   : Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+@MODIFIED   : Revision 1.7  1994-09-28 10:34:53  neelin
+@MODIFIED   : Pre-release
 @MODIFIED   :
+ * Revision 1.6  94/05/18  08:55:17  neelin
+ * Changed some ACR_OTHER_ERROR's to ACR_ABNORMAL_END_OF_OUTPUT.
+ * 
  * Revision 1.5  94/04/07  11:03:32  neelin
  * Changed error handling to be more explicit about errors.
  * When the server terminates due to an error, a message is printed to /dev/log.
