@@ -12,14 +12,25 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#include "config.h"
 #include  <sys/types.h>
 #include  <sys/times.h>
-#include  <sys/time.h>
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
 #include  <unistd.h>
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.19 1997-03-23 21:11:31 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.20 2003-09-18 14:45:25 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -238,9 +249,6 @@ public  STRING  get_clock_time( void )
     time_t           clock_time;
     struct  tm       *time_tm;
     char             *str;
-#ifndef __sgi
-    time_t   time();
-#endif
 
     (void) time( &clock_time );
 
@@ -310,9 +318,6 @@ public  STRING  get_date( void )
     time_t           clock_time;
     struct  tm       *time_tm;
     char             *str;
-#ifndef __sgi
-    time_t time();
-#endif
 
     (void) time( &clock_time );
 
