@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Constants for handling byte order - First is 0 for big-endian, 
+   and 1 for little endian; Second is the other way around */
+int idummy = 1;
+char *dummy = (char *) &idummy;
+int First  = 0;
+int Second = 1;
+
 int main(int argc, char *argv[])
 {
    union {
@@ -8,10 +15,21 @@ int main(int argc, char *argv[])
       short s;
    } conv;
 
+   /* For figuring out byte order */
    int first_byte;
    int second_byte;
    int base;
    FILE *fpin, *fpout;
+
+   /* Figure out byte order for machine */
+   if ((int) dummy[0] == 1) {   /* Little-endian */
+      First = 1;
+      Second = 0;
+   }
+   else {                      /* Big-endian */
+      First = 0;
+      Second = 1;
+   }
 
    /* Loop through bytes */
    base = 0;
@@ -40,16 +58,16 @@ int main(int argc, char *argv[])
 
          /* We have a three-byte form */
          else {
-            conv.b[0] = second_byte;
-            conv.b[1] = getc(fpin);
+            conv.b[First] = second_byte;
+            conv.b[Second] = getc(fpin);
             base = conv.s;
          }
       }
 
       /* Write out the data */
       conv.s = base;
-      (void) putc((int) conv.b[0], fpout);
-      (void) putc((int) conv.b[1], fpout);
+      (void) putc((int) conv.b[First], fpout);
+      (void) putc((int) conv.b[Second], fpout);
 
    }
 

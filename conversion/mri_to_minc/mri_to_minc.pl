@@ -5,6 +5,15 @@
 # file format.
 #
 
+# Global variable for indicating byte order
+$Little_endian = unpack("c",substr(pack("s",1),0,1));
+%Unpack_codes = ('a', 1, 'A', 1, 
+                 's', 2, 'S', 2,
+                 'i', 4, 'I', 4,
+                 'f', 4, 'd', 8,
+                 );
+                 
+
 sub numeric_order { $a <=> $b;}
 
 # Routine to take absolute value
@@ -236,7 +245,34 @@ sub read_next_file {
 # Subroutine to unpack a value from a string
 sub unpack_value {
     local(*string, $offset, $type) = @_;
-    return unpack("x$offset $type", $string);
+
+    # Check for byte swapping
+    if ($Little_endian) {
+       if ($type !~ /^\s*([a-zA-Z])(\d+)?\s*$/) {
+          die "Unrecognized data type \"$type\" on little-endian machine.\n";
+       }
+       local($code) = $1;
+       local($number) = (defined($2) ? $2 : 1);
+       if (!defined($Unpack_codes{$code})) {
+          die "Unrecognized unpack code \"$code\" on little-endian machine.\n";
+       }
+       local($size) = $Unpack_codes{$code};
+       local($tempstring) = substr($string, $offset, $number * $size);
+       if ($size > 1) {
+          local($iloop);
+          local($max) = $number * $size;
+          for ($iloop=0; $iloop < $max; $iloop+=$size) {
+             substr($tempstring, $iloop, $size) = 
+                reverse(substr($tempstring, $iloop, $size));
+          }
+       }
+       return unpack("$type", $tempstring);
+    }
+       
+    # No byte swapping required
+    else {
+       return unpack("x$offset $type", $string);
+    }
 }
 
 # Subroutine to get a direction cosine from a vector, correcting for
@@ -461,7 +497,7 @@ sub create_mincfile {
 
     # Run rawtominc with appropriate arguments
     $| = 1;
-    open(MINC, "|-") || exec
+    local(@minccommand) = 
         ("rawtominc", $mincfile, $nslices, $nrows, $ncols, "-noclobber",
          "-scan_range", "-short", "-range", "0", "4095", $orientation,
          "-xstep", $xstep, "-ystep", $ystep, "-zstep", $zstep,
@@ -472,6 +508,7 @@ sub create_mincfile {
          @optional_attributes,
          @ge_specific_attributes,
          );
+    open(MINC, "|-") || exec(@minccommand);
 
     # Get keys for machine specific file info
     local(@specific_keys, %specific_keys, $key);
@@ -518,6 +555,9 @@ sub create_mincfile {
 
             local($image_cmd) = 
                 &get_image_cmd($cur_file, *specific_file_info);
+            if ($Little_endian) {
+               $image_cmd .= " | byte_swap";
+            }
             open(GEDAT, $image_cmd . " |");
             read(GEDAT, $image_data, $image_data_len);
             close(GEDAT);
