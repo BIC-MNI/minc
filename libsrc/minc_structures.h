@@ -46,6 +46,8 @@ struct mi_icv_struct {
                                  norm is taken from variable range */
    double  user_imgmax;    /* Range for normalization */
    double  user_imgmin;
+   int     user_do_dimconv; /* Indicates that user wants to do dimension 
+                               conversion stuff */
    int     user_do_scalar; /* Indicates that user wants scalar fields */
    int     user_xdim_dir;  /* Direction for x, y and z dimensions */
    int     user_ydim_dir;
