@@ -2,17 +2,24 @@ ROOT = ..
 include $(ROOT)/Make_machine_specific
 include $(ROOT)/Make_configuration
 
-.SUFFIXES: .tex .dvi
+DOCS = prog_ref.ps prog_guide.ps
+
+.SUFFIXES : .tex .dvi .ps
 
 default : build
 
 all : build
 
-build : prog_ref.dvi prog_guide.dvi
+build : $(DOCS)
+
+$(DOCS) : $(DOCS:.ps=.dvi)
 
 .tex.dvi :
 	-latex $<
 	-latex $<
+
+.dvi.ps :
+	-dvips $< -o $@
 
 clean:
 	$(RM) $(RM_FLAGS) *.aux *.dvi *.log *.toc
