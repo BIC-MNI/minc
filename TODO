@@ -1,3 +1,6 @@
 * check addition in rev 1.72 of volume_io/Volumes/volumes.c
 
 * remove the old build system's Makefiles from CVS
+
+* Add "-version" flag to all executables.
+
