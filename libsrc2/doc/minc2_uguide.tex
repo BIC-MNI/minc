@@ -112,7 +112,13 @@ appropriate document (insert reference here).
 
 \subsection{Definitions}
 \begin{itemize}
-\item volume - A MINC file.  
+\item volume - A MINC file. Volume and file can be used interchangeably
+as it is not common to use volume for more than
+3 dimensions and MINC 2 is N dimensional.
+
+\item opaque datatype - An object orientet concept used for OOP 
+programming in C mainly defined in the internal header files and only 
+used and NOT changed by the user
 \end{itemize}
 \newpage
 \section{Using the core tools}
@@ -382,34 +388,32 @@ Typical scans might be two dimensional or three dimensional, while functional
 data may be stored in a four dimensional file with three spatial and one temporal 
 dimension.
 
-Each dimension of a MINC image volume/file \footnote {volume and file can 
-be used interchangeably as it is not common to use volume for more than
-3 dimensions and MINC 2 is N dimensional.} is specified by its ``name''. MINC2 defines
-standard naming conventions such as ``xspace'', ``yspace'', ``zspace'' (spatial 
-dimensions), ``xfrequency'', ``yfrequency'', ``zfrequency'' 
-(spatial frequency dimensions), ``tfrequency'' (temporal frequency dimension), ``time'' 
-(time dimension) and finally ``vector-dimension'' (vector or complex data dimension).
-``class'' which specifies a general type for the dimensions, is defined as spatial, 
+Each dimension of a MINC image volume/file is specified by its {\tt name}. MINC2 defines
+standard naming conventions such as {\tt xspace, yspace, zspace} (spatial 
+dimensions), {\tt xfrequency, yfrequency, zfrequency}
+(spatial frequency dimensions), {\tt tfrequency} (temporal frequency dimension), {\tt time} 
+(time dimension) and finally {\tt vector-dimension} (vector or complex data dimension).
+{\tt class} which specifies a general type for the dimensions, is defined as spatial, 
 temporal, spatial frequency, temporal frequency or user-defined (i.e. arbitrary) dimension.
-So the above defintion creates a more flexible naming convention where any name can be defined
+So the above definition creates a more flexible naming convention where any name can be defined
 as spatial dimension or vice versa. 
-Apart from ``name'' and ``class'' which are both defined as dimension properties, 
+Apart from {\tt name} and {\tt class} which are both defined as dimension properties, 
 in MINC 2 each dimension has a number 
 of other properties defined that specify how the data should be interpreted.
 For example, the convention for spatial dimensions which is positive xspace coordinates 
 run from the patient's left side to right side, 
 positive yspace coordinates run from patient posterior to anterior 
 and positive zspace coordinates run from inferior to superior is defined in 
-``description'' property. The description for any other dimension must be set by the user 
-or will be set to empty by default. Each dimension can have a ``unit'' 
+{\tt description} property. The description for any other dimension must be set by the user 
+or will be set to empty by default. Each dimension can have a {\tt unit} 
 value assigned to it which is a text string (e.g. ``mm'', ``seconds'') that 
-specifies the units along the dimension's axis. The dimension attribute ``attr''
+specifies the units along the dimension's axis. The dimension attribute {\tt attr}
 defines whether the dimension is regularly or irregularly sampled. A regularly 
-sampled dimension is defined by an origin or ``start'' value and a ``step'' 
+sampled dimension is defined by an origin or {\tt start} value and a {\tt step}
 value that defines the distance between points on the axis. An irregularly 
 sampled dimension must define an array of step values that specify 
-the position of each sample along the axis.``length'' defines the size of the dimension
-and ``direction\_cosines'' are a set of three vectors associated with spatial dimensions
+the position of each sample along the axis.{\tt length} defines the size of the dimension
+and {\tt direction\_cosines} are a set of three vectors associated with spatial dimensions
 and define the precise orientation of the axis relative to "true" x, y, or z coordinates.
 
 For each dimension, the world  coordinate  conversion is specified  
@@ -423,13 +427,11 @@ aligned with the named axis. There can be a direction\_cosine attribute that
 gives the true orientation of the axis. For example, normally the xspace 
 dimension should line up with the world x axis, ie. direction cosine = (1,0,0)
 ; however, it is possible to have a direction cosine of (0.9, 0.43589, 0).
-For detailed formulas please refer to \emph{The MINC 2.0 File Format by Robert D. 
-Vincent}.
+For detailed formulas please refer to APPENDIX A, section 2.1
+\emph{The MINC 2.0 File Format by Robert D. Vincent}.
 
 MINC 2 files can define any number of dimensions. In MINC 2 library, a dimension 
-is represented by an opaque \footnote {An object oriented
-concept used for OOP programming in C mainly defined in the internal header files and only 
-used and NOT changed by the user} datatype
+is represented by an opaque datatype
 called a \emph{dimension handle}, which is defined by the ``C'' typedef
 {\tt midimhandle\_t}. Through the use of the dimension handle, the user can access and 
 modify all dimension properties. 
@@ -477,9 +479,127 @@ just pass the dimension handle to the following function:\\
       mifree_dimension_handle(midimhandle_t dim_ptr)
 \end{verbatim}
 
-\section{Volume Properties}
+\section{Volume Attributes}
+Attributes are small datasets, text or numeric, which are used to describe extra information about 
+the variables they are attached to and carry NO information about the medical image itself.
+
+The attributes in MINC 2 are defined in three different categories of
+global, structural and informational. Each category defines a set of predefined standard 
+attributes. Global attributes such as 
+{\tt history} contain information about the entire MINC file. Structural attributes such 
+as {\tt dimorder}: an ordered comma separated list of dimension names, 
+convery information to support the MINC file format format. Finally, informational attributes
+provide information about the medical image itself. For a detailed list of
+all MINC 2 attributes refer to APPENDIX A, section 4.
+ 
+The MINC 2 library defines a set of functions for manipulating attributes. To set 
+an attribute's value and
+create it , if it does not already exist, use the following:
+\begin{verbatim}
+      miset_attr_values(mihandle_t volume, 
+                        mitype_t attr_data_type,
+                        const char *path, 
+                        const char *name,
+                        int length, void *values)
+\end{verbatim}
+where file handle, data type, path to the attribute (i.e., where in the hierarchy this
+attribute is created, /minc-2.0/stuff), name of the attribute, its length (i.e., 10 
+characters) and finally the attribute's value are passed as parameters. 
+The attribute's value is retrieved using the following,
+\begin{verbatim}
+      miget_attr_values(mihandle_t volume,
+                        mitype_t attr_data_type,
+                        const char *path, 
+                        const char *name,
+                        int length, void *values)
+\end{verbatim}
+and finally to delete an attribute use
+\begin{verbatim}
+      midelete_attr(mihandle_t volume, 
+                    const char *path, const char *name)
+                       
+\end{verbatim}
 \section{Reading and writing data}
 \section{Volume creation}
+After all the required dimension handles are defined/assigned with their appropriate 
+class and attribute, the MINC 2.0 file can be created by calling the following:
+\begin{verbatim}
+      micreate_volume(const char *filename, 
+                      int number_of_dimensions,
+                      midimhandle_t dimensions[], 
+                      mitype_t volume_type,
+                      miclass_t volume_class, 
+                      mivolumeprops_t create_props,
+                      mihandle_t *volume)
+\end{verbatim}
+where filename, number of dimensions, an array of dimension handles, volume type, 
+volume class and finally volume properties are the given parameters and the file handle
+will be the  retrieved parameter after the file is successfully created.
+{\tt micreate\_volume} creates the file template (i.e, all the information about the actual
+image, its dimensions etc) but not the actual image file itself.
+To Create the actual image for the file, after the file template is created use the following
+\begin{verbatim}
+         micreate_volume_image(mihandle_t volume)
+\end{verbatim}
+where the handle is the one retrieved by calling the previous function.    
+Here is an example showing the use of these two functions:
+
+\begin{verbatim}
+
+#include <minc2.h>
+
+main() {
+
+    int result;
+    mihandle_t hvol;
+    midimhandle_t dim[3];
+    mivolumeprops_t props;
+
+    result = minew_volume_props(&props);
+    result = miset_props_compression_type(props, 
+                                     MI_COMPRESS_ZLIB);
+    result = miset_props_zlib_compression(props, 3);
+    result = miset_props_multi_resolution(props, 1, 3);
+    
+    if (result < 0) {
+      TESTRPT("failed", result);
+    }
+  
+    result = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,
+                                MI_DIMATTR_REGULARLY_SAMPLED, 
+                                10,&dim[0]);
+    if (result < 0) {
+      TESTRPT("failed", result);
+    }
+    result = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,
+                                MI_DIMATTR_REGULARLY_SAMPLED, 
+                                10,&dim[1]);
+    if (result < 0) {
+      TESTRPT("failed", result);
+    }
+    result = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,
+                                MI_DIMATTR_REGULARLY_SAMPLED, 
+                                6,&dim[2]);
+    if (result < 0) {
+      TESTRPT("failed", result);
+    }
+
+    result = micreate_volume("test_multi_h5.mnc", 3, dim, 
+                             MI_TYPE_UINT, MI_CLASS_REAL,
+                             props,&hvol);
+    if (result < 0) {
+      TESTRPT("failed", result);
+    }
+
+    result = micreate_volume_image(hvol);
+    if (result < 0) {
+    TESTRPT("failed", result);
+    }
+   
+}
+
+\end{verbatim}
+
 \section{Multiresolution, blocking and compression}
 \end{document}
 
