@@ -93,26 +93,75 @@ miconvert_voxel_to_real(mihandle_t volume,
     return (result);
 }
 
-/** Converts a 3-dimensional position in voxel coordinates into a 
- * 3-dimensional position in world coordinates.
+/**
+ */
+static void
+mireorder_voxel_to_xyz(mihandle_t volume, const double voxel[MI2_3D], 
+                       double xyz[MI2_3D])
+{
+    int i, axis;
+
+    for (i = 0; i < volume->number_of_dims; i++) {
+        axis = volume->world_indices[i];
+        if ( axis >= 0 )
+            xyz[i] = voxel[axis];
+        else
+            xyz[i] = 0.0;
+    }
+}
+
+/**
+ */
+static void
+mireorder_xyz_to_voxel(mihandle_t volume, const double xyz[MI2_3D], 
+                       double voxel[MI2_3D])
+{
+    int i, axis;
+
+    for (i = 0; i < volume->number_of_dims; i++) {
+        axis = volume->world_indices[i];
+        if ( axis >= 0 ) {
+            voxel[axis] = xyz[i];
+        }
+    }
+}
+
+/** Converts a 3-dimensional spatial position in voxel coordinates into a 
+ * 3-dimensional spatial position in world coordinates.
+ *
+ * The returned world coordinate vector is in a standardized order, with
+ * the X position first (at index 0), followed by the Y and Z coordinates.
+ * The voxel coordinate vector is in the native order appropriate to the
+ * file.
  */
 int
 miconvert_3D_voxel_to_world(mihandle_t volume,
                             const double voxel[MI2_3D],
                             double world[MI2_3D])
 {
-    mitransform_coord(world, volume->v2w_transform, voxel);
+    double temp[MI2_3D];
+
+    mireorder_voxel_to_xyz(volume, voxel, temp);
+    mitransform_coord(world, volume->v2w_transform, temp);
     return (MI_NOERROR);
 }
 
-/** Converts a 3-dimensional position in world coordinates into a 
- * 3-dimensional position in voxel coordinates.
+/** Converts a 3-dimensional spatial position in world coordinates into a 
+ * 3-dimensional spatial position in voxel coordinates.
+ *
+ * The input world coordinate vector is in a standardized order, with
+ * the X position first (at index 0), followed by the Y and Z coordinates.
+ * The voxel coordinate vector is in the native order appropriate to the
+ * file.
  */
 int miconvert_3D_world_to_voxel(mihandle_t volume,
                                 const double world[MI2_3D],
                                 double voxel[MI2_3D])
 {
-    mitransform_coord(voxel, volume->w2v_transform, world);
+    double temp[MI2_3D];
+
+    mitransform_coord(temp, volume->w2v_transform, world);
+    mireorder_xyz_to_voxel(volume, temp, voxel);
     return (MI_NOERROR);
 }
 
