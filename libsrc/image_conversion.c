@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.11 1993-02-01 13:21:31 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.12 1993-03-01 15:16:57 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -1506,7 +1506,7 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
          icvp->scale  = 1.0/icvp->scale;
       }
       else {
-         icvp->offset = usr_vmin;
+         icvp->offset = var_vmin;
          icvp->scale  = 0.0;
       }
    }
