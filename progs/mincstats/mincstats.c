@@ -5,7 +5,11 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.7  2001-12-10 14:11:45  neelin
+ * Revision 1.8  2001-12-11 14:36:00  neelin
+ * Added -discrete_histogram and -integer_histogram, as well as
+ * -world_only options.
+ *
+ * Revision 1.7  2001/12/10 14:11:45  neelin
  * Obtained speed improvement by only doing CoM summing when needed.
  *
  * Revision 1.6  2001/12/06 21:54:25  neelin
@@ -75,6 +79,8 @@
 #define WORLD_NDIMS 3
 
 #define DEFAULT_BOOLEAN (-1)
+
+#define BINS_DEFAULT 2000
 
 /* Double_Array structure */
 typedef struct {
@@ -155,6 +161,7 @@ static int    Mean           = FALSE;
 static int    Variance       = FALSE;
 static int    Stddev         = FALSE;
 static int    CoM            = FALSE;
+static int    World_Only     = FALSE;
 
 static int    Hist           = FALSE;
 static int    Hist_Count     = FALSE;
@@ -180,9 +187,12 @@ static Double_Array mask_binvalue = {0, NULL};
 static int          num_masks;
 
 char          *hist_file;
-static int     hist_bins     = 2000;
+static int     hist_bins     = BINS_DEFAULT;
 static double  hist_sep;
 static double  hist_range[2] = {-DBL_MAX, DBL_MAX};
+static int     discrete_histogram = FALSE;
+static int     integer_histogram = FALSE;
+static int     max_bins      = 10000;
   
 /* Global Variables to store info for stats */
 Stats_Info **stats_info = NULL;
@@ -198,7 +208,8 @@ ArgvInfo argTable[] = {
   {NULL,          ARGV_HELP,    (char*)NULL, (char*)NULL,       "General options:"                          },
   {"-verbose",    ARGV_CONSTANT,(char*)TRUE, (char*)&verbose,   "Print out extra information."              },
   {"-quiet",      ARGV_CONSTANT,(char*)TRUE, (char*)&quiet,     "Print requested values only."              },
-  {"-clobber",    ARGV_CONSTANT,(char*)TRUE, (char*)&clobber,   "Clobber existing files."                   },
+  {"-clobber",    ARGV_CONSTANT,(char*)TRUE,  (char*)&clobber,   "Clobber existing files."                   },
+  {"-noclobber",  ARGV_CONSTANT,(char*)FALSE, (char*)&clobber,   "Do not clobber existing files (default)."                   },
   {"-max_buffer_size_in_kb",
                   ARGV_INT,     (char*)1,    (char*)&max_buffer_size_in_kb,
                                                                 "maximum size of internal buffers."         },
@@ -232,6 +243,9 @@ ArgvInfo argTable[] = {
   {"-hist_floor", ARGV_FLOAT,   (char*)1,    (char*)&hist_range[0],"Histogram floor value. (incl)"             },
   {"-hist_ceil",  ARGV_FLOAT,   (char*)1,    (char*)&hist_range[1], "Histogram ceiling value. (incl)"           },
   {"-hist_range", ARGV_FLOAT,   (char*)2,    (char*)&hist_range,"Histogram floor and ceiling. (incl)"       },
+  {"-discrete_histogram", ARGV_CONSTANT,   (char*)TRUE,    (char*)&discrete_histogram,"Match histogram bins to data discretization"       },
+  {"-integer_histogram", ARGV_CONSTANT,   (char*)TRUE,    (char*)&integer_histogram,"Set histogram bins to unit width"       },
+  {"-max_bins", ARGV_INT,   (char*)1,    (char*)&max_bins,"Set maximum number of histogram bins for integer histograms"       },
 
   {NULL,          ARGV_HELP,    (char*)NULL, (char*)NULL,       "\nStatistics (Printed in this order)"      },
   {"-all",        ARGV_CONSTANT,(char*)TRUE, (char*)&All,       "all statistics (default)."                 },
@@ -244,9 +258,11 @@ ArgvInfo argTable[] = {
   {"-sum",        ARGV_CONSTANT,(char*)TRUE, (char*)&Sum,       "sum."                                      },
   {"-sum2",       ARGV_CONSTANT,(char*)TRUE, (char*)&Sum2,      "sum of squares."                           },
   {"-mean",       ARGV_CONSTANT,(char*)TRUE, (char*)&Mean,      "mean value."                               },
-  {"-var",        ARGV_CONSTANT,(char*)TRUE, (char*)&Variance,  "variance."                                 },
+  {"-variance",   ARGV_CONSTANT,(char*)TRUE, (char*)&Variance,  "variance."                                 },
   {"-stddev",     ARGV_CONSTANT,(char*)TRUE, (char*)&Stddev,    "standard deviation."                       },
   {"-CoM",        ARGV_CONSTANT,(char*)TRUE, (char*)&CoM,       "centre of mass of the volume."                    },
+  {"-com",        ARGV_CONSTANT,(char*)TRUE, (char*)&CoM,       "centre of mass of the volume."                    },
+  {"-world_only", ARGV_CONSTANT,(char*)TRUE, (char*)&World_Only,"print CoM in world coords only."                    },
   
   {NULL,          ARGV_HELP,    (char*)NULL, (char*)NULL,       "\nHistogram Dependant Statistics:"         },
   {"-hist_count", ARGV_CONSTANT,(char*)TRUE, (char*)&Hist_Count,"# of voxels portrayed in Histogram."       },
@@ -270,13 +286,16 @@ int main(int argc, char *argv[])
    char          **infiles;
    int             nfiles;
    Loop_Options   *loop_options;
-   int            mincid;
+   int            mincid, imgid;
    int            idim;
    int            irange, imask;
-   double         real_range[2];
+   double         real_range[2], valid_range[2];
+   nc_type        datatype;
+   int            is_signed;
    double         voxel_to_world[WORLD_NDIMS][WORLD_NDIMS+1];
    Stats_Info     *stats;
    FILE           *FP;
+   double         scale, voxmin, voxmax;
 
    /* Get arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
@@ -309,6 +328,14 @@ int main(int argc, char *argv[])
       in mask_min/mask_max */
    verify_range_options(&mask_min, &mask_max, &mask_range, &mask_binvalue);
    num_masks = mask_min.numvalues;
+
+   /* Check histogramming options */
+   if ((discrete_histogram && integer_histogram) ||
+       ((discrete_histogram || integer_histogram) && 
+        (hist_bins != BINS_DEFAULT))) {
+      (void) fprintf(stderr, "Please specify only one of -discrete_histogram, -integer_histogram or -bins\n");
+      exit(EXIT_FAILURE);
+   }
 
    /* init PctT boolean before checking */
    if (pctT > 0.0) {
@@ -351,6 +378,94 @@ int main(int argc, char *argv[])
       exit(EXIT_FAILURE);
    }
 
+   /* Open the file to get some information */
+   mincid = miopen(infiles[0], NC_NOWRITE);
+   imgid = ncvarid(mincid, MIimage);
+   nvoxels = get_minc_nvoxels(mincid);
+   voxel_volume = get_minc_voxel_volume(mincid);
+   (void) miget_datatype(mincid, imgid, &datatype, &is_signed);
+   (void) miget_image_range(mincid, real_range);
+   (void) miget_valid_range(mincid, imgid, valid_range);
+   file_ndims = get_minc_ndims(mincid);
+   find_minc_spatial_dims(mincid, space_to_dim, dim_to_space);
+   get_minc_voxel_to_world(mincid, voxel_to_world);
+
+   /* Check whether discrete histogramming makes sense - i.e. not
+      floating-point. Silently ignore the option if it does not make sense. */
+   if (datatype == NC_FLOAT || datatype == NC_DOUBLE) {
+      discrete_histogram = FALSE;
+   }
+   
+   /* set up the histogram definition, if needed */
+   if (Hist) {
+
+      if (hist_range[0] == -DBL_MAX) { 
+         if (vol_min.numvalues == 1 && vol_min.values[0] != -DBL_MAX) 
+            hist_range[0] = vol_min.values[0];
+         else
+            hist_range[0] = real_range[0];
+      }
+         
+      if (hist_range[1] == DBL_MAX) { 
+         if (vol_max.numvalues == 1 && vol_max.values[0] != DBL_MAX) 
+            hist_range[1] = vol_max.values[0];
+         else
+            hist_range[1] = real_range[1];
+      }
+
+      if (discrete_histogram) {
+
+         /* Convert histogram range to voxel values and round, then
+            convert back. */
+         scale = (real_range[1] == real_range[0]) ? 0.0 :
+            (valid_range[1]-valid_range[0]) / (real_range[1]-real_range[0]);
+         voxmin = rint((hist_range[0] - real_range[0])*scale + valid_range[0]);
+         voxmax = rint((hist_range[1] - real_range[0])*scale + valid_range[0]);
+         if (real_range[1] != real_range[0])
+            scale = 1.0/scale;
+         hist_range[0] = (voxmin - valid_range[0]) * scale + real_range[0];
+         hist_range[1] = (voxmax - valid_range[0]) * scale + real_range[0];
+
+         /* Figure out number of bins and bin width */
+         hist_bins = voxmax - voxmin;
+         if (hist_bins <= 0) {
+            hist_sep = 1.0;
+            hist_bins = 0;
+         }
+         else {
+            hist_sep = (hist_range[1] - hist_range[0])/hist_bins;
+         }
+
+         /* Shift the ends of the histogram down and up by half a bin
+            and add one to the number of bins */
+         hist_range[0] -= hist_sep/2.0;
+         hist_range[1] += hist_sep/2.0;
+         hist_bins++;
+      }
+      else if (integer_histogram) {
+
+         /* Add and subtract the 0.01 in order to ensure that a range that
+            is already properly specified stays that way. Ie. [-0.5,255.5]
+            does not change, regardless of the type of rounding done to .5 */
+         hist_range[0] = (int) rint(hist_range[0] + 0.01);
+         hist_range[1] = (int) rint(hist_range[1] - 0.01);
+         hist_bins = hist_range[1] - hist_range[0] + 1.0;
+         hist_range[0] -= 0.5;
+         hist_range[1] += 0.5;
+         hist_sep = 1.0;
+      }
+      else {
+         hist_sep = (hist_range[1] - hist_range[0])/hist_bins;
+      }
+
+      if ((discrete_histogram || integer_histogram) &&
+          (hist_bins > max_bins)) {
+         (void) fprintf(stderr, "Too many bins in histogram (%d) - please increase -max_bins if appropriate\n", hist_bins);
+         exit(EXIT_FAILURE);
+      }
+      
+   }
+   
    /* Initialize the stats structure */
    stats_info = MALLOC(num_ranges * sizeof(*stats_info));
    for (irange=0; irange < num_ranges; irange++) {
@@ -365,35 +480,6 @@ int main(int argc, char *argv[])
       }
    }
 
-   /* Open the file to get some information */
-   mincid = miopen(infiles[0], NC_NOWRITE);
-   nvoxels = get_minc_nvoxels(mincid);
-   voxel_volume = get_minc_voxel_volume(mincid);
-   (void) miget_image_range(mincid, real_range);
-   file_ndims = get_minc_ndims(mincid);
-   find_minc_spatial_dims(mincid, space_to_dim, dim_to_space);
-   get_minc_voxel_to_world(mincid, voxel_to_world);
-   
-   /* set up the histogram definition, if needed */
-   if (Hist) {
-      if (hist_range[0] == -DBL_MAX) { 
-         if (vol_min.numvalues == 1 && vol_min.values[0] != -DBL_MAX) 
-            hist_range[0] = vol_min.values[0];
-         else
-            hist_range[0] = real_range[0];
-      }
-         
-      if (hist_range[1] == DBL_MAX) { 
-         if (vol_max.numvalues == 1 && vol_max.values[0] != DBL_MAX) 
-            hist_range[1] = vol_max.values[0];
-         else
-            hist_range[1] = real_range[1];
-      }
-         
-      hist_sep = (hist_range[1] - hist_range[0])/hist_bins;
-      
-   }
-   
    /* Do math */
    loop_options = create_loop_options();
    set_loop_first_input_mincid(loop_options, mincid);
@@ -944,29 +1030,31 @@ void print_com(Stats_Info *stats)
    int first;
 
    /* Print out voxel coord info */
-   if (!quiet) {
-      (void) fprintf(stdout, "CoM_voxel(");
+   if (!World_Only) {
+      if (!quiet) {
+         (void) fprintf(stdout, "CoM_voxel(");
+         first = TRUE;
+         for (idim=0; idim < MAX_VAR_DIMS; idim++) {
+            if (dim_to_space[idim] >= 0) {
+               if (first) first = FALSE;
+               else (void) fprintf(stdout, ",");
+               (void) fprintf(stdout, "%s", spatial_codes[dim_to_space[idim]]);
+            }
+         }
+         (void) fprintf(stdout, "):  ");
+      }
       first = TRUE;
       for (idim=0; idim < MAX_VAR_DIMS; idim++) {
          if (dim_to_space[idim] >= 0) {
             if (first) first = FALSE;
-            else (void) fprintf(stdout, ",");
-            (void) fprintf(stdout, "%s", spatial_codes[dim_to_space[idim]]);
+            else (void) fprintf(stdout, " ");
+            (void) fprintf(stdout, "%.10g", stats->voxel_com[dim_to_space[idim]]);
          }
       }
-      (void) fprintf(stdout, "):  ");
+      (void) fprintf(stdout, "\n");
    }
-   first = TRUE;
-   for (idim=0; idim < MAX_VAR_DIMS; idim++) {
-      if (dim_to_space[idim] >= 0) {
-         if (first) first = FALSE;
-         else (void) fprintf(stdout, " ");
-         (void) fprintf(stdout, "%.10g", stats->voxel_com[dim_to_space[idim]]);
-      }
-   }
-   (void) fprintf(stdout, "\n");
 
-   /* Print out world coord infor */
+   /* Print out world coord info */
    if (!quiet) {
       (void) fprintf(stdout, "CoM_real(x,y,z):   ");
    }
