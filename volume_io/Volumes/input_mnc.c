@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.64 2001-11-28 16:31:02 neelin Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.65 2003-09-18 14:35:03 bert Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -104,11 +104,11 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 {
     minc_file_struct    *file;
     int                 dim_vars[MAX_VAR_DIMS], n_vol_dims;
-    int                 i, slab_size, length, prev_sizes[MAX_VAR_DIMS];
+    int                 i, slab_size, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
     BOOLEAN             different;
     BOOLEAN             range_specified;
-    double              valid_range[2], temp;
+    double              valid_range[2];
     long                long_size;
     BOOLEAN             converted_sign, space_type_consensus;
     nc_type             converted_type;
