@@ -235,7 +235,7 @@ public  int   evaluate_volume(
     int      n_coefs;
     int      vi[MAX_DIMENSIONS];
     Real     fraction[MAX_DIMENSIONS], bound, *coefs;
-    BOOLEAN  fully_inside;
+    BOOLEAN  fully_inside, fully_outside;
 
     if( degrees_continuity < -1 || degrees_continuity > 2 )
     {
@@ -246,46 +246,23 @@ public  int   evaluate_volume(
 
     n_dims = get_volume_n_dimensions(volume);
     get_volume_sizes( volume, sizes );
-    n_values = 1;
-    n_interp_dims = 0;
-
-    for_less( d, 0, n_dims )
-    {
-        if( interpolating_dimensions == NULL || interpolating_dimensions[d] )
-            ++n_interp_dims;
-        else
-            n_values *= sizes[d];
-    }
-
-    if( degrees_continuity < 0 && first_deriv != NULL )
-    {
-        for_less( v, 0, n_values )
-            for_less( d, 0, n_interp_dims )
-                first_deriv[v][d] = 0.0;
-    }
-
-    if( degrees_continuity < 1 && second_deriv != NULL )
-    {
-        for_less( v, 0, n_values )
-            for_less( d, 0, n_interp_dims )
-                for_less( dim, 0, n_interp_dims )
-                   second_deriv[v][d][dim] = 0.0;
-    }
 
     bound = degrees_continuity / 2.0;
     n_interp_dims = 0;
+    n_values = 1;
     n_coefs = 1;
 
     fully_inside = TRUE;
+    fully_outside = TRUE;
 
     for_less( d, 0, n_dims )
     {
         if( interpolating_dimensions == NULL || interpolating_dimensions[d])
         {
             interp_dims[n_interp_dims] = d;
-            start[n_interp_dims] =      (int) ( voxel[d] - bound );
-            fraction[n_interp_dims] = FRACTION( voxel[d] - bound );
-            end[n_interp_dims] = start[d] + degrees_continuity + 2;
+            start[n_interp_dims] =       FLOOR( voxel[d] - bound );
+            fraction[n_interp_dims] = voxel[d] - (Real) start[n_interp_dims];
+            end[n_interp_dims] = start[n_interp_dims] + degrees_continuity + 2;
             n_coefs *= 2 + degrees_continuity;
 
             if( start[n_interp_dims] < 0 ||
@@ -294,8 +271,39 @@ public  int   evaluate_volume(
                 fully_inside = FALSE;
             }
 
+            if( start[n_interp_dims] < sizes[n_interp_dims] ||
+                end[n_interp_dims] >= 0 )
+            {
+                fully_outside = FALSE;
+            }
+
             ++n_interp_dims;
         }
+        else
+            n_values *= sizes[d];
+    }
+
+    if( (fully_outside || degrees_continuity < 0) && first_deriv != NULL )
+    {
+        for_less( v, 0, n_values )
+            for_less( d, 0, n_interp_dims )
+                first_deriv[v][d] = 0.0;
+    }
+
+    if( (fully_outside || degrees_continuity < 1) && second_deriv != NULL )
+    {
+        for_less( v, 0, n_values )
+            for_less( d, 0, n_interp_dims )
+                for_less( dim, 0, n_interp_dims )
+                   second_deriv[v][d][dim] = 0.0;
+    }
+
+    if( fully_outside )
+    {
+        for_less( v, 0, n_values )
+            values[v] = outside_value;
+
+        return( n_values );
     }
 
     n = 0;
@@ -332,6 +340,9 @@ public  int   evaluate_volume(
                                             vi[0], vi[1], vi[2], vi[3], vi[4] );
             ++ind;
         }
+
+        if( ind > n_values * n_coefs )
+            handle_internal_error( "overflow" );
     }
     else
     {
@@ -357,6 +368,9 @@ public  int   evaluate_volume(
                 coefs[ind] = outside_value;
             ++ind;
         }
+
+        if( ind > n_values * n_coefs )
+            handle_internal_error( "overflow" );
     }
 
     switch( degrees_continuity )
