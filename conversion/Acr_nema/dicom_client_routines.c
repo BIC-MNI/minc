@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.11  1998-04-01 20:56:58  neelin
-@MODIFIED   : Added code to set socket buffer size so that things will go faster
-@MODIFIED   : under SunOS.
+@MODIFIED   : Revision 6.12  1998-11-13 15:55:27  neelin
+@MODIFIED   : Modifications to support asynchronous transfers.
 @MODIFIED   :
+ * Revision 6.11  1998/04/01  20:56:58  neelin
+ * Added code to set socket buffer size so that things will go faster
+ * under SunOS.
+ *
  * Revision 6.10  1998/03/23  20:22:56  neelin
  * Removed unnecessary include.
  *
@@ -75,7 +78,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.11 1998-04-01 20:56:58 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.12 1998-11-13 15:55:27 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -95,6 +98,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_cl
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Constants */
@@ -151,13 +155,26 @@ DEFINE_ELEMENT(static, ACR_Photometric_interpretation , 0x0028, 0x0004, CS);
 /* Minimum socket buffer size that we would like to have for TCP connections */
 #define MIN_SOCK_BUFLEN (50*1024)
 
+/* Default values for timeouts and outstanding responses */
+#define DEFAULT_TIMEOUT (60*2)
+#define DEFAULT_INITIAL_TIMEOUT (10)
+#define DEFAULT_MAX_OUTSTANDING (-1)
+
+/* Typedefs */
+typedef struct {
+   int timeout_length;
+   int max_outstanding_responses;
+   int last_message_id;
+   int last_answered_id;
+} Dicom_client_data;
+
 /* Globals for handling connection timeouts */
-static int Timeout_length = 60 * 2 ;       /* Timeout in seconds */
-static int Initial_timeout_length = 10;    /* Timeout for initial connection */
+static int Initial_timeout_length = DEFAULT_INITIAL_TIMEOUT;
 static int Connection_timeout = FALSE;
 static Acr_File *Alarmed_afp = NULL;
 
 /* Private functions */
+private Dicom_client_data *get_client_data_ptr(Acr_File *afp);
 private Acr_Message compose_assoc_request(char *called_ae, char *calling_ae,
                                           char *abstract_syntax_list[],
                                           char *transfer_syntax_list[]);
@@ -168,8 +185,47 @@ private int check_reply(Acr_Message message,
 private Acr_Status receive_message(Acr_File *afpin, Acr_Message *message);
 private Acr_Status send_message(Acr_File *afpout, Acr_Message message);
 private void timeout_handler(int sig);
+private int read_replies(Acr_File *afpin);
+private int synchronize_input(Acr_File *afpin);
 private Acr_Message make_message(Acr_Group group_list);
 
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_client_data_ptr
+@INPUT      : afp
+@OUTPUT     : (none)
+@RETURNS    : Pointer to dicom client data
+@DESCRIPTION: Routine to get the pointer to the client data. If none exists,
+              then it is created.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 11, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private Dicom_client_data *get_client_data_ptr(Acr_File *afp)
+{
+   Dicom_client_data *client_data;
+
+   /* Get the data */
+   client_data = (Dicom_client_data *) acr_get_dicom_client_data(afp);
+
+   /* If it is NULL then initialize it */
+   if (client_data == NULL) {
+      client_data = MALLOC(sizeof(*client_data));
+      if (client_data == NULL) {
+         (void) fprintf(stderr, "Out of memory\n");
+         exit(EXIT_FAILURE);
+      }
+      client_data->timeout_length = DEFAULT_TIMEOUT;
+      client_data->max_outstanding_responses = DEFAULT_MAX_OUTSTANDING;
+      client_data->last_message_id = 0;
+      client_data->last_answered_id = client_data->last_message_id;
+      acr_set_dicom_client_data(afp, (void *) client_data);
+   }
+
+   return client_data;
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_open_dicom_connection
@@ -428,6 +484,9 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
    int isyntax, nsyntax;
    int presentation_context_id;
    long maximum_length;
+
+   /* Synchronize input */
+   if (!synchronize_input(afpin)) return NULL;
 
    /* Compose a message */
    message = compose_assoc_request(called_ae, calling_ae,
@@ -746,11 +805,13 @@ private int check_reply(Acr_Message message,
 private Acr_Status receive_message(Acr_File *afpin, Acr_Message *message)
 {
    Acr_Status status;
+   Dicom_client_data *client_data;
 
    Alarmed_afp = afpin;
+   client_data = get_client_data_ptr(afpin);
    Connection_timeout = FALSE;
    (void) signal(SIGALRM, timeout_handler);
-   (void) alarm(Timeout_length);
+   (void) alarm(client_data->timeout_length);
    status=acr_input_dicom_message(afpin, message);
    (void) alarm(0);
    if (Connection_timeout) {
@@ -776,11 +837,13 @@ private Acr_Status receive_message(Acr_File *afpin, Acr_Message *message)
 private Acr_Status send_message(Acr_File *afpout, Acr_Message message)
 {
    Acr_Status status;
+   Dicom_client_data *client_data;
 
+   client_data = get_client_data_ptr(afpout);
    Alarmed_afp = afpout;
    Connection_timeout = FALSE;
    (void) signal(SIGALRM, timeout_handler);
-   (void) alarm(Timeout_length);
+   (void) alarm(client_data->timeout_length);
    status = acr_output_dicom_message(afpout, message);
    (void) alarm(0);
    if (Connection_timeout) {
@@ -792,7 +855,8 @@ private Acr_Status send_message(Acr_File *afpout, Acr_Message message)
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_set_client_timeout
-@INPUT      : seconds - time in seconds to wait for i/o before timing out
+@INPUT      : afp - stream on which to set timeout
+              seconds - time in seconds to wait for i/o before timing out
 @OUTPUT     : (none)
 @RETURNS    : 
 @DESCRIPTION: Routine to set the length of network timeouts. This time
@@ -806,9 +870,12 @@ private Acr_Status send_message(Acr_File *afpout, Acr_Message message)
 @CREATED    : September 15, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_client_timeout(double seconds)
+public void acr_set_client_timeout(Acr_File *afp, double seconds)
 {
-   Timeout_length = (int) seconds;
+   Dicom_client_data *client_data;
+
+   client_data = get_client_data_ptr(afp);
+   client_data->timeout_length = (int) seconds;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -853,6 +920,62 @@ private void timeout_handler(int sig)
       acr_dicom_set_eof(Alarmed_afp);
    }
    return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_client_max_outstanding
+@INPUT      : afp - stream on which to set asynchronous transfer
+              max - maximum number of outstanding messages that are allowed
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to set the maximum number of messages that can be
+              sent by acr_send_group_list before a reply is received. 
+              This must be set on the input stream to take effect.
+              Setting a negative maximum means that acr_send_group_list
+              will immediately block until the reply is received (completely
+              synchonous). A value of zero means that the send will return 
+              immediately after sending, but will block on the next call 
+              until the reply is recieved. Setting a non-zero positive value 
+              will allow the transmission of more messages (up to the max) 
+              without any reply (asynchronous). Once the limit is reached, 
+              acr_send_group_list will block until a reply is received. 
+              Using asynchronous transfers can greatly improve speed for 
+              small messages, but means that error reporting can occur
+              asynchonously as well.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 12, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_client_max_outstanding(Acr_File *afp, int max)
+{
+   Dicom_client_data *client_data;
+
+   client_data = get_client_data_ptr(afp);
+   client_data->max_outstanding_responses = max;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_get_client_max_outstanding
+@INPUT      : afp - stream on which to set asynchronous transfer
+@OUTPUT     : (none)
+@RETURNS    : maximum number of outstanding responses permitted for this
+              stream.
+@DESCRIPTION: Routine to get the maximum number of messages that can be
+              sent by acr_send_group_list before a reply is received. 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 12, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_get_client_max_outstanding(Acr_File *afp)
+{
+   Dicom_client_data *client_data;
+
+   client_data = get_client_data_ptr(afp);
+   return client_data->max_outstanding_responses;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -902,6 +1025,9 @@ public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout)
    Acr_Status status;
    int pdu_type;
 
+   /* Synchronize input */
+   if (!synchronize_input(afpin)) return FALSE;
+
    /* Compose a message */
    group = acr_create_group(DCM_PDU_GRPID);
    acr_group_add_element(group, 
@@ -946,6 +1072,9 @@ public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout)
 @OUTPUT     : (none)
 @RETURNS    : TRUE if exchange went smoothly.
 @DESCRIPTION: Routine to send a dicom data set and get the response.
+              Asynchronous transmission and reply is supported in this
+              routine only. Use function acr_set_client_max_outstanding 
+              to turn this feature on.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -956,24 +1085,137 @@ public int acr_send_group_list(Acr_File *afpin, Acr_File *afpout,
                                Acr_Group group_list, 
                                char *sop_class_uid)
 {
-   static int message_id=0;
-   int result;
+   Dicom_client_data *client_data;
+
+   /* Get the client_data */
+   client_data = get_client_data_ptr(afpin);
+
+   /* Read in replies */
+   if (!read_replies(afpin)) return FALSE;
 
    /* Send the message */
    if (!acr_transmit_group_list(afpout, group_list, sop_class_uid,
-                                ++message_id)) {
+                                ++(client_data->last_message_id))) {
       return FALSE;
    }
 
-   /* Check the reply */
-   result = acr_receive_reply(afpin);
-   if (result < 0) return FALSE;
-   if (result != message_id) {
-      (void) fprintf(stderr, "Received reply to wrong message\n");
-      return FALSE;
+   /* Check the reply if user wants to force synchronous operation */
+   if (client_data->max_outstanding_responses < 0) {
+      if (!read_replies(afpin)) return FALSE;
    }
 
    return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : read_replies
+@INPUT      : afpin - input stream
+@OUTPUT     : (none)
+@RETURNS    : TRUE if replies are okay.
+@DESCRIPTION: Routine to read in outstanding replies. If asynchronous
+              message exchange is permitted (see function
+              acr_set_client_max_outstanding), then this routine will
+              not block.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 12, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int read_replies(Acr_File *afpin)
+{
+   int result;
+   Dicom_client_data *client_data;
+   struct timeval timeout, *timeout_ptr;
+   FILE *fp;
+   int num_outstanding, max_outstanding;
+   int fd;
+   int nfds;
+   fd_set readfds;
+
+   /* Get the client_data */
+   client_data = get_client_data_ptr(afpin);
+
+   /* Check whether there are any outstanding responses */
+   if (client_data->last_message_id > client_data->last_answered_id) {
+
+      /* Loop until there is nothing left waiting */
+      do {
+
+         /* Get file descriptor */
+         fp = (FILE *) acr_dicom_get_io_data(afpin);
+         fd = fileno(fp);
+         FD_ZERO(&readfds);
+         FD_SET(fd, &readfds);
+
+         /* Check for anything to read. Block if we have too many 
+            outstanding responses. Make sure that max_outstanding is
+            not negative or we could block waiting for a reply to a
+            message that has not yet been sent. */
+         num_outstanding = 
+            client_data->last_message_id - client_data->last_answered_id;
+         max_outstanding = client_data->max_outstanding_responses;
+         if (max_outstanding < 0) max_outstanding = 0;
+         if (num_outstanding > max_outstanding) {
+            timeout_ptr = NULL;         /* This will make select block */
+         }
+         else {
+            timeout_ptr = &timeout;
+         }
+         timeout.tv_sec = 0;
+         timeout.tv_usec = 0;
+         nfds = select(fd+1, &readfds, NULL, NULL, timeout_ptr);
+
+         /* Read in a message */
+         if ((nfds > 0) && FD_ISSET(fd, &readfds)) {
+            result = acr_receive_reply(afpin);
+            if (result < 0) return FALSE;
+            if (result != (client_data->last_answered_id+1)) {
+               (void) fprintf(stderr, "Received reply to wrong message\n");
+               return FALSE;
+            }
+            client_data->last_answered_id++;
+         }
+
+      } while ((nfds > 0) && (client_data->last_message_id >
+                              client_data->last_answered_id));
+
+   }      /* End if outstanding responses */
+
+   return TRUE;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : synchronize_input
+@INPUT      : afpin - input stream
+@OUTPUT     : (none)
+@RETURNS    : TRUE if replies are okay.
+@DESCRIPTION: Routine to synchronize the input stream with the output (see
+              function acr_set_client_max_outstanding). This function will
+              block until all replies are read in.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 12, 1998 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private int synchronize_input(Acr_File *afpin)
+{
+   int old_max_outstanding;
+   int result;
+
+   /* Set the maximum number of outstanding replies to zero to force
+      blocking, saving the old value */
+   old_max_outstanding = acr_get_client_max_outstanding(afpin);
+   acr_set_client_max_outstanding(afpin, 0);
+
+   /* Read the replies */
+   result = read_replies(afpin);
+
+   /* Restore the old value */
+   acr_set_client_max_outstanding(afpin, old_max_outstanding);
+
+   return result;
 }
 
 /* ----------------------------- MNI Header -----------------------------------

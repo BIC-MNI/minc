@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.h,v $
-@MODIFIED   : Revision 6.3  1998-03-23 20:17:17  neelin
-@MODIFIED   : Removed some functions.
+@MODIFIED   : Revision 6.4  1998-11-13 15:55:27  neelin
+@MODIFIED   : Modifications to support asynchronous transfers.
 @MODIFIED   :
+ * Revision 6.3  1998/03/23  20:17:17  neelin
+ * Removed some functions.
+ *
  * Revision 6.2  1997/10/20  23:22:38  neelin
  * Added routine acr_dicom_close_no_release to close a connection that does
  * not have an association.
@@ -57,8 +60,10 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
                                         char *called_ae, char *calling_ae,
                                         char *abstract_syntax_list[], 
                                         char *transfer_syntax_list[]);
-public void acr_set_client_timeout(double seconds);
+public void acr_set_client_timeout(Acr_File *afp, double seconds);
 public void acr_set_client_initial_timeout(double seconds);
+public void acr_set_client_max_outstanding(Acr_File *afp, int max);
+public int acr_get_client_max_outstanding(Acr_File *afp);
 public void acr_dicom_error(Acr_Status status, char *string);
 public int acr_release_dicom_association(Acr_File *afpin, Acr_File *afpout);
 public int acr_send_group_list(Acr_File *afpin, Acr_File *afpout, 
