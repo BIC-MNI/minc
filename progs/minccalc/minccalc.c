@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.9  2004-04-27 15:37:52  bert
+ * Revision 1.10  2004-06-11 20:55:37  bert
+ * Fix for nasty bug which causes lots of bogus zero values to be inserted when minccalc is used with a file with a vector_dimension
+ *
+ * Revision 1.9  2004/04/27 15:37:52  bert
  * Added -2 option
  *
  * Revision 1.8  2001/05/24 15:08:40  neelin
@@ -66,7 +69,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.9 2004-04-27 15:37:52 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.10 2004-06-11 20:55:37 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -409,6 +412,7 @@ public void do_math(void *caller_data, long num_voxels,
    long ivox, ibuff, ivalue, nvox;
    scalar_t scalar, *output_scalars;
    int num_output, iout;
+   long total_values;  /* Total # of values to process in this call */
 
    /* Check arguments */
    if ((output_num_buffers < 1) || 
@@ -416,14 +420,17 @@ public void do_math(void *caller_data, long num_voxels,
       (void) fprintf(stderr, "Bad arguments to do_math!\n");
       exit(EXIT_FAILURE);
    }
-   
+
+   total_values = num_voxels * input_vector_length;
+
    /* Loop through the voxels */
-   for (ivox=0; ivox < num_voxels*input_vector_length; ivox+=eval_width) {
+   for (ivox=0; ivox < total_values; ivox+=eval_width) {
 
       /* Figure out how many voxels to work on at once */
       nvox = eval_width;
-      if (ivox + nvox > num_voxels) nvox = num_voxels - ivox;
-
+      if (ivox + nvox > total_values) 
+          nvox = total_values - ivox;
+      
       /* Copy the data into the A vector */
       for (ivalue=0; ivalue < nvox; ivalue++) {
          for (ibuff=0; ibuff < input_num_buffers; ibuff++){
