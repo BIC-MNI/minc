@@ -5,9 +5,15 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.c,v $
-@MODIFIED   : Revision 6.1  1998-02-18 20:27:13  neelin
-@MODIFIED   : Minor bug fix.
+@MODIFIED   : Revision 6.2  1998-03-09 19:30:23  neelin
+@MODIFIED   : Fixed bug in acr_input_message where the last group added to the input
+@MODIFIED   : message was being deleted followed by the message itself when a
+@MODIFIED   : message length error occurred. When an input error occurs the message
+@MODIFIED   : should not be deleted.
 @MODIFIED   :
+ * Revision 6.1  1998/02/18  20:27:13  neelin
+ * Minor bug fix.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *
@@ -458,15 +464,18 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
 
       /* Read in the next group and check for an error */
       status = acr_input_group(afp, &group);
+
+      /* Add the group to the message */
+      if (group != NULL) {
+         acr_message_add_group(*message, group);
+      }
+
+      /* Check the status */
       if (status != ACR_OK) {
          if (group != NULL) acr_delete_group(group);
-         acr_delete_message(*message);
          if (status == ACR_END_OF_INPUT) status = ACR_ABNORMAL_END_OF_INPUT;
          return status;
       }
-
-      /* Add the group to the message */
-      acr_message_add_group(*message, group);
 
       /* Keep track of remaining bytes to read, if necessary */
       if (length_element != NULL) {
@@ -478,8 +487,6 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
 
    /* Check that we got a full message */
    if ((length_element != NULL) && (message_length != 0)) {
-      if (group != NULL) acr_delete_group(group);
-      acr_delete_message(*message);
       status = ACR_PROTOCOL_ERROR;
       return status;
    }
