@@ -1,0 +1,11 @@
+#! /bin/csh -fa
+
+# Check arguments
+
+if ($#argv != 1) then
+   echo "Usage: $0 <minc file>
+   exit
+endif
+
+ncdump -e image $*
+
