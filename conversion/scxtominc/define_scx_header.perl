@@ -47,6 +47,8 @@ open(hfile, ">$header_file") || die "$0 : Cannot open file $header_file\n";
 foreach $types (@types) {push(@lengths, $lengths{$types});}
 print hfile '
 /* Header file for scanditronix file definition */
+#ifndef SCX_FILE_HEADER_DEFINITION_H
+#define SCX_FILE_HEADER_DEFINITION_H
 
 /* Mnemonic types */
 enum scx_mnem_types 
@@ -310,4 +312,8 @@ foreach $drs_id (@drs_list) {
                "$drs_mnemonics{$drs_id},\n";
 }
 
-   print hfile "   0, NULL, NULL\n};\n";
+   print hfile '   0, NULL, NULL
+};
+
+#endif  /* SCX_FILE_HEADER_DEFINITION_H */
+';
