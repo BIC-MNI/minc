@@ -4,10 +4,13 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.6  1993-09-22 14:50:32  neelin
-@MODIFIED   : Added DTYP = 2 for short values in scx_get_image (this isn't documented,
-@MODIFIED   : but seems to occur for version 6 files sometimes).
+@MODIFIED   : Revision 1.7  1993-10-06 10:15:46  neelin
+@MODIFIED   : Added include of memory.h for compilation on SUNs
 @MODIFIED   :
+ * Revision 1.6  93/09/22  14:50:32  neelin
+ * Added DTYP = 2 for short values in scx_get_image (this isn't documented,
+ * but seems to occur for version 6 files sometimes).
+ * 
  * Revision 1.5  93/08/31  12:08:28  neelin
  * Added conditional definition of SEEK_SET.
  * 
@@ -27,12 +30,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.6 1993-09-22 14:50:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.7 1993-10-06 10:15:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <memory.h>
 #include <scx_header_def.h>
 #include <scx_file.h>
 #include <vax_conversions.h>
