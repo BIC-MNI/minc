@@ -1,3 +1,7 @@
+Thu Dec  6 09:14:22 EST 2001
+   - Corrected return from mivar_exists in minc library to use MI_RETURN
+     so that ncopts is properly restored.
+
 Tue Dec  4 12:24:29 EST 2001
    - No code changes, but checked in lex.c and gram.c in progs/minccalc.
      This fixes an interaction problem between make and CVS. When
