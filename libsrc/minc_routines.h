@@ -12,15 +12,15 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 1.5 1992-12-01 14:04:53 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 1.6 1993-01-22 11:40:30 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */
 
 /* From minc_error.c */
 semiprivate int MI_save_routine_name(char *name);
-semiprivate int MI_return();
-semiprivate int MI_return_error();
+semiprivate int MI_return(void);
+semiprivate int MI_return_error(void);
 semiprivate void MI_log_pkg_error2(int p1, char *p2);
 semiprivate void MI_log_pkg_error3(int p1, char *p2, char *p3);
 semiprivate void MI_log_sys_error1(char *p1);
