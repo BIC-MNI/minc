@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: dump_acr_nema.c,v $
-@MODIFIED   : Revision 1.1  1993-11-24 11:25:01  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-24 12:05:00  neelin
+@MODIFIED   : Write output to stdout instead of stderr.
 @MODIFIED   :
+ * Revision 1.1  93/11/24  11:25:01  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -63,7 +66,7 @@ int main(int argc, char *argv[])
    status = acr_input_group_list(afp, &group_list, 0);
 
    /* Dump the values */
-   acr_dump_group_list(stderr, group_list);
+   acr_dump_group_list(stdout, group_list);
 
    /* Print status information */
    if (status != ACR_END_OF_INPUT) {
