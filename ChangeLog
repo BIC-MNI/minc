@@ -1,4 +1,9 @@
 MINC 2:
+2004-10-18 Andrew Janke <rotor@cmr.uq.edu.au>
+	* Fixed bug in mincstats -BimodalT code to
+           exactly replicate (within reason) volume_stats
+	* Changed default # of int histogram bins from 10000 to 65536
+
 2004-08-11 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fix minc.h for netCDF 3.5.1
 	

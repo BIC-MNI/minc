@@ -5,7 +5,12 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.15  2004-04-27 15:29:22  bert
+ * Revision 1.16  2004-10-18 08:20:35  rotor
+ *  * Changes to mincstats
+ *     - Fixed bug in calculation of BiModalT
+ *     - changed default # of histogram bins to 65536 (from 10000)
+ *
+ * Revision 1.15  2004/04/27 15:29:22  bert
  * Added milog_init() call during initialization
  *
  * Revision 1.14  2003/09/05 18:29:40  bert
@@ -218,7 +223,7 @@ static double hist_sep;
 static double hist_range[2] = { -DBL_MAX, DBL_MAX };
 static int discrete_histogram = FALSE;
 static int integer_histogram = FALSE;
-static int max_bins = 10000;
+static int max_bins = 65536;
 
 /* Global Variables to store info for stats */
 Stats_Info **stats_info = NULL;
@@ -524,7 +529,7 @@ int main(int argc, char *argv[])
 
       if((discrete_histogram || integer_histogram) && (hist_bins > max_bins)) {
          (void)fprintf(stderr,
-                       "Too many bins in histogram (%d) - please increase -max_bins if appropriate\n",
+                       "Too many bins in histogram (%d) - please increase -int_max_bins if appropriate\n",
                        hist_bins);
          exit(EXIT_FAILURE);
       }
@@ -638,18 +643,18 @@ int main(int argc, char *argv[])
                }
 
                /* BiModal Threshold */
-               if(c > 0) {
-                  zero_moment += pdf[c];
-                  first_moment += hist_centre[c] * pdf[c];
+               zero_moment += pdf[c];
+               first_moment += hist_centre[c] * pdf[c];
 
+               if(c > 0) {
                   var = SQR((stats->mean * zero_moment) - first_moment) /
                      (zero_moment * (1 - zero_moment));
-
+                  
                   if(var > max_var) {
                      bimodalt_bin = c;
                      max_var = var;
                   }
-               }
+               }  
 
                /* pct Threshold */
                if(cdf[c] < pctT) {
