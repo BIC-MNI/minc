@@ -32,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.5 1993-03-02 11:11:31 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 1.6 1993-05-14 10:44:09 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -207,7 +207,7 @@ public char *miattgetstr(int cdfid, int varid, char *name,
          MI_RETURN_ERROR(NULL);
       /* Check the last character for a '\0' */
       if (value[att_length-1] != '\0') {
-         if (att_length=maxlen)
+         if (att_length==maxlen)
             value[att_length-1] = '\0';
          else
             value[att_length]   = '\0';
