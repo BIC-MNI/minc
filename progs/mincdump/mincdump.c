@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.4 2004-06-11 15:27:16 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.5 2004-06-16 16:09:24 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -356,6 +356,7 @@ do_ncdump(char *path, struct fspec* specp)
     int ncid;			/* netCDF id */
     vnode* vlist = 0;		/* list for vars specified with -v option */
     int nc_status;
+    int old_nc_opts;
 
     ncid = miopen(path, NC_NOWRITE);
     if (ncid < 0) {
@@ -378,7 +379,12 @@ do_ncdump(char *path, struct fspec* specp)
 	specp->name = name_path (path);
     }
 
-    Printf ("netcdf %s {\n", specp->name);
+    if (MI2_ISH5OBJ(ncid)) {
+        Printf ("hdf5 %s {\n", specp->name);
+    }
+    else {
+        Printf ("netcdf %s {\n", specp->name);
+    }
     /*
      * get number of dimensions, number of variables, number of global
      * atts, and dimension id of unlimited dimension, if any
@@ -464,7 +470,10 @@ do_ncdump(char *path, struct fspec* specp)
 		var.has_fillval = 1; /* by default, but turn off for bytes */
 
 		/* get _FillValue attribute */
-		nc_status = ncattinq(ncid,varid,_FillValue,&att.type,&att.len);
+                old_nc_opts = ncopts;
+                ncopts = 0;
+                nc_status = ncattinq(ncid,varid,_FillValue,&att.type,&att.len);
+                ncopts = old_nc_opts;
 		if(nc_status == NC_NOERR &&
 		   att.type == var.type && att.len == 1) {
 		    if(var.type == NC_CHAR) {
