@@ -1,3 +1,8 @@
+                New in Release 2.0.06
+                ---------------------
+* No functional changes - this release is intended only to address compilation
+  issues found with the SGI IRIX MIPSpro compiler.
+
                 New in Release 2.0.05
                 ---------------------
 * More bugs fixed
