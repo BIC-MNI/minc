@@ -12,7 +12,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.3 1993-02-01 16:06:47 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.4 1993-02-15 12:13:57 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -80,7 +80,8 @@ main(int argc, char *argv[])
             if ((mni_header.file_type == MNI_FILE_TYPE) &&
                 (mni_header.scanner_id == MNI_STX_SCAN) &&
                 (orientation == TRANSVERSE) &&
-                (mni_header.npixels == 128)) {
+                ((mni_header.npixels == 128) ||
+                 (mni_header.npixels == 256))) {
                (void) miattputdbl(cdfid, dimvar[i], MIstart, 
                                   mni_header.xstart);
             }
@@ -90,7 +91,8 @@ main(int argc, char *argv[])
             if ((mni_header.file_type == MNI_FILE_TYPE) &&
                 (mni_header.scanner_id == MNI_STX_SCAN) &&
                 (orientation == TRANSVERSE) &&
-                (mni_header.npixels == 128)) {
+                ((mni_header.npixels == 128) ||
+                 (mni_header.npixels == 256))) {
                (void) miattputdbl(cdfid, dimvar[i], MIstart, 
                                   mni_header.ystart);
             }
@@ -437,8 +439,14 @@ void parse_args(int argc, char *argv[], mni_header_type *mni_header)
          mni_header->ystep = 
             MNI_DIR * MNI_STX_YFOV / ((double) npix);
          mni_header->zstep_scale = MNI_STX_ZSCALE;
-         mni_header->xstart = -((int) npix/2) * mni_header->xstep;
-         mni_header->ystart = -((int) npix/2) * mni_header->ystep;
+         if (npix==128) {
+            mni_header->xstart = -(npix/2.0) * mni_header->xstep;
+            mni_header->ystart = -(npix/2.0) * mni_header->ystep;
+         }
+         else if (npix==256) {
+            mni_header->xstart = -(npix/2.0 + 0.5) * mni_header->xstep;
+            mni_header->ystart = -(npix/2.0 + 0.5) * mni_header->ystep;
+         }
          break;
       case SAGITTAL:
          mni_header->xstep = 
