@@ -5,7 +5,7 @@
 
 # Object files, header files and library archive
 OBJS = minc_globdef.o minc_error.o value_conversion.o netcdf_convenience.o \
-	    minc_convenience.o image_conversion.o
+	    minc_convenience.o image_conversion.o dim_conversion.o
 HEADERS = minc.h minc_routines.h minc_varlists.h minc_basic.h \
 	       minc_structures.h minc_private.h minc_useful.h type_limits.h
 LIBRARY = minc
