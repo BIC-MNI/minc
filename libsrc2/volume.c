@@ -190,7 +190,33 @@ miset_volume_world_indices(mihandle_t hvol)
         }
     }
 }
-        
+
+/** Create and initialize a MINC 2.0 volume structure.
+ */
+static mihandle_t 
+mialloc_volume_handle(void)
+{
+    mihandle_t handle = (mihandle_t) malloc(sizeof(struct mivolume));
+
+    if (handle != NULL) {
+        /* Clear the memory by default. */
+        memset(handle, 0, sizeof(struct mivolume));
+
+        /* Set the defaults for the data structure */
+        handle->scale_min = 0.0;
+        handle->scale_max = 1.0;
+        handle->image_id = -1;
+        handle->imax_id = -1;
+        handle->imin_id = -1;
+        handle->plist_id = -1;
+        handle->has_slice_scaling = FALSE;
+        handle->is_dirty = FALSE;
+        handle->dim_indices = NULL;
+        handle->selected_resolution = 0;
+    }
+    return (handle);
+}
+
 /** Create a volume with the specified name, dimensions, 
     type, class, volume properties and retrieve the volume handle.
     \ingroup mi2Vol
@@ -238,21 +264,14 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   /* Allocate space for the volume handle
    */
-  handle = (mihandle_t)malloc(sizeof(struct mivolume));
+  handle = mialloc_volume_handle();
   if (handle == NULL) {
     return (MI_ERROR);
   }
   /* Initialize some of the variables associated with the volume handle.
    */
-  handle->is_dirty = FALSE;     /* No writes yet. */
   handle->mode = MI2_OPEN_RDWR;
-  handle->has_slice_scaling = FALSE;
-  handle->scale_min = 0.0;
-  handle->scale_max = 1.0;
   handle->number_of_dims = number_of_dimensions;
-  handle->image_id = -1;
-  handle->imax_id = -1;
-  handle->imin_id = -1;
 
   /* convert minc type to hdf type
    */
@@ -619,12 +638,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
   }
 
   miset_volume_world_indices(handle);
-
-  /* Set the apparent order of dimensions to NULL
-     until user defines them. Switch is used to 
-     avoid errors.
-   */
-  handle->dim_indices = NULL;
 
   /* Verify the volume type.
    */
@@ -1018,14 +1031,13 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 	return (MI_ERROR);
     }
      /* Allocate space for the volume handle */
-    handle = (mihandle_t) malloc(sizeof(struct mivolume));
+    handle = mialloc_volume_handle();
     if (handle == NULL) {
       return (MI_ERROR);
     }
     /* Set some varibales associated with the volume handle */
     handle->hdf_id = file_id;
     handle->mode = mode;
-    handle->selected_resolution = 0;
 
     /* Get the volume class.
      */
@@ -1101,9 +1113,6 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 
     /* Calculate the inverse transform */
     miinvert_transform(handle->v2w_transform, handle->w2v_transform);
-
-    /* Initialize the selected resolution. */
-    handle->selected_resolution = 0;
 
     /* Open the image dataset */
     handle->image_id = H5Dopen(file_id, "/minc-2.0/image/0/image");
