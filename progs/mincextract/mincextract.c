@@ -9,12 +9,15 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 1.10  1994-04-11 16:12:42  neelin
-@MODIFIED   : Added -image_range, -image_minimum, -image_maximum.
-@MODIFIED   : Changed default to -normalize.
-@MODIFIED   : Changed behaviour so that -byte gives default range and sign even if
-@MODIFIED   : file is of type byte (must use -filetype to preserve range and sign).
+@MODIFIED   : Revision 1.11  1994-04-14 08:45:51  neelin
+@MODIFIED   : Added options for flipping images.
 @MODIFIED   :
+ * Revision 1.10  94/04/11  16:12:42  neelin
+ * Added -image_range, -image_minimum, -image_maximum.
+ * Changed default to -normalize.
+ * Changed behaviour so that -byte gives default range and sign even if
+ * file is of type byte (must use -filetype to preserve range and sign).
+ * 
  * Revision 1.9  93/08/11  15:49:49  neelin
  * get_arg_vector must return a value (TRUE if all goes well).
  * 
@@ -37,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.10 1994-04-11 16:12:42 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.11 1994-04-14 08:45:51 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -101,6 +104,10 @@ int normalize_output = TRUE;
 double image_range[2] = {DBL_MAX, DBL_MAX};
 long hs_start[MAX_VAR_DIMS] = {LONG_MIN};
 long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
+int xdirection = INT_MAX;
+int ydirection = INT_MAX;
+int zdirection = INT_MAX;
+int default_direction = INT_MAX;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -138,6 +145,42 @@ ArgvInfo argTable[] = {
        "Specifies corner of hyperslab (C conventions for indices)"},
    {"-count", ARGV_FUNC, (char *) get_arg_vector, (char *) hs_count,
        "Specifies edge lengths of hyperslab to read"},
+   {"-positive_direction", ARGV_CONSTANT, (char *) MI_ICV_POSITIVE, 
+       (char *) &default_direction,
+       "Flip images to always have positive direction."},
+   {"-negative_direction", ARGV_CONSTANT, (char *) MI_ICV_NEGATIVE, 
+       (char *) &default_direction,
+       "Flip images to always have negative direction."},
+   {"-any_direction", ARGV_CONSTANT, (char *) MI_ICV_ANYDIR, 
+       (char *) &default_direction,
+       "Do not flip images (Default)."},
+   {"+xdirection", ARGV_CONSTANT, (char *) MI_ICV_POSITIVE, 
+       (char *) &xdirection,
+       "Flip images to give positive xspace:step value (left-to-right)."},
+   {"-xdirection", ARGV_CONSTANT, (char *) MI_ICV_NEGATIVE, 
+       (char *) &xdirection,
+       "Flip images to give negative xspace:step value (right-to-left)."},
+   {"-xanydirection", ARGV_CONSTANT, (char *) MI_ICV_ANYDIR, 
+       (char *) &xdirection,
+       "Don't flip images along x-axis (default)."},
+   {"+ydirection", ARGV_CONSTANT, (char *) MI_ICV_POSITIVE, 
+          (char *) &ydirection,
+       "Flip images to give positive yspace:step value (post-to-ant)."},
+   {"-ydirection", ARGV_CONSTANT, (char *) MI_ICV_NEGATIVE, 
+       (char *) &ydirection,
+       "Flip images to give negative yspace:step value (ant-to-post)."},
+   {"-yanydirection", ARGV_CONSTANT, (char *) MI_ICV_ANYDIR, 
+       (char *) &ydirection,
+       "Don't flip images along y-axis (default)."},
+   {"+zdirection", ARGV_CONSTANT, (char *) MI_ICV_POSITIVE, 
+       (char *) &zdirection,
+       "Flip images to give positive zspace:step value (inf-to-sup)."},
+   {"-zdirection", ARGV_CONSTANT, (char *) MI_ICV_NEGATIVE, 
+       (char *) &zdirection,
+       "Flip images to give negative zspace:step value (sup-to-inf)."},
+   {"-zanydirection", ARGV_CONSTANT, (char *) MI_ICV_ANYDIR, 
+       (char *) &zdirection,
+       "Don't flip images along z-axis (default)."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -176,6 +219,16 @@ int main(int argc, char *argv[])
       user_normalization = TRUE;
       normalize_output = TRUE;
    }
+
+   /* Check direction values */
+   if (default_direction == INT_MAX)
+      default_direction = MI_ICV_ANYDIR;
+   if (xdirection == INT_MAX)
+      xdirection = default_direction;
+   if (ydirection == INT_MAX)
+      ydirection = default_direction;
+   if (zdirection == INT_MAX)
+      zdirection = default_direction;
 
    /* Open the file */
    mincid = ncopen(filename, NC_NOWRITE);
@@ -256,6 +309,11 @@ int main(int argc, char *argv[])
                                             MI_SIGNED : MI_UNSIGNED));
    (void) miicv_setdbl(icvid, MI_ICV_VALID_MIN, valid_range[0]);
    (void) miicv_setdbl(icvid, MI_ICV_VALID_MAX, valid_range[1]);
+   (void) miicv_setint(icvid, MI_ICV_DO_DIM_CONV, TRUE);
+   (void) miicv_setint(icvid, MI_ICV_DO_SCALAR, FALSE);
+   (void) miicv_setint(icvid, MI_ICV_XDIM_DIR, xdirection);
+   (void) miicv_setint(icvid, MI_ICV_YDIM_DIR, ydirection);
+   (void) miicv_setint(icvid, MI_ICV_ZDIM_DIR, zdirection);
    if ((output_datatype == NC_FLOAT) || (output_datatype == NC_DOUBLE)) {
       (void) miicv_setint(icvid, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(icvid, MI_ICV_USER_NORM, TRUE);
