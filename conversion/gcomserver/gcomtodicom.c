@@ -5,7 +5,10 @@
 @GLOBALS    : 
 @CREATED    : June 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: gcomtodicom.c,v $
-@MODIFIED   : Revision 6.2  2001-04-09 23:02:49  neelin
+@MODIFIED   : Revision 6.3  2001-04-21 12:50:47  neelin
+@MODIFIED   : Added in -d (dump) and -t (trace) options.
+@MODIFIED   :
+@MODIFIED   : Revision 6.2  2001/04/09 23:02:49  neelin
 @MODIFIED   : Modified copyright notice, removing permission statement since copying,
 @MODIFIED   : etc. is probably not permitted by our non-disclosure agreement with
 @MODIFIED   : Philips.
@@ -20,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.2 2001-04-09 23:02:49 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.3 2001-04-21 12:50:47 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -47,11 +50,6 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomto
 #  define TRUE 0
 #endif
 
-/* Set NO_NETWORK to just dump out data */
-#if 0
-#  define NO_NETWORK
-#endif
-
 /* Function prototypes */
 public int send_file(Acr_File *afpin, Acr_File *afpout, char *filename);
 public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
@@ -59,6 +57,8 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
 
 /* Globals */
 int Use_safe_orientations = FALSE;
+int No_network = FALSE;
+int Do_trace = FALSE;
 char *Uid_prefix = "";
 
 /* Main program */
@@ -69,15 +69,14 @@ int main(int argc, char *argv[])
    char *host, *port, *AE_title;
    char **file_list;
    int ifile, num_files;
-   FILE *fpin, *fpout;
    Acr_File *afpin, *afpout;
    char implementation_uid[128];
    int optc;
    extern char *optarg;
    extern int optind;
-   char *optlist = "hsu:";
+   char *optlist = "hsdtu:";
    char *usage = 
-      "Usage: %s [-h] [-s] [-u <uid prefix>] host port AE-title files ...\n";
+      "Usage: %s [-h] [-s] [-d] [-t] [-u <uid prefix>] host port AE-title files ...\n";
    char *abstract_syntax_list[] =
       {
          ACR_MR_IMAGE_STORAGE_UID,
@@ -97,6 +96,8 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr, "Options:\n");
             (void) fprintf(stderr, "   -h:\tPrint this message\n");
             (void) fprintf(stderr, "   -s:\tUse safe orientations\n");
+            (void) fprintf(stderr, "   -d:\tOnly dump the dicom data\n");
+            (void) fprintf(stderr, "   -t:\tDo trace of i/o\n");
             (void) fprintf(stderr, "   -u:\tSpecify uid prefix\n");
             (void) fprintf(stderr, "\n");
             (void) fprintf(stderr, usage, pname);
@@ -104,6 +105,12 @@ int main(int argc, char *argv[])
             break;
          case 's':
             Use_safe_orientations = TRUE;
+            break;
+         case 'd':
+            No_network = TRUE;
+            break;
+         case 't':
+            Do_trace = TRUE;
             break;
          case 'u':
             Uid_prefix = optarg;
@@ -121,28 +128,33 @@ int main(int argc, char *argv[])
    num_files = argc - optind + 1;
 
    /* Set the software implementation uid */
-   if (strlen(Uid_prefix) > 0) {
+   if (strlen(Uid_prefix) > (size_t) 0) {
       (void) sprintf(implementation_uid, "%s.100.1.1", Uid_prefix);
       acr_set_implementation_uid(implementation_uid);
    }
 
-#ifndef NO_NETWORK
    /* Make network connection */
-   if (!acr_open_dicom_connection(host, port, AE_title, "GCOM_TEST",
-                                  ACR_MR_IMAGE_STORAGE_UID,
-                                  ACR_IMPLICIT_VR_LITTLE_END_UID,
-                                  &afpin, &afpout)) {
-      (void) fprintf(stderr, "Unable to connect to host %s", host);
-      return EXIT_FAILURE;
+   if (!No_network) {
+
+      if (!acr_open_dicom_connection(host, port, AE_title, "GCOM_TEST",
+                                     ACR_MR_IMAGE_STORAGE_UID,
+                                     ACR_IMPLICIT_VR_LITTLE_END_UID,
+                                     &afpin, &afpout)) {
+         (void) fprintf(stderr, "Unable to connect to host %s", host);
+         return EXIT_FAILURE;
+      }
+      if (Do_trace) {
+         acr_dicom_enable_trace(afpin);
+         acr_dicom_enable_trace(afpout);
+      }
+
    }
-#if 0
-   acr_dicom_enable_trace(afpin);
-   acr_dicom_enable_trace(afpout);
-#endif
-#else
-   afpin = NULL;
-   afpout = NULL;
-#endif
+   else {          /* No network connection - dump only */
+
+      afpin = NULL;
+      afpout = NULL;
+
+   }
 
    /* Loop over the input files, sending them one at a time */
    for (ifile = 0; ifile < num_files; ifile++) {
@@ -153,10 +165,10 @@ int main(int argc, char *argv[])
       }
    }
 
-#ifndef NO_NETWORK
    /* Close the connection */
-   acr_close_dicom_connection(afpin, afpout);
-#endif
+   if (!No_network) {
+      acr_close_dicom_connection(afpin, afpout);
+   }
 
    (void) fprintf(stderr, "Success!\n");
 
@@ -215,16 +227,17 @@ public int send_file(Acr_File *afpin, Acr_File *afpout, char *filename)
    /* Modify group list to be dicom conformant */
    convert_to_dicom(data_group_list, Uid_prefix, Use_safe_orientations);
 
-#ifndef NO_NETWORK
-   /* Send the group list */
-   if (!acr_send_group_list(afpin, afpout, data_group_list,
-                            ACR_MR_IMAGE_STORAGE_UID)) {
-      (void) fprintf(stderr, "Error sending image\n");
-      return FALSE;
+   /* Send or dump the group list */
+   if (!No_network) {
+      if (!acr_send_group_list(afpin, afpout, data_group_list,
+                               ACR_MR_IMAGE_STORAGE_UID)) {
+         (void) fprintf(stderr, "Error sending image\n");
+         return FALSE;
+      }
    }
-#else
-   acr_dump_group_list(stdout, data_group_list);
-#endif
+   else {
+      acr_dump_group_list(stdout, data_group_list);
+   }
 
    /* Delete the group list */
    acr_delete_group_list(data_group_list);
