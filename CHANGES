@@ -8,6 +8,7 @@ Wed Apr 23 10:58:02 EDT 1997
    - Added dependencies for install targets. They were removed at one
      point, but it seems safer to have them in. They'll probably disappear
      at a later point, and perhaps I'll make a note of the reason...!
+   - Added options -maximum, -minimum, -abs to mincmath.
 Mon Apr 21 13:33:55 EDT 1997
    - Fixed icv calculation of scale so that values are never re-scaled
      from their internal "real" value to an external floating-point type
