@@ -136,7 +136,8 @@ sub gedicom_read_file_info {
     # Get interesting values
     $file_info{'numechos'} = &acr_find_numeric(*header, 0x21, 0x107e);
     if ($file_info{'numechos'} <= 0) {$file_info{'numechos'} = 1;}
-    $file_info{'exam'} = &acr_find_string(*header, 0x20, 0x10);
+    ($file_info{'exam'} = &acr_find_string(*header, 0x20, 0x10))
+       =~ s/[^\w-\.]//g;
     $file_info{'series'} = &acr_find_numeric(*header, 0x20, 0x11);
     $file_info{'image'} = &acr_find_numeric(*header, 0x20, 0x13);
 
