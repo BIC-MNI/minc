@@ -6,7 +6,11 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.c,v $
- * Revision 6.7  1999-10-29 17:51:51  neelin
+ * Revision 6.8  2000-02-03 13:30:30  neelin
+ * Changed initial value of counter for acr_create_uid so that uid does not ever
+ * contain a zero.
+ *
+ * Revision 6.7  1999/10/29 17:51:51  neelin
  * Fixed Log keyword
  *
  * Revision 6.6  1998/11/11 17:47:38  neelin
@@ -263,7 +267,7 @@ public char *acr_create_uid(void)
       unsigned char ch[4];
       int ul;
    } host_id;
-   static int counter = 0;
+   static int counter = 1;
 
    /* Make up a new UID */
    host_id.ul = gethostid();
