@@ -53,13 +53,10 @@ public  Minc_file  initialize_minc_output(
     Transform  *voxel_to_world_transform )
 {
     minc_file_struct    *file;
-    int                 img_var, dim_vars[MAX_VAR_DIMS], min_id, max_id;
-    int                 dim_ids[MAX_VAR_DIMS];
-    long                start_index, mindex[MAX_VAR_DIMS];
+    int                 dim_vars[MAX_VAR_DIMS];
     double              separation[MAX_VAR_DIMS];
     double              start[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    double              image_range[2], dim_value;
     int                 i, j, d, axis;
     Point               origin;
     Vector              axes[N_DIMENSIONS];
@@ -68,6 +65,8 @@ public  Minc_file  initialize_minc_output(
 
     file->file_is_being_read = FALSE;
     file->n_file_dimensions = n_dimensions;
+    file->output_nc_data_type = data_type;
+    file->output_signed_flag = signed_flag;
 
     ncopts = NC_VERBOSE;
     file->cdfid =  nccreate( filename, NC_CLOBBER );
@@ -106,86 +105,185 @@ public  Minc_file  initialize_minc_output(
     {
         file->sizes_in_file[d] = sizes[d];
         file->indices[d] = 0;
-        dim_vars[d] = ncdimdef( file->cdfid, dim_names[d],
-                                sizes[d] );
+        (void) strcpy( file->dim_names[d], dim_names[d] );
+        dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
 
         if( is_spatial_dimension( dim_names[d], &axis ) )
         {
-            dim_ids[d] = micreate_std_variable( file->cdfid, dim_names[d],
-                                                NC_DOUBLE, 0, NULL);
-            (void) miattputdbl( file->cdfid, dim_ids[d], MIstep,
+            file->dim_ids[d] = micreate_std_variable( file->cdfid, dim_names[d],
+                                                      NC_DOUBLE, 0, NULL);
+            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
                                 separation[axis]);
-            (void) miattputdbl( file->cdfid, dim_ids[d], MIstart, start[axis]);
+            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
+                                start[axis]);
             if( !is_default_direction_cosine( axis, dir_cosines[axis] ) )
             {
-                (void) ncattput( file->cdfid, dim_ids[d], MIdirection_cosines,
+                (void) ncattput( file->cdfid, file->dim_ids[d],
+                                 MIdirection_cosines,
                                  NC_DOUBLE, N_DIMENSIONS, dir_cosines[axis]);
             }
-            (void) miattputstr( file->cdfid, dim_ids[d], MIunits, UNITS );
+            (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
         }
     }
 
-    img_var = micreate_std_variable( file->cdfid, MIimage, data_type,
-                                     n_dimensions, dim_vars );
+    file->img_var_id = micreate_std_variable( file->cdfid, MIimage, data_type,
+                                              n_dimensions, dim_vars );
 
-    image_range[0] = min_value;
-    image_range[1] = max_value;
+    file->image_range[0] = min_value;
+    file->image_range[1] = max_value;
 
-    min_id = micreate_std_variable( file->cdfid, MIimagemin, NC_DOUBLE, 0,
-                                   (int *) NULL );
-    (void) miattput_pointer( file->cdfid, img_var, MIimagemin, min_id );
+    file->min_id = micreate_std_variable( file->cdfid, MIimagemin, NC_DOUBLE, 0,
+                                          (int *) NULL );
+    (void) miattput_pointer( file->cdfid, file->img_var_id, MIimagemin,
+                             file->min_id );
 
-    max_id = micreate_std_variable( file->cdfid, MIimagemax, NC_DOUBLE, 0,
-                                   (int *) NULL );
-    (void) miattput_pointer( file->cdfid, img_var, MIimagemax, max_id );
+    file->max_id = micreate_std_variable( file->cdfid, MIimagemax, NC_DOUBLE, 0,
+                                          (int *) NULL );
+    (void) miattput_pointer( file->cdfid, file->img_var_id, MIimagemax,
+                             file->max_id );
 
     if( signed_flag )
-        (void) miattputstr( file->cdfid, img_var, MIsigntype, MI_SIGNED);
+        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
+                            MI_SIGNED );
     else
-        (void) miattputstr( file->cdfid, img_var, MIsigntype, MI_UNSIGNED);
-
-    /* Get into data mode */
-    (void) ncendef( file->cdfid );
-
-    for_less( d, 0, n_dimensions )
-        mindex[d] = 0;
-
-    dim_value = 0.0;
-    for_less( d, 0, n_dimensions )
-    {
-        if( is_spatial_dimension( dim_names[d], &axis ) )
-        {
-            (void) mivarput1( file->cdfid, dim_ids[d], mindex,
-                              NC_DOUBLE, MI_SIGNED, &dim_value );
-        }
-    }
-
-    file->icv = miicv_create();
-
-    (void) miicv_setint( file->icv, MI_ICV_TYPE, data_type );
-    (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
-    (void) miicv_setstr( file->icv, MI_ICV_SIGN,
-                         signed_flag ? MI_SIGNED : MI_UNSIGNED );
-    (void) miicv_attach( file->icv, file->cdfid, img_var );
-
-    start_index = 0;
-    (void) mivarput1( file->icv, min_id, &start_index,
-                      NC_DOUBLE, MI_SIGNED, &image_range[0] );
-    (void) mivarput1( file->icv, max_id, &start_index,
-                      NC_DOUBLE, MI_SIGNED, &image_range[1] );
+        (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
+                            MI_UNSIGNED );
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
+    file->end_def_done = FALSE;
+    file->variables_written = FALSE;
+
     return( file );
+}
+
+public  Status  copy_auxiliary_data_from_minc_file(
+    Minc_file   file,
+    char        filename[] )
+{
+    Status  status;
+    int     src_cdfid;
+
+    ncopts = NC_VERBOSE;
+    src_cdfid =  ncopen( filename, NC_NOWRITE );
+
+    if( src_cdfid == MI_ERROR )
+    {
+        print( "Error opening %s\n", filename );
+        return( ERROR );
+    }
+
+    status = copy_auxiliary_data_from_open_minc_file( file, src_cdfid );
+
+    (void) ncclose( src_cdfid );
+
+    ncopts = NC_VERBOSE | NC_FATAL;
+
+    return( status );
+}
+
+public  Status  copy_auxiliary_data_from_open_minc_file(
+    Minc_file   file,
+    int         src_cdfid )
+{
+    int     src_img_var, varid, n_excluded, excluded_vars[10];
+    int     src_min_id, src_max_id;
+
+    ncopts = NC_VERBOSE;
+
+    n_excluded = 0;
+    if( (varid = ncvarid(src_cdfid, MIrootvariable )) != MI_ERROR )
+        excluded_vars[n_excluded++] = varid;
+    if( (varid = ncvarid(src_cdfid, MIxspace )) != MI_ERROR )
+        excluded_vars[n_excluded++] = varid;
+    if( (varid = ncvarid(src_cdfid, MIyspace )) != MI_ERROR )
+        excluded_vars[n_excluded++] = varid;
+    if( (varid = ncvarid(src_cdfid, MIzspace )) != MI_ERROR )
+        excluded_vars[n_excluded++] = varid;
+    if( (src_img_var = ncvarid(src_cdfid, MIimage )) != MI_ERROR )
+        excluded_vars[n_excluded++] = src_img_var;
+    if( (src_max_id = ncvarid(src_cdfid, MIimagemax )) != MI_ERROR )
+        excluded_vars[n_excluded++] = src_max_id;
+    if( (src_min_id = ncvarid(src_cdfid, MIimagemin )) != MI_ERROR )
+        excluded_vars[n_excluded++] = src_min_id;
+
+    (void) micopy_all_var_defs( src_cdfid, file->cdfid, n_excluded,
+                                excluded_vars );
+
+    if( src_img_var != MI_ERROR )
+        (void) micopy_all_atts( src_cdfid, src_img_var,
+                                file->cdfid, file->img_var_id );
+
+    if( src_min_id != MI_ERROR )
+        (void) micopy_all_atts( src_cdfid, src_min_id,
+                                file->cdfid, file->min_id );
+
+    if( src_max_id != MI_ERROR )
+        (void) micopy_all_atts( src_cdfid, src_max_id,
+                                file->cdfid, file->max_id );
+
+    (void) ncendef( file->cdfid );
+    file->end_def_done = TRUE;
+
+    (void) micopy_all_var_values( src_cdfid, file->cdfid,
+                                  n_excluded, excluded_vars );
+
+    ncopts = NC_VERBOSE | NC_FATAL;
+
+    return( OK );
 }
 
 public  Status  output_minc_volume(
     Minc_file   file,
     Volume      volume )
 {
-    int    d, n_volume_dims, sizes[MAX_DIMENSIONS];
+    int    d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
     long   start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+    long   start_index, mindex[MAX_VAR_DIMS];
+    double dim_value;
     void   *data_ptr;
+
+    if( !file->end_def_done )
+    {
+        /* --- Get into data mode */
+
+        (void) ncendef( file->cdfid );
+        file->end_def_done = TRUE;
+    }
+
+    if( !file->variables_written )
+    {
+        file->variables_written = TRUE;
+
+        ncopts = NC_VERBOSE;
+        for_less( d, 0, file->n_file_dimensions )
+            mindex[d] = 0;
+
+        dim_value = 0.0;
+        for_less( d, 0, file->n_file_dimensions )
+        {
+            if( is_spatial_dimension( file->dim_names[d], &axis ) )
+            {
+                (void) mivarput1( file->cdfid, file->dim_ids[d], mindex,
+                                  NC_DOUBLE, MI_SIGNED, &dim_value );
+            }
+        }
+
+        file->icv = miicv_create();
+
+        (void) miicv_setint( file->icv, MI_ICV_TYPE, file->output_nc_data_type);
+        (void) miicv_setint( file->icv, MI_ICV_DO_NORM, TRUE );
+        (void) miicv_setstr( file->icv, MI_ICV_SIGN,
+                           file->output_signed_flag ? MI_SIGNED : MI_UNSIGNED );
+        (void) miicv_attach( file->icv, file->cdfid, file->img_var_id );
+
+        start_index = 0;
+        (void) mivarput1( file->icv, file->min_id, &start_index,
+                          NC_DOUBLE, MI_SIGNED, &file->image_range[0] );
+        (void) mivarput1( file->icv, file->max_id, &start_index,
+                          NC_DOUBLE, MI_SIGNED, &file->image_range[1] );
+        ncopts = NC_VERBOSE | NC_FATAL;
+    }
 
     n_volume_dims = get_volume_n_dimensions( volume );
 
