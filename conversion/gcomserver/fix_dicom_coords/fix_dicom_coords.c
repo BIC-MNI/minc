@@ -40,7 +40,7 @@ void calculate_dicom_coords(int orientation,
                             double position[],
                             double row_dircos[], double col_dircos[],
                             double *location);
-int convert_imagenum(char *string);
+int convert_modified_imagenum(char *string);
 
 /* Private function prototypes */
 private void convert_coordinate(double coord[WORLD_NDIMS]);
@@ -489,23 +489,26 @@ private void calculate_slice_location(int orientation,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : convert_imagenum
+@NAME       : convert_modified_imagenum
 @INPUT      : string - string to be converted in place
 @OUTPUT     : string - modified date string
 @RETURNS    : TRUE if string was modified, FALSE otherwise.
 @DESCRIPTION: Routine to convert an image number from gyroscan format to 
               a valid dicom integer by making it smaller, if necessary.
+              This function differs from the original in that it assumes that
+              the string has already had two characters chopped off the end.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : March 5, 2001 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-int convert_imagenum(char *string)
+int convert_modified_imagenum(char *string)
 {
    int istart, iend, iold, inew, oldlen, ipos;
    static Acr_max_IS_len = 8;
-   static int chars_to_remove[] = {1,2,5,6,13};
+/*   static int chars_to_remove[] = {1,2,5,6,13}; */
+   static int chars_to_remove[] = {3,4,11};
    static int nchars_to_remove = 
       sizeof(chars_to_remove) / sizeof(chars_to_remove[0]);
    int ichar;

@@ -39,7 +39,7 @@ void calculate_dicom_coords(int orientation,
                             double position[],
                             double row_dircos[], double col_dircos[],
                             double *location);
-int convert_imagenum(char *string);
+int convert_modified_imagenum(char *string);
 
 
 /* MAIN PROGRAM */
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 
    /* Fix the image num string */
    (void) strcpy(imagenum, acr_find_string(group_list, ACR_Image_Number, ""));
-   (void) convert_imagenum(imagenum);
+   (void) convert_modified_imagenum(imagenum);
    (void) printf("\"%s\"\n", imagenum);
 
    return EXIT_SUCCESS;
