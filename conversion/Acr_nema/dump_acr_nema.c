@@ -6,7 +6,10 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_acr_nema.c,v $
- * Revision 6.6  2004-10-29 13:08:41  rotor
+ * Revision 6.7  2005-03-11 22:19:59  bert
+ * add '-t' option to parse files which contain lists of field names with corresponding group and element id's.
+ *
+ * Revision 6.6  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -90,8 +93,89 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <acr_nema.h>
+
+#define N_NAME 31
+
+struct table_element {
+    struct table_element *next;
+    unsigned short el_id;
+    char name[N_NAME+1];
+};
+
+struct table_group {
+    struct table_group *next;
+    struct table_element *list;
+    unsigned short grp_id;
+};
+
+struct table_group *_head;
+
+char *get_name(unsigned short grp_id, unsigned short el_id)
+{
+    struct table_group *tg_ptr;
+    struct table_element *te_ptr;
+
+    for (tg_ptr = _head; tg_ptr; tg_ptr = tg_ptr->next) {
+        if (tg_ptr->grp_id == grp_id) {
+            for (te_ptr = tg_ptr->list; te_ptr; te_ptr = te_ptr->next) {
+                if (te_ptr->el_id == el_id) {
+                    return (te_ptr->name);
+                }
+            }
+        }
+    }
+    return (NULL);
+}
+
+void parse_table(char *filename)
+{
+    FILE *fp;
+    char line[1024];
+    char name[1024];
+    unsigned int el_id;         /* Must be int for sscanf */
+    unsigned int grp_id;        /* Must be int for sscanf */
+    char vr[1024];
+    struct table_element *te_ptr;
+    struct table_group *tg_ptr;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        return;
+    }
+
+    while (fgets(line, sizeof(line), fp)) {
+        if (!isalnum(line[0])) {
+            continue;           /* Ignore */
+        }
+        if (sscanf(line, "%s %x %x %s\n", name, &grp_id, &el_id, vr) != 4) {
+            continue;
+        }
+
+        for (tg_ptr = _head; tg_ptr; tg_ptr = tg_ptr->next) {
+            if (tg_ptr->grp_id == grp_id) {
+                break;
+            }
+        }
+        if (tg_ptr == NULL) {
+            tg_ptr = malloc(sizeof(struct table_group));
+            tg_ptr->next = _head;
+            _head = tg_ptr;
+            tg_ptr->list = NULL;
+            tg_ptr->grp_id = (unsigned short) grp_id;
+        }
+
+        te_ptr = malloc(sizeof(struct table_element));
+        te_ptr->el_id = (unsigned short) el_id;
+        te_ptr->next = tg_ptr->list;
+        tg_ptr->list = te_ptr;
+        strncpy(te_ptr->name, name, N_NAME);
+    }
+    fclose(fp);
+}
+
 
 #define UNKNOWN_VR_ENCODING ((Acr_VR_encoding_type) -1)
 
@@ -112,7 +196,7 @@ int main(int argc, char *argv[])
    char *ptr;
    int iarg, argcounter;
    char *arg;
-   char *usage = "Usage: %s [-h] [-i] [-b] [-l] [-e] [<file> [<max group>]]\n";
+   char *usage = "Usage: %s [-h] [-i] [-b] [-l] [-e] [-t <table>] [<file> [<max group>]]\n";
 
    /* Check arguments */
    pname = argv[0];
@@ -125,9 +209,17 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
          }
          switch (arg[1]) {
+         case 't':
+             if (iarg < argc - 1) {
+                 parse_table(argv[++iarg]);
+                 _acr_name_proc = get_name;
+                 break;
+             }
+             /* Fall through */
          case 'h':
             (void) fprintf(stderr, "Options:\n");
             (void) fprintf(stderr, "   -h:\tPrint this message\n");
+            (void) fprintf(stderr, "   -t <table>:\tUse table to decode element names\n");
             (void) fprintf(stderr, "   -i:\tIgnore protocol errors\n");
             (void) fprintf(stderr, "   -b:\tAssume big-endian data\n");
             (void) fprintf(stderr, "   -l:\tAssume little-endian data\n");
