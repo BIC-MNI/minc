@@ -6,7 +6,10 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_acr_nema.c,v $
- * Revision 6.2  2000-04-28 15:02:01  neelin
+ * Revision 6.3  2000-05-01 13:59:55  neelin
+ * Added -e option to allow reading data streams with explicit VR.
+ *
+ * Revision 6.2  2000/04/28 15:02:01  neelin
  * Added more general argument processing (but not with ParseArgv).
  * Added support for ignoring non-fatal protocol errors.
  * Added support for user-specified byte-order.
@@ -83,6 +86,7 @@ int main(int argc, char *argv[])
    char *maxidstr = NULL;
    int ignore_errors = FALSE;
    Acr_byte_order byte_order = ACR_UNKNOWN_ENDIAN;
+   Acr_VR_encoding_type vr_encoding = ACR_IMPLICIT_VR;
    FILE *fp;
    Acr_File *afp;
    Acr_Group group_list;
@@ -92,7 +96,7 @@ int main(int argc, char *argv[])
    char *ptr;
    int iarg, argcounter;
    char *arg;
-   char *usage = "Usage: %s [-h] [-i] [-b] [-l] [<file> [<max group>]]\n";
+   char *usage = "Usage: %s [-h] [-i] [-b] [-l] [-e] [<file> [<max group>]]\n";
 
    /* Check arguments */
    pname = argv[0];
@@ -110,9 +114,11 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr, "   -h:\tPrint this message\n");
             (void) fprintf(stderr, "   -i:\tIgnore protocol errors\n");
             (void) fprintf(stderr, "   -b:\tAssume big-endian data\n");
-            (void) fprintf(stderr, "   -l:\tAssume little-endian data\n\n");
+            (void) fprintf(stderr, "   -l:\tAssume little-endian data\n");
+            (void) fprintf(stderr, "   -e:\tAssume explicit VR encoding\n\n");
             (void) fprintf(stderr, usage, pname);
             exit(EXIT_FAILURE);
+            break;
          case 'i':
             ignore_errors = TRUE;
             break;
@@ -121,6 +127,9 @@ int main(int argc, char *argv[])
             break;
          case 'b':
             byte_order = ACR_BIG_ENDIAN;
+            break;
+         case 'e':
+            vr_encoding = ACR_EXPLICIT_VR;
             break;
          default:
             (void) fprintf(stderr, "Unrecognized option %s\n", arg);
@@ -176,6 +185,7 @@ int main(int argc, char *argv[])
    else {
       acr_set_byte_order(afp, byte_order);
    }
+   acr_set_vr_encoding(afp, vr_encoding);
 
    /* Read in group list */
    status = acr_input_group_list(afp, &group_list, maxid);
