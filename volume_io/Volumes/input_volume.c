@@ -32,7 +32,7 @@ public  Status  start_volume_input(
     input->icv = miicv_create();
 
     (void) miicv_setint( input->icv, MI_ICV_TYPE, NC_BYTE );
-    (void) miicv_set( input->icv, MI_ICV_SIGN, MI_UNSIGNED );
+    (void) miicv_setstr( input->icv, MI_ICV_SIGN, MI_UNSIGNED );
     (void) miicv_setdbl( input->icv, MI_ICV_VALID_MAX, 255.0 );
     (void) miicv_setdbl( input->icv, MI_ICV_VALID_MIN, 0.0 );
 
