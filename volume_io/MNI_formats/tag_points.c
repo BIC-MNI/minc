@@ -11,10 +11,14 @@ public  Status  output_tag_points(
     int       n_tag_points,
     double    **tags_volume1,
     double    **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
     char      **labels )
 {
     Status   status;
     int      i;
+    Boolean  aux_present;
 
     /* parameter checking */
 
@@ -55,6 +59,10 @@ public  Status  output_tag_points(
 
     (void) fprintf( file, "%s =\n", TAG_POINTS_STRING );
 
+    aux_present = (weights != (Real *) NULL ||
+                   structure_ids != (int *) NULL ||
+                   patient_ids != (int *) NULL);
+
     for( i = 0;  i < n_tag_points;  ++i )
     {
         (void) fprintf( file, " %10.5f %10.5f %10.5f",
@@ -68,6 +76,24 @@ public  Status  output_tag_points(
                             tags_volume2[i][0],
                             tags_volume2[i][1],
                             tags_volume2[i][2] );
+        }
+
+        if( aux_present )
+        {
+            if( weights != (Real *) NULL )
+                (void) fprintf( file, " %g", weights[i] );
+            else
+                (void) fprintf( file, " %g", 0.0 );
+
+            if( structure_ids != (int *) NULL )
+                (void) fprintf( file, " %d", structure_ids[i] );
+            else
+                (void) fprintf( file, " %d", -1 );
+
+            if( patient_ids != (int *) NULL )
+                (void) fprintf( file, " %d", patient_ids[i] );
+            else
+                (void) fprintf( file, " %d", -1 );
         }
 
         if( labels != (char **) NULL )
@@ -99,6 +125,33 @@ private  void  add_tag_point(
     (*tags)[n_tag_points][0] = x;
     (*tags)[n_tag_points][1] = y;
     (*tags)[n_tag_points][2] = z;
+}
+
+private  void  add_tag_weight(
+    double  **weights,
+    int     n_tag_points,
+    double  weight )
+{
+    if( n_tag_points == 0 )
+        *weights = (double *) malloc( sizeof(double) );
+    else
+        *weights = (double *) realloc( (void *) (*weights),
+                                       (n_tag_points+1)*sizeof(double));
+
+    (*weights)[n_tag_points] = weight;
+}
+
+private  void  add_tag_id(
+    int  **ids,
+    int  n_tag_points,
+    int  id )
+{
+    if( n_tag_points == 0 )
+        *ids = (int *) malloc( sizeof(int) );
+    else
+        *ids = (int *) realloc( (void *) (*ids), (n_tag_points+1)*sizeof(int));
+
+    (*ids)[n_tag_points] = id;
 }
 
 private  void  add_tag_label(
@@ -147,6 +200,9 @@ public  void  free_tag_points(
     int       n_tag_points,
     double    **tags_volume1,
     double    **tags_volume2,
+    Real      weights[],
+    int       structure_ids[],
+    int       patient_ids[],
     char      **labels )
 {
     free_tags( tags_volume1, n_tag_points );
@@ -154,8 +210,50 @@ public  void  free_tag_points(
     if( n_volumes == 2 )
         free_tags( tags_volume2, n_tag_points );
 
+    if( weights != (Real *) NULL )
+        free( (void *) weights );
+
+    if( structure_ids != (int *) NULL )
+        free( (void *) structure_ids );
+
+    if( patient_ids != (int *) NULL )
+        free( (void *) patient_ids );
+
     if( labels != (char **) NULL )
         free_labels( labels, n_tag_points );
+}
+
+private  void  extract_label(
+    char     str[],
+    char     label[] )
+{
+    Boolean  quoted;
+    int      i, len;
+
+    i = 0;
+    len = 0;
+
+    while( str[i] == ' ' || str[i] == '\t' )
+        ++i;
+
+    if( str[i] == '"' )
+    {
+        quoted = TRUE;
+        ++i;
+    }
+    else
+        quoted = FALSE;
+
+    while( str[i] != (char) 0 &&
+           (quoted && str[i] != '"' ||
+            !quoted && str[i] != ' ' && str[i] != '\t') )
+    {
+        label[len] = str[i];
+        ++len;
+        ++i;
+    }
+
+    label[len] = (char) 0;
 }
 
 public  Status  input_tag_points(
@@ -164,9 +262,15 @@ public  Status  input_tag_points(
     int       *n_tag_points,
     double    ***tags_volume1,
     double    ***tags_volume2,
+    Real      **weights,
+    int       **structure_ids,
+    int       **patient_ids,
     char      ***labels )
 {
     String  line;
+    double  weight;
+    Boolean last_was_blank, in_quotes;
+    int     n_strings, structure_id, patient_id, pos, i;
     double  x1, y1, z1, x2, y2, z2;
     String  label;
 
@@ -189,7 +293,7 @@ public  Status  input_tag_points(
 
     /* now read the number of volumes */
 
-    if( mni_input_keyword_and_equal_sign( file, VOLUMES_STRING ) != OK )
+    if( mni_input_keyword_and_equal_sign( file, VOLUMES_STRING, TRUE ) != OK )
         return( ERROR );
 
     if( mni_input_int( file, n_volumes ) != OK )
@@ -212,7 +316,7 @@ public  Status  input_tag_points(
 
     /* now read the tag points */
 
-    if( mni_input_keyword_and_equal_sign( file, TAG_POINTS_STRING ) != OK )
+    if( mni_input_keyword_and_equal_sign( file, TAG_POINTS_STRING, TRUE ) != OK)
         return( ERROR );
 
     *n_tag_points = 0;
@@ -224,15 +328,11 @@ public  Status  input_tag_points(
             (*n_volumes == 2 &&
              (mni_input_double( file, &y2 ) != OK ||
               mni_input_double( file, &x2 ) != OK ||
-              mni_input_double( file, &z2 ) != OK)) ||
-            mni_input_string( file, label, MAX_STRING_LENGTH, ' ', ';' ) != OK )
+              mni_input_double( file, &z2 ) != OK)) )
         {
             (void) fprintf( stderr,
                       "input_tag_points(): error reading tag point %d\n",
                       *n_tag_points + 1 );
-
-            free_tag_points( *n_volumes, *n_tag_points, *tags_volume1,
-                             *tags_volume2, *labels );
             return( ERROR );
         }
 
@@ -240,6 +340,74 @@ public  Status  input_tag_points(
 
         if( *n_volumes == 2 )
             add_tag_point( tags_volume2, *n_tag_points, x2, y2, z2 );
+
+        label[0] = (char) 0;
+        weight = 0.0;
+        structure_id = -1;
+        patient_id = -1;
+
+        n_strings = 0;
+        if( mni_input_line( file, line, MAX_STRING_LENGTH ) == OK )
+        {
+            i = 0;
+            last_was_blank = TRUE;
+            in_quotes = FALSE;
+            while( line[i] != (char) 0 )
+            {
+                if( line[i] == ' ' || line[i] == '\t' )
+                {
+                    last_was_blank = TRUE;
+                }
+                else
+                {
+                    if( last_was_blank && !in_quotes )
+                        ++n_strings;
+
+                    last_was_blank = FALSE;
+
+                    if( line[i] == '\"' )
+                        in_quotes = !in_quotes;
+                }
+                ++i;
+            }
+
+            while( i > 0 &&
+                   (line[i] == ' ' || line[i] == '\t' || line[i] == (char) 0 ) )
+                --i;
+
+            if( line[i] == ';' )
+            {
+                (void) unget_character( file, ';' );
+                line[i] = (char) 0;
+            }
+        }
+
+        if( n_strings == 1 )
+        {
+            extract_label( line, label );
+        }
+        else if( n_strings < 3 || n_strings > 4 ||
+                 sscanf( line, "%lf %d %d %n", &weight, &structure_id,
+                         &patient_id, &pos ) != 4 )
+        {
+            (void) fprintf( stderr,
+                  "input_tag_points(): error reading tag point %d\n",
+                  *n_tag_points + 1 );
+            return( ERROR );
+        }
+        else if( n_strings == 4 )
+        {
+            extract_label( &line[pos], label );
+        }
+
+        if( weights != (Real **) NULL )
+            add_tag_weight( weights, *n_tag_points, weight );
+
+        if( structure_ids != (int **) NULL )
+            add_tag_id( structure_ids, *n_tag_points, structure_id );
+
+        if( patient_ids != (int **) NULL )
+            add_tag_id( patient_ids, *n_tag_points, patient_id );
 
         if( labels != (char ***) NULL )
             add_tag_label( labels, *n_tag_points, label );
