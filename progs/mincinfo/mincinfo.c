@@ -10,7 +10,11 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.3  2001-08-16 16:41:35  neelin
+ * Revision 6.4  2001-10-31 19:40:21  neelin
+ * Fixed bug in printing of sign for default output - this was introduced
+ * in the change to miget_datatype.
+ *
+ * Revision 6.3  2001/08/16 16:41:35  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -75,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.3 2001-08-16 16:41:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.4 2001-10-31 19:40:21 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -531,7 +535,7 @@ public int print_image_info(char *filename, int mincid)
    int imgid, ndims, dim[MAX_VAR_DIMS], varid;
    nc_type datatype;
    double valid_range[2];
-   char sign_type[MI_MAX_ATTSTR_LEN];
+   char *sign_type[] = {MI_UNSIGNED, MI_SIGNED};
    int sign_index;
    int is_signed;
    long length;
@@ -546,13 +550,13 @@ public int print_image_info(char *filename, int mincid)
    RTN_ERR(miget_datatype(mincid, imgid, &datatype, &is_signed));
    RTN_ERR(miget_valid_range(mincid, imgid, valid_range));
 
-   /* Get sign index;
+   /* Get sign index */
    sign_index = (is_signed ? 1 : 0);
 
    /* Write out image info line */
    (void) printf("file: %s\n", filename);
    (void) printf("image: %s %s %.20g to %.20g\n", 
-                 sign_type, type_names[datatype],
+                 sign_type[sign_index], type_names[datatype],
                  valid_range[0], valid_range[1]);
 
    /* Write out dimension names */
