@@ -1,5 +1,6 @@
 /* Copyright David Leonard & Andrew Janke, 2000. All rights reserved. */
 
+#define _GNU_SOURCE 1
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

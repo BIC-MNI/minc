@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.6  2004-11-01 22:38:38  bert
+ * Revision 6.7  2004-12-14 23:52:50  bert
+ * Get rid of compilation warnings w/c99
+ *
+ * Revision 6.6  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.5  2004/04/27 15:38:15  bert
@@ -71,9 +74,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.6 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.7 2004-12-14 23:52:50 bert Exp $";
 #endif
 
+#define _GNU_SOURCE
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

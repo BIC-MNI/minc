@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.10  2004-11-01 22:38:38  bert
+ * Revision 6.11  2004-12-14 23:52:08  bert
+ * Get rid of compilation warnings w/c99
+ *
+ * Revision 6.10  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.9  2004/04/27 15:37:13  bert
@@ -97,9 +100,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.10 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.11 2004-12-14 23:52:08 bert Exp $";
 #endif
 
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <stdio.h>
 #include <float.h>

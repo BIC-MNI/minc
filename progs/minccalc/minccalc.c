@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.11  2004-11-01 22:38:38  bert
+ * Revision 1.12  2004-12-14 23:52:23  bert
+ * Get rid of compilation warnings w/c99
+ *
+ * Revision 1.11  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 1.10  2004/06/11 20:55:37  bert
@@ -72,9 +75,10 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.11 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.12 2004-12-14 23:52:23 bert Exp $";
 #endif
 
+#define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
