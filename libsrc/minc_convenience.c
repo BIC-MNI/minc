@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.9 1992-12-01 14:02:04 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.10 1992-12-15 09:54:21 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -399,7 +399,6 @@ private int MI_create_dimwidth_variable(int cdfid, char *name,
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_DIM_WIDTH))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
-   MI_CHK_ERR(miattputstr(cdfid, varid, MIspacing, MI_REGULAR))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIfiltertype, MI_SQUARE))
 
    MI_RETURN(varid);
