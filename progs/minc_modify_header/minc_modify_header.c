@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.7  2004-02-02 18:27:06  bert
+ * Revision 6.8  2004-05-25 21:33:51  bert
+ * Add -dappend and -sappend
+ *
+ * Revision 6.7  2004/02/02 18:27:06  bert
  * Include config.h
  *
  * Revision 6.6  2003/11/14 16:52:24  stever
@@ -69,7 +72,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.7 2004-02-02 18:27:06 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.8 2004-05-25 21:33:51 bert Exp $";
 #endif
 
 #include "config.h"
@@ -98,7 +101,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/min
 #endif
 
 /* Typedefs */
-typedef enum {Insert_attribute, Delete_attribute} Attribute_Action;
+typedef enum {
+    Insert_attribute, Delete_attribute, Append_attribute
+} Attribute_Action;
 
 /* Functions */
 int get_attribute(char *dst, char *key, char *nextarg);
@@ -125,6 +130,10 @@ ArgvInfo argTable[] = {
        "Insert a double precision attribute (<var>:<attr>=<value>(,...))."},
    {"-delete", ARGV_FUNC, (char *) get_attribute, NULL,
        "Delete an attribute (<var>:<attr>)."},
+   {"-sappend", ARGV_FUNC, (char *) get_attribute, NULL,
+       "Append string attribute (<var>:<attr>=<value>)."},
+   {"-dappend", ARGV_FUNC, (char *) get_attribute, NULL,
+       "Append a double precision attribute (<var>:<attr>=<value>(,...))."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -251,7 +260,9 @@ int main(int argc, char *argv[])
          attribute_exists = FALSE;
 
       /* Are we inserting or deleting? */
-      if (attribute_list[iatt].action == Insert_attribute) {
+      switch (attribute_list[iatt].action) {
+      case Insert_attribute:
+      case Append_attribute:
          if (attribute_list[iatt].value != NULL) {
             new_type = NC_CHAR;
             new_length = strlen(attribute_list[iatt].value)+1;
@@ -262,6 +273,37 @@ int main(int argc, char *argv[])
             new_length = attribute_list[iatt].num_doubles;
             new_value = (void *) attribute_list[iatt].double_values;
          }
+
+         /* For append we have to copy the entire attribute, if it 
+          * already exists.
+          */
+         if (attribute_list[iatt].action == Append_attribute &&
+             attribute_exists) {
+             char *tmp_value;
+
+             /* Verify that the existing type matches the newly
+              * requested type.  Don't allow a -dappend on a 
+              * string attribute, for example.
+              */
+             if (new_type != attribute_type) {
+                 fprintf(stderr, 
+                         "Can't append %s data to %s attribute %s:%s.\n",
+                         (new_type == NC_DOUBLE) ? "double" : "string",
+                         (attribute_type == NC_DOUBLE) ? "double" : "string",
+                         variable_name, attribute_name);
+                 exit(EXIT_FAILURE);
+             }
+
+             new_type = attribute_type;
+             new_length += attribute_length;
+             tmp_value = malloc(new_length * nctypelen(new_type));
+             ncattget(mincid, varid, attribute_name, tmp_value);
+             memcpy(tmp_value + attribute_length * nctypelen(new_type),
+                    new_value,
+                    new_length * nctypelen(new_type));
+             new_value = (void *) tmp_value;
+         }
+
          total_length = attribute_length*nctypelen(attribute_type);
          if (!attribute_exists ||
              (total_length < new_length*nctypelen(new_type))) {
@@ -298,9 +340,9 @@ int main(int argc, char *argv[])
                             new_type, new_length, new_value);
          }
 
-      }    /* Insert_attribute */
+         break;
 
-      else if (attribute_list[iatt].action == Delete_attribute) {
+      case Delete_attribute:
 
          if (attribute_exists) {
             if (! done_redef) {
@@ -309,16 +351,14 @@ int main(int argc, char *argv[])
             }
             (void) ncattdel(mincid, varid, attribute_name);
          }
-               
+              
+         break;
 
-      }    /* Delete_attribute */
-
-      else {
-         (void) fprintf(stderr, "Program error: unknown action %d\n",
-                        (int) attribute_list[iatt].action);
-         exit(EXIT_FAILURE);
+      default:
+          (void) fprintf(stderr, "Program error: unknown action %d\n",
+                         (int) attribute_list[iatt].action);
+          exit(EXIT_FAILURE);
       }
-      
 
    }
    ncopts = NC_VERBOSE | NC_FATAL;
@@ -379,6 +419,16 @@ int get_attribute(char *dst, char *key, char *nextarg)
       need_double = FALSE;
       format = "<var>:<attr>";
    }
+   else if (strcmp(key, "-sappend") == 0) {
+       action = Append_attribute;
+       need_double = FALSE;
+       format = "<var>:<attr>=<val>";
+   }
+   else if (strcmp(key, "-dappend") == 0) {
+       action = Append_attribute;
+       need_double = TRUE;
+       format = "<var>:<attr>=<val>";
+   }
 
    /* Check for a following argument */
    if (nextarg == NULL) {
@@ -404,7 +454,7 @@ int get_attribute(char *dst, char *key, char *nextarg)
    value = NULL;
    num_doubles = 0;
    dvalues = NULL;
-   if (action == Insert_attribute) {
+   if (action == Insert_attribute || action == Append_attribute) {
       value = strchr(attribute, '=');
       if (value == NULL) {
          (void) fprintf(stderr, 
