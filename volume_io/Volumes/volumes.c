@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.49 1995-08-16 01:58:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.50 1995-08-18 13:33:49 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -170,6 +170,7 @@ public   Volume   create_volume(
     ALLOC( volume, 1 );
 
     volume->is_rgba_data = FALSE;
+    volume->is_cached_volume = FALSE;
 
     volume->real_range_set = FALSE;
     volume->real_value_scale = 1.0;
@@ -363,13 +364,27 @@ public  BOOLEAN  is_an_rgb_volume(
 public  void  alloc_volume_data(
     Volume   volume )
 {
-    alloc_multidim_array( &volume->array );
+    int   data_size;
+
+    data_size = get_volume_total_n_voxels( volume ) *
+                get_type_size( get_volume_data_type( volume ) );
+
+    if( data_size > get_n_bytes_cache_threshold() )
+    {
+        volume->is_cached_volume = TRUE;
+        initialize_volume_cache( &volume->cache, volume );
+    }
+    else
+    {
+        alloc_multidim_array( &volume->array );
+    }
 }
 
 public  BOOLEAN  volume_is_alloced(
     Volume   volume )
 {
-    return( multidim_array_is_alloced( &volume->array ) );
+    return( volume->is_cached_volume ||
+            multidim_array_is_alloced( &volume->array ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -388,7 +403,10 @@ public  BOOLEAN  volume_is_alloced(
 public  void  free_volume_data(
     Volume   volume )
 {
-    delete_multidim_array( &volume->array );
+    if( volume->is_cached_volume )
+        delete_volume_cache( &volume->cache );
+    else
+        delete_multidim_array( &volume->array );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1633,6 +1651,14 @@ public  Volume  copy_volume(
     Volume   copy;
     void     *src, *dest;
     int      d, n_voxels, sizes[MAX_DIMENSIONS];
+
+    if( volume->is_cached_volume )
+    {
+        print_error(
+               "copy_volume():  copying cached volumes not implemented.\n" );
+
+        return( NULL );
+    }
 
     copy = copy_volume_definition( volume, NC_UNSPECIFIED, FALSE, 0.0, 0.0 );
 
