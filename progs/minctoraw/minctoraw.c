@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minctoraw.c,v $
-@MODIFIED   : Revision 2.1  1995-01-23 09:03:19  neelin
-@MODIFIED   : Changed ncopen to miopen.
+@MODIFIED   : Revision 2.2  1995-01-23 09:05:31  neelin
+@MODIFIED   : changed ncclose to miclose
 @MODIFIED   :
+ * Revision 2.1  95/01/23  09:03:19  neelin
+ * Changed ncopen to miopen.
+ * 
  * Revision 2.0  94/09/28  10:33:06  neelin
  * Release of minc version 0.2
  * 
@@ -34,7 +37,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 2.1 1995-01-23 09:03:19 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 2.2 1995-01-23 09:05:31 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -241,7 +244,7 @@ int main(int argc, char *argv[])
    }       /* End loop over slices */
 
    /* Clean up */
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
    (void) miicv_free(icvid);
    FREE(data);
 
