@@ -9,43 +9,46 @@ private  void  create_world_transform(
     Real        thickness[N_DIMENSIONS],
     Transform   *transform );
 
-public  Status  input_volume(
-    char           filename[],
-    volume_struct  *volume )
+public  Status  start_volume_input(
+    char                 filename[],
+    volume_struct        *volume,
+    volume_input_struct  *input )
 {
     Status       status;
     char         name[MAX_NC_NAME];
-    int          axis_index[N_DIMENSIONS];
     double       slice_separation[N_DIMENSIONS];
     double       start_position[N_DIMENSIONS];
     double       direction_cosines[N_DIMENSIONS][N_DIMENSIONS];
     Point        origin;
     Vector       axes[N_DIMENSIONS];
     Vector       x_offset, y_offset, z_offset, start_offset;
-    Volume_type  *image;
-    int          indices[N_DIMENSIONS], sizes[N_DIMENSIONS];
-    int          index0, index1, index2;
     int          axis;
     long         length;
-    int          icv, cdfid, img, dimvar;
+    int          img, dimvar;
     int          ndims, dim[MAX_VAR_DIMS];
-    long         start[3], count[3];
 
     status = OK;
 
-    icv = miicv_create();
+    input->icv = miicv_create();
 
-    (void) miicv_setint( icv, MI_ICV_TYPE, NC_BYTE );
-    (void) miicv_set( icv, MI_ICV_SIGN, MI_UNSIGNED );
-    (void) miicv_setdbl( icv, MI_ICV_VALID_MAX, 255.0 );
-    (void) miicv_setdbl( icv, MI_ICV_VALID_MIN, 0.0 );
+    (void) miicv_setint( input->icv, MI_ICV_TYPE, NC_BYTE );
+    (void) miicv_set( input->icv, MI_ICV_SIGN, MI_UNSIGNED );
+    (void) miicv_setdbl( input->icv, MI_ICV_VALID_MAX, 255.0 );
+    (void) miicv_setdbl( input->icv, MI_ICV_VALID_MIN, 0.0 );
 
-    cdfid = ncopen( filename, NC_NOWRITE );
+    ncopts = 0;
+    input->cdfid = ncopen( filename, NC_NOWRITE );
+    ncopts = NC_VERBOSE | NC_FATAL;
 
-    img = ncvarid( cdfid, MIimage );
-    (void) miicv_attach( icv, cdfid, img );
+    if( input->cdfid == MI_ERROR )
+    {
+        return( ERROR );
+    }
 
-    (void) ncvarinq( cdfid, img, (char *) 0, (nc_type *) 0,
+    img = ncvarid( input->cdfid, MIimage );
+    (void) miicv_attach( input->icv, input->cdfid, img );
+
+    (void) ncvarinq( input->cdfid, img, (char *) 0, (nc_type *) 0,
                      &ndims, dim, (int *) 0 );
 
     if( ndims != N_DIMENSIONS )
@@ -56,21 +59,21 @@ public  Status  input_volume(
         return( status );
     }
 
-    axis_index[X] = -1;
-    axis_index[Y] = -1;
-    axis_index[Z] = -1;
+    input->axis_index[X] = -1;
+    input->axis_index[Y] = -1;
+    input->axis_index[Z] = -1;
 
     for_less( axis, 0, ndims )
     {
-        (void) ncdiminq( cdfid, dim[axis], name, &length );
-        sizes[axis] = length;
+        (void) ncdiminq( input->cdfid, dim[axis], name, &length );
+        input->sizes_in_file[axis] = length;
 
         if( EQUAL_STRINGS( name, MIxspace ) )
-            axis_index[axis] = X;
+            input->axis_index[axis] = X;
         else if( EQUAL_STRINGS( name, MIyspace ) )
-            axis_index[axis] = Y;
+            input->axis_index[axis] = Y;
         else if( EQUAL_STRINGS( name, MIzspace ) )
-            axis_index[axis] = Z;
+            input->axis_index[axis] = Z;
         else
         {
             print("Error:  cannot handle dimensions other than x, y, and z.\n");
@@ -84,26 +87,28 @@ public  Status  input_volume(
         direction_cosines[axis][0] = 0.0;
         direction_cosines[axis][1] = 0.0;
         direction_cosines[axis][2] = 0.0;
-        direction_cosines[axis][axis_index[axis]] = 1.0;
+        direction_cosines[axis][input->axis_index[axis]] = 1.0;
 
         ncopts = 0;
-        dimvar = ncvarid( cdfid, name );
+        dimvar = ncvarid( input->cdfid, name );
         if( dimvar != MI_ERROR )
         {
-            (void) miattget1( cdfid, dimvar, MIstep, NC_DOUBLE,
+            (void) miattget1( input->cdfid, dimvar, MIstep, NC_DOUBLE,
                               (void *) &slice_separation[axis] );
 
-            (void) miattget1( cdfid, dimvar, MIstart, NC_DOUBLE,
+            (void) miattget1( input->cdfid, dimvar, MIstart, NC_DOUBLE,
                               (void *) &start_position[axis] );
 
-            (void) miattget( cdfid, dimvar, MIdirection_cosines, NC_DOUBLE,
+            (void) miattget( input->cdfid, dimvar,
+                             MIdirection_cosines, NC_DOUBLE,
                              N_DIMENSIONS, (void *) direction_cosines[axis],
                              (int *) 0 );
         }
         ncopts = NC_VERBOSE | NC_FATAL;
     }
 
-    if( axis_index[X] == -1 || axis_index[Y] == -1 || axis_index[Z] == -1 )
+    if( input->axis_index[X] == -1 || input->axis_index[Y] == -1 ||
+        input->axis_index[Z] == -1 )
     {
         print( "Error:  missing some of the 3 dimensions.\n" );
         status = ERROR;
@@ -112,68 +117,124 @@ public  Status  input_volume(
 
     for_less( axis, 0, N_DIMENSIONS )
     {
-        volume->thickness[axis_index[axis]] = (Real) slice_separation[axis];
-        volume->sizes[axis_index[axis]] = sizes[axis];
-        fill_Vector( axes[axis_index[axis]],
+        volume->thickness[input->axis_index[axis]] =
+                                   (Real) slice_separation[axis];
+        volume->sizes[input->axis_index[axis]] = input->sizes_in_file[axis];
+        fill_Vector( axes[input->axis_index[axis]],
                      direction_cosines[axis][0],
                      direction_cosines[axis][1],
                      direction_cosines[axis][2] );
-        NORMALIZE_VECTOR( axes[axis_index[axis]], axes[axis_index[axis]] );
-        if( null_Vector( &axes[axis_index[axis]] ) )
+        NORMALIZE_VECTOR( axes[input->axis_index[axis]],
+                          axes[input->axis_index[axis]] );
+        if( null_Vector( &axes[input->axis_index[axis]] ) )
         {
-            fill_Vector( axes[axis_index[axis]],
+            fill_Vector( axes[input->axis_index[axis]],
                          0.0, 0.0, 0.0 );
-            Vector_coord(axes[axis_index[axis]],axis_index[axis]) = 1.0;
+            Vector_coord(axes[input->axis_index[axis]],input->axis_index[axis])
+                                                                       = 1.0;
         }
     }
 
-    SCALE_VECTOR( x_offset, axes[X], start_position[axis_index[X]] );
-    SCALE_VECTOR( y_offset, axes[Y], start_position[axis_index[Y]] );
-    SCALE_VECTOR( z_offset, axes[Z], start_position[axis_index[Z]] );
+    SCALE_VECTOR( x_offset, axes[X], start_position[input->axis_index[X]] );
+    SCALE_VECTOR( y_offset, axes[Y], start_position[input->axis_index[Y]] );
+    SCALE_VECTOR( z_offset, axes[Z], start_position[input->axis_index[Z]] );
     ADD_VECTORS( start_offset, x_offset, y_offset );
     ADD_VECTORS( start_offset, start_offset, z_offset );
 
     CONVERT_VECTOR_TO_POINT( origin, start_offset );
 
     create_world_transform( &origin, axes, volume->thickness,
-                            &volume->world_transform );
+                            &volume->voxel_to_world_transform );
+
+    /* let's assume orthogonal */
+
+    compute_transform_inverse( &volume->voxel_to_world_transform,
+                               &volume->world_to_voxel_transform );
 
     ALLOC3D( volume->data, volume->sizes[X], volume->sizes[Y],
              volume->sizes[Z] );
 
-    ALLOC( image, sizes[1] * sizes[2] );
+    volume->value_scale = 1.0;
+    volume->value_translation = 0.0;
 
-    for_less( index0, 0, sizes[0] )
+    ALLOC( input->slice_buffer, input->sizes_in_file[1] *
+                                input->sizes_in_file[2] );
+    input->slice_index = 0;
+
+    return( status );
+}
+
+public  Boolean  input_more_of_volume(
+    volume_struct         *volume,
+    volume_input_struct   *input,
+    Real                  *fraction_done )
+{
+    Boolean       more_to_do;
+    int           index1, index2, indices[N_DIMENSIONS];
+    long          start[N_DIMENSIONS], count[N_DIMENSIONS];
+    Volume_type   *slice_pointer;
+
+    if( input->slice_index < input->sizes_in_file[0] )
     {
-        indices[axis_index[0]] = index0;
-        start[0] = index0;
+        indices[input->axis_index[0]] = input->slice_index;
+
+        start[0] = input->slice_index;
         start[1] = 0;
         start[2] = 0;
         count[0] = 1;
-        count[1] = sizes[1];
-        count[2] = sizes[2];
+        count[1] = input->sizes_in_file[1];
+        count[2] = input->sizes_in_file[2];
 
-        (void) miicv_get( icv, start, count, (void *) image );
+        (void) miicv_get( input->icv, start, count,
+                          (void *) input->slice_buffer );
 
-        for_less( index1, 0, sizes[1] )
+        slice_pointer = input->slice_buffer;
+
+        for_less( index1, 0, input->sizes_in_file[1] )
         {
-            indices[axis_index[1]] = index1;
-            for_less( index2, 0, sizes[2] )
+            indices[input->axis_index[1]] = index1;
+            for_less( index2, 0, input->sizes_in_file[2] )
             {
-                indices[axis_index[2]] = index2;
+                indices[input->axis_index[2]] = index2;
                 volume->data[indices[X]][indices[Y]][indices[Z]] =
-                                 image[IJ(index1,index2,sizes[2])];
+                     *slice_pointer;
+                ++slice_pointer;
             }
         }
+
+        ++input->slice_index;
     }
 
-    FREE( image );
+    *fraction_done = (Real) input->slice_index /
+                     (Real) volume->sizes[input->axis_index[0]];
 
-    (void) ncclose( cdfid );
-    (void) miicv_free( icv );
+    more_to_do = TRUE;
 
-    volume->value_scale = 1.0;
-    volume->value_translation = 0.0;
+    if( input->slice_index == (Real) volume->sizes[input->axis_index[0]] )
+    {
+        more_to_do = FALSE;
+        FREE( input->slice_buffer );
+
+        (void) ncclose( input->cdfid );
+        (void) miicv_free( input->icv );
+    }
+
+    return( more_to_do );
+}
+
+public  Status  input_volume(
+    char           filename[],
+    volume_struct  *volume )
+{
+    Status               status;
+    Real                 amount_done;
+    volume_input_struct  volume_input;
+
+    status = start_volume_input( filename, volume, &volume_input );
+
+    while( input_more_of_volume( volume, &volume_input, &amount_done ) )
+    {
+    }
 
     return( status );
 }
@@ -257,4 +318,10 @@ public  Status  input_fake_volume(
     }
 
     return( OK );
+}
+
+public  void  delete_volume(
+    volume_struct  *volume )
+{
+    FREE3D( volume->data );
 }
