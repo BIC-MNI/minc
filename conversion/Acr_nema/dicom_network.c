@@ -5,12 +5,9 @@
 @GLOBALS    : 
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_network.c,v $
-@MODIFIED   : Revision 5.0  1997-08-21 13:25:00  neelin
-@MODIFIED   : Release of minc version 0.5
+@MODIFIED   : Revision 4.3  1997-08-21 13:24:56  neelin
+@MODIFIED   : Fixed bug that causing loss of PDU items being read
 @MODIFIED   :
- * Revision 4.3  1997/08/21  13:24:56  neelin
- * Pre-release
- *
  * Revision 4.2  1997/07/10  17:14:38  neelin
  * Added more status codes and function to return status string.
  *
