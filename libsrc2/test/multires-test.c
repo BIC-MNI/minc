@@ -7,9 +7,10 @@
 
 static int error_cnt = 0;
 
-#define CX 10
-#define CY 10
-#define CZ 6
+#define CX 60
+#define CY 55
+#define CZ 50
+
 #define NDIMS 3
 
 int main(int argc, char **argv)
@@ -23,7 +24,9 @@ int main(int argc, char **argv)
     unsigned long count[NDIMS];
     int i,j,k;
     unsigned int voxel;
-    int result = 1;
+
+    printf("Creating volume...\n");
+
     /* Write data one voxel at a time. */
     for (i = 0; i < NDIMS; i++) {
         count[i] = 1;
@@ -56,7 +59,7 @@ int main(int argc, char **argv)
         TESTRPT("failed", r);
     }
 
-    r = miset_volume_valid_range(vol, 100000.0, 0.0);
+    r = miset_volume_valid_range(vol, CX*10000.0 + CY*100 + CZ, 0.0);
 
     r = micreate_volume_image(vol);
     if (r < 0) {
@@ -67,7 +70,8 @@ int main(int argc, char **argv)
     if (r < 0) {
         TESTRPT("failed", r);
     }
-    printf( " N is %d \n", n);
+
+    printf("Writing data...\n");
 
     for (i = 0; i < CX; i++) {
         for (j = 0; j < CY; j++) {
@@ -78,36 +82,91 @@ int main(int argc, char **argv)
 
                 voxel = i*10000 + j*100 + k;
                 
-                result = miset_voxel_value_hyperslab(vol, MI_TYPE_UINT,
-						     coords, count, &voxel);
-                if (result < 0) {
-                    TESTRPT("Error writing voxel", result);
+                r = miset_voxel_value_hyperslab(vol, MI_TYPE_UINT,
+                                                coords, count, &voxel);
+                if (r < 0) {
+                    TESTRPT("Error writing voxel", r);
                 }
             }
         }
     }
 
-  /* call miselect_resolution() 
-   */
-#if 0 
-  r = miflush_from_resolution(vol, 3);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-#endif
-  r = miclose_volume(vol);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  if (error_cnt != 0) {
-    fprintf(stderr, "%d error%s reported\n", 
-	    error_cnt, (error_cnt == 1) ? "" : "s");
-  }
-  else {
-    fprintf(stderr, "No errors\n");
-   
-  }
-  return (error_cnt);
+    printf("Selecting half-size image\n");
+
+    r = miselect_resolution(vol, 1);
+    if (r < 0) {
+        TESTRPT("miselect_resolution failed", r);
+    }
+
+    /* OK, now try to read the lower-resolution hyperslab */
+    coords[0] = 0;
+    coords[1] = 0;
+    coords[2] = 0;
+    count[0] = CX/2;
+    count[1] = CY/2;
+    count[2] = CZ/2;
+
+    {
+        unsigned int buffer[CX/2][CY/2][CZ/2];
+    
+        r = miget_voxel_value_hyperslab(vol, MI_TYPE_UINT,
+                                        coords, count, buffer);
+        if (r < 0) {
+            TESTRPT("failed", r);
+        }
+    }
+
+    printf("Selecting quarter-size image\n");
+
+    r = miselect_resolution(vol, 2);
+    if (r < 0) {
+        TESTRPT("miselect_resolution failed", r);
+    }
+
+    /* OK, now try to read the lower-resolution hyperslab */
+    coords[0] = 0;
+    coords[1] = 0;
+    coords[2] = 0;
+    count[0] = CX/4;
+    count[1] = CY/4;
+    count[2] = CZ/4;
+
+    {
+        unsigned int buffer[CX/4][CY/4][CZ/4];
+    
+        r = miget_voxel_value_hyperslab(vol, MI_TYPE_UINT,
+                                        coords, count, buffer);
+        if (r < 0) {
+            TESTRPT("failed", r);
+        }
+    }
+
+    printf("Return to full resolution.\n");
+
+    r = miselect_resolution(vol, 0); /* Back to full resolution */
+    if (r < 0) {
+        TESTRPT("miselect_resolution failed", r);
+    }
+
+    printf("Flush any remaining thumbnails.\n");
+
+    r = miflush_from_resolution(vol, 3);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+
+    r = miclose_volume(vol);
+    if (r < 0) {
+        TESTRPT("failed", r);
+    }
+      
+    if (error_cnt != 0) {
+        fprintf(stderr, "%d error%s reported\n", 
+                error_cnt, (error_cnt == 1) ? "" : "s");
+    }
+    else {
+        fprintf(stderr, "No errors\n");
+    }
+    return (error_cnt);
 }
 
