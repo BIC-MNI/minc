@@ -15,7 +15,10 @@
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   : 
  * $Log: minc_useful.h,v $
- * Revision 6.1  1999-10-19 14:45:10  neelin
+ * Revision 6.2  2004-10-15 13:47:55  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.1  1999/10/19 14:45:10  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -55,7 +58,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 6.1 1999-10-19 14:45:10 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 6.2 2004-10-15 13:47:55 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* ------------ define signed for vaxes ----------------- */
@@ -65,11 +68,11 @@
 
 /* --------- define the prefixes to all functions ---------- */
 
-#ifndef public
-#   define  public
+#ifndef MNCAPI
+#   define  MNCAPI
 #endif
-#define  private     static
-#define  semiprivate
+#define  PRIVATE     static
+#define  SEMIPRIVATE
 
 /* --------- define  TRUE and FALSE ------------------------ */
 

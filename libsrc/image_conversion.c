@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.11  2004-04-27 15:40:22  bert
+ * Revision 6.12  2004-10-15 13:45:28  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.11  2004/04/27 15:40:22  bert
  * Revised logging/error handling
  *
  * Revision 6.10  2003/09/18 16:17:00  bert
@@ -150,24 +153,24 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.11 2004-04-27 15:40:22 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.12 2004-10-15 13:45:28 bert Exp $ MINC (MNI)";
 #endif
 
-#include <type_limits.h>
-#include <minc_private.h>
+#include "type_limits.h"
+#include "minc_private.h"
 
 /* Private functions */
-private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
-private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
-private double MI_get_default_range(char *what, nc_type datatype, int sign);
-private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
-private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE double MI_get_default_range(char *what, nc_type datatype, int sign);
+PRIVATE int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
                           long count[], void *values);
-private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
-private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+PRIVATE int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
+PRIVATE int MI_icv_coords_tovar(mi_icv_type *icvp, 
                                 long icv_start[], long icv_count[],
                                 long var_start[], long var_count[]);
-private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
+PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 
 /* Array of pointers to image conversion structures */
 static int minc_icv_list_nalloc = 0;
@@ -186,7 +189,7 @@ static mi_icv_type **minc_icv_list = NULL;
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_create()
+MNCAPI int miicv_create()
 {
    int new_icv;       /* Id of newly created icv */
    mi_icv_type *icvp;  /* Pointer to new icv structure */
@@ -299,7 +302,7 @@ public int miicv_create()
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_free(int icvid)
+MNCAPI int miicv_free(int icvid)
 {
    mi_icv_type *icvp;
 
@@ -342,7 +345,7 @@ public int miicv_free(int icvid)
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setdbl(int icvid, int icv_property, double value)
+MNCAPI int miicv_setdbl(int icvid, int icv_property, double value)
 {
    int ival, idim;
    mi_icv_type *icvp;
@@ -460,7 +463,7 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
 @MODIFIED   : January 22, 1993 (P.N.)
                  - modified handling of icv properties
 ---------------------------------------------------------------------------- */
-public int miicv_setint(int icvid, int icv_property, int value)
+MNCAPI int miicv_setint(int icvid, int icv_property, int value)
 {
 
    MI_SAVE_ROUTINE_NAME("miicv_setint");
@@ -488,7 +491,7 @@ public int miicv_setint(int icvid, int icv_property, int value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setlong(int icvid, int icv_property, long value)
+MNCAPI int miicv_setlong(int icvid, int icv_property, long value)
 {
 
    MI_SAVE_ROUTINE_NAME("miicv_setlong");
@@ -516,7 +519,7 @@ public int miicv_setlong(int icvid, int icv_property, long value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setstr(int icvid, int icv_property, char *value)
+MNCAPI int miicv_setstr(int icvid, int icv_property, char *value)
 {
    mi_icv_type *icvp;
 
@@ -602,7 +605,7 @@ public int miicv_setstr(int icvid, int icv_property, char *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqdbl(int icvid, int icv_property, double *value)
+MNCAPI int miicv_inqdbl(int icvid, int icv_property, double *value)
 {
    int idim;
    mi_icv_type *icvp;
@@ -719,7 +722,7 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqint(int icvid, int icv_property, int *value)
+MNCAPI int miicv_inqint(int icvid, int icv_property, int *value)
 {
    double dvalue;
 
@@ -747,7 +750,7 @@ public int miicv_inqint(int icvid, int icv_property, int *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqlong(int icvid, int icv_property, long *value)
+MNCAPI int miicv_inqlong(int icvid, int icv_property, long *value)
 {
    double dvalue;
 
@@ -776,7 +779,7 @@ public int miicv_inqlong(int icvid, int icv_property, long *value)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqstr(int icvid, int icv_property, char *value)
+MNCAPI int miicv_inqstr(int icvid, int icv_property, char *value)
 {
    mi_icv_type *icvp;
 
@@ -873,7 +876,7 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
 @CREATED    : September 9, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_ndattach(int icvid, int cdfid, int varid)
+MNCAPI int miicv_ndattach(int icvid, int cdfid, int varid)
 {
    mi_icv_type *icvp;         /* Pointer to icv structure */
    int idim;
@@ -968,7 +971,7 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 {
    int oldncopts;            /* For saving value of ncopts */
    char stringa[MI_MAX_ATTSTR_LEN];
@@ -1015,7 +1018,7 @@ private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 {
    double vrange[2];         /* Valid range buffer */
 
@@ -1046,7 +1049,7 @@ private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private double MI_get_default_range(char *what, nc_type datatype, int sign)
+PRIVATE double MI_get_default_range(char *what, nc_type datatype, int sign)
 {
    double range[2];
 
@@ -1082,7 +1085,7 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
      /* ARGSUSED */
 {
    int oldncopts;             /* For saving value of ncopts */
@@ -1169,7 +1172,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_detach(int icvid)
+MNCAPI int miicv_detach(int icvid)
 {
    mi_icv_type *icvp;
    int idim;
@@ -1217,7 +1220,7 @@ public int miicv_detach(int icvid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_get(int icvid, long start[], long count[], void *values)
+MNCAPI int miicv_get(int icvid, long start[], long count[], void *values)
 {
    mi_icv_type *icvp;
 
@@ -1250,7 +1253,7 @@ public int miicv_get(int icvid, long start[], long count[], void *values)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_put(int icvid, long start[], long count[], void *values)
+MNCAPI int miicv_put(int icvid, long start[], long count[], void *values)
 {
    mi_icv_type *icvp;
 
@@ -1283,7 +1286,7 @@ public int miicv_put(int icvid, long start[], long count[], void *values)
 @CREATED    : August 11, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
                           long count[], void *values)
 {
    int *bufsize_step;                /* Pointer to array giving increments
@@ -1415,7 +1418,7 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 @CREATED    : September 9, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
+PRIVATE int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 {
    double zeroval, zerobuf;
    void *zerostart;
@@ -1471,7 +1474,7 @@ private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 @CREATED    : September 1, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+PRIVATE int MI_icv_coords_tovar(mi_icv_type *icvp, 
                                 long icv_start[], long icv_count[],
                                 long var_start[], long var_count[])
 {
@@ -1573,7 +1576,7 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
+PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 {
    long mmcoords[MAX_VAR_DIMS];   /* Coordinates for max/min variable */
    double usr_imgmax, usr_imgmin;
@@ -1765,7 +1768,7 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-semiprivate mi_icv_type *MI_icv_chkid(int icvid)
+SEMIPRIVATE mi_icv_type *MI_icv_chkid(int icvid)
 {
    MI_SAVE_ROUTINE_NAME("MI_icv_chkid");
 

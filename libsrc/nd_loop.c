@@ -6,7 +6,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: nd_loop.c,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.2  2004-10-15 13:47:13  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -47,14 +50,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/nd_loop.c,v 6.1 2002-01-14 21:28:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/nd_loop.c,v 6.2 2004-10-15 13:47:13 bert Exp $";
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-
-/* Constant definition */
-#define public
+#include "minc_private.h"
+#include "nd_loop.h"
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : nd_begin_looping
@@ -70,7 +70,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/nd_loop.c,v 6.1 2002-
 @CREATED    : October 28, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void nd_begin_looping(long start[], long current[], int ndims)
+MNCAPI void nd_begin_looping(long start[], long current[], int ndims)
 {
    int idim;
 
@@ -93,7 +93,7 @@ public void nd_begin_looping(long start[], long current[], int ndims)
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int nd_end_of_loop(long current[], long end[], int ndims)
+MNCAPI int nd_end_of_loop(long current[], long end[], int ndims)
      /* ARGSUSED */
 {
    return (current[0] >= end[0]);
@@ -116,7 +116,7 @@ public int nd_end_of_loop(long current[], long end[], int ndims)
 @CREATED    : October 28, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void nd_update_current_count(long current[], 
+MNCAPI void nd_update_current_count(long current[], 
                                     long increment[], long end[],
                                     long current_count[],
                                     int ndims)
@@ -150,7 +150,7 @@ public void nd_update_current_count(long current[],
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void nd_increment_loop(long current[], 
+MNCAPI void nd_increment_loop(long current[], 
                               long start[], long increment[], long end[],
                               int ndims)
 {

@@ -14,7 +14,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.5  2004-04-27 15:49:51  bert
+ * Revision 6.6  2004-10-15 13:45:28  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.5  2004/04/27 15:49:51  bert
  * Use new logging, gettext preparation
  *
  * Revision 6.4  2003/11/14 16:52:24  stever
@@ -85,17 +88,17 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.5 2004-04-27 15:49:51 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.6 2004-10-15 13:45:28 bert Exp $ MINC (MNI)";
 #endif
 
+#include "minc_private.h"
 #include <math.h>
-#include <type_limits.h>
-#include <minc_private.h>
+#include "type_limits.h"
 
 /* Private functions */
-private int MI_var_action(int ndims, long var_start[], long var_count[], 
+PRIVATE int MI_var_action(int ndims, long var_start[], long var_count[], 
                           long nvalues, void *var_buffer, void *caller_data);
-private int MI_get_sign(nc_type datatype, int sign);
+PRIVATE int MI_get_sign(nc_type datatype, int sign);
 
 
 
@@ -149,7 +152,7 @@ private int MI_get_sign(nc_type datatype, int sign);
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-semiprivate int MI_varaccess(int operation, int cdfid, int varid, 
+SEMIPRIVATE int MI_varaccess(int operation, int cdfid, int varid, 
                              long start[], long count[],
                              nc_type datatype, int sign, void *values,
                              int *bufsize_step, mi_icv_type *icvp)
@@ -255,7 +258,7 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
 @CREATED    : July 30, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_var_action(int ndims, long var_start[], long var_count[], 
+PRIVATE int MI_var_action(int ndims, long var_start[], long var_count[], 
                           long nvalues, void *var_buffer, void *caller_data)
      /* ARGSUSED */
 {
@@ -352,7 +355,7 @@ private int MI_var_action(int ndims, long var_start[], long var_count[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-semiprivate int MI_var_loop(int ndims, long start[], long count[],
+SEMIPRIVATE int MI_var_loop(int ndims, long start[], long count[],
                             int value_size, int *bufsize_step,
                             long max_buffer_size,
                             void *caller_data,
@@ -468,7 +471,7 @@ semiprivate int MI_var_loop(int ndims, long start[], long count[],
 @CREATED    : July 30, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-semiprivate int MI_get_sign_from_string(nc_type datatype, char *sign)
+SEMIPRIVATE int MI_get_sign_from_string(nc_type datatype, char *sign)
 {
    MI_SAVE_ROUTINE_NAME("MI_get_sign_from_string");
 
@@ -502,7 +505,7 @@ semiprivate int MI_get_sign_from_string(nc_type datatype, char *sign)
 @CREATED    : July 27, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_get_sign(nc_type datatype, int sign)
+PRIVATE int MI_get_sign(nc_type datatype, int sign)
 {
    MI_SAVE_ROUTINE_NAME("MI_get_sign");
 
@@ -555,7 +558,7 @@ private int MI_get_sign(nc_type datatype, int sign)
 @MODIFIED   : August 28, 1992 (P.N.)
                  - replaced type conversions with macros
 ---------------------------------------------------------------------------- */
-semiprivate int MI_convert_type(long number_of_values,
+SEMIPRIVATE int MI_convert_type(long number_of_values,
                                 nc_type intype,  int insign,  void *invalues,
                                 nc_type outtype, int outsign, void *outvalues,
                                 mi_icv_type *icvp)

@@ -5,7 +5,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.2  2004-04-27 15:43:04  bert
+ * Revision 6.3  2004-10-15 13:46:52  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.2  2004/04/27 15:43:04  bert
  * Added set_loop_v2format()
  *
  * Revision 6.1  2002/01/14 21:28:26  neelin
@@ -73,15 +76,11 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef public
-#  define public
-#endif
-#ifndef private
-#  define private static
-#endif
-
 /* Includes */
-#include <minc.h>
+#include "minc.h"
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* Incomplete structure typedefs */
 
@@ -245,58 +244,62 @@ typedef void (*AllocateBufferFunction)
       Loop_Info *loop_info);
 
 /* Function declarations */
-public void voxel_loop(int num_input_files, char *input_files[], 
+MNCAPI void voxel_loop(int num_input_files, char *input_files[], 
                        int num_output_files, char *output_files[], 
                        char *arg_string, 
                        Loop_Options *loop_options,
                        VoxelFunction voxel_function, void *caller_data);
-public Loop_Options *create_loop_options(void);
-public void free_loop_options(Loop_Options *loop_options);
-public void set_loop_clobber(Loop_Options *loop_options, 
+MNCAPI Loop_Options *create_loop_options(void);
+MNCAPI void free_loop_options(Loop_Options *loop_options);
+MNCAPI void set_loop_clobber(Loop_Options *loop_options, 
                              int clobber);
 #ifdef MINC2
-public void set_loop_v2format(Loop_Options *loop_options,
+MNCAPI void set_loop_v2format(Loop_Options *loop_options,
 			      int use_v2_format);
 #endif /* MINC2 defined */
-public void set_loop_verbose(Loop_Options *loop_options, 
+MNCAPI void set_loop_verbose(Loop_Options *loop_options, 
                              int verbose);
-public void set_loop_datatype(Loop_Options *loop_options, 
+MNCAPI void set_loop_datatype(Loop_Options *loop_options, 
                               nc_type datatype, int is_signed,
                               double valid_min, double valid_max);
-public void set_loop_max_open_files(Loop_Options *loop_options, 
+MNCAPI void set_loop_max_open_files(Loop_Options *loop_options, 
                                     int max_open_files);
-public void set_loop_check_dim_info(Loop_Options *loop_options, 
+MNCAPI void set_loop_check_dim_info(Loop_Options *loop_options, 
                                     int check_dim_info);
-public void set_loop_convert_input_to_scalar(Loop_Options *loop_options, 
+MNCAPI void set_loop_convert_input_to_scalar(Loop_Options *loop_options, 
                                              int convert_input_to_scalar);
-public void set_loop_output_vector_size(Loop_Options *loop_options, 
+MNCAPI void set_loop_output_vector_size(Loop_Options *loop_options, 
                                         int output_vector_size);
-public void set_loop_first_input_mincid(Loop_Options *loop_options, 
+MNCAPI void set_loop_first_input_mincid(Loop_Options *loop_options, 
                                         int input_mincid);
-public void set_loop_buffer_size(Loop_Options *loop_options,
+MNCAPI void set_loop_buffer_size(Loop_Options *loop_options,
                                  long buffer_size);
-public void set_loop_dimension(Loop_Options *loop_options,
+MNCAPI void set_loop_dimension(Loop_Options *loop_options,
                                char *dimension_name);
-public void set_loop_input_file_function
+MNCAPI void set_loop_input_file_function
    (Loop_Options *loop_options,
     VoxelInputFileFunction input_file_function);
-public void set_loop_output_file_function
+MNCAPI void set_loop_output_file_function
    (Loop_Options *loop_options,
     VoxelOutputFileFunction output_file_function);
-public void set_loop_copy_all_header(Loop_Options *loop_options, 
+MNCAPI void set_loop_copy_all_header(Loop_Options *loop_options, 
                                      int copy_all_header);
-public void set_loop_accumulate(Loop_Options *loop_options, 
+MNCAPI void set_loop_accumulate(Loop_Options *loop_options, 
                                 int do_accumulation,
                                 int num_extra_buffers,
                                 VoxelStartFunction start_function,
                                 VoxelFinishFunction finish_function);
-public void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
+MNCAPI void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
                          AllocateBufferFunction allocate_buffer_function);
-public void get_info_shape(Loop_Info *loop_info, int ndims,
+MNCAPI void get_info_shape(Loop_Info *loop_info, int ndims,
                            long start[], long count[]);
-public void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
+MNCAPI void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
                                  int ndims, long index[]);
-public int get_info_current_file(Loop_Info *loop_info);
-public int get_info_current_mincid(Loop_Info *loop_info);
-public int get_info_current_index(Loop_Info *loop_info);
-public int get_info_whole_file(Loop_Info *loop_info);
+MNCAPI int get_info_current_file(Loop_Info *loop_info);
+MNCAPI int get_info_current_mincid(Loop_Info *loop_info);
+MNCAPI int get_info_current_index(Loop_Info *loop_info);
+MNCAPI int get_info_whole_file(Loop_Info *loop_info);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */

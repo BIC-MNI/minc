@@ -18,7 +18,10 @@
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
  * $Log: dim_conversion.c,v $
- * Revision 6.3  2003-11-14 16:52:24  stever
+ * Revision 6.4  2004-10-15 13:44:52  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.3  2003/11/14 16:52:24  stever
  * More last-minute fixes.
  *
  * Revision 6.2  2003/09/18 16:16:15  bert
@@ -80,24 +83,24 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.3 2003-11-14 16:52:24 stever Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.4 2004-10-15 13:44:52 bert Exp $ MINC (MNI)";
 #endif
 
+#include "minc_private.h"
 #include <math.h>
 #include <type_limits.h>
-#include <minc_private.h>
 
 /* Private functions */
-private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid);
-private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
+PRIVATE int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
                            int subsc[]);
-private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[]);
-private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[]);
-private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[]);
-private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
+PRIVATE int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[]);
+PRIVATE int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[]);
+PRIVATE int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[]);
+PRIVATE int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer);
-private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
+PRIVATE int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               mi_icv_dimconv_type *dcp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer);
@@ -120,7 +123,7 @@ private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
 @CREATED    : September 9, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_attach(int icvid, int cdfid, int varid)
+MNCAPI int miicv_attach(int icvid, int cdfid, int varid)
 {
    mi_icv_type *icvp;         /* Pointer to icv structure */
    long size_diff, user_dim_size;
@@ -199,7 +202,7 @@ public int miicv_attach(int icvid, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
      /* ARGSUSED */
 {
    int oldncopts;             /* For saving value of ncopts */
@@ -278,7 +281,7 @@ private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : September 1, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
+PRIVATE int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
                            int subsc[])
 {
    int oldncopts;             /* For saving value of ncopts */
@@ -349,7 +352,7 @@ private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
 @CREATED    : September 1, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
+PRIVATE int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
 {
    int oldncopts;             /* For saving value of ncopts */
    int min_grow, dim_grow;
@@ -500,7 +503,7 @@ private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
 @CREATED    : September 3, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[])
+PRIVATE int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[])
 {
    int idim;
 
@@ -542,7 +545,7 @@ private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[])
 @CREATED    : September 8, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[])
+PRIVATE int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[])
      /* ARGSUSED */
 {
    int idim;
@@ -612,7 +615,7 @@ private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[])
 @CREATED    : August 27, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
+PRIVATE int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer)
 {
@@ -793,7 +796,7 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
 @CREATED    : September 4, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
+PRIVATE int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               mi_icv_dimconv_type *dcp,
                               long start[], long count[], void *values,
                               long bufstart[], long bufcount[], void *buffer)

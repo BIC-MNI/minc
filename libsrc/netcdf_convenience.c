@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.13  2004-06-04 18:16:25  bert
+ * Revision 6.14  2004-10-15 13:48:33  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.13  2004/06/04 18:16:25  bert
  * Create and add an 'ident' attribute when a file is created
  *
  * Revision 6.12  2004/04/30 18:57:39  bert
@@ -154,11 +157,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.13 2004-06-04 18:16:25 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.14 2004-10-15 13:48:33 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
-#include <minc_private.h>
+#include "minc_private.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -184,9 +187,9 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 #endif
 
 /* Private functions */
-private int execute_decompress_command(char *command, char *infile, 
+PRIVATE int execute_decompress_command(char *command, char *infile, 
                                        char *outfile, int header_only);
-private int MI_vcopy_action(int ndims, long start[], long count[], 
+PRIVATE int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data);
 
 
@@ -219,7 +222,7 @@ static int mi_h5_files = 0;
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int execute_decompress_command(char *command, char *infile, 
+PRIVATE int execute_decompress_command(char *command, char *infile, 
                                        char *outfile, int header_only)
 {
    int oldncopts;
@@ -373,7 +376,7 @@ private int execute_decompress_command(char *command, char *infile,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *miexpand_file(char *path, char *tempfile, int header_only,
+MNCAPI char *miexpand_file(char *path, char *tempfile, int header_only,
                            int *created_tempfile)
 {
    typedef enum 
@@ -554,7 +557,7 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miopen(char *path, int mode)
+MNCAPI int miopen(char *path, int mode)
 {
    int status, oldncopts, created_tempfile;
    char *tempfile;
@@ -581,7 +584,6 @@ public int miopen(char *path, int mode)
    else {
      hmode = H5F_ACC_RDONLY;
    }
-
    status = hdf_open(path, hmode);
 
    /* If there is no error then return */
@@ -651,7 +653,7 @@ public int miopen(char *path, int mode)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 #ifdef MINC2
-public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
+MNCAPI int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
 {
     int fd;
 
@@ -685,16 +687,16 @@ public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
     MI_RETURN(fd);
 }
 
-public int micreate(char *path, int cmode)
+MNCAPI int micreate(char *path, int cmode)
 {
     MI_SAVE_ROUTINE_NAME("micreate");
 
-    return micreatex(path, cmode, NULL);
+    MI_RETURN(micreatex(path, cmode, NULL));
 }
 
 #else
 
-public int micreate(char *path, int cmode)
+MNCAPI int micreate(char *path, int cmode)
 {
     int fd;
 
@@ -723,7 +725,7 @@ public int micreate(char *path, int cmode)
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miclose(int cdfid)
+MNCAPI int miclose(int cdfid)
 {
    int status;
 
@@ -772,7 +774,7 @@ public int miclose(int cdfid)
 @MODIFIED   : August 20, 2001 (P.N.)
                  - changed to call miattget_with_sign
 ---------------------------------------------------------------------------- */
-public int miattget(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget(int cdfid, int varid, char *name, nc_type datatype,
                     int max_length, void *value, int *att_length)
 {
     int status;
@@ -814,7 +816,7 @@ public int miattget(int cdfid, int varid, char *name, nc_type datatype,
                  - slightly modified version of old miattget
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattget_with_sign(int cdfid, int varid, char *name, 
+MNCAPI int miattget_with_sign(int cdfid, int varid, char *name, 
                               char *insign, nc_type datatype, char *outsign,
                               int max_length, void *value, int *att_length)
 {
@@ -908,7 +910,7 @@ public int miattget_with_sign(int cdfid, int varid, char *name,
 @CREATED    : July 27, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget1(int cdfid, int varid, char *name, nc_type datatype,
                     void *value)
 {
    int att_length;      /* Actual length of the attribute */
@@ -952,7 +954,7 @@ public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
 @CREATED    : July 28, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *miattgetstr(int cdfid, int varid, char *name, 
+MNCAPI char *miattgetstr(int cdfid, int varid, char *name, 
                          int maxlen, char *value)
 {
    nc_type att_type;          /* Type of attribute */
@@ -1031,7 +1033,7 @@ public char *miattgetstr(int cdfid, int varid, char *name,
 @CREATED    : November 25, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputint(int cdfid, int varid, char *name, int value)
+MNCAPI int miattputint(int cdfid, int varid, char *name, int value)
 {
     int lvalue;
     int status;
@@ -1062,7 +1064,7 @@ public int miattputint(int cdfid, int varid, char *name, int value)
 @CREATED    : August 5, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputdbl(int cdfid, int varid, char *name, double value)
+MNCAPI int miattputdbl(int cdfid, int varid, char *name, double value)
 {
     int status;
     MI_SAVE_ROUTINE_NAME("miattputdbl");
@@ -1089,7 +1091,7 @@ public int miattputdbl(int cdfid, int varid, char *name, double value)
 @CREATED    : July 28, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputstr(int cdfid, int varid, char *name, char *value)
+MNCAPI int miattputstr(int cdfid, int varid, char *name, char *value)
 {
     int status;
     MI_SAVE_ROUTINE_NAME("miattputstr");
@@ -1128,7 +1130,7 @@ public int miattputstr(int cdfid, int varid, char *name, char *value)
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarget(int cdfid, int varid, long start[], long count[],
+MNCAPI int mivarget(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values)
 {
     int status;
@@ -1168,7 +1170,7 @@ public int mivarget(int cdfid, int varid, long start[], long count[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarget1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarget1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value)
 {
     int status;
@@ -1213,7 +1215,7 @@ public int mivarget1(int cdfid, int varid, long mindex[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarput(int cdfid, int varid, long start[], long count[],
+MNCAPI int mivarput(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values)
 {
     int status;
@@ -1253,7 +1255,7 @@ public int mivarput(int cdfid, int varid, long start[], long count[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarput1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarput1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value)
 {
     int status;
@@ -1285,7 +1287,7 @@ public int mivarput1(int cdfid, int varid, long mindex[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long *miset_coords(int nvals, long value, long coords[])
+MNCAPI long *miset_coords(int nvals, long value, long coords[])
 {
    int i;
 
@@ -1320,7 +1322,7 @@ public long *miset_coords(int nvals, long value, long coords[])
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long *mitranslate_coords(int cdfid, 
+MNCAPI long *mitranslate_coords(int cdfid, 
                                 int invar,  long incoords[],
                                 int outvar, long outcoords[])
 {
@@ -1379,7 +1381,7 @@ public long *mitranslate_coords(int cdfid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public int micopy_all_atts(int incdfid, int invarid, 
+MNCAPI int micopy_all_atts(int incdfid, int invarid, 
                            int outcdfid, int outvarid)
 {
    int num_atts;             /* Number of attributes */
@@ -1462,7 +1464,7 @@ public int micopy_all_atts(int incdfid, int invarid,
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_var_def(int incdfid, int invarid, int outcdfid)
+MNCAPI int micopy_var_def(int incdfid, int invarid, int outcdfid)
 {
    char varname[MAX_NC_NAME]; /* Name of variable */
    char dimname[MAX_NC_NAME]; /* Name of dimension */
@@ -1610,7 +1612,7 @@ mivarsize(int fd, int varid, long *size_ptr)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_var_values(int incdfid, int invarid, 
+MNCAPI int micopy_var_values(int incdfid, int invarid, 
                              int outcdfid, int outvarid)
 {
    nc_type intype, outtype;   /* Data types */
@@ -1683,7 +1685,7 @@ public int micopy_var_values(int incdfid, int invarid,
 @CREATED    : August 3, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_vcopy_action(int ndims, long start[], long count[], 
+PRIVATE int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data)
      /* ARGSUSED */
 {
@@ -1728,7 +1730,7 @@ private int MI_vcopy_action(int ndims, long start[], long count[],
 @CREATED    : August 3, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
                                int excluded_vars[])
 {
    int num_vars;          /* Number of variables in input file */
@@ -1797,7 +1799,7 @@ public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
                                  int excluded_vars[])
 {
    int num_vars;           /* Number of variables in input file */
@@ -1871,7 +1873,7 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 #define P_tmpdir "/var/tmp"
 #endif /* P_tmpdir not defined */
 
-public char *
+MNCAPI char *
 micreate_tempfile(void)
 {
   int tmp_fd;

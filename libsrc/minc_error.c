@@ -7,7 +7,10 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_error.c,v $
- * Revision 6.3  2004-04-27 15:47:25  bert
+ * Revision 6.4  2004-10-15 13:46:15  bert
+ * Minor changes for Windows compatibility
+ *
+ * Revision 6.3  2004/04/27 15:47:25  bert
  * Move most message text into this file
  *
  * Revision 6.2  2001/04/17 18:40:13  neelin
@@ -53,7 +56,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 6.3 2004-04-27 15:47:25 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 6.4 2004-10-15 13:46:15 bert Exp $ MINC (MNI)";
 #endif
 
 #include <errno.h>
@@ -121,35 +124,35 @@ static struct mierror_entry mierror_table[] = {
     { MI_MSG_ERROR, "Illegal variable access operation" } /* MI_MSG_BADOP */
 };
 
-semiprivate int MI_save_routine_name(char *name)
+SEMIPRIVATE int MI_save_routine_name(char *name)
 {
    MI_ROUTINE_VAR = name; 
    return(TRUE);
 }
-semiprivate int MI_return(void)
+SEMIPRIVATE int MI_return(void)
 { 
    return(TRUE); 
 }
-semiprivate int MI_return_error(void)
+SEMIPRIVATE int MI_return_error(void)
 { 
    MI_LOG_PKG_ERROR2(0, "MINC package entry point"); 
    return(TRUE);
 }
-semiprivate void MI_log_pkg_error2(int p1, char *p2)
+SEMIPRIVATE void MI_log_pkg_error2(int p1, char *p2)
 {
   (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
   (void) fprintf(stderr, p2);
   (void) fputc('\n', stderr);
   (void) fflush(stderr);
 }
-semiprivate void MI_log_pkg_error3(int p1, char *p2, char *p3)
+SEMIPRIVATE void MI_log_pkg_error3(int p1, char *p2, char *p3)
 { 
   (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
   (void) fprintf(stderr, p2, p3);
   (void) fputc('\n', stderr);
   (void) fflush(stderr);
 }
-semiprivate void MI_log_sys_error1(char *p1)
+SEMIPRIVATE void MI_log_sys_error1(char *p1)
 {
    char *message;
    int errnum = errno;
@@ -177,7 +180,7 @@ static struct {
     MI_MSG_ERROR, {""}, NULL
 };
 
-public void milog_init(const char *name)
+MNCAPI void milog_init(const char *name)
 {
     char *fname_str = miget_cfg_str(MICFG_LOGFILE);
     int level = miget_cfg_int(MICFG_LOGLEVEL);
@@ -208,14 +211,14 @@ public void milog_init(const char *name)
     }
 }
 
-public int milog_set_verbosity(int lvl)
+MNCAPI int milog_set_verbosity(int lvl)
 {
     int lvl_prev = _MI_log.level;
     _MI_log.level = lvl;
     return (lvl_prev);
 }
 
-public int milog_message(mimsgcode_t code, ...)
+MNCAPI int milog_message(mimsgcode_t code, ...)
 {
     va_list ap;
     int lvl;
