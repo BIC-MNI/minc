@@ -3,7 +3,21 @@
 
 #define  DEFAULT_SUFFIX  "fre"
 
-#define  NUM_VALUES      256
+#define  NUM_BYTE_VALUES      256
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : initialize_free_format_input
+@INPUT      : 
+@OUTPUT     : volume
+              volume_input
+@RETURNS    : OK if successful
+@DESCRIPTION: Initializes loading a free format file by reading the header.
+              If the file contains short, but the convert_to_byte flag is set
+              in volume_input, then the file is converted to bytes on input.
+              This function assumes that volume->filename has been assigned.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  initialize_free_format_input(
     volume_struct        *volume,
@@ -17,6 +31,7 @@ public  Status  initialize_free_format_input(
     Real           thickness[N_DIMENSIONS];
     Point          origin;
     Real           trans[N_DIMENSIONS], scale_axis[N_DIMENSIONS];
+    Real           x_translation, y_translation, z_translation;
     FILE           *file;
     Boolean        flip_axis[N_DIMENSIONS], axis_valid;
     int            axis;
@@ -29,6 +44,11 @@ public  Status  initialize_free_format_input(
 
     status = file_status;
 
+    /* read the line containing:
+
+              filename          n_bytes_per_voxel
+    */
+
     if( status == OK )
         status = input_string( file, volume_filename, MAX_STRING_LENGTH, ' ' );
 
@@ -37,6 +57,8 @@ public  Status  initialize_free_format_input(
 
     if( status == OK )
     {
+        /* decide what type of data is in image file */
+
         if( n_bytes_per_voxel == 1 )
             volume_input->file_data_type = UNSIGNED_BYTE;
         else if( n_bytes_per_voxel == 2 )
@@ -47,11 +69,22 @@ public  Status  initialize_free_format_input(
             status = ERROR;
         }
 
+        /* decide how to store data in memory */
+
         if( volume_input->convert_to_byte )
             volume->data_type = UNSIGNED_BYTE;
         else
             volume->data_type = volume_input->file_data_type;
     }
+
+    /* read 3 lines, 1 for each axis:
+
+            number_voxels   voxel_thickness  [+-] x|y|z
+
+       where the x, y, or z is used to indicate the ordering of the axes
+             within the file, with the 3rd one being the fastest varying index.
+             `-' indicates to flip the axis.
+    */
 
     if( status == OK )
     for_less( axis, 0, N_DIMENSIONS )
@@ -101,6 +134,19 @@ public  Status  initialize_free_format_input(
         status = OK;
     }
 
+    /* input the optional 3 translation values used for the
+       voxel_to_world_transform */
+
+    if( status == OK &&
+        (input_real( file, &x_translation ) != OK ||
+         input_real( file, &y_translation ) != OK ||
+         input_real( file, &z_translation ) != OK) )
+    {
+        x_translation = 0.0;
+        y_translation = 0.0;
+        z_translation = 0.0;
+    }
+
     if( status == OK &&
         volume->axis_index_from_file[X] == volume->axis_index_from_file[Y] ||
         volume->axis_index_from_file[X] == volume->axis_index_from_file[Z] ||
@@ -109,6 +155,8 @@ public  Status  initialize_free_format_input(
         print( "Two axis indices are equal.\n" );
         status = ERROR;
     }
+
+    /* record the information in the volume struct */
 
     if( status == OK )
     {
@@ -141,7 +189,8 @@ public  Status  initialize_free_format_input(
                               scale_axis[Y],
                               scale_axis[Z],
                               &volume->voxel_to_world_transform );
-        fill_Point( origin, trans[X], trans[Y], trans[Z] );
+        fill_Point( origin, trans[X] + x_translation,
+                      trans[Y] + y_translation, trans[Z] + z_translation );
         set_transform_origin( &volume->voxel_to_world_transform, &origin );
 
         extract_directory( volume->filename, directory );
@@ -150,6 +199,10 @@ public  Status  initialize_free_format_input(
         status = open_file( abs_volume_filename, READ_FILE, BINARY_FORMAT,
                             &volume_input->volume_file );
     }
+
+    /* if the data must be converted to byte, read the entire image file simply
+       to find the max and min values, and set the value_scale and
+       value_translation */
 
     if( status == OK && volume_input->convert_to_byte &&
         volume_input->file_data_type != UNSIGNED_BYTE )
@@ -183,7 +236,7 @@ public  Status  initialize_free_format_input(
         }
         else
         {
-            volume->value_scale = (Real) (NUM_VALUES - 1) /
+            volume->value_scale = (Real) (NUM_BYTE_VALUES - 1) /
                                   (Real) (max_value - min_value);
             volume->value_translation = (Real) min_value;
         }
@@ -201,22 +254,40 @@ public  Status  initialize_free_format_input(
         volume->value_translation = 0.0;
     }
 
+    /* allocate the slice buffer */
+
     if( status == OK )
-    if( volume_input->file_data_type == UNSIGNED_BYTE )
+    switch( volume_input->file_data_type )
     {
+    case  UNSIGNED_BYTE:
         ALLOC( volume_input->byte_slice_buffer,
                volume_input->sizes_in_file[1]*volume_input->sizes_in_file[2] );
-    }
-    else
-    {
+        break;
+
+    case  UNSIGNED_SHORT:
         ALLOC( volume_input->short_slice_buffer,
                volume_input->sizes_in_file[1]*volume_input->sizes_in_file[2] );
+        break;
+
+    default:
+        HANDLE_INTERNAL_ERROR( "initialize_free_format_input" );
+        break;
     }
 
     volume_input->slice_index = 0;
 
     return( status );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : delete_free_format_input
+@INPUT      : volume_input
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Frees the slice buffer and closes the image file.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  void  delete_free_format_input(
     volume_input_struct   *volume_input )
@@ -233,6 +304,17 @@ public  void  delete_free_format_input(
     (void) close_file( volume_input->volume_file );
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_more_free_format_file
+@INPUT      : volume
+              volume_input
+@OUTPUT     : fraction_done
+@RETURNS    : TRUE if more to input after this call
+@DESCRIPTION: Reads in one more slice from the image file.
+@CREATED    :                      David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Boolean  input_more_free_format_file(
     volume_struct         *volume,
     volume_input_struct   *volume_input,
@@ -246,8 +328,9 @@ public  Boolean  input_more_free_format_file(
 
     if( volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
-        if( volume_input->file_data_type == UNSIGNED_BYTE )
+        switch( volume_input->file_data_type )
         {
+        case  UNSIGNED_BYTE:
             status = io_binary_data( volume_input->volume_file, READ_FILE,
                                  (void *) volume_input->byte_slice_buffer,
                                  sizeof(volume_input->byte_slice_buffer[0]),
@@ -275,9 +358,10 @@ public  Boolean  input_more_free_format_file(
                     }
                 }
             }
-        }
-        else
-        {
+
+            break;
+
+        case  UNSIGNED_SHORT:
             status = io_binary_data( volume_input->volume_file, READ_FILE,
                                  (void *) volume_input->short_slice_buffer,
                                  sizeof(volume_input->short_slice_buffer[0]),
@@ -305,6 +389,11 @@ public  Boolean  input_more_free_format_file(
                     }
                 }
             }
+            break;
+
+        default:
+            HANDLE_INTERNAL_ERROR( "input_more_free_format_file" );
+            break;
         }
 
         ++volume_input->slice_index;
