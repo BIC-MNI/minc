@@ -1,14 +1,24 @@
 #include  <internal_volume_io.h>
 
+private  int  compute_voxel(
+    int    x,
+    int    y,
+    int    z,
+    Real   factor );
+
+#define  X_SIZE  200
+#define  Y_SIZE  200
+#define  Z_SIZE  200
+
 int  main(
     int   argc,
     char  *argv[] )
 {
-    Volume               volume, cached_volume;
+    Volume               volume;
     int                  sizes[N_DIMENSIONS];
-    int                  x, y, z;
-    Real                 true_value, test_value;
-    char                 *input_filename, *output_filename;
+    int                  x, y, z, n_errors;
+    int                  true_voxel, test_voxel;
+    char                 *output_filename, *output_filename2;
     static char          *dim_names[] = { MIxspace, MIzspace, MIyspace };
 
     if( argc < 3 )
@@ -17,38 +27,84 @@ int  main(
         return( 1 );
     }
 
-    input_filename = argv[1];
-    output_filename = argv[2];
-
-    if( input_volume( input_filename, 3, File_order_dimension_names,
-                      NC_UNSPECIFIED, FALSE,
-                      0.0, 0.0, TRUE, &volume,
-                      (minc_input_options *) NULL ) != OK )
-        return( 1 );
+    output_filename = argv[1];
+    output_filename2 = argv[2];
 
     set_n_bytes_cache_threshold( 100 );
-    set_max_bytes_in_cache( 100000 );
+    set_max_bytes_in_cache( 100000000 );
 
-    if( input_volume( input_filename, 3, File_order_dimension_names,
-                      NC_UNSPECIFIED, FALSE,
-                      0.0, 0.0, TRUE, &cached_volume,
-                      (minc_input_options *) NULL ) != OK )
-        return( 1 );
+    volume = create_volume( N_DIMENSIONS, dim_names, NC_BYTE, FALSE,
+                            0.0, 0.0 );
 
-    get_volume_sizes( volume, sizes );
+    sizes[X] = X_SIZE;
+    sizes[Y] = Y_SIZE;
+    sizes[Z] = Z_SIZE;
+
+    set_volume_sizes( volume, sizes );
+    alloc_volume_data( volume );
+
+    print( "Setting volume.\n" );
 
     for_less( x, 0, sizes[X] )
     for_less( y, 0, sizes[Y] )
     for_less( z, 0, sizes[Z] )
     {
-        true_value = get_volume_real_value( volume, x, y, z, 0, 0 );
-        test_value = get_volume_real_value( cached_volume, x, y, z, 0, 0 );
-
-        if( true_value != test_value )
-            print( "%d %d %d:  %g != %g\n", x, y, z, true_value, test_value );
+        true_voxel = compute_voxel( x, y, z, 1.0 );
+        set_volume_voxel_value( volume, x, y, z, 0, 0, (Real) true_voxel );
     }
 
-    set_cache_volume_output_filename( cached_volume, output_filename );
+    print( "Checking volume.\n" );
+
+    n_errors = 0;
+    for_less( x, 0, sizes[X] )
+    for_less( y, 0, sizes[Y] )
+    for_less( z, 0, sizes[Z] )
+    {
+        true_voxel = compute_voxel( x, y, z, 1.0 );
+        test_voxel = (int) get_volume_voxel_value( volume, x, y, z, 0, 0 );
+        if( true_voxel != test_voxel )
+        {
+            ++n_errors;
+            if( n_errors < 400 )
+                print( "Error: %d %d\n", true_voxel, test_voxel );
+        }
+    }
+
+    print( "Outputting volume.\n" );
+
+    if( output_volume( output_filename, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                       volume, "Testing Virtual Volumes", NULL ) != OK )
+        return( 1 );
+
+    delete_volume( volume );
+
+    print( "Inputting volume.\n" );
+
+    /*set_n_bytes_cache_threshold( 100000000 ); */
+
+    if( input_volume( output_filename, N_DIMENSIONS, File_order_dimension_names,
+                      NC_UNSPECIFIED, FALSE,
+                      0.0, 0.0, TRUE, &volume,
+                      (minc_input_options *) NULL ) != OK )
+        return( 1 );
+
+    print( "Checking values.\n" );
+
+    n_errors = 0;
+
+    for_less( x, 0, sizes[X] )
+    for_less( y, 0, sizes[Y] )
+    for_less( z, 0, sizes[Z] )
+    {
+        true_voxel = compute_voxel( x, y, z, 1.0 );
+        test_voxel = (int) get_volume_voxel_value( volume, x, y, z, 0, 0 );
+        if( true_voxel != test_voxel )
+        {
+            ++n_errors;
+            if( n_errors < 400 )
+                print( "Error: %d %d %d: %d %d\n", x, y, z, true_voxel, test_voxel );
+        }
+    }
 
     print( "Setting voxels.\n" );
 
@@ -56,43 +112,49 @@ int  main(
     for_less( y, 0, sizes[Y] )
     for_less( z, 0, sizes[Z] )
     {
-        test_value = get_volume_real_value( cached_volume, x, y, z, 0, 0 );
-        test_value /= 2.0;
-        if( test_value < get_volume_real_min(cached_volume) )
-            test_value = get_volume_real_min(cached_volume);
-        set_volume_real_value( cached_volume, x, y, z, 0, 0, test_value );
+        true_voxel = compute_voxel( x, y, z, 0.5 );
+        set_volume_voxel_value( volume, x, y, z, 0, 0, (Real) true_voxel );
     }
 
-    print( "Done setting voxels.\n" );
+    print( "Checking values.\n" );
 
-    delete_volume( cached_volume );
-
-    if( input_volume( output_filename, 3, File_order_dimension_names,
-                      NC_UNSPECIFIED, FALSE,
-                      0.0, 0.0, TRUE, &cached_volume,
-                      (minc_input_options *) NULL ) != OK )
-        return( 1 );
+    n_errors = 0;
 
     for_less( x, 0, sizes[X] )
     for_less( y, 0, sizes[Y] )
     for_less( z, 0, sizes[Z] )
     {
-        true_value = get_volume_real_value( volume, x, y, z, 0, 0 );
-        test_value = get_volume_real_value( cached_volume, x, y, z, 0, 0 );
-
-        true_value = true_value / 2.0;
-        if( true_value < get_volume_real_min( volume ) )
-            true_value = get_volume_real_min( volume );
-        true_value = CONVERT_VALUE_TO_VOXEL( volume, true_value );
-        true_value = CONVERT_VOXEL_TO_VALUE( volume, ROUND(true_value) );
-        if( true_value != test_value )
-            print( "%d %d %d:  %g != %g\n", x, y, z, true_value, test_value );
+        true_voxel = compute_voxel( x, y, z, 0.5 );
+        test_voxel = (int) get_volume_voxel_value( volume, x, y, z, 0, 0 );
+        if( true_voxel != test_voxel )
+        {
+            ++n_errors;
+            if( n_errors < 400 )
+                print( "Error: %d %d %d: %d %d\n", x, y, z, true_voxel, test_voxel);
+        }
     }
 
+    if( output_volume( output_filename2, NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                       volume, "Testing Virtual Volumes", NULL ) != OK )
+        return( 1 );
+
     delete_volume( volume );
-    delete_volume( cached_volume );
 
     output_alloc_to_file( NULL );
 
     return( 0 );
+}
+
+private  int  compute_voxel(
+    int    x,
+    int    y,
+    int    z,
+    Real   factor )
+{
+    int   value;
+
+    value = (x + y + z) % 256;
+    value = value * factor;
+
+    return( value );
 }
