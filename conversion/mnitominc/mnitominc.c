@@ -9,9 +9,14 @@
 @CALLS      : 
 @CREATED    : December 7, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.c,v $
-@MODIFIED   : Revision 1.12  1993-08-11 15:24:20  neelin
-@MODIFIED   : Added RCS logging to source.
+@MODIFIED   : Revision 1.13  1993-08-30 16:43:47  neelin
+@MODIFIED   : Added -slcstep option.
+@MODIFIED   : Fixed -field_of_view option.
+@MODIFIED   : Changed -xstep/-ystep to -colstep -rowstep.
 @MODIFIED   :
+ * Revision 1.12  93/08/11  15:24:20  neelin
+ * Added RCS logging to source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -25,7 +30,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.12 1993-08-11 15:24:20 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.13 1993-08-30 16:43:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -78,7 +83,7 @@ main(int argc, char *argv[])
 
       /* Create dimension variable if mni file or for image dimensions */
       if ((mni_header.file_type==MNI_FILE_TYPE) ||
-          (i>=ndims-IMAGE_DIMS)) {
+          (i>=ndims-IMAGE_DIMS) || (zstep != 0.0)) {
          if (dimfixed[i])
             dimvar[i] = micreate_std_variable(cdfid, dimname[i], 
                                            NC_LONG, 0, NULL);
@@ -227,31 +232,36 @@ main(int argc, char *argv[])
             (void) fprintf(stderr, "%s: Error reading mni image.\n", pname);
             exit(ERROR_STATUS);
          }
- 
+
          /* Write the image */
          (void) ncvarput(cdfid, imgid, start, count, mni_image.image);
 
-         /* Write the image max and min, z position and time */
+         /* Overwrite the z position if user specified */
+         if ((zdim >= 0) && (zstep != 0.0) && (islice != 0))
+            mni_image.zposition = first_z + islice * zstep;
+
+         /* Write the z position */
+         if ((zdim>=0) && (iframe==0)) {
+            (void) ncvarput1(cdfid, dimvar[zdim], 
+                             mitranslate_coords(cdfid, 
+                                                imgid, start,
+                                                dimvar[zdim], 
+                                    miset_coords(MAX_DIMS, 0L, temp_coord)),
+                             &mni_image.zposition);
+            if (islice>0) {
+               curr_diff_z = mni_image.zposition - last_z;
+               if ((islice>1) && !dblcmp(curr_diff_z, diff_z, EPSILON))
+                  z_regular = FALSE;
+               diff_z = curr_diff_z;
+            }
+            else
+               first_z = mni_image.zposition;
+            last_z=mni_image.zposition;
+         }
+         /* Write the image max and min and time */
          if (mni_header.file_type==MNI_FILE_TYPE) {
             (void) ncvarput1(cdfid, minid, start, &mni_image.minimum);
             (void) ncvarput1(cdfid, maxid, start, &mni_image.maximum);
-            if ((zdim>=0) && (iframe==0)) {
-               (void) ncvarput1(cdfid, dimvar[zdim], 
-                         mitranslate_coords(cdfid, 
-                                            imgid, start,
-                                            dimvar[zdim], 
-                            miset_coords(MAX_DIMS, 0L, temp_coord)),
-                                &mni_image.zposition);
-               if (islice>0) {
-                  curr_diff_z = mni_image.zposition - last_z;
-                  if ((islice>1) && !dblcmp(curr_diff_z, diff_z, EPSILON))
-                     z_regular = FALSE;
-                  diff_z = curr_diff_z;
-               }
-               else
-                  first_z = mni_image.zposition;
-               last_z=mni_image.zposition;
-            }
             if ((tdim>=0) && (islice==0)) {
                (void) ncvarput1(cdfid, dimvar[tdim], 
                          mitranslate_coords(cdfid, 
@@ -500,10 +510,20 @@ void parse_args(int argc, char *argv[], mni_header_type *mni_header)
    }
 
    /* Field of view */
-   if (xstep==0.0) xstep = field_of_view;
-   if (ystep==0.0) ystep = field_of_view;
+   if (xstep==0.0) xstep = field_of_view / (double) mni_header->npixels;
+   if (ystep==0.0) ystep = field_of_view / (double) mni_header->npixels;
    if (xstep==0.0) xstep = mni_header->xstep;
    if (ystep==0.0) ystep = mni_header->ystep;
+
+   /* Set sign of step according to file type */
+   if (mni_header->file_type == MNI_FILE_TYPE) {
+      xstep *= MNI_DIR;
+      ystep *= MNI_DIR;
+   }
+   else if (mni_header->file_type == NIL_FILE_TYPE) {
+      xstep *= NIL_DIR;
+      ystep *= NIL_DIR;
+   }
 
    return;
 }
@@ -625,12 +645,12 @@ int get_mni_header(char *file, mni_header_type *mni_header)
          orientation (i.e. after parsing args) */
       if (mni_header->scanner_id != MNI_STX_SCAN) {
          mni_header->xstep = mni_header->ystep = 
-            MNI_DIR * MNI_FOV / ((double) mni_header->npixels);
+            MNI_FOV / ((double) mni_header->npixels);
       }
    }
    else
       mni_header->xstep = mni_header->ystep = 
-         NIL_DIR * NIL_FOV / ((double) mni_header->npixels);
+         NIL_FOV / ((double) mni_header->npixels);
 
    /* Get image orientation */
    get_vax_short(1, &buffer[MNI_LOC_ORIENTATION], &(mni_header->orientation));

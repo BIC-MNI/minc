@@ -5,9 +5,14 @@
 @CALLS      : 
 @CREATED    : December 9, 1992 (Peter Neelin)
 @MODIFIED   : $Log: mnitominc.h,v $
-@MODIFIED   : Revision 1.8  1993-08-11 15:24:29  neelin
-@MODIFIED   : Added RCS logging to source.
+@MODIFIED   : Revision 1.9  1993-08-30 16:44:30  neelin
+@MODIFIED   : Added -slcstep option.
+@MODIFIED   : Fixed -field_of_view option.
+@MODIFIED   : Changed -xstep/-ystep to -colstep -rowstep.
 @MODIFIED   :
+ * Revision 1.8  93/08/11  15:24:29  neelin
+ * Added RCS logging to source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -139,6 +144,7 @@ int orientation = DEF_ORIENT;
 double field_of_view = 0.0;
 double xstep = 0.0;
 double ystep = 0.0;
+double zstep = 0.0;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -172,10 +178,12 @@ ArgvInfo argTable[] = {
        "Other options."},
    {"-field_of_view", ARGV_FLOAT, (char *) 1, (char *) &field_of_view,
        "Field of view of images (in mm)."},
-   {"-xstep", ARGV_FLOAT, (char *) 1, (char *) &xstep,
-       "Distance between pixels in x dimension (in mm)."},
-   {"-ystep", ARGV_FLOAT, (char *) 1, (char *) &ystep,
-       "Distance between pixels in y dimension (in mm)."},
+   {"-colstep", ARGV_FLOAT, (char *) 1, (char *) &xstep,
+       "Distance between pixels along columns (in mm)."},
+   {"-rowstep", ARGV_FLOAT, (char *) 1, (char *) &ystep,
+       "Distance between pixels along rows (in mm)."},
+   {"-slcstep", ARGV_FLOAT, (char *) 1, (char *) &zstep,
+       "Distance between slices (in mm)."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
