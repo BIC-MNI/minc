@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.14  1994-03-15 16:44:21  neelin
-@MODIFIED   : Changed default from -clobber to -noclobber.
+@MODIFIED   : Revision 1.15  1994-03-17 14:12:09  neelin
+@MODIFIED   : Exit with failure if no argument given for -transformation or -like.
+@MODIFIED   : .,
 @MODIFIED   :
+ * Revision 1.14  94/03/15  16:44:21  neelin
+ * Changed default from -clobber to -noclobber.
+ * 
  * Revision 1.13  93/11/04  15:13:13  neelin
  * Added support for irregularly spaced dimensions.
  * 
@@ -61,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.14 1994-03-15 16:44:21 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.15 1994-03-17 14:12:09 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1383,7 +1387,7 @@ public int get_transformation(char *dst, char *key, char *nextArg)
       (void) fprintf(stderr, 
                      "\"%s\" option requires an additional argument\n",
                      key);
-      return FALSE;
+      exit(EXIT_FAILURE);
    }
 
    /* Get pointer to transform info structure */
@@ -1472,7 +1476,7 @@ public int get_model_file(char *dst, char *key, char *nextArg)
       (void) fprintf(stderr, 
                      "\"%s\" option requires an additional argument\n",
                      key);
-      return FALSE;
+      exit(EXIT_FAILURE);
    }
 
    /* Get pointer to volume definition structure */
