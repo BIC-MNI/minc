@@ -81,8 +81,10 @@ sub read_next_file {
     # Constants
     $tape_block_size = 8192;
     $tape_sleep = 1;
-    $nretries = 4;
     $retry_sleep = 2;
+    $nretries = 4;
+    $nreposition_retries = 4;
+
 
     # Get next value from list if no tape drive
     if (length($tapedrive) == 0) {
@@ -115,13 +117,20 @@ sub read_next_file {
         if ($status == 0) {last;}
 
         # If we get to here then the read failed. Try to reposition the tape.
+        # We'll try a few times just in case. Throw in a sleep before 
+        # rewinding for good measure.
         print STDERR "Error reading from tape - trying again.\n";
         local($tmp_status);
-        $tmp_status = system("mt -t $tapedrive rewind");
-        $tmp_status = system("mt -t $tapedrive fsf $cur_file_number")
-            unless ($tmp_status != 0);
+        foreach $reposloop (0..$nreposition_retries-1) {
+            select(undef, undef, undef, $retry_sleep);
+            $tmp_status = system("mt -t $tapedrive rewind");
+            $tmp_status = system("mt -t $tapedrive fsf $cur_file_number")
+                unless ($tmp_status != 0);
+            if ($tmp_status == 0) {last;}
+            print STDERR "Error repositioning tape - trying again.\n";
+        }
         if ($tmp_status != 0) {
-            warn "\n\nWARNING!!!!! Error repositioning tape.\n\n";
+            warn "\n\nWARNING!!!!! Unable to reposition the tape.\n\n";
             last;
         }
 
@@ -129,9 +138,12 @@ sub read_next_file {
         select(undef, undef, undef, $retry_sleep);
         
     }
+
+    # We've finished trying to read. Test to see if we failed or if
+    # we've reached the end of the tape.
     if (($status!=0) || -z $filename) {
         if ($status != 0) {
-            warn "\n\nWARNING!!!! ".
+            warn "\n\nWARNING!!!!! ".
                 "Error occurred while reading tape. Giving up.\n\n\n";
             &cleanup_and_die("Not creating last minc file.\n", $status);
         }
