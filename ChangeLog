@@ -1,3 +1,11 @@
+2003-02-02  Bert Vincent <bert@mni.mcgill.ca>
+	* Added -version flag for all executables (or at least all "C" 
+	language executables).  Implemented in ParseArgv() to make it
+	universal, and applications can override their version number by
+	adding a "ARGV_VERINFO" record to their argTable[].
+
+	* Created miget_version() and miappend_history() functions.
+	
 2003-12-05  Andrew L. Janke <rotor@cmr.uq.edu.au>
 
     * Changes to mincpik: added -depth option (as per a diff supplied
