@@ -1,13 +1,42 @@
 /* concorde microPET to minc */
+#include "config.h"
+
+#define _XOPEN_SOURCE 1
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <float.h>
-#define _XOPEN_SOURCE
 #include <time.h>
 #include <minc.h>
+#include <time_stamp.h>
+#include <ParseArgv.h>
 
-/* Concorde microPET definitions */
-#define UPET_FT_IMAGE 5
+#define VERSIONSTR VERSION " built " __DATE__ " " __TIME__
+
+/*************************************************************************
+ * Concorde microPET definitions 
+ */
+/* file_type field */
+#define UPET_FT_UNKNOWN 0
+#define UPET_FT_LIST_MODE 1
+#define UPET_FT_SINOGRAM 2
+#define UPET_FT_NORMALIZATION 3
+#define UPET_FT_ATTENUATION_CORRECTION 4
+#define UPET_FT_IMAGE 5         /* Standard image data file (typical) */
+#define UPET_FT_BLANK 6
+#define UPET_FT_MU_MAP 8        /* Mu map data file */
+#define UPET_FT_SCATTER_CORRECTION 9
+
+/* acquisition_mode field */
+#define UPET_AM_UNKNOWN 0
+#define UPET_AM_BLANK 1
+#define UPET_AM_EMISSION 2
+#define UPET_AM_DYNAMIC 3
+#define UPET_AM_GATED 4
+#define UPET_AM_CONTINUOUS_BED_MOTION 5
+#define UPET_AM_SINGLES_TRANSMISSION 6
+#define UPET_AM_WINDOWED_COINCIDENCE_TRANSMISSION 7
+#define UPET_AM_NONWINDOWED_COINCIDENCE_TRANSMISSION 8
 
 #define UPET_DT_UNKNOWN 0
 #define UPET_DT_BYTE 1
@@ -40,6 +69,8 @@ struct conversion_info {
     double deadtime_correction;
     double decay_correction;
     double calibration_factor;
+    double isotope_branching_fraction;
+    int swap_size;              /* 0, 2, 4 */
 };
 
 DECLARE_FUNC(upet_file_type);
@@ -59,6 +90,8 @@ DECLARE_FUNC(upet_axial_crystal_pitch);
 DECLARE_FUNC(upet_pixel_size);
 DECLARE_FUNC(upet_dose_units);
 DECLARE_FUNC(upet_calibration_factor);
+DECLARE_FUNC(upet_rotation);
+DECLARE_FUNC(upet_isotope_branching_fraction);
 
 DECLARE_FUNC(upet_frame_no);
 DECLARE_FUNC(upet_frame_start);
@@ -73,14 +106,17 @@ DECLARE_FUNC(upet_frame_deadtime_correction);
 static void copy_init(struct conversion_info *ci_ptr);
 static void copy_frame(struct conversion_info *ci_ptr);
 
-#define UPET_TYPE_STR 1
-#define UPET_TYPE_INT 2
-#define UPET_TYPE_REAL 3
-#define UPET_TYPE_TIME 4
-#define UPET_TYPE_FILTER 5
-#define UPET_TYPE_3X64 6
-#define UPET_TYPE_FPTR 7
-#define UPET_TYPE_SINGLE 8
+/* These values are used to represent the field types in the microPET
+ * header file.
+ */
+#define UPET_TYPE_STR 1         /* String */
+#define UPET_TYPE_INT 2         /* Integer */
+#define UPET_TYPE_REAL 3        /* Floating-point */
+#define UPET_TYPE_TIME 4        /* Timestamp */
+#define UPET_TYPE_FILTER 5      /* Integer type followed by a float cutoff */
+#define UPET_TYPE_3X64 6        /* 3 64-bit integers */
+#define UPET_TYPE_FPTR 7        /* File pointer (2 32 bit integers) */
+#define UPET_TYPE_SINGLE 8      /* Block #, singles/sec, raw singles/sec */
 
 /* concorde keywords */
 struct keywd_entry {
@@ -155,9 +191,9 @@ struct keywd_entry vol_atts[] = {
     { "file_type", 
       UPET_TYPE_INT, NULL, NULL, upet_file_type },
     { "acquisition_mode", 
-      UPET_TYPE_INT, MIacquisition, "acquisition_mode", upet_acq_mode},
+      UPET_TYPE_INT, NULL, NULL, upet_acq_mode},
     { "bed_motion", 
-      UPET_TYPE_INT, MIacquisition, "bed_motion", upet_bed_motion},
+      UPET_TYPE_INT, NULL, NULL, upet_bed_motion},
     { "total_frames", 
       UPET_TYPE_INT, NULL, NULL, upet_total_frames },
     { "isotope", 
@@ -165,7 +201,7 @@ struct keywd_entry vol_atts[] = {
     { "isotope_half_life", 
       UPET_TYPE_REAL, MIacquisition, MIradionuclide_halflife, NULL },
     { "isotope_branching_fraction", 
-      UPET_TYPE_REAL, MIacquisition, "isotope_branching_fraction"},
+      UPET_TYPE_REAL, NULL, NULL, upet_isotope_branching_fraction },
     { "transaxial_crystals_per_block", 
       UPET_TYPE_INT, NULL, NULL, NULL },
     { "axial_crystals_per_block", 
@@ -278,6 +314,8 @@ struct keywd_entry vol_atts[] = {
      UPET_TYPE_STR, NULL, NULL, NULL },
     {"arc_correction_applied", 
      UPET_TYPE_INT, NULL, NULL, NULL },
+    {"rotation",
+     UPET_TYPE_REAL, NULL, NULL, upet_rotation },
     {"x_offset", 
      UPET_TYPE_REAL, NULL, NULL, NULL },
     {"y_offset", 
@@ -352,55 +390,104 @@ struct keywd_entry vol_atts[] = {
 #define DIM_X 3
 #define DIM_W 4
 
+/* Calculate the overall scaling factor for the image data from the
+ * conversion information structure.
+ */
+#define COMBINED_SCALE_FACTOR(ci_ptr) \
+     ((ci_ptr->scale_factor * ci_ptr->calibration_factor) / \
+      (ci_ptr->isotope_branching_fraction))
 
-void usage()
+int _verbose_flag = 1;
+
+ArgvInfo argTable[] = {
+    {"-quiet", ARGV_CONSTANT, (char *) 0, (char *) &_verbose_flag,
+     "Turn off the various progress reporting messages."},
+     {NULL, ARGV_VERINFO, (char *) VERSIONSTR, (char *) NULL, NULL},
+     {NULL, ARGV_END, NULL, NULL, NULL}
+};
+
+typedef enum {
+    MSG_INFO,
+    MSG_WARNING,
+    MSG_ERROR,
+    MSG_FATAL
+} msg_level_t;
+
+static void 
+message(msg_level_t level, char *fmt, ...)
 {
-    fprintf(stderr, "usage: upet2mnc infile outfile\n");
+    va_list ap;
+    const char *prefix_str;
+
+    switch (level) {
+    case MSG_WARNING:
+        prefix_str = "WARNING: ";
+        break;
+    case MSG_ERROR:
+        prefix_str = "ERROR: ";
+        break;
+    case MSG_FATAL:
+        prefix_str = "FATAL: ";
+        break;
+    default:
+        prefix_str = NULL;
+        break;
+    }
+    va_start(ap, fmt);
+    if (_verbose_flag || level != MSG_INFO) {
+        if (level != MSG_INFO) {
+            if (prefix_str != NULL) {
+                fprintf(stderr, prefix_str);
+            }
+            vfprintf(stderr, fmt, ap);
+        }
+        if (prefix_str != NULL) {
+            fprintf(stdout, prefix_str);
+        }
+        vfprintf(stdout, fmt, ap);
+    }
+    va_end(ap);
+}
+
+static int
+is_host_big_endian()
+{
+    long ltmp = 0x04030201;
+    char *ctmp = (char *) &ltmp;
+
+    if (ctmp[0] == 0x01) {
+        return (0);
+    }
+    if (ctmp[0] == 0x04) {
+        return (1);
+    }
+    return (-1);
+}
+
+static void
+usage(const char *progname)
+{
+   fprintf(stderr, "\nUsage: %s [<options>] input.img[.hdr] [output.mnc]\n", 
+           progname);
+   fprintf(stderr,   "       %s [-help]\n\n", progname);
+   exit(-1);
 }
 
 int
-main(int argc, char **argv)
+upet_to_minc(char *hdr_fname, char *img_fname, char *out_fname, 
+             char *prog_name)
 {
-    char line_buf[1024];
     char *line_ptr;
+    char line_buf[1024];
     char *val_ptr;
-    int i;
     int in_header;
     double dbl_tmp;
     int int_tmp;
-    char img_fname[1024];
-    char hdr_fname[1024];
     struct conversion_info ci;
     struct keywd_entry *ke_ptr;
     int is_known;
-
-    if (argc < 3) {
-        usage();
-        return (-1);
-    }
-
-    /* Open the header and the associated binary file. */
-
-    line_ptr = strrchr(argv[1], '.');
-    if (line_ptr != NULL && !strcmp(line_ptr, ".hdr")) {
-        strcpy(img_fname, argv[1]);
-        strcpy(hdr_fname, argv[1]);
-        line_ptr = strrchr(img_fname, '.');
-        if (line_ptr != NULL) {
-            *line_ptr = '\0';
-        }
-    }
-    else if (line_ptr != NULL && !strcmp(line_ptr, ".img")) {
-        strcpy(img_fname, argv[1]);
-        strcpy(hdr_fname, argv[1]);
-        strcat(hdr_fname, ".hdr");
-    }
-    else {
-        strcpy(img_fname, argv[1]);
-        strcpy(hdr_fname, argv[1]);
-        strcat(img_fname, ".img");
-        strcat(hdr_fname, ".img.hdr");
-    }
+    char *argv_tmp[5];
+    char *out_history;
 
     ci.hdr_fp = fopen(hdr_fname, "r");
     if (ci.hdr_fp == NULL) {
@@ -414,22 +501,32 @@ main(int argc, char **argv)
         return (-1);
     }
 
-
-    ci.mnc_fd = micreate(argv[2], NC_NOCLOBBER);
+    ci.mnc_fd = micreate(out_fname, NC_NOCLOBBER);
     if (ci.mnc_fd < 0) {
-        perror(argv[2]);
+        perror(out_fname);
         return (-1);
     }
 
-    ci.frame_zero = -1;         /* Initial frame is -1 until set. */
+    ci.frame_zero = -1;     /* Initial frame is -1 until set. */
 
     /* Define the basic MINC group variables.
      */
     micreate_group_variable(ci.mnc_fd, MIstudy);
     micreate_group_variable(ci.mnc_fd, MIacquisition);
     micreate_group_variable(ci.mnc_fd, MIpatient);
-    /* TODO: add some comments & other information */
     ncvardef(ci.mnc_fd, "micropet", NC_SHORT, 0, NULL);
+
+    /* Fake the history here */
+    argv_tmp[0] = prog_name;
+    argv_tmp[1] = VERSIONSTR;
+    argv_tmp[2] = hdr_fname;
+    argv_tmp[3] = img_fname;
+    argv_tmp[4] = out_fname;
+
+    out_history = time_stamp(5, argv_tmp);
+
+    miattputstr(ci.mnc_fd, NC_GLOBAL, MIhistory, out_history);
+    free(out_history);
         
     in_header = 1;
 
@@ -450,7 +547,7 @@ main(int argc, char **argv)
             line_ptr++;
         }
         *line_ptr = '\0';
-
+            
         is_known = 0;
 
         if (in_header) {
@@ -462,7 +559,7 @@ main(int argc, char **argv)
 
             for (ke_ptr = vol_atts; ke_ptr->upet_kwd != NULL; ke_ptr++) {
                 if (!strcmp(ke_ptr->upet_kwd, line_buf)) {
-
+                    
                     is_known = 1;
 
                     if (ke_ptr->func != NULL) {
@@ -536,30 +633,163 @@ main(int argc, char **argv)
                 }
             }
             else {
-                printf("Unrecognized keyword %s\n", line_buf);
+                message(MSG_WARNING, "Unrecognized keyword %s\n", line_buf);
             }
         }
     }
 
+
     fclose(ci.hdr_fp);
     fclose(ci.img_fp);
     miclose(ci.mnc_fd);
+    return (0);
+}
 
-    fprintf(stderr, "\nFinished creating %s\n", argv[2]);
+int
+main(int argc, char **argv)
+{
+    char *line_ptr;
+    int i;
+    char img_fname[1024];
+    char hdr_fname[1024];
+    char out_fname[1024];
+    int result;
+
+    if (ParseArgv(&argc, argv, argTable, 0) || argc < 2) {
+        usage(argv[0]);
+        return (-1);
+    }
+
+    /* Open the header and the associated binary file. */
+
+    for (i = 1; i < argc; i++) {
+        /* Here we try to be flexible about allowing the user to specify
+         * either the name of the .hdr file or the name of the .img file,
+         * or just the base name of the two files.  All three options
+         * should work.
+         */
+        strcpy(img_fname, argv[i]);
+        strcpy(hdr_fname, argv[i]);
+
+        /* Find the last extension.
+         */
+        line_ptr = strrchr(argv[i], '.');
+
+        /* Did the user specify the .hdr file??
+         */
+        if (line_ptr != NULL && !strcmp(line_ptr, ".hdr")) {
+            line_ptr = strrchr(img_fname, '.');
+            if (line_ptr != NULL) {
+                *line_ptr = '\0';
+            }
+        }
+        /* Did the user specify the .img file??
+         */
+        else if (line_ptr != NULL && !strcmp(line_ptr, ".img")) {
+            strcat(hdr_fname, ".hdr");
+        }
+        /* Or perhaps just the base name??
+         */
+        else {
+            strcat(img_fname, ".img");
+            strcat(hdr_fname, ".img.hdr");
+        }
+
+        /* See if there is a filename following this one, and if so, does it
+         * end with the ".mnc" extension.  If so, take that names as the 
+         * output for this conversions.
+         */
+        if (i < argc - 1 && 
+            (line_ptr = strrchr(argv[i+1], '.')) != NULL &&
+            !strcmp(line_ptr, ".mnc")) {
+
+            strcpy(out_fname, argv[i+1]);
+            i++;
+        }
+        else {
+            strcpy(out_fname, img_fname);
+            line_ptr = strrchr(out_fname, '.');
+            if (line_ptr != NULL) {
+                strcpy(line_ptr, ".mnc");
+            }
+        }
+
+        /* Perform the conversion.
+         */
+
+        message(MSG_INFO, "Starting conversion\n");
+        message(MSG_INFO, "- Input header: %s\n", hdr_fname);
+        message(MSG_INFO, "- Input image:  %s\n", img_fname);
+        message(MSG_INFO, "- Output file:  %s\n", out_fname);
+               
+        result = upet_to_minc(hdr_fname, img_fname, out_fname, argv[0]);
+        if (result < 0) {
+            message(MSG_ERROR, "Error creating %s\n", out_fname);
+        }
+        else {
+            message(MSG_INFO, "Finished creating %s\n", out_fname);
+        }
+    }
 }
 
 
 DECLARE_FUNC(upet_file_type)
 {
-    if (atoi(val_str) == UPET_FT_IMAGE) { /* Image file */
+    int file_type = atoi(val_str);
+    switch (file_type) {
+    case UPET_FT_IMAGE:         /* Image file */
+    case UPET_FT_MU_MAP:        /* Mu map file */
         return (0);
+    default:
+        message(MSG_WARNING, 
+                "File type %d is not handled.  Conversion results may be problematic...\n", file_type);
+        break;
     }
-    fprintf(stderr, "WARNING: This file is not an image file.  Conversion results may be problematic...\n");
     return (1);
 }
 
 DECLARE_FUNC(upet_acq_mode)
 {
+    int mode_int = atoi(val_str);
+    char *mode_str;
+
+    switch (mode_int) {
+    case UPET_AM_UNKNOWN:
+        mode_str = "unknown";
+        break;
+    case UPET_AM_BLANK:
+        mode_str = "blank";
+        break;
+    case UPET_AM_EMISSION:
+        mode_str = "emission";
+        break;
+    case UPET_AM_DYNAMIC:
+        mode_str = "dynamic";
+        break;
+    case UPET_AM_GATED:
+        mode_str = "gated";
+        break;
+    case UPET_AM_CONTINUOUS_BED_MOTION:
+        mode_str = "continuous_bed_motion";
+        break;
+    case UPET_AM_SINGLES_TRANSMISSION:
+        mode_str = "singles_transmission";
+        break;
+    case UPET_AM_WINDOWED_COINCIDENCE_TRANSMISSION:
+        mode_str = "windowed_coincidence_transmission";
+        break;
+    case UPET_AM_NONWINDOWED_COINCIDENCE_TRANSMISSION:
+        mode_str = "non-windowed_coincidence_transmission";
+        break;
+    default:
+        message(MSG_WARNING, "Unknown acquisition mode %d\n", mode_int);
+        mode_str = NULL;
+        break;
+    }
+    if (mode_str != NULL) {
+        miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIacquisition),
+                    "micropet_mode", mode_str);
+    }
     return (0);
 }
 
@@ -578,30 +808,72 @@ DECLARE_FUNC(upet_data_type)
     case UPET_DT_II16:
         ci_ptr->minc_type = NC_SHORT;
         ci_ptr->frame_nbytes *= 2;
+        if (is_host_big_endian()) {
+            ci_ptr->swap_size = 2;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     case UPET_DT_II32:
         ci_ptr->minc_type = NC_INT;
         ci_ptr->frame_nbytes *= 4;
+        if (is_host_big_endian()) {
+            ci_ptr->swap_size = 4;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     case UPET_DT_IF32:
         ci_ptr->minc_type = NC_FLOAT;
         ci_ptr->frame_nbytes *= 4;
+        if (is_host_big_endian()) {
+            ci_ptr->swap_size = 4;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     case UPET_DT_MF32:
         ci_ptr->minc_type = NC_FLOAT;
         ci_ptr->frame_nbytes *= 4;
+        if (!is_host_big_endian()) {
+            ci_ptr->swap_size = 4;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     case UPET_DT_MI16:
         ci_ptr->minc_type = NC_SHORT;
         ci_ptr->frame_nbytes *= 2;
+        if (!is_host_big_endian()) {
+            ci_ptr->swap_size = 2;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     case UPET_DT_MI32:
         ci_ptr->minc_type = NC_INT;
         ci_ptr->frame_nbytes *= 4;
+        if (!is_host_big_endian()) {
+            ci_ptr->swap_size = 4;
+        }
+        else {
+            ci_ptr->swap_size = 0;
+        }
         break;
     default:
-        fprintf(stderr, "ERROR: Unknown data type %d\n", ci_ptr->data_type);
+        message(MSG_ERROR, "Unknown data type %d\n", ci_ptr->data_type);
         return (1);
+    }
+    if (ci_ptr->swap_size != 0) {
+        message(MSG_INFO, "Swapping groups of %d bytes.\n", ci_ptr->swap_size);
+    }
+    else {
+        message(MSG_INFO, "No byte-swapping required.\n");
     }
     return (0);
 }
@@ -609,7 +881,7 @@ DECLARE_FUNC(upet_data_type)
 DECLARE_FUNC(upet_data_order)
 {
     if (atoi(val_str) != 1) {
-        fprintf(stderr, "WARNING: Unknown data order.\n");
+        message(MSG_WARNING, "Unknown data order.\n");
     }
     return (0);
 }
@@ -685,22 +957,30 @@ DECLARE_FUNC(upet_injection_time)
     int id;
     char str_buf[128];
 
-    strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf);
-
     id = ncvarid(ci_ptr->mnc_fd, MIacquisition);
 
-    sprintf(str_buf, "%02d%02d%02d", 
-            tmbuf.tm_hour, tmbuf.tm_min, tmbuf.tm_sec);
-    miattputstr(ci_ptr->mnc_fd, id, MIinjection_time, str_buf);
+    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+        strcpy(str_buf, "unknown");
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_time, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_year, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_month, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_day, str_buf);
+    }
+    else {
+        sprintf(str_buf, "%02d%02d%02d", 
+                tmbuf.tm_hour, tmbuf.tm_min, tmbuf.tm_sec);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_time, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_year + 1900);
-    miattputstr(ci_ptr->mnc_fd, id, MIinjection_year, str_buf);
+        sprintf(str_buf, "%d", tmbuf.tm_year + 1900);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_year, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_mon + 1);
-    miattputstr(ci_ptr->mnc_fd, id, MIinjection_month, str_buf);
+        sprintf(str_buf, "%d", tmbuf.tm_mon + 1);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_month, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_mday);
-    miattputstr(ci_ptr->mnc_fd, id, MIinjection_day, str_buf);
+        sprintf(str_buf, "%d", tmbuf.tm_mday);
+        miattputstr(ci_ptr->mnc_fd, id, MIinjection_day, str_buf);
+    }
+    return (0);
 }
 
 DECLARE_FUNC(upet_scan_time)
@@ -709,23 +989,30 @@ DECLARE_FUNC(upet_scan_time)
     int id;
     char str_buf[128];
 
-    strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf);
-
     id = ncvarid(ci_ptr->mnc_fd, MIstudy);
 
-    sprintf(str_buf, "%02d%02d%02d", 
-            tmbuf.tm_hour, tmbuf.tm_min, tmbuf.tm_sec);
-    miattputstr(ci_ptr->mnc_fd, id, MIstart_time, str_buf);
+    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+        strcpy(str_buf, "unknown");
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_time, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_year, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_month, str_buf);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_day, str_buf);
+    }
+    else {
+        sprintf(str_buf, "%02d%02d%02d", 
+                tmbuf.tm_hour, tmbuf.tm_min, tmbuf.tm_sec);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_time, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_year + 1900);
-    miattputstr(ci_ptr->mnc_fd, id, MIstart_year, str_buf);
+        sprintf(str_buf, "%d", tmbuf.tm_year + 1900);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_year, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_mon + 1);
-    miattputstr(ci_ptr->mnc_fd, id, MIstart_month, str_buf);
+        sprintf(str_buf, "%d", tmbuf.tm_mon + 1);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_month, str_buf);
 
-    sprintf(str_buf, "%d", tmbuf.tm_mday);
-    miattputstr(ci_ptr->mnc_fd, id, MIstart_day, str_buf);
-
+        sprintf(str_buf, "%d", tmbuf.tm_mday);
+        miattputstr(ci_ptr->mnc_fd, id, MIstart_day, str_buf);
+    }
+    return (0);
 }
 
 DECLARE_FUNC(upet_axial_crystal_pitch)
@@ -739,6 +1026,7 @@ DECLARE_FUNC(upet_axial_crystal_pitch)
     dbl_tmp /= 2.0;
 
     ci_ptr->dim_steps[DIM_Z] = dbl_tmp;
+    return (0);
 }
 
 DECLARE_FUNC(upet_pixel_size)
@@ -749,6 +1037,7 @@ DECLARE_FUNC(upet_pixel_size)
     dbl_tmp *= 10.0;
 
     ci_ptr->dim_steps[DIM_X] = ci_ptr->dim_steps[DIM_Y] = dbl_tmp;
+    return (0);
 }
 
 DECLARE_FUNC(upet_dose_units)
@@ -767,8 +1056,10 @@ DECLARE_FUNC(upet_dose_units)
     }
     else {
         str_ptr = "???????";
+        message(MSG_WARNING, "Unrecognized dose_units value %d\n", tmp);
     }
     miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, new_var), new_att, str_ptr);
+    return (0);
 }
 
 DECLARE_FUNC(upet_calibration_factor)
@@ -776,6 +1067,25 @@ DECLARE_FUNC(upet_calibration_factor)
     double dbl_tmp = atof(val_str);
 
     ci_ptr->calibration_factor = dbl_tmp;
+    return (0);
+}
+
+DECLARE_FUNC(upet_isotope_branching_fraction)
+{
+    double dbl_tmp = atof(val_str);
+
+    ci_ptr->isotope_branching_fraction = dbl_tmp;
+    return (0);
+}
+
+
+DECLARE_FUNC(upet_rotation)
+{
+    double dbl_tmp = atof(val_str);
+    if (dbl_tmp != 0.0) {
+        message(MSG_WARNING, "Rotation is %f\n", dbl_tmp);
+    }
+    return (0);
 }
 
 /***********************/
@@ -788,6 +1098,7 @@ DECLARE_FUNC(upet_frame_no)
     if (ci_ptr->frame_zero < 0) {
         ci_ptr->frame_zero = ci_ptr->frame_index;
     }
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_start)
@@ -796,6 +1107,7 @@ DECLARE_FUNC(upet_frame_start)
     double dbl_tmp = atof(val_str);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MItime), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_duration)
@@ -804,24 +1116,27 @@ DECLARE_FUNC(upet_frame_duration)
     double dbl_tmp = atof(val_str);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MItime_width), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_min)
 {
     long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
-    dbl_tmp *= (ci_ptr->scale_factor*ci_ptr->calibration_factor);
+    dbl_tmp *= COMBINED_SCALE_FACTOR(ci_ptr);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimagemin), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_max)
 {
     long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     double dbl_tmp = atof(val_str);
-    dbl_tmp *= (ci_ptr->scale_factor*ci_ptr->calibration_factor);
+    dbl_tmp *= COMBINED_SCALE_FACTOR(ci_ptr);
     mivarput1(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimagemax), &index, 
               NC_DOUBLE, MI_SIGNED, &dbl_tmp);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_file_ptr)
@@ -845,30 +1160,63 @@ DECLARE_FUNC(upet_frame_file_ptr)
     /* Seek the image file to the data */
 
     fseek(ci_ptr->img_fp, lopart, SEEK_SET);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_scale_factor)
 {
     ci_ptr->scale_factor = atof(val_str);
+    return (0);
 }
 
 
 DECLARE_FUNC(upet_frame_deadtime_correction)
 {
     ci_ptr->deadtime_correction = atof(val_str);
+    return (0);
 }
 
 DECLARE_FUNC(upet_frame_decay_correction)
 {
     ci_ptr->decay_correction = atof(val_str);
+    return (0);
 }
 
-static void scale_data(nc_type datatype,
-                       long nvox,
-                       void *data,
-                       double scale)
+static void 
+swap_data(int swap_size,
+          long nvox,
+          unsigned char *data)
 {
-    int i;
+  unsigned char tmp;
+
+  if (swap_size == 2) {
+    while (nvox--) {
+      tmp = data[0];
+      data[0] = data[1];
+      data[1] = tmp;
+      data += 2;
+    }
+  }
+  else if (swap_size == 4) {
+    while (nvox--) {
+      tmp = data[0];
+      data[0] = data[3];
+      data[3] = tmp;
+      tmp = data[1];
+      data[1] = data[2];
+      data[2] = tmp;
+      data += 4;
+    }
+  }
+}
+
+static void 
+scale_data(nc_type datatype,
+           long nvox,
+           void *data,
+           double scale)
+{
+    long i;
     double tmp;
 
     switch (datatype) {
@@ -908,7 +1256,7 @@ static void scale_data(nc_type datatype,
         }
         break;
     default:
-        fprintf(stderr, "Data type %d not handled\n", datatype);
+        message(MSG_ERROR, "Data type %d not handled\n", datatype);
         break;
     }
 }
@@ -918,7 +1266,7 @@ copy_init(struct conversion_info *ci_ptr)
 {
     ci_ptr->frame_buffer = malloc(ci_ptr->frame_nbytes);
     if (ci_ptr->frame_buffer == NULL) {
-        fprintf(stderr, "Out of memory\n");
+        message(MSG_FATAL, "Out of memory\n");
         exit(-1);
     }
 
@@ -958,11 +1306,23 @@ copy_frame(struct conversion_info *ci_ptr)
 {
     long start[5];
     long count[5];
+    size_t nitems;
 
-    fprintf(stderr, "Inserting frame #%d\n", ci_ptr->frame_index);
+    message(MSG_INFO, "Inserting frame #%d\n", ci_ptr->frame_index);
 
-    fread(ci_ptr->frame_buffer, ci_ptr->frame_nbytes, 1, ci_ptr->img_fp);
+    /* Actually read the data from the image file.
+     */
+    nitems = fread(ci_ptr->frame_buffer, ci_ptr->frame_nbytes, 1, 
+                   ci_ptr->img_fp);
 
+    if (nitems != 1) {
+        message(MSG_FATAL, "Read failed with error %d, return %d\n",
+                errno, nitems);
+        exit(-1);
+    }
+
+    /* Setup the starts and counts for the data block.
+     */
     start[DIM_T] = ci_ptr->frame_index - ci_ptr->frame_zero;
     start[DIM_X] = 0;
     start[DIM_Y] = 0;
@@ -975,9 +1335,22 @@ copy_frame(struct conversion_info *ci_ptr)
     count[DIM_Z] = ci_ptr->dim_lengths[DIM_Z];
     count[DIM_W] = ci_ptr->dim_lengths[DIM_W];
 
-    scale_data(ci_ptr->minc_type, ci_ptr->frame_nvoxels, ci_ptr->frame_buffer,
-               ci_ptr->scale_factor*ci_ptr->calibration_factor);
+    /* Perform swapping if necessary.
+     */
+    if (ci_ptr->swap_size != 0) {
+      swap_data(ci_ptr->swap_size, ci_ptr->frame_nvoxels, 
+                ci_ptr->frame_buffer);
+    }
 
-    mivarput(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimage), start, count, 
-             ci_ptr->minc_type, MI_SIGNED, ci_ptr->frame_buffer);
+    /* Scale the raw data into the final range.
+     */
+    scale_data(ci_ptr->minc_type, ci_ptr->frame_nvoxels, ci_ptr->frame_buffer,
+               COMBINED_SCALE_FACTOR(ci_ptr));
+
+    /* For now we perform no conversions on the data as it is stored.
+     * This may be worth modifying in the future, to allow storage of
+     * non-floating-point formats from a typical microPET file.
+     */
+    ncvarput(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimage), start, count, 
+             ci_ptr->frame_buffer);
 }
