@@ -19,7 +19,7 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.30 1996-04-10 13:34:49 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.31 1996-04-10 17:19:39 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
@@ -828,14 +828,18 @@ public  STRING  extract_directory(
         --slash_index;
 
     if( slash_index < 0 )
+        directory = create_string( "." );
+    else
+    {
         ++slash_index;
 
-    directory = alloc_string( slash_index );
+        directory = alloc_string( slash_index );
 
-    for_less( i, 0, slash_index )
-        directory[i] = expanded[i];
+        for_less( i, 0, slash_index )
+            directory[i] = expanded[i];
 
-    directory[slash_index] = END_OF_STRING;
+        directory[slash_index] = END_OF_STRING;
+    }
 
     delete_string( expanded );
 

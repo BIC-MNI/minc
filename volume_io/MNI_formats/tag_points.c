@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.19 1995-11-10 20:23:19 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.20 1996-04-10 17:19:44 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -216,6 +216,8 @@ public  void  terminate_tag_file_output(
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
 @MODIFIED   : Oct. 19, 1995   D. MacDonald, now calls the 1 at a time routine
+@MODIFIED   : Apr.  1, 1996   D. MacDonald, fixed bug of passing non-null
+                              tags_volume2 with n_volumes==1
 ---------------------------------------------------------------------------- */
 
 public  Status  output_tag_points(
@@ -240,8 +242,8 @@ public  Status  output_tag_points(
         for( i = 0;  i < n_tag_points;  ++i )
         {
             status = output_one_tag( file, n_volumes,
-                            tags_volume1 == NULL ? NULL : tags_volume1[i],
-                            tags_volume2 == NULL ? NULL : tags_volume2[i],
+                            tags_volume1[i],
+                            (n_volumes == 1) ? NULL : tags_volume2[i],
                             weights == NULL ? NULL : &weights[i],
                             structure_ids == NULL ? NULL : &structure_ids[i],
                             patient_ids == NULL ? NULL : &patient_ids[i],

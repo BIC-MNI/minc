@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.61 1996-02-28 16:03:57 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.62 1996-04-10 17:19:41 david Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -591,6 +591,7 @@ public  void  set_voxel_to_world_transform(
     Volume             volume,
     General_transform  *transform )
 {
+    Real        sign;
     int         c, axis;
     Vector      axes[N_DIMENSIONS];
     Transform   *linear_transform;
@@ -609,9 +610,12 @@ public  void  set_voxel_to_world_transform(
         for_less( c, 0, N_DIMENSIONS )
         {
             axis = volume->spatial_axes[c];
+            if( volume->separations[axis] < 0.0 )
+                sign = -1.0;
+            else
+                sign = 1.0;
             if( axis >= 0 )
-                volume->separations[axis] = SIGN( volume->separations[axis] ) *
-                                            MAGNITUDE( axes[c] );
+                volume->separations[axis] = sign * MAGNITUDE( axes[c] );
         }
     }
 }

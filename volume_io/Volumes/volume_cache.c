@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.23 1996-03-14 15:51:42 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.24 1996-04-10 17:19:43 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -148,7 +148,7 @@ public  void  set_default_max_bytes_in_cache(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  int  get_default_max_bytes_in_cache()
+public  int  get_default_max_bytes_in_cache()
 {
     int   n_bytes;
 
@@ -694,11 +694,11 @@ public  void  set_volume_cache_block_sizes(
 
     for_less( d, 0, get_volume_n_dimensions(volume) )
     {
-        if( block_sizes[d] >= 1 )
-        {
-            if( cache->block_sizes[d] != block_sizes[d] )
-                changed = TRUE;
-        }
+        if( block_sizes[d] < 1 || block_sizes[d] > sizes[d] )
+            block_sizes[d] = sizes[d];
+
+        if( cache->block_sizes[d] != block_sizes[d] )
+            changed = TRUE;
     }
 
     /*--- if the block sizes have not changed, do nothing */
@@ -716,12 +716,7 @@ public  void  set_volume_cache_block_sizes(
     }
 
     for_less( d, 0, get_volume_n_dimensions(volume) )
-    {
-        if( block_sizes[d] < 1 || block_sizes[d] > sizes[d] )
-            cache->block_sizes[d] = sizes[d];
-        else
-            cache->block_sizes[d] = block_sizes[d];
-    }
+        cache->block_sizes[d] = block_sizes[d];
 
     alloc_volume_cache( cache, volume );
 }

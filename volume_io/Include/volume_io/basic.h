@@ -29,7 +29,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.25 1995-12-19 15:47:12 david Exp $";
+static char basic_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.26 1996-04-10 17:19:38 david Exp $";
 #endif
 
 #include  <stdlib.h>
@@ -130,17 +130,11 @@ typedef  char            *STRING;
 
 #define  IS_INT( x )    ((double) (x) == (double) ((int) (x)))
 
-#define  FLOOR( x )   (((x) < 0.0) ? ((IS_INT(x) ? (int) (x) : (int) (x) - 1)) \
-                                   : (int) (x) )
+#define  FLOOR( x )     ((int) floor(x))
 
-#define  ROUND( x )     FLOOR( (x) + 0.5 )
+#define  ROUND( x )     FLOOR( (double) (x) + 0.5 )
 
-#define  POSITIVE_ROUND( x )     ((int)( (x) + 0.5 ))
-
-#define  CEILING( x )   (  IS_INT(x) ?                                      \
-                               ((int) (x)) :                                \
-                               ((x) < 0.0 ? (int)(x) : ((int) (x)+1))       \
-                        )
+#define  CEILING( x )   ((int) ceil(x))
 
 #define  FRACTION( x )  ((x) - FLOOR(x))
 

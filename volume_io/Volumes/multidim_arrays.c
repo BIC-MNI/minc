@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.10 1996-02-28 16:04:00 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.11 1996-04-10 17:19:42 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -376,7 +376,7 @@ public  void  copy_multidim_data_reordered(
     BOOLEAN             use_src_order )
 {
     char      *src_ptr, *dest_ptr;
-    int       i, d;
+    int       d;
     int       dest_offsets[MAX_DIMENSIONS], src_offsets[MAX_DIMENSIONS];
     int       dest_offset0, dest_offset1, dest_offset2, dest_offset3;
     int       dest_offset4;

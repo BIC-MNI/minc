@@ -60,6 +60,13 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
             if( ABS(a[i][j]) > s[i] )
                s[i] = ABS(a[i][j]);
         }
+
+        if( s[i] == 0.0 )
+        {
+            FREE( s );
+
+            return( FALSE );
+        }
     }
 
     success = TRUE;
@@ -95,12 +102,21 @@ public  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
 
         for_less( j, i+1, n )
         {
+            if( a[row[i]][i] == 0.0 )
+            {
+                success = FALSE;
+                break;
+            }
+
             m = a[row[j]][i] / a[row[i]][i];
             for_less( k, i+1, n )
                 a[row[j]][k] -= m * a[row[i]][k];
             for_less( v, 0, n_values )
                 solution[row[j]][v] -= m * solution[row[i]][v];
         }
+
+        if( !success )
+            break;
     }
 
     if( success && a[row[n-1]][n-1] == 0.0 )
