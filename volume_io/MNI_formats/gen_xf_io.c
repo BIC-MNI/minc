@@ -13,10 +13,38 @@ static   const char      *N_DIMENSIONS_STRING = "Number_Dimensions";
 static   const char      *POINTS_STRING = "Points";
 static   const char      *DISPLACEMENTS_STRING = "Displacements";
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_default_transform_file_suffix
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : "xfm"
+@DESCRIPTION: Returns the default transform file suffix.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  char  *get_default_transform_file_suffix()
 {
     return( "xfm" );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_one_transform
+@INPUT      : file
+              invert  - whether to invert the transform
+              transform
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Outputs a transform to the MNI transform file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  void  output_one_transform(
     FILE                *file,
@@ -122,6 +150,22 @@ private  void  output_one_transform(
     }
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : output_transform
+              file
+              comments   - can be null
+              transform
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Outputs the transform to the file in MNI transform format.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
 public  Status  output_transform(
     FILE                *file,
     char                comments[],
@@ -147,6 +191,19 @@ public  Status  output_transform(
 
     return( OK );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_one_transform
+@INPUT      : file
+@OUTPUT     : transform
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Inputs a transform from the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 private  Status  input_one_transform(
     FILE                *file,
@@ -326,6 +383,19 @@ private  Status  input_one_transform(
 
     return( OK );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : input_transform
+@INPUT      : file
+@OUTPUT     : transform
+@RETURNS    : OK or ERROR
+@DESCRIPTION: Inputs the transform from the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 public  Status  input_transform(
     FILE                *file,
