@@ -30,7 +30,7 @@ struct {
            NC_DOUBLE, MI_SIGNED,   "double"};
 int ntypes = sizeof(types)/sizeof(types[0]);
 
-main()
+main(int argc, char **argv)
 {
    int cdf;
    int img, img2;
@@ -40,11 +40,18 @@ main()
    double image[256*256];
    long limage[256*256];
    int i, j, k, ioff, itype, jtype;
+   int cflag = 0;
+
+#ifdef MINC2
+   if (argc == 2 && !strcmp(argv[1], "-2")) {
+       cflag = MI2_CREATE_V2;
+   }
+#endif /* MINC2 */
 
    ncopts=NC_VERBOSE|NC_FATAL;
    for (itype=0; itype<ntypes; itype++) {
       for (jtype=0; jtype<ntypes; jtype++) {
-         cdf=nccreate("test.mnc",NC_CLOBBER);
+         cdf=micreate("test.mnc",NC_CLOBBER | cflag);
          count[2]=256;
          count[1]=20;
          count[0]=7;
@@ -87,7 +94,7 @@ main()
                        types[jtype].ctype);
          for (i=0;i<count[0];i++)
             (void) printf("   image[%d] = %g\n",(int) i, image[i]);
-         (void) ncclose(cdf);
+         (void) miclose(cdf);
       }
    }
    return(0);

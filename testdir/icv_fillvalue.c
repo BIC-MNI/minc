@@ -7,7 +7,7 @@
 #define TRUE 1
 #define FALSE 0
 
-main()
+main(int argc, char **argv)
 {
    int icv, mincid, img, i;
    static int dim[MAX_VAR_DIMS];
@@ -23,13 +23,19 @@ main()
       141, 143, 145, 147, -5
    };
    static int ivallen = sizeof(ivalue)/sizeof(ivalue[0]);
+   int cflag = 0;
 
+#ifdef MINC2
+   if (argc == 2 && !strcmp(argv[1], "-2")) {
+       cflag = MI2_CREATE_V2;
+   }
+#endif /* MINC2 */
 
    icv = miicv_create();
    (void) miicv_setint(icv, MI_ICV_VALID_MAX, 200);
    (void) miicv_setint(icv, MI_ICV_VALID_MIN, 0);
    (void) miicv_setint(icv, MI_ICV_DO_FILLVALUE, TRUE);
-   mincid=nccreate("test.mnc", NC_CLOBBER);
+   mincid=micreate("test.mnc", NC_CLOBBER | cflag);
    for (i=0; i<2; i++) {
       dim[i]=ncdimdef(mincid, diminfo[i].name, diminfo[i].len);
    }
@@ -78,6 +84,6 @@ main()
       if ((i % 5) == 4) (void) printf("\n");
    }
 
-   (void) ncclose(mincid);
+   (void) miclose(mincid);
 
 }

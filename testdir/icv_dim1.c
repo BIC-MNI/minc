@@ -4,7 +4,7 @@
 #define TRUE 1
 #define FALSE 0
 
-main()
+main(int argc, char **argv)
 {
    int icv, cdfid, img, max, min, dimvar;
    static int dim[MAX_VAR_DIMS];
@@ -31,6 +31,13 @@ main()
       341, 343, 345, 347, 349
    };
    int i, j, k, intype, inorm, outtype, imax, ival;
+   int cflag = 0;
+
+#ifdef MINC2
+   if (argc == 2 && !strcmp(argv[1], "-2")) {
+       cflag = MI2_CREATE_V2;
+   }
+#endif /* MINC2 */
 
    icv=miicv_create();
    miicv_setint(icv, MI_ICV_XDIM_DIR, MI_ICV_NEGATIVE);
@@ -43,7 +50,7 @@ main()
    miicv_setint(icv, MI_ICV_DO_DIM_CONV, TRUE);
    miicv_setint(icv, MI_ICV_KEEP_ASPECT, FALSE);
    miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
-   cdfid=nccreate("test.mnc", NC_CLOBBER);
+   cdfid=micreate("test.mnc", NC_CLOBBER | cflag);
    for (i=0; i<numdims; i++) {
       dim[i]=ncdimdef(cdfid, diminfo[i].name, diminfo[i].len);
       dimvar=micreate_std_variable(cdfid, diminfo[i].name, NC_DOUBLE,
@@ -88,7 +95,7 @@ main()
          printf("\n");
       }
    }
-   ncclose(cdfid);
+   miclose(cdfid);
    miicv_free(icv);
    
    return 0;

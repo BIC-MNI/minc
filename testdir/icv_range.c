@@ -10,7 +10,7 @@
 #define MAX_MAX 2
 #define MAX_VAL 2
 
-main()
+main(int argc, char **argv)
 {
    int icv, cdfid, img, max, min;
    static char *typenm[]={"short", "double"};
@@ -30,6 +30,13 @@ main()
    double dvalue;
    short int ivalue;
    int i, intype, inorm, outtype, imax, ival;
+   int cflag = 0;
+
+#ifdef MINC2
+   if (argc == 2 && !strcmp(argv[1], "-2")) {
+       cflag = MI2_CREATE_V2;
+   }
+#endif /* MINC2 */
 
    for (intype=0; intype<MAX_IN_TYPES; intype++) {
       for (inorm=0; inorm<MAX_NORM; inorm++) {
@@ -45,7 +52,7 @@ main()
                      "in : %s, out : %s, norm : %s, imgmax : %s, valid : %s\n",
                          typenm[intype], typenm[outtype], boolnm[inorm],
                          boolnm[imax], boolnm[ival], dvalue);
-                  cdfid=nccreate("test.mnc", NC_CLOBBER);
+                  cdfid=micreate("test.mnc", NC_CLOBBER | cflag);
                   for (i=0; i<numdims; i++) 
                      dim[i]=ncdimdef(cdfid, diminfo[i].name, diminfo[i].len);
                   img=micreate_std_variable(cdfid, MIimage, outtypes[outtype],
@@ -93,7 +100,7 @@ main()
                      dvalue=ivalue;
                   }
                   printf("   icv value = %g\n", dvalue);
-                  ncclose(cdfid);
+                  miclose(cdfid);
                }
             }
          }
