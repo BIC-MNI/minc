@@ -7,7 +7,12 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.2  1999-10-29 17:51:49  neelin
+ * Revision 6.3  2000-04-28 15:03:10  neelin
+ * Added support for ignoring non-fatal protocol errors (cases where redundant
+ * information is inconsistent). In particular, it is possible to ignore
+ * differences between the group length element and the true group length.
+ *
+ * Revision 6.2  1999/10/29 17:51:49  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1999/10/27 20:13:15  neelin
@@ -104,6 +109,7 @@
 typedef struct {
    Acr_byte_order byte_order;
    Acr_VR_encoding_type vr_encoding;
+   int ignore_nonfatal_protocol_errors;
 } *Data_Info;
 
 /* Private functions */
@@ -183,6 +189,7 @@ private Data_Info get_data_info(Acr_File *afp)
       data_info = MALLOC(sizeof(*data_info));
       data_info->byte_order = ACR_BYTE_ORDER_DEFAULT;
       data_info->vr_encoding = ACR_VR_ENCODING_DEFAULT;
+      data_info->ignore_nonfatal_protocol_errors = FALSE;
       acr_file_set_client_data(afp, (void *) data_info);
    }
    return data_info;
@@ -334,6 +341,59 @@ public Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp)
 
    /* Return the VR encoding */
    return data_info->vr_encoding;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_set_ignore_errors
+@INPUT      : afp - i/o stream
+              ignore_nonfatal_protocol_errors - if TRUE then non-fatal
+                 protocol errors will be ignored
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Allows a user to indicate whether to ignore protocol errors
+              that can be ignored.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 28, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_set_ignore_errors(Acr_File *afp, 
+                                  int ignore_nonfatal_protocol_errors)
+{
+   Data_Info data_info;
+
+   /* Get data info pointer */
+   data_info = get_data_info(afp);
+
+   /* Set the flag */
+   data_info->ignore_nonfatal_protocol_errors = 
+      ignore_nonfatal_protocol_errors;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_ignore_protocol_errors
+@INPUT      : afp - i/o stream
+@OUTPUT     : (none)
+@RETURNS    : TRUE if stream is set to ignore nonfatal protocol errors
+@DESCRIPTION: Allows one to get the ignore errors flag for a stream
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 28, 2000 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_ignore_protocol_errors(Acr_File *afp)
+{
+   Data_Info data_info;
+
+   /* Get data info pointer */
+   data_info = get_data_info(afp);
+
+   /* Return the VR encoding */
+   return data_info->ignore_nonfatal_protocol_errors;
 
 }
 

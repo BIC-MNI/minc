@@ -6,7 +6,12 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.h,v $
- * Revision 6.1  1999-10-29 17:51:50  neelin
+ * Revision 6.2  2000-04-28 15:03:11  neelin
+ * Added support for ignoring non-fatal protocol errors (cases where redundant
+ * information is inconsistent). In particular, it is possible to ignore
+ * differences between the group length element and the true group length.
+ *
+ * Revision 6.1  1999/10/29 17:51:50  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -91,12 +96,14 @@
 
 /* Byte-ordering options */
 typedef enum {
-   ACR_LITTLE_ENDIAN = 1,
+   ACR_UNKNOWN_ENDIAN = 0,
+   ACR_LITTLE_ENDIAN,
    ACR_BIG_ENDIAN
 } Acr_byte_order;
 
 /* VR encoding options */
 typedef enum {
+   ACR_UNKNOWN_VR = 0,
    ACR_EXPLICIT_VR,
    ACR_IMPLICIT_VR
 } Acr_VR_encoding_type;
@@ -126,6 +133,9 @@ public int acr_need_invert(Acr_byte_order byte_order);
 public void acr_set_vr_encoding(Acr_File *afp, 
                                 Acr_VR_encoding_type vr_encoding);
 public Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp);
+public void acr_set_ignore_errors(Acr_File *afp, 
+                                  int ignore_nonfatal_protocol_errors);
+public int acr_ignore_protocol_errors(Acr_File *afp);
 public void acr_reverse_byte_order(long nvals, size_t value_size, 
                                    void *input_values, void *output_values);
 public void acr_get_short(Acr_byte_order byte_order, 

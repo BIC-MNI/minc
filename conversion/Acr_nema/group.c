@@ -6,7 +6,12 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.2  1999-10-29 17:51:53  neelin
+ * Revision 6.3  2000-04-28 15:03:11  neelin
+ * Added support for ignoring non-fatal protocol errors (cases where redundant
+ * information is inconsistent). In particular, it is possible to ignore
+ * differences between the group length element and the true group length.
+ *
+ * Revision 6.2  1999/10/29 17:51:53  neelin
  * Fixed Log keyword
  *
  * Revision 6.1  1998/11/06 19:41:06  neelin
@@ -775,12 +780,19 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
          return status;
       }
       if ((acr_get_element_element(element) != ACR_EID_GRPLEN) || 
-          (acr_get_element_length(element) != ACR_SIZEOF_LONG)) {
-         acr_delete_element(element);
-         status = ACR_PROTOCOL_ERROR;
-         return status;
+           (acr_get_element_length(element) != ACR_SIZEOF_LONG)) {
+         if (acr_ignore_protocol_errors(afp)) {
+            group_length = 0;
+         }
+         else {
+            acr_delete_element(element);
+            status = ACR_PROTOCOL_ERROR;
+            return status;
+         }
       }
-      group_length = acr_get_element_long(element);
+      else {
+         group_length = acr_get_element_long(element);
+      }
       acr_delete_element(element);
    }
 
@@ -832,7 +844,7 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
       }
 
       /* Check group length */
-      if (have_length_element) {
+      if (have_length_element && !acr_ignore_protocol_errors(afp)) {
          get_more_elements = (group_length > 0);
       }
 
@@ -842,9 +854,11 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
    if (have_length_element && (group_length != 0)) {
       switch (status) {
       case ACR_OK:
-         status = ACR_PROTOCOL_ERROR; break;
+         if (!acr_ignore_protocol_errors(afp)) status = ACR_PROTOCOL_ERROR;
+         break;
       case ACR_END_OF_INPUT:
-         status = ACR_ABNORMAL_END_OF_INPUT; break;
+         status = ACR_ABNORMAL_END_OF_INPUT; 
+         break;
       }
    }
 
