@@ -5,7 +5,11 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.16  2001-04-09 23:02:48  neelin
+ * Revision 1.17  2001-04-09 23:27:19  neelin
+ * Fixed convert_imagenum to handle case where string is shorter than
+ * expect, but still needs characters trimmed.
+ *
+ * Revision 1.16  2001/04/09 23:02:48  neelin
  * Modified copyright notice, removing permission statement since copying,
  * etc. is probably not permitted by our non-disclosure agreement with
  * Philips.
@@ -78,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.16 2001-04-09 23:02:48 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.17 2001-04-09 23:27:19 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -1024,6 +1028,10 @@ private int convert_imagenum(char *string)
    inew = 0;
    iold = istart;
    ichar = nchars_to_remove - 1;
+   ipos = iend-iold;
+   while ((chars_to_remove[ichar] > ipos) && (ichar > 0)) {
+      ichar--;
+   }
    while (string[iold] >= '0' && string[iold] <= '9') {
 
       /* Get position from end of string */
