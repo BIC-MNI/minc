@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.h,v $
- * Revision 6.2  2004-10-29 13:08:41  rotor
+ * Revision 6.3  2005-03-04 00:08:08  bert
+ * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
+ *
+ * Revision 6.2  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -77,8 +80,8 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef ELEMENT_H
-#define ELEMENT_H
+#ifndef _ACR_ELEMENT_H_
+#define _ACR_ELEMENT_H_
 
 /* Element type */
 typedef struct Acr_Element {
@@ -138,68 +141,68 @@ ACRLIB_GLOBAL_ELEMENT(ACR_Sequence_Item, ACR_ITEM_GROUP,
                       ACR_ITEM_TAG, UNKNOWN);
 
 /* Functions */
-public Acr_Element acr_create_element(int group_id, int element_id, 
+extern Acr_Element acr_create_element(int group_id, int element_id, 
                                       Acr_VR_Type vr_code, 
                                       long data_length, char *data_pointer);
-public void acr_delete_element(Acr_Element element);
-public void acr_delete_element_list(Acr_Element element_list);
-public Acr_Element acr_element_list_add(Acr_Element element_list, 
+extern void acr_delete_element(Acr_Element element);
+extern void acr_delete_element_list(Acr_Element element_list);
+extern Acr_Element acr_element_list_add(Acr_Element element_list, 
                                         Acr_Element element);
-public void acr_set_element_id(Acr_Element element,
+extern void acr_set_element_id(Acr_Element element,
                                int group_id, int element_id);
-public void acr_set_element_vr(Acr_Element element,
+extern void acr_set_element_vr(Acr_Element element,
                                Acr_VR_Type vr_code);
-public void acr_set_element_vr_encoding(Acr_Element element,
+extern void acr_set_element_vr_encoding(Acr_Element element,
                                         Acr_VR_encoding_type vr_encoding);
-public void acr_set_element_byte_order(Acr_Element element,
+extern void acr_set_element_byte_order(Acr_Element element,
                                        Acr_byte_order byte_order);
-public void acr_set_element_variable_length(Acr_Element element,
+extern void acr_set_element_variable_length(Acr_Element element,
                                             int has_variable_length);
-public void acr_set_element_data(Acr_Element element,
+extern void acr_set_element_data(Acr_Element element,
                                  long data_length, char *data_pointer);
-public void acr_set_element_next(Acr_Element element, Acr_Element next);
-public int acr_get_element_group(Acr_Element element);
-public int acr_get_element_element(Acr_Element element);
-public Acr_VR_Type acr_get_element_vr(Acr_Element element);
-public Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element);
-public int acr_element_is_sequence(Acr_Element element);
-public Acr_byte_order acr_get_element_byte_order(Acr_Element element);
-public int acr_element_has_variable_length(Acr_Element element);
-public long acr_get_element_length(Acr_Element element);
-public char *acr_get_element_data(Acr_Element element);
-public long acr_get_element_total_length(Acr_Element element,
+extern void acr_set_element_next(Acr_Element element, Acr_Element next);
+extern int acr_get_element_group(Acr_Element element);
+extern int acr_get_element_element(Acr_Element element);
+extern Acr_VR_Type acr_get_element_vr(Acr_Element element);
+extern Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element);
+extern int acr_element_is_sequence(Acr_Element element);
+extern Acr_byte_order acr_get_element_byte_order(Acr_Element element);
+extern int acr_element_has_variable_length(Acr_Element element);
+extern long acr_get_element_length(Acr_Element element);
+extern char *acr_get_element_data(Acr_Element element);
+extern long acr_get_element_total_length(Acr_Element element,
                                          Acr_VR_encoding_type vr_encoding);
-public Acr_Element acr_get_element_next(Acr_Element element);
-public Acr_Element acr_copy_element(Acr_Element element);
-public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element);
-public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element);
-public void acr_convert_element_byte_order(Acr_Element element, 
+extern Acr_Element acr_get_element_next(Acr_Element element);
+extern Acr_Element acr_copy_element(Acr_Element element);
+extern Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element);
+extern Acr_Status acr_output_element(Acr_File *afp, Acr_Element element);
+extern void acr_convert_element_byte_order(Acr_Element element, 
                                            Acr_byte_order byte_order);
-public int acr_match_element_id(Acr_Element_Id elid,
+extern int acr_match_element_id(Acr_Element_Id elid,
                                 Acr_Element element);
-public Acr_Element acr_find_element_id(Acr_Element element_list,
+extern Acr_Element acr_find_element_id(Acr_Element element_list,
                                        Acr_Element_Id elid);
-public void *acr_memdup(size_t value_size, void *value);
-public Acr_Element acr_create_element_short(Acr_Element_Id elid,
+extern void *acr_memdup(size_t value_size, void *value);
+extern Acr_Element acr_create_element_short(Acr_Element_Id elid,
                                             unsigned short value);
-public Acr_Element acr_create_element_long(Acr_Element_Id elid,
+extern Acr_Element acr_create_element_long(Acr_Element_Id elid,
                                            long value);
-public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
+extern Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
-public Acr_Element acr_create_element_string(Acr_Element_Id elid,
+extern Acr_Element acr_create_element_string(Acr_Element_Id elid,
                                              char *value);
-public Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
+extern Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
                                                Acr_Element itemlist);
-public unsigned short acr_get_element_short(Acr_Element element);
-public long acr_get_element_long(Acr_Element element);
-public double acr_get_element_numeric(Acr_Element element);
-public char *acr_get_element_string(Acr_Element element);
-public long acr_get_element_short_array(Acr_Element element, long max_values, 
+extern unsigned short acr_get_element_short(Acr_Element element);
+extern long acr_get_element_long(Acr_Element element);
+extern double acr_get_element_numeric(Acr_Element element);
+extern char *acr_get_element_string(Acr_Element element);
+extern long acr_get_element_short_array(Acr_Element element, long max_values, 
                                         unsigned short values[]);
-public int *acr_element_numeric_array_separator(int character);
-public int acr_get_element_numeric_array(Acr_Element element,
+extern int *acr_element_numeric_array_separator(int character);
+extern int acr_get_element_numeric_array(Acr_Element element,
                                          int max_values, double values[]);
-public void acr_dump_element_list(FILE *file_pointer, 
+extern void acr_dump_element_list(FILE *file_pointer, 
                                   Acr_Element element_list);
 
-#endif
+#endif /* _ACR_ELEMENT_H_ */

@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.h,v $
- * Revision 6.3  2001-11-08 14:17:06  neelin
+ * Revision 6.4  2005-03-04 00:08:08  bert
+ * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
+ *
+ * Revision 6.3  2001/11/08 14:17:06  neelin
  * Added acr_test_dicom_file to allow reading of DICOM part 10 format
  * files. This function also calls acr_test_byte_order to set up the stream
  * properly and can be used as a direct replacement for that function.
@@ -72,6 +75,9 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#ifndef _ACR_GROUP_H_
+#define _ACR_GROUP_H_ 1
+
 /* Group type */
 typedef struct Acr_Group {
    int group_id;
@@ -87,51 +93,56 @@ typedef struct Acr_Group {
 #define ACR_EID_GRPLEN 0
 
 /* Functions */
-public Acr_Group acr_create_group(int group_id);
-public void acr_delete_group(Acr_Group group);
-public void acr_delete_group_list(Acr_Group group_list);
-public Acr_Group acr_copy_group(Acr_Group group);
-public Acr_Group acr_copy_group_list(Acr_Group group_list);
-public void acr_group_insert_element(Acr_Group group,
-                                     Acr_Element element);
-public void acr_group_add_element(Acr_Group group, Acr_Element element);
-public void acr_group_remove_element(Acr_Group group, int element_id);
-public void acr_group_steal_element(Acr_Group group, Acr_Element element);
-public void acr_set_group_next(Acr_Group group, Acr_Group next);
-public int acr_get_group_group(Acr_Group group);
-public Acr_Element acr_get_group_element_list(Acr_Group group);
-public long acr_get_group_total_length(Acr_Group group,
+extern Acr_Group acr_create_group(int group_id);
+extern void acr_delete_group(Acr_Group group);
+extern void acr_delete_group_list(Acr_Group group_list);
+extern Acr_Group acr_copy_group(Acr_Group group);
+extern Acr_Group acr_copy_group_list(Acr_Group group_list);
+extern Acr_Status acr_group_insert_element(Acr_Group group,
+                                           Acr_Element element);
+extern Acr_Status acr_group_add_element(Acr_Group group, Acr_Element element);
+extern void acr_group_remove_element(Acr_Group group, int element_id);
+extern void acr_group_steal_element(Acr_Group group, Acr_Element element);
+extern void acr_set_group_next(Acr_Group group, Acr_Group next);
+extern int acr_get_group_group(Acr_Group group);
+extern Acr_Element acr_get_group_element_list(Acr_Group group);
+extern long acr_get_group_total_length(Acr_Group group,
                                        Acr_VR_encoding_type vr_encoding);
-public int acr_get_group_nelements(Acr_Group group);
-public Acr_Group acr_get_group_next(Acr_Group group);
-public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group);
-public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group);
-public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
+extern int acr_get_group_nelements(Acr_Group group);
+extern Acr_Group acr_get_group_next(Acr_Group group);
+extern Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group);
+extern Acr_Status acr_output_group(Acr_File *afp, Acr_Group group);
+extern Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
                                        int max_group_id);
-public Acr_Group acr_find_group(Acr_Group group_list, int group_id);
-public Acr_Element acr_find_group_element(Acr_Group group_list,
+extern Acr_Group acr_find_group(Acr_Group group_list, int group_id);
+extern Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid);
-public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list);
-public int acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
+extern void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list);
+extern int acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
                           int default_value);
-public long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
+extern long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
                           long default_value);
-public int acr_find_int(Acr_Group group_list, Acr_Element_Id elid, 
+extern int acr_find_int(Acr_Group group_list, Acr_Element_Id elid, 
                         int default_value);
-public double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
+extern double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
                               double default_value);
-public char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
+extern char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
                              char *default_value);
-public void acr_insert_element_into_group_list(Acr_Group *group_list,
-                                               Acr_Element element);
-public void acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
+extern Acr_Status acr_insert_element_into_group_list(Acr_Group *group_list,
+                                                     Acr_Element element);
+extern Acr_Status acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
                              int value);
-public void acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
+extern Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
                             long value);
-public void acr_insert_numeric(Acr_Group *group_list, Acr_Element_Id elid, 
-                               double value);
-public void acr_insert_string(Acr_Group *group_list, Acr_Element_Id elid, 
-                              char *value);
-public void acr_insert_sequence(Acr_Group *group_list, Acr_Element_Id elid, 
-                                Acr_Element itemlist);
-public Acr_Status acr_test_dicom_file(Acr_File *afp);
+extern Acr_Status acr_insert_numeric(Acr_Group *group_list, 
+                                     Acr_Element_Id elid, 
+                                     double value);
+extern Acr_Status acr_insert_string(Acr_Group *group_list, 
+                                    Acr_Element_Id elid, 
+                                    char *value);
+extern Acr_Status acr_insert_sequence(Acr_Group *group_list,
+                                      Acr_Element_Id elid, 
+                                      Acr_Element itemlist);
+extern Acr_Status acr_test_dicom_file(Acr_File *afp);
+
+#endif /* _ACR_GROUP_H_ */

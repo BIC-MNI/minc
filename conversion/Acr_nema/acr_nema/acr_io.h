@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.h,v $
- * Revision 6.2  2000-04-28 15:03:11  neelin
+ * Revision 6.3  2005-03-04 00:08:08  bert
+ * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
+ *
+ * Revision 6.2  2000/04/28 15:03:11  neelin
  * Added support for ignoring non-fatal protocol errors (cases where redundant
  * information is inconsistent). In particular, it is possible to ignore
  * differences between the group length element and the true group length.
@@ -125,56 +128,56 @@ typedef enum {
 } Acr_Status;
 
 /* Functions */
-public void acr_set_byte_order(Acr_File *afp, 
+extern void acr_set_byte_order(Acr_File *afp, 
                                Acr_byte_order byte_order);
-public Acr_byte_order acr_get_byte_order(Acr_File *afp);
-public int acr_get_machine_byte_order(void);
-public int acr_need_invert(Acr_byte_order byte_order);
-public void acr_set_vr_encoding(Acr_File *afp, 
+extern Acr_byte_order acr_get_byte_order(Acr_File *afp);
+extern int acr_get_machine_byte_order(void);
+extern int acr_need_invert(Acr_byte_order byte_order);
+extern void acr_set_vr_encoding(Acr_File *afp, 
                                 Acr_VR_encoding_type vr_encoding);
-public Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp);
-public void acr_set_ignore_errors(Acr_File *afp, 
+extern Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp);
+extern void acr_set_ignore_errors(Acr_File *afp, 
                                   int ignore_nonfatal_protocol_errors);
-public int acr_ignore_protocol_errors(Acr_File *afp);
-public void acr_reverse_byte_order(long nvals, size_t value_size, 
+extern int acr_ignore_protocol_errors(Acr_File *afp);
+extern void acr_reverse_byte_order(long nvals, size_t value_size, 
                                    void *input_values, void *output_values);
-public void acr_get_short(Acr_byte_order byte_order, 
+extern void acr_get_short(Acr_byte_order byte_order, 
                           long nvals, void *input_value, 
                           unsigned short *mach_value);
-public void acr_get_long(Acr_byte_order byte_order, 
+extern void acr_get_long(Acr_byte_order byte_order, 
                          long nvals, void *input_value, long *mach_value);
-public void acr_get_float(Acr_byte_order byte_order, 
+extern void acr_get_float(Acr_byte_order byte_order, 
                           long nvals, void *input_value, float *mach_value);
-public void acr_get_double(Acr_byte_order byte_order, 
+extern void acr_get_double(Acr_byte_order byte_order, 
                            long nvals, void *input_value, double *mach_value);
-public void acr_put_short(Acr_byte_order byte_order, 
+extern void acr_put_short(Acr_byte_order byte_order, 
                           long nvals, unsigned short *mach_value, 
                           void *output_value);
-public void acr_put_long(Acr_byte_order byte_order, 
+extern void acr_put_long(Acr_byte_order byte_order, 
                          long nvals, long *mach_value, void *output_value);
-public void acr_put_float(Acr_byte_order byte_order, 
+extern void acr_put_float(Acr_byte_order byte_order, 
                           long nvals, float *mach_value, void *output_value);
-public void acr_put_double(Acr_byte_order byte_order, 
+extern void acr_put_double(Acr_byte_order byte_order, 
                            long nvals, double *mach_value, void *output_value);
-public Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip);
-public Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
+extern Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip);
+extern Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
                                   long nbytes_to_read, long *nbytes_read);
-public Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
+extern Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
                                    long nbytes_to_unget);
-public Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
+extern Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
                                    long nbytes_to_write, long *nbytes_written);
-public Acr_Status acr_test_byte_order(Acr_File *afp);
-public void acr_copy_file_encoding(Acr_File *afp1, Acr_File *afp2);
-public int acr_get_element_header_size(char vr_name[2], 
+extern Acr_Status acr_test_byte_order(Acr_File *afp);
+extern void acr_copy_file_encoding(Acr_File *afp1, Acr_File *afp2);
+extern int acr_get_element_header_size(char vr_name[2], 
                                        Acr_VR_encoding_type vr_encoding);
-public Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
+extern Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
                                               int *group_id, int *element_id);
-public Acr_Status acr_read_one_element(Acr_File *afp,
+extern Acr_Status acr_read_one_element(Acr_File *afp,
                                        int *group_id, int *element_id,
                                        char vr_name[],
                                        long *data_length, char **data_pointer);
-public Acr_Status acr_write_one_element(Acr_File *afp,
+extern Acr_Status acr_write_one_element(Acr_File *afp,
                                         int group_id, int element_id,
                                         char vr_name[],
                                         long data_length, char *data_pointer);
-public char *acr_status_string(Acr_Status status);
+extern char *acr_status_string(Acr_Status status);
