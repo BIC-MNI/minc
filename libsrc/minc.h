@@ -18,12 +18,12 @@
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.18 1993-01-22 08:45:59 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.19 1993-01-22 11:39:58 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.18 1993-01-22 08:45:59 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.19 1993-01-22 11:39:58 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -349,8 +349,12 @@ public int miicv_create();
 public int miicv_free(int icvid);
 public int miicv_setdbl(int icvid, int icv_property, double value);
 public int miicv_setint(int icvid, int icv_property, int value);
-public int miicv_set(int icvid, int icv_property, void *value);
-public int miicv_inq(int icvid, int icv_property, void *value);
+public int miicv_setlong(int icvid, int icv_property, long value);
+public int miicv_setstr(int icvid, int icv_property, char *value);
+public int miicv_inqdbl(int icvid, int icv_property, double *value);
+public int miicv_inqint(int icvid, int icv_property, int *value);
+public int miicv_inqlong(int icvid, int icv_property, long *value);
+public int miicv_inqstr(int icvid, int icv_property, char *value);
 public int miicv_ndattach(int icvid, int cdfid, int varid);
 public int miicv_detach(int icvid);
 public int miicv_get(int icvid, long start[], long count[], void *values);
