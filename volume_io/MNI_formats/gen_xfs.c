@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.21 1995-12-19 15:47:20 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.22 2002-09-03 23:27:31 stever Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -596,9 +596,6 @@ private  void  transform_or_invert_point(
         *x_transformed = x;
         *y_transformed = y;
         *z_transformed = z;
-
-        if( transform->inverse_flag )
-            inverse_flag = !inverse_flag;
 
         if( inverse_flag )
         {
