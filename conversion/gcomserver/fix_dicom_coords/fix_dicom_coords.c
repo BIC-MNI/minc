@@ -533,6 +533,10 @@ int convert_imagenum(char *string)
    inew = 0;
    iold = istart;
    ichar = nchars_to_remove - 1;
+   ipos = iend-iold;
+   while ((chars_to_remove[ichar] > ipos) && (ichar > 0)) {
+      ichar--;
+   }
    while (string[iold] >= '0' && string[iold] <= '9') {
 
       /* Get position from end of string */
