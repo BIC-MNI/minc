@@ -1,8 +1,9 @@
 /** \file dimension.c
- * \brief MINC 2.0 Dimension Functions
+ * \brief MINC 2.0 "dimension" Functions
  * \author Leila Baghdadi
  * 
  * Functions to create, destroy, and manipulate MINC dimension objects.
+ * All functions return MI_NOERROR upon success and MI_ERROR on failure.
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
@@ -10,13 +11,15 @@
 #include "minc2_private.h"
 #include "minc.h"
 
-/**
- * \defgroup mi2Dim MINC 2.0 Dimension Functions
- */
 
-
-/*! Figure out whether a dimension is associated with a volume.
- * \ingroup mi2Dim
+/*! 
+  Figure out whether a dimension is associated with a volume.
+  \param dimension The dimension handle.
+  \param volume    A pointer to the volume handle.
+  *
+  * This method returns the volume handle associated with a given dimension
+  * or an error if the specified handle is not associated with the volume. 
+  * \ingroup mi2Dim
  */
 
 int 
@@ -36,8 +39,14 @@ miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume)
     return (MI_NOERROR);
 }
 
-/*! Create a copy of a given dimension.
- * \ingroup mi2Dim
+/*! 
+  Create a copy of a given dimension.
+  \param dim_ptr The dimension handle of the dimension to copy.
+  \param new_dim_ptr A pointer to the dimension handle of the copied dimension.
+  *
+  * This method creates a copy of the specified dimension and returns the handle 
+  * to the copied dimension or error on failure.
+  * \ingroup mi2Dim
  */
 
 int 
@@ -116,9 +125,36 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   return (MI_NOERROR);
 }
 
-/*! Define a new dimension in a MINC volume.
- * \ingroup mi2Dim
- */
+/*! 
+  Define a new dimension in a MINC volume.
+  \param name A pointer to the string specifying the dimension name.
+  \param class The class of the dimension.
+  \param attr  The attribute of the dimension.
+  \param length The size of the dimension.
+  \param new_dim_ptr A pointer to the dimension handle.
+  *
+  * This function defines a dimension that can be used in the definition
+  * of a new MINC volume (see the create_volume function).  The name may
+  * be an arbitrary string of up to 128 alphanumeric characters. Any of
+  * the "standard" names retained from MINC 1.0 retain their default
+  * behaviors: MIxspace, MIyspace, and MIzspace default to spatial
+  * dimensions, and MItime default to be a time dimension.  MItfrequency
+  * is a temporal frequency axis, and MIxfrequency, MIyfrequency, and
+  * MIzfrequency are spatial frequency axes.  Any other name may be used.
+  *
+  * When initially defined, a regularly-sampled dimension will have a
+  * "start" value of zero, and a "separation" or "step" value of 1.0.  An
+  * irregular dimension will be initialized with all offsets equal to
+  * zero.
+  *
+  * The size of the dimension may range from 0 to 2^32, which should provide
+  * enough range to represent detail on the order of 10 Angstroms in
+  * typical medical imaging applications.
+  *
+  * For the detailed defintion of \a class and \a type refer to the MINC 2.0 API
+  * definition.
+  * \ingroup mi2Dim
+  */
 
 int 
 micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
@@ -243,12 +279,15 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
 
 }
 
-/*! Delete the dimension definition.
- * Note: The original document stated that a dimension has to be
- * associated with a given volume before it can be deleted. This
- * feature was erased from the document and not considered here.
- * \ingroup mi2Dim
- */
+/*! 
+  Delete the dimension definition.
+  \param dim_prt The dimension handle.
+  *
+  * Note: The original document stated that a dimension has to be
+  * associated with a given volume before it can be deleted. This
+  * feature was erased from the document and not considered here.
+  * \ingroup mi2Dim
+  */
 int 
 mifree_dimension_handle(midimhandle_t dim_ptr)
 {
@@ -273,10 +312,23 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
   return (MI_NOERROR);
 }
 
-/** Retrieve the list of dimensions defined in a MINC volume, 
- *  with the same class \a class and attribute \a attr.
- * \retval The number of dimensions returned.
- * \retval MI_ERROR on failure.
+/*! 
+  Retrieve the list of dimensions defined in a MINC volume, 
+ * with the same class \a class and attribute \a attr.
+ \param volume The volume handle.
+ \param class  The class of the dimensions.
+ \param attr   The attribute of the dimensions.
+ \param order  The order of the dimension (file or apparent).
+ \param array_length The number of dimension to be retrieved.
+ \param dimensions An array of dimension handles to be retrieved.
+ * 
+ * This function is used to retrieve an array of dimension handles for a
+ * MINC volume.  It will place the handles of the first "array_length"
+ * dimensions into the "dimensions[]" array, returning only those dimension
+ * whose characteristics match the "class" and "attr" parameters. 
+ * The miorder_t is an enumerated type flag which determines whether the
+ * dimension order is determined by the file or by the apparent order set by 
+ * the user.
  * \ingroup mi2Dim
  */
 int 
@@ -318,10 +370,17 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   return (num_ret_dims);
 }
 
-/*! Set apparent dimension order, based on an array of dimensions.  You
+/*! 
+  Set apparent dimension order, based on an array of dimensions.  You
  * may also set the dimension order by the name of the dimension, see
  * miset_apparent_dimension_order_by_name().
+ \param volume The volume handle.
+ \param array_length The number of dimensions to be sorted.
+ \param dimensions An "ordered" array of dimension handles.
  *
+ * This method sets an apparent dimension order. The user can sort the
+ * dimensions in any desired order. If the user specifies fewer dimensions
+ * than the existing ones, then they are assumed to be added to the last.
  * \ingroup mi2Dim
  */
 
@@ -363,9 +422,16 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
   return (MI_NOERROR);
 }
 
-/*! Set apparent dimension order by name.
- * \ingroup mi2Dim
- */
+/*! 
+  Set apparent dimension order by name.
+  \param volume The volume handle.
+  \param array_length The number of dimensions to be sorted.
+  \param names An "ordered" array of dimension names.
+  *
+  * This method sets an apparent dimension order by dimension name. Note that
+  * all dimension names must be different or an error occurs.
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length, 
@@ -425,8 +491,16 @@ miset_apparent_dimension_order_by_name(mihandle_t volume, int array_length,
   return (MI_NOERROR);
 }
 
-/*! Set the record flag and add a record dimension to the volume
-    dimensions so the volume would appear to have n+1 dimensions
+/*! 
+  Set the record flag and add a record dimension to the volume
+  * dimensions so the volume would appear to have an extra dimension.
+  \param volume The volume handle.
+  \param record_flag The flag to determine whether there exist a record dimension
+  in the volume.
+  *
+  * This method causes a volume to appear to have a record dimension. The record
+  * dimension will be set to uniform and flat (i.e., the volume will appear to have 
+  * an extra dimension)
  * \ingroup mi2Dim
  */
 
@@ -458,9 +532,16 @@ miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
   return (MI_NOERROR);
 }
 
-/*! Get the apparent order of voxels.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the apparent order of voxels (i.e., the order that voxel indices increase/decrease)
+  \param dimension The dimension handle
+  \param file_order The order of voxels.
+  \param sign The sign of the step value.
+  *
+  * This method gets the apparent order of voxels for the specified dimension
+  * and the sign of the step values.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_apparent_voxel_order(midimhandle_t dimension, 
@@ -513,7 +594,13 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension,
   return (MI_NOERROR);
 }
 
-/*! Set the apparent order of voxels.
+/*! 
+  Set the apparent order of voxels.
+  \param dimension The dimension handle.
+  \param flipping_order The order of voxels.
+  *
+  * This method sets the apparent order of voxels for the specified dimension.
+  * For the detailed description of voxel order refer to the MINC 2.0 API definition.
  * \ingroup mi2Dim
  */
 
@@ -544,7 +631,16 @@ miset_dimension_apparent_voxel_order(midimhandle_t dimension,
   return (MI_NOERROR);
 }
 
-/*! Get the class of a MINC dimension.
+/*! 
+  Get the class of a MINC dimension.
+  \param dimension The dimension handle.
+  \param class A pointer to the dimension class.
+  *
+  * The "class" of a MINC dimension defines the general type of a dimension, 
+  * whether it is a spatial dimension, a time dimension, or a frequency dimension
+  * as transformed from either space or time.  User-defined dimension are also
+  * permitted, with no default handling assumed. Finally, a record can be specified
+  * as a dimension.
  * \ingroup mi2Dim
  */
 
@@ -584,9 +680,14 @@ miget_dimension_class(midimhandle_t dimension, midimclass_t *class)
   return (MI_NOERROR);
 }
 
-/*! Set the class of a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the class of a MINC dimension. 
+  \param dimension The dimension handle.
+  \param class The dimension class.
+  *
+  * Refer to miget_dimension_class().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_class(midimhandle_t dimension, midimclass_t class)
@@ -623,9 +724,16 @@ miset_dimension_class(midimhandle_t dimension, midimclass_t class)
   return (MI_NOERROR);
 }
 
-/*! Get the direction cosine vector of a given SPATIAL dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the direction cosine vector of a given SPATIAL dimension.
+  \param dimension The dimension handle.
+  \param direction_cosines An array of direction_cosines(i.e., vector determining the direction cosine).
+  * 
+  * Spatial dimension in MINC volumes may be associated with a vector of direction
+  * cosines which define the precise orientation of the axis relative to "true"
+  * x, y, or z coordinates.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_cosines(midimhandle_t dimension, double direction_cosines[3])
@@ -642,9 +750,14 @@ miget_dimension_cosines(midimhandle_t dimension, double direction_cosines[3])
   return (MI_NOERROR);
 }
 
-/*! Set the direction cosine vector for a given SPATIAL dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the direction cosine vector for a given SPATIAL dimension.
+  \param dimension The dimension handle.
+  \param direction_cosines An array of direction_cosines(i.e., vector determining the direction cosine).
+  *
+  * Refer to miget_dimension_cosines().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_cosines(midimhandle_t dimension, 
@@ -662,9 +775,15 @@ miset_dimension_cosines(midimhandle_t dimension,
   return (MI_NOERROR);
 }
 
-/*! Get the comments attribute for a given dimension.  The string pointer
- * returned in \a *comments_ptr must be freed by the caller.
+/*! 
+  Get the comments attribute for a given dimension.  
+ \param dimension The dimension handle.
+ \param comments_ptr A string pointer for the comments.
  *
+ * Get and Set the dimension description. Note that the spatial dimensions
+ * (xspace, yspace, zspace) are initialized according to minc1 description.
+ * All other dimensions will have an empty description unless set by the user.
+ * The string pointer returned in \a *comments_ptr must be freed by the caller.
  * \ingroup mi2Dim
  */
 
@@ -681,9 +800,14 @@ miget_dimension_description(midimhandle_t dimension, char **comments_ptr)
   return (MI_NOERROR); 
 }
 
-/*! Set the comments attribute for a given dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the comments attribute for a given dimension.
+  \param dimension The dimension handle.
+  \param comments_ptr A pointer for the comments.
+  *
+  * Refer to miget_dimension_description().
+  * \ingroup mi2Dim
+  */
 
 int
 miset_dimension_description(midimhandle_t dimension, const char *comments)
@@ -704,9 +828,14 @@ miset_dimension_description(midimhandle_t dimension, const char *comments)
 }
 
 
-/*! Get the identifier (name) of a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the identifier (name) of a MINC dimension.
+  \param dimension The dimension handle.
+  \param name_ptr A string pointer for returning the dimension name.
+  *
+  * Retrieves the name of the given dimension.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_name(midimhandle_t dimension, char **name_ptr)
@@ -720,7 +849,12 @@ miget_dimension_name(midimhandle_t dimension, char **name_ptr)
   return (MI_NOERROR);
 }
 
-/*! Set the identifier (name) of a given MINC dimension.
+/*! 
+  Set the identifier (name) of a given MINC dimension.
+  \param dimension The dimension handle.
+  \param name_ptr A pointer for the dimension name.
+  *
+  * Rename the given dimension.
  * \ingroup mi2Dim
  */
 
@@ -746,9 +880,26 @@ miset_dimension_name(midimhandle_t dimension, const char *name)
     return (MI_NOERROR);
 }
 
-/*! Get the untransformed world coordinates of points along a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the untransformed world coordinates of points along a MINC dimension.
+  \param dimension The dimension handle.
+  \param array_length The number of dimensions.
+  \param start_position The position in which to retrieve the offsets.
+  \param offsets The array of offsets to be returned.
+  *
+  * Get or Set the dimension offsets, that is, the
+  * absolute world coordinates of each sampled point along the dimension.
+  *
+  * The caller may retrieve up to "array_length" values, starting at the
+  * integer index "start_position".  Thus an arbitrary contiguous subset
+  * of the dimension's offsets may be retrieved or stored.  An error is
+  * returned if the "start_position" exceeds the total size of the
+  * dimension.  If the value of "start_position" is legal, but the sum of
+  * "start_position" and "array_length" exceeds the size of the dimension,
+  * the function will get or set offsets up to the size of the dimension.
+  * Any extra positions in the offsets[] array will be ignored.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 
@@ -783,9 +934,16 @@ miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
     return (MI_NOERROR);
 }
 
-/*! Set the absolute world coordinates of points along a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the absolute world coordinates of points along a MINC dimension.
+  \param dimension The dimension handle.
+  \param array_length The number of dimensions.
+  \param start_position The position in which to retrieve the offsets.
+  \param offsets The array of offsets to be set.
+  *
+  * Refer to miget_dimension_offsets().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_offsets(midimhandle_t dimension, 
@@ -823,12 +981,22 @@ miset_dimension_offsets(midimhandle_t dimension,
     return (MI_NOERROR);
 }
 
-/*! Get the sampling flag for a MINC dimension.  
- * If the flag is TRUE, the
- * dimension is irregularly sampled. If the flag is FALSE (the default),
- * sampling points occur regularly along the axis.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the sampling flag for a MINC dimension. 
+  \param dimension The dimension handle.
+  \param sampling_flag The flag to determine regular/irregular sampling dimensions.
+  *
+  * This flag is true (non-zero) if the dimension is sampled at regular
+  * intervals, and false if the dimension is sampled irregularly.
+  * If a dimension has regular sampling, the miget_dimension_separation()
+  * may be used to retrieve the sampling interval, and the
+  * miget_dimension_start() may be used to retrieve the origin
+  * value along the axis.
+  *
+  * If a dimension has irregular sampling, the miget_dimension_offsets()
+  * may be used to retrieve the positions of each sample along that axis.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
@@ -842,12 +1010,14 @@ miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
   return (MI_NOERROR);
 }
 
-/*! Set the sampling flag for a MINC dimension.
- * If the flag is TRUE, the
- * dimension is irregularly sampled. If the flag is FALSE (the default),
- * sampling points occur regularly along the axis.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the sampling flag for a MINC dimension.
+  \param dimension The dimension handle.
+  \param sampling_flag The flag to determine regular/irregular sampling dimensions.
+  *
+  * Refer to miget_dimension_sampling_flag().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
@@ -864,7 +1034,15 @@ miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
     return (MI_NOERROR);
 }
 
-/*! Get the sampling interval (step) for a single dimension.
+/*! 
+  Get the constant sampling interval (step) for a single dimension.
+  \param dimension The dimension handle.
+  \param voxel_order The order in which the voxel indices increase/decrease.
+  \param separation_ptr The Pointer to the dimension sampling interval (step).
+  *
+  * Gets or sets the constant sampling interval defined on a regularly-sampled
+  * dimension. While it is legal to call these functions for an irregularly-
+  * sampled dimension, the values will be ignored.
  * \ingroup mi2Dim
  */
 
@@ -906,9 +1084,14 @@ miget_dimension_separation(midimhandle_t dimension,
     return (MI_NOERROR);
 }
 
-/*! Set the sampling interval (step) for a single dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the sampling interval (step) for a single dimension.
+  \param dimension The dimension handle.
+  \param separation The dimension sampling interval (step).
+  *
+  * Refer to miget_dimension_separation().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_separation(midimhandle_t dimension, double separation)
@@ -928,9 +1111,20 @@ miset_dimension_separation(midimhandle_t dimension, double separation)
   return (MI_NOERROR);
 }
 
-/*! Get the sampling interval (STEP) for a list of dimensions.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the sampling interval (STEP) for a list of dimensions.
+  \param dimensions An array of dimension handles.
+  \param voxel_order The order in which the voxel indices increase/decrease.
+  \param array_length The number of dimensions in the dimesions array.
+  \param separations An array of dimensions sampling intervals (step) values.
+  *
+  * Get or Set the scalar separation (sampling interval)
+  * associated with each of the dimensions in the input "dimensions[]"
+  * array.  The "array_length" parameter specifies the size of both the
+  * input and output arrays. While it is legal to call these functions for
+  * an irregularly-sampled dimension, the values will be ignored.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_separations(const midimhandle_t dimensions[], 
@@ -947,9 +1141,15 @@ miget_dimension_separations(const midimhandle_t dimensions[],
     return (MI_NOERROR);
 }
 
-/*! Set the sampling interval (STEP) for a list of dimensions.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the sampling interval (STEP) for a list of dimensions.
+  \param dimensions An array of dimension handles.
+  \param array_length The number of dimensions in the dimesions array.
+  \param separations An array of dimensions sampling intervals (step) values.
+  *
+  * Refer to miget_dimension_separations().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_separations(const midimhandle_t dimensions[], 
@@ -963,9 +1163,16 @@ miset_dimension_separations(const midimhandle_t dimensions[],
     return (MI_NOERROR);
 }
 
-/*! Get the length of a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the length of a MINC dimension.
+  \param dimension The dimension handle.
+  \param size_ptr A pointer to the dimension size.
+  *
+  * Get or Set the size (or length) of a MINC 2 dimension
+  * object used in creating a new volume.  The size of a dimension
+  * associated with an existing volume cannot be changed.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
@@ -977,10 +1184,14 @@ miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
     return (MI_NOERROR);
 }
 
-/*! Set the length of a MINC dimension if not associated with a 
- *  volume.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the length of a MINC dimension if not associated with a volume.
+  \param dimension The dimension handle.
+  \param size  The size of the dimension.
+  *
+  * Refer to miget_dimension_size().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_size(midimhandle_t dimension, unsigned long size)
@@ -994,9 +1205,17 @@ miset_dimension_size(midimhandle_t dimension, unsigned long size)
     return (MI_NOERROR);
 }
 
-/*! Retrieve the length of all dimensions in dimensions array.
- * \ingroup mi2Dim
- */
+/*! 
+  Retrieve the length of all dimensions in dimensions array.
+  \param dimensions An array of dimension handles.
+  \param array_length The number of dimensions in the dimensions array
+  \param sizes An array of dimension sizes.
+  *
+  * This function will copy the lengths of each of the dimensions listed in the
+  * "dimensions[]" array into the "sizes[]" array.  The parameter "array_length"
+  * specifies the length of both of the arrays.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
@@ -1011,9 +1230,18 @@ miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
     return (MI_NOERROR);
 }
 
-/*! Get the start value of a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the start value of a MINC dimension.
+  \param dimension The dimension handle.
+  \param voxel_order The order in which the voxel indices increase/decrease.
+  \param start_ptr A pointer to the start value.
+  *
+  * Get or set the origin of the dimension in world
+  * coordinates. While a "start" value may be legally associated with any
+  * dimension, it is considered meaningless when associated with an
+  * irregularly sampled dimension.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
@@ -1035,9 +1263,14 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
   return (MI_NOERROR);
 }
 
-/*! Set the origin of a MINC dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the start of a MINC dimension.
+  \param dimension The dimension handle.
+  \param start The start of the dimension.
+  *
+  * Refer to miget_dimension_start().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_start(midimhandle_t dimension, double start)
@@ -1049,9 +1282,19 @@ miset_dimension_start(midimhandle_t dimension, double start)
   return (MI_NOERROR);
 }
 
-/*! Get the start values for MINC dimensions in dimensions array.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the start values for MINC dimensions in dimensions array.
+  \param dimensions The array of dimension handles.
+  \param voxel_order The order in which the voxel indices increase/decrease.
+  \param array_length The number of dimensions in the dimensions array.
+  \param starts The array of dimension starts.
+  *
+  * Get or Set the start value for an array of
+  * regularly-sampled dimensions.  The start value defines the origin of
+  * that dimension.  While it is legal to call these functions for an
+  * irregularly-sampled dimension, the values will be ignored.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_starts(const midimhandle_t dimensions[], 
@@ -1066,9 +1309,15 @@ miget_dimension_starts(const midimhandle_t dimensions[],
     return (MI_NOERROR);
 }
 
-/*! Set the start values for MINC dimensions in dimensions array.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the start values for MINC dimensions in dimensions array.
+  \param dimensions The array of dimension handles.
+  \param array_length The number of dimensions in the dimensions array.
+  \param starts The array of dimension starts.
+  *
+  * Refer to miget_dimension_starts().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_starts(const midimhandle_t dimensions[], 
@@ -1083,10 +1332,15 @@ miset_dimension_starts(const midimhandle_t dimensions[],
     return (MI_NOERROR);
 }
 
-/*! Get the unit string for a MINC dimension.  The caller must free the
- * string returned by this function.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the unit string for a MINC dimension. 
+  \param dimension The dimension handle.
+  \param units_ptr A string pointer to the dimension units.
+  *
+  * Retrieves the units of the given dimension,
+  * The caller must free the string returned by this function.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_units(midimhandle_t dimension, char **units_ptr)
@@ -1100,7 +1354,14 @@ miget_dimension_units(midimhandle_t dimension, char **units_ptr)
     return (MI_NOERROR);
 }
 
-/*! Set the unit string for a MINC dimension.
+/*!
+  Set the unit string for a MINC dimension.
+  \param dimension The dimension handle.
+  \param units A pointer to the dimension units.
+  *
+  * Set the units for an existing dimension.
+  * The new string must be no greater than 128 characters in length,
+  * including the trailing zero byte.
  * \ingroup mi2Dim
  */
 
@@ -1119,10 +1380,18 @@ miset_dimension_units(midimhandle_t dimension, const char *units)
     return (MI_NOERROR);
 }
 
-/*! Get A single full-width half-maximum value from a 
-    regularly sampled dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get A single full-width half-maximum value from a 
+  *regularly sampled dimension.
+  \param dimension The dimension handle.
+  \param width_ptr A pointer to the FWHM value.
+  *
+  * Get or Set the dimension width, that is, the
+  * full-width half-maximum values of each sampled point along the dimension.  
+  * These functions are used to set a constant width for regularly-sampled
+  * dimensions.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_width(midimhandle_t dimension, double *width_ptr)
@@ -1136,10 +1405,15 @@ miget_dimension_width(midimhandle_t dimension, double *width_ptr)
   return (MI_NOERROR);
 }
 
-/*! Set the A single full-width half-maximum value for a 
- * regularly sampled dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the A single full-width half-maximum value for a 
+  *regularly sampled dimension.
+  \param dimension The dimension handle.
+  \param width The FWHM value.
+  *
+  * Refer to miget_dimension_width().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_width(midimhandle_t dimension, double width)
@@ -1159,10 +1433,28 @@ miset_dimension_width(midimhandle_t dimension, double width)
   return (MI_NOERROR);
 }
 
-/*! Get the full-width half-maximum value for points along an
- *     irregularly sampled dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Get the full-width half-maximum value for points along an
+  *irregularly sampled dimension.
+  \param dimension The dimension handle.
+  \param voxel_order The order in which the voxel indices increase/decrease.
+  \param array_length The number of width in the widths array.
+  \param start_position Index for starting position.
+  \param widths An array of width values to be retrieved.
+  *
+  * Get or Set the dimension widths, that is, the
+  * full-width half-maximum values of each sampled point along the
+  * dimension.
+  * The caller may retrieve up to "array_length" values, starting at the
+  * integer index "start_position".  Thus an arbitrary contiguous subset
+  * of the dimension's widths may be retrieved or stored.  An error is
+  * returned if the "start_position" exceeds the total size of the
+  * dimension.  If the value of "start_position" is legal, but the sum of
+  * "start_position" and "array_length" exceeds the size of the dimension,
+  * the function will get or set widths up to the size of the dimension.
+  * Any extra positions in the widths[] array will be ignored.
+  * \ingroup mi2Dim
+  */
 
 int 
 miget_dimension_widths(midimhandle_t dimension, 
@@ -1220,10 +1512,17 @@ miget_dimension_widths(midimhandle_t dimension,
   return (MI_NOERROR);
 }
 
-/*! Set the full-width half-maximum value for points along an
- * irregularly sampled dimension.
- * \ingroup mi2Dim
- */
+/*! 
+  Set the full-width half-maximum value for points along an
+  *irregularly sampled dimension.
+  \param dimension The dimension handle.
+  \param array_length The number of width in the widths array.
+  \param start_position Index for starting position.
+  \param widths An array of width values to be set.
+  *
+  * Refer to miget_dimension_widths().
+  * \ingroup mi2Dim
+  */
 
 int 
 miset_dimension_widths(midimhandle_t dimension, 
