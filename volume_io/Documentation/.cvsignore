@@ -1,6 +1,6 @@
+Makefile.in Makefile
 *.ps
 *.dvi
 *.aux
 *.log
 *.toc
-Makefile.in
