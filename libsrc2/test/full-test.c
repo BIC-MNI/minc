@@ -137,6 +137,10 @@ int test1(int do_real)
     return (0);
 }
 
+#define CCX 20
+#define CCY 20
+#define CCZ 20
+
 int test2()
 {
     midimhandle_t hdim[ND];
@@ -144,15 +148,17 @@ int test2()
     int r;
     int i,j,k;
     unsigned long coords[ND];
+    unsigned long lengths[ND];
+    mifcomplex_t fcmpl;
 
     r = micreate_dimension("xspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, CX, &hdim[2]);
+                           MI_DIMATTR_REGULARLY_SAMPLED, CCX, &hdim[2]);
     if (r != 0) {
         return (1);
     }
 
     r = micreate_dimension("yspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, CY, &hdim[1]);
+                           MI_DIMATTR_REGULARLY_SAMPLED, CCY, &hdim[1]);
 
     if (r < 0) {
         return (1);
@@ -164,7 +170,7 @@ int test2()
     }
 
     r = micreate_dimension("zspace", MI_DIMCLASS_SPATIAL, 
-                           MI_DIMATTR_REGULARLY_SAMPLED, CZ, &hdim[0]);
+                           MI_DIMATTR_REGULARLY_SAMPLED, CCZ, &hdim[0]);
     if (r < 0) {
         return (1);
     }
@@ -182,8 +188,7 @@ int test2()
     }
 
     r = micreate_volume("cmpltest.mnc", 3, hdim, MI_TYPE_FCOMPLEX, 
-                        MI_CLASS_COMPLEX,
-                        NULL, &hvol);
+                        MI_CLASS_COMPLEX, NULL, &hvol);
     if (r != 0) {
         fprintf(stderr, "error creating volume\n");
         return (1);
@@ -195,24 +200,51 @@ int test2()
         return (1);
     }
 
-#if 0
-    r = miset_volume_valid_range(hvol, 1000, -1000);
-    if (r != 0) {
-        fprintf(stderr, "error setting valid range\n");
-    }
+    lengths[0] = lengths[1] = lengths[2] = 1;
 
-    r = miset_volume_range(hvol, 5, -5);
-    if (r < 0) {
-        fprintf(stderr, "error setting volume range\n");
-    }
-#endif
-
-    for (i = 0; i < CX; i++) {
-        for (j = 0; j < CY; j++) {
-            for (k = 0; k < CZ; k++) {
+    for (i = 0; i < CCX; i++) {
+        for (j = 0; j < CCY; j++) {
+            for (k = 0; k < CCZ; k++) {
                 coords[0] = i;
                 coords[1] = j;
                 coords[2] = k;
+
+                fcmpl.real = (i * 100) + j;
+                fcmpl.imag = k;
+                r = miset_voxel_value_hyperslab(hvol, 
+                                                MI_TYPE_FCOMPLEX,
+                                                coords,
+                                                lengths,
+                                                &fcmpl);
+                if (r < 0) {
+                    fprintf(stderr, "error writing complex voxel\n");
+                    return (1);
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < CCX; i++) {
+        for (j = 0; j < CCY; j++) {
+            for (k = 0; k < CCZ; k++) {
+                coords[0] = i;
+                coords[1] = j;
+                coords[2] = k;
+
+                r = miget_voxel_value_hyperslab(hvol, 
+                                                MI_TYPE_FCOMPLEX,
+                                                coords,
+                                                lengths,
+                                                &fcmpl);
+                if (r < 0) {
+                    fprintf(stderr, "error writing complex voxel\n");
+                    return (1);
+                }
+
+                if (fcmpl.real != (i * 100) + j || fcmpl.imag != k) {
+                    fprintf(stderr, "value mismatch for complex voxel\n");
+                    return (1);
+                }
             }
         }
     }
