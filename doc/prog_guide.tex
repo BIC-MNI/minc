@@ -495,12 +495,12 @@ set equal to \verb+usr_imgrange+ (ie. no conversion of real values).
 
 If normalization is not being done, then \verb+var_imgrange+ and
 \verb+usr_imgrange+ are set to [0,1] (scale down to [0,1] and
-scale up again).  Otherwise, \verb+usr_imgrange+ is set to either the full
-range of the variable ([0,1] if not found) or the user's requested
-range. If the variable values are floating point, or if the real range
-of the variable is not known, then \verb+var_imgrange+ is set to
-\verb+var_vrange+ (no scaling to real values), otherwise
-\verb+var_imgrange+ is read for each image.
+scale up again).  Otherwise, \verb+usr_imgrange+ is set to either the
+full range of the variable ([0,1] if not found) or the user's
+requested range. If the variable values are floating point, then
+\verb+var_imgrange+ is set to \verb+var_vrange+ (no scaling to real
+values), otherwise \verb+var_imgrange+ is read for each image (again,
+[0,1] if not found).
 
 What this means for reading and writing images is discussed below.
 
