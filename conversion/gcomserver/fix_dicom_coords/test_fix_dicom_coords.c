@@ -19,6 +19,7 @@
 #include <acr_nema.h>
 
 /* Dicom definitions */
+DEFINE_ELEMENT(static, ACR_Image_Number            , 0x0020, 0x0013, IS);
 DEFINE_ELEMENT(static, SPI_Field_of_view           , 0x0019, 0x1000, DS);
 DEFINE_ELEMENT(static, SPI_Angulation_of_cc_axis   , 0x0019, 0x1005, DS);
 DEFINE_ELEMENT(static, SPI_Angulation_of_ap_axis   , 0x0019, 0x1006, DS);
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
    double off_centre_lr, off_centre_ap, off_centre_cc;
    double field_of_view;
    int orientation;
+   char imagenum[128];
 
    /* Check arguments */
    pname = argv[0];
@@ -80,7 +82,7 @@ int main(int argc, char *argv[])
    (void) acr_test_byte_order(afp);
 
    /* Read in group list up to group */
-   (void) acr_input_group_list(afp, &group_list, SPI_Field_of_view->group_id);
+   (void) acr_input_group_list(afp, &group_list, ACR_Image_Number->group_id);
 
    /* Free the afp and close the input */
    acr_file_free(afp);
@@ -109,6 +111,11 @@ int main(int argc, char *argv[])
                  row_dircos[0], row_dircos[1], row_dircos[2],
                  col_dircos[0], col_dircos[1], col_dircos[2],
                  location);
+
+   /* Fix the image num string */
+   (void) strcpy(imagenum, acr_find_string(group_list, ACR_Image_Number, ""));
+   (void) convert_imagenum(imagenum);
+   (void) printf("\"%s\"\n", imagenum);
 
    return EXIT_SUCCESS;
 }
