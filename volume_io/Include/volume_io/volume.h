@@ -2,7 +2,7 @@
 #define  DEF_VOLUME
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.28 1994-11-25 14:19:34 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.29 1995-01-12 18:31:34 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -50,6 +50,7 @@ typedef  struct
     Data_types              data_type;
     nc_type                 nc_data_type;
     BOOLEAN                 signed_flag;
+    BOOLEAN                 is_rgba_data;
 
     void                    *data;
 
@@ -70,6 +71,27 @@ typedef  struct
 } volume_struct;
 
 typedef  volume_struct  *Volume;
+
+/* ---- macro for stepping through entire volume */
+
+#define  BEGIN_ALL_VOXELS( volume, v0, v1, v2, v3, v4 )                       \
+         {                                                                    \
+             int  _i_, _sizes_[MAX_DIMENSIONS];                               \
+                                                                              \
+             get_volume_sizes( volume, _sizes_ );                             \
+             for_less( _i_, get_volume_n_dimensions(volume), MAX_DIMENSIONS ) \
+                 _sizes_[_i_] = 1;                                            \
+                                                                              \
+             for_less( v4, 0, _sizes_[4] )                                    \
+             for_less( v3, 0, _sizes_[3] )                                    \
+             for_less( v2, 0, _sizes_[2] )                                    \
+             for_less( v1, 0, _sizes_[1] )                                    \
+             for_less( v0, 0, _sizes_[0] )                                    \
+             {
+
+#define  END_ALL_VOXELS                                                       \
+             }                                                                \
+         }
 
 /* ------------------------- set voxel value ------------------------ */
 
@@ -346,6 +368,8 @@ typedef  struct
     /* input only */
 
     BOOLEAN            end_volume_flag;
+    BOOLEAN            converting_to_colour;
+    int                rgba_indices[4];
     int                n_volumes_in_file;
 
     int                valid_file_axes[MAX_DIMENSIONS];
@@ -379,6 +403,9 @@ typedef  struct
 {
     BOOLEAN     promote_invalid_to_min_flag;
     BOOLEAN     convert_vector_to_scalar_flag;
+    BOOLEAN     convert_vector_to_colour_flag;
+    int         dimension_size_for_colour_data;
+    int         rgba_indices[4];
 } minc_input_options;
 
 typedef  struct
