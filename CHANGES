@@ -1,3 +1,13 @@
+Tue Dec  4 12:24:29 EST 2001
+   - No code changes, but checked in lex.c and gram.c in progs/minccalc.
+     This fixes an interaction problem between make and CVS. When
+     exporting the minc tree the file dates are set to the commit time. 
+     If the generated .c files were previously committed at the same time
+     as the generating files (.l and .y), then later makes on the exported
+     files might try to rebuild the .c files. Since these file dates tend 
+     to end up in the distribution, the distribution will not build cleanly
+     without bison and flex being installed.
+
 Wed Nov 28 10:36:13 EST 2001
    - Removed limit on number of icv's that can exist at one time.
      The definition of MI_MAX_NUM_ICV remains, but it is no longer
