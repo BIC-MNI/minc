@@ -9,9 +9,13 @@
 @CALLS      : 
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecattominc.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:06:04  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-05-16 18:21:37  neelin
+@MODIFIED   : Changed calculation of z filter width to use BinSize rather than
+@MODIFIED   : PlaneSeparation.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:06:04  neelin
+ * Release of minc version 0.4
+ *
  * Revision 1.2  1996/03/26  15:58:18  neelin
  * Various changes including changed coordinates in x and y and computing
  * FWHM from cutoff frequency.
@@ -32,7 +36,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 4.0 1997-05-07 20:06:04 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 4.1 1997-05-16 18:21:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -747,10 +751,7 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
          if ((general_info->zwidth <= 0.0) &&
              !ecat_get_subhdr_value(ecat_fp, curframe, 0, 
                                     ECAT_Zfilter_Cutoff,
-                                    0, NULL, &cutoff, NULL) &&
-             !ecat_get_main_value(ecat_fp, ECAT_Plane_Separation, 0, 
-                                  NULL, &binsize, NULL)) {
-            binsize *= MM_PER_CM;
+                                    0, NULL, &cutoff, NULL)) {
             general_info->zwidth = FWHM_SCALE_FOR_HANN * binsize / cutoff;
          }
 
