@@ -66,6 +66,7 @@ Tue Apr 17 15:00:48 EDT 2001
    - Modified to build with NetCDF 3.x.
      Changed NC_LONG to NC_INT, as well as corresponding longs to ints.
      Replaced NC_UNSPECIFIED with NC_NAT (not-a-type).
+     Changed volume_io to use UNSIGNED_INT instead of UNSIGNED_LONG.
      Added appropriate definitions to support both of these with both
      NetCDF 2.x and 3.x.
      Changed error handling to be independent of NetCDF library apart
