@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.5  1994-04-08 10:32:00  neelin
-@MODIFIED   : Fixed io tracing.
+@MODIFIED   : Revision 1.6  1994-04-08 10:34:47  neelin
+@MODIFIED   : Added include of string.h
 @MODIFIED   :
+ * Revision 1.5  94/04/08  10:32:00  neelin
+ * Fixed io tracing.
+ * 
  * Revision 1.4  93/11/25  10:36:14  neelin
  * Added file free and ungetc
  * 
@@ -34,6 +37,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <minc_def.h>
 #include <file_io.h>
 
