@@ -1,3 +1,8 @@
+Wed Nov 28 10:36:13 EST 2001
+   - Removed limit on number of icv's that can exist at one time.
+     The definition of MI_MAX_NUM_ICV remains, but it is no longer
+     enforced.
+
 Tue Nov 13 16:04:36 EST 2001
    - Modified icv normalization handling in minc library. When the icv
      type is floating point, normalization is always done (scaling to real 
