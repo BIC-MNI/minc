@@ -10,9 +10,13 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:40  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 3.1  1995-09-29 12:59:06  neelin
+@MODIFIED   : Fixed bug in handling of image-min/max when these variables are not
+@MODIFIED   : present in the input file.
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:40  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.1  1995/05/11  12:35:53  neelin
  * Initial revision
  *
@@ -29,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.0 1995-05-15 19:32:40 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.1 1995-09-29 12:59:06 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -179,7 +183,7 @@ public int main(int argc, char *argv[])
       if ((concat_info->global_minimum == DBL_MAX) && 
           (concat_info->global_maximum == -DBL_MAX)) {
          concat_info->global_minimum = 0.0;
-         concat_info->global_maximum = 0.0;
+         concat_info->global_maximum = 1.0;
       }
       valid_range[0] = concat_info->global_minimum;
       valid_range[1] = concat_info->global_maximum;
@@ -870,10 +874,14 @@ public void do_concat(void *caller_data, long num_voxels,
 
    /* Copy the image max and min info from the input file */
    for (imm=0; imm < 2; imm++) {
-      if (imm == 0)
+      if (imm == 0) {
          varname = MIimagemin;
-      else 
+         value = 0.0;
+      }
+      else {
          varname = MIimagemax;
+         value = 1.0;
+      }
       ncopts = 0;
       invarid = ncvarid(input_mincid, varname);
       ncopts = NC_OPTS_VAL;
@@ -882,19 +890,19 @@ public void do_concat(void *caller_data, long num_voxels,
                                    invarid, mmstart);
          (void) mivarget1(input_mincid, invarid, mmstart, NC_DOUBLE, NULL, 
                           &value);
-         varid = ncvarid(output_mincid, varname);
-         (void) mitranslate_coords(output_mincid, outimgid, outstart,
-                                   varid, mmstart);
-         (void) mivarput1(output_mincid, varid, mmstart, NC_DOUBLE, NULL, 
-                          &value);
-
-         /* Save global min and max */
-         if (value < concat_info->global_minimum) 
-            concat_info->global_minimum = value;
-         if (value > concat_info->global_maximum) 
-            concat_info->global_maximum = value;
-
       }
+      varid = ncvarid(output_mincid, varname);
+      (void) mitranslate_coords(output_mincid, outimgid, outstart,
+                                varid, mmstart);
+      (void) mivarput1(output_mincid, varid, mmstart, NC_DOUBLE, NULL, 
+                       &value);
+
+      /* Save global min and max */
+      if (value < concat_info->global_minimum) 
+         concat_info->global_minimum = value;
+      if (value > concat_info->global_maximum) 
+         concat_info->global_maximum = value;
+
    }
 
    /* Copy the data */
