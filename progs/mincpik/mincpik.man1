@@ -1,0 +1,67 @@
+.TH MINCPIK 1
+
+.SH NAME
+mincpik \- generate images from minc files
+
+.SH SYNOPSIS
+.B mincpik
+[options] <infile>.mnc [<image.type>]
+
+.SH DESCRIPTION
+.I mincpik
+generates image files from MINC volumes using the Imagemagick
+convert utility. For a complete list of output file types see the
+convert man pages.
+
+.SH General options
+.P
+.I -verbose
+print out extra information
+.P
+.I -slice
+slice number to get (note this is in voxel co-ordinates)
+.P
+.I -scale
+scaling factor for resulting image, by default images are output 
+at twice their original resolution
+
+.SH Image range and lookup table options
+.P
+.I -range
+valid range of values to use from MINC file
+.P
+.I -image_range
+range of image values to use for pixel intensity
+.P
+.I -lookup
+arguments to pass to minclookup
+
+.SH Slicing options
+.P
+.I -transverse   
+get a transverse slice
+.P
+.I -axial
+synonym for transverse
+.P
+.I -coronal
+get a coronal slice
+.P
+.I -sagittal
+get a sagital slice
+.P
+.I -allthree
+get all three dimensions
+
+.SH Generic options for all commands:
+.P
+.I -help:
+Print summary of command-line options and abort.
+
+.SH AUTHOR
+Andrew Janke - <rotor@cmr.uq.edu.au>
+
+.SH "SEE ALSO"
+.IR minclookup (1),
+.IR convert (1),
+.IR display (1).
