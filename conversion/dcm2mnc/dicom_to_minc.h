@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.1  2005-02-17 16:38:10  bert
+ * Revision 1.2  2005-03-02 18:25:13  bert
+ * Add Mri_Names and Volume_Names
+ *
+ * Revision 1.1  2005/02/17 16:38:10  bert
  * Initial checkin, revised DICOM to MINC converter
  *
  * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -81,6 +84,8 @@
 /* Possible MRI dimensions */
 typedef enum { SLICE = 0, ECHO, TIME, PHASE, CHEM_SHIFT, MRI_NDIMS } Mri_Index;
 
+extern const char *Mri_Names[MRI_NDIMS];
+
 /* World dimensions */
 typedef enum { XCOORD = 0, YCOORD, ZCOORD, WORLD_NDIMS } World_Index;
 
@@ -88,6 +93,8 @@ extern const char *World_Names[WORLD_NDIMS];
 
 /* Volume dimensions */
 typedef enum { VSLICE = 0, VROW, VCOLUMN, VOL_NDIMS } Volume_Index;
+
+extern const char *Volume_Names[VOL_NDIMS];
 
 /* Orientations */
 typedef enum {TRANSVERSE = 0, SAGITTAL, CORONAL, NUM_ORIENTATIONS} Orientation;
