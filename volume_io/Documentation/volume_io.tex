@@ -1,11 +1,13 @@
-\documentstyle{article}
+\documentstyle{report}
 
 \title{Programmer's Reference for the MNI Volume IO Library}
 \author{David MacDonald}
 
 \newcommand{\path}{{\bf\tt /nil/david/Release/MNI\_lib}}
 \newcommand{\name}[1]{{\bf\tt #1}}
-\newcommand{\savelength}{}
+
+\newcommand{\desc}[1]{\begin{tabular}{p{2cm}p{10cm}}
+& #1 \end{tabular}}
 
 \begin{document}
 
@@ -17,7 +19,7 @@
 
 \newpage
 
-\section{Introduction}
+\chapter{Introduction}
 
 This document describes a library of routines available at the
 McConnell Brain Imaging Centre at the Montreal Neurological Institute.
@@ -40,7 +42,7 @@ to be linked with C source.  It makes calls to three other libraries:
 \name{MINC}, \name{netcdf}, and \name{recipes}, the library associated
 with the Numerical Recipes handbook.
 
-\section{Compiling and Linking}
+\chapter{Compiling and Linking}
 
 The relevent directory is \path.  In this directory is the library,
 \name{libvolume\_io.a}, and the related include files in the directory
@@ -50,26 +52,26 @@ the compile line, but also the include directories for the three
 libraries called by Volume IO, \name{MINC}, \name{netcdf}, and
 \name{recipes}.  The path for these is most likely \name{/usr/local/include},
 which is automatically in the search path, so the compile line would look like:
-\begin{verbatim}
+{\bf\begin{verbatim}
         cc -prototypes -I/nil/david/Release/MNI_lib/Include \
            -c test_volume_io.c
-\end{verbatim}
+\end{verbatim}}
 
 Source files making calls to Volume IO functions must have the
 following line at the top, to include the relevent type definitions and
 prototypes:
 
-\begin{verbatim}
+{\bf\begin{verbatim}
         #include  <volume_io.h>
-\end{verbatim}
+\end{verbatim}}
 
 In order to link with Volume IO, the relevant libraries must be
 specified:
-\begin{verbatim}
+{\bf\begin{verbatim}
         cc test_volume_io.o  -o test_volume_io \
            -L/nil/david/Release/MNI_lib -lmni \
            -lminc -lnetcdf -lrecipes -lm -lsun -lmalloc
-\end{verbatim}
+\end{verbatim}}
 The three libraries are usually in /usr/local/lib, which is
 automatically in the search path.  The \name{-lm} option includes the
 math library, which is sometimes called by the Volume IO library.  The
@@ -77,90 +79,1676 @@ math library, which is sometimes called by the Volume IO library.  The
 The \name{-lmalloc} library provides faster and more robust memory
 allocation than the default.
 
-\section{Types and Macros}
+\chapter{Types and Macros}
 
 There are several types and macros defined for used with the Volume IO
 library.  All functions in the library are prefixed with either the
 word \name{public} or \name{private}, which indicates whether the
 function is accessible from outside the file in which it resides.
 They are defined as follows:
-\begin{verbatim}
+{\bf\begin{verbatim}
         #define  public
         #define  private   static
-\end{verbatim}
+\end{verbatim}}
 
 A type for logical values is defined:
-\begin{verbatim}
+{\bf\begin{verbatim}
         typedef  int    BOOLEAN
         #define  FALSE  0
         #define  TRUE   1
         #define  OFF    FALSE
         #define  ON     TRUE
-\end{verbatim}
+\end{verbatim}}
 
 Other useful types defined include:
-\begin{verbatim}
-        typedef  double               Real;
-        #define  MAX_STRING_LENGTH    200
-        typedef  char                 STRING[MAX_STRING_LENGTH+1];
+{\bf\begin{verbatim}
+        typedef  double             Real;
+        #define  MAX_STRING_LENGTH  200
+        typedef  char               STRING[MAX_STRING_LENGTH+1];
         typedef  enum 
-                { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT } Status;
-        typedef  char                 Smallest_int;
-\end{verbatim}
+             { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT }
+                                    Status;
+        typedef  char               Smallest_int;
+\end{verbatim}}
 
 \newcommand{\definemacro}[2]{
-\noindent
-{\bf\tt #1}
-#2}
+\begin{tabular}{p{2cm}p{10cm}}
+\multicolumn{2}{l}{{\bf\tt #1}} \\
+& #2 \\
+\end{tabular}}
 
 Some macros useful for general programming include:
-\break
 
 \definemacro{SIZEOF\_STATIC\_ARRAY( array )}
-{returns the number of elements in a statically allocated array},
-\begin{verbatim}
+{returns the number of elements in a statically allocated array, for example,}
+{\bf\begin{verbatim}
         {
             int  size;
             int  array[] = { 1, 2, 3 };
 
             size = SIZEOF_STATIC_ARRAY( array );     /* == 3 */
         }
+\end{verbatim}}
+
+\definemacro{ROUND( x )}{returns the nearest integer to the value.  If
+halfway in between, returns the higher of the two.}
+
+\definemacro{IS\_INT( x )}{returns \name{TRUE} if the real argument is exactly an integer.}
+
+\definemacro{FRACTION( x )}{returns the fractional part of the argument.}
+
+\definemacro{FLOOR( x )}{returns the largest integer less than or
+equal to the argument.}
+
+\definemacro{CEILING( x )}{returns the smallest integer greater than or
+equal to the argument.}
+
+\definemacro{ABS( x )}{returns the absolute value of an integer or real.}
+
+\definemacro{MAX( x, y )}{returns the maximum of two integers or reals.}
+
+\definemacro{MAX3( x, y, z )}{returns the maximum of three integers or
+reals.}
+
+\definemacro{MIN( x, y )}{returns the minimum of two integers or reals.}
+
+\definemacro{MIN3( x, y, z )}{returns the minimum of three integers or
+reals.}
+
+\definemacro{INTERPOLATE( alpha, a, b )}{returns the interpolation between
+\name{a} and \name{b}, where \name{alpha} is in the range zero to
+one.}
+
+\definemacro{PI}{returns the value of $\pi$.}
+
+\definemacro{DEG\_TO\_RAD}{returns the number of radians per degrees,
+used to multiply an angle in degrees to result in radians.}
+
+\definemacro{RAD\_TO\_DEG}{returns the number of degrees per radian,
+used to multiply an angle in radians to result in degrees.}
+
+\definemacro{IJ( i, j, nj )}{converts the indices $\left[ i, j \right]$
+of a 2-D \name{ni} by \name{nj} array into a single index, based on
+row-major order.}
+
+\definemacro{IJK( i, j, k, nj, nk )}{converts the indices
+$\left[ i , j , k \right]$ of a 3-D \name{ni} by \name{nj} by
+\name{nk} array into a single index, based on row-major order.}
+
+\definemacro{for\_less( i, start, end )}{performs a for loop where \name{i}
+starts at \name{start} and increments until it is greater than or
+equal to \name{end}}
+
+\definemacro{for\_inclusive( i, start, end )}{performs a for loop where \name{i}
+starts at \name{start} and increments until it is greater than \name{end}}
+
+\definemacro{GLUE(x,y)}{Special C source macro to stick two different
+identifiers together, i.e., \name{GLUE(colour,\_name)} results in
+\name{colour\_name}.}
+
+\definemacro{GLUE3(x,y,z)}{Special C source macro to stick three different
+identifiers together, i.e., \name{GLUE(a,b,c)} results in \name{abc}.}
+
+\chapter{Programming Utilities}
+
+A set of functions which are useful for general purpose, portable
+programming are provided.  These include such basic areas as strings,
+time, file IO, etc.  Many parts of the Volume IO library refer
+to the programming utilities, and it is advisable that users of the
+Volume IO library try to use these functions whenever convenient.
+The following is a list of all the programming utilities, grouped into
+related areas, and ordered alphabetically.
+
+\section{Automatic File Decompression}
+
+The unix command \name{compress} is often used to reduce file space by
+compressing files into new files ending in \name{.Z}.  The Volume IO
+library includes routines for automatically decompressing such files.
+This is done by inserting new definitions of such file operations as
+\name{fopen}, \name{fread}, and \name{fscanf}.  Use of this facility
+is transparent, as long as the Volume IO include directory is specified
+correctly on the compile line, and the executable is linked with the
+Volume IO library.
+
+\section{Argument Processing}
+
+Simple command line argument processing is provided.  Note that more
+sophisticated and extensive argument processing can be provided by
+other existing packages around the lab.  Nevertheless, command line
+argument lists can be scanned in command line order as follows:
+
+{\bf\begin{verbatim}
+    public  void  initialize_argument_processing(
+        int     argc,
+        char    *argv[] )
+\end{verbatim}}
+
+\desc{called once to let the argument processor know what the command line
+arguments are.  Initializes the current argument to the first
+argument, in preparation for sequential processing of the command line
+arguments.}
+
+{\bf\begin{verbatim}
+    public  BOOLEAN  get_int_argument(
+        int   default_value,
+        int   *value )
+    public  BOOLEAN  get_real_argument(
+        Real  default_value,
+        Real  *value )
+    public  BOOLEAN  get_string_argument(
+        char   default_value[],
+        char   *value[] )
+\end{verbatim}}
+
+\desc{checks if an argument exists and is of the desired type.  If so,
+then it assigns the appropriate \name{value}, advances to the next
+argument, and returns \name{TRUE}.  Otherwise, the default value is assigned
+to the \name{value} and the current argument is not advanced.}
+
+{\bf\begin{verbatim}
+    public  BOOLEAN  get_prefix_argument(
+        char  prefix[] )
+\end{verbatim}}
+
+\desc{checks if the next argument starts with the given prefix and if so,
+advances to the point in the argument just after the end of the prefix, or
+to the next argument, if there are no characters after the prefix.
+Returns \name{TRUE} if the command line argument starts with the prefix.}
+
+\section{Colour Manipulation}
+
+Colours are generally represented as triples of coordinates,
+representing red, green, and blue components.  Sometimes, an opacity
+is included as a fourth component, to determine how much the colour
+will let other objects show through.  Sometimes it is useful
+to work with colours in a different space, Hue-Saturation-Light, which
+is also a triple of coordinates.  Each colour component is usually either a
+real value in the range zero to one, or an integral value in the range
+zero to 255.  A colour type is defined (\name{Colour}) which uses a
+single long integer to store colours as four eight-bit integers.
+Various macros and functions exist to manipulate these colours:
+
+\definemacro{make\_Colour( r, g, b )}{Returns a value of type
+\name{Colour} which contains the specified red, green, and blue
+components, each of which must be within the range zero to 255.}
+
+\definemacro{make\_rgba\_Colour( r, g, b, a )}{Returns a value of type
+\name{Colour} which contains the specified red, green, blue, and alpha
+(opacity) components, each of which must be within the range zero to 255.}
+
+\definemacro{get\_Colour\_r( col )}{Given an argument of type
+\name{Colour}, returns the value of the red component, in the range
+zero to 255.}
+
+\definemacro{get\_Colour\_g( col )}{Given an argument of type
+\name{Colour}, returns the value of the green component, in the range
+zero to 255.}
+
+\definemacro{get\_Colour\_b( col )}{Given an argument of type
+\name{Colour}, returns the value of the blue component, in the range
+zero to 255.}
+
+\definemacro{get\_Colour\_a( col )}{Given an argument of type
+\name{Colour}, returns the value of the alpha component, in the range
+zero to 255.}
+
+\definemacro{make\_Colour\_0\_1( r, g, b )}{Returns a value of type
+\name{Colour} which contains the specified red, green, and blue
+components, each of which must be within the range zero to 1.0.}
+
+\definemacro{make\_rgba\_Colour\_0\_1( r, g, b )}{Returns a value of type
+\name{Colour} which contains the specified red, green, blue, and
+alpha components, each of which must be within the range zero to 1.0.}
+
+\definemacro{get\_Colour\_r\_0\_1( col )}{Given an argument of type
+\name{Colour}, returns the value of the red component, in the range
+zero to 1.0.}
+
+\definemacro{get\_Colour\_g\_0\_1( col )}{Given an argument of type
+\name{Colour}, returns the value of the green component, in the range
+zero to 1.0.}
+
+\definemacro{get\_Colour\_b\_0\_1( col )}{Given an argument of type
+\name{Colour}, returns the value of the blue component, in the range
+zero to 1.0.}
+
+\definemacro{get\_Colour\_a\_0\_1( col )}{Given an argument of type
+\name{Colour}, returns the value of the alpha component, in the range
+zero to 1.0.}
+
+\definemacro{get\_Colour\_luminance( col )}{Given an argument of type
+\name{Colour}, returns the brightness of the colour, in the range zero
+to 255.  This is used to convert colour to gray-scale.}
+
+A surface property type is also defined, to provide descriptions of
+surface lighting characteristics:
+
+\definemacro{fill\_Surfprop( spr, a, d, s, e, o )}{Fills in the
+\name{spr} structure, which is of type \name{Surfprop}, with the five
+parameters:  ambient coefficient, diffuse coefficient, specular
+coefficient, specular exponent, and opacity.}
+
+\definemacro{Surfprop\_a( spr )}{Returns the ambient coefficient, a
+number in the range of zero to one.}
+
+\definemacro{Surfprop\_d( spr )}{Returns the diffuse coefficient, a
+number in the range of zero to one.}
+
+\definemacro{Surfprop\_s( spr )}{Returns the specular coefficient, a
+number in the range of zero to one.}
+
+\definemacro{Surfprop\_se( spr )}{Returns the specular exponent, a
+number in the range of zero to infinity, typically less than 100.}
+
+\definemacro{Surfprop\_t( spr )}{Returns the opacity (inverse of
+transparency), a number in the range of zero to one.}
+
+Several functions are available which deal with colours and surface
+properties:
+
+{\bf\begin{verbatim}
+    public  void  rgb_to_hsl(
+        Real    r,
+        Real    g,
+        Real    b,
+        Real    *h,
+        Real    *s,
+        Real    *l )
+    public  void  hsl_to_rgb(
+        Real   h,
+        Real   sl,
+        Real   l,
+        Real   *r,
+        Real   *g,
+        Real   *b )
+    public  void  convert_colour_to_hsl(
+        Colour   rgb,
+        Colour   *hsl )
+    public  void  convert_colour_to_rgb(
+        Colour   hsl,
+        Colour   *rgb )
+\end{verbatim}}
+
+\desc{Converts between red-green-blue and hue-saturation-light space.}
+
+{\bf\begin{verbatim}
+    public  BOOLEAN  equal_colours(
+        Colour  col1,
+        Colour  col2 )
+\end{verbatim}}
+
+\desc{returns \name{TRUE} if the two colours are equal.}
+
+{\bf\begin{verbatim}
+    public  int  get_colour_distance(
+        int      r,
+        int      g,
+        int      b,
+        Colour   c2 )
+\end{verbatim}}
+
+\desc{finds the squared Euclidean distance between the first colour,
+specified by its components, and the second colour, \name{c2}.}
+
+{\bf\begin{verbatim}
+    public  int   find_closest_colour(
+        int     r,
+        int     g,
+        int     b,
+        int     n_colours,
+        Colour  colours[] )
+\end{verbatim}}
+
+\desc{Given the three components of a target colour, and a list of
+\name{n\_colours} colours, returns the index in the list of the
+closest colour to the target colour.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  lookup_colour(
+    char    colour_name[],
+    Colour  *col )
+\end{verbatim}}
+
+\desc{Given a colour name, such as ``\name{red}'' or ``\name{dark\_blue}''
+looks up the name in a list of colours and passes back the
+corresponding colour, returning \name{TRUE} if successful.  The
+supported colours are from the list of about 300 named X colours.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  lookup_colour_name(
+    Colour  col,
+    char    colour_name[] )
+\end{verbatim}}
+
+\desc{This performs the inverse of the \name{lookup\_colour()}
+function, taking a colour and seeing if it matches one of the known
+named colours.  If so, the colour name is copied into the argument
+\name{colour\_name}, and \name{TRUE} is returned.}
+
+\section{General File IO}
+
+Although one may use the standard UNIX file interface (\name{fprintf},
+for example), the Volume IO library contains a set of routines for
+doing all file operations, with the potential to be portable to
+other operating systems.  There are some other minor advantages,
+including the automatic expansion of \name{\~\ } and environment
+variables.
+
+{\bf\begin{verbatim}
+public  void  expand_filename(
+    char  filename[],
+    char  expanded_filename[] )
+\end{verbatim}}
+
+\desc{Searches the argument \name{filename} for certain patterns, and
+expands them appropriately, storing the resulting expanded filename in
+the second argument, \name{expanded\_filename}.  Any sequence of
+characters starting with a \name{\~\ } up to but not including a slash,
+\name{\/}, will be changed to the current users home directory.  Note
+that this will only work properly if the \name{\~\ } is used alone, or
+in conjunction with the current user's user name.  For example,
+if user \name{john} passes this routine a filename of
+\name{\~\ frank/text}, it will be expanded to \name{/usr/people/john/text},
+which is not what was desired.  Any occurrence of a dollar sign,
+\name{\$}, will result in the following text, up to the next slash,
+being expanded to the environment variable specified by the text.  This
+expansion can be avoided by placing a backslash, \name{$\backslash$},
+before any \name{\~\ } or \name{\$}.  In all the following functions which
+take filenames, automatic expansion of filenames is performed.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  filename_extension_matches(
+    char   filename[],
+    char   extension[] )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the file ends in the given extension, preceded
+by a period. e.g.,
+\name{filename\_extension\_matches("volume.mnc","mnc")} returns \name{TRUE}.
+Correctly handles compressed files, e.g.,
+\name{filename\_extension\_matches("volume.mnc.Z","mnc")} returns \name{TRUE}.}
+
+{\bf\begin{verbatim}
+public  void  remove_directories_from_filename(
+    char  filename[],
+    char  filename_no_directories[] )
+\end{verbatim}}
+
+\desc{Strips the directories from the filename, placing the result in
+the second argument, \name{filename\_no\_directories}.}
+
+{\bf\begin{verbatim}
+public  void  extract_directory(
+    char    filename[],
+    char    directory[] )
+\end{verbatim}}
+
+\desc{Extracts the directory from the filename, placing the result in
+the second argument, \name{directory}.}
+
+{\bf\begin{verbatim}
+public  void  get_absolute_filename(
+    char    filename[],
+    char    directory[],
+    char    abs_filename[] )
+\end{verbatim}}
+
+\desc{Given a filename and a current directory, constructs and
+absolute filename (one starting with a slash, \name{/}.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  file_exists(
+    char        filename[] )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the file exists, \name{FALSE} otherwise.  The filename
+may contain the home directory character, \name{\~\ }, and environment
+variables, such as \name{\$PET\_IMAGE}.}
+
+{\bf\begin{verbatim}
+public  void  remove_file(
+    char  filename[] )
+\end{verbatim}}
+
+\desc{Removes the specified file.  The filename
+may contain the home directory character, \name{\~\ }, and environment
+variables, such as \name{\$PET\_IMAGE}.}
+
+{\bf\begin{verbatim}
+public  void  unlink_file(
+    char        filename[] )
+\end{verbatim}}
+
+\desc{Unlinks the specified file, which results in the file being
+removed only after all other references to it are closed.}
+
+{\bf\begin{verbatim}
+public  Status  open_file(
+    char               filename[],
+    IO_types           io_type,
+    File_formats       file_format,
+    FILE               **file )
+public  Status  open_file_with_default_suffix(
+    char               filename[],
+    char               default_suffix[],
+    IO_types           io_type,
+    File_formats       file_format,
+    FILE               **file )
+\end{verbatim}}
+
+\desc{The function \name{open\_file()} opens the specified file, where
+\name{io\_type} must be one of
+\name{WRITE\_FILE} or \name{READ\_FILE}, and
+\name{file\_format} must be one of \name{ASCII\_FORMAT} or
+\name{BINARY\_FORMAT}.  If successful, the file pointer is passed back
+in the last argument and a status of \name{OK} is returned.
+Otherwise, a null pointer is passed back, and a status of \name{ERROR}
+is returned.  Filename expansion is automatically performed.  The
+second function, \name{open\_file\_with\_default\_suffix()}, performs the
+same task as \name{open\_file} with the addition that it automatically
+adds the specified suffix extension, if needed.  On input, if the
+specified file does not exist and the file does not have an extension,
+then it looks for the specified file with the default extension.}
+
+{\bf\begin{verbatim}
+public  Status  close_file(
+    FILE     *file )
+\end{verbatim}}
+
+\desc{Closes the file, returning \name{OK} if successful.}
+
+{\bf\begin{verbatim}
+public  Status  set_file_position(
+    FILE     *file,
+    long     byte_position )
+\end{verbatim}}
+
+\desc{Seeks to the specified position in the file, where 0 corresponds
+to the beginning of the file.}
+
+{\bf\begin{verbatim}
+public  Status  flush_file(
+    FILE     *file )
+\end{verbatim}}
+
+\desc{Flushes the file buffer of any pending output.}
+
+{\bf\begin{verbatim}
+public  Status  input_character(
+    FILE  *file,
+    char   *ch )
+\end{verbatim}}
+
+\desc{Inputs a character from the file and passes it back as the
+second argument.  If the character is the end
+of file character, returns a status of \name{ERROR}, otherwise, \name{OK}.}
+
+{\bf\begin{verbatim}
+public  Status  unget_character(
+    FILE  *file,
+    char  ch )
+\end{verbatim}}
+
+\desc{Places the character back on the input queue.}
+
+{\bf\begin{verbatim}
+public  Status  input_nonwhite_character(
+    FILE   *file,
+    char   *ch )
+\end{verbatim}}
+
+\desc{Inputs the next non-white character, i.e. the next character
+that is neither a blank, a tab, or a newline character.}
+
+{\bf\begin{verbatim}
+public  Status   skip_input_until(
+    FILE   *file,
+    char   search_char )
+\end{verbatim}}
+
+\desc{Inputs characters from the file until the specified search
+character is found.}
+
+{\bf\begin{verbatim}
+public  Status  input_string(
+    FILE  *file,
+    char  str[],
+    int   string_length,
+    char  termination_char )
+\end{verbatim}}
+
+\desc{Inputs a string from the file, where the maximum storage of the
+string is specified by the argument \name{string\_length}.  The file
+is read into the string until either the termination character or and
+newline character is found.  If the string ends at an newline
+character and the termination character is not an newline, the
+next character available from the file will be the newline
+character.  Otherwise, the next character available is the one just
+after the termination character found.
+}
+
+{\bf\begin{verbatim}
+public  Status  input_quoted_string(
+    FILE            *file,
+    char            str[],
+    int             str_length )
+\end{verbatim}}
+
+\desc{Inputs a string from a file, delimited by quotation marks,
+returning \name{OK} or \name{ERROR}.  The
+maximum storage available in the \name{str} pointer is specified by
+the third argument, \name{str\_length}.   After successful reading of
+a string, the next character available from the file is the one just
+after the ending quotation mark.}
+
+{\bf\begin{verbatim}
+public  Status  input_line(
+    FILE    *file,
+    char    line[],
+    int     str_length )
+\end{verbatim}}
+
+\desc{Inputs characters from the file into the argument \name{line},
+up until the next newline character, or until \name{str\_length}
+characters have been read.  If a newline was found, the next available
+character will be the one after the newline.}
+
+{\bf\begin{verbatim}
+public  Status  input_boolean(
+    FILE            *file,
+    BOOLEAN         *b )
+\end{verbatim}}
+
+\desc{Inputs the next non-white character.
+If it is a ``\name{f}'' or ``\name{F}'', then the value
+\name{FALSE} is passed back.
+If it is a ``\name{t}'' or ``\name{T}'', then the value
+\name{TRUE} is passed back.  Otherwise \name{ERROR} is returned.}
+
+{\bf\begin{verbatim}
+public  Status  input_short(
+    FILE            *file,
+    short           *s )
+public  Status  input_unsigned_short(
+    FILE            *file,
+    unsigned short  *s )
+public  Status  input_int(
+    FILE  *file,
+    int   *i )
+public  Status  input_real(
+    FILE            *file,
+    Real            *r )
+public  Status  input_float(
+    FILE            *file,
+    float           *f )
+ublic  Status  input_double(
+    FILE            *file,
+    double          *d )
+\end{verbatim}}
+
+\desc{Inputs a value of the specified type from an ascii file.}
+
+{\bf\begin{verbatim}
+public  Status  input_newline(
+    FILE            *file )
+\end{verbatim}}
+
+\desc{Inputs and discards characters from the file up to and including
+the next newline character.  Returns \name{OK} if a newline was found,
+or \name{ERROR} if the end of file was reached first.}
+
+{\bf\begin{verbatim}
+public  Status  input_binary_data(
+    FILE            *file,
+    void            *data,
+    size_t          element_size,
+    int             n )
+\end{verbatim}}
+
+\desc{Inputs an array of data from a file, in binary format.  The
+array contains \name{n} elements, each of size \name{element\_size}.
+Returns either \name{OK} or \name{ERROR}.}
+
+{\bf\begin{verbatim}
+public  Status  output_character(
+    FILE   *file,
+    char   ch )
+\end{verbatim}}
+
+\desc{Outputs a character to the file, returning \name{OK} or
+\name{ERROR}.}
+
+{\bf\begin{verbatim}
+public  Status  output_string(
+    FILE  *file,
+    char  str[] )
+\end{verbatim}}
+
+\desc{Outputs the specified string to the file.}
+
+{\bf\begin{verbatim}
+public  Status  output_quoted_string(
+    FILE            *file,
+    char            str[] )
+\end{verbatim}}
+
+\desc{Outputs a quotation mark, the specified string, and a closing
+quotation mark.}
+
+{\bf\begin{verbatim}
+public  Status  output_newline(
+    FILE            *file )
+\end{verbatim}}
+
+\desc{Outputs a newline character, returning \name{OK} or \name{ERROR}.}
+
+{\bf\begin{verbatim}
+public  Status  output_boolean(
+    FILE            *file,
+    BOOLEAN         b )
+\end{verbatim}}
+
+\desc{If the argument is \name{TRUE}, then a space and the letter
+``\name{T}'' is output, otherwise, a space and the letter ``\name{F}''
+is output.
+}
+
+{\bf\begin{verbatim}
+public  Status  output_short(
+    FILE            *file,
+    short           s )
+public  Status  output_unsigned_short(
+    FILE            *file,
+    unsigned short  s )
+public  Status  output_int(
+    FILE            *file,
+    int             i )
+public  Status  output_real(
+    FILE            *file,
+    Real            r )
+public  Status  output_float(
+    FILE            *file,
+    float           f )
+public  Status  output_double(
+    FILE            *file,
+    double          d )
+\end{verbatim}}
+
+\desc{Outputs the specified value to an ascii file.}
+
+{\bf\begin{verbatim}
+public  Status  output_binary_data(
+    FILE            *file,
+    void            *data,
+    size_t          element_size,
+    int             n )
+\end{verbatim}}
+
+\desc{Outputs an array of data from a file, in binary format.  The
+array contains \name{n} elements, each of size \name{element\_size}.
+Returns either \name{OK} or \name{ERROR}.}
+
+{\bf\begin{verbatim}
+public  Status  io_binary_data(
+    FILE            *file,
+    IO_types        io_flag,
+    void            *data,
+    size_t          element_size,
+    int             n )
+\end{verbatim}}
+
+\desc{Inputs or outputs the specified binary data, depending on
+whether the argument \name{io\_flag} is \name{READ\_FILE} or
+\name{WRITE\_FILE}.}
+
+{\bf\begin{verbatim}
+public  Status  io_newline(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format )
+\end{verbatim}}
+
+\desc{Inputs or outputs an ascii newline character, depending on 
+whether the argument \name{io\_flag} is \name{READ\_FILE} or
+\name{WRITE\_FILE}.  If the \name{format} argument is
+\name{BINARY\_FORMAT}, this function does nothing.}
+
+{\bf\begin{verbatim}
+public  Status  io_quoted_string(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    char            str[],
+    int             str_length )
+\end{verbatim}}
+
+\desc{If the \name{format} argument is \name{ASCII\_FORMAT},
+inputs or outputs a quotation mark delimited string, depending
+on whether the argument \name{io\_flag} is \name{READ\_FILE} or
+\name{WRITE\_FILE}.  IF the \name{format} argument is
+\name{BINARY\_FORMAT}, inputs or outputs a string preceded by an
+integer indicating the length of the string.}
+
+{\bf\begin{verbatim}
+public  Status  io_boolean(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    BOOLEAN         *b )
+public  Status  io_short(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    short           *short_int )
+public  Status  io_unsigned_short(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    unsigned short  *unsigned_short )
+ublic  Status  io_unsigned_char(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    unsigned  char  *c )
+public  Status  io_int(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             *i )public  Status  io_real(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    Real            *r )
+public  Status  io_float(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    float           *f )
+public  Status  io_double(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    double          *d )
+\end{verbatim}}
+
+\desc{Inputs or outputs a binary or ascii value of the specified type.}
+
+{\bf\begin{verbatim}
+public  Status  io_ints(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             n,
+    int             *ints[] )
+\end{verbatim}}
+
+\desc{Inputs or outputs an array of integers in binary or ascii
+format.}
+
+{\bf\begin{verbatim}
+public  Status  io_unsigned_chars(
+    FILE            *file,
+    IO_types        io_flag,
+    File_formats    format,
+    int             n,
+    unsigned char   *unsigned_chars[] )
+\end{verbatim}}
+
+\desc{Inputs or outputs an array of unsigned characters in binary or ascii
+format.}
+
+\section{Global Variables}
+
+This module provides support for defining global variables in such a
+way that there is a lookup table of global variable names.  This table
+can be used to provide reading of global variables from files at
+runtime, or to allow the user to query and modify global variable
+values during program execution.  In order to use this facility, the
+programmer must have (either directly or indirectly)
+{\bf\begin{verbatim}
+#include  <globals.h>
+\end{verbatim}}
+in every program file that refers to a global variable.  The
+global variables must be defined in a file called
+\name{global\_variables.h} which has the following form:
+{\bf\begin{verbatim}
+START_GLOBALS
+    DEF_GLOBAL(        Mine_1, BOOLEAN,  TRUE )
+    DEF_GLOBAL(        Mine_2, int,      3 )
+    DEF_GLOBAL(        Mine_3, Real,     2.5 )
+    DEF_GLOBAL(        Mine_4, Colour,   RED )
+    DEF_GLOBAL5(       Mine_5, Surfprop, 0.3, 0.6, 0.6, 40.0, 1.0 )
+    DEF_GLOBAL3(       Mine_6, Vector,   1.0, 0.0, 0.0 )
+    DEF_GLOBAL3(       Mine_7, Point,    2.0, 2.0, 2.0 )
+    DEF_GLOBAL_STRING( Mine_8, "Initial value" )
+END_GLOBALS
+\end{verbatim}}
+The first argument of each of these macros is the name of the global
+variable.  The second argument is the type of the global variable.
+Note that only the types in the previous example are supported.  The
+final argument or arguments are the initial values of the global
+variable.
+
+Finally, one needs to create the lookup table in one program file,
+usually the main program file, as follows:
+{\bf\begin{verbatim}
+#define  GLOBALS_LOOKUP_NAME  my_globals
+#include  <globals.h>
+\end{verbatim}}
+which creates a global variable lookup table called
+\name{my\_globals}.  Relevent functions for global variables are:
+
+
+{\bf\begin{verbatim}
+public  Status  input_globals_file(
+    int             n_globals_lookup,
+    global_struct   globals_lookup[],
+    char            filename[] )
+\end{verbatim}}
+
+\desc{Inputs global variable assignments from the specified file.
+Assignments are of the form \name{variable = value ;}.  The lookup
+table and its size are passed to this function.  An example
+follows: }
+{\bf\begin{verbatim}
+    if( input_globals_file( SIZEOF_STATIC_ARRAY(my_globals),
+           my_globals, filename ) != OK )
+    {
+        print( "Error reading globals file.\n" );
+    }
+\end{verbatim}}
+
+{\bf\begin{verbatim}
+public  Status  get_global_variable(
+    int              n_globals_lookup,
+    global_struct    globals_lookup[],
+    char             variable_name[],
+    char             value[] )
+\end{verbatim}}
+
+\desc{Creates a string containing the value of the global variable
+matching the specified name, \name{variable\_name}.  For example, if
+the global variable \name{my\_variable} is of type integer,}
+{\bf\begin{verbatim}
+    if( get_global_variable( SIZEOF_STATIC_ARRAY(my_globals),
+            my_globals, "my_variable", value_string ) == OK )
+    {
+        print( "Value is: %s\n", value_string );
+    }
+\end{verbatim}}
+is equivalent to:
+{\bf\begin{verbatim}
+    print( "Value is: %d\n", my_variable );
+\end{verbatim}}
+
+{\bf\begin{verbatim}
+public  Status  set_global_variable(
+    int              n_globals_lookup,
+    global_struct    globals_lookup[],
+    char             variable_name[],
+    char             value_to_set[] )
+\end{verbatim}}
+
+\desc{Sets the value of the global variable matching the specified name,
+\name{variable\_name}, to the value specified by the ascii string
+\name{value\_to\_set}.  For example, if the global variable
+\name{my\_variable} is of type integer,}
+{\bf\begin{verbatim}
+    if( set_global_variable( SIZEOF_STATIC_ARRAY(my_globals),
+            my_globals, "my_variable", "45" ) != OK )
+    {
+        print( "Error setting variable.\n" );
+    }
+\end{verbatim}}
+is equivalent to
+{\bf\begin{verbatim}
+    my_variable = 45;
+\end{verbatim}}
+
+{\bf\begin{verbatim}
+public  Status  set_or_get_global_variable(
+    int              n_globals_lookup,
+    global_struct    globals_lookup[],
+    char             input_str[],
+    char             variable_name[],
+    char             value_string[] )
+\end{verbatim}}
+
+\desc{If the \name{input\_str} is of the form
+``\name{variable = value}'', then the corresponding global variable is
+set to the value, and the value is passed back in ascii form in the
+\name{value\_string} argument.  Otherwise, the form of
+\name{input\_str} is simply ``\name{variable}'' and the corresponding
+global variable is not changed, but its current value is passed back
+in the \name{value\_string} argument.  This routine is useful in many
+programs to read input lines from the user, allowing the user to query
+and set global variable values during program execution.}
+
+\section{Memory Allocation}
+
+A set of macros is provided to allow easy allocation and deallocation
+of memory, with up to 5 dimensional arrays.  Memory allocation
+checking is also performed, to catch errors such as freeing memory
+that was not allocated.  Also, the memory allocation automatically
+tracks all memory allocated, so that detection of memory leaks
+(orphaned memory) is possible.
+
+\subsection{Basic Memory Allocation}
+
+The basic macros are as follows:
+
+{\bf\begin{verbatim}
+     ALLOC( ptr, n_items )
+\end{verbatim}}
+
+\desc{Allocates \name{n\_items} elements of the correct type,
+assigning the result to the argument \name{ptr}.}
+
+{\bf\begin{verbatim}
+    FREE( ptr )
+\end{verbatim}}
+
+\desc{Frees the memory pointed to by the argument \name{ptr}.}
+
+{\bf\begin{verbatim}
+    REALLOC( ptr, n_items )
+\end{verbatim}}
+
+\desc{Changes the size of the memory pointed to by \name{ptr} to be of
+size \name{n\_items} elements, possibly changing the value of
+\name{ptr} in the process.}
+
+{\bf\begin{verbatim}
+    ALLOC_VAR_SIZED_STRUCT( ptr, element_type, n_elements )
+\end{verbatim}}
+
+\desc{Allocates a variable sized structure, which must be of a
+specific form.  The last element of the structure must be an array of
+size 1, and this array will constitute the variable-sized part of the
+structure.  The argument \name{element\_type} must be the type of this
+last element, and the argument \name{n\_elements} is the desired
+number of elements to allocate for this array, in addition to the
+memory for the first part of the structure.  An example of usage is:}
+
+\begin{verbatim}
+        {
+            struct {  int   a;
+                      float b;
+                      char  data[1];
+                   }                    *ptr;
+
+            ALLOC_VAR_SIZED_STRUCT( ptr, char, 10 );
+        }
 \end{verbatim}
 
-\definemacro{ABS( x )}{returns the absolute value of an integer or real}.
+{\bf\begin{verbatim}
+    ALLOC2D( ptr, n1, n2 )
+    ALLOC3D( ptr, n1, n2, n3 )
+    ALLOC4D( ptr, n1, n2, n3, n4 )
+    ALLOC5D( ptr, n1, n2, n3, n4, n5 )
+\end{verbatim}}
 
-\definemacro{MAX( x, y )}{returns the maximum of two integers or reals}.
+\desc{Allocates a 2 to 5 dimensional array of size \name{n1} by \name{n2},
+etc.  and stores the result in the specified pointer, \name{ptr}.  In
+the 2 dimensional case, this is
+accomplished with only 2 memory allocations, one to allocate \name{n1}
+times \name{n2} elements for the storage, and the second to allocate
+\name{n1} pointers into the first memory area.  In general, there is
+one memory allocation for each dimension required.}
 
-\section{Programming Utilities}
+{\bf\begin{verbatim}
+    FREE2D( ptr )
+    FREE3D( ptr )
+    FREE4D( ptr )
+    FREE5D( ptr )
+\end{verbatim}}
 
-\subsection{Automatic File Decompression}
+\desc{Frees the memory associated with the multi-dimensional array.}
 
-\subsection{Argument Processing}
+\subsection{Higher Level Array Allocation}
 
-\subsection{Colour Manipulation}
+In addition to the basic memory allocation macros described previously,
+a set of useful macros for dealing with arrays of dynamically changing
+size.
 
-\subsection{General File IO}
+{\bf\begin{verbatim}
+    SET_ARRAY_SIZE( array, previous_n_elems, new_n_elems,
+                    chunk_size )
+\end{verbatim}}
 
-\subsection{Global Variables}
+\desc{This macro increases or decreases the size of an array, by
+specifying the number of elements previously allocated to the array.
+The \name{chunk\_size} argument defines the size of the memory chunks which
+are allocated.  For instance, if \name{chunk\_size} is 100, then this
+macro will only reallocate the array if the size change crosses to a
+different multiple of 100, thus avoiding memory allocation every time
+it is called.  This specification of the granularity of the memory
+allocation must be consistently specified; if this macro is called
+with a given variable and chunk size, then subsequent calls to this
+macro with same variable must specify the same chunk size.  Note also
+that the number passed in as \name{new\_n\_elems} must be passed in as
+\name{previous\_n\_elems} on the next call to this macro.}
 
-\subsection{Memory Allocation}
+{\bf\begin{verbatim}
+    ADD_ELEMENT_TO_ARRAY( array, n_elems,
+                          elem_to_add, chunk_size )
+\end{verbatim}}
 
-\subsection{Numerical Utilities}
+\desc{Adds the argument \name{elem\_to\_add} to the array at the
+\name{n\_elems}'th index, then incrementing \name{n\_elems}. The
+argument \name{chunk\_size} specifies the granularity of memory
+allocation.}
 
-\subsection{Progress Reports}
+{\bf\begin{verbatim}
+    DELETE_ELEMENT_FROM_ARRAY( array, n_elems, index_to_remove,
+                               chunk_size )
+\end{verbatim}}
 
-\subsection{Random Numbers}
+\desc{Deletes the \name{index\_to\_remove}'th element from the array,
+decreasing the number of elements in the array (\name{n\_elems}) and
+decreasing the memory allocation, if crossing a multiple of
+\name{chunk\_size}.  Again, \name{chunk\_size} must be specified the
+same for all invocations of the previous three macros involving a
+given pointer.}
 
-\subsection{Strings}
+{\bf\begin{verbatim}
+    ADD_ELEMENT_TO_ARRAY_WITH_SIZE( array, n_alloced, n_elems,
+                                    elem_to_add, chunk_size )
+\end{verbatim}}
 
-\subsection{Text Output}
+\desc{Adds an element (\name{elem\_to\_add}) to the array,
+incrementing \name{n\_elems}.  If necessary, the memory is increased
+by the amount specified in \name{chunk\_size} and the \name{n\_alloced}
+variable is incremented by this amount.  The usage of this differs
+from the use of \name{ADD\_ELEMENT\_TO\_ARRAY} in that the number of
+elements (\name{n\_elems}) can be decreased arbitrarily, without
+causing memory to be deallocated.}
 
-\subsection{Time}
+\section{Numerical Utilities}
+
+A small set of useful numerical functions are provided:
+
+{\bf\begin{verbatim}
+public  BOOLEAN  numerically_close(
+    Real  n1,
+    Real  n2,
+    Real  threshold_ratio )
+\end{verbatim}}
+
+\desc{Checks if the two numbers are within the given threshold ratio.
+For instance, \name{numerically\_close( 4113.0, 4112.0, 0.001 )}
+returns \name{TRUE}, since the two numbers are with 0.1 percent of
+each other.}
+
+{\bf\begin{verbatim}
+public  Real  get_good_round_value(
+    Real    value )
+\end{verbatim}}
+
+\desc{Returns the largest power of 10 or five times a power of 10
+which is less then the specified value.  Useful for determining graph
+axis positions.}
+
+{\bf\begin{verbatim}
+public  int  solve_quadratic(
+    Real   a,
+    Real   b,
+    Real   c,
+    Real   *solution1,
+    Real   *solution2 )
+\end{verbatim}}
+
+\desc{Finds the real roots of the equation $a * x^2 + b * x + c$.
+Returns either 0, 1, or 2, indicating the number of unique real roots,
+which are passed back either the argument \name{solution1}, or in both
+arguments, \name{solution1} and \name{solution2}.}
+
+{\bf\begin{verbatim}
+public  int solve_cubic(
+    Real   a,
+    Real   b,
+    Real   c,
+    Real   d,
+    Real   s[ 3 ] )
+\end{verbatim}}
+
+\desc{Finds the real roots of the equation $a * x^3 + b * x^2 + c * x
++ d$.  Returns the number of unique real solutions, and passes them
+back in the array \name{s}.}
+
+{\bf\begin{verbatim}
+public  Real  evaluate_polynomial(
+    int     n,
+    Real    poly[],
+    Real    u )
+\end{verbatim}}
+
+\desc{Efficiently evaluates a polynomial of the form $poly[0] +
+poly[1] * u + poly[2] * u^2 ...$, using Horner's rule.}
+
+\section{Progress Reports}
+
+In order to provide simple monitoring of the progress of a particular
+processing task, a progress reporting module is available.  While a
+task is in progress, the progress report prints dots across the line
+indicating how close to finished the task is.  If the task is going to
+take very long, (greater than 2 minutes), the progress report
+periodically prints the current percentage done and the estimated time
+remaining.  An example of usage, followed by function descriptions, is
+presented:
+
+\begin{verbatim}
+        {
+            int                 i, n_slices;
+            progress_struct     progress;
+
+            n_slices = 100;
+
+            initialize_progress_report( &progress, FALSE,
+                        n_slices, "Processing Slices" );
+
+            for( i = 0;  i < n_slices;  ++i )
+            {
+                process_slice( i );
+
+                update_progress_report( &progress, i + 1 );
+            }
+
+            terminate_progress_report( &progress );
+        }
+\end{verbatim}
+
+{\bf\begin{verbatim}
+public  void  initialize_progress_report(
+    progress_struct   *progress,
+    BOOLEAN           one_line_only,
+    int               n_steps,
+    char              title[] )
+\end{verbatim}}
+
+\desc{Initializes a progress report struct, specifying the number of
+steps that will occur in  the processing, and the title to print out
+for the progress report.  During progress report, the display will
+automatically switch from the short-job mode of printing a single row
+of dots across a line to the long-job mode of periodically printing
+the percentage done and estimated time remaining.  If the
+\name{one\_line\_only} flag is \name{TRUE}, this is disabled and only
+a single row of dots will be displayed.}
+
+{\bf\begin{verbatim}
+public  void  update_progress_report(
+    progress_struct   *progress,
+    int               current_step )
+\end{verbatim}}
+
+\desc{Tells the progress reporting module how many steps have been
+done, and causes update of the display of dots on the line or
+estimated time remaining.}
+
+{\bf\begin{verbatim}
+public  void  terminate_progress_report(
+    progress_struct   *progress )
+\end{verbatim}}
+
+\desc{Terminates the progress report.}
+
+\section{Random Numbers}
+
+A simple random number package is provided, which produces a sequence
+of pseudo-random numbers based on a seed value, which totally
+determines the entire sequence of numbers.  If the user does not set a
+seed, a seed is automatically created by the current time and date.
+
+{\bf\begin{verbatim}
+public  void  set_random_seed(
+    int seed )
+\end{verbatim}}
+
+\desc{Sets the seed which determines the sequence of pseudo-random numbers.}
+
+{\bf\begin{verbatim}
+public  int  get_random_int(
+    int n )
+\end{verbatim}}
+
+\desc{Returns a random integer in the range zero to \name{n-1}.}
+
+{\bf\begin{verbatim}
+public  Real  get_random_0_to_1( void )
+\end{verbatim}}
+
+\desc{Returns a random number greater than or equal to zero and
+strictly less than one.}
+
+\section{Strings}
+
+Some simple string manipulation techniques are provided:
+
+{\bf\begin{verbatim}
+public  BOOLEAN  string_ends_in(
+    char   string[],
+    char   ending[] )
+\end{verbatim}}
+
+\desc{Determines if the string ends in the specified \name{ending}.  For
+instance, \name{string\_ends\_in( "rainfall", "fall" )} returns
+\name{TRUE}.}
+
+{\bf\begin{verbatim}
+public    void   strip_blanks(
+    char  str[],
+    char  stripped[] )
+\end{verbatim}}
+
+\desc{Removes leading and trailing blanks from the string, placing the
+result in the argument \name{stripped}.  Works correctly even if both
+arguments refer to the same string.}
+
+{\bf\begin{verbatim}
+public  void  get_upper_case_string(
+    char    string[],
+    char    upper_case[] )
+\end{verbatim}}
+
+\desc{Converts the string to an all upper case string.  Correctly
+handles case where the two string arguments point to the same memory.}
+
+{\bf\begin{verbatim}
+public  int  find_character(
+    char    string[],
+    char    ch )
+\end{verbatim}}
+
+\desc{Searches for the given character in the given string \,
+returning the index where it was found, or -1 if it was not found.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  blank_string(
+    char   string[] )
+\end{verbatim}}
+
+\desc{Returns true if the string is empty or consists of only space,
+tab, and newline characters.}
+
+\section{Text Output}
+
+Rather than using the standard UNIX function \name{printf} for routine
+text output, a module which is similar in appearance is provided,
+which allows for installing arbitrary printing output functions.  This
+can be used, for instance, to mirror output to a log file for
+instance, or to send text to an X window.  The primary change is to
+use a function called \name{print} with exactly the same arguments as
+for the standard \name{printf} function.
+
+{\bf\begin{verbatim}
+public  void  print( char format[], ... )
+\end{verbatim}}
+
+\desc{Takes the same arguments as \name{printf()}, but allows
+installing of a user output function for the final stage of output.}
+
+{\bf\begin{verbatim}
+public  void  set_print_function(
+    void     (*function) ( char [] ) )
+\end{verbatim}}
+
+\desc{Sets the output function, where all text from calls to
+\name{print()} will be sent.  By default, there is no print function,
+and output is sent to printf().}
+
+{\bf\begin{verbatim}
+public  void  push_print_function()
+\end{verbatim}}
+
+\desc{Temporarily sets the print function to go to standard out.}
+
+{\bf\begin{verbatim}
+public  void  pop_print_function()
+\end{verbatim}}
+
+\desc{Restores the previous user print function.}
+
+\section{Time}
+
+Some basic utilities relating to time, date, and CPU time are
+provided.
+
+{\bf\begin{verbatim}
+public  Real  current_cpu_seconds( void )
+\end{verbatim}}
+
+\desc{Returns the number of CPU seconds used by the current process so
+far.}
+
+{\bf\begin{verbatim}
+public  Real  current_realtime_seconds( void )
+\end{verbatim}}
+
+\desc{Returns the number of seconds that the current process has been
+running.}
+
+{\bf\begin{verbatim}
+public  void  get_clock_time(
+    char  time_str[] )
+\end{verbatim}}
+
+\desc{Copies the current clock time (hours and minutes) into a string.}
+
+{\bf\begin{verbatim}
+public  void  get_date(
+    char  date_str[] )
+\end{verbatim}}
+
+\desc{Copies the current date into a string.}
+
+{\bf\begin{verbatim}
+public  void  format_time(
+    char   str[],
+    char   format[],
+    Real   seconds )
+\end{verbatim}}
+
+\desc{Takes a time in seconds and a format string which has format
+components, i.e. "%g %s", and prints the time into the string
+\name{str}, in appropriate units of milliseconds, seconds, minutes,
+days, etc.}
+
+{\bf\begin{verbatim}
+public  void  print_time(
+    char   format[],
+    Real   seconds )
+\end{verbatim}}
+
+\desc{Same as \name{format\_time}, but calls \name{print()} with the
+result.}
+
+{\bf\begin{verbatim}
+public  void  sleep_program(
+    Real seconds )
+\end{verbatim}}
+
+\desc{Suspends the program for the specified number of seconds.  Note
+that on most systems, this will only be performed to the nearest
+multiple of some particular time increment.  On Silicon Graphics
+Systems this will be to the nearest hundredth of a second.}
+
+\chapter{Volumes}
+
+Processing tasks within the lab where this software was developed
+deals with multidimensional volumes of data such as created by
+Magnetic Resonance and PET scanners.  Therefore, an extensive set of
+routines is provided to represent volumes, and to read and write
+volumes in the MINC format.
+
+The basic type of a volume is \name{Volume}, which is actually a
+pointer to an allocated structure which contains all the information
+about the type of volume, number of dimensions, voxel values, etc.  In
+order to use a volume structure, the volume must first be created, then
+the size of the volume set, then the large array of voxel values is
+allocated.  Alternately, a volume may be automatically created by
+calling the appropriate function to read a MINC file and create a
+volume.
+
+A volume has an associated dimension, which must be in the range
+from one to five, but typically is three.  The volume is thought of as
+multidimensional array of any of a variety of types, including all
+sizes of integer and real C scalar types.  Even though a volume may be
+stored in a 1 byte type, with values from zero to 255, there is an
+optional real value mapping, which provides a mapping to any arbitrary
+real range.  In this way, the real range may be any valid real
+interval and is independent of the particular storage type.
+
+Since most volumes will be created by reading from a MINC file, this
+method will be presented first, followed by a description of how to
+create a volume from scratch.
+
+\section{Volume Input}
+
+{\bf\begin{verbatim}
+public  Status  input_volume(
+    char                 filename[],
+    int                  n_dimensions,
+    char                 *dim_names[],
+    nc_type              volume_nc_data_type,
+    BOOLEAN              volume_signed_flag,
+    Real                 volume_voxel_min,
+    Real                 volume_voxel_max,
+    BOOLEAN              create_volume_flag,
+    Volume               *volume,
+    minc_input_options   *options )
+\end{verbatim}}
+
+\desc{This routine reads a volume from a MINC file, first creating
+the volume if the \name{create\_volume\_flag} is specified.  The
+number of dimensions is the desired number of dimensions for the
+volume.  If this is less than the number of dimensions in the file,
+then only the first part of the file, corresponding to this number of
+dimensions is read.  The argument \name{dim\_names} specifies in what
+order the volume is to be stored in the volume variable.  For each
+dimension in the stored volume, there is a corresponding name, which
+is one of \name{MIxspace}, \name{MIyspace}, \name{MIzspace},
+\name{ANY\_SPATIAL\_DIMENSION}, or an empty string.  These are matched
+up with corresponding dimensions in the file and the dimension
+ordering of the volume array is reordered on input.  So, if the user
+wishes to represent the volume in X-Z-Y order, then the the value of
+the \name{dim\_names} array should be the three strings,
+``\name{MIxspace}'', ``\name{MIzspace}'', and ``\name{MIyspace}''.}
+
+\desc{The four arguments, \name{volume\_nc\_data\_type},
+\name{volume\_signed\_flag}, \name{volume\_voxel\_min}, and
+\name{volume\_voxel\_max} can be used to specified the desired storage
+type within the volume variable, automatically converted from the
+storage type in the file.  The \name{volume\_nc\_data\_type} is one of
+\name{NC\_UNSPECIFIED}, \name{NC\_BYTE}, \name{NC\_SHORT}, \name{NC\_LONG},
+\name{NC\_FLOAT}, or \name{NC\_DOUBLE}.
+For the integer types, the
+\name{volume\_signed\_flag} is \name{TRUE} if a signed type is
+desired, otherwise, it is \name{FALSE}.  The \name{volume\_voxel\_min}
+and \name{volume\_voxel\_max} specify the range of valid voxel values,
+and are usually set equal to indicate to use the full range of the
+type, e.g. zero to 255.0 for unsigned \name{NC\_BYTE}.
+If \name{NC\_UNSPECIFIED} is passed, then the type, sign. and voxel
+range in the file are used.}
+
+\desc{If the \name{create\_volume\_flag} is \name{TRUE}, the usual
+case, then the volume is automatically created.  Otherwise, it is
+assumed that the volume already exists and will only be recreated if
+its current size is different from the new size resulting from the
+file, thus reducing the amount of memory allocation when reading
+multiple files.}
+
+\desc{The \name{options} argument specifies some special options to
+the input process, and is usually passed just a \name{NULL} pointer,
+indicating that the default options should be used.  Currently the
+possible options are:}
+
+{\bf\begin{verbatim}
+public  void  set_default_minc_input_options(
+    minc_input_options  *options )
+\end{verbatim}}
+
+\desc{Fills in the default options into an \name{options} structure
+which will subsequently be passed to \name{input\_volume}.}
+
+{\bf\begin{verbatim}
+public  void  set_minc_input_promote_invalid_to_min_flag(
+    minc_input_options  *options,
+    BOOLEAN             flag )
+\end{verbatim}}
+
+\desc{By default, any voxel value which is outside the valid range of
+voxel values is promoted to the minimum valid voxel value.  If this
+\name{flag} is set to \name{FALSE}, this promotion is disabled.}
+
+{\bf\begin{verbatim}
+public  void  set_minc_input_vector_to_scalar_flag(
+    minc_input_options  *options,
+    BOOLEAN             flag )
+\end{verbatim}}
+
+\desc{By default, any volume which contains a dimension which is of
+type vector, for instance, an RGB colour volume, is converted to a
+scalar volume by averaging the components of each vector.  This can be
+disabled by passing the \name{flag} as \name{FALSE}.}
+
+\section{Volume Output}
+
+Volume output is accomplished by one of two routines, depending on
+whether or not the volume is treated as a modified version of another
+volume or is an independent volume on its own.
+
+{\bf\begin{verbatim}
+public  Status  output_volume(
+    char                  filename[],
+    nc_type               file_nc_data_type,
+    BOOLEAN               file_signed_flag,
+    Real                  file_voxel_min,
+    Real                  file_voxel_max,
+    Volume                volume,
+    char                  history[],
+    minc_output_options   *options )
+\end{verbatim}}
+
+\desc{Outputs the specified volume to the specified filename.  If the
+argument \name{file\_nc\_data\_type} is \name{NC\_SPECIFIED} then the
+volume is stored in the MINC file in the same type as in the volume
+variable.  Otherwise, the four arguments, \name{file\_nc\_data\_type},
+\name{file\_signed\_flag}, \name{file\_voxel\_min}, and
+\name{file\_voxel\_max}, specify the type and valid voxel range to store
+the volume in the file.  If the \name{history} argument is non-null,
+then it represents a description of the volume, and will be placed in
+the MINC volume.  If the \name{options} argument is \name{NULL}, then
+the default options will be used.  Otherwise, some specific output
+options can be set through this parameter, and the following
+functions:}
+
+{\bf\begin{verbatim}
+public  void  set_default_minc_output_options(
+    minc_output_options  *options )
+\end{verbatim}}
+
+\desc{Sets the \name{options} structure to the default values.  The
+user can then override the default values and pass the structure to
+the \name{output\_volume} function.  Currently, there are no output
+options, but this function exists as a place holder for future
+revisions.}
+
+If the volume is a modification of another volume currently stored in
+a file, then it is more appropriate to use the following function to
+output the volume:
+
+{\bf\begin{verbatim}
+public  Status  output_modified_volume(
+    char                  filename[],
+    nc_type               file_nc_data_type,
+    BOOLEAN               file_signed_flag,
+    Real                  file_voxel_min,
+    Real                  file_voxel_max,
+    Volume                volume,
+    char                  original_filename[],
+    char                  history[],
+    minc_output_options   *options )
+\end{verbatim}}
+
+\desc{The only difference between this function and the other method
+of volume output (\name{output\_volume}), is that this function copies
+auxiliary data from the original file (\name{original\_filename}) to
+the new file.  This auxiliary data includes such items as patient
+name and other scanning data, and is not read into a volume, so the
+only way to correctly pass it along to a new MINC file is to use this
+function.}
 
 \section{Volume Manipulation}
 
-\subsection{Volume Input}
+Once a volume has been created and allocated, there are many routines
+for manipulating the volume:
 
-\subsection{Volume Output}
+{\bf\begin{verbatim}
+public  void  delete_volume(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Deletes all the memory associated with an volume.}
+
+{\bf\begin{verbatim}
+public  nc_type  get_volume_nc_data_type(
+    Volume       volume,
+    BOOLEAN      *signed_flag )
+\end{verbatim}}
+
+\desc{Returns the storage type of the volume (e.g. \name{NC\_SHORT}),
+and passes back an indication of whether it is signed or unsigned.}
+
+{\bf\begin{verbatim}
+public  int  get_volume_n_dimensions(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Returns the number of dimensions of the volume.}
+
+{\bf\begin{verbatim}
+public  void  get_volume_sizes(
+    Volume   volume,
+    int      sizes[] )
+\end{verbatim}}
+
+\desc{Stores the size of each dimension in the array \name{sizes}.
+This is the number of voxels in each dimension.  The array
+\name{sizes} must
+be at least as large as the number of dimensions of the volume.}
+
+{\bf\begin{verbatim}
+public  void  get_volume_separations(
+    Volume   volume,
+    Real     separations[] )
+\end{verbatim}}
+
+\desc{Stores the slice separation for each dimension in the array
+\name{separations}.  The array \name{separations} must
+be at least as large as the number of dimensions of the volume.}
+
+{\bf\begin{verbatim}
+public  char  **get_volume_dimension_names(
+    Volume   volume )
+\end{verbatim}}
+
+\desc{Returns a pointer to the list of names of each dimension.}
+
+A volume has two coordinate systems.  The {\bf voxel} coordinate
+system is simply the n-dimensional indexing coordinate system for a
+volume.  A voxel coordinate of (0.0, 0.0, 0.0), for instance, corresponds
+to the centre of the first voxel in a three dimensional volume.  A voxel
+coordinate of ( 99.0, 0.0, 0.0 ) corresponds to the centre of the last
+voxel in the first direction of a three dimensional volume of size (
+100, 200, 150 ).  The second coordinate system is an arbitrary orthogonal
+system, usually referred to as the {\bf world} coordinate system, often
+the Talairach coordinate system.  The following functions provide
+conversion to and from these two coordinate systems:
+
+{\bf\begin{verbatim}
+public  void  convert_voxel_to_world(
+    Volume   volume,
+    Real     voxel[],
+    Real     *x_world,
+    Real     *y_world,
+    Real     *z_world )
+\end{verbatim}}
+
+\desc{Given a volume and a real valued voxel index, passes back the
+corresponding world coordinate.}
+
+\section{Volume Creation from Scratch}
+
+{\bf\begin{verbatim}
+public   Volume   create_volume(
+    int         n_dimensions,
+    char        *dimension_names[],
+    nc_type     nc_data_type,
+    BOOLEAN     signed_flag,
+    Real        voxel_min,
+    Real        voxel_max )
+\end{verbatim}}
+
+\desc{}
 
 \end{document}
