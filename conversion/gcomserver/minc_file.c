@@ -6,9 +6,15 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 1.7  1994-03-14 16:45:28  neelin
-@MODIFIED   : Moved ncendef up a level so that we can catch errors.
+@MODIFIED   : Revision 1.8  1994-03-15 14:25:41  neelin
+@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+@MODIFIED   : Added acquisition:comments attribute
+@MODIFIED   : Changed reading of configuration file to allow execution of a command on
+@MODIFIED   : the minc file.
 @MODIFIED   :
+ * Revision 1.7  94/03/14  16:45:28  neelin
+ * Moved ncendef up a level so that we can catch errors.
+ * 
  * Revision 1.6  94/01/18  15:08:57  neelin
  * Cast enumerated types to int when they can be negative for gcc on sun.
  * (For decrementing loop on Mri_index).
@@ -362,6 +368,9 @@ public void setup_minc_variables(int mincid, General_Info *general_info)
    if (strlen(general_info->acq.imaged_nucl) > 0)
       (void) miattputstr(mincid, varid, MIimaged_nucleus, 
                          general_info->acq.imaged_nucl);
+   if (strlen(general_info->acq.comments) > 0)
+      (void) miattputstr(mincid, varid, MIcomments, 
+                         general_info->acq.comments);
 
    /* Create the spi info variable */
    varid = ncvardef(mincid, "spiinfo", NC_LONG, 0, NULL);

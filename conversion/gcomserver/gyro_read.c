@@ -6,10 +6,16 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 1.7  1994-03-14 16:44:30  neelin
-@MODIFIED   : Changed scale to be fp_scaled_min/max instead of ext_scale_min/max.
-@MODIFIED   : Check units for millirad and change to radians.
+@MODIFIED   : Revision 1.8  1994-03-15 14:24:01  neelin
+@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+@MODIFIED   : Added acquisition:comments attribute
+@MODIFIED   : Changed reading of configuration file to allow execution of a command on
+@MODIFIED   : the minc file.
 @MODIFIED   :
+ * Revision 1.7  94/03/14  16:44:30  neelin
+ * Changed scale to be fp_scaled_min/max instead of ext_scale_min/max.
+ * Check units for millirad and change to radians.
+ * 
  * Revision 1.6  94/01/17  15:05:46  neelin
  * Added some acquisition parameters (flip angle) and fixed error in writing
  * of scanning sequence.
@@ -476,6 +482,8 @@ public void get_file_info(Acr_Group group_list, File_Info *file_info,
          find_double(group_list, ACR_Imaging_frequency, -DBL_MAX);
       (void) strncpy(general_info->acq.imaged_nucl,
          find_string(group_list, ACR_Imaged_nucleus, ""), maxlen);
+      (void) strncpy(general_info->acq.comments,
+         find_string(group_list, ACR_Acq_comments, ""), maxlen);
 
       /* Copy the group list */
       general_info->group_list = acr_copy_group_list(group_list);

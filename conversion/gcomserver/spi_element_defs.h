@@ -57,6 +57,7 @@ GLOBAL_ELEMENT(ACR_Inversion_time        , 0x0018, 0x0082);
 GLOBAL_ELEMENT(ACR_Nr_of_averages        , 0x0018, 0x0083);
 GLOBAL_ELEMENT(ACR_Imaging_frequency     , 0x0018, 0x0084);
 GLOBAL_ELEMENT(ACR_Imaged_nucleus        , 0x0018, 0x0085);
+GLOBAL_ELEMENT(ACR_Acq_comments          , 0x0018, 0x4000);
 GLOBAL_ELEMENT(ACR_Rows                  , 0x0028, 0x0010);
 GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011);
 GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030);

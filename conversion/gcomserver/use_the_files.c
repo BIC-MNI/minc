@@ -6,10 +6,16 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.6  1994-01-14 11:37:37  neelin
-@MODIFIED   : Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
-@MODIFIED   : file name to include reconstruction number and image type number.
+@MODIFIED   : Revision 1.7  1994-03-15 14:25:49  neelin
+@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+@MODIFIED   : Added acquisition:comments attribute
+@MODIFIED   : Changed reading of configuration file to allow execution of a command on
+@MODIFIED   : the minc file.
 @MODIFIED   :
+ * Revision 1.6  94/01/14  11:37:37  neelin
+ * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
+ * file name to include reconstruction number and image type number.
+ * 
  * Revision 1.5  94/01/11  12:37:29  neelin
  * Modified handling of output directory and user id.
  * Defaults are current dir and no chown.
@@ -81,16 +87,27 @@ public void use_the_files(int num_files, char *file_list[],
    char output_default_file[256];
    char hostname[256];
    int output_uid, output_gid;
+   char command_line[512];
+   char string[512];
    FILE *fp;
+   int index;
 
    /* Look for defaults file */
    file_prefix[0] = '\0';
+   command_line[0] = '\0';
    output_uid = output_gid = INT_MIN;
    (void) gethostname(hostname, sizeof(hostname) - 1);
    (void) sprintf(output_default_file, "%s%s", 
                   OUTPUT_DEFAULT_FILE, hostname);
    if ((fp=fopen(output_default_file, "r")) != NULL) {
-      (void) fscanf(fp, "%s %d %d", file_prefix, &output_uid, &output_gid);
+      if (fgets(string, (int) sizeof(string), fp) != NULL) {
+         (void) sscanf(string, "%s %d %d", 
+                       file_prefix, &output_uid, &output_gid);
+      }
+      (void) fgets(command_line, (int) sizeof(command_line), fp);
+      index = strlen(command_line) - 1;
+      if ((index >= 0) && (command_line[index] == '\n'))
+         command_line[index] = '\0';
       (void) fclose(fp);
    }
 
@@ -146,15 +163,41 @@ public void use_the_files(int num_files, char *file_list[],
                                     FALSE, file_prefix, 
                                     &output_file_name);
 
-         /* Change the ownership */
-         if (exit_status == EXIT_SUCCESS) {
-            if (Do_logging >= LOW_LOGGING) 
-               (void) fprintf(stderr, "Created minc file %s.\n",
-                              output_file_name);
-            if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
-               (void) chown(output_file_name, (uid_t) output_uid,
-                            (gid_t) output_gid);
+         if (exit_status != EXIT_SUCCESS) continue;
+
+         /* Print log message */
+         if (Do_logging >= LOW_LOGGING) {
+            (void) fprintf(stderr, "Created minc file %s.\n",
+                           output_file_name);
+         }
+
+         /* Invoke a command on the file (if requested) and get the 
+            returned file name */
+         if (strlen(command_line) > 0) {
+            (void) sprintf(string, "%s %s", command_line, output_file_name);
+            if ((fp=popen(string, "r")) != NULL) {
+               (void) fscanf(fp, "%s", output_file_name);
+               if (pclose(fp) != EXIT_SUCCESS) {
+                  (void) fprintf(stderr, 
+                                 "Error executing command\n   \"%s\"\n",
+                                 string);
+               }
+               else if (Do_logging >= LOW_LOGGING) {
+                  (void) fprintf(stderr, 
+                     "Executed command \"%s\",\nproducing file %s.\n",
+                                 string, output_file_name);
+               }
             }
+            else {
+               (void) fprintf(stderr, "Error executing command \"%s\"\n",
+                              string);
+            }
+         }
+
+         /* Change the ownership */
+         if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
+            (void) chown(output_file_name, (uid_t) output_uid,
+                         (gid_t) output_gid);
          }
 
       }

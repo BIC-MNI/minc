@@ -6,10 +6,16 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.5  1994-01-17 15:06:31  neelin
-@MODIFIED   : Added some acquisition parameters (flip angle) and fixed error in writing
-@MODIFIED   : of scanning sequence.
+@MODIFIED   : Revision 1.6  1994-03-15 14:25:52  neelin
+@MODIFIED   : Changed image-max/min to use fp_scaled_max/min instead of ext_scale_max/min
+@MODIFIED   : Added acquisition:comments attribute
+@MODIFIED   : Changed reading of configuration file to allow execution of a command on
+@MODIFIED   : the minc file.
 @MODIFIED   :
+ * Revision 1.5  94/01/17  15:06:31  neelin
+ * Added some acquisition parameters (flip angle) and fixed error in writing
+ * of scanning sequence.
+ * 
  * Revision 1.4  94/01/14  11:37:42  neelin
  * Fixed handling of multiple reconstructions and image types. Add spiinfo variable with extra info (including window min/max). Changed output
  * file name to include reconstruction number and image type number.
@@ -122,6 +128,7 @@ typedef struct {
       double num_avg;
       double imaging_freq;
       Cstring imaged_nucl;
+      Cstring comments;
    } acq;
    Acr_Group group_list;
 } General_Info;
