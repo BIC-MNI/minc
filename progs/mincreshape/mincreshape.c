@@ -11,12 +11,16 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
-@MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 6.2  1998-08-19 13:57:23  neelin
-@MODIFIED   : Fixed argument parsing to detect errors such as octal numbers
-@MODIFIED   : containing illegal digits (08) and extraneous characters on the end of
-@MODIFIED   : arguments.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincreshape.c,v $
+ * Revision 6.3  1999-10-19 14:45:29  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.2  1998/08/19 13:57:23  neelin
+ * Fixed argument parsing to detect errors such as octal numbers
+ * containing illegal digits (08) and extraneous characters on the end of
+ * arguments.
+ *
  * Revision 6.0  1997/09/12  13:24:12  neelin
  * Release of minc version 0.6
  *
@@ -61,7 +65,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.2 1998-08-19 13:57:23 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.3 1999-10-19 14:45:29 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -1,38 +1,42 @@
 #! /bin/csh -f
 
-# Modifications: $Log: mincheader,v $
-# Modifications: Revision 6.0  1997-09-12 13:23:37  neelin
-# Modifications: Release of minc version 0.6
-# Modifications:
-# Revision 5.0  1997/08/21  13:24:37  neelin
-# Release of minc version 0.5
+# Modifications: 
+#   $Log: mincheader,v $
+#   Revision 6.1  1999-10-19 14:45:23  neelin
+#   Fixed Log subsitutions for CVS
 #
-# Revision 4.0  1997/05/07  20:00:42  neelin
-# Release of minc version 0.4
-#
-# Revision 3.0  1995/05/15  19:31:32  neelin
-# Release of minc version 0.3
-#
-# Revision 2.2  1995/01/25  08:04:41  neelin
-# Added check for failure to read minc file.
-#
-# Revision 2.1  95/01/24  10:19:09  neelin
-# Added support for compressed files.
-# 
-# Revision 2.0  94/09/28  10:34:10  neelin
-# Release of minc version 0.2
-# 
-# Revision 1.6  94/09/28  10:34:06  neelin
-# Pre-release
-# 
-# Revision 1.5  93/10/14  10:09:35  neelin
-# Fixed usage error message.
-# 
-# Revision 1.4  93/08/25  11:24:20  neelin
-# Added checking for -h or -help options.
-# 
-# Revision 1.3  93/08/11  15:20:55  neelin
-# Added RCS logging in source.
+#   Revision 6.0  1997/09/12 13:23:37  neelin
+#   Release of minc version 0.6
+#   
+#   Revision 5.0  1997/08/21  13:24:37  neelin
+#   Release of minc version 0.5
+#  
+#   Revision 4.0  1997/05/07  20:00:42  neelin
+#   Release of minc version 0.4
+#  
+#   Revision 3.0  1995/05/15  19:31:32  neelin
+#   Release of minc version 0.3
+#  
+#   Revision 2.2  1995/01/25  08:04:41  neelin
+#   Added check for failure to read minc file.
+#  
+#   Revision 2.1  95/01/24  10:19:09  neelin
+#   Added support for compressed files.
+#   
+#   Revision 2.0  94/09/28  10:34:10  neelin
+#   Release of minc version 0.2
+#   
+#   Revision 1.6  94/09/28  10:34:06  neelin
+#   Pre-release
+#   
+#   Revision 1.5  93/10/14  10:09:35  neelin
+#   Fixed usage error message.
+#   
+#   Revision 1.4  93/08/25  11:24:20  neelin
+#   Added checking for -h or -help options.
+#   
+#   Revision 1.3  93/08/11  15:20:55  neelin
+#   Added RCS logging in source.
 # 
 #
 

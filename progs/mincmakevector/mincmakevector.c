@@ -9,10 +9,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : August 11, 1997 (Peter Neelin)
-@MODIFIED   : $Log: mincmakevector.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:31  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincmakevector.c,v $
+ * Revision 6.1  1999-10-19 14:45:25  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:31  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:32  neelin
  * Release of minc version 0.5
  *
@@ -22,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.0 1997-09-12 13:24:31 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.1 1999-10-19 14:45:25 neelin Exp $";
 #endif
 
 #include <stdlib.h>

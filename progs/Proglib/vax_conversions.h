@@ -4,10 +4,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 8, 1993
-@MODIFIED   : $Log: vax_conversions.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: vax_conversions.h,v $
+ * Revision 6.1  1999-10-19 14:45:15  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:41  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:41  neelin
  * Release of minc version 0.5
  *
@@ -25,7 +29,10 @@
  * 
  * Revision 1.3  93/08/04  13:04:03  neelin
  * Added RCS $Log: vax_conversions.h,v $
- * Added RCS Revision 6.0  1997-09-12 13:23:41  neelin
+ * Added RCS Revision 6.1  1999-10-19 14:45:15  neelin
+ * Added RCS Fixed Log subsitutions for CVS
+ * Added RCS
+ * Added RCS Revision 6.0  1997/09/12 13:23:41  neelin
  * Added RCS Release of minc version 0.6
  * Added RCS
  * Revision 5.0  1997/08/21  13:24:41  neelin

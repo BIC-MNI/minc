@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
-@MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 6.1  1998-08-19 13:05:28  neelin
-@MODIFIED   : Added code to free minmax buffer.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: copy_data.c,v $
+ * Revision 6.2  1999-10-19 14:45:28  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.1  1998/08/19 13:05:28  neelin
+ * Added code to free minmax buffer.
+ *
  * Revision 6.0  1997/09/12  13:24:12  neelin
  * Release of minc version 0.6
  *
@@ -53,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.1 1998-08-19 13:05:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.2 1999-10-19 14:45:28 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,10 +5,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
-@MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:21  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincresample.h,v $
+ * Revision 6.1  1999-10-19 14:45:27  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:21  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:22  neelin
  * Release of minc version 0.5
  *

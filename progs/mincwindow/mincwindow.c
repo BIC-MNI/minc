@@ -8,10 +8,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 10, 1994 (Peter Neelin)
-@MODIFIED   : $Log: mincwindow.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:05  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincwindow.c,v $
+ * Revision 6.1  1999-10-19 14:45:30  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:05  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:05  neelin
  * Release of minc version 0.5
  *
@@ -57,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.0 1997-09-12 13:24:05 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.1 1999-10-19 14:45:30 neelin Exp $";
 #endif
 
 #include <stdlib.h>

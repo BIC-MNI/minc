@@ -4,33 +4,37 @@
 #
 # Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
 #
-# Modifications: $Log: mincdiff,v $
-# Modifications: Revision 6.0  1997-09-12 13:23:46  neelin
-# Modifications: Release of minc version 0.6
-# Modifications:
-# Revision 5.0  1997/08/21  13:24:47  neelin
-# Release of minc version 0.5
+# Modifications: 
+#   $Log: mincdiff,v $
+#   Revision 6.1  1999-10-19 14:45:20  neelin
+#   Fixed Log subsitutions for CVS
 #
-# Revision 4.0  1997/05/07  20:01:01  neelin
-# Release of minc version 0.4
-#
-# Revision 3.0  1995/05/15  19:31:40  neelin
-# Release of minc version 0.3
-#
-# Revision 2.1  1995/01/24  09:12:29  neelin
-# Added support for compressed minc files.
-#
-# Revision 2.0  94/09/28  10:34:46  neelin
-# Release of minc version 0.2
-# 
-# Revision 1.4  94/09/28  10:34:44  neelin
-# Pre-release
-# 
-# Revision 1.3  94/07/18  10:41:26  neelin
-# Added -nonormalize option to mincextract for comparing image data.
-# 
-# Revision 1.2  93/11/01  16:50:03  neelin
-# Some fixes.
+#   Revision 6.0  1997/09/12 13:23:46  neelin
+#   Release of minc version 0.6
+#   
+#   Revision 5.0  1997/08/21  13:24:47  neelin
+#   Release of minc version 0.5
+#  
+#   Revision 4.0  1997/05/07  20:01:01  neelin
+#   Release of minc version 0.4
+#  
+#   Revision 3.0  1995/05/15  19:31:40  neelin
+#   Release of minc version 0.3
+#  
+#   Revision 2.1  1995/01/24  09:12:29  neelin
+#   Added support for compressed minc files.
+#  
+#   Revision 2.0  94/09/28  10:34:46  neelin
+#   Release of minc version 0.2
+#   
+#   Revision 1.4  94/09/28  10:34:44  neelin
+#   Pre-release
+#   
+#   Revision 1.3  94/07/18  10:41:26  neelin
+#   Added -nonormalize option to mincextract for comparing image data.
+#   
+#   Revision 1.2  93/11/01  16:50:03  neelin
+#   Some fixes.
 # 
 #
 # Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 

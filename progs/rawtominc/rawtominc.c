@@ -9,10 +9,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
-@MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 6.2  1998-06-22 14:06:01  neelin
-@MODIFIED   : Fixed bug in handling of default types and signs.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: rawtominc.c,v $
+ * Revision 6.3  1999-10-19 14:45:31  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.2  1998/06/22 14:06:01  neelin
+ * Fixed bug in handling of default types and signs.
+ *
  * Revision 6.1  1997/09/29  12:22:46  neelin
  * Clarified argument error messages.
  *
@@ -97,7 +101,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.2 1998-06-22 14:06:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.3 1999-10-19 14:45:31 neelin Exp $";
 #endif
 
 #include <stdlib.h>

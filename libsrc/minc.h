@@ -17,10 +17,14 @@
                  MI study variable
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : $Log: minc.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:54  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: minc.h,v $
+ * Revision 6.1  1999-10-19 14:45:08  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:54  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:53  neelin
  * Release of minc version 0.5
  *
@@ -73,12 +77,12 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.0 1997-09-12 13:24:54 neelin Rel $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.1 1999-10-19 14:45:08 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 6.0 1997-09-12 13:24:54 neelin Rel $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 6.1 1999-10-19 14:45:08 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 

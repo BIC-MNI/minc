@@ -8,10 +8,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 11, 1993 (Peter Neelin)
-@MODIFIED   : $Log: minctoraw.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:26  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: minctoraw.c,v $
+ * Revision 6.1  1999-10-19 14:45:30  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:26  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:27  neelin
  * Release of minc version 0.5
  *
@@ -49,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.0 1997-09-12 13:23:26 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.1 1999-10-19 14:45:30 neelin Exp $";
 #endif
 
 #include <stdlib.h>

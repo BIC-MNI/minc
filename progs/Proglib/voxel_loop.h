@@ -3,10 +3,14 @@
 @DESCRIPTION: Header file for voxel_loop.c
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
-@MODIFIED   : $Log: voxel_loop.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: voxel_loop.h,v $
+ * Revision 6.1  1999-10-19 14:45:16  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:41  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:41  neelin
  * Release of minc version 0.5
  *

@@ -12,10 +12,14 @@
                  MI_get_sign
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:54  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: value_conversion.c,v $
+ * Revision 6.1  1999-10-19 14:45:12  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:54  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:53  neelin
  * Release of minc version 0.5
  *
@@ -66,7 +70,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.0 1997-09-12 13:24:54 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.1 1999-10-19 14:45:12 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

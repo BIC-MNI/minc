@@ -9,10 +9,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
-@MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 6.1  1998-02-19 15:04:24  neelin
-@MODIFIED   : Minor bug fixes.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincresample.c,v $
+ * Revision 6.2  1999-10-19 14:45:27  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.1  1998/02/19 15:04:24  neelin
+ * Minor bug fixes.
+ *
  * Revision 6.0  1997/09/12  13:23:21  neelin
  * Release of minc version 0.6
  *
@@ -120,7 +124,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.1 1998-02-19 15:04:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.2 1999-10-19 14:45:27 neelin Exp $";
 #endif
 
 #include <stdlib.h>

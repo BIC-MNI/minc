@@ -5,10 +5,14 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : March 11, 1994 (Peter Neelin)
-@MODIFIED   : $Log: mincreshape.h,v $
-@MODIFIED   : Revision 6.1  1998-08-19 13:57:50  neelin
-@MODIFIED   : Added ARG_SEPARATOR to replace string literal for comma.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincreshape.h,v $
+ * Revision 6.2  1999-10-19 14:45:29  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.1  1998/08/19 13:57:50  neelin
+ * Added ARG_SEPARATOR to replace string literal for comma.
+ *
  * Revision 6.0  1997/09/12  13:24:12  neelin
  * Release of minc version 0.6
  *

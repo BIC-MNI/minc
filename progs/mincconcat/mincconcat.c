@@ -9,11 +9,15 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
-@MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 6.1  1998-08-13 19:34:37  neelin
-@MODIFIED   : Always create concatenation coordinate variable subscription by
-@MODIFIED   : dimension.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: mincconcat.c,v $
+ * Revision 6.2  1999-10-19 14:45:19  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.1  1998/08/13 19:34:37  neelin
+ * Always create concatenation coordinate variable subscription by
+ * dimension.
+ *
  * Revision 6.0  1997/09/12  13:24:15  neelin
  * Release of minc version 0.6
  *
@@ -58,7 +62,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.1 1998-08-13 19:34:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.2 1999-10-19 14:45:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -32,10 +32,14 @@
                  MI_icv_coords_tovar
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:54  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: image_conversion.c,v $
+ * Revision 6.1  1999-10-19 14:45:07  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:54  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:53  neelin
  * Release of minc version 0.5
  *
@@ -102,7 +106,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.0 1997-09-12 13:24:54 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.1 1999-10-19 14:45:07 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

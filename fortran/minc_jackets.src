@@ -57,34 +57,38 @@
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : January 28, 1993
-@MODIFIED   : $Log: minc_jackets.src,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:34  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
-Revision 5.0  1997/08/21  13:25:35  neelin
-Release of minc version 0.5
-
-Revision 4.0  1997/05/07  20:06:39  neelin
-Release of minc version 0.4
-
-Revision 3.1  1997/01/14  19:46:53  neelin
-Added wrappers for miopn, micre and miclos.
-
-Revision 3.0  1995/05/15  19:32:47  neelin
-Release of minc version 0.3
-
-Revision 2.1  1995/02/08  14:07:58  neelin
-Removed declaration of miicv_put function.
-
-Revision 2.0  1994/09/28  10:38:47  neelin
-Release of minc version 0.2
-
-Revision 1.6  94/09/28  10:38:28  neelin
-Pre-release
-
-Revision 1.5  93/08/11  15:08:48  neelin
-Added RCS logging in sources code.
-
+@MODIFIED   : 
+ * $Log: minc_jackets.src,v $
+ * Revision 6.1  1999-10-19 14:45:06  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:24:34  neelin
+ * Release of minc version 0.6
+ *
+ * Revision 5.0  1997/08/21  13:25:35  neelin
+ * Release of minc version 0.5
+ * 
+ * Revision 4.0  1997/05/07  20:06:39  neelin
+ * Release of minc version 0.4
+ * 
+ * Revision 3.1  1997/01/14  19:46:53  neelin
+ * Added wrappers for miopn, micre and miclos.
+ * 
+ * Revision 3.0  1995/05/15  19:32:47  neelin
+ * Release of minc version 0.3
+ * 
+ * Revision 2.1  1995/02/08  14:07:58  neelin
+ * Removed declaration of miicv_put function.
+ * 
+ * Revision 2.0  1994/09/28  10:38:47  neelin
+ * Release of minc version 0.2
+ * 
+ * Revision 1.6  94/09/28  10:38:28  neelin
+ * Pre-release
+ * 
+ * Revision 1.5  93/08/11  15:08:48  neelin
+ * Added RCS logging in sources code.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -98,7 +102,7 @@ Added RCS logging in sources code.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 6.0 1997-09-12 13:24:34 neelin Rel $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 6.1 1999-10-19 14:45:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <ctype.h>

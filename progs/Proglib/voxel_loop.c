@@ -5,10 +5,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
-@MODIFIED   : $Log: voxel_loop.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: voxel_loop.c,v $
+ * Revision 6.1  1999-10-19 14:45:15  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:41  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:41  neelin
  * Release of minc version 0.5
  *
@@ -63,7 +67,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.0 1997-09-12 13:23:41 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/voxel_loop.c,v 6.1 1999-10-19 14:45:15 neelin Exp $";
 #endif
 
 #include <stdlib.h>

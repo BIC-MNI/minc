@@ -33,11 +33,15 @@
                  execute_decompress_command
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 6.1  1997-10-06 12:54:08  neelin
-@MODIFIED   : Changed call to tmpnam to tempnam so that TMPDIR variable is checked when
-@MODIFIED   : creating temporary files.
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: netcdf_convenience.c,v $
+ * Revision 6.2  1999-10-19 14:45:11  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.1  1997/10/06 12:54:08  neelin
+ * Changed call to tmpnam to tempnam so that TMPDIR variable is checked when
+ * creating temporary files.
+ *
  * Revision 6.0  1997/09/12  13:24:54  neelin
  * Release of minc version 0.6
  *
@@ -105,7 +109,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.1 1997-10-06 12:54:08 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.2 1999-10-19 14:45:11 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

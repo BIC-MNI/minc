@@ -3,10 +3,14 @@
 @DESCRIPTION: File containing routine to create a time stamp string.
 @METHOD     : 
 @CREATED    : February 1, 1993 (Peter Neelin)
-@MODIFIED   : $Log: time_stamp.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:41  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: time_stamp.c,v $
+ * Revision 6.1  1999-10-19 14:45:14  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:41  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:41  neelin
  * Release of minc version 0.5
  *
@@ -24,7 +28,10 @@
  * 
  * Revision 1.3  93/08/04  13:03:56  neelin
  * Added RCS $Log: time_stamp.c,v $
- * Added RCS Revision 6.0  1997-09-12 13:23:41  neelin
+ * Added RCS Revision 6.1  1999-10-19 14:45:14  neelin
+ * Added RCS Fixed Log subsitutions for CVS
+ * Added RCS
+ * Added RCS Revision 6.0  1997/09/12 13:23:41  neelin
  * Added RCS Release of minc version 0.6
  * Added RCS
  * Revision 5.0  1997/08/21  13:24:41  neelin
@@ -61,7 +68,7 @@
 #include <time_stamp.h>
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/time_stamp.c,v 6.0 1997-09-12 13:23:41 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/Attic/time_stamp.c,v 6.1 1999-10-19 14:45:14 neelin Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

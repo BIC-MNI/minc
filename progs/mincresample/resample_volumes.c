@@ -4,10 +4,14 @@
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
-@MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:21  neelin
-@MODIFIED   : Release of minc version 0.6
-@MODIFIED   :
+@MODIFIED   : 
+ * $Log: resample_volumes.c,v $
+ * Revision 6.1  1999-10-19 14:45:28  neelin
+ * Fixed Log subsitutions for CVS
+ *
+ * Revision 6.0  1997/09/12 13:23:21  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:22  neelin
  * Release of minc version 0.5
  *
@@ -73,7 +77,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.0 1997-09-12 13:23:21 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.1 1999-10-19 14:45:28 neelin Exp $";
 #endif
 
 #include <stdlib.h>
