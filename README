@@ -41,7 +41,11 @@ facilitate image processing and display.
 GETTING MINC
 ------------
 The minc package is available through anonymous ftp from
-ftp.mni.mcgill.ca in directory pub/minc.
+ftp.bic.mni.mcgill.ca in directory pub/minc:
+
+   ftp://ftp.bic.mni.mcgill.ca/pub/minc/
+
+Pre-compiled versions exist in the compiled subdirectory.
 
 Minc requires that the NetCDF package be built and installed first. It
 is available through anonymous ftp from the Unidata Program centre at
