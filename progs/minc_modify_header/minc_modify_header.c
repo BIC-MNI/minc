@@ -10,7 +10,10 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.3  2000-11-03 16:35:40  neelin
+ * Revision 6.4  2000-12-13 16:19:37  neelin
+ * Removed debugging statements
+ *
+ * Revision 6.3  2000/11/03 16:35:40  neelin
  * Modified -dinsert option to allow multiple double values to be
  * inserted in an attribute.
  *
@@ -54,7 +57,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.3 2000-11-03 16:35:40 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.4 2000-12-13 16:19:37 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -441,11 +444,6 @@ int get_attribute(char *dst, char *key, char *nextarg)
 
          /* Clear the value string */
          value = NULL;
-
-         (void) printf("Found %d doubles:\n", num_doubles);
-         for (ivalue=0; ivalue < num_doubles; ivalue++) {
-            (void) printf("   [%3d] = %g\n", ivalue, dvalues[ivalue]);
-         }
 
       }        /* Endif need_double */
    }        /* Endif insert */
