@@ -3,9 +3,9 @@
 # MINC Makefile
 #
 
-ROOT = ../../minc
-include $(ROOT)/Make_machine_specific
-include $(ROOT)/Make_configuration
+#ROOT = ../../minc
+#include $(ROOT)/Make_machine_specific
+#include $(ROOT)/Make_configuration
 
 # Executable names
 PROGS    = ecattominc dump_ecat_header
@@ -16,5 +16,5 @@ LDOPT    = $(PROG_LDOPT)
 MANSECT  = 1
 #MANPAGES = $(PROGS).$(MANSECT)
 
-include $(ROOT)/progs/Make_progs
+#include $(ROOT)/progs/Make_progs
 
