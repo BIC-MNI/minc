@@ -603,11 +603,12 @@ string must be freed by the caller. If the file specified by
 \code{path} is not compressed, then its name is returned.
 \code{*create\_tempfile} is set to TRUE if a temporary file is
 created (and the caller needs to delete the file), FALSE if the
-original file name is returned. If 
-\code{header\_only} is TRUE, then the routine will expand
-only enough of the file to read the header.
+original file name is returned. If tempfile is NULL, then the routine
+generates its own temporary file name, otherwise, the user provided
+name is used. If \code{header\_only} is TRUE, then the routine will
+expand only enough of the file to read the header.
 \begin{verbatim}
-public char *miexpand_file(char *path, int header_only, 
+public char *miexpand_file(char *path, char *tempfile, int header_only, 
                            int *created_tempfile);
 \end{verbatim}
 
