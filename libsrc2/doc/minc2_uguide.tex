@@ -308,8 +308,8 @@ The {\tt path} argument gives the absolute or relative pathname of the
 file to be accessed.
 
 The {\tt mode} argument controls whether the file is opened for read
-access only ({\tt MI2\_OPEN\_RDONLY}), or for both read and write access
-({\tt MI2\_OPEN\_RDWR}). 
+access only \\
+({\tt MI2\_OPEN\_RDONLY}),or for both read and write access ({\tt MI2\_OPEN\_RDWR}). 
 
 The file ``handle'', which must be used in subsequent operations on the
 file, is returned in the {\tt hvol} argument.
@@ -386,39 +386,75 @@ array with named entries.
 is not yet implemented.
 \end{enumerate}
 \section{Dimensions and coordinate systems}
+\subsection{Dimension Definition}
 A dimension is simply an axis or index along which the data is stored.  
 Typical scans might be two dimensional or three dimensional, while functional 
 data may be stored in a four dimensional file with three spatial and one temporal 
 dimension.
-
+\subsection{Dimensions MINC 2.0}
 Each dimension of a MINC image volume/file is specified by its {\tt name}. MINC2 defines
 standard naming conventions such as {\tt xspace, yspace, zspace} (spatial 
 dimensions), {\tt xfrequency, yfrequency, zfrequency}
 (spatial frequency dimensions), {\tt tfrequency} (temporal frequency dimension), {\tt time} 
 (time dimension) and finally {\tt vector-dimension} (vector or complex data dimension).
-{\tt class} which specifies a general type for the dimensions, is defined as spatial, 
+It is important to note that in MINC 2 there are certain default interpretations and properties 
+associated with standard named dimensions. However, this does not place 
+any limitations on MINC 2 dimensions definition as the user has full freedom to define new names, 
+interpretations and properties for each dimension.
+\subsection{Dimension Attributes}
+Each dimension has a {\tt class} that specifies its overall interpretation: spatial, 
 temporal, spatial frequency, temporal frequency or user-defined (i.e. arbitrary) dimension.
-So the above definition creates a more flexible naming convention where any name can be defined
-as spatial dimension or vice versa. 
-Apart from {\tt name} and {\tt class} which are both defined as dimension properties, 
-in MINC 2 each dimension has a number 
-of other properties defined that specify how the data should be interpreted.
-For example, the convention for spatial dimensions which is positive xspace coordinates 
-run from the patient's left side to right side, 
-positive yspace coordinates run from patient posterior to anterior 
-and positive zspace coordinates run from inferior to superior is defined in 
-{\tt description} property. The description for any other dimension must be set by the user 
-or will be set to empty by default. Each dimension can have a {\tt unit} 
-value assigned to it which is a text string (e.g. ``mm'', ``seconds'') that 
-specifies the units along the dimension's axis. The dimension attribute {\tt attr}
-defines whether the dimension is regularly or irregularly sampled. A regularly 
-sampled dimension is defined by an origin or {\tt start} value and a {\tt step}
-value that defines the distance between points on the axis. An irregularly 
-sampled dimension must define an array of step values that specify 
-the position of each sample along the axis.{\tt length} defines the size of the dimension
-and {\tt direction\_cosines} are a set of three vectors associated with spatial dimensions
-and define the precise orientation of the axis relative to "true" x, y, or z coordinates.
+The following shows the list of dimension classes which are defined in minc 2.
+\begin{enumerate}
+\item MI\_DIMCLASS\_ANY        - Don't care (or unknown)
+\item MI\_DIMCLASS\_SPATIAL    - Spatial
+\item MI\_DIMCLASS\_TIME       - Time
+\item MI\_DIMCLASS\_SFREQUENCY - Spatial frequency
+\item MI\_DIMCLASS\_TFREQUENCY - Temporal frequency
+\item MI\_DIMCLASS\_USER       - Arbitrary user-defined axis
+\item MI\_DIMCLASS\_RECORD     - Record as dimension
+\end{enumerate}
 
+The above definition also creates a more flexible naming convention where any name 
+can be defined as any dimension class.
+
+Apart from {\tt name} and {\tt class}, MINC 2 has a number of other attributes defined for 
+each dimension which specify how the data should be interpreted. 
+
+The {\tt description} attribute is used to specify human-readable text which provides
+some information about the interpretation of the dimension. For example, it is commnly 
+used to describe the dimension's orientation relative to the patient.
+The description attribute is set to default text only for the named dimensions
+{\tt xspace, yspace, zspace} but can be set for any dimension by the user. For instance,
+{\tt xspace} is defined to increase from patient's left to right.
+
+The {\tt unit} attribute, also a human-readable text, that defines unit of the distance
+between the sampled data points along each dimension. The default {\tt unit} attribute is set
+to millimeters (i.e., ``mm'').
+
+The {\tt spacing} dimension attribute is a human-readable text which defines whether
+the sampled data points are in constant or random intervals from each other
+(i.e., regular versus irregualr) in space from each other. The {\tt spacing} attribute
+is set to ``regular\_\_'' by default.
+
+The {\tt start} attribute is a number which specifies the position of the first 
+sampled data point in world coordinates (refer to voxel versus world subsection).
+This attribute is set to zero by default.
+The {\tt step} attribute is a positive number indicating the size of the interval
+between sampled data points along a regularly sampled dimension. A negative value simply
+indicates that the sampled data points have a reverse orientation. This attribute is
+set to one by default. 
+An irregularly sampled dimension must define a list of interval values defined for each
+pair of sampled data points which is defined in MINC 2 as {\tt offset} property. 
+
+The {\tt length} attribute is a number defining the total number of sampled data 
+points along a dimension.
+The {\tt direction\_cosines} attribute are a set of three vectors associated with 
+spatial dimensions and define the precise orientation of the axis relative to "true" 
+x, y, or z coordinates.
+** NOT sure whether to list all the attributes or not **
+\subsection{Voxel and World Coordinate Systems}
+MINC 2 defines both ``voxel'' and ``world'' spatial coordinate systems.
 For each dimension, the world  coordinate  conversion is specified  
 by a pair of attributes: step and start. The xspace world coordinate, 
 for example is calculated using x = v*step + start, where x is the x world 
@@ -432,7 +468,7 @@ dimension should line up with the world x axis, ie. direction cosine = (1,0,0)
 ; however, it is possible to have a direction cosine of (0.9, 0.43589, 0).
 For detailed formulas please refer to APPENDIX A, section 2.1
 \emph{The MINC 2.0 File Format} by Robert D. Vincent.
-
+\subsection{Coding Examples}
 MINC 2 files can define any number of dimensions. In MINC 2 library, a dimension 
 is represented by an opaque datatype
 called a \emph{dimension handle}, which is defined by the ``C'' typedef
@@ -476,49 +512,15 @@ dimension order is determined by the file (i.e., the order the dimensions
 were created) or by the apparent order (i.e., any order other than the file
 order) which must be set by the user.       
      
-Finally, to delete the entire dimension defintion and its corresponding handle
-just pass the dimension handle to the following function:\\
+Finally, to release the memory associated with a dimension, 
+the dimension handle must be passed to {\tt mifree\_dimension\_handle()}.\\
+Note that calling {\tt mifree\_dimension\_handle()} on a 
+dimension that is associated with a volume will result in an error. 
+
 \begin{verbatim}
       mifree_dimension_handle(midimhandle_t dim_ptr)
+
 \end{verbatim}
-
-\subsection{Dimension and voxel ordering}
-Since MINC files may organize data arbitrarily, the MINC 2.0
-programming interface allows the programmer to specify both the
-apparent order of dimensions and the apparent direction of each
-dimension.  This enables programs to specify a that the data be
-presented in whatever fashion is most convenient.
-
-The programmer may set an ``apparent'' dimension order for a given
-volume.  Specifying an apparent dimension order causes the library to
-transform all coordinates and data as if the data was stored in the
-apparent order. If a set of three volumes which must be processed
-simultaneously have the dimensions x,y,z, z,y,x, and y,z,x
-respectively, it may be useful for a program to treat them each as if
-the data was in z,y,x order.
-
-Transforming the dimensions of a block of data causes the block to be
-restructured in memory after it is read or before it is written.  Obviously
-this restructuring takes time and will affect data throughput.
-
-If the apparent dimension order happens to match the volume's file
-dimension order, no special processing is performed.
-
-For each dimension, a programmer may also specify an apparent
-direction.  This apparent direction may be specified in one of four
-ways:
-\begin{enumerate}
-\item Native file order - The dimension's direction is exactly as it
-appears in the file.
-\item Counter file order - The dimension's direction is opposite the
-file order.
-\item Positive order - The dimension's direction in world coordinates
-is guaranteed to be positive along increasing voxel coordinates.  This
-mode inverts the dimension only if the step size is negative.
-\item Negative order - The dimension's direction in world coordinates
-is guaranteed to be negative along increasing voxel coordinates.  This
-mode inverts the dimension only if the step size is positive.
-\end{enumerate}
 
 \section{Volume Attributes}
 Attributes are small datasets, text or numeric, which are used to describe extra information about 
@@ -660,36 +662,22 @@ int miset_voxel_value_hyperslab(mihandle_t volume,
 These two functions read and write a hyperslab of data from the file, 
 performing no data conversions on the individual voxels.  Coordinate
 transformations may be performed, depending upon the apparent direction
-and order of the volume dimensions and voxels.
+and order of dimensions of the volume dimensions.
 
 \subsection{Hyperslab, real data functions}
 \begin{verbatim}
 int miget_real_value_hyperslab(mihandle_t volume,
                                mitype_t buf_type,
-			       const unsigned long start[],
-			       const unsigned long count[],
-			       void *buf_ptr);
-\end{verbatim}
+                               const unsigned long start[],
+                               const unsigned long count[],
+                               void *buf_ptr);
 
-{\tt miget\_real\_value\_hyperslab} retrieves a selected hyperslab of
-data from the MINC file.  If the file's class is ``real'', each voxel
-is converted by scaling it with the stored image minimum and maximum
-values.  If the file's class is not ``real'', no conversion is performed.
-
-\begin{verbatim}
 int miset_real_value_hyperslab(mihandle_t volume,
                                mitype_t buf_type,
-			       const unsigned long start[],
-			       const unsigned long count[],
-			       const void *buf_ptr);
-\end{verbatim}
+                               const unsigned long start[],
+                               const unsigned long count[],
+                               const void *buf_ptr);
 
-{\tt miset\_real\_value\_hyperslab} saves a selected hyperslab of data
-to the MINC file.  If the file's class is ``real'', each voxel is
-converted by scaling it with the stored image minimum and maximum
-values.  If the file's class is not ``real'', no conversion is performed.
-
-\begin{verbatim}
 int miget_hyperslab_normalized(mihandle_t volume, 
                                mitype_t buffer_data_type,
                                const unsigned long start[], 
@@ -698,14 +686,6 @@ int miget_hyperslab_normalized(mihandle_t volume,
                                double max, 
                                void *buffer);
 \end{verbatim}
-
-{\tt miget\_hyperslab\_normalized} reads a hyperslab of data from the file.
-In addition to performing the standard conversions, the data is normalized
-such that the values are mapped into the full range of the specified 
-{\tt buffer\_data\_type}, such that real voxel values less than or equal to 
-{\tt min} will be mapped to the lowest possible value of the data type, and
-real voxel values greater than or equal to {\tt max} will be mapped to the
-largest possible value of the data type.
 
 \section{Volume creation}
 After all the required dimension handles are defined/assigned with their appropriate 
@@ -788,62 +768,5 @@ main() {
 \end{verbatim}
 
 \section{Multiresolution, blocking and compression}
-This section covers the details of several of the advanced features of
-the MINC 2 library.
-
-\subsection{Multiresolution}
-
-\subsection{Blocking}
-Blocking, also known as chunking, refers to an alternative method of
-organizing the storage of image data.  Most standard operating systems
-represent a file as a one-dimesional array of eight-bit bytes.  In a
-conventional file, multidimensional data is stored in a simple
-continguous array of values.  Each successive value is related to the
-previous value by an increment of the ``fastest-varying'' dimension of
-the file, which is usually the last dimension.  The first dimension is
-the ``slowest-varying'' dimension of the file.  For example, given a
-three dimensional image with dimensions $X$,$Y$,and $Z$ with lengths
-$L_X$, $L_Y$, and $L_Z$, a the correct storage index of any 
-voxel at position $(x,y,z)$ can be calculated as:
-\begin{equation}
-I = ((x * L_X) + y * L_Y) + z
-\end{equation}
-
-This storage method has the virtue of simplicity, and also
-conveniently mimics the memory organization of arrays in the ``C''
-programming language.  However, it has two major drawbacks.  First, it
-assumes that all of the data is stored in a contiguous block.  This
-reduces flexibility, making it extremely difficult to implement data
-compression, for example, since compression may remove the predictable
-relationship between adjacent data values.  Second, this storage
-method inherently favors input and output which read entire sections
-along the fastest-varying dimension. In the above example, if your
-program wants to read a slice of data which varies in $x$ and $y$ but
-which is at a fixed $z$, it must read through most of the file to
-collect the required data.
-
-In a file with ``blocking'' enabled, data is stored in a more complex
-fashion.  A block with the same dimensionality as the overall file is
-defined, and each block contains a fixed-size chunk of the overall data.
-For example, if a file has the overall dimensionality of $X = Y = Z = 100$,
-and a block size of $10$, then the file's data will be grouped into 1000 blocks
-of data, each holding 1000 values each.  The ``first'' block contains all 
-data points for $0 \le X < 10$, $0 \le Y < 10$, and $0 \le Z < 10$.  Within
-a block, the storage layout is the same as for the contiguous case described
-above.
-
-To complicate matters, the file may contain some sort of translation
-table which defines the physical storage location of each of these
-blocks, so that blocks may not be stored in a specific order.
-
-The advantage of a block-structured file is that in freeing the system from
-a strictly-ordered storage arrangement, it becomes possible for individual
-blocks to vary in location and size.  If a compression algorithm is applied,
-some blocks will prove highly compressible and thus will be quite small, 
-whereas relatively uncompressible blocks will be relatively large.  In the
-case of a sparse array, it may be possible to avoid allocating space for 
-those blocks which consist of only the default value.
-
-\subsection{Compression}
 \end{document}
 
