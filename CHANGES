@@ -1,3 +1,7 @@
+Wed Apr 22 16:23:06 EDT 1998
+   - Fixed a bug in fortran test program minc_ftest.f in which an 
+     insufficient number of arguments were being passed to miclos.
+
 Mon Mar 23 15:17:49 EST 1998
    - Moved some functions in the acr-nema library from one file to another.
 
