@@ -567,7 +567,7 @@ public  Status  output_string(
 {
     Status   status;
 
-    if( fprintf( file, "%s", str ) > 0 )
+    if( fprintf( file, "%s", str ) == strlen(str) )
         status = OK;
     else
     {
@@ -625,7 +625,7 @@ public  Status  input_string(
         }
     }
 
-    if( ch == '\n' )
+    if( termination_char != '\n' && ch == '\n' )
         (void) ungetc( ch, file );
 
     str[i] = (char) 0;
@@ -1681,36 +1681,29 @@ public  Status  io_ints(
 
     if( io_flag == READ_FILE )
     {
-        ALLOC( status, *ints, n );
+        ALLOC( *ints, n );
     }
 
-    if( status == OK )
+    if( format == ASCII_FORMAT )
     {
-        if( format == ASCII_FORMAT )
+        for_less( i, 0, n )
         {
-            for_less( i, 0, n )
+            status = io_int( file, io_flag, format, &(*ints)[i] );
+
+            if( status == OK )
             {
-                status = io_int( file, io_flag, format, &(*ints)[i] );
-
-                if( status == OK )
-                {
-                    if( i == n - 1 || (i+1) % INTS_PER_LINE == 0 )
-                    {
-                        status = io_newline( file, io_flag, format );
-                    }
-                }
-
-                if( status == ERROR )
-                {
-                    break;
-                }
+                if( i == n - 1 || (i+1) % INTS_PER_LINE == 0 )
+                    status = io_newline( file, io_flag, format );
             }
+
+            if( status == ERROR )
+                break;
         }
-        else
-        {
-            status = io_binary_data( file, io_flag, (void *) *ints,
-                                     sizeof((*ints)[0]), n );
-        }
+    }
+    else
+    {
+        status = io_binary_data( file, io_flag, (void *) *ints,
+                                 sizeof((*ints)[0]), n );
     }
 
     return( status );
@@ -1746,32 +1739,29 @@ public  Status  io_unsigned_chars(
     status = OK;
 
     if( io_flag == READ_FILE )
-        ALLOC( status, *unsigned_chars, n );
+        ALLOC( *unsigned_chars, n );
 
-    if( status == OK )
+    if( format == ASCII_FORMAT )
     {
-        if( format == ASCII_FORMAT )
+        for_less( i, 0, n )
         {
-            for_less( i, 0, n )
+            status = io_unsigned_char( file, io_flag, format,
+                                       &(*unsigned_chars)[i] );
+
+            if( status == OK )
             {
-                status = io_unsigned_char( file, io_flag, format,
-                                           &(*unsigned_chars)[i] );
-
-                if( status == OK )
-                {
-                    if( i == n - 1 || (i+1) % INTS_PER_LINE == 0 )
-                        status = io_newline( file, io_flag, format );
-                }
-
-                if( status == ERROR )
-                    break;
+                if( i == n - 1 || (i+1) % INTS_PER_LINE == 0 )
+                    status = io_newline( file, io_flag, format );
             }
+
+            if( status == ERROR )
+                break;
         }
-        else
-        {
-            status = io_binary_data( file, io_flag, (void *) (*unsigned_chars),
-                                     sizeof((*unsigned_chars)[0]), n );
-        }
+    }
+    else
+    {
+        status = io_binary_data( file, io_flag, (void *) (*unsigned_chars),
+                                 sizeof((*unsigned_chars)[0]), n );
     }
 
     return( status );
