@@ -1,3 +1,8 @@
+Mon Apr 23 09:20:36 EDT 2001
+   - Fixed volume_io/Volumes/output_mnc.c to pass cdfid to mivarput* instead
+     of minc_icv id (patch from Steve Robbins). Problems showed up when
+     used NetCDF 3.x
+
 Tue Apr 17 15:00:48 EDT 2001
    - Modified to build with NetCDF 3.x.
      Changed NC_LONG to NC_INT, as well as corresponding longs to ints.
