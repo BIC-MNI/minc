@@ -1,13 +1,16 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : dump_acr_nema.c
-@DESCRIPTION: Program to dump the contents of an acr-nema file.
+@NAME       : extract_acr_nema.c
+@DESCRIPTION: Program to extract an element from an acr-nema file.
 @METHOD     : 
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: extract_acr_nema.c,v $
-@MODIFIED   : Revision 1.2  1993-11-25 10:36:05  neelin
-@MODIFIED   : Added byte-order test and file free.
+@MODIFIED   : Revision 1.3  1994-03-14 16:13:04  neelin
+@MODIFIED   : Changed name in header.
 @MODIFIED   :
+ * Revision 1.2  93/11/25  10:36:05  neelin
+ * Added byte-order test and file free.
+ * 
  * Revision 1.1  93/11/24  11:25:23  neelin
  * Initial revision
  * 
