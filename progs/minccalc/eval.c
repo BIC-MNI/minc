@@ -4,6 +4,16 @@
 #include <math.h>
 #include "node.h"
 
+#ifndef TRUE
+#  define TRUE 1
+#endif
+
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#define INVALID_VALUE -DBL_MAX
+
 scalar_t   eval_index(node_t, vector_t, scalar_t);
 scalar_t   eval_sum(node_t, vector_t);
 vector_t   eval_vector(node_t, sym_t);
@@ -26,36 +36,96 @@ void show_error(int pos, const char *msg){
             break;
          if (*c == '\t') fprintf(stderr, "\t");
          else          fprintf(stderr, " ");
-         }
-      fprintf(stderr, "^\n");
       }
+      fprintf(stderr, "^\n");
+   }
    fprintf(stderr, "%s\n", msg);
    exit(1);
-   }
+}
 
 /* Try to evaluate an expression in a scalar context */
 scalar_t eval_scalar(node_t n, sym_t sym){
    vector_t v;
    scalar_t s;
    sym_t y;
+   scalar_t vals[3];
+   int found_invalid;
+   int iarg;
+
+   /* Check special case where all arguments are scalar and we can test
+      them in a general way */
+   if (n->flags |= ALLARGS_SCALAR) {
+
+      /* Check that we don't have too many arguments */
+      if (n->numargs > (int) sizeof(vals)/sizeof(vals[0])) {
+         eval_error(n, "Internal error: too many arguments");
+      }
+
+      /* Evaluate each argument and save the result, checking for invalid
+         values. */
+      found_invalid = FALSE;
+      for (iarg=0; iarg < n->numargs; iarg++) {
+         vals[iarg] = eval_scalar(n->expr[iarg], sym);
+         if (vals[iarg] == INVALID_VALUE) {
+            found_invalid = TRUE;
+         }
+      }
+
+      /* Check for an invalid value. If we are testing for them, 
+         return 1.0, otherwise return an invalid value. */
+      if (found_invalid) {
+         return ( (n->type == NODETYPE_ISNAN) ? 1.0 : INVALID_VALUE);
+      }
+
+      /* Do the operation */
+      switch (n->type) {
+      case NODETYPE_ADD:
+         return vals[0] + vals[1];
+   
+      case NODETYPE_SUB:
+         return vals[0] - vals[1];
+   
+      case NODETYPE_MUL:
+         return vals[0] * vals[1];
+   
+      case NODETYPE_DIV:
+         return vals[0] / vals[1];
+   
+      case NODETYPE_LT:
+         return vals[0] < vals[1];
+
+      case NODETYPE_LE:
+         return vals[0] <= vals[1];
+
+      case NODETYPE_GT:
+         return vals[0] > vals[1];
+
+      case NODETYPE_GE:
+         return vals[0] >= vals[1];
+
+      case NODETYPE_EQ:
+         return vals[0] == vals[1];
+
+      case NODETYPE_NE:
+         return vals[0] != vals[1];
+
+      case NODETYPE_NOT:
+         return ( ! (int) vals[0] );
+
+      case NODETYPE_ISNAN:
+         return 0.0;      /* We only get here if the value is valid */
+
+      case NODETYPE_EXP:
+         return pow(vals[0], vals[1]);
+
+      }  /* switch on type */
+
+   } /* If all args are scalar */
+
+   /* If we get here then we are not doing a simple scalar operation
+      and we have to handle invalid values on a case-by-case basis. */
 
    switch (n->type) {
-   case NODETYPE_ADD:
-      return eval_scalar(n->expr[0], sym) + eval_scalar(n->expr[1], sym);
-      
-   case NODETYPE_SUB:
-      return eval_scalar(n->expr[0], sym) - eval_scalar(n->expr[1], sym);
-      
-   case NODETYPE_MUL:
-      return eval_scalar(n->expr[0], sym) * eval_scalar(n->expr[1], sym);
-      
-   case NODETYPE_DIV:
-      return eval_scalar(n->expr[0], sym) / eval_scalar(n->expr[1], sym);
-      
-   case NODETYPE_EXP:
-      return pow(eval_scalar(n->expr[0], sym), 
-            eval_scalar(n->expr[1], sym));
-      
    case NODETYPE_INDEX:
       v = eval_vector(n->expr[0], sym);
       s = eval_index(n, v, eval_scalar(n->expr[1], sym));
@@ -70,7 +140,9 @@ scalar_t eval_scalar(node_t n, sym_t sym){
       
    case NODETYPE_AVG:
       v = eval_vector(n->expr[0], sym);
-      s = eval_sum(n, v) / (scalar_t)v->len;
+      s = eval_sum(n, v);
+      if (s != INVALID_VALUE)
+         s /= (scalar_t)v->len;
       vector_free(v);
       return s;
       
@@ -120,12 +192,17 @@ scalar_t eval_index(node_t n, vector_t v, scalar_t i){
 /* Perform a sum over the arguments */
 scalar_t eval_sum(node_t n, vector_t v){
    int i;
-   scalar_t result;
+   scalar_t result, s;
+   int found_invalid;
 
    result = 0;
-   for (i = 0; i < v->len; i++)
-      result += eval_index(n, v, i);
-   return result;
+   found_invalid = FALSE;
+   for (i = 0; i < v->len; i++) {
+      s = eval_index(n, v, i);
+      if (s == INVALID_VALUE) found_invalid = TRUE;
+      else result += s;
+   }
+   return found_invalid ? INVALID_VALUE : result;
 }
 
 /* Evaluate an expression in a vector context */

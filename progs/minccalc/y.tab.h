@@ -7,6 +7,14 @@
 #define LET 263
 #define NEG 264
 #define LEN 265
+#define ISNAN 266
+#define NOT 267
+#define LT 268
+#define LE 269
+#define GT 270
+#define GE 271
+#define EQ 272
+#define NE 273
 typedef union{
 int		pos;
 node_t 		node;

@@ -36,10 +36,19 @@ enum nodetype {
    NODETYPE_VEC2,
    NODETYPE_GEN,
    NODETYPE_RANGE,
+   NODETYPE_LT,
+   NODETYPE_LE,
+   NODETYPE_GT,
+   NODETYPE_GE,
+   NODETYPE_EQ,
+   NODETYPE_NE,
+   NODETYPE_NOT,
+   NODETYPE_ISNAN,
 };
 
 #define RANGE_EXACT_UPPER   1
 #define RANGE_EXACT_LOWER   2
+#define ALLARGS_SCALAR      4
 
 struct node {
    enum nodetype type;
@@ -48,13 +57,14 @@ struct node {
    int   flags;
    float real;
    int   pos;
+   int   numargs;
 };
 
 ident_t       new_ident(const char *);
 const char    *ident_str(ident_t);
 int           ident_is_scalar(ident_t);
 
-node_t      new_node(void);
+node_t      new_node(int numargs);
 const char *   node_name(node_t);
 node_t      optimize(node_t);
 

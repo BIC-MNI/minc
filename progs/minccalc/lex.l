@@ -13,8 +13,16 @@ avg					setpos(); return AVG;
 sum					setpos(); return SUM;
 let					setpos(); return LET;
 len					setpos(); return LEN;
+isnan             setpos(); return ISNAN;
 in					setpos(); return IN;
 to					setpos(); return TO;
+<              setpos(); return LT;
+<=             setpos(); return LE;
+>              setpos(); return GT;
+>=             setpos(); return GE;
+==             setpos(); return EQ;
+!=             setpos(); return NE;
+!              setpos(); return NOT;
 [a-zA-Z][_a-zA-Z0-9]*		    {
 					setpos();
 					yylval.ident = new_ident(yytext); 

@@ -22,9 +22,11 @@ nodenames[] = {
         { 0, NULL }
 };
 
-node_t new_node(){
+node_t new_node(int numargs){
    node_t n;
    n = malloc(sizeof *n);
+   n->numargs = numargs;
+   n->flags = 0;
    return n;
 }
 
