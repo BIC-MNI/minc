@@ -1,3 +1,4 @@
+INCLUDES = -I$(top_srcdir)/libsrc
 
 LDADD = ../libminc.la
 

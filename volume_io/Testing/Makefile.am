@@ -1,5 +1,11 @@
 # Programming examples and test programs.
 
+INCLUDES = \
+        -I$(top_srcdir)/libsrc \
+        -I$(top_builddir)/volume_io/Include \
+        -I$(top_srcdir)/volume_io/Include \
+        -I$(top_srcdir)/progs/Proglib
+
 LDADD = ../../libvolume_io.la ../../libminc.la
 
 noinst_PROGRAMS = example_modify example_tags example_volume_io

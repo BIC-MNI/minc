@@ -1,5 +1,9 @@
 2003-01-10  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+	* testdir/Makefile.am (INCLUDES): 
+	* volume_io/Testing//Makefile.am (INCLUDES): Set includes for
+	test files.
+
 	* Makefile.am (EXTRA_DIST, dist-hook): Distribute fortran
 	subdirectory, sans the CVS files.
 
