@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.5 1995-07-31 13:44:34 david Exp $";
+static char progress_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/progress.h,v 1.6 1995-09-13 13:24:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -44,6 +44,7 @@ typedef  struct
     int        total_n_dots;
     Real       start_time;
     Real       previous_time;
+    Real       update_rate;
     Real       sum_xy;
     Real       sum_xx;
     STRING     title;

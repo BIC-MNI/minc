@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.7 1995-09-12 17:58:17 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.8 1995-09-13 13:24:47 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -255,13 +255,60 @@ public  void  initialize_volume_cache(
     cache->n_dimensions = n_dims;
     cache->dim_names_set = FALSE;
 
+    for_less( dim, 0, MAX_DIMENSIONS )
+        cache->file_offset[dim] = 0;
+
+    cache->blocks = NULL;
+
+    cache->head = NULL;
+    cache->tail = NULL;
+    cache->minc_file = NULL;
+    cache->input_filename[0] = (char) 0;
+    cache->output_filename[0] = (char) 0;
+    cache->has_been_modified = FALSE;
+    cache->n_blocks = 0;
+}
+
+private  BOOLEAN  cache_is_alloced(
+    volume_cache_struct  *cache )
+{
+    return( cache->blocks != NULL );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_alloc_volume_cache
+@INPUT      : cache
+              volume
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Ensures that the volume cache has been allocated.  This is
+              delayed, i.e., not performed on volume cache initialization,
+              so that block sizes and cache parameters may be set before it
+              is allocated but after a volume cache has been initialized,
+              i.e., a large volume file opened for reading.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+private  void  check_alloc_volume_cache(
+    volume_cache_struct   *cache,
+    Volume                volume )
+{
+    int    dim, n_dims, sizes[MAX_DIMENSIONS], block, total_blocks, block_size;
+
+    if( cache_is_alloced( cache ) )
+        return;
+
+    get_volume_sizes( volume, sizes );
+    n_dims = get_volume_n_dimensions( volume );
+
     get_volume_cache_block_sizes( cache->block_sizes );
 
     for_less( dim, 0, MAX_DIMENSIONS )
-    {
         cache->previous_block_start[dim] = -cache->block_sizes[dim];
-        cache->file_offset[dim] = 0;
-    }
 
     block_size = get_volume_data_type( volume );
 
@@ -282,15 +329,6 @@ public  void  initialize_volume_cache(
 
     for_less( block, 0, total_blocks )
         cache->blocks[block] = NULL;
-
-    cache->head = NULL;
-    cache->tail = NULL;
-    cache->minc_file = NULL;
-    cache->input_filename[0] = (char) 0;
-    cache->output_filename[0] = (char) 0;
-    cache->empty_flag = TRUE;
-    cache->has_been_modified = FALSE;
-    cache->n_blocks = 0;
 
     cache->max_blocks = get_max_bytes_in_cache() / block_size;
 
@@ -408,6 +446,9 @@ private  void  free_cache_blocks(
     int                 block, total_blocks, block_index;
     int                 block_start[MAX_DIMENSIONS];
     cache_block_struct  **this, **next;
+
+    if( !cache_is_alloced( cache ) )
+        return;
 
     /*--- step through linked list, freeing blocks */
 
@@ -1068,6 +1109,8 @@ public  Real  get_cached_volume_voxel(
     if( volume->cache.minc_file == NULL )
         return( get_volume_voxel_min( volume ) );
 
+    check_alloc_volume_cache( &volume->cache, volume );
+
     block = get_cache_block_for_voxel( volume, &x, &y, &z, &t, &v );
 
     GET_MULTIDIM( value, block->array, x, y, z, t, v );
@@ -1107,6 +1150,8 @@ public  void  set_cached_volume_voxel(
 
     if( !volume->cache.has_been_modified )
     {
+        check_alloc_volume_cache( &volume->cache, volume );
+
         open_cache_volume_output_file( &volume->cache, volume );
         volume->cache.has_been_modified = TRUE;
     }

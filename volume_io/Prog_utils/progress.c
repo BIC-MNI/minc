@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.5 1995-07-31 13:44:43 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.6 1995-09-13 13:24:45 david Exp $";
 #endif
 
 #define  FIRST_MESSAGE_THRESHOLD   5.0
@@ -24,7 +24,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progr
 
 #define  LINE_LENGTH               77
 
-#define  UPDATE_RATE               20.0    /* seconds */
+#define  MIN_UPDATE_RATE           20.0    /* seconds */
+#define  UPDATE_RATE_FACTOR        0.05
 
 #define  RATIO_FOR_LINEAR          0.5
 
@@ -78,6 +79,7 @@ public  void  initialize_progress_report(
     progress->last_check_step = 0;
     progress->next_check_step = 1;
     progress->check_every = 1;
+    progress->update_rate = MIN_UPDATE_RATE;
     progress->sum_xy = 0.0;
     progress->sum_xx = 0.0;
     progress->n_dots_so_far = 0;
@@ -98,8 +100,9 @@ public  void  initialize_progress_report(
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
-@CREATED    :                      David MacDonald
-@MODIFIED   : 
+@CREATED    :                 David MacDonald
+@MODIFIED   : Sep.  1, 1995   D. MacDonald - changed update rate to be relative
+                                             to time so far
 ---------------------------------------------------------------------------- */
 
 public  void  update_progress_report(
@@ -163,12 +166,17 @@ public  void  update_progress_report(
 
             progress->one_line_flag = FALSE;
 
-            if( current_time - progress->previous_time >= UPDATE_RATE )
+            if( current_time - progress->previous_time >= progress->update_rate)
             {
                 show_multi_line_progress( progress, current_step, time_so_far,
                                           est_total_time );
                 progress->first_msg_displayed = TRUE;
                 progress->previous_time = current_time;
+
+                progress->update_rate = (current_time - progress->start_time) *
+                                        UPDATE_RATE_FACTOR;
+                if( progress->update_rate < MIN_UPDATE_RATE )
+                    progress->update_rate = MIN_UPDATE_RATE;
             }
         }
     }

@@ -17,9 +17,9 @@ private  int  compute_voxel(
 #define  CACHE_SIZE       1000000000
 #endif
 
-#define  X_SIZE  150
-#define  Y_SIZE  150
-#define  Z_SIZE  150
+#define  X_SIZE  200
+#define  Y_SIZE  200
+#define  Z_SIZE  200
 
 int  main(
     int   argc,

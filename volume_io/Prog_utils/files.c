@@ -18,7 +18,7 @@
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.26 1995-07-31 13:44:40 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.27 1995-09-13 13:24:44 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( char [] );
@@ -76,6 +76,79 @@ public  BOOLEAN  file_exists(
         exists = FALSE;
 
     return( exists );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_clobber_file
+@INPUT      : filename
+@OUTPUT     : 
+@RETURNS    : TRUE if can write file
+@DESCRIPTION: Checks if the file exists.  If so, asks the user for permission
+              to overwrite the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  BOOLEAN  check_clobber_file(
+    char   filename[] )
+{
+    char     ch;
+    BOOLEAN  okay;
+
+    okay = TRUE;
+
+    if( file_exists( filename ) )
+    {
+        print( "File exists, do you wish to overwrite (y or n): " );
+        while( input_character( stdin, &ch ) == OK && ch != 'y' && ch != 'n' &&
+               ch != 'N' && ch != 'Y' )
+        {
+            if( ch == '\n' )
+                print( "  Please type y or n: " );
+        }
+
+        (void) input_newline( stdin );
+
+        okay = (ch == 'y' || ch == 'Y');
+    }
+
+    return( okay );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : check_clobber_file_default_suffix
+@INPUT      : filename
+              default_suffix
+@OUTPUT     : 
+@RETURNS    : TRUE if can write file
+@DESCRIPTION: Checks if the file exists (adding the default suffix if
+              necessary).  If the file exists, asks the user for permission
+              to overwrite the file.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Sep. 1, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  BOOLEAN  check_clobber_file_default_suffix(
+    char   filename[],
+    char   default_suffix[] )
+{
+    STRING   expanded;
+
+    expand_filename( filename, expanded );
+
+    if( has_no_extension( expanded ) )
+    {
+        (void) strcat( expanded, "." );
+        (void) strcat( expanded, default_suffix );
+    }
+
+    return( check_clobber_file( filename ) );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

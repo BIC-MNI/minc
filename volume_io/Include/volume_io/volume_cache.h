@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.2 1995-08-21 14:04:56 david Exp $";
+static char volume_cache_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.3 1995-09-13 13:24:43 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -54,7 +54,6 @@ typedef struct
     int                         previous_block_index;
     BOOLEAN                     dim_names_set;
     STRING                      dimension_names[MAX_DIMENSIONS];
-    BOOLEAN                     empty_flag;
     BOOLEAN                     has_been_modified;
     void                        *minc_file;
     int                         n_blocks;
