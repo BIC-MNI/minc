@@ -29,13 +29,17 @@
                  micopy_var_values
                  micopy_all_var_defs
                  micopy_all_var_values
+                 micreate_tempfile
               private :
                  execute_decompress_command
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.7  2001-08-20 13:19:15  neelin
+ * Revision 6.8  2003-03-17 16:15:33  bert
+ * Added micreate_tempfile() to resolve issues with tempfile naming and creation, especially to suppress those annoying GNU linker messages about tempnam() and tmpnam().
+ *
+ * Revision 6.7  2001/08/20 13:19:15  neelin
  * Added function miattget_with_sign to allow the caller to specify the sign
  * of the input attribute since this information is ambiguous. This is
  * necessary for the valid_range attribute which should have the same sign
@@ -132,13 +136,15 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.7 2001-08-20 13:19:15 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.8 2003-03-17 16:15:33 bert Exp $ MINC (MNI)";
 #endif
 
+#include "config.h"             /* From configure */
 #include <minc_private.h>
 #ifdef unix
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>           /* For S_IREAD, S_IWRITE */
 #endif
 
 /* Private functions */
@@ -419,7 +425,7 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
 
    /* Create a temporary file name */
    if (tempfile == NULL) {
-      newfile = tempnam(NULL, NULL);
+      newfile = micreate_tempfile();
    }
    else {
       newfile = strdup(tempfile);
@@ -1522,4 +1528,104 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 
    MI_RETURN(MI_NOERROR);
        
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : micreate_tempfile
+@INPUT      : void
+@OUTPUT     : (none)
+@RETURNS    : Pointer to filename (which must be freed), or NULL if an error
+              occurs.
+@DESCRIPTION: Creates a temporary file (which is initially CLOSED).
+@METHOD     : Unnecessarily convoluted, I suppose... See comments.
+@GLOBALS    : 
+@CALLS      : Standard POSIX/UNIX routines
+@CREATED    : 07-March-2003 by bert@bic.mni.mcgill.ca
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+/* Force P_tmpdir to be something reasonable. */
+#if !defined(P_tmpdir)
+#define P_tmpdir "/var/tmp"
+#endif /* P_tmpdir not defined */
+
+public char *
+micreate_tempfile(void)
+{
+  int tmp_fd;
+  char *tmpfile_ptr;
+
+#if defined (HAVE_MKSTEMP)
+
+  /* Best-case scenario (so far...)
+   * mkstemp() creates a file immediately, minimizing the race
+   * conditions that exist when using the other functions.  These race
+   * conditions can lead to small security holes (and large, annoying
+   * GNU linker messages).
+   *
+   * The only catch is that mkstemp() does not automatically put the 
+   * file in the TMPDIR directory (or some other appropriate place).
+   * So I more-or-less emulate that behavior here.
+   */
+  const char pat_str[] = "/minc-XXXXXX";
+  char *tmpdir_ptr;
+
+  if ((tmpdir_ptr = getenv("TMPDIR")) == NULL) {
+    tmpdir_ptr = P_tmpdir;
+  }
+  tmpfile_ptr = malloc(strlen(tmpdir_ptr) + sizeof (pat_str));
+  if (tmpfile_ptr == NULL) {
+    return (NULL);
+  }
+  strcpy(tmpfile_ptr, tmpdir_ptr);
+  strcat(tmpfile_ptr, pat_str);
+  tmp_fd = mkstemp(tmpfile_ptr); /* Creates the file if possible. */
+
+#elif defined (HAVE_TEMPNAM)
+
+  /* Second-best case.  While not completely avoiding the race condition,
+   * this approach should at least have the nice property of putting the
+   * tempfile in the right directory (on IRIX and Linux, at least - on
+   * some systems tempnam() may not consult the TMPDIR environment variable).
+   */
+  tmpfile_ptr = tempnam(NULL, "minc-");
+  if (tmpfile_ptr == NULL) {
+    return (NULL);
+  }
+  tmp_fd = open(tmpfile_ptr, O_CREAT | O_EXCL | O_RDWR, S_IWRITE | S_IREAD);
+
+#elif defined (HAVE_TMPNAM)
+  /* Worst case.  tmpnam() is apparently the worst of all possible worlds
+   * here.  It doesn't allow any way to force a particular directory,
+   * and it doesn't avoid the race condition.  But volume_io used it for
+   * years, so I see no reason to disallow this case for systems that 
+   * might not define the above two functions (whether any such systems
+   * exist is unclear to me).
+   */
+  tmpfile_ptr = malloc(L_tmpnam + 1);
+  if (tmpfile_ptr == NULL) {
+    return (NULL);
+  }
+  if (tmpnam(tmpfile_ptr) == NULL) {
+    free(tmpfile_ptr);
+    return (NULL);
+  }
+  tmp_fd = open(tmpfile_ptr, O_CREAT | O_EXCL | O_RDWR, S_IWRITE | S_IREAD);
+
+#else
+#error "System defines neither mkstemp(), tempnam(), nor tmpnam()"
+#endif /* Neither HAVE_MKSTEMP, HAVE_TEMPNAM, or HAVE_TMPNAM defined. */
+
+  /* If we get here, tmp_fd should have been opened and the file
+   * created.  Now go ahead and close the file.
+   */
+  if (tmp_fd >= 0) {
+    close(tmp_fd);
+  }
+  else {
+    free(tmpfile_ptr);
+    tmpfile_ptr = NULL;
+  }
+  return (tmpfile_ptr);
 }
