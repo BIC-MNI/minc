@@ -112,13 +112,16 @@ appropriate document (insert reference here).
 
 \subsection{Definitions}
 \begin{itemize}
+\item hyperslab - An N-dimensional block of data.  Known as a
+``hypercube'' if all dimensions are equal.
 \item volume - A MINC file. Volume and file can be used interchangeably
 as it is not common to use volume for more than
 3 dimensions and MINC 2 is N dimensional.
-
-\item opaque datatype - An object orientet concept used for OOP 
-programming in C mainly defined in the internal header files and only 
-used and NOT changed by the user
+\item voxel - Volume element, analogous to ``pixel'' for ``picture
+element''. A single datapoint in a multidimensional image.
+\item opaque datatype - An object oriented concept used to refer
+to datatypes whose implementation details are explicitly hidden from
+the programmer.
 \end{itemize}
 \newpage
 \section{Using the core tools}
@@ -428,7 +431,7 @@ gives the true orientation of the axis. For example, normally the xspace
 dimension should line up with the world x axis, ie. direction cosine = (1,0,0)
 ; however, it is possible to have a direction cosine of (0.9, 0.43589, 0).
 For detailed formulas please refer to APPENDIX A, section 2.1
-\emph{The MINC 2.0 File Format by Robert D. Vincent}.
+\emph{The MINC 2.0 File Format} by Robert D. Vincent.
 
 MINC 2 files can define any number of dimensions. In MINC 2 library, a dimension 
 is represented by an opaque datatype
@@ -520,6 +523,130 @@ and finally to delete an attribute use
                        
 \end{verbatim}
 \section{Reading and writing data}
+Several functions are provided for reading and writing data in a MINC 
+file.
+
+Functions can be divided into four broad classes, according to two 
+sets of criteria.
+
+First, some functions operate on single voxels, and others operate on
+a ``hyperslab'' of data, which may be of any size and dimensionality up to the 
+full file size.
+
+Second, some functions read or write ``raw'' or ``voxel'' data, while others
+operate on ``real'' data.  Real data is data which has been scaled according
+to the image's voxel and real ranges.
+
+In general it is much more efficient to read and write a file in large
+chunks than in individual voxels, so if speed is important to your
+application it is best to avoid use of the single-voxel functions.
+
+\subsection{Details of voxel conversion}
+Conversion from real to voxel data, or from voxel to real data, can
+be expressed by the following relationships:
+
+\begin{equation}
+V(c) = ((R(c) - R_{min}(c)) / (R_{max}(c)-R_{min}(c)) * (V_{max} - V_{min})) + V_{min}
+\end{equation}
+\begin{equation}
+R(c) = ((V(c) - V_{min}) / (V_{min} - V_{max}) * (R_{max}(c) - R_{min}(c)) + R_{min}(c)
+\end{equation}
+
+Where $R(c)$ is the real value of the image at location $c$, and
+$V(c)$ is the voxel value of the image at the same coordinate.  The
+$R_{max}(c)$ and $R_{min}(c)$ values correspond to the maximum and
+minimum real values, which may also be a function the location,
+although at a reduced dimensionality.  The values of $V_{max}$ and
+$V_{min}$ are global to the volume and do not vary with position.
+
+For more information on these scaling values, see the functions:
+\begin{verbatim}
+int miget_volume_valid_range(mihandle_t volume, 
+                             double *valid_max,
+                             double *valid_min);
+
+int miget_slice_range(mihandle_t volume,
+                      const unsigned long location[],
+                      double *slice_max,
+                      double *slice_min);
+                      
+\end{verbatim}
+
+\subsection{Single voxel, voxel data functions}
+\begin{verbatim}
+miget_voxel_value(mihandle_t volume,
+                  const unsigned long location[],
+                  double *voxel_ptr);
+
+miset_voxel_value(mihandle_t volume,
+                  const unsigned long location[],
+                  double voxel);
+\end{verbatim}
+
+These two functions read or write a single voxel, at coordinates given
+by the {\tt location} array.  The length of the {\tt location} array must
+equal the number of dimensions in the volume.  The only transformation
+performed on the data will be a value-preserving change of representation.
+If the actual storage type cannot represent the value passed to the 
+{\tt miset\_voxel\_value()} function, the value stored will be undefined.
+
+\subsection{Single voxel, real data functions}
+\begin{verbatim}
+int miget_real_value(mihandle_t volume,
+                     const unsigned long location[],
+                     double *value_ptr);
+
+int miset_real_value(mihandle_t volume,
+                     const unsigned long location[],
+                     double value);
+\end{verbatim}
+
+These two functions read and write single voxels, while performing the data
+conversions described above.
+
+\subsection{Hyperslab, voxel data functions}
+\begin{verbatim}
+int miget_voxel_value_hyperslab(mihandle_t volume,
+                                mitype_t buf_type,
+                                const unsigned long start[],
+                                const unsigned long count[],
+                                void *buf_ptr);
+
+int miset_voxel_value_hyperslab(mihandle_t volume, 
+                                mitype_t buf_type,
+                                const unsigned long start[],
+                                const unsigned long count[],
+                                const void *buf_ptr);
+\end{verbatim}
+
+These two functions read and write a hyperslab of data from the file, 
+performing no data conversions on the individual voxels.  Coordinate
+transformations may be performed, depending upon the apparent direction
+and order of dimensions of the volume dimensions.
+
+\subsection{Hyperslab, real data functions}
+\begin{verbatim}
+int miget_real_value_hyperslab(mihandle_t volume,
+                               mitype_t buf_type,
+			       const unsigned long start[],
+			       const unsigned long count[],
+			       void *buf_ptr);
+
+int miset_real_value_hyperslab(mihandle_t volume,
+                               mitype_t buf_type,
+			       const unsigned long start[],
+			       const unsigned long count[],
+			       const void *buf_ptr);
+
+int miget_hyperslab_normalized(mihandle_t volume, 
+                               mitype_t buffer_data_type,
+                               const unsigned long start[], 
+                               const unsigned long count[],
+                               double min, 
+                               double max, 
+                               void *buffer);
+\end{verbatim}
+
 \section{Volume creation}
 After all the required dimension handles are defined/assigned with their appropriate 
 class and attribute, the MINC 2.0 file can be created by calling the following:
