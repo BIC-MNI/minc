@@ -533,7 +533,7 @@ sub create_mincfile {
             read(GEDAT, $image_data, $image_data_len);
             close(GEDAT);
             if ($? != 0) {
-                &warn("Error or signal while reading image.\n");
+                warn("Error or signal while reading image.\n");
                 if ($ignore_image_errors) {
                     warn "Using blank image instead.\n";
                     $image_data = pack("x$image_data_len",());
