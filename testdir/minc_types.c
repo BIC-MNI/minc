@@ -55,9 +55,9 @@ main()
          (void) miattputstr(cdf, img, MIsigntype, types[itype].sign);
          img2=ncvardef(cdf, "image2", types[jtype].type, 1, dim);
          (void) miattputstr(cdf, img2, MIsigntype, types[jtype].sign);
-         image[0]=10;
-         image[1]=2*(-FLT_MAX);
-         image[2]=2*FLT_MAX;
+         image[0]=10.0;
+         image[1]=2.0*(-FLT_MAX);
+         image[2]=2.0*FLT_MAX;
          image[3]=3.2;
          image[4]=3.7;
          image[5]=(-3.2);
