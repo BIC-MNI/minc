@@ -124,6 +124,27 @@ public  void  convert_voxel_to_world(
     *z_world = Point_z(world);
 }
 
+public  void  convert_voxel_vector_to_world(
+    volume_struct   *volume,
+    Real            xv_voxel,
+    Real            yv_voxel,
+    Real            zv_voxel,
+    Real            *xv_world,
+    Real            *yv_world,
+    Real            *zv_world )
+{
+    /* transform vector by transpose of inverse transformation */
+    *xv_world = Transform_elem(volume->world_to_voxel_transform,0,0) * xv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,1,0) * yv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,2,0) * zv_voxel;
+    *yv_world = Transform_elem(volume->world_to_voxel_transform,0,1) * xv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,1,1) * yv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,2,1) * zv_voxel;
+    *zv_world = Transform_elem(volume->world_to_voxel_transform,0,2) * xv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,1,2) * yv_voxel+
+                Transform_elem(volume->world_to_voxel_transform,2,2) * zv_voxel;
+}
+
 public  void  convert_world_to_voxel(
     volume_struct   *volume,
     Real            x_world,
@@ -312,7 +333,10 @@ public  Boolean  get_voxel_activity_flag(
     int             y,
     int             z )
 {
-    return( (volume->labels[x][y][z] & ACTIVE_BIT) != 0 );
+    if( volume->labels == (unsigned char ***) NULL )
+        return( TRUE );
+    else
+        return( (volume->labels[x][y][z] & ACTIVE_BIT) != 0 );
 }
 
 public  void  set_voxel_activity_flag(
@@ -435,6 +459,7 @@ public  Boolean   evaluate_volume_in_world(
     Boolean voxel_is_active;
     int     n_inactive;
     int     i, j, k;
+    Real    dx, dy, dz;
     double  u, v, w;
     double  c000, c001, c010, c011, c100, c101, c110, c111;
     double  c00, c01, c10, c11;
@@ -521,9 +546,12 @@ public  Boolean   evaluate_volume_in_world(
         du0 = INTERPOLATE( v, du00, du10 );
         du1 = INTERPOLATE( v, du01, du11 );
 
-        *deriv_x = INTERPOLATE( w, du0, du1 );
-        *deriv_y = INTERPOLATE( w, dv0, dv1 );
-        *deriv_z = (c1 - c0);
+        dx = INTERPOLATE( w, du0, du1 );
+        dy = INTERPOLATE( w, dv0, dv1 );
+        dz = (c1 - c0);
+
+        convert_voxel_vector_to_world( volume, dx, dy, dz,
+                                       deriv_x, deriv_y, deriv_z );
     }
 
     if( n_inactive == 0 )
