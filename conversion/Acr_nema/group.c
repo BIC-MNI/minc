@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.5  2001-11-08 14:17:05  neelin
+ * Revision 6.6  2002-12-08 22:31:34  neelin
+ * When a last fragment is received, the dicom watchpoint is only updated when the next read happens, so the peek ahead will fail after the watchpoint test in acr_input_group_with_max.
+ *
+ * Revision 6.5  2001/11/08 14:17:05  neelin
  * Added acr_test_dicom_file to allow reading of DICOM part 10 format
  * files. This function also calls acr_test_byte_order to set up the stream
  * properly and can be used as a direct replacement for that function.
@@ -835,6 +838,8 @@ private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group,
       /* Look ahead at next element */
       status = acr_peek_at_next_element_id(afp, &next_group_id, &element_id);
       if ((status != ACR_OK) || (next_group_id != group_id)) {
+         if ( status == ACR_REACHED_WATCHPOINT )
+            status = ACR_OK;
          get_more_elements = FALSE;
          break;
       }
