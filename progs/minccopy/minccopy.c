@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.2 1993-07-13 13:26:06 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 1.3 1993-07-13 15:22:12 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
       (void) fprintf(stderr, 
   "%s: Input and output datatypes must be the same for exact pixel copies.\n",
                      argv[0]);
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
    }
 
    /* Check number of dimensions */
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
       (void) fprintf(stderr, 
   "%s: Input and output files have different number of image dimensions.\n",
                      argv[0]);
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
    }
 
    /* Set input file start, count and end vectors for reading a slice
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
          (void) fprintf(stderr, 
             "%s: Input and output files have different image dimensions\n",
                         argv[0]);
-         return EXIT_FAILURE;
+         exit(EXIT_FAILURE);
       }
    }
    (void) miset_coords(ndims, (long) 0, start);
@@ -166,6 +166,6 @@ int main(int argc, char *argv[])
       (void) miicv_free(inicv);
    }
 
-   return EXIT_SUCCESS;
+   exit(EXIT_SUCCESS);
 }
 
