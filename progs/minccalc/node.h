@@ -11,7 +11,7 @@ typedef struct scalar  *scalar_t;
 typedef struct vector  *vector_t;
 typedef struct sym     *sym_t;
 
-#define SCALAR_ROUND(s)   (floorf(s + 0.5))
+#define SCALAR_ROUND(s)   (floor(s + 0.5))
 
 struct scalar {
    int      width;
