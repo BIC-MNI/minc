@@ -611,7 +611,7 @@ sub create_mincfile {
                     &cleanup_and_die("Quitting.\n", $?);
                 }
             }
-            if (length($image_data) != $image_data_len) {
+            if (length($image_data) < $image_data_len) {
                 warn "Error reading image from \"$cur_file\"\n";
                 if ($ignore_image_errors) {
                     warn "Using blank image instead.\n";
@@ -621,6 +621,10 @@ sub create_mincfile {
                     close(MINC);
                     return;
                 }
+            }
+            elsif (length($image_data) > $image_data_len) {
+               warn "More image data than expected - truncating.\n";
+               $image_data = substr($image_data, 0, $image_data_len);
             }
         }
 
