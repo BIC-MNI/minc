@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.h,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
+@MODIFIED   : Added ability to convert gyrocom images to dicom images.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.1  1997/09/11  13:09:40  neelin
  * Added more complicated syntax for project files so that different things
  * can be done to the data. The old syntax is still supported.
@@ -159,6 +162,8 @@ typedef struct {
          char hostname[SHORT_LINE];
          char port[SHORT_LINE];
          char AEtitle[SHORT_LINE];
+         Acr_File *afpin;
+         Acr_File *afpout;
       } dicom;
 
    } info;

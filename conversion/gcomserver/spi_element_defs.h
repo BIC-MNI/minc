@@ -108,6 +108,7 @@ GLOBAL_ELEMENT(ACR_Priority                  , 0x0000, 0x0700, US);
 GLOBAL_ELEMENT(ACR_Dataset_type              , 0x0000, 0x0800, US);
 GLOBAL_ELEMENT(ACR_Status                    , 0x0000, 0x0900, US);
 GLOBAL_ELEMENT(ACR_Affected_SOP_instance_UID , 0x0000, 0x1000, UI);
+
 GLOBAL_ELEMENT(ACR_Data_set_type             , 0x0008, 0x0040, US);
 GLOBAL_ELEMENT(ACR_Data_set_subtype          , 0x0008, 0x0041, LO);
 GLOBAL_ELEMENT(ACR_Patient_name              , 0x0010, 0x0010, PN);
@@ -115,7 +116,6 @@ GLOBAL_ELEMENT(ACR_Study                     , 0x0020, 0x0010, SH);
 GLOBAL_ELEMENT(ACR_Acquisition               , 0x0020, 0x0012, IS);
 GLOBAL_ELEMENT(ACR_Image                     , 0x0020, 0x0013, IS);
 GLOBAL_ELEMENT(ACR_Image_location            , 0x0028, 0x0200, US);
-
 GLOBAL_ELEMENT(ACR_Study_date            , 0x0008, 0x0020, DA);
 GLOBAL_ELEMENT(ACR_Study_time            , 0x0008, 0x0030, TM);
 GLOBAL_ELEMENT(ACR_Modality              , 0x0008, 0x0060, CS);
@@ -148,6 +148,7 @@ GLOBAL_ELEMENT(ACR_Bits_allocated        , 0x0028, 0x0100, US);
 GLOBAL_ELEMENT(ACR_Bits_stored           , 0x0028, 0x0101, US);
 GLOBAL_ELEMENT(ACR_Smallest_pixel_value  , 0x0028, 0x0104, US);
 GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0105, US);
+GLOBAL_ELEMENT(ACR_Pixel_data            , 0x7fe0, 0x0010, OW);
 
 /* Element id's for SPI */
 GLOBAL_ELEMENT(SPI_Recognition_code, 0x0001, 0x0010, LO);

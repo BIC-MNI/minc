@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
+@MODIFIED   : Added ability to convert gyrocom images to dicom images.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.1  1997/09/11  13:09:40  neelin
  * Added more complicated syntax for project files so that different things
  * can be done to the data. The old syntax is still supported.
@@ -206,6 +209,7 @@ private Acr_Group spi_reply(Acr_Message input_message)
 @INPUT      : input_message
 @OUTPUT     : num_files - number of files needed
               project_name - name to use for project file
+              project_info
 @RETURNS    : output_message
 @DESCRIPTION: Responds to GCBEGINq message
 @METHOD     : 
@@ -215,11 +219,12 @@ private Acr_Group spi_reply(Acr_Message input_message)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
-                                 char **project_name)
+                                 char **project_name, 
+                                 Project_File_Info *project_info)
 {
    Acr_Group group, group_list;
    Acr_Element element;
-   char project_option_string[512];
+   char operator_string[512];
    void *ptr;
    int index;
 
@@ -281,10 +286,41 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
 
    /* Check that the project file is okay - if not get a string listing 
       possible project names and send it back */
-   if (read_project_file(*project_name, NULL)) {
+   operator_string[0] = '\0';
+   if (read_project_file(*project_name, project_info)) {
 
       /* Print an error message */
       (void) fprintf(stderr, "Unknown project \"%s\"\n", *project_name);
+
+      /* Set a message for the operator */
+      (void) sprintf(operator_string, 
+                     "Unknown volume, try remote DOR volume: ");
+      index = strlen(operator_string);
+      get_project_option_string(&operator_string[index],
+                                sizeof(operator_string) - index);
+
+   }
+
+   /* Check for a dicom-type project */
+   else if (project_info->type == PROJECT_DICOM) {
+
+      /* Make the dicom connection */
+      if (!acr_open_dicom_connection(project_info->info.dicom.hostname,
+                                     project_info->info.dicom.port,
+                                     project_info->info.dicom.AEtitle,
+                                     "GCOMTODICOM",
+                                     ACR_MR_IMAGE_STORAGE_UID,
+                                     ACR_IMPLICIT_VR_LITTLE_END_UID,
+                                     &project_info->info.dicom.afpin,
+                                     &project_info->info.dicom.afpout)) {
+         (void) sprintf(operator_string, "Unable to connect to host %s",
+                        project_info->info.dicom.hostname);
+      }
+
+   }
+
+   /* Handle any error */
+   if (operator_string[0] != '\0') {
 
       /* Set the project name to NULL as a signal to the caller */
       FREE(*project_name);
@@ -303,22 +339,17 @@ public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
       }
 
       /* Set a message for the operator */
-      (void) sprintf(project_option_string, 
-                     "Unknown volume, try remote DOR volume: ");
-      index = strlen(project_option_string);
-      get_project_option_string(&project_option_string[index],
-                                sizeof(project_option_string) - index);
-      index = strlen(project_option_string);
+      index = strlen(operator_string);
       if ((index % 2) != 0) {
-         project_option_string[index] = ' ';
-         project_option_string[index+1] = '\0';
+         operator_string[index] = ' ';
+         operator_string[index+1] = '\0';
       }
       element = acr_find_group_element(group_list, SPI_Operator_text);
       if (element != NULL) {
          ptr = acr_get_element_data(element);
          if (ptr != NULL) FREE(ptr);
-         acr_set_element_data(element, strlen(project_option_string),
-                              strdup(project_option_string));
+         acr_set_element_data(element, strlen(operator_string),
+                              strdup(operator_string));
       }
    }
 

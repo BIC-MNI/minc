@@ -4,7 +4,8 @@ public void free_list(int num_files, char **file_list,
 public void open_connection(int argc, char *argv[], 
                             Acr_File **afpin, Acr_File **afpout);
 public Acr_Message gcbegin_reply(Acr_Message input_message, int *num_files,
-                                 char **project_name);
+                                 char **project_name, 
+                                 Project_File_Info *project_info);
 public Acr_Message ready_reply(Acr_Message input_message);
 public Acr_Message send_reply(Acr_Message input_message);
 public Acr_Message gcend_reply(Acr_Message input_message);
@@ -66,3 +67,4 @@ public int read_project_file(char *project_name,
                              Project_File_Info *project_info);
 public void get_project_option_string(char *project_option_string,
                                       int maxlen_project_option);
+public void convert_to_dicom(Acr_Group group_list);

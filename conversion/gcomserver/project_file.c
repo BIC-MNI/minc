@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : $Log: project_file.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
+@MODIFIED   : Added ability to convert gyrocom images to dicom images.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.1  1997/09/11  13:09:40  neelin
  * Added more complicated syntax for project files so that different things
  * can be done to the data. The old syntax is still supported.
@@ -212,6 +215,8 @@ public int read_project_file(char *project_name,
                   project_info->info.dicom.hostname[0] = '\0';
                   project_info->info.dicom.port[0] = '\0';
                   project_info->info.dicom.AEtitle[0] = '\0';
+                  project_info->info.dicom.afpin = NULL;
+                  project_info->info.dicom.afpout = NULL;
                }
                else {
                   error = "Unknown project type";

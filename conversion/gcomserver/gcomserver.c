@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:23:50  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1997-09-12 23:13:28  neelin
+@MODIFIED   : Added ability to convert gyrocom images to dicom images.
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:23:50  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:24:50  neelin
  * Release of minc version 0.5
  *
@@ -102,7 +105,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.0 1997-09-12 13:23:50 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.1 1997-09-12 23:13:28 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -161,6 +164,7 @@ int main(int argc, char *argv[])
    char last_file_name[256];
    char *project_name = NULL;
    char logfilename[256];
+   Project_File_Info project_info;
 
    /* Create minc history string */
    {
@@ -255,21 +259,24 @@ int main(int argc, char *argv[])
                break;
             }
             output_message = gcbegin_reply(input_message, &num_files,
-                                           &project_name);
+                                           &project_name, &project_info);
             if (project_name == NULL) {
                num_files = 0;
                break;
             }
+
             file_list = MALLOC((size_t) num_files * sizeof(*file_list));
             for (cur_file=0; cur_file < num_files; cur_file++) {
                file_list[cur_file] = NULL;
             }
             file_info_list = MALLOC(num_files * sizeof(*file_info_list));
             cur_file = -1;
-            state = WAITING_FOR_OBJECT;
             if (Do_logging >= LOW_LOGGING) {
                (void) fprintf(stderr, "\nCopying a group of files:\n");
             }
+
+            /* Change to next state */
+            state = WAITING_FOR_OBJECT;
             break;
 
             /* Ready */
@@ -308,22 +315,31 @@ int main(int argc, char *argv[])
                state = DISCONNECTING;
                break;
             }
+
             /* Create the output message */
             output_message = gcend_reply(input_message);
             /* Print message */
             if (Do_logging >= LOW_LOGGING) {
                (void) fprintf(stderr, "\nFinished group copy.\n");
             }
+
             /* Do something with the files */
+            if (project_info.type == PROJECT_DIRECTORY) {
 #ifdef DO_INPUT_TRACING
-            /* Disable input tracing */
-            acr_file_disable_trace(afpin);
+               /* Disable input tracing */
+               acr_file_disable_trace(afpin);
 #endif
-            use_the_files(project_name, num_files, file_list, file_info_list);
+               use_the_files(project_name, num_files, file_list, file_info_list);
 #ifdef DO_INPUT_TRACING
-   /* Enable input tracing */
-            acr_file_enable_trace(afpin);
+               /* Enable input tracing */
+               acr_file_enable_trace(afpin);
 #endif
+            }
+            else if (project_info.type == PROJECT_DICOM) {
+               acr_close_dicom_connection(project_info.info.dicom.afpin,
+                                          project_info.info.dicom.afpout);
+            }
+
             /* Remove the temporary files */
             cleanup_files(num_files, file_list);
             free_list(num_files, file_list, file_info_list);
@@ -388,12 +404,38 @@ int main(int argc, char *argv[])
             state = TERMINATING;
             break;
          }
-         save_transferred_object(group_list, 
-                                 file_prefix, &file_list[cur_file],
-                                 &file_info_list[cur_file]);
-         if (Do_logging >= LOW_LOGGING) {
-            (void) fprintf(stderr, "   Copied %s\n", file_list[cur_file]);
+
+         /* Do something with the data */
+         if (project_info.type == PROJECT_DIRECTORY) {
+            save_transferred_object(group_list, 
+                                    file_prefix, &file_list[cur_file],
+                                    &file_info_list[cur_file]);
+            if (Do_logging >= LOW_LOGGING) {
+               (void) fprintf(stderr, "   Copied %s\n", file_list[cur_file]);
+            }
          }
+         else if (project_info.type == PROJECT_DICOM) {
+
+            /* Check that we have image data and send it */
+            if (acr_find_group_element(group_list, ACR_Pixel_data)
+                != NULL) {
+               convert_to_dicom(group_list);
+               if (!acr_send_group_list(project_info.info.dicom.afpin,
+                                        project_info.info.dicom.afpout, 
+                                        group_list,
+                                        ACR_MR_IMAGE_STORAGE_UID)) {
+                  (void) fprintf(stderr, "Error sending dicom image\n");
+                  state = TERMINATING;
+                  break;
+               }
+               if (Do_logging >= LOW_LOGGING) {
+                  (void) fprintf(stderr, ".");
+                  (void) fflush(stderr);
+               }
+            }
+         }
+
+         /* Delete the input data */
          acr_delete_group_list(group_list);
       }
 
