@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.h,v $
-@MODIFIED   : Revision 1.1  1993-11-19 12:50:37  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-22 13:12:55  neelin
+@MODIFIED   : Changed to use new Acr_Element_Id stuff.
 @MODIFIED   :
+ * Revision 1.1  93/11/19  12:50:37  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -29,10 +32,6 @@ typedef struct Acr_Message {
    Acr_Group list_head;
    Acr_Group list_tail;
 } *Acr_Message;
-
-/* Message length group and element id */
-#define ACR_GID_MESSLEN 0
-#define ACR_EID_MESSLEN 1
 
 /* Functions */
 public Acr_Message acr_create_message(void);
