@@ -11,7 +11,7 @@ include $(ROOT)/Makefile_configuration
 PROGS    = minc_ftest
 JACKETS_SRC  = minc_jackets.src
 CDEFINES = -D__STDC__#                        cpp defines
-LDOPT    = -L$(MINC_LIB_DIR) -l$(MINC_LIB) -L/usr/local/lib -lnetcdf -lsun
+LDOPT    = $(MINC_LDOPT:-lc_s=)
 
 # --------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ all: $(PROGS) lint library
 	$(FC) $(FFLAGS) -c $< -o $@
 
 # How to make executables
-$(PROGS) : $$@.o $(JACKETS_OBJ) $(MINC_LIB_DIR)/$(CC_MINC_LIB)
+$(PROGS) : $$@.o $(JACKETS_OBJ) $(CC_MINC_LIB)
 	$(FC) -o $@ $@.o $(JACKETS_OBJ) $(FFLAGS) $(LDOPT)
 
 $(JACKETS_C): $(JACKETS_SRC) \
@@ -57,12 +57,12 @@ $(JACKETS_C): $(JACKETS_SRC) \
 lint: $(JACKETS_LN)
 
 # name of library
-library: $(MINC_LIB_DIR)/$(CC_MINC_LIB)
+library: $(CC_MINC_LIB)
 
 # how to update library
-$(MINC_LIB_DIR)/$(CC_MINC_LIB): $(JACKETS_OBJ)
-	$(AR) $(AR_FLAGS) $(MINC_LIB_DIR)/$(CC_MINC_LIB) $(JACKETS_OBJ)
-	$(RANLIB) $(MINC_LIB_DIR)/$(CC_MINC_LIB)
+$(CC_MINC_LIB): $(JACKETS_OBJ)
+	$(AR) $(AR_FLAGS) $(CC_MINC_LIB) $(JACKETS_OBJ)
+	$(RANLIB) $(CC_MINC_LIB)
 
 
 # Remove all derived files in this directory
