@@ -1,6 +1,7 @@
 
 #include  <def_mni.h>
 #include  <stdlib.h>
+#include  <malloc.h>
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_check.c
@@ -486,6 +487,9 @@ public  int  get_total_memory_alloced( void )
     return( alloc_list.total_memory_allocated );
 }
 
+static  Boolean  checking_enabled;
+static  Boolean  enabled_initialized = FALSE;
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : alloc_checking_enabled
 @INPUT      : 
@@ -505,17 +509,24 @@ private  Boolean  alloc_checking_enabled( void )
 #ifdef NO_DEBUG_ALLOC
     return( FALSE );
 #else
-    static  Boolean  first = TRUE;
-    static  Boolean  enabled;
-
-    if( first )
+    if( !enabled_initialized )
     {
-        enabled = !ENV_EXISTS( "NO_DEBUG_ALLOC" );
-        first = FALSE;
+        set_alloc_checking( !ENV_EXISTS( "NO_DEBUG_ALLOC" ) );
     }
 
-    return( enabled );
+    return( checking_enabled );
 #endif
+}
+
+public  void  set_alloc_checking( Boolean state )
+{
+    enabled_initialized = TRUE;
+    checking_enabled = state;
+}
+
+public  void  set_alloc_debug( Boolean state )
+{
+    mallopt( M_DEBUG, state );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
