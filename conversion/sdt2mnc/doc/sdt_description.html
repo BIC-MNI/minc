@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html><head><!--Converted with LaTeX2HTML 96.1-h (September 30, 1996) by Nikos Drakos (nikos@cbl.leeds.ac.uk), CBLU, University of Leeds --><title>Appendix: Sdt File Format</title>
+
+<meta name="description" content="Appendix: Sdt File Format">
+<meta name="keywords" content="usersGuide">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<link rel="STYLESHEET" href="node57_files/usersGuide.css"></head>
+
+
+<body lang="EN" bgcolor="#ffffff">
+ <a name="tex2html834" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node58.html"><img width="37" height="24" align="bottom" alt="next" src="node57_files/next_motif.gif"></a> <a name="tex2html832" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/usersGuide.html"><img width="26" height="24" align="bottom" alt="up" src="node57_files/up_motif.gif"></a> <a name="tex2html826" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node56.html"><img width="63" height="24" align="bottom" alt="previous" src="node57_files/previous_motif.gif"></a> <a name="tex2html836" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node1.html"><img width="65" height="24" align="bottom" alt="contents" src="node57_files/contents_motif.gif"></a>  <br>
+<b> Next:</b> <a name="tex2html835" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node58.html">Appendix: Changes Version 4.0 </a>
+<b>Up:</b> <a name="tex2html833" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/usersGuide.html">  User's Guide Software </a>
+<b> Previous:</b> <a name="tex2html827" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node56.html">References</a>
+<br> <p>
+</p><h1><a name="SECTION000230000000000000000">Appendix: Sdt File Format</a></h1>
+<a name="apxsdtFmt"> </a>
+<p>
+The sdt file format actually consists of a file pair designated by the
+extensions, ``.sdt'' and ``.spr''.
+</p><p>
+</p><ul>
+{
+} xxxx
+<br><br>
+
+<dt><b>.sdt</b>
+</dt><dd>
+	Contains the <b>S</b>ignal <b>D</b>a<b>T</b>a 
+and consists of only raw binary data.
+<p>
+</p></dd><dt><b>.spr</b>
+</dt><dd>
+	Contains the <b>S</b>ignal <b>P</b>a<b>R</b>ameters 
+	and consists of ASCII attribute:value pairs.
+</dd></ul>
+<p>
+The ``.spr'' file has one ASCII parameter string per line
+(i.e. newline '<img width="6" height="29" align="middle" alt="tex2html_wrap_inline4216" src="node57_files/img95.gif">n' terminated).
+The parameters format consists first of a colon terminated attribute name,
+followed by a newline terminated value.
+</p><p>
+There are three mandatory parameters:
+</p><ul>
+{
+} xxxxxxxxxx
+<br><br>
+
+<dt><b>numDim</b>
+</dt><dd> The number of dimensions for the data.
+</dd><dt><b>dim</b>
+</dt><dd> The number of data points in each dimension.
+</dd><dt><b>dataType</b>
+</dt><dd> The data type.  There are five data types supported 
+as given with their corresponding sizes in Table <a href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node57.html#tbldataTypes">13</a>.
+</dd></ul>
+<p>
+</p><p><a name="2217"> </a><a name="tbldataTypes"> </a><img width="329" height="143" align="bottom" alt="table2177" src="node57_files/img96.gif"><br>
+<strong>Table 13:</strong> Supported Values for the <b>dataType</b> Attribute.<br>
+</p><p>
+</p><p>
+A minimal ``.spr'' example:
+</p><pre><tt> 
+numDim: 		 4
+</tt><p>
+<tt>dim: 		 64 64 27 110
+</tt></p><p>
+<tt>dataType: 		  REAL
+</tt></p><p>
+</p></pre>
+
+<p>
+Optional parameters:
+</p><ul>
+{
+} xxxxxxxxxxxxx
+<br><br>
+
+<dt><b>origin</b>
+</dt><dd> Position of the center of the first voxel.
+One value for each dimension. If the origin is not specified, 
+but the fov is, then the image is assumed to be centered:
+<img width="189" height="36" align="middle" alt="tex2html_wrap_inline4218" src="node57_files/img97.gif">
+
+<p>
+</p></dd><dt><b>fov</b>
+</dt><dd> 
+Field of view: The distance between the outside edges of the
+first and last voxel along each dimension; one value for each dimension.
+	If the fov is not specified it is calculated according to:
+ <i>fov</i> = <i>interval</i> * <i>dim</i> 
+
+<p>
+</p></dd><dt><b>interval</b>
+</dt><dd> 
+	The center to center distance between adjacent voxels along
+	each dimension; one value for each dimension.
+	If the interval is not specified it is calculated according to:
+<i>interval</i> = <i>fov</i> / <i>dim</i>
+
+<p>
+</p></dd><dt><b>displayRange</b>
+</dt><dd> 
+Two values giving the low_value and high_value.
+	Voxel values below the low_value will be displayed as black
+	and voxels with values above the high_value will be displayed
+	as white.  Voxels with values within the display range are
+	displayed with a grey value that is scaled linearly between
+	the low_value and high_value.
+</dd></ul>
+<p>
+A typical stimulate ``.spr'' example:
+</p><p>
+</p><pre><tt> 
+numDim: 		 4
+</tt><p>
+<tt>dim: 		 128 128 20 150
+</tt></p><p>
+<tt>origin: 		 -10.000000 -10.000000 0.000000 0.000000
+</tt></p><p>
+<tt>fov: 		 20.000000 20.000000 2.000000 15.000000
+</tt></p><p>
+<tt>interval: 		 0.156250 0.156250 1.000000 1.000000
+</tt></p><p>
+<tt>dataType: 		 REAL
+</tt></p><p>
+<tt>displayRange: 		 0.000000 347.904358
+</tt></p><p>
+<tt>fidName: 		 stimFid.sdt
+</tt></p><p>
+<tt>sdtOrient: 		 sag
+</tt></p><p>
+</p></pre>
+
+<p>
+</p><hr><a name="tex2html834" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node58.html"><img width="37" height="24" align="bottom" alt="next" src="node57_files/next_motif.gif"></a> <a name="tex2html832" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/usersGuide.html"><img width="26" height="24" align="bottom" alt="up" src="node57_files/up_motif.gif"></a> <a name="tex2html826" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node56.html"><img width="63" height="24" align="bottom" alt="previous" src="node57_files/previous_motif.gif"></a> <a name="tex2html836" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node1.html"><img width="65" height="24" align="bottom" alt="contents" src="node57_files/contents_motif.gif"></a>  <br>
+<b> Next:</b> <a name="tex2html835" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node58.html">Appendix: Changes Version 4.0 </a>
+<b>Up:</b> <a name="tex2html833" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/usersGuide.html">  User's Guide Software </a>
+<b> Previous:</b> <a name="tex2html827" href="http://www.cmrr.umn.edu/stimulate/stimUsersGuide/node56.html">References</a>
+
+</body></html>
