@@ -2071,6 +2071,18 @@ dimensions, which is one if all dimensions are spatial.  If the
 derivative arguments are non-null, then the resulting derivatives are
 placed in the appropriate places.} 
 
+{\bf\begin{verbatim}
+public  void  set_volume_interpolation_tolerance(
+    Real   tolerance )
+\end{verbatim}}
+
+\desc{For speed considerations, if a volume is evaluated at or near a voxel
+centre, then no interpolation is performed, and the voxel value is returned.
+The tolerance defines how close to the voxel centre this occurs, and defaults
+to 0.  Note that if derivatives are desired and the degree of continuity
+specified is 0 or greater, then interpolation will be performed, even when
+within the specified tolerance of the voxel.}
+
 \section{Volume Creation from Scratch}
 
 In some circumstances, it is desirable to create volumes in ways

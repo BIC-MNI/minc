@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.28 1996-01-15 17:37:54 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/evaluate.c,v 1.29 1996-04-11 19:01:29 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -651,6 +651,29 @@ private  void   extract_coefficients(
     }
 }
 
+static  Real   interpolation_tolerance = 0.0;
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_volume_interpolation_tolerance
+@INPUT      : tolerance
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the tolerance which defines how close to a voxel centre we
+              must be in order to just pass back the voxel value, rather than
+              interpolating.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      :  
+@CREATED    : Apr. 11, 1996    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_volume_interpolation_tolerance(
+    Real   tolerance )
+{
+    interpolation_tolerance = tolerance;
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : evaluate_volume
 @INPUT      : volume
@@ -707,7 +730,7 @@ public  int   evaluate_volume(
     int      n_coefs;
     Real     fraction[MAX_DIMENSIONS], bound, *coefs, pos;
     Real     fixed_size_coefs[MAX_COEF_SPACE];
-    BOOLEAN  fully_inside, fully_outside;
+    BOOLEAN  fully_inside, fully_outside, on_grid_point;
 
     n_dims = get_volume_n_dimensions(volume);
 
@@ -743,6 +766,30 @@ public  int   evaluate_volume(
     }
 
     get_volume_sizes( volume, sizes );
+
+    /*--- check if we are near a voxel centre, if so just use nearest neighbour
+          and avoid the expensive interpolation, unless we need derivatives */
+
+    if( interpolation_tolerance > 0.0 &&
+        first_deriv == NULL && second_deriv == NULL )
+    {
+        on_grid_point = TRUE;
+        for_less( d, 0, n_dims )
+        {
+            if( interpolating_dimensions == NULL || interpolating_dimensions[d])
+            {
+                pos = (Real) ROUND( voxel[d] );
+                if( voxel[d] < pos - interpolation_tolerance ||
+                    voxel[d] > pos + interpolation_tolerance )
+                {
+                    on_grid_point = FALSE;
+                    break;
+                }
+            }
+        }
+        if( on_grid_point )
+            degrees_continuity = -1;
+    }
 
     bound = (Real) degrees_continuity / 2.0;
 
