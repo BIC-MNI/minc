@@ -7,7 +7,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.1  1999-10-19 14:45:27  neelin
+ * Revision 6.2  2001-04-02 14:58:09  neelin
+ * Added -keep_real_range option to prevent rescaling of slices on output
+ *
+ * Revision 6.1  1999/10/19 14:45:27  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:21  neelin
@@ -155,6 +158,8 @@ typedef struct {
                                     loop through the data a second time, 
                                     recomputing the slices to normalize
                                     images properly */
+   int keep_real_range;      /* Flag indicating whether we should keep
+                                the real range of the input data or not */
 } File_Info;
 
 typedef struct {
@@ -172,6 +177,7 @@ struct Volume_Data_Struct {
                                 calculation of output image max/min */
    double fillvalue;         /* Value to return when out of bounds */
    double vrange[2];         /* [0]=min, [1]=max */
+   double real_range[2];     /* Real min and max for current volume */
    int size[VOL_NDIMS];      /* Size of each dimension */
    void *data;               /* Pointer to volume data */
    double *scale;            /* Pointer to array of scales for slices */
@@ -213,6 +219,7 @@ typedef struct {
 
 typedef struct {
    int clobber;
+   int keep_real_range;
    nc_type datatype;
    int is_signed;
    double vrange[2];

@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.0 1997-09-12 13:23:21 neelin Rel $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.1 2001-04-02 14:58:10 neelin Exp $
 .\"
 .TH MINCRESAMPLE 1
 
@@ -269,6 +269,16 @@ floating point types.
 specifies the valid range of output voxel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values.
+.P
+.I -keep_real_range:
+Preserve the real minimum and maximum from the input volume, so that
+values are scaled in the same way on output. This is particularly
+useful for resampling label volumes where interpolating intensity
+values does not make sense.
+.P
+.I -nokeep_real_range:
+Recompute the real minimum and maximum for each output slice. This is
+the default.
 
 .SH Handling of undefined (invalid) voxel values
 .P

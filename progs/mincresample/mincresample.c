@@ -11,9 +11,8 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.3  2000-04-05 13:00:32  neelin
- * Fixed bug in use of -fillvalue in which output slices containing only
- * fill values data did not have the correct range calculated.
+ * Revision 6.4  2001-04-02 14:58:09  neelin
+ * Added -keep_real_range option to prevent rescaling of slices on output
  *
  * Revision 6.2  1999/10/19 14:45:27  neelin
  * Fixed Log subsitutions for CVS
@@ -128,7 +127,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.3 2000-04-05 13:00:32 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.4 2001-04-02 14:58:09 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -206,6 +205,7 @@ public void get_arginfo(int argc, char *argv[],
 #endif
    static Arg_Data args={
       FALSE,                  /* Clobber */
+      FALSE,                  /* Keep scale */
       NC_UNSPECIFIED,         /* Flag that type not set */
       INT_MIN,                /* Flag that is_signed has not been set */
       {-DBL_MAX, -DBL_MAX},   /* Flag that range not set */
@@ -348,6 +348,12 @@ public void get_arginfo(int argc, char *argv[],
           "Write unsigned integer data"},
       {"-range", ARGV_FLOAT, (char *) 2, (char *) args.vrange,
           "Valid range for output data"},
+      {"-keep_real_range", ARGV_CONSTANT, (char *) TRUE, 
+          (char *) &args.keep_real_range,
+          "Keep the real scale of the input volume"},
+      {"-nokeep_real_range", ARGV_CONSTANT, (char *) FALSE, 
+          (char *) &args.keep_real_range,
+          "Do not keep the real scale of the data (default)"},
       {"-nofill", ARGV_FUNC, (char *) get_fillvalue, 
           (char *) &args.fillvalue,
           "Use value zero for points outside of input volume"},
@@ -480,7 +486,7 @@ public void get_arginfo(int argc, char *argv[],
    }
    else {
       in_vol->volume->fillvalue = args.fillvalue;
-      in_vol->volume->use_fill = (args.fillvalue != -DBL_MAX);
+      in_vol->volume->use_fill = FALSE;
    }
    in_vol->volume->interpolant = args.interpolant;
 
@@ -557,6 +563,7 @@ public void get_arginfo(int argc, char *argv[],
       out_vol->file->nelements[idim] = in_vol->file->nelements[idim];
       out_vol->file->world_axes[idim] = in_vol->file->world_axes[idim];
    }
+   out_vol->file->keep_real_range = args.keep_real_range;
 
    /* Get space for output slice */
    out_vol->volume = NULL;

@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.1  1999-10-19 14:45:28  neelin
+ * Revision 6.2  2001-04-02 14:58:10  neelin
+ * Added -keep_real_range option to prevent rescaling of slices on output
+ *
+ * Revision 6.1  1999/10/19 14:45:28  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:21  neelin
@@ -77,7 +80,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.1 1999-10-19 14:45:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.2 2001-04-02 14:58:10 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -196,6 +199,12 @@ public void resample_volumes(Program_Flags *program_flags,
          /* Get the slice */
          get_slice(islice, in_vol, out_vol, transformation, 
                    &minimum, &maximum);
+
+         /* Check whether we are keep the input range */
+         if (ofp->keep_real_range) {
+            minimum = in_vol->volume->real_range[0];
+            maximum = in_vol->volume->real_range[1];
+         }
 
          /* Update global max and min */
          if (maximum > valid_range[1]) valid_range[1] = maximum;
@@ -354,6 +363,15 @@ public void load_volume(File_Info *file, long start[], long count[],
 
    }        /* If max/min variables both exist */
 
+   /* Get the real range of this volume (offset is min, scale is max) */
+   volume->real_range[0] = volume->offset[0];
+   volume->real_range[1] = volume->scale[0];
+   for (islice=1; islice < volume->size[SLC_AXIS]; islice++) {
+      if (volume->offset[islice] < volume->real_range[0])
+         volume->real_range[0] = volume->offset[islice];
+      if (volume->scale[islice] > volume->real_range[1])
+         volume->real_range[1] = volume->scale[islice];
+   }
 
    /* Calculate the scale and offset */
    for (islice=0; islice < volume->size[SLC_AXIS]; islice++) {
