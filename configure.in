@@ -121,7 +121,9 @@ AC_SUBST(OS_TYPE)
 #------------------------------------------------------------------------
 AC_CHECK_PROGS(FC, f77)
 AC_MSG_CHECKING(whether to build fortran jackets)
-if test "$OS_TYPE" = "irix" && test "$FC" = "f77" || test "$BUILD_FORTRAN"
+if test "$BUILD_FORTRAN" = "yes" || 
+   ( test "$OS_TYPE" = "irix" && test "$FC" = "f77" &&
+     test "$BUILD_FORTRAN" != "no" )
 then
    FORTRAN_SUBDIR=fortran
    FORTRAN_OBJ='$(ROOT)/$(FORTRAN_SUBDIR)/minc_jackets.o'
