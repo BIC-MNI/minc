@@ -6,11 +6,14 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 2.2  1994-11-21 08:07:59  neelin
-@MODIFIED   : Modified code to properly calculate start from centre locations, then
-@MODIFIED   : changed calculation back to old way because it worked.
-@MODIFIED   : Added a ncsetfill(mincid, NC_NOFILL).
+@MODIFIED   : Revision 2.3  1994-12-07 08:20:22  neelin
+@MODIFIED   : Fixed some lint messages.
 @MODIFIED   :
+ * Revision 2.2  94/11/21  08:07:59  neelin
+ * Modified code to properly calculate start from centre locations, then
+ * changed calculation back to old way because it worked.
+ * Added a ncsetfill(mincid, NC_NOFILL).
+ * 
  * Revision 2.1  94/10/20  13:50:11  neelin
  * Write out direction cosines to support rotated volumes.
  * Store single slices as 1-slice volumes (3D instead of 2D).
@@ -894,7 +897,7 @@ public void get_orientation_info(Orientation orientation,
                                  World_Index *column_world)
 {
    World_Index original_to_rotated[WORLD_NDIMS];
-   World_Index original_axis, rotated_axis;
+   World_Index original_axis;
    static World_Index orientation_axes[NUM_ORIENTATIONS][VOL_NDIMS] = {
       ZCOORD, YCOORD, XCOORD, /* TRANSVERSE */
       XCOORD, ZCOORD, YCOORD, /* SAGITTAL */
@@ -1010,7 +1013,7 @@ public void calculate_slice_start(World_Index slice_world,
                                   double step[WORLD_NDIMS],
                                   double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                   double start[WORLD_NDIMS])
-{
+{   /* ARGSUSED */
    World_Index iworld;
    double offset[WORLD_NDIMS];
 
