@@ -80,7 +80,7 @@ sub read_next_file {
 
     # Constants
     $tape_block_size = 8192;
-    $tape_sleep = 1;
+    $tape_sleep = 2;
 
     # Get next value from list if no tape drive
     if (length($tapedrive) == 0) {
