@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : $Log: convert_to_dicom.c,v $
-@MODIFIED   : Revision 1.1  1997-09-12 23:14:11  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1997-09-17 13:15:54  neelin
+@MODIFIED   : Changes to unpack packed images and to get coordinate directions right.
 @MODIFIED   :
+ * Revision 1.1  1997/09/12  23:14:11  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -20,16 +23,18 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.1 1997-09-12 23:14:11 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.2 1997-09-17 13:15:54 neelin Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 #include <math.h>
 #include <ctype.h>
 #include <time.h>
+#include <minc_def.h>
 #include <acr_nema.h>
 #include <spi_element_defs.h>
 
@@ -60,6 +65,7 @@ DEFINE_ELEMENT(static, ACR_Image_orientation          , 0x0020, 0x0037, DS);
 DEFINE_ELEMENT(static, ACR_Frame_of_reference_UID     , 0x0020, 0x0052, UI);
 
 /* Function prototypes */
+private void convert_image(Acr_Group *group_list);
 private void convert_date(char *string);
 private void convert_time(char *string);
 private void convert_coordinate(double coord[WORLD_NDIMS]);
@@ -204,6 +210,103 @@ public void convert_to_dicom(Acr_Group group_list)
       acr_insert_numeric(&group_list, ACR_Echo_train_length, value);
    }
 
+   /* Fix the image, if necessary */
+   convert_image(&group_list);
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : convert_image
+@INPUT      : group_list
+@OUTPUT     : group_list
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to unpack the image.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : September 16, 1997 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void convert_image(Acr_Group *group_list)
+{
+   /* Define some constants */
+#define PACK_BITS 12
+#define PACK_BYTES 3
+#define PACK_MASK 0x0F
+#define PACK_SHIFT 4
+
+   /* Variables */
+   int bits_alloc, bits_stored, nrows, ncolumns;
+   long imagepix, ipix;
+   Acr_byte_order byte_order;
+   int need_byte_flip;
+   Acr_Element element;
+   unsigned char *packed;
+   unsigned char pixel[2][2];
+   unsigned char temp_byte;
+   unsigned short *image;
+
+   /* Look for image data */
+   element = acr_find_group_element(*group_list, ACR_Pixel_data);
+   if (element == NULL) return;
+
+   /* Get basic image information */
+   bits_alloc = acr_find_short(*group_list, ACR_Bits_allocated, 0);
+   bits_stored = acr_find_short(*group_list, ACR_Bits_stored, 0);
+   nrows = acr_find_short(*group_list, ACR_Rows, 0);
+   ncolumns = acr_find_short(*group_list, ACR_Columns, 0);
+   byte_order = acr_get_element_byte_order(element);
+   imagepix = nrows * ncolumns;
+
+   /* Look for packed data that we know how to unpack */
+   if ((bits_alloc == PACK_BITS) && (bits_stored <= bits_alloc) &&
+       ((imagepix % 2) == 0)) {
+
+      /* Check whether we need to flip bytes */
+      need_byte_flip = acr_need_invert(byte_order);
+
+      /* Get pointer to data */
+      packed = (unsigned char *) acr_get_element_data(element);
+
+      /* Allocate space for new data */
+      image = MALLOC(sizeof(*image) * imagepix);
+
+      /* Loop over pixels, extracting data */
+      for (ipix=0; ipix < imagepix; ipix+=2) {
+
+         pixel[0][0] = packed[0];
+         pixel[0][1] = packed[1] & PACK_MASK;
+         pixel[1][0] = (packed[1] >> PACK_SHIFT) |
+            ((packed[2] & PACK_MASK) << PACK_SHIFT);
+         pixel[1][1] = packed[2] >> PACK_SHIFT;
+         if (need_byte_flip) {
+            temp_byte = pixel[0][0];
+            pixel[0][0] = pixel[0][1];
+            pixel[0][1] = temp_byte;
+            temp_byte = pixel[1][0];
+            pixel[1][0] = pixel[1][1];
+            pixel[1][1] = temp_byte;
+         }
+         image[ipix]   = *((unsigned short *) pixel[0]);
+         image[ipix+1] = *((unsigned short *) pixel[1]);
+         packed += PACK_BYTES;
+
+      }        /* loop over pixels */
+
+      /* Replace the image */
+      element = acr_create_element(ACR_Pixel_data->group_id,
+                                   ACR_Pixel_data->element_id,
+                                   ACR_Pixel_data->vr_code,
+                                   imagepix * sizeof(*image),
+                                   (char *) image);
+      acr_insert_element_into_group_list(group_list, element);
+
+      /* Replace the number of bits allocated */
+      acr_insert_short(group_list, ACR_Bits_allocated, 
+                       (short) (sizeof(short) * CHAR_BIT));
+
+
+   }
 
 }
 
@@ -424,6 +527,8 @@ private void get_direction_cosines(int orientation,
    }
 
 #if 1
+   /* Kludge to handle the fact the the Picker software does not seem
+      to handle rotated volumes properly */
    {
       double biggest;
       int dimused[WORLD_NDIMS];
@@ -489,7 +594,8 @@ private void calculate_image_position(int orientation,
                                       double dircos[WORLD_NDIMS][WORLD_NDIMS],
                                       double position[WORLD_NDIMS])
 {
-   double coord[WORLD_NDIMS];
+   double coord[WORLD_NDIMS], pos_dircos[WORLD_NDIMS][WORLD_NDIMS];
+   double biggest;
    int slice_world, row_world, column_world;
    World_Index iloop, jloop;
 
@@ -513,6 +619,22 @@ private void calculate_image_position(int orientation,
       break;
    }
 
+   /* Work out positive direction cosines */
+   for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
+      biggest = dircos[iloop][0];
+      for (jloop=1; jloop < WORLD_NDIMS; jloop++) {
+         if (fabs(biggest) < fabs(dircos[iloop][jloop])) {
+            biggest = dircos[iloop][jloop];
+         }
+      }
+      for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
+         if (biggest >= 0.0)
+            pos_dircos[iloop][jloop] = dircos[iloop][jloop];
+         else
+            pos_dircos[iloop][jloop] = -dircos[iloop][jloop];
+      }
+   }
+
    /* Calculate position - note that centres are given in rotated frame */
    coord[slice_world] = centre[slice_world];
    coord[row_world] = centre[row_world] - row_fov/2.0;
@@ -522,7 +644,7 @@ private void calculate_image_position(int orientation,
    for (iloop=0; iloop < WORLD_NDIMS; iloop++) {
       position[iloop] = 0.0;
       for (jloop=0; jloop < WORLD_NDIMS; jloop++) {
-         position[iloop] += dircos[jloop][iloop] * coord[jloop];
+         position[iloop] += pos_dircos[jloop][iloop] * coord[jloop];
       }
    }
 
