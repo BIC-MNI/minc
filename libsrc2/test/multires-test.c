@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     if (r < 0) {
         TESTRPT("failed", r);
     }
-  
+
     r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, CX,&dim[0]);
     if (r < 0) {
         TESTRPT("failed", r);
@@ -55,6 +55,8 @@ int main(int argc, char **argv)
     if (r < 0) {
         TESTRPT("failed", r);
     }
+
+    r = miset_volume_valid_range(vol, 100000.0, 0.0);
 
     r = micreate_volume_image(vol);
     if (r < 0) {
