@@ -1,0 +1,26 @@
+                        INSTALLATION
+
+This document describes how to build and install the minc package on
+a UNIX system.
+
+1) Make sure that the netcdf package has been compiled and installed. 
+   Version 2.3.2 is known to work.
+
+2) Copy the appropriate Makefile_machine_specific.<osname> over the file
+   Makefile_machine_specific. Currently there are files for Silicon Graphics
+   machines running Irix 4.x and 5.x (the irix4 file works for both) and
+   for Suns running SunOS (tested on SunOS 4.1.3). Note that the compiler
+   used for building the package must be roughly ANSI-compatible 
+   (prototypes, void, enum, etc.), thus we use gcc for SunOS.
+
+3) Modify the configuration file Makefile_configuration. The fortran jackets
+   work on SGIs but not on SUNs. Note that installation is not a true
+   installation, but simply a copy. I prefer to simply copy the libraries,
+   includes, binaries and man pages into four directories in the 
+   distribution from which they can be installed manually.
+
+4) Type "make" in this directory. This will run some tests after building
+   the package.
+
+5) Type "make install" to copy files into the INSTALL directories.
+
