@@ -263,8 +263,8 @@ private  void  setup_input_mni_as_free_format(
 }
 
 private  Status  input_vax_real(
-    FILE    *file,
-    Real    *real )
+    FILE     *file,
+    float    *real )
 {
     char    *byte_ptr, tmp;
     Status  status;
@@ -316,6 +316,7 @@ private  void  get_mni_scaling(
     Real   *trans_factor )
 {
     Status  status;
+    float   float_scale_factor;
     short   short_trans_factor;
     FILE    *file;
 
@@ -324,7 +325,7 @@ private  void  get_mni_scaling(
     status = set_file_position( file, (long) MNI_BYTE_OFFSET );
 
     if( status == OK )
-        status = input_vax_real( file, scale_factor );
+        status = input_vax_real( file, &float_scale_factor );
 
     if( status == OK )
     {
@@ -335,7 +336,12 @@ private  void  get_mni_scaling(
         status = input_vax_short( file, &short_trans_factor );
 
     if( status == OK )
+    {
+        *scale_factor = (Real) float_scale_factor;
         *trans_factor = (Real) short_trans_factor;
+    }
+
+    print( "Rescaling %g %g\n", *scale_factor, *trans_factor );
 
     status = close_file( file );
 }

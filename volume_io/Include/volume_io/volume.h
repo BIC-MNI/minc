@@ -231,19 +231,29 @@ typedef  volume_struct  *Volume;
 typedef  struct
 {
     Boolean            file_is_being_read;
-    Boolean            end_volume_flag;
-    int                n_volumes_in_file;
-    int                n_file_dimensions;
+
+    /* input and output */
+
     int                cdfid;
     int                icv;
+    int                n_file_dimensions;
+    int                sizes_in_file[MAX_VAR_DIMS];
+    long               indices[MAX_VAR_DIMS];
+
+    /* input only */
+
+    Boolean            end_volume_flag;
+    int                n_volumes_in_file;
     Volume             volume;
 
-    int                sizes_in_file[MAX_VAR_DIMS];
     int                axis_index_in_file[MAX_VAR_DIMS];
     int                valid_file_axes[MAX_DIMENSIONS];
-    long               input_indices[MAX_VAR_DIMS];
 
     int                n_slab_dims;
+
+    /* output only */
+
+    String             dim_names[MAX_VAR_DIMS];
 } minc_file_struct;
 
 typedef  minc_file_struct  *Minc_file;

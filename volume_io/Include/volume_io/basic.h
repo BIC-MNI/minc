@@ -21,8 +21,12 @@
 
 /* --------- define the prefixes to all functions ---------- */
 
+#ifndef  public
 #define  public                /* functions called from outside file */
+#endif
+#ifndef  private
 #define  private   static      /* functions/variables used only within file */
+#endif
 
 /* --------- define  TRUE and FALSE ------------------------ */
 

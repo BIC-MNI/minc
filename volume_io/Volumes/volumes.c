@@ -662,6 +662,7 @@ public  Boolean  voxel_contains_value(
             {
                 GET_VOXEL_3D( value, volume,
                               x + x_offset, y + y_offset, z + z_offset );
+                value = CONVERT_VOXEL_TO_VALUE( volume, value );
 
                 if( value < target_value )
                 {
@@ -1203,6 +1204,15 @@ public  Boolean   evaluate_volume(
         GET_VOXEL_3D( c110, volume, i+1, j+1, k );
         GET_VOXEL_3D( c111, volume, i+1, j+1, k+1 );
 
+        c000 = CONVERT_VOXEL_TO_VALUE( volume, c000 );
+        c001 = CONVERT_VOXEL_TO_VALUE( volume, c001 );
+        c010 = CONVERT_VOXEL_TO_VALUE( volume, c010 );
+        c011 = CONVERT_VOXEL_TO_VALUE( volume, c011 );
+        c100 = CONVERT_VOXEL_TO_VALUE( volume, c100 );
+        c101 = CONVERT_VOXEL_TO_VALUE( volume, c101 );
+        c110 = CONVERT_VOXEL_TO_VALUE( volume, c110 );
+        c111 = CONVERT_VOXEL_TO_VALUE( volume, c111 );
+
         if( !get_voxel_activity_flag( volume, i  , j  , k ) )
             ++n_inactive;
         if( !get_voxel_activity_flag( volume, i  , j  , k+1 ) )
@@ -1237,6 +1247,7 @@ public  Boolean   evaluate_volume(
                         z_voxel >= 0 && z_voxel < nz )
                     {
                         GET_VOXEL_3D( val, volume, x_voxel, y_voxel, z_voxel );
+                        val = CONVERT_VOXEL_TO_VALUE( volume, val );
 
                         if( !get_voxel_activity_flag( volume, x_voxel,
                                                       y_voxel, z_voxel ) )

@@ -1,19 +1,10 @@
 #include  <def_mni.h>
-#include  <def_tag_io.h>
-
-static   const char      COMMENT_CHAR1 = '%';
-static   const char      COMMENT_CHAR2 = '#';
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
-static   const char      *VOLUMES_EQUAL = "Volumes = ";
+static   const char      *VOLUMES_STRING = "Volumes";
+static   const char      *TAG_POINTS_STRING = "Points";
 
-static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
-
-static  void  output_comments( FILE *, char [] );
-
-#define  STRING_LENGTH  213
-
-public  int  output_tag_points(
+public  Status  output_tag_points(
     FILE      *file,
     char      comments[],
     int       n_volumes,
@@ -22,16 +13,17 @@ public  int  output_tag_points(
     double    **tags_volume2,
     char      **labels )
 {
-    int   i, okay;
+    Status   status;
+    int      i;
 
     /* parameter checking */
 
-    okay = 1;
+    status = OK;
 
     if( file == (FILE *) 0 )
     {
         (void) fprintf( stderr, "output_tag_points(): passed NULL FILE ptr.\n");
-        okay = 0;
+        status = ERROR;
     }
 
     if( n_volumes != 1 && n_volumes != 2 )
@@ -39,7 +31,7 @@ public  int  output_tag_points(
         (void) fprintf( stderr, "output_tag_points():" );
         (void) fprintf( stderr, " can only support 1 or 2 volumes;\n" );
         (void) fprintf( stderr, "     you've supplied %d.\n", n_volumes );
-        okay = 0;
+        status = ERROR;
     }
 
     if( n_tag_points < 0 )
@@ -47,18 +39,21 @@ public  int  output_tag_points(
         (void) fprintf( stderr, "output_tag_points():" );
         (void) fprintf( stderr, " n_tag_points must be greater than 0;\n" );
         (void) fprintf( stderr, "     you've supplied %d.\n", n_tag_points );
-        okay = 0;
+        status = ERROR;
     }
 
-    if( !okay )
-        return( 0 );
+    if( status != OK )
+        return( status );
 
     /* okay write the file */
 
     (void) fprintf( file, "%s\n", TAG_FILE_HEADER );
-    (void) fprintf( file, "%s%d\n", VOLUMES_EQUAL, n_volumes );
+    (void) fprintf( file, "%s = %d;\n", VOLUMES_STRING, n_volumes );
     output_comments( file, comments );
     (void) fprintf( file, "\n" );
+    (void) fprintf( file, "\n" );
+
+    (void) fprintf( file, "%s =\n", TAG_POINTS_STRING );
 
     for( i = 0;  i < n_tag_points;  ++i )
     {
@@ -78,118 +73,12 @@ public  int  output_tag_points(
         if( labels != (char **) NULL )
             (void) fprintf( file, " \"%s\"", labels[i] );
 
+        if( i == n_tag_points - 1 )
+            (void) fprintf( file, ";" );
         (void) fprintf( file, "\n" );
     }
 
-    return( 1 );
-}
-
-private  int  line_is_comment(
-    char   line[] )
-{
-    return( line[0] == COMMENT_CHAR1 || line[0] == COMMENT_CHAR2 );
-}
-
-private  int  line_is_blank(
-    char   line[] )
-{
-    int   i, blank;
-
-    blank = 1;
-
-    for( i = 0;  i < strlen(line);  ++i )
-    {
-        if( line[i] != ' ' && line[i] != '\t' && line[i] != '\n' )
-        {
-            blank = 0;
-            break;
-        }
-    }
-
-    return( blank );
-}
-
-private  int  input_a_line(
-    FILE     *file,
-    char     line[] )
-{
-    int   len;
-    char  *ret;
-
-    do
-    {
-        ret = fgets( line, STRING_LENGTH, file );
-    }
-    while( ret != (char *) NULL &&
-           (line_is_comment( line ) || line_is_blank( line )) );
-
-    len = strlen(line);
-    if( len > 0 && line[len-1] == '\n' )
-        line[len-1] = (char) 0;        /* remove the '\n' at the end */
-
-    return( ret != (char *) NULL );
-}
-
-private  int  extract_tag_points(
-    int      n_volumes,
-    char     line[],
-    double   *x1,
-    double   *y1,
-    double   *z1,
-    double   *x2,
-    double   *y2,
-    double   *z2,
-    char     *label )
-{
-    int   i, pos, quoted;
-
-    if( sscanf( line, "%lf %lf %lf %n", x1, y1, z1, &pos ) != 3 )
-        return( 0 );
-
-    line = &line[pos];
-
-    if( n_volumes == 2 )
-    {
-        if( sscanf( line, "%lf %lf %lf %n", x2, y2, z2, &pos ) != 3 )
-            return( 0 );
-
-        line = &line[pos];
-    }
-
-    /* skip leading white space of label */
-
-    pos = 0;
-    while( line[pos] == ' ' || line[pos] == '\t' )
-        ++pos;
-
-    if( line[pos] == '"' )
-    {
-        quoted = 1;
-        ++pos;
-    }
-    else
-        quoted = 0;
-
-    i = 0;   
-
-    while( line[pos] != (char) 0 && (!quoted || line[pos] != '"') )
-    {
-        label[i] = line[pos];
-        ++pos;
-        ++i;
-    }
-
-    label[i] = (char) 0;
-
-    /* remove trailing white space */
-
-    while( i > 0 && (label[i-1] == ' ' || label[i-1] == '\t' ) )
-    {
-        --i;
-        label[i] = (char) 0;
-    }
-
-    return( 1 );
+    return( status );
 }
 
 private  void  add_tag_point(
@@ -269,7 +158,7 @@ public  void  free_tag_points(
         free_labels( labels, n_tag_points );
 }
 
-public  int  input_tag_points(
+public  Status  input_tag_points(
     FILE      *file,
     int       *n_volumes,
     int       *n_tag_points,
@@ -277,51 +166,66 @@ public  int  input_tag_points(
     double    ***tags_volume2,
     char      ***labels )
 {
-    char    line[STRING_LENGTH+1];
+    String  line;
     double  x1, y1, z1, x2, y2, z2;
-    char    label[STRING_LENGTH+1];
+    String  label;
 
     /* parameter checking */
 
     if( file == (FILE *) 0 )
     {
         (void) fprintf( stderr, "input_tag_points(): passed NULL FILE ptr.\n");
-        return( 0 );
+        return( ERROR );
     }
 
     /* okay read the header */
 
-    if( !input_a_line( file, line ) ||
+    if( mni_input_string( file, line, MAX_STRING_LENGTH, 0, 0 ) != OK ||
         strcmp( line, TAG_FILE_HEADER ) != 0 )
     {
         (void) fprintf(stderr, "input_tag_points(): invalid header in file.\n");
-        return( 0 );
+        return( ERROR );
     }
 
     /* now read the number of volumes */
 
-    if( !input_a_line( file, line ) ||
-        strncmp( line, VOLUMES_EQUAL, strlen(VOLUMES_EQUAL) ) != 0 )
+    if( mni_input_keyword_and_equal_sign( file, VOLUMES_STRING ) != OK )
+        return( ERROR );
+
+    if( mni_input_int( file, n_volumes ) != OK )
     {
-        (void) fprintf(stderr, "input_tag_points(): invalid # volumes line.\n");
-        return( 0 );
+        (void) fprintf( stderr,
+                 "input_tag_points(): expected # volumes after %s.\n",
+                 VOLUMES_STRING );
+        return( ERROR );
     }
 
-    (void) sscanf( &line[strlen(VOLUMES_EQUAL)], "%d", n_volumes );
+    if( mni_skip_expected_character( file, ';' ) != OK )
+        return( ERROR );
 
     if( *n_volumes != 1 && *n_volumes != 2 )
     {
         (void) fprintf( stderr, "input_tag_points(): invalid # volumes: %d \n",
                         *n_volumes );
-        return( 0 );
+        return( ERROR );
     }
+
+    /* now read the tag points */
+
+    if( mni_input_keyword_and_equal_sign( file, TAG_POINTS_STRING ) != OK )
+        return( ERROR );
 
     *n_tag_points = 0;
 
-    while( input_a_line( file, line ) )
+    while( mni_input_double( file, &x1 ) == OK )
     {
-        if( !extract_tag_points( *n_volumes, line,
-                                 &x1, &y1, &z1, &x2, &y2, &z2, label ) )
+        if( mni_input_double( file, &y1 ) != OK ||
+            mni_input_double( file, &z1 ) != OK ||
+            (*n_volumes == 2 &&
+             (mni_input_double( file, &y2 ) != OK ||
+              mni_input_double( file, &x2 ) != OK ||
+              mni_input_double( file, &z2 ) != OK)) ||
+            mni_input_string( file, label, MAX_STRING_LENGTH, ' ', ';' ) != OK )
         {
             (void) fprintf( stderr,
                       "input_tag_points(): error reading tag point %d\n",
@@ -329,7 +233,7 @@ public  int  input_tag_points(
 
             free_tag_points( *n_volumes, *n_tag_points, *tags_volume1,
                              *tags_volume2, *labels );
-            return( 0 );
+            return( ERROR );
         }
 
         add_tag_point( tags_volume1, *n_tag_points, x1, y1, z1 );
@@ -343,102 +247,8 @@ public  int  input_tag_points(
         ++(*n_tag_points);
     }
 
-    return( 1 );
-}
+    if( mni_skip_expected_character( file, ';' ) != OK )
+        return( ERROR );
 
-public  int  output_transform(
-    FILE      *file,
-    char      comments[],
-    double    transform[3][4] )
-{
-    int   i;
-
-    /* parameter checking */
-
-    if( file == (FILE *) 0 )
-    {
-        (void) fprintf( stderr, "output_transform(): passed NULL FILE ptr.\n");
-        return( 0 );
-    }
-
-    /* okay write the file */
-
-    (void) fprintf( file, "%s\n", TRANSFORM_FILE_HEADER );
-    output_comments( file, comments );
-    (void) fprintf( file, "\n" );
-
-    for( i = 0;  i < 3;  ++i )
-    {
-        (void) fprintf( file, " %15.8f %15.8f %15.8f %15.8f",
-                              transform[i][0],
-                              transform[i][1],
-                              transform[i][2],
-                              transform[i][3] );
-        (void) fprintf( file, "\n" );
-    }
-
-    return( 1 );
-}
-
-public  int  input_transform(
-    FILE      *file,
-    double    transform[3][4] )
-{
-    int     i;
-    char    line[STRING_LENGTH+1];
-
-    /* parameter checking */
-
-    if( file == (FILE *) 0 )
-    {
-        (void) fprintf( stderr, "input_transform(): passed NULL FILE ptr.\n");
-        return( 0 );
-    }
-
-    /* okay read the header */
-
-    if( !input_a_line( file, line ) ||
-        strcmp( line, TRANSFORM_FILE_HEADER ) != 0 )
-    {
-        (void) fprintf(stderr, "input_transform(): invalid header in file.\n");
-        return( 0 );
-    }
-
-    /* now read the 3 lines of transforms */
-
-    for( i = 0;  i < 3;  ++i )
-    {
-        if( !input_a_line( file, line ) ||
-            sscanf( line, "%lf %lf %lf %lf",
-                    &transform[i][0], &transform[i][1],
-                    &transform[i][2], &transform[i][3] ) != 4 )
-        {
-            (void) fprintf( stderr,
-                      "input_transform(): error reading transform line %d\n",
-                      i + 1 );
-            return( 0 );
-        }
-    }
-
-    return( 1 );
-}
-
-private  void  output_comments(
-    FILE   *file,
-    char   comments[] )
-{
-    int   i, len;
-
-    if( comments != (char *) NULL )
-    {
-        len = strlen( comments );
-
-        (void) fputc( COMMENT_CHAR1, file );
-        for( i = 0;  i < len;  ++i )
-        {
-            (void) fputc( comments[i], file );
-            if( comments[i] == '\n' )
-                (void) fputc( COMMENT_CHAR1, file );
-        }
-    }
+    return( OK );
 }

@@ -675,25 +675,18 @@ public  Status  write_transform_file(
     char       comments[],
     Transform  *transform )
 {
-    Status  status;
-    FILE    *file;
-    int     i, j;
-    double  mni_transform[3][4];
+    Status              status;
+    FILE                *file;
+    General_transform   gen_transform;
 
-    for_less( i, 0, 3 )
-    {
-        for_less( j, 0, 4 )
-        {
-            mni_transform[i][j] = (double) Transform_elem(*transform,i,j);
-        }
-    }
+    create_linear_transform( &gen_transform, transform );
 
     status = open_file_with_default_suffix( filename, "xfm",
                                  WRITE_FILE, ASCII_FORMAT, &file );
 
     if( status == OK )
     {
-        if( !output_transform( file, comments, mni_transform ) )
+        if( !output_transform( file, comments, &gen_transform ) )
             status = ERROR;
 
         (void) close_file( file );
@@ -706,37 +699,23 @@ public  Status  read_transform_file(
     char       filename[],
     Transform  *transform )
 {
-    Status  status;
-    FILE    *file;
-    int     i, j;
-    double  mni_transform[3][4];
+    Status             status;
+    FILE               *file;
+    General_transform  gen_transform;
 
     status = open_file_with_default_suffix( filename, "xfm",
                          READ_FILE, ASCII_FORMAT, &file );
 
     if( status == OK )
     {
-        if( !input_transform( file, mni_transform ) )
+        if( !input_transform( file, &gen_transform ) )
             status = ERROR;
 
         (void) close_file( file );
     }
 
     if( status == OK )
-    {
-        for_less( i, 0, 3 )
-        {
-            for_less( j, 0, 4 )
-            {
-                Transform_elem(*transform,i,j) = mni_transform[i][j];;
-            }
-        }
-
-        Transform_elem(*transform,3,0) = 0.0;
-        Transform_elem(*transform,3,1) = 0.0;
-        Transform_elem(*transform,3,2) = 0.0;
-        Transform_elem(*transform,3,3) = 1.0;
-    }
+        *transform = *get_linear_transform_ptr(&gen_transform);
 
     return( status );
 }
