@@ -41,7 +41,7 @@ public  Minc_file  initialize_minc_input(
     minc_input_options   *options )
 {
     minc_file_struct    *file;
-    int                 img_var, dim_vars[MAX_VAR_DIMS];
+    int                 img_var, dim_vars[MAX_VAR_DIMS], n_vol_dims;
     int                 slab_size, length, prev_sizes[MAX_VAR_DIMS];
     nc_type             prev_nc_type;
     BOOLEAN             different;
@@ -112,10 +112,12 @@ public  Minc_file  initialize_minc_input(
             --file->n_file_dimensions;
     }
 
-    if( file->n_file_dimensions < volume->n_dimensions )
+    n_vol_dims = get_volume_n_dimensions( volume );
+
+    if( file->n_file_dimensions < n_vol_dims )
     {
         print( "Error: MINC file has only %d dims, volume requires %d.\n",
-               file->n_file_dimensions, volume->n_dimensions );
+               file->n_file_dimensions, n_vol_dims );
         (void) miclose( file->cdfid );
         return( (Minc_file) 0 );
     }
@@ -146,7 +148,7 @@ public  Minc_file  initialize_minc_input(
         
         print( "\n" );
         print( "Requested:\n" );
-        for_less( d, 0, volume->n_dimensions )
+        for_less( d, 0, n_vol_dims )
             print( "%d: %s\n", d+1, volume->dimension_names[d] );
 
         print( "\n" );
@@ -156,6 +158,15 @@ public  Minc_file  initialize_minc_input(
 
         (void) miclose( file->cdfid );
         return( (Minc_file) NULL );
+    }
+
+    for_less( d, 0, n_vol_dims )
+        file->to_file_index[d] = INVALID_AXIS;
+
+    for_less( d, 0, file->n_file_dimensions )
+    {
+        if( file->axis_index_in_file[d] != INVALID_AXIS )
+            file->to_file_index[file->axis_index_in_file[d]] = d;
     }
 
     file->n_volumes_in_file = 1;
@@ -431,15 +442,18 @@ public  Minc_file  initialize_minc_input(
 
     file->n_slab_dims = 0;
     slab_size = 1;
+    d = file->n_file_dimensions-1;
     
     do
     {
-        ++file->n_slab_dims;
-        d = file->valid_file_axes[volume->n_dimensions-file->n_slab_dims];
-        slab_size *= file->sizes_in_file[d];
+        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        {
+            ++file->n_slab_dims;
+            slab_size *= file->sizes_in_file[d];
+        }
+        --d;
     }
-    while( file->n_slab_dims < volume->n_dimensions &&
-           slab_size < MIN_SLAB_SIZE );
+    while( d >= 0 && slab_size < MIN_SLAB_SIZE );
 
     if( slab_size > MAX_SLAB_SIZE && file->n_slab_dims > 1 )
     {
@@ -449,7 +463,7 @@ public  Minc_file  initialize_minc_input(
     /* --- decide whether the volume data must be freed (if it changed size) */
 
     different = FALSE;
-    for_less( d, 0, volume->n_dimensions )
+    for_less( d, 0, n_vol_dims )
     {
         if( sizes[d] != prev_sizes[d] )
             different = TRUE;
@@ -519,6 +533,78 @@ public  Status  close_minc_input(
     return( OK );
 }
 
+public  void  copy_volumes_reordered(
+    Volume      dest,
+    int         dest_ind[],
+    Volume      src,
+    int         src_ind[],
+    int         to_dest_index[] )
+{
+    int     d, n_src_dims, n_dest_dims, ind[MAX_DIMENSIONS];
+    int     type_size, src_sizes[MAX_DIMENSIONS];
+    int     dest_offset[MAX_DIMENSIONS], src_offset[MAX_DIMENSIONS];
+    int     dest_sizes[MAX_DIMENSIONS], dest_index;
+    char    *dest_ptr, *src_ptr;
+    BOOLEAN done;
+
+    type_size = get_type_size( get_volume_data_type(dest) );
+
+    /*--- initialize dest */
+
+    n_dest_dims = get_volume_n_dimensions( dest );
+    get_volume_sizes( dest, dest_sizes );
+    GET_VOXEL_PTR( dest_ptr, dest, dest_ind[0], dest_ind[1], dest_ind[2],
+                   dest_ind[3], dest_ind[4] );
+
+    dest_offset[n_dest_dims-1] = type_size;
+    for( d = n_dest_dims-2;  d >= 0;  --d )
+        dest_offset[d] = dest_offset[d+1] * dest_sizes[d+1];
+
+    /*--- initialize src */
+
+    n_src_dims = get_volume_n_dimensions( src );
+    get_volume_sizes( src, src_sizes );
+    GET_VOXEL_PTR( src_ptr, src, src_ind[0], src_ind[1], src_ind[2],
+                   src_ind[3], src_ind[4] );
+
+    src_offset[n_src_dims-1] = type_size;
+    for( d = n_src_dims-2;  d >= 0;  --d )
+        src_offset[d] = src_offset[d+1] * src_sizes[d+1];
+
+    for_less( d, 0, n_src_dims )
+        ind[d] = src_ind[d];
+
+    done = FALSE;
+    while( !done )
+    {
+        (void) memcpy( dest_ptr, src_ptr, type_size );
+
+        done = TRUE;
+        d = n_src_dims-1;
+        while( d >= 0 && done )
+        {
+            dest_index = to_dest_index[d];
+            if( dest_index != INVALID_AXIS )
+            {
+                src_ptr += src_offset[d];
+                dest_ptr += dest_offset[dest_index];
+
+                ++ind[d];
+                if( ind[d] < src_sizes[d] )
+                    done = FALSE;
+                else
+                {
+                    ind[d] = 0;
+                    src_ptr -= src_offset[d] * src_sizes[d];
+                    dest_ptr -= dest_offset[dest_index] * src_sizes[d];
+                }
+            }
+
+            --d;
+        }
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : input_slab
 @INPUT      : file
@@ -539,49 +625,54 @@ public  Status  close_minc_input(
 private  void  input_slab(
     Minc_file   file,
     Volume      volume,
+    int         to_volume[],
     long        start[],
     long        count[] )
 {
-    int      i, ind, valid_ind, file_ind, expected_ind;
-    int      iv[MAX_DIMENSIONS], n_to_read;
+    int      ind, expected_ind, n_vol_dims, file_ind;
+    int      iv[MAX_DIMENSIONS];
     void     *void_ptr;
-    BOOLEAN  direct_to_volume;
-    BOOLEAN  non_full_size_found;
-    char     *buffer;
+    BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
+    Volume   tmp_volume;
+    int      tmp_ind, tmp_sizes[MAX_DIMENSIONS], vol1_indices[MAX_DIMENSIONS];
+    int      zero[MAX_DIMENSIONS];
+    nc_type  data_type;
 
-    non_full_size_found = FALSE;
     direct_to_volume = TRUE;
+    n_vol_dims = get_volume_n_dimensions( volume );
+    expected_ind = n_vol_dims-1;
+    tmp_ind = file->n_slab_dims-1;
+    non_full_size_found = FALSE;
 
-    expected_ind = volume->n_dimensions-1;
+    for_less( ind, 0, file->n_slab_dims )
+        vol1_indices[ind] = -1;
 
     for( file_ind = file->n_file_dimensions-1;  file_ind >= 0;  --file_ind )
     {
-        ind = file->axis_index_in_file[file_ind];
-        if( ind != INVALID_AXIS && (count[file_ind] != 1 ||
-                                    file->sizes_in_file[file_ind] == 1) )
+        ind = to_volume[file_ind];
+        if( ind != INVALID_AXIS )
         {
-            if( non_full_size_found )
-            {
+            if( !non_full_size_found &&
+                count[file_ind] < file->sizes_in_file[file_ind] )
+                non_full_size_found = TRUE;
+            else if( non_full_size_found && count[file_ind] > 1 )
                 direct_to_volume = FALSE;
-                break;
+
+            if( count[file_ind] > 1 && ind != expected_ind )
+                direct_to_volume = FALSE;
+
+            if( count[file_ind] != 1 || file->sizes_in_file[file_ind] == 1 )
+            {
+                tmp_sizes[tmp_ind] = file->sizes_in_file[file_ind];
+                vol1_indices[tmp_ind] = ind;
+                zero[tmp_ind] = 0;
+                --tmp_ind;
             }
 
-            if( ind != expected_ind )
-            {
-                direct_to_volume = FALSE;
-                break;
-            }
             --expected_ind;
 
-            if( count[file_ind] != file->sizes_in_file[file_ind] )
-                non_full_size_found = TRUE;
+            iv[ind] = start[file_ind];
         }
-    }
-
-    for_less( i, 0, volume->n_dimensions )
-    {
-        file_ind = file->valid_file_axes[i];
-        iv[file->axis_index_in_file[file_ind]] = start[file_ind];
     }
 
     if( direct_to_volume )        /* file is same order as volume */
@@ -591,74 +682,22 @@ private  void  input_slab(
     }
     else
     {
-        n_to_read = 1;
+        data_type = get_volume_nc_data_type( volume, &signed_flag );
 
-        for_less( i, 0, file->n_file_dimensions )
-            n_to_read *= count[i];
+        tmp_volume = create_volume( file->n_slab_dims, NULL,
+                                    data_type, signed_flag,
+                                    get_volume_voxel_min(volume),
+                                    get_volume_voxel_max(volume) );
 
-        ALLOC( buffer, sizeof(double) * n_to_read );
+        set_volume_sizes( tmp_volume, tmp_sizes );
+        alloc_volume_data( tmp_volume );
 
-        void_ptr = (void *) buffer;
-
+        GET_VOXEL_PTR( void_ptr, tmp_volume, 0, 0, 0, 0, 0 );
         (void) miicv_get( file->icv, start, count, void_ptr );
 
-        for_less( i, 0, n_to_read )
-        {
-            switch( volume->data_type )
-            {
-            case UNSIGNED_BYTE:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (unsigned char *) void_ptr )[i] );
-                break;
-            case SIGNED_BYTE:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (signed char *) void_ptr )[i] );
-                break;
-            case UNSIGNED_SHORT:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (unsigned short *) void_ptr )[i] );
-                break;
-            case SIGNED_SHORT:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (signed short *) void_ptr )[i] );
-                break;
-            case UNSIGNED_LONG:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (unsigned long *) void_ptr )[i] );
-                break;
-            case SIGNED_LONG:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (signed long *) void_ptr )[i] );
-                break;
-            case FLOAT:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (float *) void_ptr )[i] );
-                break;
-            case DOUBLE:
-                SET_VOXEL( volume, iv[0], iv[1], iv[2], iv[3], iv[4],
-                           ( (double *) void_ptr )[i] );
-                break;
-            }
+        copy_volumes_reordered( volume, iv, tmp_volume, zero, vol1_indices );
 
-            valid_ind = volume->n_dimensions-1;
-
-            while( valid_ind >= 0 )
-            {
-                file_ind = file->valid_file_axes[valid_ind];
-                if( count[file_ind] > 1 )
-                {
-                    ++iv[file->axis_index_in_file[file_ind]];
-                    if( iv[file->axis_index_in_file[file_ind]] <
-                        start[file_ind] + count[file_ind])
-                        break;
-                    iv[file->axis_index_in_file[file_ind]] = start[file_ind];
-                }
-
-                --valid_ind;
-            }
-        }
-
-        FREE( buffer );
+        delete_volume( tmp_volume );
     }
 }
 
@@ -681,9 +720,10 @@ public  BOOLEAN  input_more_minc_file(
     Minc_file   file,
     Real        *fraction_done )
 {
-    int      ind, file_ind, n_done, total;
+    int      d, ind, n_done, total, n_slab;
     long     count[MAX_VAR_DIMS];
     Volume   volume;
+    BOOLEAN  increment;
 
     if( file->end_volume_flag )
     {
@@ -700,53 +740,57 @@ public  BOOLEAN  input_more_minc_file(
            every time */
 
     for_less( ind, 0, file->n_file_dimensions )
-    {
         count[ind] = 1;
-    }
 
-    for_less( ind, volume->n_dimensions - file->n_slab_dims,
-              volume->n_dimensions )
+    n_slab = 0;
+
+    for( d = file->n_file_dimensions-1;  d >= 0 && n_slab < file->n_slab_dims;
+         --d )
     {
-        file_ind = file->valid_file_axes[ind];
-        count[file_ind] = file->sizes_in_file[file_ind];
+        if( file->axis_index_in_file[d] != INVALID_AXIS )
+        {
+            count[d] = file->sizes_in_file[d];
+            ++n_slab;
+        }
     }
 
-    input_slab( file, volume, file->indices, count );
+    input_slab( file, volume, file->axis_index_in_file, file->indices, count );
 
     /* --- advance to next slab */
 
-    ind = volume->n_dimensions-file->n_slab_dims-1;
+    increment = TRUE;
+    n_slab = 0;
+    total = 1;
+    n_done = 0;
 
-    while( ind >= 0 )
+    for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
-        file_ind = file->valid_file_axes[ind];
+        if( n_slab >= file->n_slab_dims &&
+            file->axis_index_in_file[d] != INVALID_AXIS )
+        {
+            if( increment )
+            {
+                ++file->indices[d];
+                if( file->indices[d] < file->sizes_in_file[d] )
+                    increment = FALSE;
+                else
+                    file->indices[d] = 0;
+            }
+            n_done += total * file->indices[d];
+            total *= file->sizes_in_file[d];
+        }
 
-        ++file->indices[file_ind];
-        if( file->indices[file_ind] < file->sizes_in_file[file_ind] )
-            break;
-
-        file->indices[file_ind] = 0;
-        --ind;
+        if( file->axis_index_in_file[d] != INVALID_AXIS )
+            ++n_slab;
     }
 
-    /* --- check if done */
-
-    if( ind < 0 )
+    if( increment )
     {
         *fraction_done = 1.0;
         file->end_volume_flag = TRUE;
     }
     else
     {
-        n_done = 0;             /* --- compute fraction done */
-        total = 1;
-        for_less( ind, 0, volume->n_dimensions - file->n_slab_dims )
-        {
-            n_done = n_done * file->sizes_in_file[file->valid_file_axes[ind]] +
-                     file->indices[ind];
-            total *= file->sizes_in_file[file->valid_file_axes[ind]];
-        }
-
         *fraction_done = (Real) n_done / (Real) total;
     }
 
