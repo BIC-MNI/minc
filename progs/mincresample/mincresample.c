@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.4  2001-04-02 14:58:09  neelin
+ * Revision 6.5  2001-04-10 12:44:34  neelin
+ * Re-introduced fix for fillvalues that was lost with last version
+ *
+ * Revision 6.4  2001/04/02 14:58:09  neelin
  * Added -keep_real_range option to prevent rescaling of slices on output
  *
  * Revision 6.2  1999/10/19 14:45:27  neelin
@@ -127,7 +130,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.4 2001-04-02 14:58:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.5 2001-04-10 12:44:34 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -486,7 +489,7 @@ public void get_arginfo(int argc, char *argv[],
    }
    else {
       in_vol->volume->fillvalue = args.fillvalue;
-      in_vol->volume->use_fill = FALSE;
+      in_vol->volume->use_fill = (args.fillvalue != -DBL_MAX);
    }
    in_vol->volume->interpolant = args.interpolant;
 
