@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/dumplib.c,v 1.1 2004-04-27 15:35:15 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/dumplib.c,v 1.2 2004-06-16 16:15:58 bert Exp $
  *********************************************************************/
 
 /*
@@ -101,7 +101,14 @@ has_c_format_att(
     static char cfmt[MAX_CFMT_LEN];
     
     /* we expect nc_inq_att to fail if there is no "C_format" attribute */
-    int nc_stat = ncattinq(ncid, varid, "C_format", &cfmt_type, &cfmt_len);
+    int old_nc_opts;
+    int nc_stat;
+
+    old_nc_opts = ncopts;
+    ncopts = 0;
+    nc_stat = ncattinq(ncid, varid, "C_format", &cfmt_type, &cfmt_len);
+    ncopts = old_nc_opts;
+
     if (nc_stat == -1) {
         return 0;
     }
