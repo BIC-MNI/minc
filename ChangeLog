@@ -1,3 +1,9 @@
+2005-03-31  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Port A. Janke's fix to volume_io/Prog_utils/files.c to the
+	1.X branch.  This replaces any ':' characters in a temporary
+	filename with '-' characters, to avoid errors on Windows.
+	* Replace MINC_PLAY_NICE macro with VIO_PREFIX_NAMES macro.
+	
 2005-03-16  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Port other changes from 2.0 branch - new mincconcat bimodal
 	threshold calculations, get rid of minc_def.h for all programs.

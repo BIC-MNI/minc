@@ -14,7 +14,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11.2.1 2004-10-04 20:16:39 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.11.2.2 2005-03-31 17:39:49 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,6 +29,10 @@
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   :  
 ---------------------------------------------------------------------------- */
+
+#ifndef VIO_PREFIX_NAMES
+#define VIO_PREFIX_NAMES 0      /* Allow old-fashioned namespace pollution */
+#endif /* VIO_PREFIX_NAMES */
 
 #include  <volume_io/basic.h>
 #include  <volume_io/string_funcs.h>
