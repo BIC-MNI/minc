@@ -360,4 +360,17 @@ extern int miget_voxel_value(mihandle_t volume,
                              const unsigned long coords[],
                              int ndims,
                              double *voxel_ptr);
+
+/* VALID functions */
+extern int miget_volume_valid_max(mihandle_t volume, double *valid_max);
+extern int miset_volume_valid_max(mihandle_t volume, double valid_max);
+extern int miget_volume_valid_min(mihandle_t volume, double *valid_min);
+extern int miset_volume_valid_min(mihandle_t volume, double valid_min);
+extern int miget_volume_valid_range(mihandle_t volume,
+                                    double *valid_max, double *valid_min);
+extern int miset_volume_valid_range(mihandle_t volume, 
+                                    double valid_max, double valid_min);
+
+
+
 #endif /* _MINC2_H_ */
