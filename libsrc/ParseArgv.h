@@ -15,7 +15,7 @@
  *
  * This file has been modified to be used only for argv parsing without
  * reference to tk, tcl or X11. Base on tk.h from tk2.3
- * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.1 2002-01-14 21:28:26 neelin Exp $ SPRITE (Berkeley)
+ * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.2 2002-02-25 03:21:22 stever Exp $ SPRITE (Berkeley)
  */
 
 /*
@@ -78,6 +78,13 @@ typedef struct {
  *
  *--------------------------------------------------------------
  */
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 extern int ParseArgv _ANSI_ARGS_((int *argcPtr, char **argv,
                                   ArgvInfo *argTable, int flags));
 
+#if defined(__cplusplus)
+}
+#endif

@@ -1,0 +1,5 @@
+2002-02-22  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* libsrc/ParseArgv.h: Declare code with "C" linkage when included
+	by C++ compiler.
+
