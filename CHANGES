@@ -1,3 +1,16 @@
+Tue Mar 10 12:07:28 EST 1998
+   - Fixed more bugs in acrnema library to prevent core dumps under Linux 
+     when a protocol error occurs while reading a message. Also fixed handling
+     of last fragment bit for DICOM command PDV's. Re-organized code to
+     use watchpoints more consistently in dicom_network.c
+
+Fri Feb 20 12:29:18 EST 1998
+   - Fixed bug in acrnema library (dicom_client_routines) that sometimes
+     caused write errors under irix 5.3.
+
+Thu Feb 19 10:05:34 EST 1998
+   - Minor bug fixes.
+
 Wed Feb 18 15:29:28 EST 1998
    - Minor bug fixes in libacrnema.
 
