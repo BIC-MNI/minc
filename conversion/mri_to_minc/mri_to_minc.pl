@@ -80,31 +80,58 @@ sub read_next_file {
 
     # Constants
     $tape_block_size = 8192;
-    $tape_sleep = 2;
+    $tape_sleep = 1;
+    $nretries = 4;
+    $retry_sleep = 2;
 
     # Get next value from list if no tape drive
     if (length($tapedrive) == 0) {
         return shift(@input_list);
     }
 
-    # Create file counting variable if it does not exist
+    # Create file counting variable if it does not exist and rewind tape
+    # drive
     if (!defined($counter_for_read_next_file)) {
+        &execute("mt -t $tapedrive rewind");
         $counter_for_read_next_file = 0;
     }
 
     # Create the filename
-    local($filename) = "$tmpdir/datafile_".$counter_for_read_next_file;
+    local($cur_file_number) = $counter_for_read_next_file;
     $counter_for_read_next_file++;
+    local($filename) = "$tmpdir/datafile_".$cur_file_number;
 
-    # Sleep for a moment, then read from tape drive (don't ask me why,
-    # it just works!)
+    # Try reading from the tape drive. We will try repeatedly if necessary
     print STDERR "Retrieving file $filename from drive $tapedrive\n";
-    select(undef, undef, undef, $tape_sleep);
-    local($status) = system("dd if=$tapedrive of=$filename ".
-                            "ibs=$tape_block_size >/dev/null 2>/dev/null");
+    local($status);
+    foreach $retryloop (0..$nretries-1) {
+
+        # Sleep for a moment, then read from tape drive (don't ask me why,
+        # it just works!)
+        select(undef, undef, undef, $tape_sleep);
+        $status = system("dd if=$tapedrive of=$filename ".
+                         "ibs=$tape_block_size >/dev/null 2>/dev/null");
+        if ($status == 0) {last;}
+
+        # If we get to here then the read failed. Try to reposition the tape.
+        print STDERR "Error reading from tape - trying again.\n";
+        local($tmp_status);
+        $tmp_status = system("mt -t $tapedrive rewind");
+        $tmp_status = system("mt -t $tapedrive fsf $cur_file_number")
+            unless ($tmp_status != 0);
+        if ($tmp_status != 0) {
+            warn "\n\nWARNING!!!!! Error repositioning tape.\n\n";
+            last;
+        }
+
+        # Sleep to let things settle after repositioning
+        select(undef, undef, undef, $retry_sleep);
+        
+    }
     if (($status!=0) || -z $filename) {
-        if ($status !=0) {
-            warn "\n\nWARNING!!!! Error occurred while reading tape.\n\n";
+        if ($status != 0) {
+            warn "\n\nWARNING!!!! ".
+                "Error occurred while reading tape. Giving up.\n\n\n";
         }
         else {
             print STDERR "End of tape.\n";
@@ -396,7 +423,6 @@ sub mri_to_minc {
 
     # Rewind and initialize the tape
     if (length($tapedrive) > 0) {
-        &execute("mt -t $tapedrive rewind");
         &initialize_tape_drive($tapedrive);
     }
 
