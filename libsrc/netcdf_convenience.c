@@ -35,7 +35,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.6  2001-04-24 14:49:39  neelin
+ * Revision 6.7  2001-08-20 13:19:15  neelin
+ * Added function miattget_with_sign to allow the caller to specify the sign
+ * of the input attribute since this information is ambiguous. This is
+ * necessary for the valid_range attribute which should have the same sign
+ * as the image data. Modified miget_valid_range to make use of this function.
+ *
+ * Revision 6.6  2001/04/24 14:49:39  neelin
  * In execute_decompress_command, close all file handles in child after
  * fork to avoid problems with buffer flushing.
  *
@@ -126,7 +132,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.6 2001-04-24 14:49:39 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.7 2001-08-20 13:19:15 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -593,19 +599,62 @@ public int miclose(int cdfid)
               vector is returned in att_length.
 @METHOD     : 
 @GLOBALS    : 
-@CALLS      : NetCDF routines and MI_convert_type
+@CALLS      : miattget_with_sign
 @CREATED    : July 27, 1992 (Peter Neelin)
-@MODIFIED   : 
+@MODIFIED   : August 20, 2001 (P.N.)
+                 - changed to call miattget_with_sign
 ---------------------------------------------------------------------------- */
 public int miattget(int cdfid, int varid, char *name, nc_type datatype,
                     int max_length, void *value, int *att_length)
+{
+   MI_SAVE_ROUTINE_NAME("miattget");
+
+   MI_CHK_ERR(miattget_with_sign(cdfid, varid, name, 
+                                 NULL, datatype, NULL, 
+                                 max_length, value, att_length))
+
+   MI_RETURN(MI_NOERROR);
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : miattget_with_sign
+@INPUT      : cdfid      - cdf file id
+              varid      - variable id
+              name       - name of attribute
+              insign     - sign of input attribute. If NULL, then use default.
+              datatype   - type that calling routine wants (one of the valid
+                 netcdf data types, excluding NC_CHAR)
+              outsign    - sign of type for calling routine. If NULL, then use
+                 default
+              max_length - maximum length to return (number of elements)
+@OUTPUT     : value      - value of attribute
+              att_length - actual length of attribute (number of elements)
+                 If NULL, then no value is returned.
+@RETURNS    : MI_ERROR (=-1) when an error occurs
+@DESCRIPTION: Similar to routine miattget, but the calling routine specifies
+              the sign of the attribute in the file (which may be ambiguous)
+              as well as the sign of the return type. Sign strings can be
+              MI_SIGNED, MI_UNSIGNED, an empty string or NULL - the latter
+              two mean use the default for the type.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : NetCDF routines and MI_convert_type
+@CREATED    : August 20, 2001 (Peter Neelin)
+                 - slightly modified version of old miattget
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int miattget_with_sign(int cdfid, int varid, char *name, 
+                              char *insign, nc_type datatype, char *outsign,
+                              int max_length, void *value, int *att_length)
 {
    nc_type att_type;          /* Type of attribute */
    int actual_length;         /* Actual length of attribute */
    void *att_value;           /* Pointer to attribute value */
    int status;                /* Status of nc routine */
+   int att_sign, data_sign;   /* Integer sign values */
 
-   MI_SAVE_ROUTINE_NAME("miattget");
+   MI_SAVE_ROUTINE_NAME("miattget_with_sign");
 
    /* Inquire about the attribute */
    MI_CHK_ERR(ncattinq(cdfid, varid, name, &att_type, &actual_length))
@@ -641,6 +690,10 @@ public int miattget(int cdfid, int varid, char *name, nc_type datatype,
       MI_RETURN_ERROR(MI_ERROR);
    }
 
+   /* Get the signs */
+   att_sign = MI_get_sign_from_string(att_type, insign);
+   data_sign = MI_get_sign_from_string(datatype, outsign);
+
    /* Get the values.
       Call MI_convert_type with :
          MI_convert_type(number_of_values,
@@ -648,8 +701,8 @@ public int miattget(int cdfid, int varid, char *name, nc_type datatype,
                          outtype, outsign, outvalues,
                          icvp) */
    status=MI_convert_type(MIN(max_length, actual_length), 
-                          att_type, MI_PRIV_DEFSIGN, att_value,
-                          datatype, MI_PRIV_DEFSIGN, value,
+                          att_type, att_sign, att_value,
+                          datatype, data_sign, value,
                           NULL);
    FREE(att_value);
    MI_CHK_ERR(status)

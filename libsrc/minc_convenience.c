@@ -25,7 +25,13 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.5  2001-08-16 19:24:11  neelin
+ * Revision 6.6  2001-08-20 13:19:14  neelin
+ * Added function miattget_with_sign to allow the caller to specify the sign
+ * of the input attribute since this information is ambiguous. This is
+ * necessary for the valid_range attribute which should have the same sign
+ * as the image data. Modified miget_valid_range to make use of this function.
+ *
+ * Revision 6.5  2001/08/16 19:24:11  neelin
  * Fixes to the code handling valid_range values.
  *
  * Revision 6.4  2001/08/16 16:41:32  neelin
@@ -86,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.5 2001-08-16 19:24:11 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.6 2001-08-20 13:19:14 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -244,6 +250,7 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
    int length;
    nc_type datatype;
    int is_signed;
+   char *att_sign;
    double temp;
 
    MI_SAVE_ROUTINE_NAME("miget_valid_range");
@@ -256,9 +263,16 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
    old_ncopts = ncopts;
    ncopts = 0;
 
+   /* Get the sign string for the attribute */
+   if (is_signed)
+      att_sign = MI_SIGNED;
+   else
+      att_sign = MI_UNSIGNED;
+
    /* Get valid range */
-   status=miattget(cdfid, imgid, MIvalid_range, 
-                   NC_DOUBLE, 2, valid_range, &length);
+   status=miattget_with_sign(cdfid, imgid, MIvalid_range, 
+                             att_sign, NC_DOUBLE, NULL, 
+                             2, valid_range, &length);
 
    /* If not there, look for the max and min */
    if ((status==MI_ERROR) || (length!=2)) {
@@ -267,10 +281,14 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
       (void) miget_default_range(datatype, is_signed, valid_range);
 
       /* Try to read the valid max */
-      (void) miattget1(cdfid, imgid, MIvalid_max, NC_DOUBLE, &valid_range[1]);
+      (void) miattget_with_sign(cdfid, imgid, MIvalid_max, 
+                                att_sign, NC_DOUBLE, NULL, 
+                                1, &valid_range[1], NULL);
 
       /* Try to read the valid min */
-      (void) miattget1(cdfid, imgid, MIvalid_min, NC_DOUBLE, &valid_range[0]);
+      (void) miattget_with_sign(cdfid, imgid, MIvalid_min, 
+                                att_sign, NC_DOUBLE, NULL,
+                                1, &valid_range[0], NULL);
 
    }
 

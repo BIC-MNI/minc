@@ -19,7 +19,13 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.6  2001-08-16 16:41:31  neelin
+ * Revision 6.7  2001-08-20 13:19:14  neelin
+ * Added function miattget_with_sign to allow the caller to specify the sign
+ * of the input attribute since this information is ambiguous. This is
+ * necessary for the valid_range attribute which should have the same sign
+ * as the image data. Modified miget_valid_range to make use of this function.
+ *
+ * Revision 6.6  2001/08/16 16:41:31  neelin
  * Added library functions to handle reading of datatype, sign and valid range,
  * plus writing of valid range and setting of default ranges. These functions
  * properly handle differences between valid_range type and image type. Such
@@ -101,7 +107,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.6 2001-08-16 16:41:31 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.7 2001-08-20 13:19:14 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -420,6 +426,9 @@ public char *miexpand_file(char *path, char *tempfile,
 public int miopen(char *path, int mode);
 public int micreate(char *path, int cmode);
 public int miclose(int cdfid);
+public int miattget_with_sign(int cdfid, int varid, char *name, 
+                              char *insign, nc_type datatype, char *outsign,
+                              int max_length, void *value, int *att_length);
 public int miattget(int cdfid, int varid, char *name, nc_type datatype,
                     int max_length, void *value, int *att_length);
 public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
