@@ -189,6 +189,7 @@ miset_volume_world_indices(mihandle_t hvol)
             }
         }
     }
+    return (MI_NOERROR);
 }
 
 /** Create and initialize a MINC 2.0 volume structure.

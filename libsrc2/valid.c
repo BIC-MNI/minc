@@ -11,7 +11,6 @@
  ************************************************************************/
 #include <stdlib.h>
 #include <hdf5.h>
-#include "minc.h"               /* For MINC 1 routines we use */
 #include "minc2.h"
 #include "minc2_private.h"
 

@@ -9,12 +9,10 @@
 /**
  * \defgroup mi2Cvt MINC 2.0 Coordinate and Voxel Conversion Functions
  */
-
 #include <stdlib.h>
 #include <hdf5.h>
 #include <math.h>
 #include <float.h>
-#include "minc.h"
 #include "minc2.h"
 #include "minc2_private.h"
 

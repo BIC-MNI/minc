@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <hdf5.h>
-#include <minc.h>
 #include <limits.h>
 #include <float.h>
 #include "minc2.h"
@@ -1644,7 +1643,7 @@ minc_update_thumbnails(mihandle_t volume)
     if (H5Gget_num_objs(grp_id, &n) < 0) {
         return (MI_ERROR);      /* Error getting object count. */
     }
-
+    grp_no = -1;
     for (i = 0; i < n; i++) {
         if (H5Gget_objname_by_idx(grp_id, i, name, MI2_MAX_PATH) < 0) {
             return (MI_ERROR);
@@ -1798,7 +1797,7 @@ scaled_maximal_pivoting_gaussian_elimination_real(int n,
     double **a, **solution;
     int success;
 
-    row = alloc1d( n );
+    row = (int *) alloc1d( n ); /* Ugly and wasteful but OK for 1D array */
     a = alloc2d( n, n );
     solution = alloc2d( n, n_values );
 

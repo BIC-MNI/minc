@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.15  2004-10-15 13:48:13  bert
+ * Revision 6.16  2004-12-03 21:52:35  bert
+ * Minor changes for Windows build
+ *
+ * Revision 6.15  2004/10/15 13:48:13  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.14  2004/08/11 20:50:54  bert
@@ -131,15 +134,10 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.15 2004-10-15 13:48:13 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.16 2004-12-03 21:52:35 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
-
-#ifdef MINC2
-#include <hdf5.h>
-#include "minc_compat.h"
-#endif /* MINC2 defined */
 
 #ifdef __cplusplus
 extern "C" {
@@ -579,6 +577,9 @@ struct mi2opts {
     int chunk_type;
     int chunk_param;
 };
+
+#include <hdf5.h>
+#include "minc_compat.h"
 
 #define MI2_ISH5OBJ(x) (H5Iget_type(x) > 0)
 

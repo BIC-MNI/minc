@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.14  2004-10-15 13:48:33  bert
+ * Revision 6.15  2004-12-03 21:52:35  bert
+ * Minor changes for Windows build
+ *
+ * Revision 6.14  2004/10/15 13:48:33  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.13  2004/06/04 18:16:25  bert
@@ -157,7 +160,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.14 2004-10-15 13:48:33 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.15 2004-12-03 21:52:35 bert Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
@@ -185,6 +188,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+
+#include <stdio.h>		/* for tempnam() */
 
 /* Private functions */
 PRIVATE int execute_decompress_command(char *command, char *infile, 
@@ -584,6 +589,9 @@ MNCAPI int miopen(char *path, int mode)
    else {
      hmode = H5F_ACC_RDONLY;
    }
+
+   hmode = (mode & 0x8000);     /* !!!! Pass along magic memory-mapping bit */
+
    status = hdf_open(path, hmode);
 
    /* If there is no error then return */
@@ -1963,9 +1971,13 @@ miread_cfg(const char *name, char *buffer, int maxlen)
     char *home_ptr = getenv("HOME");
     char path[256];
 
-    strcpy(path, home_ptr);
+    if (home_ptr != NULL) {
+      strcpy(path, home_ptr);
+    }
+    else {
+      path[0] = '\0';
+    }
     strcat(path, "/.mincrc");
-      
     
     if ((fp = fopen(path, "r")) != NULL) {
         while (fgets(buffer, maxlen, fp)) {

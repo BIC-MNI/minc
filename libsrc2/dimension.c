@@ -9,7 +9,6 @@
 #include <hdf5.h>
 #include "minc2.h"
 #include "minc2_private.h"
-#include "minc.h"
 
 
 /*! 
@@ -370,8 +369,8 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
      to search the dimensions otherwise use dim_handles
    */
   
-  
   for (i=0; i < max_dims; i++) {
+      midimhandle_t hdim;
       if (order == MI_DIMORDER_APPARENT) {
 	  hdim = volume->dim_handles[volume->dim_indices[i]];
       }

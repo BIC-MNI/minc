@@ -7,7 +7,10 @@
 @MODIFIED   : 
  *
  * $Log: minc_error.h,v $
- * Revision 6.2  2004-10-15 13:46:15  bert
+ * Revision 6.3  2004-12-03 21:52:35  bert
+ * Minor changes for Windows build
+ *
+ * Revision 6.2  2004/10/15 13:46:15  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.1  2004/04/27 15:42:47  bert
@@ -93,5 +96,5 @@ typedef enum mimsgcode {
     MI_MSG_BADOP
 } mimsgcode_t;
 
-SEMIPRIVATE int milog_message(mimsgcode_t code, ...);
+MNCAPI int milog_message(mimsgcode_t code, ...);
 #endif /* _MINC_ERROR_H_ not defined */

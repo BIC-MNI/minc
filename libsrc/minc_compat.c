@@ -9,13 +9,11 @@
  * of whether this is an HDF5 handle or a NetCDF file descriptor.
  */
 #define _MI2_FORCE_NETCDF_
-#include "netcdf.h"
-#include "minc.h"
 #include "minc_private.h"
 #include "hdf_convenience.h"
 
 /* */
-int
+MNCAPI int
 MI2varname(int fd, int varid, char *varnm)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -27,7 +25,7 @@ MI2varname(int fd, int varid, char *varnm)
 }
 
 /* */
-int
+MNCAPI int
 MI2varid(int fd, const char *varnm)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -39,7 +37,7 @@ MI2varid(int fd, const char *varnm)
 }
 
 /* */
-int
+MNCAPI int
 MI2attinq(int fd, int varid, const char *attnm, nc_type *type_ptr,
           int *length_ptr)
 {
@@ -63,7 +61,7 @@ MI2attinq(int fd, int varid, const char *attnm, nc_type *type_ptr,
     }
 }
 
-int
+MNCAPI int
 MI2attname(int fd, int varid, int attid, char *name)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -75,7 +73,7 @@ MI2attname(int fd, int varid, int attid, char *name)
 }
 
 /* */
-int
+MNCAPI int
 MI2inquire(int fd, int *ndims_ptr, int *nvars_ptr, int *natts_ptr,
            int *unlimdim_ptr)
 {
@@ -88,7 +86,7 @@ MI2inquire(int fd, int *ndims_ptr, int *nvars_ptr, int *natts_ptr,
 }
 
 /* */
-int
+MNCAPI int
 MI2varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
           int *ndims_ptr, int *dims_ptr, int *natts_ptr)
 {
@@ -103,7 +101,7 @@ MI2varinq(int fd, int varid, char *varnm_ptr, nc_type *type_ptr,
 }
 
 /* */
-int
+MNCAPI int
 MI2dimid(int fd, const char *dimnm)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -115,7 +113,7 @@ MI2dimid(int fd, const char *dimnm)
 }
 
 /* */
-int
+MNCAPI int
 MI2diminq(int fd, int dimid, char *dimnm_ptr, long *len_ptr)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -127,7 +125,7 @@ MI2diminq(int fd, int dimid, char *dimnm_ptr, long *len_ptr)
 }
 
 /* */
-int
+MNCAPI int
 MI2dimdef(int fd, const char *dimnm, long length)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -139,7 +137,7 @@ MI2dimdef(int fd, const char *dimnm, long length)
 }
 
 /* */
-int
+MNCAPI int
 MI2attget(int fd, int varid, const char *attnm, void *value)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -151,7 +149,7 @@ MI2attget(int fd, int varid, const char *attnm, void *value)
 }
 
 /* */
-int
+MNCAPI int
 MI2attput(int fd, int varid, const char *attnm, nc_type val_typ, 
           int val_len, void *val_ptr)
 {
@@ -169,7 +167,7 @@ MI2attput(int fd, int varid, const char *attnm, nc_type val_typ,
 }
 
 /* */
-int
+MNCAPI int
 MI2endef(int fd)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -181,7 +179,7 @@ MI2endef(int fd)
 }  
 
 /* */
-int
+MNCAPI int
 MI2vardef(int fd, const char *varnm, nc_type vartype, int ndims,
           const int *dimids)
 {
@@ -194,7 +192,7 @@ MI2vardef(int fd, const char *varnm, nc_type vartype, int ndims,
 }
 
 /* */
-int
+MNCAPI int
 MI2varget(int fd, int varid, const long *start_ptr, 
           const long *count_ptr, void *val_ptr)
 {
@@ -207,7 +205,7 @@ MI2varget(int fd, int varid, const long *start_ptr,
 }
 
 /* */
-int
+MNCAPI int
 MI2varput(int fd, int varid, const long *start_ptr,
           const long *count_ptr, const void *val_ptr)
 {
@@ -220,7 +218,7 @@ MI2varput(int fd, int varid, const long *start_ptr,
 }
 
 /* */
-int
+MNCAPI int
 MI2varput1(int fd, int varid, const long *mindex_ptr,
            const void *val_ptr)
 {
@@ -232,7 +230,8 @@ MI2varput1(int fd, int varid, const long *mindex_ptr,
     }
 }
 
-int MI2attdel(int fd, int varid, const char *attnm)
+MNCAPI int
+MI2attdel(int fd, int varid, const char *attnm)
 {
     if (MI2_ISH5OBJ(fd)) {
         return (hdf_attdel(fd, varid, attnm));
@@ -244,7 +243,7 @@ int MI2attdel(int fd, int varid, const char *attnm)
 
 
 /* */
-int
+MNCAPI int
 MI2dimrename(int fd, int dimid, const char *new_name)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -255,7 +254,7 @@ MI2dimrename(int fd, int dimid, const char *new_name)
     }
 }
 
-int
+MNCAPI int
 MI2varputg(int fd, int varid, const long *startp, const long *countp,
            const long *stridep, const long *imapp, const void *valp)
 {
@@ -267,7 +266,7 @@ MI2varputg(int fd, int varid, const long *startp, const long *countp,
     }
 }
 
-int
+MNCAPI int
 MI2attcopy(int infd, int invarid, const char *name, int outfd, 
            int outvarid)
 {
@@ -319,7 +318,7 @@ MI2attcopy(int infd, int invarid, const char *name, int outfd,
     }
 }
 
-int
+MNCAPI int
 MI2typelen(int type_id)
 {
     switch (type_id) {
@@ -340,7 +339,7 @@ MI2typelen(int type_id)
     return (-1);
 }
 
-int
+MNCAPI int
 MI2redef(int fd)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -352,7 +351,7 @@ MI2redef(int fd)
     }
 }
 
-int
+MNCAPI int
 MI2sync(int fd)
 {
     if (MI2_ISH5OBJ(fd)) {
@@ -369,7 +368,7 @@ MI2sync(int fd)
     }
 }
 
-int
+MNCAPI int
 MI2setfill(int fd, int fillmode)
 {
     if (MI2_ISH5OBJ(fd)) {

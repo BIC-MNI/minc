@@ -1,7 +1,6 @@
 #ifdef MINC2                    /* Ignore this file if not MINC2 */
 
 /* #define NC_FILL_INT 1 */
-#include "minc.h"
 #include "minc_private.h"
 #include "hdf_convenience.h"
 
@@ -2133,6 +2132,7 @@ hdf_open(const char *path, int mode)
     struct m2_var *var;
 
     H5E_BEGIN_TRY {
+#ifdef HDF5_MMAP_TEST
         if (mode & 0x8000) {
             hid_t prp_id;
 
@@ -2144,6 +2144,9 @@ hdf_open(const char *path, int mode)
         else {
             fd = H5Fopen(path, mode, H5P_DEFAULT);
         }
+#else
+        fd = H5Fopen(path, mode, H5P_DEFAULT);
+#endif
     } H5E_END_TRY;
 
     if (fd < 0) {

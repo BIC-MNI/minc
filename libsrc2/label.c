@@ -20,7 +20,7 @@
 
 int miswap2(unsigned short tmp)
 {
-    unsigned char *x = &tmp;
+    unsigned char *x = (unsigned char *) &tmp;
     unsigned char t = x[0];
     x[0] = x[1];
     x[1] = t;
@@ -29,7 +29,7 @@ int miswap2(unsigned short tmp)
 
 int miswap4(unsigned int tmp)
 {
-    unsigned char *x = &tmp;
+    unsigned char *x = (unsigned char *) &tmp;
     unsigned char t = x[0];
     x[0] = x[3];
     x[3] = t;

@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.15  2004-11-01 22:38:39  bert
+ * Revision 6.16  2004-12-03 21:54:27  bert
+ * Minor changes for Windows build
+ *
+ * Revision 6.15  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.14  2004/04/27 15:26:34  bert
@@ -146,7 +149,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.15 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.16 2004-12-03 21:54:27 bert Exp $";
 #endif
 
 #include "config.h"
@@ -155,9 +158,13 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #include <string.h>
 #include <ctype.h>
 #include <minc.h>
+#if HAVE_FLOAT_H
 #include <float.h>
+#endif /* HAVE_FLOAT_H */
 #include <math.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <convert_origin_to_start.h>

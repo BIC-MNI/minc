@@ -30,7 +30,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.16  2004-10-15 13:46:15  bert
+ * Revision 6.17  2004-12-03 21:52:35  bert
+ * Minor changes for Windows build
+ *
+ * Revision 6.16  2004/10/15 13:46:15  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.15  2004/08/26 16:14:21  bert
@@ -131,7 +134,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.16 2004-10-15 13:46:15 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.17 2004-12-03 21:52:35 bert Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -1477,7 +1480,11 @@ MNCAPI int micreate_ident( char * id_str, size_t length )
 
 
     time(&now);
+#ifdef _MSC_VER
+    memcpy(&tm_buf, localtime(&now), sizeof(tm_buf));
+#else
     localtime_r(&now, &tm_buf);
+#endif
     strftime(time_str, sizeof(time_str), "%Y.%m.%d.%H.%M.%S", &tm_buf);
 
     result = snprintf(id_str, length, "%s%c%s%c%s%c%u%c%u", 
