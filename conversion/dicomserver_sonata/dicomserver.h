@@ -7,8 +7,8 @@
 @MODIFIED   : 
 
  * $Log: dicomserver.h,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.5  2002/03/19 13:13:56  rhoge
  * initial working mosaic support - I think time is scrambled though.

@@ -5,8 +5,8 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: reply.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.2  2001/02/26 06:14:39  rhoge
  * modified to allow target directory to be passed as AE title (only 16 chars)

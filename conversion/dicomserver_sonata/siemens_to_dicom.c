@@ -6,8 +6,8 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.1  2003-08-15 19:52:55  leili
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.1.1.1  2003-08-15 19:52:55  leili
+@MODIFIED   : Leili's dicom server for sonata
 @MODIFIED   :
 @MODIFIED   : Revision 1.1  2001/12/31 17:28:34  rhoge
 @MODIFIED   : adding file to repos - now needed for reading .ima files in directly
@@ -33,7 +33,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/siemens_to_dicom.c,v 1.1 2003-08-15 19:52:55 leili Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/siemens_to_dicom.c,v 1.1.1.1 2003-08-15 19:52:55 leili Exp $";
 #endif
 
 #include <stdio.h>

@@ -7,8 +7,8 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: save_transferred_object.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.2  2001/12/31 18:27:21  rhoge
  * modifications for dicomreader processing of Numaris 4 dicom files - at

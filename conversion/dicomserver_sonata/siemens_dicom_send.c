@@ -6,8 +6,8 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin) re-write by Rick Hoge
 @MODIFIED   : $Log: siemens_dicom_send.c,v $
-@MODIFIED   : Revision 1.1  2003-08-15 19:52:55  leili
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.1.1.1  2003-08-15 19:52:55  leili
+@MODIFIED   : Leili's dicom server for sonata
 @MODIFIED   :
 @MODIFIED   : Revision 1.9  2001/10/19 13:08:39  rhoge
 @MODIFIED   : - fixed problem for single slice acq loop scans in siemens_dicom_send
@@ -74,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/siemens_dicom_send.c,v 1.1 2003-08-15 19:52:55 leili Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/siemens_dicom_send.c,v 1.1.1.1 2003-08-15 19:52:55 leili Exp $";
 #endif
 
 #include <stdio.h>

@@ -8,8 +8,8 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: siemens_dicom_to_minc.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.18  2002/09/26 15:24:33  rhoge
  * Before was only skipping time sort for multi-slice N4 mosaics.  Turns out

@@ -7,8 +7,8 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_file.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.12  2002/04/29 15:24:53  rhoge
  * removed (mode_t) cast in minc_file - would not build on SGI's

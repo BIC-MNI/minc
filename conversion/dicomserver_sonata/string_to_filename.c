@@ -8,8 +8,8 @@
 @CREATED    : January 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: string_to_filename.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.2  2002/03/22 19:19:36  rhoge
  * Numerous fixes -

@@ -7,8 +7,8 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: siemens_dicom_read.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.1.1.1  2003-08-15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.12  2002/05/01 21:29:34  rhoge
  * removed MrProt from minc header - encountered files with large strings,
