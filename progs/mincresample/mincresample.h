@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 4.0  1997-05-07 19:59:42  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-08-13 15:41:12  neelin
+@MODIFIED   : Fixed initialization problem that caused crashing under Linux.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  19:59:42  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.4  1996/01/31  15:22:02  neelin
  * Fixed bug in transformation of input sampling.
  *
@@ -304,7 +307,7 @@ public void get_arginfo(int argc, char *argv[],
                         VVolume *in_vol, VVolume *out_vol, 
                         General_transform *transformation);
 public void check_imageminmax(File_Info *fp, Volume_Data *volume);
-public void get_file_info(char *filename, 
+public void get_file_info(char *filename, int initialized_volume_def, 
                           Volume_Definition *volume_def,
                           File_Info *file_info);
 public void get_args_volume_def(Volume_Definition *input_volume_def,

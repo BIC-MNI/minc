@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 19:59:42  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-08-13 15:41:12  neelin
+@MODIFIED   : Fixed initialization problem that caused crashing under Linux.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  19:59:42  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.5  1996/01/31  15:22:02  neelin
  * Fixed bug in transformation of input sampling.
  *
@@ -108,7 +111,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 4.0 1997-05-07 19:59:42 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 4.1 1997-08-13 15:41:12 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -412,7 +415,7 @@ public void get_arginfo(int argc, char *argv[],
 
    /* Check input file for default argument information */
    in_vol->file = MALLOC(sizeof(File_Info));
-   get_file_info(infile, &input_volume_def, in_vol->file);
+   get_file_info(infile, FALSE, &input_volume_def, in_vol->file);
    transform_volume_def((transform_input_sampling ? 
                          &args.transform_info : NULL), 
                         &input_volume_def, 
@@ -645,6 +648,9 @@ public void check_imageminmax(File_Info *fp, Volume_Data *volume)
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_file_info
 @INPUT      : filename - name of file to read
+              initialized_volume_def - if TRUE, then volume_def is taken 
+                 as being properly initialized and arrays are freed if
+                 non-NULL. Otherwise arrays are not freed.
 @OUTPUT     : volume_def - description of volume
               file_info - description of file
 @RETURNS    : (nothing)
@@ -656,7 +662,7 @@ public void check_imageminmax(File_Info *fp, Volume_Data *volume)
 @CREATED    : February 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_file_info(char *filename, 
+public void get_file_info(char *filename, int initialized_volume_def, 
                           Volume_Definition *volume_def,
                           File_Info *file_info)
 {
@@ -744,10 +750,10 @@ public void get_file_info(char *filename,
          else
             volume_def->dircos[idim][jdim] = 0.0;
       }
-      if (volume_def->coords[idim] != NULL) {
+      if (initialized_volume_def && (volume_def->coords[idim] != NULL)) {
          FREE(volume_def->coords[idim]);
-         volume_def->coords[idim] = NULL;
       }
+      volume_def->coords[idim] = NULL;
       (void) strcpy(volume_def->units[idim], "mm");
       (void) strcpy(volume_def->spacetype[idim], MI_NATIVE);
    }
@@ -1828,7 +1834,7 @@ public int get_model_file(char *dst, char *key, char *nextArg)
    volume_def = (Volume_Definition *) dst;
 
    /* Get file information */
-   get_file_info(nextArg, volume_def, &file);
+   get_file_info(nextArg, TRUE, volume_def, &file);
 
    /* Close the file */
    (void) miclose(file.mincid);
