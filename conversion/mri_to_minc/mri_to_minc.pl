@@ -180,22 +180,23 @@ sub read_next_file {
 
     # Try reading from the tape drive. We will try repeatedly if necessary
     print STDERR "Retrieving file $filename from drive $tapedrive\n";
-    local($status, $oldsep, $filedata);
+    local($status, $oldsep, $tapemessage);
     foreach $retryloop (0..$nretries-1) {
 
         # Sleep for a moment, then read from tape drive (don't ask me why,
         # it just works!)
         select(undef, undef, undef, $tape_sleep);
         $oldsep = $/; undef($/);
-#        $! = "";
-#        $filedata=<TAPEHANDLE>;
-#        $status = $!+0;
         close(TAPEHANDLE);
         $status = 1;
-        if (open(TP, "dd if=$tapedrive bs=1000000 2> /dev/null |")) {
-           $filedata = <TP>;
+        if (open(TP, "dd if=$tapedrive of=$filename bs=1000000 2>&1 |")) {
+           $tapemessage = <TP>;
            close(TP);
-           $status = $?;
+           $status = $?; 
+           if (($status != 0) && (-z $filename) &&
+               ($tapemessage =~ /^Read error:\s*No space left on device/)) {
+              $status = 0;
+           }
         }
         open(TAPEHANDLE, $tapedrive);
         $/ = $oldsep;
@@ -214,7 +215,8 @@ sub read_next_file {
 
     # We've finished trying to read. Test to see if we failed or if
     # we've reached the end of the tape.
-    if (($status!=0) || (length($filedata) <= 0)) {
+    if (($status!=0) || (-z $filename)) {
+        &remove_file($filename);
         if ($status != 0) {
             warn "\n\nWARNING!!!!! ".
                 "Error occurred while reading tape. Giving up.\n\n\n";
@@ -226,10 +228,6 @@ sub read_next_file {
         return "";
     }
     else {
-        open(OUTFILE, ">$filename") ||
-            die "Unable to open to temporary file $filename.\n";
-        print OUTFILE $filedata;
-        close(OUTFILE);
         return $filename;
     }
 
