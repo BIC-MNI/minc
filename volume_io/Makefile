@@ -28,11 +28,14 @@ OBJS     = \
 
 # Header files
 HEADERS  = \
-   Include/volume_io.h Include/volume_io_prototypes.h \
+   Include/volume_io.h Include/vol_io_prototypes.h \
    Include/basic.h Include/string_funcs.h Include/files.h \
    Include/arrays.h Include/geom_structs.h Include/progress.h \
    Include/geometry.h Include/volume.h Include/transforms.h \
    Include/alloc.h Include/alloc_check.h Include/def_math.h
+
+DOCDIR = Documentation
+DOCS = $(DOCDIR)/volume_io.dvi
 
 CDEFINES = #                        cpp defines
 
@@ -49,11 +52,13 @@ LINT_LIST_EXE = $(LINT_LIST:.ln=.)
 
 # --------------------------------------------------------------------
 
+.SUFFIXES: .tex .dvi
+
 default: build
 
 all: build lint
 
-build: $(CC_VOLIO_LIB) $(PROGS)
+build: $(CC_VOLIO_LIB) $(PROGS) $(DOCS)
 
 #Dependency on Makefile
 $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
@@ -67,6 +72,10 @@ $(OBJS) $(LINT_OBJS) $(PROG_OBJ) $(LINT_LIST) : Makefile
 
 .c.o:#                                    defines the rule for creating .o
 	$(CC) $(CFLAGS) -c $< -o $@
+
+.tex.dvi :
+	-latex $<
+	-latex $<
 
 # How to create library
 $(CC_VOLIO_LIB): $(OBJS)
@@ -90,7 +99,8 @@ $(LINT_LIST_EXE) : $(TARGET_IN_DEPENDENCY)ln $(LINT_VOLIO_LIB) $(LINT_MINC_LIB)
 # Remove all derived files in this directory
 clean:
 	$(RM) $(RM_FLAGS) $(CC_VOLIO_LIB) $(LINT_VOLIO_LIB) \
-	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST)
+	         $(OBJS) $(LINT_OBJS) $(PROGS) $(PROG_OBJ) $(LINT_LIST) \
+	         $(DOCS) $(DOCDIR)/*.aux $(DOCDIR)/*.log $(DOCDIR)/*.toc
 
 install:
 	$(CP) $(CP_FLAGS) $(CC_VOLIO_LIB) $(INSTALL_LIBDIR)
