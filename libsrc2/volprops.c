@@ -14,17 +14,25 @@ minew_volume_props(mivolumeprops_t  *props)
 {
   volprops *handle;
   
-
   handle = (volprops *)malloc(sizeof(*handle));
   
   if (handle == NULL) {
     return (MI_ERROR);
   }
-  /* Initialize everything to zero.
+  /* Initialize all the fields.
    */
-  memset(handle, 0, sizeof(*handle));
+  handle->enable_flag = FALSE;
+  handle->depth = 0;
+  handle->compression_type = MI_COMPRESS_NONE;
+  handle->zlib_level = 0;
+  handle->edge_count = 0;
+  handle->edge_lengths = NULL;
+  handle->max_lengths = 0;
+  handle->record_length = 0;
+  handle->record_name = NULL;
+  handle->template_flag = 0;
+
   *props = handle;
-  
 
   return (MI_NOERROR);
 }
@@ -34,13 +42,14 @@ minew_volume_props(mivolumeprops_t  *props)
 int
 mifree_volume_props(mivolumeprops_t props)
 {
-  // check to make sure this function correctly frees
-  // everything
   if (props == NULL) {
     return (MI_ERROR);
   }
   if (props->edge_lengths != NULL) {
-      free(props->edge_lengths);
+    free(props->edge_lengths);
+  }
+  if (props->record_name != NULL) {
+    free(props->record_name);
   }
   free(props);
   return (MI_NOERROR);
@@ -49,43 +58,31 @@ mifree_volume_props(mivolumeprops_t props)
 /*! Get a copy of the volume property list
  */
 int
-miget_volume_props(mihandle_t vol, mivolumeprops_t *props)
+miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
 {
   volprops *handle;
-  hid_t hdf_file;
   hid_t hdf_vol_dataset;
   hid_t hdf_plist;
   
-  if (vol == NULL) {
+  if (volume->hdf_id < 0) {
     return (MI_ERROR);
   }
-  
-  handle = (volprops *)malloc(sizeof(*handle));
-
-  /* Get a handle to the actual HDF file 
-   */
-  hdf_file = miget_volume_file_handle(vol);
-  if (hdf_file < 0) {
-    return (MI_ERROR);
-  }
-  hdf_vol_dataset = midescend_path(hdf_file, "/minc-2.0/image/0/image");
+  hdf_vol_dataset = midescend_path(volume->hdf_id, "/minc-2.0/image/0/image");
   if (hdf_vol_dataset < 0) {
     return (MI_ERROR);
   }
-
   hdf_plist = H5Dget_create_plist(hdf_vol_dataset);
   if (hdf_plist < 0) {
     return (MI_ERROR);
   }
-
+  /* Get the layout of the raw data for a dataset.
+   */
   if (H5Pget_layout(hdf_plist) == H5D_CHUNKED) {
       hsize_t dims[MI2_MAX_BLOCK_EDGES];
       int i;
-      
+      handle = (volprops *)malloc(sizeof(*handle));
       handle->edge_count = H5Pget_chunk(hdf_plist, MI2_MAX_BLOCK_EDGES, dims);
-      handle->edge_lengths = (int *) malloc(sizeof (int) * handle->edge_count);
-      /* Memory allocation failed.
-       */
+      handle->edge_lengths = (int *)malloc(sizeof(handle->edge_count));
       if (handle->edge_lengths == NULL) {
 	  return (MI_ERROR);
       }
@@ -98,7 +95,7 @@ miget_volume_props(mihandle_t vol, mivolumeprops_t *props)
       handle->edge_lengths = NULL;
   }
   
-  *props = (mivolumeprops_t) handle;
+  *props = handle;
    
   H5Pclose(hdf_plist);
   H5Dclose(hdf_vol_dataset);
@@ -114,18 +111,19 @@ int
 miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
 			    int depth)
 {
-  if (props == NULL) {
+  if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth < 0) {
     return (MI_ERROR);
   }
   
   if (enable_flag){
     props->enable_flag = enable_flag;
     props->depth = depth;
-    return (MI_NOERROR);
+   
   }
   else {
     return (MI_ERROR);
   }
+  return (MI_NOERROR);
 }
   
 /*! Get Mutli-resolution properties
@@ -140,44 +138,51 @@ miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
   
   *enable_flag = props->enable_flag;
   *depth = props->depth;
+
   return (MI_NOERROR);
 }
 
 /*! Compute a different resolution
  */
 int
-miselect_resolution(mihandle_t vol, int depth)
+miselect_resolution(mihandle_t volume, int depth)
 {
-  hid_t hdf_file;
- 
-  /* Get a handle to the actual HDF file 
-   */
-  hdf_file = miget_volume_file_handle(vol);
-  if (hdf_file < 0) {
+  hid_t grp_id;
+  
+  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth < 0) {
     return (MI_ERROR);
   }
-  // must make a call to compute new res.
-  // if ok
+  grp_id = H5Gopen(volume->hdf_id, "/minc-2.0/image");
+  if (grp_id < 0) {
+    return (MI_ERROR);
+  }
+  /* Check given depth with the available depth in file.
+   */
+  if (depth <= volume->create_props->depth) {
+    printf(" THIS RESOLUTION IS ALREADY COMPUTED!!! \n");
+    return (0);
+  }
+  else {
+    minc_update_thumbnail(grp_id,0 ,depth);
+  }
+
  return (MI_NOERROR);
 }
 
 /*! Compute all resolution
  */
 int
-miflush_from_resolution(mihandle_t vol, int depth)
+miflush_from_resolution(mihandle_t volume, int depth)
 {
- hid_t hdf_file;
- 
-
-  /* Get a handle to the actual HDF file 
-   */
-  hdf_file = miget_volume_file_handle(vol);
-  if (hdf_file < 0) {
+  int i;
+  if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth < 0) {
     return (MI_ERROR);
   }
-  // must make a call to compute all res.
-  // starting from 1 all the way to depth
-  // if ok
+  for(i=0; i<depth; i++) {
+    miselect_resolution(volume, i+1);
+  }
+  
+  
  return (MI_NOERROR);
 }
 
@@ -195,9 +200,6 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
    break;
  case MI_COMPRESS_ZLIB:
    props->compression_type = MI_COMPRESS_ZLIB;
-
-   // make a call to mi_set_props_blocking
-   // with default parameters
    break;
  default:
    return (MI_ERROR);
@@ -210,7 +212,7 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
 int 
 miget_props_compression_type(mivolumeprops_t props, micompression_t *compression_type)
 {
-if (props == NULL) {
+  if (props == NULL) {
     return (MI_ERROR);
   }
   
@@ -223,7 +225,7 @@ if (props == NULL) {
 int
 miset_props_zlib_compression(mivolumeprops_t props, int zlib_level)
 {
-if (props == NULL) {
+  if (props == NULL || zlib_level > MAX_ZLIB_LEVEL) {
     return (MI_ERROR);
   }
   
@@ -251,22 +253,18 @@ miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_leng
 {
   int i;
   
-  if (props == NULL) {
+  if (props == NULL || edge_count > MI2_MAX_BLOCK_EDGES) {
     return (MI_ERROR);
   }
-
-  if (edge_count > MI2_MAX_BLOCK_EDGES) {
-      return (MI_ERROR);
-  }
-
+  
   if (props->edge_lengths != NULL) {
       free(props->edge_lengths);
+      props->edge_lengths = NULL;
   }
-  props->edge_lengths = NULL;
-
+  
   props->edge_count = edge_count;
   if (edge_count != 0) {
-      props->edge_lengths = (int *) malloc(sizeof(int) * edge_count);
+      props->edge_lengths = (int *) malloc(sizeof(edge_count));
       if (props->edge_lengths == NULL) {
 	  return (MI_ERROR);
       }
@@ -293,7 +291,6 @@ miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
   if (props == NULL) {
     return (MI_ERROR);
   }
-  
   *edge_count = props->edge_count;
   /* If max_lengths is greater than the actual edge count, reduce max_lengths
    * to the edge_count
@@ -301,6 +298,7 @@ miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
   if (max_lengths > props->edge_count) {
       max_lengths = props->edge_count;
   }
+  edge_lengths = (int *) malloc(sizeof(edge_count));
   for (i=0; i< max_lengths; i++){
     edge_lengths[i] = props->edge_lengths[i];
   }
@@ -316,14 +314,24 @@ miset_props_uniform_record(mivolumeprops_t props, long record_length, char *reco
   if (props == NULL) {
     return (MI_ERROR);
   }
+  if (record_length > 0) {
     props->record_length = record_length;
-    props->record_name = record_name;
+  }
+  if (props->record_name != NULL) {
+      free(props->record_name);
+      props->record_name = NULL;
+  }
+  /* Explicitly allocate storage for name
+   */
+  props->record_name =malloc(strlen(record_name));
+  strcpy(props->record_name, record_name);
   
-    return (MI_NOERROR);
+  return (MI_NOERROR);
 }
   
 /*! Set properties for non_uniform record dimension
  */
+/*
 int 
 miset_props_non_uniform_record(mivolumeprops_t props, long record_length, char *record_name)
 {
@@ -335,7 +343,7 @@ miset_props_non_uniform_record(mivolumeprops_t props, long record_length, char *
   
     return (MI_NOERROR);
 }
-
+*/
 /*! Set the template volume flag
  */ 
 int
@@ -425,7 +433,7 @@ int main(int argc, char **argv)
   mifree_volume_props(props);
 
   while (--argc > 0) {
-      r = miopen_volume(*++argv, MI2_OPEN_READ, &vol);
+      r = miopen_volume(*++argv, MI2_OPEN_RDWR, &vol);
       if (r < 0) {
 	  TESTRPT("failed", r);
       }
