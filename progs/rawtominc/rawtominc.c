@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.1 1993-01-08 09:45:04 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 1.2 1993-01-22 12:12:04 neelin Exp $";
 #endif
 
 #include <sys/types.h>
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
    /* Create an icv */
    icv=miicv_create();
    (void) miicv_setint(icv, MI_ICV_TYPE, type);
-   (void) miicv_set(icv, MI_ICV_SIGN, sign);
+   (void) miicv_setstr(icv, MI_ICV_SIGN, sign);
    if (vrange_set) {
       (void) miicv_setdbl(icv, MI_ICV_VALID_MIN, valid_range[0]);
       (void) miicv_setdbl(icv, MI_ICV_VALID_MAX, valid_range[1]);
