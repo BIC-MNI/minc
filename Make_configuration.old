@@ -1,0 +1,24 @@
+#
+# MINC configuration Makefile
+#
+
+# MINC library
+MINC_LIB_DIR  = $(ROOT)/src
+MINC_LIB      = minc
+CC_MINC_LIB   = $(MINC_LIB_DIR)/lib$(MINC_LIB).a
+LINT_MINC_LIB = $(MINC_LIB_DIR)/llib-l$(MINC_LIB).ln
+
+# MINC program utility library
+PROG_LIB_DIR  = $(ROOT)/progs/Proglib
+PROG_LIB      = mincprog
+CC_PROG_LIB   = $(PROG_LIB_DIR)/lib$(PROG_LIB).a
+LINT_PROG_LIB = $(PROG_LIB_DIR)/llib-l$(PROG_LIB).ln
+
+# Include directories
+INCLUDES = -I. -I$(PROG_LIB_DIR) -I$(MINC_LIB_DIR) -I/usr/local/include
+
+# Directory for netcdf stuff
+NETCDF_FORTRAN_DIR = $(ROOT)/fortran/netcdf
+
+# MINC loader options
+MINC_LDOPT = $(CC_MINC_LIB) /usr/local/lib/libnetcdf.a $(MACHINE_LDOPT)
