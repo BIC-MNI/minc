@@ -14,8 +14,8 @@
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_private.h,v $
- * Revision 6.2  2004-04-27 15:47:47  bert
- * #include minc_config.h and minc_error.h
+ * Revision 6.1.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.1  1999/10/19 14:45:09  neelin
  * Fixed Log subsitutions for CVS
@@ -57,18 +57,27 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.2 2004-04-27 15:47:47 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.1.2.1 2004-09-28 20:23:40 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
+#if defined(_MSC_VER)
+/* If we are building on the Microsoft C compiler, we want to
+ * explicitly export all public functions from the DLL
+ */
+#define MNCAPI __declspec(dllexport)
+#else
+#define MNCAPI
+#endif
+
+#include "config.h"
 #include  <stdlib.h>
 #include  <stdio.h>
 #include  <string.h>
 #include  <memory.h>
-#include  <minc.h>
-#include  <minc_useful.h>
-#include  <minc_basic.h>
-#include  <minc_structures.h>
-#include  <minc_routines.h>
-#include  <minc_config.h>
-#include  <minc_error.h>
+#include  "minc.h"
+#include  "minc_useful.h"
+#include  "minc_basic.h"
+#include  "minc_structures.h"
+#include  "minc_routines.h"
+
 #endif

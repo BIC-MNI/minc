@@ -5,7 +5,10 @@
 @CREATED    : February 1, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: time_stamp.c,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.1.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -47,14 +50,13 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
+#include "minc_private.h"
+#include <time.h>
 #include <time_stamp.h>
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/time_stamp.c,v 6.1 2002-01-14 21:28:26 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/time_stamp.c,v 6.1.2.1 2004-09-28 20:23:40 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -16,17 +16,13 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.5 2004-06-09 19:42:04 bert Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.1 2004-09-28 20:23:39 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
-#include "config.h"
 #include "minc_private.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
-#include <ParseArgv.h>
+#include "ParseArgv.h"
 
 /*
  * Default table of argument descriptors.  These are normally available
@@ -465,13 +461,5 @@ static void PrintVersion(ArgvInfo *argTable)
     }
     printf("program: %s\n", versionStr);
     printf("libminc: %s\n", miget_version());
-    printf("netcdf : %s\n", nc_inq_libvers());
-#ifdef MINC2
-    {
-        unsigned int major, minor, release;
-        H5get_libversion(&major, &minor, &release);
-        printf("HDF5   : %d.%d.%d\n", major, minor, release);
-    }
-#endif
     exit(0);
 }

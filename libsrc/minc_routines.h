@@ -13,7 +13,10 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_routines.h,v $
- * Revision 6.1  1999-10-19 14:45:10  neelin
+ * Revision 6.1.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
+ *
+ * Revision 6.1  1999/10/19 14:45:10  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -53,38 +56,38 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 6.1 1999-10-19 14:45:10 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 6.1.2.1 2004-09-28 20:23:40 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */
 
 /* From minc_error.c */
-semiprivate int MI_save_routine_name(char *name);
-semiprivate int MI_return(void);
-semiprivate int MI_return_error(void);
-semiprivate void MI_log_pkg_error2(int p1, char *p2);
-semiprivate void MI_log_pkg_error3(int p1, char *p2, char *p3);
-semiprivate void MI_log_sys_error1(char *p1);
+SEMIPRIVATE int MI_save_routine_name(char *name);
+SEMIPRIVATE int MI_return(void);
+SEMIPRIVATE int MI_return_error(void);
+SEMIPRIVATE void MI_log_pkg_error2(int p1, char *p2);
+SEMIPRIVATE void MI_log_pkg_error3(int p1, char *p2, char *p3);
+SEMIPRIVATE void MI_log_sys_error1(char *p1);
 
 /* From value_conversion.c */
-semiprivate int MI_varaccess(int operation, int cdfid, int varid, 
+SEMIPRIVATE int MI_varaccess(int operation, int cdfid, int varid, 
                              long start[], long count[],
                              nc_type datatype, int sign, void *values,
                              int *bufsize_step, mi_icv_type *icvp);
-semiprivate int MI_var_loop(int ndims, long start[], long count[],
+SEMIPRIVATE int MI_var_loop(int ndims, long start[], long count[],
                             int value_size, int *bufsize_step,
                             long max_buffer_size,
                             void *caller_data,
                             int (*action_func) (int, long [], long [], 
                                                 long, void *, void *));
-semiprivate int MI_get_sign_from_string(nc_type datatype, char *sign);
-semiprivate int MI_convert_type(long number_of_values,
+SEMIPRIVATE int MI_get_sign_from_string(nc_type datatype, char *sign);
+SEMIPRIVATE int MI_convert_type(long number_of_values,
                                 nc_type intype,  int insign,  void *invalues,
                                 nc_type outtype, int outsign, void *outvalues,
                                 mi_icv_type *icvp);
 
 /* From image_conversion.c */
-semiprivate mi_icv_type *MI_icv_chkid(int icvid);
+SEMIPRIVATE mi_icv_type *MI_icv_chkid(int icvid);
 
 
 #endif

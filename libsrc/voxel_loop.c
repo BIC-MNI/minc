@@ -7,8 +7,8 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.4  2004-04-27 15:43:29  bert
- * Support MINC 2.0 format
+ * Revision 6.3.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.3  2003/11/14 16:52:24  stever
  * More last-minute fixes.
@@ -120,23 +120,15 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.4 2004-04-27 15:43:29 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.3.2.1 2004-09-28 20:23:40 bert Exp $";
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "minc_private.h"
 #include <float.h>
 #include <math.h>
-#include <minc.h>
 #include <minc_def.h>
-#include <voxel_loop.h>
-#include <nd_loop.h>
-
-#ifndef TRUE
-#  define TRUE 1
-#  define FALSE 0
-#endif
+#include "voxel_loop.h"
+#include "nd_loop.h"
 
 /* Minimum number of voxels to put in a buffer. If this is too small,
    then for large images excessive reading can result. If it is
@@ -189,13 +181,10 @@ struct Loop_Options {
    Loop_Info *loop_info;
    int is_floating_type;
    AllocateBufferFunction allocate_buffer_function;
-#ifdef MINC2
-   int v2format;
-#endif /* MINC2 defined */
 };
 
 struct Loopfile_Info {
-   int cflags;			/* creation flags */
+   int clobber_output;
    int num_input_files;
    int num_output_files;
    char **input_files;
@@ -215,91 +204,91 @@ struct Loopfile_Info {
 };
 
 /* Function prototypes */
-private int get_loop_dim_size(int inmincid, Loop_Options *loop_options);
-private void translate_input_coords(int inmincid,
+PRIVATE int get_loop_dim_size(int inmincid, Loop_Options *loop_options);
+PRIVATE void translate_input_coords(int inmincid,
                                     long chunk_cur[], long input_cur[],
                                     long chunk_curcount[], 
                                     long input_curcount[],
                                     int *loop_dim_index,
                                     Loop_Options *loop_options);
-private void check_input_files(Loop_Options *loop_options,
+PRIVATE void check_input_files(Loop_Options *loop_options,
                                Loopfile_Info *loopfile_info);
-private int input_image_varinq(int mincid, int imgid, char *name,
+PRIVATE int input_image_varinq(int mincid, int imgid, char *name,
                                nc_type *datatype, int *ndims, int dim[],
                                int *natts, Loop_Options *loop_options);
-private void get_dim_info(int mincid, int *ndims, long size[], 
+PRIVATE void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
                           double start[], double step[],
                           double dircos[][3], int is_regular[],
                           Loop_Options *loop_options);
-private void setup_output_files(Loop_Options *loop_options, 
+PRIVATE void setup_output_files(Loop_Options *loop_options, 
                                 Loopfile_Info *loopfile_info,
                                 char *arg_string);
-private long get_vector_length(int mincid, Loop_Options *loop_options);
-private void setup_variables(int inmincid, int outmincid,
+PRIVATE long get_vector_length(int mincid, Loop_Options *loop_options);
+PRIVATE void setup_variables(int inmincid, int outmincid,
                              int output_curfile,
                              char *arg_string, Loop_Options *loop_options);
-private void update_history(int mincid, char *arg_string);
-private void setup_icvs(Loop_Options *loop_options, 
+PRIVATE void update_history(int mincid, char *arg_string);
+PRIVATE void setup_icvs(Loop_Options *loop_options, 
                         Loopfile_Info *loopfile_info);
-private void do_voxel_loop(Loop_Options *loop_options,
+PRIVATE void do_voxel_loop(Loop_Options *loop_options,
                            Loopfile_Info *loopfile_info);
-private void setup_looping(Loop_Options *loop_options, 
+PRIVATE void setup_looping(Loop_Options *loop_options, 
                            Loopfile_Info *loopfile_info,
                            int *ndims,
                            long block_start[], long block_end[], 
                            long block_incr[], long *block_num_voxels,
                            long chunk_incr[], long *chunk_num_voxels);
-private void initialize_file_and_index(Loop_Options *loop_options, 
+PRIVATE void initialize_file_and_index(Loop_Options *loop_options, 
                                        Loopfile_Info *loopfile_info,
                                        int do_loop,
                                        int *ifile, int *dim_index,
                                        int *dummy_index);
-private int finish_file_and_index(Loop_Options *loop_options, 
+PRIVATE int finish_file_and_index(Loop_Options *loop_options, 
                                   Loopfile_Info *loopfile_info,
                                   int do_loop,
                                   int ifile, int dim_index,
                                   int dummy_index);
-private void increment_file_and_index(Loop_Options *loop_options, 
+PRIVATE void increment_file_and_index(Loop_Options *loop_options, 
                                       Loopfile_Info *loopfile_info,
                                       int do_loop,
                                       int *ifile, int *dim_index,
                                       int *dummy_index);
-private Loopfile_Info *initialize_loopfile_info(int num_input_files,
+PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
                                                 char *input_files[],
                                                 int num_output_files,
                                                 char *output_files[],
                                                 Loop_Options *loop_options);
-private void cleanup_loopfile_info(Loopfile_Info *loopfile_info);
-private int get_input_numfiles(Loopfile_Info *loopfile_info);
-private int get_output_numfiles(Loopfile_Info *loopfile_info);
-private char *get_input_filename(Loopfile_Info *loopfile_info, int file_num);
-private char *get_output_filename(Loopfile_Info *loopfile_info, int file_num);
-private void set_input_headers_only(Loopfile_Info *loopfile_info,
+PRIVATE void cleanup_loopfile_info(Loopfile_Info *loopfile_info);
+PRIVATE int get_input_numfiles(Loopfile_Info *loopfile_info);
+PRIVATE int get_output_numfiles(Loopfile_Info *loopfile_info);
+PRIVATE char *get_input_filename(Loopfile_Info *loopfile_info, int file_num);
+PRIVATE char *get_output_filename(Loopfile_Info *loopfile_info, int file_num);
+PRIVATE void set_input_headers_only(Loopfile_Info *loopfile_info,
                                     int headers_only);
-private void set_input_sequential(Loopfile_Info *loopfile_info,
+PRIVATE void set_input_sequential(Loopfile_Info *loopfile_info,
                                   int sequential_access);
-private int get_input_mincid(Loopfile_Info *loopfile_info,
+PRIVATE int get_input_mincid(Loopfile_Info *loopfile_info,
                              int file_num);
-private int get_output_mincid(Loopfile_Info *loopfile_info,
+PRIVATE int get_output_mincid(Loopfile_Info *loopfile_info,
                               int file_num);
-private int create_output_file(Loopfile_Info *loopfile_info,
+PRIVATE int create_output_file(Loopfile_Info *loopfile_info,
                                int file_num);
-private int get_input_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int get_input_icvid(Loopfile_Info *loopfile_info,
                             int file_num);
-private int get_output_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int get_output_icvid(Loopfile_Info *loopfile_info,
                              int file_num);
-private int create_input_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int create_input_icvid(Loopfile_Info *loopfile_info,
                                int file_num);
-private int create_output_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int create_output_icvid(Loopfile_Info *loopfile_info,
                                 int file_num);
-private Loop_Info *create_loop_info(void);
-private void initialize_loop_info(Loop_Info *loop_info);
-private void free_loop_info(Loop_Info *loop_info);
-private void set_info_shape(Loop_Info *loop_info, long start[], long count[]);
-private void set_info_current_file(Loop_Info *loop_info, int current_file);
-private void set_info_current_index(Loop_Info *loop_info, int current_index);
-private void set_info_loopfile_info(Loop_Info *loop_info, 
+PRIVATE Loop_Info *create_loop_info(void);
+PRIVATE void initialize_loop_info(Loop_Info *loop_info);
+PRIVATE void free_loop_info(Loop_Info *loop_info);
+PRIVATE void set_info_shape(Loop_Info *loop_info, long start[], long count[]);
+PRIVATE void set_info_current_file(Loop_Info *loop_info, int current_file);
+PRIVATE void set_info_current_index(Loop_Info *loop_info, int current_index);
+PRIVATE void set_info_loopfile_info(Loop_Info *loop_info, 
                                     Loopfile_Info *loopfile_info);
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -323,7 +312,7 @@ private void set_info_loopfile_info(Loop_Info *loop_info,
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void voxel_loop(int num_input_files, char *input_files[], 
+MNCAPI void voxel_loop(int num_input_files, char *input_files[], 
                        int num_output_files, char *output_files[], 
                        char *arg_string, 
                        Loop_Options *loop_options,
@@ -405,7 +394,7 @@ public void voxel_loop(int num_input_files, char *input_files[],
 @CREATED    : January 24, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_loop_dim_size(int inmincid, Loop_Options *loop_options)
+PRIVATE int get_loop_dim_size(int inmincid, Loop_Options *loop_options)
 {
    int dimid;
    long dim_length;
@@ -461,7 +450,7 @@ private int get_loop_dim_size(int inmincid, Loop_Options *loop_options)
 @CREATED    : January 24, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void translate_input_coords(int inmincid,
+PRIVATE void translate_input_coords(int inmincid,
                                     long chunk_cur[], long input_cur[],
                                     long chunk_curcount[], 
                                     long input_curcount[],
@@ -515,7 +504,7 @@ private void translate_input_coords(int inmincid,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void check_input_files(Loop_Options *loop_options,
+PRIVATE void check_input_files(Loop_Options *loop_options,
                                Loopfile_Info *loopfile_info)
 {
    int ifile, idim, jdim;
@@ -673,7 +662,7 @@ private void check_input_files(Loop_Options *loop_options,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int input_image_varinq(int mincid, int imgid, char *name,
+PRIVATE int input_image_varinq(int mincid, int imgid, char *name,
                                nc_type *datatype, int *ndims, int dim[],
                                int *natts, Loop_Options *loop_options)
 {
@@ -746,7 +735,7 @@ private int input_image_varinq(int mincid, int imgid, char *name,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void get_dim_info(int mincid, int *ndims, long size[], 
+PRIVATE void get_dim_info(int mincid, int *ndims, long size[], 
                           char dimname[][MAX_NC_NAME],
                           double start[], double step[],
                           double dircos[][3], int is_regular[],
@@ -840,7 +829,7 @@ private void get_dim_info(int mincid, int *ndims, long size[],
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void setup_output_files(Loop_Options *loop_options, 
+PRIVATE void setup_output_files(Loop_Options *loop_options, 
                                 Loopfile_Info *loopfile_info,
                                 char *arg_string)
 {
@@ -870,7 +859,7 @@ private void setup_output_files(Loop_Options *loop_options,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private long get_vector_length(int mincid, Loop_Options *loop_options)
+PRIVATE long get_vector_length(int mincid, Loop_Options *loop_options)
 {
    int imgid;
    int ndims;
@@ -915,7 +904,7 @@ private long get_vector_length(int mincid, Loop_Options *loop_options)
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void setup_variables(int inmincid, int outmincid,
+PRIVATE void setup_variables(int inmincid, int outmincid,
                              int output_curfile,
                              char *arg_string, Loop_Options *loop_options)
 {
@@ -1128,7 +1117,7 @@ private void setup_variables(int inmincid, int outmincid,
 @CREATED    : August 26, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void update_history(int mincid, char *arg_string)
+PRIVATE void update_history(int mincid, char *arg_string)
 {
    nc_type datatype;
    int att_length;
@@ -1171,7 +1160,7 @@ private void update_history(int mincid, char *arg_string)
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void setup_icvs(Loop_Options *loop_options, 
+PRIVATE void setup_icvs(Loop_Options *loop_options, 
                         Loopfile_Info *loopfile_info)
 {
    int ifile;
@@ -1218,7 +1207,7 @@ private void setup_icvs(Loop_Options *loop_options,
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : November 30, 1994 (P.N.)
 ---------------------------------------------------------------------------- */
-private void do_voxel_loop(Loop_Options *loop_options,
+PRIVATE void do_voxel_loop(Loop_Options *loop_options,
                            Loopfile_Info *loopfile_info)
 {
    long block_start[MAX_VAR_DIMS], block_end[MAX_VAR_DIMS];
@@ -1695,7 +1684,7 @@ private void do_voxel_loop(Loop_Options *loop_options,
 @CREATED    : December 2, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void setup_looping(Loop_Options *loop_options, 
+PRIVATE void setup_looping(Loop_Options *loop_options, 
                            Loopfile_Info *loopfile_info,
                            int *ndims,
                            long block_start[], long block_end[], 
@@ -1806,7 +1795,7 @@ private void setup_looping(Loop_Options *loop_options,
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void initialize_file_and_index(Loop_Options *loop_options, 
+PRIVATE void initialize_file_and_index(Loop_Options *loop_options, 
                                        Loopfile_Info *loopfile_info,
                                        int do_loop,
                                        int *ifile, int *dim_index,
@@ -1842,7 +1831,7 @@ private void initialize_file_and_index(Loop_Options *loop_options,
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int finish_file_and_index(Loop_Options *loop_options, 
+PRIVATE int finish_file_and_index(Loop_Options *loop_options, 
                                   Loopfile_Info *loopfile_info,
                                   int do_loop,
                                   int ifile, int dim_index,
@@ -1878,7 +1867,7 @@ private int finish_file_and_index(Loop_Options *loop_options,
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void increment_file_and_index(Loop_Options *loop_options, 
+PRIVATE void increment_file_and_index(Loop_Options *loop_options, 
                                       Loopfile_Info *loopfile_info,
                                       int do_loop,
                                       int *ifile, int *dim_index,
@@ -1918,7 +1907,7 @@ private void increment_file_and_index(Loop_Options *loop_options,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Loopfile_Info *initialize_loopfile_info(int num_input_files,
+PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
                                                 char *input_files[],
                                                 int num_output_files,
                                                 char *output_files[],
@@ -1931,18 +1920,7 @@ private Loopfile_Info *initialize_loopfile_info(int num_input_files,
    loopfile_info = MALLOC(sizeof(*loopfile_info));
 
    /* Save clobber info */
-   if (loop_options->clobber) {
-       loopfile_info->cflags = NC_CLOBBER;
-   }
-   else {
-       loopfile_info->cflags = NC_NOCLOBBER;
-   }
-
-#ifdef MINC2
-   if (loop_options->v2format) {
-       loopfile_info->cflags |= MI2_CREATE_V2;
-   }
-#endif /* MINC2 defined */
+   loopfile_info->clobber_output = loop_options->clobber;
 
    /* Save number of input and output files */
    loopfile_info->num_input_files = num_input_files;
@@ -2043,7 +2021,7 @@ private Loopfile_Info *initialize_loopfile_info(int num_input_files,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void cleanup_loopfile_info(Loopfile_Info *loopfile_info)
+PRIVATE void cleanup_loopfile_info(Loopfile_Info *loopfile_info)
 {
    int num_files, ifile;
 
@@ -2101,7 +2079,7 @@ private void cleanup_loopfile_info(Loopfile_Info *loopfile_info)
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_input_numfiles(Loopfile_Info *loopfile_info)
+PRIVATE int get_input_numfiles(Loopfile_Info *loopfile_info)
 {
    return loopfile_info->num_input_files;
 }
@@ -2118,7 +2096,7 @@ private int get_input_numfiles(Loopfile_Info *loopfile_info)
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_output_numfiles(Loopfile_Info *loopfile_info)
+PRIVATE int get_output_numfiles(Loopfile_Info *loopfile_info)
 {
    return loopfile_info->num_output_files;
 }
@@ -2136,7 +2114,7 @@ private int get_output_numfiles(Loopfile_Info *loopfile_info)
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private char *get_input_filename(Loopfile_Info *loopfile_info, int file_num)
+PRIVATE char *get_input_filename(Loopfile_Info *loopfile_info, int file_num)
 {
    /* Check for bad file_num */
    if ((file_num < 0) || (file_num >= loopfile_info->num_input_files)) {
@@ -2160,7 +2138,7 @@ private char *get_input_filename(Loopfile_Info *loopfile_info, int file_num)
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private char *get_output_filename(Loopfile_Info *loopfile_info, int file_num)
+PRIVATE char *get_output_filename(Loopfile_Info *loopfile_info, int file_num)
 {
    /* Check for bad file_num */
    if ((file_num < 0) || (file_num >= loopfile_info->num_output_files)) {
@@ -2188,7 +2166,7 @@ private char *get_output_filename(Loopfile_Info *loopfile_info, int file_num)
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_input_headers_only(Loopfile_Info *loopfile_info,
+PRIVATE void set_input_headers_only(Loopfile_Info *loopfile_info,
                                     int headers_only)
 {
    int num_files, ifile;
@@ -2251,7 +2229,7 @@ private void set_input_headers_only(Loopfile_Info *loopfile_info,
 @CREATED    : March 1, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_input_sequential(Loopfile_Info *loopfile_info,
+PRIVATE void set_input_sequential(Loopfile_Info *loopfile_info,
                                   int sequential_access)
 {
    int old_input_all_open;
@@ -2318,7 +2296,7 @@ private void set_input_sequential(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_input_mincid(Loopfile_Info *loopfile_info,
+PRIVATE int get_input_mincid(Loopfile_Info *loopfile_info,
                              int file_num)
 {
    int index;
@@ -2377,7 +2355,7 @@ private int get_input_mincid(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_output_mincid(Loopfile_Info *loopfile_info,
+PRIVATE int get_output_mincid(Loopfile_Info *loopfile_info,
                               int file_num)
 {
    int index;
@@ -2428,7 +2406,7 @@ private int get_output_mincid(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int create_output_file(Loopfile_Info *loopfile_info,
+PRIVATE int create_output_file(Loopfile_Info *loopfile_info,
                                int file_num)
 {
    int index;
@@ -2462,7 +2440,8 @@ private int create_output_file(Loopfile_Info *loopfile_info,
    }
    loopfile_info->output_mincid[index] =
       micreate(loopfile_info->output_files[file_num], 
-               loopfile_info->cflags);
+               (loopfile_info->clobber_output ? 
+                NC_CLOBBER : NC_NOCLOBBER));
 
    return loopfile_info->output_mincid[index];
 }
@@ -2482,7 +2461,7 @@ private int create_output_file(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_input_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int get_input_icvid(Loopfile_Info *loopfile_info,
                             int file_num)
 {
    int mincid, icv_mincid, icvid;
@@ -2531,7 +2510,7 @@ private int get_input_icvid(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int get_output_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int get_output_icvid(Loopfile_Info *loopfile_info,
                              int file_num)
 {
    int mincid, icv_mincid, icvid;
@@ -2582,7 +2561,7 @@ private int get_output_icvid(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int create_input_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int create_input_icvid(Loopfile_Info *loopfile_info,
                                int file_num)
 {
    int index;
@@ -2626,7 +2605,7 @@ private int create_input_icvid(Loopfile_Info *loopfile_info,
 @CREATED    : November 30, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int create_output_icvid(Loopfile_Info *loopfile_info,
+PRIVATE int create_output_icvid(Loopfile_Info *loopfile_info,
                                 int file_num)
 {
    int index;
@@ -2668,7 +2647,7 @@ private int create_output_icvid(Loopfile_Info *loopfile_info,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Loop_Options *create_loop_options(void)
+MNCAPI Loop_Options *create_loop_options(void)
 {
    Loop_Options *loop_options;
 
@@ -2703,10 +2682,6 @@ public Loop_Options *create_loop_options(void)
 
    loop_options->allocate_buffer_function = NULL;
 
-#ifdef MINC2
-   loop_options->v2format = FALSE; /* Use MINC 2.0 file format (HDF5)? */
-#endif /* MINC2 defined */
-
    /* Return the structure pointer */
    return loop_options;
 }
@@ -2723,7 +2698,7 @@ public Loop_Options *create_loop_options(void)
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void free_loop_options(Loop_Options *loop_options)
+MNCAPI void free_loop_options(Loop_Options *loop_options)
 {
    free_loop_info(loop_options->loop_info);
    if (loop_options->loop_dimension != NULL)
@@ -2744,31 +2719,11 @@ public void free_loop_options(Loop_Options *loop_options)
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_clobber(Loop_Options *loop_options, 
+MNCAPI void set_loop_clobber(Loop_Options *loop_options, 
                              int clobber)
 {
    loop_options->clobber = clobber;
 }
-
-#ifdef MINC2
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_loop_v2format
-@INPUT      : loop_options - user options for looping
-              v2format - TRUE if output files should use MINC 2.0 format
-@OUTPUT     : (none)
-@RETURNS    : (nothing)
-@DESCRIPTION: Routine to turn output clobber on or off
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : October 8, 2003 (Bert Vincent)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-public void set_loop_v2format(Loop_Options *loop_options, int v2format)
-{
-   loop_options->v2format = v2format;
-}
-#endif /* MINC2 defined */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_verbose
@@ -2783,7 +2738,7 @@ public void set_loop_v2format(Loop_Options *loop_options, int v2format)
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_verbose(Loop_Options *loop_options, 
+MNCAPI void set_loop_verbose(Loop_Options *loop_options, 
                              int verbose)
 {
    loop_options->verbose = verbose;
@@ -2807,7 +2762,7 @@ public void set_loop_verbose(Loop_Options *loop_options,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_datatype(Loop_Options *loop_options, 
+MNCAPI void set_loop_datatype(Loop_Options *loop_options, 
                               nc_type datatype, int is_signed,
                               double valid_min, double valid_max)
 {
@@ -2831,7 +2786,7 @@ public void set_loop_datatype(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_max_open_files(Loop_Options *loop_options, 
+MNCAPI void set_loop_max_open_files(Loop_Options *loop_options, 
                                     int max_open_files)
 {
    if ((max_open_files <= 0) || (max_open_files > MAX_NC_OPEN)) {
@@ -2858,7 +2813,7 @@ public void set_loop_max_open_files(Loop_Options *loop_options,
 @CREATED    : March 16, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_check_dim_info(Loop_Options *loop_options, 
+MNCAPI void set_loop_check_dim_info(Loop_Options *loop_options, 
                                     int check_dim_info)
 {
    loop_options->check_all_input_dim_info = check_dim_info;
@@ -2878,7 +2833,7 @@ public void set_loop_check_dim_info(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_convert_input_to_scalar(Loop_Options *loop_options, 
+MNCAPI void set_loop_convert_input_to_scalar(Loop_Options *loop_options, 
                                              int convert_input_to_scalar)
 {
    loop_options->convert_input_to_scalar = convert_input_to_scalar;
@@ -2899,7 +2854,7 @@ public void set_loop_convert_input_to_scalar(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_output_vector_size(Loop_Options *loop_options, 
+MNCAPI void set_loop_output_vector_size(Loop_Options *loop_options, 
                                         int output_vector_size)
 {
    if (output_vector_size < 0) {
@@ -2925,7 +2880,7 @@ public void set_loop_output_vector_size(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_first_input_mincid(Loop_Options *loop_options, 
+MNCAPI void set_loop_first_input_mincid(Loop_Options *loop_options, 
                                         int input_mincid)
 {
    loop_options->input_mincid = input_mincid;
@@ -2944,7 +2899,7 @@ public void set_loop_first_input_mincid(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_buffer_size(Loop_Options *loop_options,
+MNCAPI void set_loop_buffer_size(Loop_Options *loop_options,
                                  long buffer_size)
 {
    if (buffer_size <= 0) {
@@ -2970,7 +2925,7 @@ public void set_loop_buffer_size(Loop_Options *loop_options,
 @CREATED    : January 24, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_dimension(Loop_Options *loop_options,
+MNCAPI void set_loop_dimension(Loop_Options *loop_options,
                                char *dimension_name)
 {
    if (loop_options->loop_dimension != NULL)
@@ -3000,7 +2955,7 @@ public void set_loop_dimension(Loop_Options *loop_options,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_input_file_function
+MNCAPI void set_loop_input_file_function
    (Loop_Options *loop_options,
     VoxelInputFileFunction input_file_function)
 {
@@ -3024,7 +2979,7 @@ public void set_loop_input_file_function
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_output_file_function
+MNCAPI void set_loop_output_file_function
    (Loop_Options *loop_options,
     VoxelOutputFileFunction output_file_function)
 {
@@ -3045,7 +3000,7 @@ public void set_loop_output_file_function
 @CREATED    : March 13, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_copy_all_header(Loop_Options *loop_options, 
+MNCAPI void set_loop_copy_all_header(Loop_Options *loop_options, 
                                      int copy_all_header)
 {
    loop_options->copy_all_header_info = copy_all_header;
@@ -3079,7 +3034,7 @@ public void set_loop_copy_all_header(Loop_Options *loop_options,
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void set_loop_accumulate(Loop_Options *loop_options, 
+MNCAPI void set_loop_accumulate(Loop_Options *loop_options, 
                                 int do_accumulation,
                                 int num_extra_buffers,
                                 VoxelStartFunction start_function,
@@ -3124,7 +3079,7 @@ public void set_loop_accumulate(Loop_Options *loop_options,
 @CREATED    : Aug 29, 2000 (J. Taylor)
 @MODIFIED   : Sept. 19, 2000 (P. Neelin)
 ---------------------------------------------------------------------------- */
-public void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
+MNCAPI void set_loop_allocate_buffer_function(Loop_Options *loop_options, 
                          AllocateBufferFunction allocate_buffer_function)
 
 {
@@ -3145,7 +3100,7 @@ public void set_loop_allocate_buffer_function(Loop_Options *loop_options,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Loop_Info *create_loop_info(void)
+PRIVATE Loop_Info *create_loop_info(void)
 {
    Loop_Info *loop_info;
 
@@ -3171,7 +3126,7 @@ private Loop_Info *create_loop_info(void)
 @CREATED    : February 28, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void initialize_loop_info(Loop_Info *loop_info)
+PRIVATE void initialize_loop_info(Loop_Info *loop_info)
 {
    int idim;
 
@@ -3198,7 +3153,7 @@ private void initialize_loop_info(Loop_Info *loop_info)
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void free_loop_info(Loop_Info *loop_info)
+PRIVATE void free_loop_info(Loop_Info *loop_info)
 {
    FREE(loop_info);
 }
@@ -3217,7 +3172,7 @@ private void free_loop_info(Loop_Info *loop_info)
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_info_shape(Loop_Info *loop_info, long start[], long count[])
+PRIVATE void set_info_shape(Loop_Info *loop_info, long start[], long count[])
 {
    int idim;
    long size;
@@ -3254,7 +3209,7 @@ private void set_info_shape(Loop_Info *loop_info, long start[], long count[])
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_info_shape(Loop_Info *loop_info, int ndims,
+MNCAPI void get_info_shape(Loop_Info *loop_info, int ndims,
                            long start[], long count[])
 {
    int idim;
@@ -3282,7 +3237,7 @@ public void get_info_shape(Loop_Info *loop_info, int ndims,
 @CREATED    : November 28, 2001 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
+MNCAPI void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
                                  int ndims, long index[])
 {
    int idim;
@@ -3315,7 +3270,7 @@ public void get_info_voxel_index(Loop_Info *loop_info, long subscript,
 @CREATED    : February 28, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_info_current_file(Loop_Info *loop_info, int current_file)
+PRIVATE void set_info_current_file(Loop_Info *loop_info, int current_file)
 {
 
    loop_info->current_file = current_file;
@@ -3334,7 +3289,7 @@ private void set_info_current_file(Loop_Info *loop_info, int current_file)
 @CREATED    : February 28, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_info_current_file(Loop_Info *loop_info)
+MNCAPI int get_info_current_file(Loop_Info *loop_info)
 {
 
    return loop_info->current_file;
@@ -3353,7 +3308,7 @@ public int get_info_current_file(Loop_Info *loop_info)
 @CREATED    : March 8, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_info_current_mincid(Loop_Info *loop_info)
+MNCAPI int get_info_current_mincid(Loop_Info *loop_info)
 {
 
    if (loop_info->loopfile_info == NULL) return MI_ERROR;
@@ -3375,7 +3330,7 @@ public int get_info_current_mincid(Loop_Info *loop_info)
 @CREATED    : February 28, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_info_current_index(Loop_Info *loop_info, int current_index)
+PRIVATE void set_info_current_index(Loop_Info *loop_info, int current_index)
 {
 
    loop_info->current_index = current_index;
@@ -3394,7 +3349,7 @@ private void set_info_current_index(Loop_Info *loop_info, int current_index)
 @CREATED    : February 28, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_info_current_index(Loop_Info *loop_info)
+MNCAPI int get_info_current_index(Loop_Info *loop_info)
 {
 
    return loop_info->current_index;
@@ -3414,7 +3369,7 @@ public int get_info_current_index(Loop_Info *loop_info)
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void set_info_loopfile_info(Loop_Info *loop_info, 
+PRIVATE void set_info_loopfile_info(Loop_Info *loop_info, 
                                     Loopfile_Info *loopfile_info)
 {
 
@@ -3436,7 +3391,7 @@ private void set_info_loopfile_info(Loop_Info *loop_info,
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int get_info_whole_file(Loop_Info *loop_info)
+MNCAPI int get_info_whole_file(Loop_Info *loop_info)
 {
    Loopfile_Info *loopfile_info;
 

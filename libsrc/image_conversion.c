@@ -34,8 +34,8 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.11  2004-04-27 15:40:22  bert
- * Revised logging/error handling
+ * Revision 6.10.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.10  2003/09/18 16:17:00  bert
  * Correctly cast double to nc_type
@@ -150,24 +150,24 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.11 2004-04-27 15:40:22 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.10.2.1 2004-09-28 20:23:40 bert Exp $ MINC (MNI)";
 #endif
 
-#include <type_limits.h>
-#include <minc_private.h>
+#include "minc_private.h"
+#include "type_limits.h"
 
 /* Private functions */
-private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
-private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
-private double MI_get_default_range(char *what, nc_type datatype, int sign);
-private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
-private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE double MI_get_default_range(char *what, nc_type datatype, int sign);
+PRIVATE int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
+PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
                           long count[], void *values);
-private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
-private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+PRIVATE int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
+PRIVATE int MI_icv_coords_tovar(mi_icv_type *icvp, 
                                 long icv_start[], long icv_count[],
                                 long var_start[], long var_count[]);
-private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
+PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 
 /* Array of pointers to image conversion structures */
 static int minc_icv_list_nalloc = 0;
@@ -186,7 +186,7 @@ static mi_icv_type **minc_icv_list = NULL;
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_create()
+MNCAPI int miicv_create()
 {
    int new_icv;       /* Id of newly created icv */
    mi_icv_type *icvp;  /* Pointer to new icv structure */
@@ -216,7 +216,7 @@ public int miicv_create()
       /* Check that the allocation was successful */
       if (minc_icv_list == NULL) {
          MI_LOG_SYS_ERROR1("miicv_create");
-         MI_RETURN(MI_ERROR);
+         MI_RETURN_ERROR(MI_ERROR);
       }
       /* Put in NULL pointers */
       for (new_icv=minc_icv_list_nalloc; new_icv<new_nalloc; new_icv++)
@@ -231,7 +231,7 @@ public int miicv_create()
    /* Allocate a new structure */
    if ((minc_icv_list[new_icv]=MALLOC(1, mi_icv_type))==NULL) {
       MI_LOG_SYS_ERROR1("miicv_create");
-      MI_RETURN(MI_ERROR);
+      MI_RETURN_ERROR(MI_ERROR);
    }
    icvp=minc_icv_list[new_icv];
 
@@ -299,21 +299,18 @@ public int miicv_create()
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_free(int icvid)
+MNCAPI int miicv_free(int icvid)
 {
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_free");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Detach the icv if it is attached */
-   if (icvp->cdfid != MI_ERROR) {
-       if (miicv_detach(icvid) < 0) {
-           MI_RETURN(MI_ERROR);
-       }
-   }
+   if (icvp->cdfid != MI_ERROR)
+      {MI_CHK_ERR(miicv_detach(icvid))}
 
    /* Free anything allocated at creation time */
    FREE(icvp->user_maxvar);
@@ -342,7 +339,7 @@ public int miicv_free(int icvid)
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setdbl(int icvid, int icv_property, double value)
+MNCAPI int miicv_setdbl(int icvid, int icv_property, double value)
 {
    int ival, idim;
    mi_icv_type *icvp;
@@ -350,12 +347,13 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
    MI_SAVE_ROUTINE_NAME("miicv_setdbl");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Check that the icv is not attached to a file */
    if (icvp->cdfid != MI_ERROR) {
-       milog_message(MI_MSG_ICVATTACHED);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_ICVATTACHED, 
+         "Attempt to modify an attached image conversion variable");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Set the property */
@@ -408,8 +406,9 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
    case MI_ICV_NUM_IMGDIMS:
       ival = value;
       if ((ival<0) || (ival>MI_MAX_IMGDIMS)) {
-          milog_message(MI_MSG_BADPROP, _("MI_ICV_NUM_IMGDIMS out of range"));
-         MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "MI_ICV_NUM_IMGDIMS out of range");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       icvp->user_num_imgdims = ival;
       break;
@@ -422,10 +421,10 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
    case MI_ICV_SIGN:
    case MI_ICV_MAXVAR:
    case MI_ICV_MINVAR:
-       milog_message(MI_MSG_BADPROP, 
-                     _("Can't store a number in a string value"));
-       MI_RETURN(MI_ERROR);
-       break;
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                        "Tried to set icv string property to a number");
+      MI_RETURN_ERROR(MI_ERROR);
+      break;
    default:
       /* Check for image dimension properties */
       if ((icv_property>=MI_ICV_DIM_SIZE) && 
@@ -434,8 +433,9 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
          icvp->user_dim_size[idim] = value;
       }
       else {
-          milog_message(MI_MSG_BADPROP, "Unknown code");
-          MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set unknown or illegal icv property");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       break;
    }
@@ -460,14 +460,12 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
 @MODIFIED   : January 22, 1993 (P.N.)
                  - modified handling of icv properties
 ---------------------------------------------------------------------------- */
-public int miicv_setint(int icvid, int icv_property, int value)
+MNCAPI int miicv_setint(int icvid, int icv_property, int value)
 {
 
    MI_SAVE_ROUTINE_NAME("miicv_setint");
 
-   if (miicv_setdbl(icvid, icv_property, (double) value) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   {MI_CHK_ERR(miicv_setdbl(icvid, icv_property, (double) value))}
 
    MI_RETURN(MI_NOERROR);
 }
@@ -488,14 +486,12 @@ public int miicv_setint(int icvid, int icv_property, int value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setlong(int icvid, int icv_property, long value)
+MNCAPI int miicv_setlong(int icvid, int icv_property, long value)
 {
 
    MI_SAVE_ROUTINE_NAME("miicv_setlong");
 
-   if (miicv_setdbl(icvid, icv_property, (double) value) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   {MI_CHK_ERR(miicv_setdbl(icvid, icv_property, (double) value))}
 
    MI_RETURN(MI_NOERROR);
 }
@@ -516,19 +512,20 @@ public int miicv_setlong(int icvid, int icv_property, long value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_setstr(int icvid, int icv_property, char *value)
+MNCAPI int miicv_setstr(int icvid, int icv_property, char *value)
 {
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_setstr");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Check that the icv is not attached to a file */
    if (icvp->cdfid != MI_ERROR) {
-       milog_message(MI_MSG_ICVATTACHED);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_ICVATTACHED, 
+         "Attempt to modify an attached image conversion variable");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Set the property */
@@ -569,19 +566,22 @@ public int miicv_setstr(int icvid, int icv_property, char *value)
    case MI_ICV_ADIM_SIZE:
    case MI_ICV_BDIM_SIZE:
    case MI_ICV_KEEP_ASPECT:
-       milog_message(MI_MSG_BADPROP, "Can't store a string in a numeric property");
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                        "Tried to set icv numeric property to a string");
+      MI_RETURN_ERROR(MI_ERROR);
       break;
    default:
       /* Check for image dimension properties */
       if ((icv_property>=MI_ICV_DIM_SIZE) && 
           (icv_property<MI_ICV_DIM_SIZE+MI_MAX_IMGDIMS)) {
-          milog_message(MI_MSG_BADPROP, "Can't store a string in a numeric property");
-          MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set icv numeric property to a string");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       else {
-          milog_message(MI_MSG_BADPROP, "Unknown code");
-          MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to set unknown or illegal icv property");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       break;
    }
@@ -602,7 +602,7 @@ public int miicv_setstr(int icvid, int icv_property, char *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqdbl(int icvid, int icv_property, double *value)
+MNCAPI int miicv_inqdbl(int icvid, int icv_property, double *value)
 {
    int idim;
    mi_icv_type *icvp;
@@ -610,7 +610,7 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
    MI_SAVE_ROUTINE_NAME("miicv_inqdbl");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Set the property */
    switch (icv_property) {
@@ -675,9 +675,9 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
    case MI_ICV_SIGN:
    case MI_ICV_MAXVAR:
    case MI_ICV_MINVAR:
-       milog_message(MI_MSG_BADPROP,
-                     _("Tried to get icv string property as a number"));
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                   "Tried to inquire about icv string property as a number");
+      MI_RETURN_ERROR(MI_ERROR);
       break;
    default:
       /* Check for image dimension properties */
@@ -697,8 +697,9 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
          *value = icvp->derv_dim_start[idim];
       }
       else {
-         milog_message(MI_MSG_BADPROP, _("Tried to get unknown icv property"));
-         MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to inquire about unknown icv property");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       break;
    }
@@ -719,16 +720,13 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqint(int icvid, int icv_property, int *value)
+MNCAPI int miicv_inqint(int icvid, int icv_property, int *value)
 {
    double dvalue;
 
    MI_SAVE_ROUTINE_NAME("miicv_inqint");
 
-   if (miicv_inqdbl(icvid, icv_property, &dvalue) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
-
+   {MI_CHK_ERR(miicv_inqdbl(icvid, icv_property, &dvalue))}
    *value = dvalue;
 
    MI_RETURN(MI_NOERROR);
@@ -747,16 +745,13 @@ public int miicv_inqint(int icvid, int icv_property, int *value)
 @CREATED    : January 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqlong(int icvid, int icv_property, long *value)
+MNCAPI int miicv_inqlong(int icvid, int icv_property, long *value)
 {
    double dvalue;
 
    MI_SAVE_ROUTINE_NAME("miicv_inqlong");
 
-   if (miicv_inqdbl(icvid, icv_property, &dvalue) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
-
+   {MI_CHK_ERR(miicv_inqdbl(icvid, icv_property, &dvalue))}
    *value = dvalue;
 
    MI_RETURN(MI_NOERROR);
@@ -776,14 +771,14 @@ public int miicv_inqlong(int icvid, int icv_property, long *value)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_inqstr(int icvid, int icv_property, char *value)
+MNCAPI int miicv_inqstr(int icvid, int icv_property, char *value)
 {
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_inqstr");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Set the property */
    switch (icv_property) {
@@ -827,9 +822,9 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
    case MI_ICV_NUM_DIMS:
    case MI_ICV_CDFID:
    case MI_ICV_VARID:
-       milog_message(MI_MSG_BADPROP, 
-                     _("Tried to get icv numeric property as a string"));
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                  "Tried to inquire about icv numeric property as a string");
+      MI_RETURN_ERROR(MI_ERROR);
       break;
    default:
       /* Check for image dimension properties */
@@ -839,14 +834,14 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
            (icv_property<MI_ICV_DIM_STEP+MI_MAX_IMGDIMS)) ||
           ((icv_property>=MI_ICV_DIM_START) && 
            (icv_property<MI_ICV_DIM_START+MI_MAX_IMGDIMS))) {
-         milog_message(MI_MSG_BADPROP,
-                       _("Tried to get icv numeric property as a string"));
-         MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                  "Tried to inquire about icv numeric property as a string");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       else {
-         milog_message(MI_MSG_BADPROP,
-                       _("Tried to get unknown icv property"));
-         MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_BADPROP,
+                           "Tried to inquire about unknown icv property");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       break;
    }
@@ -873,7 +868,7 @@ public int miicv_inqstr(int icvid, int icv_property, char *value)
 @CREATED    : September 9, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_ndattach(int icvid, int cdfid, int varid)
+MNCAPI int miicv_ndattach(int icvid, int cdfid, int varid)
 {
    mi_icv_type *icvp;         /* Pointer to icv structure */
    int idim;
@@ -881,19 +876,14 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    MI_SAVE_ROUTINE_NAME("miicv_ndattach");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* If the icv is attached, then detach it */
-   if (icvp->cdfid != MI_ERROR) {
-       if (miicv_detach(icvid) < 0) {
-           MI_RETURN(MI_ERROR);
-       }
-   }
+   if (icvp->cdfid != MI_ERROR)
+      {MI_CHK_ERR(miicv_detach(icvid))}
 
    /* Inquire about the variable's type, sign and number of dimensions */
-   if (MI_icv_get_type(icvp, cdfid, varid) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   {MI_CHK_ERR(MI_icv_get_type(icvp, cdfid, varid))}
 
    /* If not doing range calculations, just set derv_firstdim for
       MI_icv_access, otherwise, call routines to calculate range and 
@@ -903,14 +893,10 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
    }
    else {
       /* Get valid range */
-       if (MI_icv_get_vrange(icvp, cdfid, varid) < 0) {
-           MI_RETURN(MI_ERROR);
-       }
+      {MI_CHK_ERR(MI_icv_get_vrange(icvp, cdfid, varid))}
           
       /* Get normalization info */
-       if (MI_icv_get_norm(icvp, cdfid, varid) < 0) {
-           MI_RETURN(MI_ERROR);
-       }
+      {MI_CHK_ERR(MI_icv_get_norm(icvp, cdfid, varid))}
    }
 
    /* Set other fields to defaults */
@@ -968,7 +954,7 @@ public int miicv_ndattach(int icvid, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 {
    int oldncopts;            /* For saving value of ncopts */
    char stringa[MI_MAX_ATTSTR_LEN];
@@ -977,15 +963,13 @@ private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
    MI_SAVE_ROUTINE_NAME("MI_icv_get_type");
 
    /* Inquire about the variable */
-   if (ncvarinq(cdfid, varid, NULL, &(icvp->var_type), 
-                &(icvp->var_ndims), icvp->var_dim, NULL) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncvarinq(cdfid, varid, NULL, &(icvp->var_type), 
+                       &(icvp->var_ndims), icvp->var_dim, NULL))
 
    /* Check that the variable type is numeric */
    if (icvp->var_type==NC_CHAR) {
-       milog_message(MI_MSG_VARNOTNUM);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC,"Non-numeric datatype");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Try to find out the sign of the variable using MIsigntype. */
@@ -1015,7 +999,7 @@ private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 {
    double vrange[2];         /* Valid range buffer */
 
@@ -1046,7 +1030,7 @@ private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private double MI_get_default_range(char *what, nc_type datatype, int sign)
+PRIVATE double MI_get_default_range(char *what, nc_type datatype, int sign)
 {
    double range[2];
 
@@ -1082,7 +1066,7 @@ private double MI_get_default_range(char *what, nc_type datatype, int sign)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
+PRIVATE int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
      /* ARGSUSED */
 {
    int oldncopts;             /* For saving value of ncopts */
@@ -1126,9 +1110,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
          icvp->derv_imgmin = icvp->user_imgmin;
       }
       else {
-          if (miget_image_range(cdfid, image_range) < 0) {
-              MI_RETURN(MI_ERROR);
-          }
+         MI_CHK_ERR(miget_image_range(cdfid, image_range))
          icvp->derv_imgmin = image_range[0];
          icvp->derv_imgmax = image_range[1];
       }
@@ -1139,9 +1121,8 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
       vid[1]=icvp->imgmaxid;
       if ((vid[0] != MI_ERROR) && (vid[1] != MI_ERROR)) {
          for (imm=0; imm < 2; imm++) {
-             if (ncvarinq(cdfid, vid[imm], NULL, NULL, &ndims, dim, NULL) < 0) {
-                 MI_RETURN(MI_ERROR);
-             }
+            MI_CHK_ERR(ncvarinq(cdfid, vid[imm], NULL, NULL, 
+                                &ndims, dim, NULL))
             for (idim=0; idim<ndims; idim++) {
                for (i=0; i<icvp->var_ndims; i++) {
                   if (icvp->var_dim[i]==dim[idim])
@@ -1169,7 +1150,7 @@ private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_detach(int icvid)
+MNCAPI int miicv_detach(int icvid)
 {
    mi_icv_type *icvp;
    int idim;
@@ -1177,7 +1158,7 @@ public int miicv_detach(int icvid)
    MI_SAVE_ROUTINE_NAME("miicv_detach");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Check that the icv is in fact attached */
    if (icvp->cdfid == MI_ERROR)
@@ -1217,19 +1198,17 @@ public int miicv_detach(int icvid)
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_get(int icvid, long start[], long count[], void *values)
+MNCAPI int miicv_get(int icvid, long start[], long count[], void *values)
 {
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_get");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
    /* Get the data */
-   if (MI_icv_access(MI_PRIV_GET, icvp, start, count, values) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(MI_icv_access(MI_PRIV_GET, icvp, start, count, values))
 
    MI_RETURN(MI_NOERROR);
 }
@@ -1250,19 +1229,17 @@ public int miicv_get(int icvid, long start[], long count[], void *values)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miicv_put(int icvid, long start[], long count[], void *values)
+MNCAPI int miicv_put(int icvid, long start[], long count[], void *values)
 {
    mi_icv_type *icvp;
 
    MI_SAVE_ROUTINE_NAME("miicv_put");
 
    /* Check icv id */
-   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN(MI_ERROR);
+   if ((icvp=MI_icv_chkid(icvid)) == NULL) MI_RETURN_ERROR(MI_ERROR);
 
 
-   if (MI_icv_access(MI_PRIV_PUT, icvp, start, count, values) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(MI_icv_access(MI_PRIV_PUT, icvp, start, count, values))
 
    MI_RETURN(MI_NOERROR);
 }
@@ -1283,7 +1260,7 @@ public int miicv_put(int icvid, long start[], long count[], void *values)
 @CREATED    : August 11, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
                           long count[], void *values)
 {
    int *bufsize_step;                /* Pointer to array giving increments
@@ -1303,21 +1280,17 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 
    /* Check that icv is attached to a variable */
    if (icvp->cdfid == MI_ERROR) {
-       milog_message(MI_MSG_ICVNOTATTACHED);
-
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_ICVNOTATTACHED, 
+                        "ICV is not attached to an image variable");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Zero the user's buffer if needed */
    if ((operation == MI_PRIV_GET) && (icvp->derv_do_zero))
-       if (MI_icv_zero_buffer(icvp, count, values) < 0) {
-           MI_RETURN(MI_ERROR);
-       }
+      {MI_CHK_ERR(MI_icv_zero_buffer(icvp, count, values))}
 
    /* Translate icv coordinates to variable coordinates */
-   if (MI_icv_coords_tovar(icvp, start, count, var_start, var_count) < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   {MI_CHK_ERR(MI_icv_coords_tovar(icvp, start, count, var_start, var_count))}
 
    /* Save icv coordinates for future reference (for dimension conversion
       routines) */
@@ -1372,18 +1345,14 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 
       /* Calculate scale factor */
       if (icvp->do_scale) {
-          if (MI_icv_calc_scale(operation, icvp, chunk_start) < 0) {
-              MI_RETURN(MI_ERROR);
-          }
+         MI_CHK_ERR(MI_icv_calc_scale(operation, icvp, chunk_start))
       }
 
       /* Get the values */
-      if (MI_varaccess(operation, icvp->cdfid, icvp->varid,
-                       chunk_start, chunk_count,
-                       icvp->user_type, icvp->user_sign,
-                       chunk_values, bufsize_step, icvp) < 0) {
-          MI_RETURN(MI_ERROR);
-      }
+      MI_CHK_ERR(MI_varaccess(operation, icvp->cdfid, icvp->varid,
+                              chunk_start, chunk_count,
+                              icvp->user_type, icvp->user_sign,
+                              chunk_values, bufsize_step, icvp))
 
       /* Increment the start counter */
       chunk_start[firstdim] += chunk_count[firstdim];
@@ -1415,7 +1384,7 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 @CREATED    : September 9, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
+PRIVATE int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 {
    double zeroval, zerobuf;
    void *zerostart;
@@ -1471,7 +1440,7 @@ private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 @CREATED    : September 1, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+PRIVATE int MI_icv_coords_tovar(mi_icv_type *icvp, 
                                 long icv_start[], long icv_count[],
                                 long var_start[], long var_count[])
 {
@@ -1512,8 +1481,9 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
       if ((icv_start[i]<0) || (icv_start[i]>=icv_dim_size) ||
           (last_coord<0) || (last_coord>=icv_dim_size) ||
           (icv_count[i]<0)) {
-          milog_message(MI_MSG_ICVCOORDS);
-          MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR2(MI_ERR_ICV_INVCOORDS,
+                           "Invalid icv coordinates");
+         MI_RETURN_ERROR(MI_ERROR);
       }
       /* Remove offset */
       coord = icv_start[i]-icvp->derv_dim_off[j];
@@ -1573,7 +1543,7 @@ private int MI_icv_coords_tovar(mi_icv_type *icvp,
 @CREATED    : August 10, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
+PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 {
    long mmcoords[MAX_VAR_DIMS];   /* Coordinates for max/min variable */
    double usr_imgmax, usr_imgmin;
@@ -1610,19 +1580,14 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
           (icvp->imgmaxid!=MI_ERROR) && (icvp->imgminid!=MI_ERROR)) {
          if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
                                 icvp->imgmaxid, mmcoords) == NULL)
-            MI_RETURN(MI_ERROR);
-         if (mivarget1(icvp->cdfid, icvp->imgmaxid, mmcoords,
-                       NC_DOUBLE, NULL, &slice_imgmax) < 0) {
-             MI_RETURN(MI_ERROR);
-         }
+            MI_RETURN_ERROR(MI_ERROR);
+         {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgmaxid, mmcoords,
+                               NC_DOUBLE, NULL, &slice_imgmax))}
          if (mitranslate_coords(icvp->cdfid, icvp->varid, coords, 
-                                icvp->imgminid, mmcoords) == NULL) {
-            MI_RETURN(MI_ERROR);
-         }
-         if (mivarget1(icvp->cdfid, icvp->imgminid, mmcoords,
-                       NC_DOUBLE, NULL, &slice_imgmin) < 0) {
-             MI_RETURN(MI_ERROR);
-         }
+                                icvp->imgminid, mmcoords) == NULL)
+            MI_RETURN_ERROR(MI_ERROR);
+         {MI_CHK_ERR(mivarget1(icvp->cdfid, icvp->imgminid, mmcoords,
+                               NC_DOUBLE, NULL, &slice_imgmin))}
       }
 
       /* Get the user real range */
@@ -1765,15 +1730,15 @@ private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-semiprivate mi_icv_type *MI_icv_chkid(int icvid)
+SEMIPRIVATE mi_icv_type *MI_icv_chkid(int icvid)
 {
    MI_SAVE_ROUTINE_NAME("MI_icv_chkid");
 
    /* Check icv id */
    if ((icvid<0) || (icvid>=minc_icv_list_nalloc) || 
        (minc_icv_list[icvid]==NULL)) {
-       milog_message(MI_MSG_BADICV);
-       MI_RETURN((void *) NULL);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADICV,"Illegal icv identifier");
+      MI_RETURN_ERROR((void *) NULL);
    }
 
    MI_RETURN(minc_icv_list[icvid]);

@@ -19,7 +19,10 @@
 @CREATED    : December 2, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: nd_loop.h,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.1.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -59,12 +62,22 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-public void nd_begin_looping(long start[], long current[], int ndims);
-public int nd_end_of_loop(long current[], long end[], int ndims);
-public void nd_update_current_count(long current[], 
+#include "minc.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+MNCAPI void nd_begin_looping(long start[], long current[], int ndims);
+MNCAPI int nd_end_of_loop(long current[], long end[], int ndims);
+MNCAPI void nd_update_current_count(long current[], 
                                     long increment[], long end[],
                                     long current_count[],
                                     int ndims);
-public void nd_increment_loop(long current[], 
+MNCAPI void nd_increment_loop(long current[], 
                               long start[], long increment[], long end[],
                               int ndims);
+
+#if defined(__cplusplus)
+}
+#endif

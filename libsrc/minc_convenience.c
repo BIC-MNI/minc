@@ -14,9 +14,6 @@
                  miadd_child
                  micreate_std_variable
                  micreate_group_variable
-                 miget_version
-                 miappend_history
-                 micreate_ident
               private :
                  MI_create_dim_variable
                  MI_create_dimwidth_variable
@@ -30,11 +27,8 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.14  2004-06-04 18:15:46  bert
- * Added micreate_ident()
- *
- * Revision 6.13  2004/04/27 15:49:17  bert
- * Use new logging, gettext preparation
+ * Revision 6.12.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.12  2004/03/24 20:53:48  bert
  * Increase att_length by one in miappend_history() in order to read the entire attribute
@@ -125,32 +119,29 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.14 2004-06-04 18:15:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.12.2.1 2004-09-28 20:23:40 bert Exp $ MINC (MNI)";
 #endif
 
-#include "config.h"
-#include <type_limits.h>
-#include <minc_private.h>
-#include <minc_varlists.h>
-
-#include <time.h>
+#include "minc_private.h"
+#include "type_limits.h"
+#include "minc_varlists.h"
 
 /* Private functions */
-private int MI_create_dim_variable(int cdfid, char *name, 
+PRIVATE int MI_create_dim_variable(int cdfid, char *name, 
                                    nc_type datatype, int ndims);
-private int MI_create_dimwidth_variable(int cdfid, char *name, 
+PRIVATE int MI_create_dimwidth_variable(int cdfid, char *name, 
                                         nc_type datatype, int ndims);
-private int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
+PRIVATE int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
                                      int ndims, int dim[]);
-private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
+PRIVATE int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
                                        int ndims, int dim[]);
-private int MI_verify_maxmin_dims(int cdfid,
+PRIVATE int MI_verify_maxmin_dims(int cdfid,
                                   int image_ndims,  int image_dim[],
                                   int maxmin_ndims, int maxmin_dim[]);
-private int MI_create_root_variable(int cdfid, char *name);
-private int MI_create_simple_variable(int cdfid, char *name);
-private int MI_add_stdgroup(int cdfid, int varid);
-private int MI_is_in_list(char *string, char *list[]);
+PRIVATE int MI_create_root_variable(int cdfid, char *name);
+PRIVATE int MI_create_simple_variable(int cdfid, char *name);
+PRIVATE int MI_add_stdgroup(int cdfid, int varid);
+PRIVATE int MI_is_in_list(char *string, char *list[]);
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -167,7 +158,7 @@ private int MI_is_in_list(char *string, char *list[]);
 @CREATED    : August 15, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miget_datatype(int cdfid, int imgid, 
+MNCAPI int miget_datatype(int cdfid, int imgid, 
                           nc_type *datatype, int *is_signed)
 {
    int old_ncopts;
@@ -227,7 +218,7 @@ public int miget_datatype(int cdfid, int imgid,
 @CREATED    : August 15, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miget_default_range(nc_type datatype, int is_signed, 
+MNCAPI int miget_default_range(nc_type datatype, int is_signed, 
                                double default_range[])
 {
    MI_SAVE_ROUTINE_NAME("miget_default_range");
@@ -279,7 +270,7 @@ public int miget_default_range(nc_type datatype, int is_signed,
 @CREATED    : August 15, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miget_valid_range(int cdfid, int imgid, double valid_range[])
+MNCAPI int miget_valid_range(int cdfid, int imgid, double valid_range[])
 {
    int old_ncopts;
    int status;
@@ -379,7 +370,7 @@ public int miget_valid_range(int cdfid, int imgid, double valid_range[])
 @CREATED    : August 15, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miset_valid_range(int cdfid, int imgid, double valid_range[])
+MNCAPI int miset_valid_range(int cdfid, int imgid, double valid_range[])
 {
    nc_type datatype;
    int is_signed;
@@ -434,7 +425,7 @@ public int miset_valid_range(int cdfid, int imgid, double valid_range[])
 @CREATED    : October 19, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miget_image_range(int cdfid, double image_range[])
+MNCAPI int miget_image_range(int cdfid, double image_range[])
 {
    int oldncopts;                /* For saving value of ncopt */
    int vid[2];                   /* Variable ids for min and max */
@@ -521,8 +512,8 @@ public int miget_image_range(int cdfid, double image_range[])
 
          /* Get space */
          if ((buffer=MALLOC(size, double))==NULL) {
-	     milog_message(MI_MSG_OUTOFMEM, size);
-	     MI_RETURN(MI_ERROR);
+            MI_LOG_SYS_ERROR1("miget_image_range");
+            MI_RETURN_ERROR(MI_ERROR);
          }
 
          /* Get values */
@@ -530,7 +521,7 @@ public int miget_image_range(int cdfid, double image_range[])
                       miset_coords(ndims, 0L, start),
                       count, NC_DOUBLE, NULL, buffer)==MI_ERROR) {
             FREE(buffer);
-            MI_RETURN(MI_ERROR);
+            MI_RETURN_ERROR(MI_ERROR);
          }
 
          /* Loop through values, getting max/min */
@@ -568,7 +559,7 @@ public int miget_image_range(int cdfid, double image_range[])
 @CREATED    : October 22, 2001
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivar_exists(int cdfid, char *varname)
+MNCAPI int mivar_exists(int cdfid, char *varname)
 {
    int oldncopts;                /* For saving value of ncopt */
    int exists;                   /* Flag */
@@ -602,7 +593,7 @@ public int mivar_exists(int cdfid, char *varname)
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
+MNCAPI int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
 {
    /* String to hold pointer to variable */
    char pointer_string[MAX_NC_NAME+sizeof(MI_VARATT_POINTER_PREFIX)];
@@ -649,7 +640,7 @@ public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattget_pointer(int cdfid, int varid, char *name)
+MNCAPI int miattget_pointer(int cdfid, int varid, char *name)
 {
    /* Character string to hold attribute */
    char pointer_string[MAX_NC_NAME+sizeof(MI_VARATT_POINTER_PREFIX)];
@@ -667,8 +658,10 @@ public int miattget_pointer(int cdfid, int varid, char *name)
    /* Check for the prefix */
    for (index=0; prefix_string[index]!='\0'; index++) {
       if (pointer_string[index]!=prefix_string[index]) {
-	  milog_message(MI_MSG_ATTRNOTPTR, name);
-	  MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR3(MI_ERR_NOTPOINTER,
+                           "Attribute %s is not a pointer to a variable",
+                           name);
+         MI_RETURN_ERROR(MI_ERROR);
       }
    }
 
@@ -695,7 +688,7 @@ public int miattget_pointer(int cdfid, int varid, char *name)
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miadd_child(int cdfid, int parent_varid, int child_varid)
+MNCAPI int miadd_child(int cdfid, int parent_varid, int child_varid)
 {
    char *child_list;           /* Pointer to string list of children */
    int child_list_size;        /* Length of child list string */
@@ -718,9 +711,8 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
    /* Allocate space for new child list */
    if ((child_list = MALLOC(child_list_size+MAX_NC_NAME+
                             strlen(MI_CHILD_SEPARATOR), char)) == NULL) {
-       milog_message(MI_MSG_OUTOFMEM, 
-                     child_list_size+MAX_NC_NAME+strlen(MI_CHILD_SEPARATOR));
-       MI_RETURN(MI_ERROR);
+      MI_LOG_SYS_ERROR1("miadd_child");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Get the old list if needed and check for terminating null character 
@@ -729,8 +721,7 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
    if (child_list_size>0) {
       if (ncattget(cdfid, parent_varid, MIchildren, child_list) == MI_ERROR) {
          FREE(child_list);
-         milog_message(MI_MSG_READATTR, MIchildren);
-         MI_RETURN(MI_ERROR);
+         MI_RETURN_ERROR(MI_ERROR);
       }
       if (child_list[child_list_size-1] == '\0')
          child_list_size--;
@@ -800,7 +791,7 @@ public int miadd_child(int cdfid, int parent_varid, int child_varid)
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
+MNCAPI int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
                                  int ndims, int dim[])
 {
    int varid;                /* Created variable id */
@@ -836,15 +827,18 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
       else if (STRINGS_EQUAL(name, MIacquisition))
          MI_CHK_ERR(varid=MI_create_simple_variable(cdfid, name))
       else {
-	  milog_message(MI_MSG_VARNOTSTD, name);
-         MI_RETURN(MI_ERROR);
+         MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR, 
+                           "%s is not recognised as a standard MINC variable",
+                           name);
+         MI_RETURN_ERROR(MI_ERROR);
       }
    }
 
    /* If not in any list, then return an error */
    else {
-       milog_message(MI_MSG_VARNOTSTD, name);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR,
+                        "%s is not a standard MINC variable", name);
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    MI_RETURN(varid);
@@ -868,7 +862,7 @@ public int micreate_std_variable(int cdfid, char *name, nc_type datatype,
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_dim_variable(int cdfid, char *name, 
+PRIVATE int MI_create_dim_variable(int cdfid, char *name, 
                                    nc_type datatype, int ndims)
 {
    int dimid;                /* Dimension id (for dimensions variables) */
@@ -878,14 +872,16 @@ private int MI_create_dim_variable(int cdfid, char *name,
 
    /* Check for MIvector_dimension - no associated variable */
    if (STRINGS_EQUAL(name, MIvector_dimension)) {
-       milog_message(MI_MSG_VARNOTSTD, name);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR3(MI_ERR_BAD_STDVAR,
+                        "%s is not a standard MINC variable", name);
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Check for ndims being 0 or 1 */
    if (ndims>1) {
-       milog_message(MI_MSG_TOOMANYDIMS, 1);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
+                        "Too many dimensions for a dimension variable");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Look for dimension and create the variable */
@@ -900,13 +896,13 @@ private int MI_create_dim_variable(int cdfid, char *name,
    /* Add comments for spatial dimensions */ 
    if (STRINGS_EQUAL(name, MIxspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                              _("X increases from patient left to right")))}
+                     "X increases from patient left to right"))}
    else if (STRINGS_EQUAL(name, MIyspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                              _("Y increases from patient posterior to anterior")))}
+                     "Y increases from patient posterior to anterior"))}
    else if (STRINGS_EQUAL(name, MIzspace))
       {MI_CHK_ERR(miattputstr(cdfid, varid, MIcomments,
-                              _("Z increases from patient inferior to superior")))}
+                     "Z increases from patient inferior to superior"))}
 
    /* Dimension attributes */
    if (ndims==0) {
@@ -942,7 +938,7 @@ private int MI_create_dim_variable(int cdfid, char *name,
 @CREATED    : August 5, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_dimwidth_variable(int cdfid, char *name, 
+PRIVATE int MI_create_dimwidth_variable(int cdfid, char *name, 
                                         nc_type datatype, int ndims)
 {
    int dimid;                /* Dimension id (for dimensions variables) */
@@ -954,15 +950,16 @@ private int MI_create_dimwidth_variable(int cdfid, char *name,
 
    /* Look for dimension name in name (remove width suffix) */
    if ((str=strstr(strcpy(string, name),MI_WIDTH_SUFFIX)) == NULL) {
-      milog_message(MI_MSG_DIMWIDTH);
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADSUFFIX,"Bad dimension width suffix");
+      MI_RETURN_ERROR(MI_ERROR);
    }
    *str='\0';
 
    /* Check for ndims being 0 or 1 */
    if (ndims>1) {
-      milog_message(MI_MSG_TOOMANYDIMS, 1);
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_WRONGNDIMS,
+                        "Too many dimensions for a dimension variable");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Look for the dimension */
@@ -1001,7 +998,7 @@ private int MI_create_dimwidth_variable(int cdfid, char *name,
 @CREATED    : August 6, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
+PRIVATE int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
                                      int ndims, int dim[])
 {
    int varid;                /* Created variable id */
@@ -1072,7 +1069,7 @@ private int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
 @CREATED    : August 6, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
+PRIVATE int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
                                        int ndims, int dim[])
 {
    int varid;                /* Created variable id */
@@ -1151,7 +1148,7 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
 @CREATED    : August 7, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_verify_maxmin_dims(int cdfid,
+PRIVATE int MI_verify_maxmin_dims(int cdfid,
                                   int image_ndims,  int image_dim[],
                                   int maxmin_ndims, int maxmin_dim[])
 {
@@ -1172,8 +1169,9 @@ private int MI_verify_maxmin_dims(int cdfid,
    for (i=MAX(0,image_ndims-nbaddims); i<image_ndims; i++)
       for (j=0; j<maxmin_ndims; j++)
          if (image_dim[i]==maxmin_dim[j]) {
-             milog_message(MI_MSG_MAXMINVARY);
-	     MI_RETURN(MI_ERROR);
+            MI_LOG_PKG_ERROR2(MI_ERR_MAXMIN_DIMS,
+                        "Imagemax/min dimensions vary over image dimensions");
+            MI_RETURN_ERROR(MI_ERROR);
          }
 
    MI_RETURN(MI_NOERROR);
@@ -1194,7 +1192,7 @@ private int MI_verify_maxmin_dims(int cdfid,
 @CREATED    : August 6, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_root_variable(int cdfid, char *name)
+PRIVATE int MI_create_root_variable(int cdfid, char *name)
 {
    int varid;                /* Created variable id */
 
@@ -1229,7 +1227,7 @@ private int MI_create_root_variable(int cdfid, char *name)
 @CREATED    : August 6, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_create_simple_variable(int cdfid, char *name)
+PRIVATE int MI_create_simple_variable(int cdfid, char *name)
 {
    int varid;                /* Created variable id */
 
@@ -1260,7 +1258,7 @@ private int MI_create_simple_variable(int cdfid, char *name)
 @CREATED    : August 6, 1992
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_add_stdgroup(int cdfid, int varid)
+PRIVATE int MI_add_stdgroup(int cdfid, int varid)
 {
    int root_varid;          /* Id of root variable */
    int oldncopts;           /* Old value of ncopts */
@@ -1303,7 +1301,7 @@ private int MI_add_stdgroup(int cdfid, int varid)
 @CREATED    : August 6, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micreate_group_variable(int cdfid, char *name)
+MNCAPI int micreate_group_variable(int cdfid, char *name)
 {
    int varid;
 
@@ -1330,7 +1328,7 @@ public int micreate_group_variable(int cdfid, char *name)
 @CREATED    : January 1, 2004 (Bert Vincent)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int
+MNCAPI int
 miappend_history(int fd, const char *tm_stamp)
 {
     nc_type att_type;
@@ -1357,7 +1355,6 @@ miappend_history(int fd, const char *tm_stamp)
     if (att_value == NULL) {
         return (MI_ERROR);
     }
-
     if (miattgetstr(fd, NC_GLOBAL, MIhistory, att_length, att_value) == NULL) {
         return (MI_ERROR);
     }
@@ -1397,7 +1394,7 @@ miappend_history(int fd, const char *tm_stamp)
 @CREATED    : August 5, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_is_in_list(char *string, char *list[])
+PRIVATE int MI_is_in_list(char *string, char *list[])
 {
    int i;
 
@@ -1423,65 +1420,7 @@ private int MI_is_in_list(char *string, char *list[])
 @CREATED    : December 8 2003
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public const char * miget_version(void)
+const char * miget_version(void)
 {
     return (VERSION);
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : micreate_ident
-@INPUT      : (none)
-@OUTPUT     : int
-@RETURNS    : The length of the ID string
-@DESCRIPTION: Creates a (hopefully) unique identifier to associate with a
-              MINC file, by concatenating various information about the
-              system, process, etc.
-              
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : 2004-May-11
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-#define MI_IDENT_SEP ':'
-
-public int micreate_ident( char * id_str, size_t length )
-{
-    static int identx = 1;      /* Static ID counter */
-    time_t now;
-    struct tm tm_buf;
-    char host_str[128];
-    char user_str[128];
-    char *temp_ptr;
-    char time_str[26];
-    int result;
-
-    if (gethostname(host_str, sizeof(host_str)) != 0) {
-        strcpy(host_str, "unknown");
-    }
-
-    temp_ptr = getenv("LOGNAME");
-    if (temp_ptr != NULL) {
-        strcpy(user_str, temp_ptr);
-    }
-    else {
-        strcpy(user_str, "nobody");
-    }
-
-
-    time(&now);
-    localtime_r(&now, &tm_buf);
-    strftime(time_str, sizeof(time_str), "%Y.%m.%d.%H.%M.%S", &tm_buf);
-
-    result = snprintf(id_str, length, "%s%c%s%c%s%c%u%c%u", 
-                      user_str, 
-                      MI_IDENT_SEP,
-                      host_str, 
-                      MI_IDENT_SEP,
-                      time_str, 
-                      MI_IDENT_SEP,
-                      getpid(), 
-                      MI_IDENT_SEP,
-                      identx++);
-    return (result);
 }

@@ -5,7 +5,10 @@
 @CREATED    : February 1, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: time_stamp.h,v $
- * Revision 6.1  2002-01-14 21:28:26  neelin
+ * Revision 6.1.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
+ *
+ * Revision 6.1  2002/01/14 21:28:26  neelin
  * Moved nd_loop, voxel_loop, ParseArgv and time_stamp from ../progs/Proglib
  * in order to include them in the main minc library.
  *
@@ -48,5 +51,15 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-char *time_stamp(int argc, char *argv[]);
+#include "minc.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+MNCAPI char *time_stamp(int argc, char *argv[]);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 

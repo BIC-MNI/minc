@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.11.2.1  2004-08-11 21:03:06  bert
+ * Revision 6.11.2.2  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
+ *
+ * Revision 6.11.2.1  2004/08/11 21:03:06  bert
  * Fix MI_MAX_IMGDIMS at 100 to avoid netCDF 3.5.1 problem
  *
  * Revision 6.11  2004/04/15 21:13:21  bert
@@ -122,7 +125,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.11.2.1 2004-08-11 21:03:06 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.11.2.2 2004-09-28 20:23:40 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -443,95 +446,95 @@ extern "C" {
 #define MI_ERR_UNCOMPRESS       1349  /* Not able to uncompress file */
 
 /* MINC public functions */
-/* Define public constant */
-#ifndef public
-#define public
-#define MINC_NEED_TO_UNDEF_PUBLIC
-#endif
+
+#ifndef MNCAPI
+#if defined(_MSC_VER)
+/* If we are building on the Microsoft C compiler, we want to
+ * explicitly import all public functions from the DLL
+ */
+#define MNCAPI __declspec(dllimport)
+#else
+#define MNCAPI
+#endif /* _MSC_VER not defined */
+#endif /* MNCAPI not defined */
 
 /* From netcdf_convenience.c */
-public char *miexpand_file(char *path, char *tempfile, 
+MNCAPI char *miexpand_file(char *path, char *tempfile, 
                            int header_only, int *created_tempfile);
-public int miopen(char *path, int mode);
-public int micreate(char *path, int cmode);
-public int miclose(int cdfid);
-public int miattget_with_sign(int cdfid, int varid, char *name, 
+MNCAPI int miopen(char *path, int mode);
+MNCAPI int micreate(char *path, int cmode);
+MNCAPI int miclose(int cdfid);
+MNCAPI int miattget_with_sign(int cdfid, int varid, char *name, 
                               char *insign, nc_type datatype, char *outsign,
                               int max_length, void *value, int *att_length);
-public int miattget(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget(int cdfid, int varid, char *name, nc_type datatype,
                     int max_length, void *value, int *att_length);
-public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget1(int cdfid, int varid, char *name, nc_type datatype,
                      void *value);
-public char *miattgetstr(int cdfid, int varid, char *name, 
+MNCAPI char *miattgetstr(int cdfid, int varid, char *name, 
                          int maxlen, char *value);
-public int miattputint(int cdfid, int varid, char *name, int value);
-public int miattputdbl(int cdfid, int varid, char *name, double value);
-public int miattputstr(int cdfid, int varid, char *name, char *value);
-public int mivarget(int cdfid, int varid, long start[], long count[],
+MNCAPI int miattputint(int cdfid, int varid, char *name, int value);
+MNCAPI int miattputdbl(int cdfid, int varid, char *name, double value);
+MNCAPI int miattputstr(int cdfid, int varid, char *name, char *value);
+MNCAPI int mivarget(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values);
-public int mivarget1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarget1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value);
-public int mivarput(int cdfid, int varid, long start[], long count[],
+MNCAPI int mivarput(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values);
-public int mivarput1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarput1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value);
-public long *miset_coords(int nvals, long value, long coords[]);
-public long *mitranslate_coords(int cdfid, 
+MNCAPI long *miset_coords(int nvals, long value, long coords[]);
+MNCAPI long *mitranslate_coords(int cdfid, 
                                 int invar,  long incoords[],
                                 int outvar, long outcoords[]);
-public int micopy_all_atts(int incdfid, int invarid, 
+MNCAPI int micopy_all_atts(int incdfid, int invarid, 
                            int outcdfid, int outvarid);
-public int micopy_var_def(int incdfid, int invarid, int outcdfid);
-public int micopy_var_values(int incdfid, int invarid, 
+MNCAPI int micopy_var_def(int incdfid, int invarid, int outcdfid);
+MNCAPI int micopy_var_values(int incdfid, int invarid, 
                              int outcdfid, int outvarid);
-public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
                                int excluded_vars[]);
-public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
                                  int excluded_vars[]);
-public char *micreate_tempfile(void);
+MNCAPI char *micreate_tempfile(void);
 
 /* From minc_convenience.c */
-public int miget_datatype(int cdfid, int imgid, 
+MNCAPI int miget_datatype(int cdfid, int imgid, 
                           nc_type *datatype, int *is_signed);
-public int miget_default_range(nc_type datatype, int is_signed, 
+MNCAPI int miget_default_range(nc_type datatype, int is_signed, 
                                double default_range[]);
-public int miget_valid_range(int cdfid, int imgid, double valid_range[]);
-public int miset_valid_range(int cdfid, int imgid, double valid_range[]);
-public int miget_image_range(int cdfid, double image_range[]);
-public int mivar_exists(int cdfid, char *varname);
-public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);
-public int miattget_pointer(int cdfid, int varid, char *name);
-public int miadd_child(int cdfid, int parent_varid, int child_varid);
-public int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
+MNCAPI int miget_valid_range(int cdfid, int imgid, double valid_range[]);
+MNCAPI int miset_valid_range(int cdfid, int imgid, double valid_range[]);
+MNCAPI int miget_image_range(int cdfid, double image_range[]);
+MNCAPI int mivar_exists(int cdfid, char *varname);
+MNCAPI int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid);
+MNCAPI int miattget_pointer(int cdfid, int varid, char *name);
+MNCAPI int miadd_child(int cdfid, int parent_varid, int child_varid);
+MNCAPI int micreate_std_variable(int cdfid, char *name, nc_type datatype, 
                                  int ndims, int dim[]);
-public int micreate_group_variable(int cdfid, char *name);
-public const char *miget_version(void);
-public int miappend_history(int fd, const char *tm_stamp);
+MNCAPI int micreate_group_variable(int cdfid, char *name);
+MNCAPI const char *miget_version(void);
+MNCAPI int miappend_history(int fd, const char *tm_stamp);
 
 /* From image_conversion.c */
-public int miicv_create(void);
-public int miicv_free(int icvid);
-public int miicv_setdbl(int icvid, int icv_property, double value);
-public int miicv_setint(int icvid, int icv_property, int value);
-public int miicv_setlong(int icvid, int icv_property, long value);
-public int miicv_setstr(int icvid, int icv_property, char *value);
-public int miicv_inqdbl(int icvid, int icv_property, double *value);
-public int miicv_inqint(int icvid, int icv_property, int *value);
-public int miicv_inqlong(int icvid, int icv_property, long *value);
-public int miicv_inqstr(int icvid, int icv_property, char *value);
-public int miicv_ndattach(int icvid, int cdfid, int varid);
-public int miicv_detach(int icvid);
-public int miicv_get(int icvid, long start[], long count[], void *values);
-public int miicv_put(int icvid, long start[], long count[], void *values);
+MNCAPI int miicv_create(void);
+MNCAPI int miicv_free(int icvid);
+MNCAPI int miicv_setdbl(int icvid, int icv_property, double value);
+MNCAPI int miicv_setint(int icvid, int icv_property, int value);
+MNCAPI int miicv_setlong(int icvid, int icv_property, long value);
+MNCAPI int miicv_setstr(int icvid, int icv_property, char *value);
+MNCAPI int miicv_inqdbl(int icvid, int icv_property, double *value);
+MNCAPI int miicv_inqint(int icvid, int icv_property, int *value);
+MNCAPI int miicv_inqlong(int icvid, int icv_property, long *value);
+MNCAPI int miicv_inqstr(int icvid, int icv_property, char *value);
+MNCAPI int miicv_ndattach(int icvid, int cdfid, int varid);
+MNCAPI int miicv_detach(int icvid);
+MNCAPI int miicv_get(int icvid, long start[], long count[], void *values);
+MNCAPI int miicv_put(int icvid, long start[], long count[], void *values);
 
 /* From dim_conversion.c */
-public int miicv_attach(int icvid, int cdfid, int varid);
-
-/* Undefine public if needed */
-#ifdef MINC_NEED_TO_UNDEF_PUBLIC
-#undef public
-#undef MINC_NEED_TO_UNDEF_PUBLIC
-#endif
+MNCAPI int miicv_attach(int icvid, int cdfid, int varid);
 
 #ifdef __cplusplus
 }

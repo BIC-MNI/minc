@@ -30,23 +30,14 @@
                  micopy_all_var_defs
                  micopy_all_var_values
                  micreate_tempfile
-                 miget_cfg_bool
-                 miget_cfg_int
-                 miget_cfg_str
               private :
                  execute_decompress_command
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.13  2004-06-04 18:16:25  bert
- * Create and add an 'ident' attribute when a file is created
- *
- * Revision 6.12  2004/04/30 18:57:39  bert
- * Explicitly cast return values of NULL to char * where appropriate to make IRIX MIPSpro compiler happy
- *
- * Revision 6.11  2004/04/27 15:50:41  bert
- * The full 2.0 treatment
+ * Revision 6.10.2.1  2004-09-28 20:23:40  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.10  2004/03/23 21:16:05  bert
  * Conditionally include fcntl.h
@@ -154,11 +145,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.13 2004-06-04 18:16:25 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.10.2.1 2004-09-28 20:23:40 bert Exp $ MINC (MNI)";
 #endif
 
-#include "config.h"             /* From configure */
-#include <minc_private.h>
+#include "minc_private.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -172,34 +162,17 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 #include <sys/stat.h>           /* For S_IREAD, S_IWRITE */
 #endif
 
-#ifdef MINC2
-#undef ncopen
-#undef ncclose
-#undef nccreate
-#include "hdf_convenience.h"
-#endif /* MINC2 defined */
-
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
-/* Private functions */
-private int execute_decompress_command(char *command, char *infile, 
+/* PRIVATE functions */
+PRIVATE int execute_decompress_command(char *command, char *infile, 
                                        char *outfile, int header_only);
-private int MI_vcopy_action(int ndims, long start[], long count[], 
+PRIVATE int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data);
 
 
-#ifdef MINC2
-/* These flags are used to count miopen() calls which open either an HDF5
- * file or a NetCDF file.  The exact count is not important; the library
- * will automatically choose to create a HDF5 output file if only HDF5
- * files have been opened.
- */
-static int mi_nc_files = 0;
-static int mi_h5_files = 0;
-
-#endif /* MINC2 defined */
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -219,7 +192,7 @@ static int mi_h5_files = 0;
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int execute_decompress_command(char *command, char *infile, 
+PRIVATE int execute_decompress_command(char *command, char *infile, 
                                        char *outfile, int header_only)
 {
    int oldncopts;
@@ -287,13 +260,6 @@ private int execute_decompress_command(char *command, char *infile,
             (void) fclose(pipe);
             return 1;
          }
-
-#ifdef MINC2
-	 successful_ncopen = (H5Fis_hdf5(outfile) > 0);
-	 if (successful_ncopen) {
-             break;
-         }
-#endif /* MINC2 */
 
          /* Try to open minc file. There seems to be a bug in NetCDF 2.3.2 -
             when the header is not all present in the file, we get a core
@@ -373,7 +339,7 @@ private int execute_decompress_command(char *command, char *infile,
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *miexpand_file(char *path, char *tempfile, int header_only,
+MNCAPI char *miexpand_file(char *path, char *tempfile, int header_only,
                            int *created_tempfile)
 {
    typedef enum 
@@ -401,14 +367,6 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
 
    /* We have not created a temporary file yet */
    *created_tempfile = FALSE;
-
-#ifdef MINC2
-   status = H5Fis_hdf5(path);
-   if (status > 0) {
-      newfile = strdup(path);
-      MI_RETURN(newfile);
-   }
-#endif /* MINC2 defined */
 
    /* Try to open the file (close it again immediately) */
    oldncopts = ncopts; ncopts = 0;
@@ -529,8 +487,8 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
       (void) remove(newfile);
       *created_tempfile = FALSE;
       FREE(newfile);
-      milog_message(MI_MSG_UNCMPFAIL);
-      MI_RETURN((char *)NULL);  /* Explicit cast needed for MIPSpro cc */
+      MI_LOG_PKG_ERROR2(MI_ERR_UNCOMPRESS,"Cannot uncompress the file");
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Return the new file name */
@@ -554,13 +512,10 @@ public char *miexpand_file(char *path, char *tempfile, int header_only,
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miopen(char *path, int mode)
+MNCAPI int miopen(char *path, int mode)
 {
    int status, oldncopts, created_tempfile;
    char *tempfile;
-#ifdef MINC2
-   int hmode;
-#endif /* MINC2 defined */
 
    MI_SAVE_ROUTINE_NAME("miopen");
 
@@ -569,34 +524,16 @@ public int miopen(char *path, int mode)
    status = ncopen(path, mode);
    ncopts = oldncopts;
 
-#ifdef MINC2
-   if (status != MI_ERROR) {
-     mi_nc_files++;             /* Count open netcdf files */
-     MI_RETURN(status);
-   }
-
-   if (mode & NC_WRITE) {
-     hmode = H5F_ACC_RDWR;
-   } 
-   else {
-     hmode = H5F_ACC_RDONLY;
-   }
-
-   status = hdf_open(path, hmode);
-
    /* If there is no error then return */
-   if (status >= 0) {
-      mi_h5_files++;           /* Count open HDF5 files */
+   if (status != MI_ERROR) {
       MI_RETURN(status);
    }
-#endif /* MINC2 defined */
 
-   /* If the user wants to modify the file then return an error, since
-    * we don't allow write access to compressed files.
-    */
-   if (mode & NC_WRITE) {
-       milog_message(MI_MSG_NOWRITECMP);
-       MI_RETURN(MI_ERROR);
+   /* If the user wants to modify the file then re-generate the error 
+      with ncopen */
+   if (mode != NC_NOWRITE) {
+      {MI_CHK_ERR(status = ncopen(path, mode))}
+      MI_RETURN(status);
    }
 
    /* Try to expand the file */
@@ -604,34 +541,16 @@ public int miopen(char *path, int mode)
 
    /* Check for error */
    if (tempfile == NULL) {
-      MI_RETURN(MI_ERROR);
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Open the temporary file and unlink it so that it will disappear when
       the file is closed */
-   oldncopts = ncopts;
-   ncopts = 0;
    status = ncopen(tempfile, mode);
-   ncopts = oldncopts;
-
-#ifdef MINC2
-   if (status == MI_ERROR) {
-     status = hdf_open(tempfile, hmode);
-     if (status >= 0) {
-         mi_h5_files++;
-     }
-   }
-   else {
-       mi_nc_files++;
-   }
-#endif /* MINC2 defined */
-
    if (created_tempfile) {
       (void) remove(tempfile);
    }
-   if (status < 0) {
-       milog_message(MI_MSG_OPENFILE, tempfile);
-   }
+   {MI_CHK_ERR(status)}
    MI_RETURN(status);
 
 }
@@ -650,64 +569,15 @@ public int miopen(char *path, int mode)
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-#ifdef MINC2
-public int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
+MNCAPI int micreate(char *path, int cmode)
 {
-    int fd;
+   int status;
 
-    MI_SAVE_ROUTINE_NAME("micreate");
+   MI_SAVE_ROUTINE_NAME("micreate");
 
-    if ((cmode & MI2_CREATE_V1) != 0) {
-        fd = nccreate(path, cmode);
-    }
-    else if (miget_cfg_bool(MICFG_FORCE_V2) || (cmode & MI2_CREATE_V2) != 0) {
-	fd = hdf_create(path, cmode, opts_ptr);
-    }
-    else {
-        if (mi_nc_files == 0 && mi_h5_files != 0) {
-            /* Create an HDF5 file. */
-            fd = hdf_create(path, cmode, opts_ptr);
-        }
-        else {
-            /* Create a NetCDF file. */
-            fd = nccreate(path, cmode);
-        }
-    }
-    if (fd < 0) {
-	milog_message(MI_MSG_CREATEFILE, path);
-    }
-    else {
-        char ident[128];
-
-        micreate_ident(ident, sizeof(ident));
-        miattputstr(fd, NC_GLOBAL, "ident", ident);
-    }
-    MI_RETURN(fd);
+   {MI_CHK_ERR(status = nccreate(path, cmode))}
+   MI_RETURN(status);
 }
-
-public int micreate(char *path, int cmode)
-{
-    MI_SAVE_ROUTINE_NAME("micreate");
-
-    return micreatex(path, cmode, NULL);
-}
-
-#else
-
-public int micreate(char *path, int cmode)
-{
-    int fd;
-
-    MI_SAVE_ROUTINE_NAME("micreate");
-
-    /* Create a NetCDF file. */
-    fd = nccreate(path, cmode);
-    if (fd < 0) {
-	milog_message(MI_MSG_CREATEFILE, path);
-    }
-    MI_RETURN(fd);
-}
-#endif /* MINC2 not defined */
 
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -723,26 +593,13 @@ public int micreate(char *path, int cmode)
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miclose(int cdfid)
+MNCAPI int miclose(int cdfid)
 {
    int status;
 
    MI_SAVE_ROUTINE_NAME("miclose");
 
-#ifdef MINC2
-   if (MI2_ISH5OBJ(cdfid)) {
-       status = hdf_close(cdfid);
-   }
-   else {
-       status = ncclose(cdfid);
-   }
-#else
-   status = ncclose(cdfid);
-#endif /* MINC2 not defined */
-
-   if (status < 0) {
-       milog_message(MI_MSG_CLOSEFILE);
-   }
+   {MI_CHK_ERR(status = ncclose(cdfid))}
    MI_RETURN(status);
 }
 
@@ -772,18 +629,16 @@ public int miclose(int cdfid)
 @MODIFIED   : August 20, 2001 (P.N.)
                  - changed to call miattget_with_sign
 ---------------------------------------------------------------------------- */
-public int miattget(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget(int cdfid, int varid, char *name, nc_type datatype,
                     int max_length, void *value, int *att_length)
 {
-    int status;
+   MI_SAVE_ROUTINE_NAME("miattget");
 
-    MI_SAVE_ROUTINE_NAME("miattget");
+   MI_CHK_ERR(miattget_with_sign(cdfid, varid, name, 
+                                 NULL, datatype, NULL, 
+                                 max_length, value, att_length))
 
-    status = miattget_with_sign(cdfid, varid, name, 
-				NULL, datatype, NULL, 
-				max_length, value, att_length);
-
-    MI_RETURN(status);
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -814,7 +669,7 @@ public int miattget(int cdfid, int varid, char *name, nc_type datatype,
                  - slightly modified version of old miattget
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattget_with_sign(int cdfid, int varid, char *name, 
+MNCAPI int miattget_with_sign(int cdfid, int varid, char *name, 
                               char *insign, nc_type datatype, char *outsign,
                               int max_length, void *value, int *att_length)
 {
@@ -827,11 +682,7 @@ public int miattget_with_sign(int cdfid, int varid, char *name,
    MI_SAVE_ROUTINE_NAME("miattget_with_sign");
 
    /* Inquire about the attribute */
-   status = ncattinq(cdfid, varid, name, &att_type, &actual_length);
-   if (status < 0) {
-       milog_message(MI_MSG_FINDATTR, name);
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncattinq(cdfid, varid, name, &att_type, &actual_length))
 
    /* Save the actual length of the attribute */
    if (att_length != NULL)
@@ -839,33 +690,29 @@ public int miattget_with_sign(int cdfid, int varid, char *name,
 
    /* Check that the attribute type is numeric */
    if ((datatype==NC_CHAR) || (att_type==NC_CHAR)) {
-      milog_message(MI_MSG_ATTRNOTNUM, name);
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC,"Non-numeric datatype");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Check to see if the type requested is the same as the attribute type
       and that the length is less than or equal to max_length. If it is, just 
       get the value. */
    if ((datatype == att_type) && (actual_length <= max_length)) {
-       status = ncattget(cdfid, varid, name, value);
-       if (status < 0) {
-           milog_message(MI_MSG_READATTR, name);
-       }
-       MI_RETURN(status);
+      MI_CHK_ERR(status=ncattget(cdfid, varid, name, value))
+      MI_RETURN(status);
    }
 
    /* Otherwise, get space for the attribute */
    if ((att_value = MALLOC(actual_length * nctypelen(att_type), char))
                       == NULL) {
-       milog_message(MI_MSG_NOMEMATTR, name);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_SYS_ERROR1("miattget");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Get the attribute */
    if (ncattget(cdfid, varid, name, att_value)==MI_ERROR) {
       FREE(att_value);
-      milog_message(MI_MSG_READATTR, name);
-      MI_RETURN(MI_ERROR);
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Get the signs */
@@ -883,10 +730,9 @@ public int miattget_with_sign(int cdfid, int varid, char *name,
                           datatype, data_sign, value,
                           NULL);
    FREE(att_value);
-   if (status < 0) {
-       milog_message(MI_MSG_CONVATTR, name);
-   }
+   MI_CHK_ERR(status)
    MI_RETURN(status);
+   
 }
 
 
@@ -908,25 +754,20 @@ public int miattget_with_sign(int cdfid, int varid, char *name,
 @CREATED    : July 27, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
+MNCAPI int miattget1(int cdfid, int varid, char *name, nc_type datatype,
                     void *value)
 {
    int att_length;      /* Actual length of the attribute */
-   int status;
 
    MI_SAVE_ROUTINE_NAME("miattget1");
 
    /* Get the attribute value and its actual length */
-   status = miattget(cdfid, varid, name, datatype, 1, value, &att_length);
-   if (status < 0) {
-       milog_message(MI_MSG_FINDATTR, name);
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(miattget(cdfid, varid, name, datatype, 1, value, &att_length))
 
    /* Check that the length is 1 */
    if (att_length != 1) {
-      milog_message(MI_MSG_ATTRNOTSCALAR, name);
-      MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_NONSCALAR,"Attribute is not a scalar value");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    MI_RETURN(MI_NOERROR);
@@ -952,7 +793,7 @@ public int miattget1(int cdfid, int varid, char *name, nc_type datatype,
 @CREATED    : July 28, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *miattgetstr(int cdfid, int varid, char *name, 
+MNCAPI char *miattgetstr(int cdfid, int varid, char *name, 
                          int maxlen, char *value)
 {
    nc_type att_type;          /* Type of attribute */
@@ -962,24 +803,20 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    MI_SAVE_ROUTINE_NAME("miattgetstr");
 
    /* Inquire about the attribute */
-   if (ncattinq(cdfid, varid, name, &att_type, &att_length)==MI_ERROR) {
-       milog_message(MI_MSG_FINDATTR, name);
-       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
-   }
+   if (ncattinq(cdfid, varid, name, &att_type, &att_length)==MI_ERROR)
+      MI_RETURN_ERROR((char *) NULL);
 
    /* Check that the attribute type is character */
    if (att_type!=NC_CHAR) {
-       milog_message(MI_MSG_ATTRNOTSTR, name);
-       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
+      MI_LOG_PKG_ERROR2(MI_ERR_NONCHAR,"Non-character datatype");
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Check to see if the attribute length is less than maxlen. 
       If it is, just get the value. */
    if (att_length <= maxlen) {
-      if (ncattget(cdfid, varid, name, value) == MI_ERROR) {
-	  milog_message(MI_MSG_READATTR, name);
-	  MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
-      }
+      if (ncattget(cdfid, varid, name, value) == MI_ERROR)
+         MI_RETURN_ERROR((char *) NULL);
       /* Check the last character for a '\0' */
       if (value[att_length-1] != '\0') {
          if (att_length==maxlen)
@@ -991,16 +828,16 @@ public char *miattgetstr(int cdfid, int varid, char *name,
    }
 
    /* Otherwise, get space for the attribute */
-   if ((att_value = MALLOC(att_length * nctypelen(att_type), char)) ==NULL) {
-       milog_message(MI_MSG_NOMEMATTR, name);
-       MI_RETURN((char *)NULL); /* Explicit cast for MIPSpro cc */
+   if ((att_value = MALLOC(att_length * nctypelen(att_type), char))
+                      ==NULL) {
+      MI_LOG_SYS_ERROR1("miattgetstr");
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Get the attribute */
    if (ncattget(cdfid, varid, name, att_value)==MI_ERROR) {
       FREE(att_value);
-      milog_message(MI_MSG_READATTR, name);
-      MI_RETURN((char *)NULL);
+      MI_RETURN_ERROR((char *) NULL);
    }
 
    /* Copy the attribute */
@@ -1031,19 +868,15 @@ public char *miattgetstr(int cdfid, int varid, char *name,
 @CREATED    : November 25, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputint(int cdfid, int varid, char *name, int value)
+MNCAPI int miattputint(int cdfid, int varid, char *name, int value)
 {
-    int lvalue;
-    int status;
+   int lvalue;
 
-    MI_SAVE_ROUTINE_NAME("miattputint");
+   MI_SAVE_ROUTINE_NAME("miattputint");
 
-    lvalue = value;
-    status = ncattput(cdfid, varid, name, NC_INT, 1, (void *) &lvalue);
-    if (status < 0) {
-	milog_message(MI_MSG_WRITEATTR, name);
-    }
-    MI_RETURN(status);
+   lvalue = value;
+   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_INT, 1, (void *) &lvalue))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1062,15 +895,12 @@ public int miattputint(int cdfid, int varid, char *name, int value)
 @CREATED    : August 5, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputdbl(int cdfid, int varid, char *name, double value)
+MNCAPI int miattputdbl(int cdfid, int varid, char *name, double value)
 {
-    int status;
-    MI_SAVE_ROUTINE_NAME("miattputdbl");
-    status = ncattput(cdfid, varid, name, NC_DOUBLE, 1, (void *) &value);
-    if (status < 0) {
-	milog_message(MI_MSG_WRITEATTR, name);
-    }
-    MI_RETURN(status);
+   MI_SAVE_ROUTINE_NAME("miattputdbl");
+
+   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_DOUBLE, 1, (void *) &value))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1089,17 +919,13 @@ public int miattputdbl(int cdfid, int varid, char *name, double value)
 @CREATED    : July 28, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int miattputstr(int cdfid, int varid, char *name, char *value)
+MNCAPI int miattputstr(int cdfid, int varid, char *name, char *value)
 {
-    int status;
-    MI_SAVE_ROUTINE_NAME("miattputstr");
+   MI_SAVE_ROUTINE_NAME("miattputstr");
 
-    status = ncattput(cdfid, varid, name, NC_CHAR, 
-                       strlen(value) + 1, (void *) value);
-    if (status < 0) {
-	milog_message(MI_MSG_WRITEATTR, name);
-    }
-    MI_RETURN(status);
+   MI_CHK_ERR(ncattput(cdfid, varid, name, NC_CHAR, 
+                       strlen(value) + 1, (void *) value))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1128,19 +954,15 @@ public int miattputstr(int cdfid, int varid, char *name, char *value)
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarget(int cdfid, int varid, long start[], long count[],
+MNCAPI int mivarget(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values)
 {
-    int status;
-    MI_SAVE_ROUTINE_NAME("mivarget");
+   MI_SAVE_ROUTINE_NAME("mivarget");
 
-    status = MI_varaccess(MI_PRIV_GET, cdfid, varid, start, count,
-			  datatype, MI_get_sign_from_string(datatype, sign),
-			  values, NULL, NULL);
-    if (status < 0) {
-	milog_message(MI_MSG_READVAR, varid);
-    }
-    MI_RETURN(status);
+   MI_CHK_ERR(MI_varaccess(MI_PRIV_GET, cdfid, varid, start, count,
+                           datatype, MI_get_sign_from_string(datatype, sign),
+                           values, NULL, NULL))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1168,22 +990,18 @@ public int mivarget(int cdfid, int varid, long start[], long count[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarget1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarget1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value)
 {
-    int status;
-    long count[MAX_VAR_DIMS];
+   long count[MAX_VAR_DIMS];
 
-    MI_SAVE_ROUTINE_NAME("mivarget1");
-    
-    status = MI_varaccess(MI_PRIV_GET, cdfid, varid, mindex, 
-			  miset_coords(MAX_VAR_DIMS, 1L, count),
-			  datatype, MI_get_sign_from_string(datatype, sign),
-			  value, NULL, NULL);
-    if (status < 0) {
-	milog_message(MI_MSG_READVAR, varid);
-    }
-    MI_RETURN(status);
+   MI_SAVE_ROUTINE_NAME("mivarget1");
+
+   MI_CHK_ERR(MI_varaccess(MI_PRIV_GET, cdfid, varid, mindex, 
+                           miset_coords(MAX_VAR_DIMS, 1L, count),
+                           datatype, MI_get_sign_from_string(datatype, sign),
+                           value, NULL, NULL))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1213,19 +1031,15 @@ public int mivarget1(int cdfid, int varid, long mindex[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarput(int cdfid, int varid, long start[], long count[],
+MNCAPI int mivarput(int cdfid, int varid, long start[], long count[],
                     nc_type datatype, char *sign, void *values)
 {
-    int status;
-    MI_SAVE_ROUTINE_NAME("mivarput");
+   MI_SAVE_ROUTINE_NAME("mivarput");
 
-    status = MI_varaccess(MI_PRIV_PUT, cdfid, varid, start, count,
-			  datatype, MI_get_sign_from_string(datatype, sign),
-			  values, NULL, NULL);
-    if (status < 0) {
-	milog_message(MI_MSG_WRITEVAR, varid);
-    }
-    MI_RETURN(status);
+   MI_CHK_ERR(MI_varaccess(MI_PRIV_PUT, cdfid, varid, start, count,
+                           datatype, MI_get_sign_from_string(datatype, sign),
+                           values, NULL, NULL))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1253,22 +1067,18 @@ public int mivarput(int cdfid, int varid, long start[], long count[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int mivarput1(int cdfid, int varid, long mindex[],
+MNCAPI int mivarput1(int cdfid, int varid, long mindex[],
                      nc_type datatype, char *sign, void *value)
 {
-    int status;
-    long count[MAX_VAR_DIMS];
+   long count[MAX_VAR_DIMS];
 
-    MI_SAVE_ROUTINE_NAME("mivarput1");
+   MI_SAVE_ROUTINE_NAME("mivarput1");
 
-    status = MI_varaccess(MI_PRIV_PUT, cdfid, varid, mindex, 
-			  miset_coords(MAX_VAR_DIMS, 1L, count),
-			  datatype, MI_get_sign_from_string(datatype, sign),
-			  value, NULL, NULL);
-    if (status < 0) {
-	milog_message(MI_MSG_WRITEVAR, varid);
-    }
-    MI_RETURN(status);
+   MI_CHK_ERR(MI_varaccess(MI_PRIV_PUT, cdfid, varid, mindex, 
+                           miset_coords(MAX_VAR_DIMS, 1L, count),
+                           datatype, MI_get_sign_from_string(datatype, sign),
+                           value, NULL, NULL))
+   MI_RETURN(MI_NOERROR);
 }
 
 
@@ -1285,7 +1095,7 @@ public int mivarput1(int cdfid, int varid, long mindex[],
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long *miset_coords(int nvals, long value, long coords[])
+MNCAPI long *miset_coords(int nvals, long value, long coords[])
 {
    int i;
 
@@ -1320,7 +1130,7 @@ public long *miset_coords(int nvals, long value, long coords[])
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long *mitranslate_coords(int cdfid, 
+MNCAPI long *mitranslate_coords(int cdfid, 
                                 int invar,  long incoords[],
                                 int outvar, long outcoords[])
 {
@@ -1334,8 +1144,7 @@ public long *mitranslate_coords(int cdfid,
                     == MI_ERROR) ||
         (ncvarinq(cdfid, outvar, NULL, NULL, &out_ndims, out_dim, NULL)
                     == MI_ERROR)) {
-      milog_message(MI_MSG_FINDVAR, invar);
-      MI_RETURN((long *) NULL);
+      MI_RETURN_ERROR((long *) NULL);
    }
 
    /* Loop through out_dim, looking for dimensions in in_dim */
@@ -1378,8 +1187,7 @@ public long *mitranslate_coords(int cdfid,
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-
-public int micopy_all_atts(int incdfid, int invarid, 
+MNCAPI int micopy_all_atts(int incdfid, int invarid, 
                            int outcdfid, int outvarid)
 {
    int num_atts;             /* Number of attributes */
@@ -1389,7 +1197,6 @@ public int micopy_all_atts(int incdfid, int invarid,
    int i;
 
    MI_SAVE_ROUTINE_NAME("micopy_all_atts");
-
 
    /* Only allow copying of global attributes to global attributes or
       variable attributes to variable attributes - this makes
@@ -1401,44 +1208,28 @@ public int micopy_all_atts(int incdfid, int invarid,
    }
 
    /* Inquire about the number of input variable attributes */
-   if (invarid != NC_GLOBAL) {
-       status = ncvarinq(incdfid, invarid, 
-			 NULL, NULL, NULL, NULL, &num_atts);
-   }
-   else {
-       status = ncinquire(incdfid, NULL, NULL, &num_atts, NULL);
-   }
-   if (status < 0) {
-       milog_message(MI_MSG_ATTRCOUNT);
-       MI_RETURN(MI_ERROR);
-   }
+   if (invarid != NC_GLOBAL)
+      {MI_CHK_ERR(ncvarinq(incdfid, invarid, 
+                           NULL, NULL, NULL, NULL, &num_atts))}
+   else
+      {MI_CHK_ERR(ncinquire(incdfid, NULL, NULL, &num_atts, NULL))}
 
    /* Loop through input attributes */
    for (i=0; i<num_atts; i++){
       
       /* Get the attribute name */
-       status = ncattname(incdfid, invarid, i, name);
-       if (status < 0) {
-	   milog_message(MI_MSG_ATTRNAME);
-	   MI_RETURN(MI_ERROR);
-       }
+      MI_CHK_ERR(ncattname(incdfid, invarid, i, name))
 
       /* Check to see if it is in the output file. We must set and reset
          ncopts to avoid surprises to the calling program. (This is no
-	 longer needed with new MI_SAVE_ROUTINE_NAME macro). */
+         longer needed with new MI_SAVE_ROUTINE_NAME macro). */
       oldncopts=ncopts; ncopts=0;
       status=ncattinq(outcdfid, outvarid, name, NULL, NULL);
       ncopts=oldncopts;
 
-      /* If the attribute does not exist, copy it.
-       * Must always copy signtype, if present!
-       */
-      if (status == MI_ERROR || !strcmp(name,  MIsigntype)) {
-	  status = ncattcopy(incdfid, invarid, name, outcdfid, outvarid);
-	  if (status < 0) {
-	      milog_message(MI_MSG_COPYATTR, name);
-	      MI_RETURN(MI_ERROR);
-	  }
+      /* If the attribute does not exist, copy it */
+      if (status == MI_ERROR) {
+         MI_CHK_ERR(ncattcopy(incdfid, invarid, name, outcdfid, outvarid))
       }
    }
 
@@ -1462,7 +1253,7 @@ public int micopy_all_atts(int incdfid, int invarid,
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_var_def(int incdfid, int invarid, int outcdfid)
+MNCAPI int micopy_var_def(int incdfid, int invarid, int outcdfid)
 {
    char varname[MAX_NC_NAME]; /* Name of variable */
    char dimname[MAX_NC_NAME]; /* Name of dimension */
@@ -1475,45 +1266,33 @@ public int micopy_var_def(int incdfid, int invarid, int outcdfid)
    int outvarid;              /* Id of newly created variable */
    int oldncopts;             /* Store ncopts */
    int i;
-   int status;
 
    MI_SAVE_ROUTINE_NAME("micopy_var_def");
 
    /* Get name and dimensions of variable */
-   status = ncvarinq(incdfid, invarid, varname, &datatype, &ndims, 
-                     indim, NULL);
-   if (status < 0) {
-       milog_message(MI_MSG_VARINQ);
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncvarinq(incdfid, invarid, varname, &datatype, 
+                       &ndims, indim, NULL))
 
    /* Get unlimited dimension for input file */
-   status = ncinquire(incdfid, NULL, NULL, NULL, &recdim);
-   if (status < 0) {
-       milog_message(MI_MSG_UNLIMDIM);
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncinquire(incdfid, NULL, NULL, NULL, &recdim))
 
    /* Create any new dimensions that need creating */
    for (i=0; i<ndims; i++) {
 
       /* Get the dimension info */
-       status = ncdiminq(incdfid, indim[i], dimname, &insize);
-       if (status < 0) {
-	   milog_message(MI_MSG_DIMINQ);
-	   MI_RETURN(MI_ERROR);
-       }
+      MI_CHK_ERR(ncdiminq(incdfid, indim[i], dimname, &insize))
 
       /* If it exists in the output file, check the size. */
-      oldncopts=ncopts; ncopts = 0;
-      outdim[i] = ncdimid(outcdfid, dimname);
+      oldncopts=ncopts; ncopts=0;
+      outdim[i]=ncdimid(outcdfid, dimname);
       ncopts=oldncopts;
-      if (outdim[i] != MI_ERROR) {
-	if ((ncdiminq(outcdfid, outdim[i], NULL, &outsize) == MI_ERROR) ||
+      if (outdim[i]!=MI_ERROR) {
+         if ( (ncdiminq(outcdfid, outdim[i], NULL, &outsize)==MI_ERROR) ||
              ((insize!=0) && (outsize!=0) && (insize != outsize)) ) {
             if ((insize!=0) && (outsize!=0) && (insize != outsize))
-		milog_message(MI_MSG_VARCONFLICT);
-            MI_RETURN(MI_ERROR);
+               MI_LOG_PKG_ERROR2(MI_ERR_DIMSIZE, 
+                  "Variable already has dimension of different size");
+            MI_RETURN_ERROR(MI_ERROR);
          }
       }
       /* Otherwise create it */
@@ -1528,67 +1307,18 @@ public int micopy_var_def(int incdfid, int invarid, int outcdfid)
          /* If it's not meant to be unlimited, or if we cannot create it
             unlimited, then create it with the current size */
          if ((indim[i]!=recdim) || (outdim[i]==MI_ERROR)) {
-	     outdim[i] = ncdimdef(outcdfid, dimname, MAX(1,insize));
-	     if (outdim[i] < 0) {
-		 milog_message(MI_MSG_DIMDEF, dimname);
-		 MI_RETURN(MI_ERROR);
-	     }
+            MI_CHK_ERR(outdim[i]=ncdimdef(outcdfid, dimname, MAX(1,insize)))
          }
       }
    }
 
    /* Create a new variable */
-   outvarid = ncvardef(outcdfid, varname, datatype, ndims, outdim);
+   MI_CHK_ERR(outvarid=ncvardef(outcdfid, varname, datatype, ndims, outdim))
 
-   if (outvarid < 0) {
-       milog_message(MI_MSG_VARDEF, varname);
-       MI_RETURN(MI_ERROR);
-   }
-   else {
-       /* Copy all the attributes */
-       status = micopy_all_atts(incdfid, invarid, outcdfid, outvarid);
-       if (status < 0) {
-	   MI_RETURN(MI_ERROR);
-       }
-   }
+   /* Copy all the attributes */
+   MI_CHK_ERR(micopy_all_atts(incdfid, invarid, outcdfid, outvarid))
 
-   MI_RETURN(MI_NOERROR);
-}
-
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : mivarsize
-@INPUT      : fd  - file id
-              varid  - variable id
-@OUTPUT     : size_ptr - dimension sizes
-@RETURNS    : MI_ERROR (=-1) if an error occurs.
-@DESCRIPTION: Copies the lengths of the variable's dimensions to the
-              size_ptr array.  size_ptr must point to a buffer large
-              enough to hold the data.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : NetCDF routines.
-@CREATED    : 
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-int
-mivarsize(int fd, int varid, long *size_ptr)
-{
-    int i;
-    int ndims;
-    int dimids[MAX_VAR_DIMS];
-
-    if (ncvarinq(fd, varid, NULL, NULL, &ndims, dimids, NULL) == MI_ERROR) {
-        return (MI_ERROR);
-    }
-
-    /* Get the dimension sizes and check for compatibility */
-    for (i = 0; i < ndims; i++) {
-        if (ncdiminq(fd, dimids[i], NULL, &size_ptr[i]) == MI_ERROR) {
-            size_ptr[i] = 0;
-        }
-    }
-    return (MI_NOERROR);
+   MI_RETURN(outvarid);
 }
 
 
@@ -1610,41 +1340,41 @@ mivarsize(int fd, int varid, long *size_ptr)
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_var_values(int incdfid, int invarid, 
+MNCAPI int micopy_var_values(int incdfid, int invarid, 
                              int outcdfid, int outvarid)
 {
    nc_type intype, outtype;   /* Data types */
    int inndims, outndims;     /* Number of dimensions */
-   long insize[MAX_VAR_DIMS]; /* Dimension sizes */
-   long outsize[MAX_VAR_DIMS];
+   long insize[MAX_VAR_DIMS], outsize; /* Dimension sizes */
    long start[MAX_VAR_DIMS];  /* First coordinate of variable */
    int indim[MAX_VAR_DIMS];   /* Input dimensions */
    int outdim[MAX_VAR_DIMS];  /* Output dimensions */
    mi_vcopy_type stc;
    int i;
-   int status;
 
    MI_SAVE_ROUTINE_NAME("micopy_var_values");
 
    /* Get the dimensions of the two variables and check for compatibility */
    if ((ncvarinq(incdfid, invarid, NULL, &intype, &inndims, indim, NULL)
-	== MI_ERROR) ||
+                     == MI_ERROR) ||
        (ncvarinq(outcdfid, outvarid, NULL, &outtype, &outndims, outdim, NULL)
-	          == MI_ERROR) ||
+                     == MI_ERROR) ||
        (intype != outtype) || (inndims != outndims)) {
-       milog_message(MI_MSG_VARMISMATCH);
-       MI_RETURN(MI_ERROR);
+      MI_LOG_PKG_ERROR2(MI_ERR_BADMATCH,
+         "Variables do not match for value copy");
+      MI_RETURN_ERROR(MI_ERROR);
    }
 
    /* Get the dimension sizes and check for compatibility */
-
-   mivarsize(incdfid, invarid, insize);
-   mivarsize(outcdfid, outvarid, outsize);
-   for (i = 0; i < inndims; i++) {
-     if (insize[i] != 0 && outsize[i] != 0 && insize[i] != outsize[i]) {
-	 milog_message(MI_MSG_VARDIFFSIZE);
-	 MI_RETURN(MI_ERROR);
-     }
+   for (i=0; i<inndims; i++) {
+      if ((ncdiminq(incdfid, indim[i], NULL, &insize[i]) == MI_ERROR) ||
+          (ncdiminq(outcdfid, outdim[i], NULL, &outsize) == MI_ERROR) ||
+          ((insize[i]!=0) && (outsize!=0) && (insize[i] != outsize))) {
+         if ((insize[i]!=0) && (outsize!=0) && (insize[i] != outsize))
+            MI_LOG_PKG_ERROR2(MI_ERR_DIMSIZE, 
+               "Variables have dimensions of different size");
+         MI_RETURN_ERROR(MI_ERROR);
+      }
    }
 
    /* Copy the values */
@@ -1653,14 +1383,11 @@ public int micopy_var_values(int incdfid, int invarid,
    stc.invarid =invarid;
    stc.outvarid=outvarid;
    stc.value_size=nctypelen(intype);
-   status = MI_var_loop(inndims, miset_coords(MAX_VAR_DIMS, 0L, start),
-			insize, stc.value_size, NULL, 
-			MI_MAX_VAR_BUFFER_SIZE, &stc,
-			MI_vcopy_action);
-   if (status < 0) {
-       milog_message(MI_MSG_COPYVAR);
-   }
-   MI_RETURN(status);
+   MI_CHK_ERR(MI_var_loop(inndims, miset_coords(MAX_VAR_DIMS, 0L, start),
+                          insize, stc.value_size, NULL, 
+                          MI_MAX_VAR_BUFFER_SIZE, &stc,
+                          MI_vcopy_action))
+   MI_RETURN(MI_NOERROR);
 
 }
 
@@ -1683,28 +1410,22 @@ public int micopy_var_values(int incdfid, int invarid,
 @CREATED    : August 3, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int MI_vcopy_action(int ndims, long start[], long count[], 
+PRIVATE int MI_vcopy_action(int ndims, long start[], long count[], 
                             long nvalues, void *var_buffer, void *caller_data)
      /* ARGSUSED */
 {
    mi_vcopy_type *ptr;       /* Pointer to data from micopy_var_values */
-   int status;
 
    MI_SAVE_ROUTINE_NAME("MI_vcopy_action");
 
    ptr=(mi_vcopy_type *) caller_data;
 
    /* Get values from input variable */
-   status = ncvarget(ptr->incdfid, ptr->invarid, start, count, var_buffer);
-   if (status < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncvarget(ptr->incdfid, ptr->invarid, start, count, var_buffer))
 
    /* Put values to output variable */
-   status = ncvarput(ptr->outcdfid, ptr->outvarid, start, count, var_buffer);
-   if (status < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncvarput(ptr->outcdfid, ptr->outvarid, start, count, 
+                       var_buffer))
    MI_RETURN(MI_NOERROR);
 
 }
@@ -1728,38 +1449,30 @@ private int MI_vcopy_action(int ndims, long start[], long count[],
 @CREATED    : August 3, 1992 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
                                int excluded_vars[])
 {
    int num_vars;          /* Number of variables in input file */
    int varid;             /* Variable id counter */
    int i;
-   int status;
 
    MI_SAVE_ROUTINE_NAME("micopy_all_var_defs");
 
    /* Find out how many variables there are in the file and loop through
       them */
-   status = ncinquire(incdfid, NULL, &num_vars, NULL, NULL);
-   if (status < 0) {
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncinquire(incdfid, NULL, &num_vars, NULL, NULL))
 
    /* Loop through variables, copying them */
    for (varid=0; varid<num_vars; varid++) {
 
       /* Check list of excluded variables */
       for (i=0; i<nexclude; i++) {
-         if (varid==excluded_vars[i]) 
-	     break;
+         if (varid==excluded_vars[i]) break;
       }
 
       /* If the variable is not excluded, copy its definition */
       if (i>=nexclude) {
-	  status = micopy_var_def(incdfid, varid, outcdfid);
-	  if (status < 0) {
-	      MI_RETURN(MI_ERROR);
-	  }
+         MI_CHK_ERR(micopy_var_def(incdfid, varid, outcdfid))
       }
    }
 
@@ -1768,10 +1481,11 @@ public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
       if (NC_GLOBAL==excluded_vars[i]) break;
    }
    if (i>=nexclude) {
-       status = micopy_all_atts(incdfid, NC_GLOBAL, outcdfid, NC_GLOBAL);
+      {MI_CHK_ERR(micopy_all_atts(incdfid, NC_GLOBAL, outcdfid, NC_GLOBAL))}
+
    }
 
-   MI_RETURN(status);
+   MI_RETURN(MI_NOERROR);
        
 }
 
@@ -1797,7 +1511,7 @@ public int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
 @CREATED    : 
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
+MNCAPI int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
                                  int excluded_vars[])
 {
    int num_vars;           /* Number of variables in input file */
@@ -1805,17 +1519,12 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
    int outvarid;           /* Output variable id */
    char name[MAX_NC_NAME]; /*Variable name */
    int i;
-   int status;
 
    MI_SAVE_ROUTINE_NAME("micopy_all_var_values");
 
    /* Find out how many variables there are in the file and loop through
       them */
-   status = ncinquire(incdfid, NULL, &num_vars, NULL, NULL);
-   if (status < 0) {
-       milog_message(MI_MSG_VARCOUNT);
-       MI_RETURN(MI_ERROR);
-   }
+   MI_CHK_ERR(ncinquire(incdfid, NULL, &num_vars, NULL, NULL))
 
    /* Loop through variables, copying them */
    for (varid=0; varid<num_vars; varid++) {
@@ -1827,23 +1536,12 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 
       /* If the variable is not excluded, copy its values */
       if (i>=nexclude) {
-	  /* Get the input variable's name */
-	  status = ncvarinq(incdfid, varid, name, NULL, NULL, NULL, NULL);
-	  if (status < 0) {
-              milog_message(MI_MSG_VARINQ);
-	      MI_RETURN(MI_ERROR);
-	  }
-	  /* Look for it in the output file */
-	  outvarid = ncvarid(outcdfid, name);
-	  if (outvarid < 0) {
-	      milog_message(MI_MSG_OUTPUTVAR, name);
-	      MI_RETURN(MI_ERROR);
-	  }
-	  /* Copy the values */
-	  status = micopy_var_values(incdfid, varid, outcdfid, outvarid);
-	  if (status < 0) {
-	      MI_RETURN(MI_ERROR);
-	  }
+         /* Get the input variable's name */
+         MI_CHK_ERR(ncvarinq(incdfid, varid, name, NULL, NULL, NULL, NULL))
+         /* Look for it in the output file */
+         MI_CHK_ERR(outvarid=ncvarid(outcdfid, name))
+         /* Copy the values */
+         MI_CHK_ERR(micopy_var_values(incdfid, varid, outcdfid, outvarid))
       }
    }
 
@@ -1871,7 +1569,7 @@ public int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
 #define P_tmpdir "/var/tmp"
 #endif /* P_tmpdir not defined */
 
-public char *
+MNCAPI char *
 micreate_tempfile(void)
 {
   int tmp_fd;
@@ -1950,92 +1648,3 @@ micreate_tempfile(void)
   }
   return (tmpfile_ptr);
 }
-
-/** Simple function to read a user's .mincrc file, if present.
- */
-static int
-miread_cfg(const char *name, char *buffer, int maxlen)
-{
-    FILE *fp;
-    int result = 0;
-    char *home_ptr = getenv("HOME");
-    char path[256];
-
-    strcpy(path, home_ptr);
-    strcat(path, "/.mincrc");
-      
-    
-    if ((fp = fopen(path, "r")) != NULL) {
-        while (fgets(buffer, maxlen, fp)) {
-            if (buffer[0] == '#') {
-                continue;
-            }
-            if (!strncasecmp(buffer, name, strlen(name))) {
-                char *tmp = strchr(buffer, '=');
-                if (tmp != NULL) {
-                    tmp++;
-                    while (isspace(*tmp)) {
-                        tmp++;
-                    }
-                    strncpy(buffer, tmp, maxlen);
-                    result = 1;
-                    break;
-                }
-            }
-        }
-        fclose(fp);
-    }
-    return (result);
-}
-
-int
-miget_cfg_bool(const char *name)
-{
-    char buffer[128];
-    char *var_ptr;
-
-    if ((var_ptr = getenv(name)) != NULL) {
-        strncpy(buffer, var_ptr, sizeof (buffer));
-    }
-    else {
-        if (!miread_cfg(name, buffer, sizeof (buffer))) {
-            return (0);
-        }
-    }
-    return (atoi(buffer) != 0);
-}
-
-int
-miget_cfg_int(const char *name)
-{
-    char buffer[128];
-    char *var_ptr;
-    
-    if ((var_ptr = getenv(name)) != NULL) {
-        strncpy(buffer, var_ptr, sizeof (buffer));
-    }
-    else {
-        if (!miread_cfg(name, buffer, sizeof(buffer))) {
-            return (0);
-        }
-    }
-    return (atoi(buffer));
-}
-
-char *
-miget_cfg_str(const char *name)
-{
-    char buffer[256];
-    char *var_ptr;
-
-    if ((var_ptr = getenv(name)) != NULL) {
-        strncpy(buffer, var_ptr, sizeof(buffer));
-    }
-    else {
-        if (!miread_cfg(name, buffer, sizeof(buffer))) {
-            return (NULL);
-        }
-    }
-    return (strdup(buffer));
-}
-
