@@ -1,0 +1,203 @@
+.\" Copyright 2000 Andrew Janke
+.TH MINCCALC 1
+
+.SH NAME
+minccalc - perform complex math operations on minc files
+
+.SH SYNOPSIS
+.B mincalc
+[<options>] <in1>.mnc [<in2>.mnc...] <out>.mnc
+
+.SH DESCRIPTION
+.I Minccalc
+will perform complex, voxel-by-voxel math operations, on one or more
+minc files of the same shape and having the same coordinate sampling,
+producing a single output file. The operations to be performed are
+input using the -expression argument (see EXPRESSIONS)
+
+.SH OPTIONS
+Note that options can be specified in abbreviated form (as long as
+they are unique) and can be given anywhere on the command line.
+
+.SH General options
+.P
+.I -clobber:
+Overwrite an existing file.
+.P
+.I -noclobber:
+Don't overwrite an existing file (default).
+.P
+.I -no_clobber:
+Synonym for -noclobber.
+.P
+.I -verbose:
+Print out progress information for each chunk of data copied (default).
+.P
+.I -quiet:
+Do not print out progress information.
+.P
+.I -debug:
+Print out debugging information.
+.P
+.I -copy_header:
+Copy all of the header information from the first input file (default for 
+one input file).
+.P
+.I -nocopy_header:
+Do not copy all of the header from the first input file; copy only
+coordinate information (default for more than one input file).
+.P
+.I -filetype:
+Create an output file with the same type as the first input file
+(default).
+.P
+.I -byte:
+Create an output file of type byte.
+.P
+.I -short:
+Create an output file of type short.
+.P
+.I -int:
+Create an output file of type int.
+.P
+.I -long:
+Superseded by -int.
+.P
+.I -float:
+Create an output file of type float.
+.P
+.I -double:
+Create an output file of type double.
+.P
+.I -signed:
+Create an output file with data stored in a signed type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -unsigned:
+Create an output file with data stored in an unsigned type. This only
+has an effect if the one of the -byte, -short or -long options is
+specified.
+.P
+.I -range
+<min> <max>:
+Create an output file with integer data stored in the specified
+valid range. This only has an effect if the one of the -byte, -short
+or -long options is specified.
+.P
+.I -max_buffer_size_in_kb
+<size>:
+Specify the maximum size of the internal buffers (in kbytes). Default
+is 4 MB.
+.P
+.I -dimension
+<dimname>:
+Specify a dimension along which we wish to perform a cumulative
+operation.
+.P
+.I -check_dimensions:
+Check that all input files have matching sampling in world 
+dimensions (default).
+.P
+.I -nocheck_dimensions:
+Ignore any differences in world dimensions sampling for input files .
+.P
+.I -propagate_nan:
+Invalid data (Not-A-Number or NaN) at a voxel in any of the input
+files will produce invalid data in the output file at that voxel
+(default).
+.P
+.I -ignore_nan:
+For cumulative operations, invalid data (NaN) in an input file is
+ignored, ie. treated as though it is not present.
+.P
+.I -nan:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), invalid data (NaN) is stored in the output file (default). Having 
+no valid input data for a cumulative operation is also considered an 
+illegal operation when -ignore_nan is used.
+.P
+.I -zero:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), value zero is stored in the output file.
+.P
+.I -illegal_value
+<value>:
+When an illegal operation is attempted at a voxel (such as divide by
+zero), the specified value is stored in the output file.
+
+.SH EXPRESSIONS
+.P
+The
+.I -expression
+argument is a single string that describes the function to evaluate.
+The function expression is typically written in terms of the vector A
+
+For example, the following expression will sum the first two input files
+together:
+
+   A[0] + A[1]
+   
+Besides normal scalar operators such as +, -, * and /,
+the expression language also supports the infix exponentiation 
+operator ^ .
+
+There are two types of values in the language: vectors and scalars.
+Scalars literals are floating point numbers or may appear as symbols
+whose name starts with a lowercase letter.
+
+Vectors can be written in the following `extensional' form
+
+   { value1, value2, ... }
+
+or by using the following range-generating notations:
+
+   [ a , b ]     generates {a, a+1, ..., b-1, b}
+   [ a , b )     generates {a, a+1, ..., b-1}
+   ( a , b ]     generates {a+1, ..., b-1, b}
+   ( a , b )     generates {a+1, ..., b-1}
+
+or be generated, by `intension'.
+
+For example, the following intension expression generates the vector {3,2,1}:
+
+   { i in [1,3] | 4 - i }
+
+Vectors may also appear as symbols whose name starts with an uppercase letter.
+
+Symbol names are introduced with let-expressions. 
+For example, the following expression will always evaluate to 3:
+
+   let a = 1, b = 2 in a + b
+
+In addition to the scalar operators, the following vector operators are
+supplied.
+
+   avg  - the average value of the scalars in vector
+   len  - the length of
+   sum  - the sum of the elements of
+   prod - the product of the elements of
+   V[s] - the s'th element of vector V with origin 0.
+
+.SH CAVEATS
+A few things you should remember...
+
+Vector variables must start with an uppercase letter.
+
+As optimisation of the tree is not inculded in this release it'd be 
+advantageous if you made use of let-expressions to speed your calculations.
+
+   "(avg[A] - 1) * (avg[A] + 1)"
+   
+   is less efficient written as
+   
+   "let avg_a = avg[A] in (avg_a - 1) * (avg_a + 1)"
+
+.SH AUTHOR
+Andrew Janke - rotor@cmr.uq.edu.au
+
+.SH COPYRIGHTS
+.ps 18
+Copyright 2000 by Andrew Janke
+ 
+

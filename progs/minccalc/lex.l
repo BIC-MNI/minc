@@ -1,0 +1,46 @@
+%{
+#include <string.h>
+#include "node.h"
+#include "y.tab.h"
+
+int lexpos = 0;
+#define setpos() yylval.pos = lexpos; lexpos += yyleng
+%}
+
+%%
+
+avg					setpos(); return AVG;
+sum					setpos(); return SUM;
+let					setpos(); return LET;
+len					setpos(); return LEN;
+in					setpos(); return IN;
+to					setpos(); return TO;
+[a-zA-Z][_a-zA-Z0-9]*		    {
+					setpos();
+					yylval.ident = new_ident(yytext); 
+					return IDENT; 
+				    }
+[0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)? {
+					setpos();
+					sscanf(yytext, "%f", &yylval.real);
+					return REAL;
+				    }
+[ \t\n\f]+				setpos();
+.					setpos(); return yytext[0];
+
+
+%%
+
+static YY_BUFFER_STATE lex_state;
+
+void lex_init(const char *s){
+	lex_state = yy_scan_string(s);
+}
+
+void lex_finalize(){
+	yy_delete_buffer(lex_state);
+}
+
+int yywrap(){
+	return 1;
+}
