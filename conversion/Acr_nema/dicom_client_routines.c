@@ -5,8 +5,9 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.5  1998-02-18 20:27:13  neelin
-@MODIFIED   : Minor bug fix in uid_equal.
+@MODIFIED   : Revision 6.6  1998-02-20 17:24:41  neelin
+@MODIFIED   : In client routines, fd must be dup'ed before fdopen or problems may
+@MODIFIED   : occur reading and writing to 2 file pointers that open the same descriptor.
 @MODIFIED   :
  * Revision 6.4  1997/10/20  23:22:38  neelin
  * Added routine acr_dicom_close_no_release to close a connection that does
@@ -57,7 +58,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.5 1998-02-18 20:27:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.6 1998-02-20 17:24:41 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -247,6 +248,7 @@ public void acr_close_dicom_no_release(Acr_File *afpin, Acr_File *afpout)
 ---------------------------------------------------------------------------- */
 public void acr_close_dicom_connection(Acr_File *afpin, Acr_File *afpout)
 {
+   FILE *fpin, *fpout;
 
    /* Release the association */
    (void) acr_release_dicom_association(afpin, afpout);
@@ -340,8 +342,10 @@ public int acr_connect_to_host(char *host, char *port,
       (void) fprintf(stderr, "Error opening socket for read\n");
       return FALSE;
    }
-   if ((*fpout = fdopen(sock, "w")) == NULL) {
+   if (((sock = dup(sock)) < 0) ||
+       ((*fpout = fdopen(sock, "w")) == NULL)) {
       (void) fclose(*fpin);
+      if (sock >= 0) (void) close(sock);
       (void) fprintf(stderr, "Error opening socket for write\n");
       return FALSE;
    }
