@@ -28,11 +28,14 @@
 #define MI_DIMATTR_NOT_REGULARLY_SAMPLED 0x2
 
 #define MI2_CHAR_LENGTH 128
-#define MI2_MAX_BLOCK_EDGES 3
+
+#define MI2_MAX_BLOCK_EDGES 3   /* Don't do 4D or greater chunks for now */
+#define MI2_CHUNK_SIZE 32	/* Length of chunk, per dimension */
 #define MAX_ZLIB_LEVEL 9
-#define MAX_VAR_DIMS 10
+
 #define MAX_PATH 32
 #define MAX_RESOLUTION_GROUP 16
+#define MAX_CD_ELEMENTS 100
 
 #define MI2_OPEN_READ 0x0001
 #define MI2_OPEN_RDWR 0x0002
@@ -40,13 +43,6 @@
 /************************************************************************
  * ENUMS, STRUCTS, and TYPEDEFS
  ************************************************************************/
-typedef int BOOLEAN;
-
-typedef enum {
-  MI_COMPRESS_NONE = 0,
-  MI_COMPRESS_ZLIB = 1,
-} micompression_t;
-
 struct volprops_struct;
 typedef struct volprops_struct volprops;
 typedef volprops *mivolumeprops_t;	/* opaque pointer to volume properties */
@@ -58,6 +54,7 @@ typedef dimension *midimhandle_t;       /* opaque pointer to dimension propertie
 struct volumehandle_struct;
 typedef struct volumehandle_struct volumehandle;
 typedef volumehandle *mihandle_t;      /* opaque pointer to volume handle */
+
 
 typedef enum {
   MI_TYPE_BYTE = 1,		/* 8-bit signed integer */
@@ -80,9 +77,9 @@ typedef enum {
 typedef enum {
   MI_CLASS_REAL = 0,
   MI_CLASS_INT = 1,
-  MI_CLASS_LABEL = 2,
+  MI_CLASS_LABEL = 2,           /* enumerated data with a description for each value */
   MI_CLASS_COMPLEX = 3,
-  MI_CLASS_UNIFORM_RECORD = 4,
+  MI_CLASS_UNIFORM_RECORD = 4,   /*aggregate datatypes consisting of multiple values */
   MI_CLASS_NON_UNIFORM_RECORD = 5
 } miclass_t;
 
@@ -114,7 +111,14 @@ typedef enum {
   MI_NEGATIVE           = 3,    /* check step if positive -> flip,
 				                 negative -> no flip */
 } miflipping_t;
- 
+
+typedef enum {
+  MI_COMPRESS_NONE = 0,
+  MI_COMPRESS_ZLIB = 1,
+} micompression_t;
+
+typedef int BOOLEAN;
+
 typedef unsigned int midimattr_t;
 
 typedef unsigned long misize_t;
@@ -138,8 +142,6 @@ typedef struct {
   double real;
   double imag;
 } midcomplex_t;
-
-
 
 /************************************************************************
  * FUNCTION DECLARATIONS
@@ -176,7 +178,7 @@ extern int miset_space_name(mihandle_t vol, const char *name);
 extern int miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume);
 extern int micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr);
 extern int micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
-			      unsigned long size, midimhandle_t *new_dim_ptr);
+			      unsigned long length, midimhandle_t *new_dim_ptr);
 extern int mifree_dimension_handle(midimhandle_t dim_ptr);
 extern int miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 				   miorder_t order, int array_length, 
@@ -189,8 +191,10 @@ extern int miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipp
 extern int miset_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t flipping_order);
 extern int miget_dimension_class(midimhandle_t dimension, midimclass_t *class);
 extern int miset_dimension_class(midimhandle_t dimension, midimclass_t class);
-extern int miget_dimension_cosines(midimhandle_t dimension, double cosines[3]);
-extern int miset_dimension_cosines(midimhandle_t dimension, const double cosines[3]);
+extern int miget_dimension_direction_cosines(midimhandle_t dimension, 
+					     double direction_cosines[3]);
+extern int miset_dimension_direction_cosines(midimhandle_t dimension, 
+					     const double direction_cosines[3]);
 extern int miget_dimension_name(midimhandle_t dimension, char **name_ptr);
 extern int miset_dimension_name(midimhandle_t dimension, const char *name);
 extern int miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length, 
@@ -202,10 +206,11 @@ extern int miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampli
 extern int miget_dimension_separation(midimhandle_t dimension, mivoxel_order_t voxel_order, 
 				      double *separation_ptr);
 extern int miset_dimension_separation(midimhandle_t dimension, double separation);
-extern int miget_dimension_separations(const midimhandle_t dimensions[], mivoxel_order_t voxel_order,
-				       int array_length, double separations[]);
+extern int miget_dimension_separations(const midimhandle_t dimensions[], 
+				 mivoxel_order_t voxel_order, int array_length, 
+				 double separations[]);
 extern int miset_dimension_separations(const midimhandle_t dimensions[], int array_length,
-				       const double separations[]);
+				 const double separations[]);
 extern int miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr);
 extern int miset_dimension_size(midimhandle_t dimension, unsigned long size);
 extern int miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
@@ -263,9 +268,7 @@ extern int miget_props_zlib_compression(mivolumeprops_t props, int *zlib_level);
 extern int miset_props_blocking(mivolumeprops_t props, int edge_count, const int *edge_lengths);
 extern int miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
 				int max_lengths);
-
-extern int miset_props_uniform_record(mivolumeprops_t props, long record_length, char *record_name);                             
-extern int miset_props_non_uniform_record(mivolumeprops_t props, long record_length, char *record_name);
+extern int miset_props_record(mivolumeprops_t props, long record_length, char *record_name); 
 extern int miset_props_template(mivolumeprops_t props, int template_flag);
 
 /* SLICE/VOLUME SCALE FUNCTIONS */

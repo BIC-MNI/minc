@@ -1,11 +1,26 @@
 /** The root of all MINC 2.0 objects in the HDF5 hierarchy.
  */
 #define MI_ROOT_PATH "/minc-2.0"
-//#define MI_ROOT_COMMENT "Root of the MINC 2.0 data hierarchy"
-//#define MI_INFO_NAME "info"
-//#define MI_INFO_COMMENT "Group holding directly accessible attributes"
+#define MI_ROOT_COMMENT "Root of the MINC 2.0 data hierarchy"
+
+#define MI_DIMAGE_PATH "image"
+
+
+#define MI_INFO_NAME "info"
+#define MI_INFO_COMMENT "Group holding directly accessible attributes"
+
 #define MI_DIMENSIONS_PATH "dimensions"
-//#define MI_DIMS_COMMENT "Group holding dimension variables"
+#define MI_DIMS_COMMENT "Group holding dimension variables"
+
+/** The fixed path to the full-resolution image data.
+ */
+#define MI_IMAGE_PATH MI_ROOT_PATH MI_DIMAGE_PATH
+#define MI_FULLIMAGE_PATH MI_IMAGE_PATH "/0"
+
+/** The fixed path to the dimension 
+ */
+#define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
+
 
 #define MI2_3D 3
 #define MI2_X 0
@@ -15,23 +30,16 @@
 /** Size of a linear transform */
 #define MI2_LIN_XFM_SIZE 4
 
-/** The fixed path to the full-resolution image data.
- */
-#define MI_FULLIMAGE_PATH MI_ROOT_PATH "/image/0"
-
-/** The fixed path to the dimension 
- */
-#define MI_FULLDIMENSIONS_PATH MI_ROOT_PATH "/dimensions"
 
 /*! Volume properties  
  */
 struct volprops_struct{
   BOOLEAN enable_flag; //enable multi-res 
-  int depth;
+  int depth; //multi-res depth
   micompression_t compression_type;
   int zlib_level; 
-  int edge_count;
-  int *edge_lengths;
+  int edge_count; //how many chunks
+  int *edge_lengths; //size of each chunk
   int max_lengths;
   long record_length;
   char *record_name;
@@ -43,13 +51,13 @@ struct volprops_struct{
 struct dimension_struct{
   midimattr_t attr;
   midimclass_t class;
-  double cosines[3];
+  double direction_cosines[3];
   miflipping_t flipping_order;
   char *name;
   double *offsets;
   BOOLEAN sampling_flag;
-  double separation;
-  unsigned long size;
+  double step;
+  unsigned long length;
   double start;
   char *units;
   double width; 

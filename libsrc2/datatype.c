@@ -74,7 +74,7 @@ miget_data_type(mihandle_t volume, mitype_t *data_type)
 	/* TODO: handle this case for uniform records (arrays)? */
 	break;
     case H5T_COMPOUND:
-	/* TODO: handle this case for non-unform records? */
+	/* TODO: handle this case for non-uniform records? */
 	break;
     default:
 	result = MI_ERROR;

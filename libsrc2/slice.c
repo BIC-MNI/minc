@@ -293,6 +293,31 @@ miset_volume_range(mihandle_t volume, double vol_max, double vol_min)
 
     return (MI_NOERROR);
 }
+
+/*! Function to get the volume's slice-scaling flag.
+ */
+int
+miget_slice_scaling_flag(mihandle_t volume, BOOLEAN *slice_scaling_flag)
+{
+    if (volume == NULL || slice_scaling_flag == NULL) {
+	return (MI_ERROR);
+    }
+    *slice_scaling_flag = volume->has_slice_scaling;
+    return (MI_NOERROR);
+}
+
+/*! Function to set the volume's slice-scaling flag.
+ */
+int
+miset_slice_scaling_flag(mihandle_t volume, BOOLEAN slice_scaling_flag)
+{
+    if (volume == NULL) {
+	return (MI_ERROR);
+    }
+    volume->has_slice_scaling = slice_scaling_flag;
+    return (MI_NOERROR);
+}
+
 #ifdef M2_TEST
 
 int

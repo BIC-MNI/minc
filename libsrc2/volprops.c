@@ -25,7 +25,7 @@ minew_volume_props(mivolumeprops_t  *props)
   handle->depth = 0;
   handle->compression_type = MI_COMPRESS_NONE;
   handle->zlib_level = 0;
-  handle->edge_count = 0;
+  handle->edge_count = 1;
   handle->edge_lengths = NULL;
   handle->max_lengths = 0;
   handle->record_length = 0;
@@ -63,7 +63,13 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
   volprops *handle;
   hid_t hdf_vol_dataset;
   hid_t hdf_plist;
-  
+  int nfilters;
+  unsigned int flags;
+  size_t cd_nelmts;
+  unsigned int cd_values[MAX_CD_ELEMENTS];
+  char fname[100];
+  int fcode;
+                    
   if (volume->hdf_id < 0) {
     return (MI_ERROR);
   }
@@ -75,13 +81,20 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
   if (hdf_plist < 0) {
     return (MI_ERROR);
   }
+  handle = (volprops *)malloc(sizeof(*handle));
+  if (handle == NULL) {
+    return (MI_ERROR);
+  }
   /* Get the layout of the raw data for a dataset.
    */
   if (H5Pget_layout(hdf_plist) == H5D_CHUNKED) {
       hsize_t dims[MI2_MAX_BLOCK_EDGES];
       int i;
-      handle = (volprops *)malloc(sizeof(*handle));
+      /* Returns chunk dimensionality */
       handle->edge_count = H5Pget_chunk(hdf_plist, MI2_MAX_BLOCK_EDGES, dims);
+      if (handle->edge_count < 0) {
+	return (MI_ERROR);
+      }
       handle->edge_lengths = (int *)malloc(handle->edge_count*sizeof(int));
       if (handle->edge_lengths == NULL) {
 	  return (MI_ERROR);
@@ -89,10 +102,44 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
       for (i = 0; i < handle->edge_count; i++) {
 	  handle->edge_lengths[i] = dims[i];
       }
+      /* Get the number of filters in the pipeline */
+      nfilters = H5Pget_nfilters(hdf_plist);
+      if (nfilters == 0) {
+	handle->zlib_level = 0;
+	handle->compression_type = MI_COMPRESS_NONE;
+      }
+      else {
+	for (i = 0; i < nfilters; i++) {
+	  cd_nelmts = MAX_CD_ELEMENTS;
+          fcode = H5Pget_filter(hdf_plist, i, &flags, &cd_nelmts,
+                                cd_values, sizeof(fname), fname);
+	  switch (fcode) {
+	  case H5Z_FILTER_DEFLATE:
+	    printf("Deflate");
+	    break;
+          case H5Z_FILTER_SHUFFLE:
+	    /* NOT SURE WHAT TO DO */
+	    printf("Shuffle");
+	    break;
+          case H5Z_FILTER_FLETCHER32:
+	    /* NOT SURE WHAT TO DO */
+	    printf("Fletcher32");
+	    break;
+          case H5Z_FILTER_SZIP:
+	    printf("SZip");
+	    break;
+          default:
+	    printf("Unknown(%d)", fcode);
+	    break;
+	  }
+	}
+      }
   }
   else {
-      handle->edge_count = 0;
+      handle->edge_count = 1;
       handle->edge_lengths = NULL;
+      handle->zlib_level = 0;
+      handle->compression_type = MI_COMPRESS_NONE;
   }
   
   *props = handle;
@@ -187,10 +234,15 @@ miflush_from_resolution(mihandle_t volume, int depth)
 }
 
 /*! Set compression type for a volume property list
+    Note that enabling compression will automatically 
+    enable blocking with default parameters. 
  */
 int
 miset_props_compression_type(mivolumeprops_t props, micompression_t compression_type)
 {
+ 
+  int edge_lengths[MI2_MAX_BLOCK_EDGES] = {MI2_CHUNK_SIZE, MI2_CHUNK_SIZE, MI2_CHUNK_SIZE};
+ 
  if (props == NULL) {
     return (MI_ERROR);
   }
@@ -200,6 +252,7 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
    break;
  case MI_COMPRESS_ZLIB:
    props->compression_type = MI_COMPRESS_ZLIB;
+   miset_props_blocking(props, MI2_MAX_BLOCK_EDGES, edge_lengths);
    break;
  default:
    return (MI_ERROR);
@@ -212,6 +265,7 @@ miset_props_compression_type(mivolumeprops_t props, micompression_t compression_
 int 
 miget_props_compression_type(mivolumeprops_t props, micompression_t *compression_type)
 {
+
   if (props == NULL) {
     return (MI_ERROR);
   }
@@ -306,10 +360,10 @@ miget_props_blocking(mivolumeprops_t props, int *edge_count, int *edge_lengths,
   return (MI_NOERROR);
 }
 
-/*! Set properties for uniform record dimension
+/*! Set properties for uniform/nonuniform record dimension
  */
 int 
-miset_props_uniform_record(mivolumeprops_t props, long record_length, char *record_name)
+miset_props_record(mivolumeprops_t props, long record_length, char *record_name)
 {
   if (props == NULL) {
     return (MI_ERROR);
@@ -321,29 +375,12 @@ miset_props_uniform_record(mivolumeprops_t props, long record_length, char *reco
       free(props->record_name);
       props->record_name = NULL;
   }
-  /* Explicitly allocate storage for name
-   */
-  props->record_name =malloc(strlen(record_name) + 1);
-  strcpy(props->record_name, record_name);
+  
+  props->record_name = strdup(record_name);
   
   return (MI_NOERROR);
 }
   
-/*! Set properties for non_uniform record dimension
- */
-/*
-int 
-miset_props_non_uniform_record(mivolumeprops_t props, long record_length, char *record_name)
-{
-  if (props == NULL) {
-    return (MI_ERROR);
-  }
-    props->record_length = record_length;
-    props->record_name = record_name;
-  
-    return (MI_NOERROR);
-}
-*/
 /*! Set the template volume flag
  */ 
 int
@@ -356,6 +393,7 @@ miset_props_template(mivolumeprops_t props, int template_flag)
   props->template_flag = template_flag;
   return (MI_NOERROR);
 }
+
 
 #ifdef M2_TEST
 #define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \

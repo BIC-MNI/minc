@@ -37,8 +37,9 @@ miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume)
 int 
 micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 {
-  dimension *handle;
   int i;
+  dimension *handle;
+  
   if (dim_ptr == NULL) {
     return (MI_ERROR);
   }
@@ -46,14 +47,16 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   /* Allocate storage for the structure
    */
   handle = (dimension *)malloc(sizeof(*handle));
-
+  if (handle == NULL) {
+    return (MI_ERROR);
+  }
   handle->attr = dim_ptr->attr;
   handle->class = dim_ptr->class;
-  if (handle->class == MI_DIMCLASS_SPATIAL) {
-    handle->cosines[0] = dim_ptr->cosines[0];
-    handle->cosines[1] = dim_ptr->cosines[1];
-    handle->cosines[2] = dim_ptr->cosines[2];
-  }
+  /* Copy direction cosines */
+  handle->direction_cosines[MI2_X] = dim_ptr->direction_cosines[0];
+  handle->direction_cosines[MI2_Y] = dim_ptr->direction_cosines[1];
+  handle->direction_cosines[MI2_Z] = dim_ptr->direction_cosines[2];
+ 
   switch (dim_ptr->flipping_order) {
   case MI_FILE_ORDER:
     handle->flipping_order = MI_FILE_ORDER;
@@ -64,14 +67,15 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   default:
     return (MI_ERROR);
   }
-  /* Explicitly allocate storage for name
-   */
-  handle->name =malloc(strlen(dim_ptr->name) + 1);
-  strcpy(handle->name, dim_ptr->name);
-  handle->size = dim_ptr->size;
+  
+  handle->name =strdup(dim_ptr->name);
+  handle->length = dim_ptr->length;
   if (dim_ptr->offsets != NULL) {
-    handle->offsets = (double *) malloc(dim_ptr->size*sizeof(double));
-    for (i=0; i < dim_ptr->size; i++) {
+    handle->offsets = (double *) malloc(dim_ptr->length*sizeof(double));
+    if (handle->offsets == NULL) {
+      return (MI_ERROR);
+    }
+    for (i=0; i < dim_ptr->length; i++) {
       handle->offsets[i] = dim_ptr->offsets[i];
     }
   }
@@ -80,20 +84,20 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
   }
   handle->start = dim_ptr->start;
   handle->sampling_flag = dim_ptr->sampling_flag;
-  handle->separation = dim_ptr->separation;
+  handle->step = dim_ptr->step;
   if (dim_ptr->units != NULL) {
-    /* Explicitly allocate storage for units
-     */
-    handle->units =malloc(strlen(dim_ptr->units) + 1);
-    strcpy(handle->units, dim_ptr->units);
+    handle->units = strdup(dim_ptr->units);
   }
   else {
     handle->units = NULL;
   }
   handle->width = dim_ptr->width;
   if (dim_ptr->widths != NULL) {
-    handle->widths = (double *) malloc(dim_ptr->size*sizeof(double));
-    for (i=0; i < dim_ptr->size; i++) {
+    handle->widths = (double *) malloc(dim_ptr->length*sizeof(double));
+    if (handle->widths == NULL) {
+      return (MI_ERROR);
+    }
+    for (i=0; i < dim_ptr->length; i++) {
       handle->widths[i] = dim_ptr->widths[i];
     }
   }
@@ -112,55 +116,54 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 
 int 
 micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
-		   unsigned long size, midimhandle_t *new_dim_ptr)
+		   unsigned long length, midimhandle_t *new_dim_ptr)
 {  
   
   dimension *handle;
- 
-  
-  /* Allocate space for the dimension
+  int i;
+  /* Allocate space for the new dimension
    */
   handle = (dimension *)malloc(sizeof(*handle));
-
   if (handle == NULL) {
     return (MI_ERROR);
   }
-
-  /* Explicitly allocate storage for name
-   */
+  /* Figure out whether the length of the name is valid
+     before allocating
+  */
   if (strlen(name) < MI2_CHAR_LENGTH) {
-    handle->name = malloc(strlen(name) + 1);
+    handle->name = strdup(name);
   }
   else {
     handle->name = malloc(MI2_CHAR_LENGTH);
+    /* copy (MI2_CHAR_LENGTH - 1) chars to handle->name */
+    strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
   }
-  strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
-  
+
   switch (class) {
   case MI_DIMCLASS_ANY:
     handle->class  = MI_DIMCLASS_ANY;
     break;
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
-    if (name == "xspace") {
-      handle->cosines[MI2_X] = 1.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 0.0;
+    if (strcmp(name, "xspace") == 0) {
+      handle->direction_cosines[MI2_X] = 1.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
-    else if (name == "yspace") {
-      handle->cosines[MI2_X] = 0.0;
-      handle->cosines[MI2_Y] = 1.0;
-      handle->cosines[MI2_Z] = 0.0;
+    else if (strcmp(name, "yspace") == 0) {
+      handle->direction_cosines[MI2_X] = 0.0;
+      handle->direction_cosines[MI2_Y] = 1.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
-    else if (name == "zspace") {
-      handle->cosines[MI2_X] = 0.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 1.0;
+    else if (strcmp(name, "zspace") == 0) {
+      handle->direction_cosines[MI2_X] = 0.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 1.0;
     }
     else {
-      handle->cosines[MI2_X] = 1.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 0.0;
+      handle->direction_cosines[MI2_X] = 1.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
     break;
   case MI_DIMCLASS_TIME:
@@ -168,25 +171,25 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
     break;
   case MI_DIMCLASS_SFREQUENCY:
     handle->class  = MI_DIMCLASS_SFREQUENCY;
-    if (name == "xfrequency") {
-      handle->cosines[MI2_X] = 1.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 0.0;
+    if (strcmp(name, "xfrequency") == 0) {
+      handle->direction_cosines[MI2_X] = 1.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
-    else if (name == "yfrequency") {
-      handle->cosines[MI2_X] = 0.0;
-      handle->cosines[MI2_Y] = 1.0;
-      handle->cosines[MI2_Z] = 0.0;
+    else if (strcmp(name, "yfrequency") == 0) {
+      handle->direction_cosines[MI2_X] = 0.0;
+      handle->direction_cosines[MI2_Y] = 1.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
-    else if (name == "zfrequency") {
-      handle->cosines[MI2_X] = 0.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 1.0;
+    else if (strcmp(name, "zfrequency") == 0) {
+      handle->direction_cosines[MI2_X] = 0.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 1.0;
     }
     else {
-      handle->cosines[MI2_X] = 1.0;
-      handle->cosines[MI2_Y] = 0.0;
-      handle->cosines[MI2_Z] = 0.0;
+      handle->direction_cosines[MI2_X] = 1.0;
+      handle->direction_cosines[MI2_Y] = 0.0;
+      handle->direction_cosines[MI2_Z] = 0.0;
     }
     break;
   case MI_DIMCLASS_TFREQUENCY:
@@ -201,32 +204,43 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   default:
     return (MI_ERROR);
   }
-  
+  /* "attr" can only be one of the following ,   
+     MI_DIMATTR_ALL is not valid for this function
+   */
   switch (attr) {
   case MI_DIMATTR_REGULARLY_SAMPLED:
     handle->attr = MI_DIMATTR_REGULARLY_SAMPLED;
     handle->sampling_flag = 1;
+    handle->offsets = NULL;
+    handle->widths = NULL;
     break;
   case MI_DIMATTR_NOT_REGULARLY_SAMPLED:
     handle->attr = MI_DIMATTR_NOT_REGULARLY_SAMPLED;
     handle->sampling_flag = 0;
+    handle->offsets = (double *) malloc(length *sizeof(double));
+    handle->widths = (double *) malloc(length *sizeof(double));
+    for (i=0; i< length; i++) {
+      handle->offsets[i] = 0;
+      handle->widths[i] = 1.0;
+    }
     break;
   default:
     return (MI_ERROR);
   }
   handle->start = 0.0;
-  handle->separation = 1.0;
+  handle->step = 1.0;
   handle->width = 1.0;
+
   handle->flipping_order = MI_FILE_ORDER;
   if (class != MI_DIMCLASS_SPATIAL && class != MI_DIMCLASS_SFREQUENCY ) {
-    handle->cosines[MI2_X] = 1.0;
-    handle->cosines[MI2_Y] = 0.0;
-    handle->cosines[MI2_Z] = 0.0;
+    handle->direction_cosines[MI2_X] = 1.0;
+    handle->direction_cosines[MI2_Y] = 0.0;
+    handle->direction_cosines[MI2_Z] = 0.0;
   }
-  handle->size = size;
-  handle->offsets = NULL;
-  handle->widths = NULL;
+  handle->length = length;
   handle->units = strdup("mm");
+  /* volume_handle is the only NULL value once the dimension is created.
+   */
   handle->volume_handle = NULL;
 
   *new_dim_ptr = handle;
@@ -237,18 +251,16 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
 
 /*! Delete the dimension definition.
     Note: The original document stated that a dimension has to be
-    associated with a given volume before it can be deleted.
+    associated with a given volume before it can be deleted. This
+    feature was erased from the document and not considered here.
  */
 int 
 mifree_dimension_handle(midimhandle_t dim_ptr)
 {
-  // WHAT HAPPENS WITH HDF5 STUFF THAT WAS 
-  // CREATED BY CALLING micreate_dimension(..)
-
+  
   if (dim_ptr == NULL) {
     return (MI_ERROR);
   }
-  
   free(dim_ptr->name);
   if (dim_ptr->offsets != NULL) {
     free(dim_ptr->offsets);
@@ -263,7 +275,7 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
 }
 
 /*! Retrieve the list of dimensions defined in a MINC volume, 
-    according to their class and attribute.
+    with the same class and attribute as given.
  */
 
 int 
@@ -271,44 +283,50 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 			miorder_t order, int array_length, 
 			midimhandle_t dimensions[])
 {
-
-  //LEFT THE DIMENSION ORDERING "miorder_t order"
-
-  
+  // THE PARAMETER "miorder_t order" WAS NOT CONSIDERED WHEW WRITING
+  // THIS FUNCTION. MUST FIGURE OUT WHAT TO DO WITH IT
   dimension *handle;
-  hid_t hdf_file;	
+  
+  hid_t hdf_file, hdf_type;	
   hid_t hdf_dims_grp;
   hid_t dataset, attribute;
   hsize_t number_of_dims; 
   herr_t status;
-  int i, max_dims;
   char *name;
   ssize_t size_of_obj;
   midimclass_t dim_class;
   midimattr_t  dim_attr;
- 
+  double *direction_cosines;
+  
+  int i=0, j=0, max_dims;
+  
   if (volume == NULL) {
     return (MI_ERROR);
   }
  
   /* Get a handle to the actual HDF file 
-     */
+   */
   hdf_file = volume->hdf_id;  
   if (hdf_file < 0) {
     return (MI_ERROR);
   }
-  /* Try opening the DIMENSIONS GROUP
-     */
+
+  /* Try opening the DIMENSIONS GROUP /minc-2.0/dimensions
+   */
   hdf_dims_grp = H5Gopen(hdf_file, MI_FULLDIMENSIONS_PATH);
   if (hdf_dims_grp < 0 ) {
     return (MI_ERROR);
   }
-  /* How many objects are part of this dimensions group.
-     */
+  
+  /* How many dimensions (i.e., objects) are part of this dimensions group.
+   */
   status = H5Gget_num_objs(hdf_dims_grp, &number_of_dims);
   if (status < 0) {
     return (MI_ERROR);
   }
+  
+  /* Figure out if the array_length provided is legal.
+   */
   if (array_length > number_of_dims) {
     max_dims = number_of_dims;
   }
@@ -316,56 +334,213 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
     max_dims = array_length;
   }
   
-  for (i=0; i<= max_dims; i++) {
+  /* Go through each dimension separately and figure out
+     which one has a matching class and attirbute.
+   */
+  for (i=0; i< max_dims; i++) {
+    /* Get the name of the dimension by providing its index
+       to the following function.
+     */
+    //PROBLEM FOUND WITH HDF H5Gget_objname_by_idx
+    // DOES NOT RETURN THE CORRECT SIZE OF THE OBJECT when name
+    // is set to NULL according to the documentation
+    // DOES NOT ALLOCATE SPACE FOR NAME
+    // LEFT malloc with MAX CHAR LENGTH until the problem is fixed
+    // EMAILED  Quincey Koziol DEC 22 /2003
+    name = malloc(MI2_CHAR_LENGTH);
     size_of_obj = H5Gget_objname_by_idx(hdf_dims_grp, i, name, MI2_CHAR_LENGTH);
-    if (size_of_obj < 0) {
+    
+    if (size_of_obj < 0 || name == NULL) {
       return (MI_ERROR);
     }
-    /* Open the dataset.
-       */
+    
+    /* Open the dataset /minc-2.0/dimensions/"name"
+     */
     dataset = H5Dopen(hdf_dims_grp, name);
     if (dataset < 0) {
       return (MI_ERROR);
     }
+    
     /* Attach to class attribute using its name
-       */
+     */
     attribute = H5Aopen_name(dataset, "class");
     if (attribute < 0) {
       return (MI_ERROR);
     }
-    status = H5Aread(attribute, H5T_NATIVE_UCHAR, &dim_class);
+    status = H5Aread(attribute, H5T_NATIVE_INT, &dim_class);
     if (status < 0) {
       return (MI_ERROR);
     }
-    if (dim_class == class) {
+
+    if(dim_class == class) {
+      
+      /* Attach to attr attribute using its name
+       */
       attribute = H5Aopen_name(dataset, "attr");
       if (attribute < 0) {
       return (MI_ERROR);
       }
-      status = H5Aread(attribute, H5T_NATIVE_UINT, &dim_attr);
+      status = H5Aread(attribute, H5T_NATIVE_INT, &dim_attr);
       if (status < 0) {
       return (MI_ERROR);
       }
+      
       if (dim_attr == attr || attr ==  MI_DIMATTR_ALL) {
-	handle = (dimension *)malloc(sizeof(*handle));
-	/* Explicitly allocate storage for name
-	 */
+	handle =  (dimension *)malloc(sizeof(*handle));
+	if (handle == NULL) {
+	  return (MI_ERROR);
+	}
+
+	handle->attr = dim_attr;
+	handle->class = dim_class;
+
+	/* Attach to direction_cosines attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "direction_cosines");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	direction_cosines = (double *) malloc(3 *sizeof(double));
+	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, direction_cosines);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	handle->direction_cosines[MI2_X] = direction_cosines[0];
+	handle->direction_cosines[MI2_Y] = direction_cosines[1];
+	handle->direction_cosines[MI2_Z] = direction_cosines[2];
+
+	/* Attach to flipping_order attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "flipping_order");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_INT, &handle->flipping_order);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+
 	if (strlen(name) < MI2_CHAR_LENGTH) {
-	  handle->name = malloc(strlen(name) + 1);
+	  handle->name = strdup(name);
 	} 
 	else {
-	  handle->name = malloc( MI2_CHAR_LENGTH );
+	  handle->name = malloc(MI2_CHAR_LENGTH);
+	  strncpy(handle->name, name, MI2_CHAR_LENGTH - 1);
 	}
-	strcpy(handle->name, name);
-	handle->class = dim_class;
-	handle->attr = dim_attr;
-	//FIND OUT WHETHER YOU NEED TO FILL THE REST OF THE FIELDS.
-	dimensions[i] = (dimension *)malloc(sizeof(*dimensions));
-	dimensions[i] = handle;
+
+	/* Attach to length attribute using its name
+	 */
+	attribute = H5Aopen_name(dataset, "length");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_ULONG, &handle->length);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	
+	if ( dim_attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
+	  /* Attach to offsets attribute using its name
+	     ONLY IF an IRREGULAR SAMPLE is specified.
+           */
+	  attribute = H5Aopen_name(dataset, "offsets");
+	  if (attribute < 0) {
+	    return (MI_ERROR);
+	  }
+	
+	  handle->offsets = (double *) malloc(handle->length *sizeof(double));
+	  status = H5Aread(attribute, H5T_NATIVE_DOUBLE, handle->offsets);
+	  if (status < 0) {
+	    return (MI_ERROR);
+	  }
+	  printf( " OFFSETS %f %f %f \n", handle->offsets[0], handle->offsets[1], handle->offsets[2]);
+	  /* Attach to widths attribute using its name
+	     ONLY IF an IRREGULAR SAMPLE is specified.
+           */
+	  attribute = H5Aopen_name(dataset, "widths");
+	  if (attribute < 0) {
+	    return (MI_ERROR);
+	  }
+	
+	  handle->widths = (double *) malloc(handle->length *sizeof(double));
+	  status = H5Aread(attribute, H5T_NATIVE_DOUBLE, handle->widths);
+	  if (status < 0) {
+	    return (MI_ERROR);
+	  }
+	  printf( " WIDTHS %f %f %f \n", handle->widths[0], handle->widths[1], handle->widths[2]);
+	}
+
+	/* Attach to sampling_flag attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "sampling_flag");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_INT, &handle->sampling_flag);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+
+	/* Attach to step attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "step");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->step);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	
+	/* Attach to start attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "start");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->start);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	
+	/* Attach to width attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "width");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	status = H5Aread(attribute, H5T_NATIVE_DOUBLE, &handle->width);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+
+	/* Attach to units attribute using its name
+         */
+	attribute = H5Aopen_name(dataset, "units");
+	if (attribute < 0) {
+	  return (MI_ERROR);
+	}
+	hdf_type = H5Tcopy(H5T_C_S1);
+	           H5Tset_size(hdf_type, MI2_CHAR_LENGTH);
+	handle->units = malloc(MI2_CHAR_LENGTH);
+	status = H5Aread(attribute, hdf_type, handle->units);
+	if (status < 0) {
+	  return (MI_ERROR);
+	}
+	printf(" UNITS IS %s \n", handle->units);
+
+	/* Set volume_handle (the volume each dimension
+	   is associated with). This is the only attribute of
+	   each dimension which is actually independent of HDF5  
+	 */
+	handle->volume_handle = volume;
+
+	dimensions[j] = handle;
+	j++;
       }
-    } // end of if 
+    } 
   }
-  //i = miicv_create();
+  
   return (MI_NOERROR);
 
   }
@@ -506,7 +681,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file
   switch (dimension->flipping_order) {
   case MI_FILE_ORDER:
     *file_order = MI_FILE_ORDER;
-    if (dimension->separation > 0) {
+    if (dimension->step > 0) {
       *sign = MI_POSITIVE;
     }
     else {
@@ -515,7 +690,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file
     break;
   case MI_COUNTER_FILE_ORDER:
     *file_order = MI_COUNTER_FILE_ORDER;
-    if (dimension->separation > 0) {
+    if (dimension->step > 0) {
       *sign = MI_NEGATIVE;
     }
     else {
@@ -524,7 +699,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file
     break;
   case MI_POSITIVE:
     *sign = MI_POSITIVE;
-    if (dimension->separation > 0) {
+    if (dimension->step > 0) {
       *file_order = MI_FILE_ORDER;
     }
     else {
@@ -533,7 +708,7 @@ miget_dimension_apparent_voxel_order(midimhandle_t dimension, miflipping_t *file
     break;  
   case MI_NEGATIVE:
     *sign = MI_NEGATIVE;
-    if (dimension->separation > 0) {
+    if (dimension->step > 0) {
       *file_order = MI_COUNTER_FILE_ORDER;
     }
     else {
@@ -674,16 +849,16 @@ miset_dimension_class(midimhandle_t dimension, midimclass_t class)
  */
 
 int 
-miget_dimension_cosines(midimhandle_t dimension, double cosines[3])
+miget_dimension_cosines(midimhandle_t dimension, double direction_cosines[3])
 {
   if (dimension == NULL || (dimension->class != MI_DIMCLASS_SPATIAL &&
                             dimension->class != MI_DIMCLASS_SFREQUENCY)){
     return (MI_ERROR);
   }
   
-  cosines[0] = dimension->cosines[0];
-  cosines[1] = dimension->cosines[1];
-  cosines[2] = dimension->cosines[2];
+  direction_cosines[0] = dimension->direction_cosines[0];
+  direction_cosines[1] = dimension->direction_cosines[1];
+  direction_cosines[2] = dimension->direction_cosines[2];
 
   return (MI_NOERROR);
 }
@@ -692,16 +867,16 @@ miget_dimension_cosines(midimhandle_t dimension, double cosines[3])
  */
 
 int 
-miset_dimension_cosines(midimhandle_t dimension, const double cosines[3])
+miset_dimension_cosines(midimhandle_t dimension, const double direction_cosines[3])
 {
   
   if (dimension == NULL || dimension->class != MI_DIMCLASS_SPATIAL) {
     return (MI_ERROR);
   }
   
-  dimension->cosines[0] = cosines[0];
-  dimension->cosines[1] = cosines[1];
-  dimension->cosines[2] = cosines[2];
+  dimension->direction_cosines[0] = direction_cosines[0];
+  dimension->direction_cosines[1] = direction_cosines[1];
+  dimension->direction_cosines[2] = direction_cosines[2];
 
   return (MI_NOERROR);
 }
@@ -715,9 +890,8 @@ miget_dimension_name(midimhandle_t dimension, char **name_ptr)
   if (dimension == NULL) {
     return (MI_ERROR);
   }
-  
-  *name_ptr = malloc(MI2_CHAR_LENGTH);
-  strcpy(*name_ptr, dimension->name);
+
+  *name_ptr = strdup(dimension->name);
 
   return (MI_NOERROR);
 }
@@ -732,9 +906,8 @@ miset_dimension_name(midimhandle_t dimension, const char *name)
     return (MI_ERROR);
   }
  
-  if (strlen(name) + 1 <= MI2_CHAR_LENGTH) {
-    dimension->name = malloc(strlen(name) + 1);
-    strcpy(dimension->name, name);
+  if ((strlen(name) + 1) <= MI2_CHAR_LENGTH) {
+    dimension->name = strdup(name);
   }
   else {
     return (MI_ERROR);
@@ -753,11 +926,11 @@ miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   unsigned long  diff;
   int i, j=0;
 
-  if (dimension == NULL || start_position > dimension->size ) {
+  if (dimension == NULL || start_position > dimension->length ) {
     return (MI_ERROR);
   }
-  if ((start_position + array_length) > dimension->size) {
-    diff = dimension->size;
+  if ((start_position + array_length) > dimension->length) {
+    diff = dimension->length;
   }
   else {
     diff = array_length;
@@ -771,7 +944,7 @@ miget_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
       /* For regularly sampled dimensions, the step value
 	 is added to each value to get the next value.
        */
-      offsets[j] = dimension->start + (i * dimension-> separation);
+      offsets[j] = dimension->start + (i * dimension->step);
       j++;
     }
   }
@@ -795,11 +968,11 @@ miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   int i, j=0;
   /* Check to see whether the dimension is regularly sampled.
    */
-  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->size ) {
+  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->length ) {
     return (MI_ERROR);
   }
-  if ((start_position + array_length) > dimension->size) {
-    diff = dimension->size;
+  if ((start_position + array_length) > dimension->length) {
+    diff = dimension->length;
   }
   else {
     diff = array_length;
@@ -807,7 +980,7 @@ miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   /* Allocate space for the offsets if not already done.
    */
   if (dimension->offsets == NULL) {
-    dimension->offsets = (double *) malloc(dimension->size*sizeof(double));
+    dimension->offsets = (double *) malloc(dimension->length*sizeof(double));
   }
   if (start_position == 0) {
     diff--;
@@ -858,10 +1031,10 @@ miget_dimension_separation(midimhandle_t dimension, mivoxel_order_t voxel_order,
     return (MI_ERROR);
   }
   if (voxel_order == 0) {
-    *separation_ptr = dimension->separation;
+    *separation_ptr = dimension->step;
   }
   else {
-    *separation_ptr = -1 * dimension->separation;
+    *separation_ptr = -1 * dimension->step;
   }
   return (MI_NOERROR);
 }
@@ -878,7 +1051,7 @@ miset_dimension_separation(midimhandle_t dimension, double separation)
     return (MI_ERROR);
   }
   
-  dimension->separation = separation;
+  dimension->step = separation;
   /* If not explicitly set, the width will be assumed to be equal to the
      dimension's step size.
   */
@@ -928,7 +1101,7 @@ miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
   if (dimension == NULL) {
     return (MI_ERROR);
   }
-  *size_ptr = dimension->size;
+  *size_ptr = dimension->length;
   return (MI_NOERROR);
 }
 
@@ -944,7 +1117,7 @@ miset_dimension_size(midimhandle_t dimension, unsigned long size)
   if (dimension == NULL || dimension->volume_handle != NULL) {
     return (MI_ERROR);
   }
-  dimension->size = size;
+  dimension->length = size;
   return (MI_NOERROR);
 }
 
@@ -956,7 +1129,7 @@ miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
 		      unsigned long sizes[])
 {
   int i;
-  /* Allocated space for the sizes array.
+  /* Allocated space for the length array.
    */
   sizes  = (unsigned long *) malloc(array_length*sizeof(unsigned long));
   for(i=0; i<array_length; i++) {
@@ -984,7 +1157,7 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
   }
   else {
     
-    *start_ptr = dimension->start + (dimension->separation * (dimension->size-1));
+    *start_ptr = dimension->start + (dimension->step * (dimension->length-1));
   }
   return (MI_NOERROR);
 }
@@ -1046,8 +1219,8 @@ miget_dimension_units(midimhandle_t dimension, char **units_ptr)
     return (MI_ERROR);
   }
   
-  *units_ptr = malloc(strlen(dimension->units) + 1);
-  strcpy(*units_ptr, dimension->units);
+  *units_ptr = strdup(dimension->units);
+  
   return (MI_NOERROR);
 }
 
@@ -1061,15 +1234,13 @@ miset_dimension_units(midimhandle_t dimension, const char *units)
     return (MI_ERROR);
   }
   
-  if (dimension->units == NULL) {
-    dimension->units = malloc(strlen(units) + 1);
-  }
   if (strlen(units) + 1 <= MI2_CHAR_LENGTH) {
-    strcpy(dimension->units, units);
+    dimension->units = strdup(units);
   }
   else {
     return (MI_ERROR);
   }
+
   return (MI_NOERROR);
 }
 
@@ -1121,12 +1292,12 @@ miget_dimension_widths(midimhandle_t dimension, mivoxel_order_t voxel_order,
   unsigned long  diff;
   int i, j = 0;
 
-  if (dimension == NULL || start_position > dimension->size) {
+  if (dimension == NULL || start_position > dimension->length) {
     return (MI_ERROR);
   }
   
-  if ((start_position + array_length) > dimension->size) {
-    diff = dimension->size;
+  if ((start_position + array_length) > dimension->length) {
+    diff = dimension->length;
   }
   else {
     diff = array_length;
@@ -1179,12 +1350,12 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   int i, j=0;
   /* Check to see whether the dimension is regularly sampled.
    */
-  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->size) {
+  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->length) {
     return (MI_ERROR);
   }
 
-  if ((start_position + array_length) > dimension->size) {
-    diff = dimension->size;
+  if ((start_position + array_length) > dimension->length) {
+    diff = dimension->length;
   }
   else {
     diff = array_length;
@@ -1192,7 +1363,7 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   /* Allocate space for widths array if not already done
    */
   if (dimension->widths == NULL) {
-    dimension->widths = (double *) malloc(dimension->size*sizeof(double));
+    dimension->widths = (double *) malloc(dimension->length*sizeof(double));
   }
   if (start_position == 0) {
     diff--;
@@ -1228,14 +1399,15 @@ int main(int argc, char **argv)
   mivolumeprops_t props;
   double cosines[3];
   int n;
-  
+  midimhandle_t dimens[3];
    /* Turn off automatic error reporting - we'll take care of this
    * ourselves, thanks!
    */
   H5Eset_auto(NULL, NULL);
   
   r = minew_volume_props(&props);
-  
+  r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
+  r = miset_props_zlib_compression(props, 3);
   r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,1, 10,&dimh);
   if (r < 0) {
     TESTRPT("failed", r);
@@ -1247,7 +1419,7 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh2);
+  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,2, 3,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
@@ -1255,7 +1427,7 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  printf( " %f %f %f \n", cosines[0], cosines[1], cosines[2]);
+  
   dim[2]=dimh2;
    r = micreate_dimension("zfrequency",MI_DIMCLASS_SFREQUENCY,1, 12,&dimh3);
   if (r < 0) {
@@ -1264,15 +1436,17 @@ int main(int argc, char **argv)
   r = miget_dimension_cosines(dimh3, cosines);
   if (r < 0) {
     TESTRPT("failed", r);
-  }
-  printf( " %f %f %f \n", cosines[0], cosines[1], cosines[2]);
-  
+  } 
   dim[3]=dimh3;
   r = micreate_volume("test.h5", 4, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  
+  r = miget_volume_dimensions(vol, MI_DIMCLASS_SPATIAL, 0, 0, 4, dimens);
+  if (r < 0) {
+    TESTRPT("failed", r);
+  }
+  printf(" %s %s %s \n", dimens[0]->name, dimens[1]->name, dimens[2]->name);
   r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
   if (r < 0) {
     TESTRPT("failed", r);
@@ -1282,7 +1456,6 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
-
   r = miclose_volume(vol1);
   if (r < 0) {
     TESTRPT("failed", r);
