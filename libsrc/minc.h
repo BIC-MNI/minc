@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.13  2004-06-04 18:14:52  bert
+ * Revision 6.14  2004-08-11 20:50:54  bert
+ * Fix incompatibility with netCDF 3.5.1 by fixing MI_MAX_IMGDIMS at 100
+ *
+ * Revision 6.13  2004/06/04 18:14:52  bert
  * Add micreate_ident()
  *
  * Revision 6.12  2004/04/27 15:44:04  bert
@@ -125,7 +128,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.13 2004-06-04 18:14:52 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.14 2004-08-11 20:50:54 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -169,7 +172,17 @@ extern "C" {
 /* Number of spatial dimensions */
 #define MI_NUM_SPACE_DIMS 3
 /* Maximum number of image dimensions for image conversion */
-#define MI_MAX_IMGDIMS MAX_VAR_DIMS
+
+/* Bert 10-Aug-2004 - MI_MAX_IMGDIMS used to be defined to be MAX_VAR_DIMS,
+ * a constant defined in netcdf.h. For many years MAX_VAR_DIMS was 100,
+ * but in netCDF 3.5.1 the value was changed to 512.
+ * Unfortunately, the definitions of MI_ICV_DIM_SIZE, MI_ICV_DIM_STEP,
+ * and MI_ICV_DIM_START assume that MI_MAX_IMGDIMS is less than or
+ * equal to 100.  To avoid changing the MINC API, we have to define
+ * MI_MAX_IMGDIMS to 100 here.  Otherwise the miicv_inqdbl() function
+ * will return bogus values for these ICV properties.
+ */
+#define MI_MAX_IMGDIMS 100
 
 /* NetCDF standard attributes */
 #define MIunits       "units"
