@@ -18,7 +18,6 @@
 
 use strict;
 use Getopt::Tabular;
-use diagnostics -verbose;
 
 my($Help, $Usage, $me, @files, $history);
 my(@opt_table, $clobber, $verbose, $settings, $args_h);
@@ -68,6 +67,9 @@ $settings = {};
      ["-coronal",    "const", "-coronal",    \$settings->{orientation}, 
         "force files to be treated as coronal"                          ],
 
+#  these are currently commented out as possible additions in the future...
+#  time will tell.
+#
 #      ["Options to override the analyze header", "section"],
 #      ["-datatype",     "string",  1, \$args_h->{data_type},    "datatype"     ],
 #      ["-db_name",      "string",  1, \$args_h->{db_name},      "db_name"      ],
@@ -269,7 +271,7 @@ elsif($me eq "spm_show"){
 
 # Subroutines #######################################################
 # Unpack a value from a string (passed by reference)
-# Legendary bit of code nicked from dicom_to_minc 
+# Legendary bit of code of peter neelins nicked from mri_to_minc 
 sub destruct{
    my($stringref, $offset, $type, $bs) = @_;
     
