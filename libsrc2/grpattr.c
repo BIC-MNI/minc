@@ -81,6 +81,8 @@ midelete_attr(mihandle_t vol, const char *path, const char *name)
     return (MI_NOERROR);
 }
 
+/** Delete the subgroup \a name from the group \a path
+ */
 int
 midelete_group(mihandle_t vol, const char *path, const char *name)
 {
@@ -101,16 +103,18 @@ midelete_group(mihandle_t vol, const char *path, const char *name)
     if (hdf_grp < 0) {
 	return (MI_ERROR);
     }
- 
-    /* Delete the group (or any object, really) from the path.
-     */
-    hdf_result = H5Gunlink(hdf_grp, name);
-    if (hdf_result < 0) {
-	hdf_result = MI_ERROR;
-    }
-    else {
-	hdf_result = MI_NOERROR;
-    }
+
+    H5E_BEGIN_TRY {
+        /* Delete the group (or any object, really) from the path.
+         */
+        hdf_result = H5Gunlink(hdf_grp, name);
+        if (hdf_result < 0) {
+            hdf_result = MI_ERROR;
+        }
+        else {
+            hdf_result = MI_NOERROR;
+        }
+    } H5E_END_TRY;
 
     /* Close the handles we created.
      */
@@ -119,6 +123,8 @@ midelete_group(mihandle_t vol, const char *path, const char *name)
     return (hdf_result);
 }
 
+/** Get the length of a attribute
+ */
 int
 miget_attr_length(mihandle_t vol, const char *path, const char *name,
 		  int *length)
@@ -191,6 +197,8 @@ miget_attr_length(mihandle_t vol, const char *path, const char *name,
     return (MI_NOERROR);
 }
 
+/** Get the type of an attribute.
+ */
 int
 miget_attr_type(mihandle_t vol, const char *path, const char *name,
 		mitype_t *data_type)
@@ -237,6 +245,8 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
     return (MI_NOERROR);
 }
 
+/** Get the values of an attribute.
+ */
 int
 miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path, 
 		  const char *name, int length, void *values)
@@ -312,6 +322,8 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     return (MI_NOERROR);
 }
 
+/** Set the values of an attribute.
+ */
 int
 miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 		  const char *name, int length, const void *values)
@@ -363,8 +375,10 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	hdf_space = H5Screate_simple(1, dims, maxdims);
     }
 
-    /* Delete attribute if it already exists. */
-    H5Adelete(hdf_grp, name);
+    H5E_BEGIN_TRY {
+        /* Delete attribute if it already exists. */
+        H5Adelete(hdf_grp, name);
+    } H5E_END_TRY;
 
     hdf_attr = H5Acreate(hdf_grp, name, hdf_type, hdf_space, H5P_DEFAULT);
     if (hdf_attr < 0) {
@@ -380,206 +394,3 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 
     return (MI_NOERROR);
 }
-
-		  
-#ifdef M2_TEST
-#define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
-                                  "Error reported on line #%d, %s: %d\n", \
-                                  __LINE__, msg, val))
-
-#define TESTARRAYSIZE 11
-
-static int error_cnt = 0;
-
-int main(int argc, char **argv)
-{
-    mihandle_t hvol;
-    hid_t file_id;
-    hid_t g1_id, g2_id, g3_id, g4_id;
-    int r;
-    mitype_t data_type;
-    int length;
-    static double tstarr[TESTARRAYSIZE] = { 
-	1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.10, 11.11
-    };
-    double dblarr[TESTARRAYSIZE];
-    float fltarr[TESTARRAYSIZE];
-    int intarr[TESTARRAYSIZE];
-    char valstr[128];
-    volumehandle *handle;
-    /* Turn off automatic error reporting - we'll take care of this
-     * ourselves, thanks!
-     */
-    // H5Eset_auto(NULL, NULL);
-    handle = (volumehandle *)malloc(sizeof(*handle));
-    if (handle == NULL) {
-      return (MI_ERROR);
-    }
-    handle->hdf_id = file_id;
-    hvol = handle;
-    r = micreate_volume("test.h5", 0, NULL, 0, 0, NULL, &hvol);
-    if (r < 0) {
-	TESTRPT("Unable to create test file", r);
-	return (-1);
-    }
-
-    file_id = 
-
-    g1_id = H5Gopen(file_id, "minc-2.0");
-
-    g2_id = H5Gcreate(g1_id, "test1", 0);
-    g3_id = H5Gcreate(g1_id, "test2", 0);
-
-    g4_id = H5Gcreate(g2_id, "stuff", 0);
-
-    /* Close the things we created. */
-    H5Gclose(g4_id);
-    H5Gclose(g3_id);
-    H5Gclose(g2_id);
-    H5Gclose(g1_id);
-
-    r = micreate_group(hvol, "/minc-2.0/test1/stuff", "hello");
-    if (r < 0) {
-	TESTRPT("micreate_group failed", r);
-    }
-
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff/hello", 
-			  "animal", 8, "fruitbat");
-    if (r < 0) {
-	TESTRPT("miset_attr_values failed", r);
-    }
-
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
-			  "objtype", 10, "automobile");
-    if (r < 0) {
-	TESTRPT("miset_attr_values failed", r);
-    }
-
-    r = miset_attr_values(hvol, MI_TYPE_DOUBLE, "/minc-2.0/test2", 
-			  "maxvals", TESTARRAYSIZE, tstarr);
-    if (r < 0) {
-	TESTRPT("miset_attr_values failed", r);
-    }
-
-    r = miget_attr_type(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
-			&data_type);
-    if (r < 0) {
-	TESTRPT("miget_attr_type failed", r);
-    }
-
-    r = miget_attr_length(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
-			  &length);
-    if (r < 0) {
-	TESTRPT("miget_attr_length failed", r);
-    }
-
-    if (data_type != MI_TYPE_STRING) {
-	TESTRPT("miget_attr_type failed", data_type);
-    }
-    if (length != 8) {
-	TESTRPT("miget_attr_length failed", length);
-    }
-
-    r = midelete_group(hvol, "/minc-2.0/test1/stuff", "goodbye");
-    if (r >= 0) {
-	TESTRPT("midelete_group failed", r);
-    }
-
-    r = midelete_group(hvol, "/minc-2.0/test1/stuff", "hello");
-    /* This should succeed.
-     */
-    if (r < 0) {
-	TESTRPT("midelete_group failed", r);
-    }
-
-    r = miget_attr_length(hvol, "/minc-2.0/test1/stuff/hello", "animal", 
-			  &length);
-    /* This should fail since we deleted the group.
-     */
-    if (r >= 0) {
-	TESTRPT("miget_attr_length failed", r);
-    }
-
-    r = miget_attr_values(hvol, MI_TYPE_DOUBLE, "/minc-2.0/test2", "maxvals", 
-			  TESTARRAYSIZE, dblarr);
-    if (r < 0) {
-	TESTRPT("miget_attr_values failed", r);
-    }
-
-    for (r = 0; r < TESTARRAYSIZE; r++) {
-	if (dblarr[r] != tstarr[r]) {
-	    TESTRPT("miget_attr_values mismatch", r);
-	}
-    }
-
-    /* Get the values again in float rather than double format.
-     */
-    r = miget_attr_values(hvol, MI_TYPE_FLOAT, "/minc-2.0/test2", "maxvals", 
-			  TESTARRAYSIZE, fltarr);
-    if (r < 0) {
-	TESTRPT("miget_attr_values failed", r);
-    }
-
-    for (r = 0; r < TESTARRAYSIZE; r++) {
-	if (fltarr[r] != (float) tstarr[r]) {
-	    TESTRPT("miget_attr_values mismatch", r);
-	    fprintf(stderr, "fltarr[%d] = %f, tstarr[%d] = %f\n",
-		    r, fltarr[r], r, tstarr[r]);
-	}
-    }
-
-    /* Get the values again in int rather than double format.
-     */
-    r = miget_attr_values(hvol, MI_TYPE_INT, "/minc-2.0/test2", "maxvals", 
-			  TESTARRAYSIZE, intarr);
-    if (r < 0) {
-	TESTRPT("miget_attr_values failed", r);
-    }
-
-    for (r = 0; r < TESTARRAYSIZE; r++) {
-	if (intarr[r] != (int) tstarr[r]) {
-	    TESTRPT("miget_attr_values mismatch", r);
-	    fprintf(stderr, "intarr[%d] = %d, tstarr[%d] = %f\n",
-		    r, intarr[r], r, tstarr[r]);
-	}
-    }
-
-    r = miget_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
-			  "objtype", 128, valstr);
-    if (r < 0) {
-	TESTRPT("miget_attr_values failed", r);
-    }
-
-    if (strcmp(valstr, "automobile") != 0) {
-	TESTRPT("miget_attr_values failed", 0);
-    }
-
-    r = miset_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff",
-			  "objtype", 8, "bicycle");
-
-    if (r < 0) {
-	TESTRPT("miset_attr_values failed on rewrite", r);
-    }
-
-    r = miget_attr_values(hvol, MI_TYPE_STRING, "/minc-2.0/test1/stuff", 
-			  "objtype", 128, valstr);
-    if (r < 0) {
-	TESTRPT("miget_attr_values failed", r);
-    }
-
-    if (strcmp(valstr, "bicycle") != 0) {
-	TESTRPT("miget_attr_values failed", 0);
-    }
-
-    miclose_volume(hvol);
-
-    if (error_cnt != 0) {
-	fprintf(stderr, "%d error%s reported\n", 
-		error_cnt, (error_cnt == 1) ? "" : "s");
-    }
-    else {
-	fprintf(stderr, "No errors\n");
-    }
-    return (error_cnt);
-}
-#endif /* M2_TEST */

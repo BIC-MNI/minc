@@ -522,8 +522,15 @@ mitransform_coord(double out_coord[],
     }
 }
 
+/** For conversions from double to integer, rounding may be performed
+ * by setting this variable to non-zero.
+ * However, at present, no API is available to control this.
+ */
+static int rounding_enabled = FALSE;
+
 /** Generic HDF5 integer-to-double converter.
  */
+
 static herr_t 
 mi2_int_to_dbl(hid_t src_id,
                hid_t dst_id,
@@ -705,106 +712,208 @@ mi2_dbl_to_int(hid_t src_id,
             dst_cnt = buf_stride;
             src_cnt = buf_stride;
         }
-
-	if (dst_sg == H5T_SGN_2) {
-            switch (dst_nb) {
-            case 4:
-                while (nelements-- > 0) {
-                    t = rint(*(double *) src_ptr);
-                    if (t > INT_MAX) {
-                        t = INT_MAX; 
+        if (rounding_enabled) {
+            if (dst_sg == H5T_SGN_2) {
+                switch (dst_nb) {
+                case 4:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *) src_ptr);
+                        if (t > INT_MAX) {
+                            t = INT_MAX; 
+                        }
+                        else if (t < INT_MIN) {
+                            t = INT_MIN;
+                        }
+                        *((int *)dst_ptr) = (int) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-                    else if (t < INT_MIN) {
-                        t = INT_MIN;
+                    break;
+                case 2:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *) src_ptr);
+                        if (t > SHRT_MAX) {
+                            t = SHRT_MAX;
+                        }
+                        else if (t < SHRT_MIN) {
+                            t = SHRT_MIN;
+                        }
+                        *((short *)dst_ptr) = (short) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-                    *((int *)dst_ptr) = (int) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
+                    break;
+                case 1:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *) src_ptr);
+                        if (t > CHAR_MAX) {
+                            t = CHAR_MAX;
+                        }
+                        else if (t < CHAR_MIN) {
+                            t = CHAR_MIN;
+                        }
+                        *((char *)src_ptr) = (char) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
+                    }
+                    break;
+                default:
+                    /* Can't handle this! */
+                    break;
                 }
-                break;
-            case 2:
-                while (nelements-- > 0) {
-                    t = rint(*(double *) src_ptr);
-                    if (t > SHRT_MAX) {
-                        t = SHRT_MAX;
+            }
+            else {
+                switch (dst_nb) {
+                case 4:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *)src_ptr);
+                        if (t > UINT_MAX) {
+                            t = UINT_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned int *)dst_ptr) = (unsigned int) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-                    else if (t < SHRT_MIN) {
-                        t = SHRT_MIN;
-                    }
-		    *((short *)dst_ptr) = (short) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
-		}
-                break;
-            case 1:
-                while (nelements-- > 0) {
-                    t = rint(*(double *) src_ptr);
-                    if (t > CHAR_MAX) {
-                        t = CHAR_MAX;
-                    }
-                    else if (t < CHAR_MIN) {
-                        t = CHAR_MIN;
-                    }
-                    *((char *)src_ptr) = (char) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
-		}
-                break;
-            default:
-                /* Can't handle this! */
-                break;
-	    }
-	}
-	else {
-            switch (dst_nb) {
-            case 4:
-                while (nelements-- > 0) {
-                    t = rint(*(double *)src_ptr);
-                    if (t > UINT_MAX) {
-                        t = UINT_MAX;
-                    }
-                    else if (t < 0) {
-                        t = 0;
-                    }
-		    *((unsigned int *)dst_ptr) = (unsigned int) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
-                }
-                break;
+                    break;
 
-            case 2:
-                while (nelements-- > 0) {
-                    t = rint(*(double *)src_ptr);
-                    if (t > USHRT_MAX) {
-                        t = USHRT_MAX;
+                case 2:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *)src_ptr);
+                        if (t > USHRT_MAX) {
+                            t = USHRT_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned short *)dst_ptr) = (unsigned short) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-                    else if (t < 0) {
-                        t = 0;
+                    break;
+                case 1:
+                    while (nelements-- > 0) {
+                        t = rint(*(double *)src_ptr);
+                        if (t > UCHAR_MAX) {
+                            t = UCHAR_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned char *)dst_ptr) = (unsigned char) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-		    *((unsigned short *)dst_ptr) = (unsigned short) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
-		}
-                break;
-            case 1:
-                while (nelements-- > 0) {
-                    t = rint(*(double *)src_ptr);
-                    if (t > UCHAR_MAX) {
-                        t = UCHAR_MAX;
+                    break;
+                default:
+                    /* Can't handle any other values */
+                    break;
+                }
+            }
+        }
+        else {
+            if (dst_sg == H5T_SGN_2) {
+                switch (dst_nb) {
+                case 4:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *) src_ptr);
+                        if (t > INT_MAX) {
+                            t = INT_MAX; 
+                        }
+                        else if (t < INT_MIN) {
+                            t = INT_MIN;
+                        }
+                        *((int *)dst_ptr) = (int) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-                    else if (t < 0) {
-                        t = 0;
+                    break;
+                case 2:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *) src_ptr);
+                        if (t > SHRT_MAX) {
+                            t = SHRT_MAX;
+                        }
+                        else if (t < SHRT_MIN) {
+                            t = SHRT_MIN;
+                        }
+                        *((short *)dst_ptr) = (short) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
                     }
-		    *((unsigned char *)dst_ptr) = (unsigned char) t;
-                    dst_ptr += dst_cnt;
-                    src_ptr += src_cnt;
-		}
-                break;
-            default:
-                /* Can't handle any other values */
-                break;
-	    }
-	}
+                    break;
+                case 1:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *) src_ptr);
+                        if (t > CHAR_MAX) {
+                            t = CHAR_MAX;
+                        }
+                        else if (t < CHAR_MIN) {
+                            t = CHAR_MIN;
+                        }
+                        *((char *)src_ptr) = (char) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
+                    }
+                    break;
+                default:
+                    /* Can't handle this! */
+                    break;
+                }
+            }
+            else {
+                switch (dst_nb) {
+                case 4:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *)src_ptr);
+                        if (t > UINT_MAX) {
+                            t = UINT_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned int *)dst_ptr) = (unsigned int) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
+                    }
+                    break;
+
+                case 2:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *)src_ptr);
+                        if (t > USHRT_MAX) {
+                            t = USHRT_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned short *)dst_ptr) = (unsigned short) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
+                    }
+                    break;
+                case 1:
+                    while (nelements-- > 0) {
+                        t = (int)(*(double *)src_ptr);
+                        if (t > UCHAR_MAX) {
+                            t = UCHAR_MAX;
+                        }
+                        else if (t < 0) {
+                            t = 0;
+                        }
+                        *((unsigned char *)dst_ptr) = (unsigned char) t;
+                        dst_ptr += dst_cnt;
+                        src_ptr += src_cnt;
+                    }
+                    break;
+                default:
+                    /* Can't handle any other values */
+                    break;
+                }
+            }
+        }
 	break;
 
     case H5T_CONV_FREE:

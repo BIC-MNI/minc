@@ -164,25 +164,19 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
 }
 
 
-/*! Set Mutli-resolution properties
+/*! Set Multi-resolution properties
  */
 int
 miset_props_multi_resolution(mivolumeprops_t props, BOOLEAN enable_flag,
 			    int depth)
 {
-  int i;
-  if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
-    return (MI_ERROR);
-  }
+    if (props == NULL || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
+        return (MI_ERROR);
+    }
   
-  if (enable_flag){
     props->enable_flag = enable_flag;
     props->depth = depth;
-  }
-  else {
-    return (MI_ERROR);
-  }
-  return (MI_NOERROR);
+    return (MI_NOERROR);
 }
   
 /*! Get Mutli-resolution properties
@@ -191,7 +185,7 @@ int
 miget_props_multi_resolution(mivolumeprops_t props, BOOLEAN *enable_flag,
 			     int *depth)
 {
-  if (props == NULL) {
+  if (props == NULL || enable_flag == NULL || depth == NULL) {
     return (MI_ERROR);
   }
   
@@ -236,8 +230,6 @@ miselect_resolution(mihandle_t volume, int depth)
 int
 miflush_from_resolution(mihandle_t volume, int depth)
 {
-  int i;
-  
   if ( volume->hdf_id < 0 || depth > MAX_RESOLUTION_GROUP || depth <= 0) {
     return (MI_ERROR);
   }
@@ -421,111 +413,3 @@ miset_props_template(mivolumeprops_t props, int template_flag)
 }
 
 
-#ifdef M2_TEST
-#define TESTRPT(msg, val) (error_cnt++, fprintf(stderr, \
-                                  "Error reported on line #%d, %s: %d\n", \
-                                  __LINE__, msg, val))
-
-static int error_cnt = 0;
-
-
-int main(int argc, char **argv)
-{
-  mihandle_t vol;
-  mivolumeprops_t  props;
-  int r;
-  micompression_t compression_type;
-  BOOLEAN enable_flag;
-  int zlib_level;
-  int depth;
-  int edge_lengths[MI2_MAX_VAR_DIMS];
-  int edge_count;
-  int i;
- /* Turn off automatic error reporting - we'll take care of this
-   * ourselves, thanks!
-   */
-  H5Eset_auto(NULL, NULL);
-  r = minew_volume_props(&props);
-
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  
-  r = miset_props_multi_resolution(props, 1 , 2);
-
-  if (r < 0) {
-    TESTRPT("failed", r);
-   }
-
-  r = miget_props_multi_resolution(props, &enable_flag, &depth);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  else {
-    printf("%d %d \n", enable_flag, depth);
-  }
-
-  r = miset_props_compression_type(props, MI_COMPRESS_NONE);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-
-  r = miget_props_compression_type(props,&compression_type);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  else {
-    printf("%d \n", compression_type);
- }  
-
-  r = miset_props_zlib_compression(props,4);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  else {
-    printf(" %d \n",props->zlib_level);
-  }
-
-  r = miget_props_zlib_compression(props,&zlib_level);
-  if (r < 0) {
-    TESTRPT("failed", r);
-  }
-  else {
-    printf(" %d \n",zlib_level);
-  }
-
-  mifree_volume_props(props);
-
-  while (--argc > 0) {
-      r = miopen_volume(*++argv, MI2_OPEN_RDWR, &vol);
-      if (r < 0) {
-	  TESTRPT("failed", r);
-      }
-      r = miget_volume_props(vol, &props);
-      if (r < 0) {
-	  TESTRPT("failed", r);
-      }
-      r = miget_props_blocking(props, &edge_count, edge_lengths, 
-			       MI2_MAX_VAR_DIMS);
-      if (r < 0) {
-	  TESTRPT("failed", r);
-      }
-      printf("edge_count %d\n", edge_count);
-      for (i = 0; i < edge_count; i++) {
-	  printf("  %d", edge_lengths[i]);
-      }
-      printf("\n");
-      mifree_volume_props(props);
-      miclose_volume(vol);
-  }
-
- if (error_cnt != 0) {
-    fprintf(stderr, "%d error%s reported\n", 
-	    error_cnt, (error_cnt == 1) ? "" : "s");
-  }
-  else {
-    fprintf(stderr, "No errors\n");
-  }
-  return (error_cnt);
-}
-#endif

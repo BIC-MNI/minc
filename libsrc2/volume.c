@@ -20,6 +20,9 @@ static void miinit_default_range(mitype_t mitype, double *valid_max,
 static void miread_valid_range(mihandle_t volume, double *valid_max, 
                                double *valid_min);
 
+static int _miset_volume_class(mihandle_t volume, miclass_t volclass);
+static int _miget_volume_class(mihandle_t volume, miclass_t *volclass);
+
 /**
  */
 int
@@ -30,8 +33,7 @@ micreate_volume_image(mihandle_t volume)
     hid_t dataspace_id;
     hid_t dset_id;
     hsize_t hdf_size[MI2_MAX_VAR_DIMS];
-    hid_t grp_id;
-    hsize_t n;
+
     /* Try creating IMAGE dataset i.e. /minc-2.0/image/0/image
      */
 
@@ -142,7 +144,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hid_t hdf_plist;
   hid_t fspc_id;
   hsize_t dim[1];
-  hid_t grp_dimensions_id; 
+  hid_t grp_id; 
   herr_t status;
   hid_t dataset_id = -1;
   hid_t dataset_width = -1;
@@ -152,14 +154,16 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hsize_t hdf_size[MI2_MAX_VAR_DIMS];
   volumehandle *handle;
   volprops *props_handle;
-  unsigned int v;
 
   miinit();
 
-  if (filename == NULL || number_of_dimensions <=0 || 
-      dimensions == NULL) {
+  if (filename == NULL) {
     return (MI_ERROR);
-  }    
+  }
+
+  if (dimensions == NULL && number_of_dimensions != 0) {
+      return (MI_ERROR);
+  }
 
   /* Allocate space for the volume handle
    */
@@ -175,6 +179,12 @@ micreate_volume(const char *filename, int number_of_dimensions,
   /* Setting up volume type_id 
    */
   switch (volume_class) {
+  case MI_CLASS_REAL:
+      handle->type_id = hdf_type;
+      break;
+  case MI_CLASS_INT:
+      handle->type_id = hdf_type;
+      break;
   case MI_CLASS_LABEL:
       /* A volume of class LABEL must have an integer type.
        */
@@ -210,15 +220,18 @@ micreate_volume(const char *filename, int number_of_dimensions,
           return (MI_ERROR);
       }
       break;
+
   case MI_CLASS_UNIFORM_RECORD:
       handle->type_id = H5Tcreate(H5T_COMPOUND, H5Tget_size(hdf_type));
       H5Tclose(hdf_type);
       break;
+
   default:
-      handle->type_id = hdf_type;
-      break;
+      return (MI_ERROR);
   }
-  
+
+  handle->volume_class = volume_class;
+
   /* Create file in HDF5 with the given filename and
      H5F_ACC_TRUNC: Truncate file, if it already exists, 
                    erasing all data previously stored in the file.
@@ -228,6 +241,10 @@ micreate_volume(const char *filename, int number_of_dimensions,
   if (file_id < 0) {
     return (MI_ERROR);
   }
+
+  handle->hdf_id = file_id;
+
+  _miset_volume_class(handle, handle->volume_class);
 
   hdf_plist = H5Pcreate(H5P_DATASET_CREATE);
   if (hdf_plist < 0) {
@@ -288,10 +305,10 @@ micreate_volume(const char *filename, int number_of_dimensions,
     }
   }
 
-   /* Try creating DIMENSIONS GROUP i.e. /minc-2.0/dimensions
-    */
-  grp_dimensions_id = H5Gopen(file_id, "/minc-2.0/dimensions");
-  if (grp_dimensions_id < 0) {
+  /* Try creating DIMENSIONS GROUP i.e. /minc-2.0/dimensions
+   */
+  grp_id = H5Gopen(file_id, MI_FULLDIMENSIONS_PATH);
+  if (grp_id < 0) {
       return (MI_ERROR);
   }
   
@@ -313,7 +330,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
     }
      
     /* Create a dataset(dimension variable name) in DIMENSIONS GROUP */
-    dataset_id = H5Dcreate(grp_dimensions_id, dimensions[i]->name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+    dataset_id = H5Dcreate(grp_id, dimensions[i]->name, 
+                           H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
     
     /* Dimension variable for a regular dimension contains
        no meaningful data. Whereas, Dimension variable for 
@@ -341,7 +359,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
         name = malloc(size);
 	strcpy(name, dimensions[i]->name);
 	strcat(name, "-width");
-	dataset_width = H5Dcreate(grp_dimensions_id, name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	dataset_width = H5Dcreate(grp_id, name, H5T_NATIVE_DOUBLE, 
+                                  dataspace_id, H5P_DEFAULT);
 	fspc_id = H5Dget_space(dataset_width);
 	if (fspc_id < 0) {
 	  return (MI_ERROR);
@@ -422,7 +441,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
     /* Save comments. If no comments do not add this attr*/
     if (dimensions[i]->comments != NULL) {
       miset_attr_at_loc(dataset_id, "comments", MI_TYPE_STRING,
-			strlen(dimensions[i]->comments), dimensions[i]->comments);
+			strlen(dimensions[i]->comments),
+                        dimensions[i]->comments);
     }
     H5Dclose(dataset_id);
     
@@ -430,9 +450,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
   } //for (i=0; i < number_of_dimensions ; i++) 
 
   
-  H5Gclose(grp_dimensions_id);
+  H5Gclose(grp_id);
   
-  handle->hdf_id = file_id;
   handle->mode = MI2_OPEN_RDWR;
   handle->has_slice_scaling = FALSE;
   handle->scale_min = -1.0;
@@ -455,52 +474,30 @@ micreate_volume(const char *filename, int number_of_dimensions,
      avoid errors.
    */
   handle->dim_indices = NULL;
+
+  /* Verify the volume type.
+   */
   switch (volume_type) {
   case MI_TYPE_BYTE:
-    handle->volume_type = MI_TYPE_BYTE;
-    break;
   case MI_TYPE_SHORT:
-    handle->volume_type = MI_TYPE_SHORT;
-    break;
   case MI_TYPE_INT:
-    handle->volume_type = MI_TYPE_INT;
-    break;
   case MI_TYPE_FLOAT:
-    handle->volume_type = MI_TYPE_FLOAT;
-    break;
   case MI_TYPE_DOUBLE:
-    handle->volume_type = MI_TYPE_DOUBLE;
-    break;
   case MI_TYPE_STRING:
-    handle->volume_type = MI_TYPE_STRING;
-    break;
   case MI_TYPE_UBYTE:
-    handle->volume_type = MI_TYPE_UBYTE;
-    break;
   case MI_TYPE_USHORT:
-    handle->volume_type = MI_TYPE_USHORT;
-    break;
   case MI_TYPE_UINT:
-    handle->volume_type = MI_TYPE_UINT;
-    break;
   case MI_TYPE_SCOMPLEX:
-    handle->volume_type = MI_TYPE_SCOMPLEX;
-    break;
   case MI_TYPE_ICOMPLEX:
-    handle->volume_type = MI_TYPE_ICOMPLEX;
-    break;
   case MI_TYPE_FCOMPLEX:
-    handle->volume_type = MI_TYPE_FCOMPLEX;
-    break;
   case MI_TYPE_DCOMPLEX:
-    handle->volume_type = MI_TYPE_DCOMPLEX;
-    break;
   case MI_TYPE_UNKNOWN:
-    handle->volume_type = MI_TYPE_UNKNOWN;
     break;
   default:
     return (MI_ERROR);
   }
+
+  handle->volume_type = volume_type;
 
   /* Set the initial value of the valid-range 
    */
@@ -510,29 +507,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   miget_voxel_to_world(handle, handle->v2w_transform);
 
-  switch (volume_class) {
-  case MI_CLASS_REAL:
-    handle->volume_class = MI_CLASS_REAL;
-    break;
-  case MI_CLASS_INT:
-    handle->volume_class = MI_CLASS_INT;
-    break;
-  case MI_CLASS_LABEL:
-    handle->volume_class = MI_CLASS_LABEL;
-    break;
-  case MI_CLASS_COMPLEX:
-    handle->volume_class = MI_CLASS_COMPLEX;
-    break;
-  case MI_CLASS_UNIFORM_RECORD:
-    handle->volume_class = MI_CLASS_UNIFORM_RECORD;
-    break;
-  case MI_CLASS_NON_UNIFORM_RECORD:
-    handle->volume_class = MI_CLASS_NON_UNIFORM_RECORD;
-    break;
-  default:
-    return (MI_ERROR);
-  }
-  
   props_handle = (volprops *)malloc(sizeof(*props_handle));
   memset(props_handle, 0, sizeof (volprops));
   if (create_props != NULL) {
@@ -653,6 +627,61 @@ _miget_file_dimension_count(hid_t file_id)
         H5Dclose(dset_id);
     }
     return (result);
+}
+
+static int
+_miset_volume_class(mihandle_t volume, miclass_t volume_class)
+{
+    const char *class_ptr;
+
+    switch (volume_class) {
+    case MI_CLASS_REAL:
+        class_ptr = "real___";
+        break;
+    case MI_CLASS_INT:
+        class_ptr = "integer";
+        break;
+    case MI_CLASS_LABEL:
+        class_ptr = "label__";
+        break;
+    case MI_CLASS_COMPLEX:
+        class_ptr = "complex";
+        break;
+    case MI_CLASS_UNIFORM_RECORD:
+        class_ptr = "array__";
+        break;
+    default:
+        return (MI_ERROR);
+    }
+    miset_attribute(volume, MI_ROOT_PATH, "class", MI_TYPE_STRING,
+                    strlen(class_ptr), class_ptr);
+    return (MI_NOERROR);
+}
+
+static int
+_miget_volume_class(mihandle_t volume, miclass_t *volume_class)
+{
+    char class_buf[MI2_CHAR_LENGTH];
+
+    miget_attribute(volume, MI_ROOT_PATH, "class", MI_TYPE_STRING,
+                    MI2_CHAR_LENGTH, class_buf);
+
+    if (!strcmp(class_buf, "label__")) {
+        *volume_class = MI_CLASS_LABEL;
+    }
+    else if (!strcmp(class_buf, "integer")) {
+        *volume_class = MI_CLASS_INT;
+    }
+    else if (!strcmp(class_buf, "complex")) {
+        *volume_class = MI_CLASS_COMPLEX;
+    }
+    else if (!strcmp(class_buf, "array__")) {
+        *volume_class = MI_CLASS_UNIFORM_RECORD;
+    }
+    else {
+        *volume_class = MI_CLASS_REAL;
+    }
+    return (MI_NOERROR);
 }
 
 static int
@@ -789,9 +818,12 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     
     handle->hdf_id = file_id;
     handle->mode = mode;
-    handle->volume_class = MI_CLASS_REAL; /* TODO: set this properly!!! */
     handle->selected_resolution = 0;
     
+    /* Get the volume class.
+     */
+    _miget_volume_class(handle, &handle->volume_class);
+
     /* GET THE DIMENSION COUNT
      */
     handle->number_of_dims = _miget_file_dimension_count(file_id);
