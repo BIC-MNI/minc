@@ -49,13 +49,13 @@
 public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
 {
    /* String to hold pointer to variable */
-   char pointer_string[MAX_NC_NAME+sizeof(MI_DIMATT_POINTER_PREFIX)];
+   char pointer_string[MAX_NC_NAME+sizeof(MI_VARATT_POINTER_PREFIX)];
    int index;           /* Index into string */
 
    MI_SAVE_ROUTINE_NAME("miattput_pointer");
 
    /* Set the first part of the string */
-   index=strlen(strcpy(pointer_string,MI_DIMATT_POINTER_PREFIX));
+   index=strlen(strcpy(pointer_string,MI_VARATT_POINTER_PREFIX));
 
    /* Get the name of the variable to which we should point */
    MI_CHK_ERR(ncvarinq(cdfid, ptrvarid, &(pointer_string[index]), NULL,
@@ -72,7 +72,7 @@ public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
    MI_CHK_ERR(miattputstr(cdfid, ptrvarid, MIparent, pointer_string))
 
    /* Set the MIvartype attribute for ptrvarid */
-   MI_CHK_ERR(miattputstr(cdfid, ptrvarid, MIvartype, MI_DIMATT))
+   MI_CHK_ERR(miattputstr(cdfid, ptrvarid, MIvartype, MI_VARATT))
 
    MI_RETURN(MI_NOERROR);
 }
@@ -96,9 +96,9 @@ public int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
 public int miattget_pointer(int cdfid, int varid, char *name)
 {
    /* Character string to hold attribute */
-   char pointer_string[MAX_NC_NAME+sizeof(MI_DIMATT_POINTER_PREFIX)];
+   char pointer_string[MAX_NC_NAME+sizeof(MI_VARATT_POINTER_PREFIX)];
    int index;           /* Index into string */
-   char *prefix_string=MI_DIMATT_POINTER_PREFIX;  /* Prefix string */
+   char *prefix_string=MI_VARATT_POINTER_PREFIX;  /* Prefix string */
    int ptrvarid;        /* Id of variable pointed to by name */
 
    MI_SAVE_ROUTINE_NAME("miattget_pointer");
@@ -525,7 +525,7 @@ private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
 
    /* Standard attributes */
    MI_CHK_ERR(miattputstr(cdfid, varid, MIvarid, MI_STDVAR))
-   MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_DIMATT))
+   MI_CHK_ERR(miattputstr(cdfid, varid, MIvartype, MI_VARATT))
    MI_CHK_ERR(miattputstr(cdfid, varid, MIversion, MI_CURRENT_VERSION))
 
    /* Create pointer from MIimage to max or min if MIimage exists */
