@@ -19,9 +19,9 @@
 #
 # Fri Oct  8 12:01:49 EST 2004 - Added -noflip and skipping of .mat file if not found
 #                                with thanks to Mark Daglish - mark.daglish@bris.ac.uk
+# Thu Dec  2 13:00:38 EST 2004 - Added -version argument (Thanks again to mark)
+#                                and more std do_cmd() function
 
-
-require 5.0;
 
 use strict;
 use warnings "all";
@@ -31,10 +31,14 @@ use File::Basename;
 my($Help, $Usage, $me, @files, $history, %opt, @opt_table);
 my($anabase, $anahdr, $anaimg, $mncfile, $matfile, $xfmfile);
 
+my $version="1.3b";
 $me = basename($0);
+my $versioninfo = "print '$me version $version\n\n'; exit 0;";
+
 %opt = (
    'verbose' => 0,
    'clobber' => 0,
+   'fake'      => 0,
    'orientation' => undef,
    'flip' => 1,
    );
@@ -65,21 +69,25 @@ Problems or comments should be sent to: rotor\@cmr.uq.edu.au
 HELP
 
 @opt_table = (
-     ["-verbose", "boolean", 0, \$opt{verbose}, 
-        "be verbose" ],
-     ["-clobber", "boolean", 0, \$opt{clobber}, 
-        "clobber existing files" ],
-     
-     ["Options for Conversion from analyze formats", "section"],
-     ["-transverse", "const", "-transverse", \$opt{orientation}, 
-        "force files to be treated as transverse" ],
-     ["-sagittal", "const", "-sagittal", \$opt{orientation}, 
-        "force files to be treated as sagittal" ],
-     ["-coronal", "const", "-coronal", \$opt{orientation}, 
-        "force files to be treated as coronal" ],
-     ["-flip|-noflip", "boolean", 0, \$opt{flip}, 
-        "Flip left-right ie: assuming Analyze Image is in radiological format" ],
-     );
+   ["-verbose|-quiet", "boolean", undef, \$opt{verbose}, 
+      "be verbose" ],
+   ["-clobber", "boolean", undef, \$opt{clobber}, 
+      "clobber existing files" ],
+   ["-fake", "boolean", 0, \$opt{fake},
+      "do a dry run, (echo cmds only)" ],
+   ["-version", "eval", undef, $versioninfo,
+      "prints version information" ],
+
+   ["Options for Conversion from analyze formats", "section"],
+   ["-transverse", "const", "-transverse", \$opt{orientation}, 
+      "force files to be treated as transverse" ],
+   ["-sagittal", "const", "-sagittal", \$opt{orientation}, 
+      "force files to be treated as sagittal" ],
+   ["-coronal", "const", "-coronal", \$opt{orientation}, 
+      "force files to be treated as coronal" ],
+   ["-flip|-noflip", "boolean", undef, \$opt{flip}, 
+      "Flip left-right assuming Analyze image in radiological format" ],
+   );
 
 if   ($me eq "ana2mnc"){   @files = ('<in.hdr>', '<out.mnc>'); }
 elsif($me eq "spm2mnc"){   @files = ('<in.hdr>', '<out.mnc>'); }
@@ -88,8 +96,10 @@ elsif($me eq "spm2xfm"){   @files = ('<in.mat>', '<out.xfm>'); }
 elsif($me eq "ana_show"){  @files = ('<in.hdr>');              }
 elsif($me eq "spm_show"){  @files = ('<in.mat>');              }
 
-$Usage = "Usage: $me [options] @files\n".
-         "       $me -help to list options\n\n";
+$Usage = "Usage: $me [options] @files\n" .
+         "       $me -help to list options\n" .
+         "       $me -version to list version information\n\n";
+
 
 # Check arguments
 &Getopt::Tabular::SetHelp($Help, $Usage);
@@ -111,8 +121,8 @@ if($me eq "ana2mnc"){
    if(!-e "$anabase.hdr"){ 
       die "$me: Couldn't find $anabase.hdr\n\n"; 
       }
-   if(!-e "$anabase.img"){ 
-      die "$me: Couldn't find $anabase.img\n\n"; 
+   if(!-e "$anabase.img" && !-e "$anabase.img.gz"){ 
+      die "$me: Couldn't find $anabase.img or $anabase.img.gz\n\n"; 
       }
    if(-e $mncfile && !$opt{clobber}){ 
       die "$me: $mncfile exists! use -clobber to overwrite\n\n"; 
@@ -128,7 +138,7 @@ if($me eq "ana2mnc"){
    
    # check for a compressed img file
    if(!-e "$anabase.img" && -e "$anabase.img.gz"){
-      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n\n";
+      &do_cmd('gunzip', "$anabase.img.gz");
       }
    
    write_minc($gen_hdr, $mncfile, "$anabase.img");
@@ -144,8 +154,8 @@ elsif($me eq "spm2mnc"){
    if(!-e "$anabase.hdr"){ 
       die "$me: Couldn't find $anabase.hdr\n\n"; 
       }
-   if(!-e "$anabase.img"){ 
-      die "$me: Couldn't find $anabase.img\n\n"; 
+   if(!-e "$anabase.img" && !-e "$anabase.img.gz"){ 
+      die "$me: Couldn't find $anabase.img or $anabase.img.gz\n\n"; 
       }
    if(!-e "$anabase.mat"){ 
       warn "$me: Couldn't find $anabase.mat, continuing anyway...\n\n"; 
@@ -164,7 +174,7 @@ elsif($me eq "spm2mnc"){
    
    # check for a compressed img file
    if(!-e "$anabase.img" && -e "$anabase.img.gz"){
-      system('gunzip', "$anabase.img.gz") ==  0 or die "$me: died during gunzip\n\n";
+      &do_cmd('gunzip', "$anabase.img.gz");
       }
    
    write_minc($gen_hdr, $mncfile, "$anabase.img");
@@ -185,16 +195,14 @@ elsif($me eq "mnc2ana"){
       }
       
    my($h) = read_minc($mncfile);
-   if($opt{verbose}){ print STDOUT dump_analyze_header($h); }
+   print STDOUT dump_analyze_header($h) if $opt{verbose};
    write_analyze_header($h, "$anabase.hdr");
    
    # Set up mincextract command
    my($args) = "mincextract -normalize -positive_direction -filetype ";
    $args .= ($h->{bitpix} == 8) ? '-unsigned ' : '-signed ';
    $args .=  "$mncfile > $anabase.img\n";
-
-   if($opt{verbose}){ print STDOUT $args; }
-   system($args) == 0 or die "$me: died during mincextract command\n\n";
+   &do_cmd($args);
    }
    
 elsif($me eq "spm2xfm"){
@@ -458,11 +466,9 @@ sub read_analyze_header{
            "    Who would really know though......\n\n";
       }
    
-   if($opt{verbose}){ 
-      print STDERR "sizeof_header: $h->{sizeof_hdr}  -- Byte Swap: $bs\n";
-      }
+   print STDERR "sizeof_header: $h->{sizeof_hdr}  -- Byte Swap: $bs\n" if $opt{verbose};
    
-   $h->{sizeof_hdr}    = destruct(\$hdr_s,  0,'i',   $bs);  #  4 - the byte size of the header file
+#  $h->{sizeof_hdr}    = destruct(\$hdr_s,  0,'i',   $bs);  #  4 - the byte size of the header file
    $h->{data_type}     = destruct(\$hdr_s,  4,'a10', $bs);  # 10 -
    $h->{db_name}       = destruct(\$hdr_s, 14,'a18', $bs);  # 18 -
    $h->{extents}       = destruct(\$hdr_s, 32,'i',   $bs);  #  4 - should be 16384
@@ -755,9 +761,7 @@ sub write_minc{
       push(@args, $gen_hdr->{ntime});
       }
    push(@args, @{$gen_hdr}{'zsize','ysize','xsize'});
-
-   if($opt{verbose}){ print STDOUT "@args\n"; }
-   system(@args) == 0 or die "$me: died during rawtominc system command\n\n";
+   &do_cmd(@args);
    }
 
 # Read a minc file header and return an appropriate ANALYZE 7.5 header
@@ -817,3 +821,9 @@ sub read_minc{
    return $h;
    }
 
+sub do_cmd { 
+   print STDOUT "@_\n" if $opt{verbose};
+   if(!$opt{fake}){
+      system(@_) == 0 or die "$me: Died executing command: '@_'\n\n";
+      }
+   }
