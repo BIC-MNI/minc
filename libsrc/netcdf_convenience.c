@@ -36,7 +36,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.8  2003-03-17 16:15:33  bert
+ * Revision 6.9  2003-12-01 22:45:58  stever
+ * Check for fork(); use for file decompression if available
+ *
+ * Revision 6.8  2003/03/17 16:15:33  bert
  * Added micreate_tempfile() to resolve issues with tempfile naming and creation, especially to suppress those annoying GNU linker messages about tempnam() and tmpnam().
  *
  * Revision 6.7  2001/08/20 13:19:15  neelin
@@ -136,14 +139,21 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.8 2003-03-17 16:15:33 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.9 2003-12-01 22:45:58 stever Exp $ MINC (MNI)";
 #endif
 
 #include "config.h"             /* From configure */
 #include <minc_private.h>
-#ifdef unix
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>           /* For S_IREAD, S_IWRITE */
 #endif
 
@@ -189,7 +199,7 @@ private int execute_decompress_command(char *command, char *infile,
 #define BYTES_PER_OPEN (1024*64)
 #define NUM_BUFFERS_PER_OPEN ((BYTES_PER_OPEN - 1) / sizeof(buffer) + 1)
 
-#ifndef unix
+#if !(HAVE_WORKING_FORK && HAVE_SYSTEM && HAVE_POPEN)
 
    return 1;
 

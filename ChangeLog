@@ -1,3 +1,13 @@
+2003-11-23  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* configure.in: Set version to 1.3.  Check for headers sys/stat.h,
+	sys/wait.h, unistd.h; and for functions fork, system, and popen.
+
+	* libsrc/netcdf_convenience.c: Use above checks for conditional 
+	inclusion of headers.
+	(execute_decompress_command): Use fork or system to decompress
+	file, if facility available.
+
 2003-11-21  Steve ROBBINS  <stever@bic.mni.mcgill.ca>
 
 	* volume_io/Include/basic.h: Include <math.h> for M_PI definition.
