@@ -10,7 +10,11 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.2  2000-09-13 14:12:35  neelin
+ * Revision 6.3  2000-11-03 16:35:40  neelin
+ * Modified -dinsert option to allow multiple double values to be
+ * inserted in an attribute.
+ *
+ * Revision 6.2  2000/09/13 14:12:35  neelin
  * Added support for bzipped files (thanks to Steve Robbins).
  *
  * Revision 6.1  1999/10/19 14:45:17  neelin
@@ -50,7 +54,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.2 2000-09-13 14:12:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.3 2000-11-03 16:35:40 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -91,7 +95,8 @@ struct {
    char *variable;
    char *attribute;
    char *value;
-   double double_value;
+   int num_doubles;
+   double *double_values;
 } *attribute_list = NULL;
 
 /* Argument table */
@@ -101,7 +106,7 @@ ArgvInfo argTable[] = {
    {"-sinsert", ARGV_FUNC, (char *) get_attribute, NULL,
        "Insert string attribute (<var>:<attr>=<value>)."},
    {"-dinsert", ARGV_FUNC, (char *) get_attribute, NULL,
-       "Insert a double precision attribute (<var>:<attr>=<value>)."},
+       "Insert a double precision attribute (<var>:<attr>=<value>(,...))."},
    {"-delete", ARGV_FUNC, (char *) get_attribute, NULL,
        "Delete an attribute (<var>:<attr>)."},
    {NULL, ARGV_END, NULL, NULL, NULL}
@@ -238,8 +243,8 @@ main(int argc, char *argv[])
          }
          else {
             new_type = NC_DOUBLE;
-            new_length = 1;
-            new_value = (void *) &attribute_list[iatt].double_value;
+            new_length = attribute_list[iatt].num_doubles;
+            new_value = (void *) attribute_list[iatt].double_values;
          }
          total_length = attribute_length*nctypelen(attribute_type);
          if (!attribute_exists ||
@@ -338,8 +343,9 @@ int get_attribute(char *dst, char *key, char *nextarg)
    char *variable;
    char *attribute;
    char *value;
-   char *end;
-   double dvalue;
+   char *end, *cur;
+   double *dvalues;
+   int num_doubles, ivalue;
 
    /* Check the key */
    if (strcmp(key, "-sinsert") == 0) {
@@ -380,7 +386,8 @@ int get_attribute(char *dst, char *key, char *nextarg)
 
    /* Get the value */
    value = NULL;
-   dvalue = 0.0;
+   num_doubles = 0;
+   dvalues = NULL;
    if (action == Insert_attribute) {
       value = strchr(attribute, '=');
       if (value == NULL) {
@@ -394,16 +401,54 @@ int get_attribute(char *dst, char *key, char *nextarg)
 
       /* Convert to double precision */
       if (need_double) {
-         dvalue = strtod(value, &end);
-         if ((end == value) || (*end != '\0')) {
-            (void) fprintf(stderr, 
-                           "\"%s\" option requires a numeric argument\n",
-                           key);
-            exit(EXIT_FAILURE);
+
+         /* Count the commas */
+         num_doubles = 1;
+         for (cur=value; *cur != '\0'; cur++) {
+            if (*cur == ',') num_doubles++;
          }
+
+         /* Allocate a list */
+         dvalues = MALLOC(sizeof(*dvalues) * num_doubles);
+
+         /* Loop over values */
+         cur = value;
+         for (ivalue=0; ivalue < num_doubles; ivalue++) {
+
+            /* Get the value */
+            dvalues[ivalue] = strtod(cur, &end);
+            if (end == cur) {
+               (void) fprintf(stderr, 
+                              "\"%s\" option requires a numeric argument\n",
+                              key);
+               exit(EXIT_FAILURE);
+            }
+            cur = end;
+
+            /* Skip whitespace and the comma */
+            while (isspace((int) *cur)) {cur++;}
+            if ((*cur != '\0') && (*cur != ',')) {
+               (void) fprintf(stderr, 
+                              "\"%s\" option requires a numeric argument\n",
+                              key);
+               exit(EXIT_FAILURE);
+            }
+            else if (*cur == ',') {
+               cur++;
+            }
+            
+         }       /* End of loop over double values */
+
+         /* Clear the value string */
          value = NULL;
-      }
-   }
+
+         (void) printf("Found %d doubles:\n", num_doubles);
+         for (ivalue=0; ivalue < num_doubles; ivalue++) {
+            (void) printf("   [%3d] = %g\n", ivalue, dvalues[ivalue]);
+         }
+
+      }        /* Endif need_double */
+   }        /* Endif insert */
 
    /* Save the information */
    attribute_list_size++;
@@ -423,7 +468,8 @@ int get_attribute(char *dst, char *key, char *nextarg)
    attribute_list[attribute_list_size-1].variable = variable;
    attribute_list[attribute_list_size-1].attribute = attribute;
    attribute_list[attribute_list_size-1].value = value;
-   attribute_list[attribute_list_size-1].double_value = dvalue;
+   attribute_list[attribute_list_size-1].num_doubles = num_doubles;
+   attribute_list[attribute_list_size-1].double_values = dvalues;
 
    return TRUE;
 
