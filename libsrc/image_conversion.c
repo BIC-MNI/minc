@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.12  2004-10-15 13:45:28  bert
+ * Revision 6.13  2004-12-14 23:53:46  bert
+ * Get rid of compilation warnings
+ *
+ * Revision 6.12  2004/10/15 13:45:28  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.11  2004/04/27 15:40:22  bert
@@ -153,11 +156,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.12 2004-10-15 13:45:28 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.13 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
 #endif
 
-#include "type_limits.h"
 #include "minc_private.h"
+#include "type_limits.h"
 
 /* Private functions */
 PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);

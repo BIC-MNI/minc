@@ -14,7 +14,10 @@
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_private.h,v $
- * Revision 6.3  2004-10-15 13:47:31  bert
+ * Revision 6.4  2004-12-14 23:53:46  bert
+ * Get rid of compilation warnings
+ *
+ * Revision 6.3  2004/10/15 13:47:31  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.2  2004/04/27 15:47:47  bert
@@ -60,7 +63,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.3 2004-10-15 13:47:31 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 6.4 2004-12-14 23:53:46 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #if defined(_MSC_VER)
@@ -73,6 +76,7 @@
 #endif
 
 #include "config.h"
+#define _GNU_SOURCE 1         /* Include all BSD & GNU interfaces */
 #include  <stdlib.h>
 #include  <stdio.h>
 #include  <string.h>

@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.15  2004-12-03 21:52:35  bert
+ * Revision 6.16  2004-12-14 23:53:46  bert
+ * Get rid of compilation warnings
+ *
+ * Revision 6.15  2004/12/03 21:52:35  bert
  * Minor changes for Windows build
  *
  * Revision 6.14  2004/10/15 13:48:33  bert
@@ -160,10 +163,9 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.15 2004-12-03 21:52:35 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.16 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
 #endif
 
-#include "config.h"             /* From configure */
 #include "minc_private.h"
 
 #if HAVE_UNISTD_H
@@ -178,6 +180,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 #include <sys/stat.h>           /* For S_IREAD, S_IWRITE */
 #endif
 
+#include <ctype.h>
+
 #ifdef MINC2
 #undef ncopen
 #undef ncclose
@@ -188,8 +192,6 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-
-#include <stdio.h>		/* for tempnam() */
 
 /* Private functions */
 PRIVATE int execute_decompress_command(char *command, char *infile, 

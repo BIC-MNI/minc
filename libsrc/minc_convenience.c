@@ -30,7 +30,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.17  2004-12-03 21:52:35  bert
+ * Revision 6.18  2004-12-14 23:53:46  bert
+ * Get rid of compilation warnings
+ *
+ * Revision 6.17  2004/12/03 21:52:35  bert
  * Minor changes for Windows build
  *
  * Revision 6.16  2004/10/15 13:46:15  bert
@@ -134,7 +137,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.17 2004-12-03 21:52:35 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.18 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -142,6 +145,10 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,
 #include "minc_varlists.h"
 
 #include <time.h>
+
+#if HAVE_UNISTD_H
+#include <unistd.h>             /* for getpid() */
+#endif /* HAVE_UNISTD_H */
 
 /* Private functions */
 PRIVATE int MI_create_dim_variable(int cdfid, char *name, 

@@ -5,7 +5,10 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.1  2004-11-01 22:06:48  bert
+ * Revision 6.2  2004-12-14 23:53:46  bert
+ * Get rid of compilation warnings
+ *
+ * Revision 6.1  2004/11/01 22:06:48  bert
  * Initial checkin, simplified minc interface
  *
 @COPYRIGHT  :
@@ -21,6 +24,7 @@
 ---------------------------------------------------------------------------- */
 
 #include "minc_private.h"
+#include <math.h>               /* for sqrt */
 #include <float.h>              /* for DBL_MAX */
 #include "minc_simple.h"
 
