@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 1.2  1993-11-22 13:11:58  neelin
-@MODIFIED   : Changed to use new Acr_Element_Id stuff
+@MODIFIED   : Revision 1.3  1993-11-24 11:25:38  neelin
+@MODIFIED   : Added some group list stuff (dump, input_group_list).
 @MODIFIED   :
+ * Revision 1.2  93/11/22  13:11:58  neelin
+ * Changed to use new Acr_Element_Id stuff
+ * 
  * Revision 1.1  93/11/19  12:48:52  neelin
  * Initial revision
  * 
@@ -268,18 +271,25 @@ public Acr_Group acr_get_group_next(Acr_Group group)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : acr_input_group
+@NAME       : acr_input_group_with_max
 @INPUT      : afp - acr file pointer
+              max_group_id - maximum group id to read in. If <= 0 then any
+                 group is read in. If max_group_id is not a group id in the
+                 input stream, then the input stream is left with the first
+                 element of the next group missing (it gets read here and
+                 is not put back), so no more groups can be read in.
 @OUTPUT     : group
 @RETURNS    : status
-@DESCRIPTION: Read in an acr-nema group
+@DESCRIPTION: Read in an acr-nema group with an optional maximum group id.
+              If group id exceeds max, then *group is set to NULL.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group)
+private Acr_Status acr_input_group_with_max(Acr_File *afp, Acr_Group *group, 
+                                            int max_group_id)
 {
    int group_id, element_id;
    long data_length;
@@ -295,6 +305,9 @@ public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group)
    status = acr_read_one_element(afp, &group_id, &element_id,
                                  &data_length, &data_pointer);
    if (status != ACR_OK) return status;
+   /* Check for a group past the limit */
+   if ((max_group_id > 0) && (group_id > max_group_id)) return status;
+   /* Check for a length element */
    if ((element_id != ACR_EID_GRPLEN) || 
        (data_length != ACR_SIZEOF_LONG)) {
       FREE(data_pointer);
@@ -329,6 +342,25 @@ public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group)
    }
 
    return status;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_input_group
+@INPUT      : afp - acr file pointer
+@OUTPUT     : group
+@RETURNS    : status
+@DESCRIPTION: Read in an acr-nema group
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 10, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Status acr_input_group(Acr_File *afp, Acr_Group *group)
+{
+
+   return acr_input_group_with_max(afp, group, 0);
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -367,6 +399,55 @@ public Acr_Status acr_output_group(Acr_File *afp, Acr_Group group)
    if ((ielement < nelements) || (next != NULL)) {
       status = ACR_PROTOCOL_ERROR;
       return status;
+   }
+
+   return status;
+
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_input_group_list
+@INPUT      : afp - acr file pointer
+              max_group_id - maximum group id to read in. If <= 0 then all
+                 groups are read in. If max_group_id is not a group id in the
+                 input stream, then the input stream is left with the first
+                 element of the next group missing (it gets read here and
+                 is not put back), so no more groups can be read in.
+@OUTPUT     : group_list
+@RETURNS    : status
+@DESCRIPTION: Read in a list of acr-nema groups
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 24, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public Acr_Status acr_input_group_list(Acr_File *afp, Acr_Group *group_list,
+                                       int max_group_id)
+{
+   Acr_Group cur_group, next_group;
+   Acr_Status status;
+
+   /* Initialize the group list */
+   *group_list = NULL;
+
+   /* Read in the first group */
+   status = acr_input_group_with_max(afp, &next_group, max_group_id);
+   if ((status != ACR_OK) || (next_group == NULL)) return status;
+
+   /* Set up pointers */
+   *group_list = cur_group = next_group;
+
+   /* Loop, reading groups */
+   while ((status == ACR_OK) && (next_group != NULL)) {
+
+      status = acr_input_group_with_max(afp, &next_group, max_group_id);
+
+      if ((status == ACR_OK) && (next_group != NULL)) {
+         acr_set_group_next(cur_group, next_group);
+         cur_group = next_group;
+      }
+
    }
 
    return status;
@@ -435,5 +516,104 @@ public Acr_Element acr_find_group_element(Acr_Group group_list,
    }
 
    return element;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_dump_group_list
+@INPUT      : file_pointer - where output should go
+              group_list
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Dump information from an acr-nema group list
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 24, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
+{
+   Acr_Group cur_group;
+   Acr_Element cur_element;
+   long element_length;
+   int printable;
+   int i;
+   char *string;
+
+   /* Check for empty list */
+   cur_group = group_list;
+   if (cur_group == NULL) {
+      (void) fprintf(file_pointer,"\nEmpty group list\n\n");
+      return;
+   }
+
+   /* Loop over groups */
+   while (cur_group != NULL) {
+
+      /* Print the group id */
+      (void) fprintf(file_pointer, "\nGroup 0x%04x :\n\n", 
+                     acr_get_group_group(cur_group));
+
+      /* Loop over elements */
+      cur_element = acr_get_group_element_list(cur_group);
+      while (cur_element != NULL) {
+
+         /* Print the element id */
+         (void) fprintf(file_pointer, 
+                        "   0x%04x  0x%04x  length = %d",
+                        acr_get_element_group(cur_element),
+                        acr_get_element_element(cur_element),
+                        (int) acr_get_element_length(cur_element));
+
+         /* Print value if needed */
+         element_length = acr_get_element_length(cur_element);
+         switch (element_length) {
+         case 2:
+            (void) fprintf(file_pointer, ", short = %d (0x%04x)",
+                           (int) acr_get_element_short(cur_element),
+                           (int) acr_get_element_short(cur_element));
+            break;
+         case 4:
+            (void) fprintf(file_pointer, ", long = %d (0x%08x)",
+                           (int) acr_get_element_long(cur_element),
+                           (int) acr_get_element_long(cur_element));
+            break;
+         }
+
+         /* Print string if short enough and is printable */
+         if ((element_length > 0) && (element_length <= 80)) {
+            string = acr_get_element_string(cur_element);
+            printable = TRUE;
+            for (i=0; i < element_length; i++) {
+               if (! isprint((int) string[i])) {
+                  printable = FALSE;
+                  break;
+               }
+            }
+
+            if (printable) {
+               (void) fprintf(file_pointer, ", string = \"%s\"", string);
+            }
+
+         }
+
+         /* End line */
+         (void) fprintf(file_pointer, "\n");
+                                                     
+
+         cur_element = acr_get_element_next(cur_element);
+      }
+
+      cur_group = acr_get_group_next(cur_group);
+   }
+
+   /* Print a blank line after dump */
+   (void) fprintf(file_pointer, "\n");
+
+   /* Flush the buffer */
+   (void) fflush(file_pointer);
+
+   return;
+
 }
 
