@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.48 1995-10-19 15:47:00 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.49 1995-11-10 20:23:14 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -30,6 +30,39 @@ private  BOOLEAN  match_dimension_names(
     int               n_file_dims,
     STRING            file_dimension_names[],
     int               to_volume_index[] );
+
+public  int   get_minc_file_n_dimensions(
+    STRING   filename )
+{
+    int       cdfid, img_var, n_dims;
+    int       dim_vars[MAX_VAR_DIMS];
+    nc_type   file_datatype;
+    STRING    expanded;
+
+    ncopts = NC_VERBOSE;
+
+    expanded = expand_filename( filename );
+
+    cdfid =  miopen( expanded, NC_NOWRITE );
+
+    if( cdfid == MI_ERROR )
+    {
+        print_error( "Error opening %s\n", expanded );
+
+        delete_string( expanded );
+
+        return( -1 );
+    }
+
+    delete_string( expanded );
+
+    img_var = ncvarid( cdfid, MIimage );
+
+    ncvarinq( cdfid, img_var, (char *) NULL, &file_datatype,
+              &n_dims, dim_vars, (int *) NULL );
+
+    return( n_dims );
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_minc_input_from_minc_id
@@ -117,8 +150,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     file->converting_to_colour = FALSE;
 
-    if( strcmp( file->dim_names[file->n_file_dimensions-1],
-                MIvector_dimension ) == 0 )
+    if( equal_strings( file->dim_names[file->n_file_dimensions-1],
+                       MIvector_dimension ) )
     {
         if( options->convert_vector_to_colour_flag &&
             options->dimension_size_for_colour_data ==
@@ -357,7 +390,7 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             if( miattgetstr( file->cdfid, file->img_var, MIsigntype,
                              MI_MAX_ATTSTR_LEN, signed_flag ) != NULL )
             {
-                converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
+                converted_sign = equal_strings( signed_flag, MI_SIGNED );
             }
             else
                 converted_sign = file_datatype != NC_BYTE;
@@ -1116,12 +1149,15 @@ public  void  reset_input_volume(
               exact matches are found.  In the second pass, volume dimensions
               of "any_spatial_dimension" are matched.  On the final pass,
               volume dimension names which are empty strings are matched
-              to any remaining file dimensions.
+              to any remaining file dimensions.  If a dimension matches
+              on "any_spatial_dimension" or empty string, then the name from
+              the file is copied to the volume.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : 1993            David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Oct. 22, 1995   D. MacDonald    - copies the name from the file
+                                                to the volume
 ---------------------------------------------------------------------------- */
 
 private  BOOLEAN  match_dimension_names(
@@ -1132,6 +1168,7 @@ private  BOOLEAN  match_dimension_names(
     int               to_volume_index[] )
 {
     int      i, j, iteration, n_matches, dummy;
+    int      to_file_index[MAX_DIMENSIONS];
     BOOLEAN  match;
     BOOLEAN  volume_dim_found[MAX_DIMENSIONS];
 
@@ -1141,7 +1178,10 @@ private  BOOLEAN  match_dimension_names(
         to_volume_index[i] = INVALID_AXIS;
 
     for_less( i, 0, n_volume_dims )
+    {
         volume_dim_found[i] = FALSE;
+        to_file_index[i] = -1;
+    }
 
     for_less( iteration, 0, 3 )
     {
@@ -1156,30 +1196,45 @@ private  BOOLEAN  match_dimension_names(
                         switch( iteration )
                         {
                         case 0:
-                            match = strcmp( volume_dimension_names[i],
-                                            file_dimension_names[j] ) == 0;
+                            match = equal_strings( volume_dimension_names[i],
+                                                   file_dimension_names[j] );
                             break;
                         case 1:
-                            match = (strcmp( volume_dimension_names[i],
-                                             ANY_SPATIAL_DIMENSION ) == 0) &&
-                                convert_dim_name_to_spatial_axis(
-                                     file_dimension_names[j], &dummy );
+                            match = equal_strings( volume_dimension_names[i],
+                                                   ANY_SPATIAL_DIMENSION ) &&
+                                    convert_dim_name_to_spatial_axis(
+                                          file_dimension_names[j], &dummy );
                             break;
                         case 2:
-                            match = (string_length(volume_dimension_names[i])
-                                     == 0);
+                            match = string_length(volume_dimension_names[i])
+                                        == 0;
                             break;
                         }
 
                         if( match )
                         {
                             to_volume_index[j] = i;
+                            to_file_index[i] = j;
                             volume_dim_found[i] = TRUE;
                             ++n_matches;
                             break;
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if( n_matches == n_volume_dims )
+    {
+        for_less( i, 0, n_volume_dims )
+        {
+            if( equal_strings( volume_dimension_names[i],
+                               ANY_SPATIAL_DIMENSION ) ||
+                string_length(volume_dimension_names[i]) == 0 )
+            {
+                replace_string( &volume_dimension_names[i],
+                    create_string( file_dimension_names[to_file_index[i]] ) );
             }
         }
     }

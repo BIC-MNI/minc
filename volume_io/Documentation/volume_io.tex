@@ -192,8 +192,6 @@ A type for logical values is defined:
 Other useful types defined include:
 {\bf\begin{verbatim}
         typedef  double             Real;
-        #define  MAX_STRING_LENGTH  200
-        typedef  char               STRING[MAX_STRING_LENGTH+1];
         typedef  enum 
              { OK, ERROR, INTERNAL_ERROR, END_OF_FILE, QUIT }
                                     Status;
@@ -390,6 +388,164 @@ to the programming utilities, and it is advisable that users of the
 The following is a list of all the programming utilities, grouped into
 related areas, and ordered alphabetically.
 
+\section{Strings}
+
+Some simple string manipulation techniques are provided.  Strings are
+arbitrarily long \name{NULL}-terminated character arrays, which are
+allocated and deleted as needed.  The type \name{STRING} is defined as:
+
+{\bf\begin{verbatim}
+typedef  char   *STRING;
+\end{verbatim}}
+
+The basic string creation and deletion routines are:
+
+{\bf\begin{verbatim}
+public  STRING  alloc_string(
+    int   length )
+public  STRING  create_string(
+    STRING    initial )
+\end{verbatim}}
+
+\desc{The function \name{alloc\_string} allocates storage for a string of the
+desired length (by allocating \name{length+1} bytes), without assigning any
+value to the string.  The function \name{create\_string} creates an
+allocated string with the value equal to \name{initial}.  If \name{initial}
+is a \name{NULL} pointer an empty string (``'') is created.}
+
+{\bf\begin{verbatim}
+public  void  delete_string(
+    STRING   string )
+\end{verbatim}}
+
+\desc{The storage associated with a string may be deleted with this
+function.}
+
+{\bf\begin{verbatim}
+public  int  string_length(
+    STRING   string )
+\end{verbatim}}
+
+\desc{Returns the length of the string.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  equal_strings(
+    STRING   str1,
+    STRING   str2 )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the two strings are exactly equal.}
+
+{\bf\begin{verbatim}
+public  void  replace_string(
+    STRING   *string,
+    STRING   new_string )
+\end{verbatim}}
+
+\desc{A convenience function which deletes the \name{string} argument,
+and reassigns it to the \name{new\_string}.  It does not copy the value
+of \name{new\_string}, but merely sets the \name{string} to the
+pointer \name{new\_string}.}
+
+{\bf\begin{verbatim}
+public  void  concat_char_to_string(
+    STRING   *string,
+    char     ch )
+\end{verbatim}}
+
+\desc{Concatenates a character to the end of the string.}
+
+{\bf\begin{verbatim}
+public  STRING  concat_strings(
+    STRING   str1,
+    STRING   str2 )
+\end{verbatim}}
+
+\desc{Creates and returns a string which is the concatenation of the
+two arguments, without changing the string arguments.}
+
+{\bf\begin{verbatim}
+public  void  concat_to_string(
+    STRING   *string,
+    STRING   str2 )
+\end{verbatim}}
+
+\desc{Replaces the argument \name{string} with the concatenation of
+the arguments \name{string} and \name{str2}.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  is_lower_case(
+    char  ch )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the character is a lower case letter.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  is_upper_case(
+    char  ch )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the character is a upper case letter.}
+
+{\bf\begin{verbatim}
+public  char  get_lower_case(
+    char   ch )
+\end{verbatim}}
+
+\desc{If the character is upper case, returns the lower case version
+of the character, otherwise, returns the character itself.}
+
+{\bf\begin{verbatim}
+public  char  get_upper_case(
+    char   ch )
+\end{verbatim}}
+
+\desc{If the character is lower case, returns the upper case version
+of the character, otherwise, returns the character itself.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  string_ends_in(
+    STRING   string,
+    STRING   ending )
+\end{verbatim}}
+
+\desc{Determines if the string ends in the specified \name{ending}.  For
+instance, passing the arguments, \name{"rainfall"} and \name{"fall"} returns
+\name{TRUE}.}
+
+{\bf\begin{verbatim}
+public    STRING   strip_outer_blanks(
+    STRING  str )
+\end{verbatim}}
+
+\desc{Returns a string which is the argument \name{str} without any leading
+or trailing blanks.}
+
+{\bf\begin{verbatim}
+public  void  make_string_upper_case(
+    STRING    string )
+\end{verbatim}}
+
+\desc{Converts the string to an all upper case string.  Modifies the
+string in place.}
+
+{\bf\begin{verbatim}
+public  int  find_character(
+    STRING  string,
+    char    ch )
+\end{verbatim}}
+
+\desc{Searches for the given character in the given \name{string},
+returning the index where it was found, or -1 if it was not found.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  blank_string(
+    STRING   string )
+\end{verbatim}}
+
+\desc{Returns true if the string is empty or consists of only space,
+tab, and newline characters.}
+
 \section{General File IO}
 
 Although one may use the standard UNIX file interface (\name{fprintf},
@@ -401,17 +557,15 @@ variables.  Also, automatic decompression of compressed files is
 provided.
 
 {\bf\begin{verbatim}
-public  void  expand_filename(
-    char  filename[],
-    char  expanded_filename[] )
+public  STRING  expand_filename(
+    STRING  filename )
 \end{verbatim}}
 
 \desc{Searches the argument \name{filename} for certain patterns, and
-expands them appropriately, storing the resulting expanded filename in
-the second argument, \name{expanded\_filename}, which must be a
-different string pointer.  Any sequence of
+expands them appropriately, returning the resulting expanded filename.
+Any sequence of
 characters starting with a \name{\~\ } up to but not including a slash,
-\name{/}, will be changed to the specified users home directory.
+\name{/}, will be changed to the specified user's home directory.
 Any occurrence of a dollar sign,
 \name{\$}, will result in the following text, up to the next slash,
 being expanded to the environment variable specified by the text.  This
@@ -420,9 +574,38 @@ before any \name{\~\ } or \name{\$}.  In all the following functions which
 take filenames, automatic expansion of filenames is performed.}
 
 {\bf\begin{verbatim}
+public  BOOLEAN  file_exists(
+    STRING        filename )
+\end{verbatim}}
+
+\desc{Returns \name{TRUE} if the file exists.}
+
+{\bf\begin{verbatim}
+public  BOOLEAN  check_clobber_file(
+    STRING   filename )
+public  BOOLEAN  check_clobber_file_default_suffix(
+    STRING   filename,
+    STRING   default_suffix )
+\end{verbatim}}
+
+\desc{Checks to see if the file exists, and if so, prompts the user as to
+whether it may be overwritten.  Returns TRUE if either the file
+does not exist, or if it does and the user answers \name{`y'} to the
+prompt.  The second form of the file appends a default suffix to the
+filename, if it does not yet have a suffix.}
+
+{\bf\begin{verbatim}
+public  void  remove_file(
+    STRING  filename )
+\end{verbatim}}
+
+\desc{Removes the specified file, which results in the file being
+removed only after all references to it are closed.}
+
+{\bf\begin{verbatim}
 public  BOOLEAN  filename_extension_matches(
-    char   filename[],
-    char   extension[] )
+    STRING   filename,
+    STRING   extension )
 \end{verbatim}}
 
 \desc{Returns \name{TRUE} if the file ends in the given extension, preceded
@@ -432,57 +615,38 @@ Correctly handles compressed files, e.g., passing the arguments,
 \name{"volume.mnc.Z"} and \name{"mnc"} returns \name{TRUE}.}
 
 {\bf\begin{verbatim}
-public  void  remove_directories_from_filename(
-    char  filename[],
-    char  filename_no_directories[] )
+public  STRING  remove_directories_from_filename(
+    STRING  filename )
 \end{verbatim}}
 
-\desc{Strips the directories from the filename, placing the result in
-the second argument, \name{filename\_no\_directories}.}
+\desc{Strips the directories from the filename, returning the result.}
 
 {\bf\begin{verbatim}
-public  void  extract_directory(
-    char    filename[],
-    char    directory[] )
+public  STRING  extract_directory(
+    STRING    filename )
 \end{verbatim}}
 
-\desc{Extracts the directory from the filename, placing the result in
-the second argument, \name{directory}.}
+\desc{Extracts the directory from the filename, returning the
+result.}
 
 {\bf\begin{verbatim}
-public  void  get_absolute_filename(
-    char    filename[],
-    char    directory[],
-    char    abs_filename[] )
+public  STRING  get_absolute_filename(
+    STRING    filename,
+    STRING    directory )
 \end{verbatim}}
 
-\desc{Given a filename and a current directory, constructs an
+\desc{Given a filename and a current directory, returns an
 absolute filename (one starting with a slash, \name{/}.}
 
 {\bf\begin{verbatim}
-public  BOOLEAN  file_exists(
-    char        filename[] )
-\end{verbatim}}
-
-\desc{Returns \name{TRUE} if the file exists, \name{FALSE} otherwise.}
-
-{\bf\begin{verbatim}
-public  void  remove_file(
-    char  filename[] )
-\end{verbatim}}
-
-\desc{Removes the specified file, which results in the file being
-removed only after all references to it are closed.}
-
-{\bf\begin{verbatim}
 public  Status  open_file(
-    char               filename[],
+    STRING             filename,
     IO_types           io_type,
     File_formats       file_format,
     FILE               **file )
 public  Status  open_file_with_default_suffix(
-    char               filename[],
-    char               default_suffix[],
+    STRING             filename,
+    STRING             default_suffix,
     IO_types           io_type,
     File_formats       file_format,
     FILE               **file )
@@ -564,46 +728,39 @@ character is found.}
 
 {\bf\begin{verbatim}
 public  Status  input_string(
-    FILE  *file,
-    char  str[],
-    int   string_length,
-    char  termination_char )
+    FILE    *file,
+    STRING  *str,
+    char    termination_char )
 \end{verbatim}}
 
-\desc{Inputs a string from the file, where the maximum storage of the
-string is specified by the argument \name{string\_length}.  The file
+\desc{Inputs a string from the file.  The file
 is read into the string until either the termination character or a
 newline character is found.  If the string ends at a newline
 character and the termination character is not a newline, the
 next character available from the file will be the newline
 character.  Otherwise, the next character available is the one just
-after the termination character found.
-}
+after the termination character found.}
 
 {\bf\begin{verbatim}
 public  Status  input_quoted_string(
     FILE            *file,
-    char            str[],
-    int             str_length )
+    STRING          *str )
 \end{verbatim}}
 
 \desc{Inputs a string from a file, delimited by quotation marks,
-returning \name{OK} or \name{ERROR}.  The
-maximum storage available in the \name{str} pointer is specified by
-the third argument, \name{str\_length}.   After successful reading of
+returning \name{OK} or \name{ERROR}.  After successful reading of
 a string, the next character available from the file is the one just
 after the ending quotation mark.}
 
 {\bf\begin{verbatim}
 public  Status  input_line(
     FILE    *file,
-    char    line[],
-    int     str_length )
+    STRING  line )
 \end{verbatim}}
 
 \desc{Inputs characters from the file into the argument \name{line},
-up until the next newline character, or until \name{str\_length}
-characters have been read.  If a newline was found, the next available
+up until the next newline character.  If a newline was found, the next
+available
 character will be the one after the newline.  The newline character is
 not stored in the string.}
 
@@ -674,8 +831,8 @@ public  Status  output_character(
 
 {\bf\begin{verbatim}
 public  Status  output_string(
-    FILE  *file,
-    char  str[] )
+    FILE    *file,
+    STRING  str )
 \end{verbatim}}
 
 \desc{Outputs the specified string to the file, returning \name{OK} or
@@ -684,7 +841,7 @@ public  Status  output_string(
 {\bf\begin{verbatim}
 public  Status  output_quoted_string(
     FILE            *file,
-    char            str[] )
+    STRING          str )
 \end{verbatim}}
 
 \desc{Outputs a quotation mark, the specified string, and a closing
@@ -773,8 +930,7 @@ public  Status  io_quoted_string(
     FILE            *file,
     IO_types        io_flag,
     File_formats    format,
-    char            str[],
-    int             str_length )
+    STRING          str )
 \end{verbatim}}
 
 \desc{If the \name{format} argument is \name{ASCII\_FORMAT},
@@ -1036,7 +1192,7 @@ public  void  initialize_progress_report(
     progress_struct   *progress,
     BOOLEAN           one_line_only,
     int               n_steps,
-    char              title[] )
+    STRING            title )
 \end{verbatim}}
 
 \desc{Initializes a progress report struct, specifying the number of
@@ -1065,56 +1221,6 @@ public  void  terminate_progress_report(
 
 \desc{Terminates the progress report.}
 
-\section{Strings}
-
-Some simple string manipulation techniques are provided:
-
-{\bf\begin{verbatim}
-public  BOOLEAN  string_ends_in(
-    char   string[],
-    char   ending[] )
-\end{verbatim}}
-
-\desc{Determines if the string ends in the specified \name{ending}.  For
-instance, passing the arguments, \name{"rainfall"} and \name{"fall"} returns
-\name{TRUE}.}
-
-{\bf\begin{verbatim}
-public    void   strip_outer_blanks(
-    char  str[],
-    char  stripped[] )
-\end{verbatim}}
-
-\desc{Removes leading and trailing blanks from the string, placing the
-result in the argument \name{stripped}.
-Correctly handles case where the two string arguments point to the same memory.}
-
-{\bf\begin{verbatim}
-public  void  get_upper_case_string(
-    char    string[],
-    char    upper_case[] )
-\end{verbatim}}
-
-\desc{Converts the string to an all upper case string.
-Correctly handles case where the two string arguments point to the same memory.}
-
-{\bf\begin{verbatim}
-public  int  find_character(
-    char    string[],
-    char    ch )
-\end{verbatim}}
-
-\desc{Searches for the given character in the given string \,
-returning the index where it was found, or -1 if it was not found.}
-
-{\bf\begin{verbatim}
-public  BOOLEAN  blank_string(
-    char   string[] )
-\end{verbatim}}
-
-\desc{Returns true if the string is empty or consists of only space,
-tab, and newline characters.}
-
 \section{Text Output}
 
 Rather than using the standard UNIX function \name{printf} for routine
@@ -1126,8 +1232,8 @@ use a function called \name{print} or \name{print\_error} with exactly the
 same arguments as for the standard \name{printf} function.
 
 {\bf\begin{verbatim}
-public  void  print( char format[], ... )
-public  void  print_error( char format[], ... )
+public  void  print( STRING format, ... )
+public  void  print_error( STRING format, ... )
 \end{verbatim}}
 
 \desc{Takes the same arguments as \name{printf()}, but allows
@@ -1135,9 +1241,9 @@ installing of a user output function for the final stage of output.}
 
 {\bf\begin{verbatim}
 public  void  set_print_function(
-    void     (*function) ( char [] ) )
+    void     (*function) ( STRING ) )
 public  void  set_print_error_function(
-    void     (*function) ( char [] ) )
+    void     (*function) ( STRING )
 \end{verbatim}}
 
 \desc{Sets the output function, where all text from calls to
@@ -1180,35 +1286,36 @@ public  Real  current_realtime_seconds( void )
 running.}
 
 {\bf\begin{verbatim}
-public  void  get_clock_time(
-    char  time_str[] )
+public  STRING  get_clock_time()
 \end{verbatim}}
 
-\desc{Copies the current clock time (hours and minutes) into a string.}
+\desc{Returns a string representing the current clock time (hours and minutes),
+for which the caller is reponsible for deleting.}
 
 {\bf\begin{verbatim}
-public  void  get_date(
-    char  date_str[] )
+public  STRING  get_date()
 \end{verbatim}}
 
-\desc{Copies the current date into a string.}
+\desc{Returns a string representing the current date,
+for which the caller is reponsible for deleting.}
+
 
 {\bf\begin{verbatim}
-public  void  format_time(
-    char   str[],
-    char   format[],
-    Real   seconds )
+public  STRING  format_time(
+    STRING   format,
+    Real     seconds )
 \end{verbatim}}
 
 \desc{Takes a time in seconds and a format string which has format
-components, i.e. ``\%g \%s'', and prints the time into the string
-\name{str}, in appropriate units of milliseconds, seconds, minutes,
-days, etc.}
+components, e.g. ``\%g \%s'', and prints the time into a string
+in appropriate units of milliseconds, seconds, minutes,
+days, etc.   The string is returned and the calling program is
+responsible for deleting the string.}
 
 {\bf\begin{verbatim}
 public  void  print_time(
-    char   format[],
-    Real   seconds )
+    STRING   format,
+    Real     seconds )
 \end{verbatim}}
 
 \desc{Same as \name{format\_time}, but calls \name{print()} with the
@@ -1259,9 +1366,9 @@ output for more advanced applications will be presented.
 
 {\bf\begin{verbatim}
 public  Status  input_volume(
-    char                 filename[],
+    STRING               filename,
     int                  n_dimensions,
-    char                 *dim_names[],
+    STRING               dim_names[],
     nc_type              volume_nc_data_type,
     BOOLEAN              volume_signed_flag,
     Real                 volume_voxel_min,
@@ -1375,13 +1482,13 @@ volume or is an independent volume on its own.
 
 {\bf\begin{verbatim}
 public  Status  output_volume(
-    char                  filename[],
+    STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,
-    char                  history[],
+    STRING                history,
     minc_output_options   *options )
 \end{verbatim}}
 
@@ -1441,14 +1548,14 @@ output the volume:
 
 {\bf\begin{verbatim}
 public  Status  output_modified_volume(
-    char                  filename[],
+    STRING                filename,
     nc_type               file_nc_data_type,
     BOOLEAN               file_signed_flag,
     Real                  file_voxel_min,
     Real                  file_voxel_max,
     Volume                volume,
-    char                  original_filename[],
-    char                  history[],
+    STRING                original_filename,
+    STRING                history,
     minc_output_options   *options )
 \end{verbatim}}
 
@@ -1626,7 +1733,7 @@ this real space linearly maps the minimum \name{voxel} value to the minimum
 \name{real} value.}
 
 {\bf\begin{verbatim}
-public  char  **get_volume_dimension_names(
+public  STRING  *get_volume_dimension_names(
     Volume   volume )
 \end{verbatim}}
 
@@ -1798,7 +1905,7 @@ similar to an existing volume.
 {\bf\begin{verbatim}
 public   Volume   create_volume(
     int         n_dimensions,
-    char        *dimension_names[],
+    STRING      dimension_names[],
     nc_type     nc_data_type,
     BOOLEAN     signed_flag,
     Real        voxel_min,
@@ -1952,49 +2059,87 @@ if present.  A threshold of zero will cause all volumes to be cached.  A
 threshold less than zero will result in no volumes being cached.}
 
 {\bf\begin{verbatim}
-public  void  set_volume_cache_block_sizes(
+typedef  enum  { SLICE_ACCESS, RANDOM_VOLUME_ACCESS }
+               Cache_block_size_hints;
+
+public  void  set_cache_block_sizes_hint(
+    Cache_block_size_hints  hint )
+
+public  void  set_default_cache_block_sizes(
     int   block_sizes[] )
 \end{verbatim}}
 
-\desc{Sets the size of the cache block in each dimension.  When a voxel is
-accessed in a
+\desc{
+When a voxel is accessed in a
 cached volume, the corresponding block containing the voxel is read from
-or written to the disk as necessary.  This function sets the size of
-the block and therefore controls the tradeoff between fast access of
+or written to the disk as necessary.  These two functions control the default
+size of the blocks and therefore the tradeoff between fast access of
 adjacent voxels (using large block sizes) and fast access of arbitrarily
-distributed voxels (using small block sizes).  If an application
-intends to perform slice-by-slice operations, then a block size
-corresponding to one slice may be selected.  If this function is not
+distributed voxels (using small block sizes).
+The function \name{set\_cache\_block\_sizes\_hint} indicates that
+the default block sizes for volumes created in the future
+should be computed based on the
+assumption that the application will be accessing volume voxels mostly in
+a slice-by-slice manner (\name{SLICE\_ACCESS}) or in an unpredictable order
+(\name{RANDOM\_VOLUME\_ACCESS}).  The second function,
+\name{set\-\_default\-\_cache\-\_block\-\_sizes}, provides an alternative
+where the default block sizes are explicitly set.  A call to either
+function overrides any previous call to the other function.
+If neither of these functions is
 called, the default value is a block size of 8 voxels per dimension,
 or the value specified by the environment variable
-\name{VOLUME\_CACHE\_BLOCK\_SIZE}.  Note that this function may be called
-after volume creation, but before the first voxel access.  This allows
-a volume to be created via \name{start\_volume\_input}, and the file
-sizes and other information to be examined, before setting the block
-size to an appropriate value.  After the first voxel access, the block
-size for a volume cannot be changed.}
+\name{VOLUME\_CACHE\_BLOCK\_SIZE}.  These functions only affect volumes
+created afterwards.  In order to change the value for a given volume,
+the following function may be used:}
 
 {\bf\begin{verbatim}
-public  void  set_max_bytes_in_cache(
+public  void  set_volume_cache_block_sizes(
+    Volume    volume,
+    int       block_sizes[] )
+\end{verbatim}}
+
+\desc{Sets the size of the cache block for the given volume.  Because
+this function causes the cache to be completely flushed, in order to
+change the block size, it may incur a temporary speed penalty during
+subsequent voxel accesses which cause the cache to read blocks from
+a file}
+
+{\bf\begin{verbatim}
+public  void  set_default_max_bytes_in_cache(
     int  n_bytes )
 \end{verbatim}}
 
-\desc{Sets the maximum number of bytes allowed in the cache for each
+\desc{Sets the default maximum number of bytes allowed in the cache for each
 volume.  A higher number may provide faster access, due to a greater
 chance of finding a particular voxel within the cache, so this value
 should be as large as reasonable, given the amount of virtual memory
 available.  If this function is not called, the default value is 80
 megabytes, or the value of the environment variable
 \name{VOLUME\_CACHE\_SIZE}, if present.  Setting a value of 0 will
-result in cached volumes having exactly one block in their cache.}
+result in cached volumes having exactly one block in their cache.
+This function only affects volumes created subsequently.  In order to
+change this value for a specific volume, the following function may be
+used:}
+
+{\bf\begin{verbatim}
+public  void  set_volume_cache_size(
+    Volume    volume,
+    int       max_memory_bytes )
+\end{verbatim}}
+
+\desc{Sets the maximum number of bytes allowed in the cache for a
+particular volume.  Calling this function flushes the cache, in order
+to reallocate the data structures to account for the new size.  As in
+calling the function \name{set\_volume\_cache\_block\_sizes}, there
+may be a temporary speed loss in accessing pixels.}
 
 {\bf\begin{verbatim}
 public  void  set_cache_volume_output_filename(
     Volume      volume,
-    char        filename[] )
+    STRING      filename )
 public  void  set_cache_volume_output_dimension_names(
     Volume      volume,
-    char        **dimension_names )
+    STRING      dimension_names[] )
 \end{verbatim}}
 
 \desc{When a cached volume is modified, a temporary file is created to
@@ -2094,7 +2239,7 @@ be facilitated by the following functions:
 
 {\bf\begin{verbatim}
 public  Minc_file  initialize_minc_input(
-    char                 filename[],
+    STRING               filename,
     Volume               volume,
     minc_input_options   *options )
 \end{verbatim}}
@@ -2176,7 +2321,7 @@ providing output to a file by subvolumes.
 
 {\bf\begin{verbatim}
 public  Minc_file  initialize_minc_output(
-    char                   filename[],
+    STRING                 filename,
     int                    n_dimensions,
     STRING                 dim_names[],
     int                    sizes[],
@@ -2218,8 +2363,8 @@ MINC functions on the file.}
 {\bf\begin{verbatim}
 public  Status  copy_auxiliary_data_from_minc_file(
     Minc_file   file,
-    char        filename[],
-    char        history_string[] )
+    STRING      filename,
+    STRING      history_string )
 \end{verbatim}}
 
 \desc{Copies the auxiliary information from the MINC file specified in
@@ -2283,9 +2428,9 @@ public  Status  input_tag_points(
     Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    char      ***labels )
+    STRING    *labels[] )
 public  Status  input_tag_file(
-    char      filename[],
+    STRING    filename,
     int       *n_volumes,
     int       *n_tag_points,
     Real      ***tags_volume1,
@@ -2293,7 +2438,7 @@ public  Status  input_tag_file(
     Real      **weights,
     int       **structure_ids,
     int       **patient_ids,
-    char      ***labels )
+    STRING    *labels[] )
 \end{verbatim}}
 
 \desc{These two functions read a set of tag points from a file.  The
@@ -2322,16 +2467,38 @@ public  void  free_tag_points(
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    char      **labels )
+    STRING    labels[] )
 \end{verbatim}}
 
 \desc{When finished with a list of tag points, the
 associated memory may be freed by calling this function.}
 
 {\bf\begin{verbatim}
+public  Status  initialize_tag_file_input(
+    FILE      *file,
+    int       *n_volumes )
+
+public  BOOLEAN  input_one_tag(
+    FILE      *file,
+    int       n_volumes,
+    Real      tag_volume1[],
+    Real      tag_volume2[],
+    Real      *weight,
+    int       *structure_id,
+    int       *patient_id,
+    STRING    *label,
+    Status    *status )
+\end{verbatim}}
+
+\desc{These two routines provide a more memory efficient method to
+input tag points.  After opening a file, the first routine is called
+to initialize the input of tags.  The next routine is repeatedly
+called until it returns FALSE, reading one tag at a time.}
+
+{\bf\begin{verbatim}
 public  Status  output_tag_points(
     FILE      *file,
-    char      comments[],
+    STRING    comments,
     int       n_volumes,
     int       n_tag_points,
     Real      **tags_volume1,
@@ -2339,10 +2506,11 @@ public  Status  output_tag_points(
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    char      **labels )
+    STRING    labels[] )
+
 public  Status  output_tag_file(
-    char      filename[],
-    char      comments[],
+    STRING    filename,
+    STRING    comments,
     int       n_volumes,
     int       n_tag_points,
     Real      **tags_volume1,
@@ -2350,7 +2518,7 @@ public  Status  output_tag_file(
     Real      weights[],
     int       structure_ids[],
     int       patient_ids[],
-    char      **labels )
+    STRING    labels[] )
 \end{verbatim}}
 
 \desc{These two functions write a list of tag points to a tag point
@@ -2369,6 +2537,32 @@ three pieces or information is written to the file.  Similarly, if
 the \name{labels} argument is \name{NULL}, then no labels are written
 to the file.}
 
+{\bf\begin{verbatim}
+public  Status  initialize_tag_file_output(
+    FILE      *file,
+    STRING    comments,
+    int       n_volumes )
+
+public  Status  output_one_tag(
+    FILE      *file,
+    int       n_volumes,
+    Real      tag_volume1[],
+    Real      tag_volume2[],
+    Real      *weight,
+    int       *structure_id,
+    int       *patient_id,
+    STRING    label )
+
+public  void  terminate_tag_file_output(
+    FILE    *file )
+\end{verbatim}}
+
+\desc{These two routines provide a more memory efficient method to
+output tag points.  After opening a file, the first routine is called
+to initialize the output of tags.  The next routine is repeatedly
+called to output a single tag point each time.  The third routine is
+called to indicate the end of tag files.}
+
 \section{Source Code Example}
 
 The following is an example which reads a tag volume, removes all tags
@@ -2385,10 +2579,10 @@ int  main(
 {
     int        i, n_volumes, n_tag_points, *structure_ids, *patient_ids;
     Real       **tags1, **tags2, *weights;
-    char       **labels;
+    STRING     *labels;
     int        new_n_tag_points, *new_structure_ids, *new_patient_ids;
     Real       **new_tags1, *new_weights;
-    char       **new_labels;
+    STRING     *new_labels;
 
     /*--- input the tag file */
 
@@ -2620,7 +2814,7 @@ typedef  void   (*User_transform_function)( void  *user_data,
                                             Real  z,
                                             Real  *x_trans,
                                             Real  *y_trans,
-                                            Real  *z_trans );
+                                            Real  *z_trans )
 
 public  void  create_user_transform(
     General_transform         *transform,
@@ -2752,14 +2946,14 @@ extension of \name{.xfm}.  The input and output functions are:
 
 {\bf\begin{verbatim}
 public  Status  output_transform_file(
-    char                filename[],
-    char                comments[],
+    STRING              filename,
+    STRING              comments,
     General_transform   *transform )
 public  Status  output_transform(
     FILE                *file,
-    char                filename[],
+    STRING              filename,
     int                 *volume_count_ptr,
-    char                comments[],
+    STRING              comments,
     General_transform   *transform )
 \end{verbatim}}
 
@@ -2785,7 +2979,7 @@ public  Status  input_transform(
     FILE                *file,
     General_transform   *transform )
 public  Status  input_transform_file(
-    char                filename[],
+    STRING              filename,
     General_transform   *transform )
 \end{verbatim}}
 
@@ -2839,7 +3033,7 @@ int  main()
     int                 i, n_volumes, n_tag_points;
     int                 *structure_ids, *patient_ids;
     Real                **tags1, **tags2, *weights;
-    char                **labels;
+    STRING              *labels;
     General_transform   transform;
 
     /*--- input the two volumes */

@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.16 1995-11-09 18:55:00 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.17 1995-11-10 20:23:18 david Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -282,18 +282,17 @@ public  void  initialize_volume_cache(
 
     n_dims = get_volume_n_dimensions( volume );
     cache->n_dimensions = n_dims;
-    cache->dim_names_set = FALSE;
     cache->writing_to_temp_file = FALSE;
 
     for_less( dim, 0, MAX_DIMENSIONS )
-    {
         cache->file_offset[dim] = 0;
-        cache->dimension_names[dim] = NULL;
-    }
 
     cache->minc_file = NULL;
     cache->input_filename = NULL;
     cache->output_filename = NULL;
+    cache->original_filename = NULL;
+    cache->history = NULL;
+    set_default_minc_output_options( &cache->options );
     cache->output_file_is_open = FALSE;
     cache->must_read_blocks_before_use = FALSE;
 
@@ -551,12 +550,15 @@ public  void  delete_volume_cache(
     n_dims = cache->n_dimensions;
     for_less( dim, 0, n_dims )
     {
-        delete_string( cache->dimension_names[dim] );
         FREE( cache->lookup[dim] );
     }
 
     delete_string( cache->input_filename );
     delete_string( cache->output_filename );
+    delete_string( cache->original_filename );
+    delete_string( cache->history );
+
+    delete_minc_output_options( &cache->options );
 
     /*--- close the file that cache was reading from or writing to */
 
@@ -680,59 +682,26 @@ public  void  set_volume_cache_size(
     alloc_volume_cache( cache, volume );
 }
 
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_cache_volume_output_dimension_names
-@INPUT      : volume
-              dimension_names
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Sets the output dimension names for any file created as a
-              result of using volume caching.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Sep. 1, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
+public  void  set_cache_output_volume_parameters(
+    Volume                      volume,
+    STRING                      filename,
+    nc_type                     file_nc_data_type,
+    BOOLEAN                     file_signed_flag,
+    Real                        file_voxel_min,
+    Real                        file_voxel_max,
+    STRING                      original_filename,
+    STRING                      history,
+    minc_output_options         *options )
 
-public  void  set_cache_volume_output_dimension_names(
-    Volume      volume,
-    STRING      dimension_names[] )
-{
-    int   dim;
-
-    for_less( dim, 0, get_volume_n_dimensions(volume) )
-    {
-        volume->cache.dimension_names[dim] =
-                                  create_string( dimension_names[dim] );
-    }
-
-    volume->cache.dim_names_set = TRUE;
-}
-    
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : set_cache_volume_output_filename
-@INPUT      : volume
-              filename
-@OUTPUT     : 
-@RETURNS    : 
-@DESCRIPTION: Sets the output filename for any file created as a result of
-              using volume caching.  If a cached volume is modified, a
-              temporary file is created to store the volume.  If this function
-              is called prior to this, a permanent file with the given name
-              is created instead.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : Sep. 1, 1995    David MacDonald
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-
-public  void  set_cache_volume_output_filename(
-    Volume      volume,
-    STRING      filename )
 {
     volume->cache.output_filename = create_string( filename );
+    volume->cache.file_nc_data_type = file_nc_data_type;
+    volume->cache.file_signed_flag = file_signed_flag;
+    volume->cache.file_voxel_min = file_voxel_min;
+    volume->cache.file_voxel_max = file_voxel_max;
+    volume->cache.original_filename = create_string( original_filename );
+    volume->cache.history = create_string( history );
+    copy_minc_output_options( options, &volume->cache.options );
 }
     
 /* ----------------------------- MNI Header -----------------------------------
@@ -784,16 +753,14 @@ private  void  open_cache_volume_output_file(
 {
     int        dim, n_dims;
     int        out_sizes[MAX_DIMENSIONS], vol_sizes[MAX_DIMENSIONS];
-    int        i, j, n_found;
-    Real       voxel_min, voxel_max;
     Real       min_value, max_value;
-    nc_type    nc_data_type;
     Minc_file  out_minc_file;
-    BOOLEAN    done[MAX_DIMENSIONS], signed_flag;
     char       tmp_name[L_tmpnam+1];
     STRING     *vol_dim_names;
-    STRING     out_dim_names[MAX_DIMENSIONS], output_filename;
-    minc_output_options  options;
+    STRING     *out_dim_names, output_filename;
+
+
+    n_dims = get_volume_n_dimensions( volume );
 
     /*--- check if the output filename has been set */
 
@@ -803,70 +770,60 @@ private  void  open_cache_volume_output_file(
         (void) tmpnam( tmp_name );
         output_filename = concat_strings( tmp_name, "." );
         concat_to_string( &output_filename, MNC_ENDING );
+
+        cache->file_nc_data_type = get_volume_nc_data_type( volume,
+                                          &cache->file_signed_flag );
+        get_volume_voxel_range( volume, &cache->file_voxel_min,
+                                &cache->file_voxel_max );
+
+        ALLOC( out_dim_names, n_dims );
+
+        vol_dim_names = get_volume_dimension_names( volume );
+        get_volume_sizes( volume, vol_sizes );
+
+        for_less( dim, 0, n_dims )
+        {
+            out_dim_names[dim] = create_string( vol_dim_names[dim] );
+            out_sizes[dim] = vol_sizes[dim];
+        }
+
+        delete_dimension_names( volume, vol_dim_names );
     }
     else
     {
         cache->writing_to_temp_file = FALSE;
         output_filename = create_string( cache->output_filename );
+
+        out_dim_names = create_output_dim_names( volume,
+                                                 cache->original_filename, 
+                                                 &cache->options, out_sizes );
+
+        if( out_dim_names == NULL )
+            return;
     }
 
-    n_dims = get_volume_n_dimensions( volume );
-    vol_dim_names = get_volume_dimension_names( volume );
-    get_volume_sizes( volume, vol_sizes );
-
-    if( cache->dim_names_set )
-    {
-        for_less( dim, 0, n_dims )
-            out_dim_names[dim] = create_string( cache->dimension_names[dim] );
-    }
-    else
-    {
-        for_less( dim, 0, n_dims )
-            out_dim_names[dim] = create_string( vol_dim_names[dim] );
-    }
-
-    /*--- using the dimension names, create output sizes */
-
-    n_found = 0;
-    for_less( i, 0, n_dims )
-        done[i] = FALSE;
-
-    for_less( i, 0, n_dims )
-    {
-        for_less( j, 0, n_dims )
-        {
-            if( !done[j] && equal_strings( vol_dim_names[i], out_dim_names[j] ))
-            {
-                out_sizes[j] = vol_sizes[i];
-                ++n_found;
-                done[j] = TRUE;
-            }
-        }
-    }
-
-    delete_dimension_names( volume, vol_dim_names );
-
-    if( n_found != n_dims )
-    {
-        handle_internal_error(
-                    "Open_cache: Volume dimension name do not match.\n" );
-    }
-
-    nc_data_type = get_volume_nc_data_type( volume, &signed_flag );
-    get_volume_voxel_range( volume, &voxel_min, &voxel_max );
     get_volume_real_range( volume, &min_value, &max_value );
 
-    set_default_minc_output_options( &options );
-    set_minc_output_real_range( &options, min_value, max_value );
+    set_minc_output_real_range( &cache->options, min_value, max_value );
 
     /*--- open the file for writing */
 
     out_minc_file = initialize_minc_output( output_filename,
                                         n_dims, out_dim_names, out_sizes,
-                                        nc_data_type, signed_flag,
-                                        voxel_min, voxel_max,
+                                        cache->file_nc_data_type,
+                                        cache->file_signed_flag,
+                                        cache->file_voxel_min,
+                                        cache->file_voxel_max,
                                         get_voxel_to_world_transform(volume),
-                                        volume, &options );
+                                        volume, &cache->options );
+
+    if( out_minc_file == NULL )
+        return;
+
+    if( copy_volume_auxiliary_and_history( out_minc_file, output_filename,
+                                           cache->original_filename,
+                                           cache->history ) != OK )
+        return;
 
     out_minc_file->converting_to_colour = FALSE;
 
@@ -875,10 +832,10 @@ private  void  open_cache_volume_output_file(
     if( string_length( cache->output_filename ) == 0 )
         remove_file( output_filename );
 
+    set_minc_output_random_order( out_minc_file );
+
     /*--- if the volume was previously reading a file, copy the volume to
           the output and close the input file */
-
-    set_minc_output_random_order( out_minc_file );
 
     if( cache->minc_file != NULL )
     {
@@ -891,9 +848,9 @@ private  void  open_cache_volume_output_file(
 
     cache->minc_file = out_minc_file;
 
+    delete_dimension_names( volume, out_dim_names );
+
     delete_string( output_filename );
-    for_less( dim, 0, n_dims )
-        delete_string( out_dim_names[dim] );
 }
 
 /* ----------------------------- MNI Header -----------------------------------

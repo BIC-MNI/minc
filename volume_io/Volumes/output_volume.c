@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.17 1995-11-09 19:17:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.18 1995-11-10 20:23:16 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -63,6 +63,123 @@ public  Status   get_file_dimension_names(
     return( status );
 }
 
+public  STRING  *create_output_dim_names(
+    Volume                volume,
+    STRING                original_filename,
+    minc_output_options   *options,
+    int                   file_sizes[] )
+{
+    int                  n_dims;
+    int                  vol_sizes[MAX_DIMENSIONS];
+    int                  i, j, n_found;
+    STRING               *vol_dimension_names;
+    BOOLEAN              done[MAX_DIMENSIONS];
+    STRING               *dim_names;
+
+    get_volume_sizes( volume, vol_sizes );
+
+    n_dims = get_volume_n_dimensions(volume);
+    vol_dimension_names = get_volume_dimension_names( volume );
+
+    ALLOC( dim_names, n_dims );
+
+    /*--- either get the output dim name ordering from the original
+          filename, the volume, or the options */
+
+    if( options != NULL && string_length( options->dimension_names[0] ) > 0 )
+    {
+        for_less( i, 0, n_dims )
+            dim_names[i] = create_string( options->dimension_names[i] );
+    }
+    else
+    {
+        if( original_filename != NULL && file_exists(original_filename) )
+        {
+            if( get_file_dimension_names( original_filename, n_dims,
+                                          dim_names ) != OK )
+                return( NULL );
+        }
+        else
+        {
+            for_less( i, 0, n_dims )
+                dim_names[i] = create_string( vol_dimension_names[i] );
+        }
+    }
+
+    n_found = 0;
+    for_less( i, 0, n_dims )
+        done[i] = FALSE;
+
+    for_less( i, 0, n_dims )
+    {
+        for_less( j, 0, n_dims )
+        {
+            if( !done[j] &&
+                equal_strings( vol_dimension_names[i], dim_names[j] ) )
+            {
+                file_sizes[j] = vol_sizes[i];
+                ++n_found;
+                done[j] = TRUE;
+            }
+        }
+    }
+
+    delete_dimension_names( volume, vol_dimension_names );
+
+    if( n_found != n_dims )
+    {
+        print_error(
+               "create_output_dim_names: invalid dimension name.\n" );
+
+        delete_dimension_names( volume, dim_names );
+
+        return( NULL );
+    }
+
+    return( dim_names );
+}
+
+public  Status   copy_volume_auxiliary_and_history(
+    Minc_file   minc_file,
+    STRING      filename,
+    STRING      original_filename,
+    STRING      history )
+{
+    Status    status;
+    BOOLEAN   copy_original_file_data;
+    STRING    full_filename, full_original_filename;
+
+    copy_original_file_data = FALSE;
+
+    if( original_filename != NULL )
+    {
+        full_filename = expand_filename( filename );
+        full_original_filename = expand_filename( original_filename );
+
+        if( !equal_strings( full_filename, full_original_filename ) &&
+            file_exists( full_original_filename ) )
+        {
+            copy_original_file_data = TRUE;
+        }
+
+        delete_string( full_filename );
+        delete_string( full_original_filename );
+    }
+
+    status = OK;
+
+    if( copy_original_file_data )
+    {
+        status = copy_auxiliary_data_from_minc_file( minc_file,
+                                                     original_filename,
+                                                     history );
+    }
+    else if( history != NULL )
+        status = add_minc_history( minc_file, history );
+
+    return( status );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : output_modified_volume
 @INPUT      : filename
@@ -104,73 +221,17 @@ public  Status  output_modified_volume(
     Status               status;
     Minc_file            minc_file;
     int                  n_dims, sizes[MAX_DIMENSIONS];
-    int                  vol_sizes[MAX_DIMENSIONS];
-    int                  i, j, n_found;
     Real                 real_min, real_max;
-    STRING               *vol_dimension_names;
-    BOOLEAN              done[MAX_DIMENSIONS], copy_original_file_data;
-    STRING               dim_names[MAX_DIMENSIONS];
-    STRING               full_filename, full_original_filename;
+    STRING               *dim_names;
     minc_output_options  used_options;
 
-    get_volume_sizes( volume, vol_sizes );
+    dim_names = create_output_dim_names( volume, original_filename,
+                                         options, sizes );
+
+    if( dim_names == NULL )
+        return( ERROR );
 
     n_dims = get_volume_n_dimensions(volume);
-    vol_dimension_names = get_volume_dimension_names( volume );
-
-    /*--- either get the output dim name ordering from the original
-          filename, the volume, or the options */
-
-    if( options == NULL || string_length( options->dimension_names[0] ) == 0 )
-    {
-        if( original_filename != NULL && file_exists(original_filename) )
-        {
-            if( get_file_dimension_names( original_filename, n_dims,
-                                          dim_names ) != OK )
-                return( ERROR );
-        }
-        else
-        {
-            for_less( i, 0, n_dims )
-                dim_names[i] = create_string( vol_dimension_names[i] );
-        }
-    }
-    else
-    {
-        for_less( i, 0, n_dims )
-            dim_names[i] = create_string( options->dimension_names[i] );
-    }
-
-    n_found = 0;
-    for_less( i, 0, n_dims )
-        done[i] = FALSE;
-
-    for_less( i, 0, n_dims )
-    {
-        for_less( j, 0, n_dims )
-        {
-            if( !done[j] &&
-                equal_strings( vol_dimension_names[i], dim_names[j] ) )
-            {
-                sizes[j] = vol_sizes[i];
-                ++n_found;
-                done[j] = TRUE;
-            }
-        }
-    }
-
-    delete_dimension_names( volume, vol_dimension_names );
-
-    if( n_found != n_dims )
-    {
-        print_error(
-                 "output_modified_volume: invalid dimension names option.\n" );
-
-        for_less( i, 0, n_dims )
-            delete_string( dim_names[i] );
-
-        return( ERROR );
-    }
 
     if( options == (minc_output_options *) NULL )
         set_default_minc_output_options( &used_options );
@@ -191,36 +252,11 @@ public  Status  output_modified_volume(
                                         get_voxel_to_world_transform(volume),
                                         volume, &used_options );
 
-    status = OK;
-
     if( minc_file == (Minc_file) NULL )
-        status = ERROR;
+        return( ERROR );
 
-    copy_original_file_data = FALSE;
-
-    if( original_filename != NULL )
-    {
-        full_filename = expand_filename( filename );
-        full_original_filename = expand_filename( original_filename );
-
-        if( !equal_strings( full_filename, full_original_filename ) &&
-            file_exists( full_original_filename ) )
-        {
-            copy_original_file_data = TRUE;
-        }
-
-        delete_string( full_filename );
-        delete_string( full_original_filename );
-    }
-
-    if( status == OK && copy_original_file_data )
-    {
-        status = copy_auxiliary_data_from_minc_file( minc_file,
-                                                     original_filename,
-                                                     history );
-    }
-    else if( status == OK && history != NULL )
-        status = add_minc_history( minc_file, history );
+    status = copy_volume_auxiliary_and_history( minc_file, filename,
+                                                original_filename, history );
 
     if( status == OK )
         status = output_minc_volume( minc_file );
@@ -228,8 +264,7 @@ public  Status  output_modified_volume(
     if( status == OK )
         status = close_minc_output( minc_file );
 
-    for_less( i, 0, n_dims )
-        delete_string( dim_names[i] );
+    delete_dimension_names( volume, dim_names );
 
     return( status );
 }

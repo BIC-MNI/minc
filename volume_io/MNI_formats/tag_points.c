@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.18 1995-10-19 15:47:13 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.19 1995-11-10 20:23:19 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -411,9 +411,10 @@ private  STRING  extract_label(
 
 public  Status  initialize_tag_file_input(
     FILE      *file,
-    int       *n_volumes )
+    int       *n_volumes_ptr )
 {
     STRING  line;
+    int     n_volumes;
 
     /* parameter checking */
 
@@ -440,7 +441,7 @@ public  Status  initialize_tag_file_input(
     if( mni_input_keyword_and_equal_sign( file, VOLUMES_STRING, TRUE ) != OK )
         return( ERROR );
 
-    if( mni_input_int( file, n_volumes ) != OK )
+    if( mni_input_int( file, &n_volumes ) != OK )
     {
         print_error( "input_tag_points(): expected # volumes after %s.\n",
                      VOLUMES_STRING );
@@ -450,10 +451,10 @@ public  Status  initialize_tag_file_input(
     if( mni_skip_expected_character( file, (char) ';' ) != OK )
         return( ERROR );
 
-    if( *n_volumes != 1 && *n_volumes != 2 )
+    if( n_volumes != 1 && n_volumes != 2 )
     {
         print_error( "input_tag_points(): invalid # volumes: %d \n",
-                        *n_volumes );
+                     n_volumes );
         return( ERROR );
     }
 
@@ -461,6 +462,9 @@ public  Status  initialize_tag_file_input(
 
     if( mni_input_keyword_and_equal_sign( file, TAG_POINTS_STRING, TRUE ) != OK)
         return( ERROR );
+
+    if( n_volumes_ptr != NULL )
+        *n_volumes_ptr = n_volumes;
 
     return( OK );
 }
@@ -625,7 +629,7 @@ private  Status  read_one_tag(
         if( mni_skip_expected_character( file, (char) ';' ) != OK )
             status = ERROR;
         else
-            status = OK;
+            status = END_OF_FILE;
     }
 
     return( status );
@@ -803,7 +807,7 @@ public  BOOLEAN  input_one_tag(
 
 public  Status  input_tag_points(
     FILE      *file,
-    int       *n_volumes,
+    int       *n_volumes_ptr,
     int       *n_tag_points,
     Real      ***tags_volume1,
     Real      ***tags_volume2,
@@ -816,15 +820,18 @@ public  Status  input_tag_points(
     Real     tags1[N_DIMENSIONS];
     Real     tags2[N_DIMENSIONS];
     Real     weight;
-    int      structure_id, patient_id;
+    int      structure_id, patient_id, n_volumes;
     STRING   label;
 
-    status = initialize_tag_file_input( file, n_volumes );
+    status = initialize_tag_file_input( file, &n_volumes );
+
+    if( n_volumes_ptr != NULL )
+        *n_volumes_ptr = n_volumes;
 
     *n_tag_points = 0;
 
     while( status == OK &&
-           input_one_tag( file, *n_volumes,
+           input_one_tag( file, n_volumes,
                           tags1, tags2, &weight, &structure_id, &patient_id,
                           &label, &status ) )
     {
@@ -838,7 +845,7 @@ public  Status  input_tag_points(
             (*tags_volume1)[*n_tag_points][Z] = tags1[Z];
         }
 
-        if( *n_volumes == 2 && tags_volume2 != NULL )
+        if( n_volumes == 2 && tags_volume2 != NULL )
         {
             SET_ARRAY_SIZE( *tags_volume2, *n_tag_points, *n_tag_points+1,
                             DEFAULT_CHUNK_SIZE );

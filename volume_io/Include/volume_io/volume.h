@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.40 1995-10-19 15:46:40 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.41 1995-11-10 20:23:09 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -37,6 +37,13 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #undef  cmode
 #include  <transforms.h>
 #include  <multidim.h>
+
+typedef  struct
+{
+    Real     global_image_range[2];
+    STRING   dimension_names[MAX_DIMENSIONS];
+} minc_output_options;
+
 #include  <volume_cache.h>
 
 extern  STRING   XYZ_dimension_names[];
@@ -297,13 +304,6 @@ typedef  struct
     int         dimension_size_for_colour_data;
     int         rgba_indices[4];
 } minc_input_options;
-
-typedef  struct
-{
-    Real     global_image_range[2];
-    STRING   dimension_names[MAX_DIMENSIONS];
-} minc_output_options;
-
 
 typedef  struct
 {

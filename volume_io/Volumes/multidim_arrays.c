@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.7 1995-10-19 15:47:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.8 1995-11-10 20:23:17 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -373,6 +373,10 @@ public  void  copy_multidim_data_reordered(
     char      *src_ptr, *dest_ptr;
     int       d;
     int       dest_offsets[MAX_DIMENSIONS], src_offsets[MAX_DIMENSIONS];
+    int       dest_offset0, dest_offset1, dest_offset2, dest_offset3;
+    int       dest_offset4;
+    int       src_offset0, src_offset1, src_offset2, src_offset3;
+    int       src_offset4;
     int       dest_steps[MAX_DIMENSIONS], src_steps[MAX_DIMENSIONS];
     int       dest_index;
     int       n_transfer_dims;
@@ -450,6 +454,18 @@ public  void  copy_multidim_data_reordered(
     size3 = transfer_counts[3];
     size4 = transfer_counts[4];
 
+    src_offset0 = src_offsets[0];
+    src_offset1 = src_offsets[1];
+    src_offset2 = src_offsets[2];
+    src_offset3 = src_offsets[3];
+    src_offset4 = src_offsets[4];
+
+    dest_offset0 = dest_offsets[0];
+    dest_offset1 = dest_offsets[1];
+    dest_offset2 = dest_offsets[2];
+    dest_offset3 = dest_offsets[3];
+    dest_offset4 = dest_offsets[4];
+
     for_less( v4, 0, size4 )
     {
         for_less( v3, 0, size3 )
@@ -461,20 +477,20 @@ public  void  copy_multidim_data_reordered(
                     for_less( v0, 0, size0 )
                     {
                         (void) memcpy( dest_ptr, src_ptr, type_size );
-                        src_ptr += src_offsets[0];
-                        dest_ptr += dest_offsets[0];
+                        src_ptr += src_offset0;
+                        dest_ptr += dest_offset0;
                     }
-                    src_ptr += src_offsets[1];
-                    dest_ptr += dest_offsets[1];
+                    src_ptr += src_offset1;
+                    dest_ptr += dest_offset1;
                 }
-                src_ptr += src_offsets[2];
-                dest_ptr += dest_offsets[2];
+                src_ptr += src_offset2;
+                dest_ptr += dest_offset2;
             }
-            src_ptr += src_offsets[3];
-            dest_ptr += dest_offsets[3];
+            src_ptr += src_offset3;
+            dest_ptr += dest_offset3;
         }
-        src_ptr += src_offsets[4];
-        dest_ptr += dest_offsets[4];
+        src_ptr += src_offset4;
+        dest_ptr += dest_offset4;
     }
 }
 

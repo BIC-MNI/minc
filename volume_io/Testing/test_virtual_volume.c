@@ -1,6 +1,6 @@
 #include  <internal_volume_io.h>
 
-#define  MAX_ERRORS 1
+#define  MAX_ERRORS 5
 
 private  int  compute_voxel(
     int    x,
@@ -14,16 +14,26 @@ private  int  compute_voxel(
 #define  CACHE_THRESHOLD  1
 
 #ifdef  TESTING_IO
-#define  CACHE_SIZE       1000000
+#define  CACHE_SIZE       100000
 #else
 #define  CACHE_SIZE       1000000000
 #endif
 
-#define  X_SIZE  100
-#define  Y_SIZE  100
-#define  Z_SIZE  100
+#define  X_SIZE  81
+#define  Y_SIZE  88
+#define  Z_SIZE  82
 
-#define  BLOCK_SIZE  8
+#define  BLOCK_SIZE_0  8
+#define  BLOCK_SIZE_1  9
+#define  BLOCK_SIZE_2  16
+#define  BLOCK_SIZE_3  8
+#define  BLOCK_SIZE_4  8
+
+#define  NEW_BLOCK_SIZE_0  16
+#define  NEW_BLOCK_SIZE_1  8
+#define  NEW_BLOCK_SIZE_2  4
+#define  NEW_BLOCK_SIZE_3  8
+#define  NEW_BLOCK_SIZE_4  8
 
 int  main(
     int   argc,
@@ -35,11 +45,16 @@ int  main(
     int                  true_voxel, test_voxel;
     STRING               output_filename, output_filename2;
     static STRING        dim_names[] = { MIxspace, MIzspace, MIyspace };
-    static int           block_sizes[] = { BLOCK_SIZE,
-                                           BLOCK_SIZE,
-                                           BLOCK_SIZE,
-                                           BLOCK_SIZE,
-                                           BLOCK_SIZE };
+    static int           block_sizes[] = { BLOCK_SIZE_0,
+                                           BLOCK_SIZE_1,
+                                           BLOCK_SIZE_2,
+                                           BLOCK_SIZE_3,
+                                           BLOCK_SIZE_4 };
+    static int           new_block_sizes[] = { NEW_BLOCK_SIZE_0,
+                                               NEW_BLOCK_SIZE_1,
+                                               NEW_BLOCK_SIZE_2,
+                                               NEW_BLOCK_SIZE_3,
+                                               NEW_BLOCK_SIZE_4 };
 
     if( argc < 3 )
     {
@@ -51,8 +66,8 @@ int  main(
     output_filename2 = argv[2];
 
     set_n_bytes_cache_threshold( CACHE_THRESHOLD );
-    set_max_bytes_in_cache( CACHE_SIZE );
-    set_volume_cache_block_sizes( block_sizes );
+    set_default_max_bytes_in_cache( CACHE_SIZE );
+    set_cache_block_sizes_hint( RANDOM_VOLUME_ACCESS );
 
     volume = create_volume( N_DIMENSIONS, dim_names, NC_BYTE, FALSE,
                             0.0, 0.0 );
@@ -73,6 +88,8 @@ int  main(
         true_voxel = compute_voxel( x, y, z, 1.0 );
         set_volume_voxel_value( volume, x, y, z, 0, 0, (Real) true_voxel );
     }
+
+    set_volume_cache_block_sizes( volume, new_block_sizes );
 
     print( "Checking volume.\n" );
 
@@ -110,6 +127,11 @@ int  main(
                       (minc_input_options *) NULL ) != OK )
         return( 1 );
 
+    set_cache_output_volume_parameters( volume, output_filename2,
+                                        NC_UNSPECIFIED, FALSE, 0.0, 0.0,
+                                        output_filename,
+                                        "Testing Virtual Volumes\n", NULL );
+
     print( "Checking values.\n" );
 
     n_errors = 0;
@@ -130,6 +152,8 @@ int  main(
 #endif
 
     print( "Setting voxels.\n" );
+
+    set_volume_cache_block_sizes( volume, block_sizes );
 
     for_less( x, 0, sizes[X] )
     for_less( y, 0, sizes[Y] )

@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.40 1995-11-09 19:17:58 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.41 1995-11-10 20:23:15 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -70,6 +70,100 @@ private  BOOLEAN  is_default_direction_cosine(
     return( is_default );
 }
 
+private  Status  output_world_transform(
+    Minc_file              file,
+    General_transform      *voxel_to_world_transform )
+{
+    double              separation[MAX_VAR_DIMS];
+    Real                start[MAX_VAR_DIMS];
+    double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
+    int                 i, j, d, axis;
+    Point               origin;
+    Vector              axes[MAX_DIMENSIONS];
+    Transform           transform, t, inverse;
+
+    if( voxel_to_world_transform == (General_transform *) NULL )
+    {
+        make_identity_transform( &transform );
+    }
+    else if( get_transform_type( voxel_to_world_transform ) == LINEAR )
+    {
+        transform = *(get_linear_transform_ptr( voxel_to_world_transform ));
+    }
+    else
+    {
+        print_error( "Cannot output non-linear transforms.  Using identity.\n");
+        make_identity_transform( &transform );
+    }
+
+    get_transform_origin( &transform, &origin );
+    get_transform_x_axis( &transform, &axes[X] );
+    get_transform_y_axis( &transform, &axes[Y] );
+    get_transform_z_axis( &transform, &axes[Z] );
+
+    separation[X] = MAGNITUDE( axes[X] );
+    separation[Y] = MAGNITUDE( axes[Y] );
+    separation[Z] = MAGNITUDE( axes[Z] );
+    SCALE_VECTOR( axes[X], axes[X], 1.0 / separation[X] );
+    SCALE_VECTOR( axes[Y], axes[Y], 1.0 / separation[Y] );
+    SCALE_VECTOR( axes[Z], axes[Z], 1.0 / separation[Z] );
+
+    for_less( i, 0, 3 )
+    {
+        if( Vector_coord(axes[i],i) < 0.0 )
+        {
+            SCALE_VECTOR( axes[i], axes[i], -1.0 );
+            separation[i] *= -1.0;
+        }
+    }
+
+    for_less( i, 0, 3 )
+    {
+        for_less( j, 0, 3 )
+            dir_cosines[i][j] = Vector_coord(axes[i],j);
+    }
+
+    make_identity_transform( &t );
+    set_transform_x_axis( &t, &axes[X] );
+    set_transform_y_axis( &t, &axes[Y] );
+    set_transform_z_axis( &t, &axes[Z] );
+
+    (void) compute_transform_inverse( &t, &inverse );
+
+    transform_point( &inverse,
+                     (Real) Point_x(origin), (Real) Point_y(origin),
+                     (Real) Point_z(origin),
+                     &start[X], &start[Y], &start[Z] );
+
+    for_less( d, 0, file->n_file_dimensions )
+    {
+        if( convert_dim_name_to_spatial_axis( file->dim_names[d], &axis ) )
+        {
+            file->dim_ids[d] = micreate_std_variable( file->cdfid,
+                                      file->dim_names[d], NC_DOUBLE, 0, NULL);
+
+            if( file->dim_ids[d] < 0 )
+                return( ERROR );
+
+            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
+                                separation[axis]);
+            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
+                                start[axis]);
+            if( !is_default_direction_cosine( axis, dir_cosines[axis] ) )
+            {
+                (void) ncattput( file->cdfid, file->dim_ids[d],
+                                 MIdirection_cosines,
+                                 NC_DOUBLE, N_DIMENSIONS, dir_cosines[axis]);
+            }
+            (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
+        }
+        else
+            file->dim_ids[d] = -1;
+    }
+
+    return( OK );
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : initialize_minc_output
 @INPUT      : filename
@@ -114,15 +208,10 @@ public  Minc_file  initialize_minc_output(
     minc_file_struct    *file;
     int                 dim_vars[MAX_VAR_DIMS], volume_sizes[MAX_DIMENSIONS];
     int                 n_volume_dims;
-    double              separation[MAX_VAR_DIMS], valid_range[2];
-    Real                start[MAX_VAR_DIMS];
-    double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
-    int                 i, j, d, axis, vol_index, n_range_dims;
-    Point               origin;
-    Vector              axes[MAX_DIMENSIONS];
+    double              valid_range[2];
+    int                 d, vol_index, n_range_dims;
     static  STRING      default_dim_names[] = { { MIzspace }, { MIyspace },
                                                 { MIxspace } };
-    Transform           transform, t, inverse;
     STRING              *vol_dimension_names;
     minc_output_options default_options;
 
@@ -194,9 +283,6 @@ public  Minc_file  initialize_minc_output(
 
     vol_dimension_names = get_volume_dimension_names( volume_to_attach );
 
-    for_less( d, 0, n_dimensions )
-        dim_names[d] = dim_names[d];
-
     if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
                                 n_dimensions, dim_names,
                             file->to_volume_index, file->to_file_index ) != OK )
@@ -241,7 +327,7 @@ public  Minc_file  initialize_minc_output(
             print_error( "initialize_minc_output: " );
             print_error( "volume size[%d]=%d does not match file[%d]=%d.\n",
                    vol_index, volume_sizes[vol_index], d, sizes[d] );
-            return( (Minc_file) NULL );
+            return( NULL );
         }
     }
 
@@ -254,98 +340,24 @@ public  Minc_file  initialize_minc_output(
     if( file->cdfid == MI_ERROR )
     {
         print_error( "Error: opening MINC file \"%s\".\n", file->filename );
-        return( (Minc_file) 0 );
+        return( NULL );
     }
-
-    if( voxel_to_world_transform == (General_transform *) NULL )
-    {
-        make_identity_transform( &transform );
-    }
-    else if( get_transform_type( voxel_to_world_transform ) == LINEAR )
-    {
-        transform = *(get_linear_transform_ptr( voxel_to_world_transform ));
-    }
-    else
-    {
-        print_error( "Cannot output non-linear transforms.  Using identity.\n" );
-        make_identity_transform( &transform );
-    }
-
-    get_transform_origin( &transform, &origin );
-    get_transform_x_axis( &transform, &axes[X] );
-    get_transform_y_axis( &transform, &axes[Y] );
-    get_transform_z_axis( &transform, &axes[Z] );
-
-    separation[X] = MAGNITUDE( axes[X] );
-    separation[Y] = MAGNITUDE( axes[Y] );
-    separation[Z] = MAGNITUDE( axes[Z] );
-    SCALE_VECTOR( axes[X], axes[X], 1.0 / separation[X] );
-    SCALE_VECTOR( axes[Y], axes[Y], 1.0 / separation[Y] );
-    SCALE_VECTOR( axes[Z], axes[Z], 1.0 / separation[Z] );
-
-    for_less( i, 0, 3 )
-    {
-        if( Vector_coord(axes[i],i) < 0.0 )
-        {
-            SCALE_VECTOR( axes[i], axes[i], -1.0 );
-            separation[i] *= -1.0;
-        }
-    }
-
-    for_less( i, 0, 3 )
-    {
-        for_less( j, 0, 3 )
-        {
-            dir_cosines[i][j] = Vector_coord(axes[i],j);
-        }
-    }
-
-    make_identity_transform( &t );
-    set_transform_x_axis( &t, &axes[X] );
-    set_transform_y_axis( &t, &axes[Y] );
-    set_transform_z_axis( &t, &axes[Z] );
-
-    (void) compute_transform_inverse( &t, &inverse );
-
-    transform_point( &inverse,
-                     (Real) Point_x(origin), (Real) Point_y(origin),
-                     (Real) Point_z(origin),
-                     &start[X], &start[Y], &start[Z] );
 
     for_less( d, 0, n_dimensions )
     {
         file->sizes_in_file[d] = sizes[d];
         file->indices[d] = 0;
         file->dim_names[d] = create_string( dim_names[d] );
-        dim_vars[d] = ncdimdef( file->cdfid, dim_names[d], sizes[d] );
-
-        if( convert_dim_name_to_spatial_axis( dim_names[d], &axis ) )
-        {
-            file->dim_ids[d] = micreate_std_variable( file->cdfid,
-                                      dim_names[d], NC_DOUBLE, 0, NULL);
-
-            if( file->dim_ids[d] < 0 )
-            {
-                FREE( file );
-                return( (Minc_file) NULL );
-            }
-
-            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstep,
-                                separation[axis]);
-            (void) miattputdbl( file->cdfid, file->dim_ids[d], MIstart,
-                                start[axis]);
-            if( !is_default_direction_cosine( axis, dir_cosines[axis] ) )
-            {
-                (void) ncattput( file->cdfid, file->dim_ids[d],
-                                 MIdirection_cosines,
-                                 NC_DOUBLE, N_DIMENSIONS, dir_cosines[axis]);
-            }
-            (void) miattputstr( file->cdfid, file->dim_ids[d], MIunits, UNITS );
-        }
-        else
-            file->dim_ids[d] = -1;
+        dim_vars[d] = ncdimdef( file->cdfid, file->dim_names[d], sizes[d] );
     }
 
+    if( output_world_transform( file, voxel_to_world_transform )
+                  != OK )
+    {
+        FREE( file );
+        return( NULL );
+    }
+            
     file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
                                               file_nc_data_type,
                                               n_dimensions, dim_vars );
@@ -1497,12 +1509,34 @@ public  Status  close_minc_output(
 public  void  set_default_minc_output_options(
     minc_output_options  *options           )
 {
-    int   i;
+    int   dim;
 
-    for_less( i, 0, MAX_DIMENSIONS )
-        options->dimension_names[i] = NULL;
+    for_less( dim, 0, MAX_DIMENSIONS )
+        options->dimension_names[dim] = NULL;
+
     options->global_image_range[0] = 0.0;
     options->global_image_range[1] = -1.0;
+}
+
+public  void  copy_minc_output_options(
+    minc_output_options  *src,
+    minc_output_options  *dest )
+{
+    int   dim;
+
+    if( src == NULL )
+        set_default_minc_output_options( dest );
+    else
+    {
+        *dest = *src;
+
+        for_less( dim, 0, MAX_DIMENSIONS )
+        {
+            if( src->dimension_names[dim] != NULL )
+                dest->dimension_names[dim] = create_string(
+                                                  src->dimension_names[dim] );
+        }
+    }
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1518,7 +1552,7 @@ public  void  set_default_minc_output_options(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  delete_default_minc_output_options(
+public  void  delete_minc_output_options(
     minc_output_options  *options           )
 {
     int   i;

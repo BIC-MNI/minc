@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.39 1995-10-19 15:47:02 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.40 1995-11-10 20:23:15 david Exp $";
 #endif
 
 #include  <minc.h>
@@ -64,6 +64,12 @@ public  Status  start_volume_input(
 
     if( create_volume_flag || *volume == (Volume) NULL )
     {
+        if( n_dimensions < 1 || n_dimensions > MAX_DIMENSIONS )
+            n_dimensions = get_minc_file_n_dimensions( filename );
+
+        if( n_dimensions < 1 )
+            return( ERROR );
+
         *volume = create_volume( n_dimensions, dim_names, volume_nc_data_type,
                                  volume_signed_flag,
                                  volume_voxel_min, volume_voxel_max );

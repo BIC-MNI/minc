@@ -18,7 +18,7 @@
 #include  <unistd.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.28 1995-10-19 15:46:44 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.29 1995-11-10 20:23:10 david Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
@@ -76,6 +76,37 @@ public  BOOLEAN  file_exists(
         exists = FALSE;
 
     delete_string( expanded );
+
+    return( exists );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : file_directory_exists
+@INPUT      : filename
+@OUTPUT     : 
+@RETURNS    : TRUE if directory containing file exists.
+@DESCRIPTION: Checks if the directory contained in the path name exists.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Nov. 2, 1995    David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  BOOLEAN  file_directory_exists(
+    STRING        filename )
+{
+    BOOLEAN  exists;
+    STRING   dir;
+
+    dir = extract_directory( filename );
+
+    if( string_length( dir ) != 0 )
+        exists = file_exists( dir );
+    else
+        exists = TRUE;
+
+    delete_string( dir );
 
     return( exists );
 }
@@ -781,7 +812,7 @@ public  STRING  extract_directory(
     while( slash_index >= 0 && expanded[slash_index] != '/' )
         --slash_index;
 
-    if( slash_index <= 0 )
+    if( slash_index < 0 )
         ++slash_index;
 
     directory = alloc_string( slash_index );

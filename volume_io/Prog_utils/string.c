@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.8 1995-10-19 15:46:46 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/string.c,v 1.9 1995-11-10 20:23:11 david Exp $";
 #endif
 
 private  const  STRING  empty_string = "";
@@ -186,7 +186,7 @@ public  BOOLEAN  string_ends_in(
     if( len_ending > len_string )
         ending_present = FALSE;
     else
-        ending_present = (strcmp( &string[len_string-len_ending], ending ) ==0);
+        ending_present = equal_strings( &string[len_string-len_ending], ending);
 
     return( ending_present );
 }
