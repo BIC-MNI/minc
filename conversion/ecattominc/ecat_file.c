@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecat_file.c,v $
-@MODIFIED   : Revision 1.1  1996-01-18 14:52:14  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 4.0  1997-05-07 20:06:04  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.1  1996/01/18  14:52:14  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1996 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -20,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecat_file.c,v 1.1 1996-01-18 14:52:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecat_file.c,v 4.0 1997-05-07 20:06:04 neelin Rel $";
 #endif
 
 #include <stdlib.h>

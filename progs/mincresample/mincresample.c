@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 3.5  1996-01-31 15:22:02  neelin
-@MODIFIED   : Fixed bug in transformation of input sampling.
+@MODIFIED   : Revision 4.0  1997-05-07 19:59:42  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.5  1996/01/31  15:22:02  neelin
+ * Fixed bug in transformation of input sampling.
+ *
  * Revision 3.4  1996/01/30  14:10:24  neelin
  * Added check for -transformation without -like, -tfm_input_sampling or
  * -use_input_sampling because of change in behaviour.
@@ -105,7 +108,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 3.5 1996-01-31 15:22:02 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 4.0 1997-05-07 19:59:42 neelin Rel $";
 #endif
 
 #include <stdlib.h>

@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : $Log: rawtominc.c,v $
-@MODIFIED   : Revision 3.3  1997-04-21 20:19:17  neelin
-@MODIFIED   : Added -origin option.
+@MODIFIED   : Revision 4.0  1997-05-07 19:59:55  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.3  1997/04/21  20:19:17  neelin
+ * Added -origin option.
+ *
  * Revision 3.2  1996/06/19  18:24:16  neelin
  * Check errors on fopen when -input is used.
  * Try opening input before creating minc file.
@@ -82,7 +85,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 3.3 1997-04-21 20:19:17 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 4.0 1997-05-07 19:59:55 neelin Rel $";
 #endif
 
 #include <stdlib.h>

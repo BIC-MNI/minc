@@ -6,10 +6,13 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_read.c,v $
-@MODIFIED   : Revision 3.1  1995-08-02 13:41:36  neelin
-@MODIFIED   : Fixed bug in direction cosine inversion (in test cases, this code was never
-@MODIFIED   : called, so it does not seem to be an important bug).
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.1  1995/08/02  13:41:36  neelin
+ * Fixed bug in direction cosine inversion (in test cases, this code was never
+ * called, so it does not seem to be an important bug).
+ *
  * Revision 3.0  1995/05/15  19:31:44  neelin
  * Release of minc version 0.3
  *

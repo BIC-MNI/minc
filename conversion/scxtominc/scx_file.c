@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:05  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:00:13  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:05  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:33:47  neelin
  * Release of minc version 0.2
  *
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 3.0 1995-05-15 19:31:05 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 4.0 1997-05-07 20:00:13 neelin Rel $";
 #endif
 
 #include <stdlib.h>

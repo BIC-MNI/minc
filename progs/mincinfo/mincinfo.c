@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincinfo.c,v $
-@MODIFIED   : Revision 3.1  1995-10-04 19:05:25  neelin
-@MODIFIED   : Fixed default_min for signed long.
+@MODIFIED   : Revision 4.0  1997-05-07 20:00:38  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.1  1995/10/04  19:05:25  neelin
+ * Fixed default_min for signed long.
+ *
  * Revision 3.0  1995/05/15  19:31:31  neelin
  * Release of minc version 0.3
  *
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 3.1 1995-10-04 19:05:25 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 4.0 1997-05-07 20:00:38 neelin Rel $";
 #endif
 
 #include <stdlib.h>

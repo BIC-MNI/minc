@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 1.2 1996-07-10 17:06:07 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/minclookup/minclookup.man1,v 4.0 1997-05-07 20:01:47 neelin Rel $
 .\"
 .TH MINCLOOKUP 1
 

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_file.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.3  1995/02/09  13:51:26  neelin
  * Mods for irix 5 lint.
  *

@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.h,v $
-@MODIFIED   : Revision 3.4  1996-01-31 15:22:02  neelin
-@MODIFIED   : Fixed bug in transformation of input sampling.
+@MODIFIED   : Revision 4.0  1997-05-07 19:59:42  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.4  1996/01/31  15:22:02  neelin
+ * Fixed bug in transformation of input sampling.
+ *
  * Revision 3.3  1995/12/12  19:15:35  neelin
  * Added -spacetype, -talairach and -units options.
  *

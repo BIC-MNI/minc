@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 1.1  1997-03-04 20:56:47  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.1  1997/03/04  20:56:47  neelin
+ * Initial revision
+ *
  * Revision 3.0  1995/05/15  19:31:44  neelin
  * Release of minc version 0.3
  *

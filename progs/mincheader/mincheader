@@ -1,9 +1,12 @@
 #! /bin/csh -f
 
 # Modifications: $Log: mincheader,v $
-# Modifications: Revision 3.0  1995-05-15 19:31:32  neelin
-# Modifications: Release of minc version 0.3
+# Modifications: Revision 4.0  1997-05-07 20:00:42  neelin
+# Modifications: Release of minc version 0.4
 # Modifications:
+# Revision 3.0  1995/05/15  19:31:32  neelin
+# Release of minc version 0.3
+#
 # Revision 2.2  1995/01/25  08:04:41  neelin
 # Added check for failure to read minc file.
 #

@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : $Log: copy_data.c,v $
-@MODIFIED   : Revision 3.1  1995-10-03 13:34:14  neelin
-@MODIFIED   : Fixed bug in truncate_input_vectors - was not handling out-of-range
-@MODIFIED   : start values properly.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:44  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.1  1995/10/03  13:34:14  neelin
+ * Fixed bug in truncate_input_vectors - was not handling out-of-range
+ * start values properly.
+ *
  * Revision 3.0  1995/05/15  19:32:36  neelin
  * Release of minc version 0.3
  *
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 3.1 1995-10-03 13:34:14 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 4.0 1997-05-07 20:01:44 neelin Rel $";
 #endif
 
 #include <stdlib.h>

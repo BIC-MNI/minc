@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyrotominc.c,v $
-@MODIFIED   : Revision 3.1  1995-08-02 13:41:36  neelin
-@MODIFIED   : Added -prefix option.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.1  1995/08/02  13:41:36  neelin
+ * Added -prefix option.
+ *
  * Revision 3.0  1995/05/15  19:31:44  neelin
  * Release of minc version 0.3
  *
@@ -45,7 +48,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 3.1 1995-08-02 13:41:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 4.0 1997-05-07 20:01:07 neelin Rel $";
 #endif
 
 #include <gcomserver.h>

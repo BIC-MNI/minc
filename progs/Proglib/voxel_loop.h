@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: voxel_loop.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:35  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:35  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.3  1995/03/21  15:33:07  neelin
  * Changed call to voxel_function to always use proper vector length and
  * set num_voxels to the number of voxels, not multiplying by vector length.

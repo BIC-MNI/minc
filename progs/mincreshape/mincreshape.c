@@ -12,9 +12,12 @@
 @CALLS      : 
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincreshape.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:36  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:44  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:36  neelin
+ * Release of minc version 0.3
+ *
  * Revision 1.6  1995/02/09  14:08:24  neelin
  * Mods to make irix 5 lint happy.
  *
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 3.0 1995-05-15 19:32:36 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 4.0 1997-05-07 20:01:44 neelin Rel $";
 #endif
 
 #include <stdlib.h>

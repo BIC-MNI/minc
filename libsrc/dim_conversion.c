@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 3.1  1997-04-10 18:14:50  neelin
-@MODIFIED   : Fixed handling of invalid data when icv scale is zero.
+@MODIFIED   : Revision 4.0  1997-05-07 20:07:52  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.1  1997/04/10  18:14:50  neelin
+ * Fixed handling of invalid data when icv scale is zero.
+ *
  * Revision 3.0  1995/05/15  19:33:12  neelin
  * Release of minc version 0.3
  *
@@ -61,7 +64,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 3.1 1997-04-10 18:14:50 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 4.0 1997-05-07 20:07:52 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

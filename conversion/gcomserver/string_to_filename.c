@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: string_to_filename.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:35:36  neelin
  * Release of minc version 0.2
  *

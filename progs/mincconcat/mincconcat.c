@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincconcat.c,v $
-@MODIFIED   : Revision 3.4  1997-04-21 20:28:45  neelin
-@MODIFIED   : Changed width suffix from _width to -width.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:54  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.4  1997/04/21  20:28:45  neelin
+ * Changed width suffix from _width to -width.
+ *
  * Revision 3.3  1996/04/11  19:31:43  neelin
  * Added -sequential and -interleaved options.
  *
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 3.4 1997-04-21 20:28:45 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 4.0 1997-05-07 20:01:54 neelin Rel $";
 #endif
 
 #include <stdlib.h>

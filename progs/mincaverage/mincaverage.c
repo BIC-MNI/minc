@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : $Log: mincaverage.c,v $
-@MODIFIED   : Revision 3.2  1996-04-02 20:16:09  neelin
-@MODIFIED   : Added -width_weighted option. Allow -weights with -avgdim option.
+@MODIFIED   : Revision 4.0  1997-05-07 20:05:59  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.2  1996/04/02  20:16:09  neelin
+ * Added -width_weighted option. Allow -weights with -avgdim option.
+ *
  * Revision 3.1  1995/11/20  14:24:47  neelin
  * Added -weights option.
  *
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 3.2 1996-04-02 20:16:09 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 4.0 1997-05-07 20:05:59 neelin Rel $";
 #endif
 
 #include <stdlib.h>

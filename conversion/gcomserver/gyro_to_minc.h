@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:31:44  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:07  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:31:44  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.2  1994/11/21  08:08:03  neelin
  * Modified code to properly calculate start from centre locations, then
  * changed calculation back to old way because it worked.

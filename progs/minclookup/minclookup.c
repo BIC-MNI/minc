@@ -10,10 +10,13 @@
 @CALLS      : 
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : $Log: minclookup.c,v $
-@MODIFIED   : Revision 3.2  1996-07-10 16:58:37  neelin
-@MODIFIED   : Added -lut_string option and added special handling of duplicated first
-@MODIFIED   : or last entries.
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:47  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.2  1996/07/10  16:58:37  neelin
+ * Added -lut_string option and added special handling of duplicated first
+ * or last entries.
+ *
  * Revision 3.1  1996/07/10  14:38:03  neelin
  * Added options to set output file type, sign and range.
  *
@@ -41,7 +44,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 3.2 1996-07-10 16:58:37 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 4.0 1997-05-07 20:01:47 neelin Rel $";
 #endif
 
 #include <stdlib.h>

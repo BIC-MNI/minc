@@ -9,10 +9,13 @@
 @CALLS      : 
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : $Log: ecattominc.c,v $
-@MODIFIED   : Revision 1.2  1996-03-26 15:58:18  neelin
-@MODIFIED   : Various changes including changed coordinates in x and y and computing
-@MODIFIED   : FWHM from cutoff frequency.
+@MODIFIED   : Revision 4.0  1997-05-07 20:06:04  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.2  1996/03/26  15:58:18  neelin
+ * Various changes including changed coordinates in x and y and computing
+ * FWHM from cutoff frequency.
+ *
  * Revision 1.1  1996/01/18  14:52:14  neelin
  * Initial revision
  *
@@ -29,7 +32,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 1.2 1996-03-26 15:58:18 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 4.0 1997-05-07 20:06:04 neelin Rel $";
 #endif
 
 #include <stdlib.h>

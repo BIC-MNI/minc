@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 3.3  1997-04-10 19:22:18  neelin
-@MODIFIED   : Removed redefinition of NULL and added pointer casts in appropriate places.
+@MODIFIED   : Revision 4.0  1997-05-07 20:07:52  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.3  1997/04/10  19:22:18  neelin
+ * Removed redefinition of NULL and added pointer casts in appropriate places.
+ *
  * Revision 3.2  1995/09/29  14:34:09  neelin
  * Modified micopy_all_atts to handle MI_ERROR being passed in as a varid.
  *
@@ -92,7 +95,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 3.3 1997-04-10 19:22:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 4.0 1997-05-07 20:07:52 neelin Rel $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

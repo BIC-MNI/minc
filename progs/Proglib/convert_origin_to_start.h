@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : $Log: convert_origin_to_start.h,v $
-@MODIFIED   : Revision 1.1  1995-11-10 20:01:27  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 4.0  1997-05-07 20:00:50  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.1  1995/11/10  20:01:27  neelin
+ * Initial revision
+ *
 @COPYRIGHT  :
               Copyright 1995 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.

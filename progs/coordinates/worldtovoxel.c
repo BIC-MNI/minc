@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : $Log: worldtovoxel.c,v $
-@MODIFIED   : Revision 3.0  1995-05-15 19:32:23  neelin
-@MODIFIED   : Release of minc version 0.3
+@MODIFIED   : Revision 4.0  1997-05-07 20:01:38  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 3.0  1995/05/15  19:32:23  neelin
+ * Release of minc version 0.3
+ *
  * Revision 2.0  1994/09/28  10:36:36  neelin
  * Release of minc version 0.2
  *
@@ -37,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 3.0 1995-05-15 19:32:23 neelin Rel $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 4.0 1997-05-07 20:01:38 neelin Rel $";
 #endif
 
 #include <stdlib.h>

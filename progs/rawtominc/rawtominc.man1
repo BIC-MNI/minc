@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 3.1 1997-04-21 20:19:17 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 4.0 1997-05-07 19:59:55 neelin Rel $
 .\"
 .TH RAWTOMINC 1
 

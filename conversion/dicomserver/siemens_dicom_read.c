@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_dicom_read.c,v $
-@MODIFIED   : Revision 1.2  1997-03-11 13:10:48  neelin
-@MODIFIED   : Working version of dicomserver.
+@MODIFIED   : Revision 4.0  1997-05-07 20:06:20  neelin
+@MODIFIED   : Release of minc version 0.4
 @MODIFIED   :
+ * Revision 1.2  1997/03/11  13:10:48  neelin
+ * Working version of dicomserver.
+ *
  * Revision 1.1  1997/03/04  20:56:47  neelin
  * Initial revision
  *
