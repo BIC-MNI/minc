@@ -34,7 +34,7 @@ C-----------------------------------------------------------------------------
       call icvstd(icv, MI_ICV_VALID_MAX, 200.0D0, rcode)
       call icvstd(icv, MI_ICV_VALID_MIN, 10.0D0, rcode)
 
-      mincid = nccre(filename, NCCLOB, rcode)
+      mincid = micre(filename, NCCLOB, rcode)
 
       dim(1) = ncddef(mincid, MIxspace, 2, rcode)
       dim(2) = ncddef(mincid, MIyspace, 2, rcode)
@@ -143,9 +143,16 @@ C
       call icvfre(icv, rcode)
 
 C
+C     Close input file
+C
+      call miclos(mincid)
+
+C
 C     Test copy routines
 C
-      mincid2 = nccre('test2.mnc', NCCLOB, rcode)
+      mincid = miopn(filename, NCNOWRIT, rcode)
+
+      mincid2 = micre('test2.mnc', NCCLOB, rcode)
 
       call micavd(mincid, mincid2, 1, imgid, rcode)
 

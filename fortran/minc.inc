@@ -25,7 +25,7 @@ C              notice appear in all copies.  The author and McGill University
 C              make no representations about the suitability of this
 C              software for any purpose.  It is provided "as is" without
 C              express or implied warranty.
-C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 3.0 1995-05-15 19:32:47 neelin Rel $ MINC (MNI)
+C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 3.1 1997-01-14 19:46:53 neelin Exp $ MINC (MNI)
 C-----------------------------------------------------------------------------
 
 C     Some useful constants
@@ -337,6 +337,7 @@ C     they are stored in the same global variable.
       PARAMETER (MI_ERR_MAXMIN_DIMS     =1348)
 
 C     Function and subroutine declarations
+      EXTERNAL MIOPN, MICRE, MICLOSE
       EXTERNAL MIAGT, MIAGT1, MIVGT, MIVGT1, MIVPT, MIVPT1
       EXTERNAL MISTCD, MITRCD, MICAAT, MICVD, MICVV, MICAVD
       EXTERNAL MICAVV, MIAPTP, MIAGTP, MICHLD, MISTDV, MIGRPV
@@ -344,6 +345,7 @@ C     Function and subroutine declarations
       EXTERNAL ICVNQI, ICVNQS, ICVNDA, ICVDET, ICVGET, ICVPUT
       EXTERNAL ICVATT
 
+      INTEGER MIOPN, MICRE
       INTEGER MIAGTP, MICVD, MISTDV, MIGRPV
       INTEGER ICVCRT
 
