@@ -8,9 +8,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.1 1995-01-03 13:09:38 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.man1,v 2.2 1995-03-29 15:34:23 neelin Exp $
 .\"
-.TH RAWTOMINC 1 "MINC Image File Format"
+.TH RAWTOMINC 1
 
 .SH NAME
 rawtominc - converts a stream of binary image data to a minc format file
@@ -328,4 +328,4 @@ Peter Neelin
 
 .SH COPYRIGHTS
 .ps 18
-\fB\(co\fR\s12 Copyright 1993 by Peter Neelin
+Copyright 1993 by Peter Neelin

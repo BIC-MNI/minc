@@ -8,9 +8,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 1.3 1995-01-24 09:06:27 neelin Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 1.4 1995-03-29 15:34:23 neelin Exp $
 .\"
-.TH MINCEXPAND 1 "MINC Image File Format"
+.TH MINCEXPAND 1
 
 .SH NAME
 mincexpand - expands a compressed minc file, if necessary.
@@ -47,4 +47,4 @@ Peter Neelin
 
 .SH COPYRIGHTS
 .ps 18
-\fB\(co\fR\s12 Copyright 1995 by Peter Neelin
+Copyright 1995 by Peter Neelin
