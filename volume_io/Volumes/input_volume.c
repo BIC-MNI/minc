@@ -31,6 +31,8 @@ public  Status  input_volume(
     int          ndims, dim[MAX_VAR_DIMS];
     long         start[3], count[3];
 
+    status = OK;
+
     icv = miicv_create();
 
     (void) miicv_setint( icv, MI_ICV_TYPE, NC_BYTE );
@@ -136,10 +138,10 @@ public  Status  input_volume(
     create_world_transform( &origin, axes, volume->thickness,
                             &volume->world_transform );
 
-    ALLOC3D( status, volume->data, volume->sizes[X], volume->sizes[Y],
+    ALLOC3D( volume->data, volume->sizes[X], volume->sizes[Y],
              volume->sizes[Z] );
 
-    ALLOC( status, image, sizes[1] * sizes[2] );
+    ALLOC( image, sizes[1] * sizes[2] );
 
     for_less( index0, 0, sizes[0] )
     {
@@ -165,7 +167,7 @@ public  Status  input_volume(
         }
     }
 
-    FREE( status, image );
+    FREE( image );
 
     (void) ncclose( cdfid );
     (void) miicv_free( icv );
@@ -218,7 +220,6 @@ public  Status  input_fake_volume(
     char           filename[],
     volume_struct  *volume )    /* ARGSUSED */
 {
-    Status    status;
     int       x, y, z, val;
     Real      dx, dy, dz;
 
@@ -231,7 +232,7 @@ public  Status  input_fake_volume(
     volume->value_scale = 1.0;
     volume->value_translation = 0.0;
 
-    ALLOC3D( status, volume->data, volume->sizes[X], volume->sizes[Y],
+    ALLOC3D( volume->data, volume->sizes[X], volume->sizes[Y],
              volume->sizes[Z] );
 
     for_less( x, 0, volume->sizes[X] )
@@ -255,5 +256,5 @@ public  Status  input_fake_volume(
             print( "%d/%d\n", x, volume->sizes[X] );
     }
 
-    return( status );
+    return( OK );
 }
