@@ -115,36 +115,48 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
    case NC_BYTE : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
-         *((unsigned char *) ptr) = \
-            MAX(0,MIN(UCHAR_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(0, dvalue); \
+         dvalue = MIN(UCHAR_MAX, dvalue); \
+         *((unsigned char *) ptr) = ROUND(dvalue); \
+         break; \
       case MI_PRIV_SIGNED : \
-         *((signed char *) ptr) = \
-            MAX(SCHAR_MIN,MIN(SCHAR_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(SCHAR_MIN, dvalue); \
+         dvalue = MIN(SCHAR_MAX, dvalue); \
+         *((signed char *) ptr) = ROUND(dvalue); \
+         break; \
       } \
       break; \
    case NC_SHORT : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
-         *((unsigned short *) ptr) = \
-            MAX(0,MIN(USHRT_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(0, dvalue); \
+         dvalue = MIN(USHRT_MAX, dvalue); \
+         *((unsigned short *) ptr) = ROUND(dvalue); \
+         break; \
       case MI_PRIV_SIGNED : \
-         *((signed short *) ptr) = \
-            MAX(SHRT_MIN,MIN(SHRT_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(SHRT_MIN, dvalue); \
+         dvalue = MIN(SHRT_MAX, dvalue); \
+         *((signed short *) ptr) = ROUND(dvalue); \
+         break; \
       } \
       break; \
    case NC_LONG : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
-         *((unsigned long *) ptr) = \
-            MAX(0,MIN(ULONG_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(0, dvalue); \
+         dvalue = MIN(ULONG_MAX, dvalue); \
+         *((unsigned long *) ptr) = ROUND(dvalue); \
+         break; \
       case MI_PRIV_SIGNED : \
-         *((signed long *) ptr) = \
-            MAX(LONG_MIN,MIN(LONG_MAX,ROUND(dvalue))); break; \
+         dvalue = MAX(LONG_MIN, dvalue); \
+         dvalue = MIN(LONG_MAX, dvalue); \
+         *((signed long *) ptr) = ROUND(dvalue); \
+         break; \
       } \
       break; \
    case NC_FLOAT : \
-      *((float *) ptr) =  \
-         MAX(-FLT_MAX,MIN(FLT_MAX,dvalue)); \
+      dvalue = MAX(-FLT_MAX,dvalue); \
+      *((float *) ptr) = MIN(FLT_MAX,dvalue); \
       break; \
    case NC_DOUBLE : \
       *((double *) ptr) = dvalue; \
