@@ -2,7 +2,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.30 1994-11-25 14:20:11 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.31 1994-12-08 09:49:18 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -95,12 +95,23 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     ncvarinq( file->cdfid, img_var, (char *) NULL, &file_datatype,
               &file->n_file_dimensions, dim_vars, (int *) NULL );
 
-    if( options->convert_vector_to_scalar_flag )
+    (void) ncdiminq( file->cdfid, dim_vars[file->n_file_dimensions-1],
+                     last_dim_name, &long_size );
+
+    file->converting_to_colour = FALSE;
+
+    if( strcmp( last_dim_name, MIvector_dimension ) == 0 )
     {
-        (void) ncdiminq( file->cdfid, dim_vars[file->n_file_dimensions-1],
-                         last_dim_name, &long_size );
-        if( strcmp( last_dim_name, MIvector_dimension ) == 0 )
+        if( options->convert_vector_to_colour_flag && long_size == 3 )
+        {
+            set_volume_type( volume, NC_LONG, FALSE, 0.0, 0.0 );
+            file->converting_to_colour = TRUE;
             --file->n_file_dimensions;
+        }
+        else if( options->convert_vector_to_scalar_flag )
+        {
+            --file->n_file_dimensions;
+        }
     }
 
     n_vol_dims = get_volume_n_dimensions( volume );
@@ -307,24 +318,31 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- decide on type conversion */
 
-    no_volume_data_type = (volume->data_type == NO_DATA_TYPE);
-    if( no_volume_data_type )     /* --- use type of file */
+    if( file->converting_to_colour )
     {
-        if( miattgetstr( file->cdfid, img_var, MIsigntype, MAX_STRING_LENGTH,
-                         signed_flag ) != (char *) NULL )
-        {
-            converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
-        }
-        else
-            converted_sign = file_datatype != NC_BYTE;
-
-        converted_type = file_datatype;
-        set_volume_type( volume, converted_type, converted_sign, 0.0, 0.0 );
+        converted_type = NC_BYTE;
+        converted_sign = FALSE;
     }
-    else                                        /* --- use specified type */
+    else
     {
-        converted_type = volume->nc_data_type;
-        converted_sign = volume->signed_flag;
+        no_volume_data_type = (get_volume_data_type(volume) == NO_DATA_TYPE);
+        if( no_volume_data_type )     /* --- use type of file */
+        {
+            if( miattgetstr( file->cdfid, img_var, MIsigntype,
+                             MAX_STRING_LENGTH, signed_flag ) != (char *) NULL )
+            {
+                converted_sign = (strcmp( signed_flag, MI_SIGNED ) == 0);
+            }
+            else
+                converted_sign = file_datatype != NC_BYTE;
+    
+            converted_type = file_datatype;
+            set_volume_type( volume, converted_type, converted_sign, 0.0, 0.0 );
+        }
+        else                                        /* --- use specified type */
+        {
+            converted_type = get_volume_nc_data_type( volume, &converted_sign );
+        }
     }
 
     set_volume_sizes( volume, sizes );
@@ -351,7 +369,15 @@ public  Minc_file  initialize_minc_input_from_minc_id(
     valid_range[0] = 0.0;
     valid_range[1] = 0.0;
 
-    if( no_volume_data_type )
+    if( file->converting_to_colour )
+    {
+        min_voxel_found = TRUE;
+        max_voxel_found = TRUE;
+        valid_range[0] = 0.0;
+        valid_range[1] = 2.0 * (double) (1ul << 31ul) - 1.0;
+        set_volume_voxel_range( volume, valid_range[0], valid_range[1] );
+    }
+    else if( no_volume_data_type )
     {
         if( miattget( file->cdfid, img_var, MIvalid_range, NC_DOUBLE,
                          2, (void *) valid_range, &length ) == MI_ERROR ||
@@ -381,7 +407,8 @@ public  Minc_file  initialize_minc_input_from_minc_id(
         }
     }
 
-    if( no_volume_data_type || !range_specified )
+    if( !file->converting_to_colour &&
+        (no_volume_data_type || !range_specified) )
     {
         set_volume_voxel_range( volume, 0.0, 0.0 );
         get_volume_voxel_range( volume, &default_voxel_min, &default_voxel_max);
@@ -394,12 +421,20 @@ public  Minc_file  initialize_minc_input_from_minc_id(
             set_volume_voxel_range( volume, default_voxel_min, valid_range[0] );
     }
 
-    get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
+    if( !file->converting_to_colour )
+    {
+        get_volume_voxel_range( volume, &valid_range[0], &valid_range[1] );
 
-    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, valid_range[0] );
-    (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, valid_range[1] );
+        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, valid_range[0] );
+        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, valid_range[1] );
+    }
+    else
+    {
+        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MIN, 0.0 );
+        (void) miicv_setdbl( file->icv, MI_ICV_VALID_MAX, 1.0 );
+    }
 
-    if( options->convert_vector_to_scalar_flag )
+    if( options->convert_vector_to_scalar_flag && !file->converting_to_colour )
     {
         (void) miicv_setint( file->icv, MI_ICV_DO_DIM_CONV, TRUE );
         (void) miicv_setint( file->icv, MI_ICV_DO_SCALAR, TRUE );
@@ -413,14 +448,20 @@ public  Minc_file  initialize_minc_input_from_minc_id(
 
     /* --- compute the mapping to real values */
 
-    (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
-    (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
+    if( !file->converting_to_colour )
+    {
+         (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MIN, &real_min );
+         (void) miicv_inqdbl( file->icv, MI_ICV_NORM_MAX, &real_max );
 
-    set_volume_real_range( volume, real_min, real_max );
+         set_volume_real_range( volume, real_min, real_max );
+    }
 
     if( options->promote_invalid_to_min_flag )
     {
-        (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, valid_range[0] );
+        if( !file->converting_to_colour )
+            (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, valid_range[0] );
+        else
+            (void) miicv_setdbl( file->icv, MI_ICV_FILLVALUE, 0.0 );
     }
 
     for_less( d, 0, file->n_file_dimensions )
@@ -746,16 +787,19 @@ private  void  input_slab(
     long        start[],
     long        count[] )
 {
-    int      ind, expected_ind, n_vol_dims, file_ind;
+    int      ind, expected_ind, n_vol_dims, file_ind, d, i;
     int      iv[MAX_VAR_DIMS];
     void     *void_ptr;
     BOOLEAN  direct_to_volume, signed_flag, non_full_size_found;
-    Volume   tmp_volume;
-    int      tmp_ind, tmp_sizes[MAX_DIMENSIONS], vol1_indices[MAX_DIMENSIONS];
+    Volume   slab_volume, rgb_volume, volume_to_read;
+    int      tmp_ind, tmp_sizes[MAX_VAR_DIMS], vol1_indices[MAX_DIMENSIONS];
     int      zero[MAX_VAR_DIMS];
+    int      v[MAX_DIMENSIONS], voxel[MAX_DIMENSIONS];
+    Real     rgb[3];
+    Colour   colour;
     nc_type  data_type;
 
-    direct_to_volume = TRUE;
+    direct_to_volume = !file->converting_to_colour;
     n_vol_dims = get_volume_n_dimensions( volume );
     expected_ind = n_vol_dims-1;
     tmp_ind = file->n_slab_dims-1;
@@ -801,20 +845,54 @@ private  void  input_slab(
     {
         data_type = get_volume_nc_data_type( volume, &signed_flag );
 
-        tmp_volume = create_volume( file->n_slab_dims, NULL,
+        slab_volume = create_volume( file->n_slab_dims, NULL,
                                     data_type, signed_flag,
                                     get_volume_voxel_min(volume),
                                     get_volume_voxel_max(volume) );
 
-        set_volume_sizes( tmp_volume, tmp_sizes );
-        alloc_volume_data( tmp_volume );
+        set_volume_sizes( slab_volume, tmp_sizes );
+        alloc_volume_data( slab_volume );
 
-        GET_VOXEL_PTR( void_ptr, tmp_volume, 0, 0, 0, 0, 0 );
+        if( file->converting_to_colour )
+        {
+            rgb_volume = create_volume( file->n_slab_dims+1, NULL,
+                                        NC_FLOAT, FALSE, 0.0, 1.0 );
+            tmp_sizes[file->n_slab_dims] = 3;
+            start[file->n_slab_dims] = 0;
+            count[file->n_slab_dims] = 3;
+            set_volume_sizes( rgb_volume, tmp_sizes );
+            alloc_volume_data( rgb_volume );
+            volume_to_read = rgb_volume;
+        }
+        else
+            volume_to_read = slab_volume;
+
+        GET_VOXEL_PTR( void_ptr, volume_to_read, 0, 0, 0, 0, 0 );
+
         (void) miicv_get( file->icv, start, count, void_ptr );
 
-        copy_volumes_reordered( volume, iv, tmp_volume, zero, vol1_indices );
+        if( file->converting_to_colour )
+        {
+            BEGIN_ALL_VOXELS( slab_volume, v[0], v[1], v[2], v[3], v[4] )
+                for_less( d, 0, file->n_slab_dims )
+                    voxel[d] = v[d];
+                for_less( i, 0, 3 )
+                {
+                    voxel[file->n_slab_dims] = i;
+                    GET_VOXEL( rgb[i], rgb_volume, voxel[0], voxel[1],
+                                        voxel[2], voxel[3], voxel[4] );
+                }
 
-        delete_volume( tmp_volume );
+                colour = make_Colour_0_1( rgb[0], rgb[1], rgb[2] );
+                SET_VOXEL( slab_volume, v[0], v[1], v[2], v[3], v[4], colour );
+            END_ALL_VOXELS
+
+            delete_volume( rgb_volume );
+        }
+
+        copy_volumes_reordered( volume, iv, slab_volume, zero, vol1_indices );
+
+        delete_volume( slab_volume );
     }
 }
 
@@ -1126,6 +1204,7 @@ public  void  set_default_minc_input_options(
 {
     set_minc_input_promote_invalid_to_min_flag( options, TRUE );
     set_minc_input_vector_to_scalar_flag( options, TRUE );
+    set_minc_input_vector_to_colour_flag( options, FALSE );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1166,4 +1245,26 @@ public  void  set_minc_input_vector_to_scalar_flag(
     BOOLEAN             flag )
 {
     options->convert_vector_to_scalar_flag = flag;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_minc_input_vector_to_colour_flag
+@INPUT      : flag
+@OUTPUT     : options
+@RETURNS    : 
+@DESCRIPTION: Sets the colour conversion flag of the input options.  Any
+              volume with a vector dimension of length 3 will be converted
+              to a 32 bit colour.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_minc_input_vector_to_colour_flag(
+    minc_input_options  *options,
+    BOOLEAN             flag )
+{
+    options->convert_vector_to_colour_flag = flag;
 }
