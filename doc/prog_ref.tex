@@ -180,9 +180,12 @@ are given below:
       \code{MI\_NUM\_SPACE\_DIMS}(=3) elements giving the
       direction cosines of the axes. Although axes are labelled x, y
       and z, they may in fact have a signficantly different
-      orientation --- this attribute allows the direction relative to
+      direction --- this attribute allows the direction relative to
       the true axes to be specified exactly. Applies only to dimension
-      variables. 
+      variables. Note that the dot product of the direction cosine
+      with the corresponding axis ($(1,0,0)$, $(0,1,0)$ or $(0,0,1)$)
+      should be positive so that the sign of the attribute
+      \code{MIstep} contains the orientation information.
    \item [\code{MIwidth}] For regularly dimension widths, this
       numeric attribute gives the FWHM width of all samples. It can be used
       for irregular widths to specify the average width. Applies only
@@ -211,7 +214,8 @@ The variable \code{MIimage} is used to store the image data.
       the image dimensions of MIimage. The units of this variable
       define the units of the image.
    \item [\code{MIimagemin}] Like \code{MIimagemax}, but stores the
-      real value minimum for the image.
+      real value minimum for the image. \code{MIimagemax} should not
+      be present without \code{MIimagemin} and vice-versa.
    \item [\code{MIcomplete}] A boolean attribute (with values
       \code{MI\_TRUE} or \code{MI\_FALSE}) that indicates whether the variable
       has been written in its entirety. This can be used to detect
