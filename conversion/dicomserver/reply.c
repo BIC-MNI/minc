@@ -4,9 +4,13 @@
 @GLOBALS    : 
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : $Log: reply.c,v $
-@MODIFIED   : Revision 6.0  1997-09-12 13:24:27  neelin
-@MODIFIED   : Release of minc version 0.6
+@MODIFIED   : Revision 6.1  1998-05-19 19:27:43  neelin
+@MODIFIED   : Test for Siemens Vision machine by looking for implementation uid
+@MODIFIED   : rather than AE title
 @MODIFIED   :
+ * Revision 6.0  1997/09/12  13:24:27  neelin
+ * Release of minc version 0.6
+ *
  * Revision 5.0  1997/08/21  13:25:26  neelin
  * Release of minc version 0.5
  *
@@ -170,10 +174,12 @@ public Acr_Message associate_reply(Acr_Message input_message,
       }
    }
 
-   /* Check for Siemens Vision AE that lies about its transfer syntaxes */
+   /* Check for Siemens Vision implementation that lies about its 
+      transfer syntaxes */
    use_implicit_little_endian = FALSE;
-   if (uid_equal(acr_find_string(input_group, DCM_PDU_Calling_Ap_title, ""),
-                 SPI_VISION_AE_TITLE)) {
+   if (uid_equal(acr_find_string(input_group, 
+                                 DCM_PDU_Implementation_class_uid, ""),
+                 SPI_VISION_IMPLEMENTATION_UID)) {
       use_implicit_little_endian = TRUE;
    }
 
