@@ -1218,18 +1218,18 @@ int main(int argc, char **argv)
   r = minew_volume_props(&props);
   r = miset_props_compression_type(props, MI_COMPRESS_ZLIB);
   r = miset_props_zlib_compression(props, 3);
-  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,1, 10,&dimh);
+  r = micreate_dimension("xspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 100,&dimh);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[0]=dimh;
   
-  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,1, 12,&dimh1);
+  r = micreate_dimension("yspace",MI_DIMCLASS_SPATIAL,MI_DIMATTR_REGULARLY_SAMPLED, 12,&dimh1);
   if (r < 0) {
     TESTRPT("failed", r);
   }
   dim[1]=dimh1;
-  r = micreate_dimension("zspace",MI_DIMCLASS_SPATIAL,2, 3,&dimh2);
+  r = micreate_dimension("z",MI_DIMCLASS_SPATIAL,MI_DIMATTR_NOT_REGULARLY_SAMPLED, 3,&dimh2);
   if (r < 0) {
     TESTRPT("failed", r);
   }
@@ -1244,7 +1244,7 @@ int main(int argc, char **argv)
   }
   
   dim[2]=dimh2;
-   r = micreate_dimension("zfrequency",MI_DIMCLASS_SFREQUENCY,1, 12,&dimh3);
+   r = micreate_dimension("zfrequency",MI_DIMCLASS_SFREQUENCY,MI_DIMATTR_REGULARLY_SAMPLED,3,&dimh3);
   if (r < 0) {
     TESTRPT("failed", r);
   }
@@ -1253,10 +1253,11 @@ int main(int argc, char **argv)
     TESTRPT("failed", r);
   } 
   dim[3]=dimh3;
-  r = micreate_volume("test.h5", 4, dim, MI_TYPE_UBYTE, MI_CLASS_INT,props,&vol);
+  r = micreate_volume("test.h5", 4, dim, MI_TYPE_UINT, MI_CLASS_INT,props,&vol);
   if (r < 0) {
     TESTRPT("failed", r);
   }
+
   r = micreate_volume_image(vol);
   if (r < 0) {
     TESTRPT("failed", r);
@@ -1274,11 +1275,11 @@ int main(int argc, char **argv)
   if (r < 0) {
     TESTRPT("failed", r);
   }
-  printf(" %s %s %s \n", dimens[0]->name, dimens[1]->name, dimens[2]->name);
-  printf(" %s \n", dimens[3]->comments);
-  printf(" %s \n", dimens[0]->comments);
-  printf( " %f %f %f \n", dimens[2]->offsets[0], dimens[2]->offsets[1], dimens[2]->offsets[2] );
-  printf( " %f %f %f \n", dimens[2]->widths[0], dimens[2]->widths[1], dimens[2]->widths[2] );
+  //printf(" %s %s %s \n", dimens[0]->name, dimens[1]->name, dimens[2]->name);
+  //printf(" %s \n", dimens[3]->comments);
+  //printf(" %s \n", dimens[0]->comments);
+  //printf( " %f %f %f \n", dimens[2]->offsets[0], dimens[2]->offsets[1], dimens[2]->offsets[2] );
+  //printf( " %f %f %f \n", dimens[2]->widths[0], dimens[2]->widths[1], dimens[2]->widths[2] );
   r = miget_volume_dimension_count(vol, MI_DIMCLASS_SPATIAL, MI_DIMATTR_ALL, &n);
   if (r < 0) {
     TESTRPT("failed", r);

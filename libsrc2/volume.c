@@ -57,8 +57,8 @@ micreate_volume_image(mihandle_t volume)
     
     dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image", 
                         volume->type_id, 
-                        dataspace_id, 
-			volume->plist_id);
+                        dataspace_id, volume->plist_id);
+    
     if (dset_id < 0) {  
         return (MI_ERROR);
     }
@@ -235,9 +235,9 @@ micreate_volume(const char *filename, int number_of_dimensions,
   /* Set fill value to guarantee valid data on incomplete datasets.
    */
   {
-      char *tmp = calloc(1, H5Tget_size(handle->type_id));
-      H5Pset_fill_value(hdf_plist, handle->type_id, tmp);
-      free(tmp);
+    char *tmp = calloc(1, H5Tget_size(handle->type_id));
+    H5Pset_fill_value(hdf_plist, handle->type_id, tmp);
+    free(tmp);
   }
   
   /* See if chunking and/or compression should be enabled */
@@ -251,8 +251,10 @@ micreate_volume(const char *filename, int number_of_dimensions,
       
       for (i=0; i < number_of_dimensions; i++) {
           hdf_size[i] = create_props->edge_lengths[i];
+	  
           if (hdf_size[i] > dimensions[i]->length) {
               hdf_size[i] = dimensions[i]->length;
+	      
           }
       }
     
