@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: open_connection.c,v $
-@MODIFIED   : Revision 1.2  1993-11-25 13:26:55  neelin
-@MODIFIED   : Working version.
+@MODIFIED   : Revision 1.3  1993-11-30 14:42:13  neelin
+@MODIFIED   : Copies to minc format.
 @MODIFIED   :
+ * Revision 1.2  93/11/25  13:26:55  neelin
+ * Working version.
+ * 
  * Revision 1.1  93/11/23  14:11:54  neelin
  * Initial revision
  * 
@@ -129,6 +132,7 @@ public int open_connection(int argc, char *argv[],
    io_data->fd = fileno(stdin);
    *afpin = acr_file_initialize((void *) io_data, (int) maxlength, 
                                 input_routine);
+   (void) acr_test_byte_ordering(*afpin);
 
    /* Set up output */
    io_data = MALLOC(sizeof(*io_data));

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gcomserver.c,v $
-@MODIFIED   : Revision 1.2  1993-11-25 13:26:35  neelin
-@MODIFIED   : Working version.
+@MODIFIED   : Revision 1.3  1993-11-30 14:40:42  neelin
+@MODIFIED   : Copies to minc format.
 @MODIFIED   :
+ * Revision 1.2  93/11/25  13:26:35  neelin
+ * Working version.
+ * 
  * Revision 1.1  93/11/23  14:11:36  neelin
  * Initial revision
  * 
@@ -33,7 +36,7 @@ typedef enum {
 int Do_logging = LOW_LOGGING;
 
 /* Do we keep files or are they temporary? */
-static int Keep_files = TRUE;
+static int Keep_files = FALSE;
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +51,7 @@ int main(int argc, char *argv[])
    int exit_status;
    char *exit_string;
    char **file_list;
+   Data_Object_Info *file_info_list;
    int num_files;
    int cur_file;
    static char file_prefix_string[256] = "gcomserver";
@@ -133,6 +137,7 @@ int main(int argc, char *argv[])
             }
             output_message = gcbegin_reply(input_message, &num_files);
             file_list = MALLOC((size_t) num_files * sizeof(*file_list));
+            file_info_list = MALLOC(num_files * sizeof(*file_info_list));
             cur_file = -1;
             state = WAITING_FOR_OBJECT;
             break;
@@ -174,12 +179,13 @@ int main(int argc, char *argv[])
                break;
             }
             /* Do something with the files */
-            use_the_files(num_files, file_list);
+            use_the_files(num_files, file_list, file_info_list);
             /* Remove the temporary files */
             cleanup_files(num_files, file_list);
-            free_list(num_files, file_list);
+            free_list(num_files, file_list, file_info_list);
             /* Create the output message */
             output_message = gcend_reply(input_message);
+            state = WAITING_FOR_GROUP;
             break;
 
             /* Unknown command */
@@ -195,7 +201,7 @@ int main(int argc, char *argv[])
       else if (acr_command == CANCELq) {
          if ((state == WAITING_FOR_OBJECT) || (state == READY_FOR_OBJECT)) {
             cleanup_files(num_files, file_list);
-            free_list(num_files, file_list);
+            free_list(num_files, file_list, file_info_list);
          }
          output_message = cancel_reply(input_message);
          state = WAITING_FOR_GROUP;
@@ -232,7 +238,8 @@ int main(int argc, char *argv[])
          }
          if (status != ACR_OK) break;
          save_transferred_object(group_list, 
-                                 file_prefix, &file_list[cur_file]);
+                                 file_prefix, &file_list[cur_file],
+                                 &file_info_list[cur_file]);
       }
 
    }        /* End of loop over messages */
@@ -244,7 +251,7 @@ int main(int argc, char *argv[])
    /* Clean up files, if needed */
    if ((state == WAITING_FOR_OBJECT) || (state == READY_FOR_OBJECT)) {
       cleanup_files(num_files, file_list);
-      free_list(num_files, file_list);
+      free_list(num_files, file_list, file_info_list);
    }
    
    /* Remove the file prefix file */
@@ -320,7 +327,8 @@ public void cleanup_files(int num_files, char *file_list[])
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void free_list(int num_files, char **file_list)
+public void free_list(int num_files, char **file_list, 
+                      Data_Object_Info *file_info_list)
 {
    int i;
 
@@ -330,6 +338,7 @@ public void free_list(int num_files, char **file_list)
       }
    }
    FREE(file_list);
+   FREE(file_info_list);
 
    return;
 }

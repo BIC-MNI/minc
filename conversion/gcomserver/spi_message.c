@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : $Log: spi_message.c,v $
-@MODIFIED   : Revision 1.3  1993-11-25 13:27:21  neelin
-@MODIFIED   : Working version.
+@MODIFIED   : Revision 1.4  1993-11-30 14:42:32  neelin
+@MODIFIED   : Copies to minc format.
 @MODIFIED   :
+ * Revision 1.3  93/11/25  13:27:21  neelin
+ * Working version.
+ * 
  * Revision 1.2  93/11/24  12:10:06  neelin
  * 
  * Revision 1.1  93/11/23  14:12:47  neelin
@@ -217,7 +220,7 @@ public Acr_Status spi_input_data_object(Acr_File *afp, Acr_Group *group_list)
          cur = acr_get_group_next(cur);
       if (status != ACR_OK) return status;
 
-      /* Get image group id */
+      /* Get image actual group id */
       element = acr_find_group_element(cur, ACR_Image_location);
       if (element == NULL) return ACR_PROTOCOL_ERROR;
       final_group = acr_get_element_short(element);

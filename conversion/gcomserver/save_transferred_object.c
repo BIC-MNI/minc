@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.1  1993-11-25 13:27:00  neelin
-@MODIFIED   : Initial revision
+@MODIFIED   : Revision 1.2  1993-11-30 14:42:28  neelin
+@MODIFIED   : Copies to minc format.
 @MODIFIED   :
+ * Revision 1.1  93/11/25  13:27:00  neelin
+ * Initial revision
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -28,6 +31,7 @@
 @INPUT      : group_list - list of acr-nema groups that make up object
               file_prefix - prefix for file names
 @OUTPUT     : new_file_name - name for newly created file
+              data_info - information about data object
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to save the object in a file.
 @METHOD     : 
@@ -37,18 +41,31 @@
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 public void save_transferred_object(Acr_Group group_list, char *file_prefix,
-                                    char **new_file_name)
+                                    char **new_file_name,
+                                    Data_Object_Info *data_info)
 {
    Acr_Group group;
    Acr_Element element;
    char temp_name[256];
    char patient_name[256];
-   char *study_id = "0";
-   char *acquisition_id = "0";
+   int study_id = 0;
+   int acquisition_id = 0;
    char *image_id = "0";
    Acr_File *afp;
    FILE *fp;
    Acr_Status status;
+
+   /* Get data info */
+   element = acr_find_group_element(group_list, ACR_Study);
+   if (element != NULL)
+      data_info->study_id = (int) acr_get_element_numeric(element);
+   else
+      data_info->study_id = 0;
+   element = acr_find_group_element(group_list, ACR_Acquisition);
+   if (element != NULL)
+      data_info->acq_id = (int) acr_get_element_numeric(element);
+   else
+      data_info->acq_id = 0;
 
    /* Look for patient name */
    element = acr_find_group_element(group_list, ACR_Patient_name);
@@ -61,16 +78,16 @@ public void save_transferred_object(Acr_Group group_list, char *file_prefix,
    /* Look for study and image numbers */
    element = acr_find_group_element(group_list, ACR_Study);
    if (element != NULL)
-      study_id = acr_get_element_string(element);
+      study_id = (int) acr_get_element_numeric(element);
    element = acr_find_group_element(group_list, ACR_Acquisition);
    if (element != NULL)
-      acquisition_id = acr_get_element_string(element);
+      acquisition_id = (int) acr_get_element_numeric(element);
    element = acr_find_group_element(group_list, ACR_Image);
    if (element != NULL)
       image_id = acr_get_element_string(element);
 
    /* Create the new file name */
-   (void) sprintf(temp_name, "%s-%s_%s_%s_%s", 
+   (void) sprintf(temp_name, "%s-%s_%d_%d_%s", 
                   file_prefix, patient_name, study_id, 
                   acquisition_id, image_id);
 
