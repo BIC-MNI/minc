@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.5  2004-10-15 13:46:52  bert
+ * Revision 6.6  2004-11-01 22:23:14  bert
+ * Get rid of minc_def.h, use standard MALLOC() macro
+ *
+ * Revision 6.5  2004/10/15 13:46:52  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.4  2004/04/27 15:43:29  bert
@@ -123,13 +126,12 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.5 2004-10-15 13:46:52 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.6 2004-11-01 22:23:14 bert Exp $";
 #endif
 
 #include "minc_private.h"
 #include <float.h>
 #include <math.h>
-#include <minc_def.h>
 #include "voxel_loop.h"
 #include "nd_loop.h"
 
@@ -1140,7 +1142,7 @@ PRIVATE void update_history(int mincid, char *arg_string)
    att_length += strlen(arg_string) + 1;
 
    /* Allocate a string and get the old history */
-   string = MALLOC(att_length);
+   string = MALLOC(att_length, char);
    string[0] = '\0';
    (void) miattgetstr(mincid, NC_GLOBAL, MIhistory, att_length, 
                       string);
@@ -1302,27 +1304,27 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
    else {
 
       /* Allocate input buffers */
-      input_buffers = MALLOC(sizeof(*input_buffers) * num_input_buffers);
+      input_buffers = MALLOC(num_input_buffers, double *);
       for (ibuff=0; ibuff < num_input_buffers; ibuff++) {
-         input_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
-                                       input_vector_length);
+         input_buffers[ibuff] = MALLOC(chunk_num_voxels * input_vector_length, 
+                                       double);
       }
 
       /* Allocate output buffers */
       if (num_output_files > 0) {
-         output_buffers = MALLOC(sizeof(*output_buffers) * num_output_files);
+         output_buffers = MALLOC(num_output_files, double *);
          for (ibuff=0; ibuff < num_output_files; ibuff++) {
-            output_buffers[ibuff] = MALLOC(sizeof(double) * block_num_voxels *
-                                           output_vector_length);
+            output_buffers[ibuff] = MALLOC(block_num_voxels * 
+                                           output_vector_length, double);
          }
       }
 
       /* Allocate extra buffers */
       if (num_extra_buffers > 0) {
-         extra_buffers = MALLOC(sizeof(*extra_buffers) * num_extra_buffers);
+         extra_buffers = MALLOC(num_extra_buffers, double *);
          for (ibuff=0; ibuff < num_extra_buffers; ibuff++) {
-            extra_buffers[ibuff] = MALLOC(sizeof(double) * chunk_num_voxels *
-                                          output_vector_length);
+            extra_buffers[ibuff] = MALLOC(chunk_num_voxels *
+                                          output_vector_length, double);
          }
       }
 
@@ -1330,7 +1332,7 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
 
    /* Set up the results pointers */
    if (num_output_buffers > 0) {
-      results_buffers = MALLOC(sizeof(*results_buffers) * num_output_buffers);
+      results_buffers = MALLOC(num_output_buffers, double *);
       for (ibuff=0; ibuff < num_output_buffers; ibuff++) {
          if (ibuff < num_output_files) {
             results_buffers[ibuff] = output_buffers[ibuff];
@@ -1343,8 +1345,8 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
 
    /* Initialize global min and max */
    if (num_output_files > 0) {
-      global_minimum = MALLOC(num_output_files * sizeof(double));
-      global_maximum = MALLOC(num_output_files * sizeof(double));
+      global_minimum = MALLOC(num_output_files, double);
+      global_maximum = MALLOC(num_output_files, double);
       for (ofile=0; ofile < num_output_files; ofile++) {
          global_minimum[ofile] = DBL_MAX;
          global_maximum[ofile] = -DBL_MAX;
@@ -1923,7 +1925,7 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
    Loopfile_Info *loopfile_info;
 
    /* Allocate structure */
-   loopfile_info = MALLOC(sizeof(*loopfile_info));
+   loopfile_info = MALLOC(1, Loopfile_Info);
 
    /* Save clobber info */
    if (loop_options->clobber) {
@@ -1945,7 +1947,7 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
 
    /* Save input file names (just copy pointers, not strings) */
    if (num_input_files > 0) {
-      loopfile_info->input_files = MALLOC(sizeof(char *) * num_input_files);
+      loopfile_info->input_files = MALLOC(num_input_files, char *);
       for (ifile=0; ifile < num_input_files; ifile++)
          loopfile_info->input_files[ifile] = input_files[ifile];
    }
@@ -1954,7 +1956,7 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
 
    /* Save output file names (just copy pointers, not strings) */
    if (num_output_files > 0) {
-      loopfile_info->output_files = MALLOC(sizeof(char *) * num_output_files);
+      loopfile_info->output_files = MALLOC(num_output_files, char *);
       for (ifile=0; ifile < num_output_files; ifile++)
          loopfile_info->output_files[ifile] = output_files[ifile];
    }
@@ -1976,8 +1978,8 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
       num_files = 1;
    }
    num_free_files -= num_files;
-   loopfile_info->output_mincid = MALLOC( sizeof(int) * num_files);
-   loopfile_info->output_icvid = MALLOC( sizeof(int) * num_files);
+   loopfile_info->output_mincid = MALLOC(num_files, int);
+   loopfile_info->output_icvid = MALLOC(num_files, int);
    for (ifile=0; ifile < num_files; ifile++) {
       loopfile_info->output_mincid[ifile] = MI_ERROR;
       loopfile_info->output_icvid[ifile] = MI_ERROR;
@@ -1999,8 +2001,8 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
       num_files = 1;
    }
    num_free_files -= num_files;
-   loopfile_info->input_mincid = MALLOC( sizeof(int) * num_files);
-   loopfile_info->input_icvid = MALLOC( sizeof(int) * num_files);
+   loopfile_info->input_mincid = MALLOC(num_files, int);
+   loopfile_info->input_icvid = MALLOC(num_files, int);
    for (ifile=0; ifile < num_files; ifile++) {
       loopfile_info->input_mincid[ifile] = MI_ERROR;
       loopfile_info->input_icvid[ifile] = MI_ERROR;
@@ -2668,7 +2670,7 @@ MNCAPI Loop_Options *create_loop_options(void)
    Loop_Options *loop_options;
 
    /* Allocate structure */
-   loop_options = MALLOC(sizeof(*loop_options));
+   loop_options = MALLOC(1, Loop_Options);
 
    /* Fill in the defaults */
    loop_options->clobber = FALSE;
@@ -3145,7 +3147,7 @@ PRIVATE Loop_Info *create_loop_info(void)
    Loop_Info *loop_info;
 
    /* Allocate structure */
-   loop_info = MALLOC(sizeof(*loop_info));
+   loop_info = MALLOC(1, Loop_Info);
 
    /* Fill in the defaults */
    initialize_loop_info(loop_info);
