@@ -23,7 +23,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.11 1992-12-15 15:31:41 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.12 1993-01-22 08:57:59 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -122,7 +122,7 @@ public int miattget_pointer(int cdfid, int varid, char *name)
    }
 
    /* Get the variable id */
-   MI_CHK_ERR(ptrvarid=ncvarid(cdfid, pointer_string[index]))
+   {MI_CHK_ERR((ptrvarid=ncvarid(cdfid, &pointer_string[index])))}
 
    MI_RETURN(ptrvarid);
 }
