@@ -19,7 +19,7 @@
 #include  <errno.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.36 1997-08-13 13:21:31 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.37 2000-09-13 14:32:26 neelin Exp $";
 #endif
 
 private  BOOLEAN  has_no_extension( STRING );
@@ -839,6 +839,7 @@ public  Status  open_file(
     char     command[EXTREMELY_LARGE_STRING_SIZE];
     STRING   access_str, expanded;
     BOOLEAN  gzipped;
+    int      command_status;
 
     /* --- determine what mode of file access */
 
@@ -897,10 +898,20 @@ public  Status  open_file(
         (void) tmpnam( tmp_name );
 
         (void) sprintf( command, "gunzip -c %s > %s", expanded, tmp_name );
-        if( system( command ) != 0 )
+        command_status = system( command );
+
+        /* Try again, using bzip2 */
+        if( command_status != 0 )
         {
-            print_error( "Error uncompressing %s into %s using gunzip\n",
-                         expanded, tmp_name );
+            (void) sprintf( command, "bunzip2 -c %s > %s", expanded, tmp_name );
+            command_status = system( command );
+        }
+
+        /* Check for failure */
+        if( command_status != 0 )
+        {
+            print_error( "Error uncompressing %s into %s using gunzip and bunzip2\n",
+                        expanded, tmp_name );
             status = ERROR;
         }
         else
