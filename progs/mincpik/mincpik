@@ -174,12 +174,19 @@ foreach $space (@{$opt{'dirs'}}){
    if($CODE eq 'RGB'){
       $dimorder .= ',vector_dimension';
       }
-   &do_cmd('mincreshape', '-clobber', '-quiet',
-           '-byte', '-normalize',
-           '+direction',
-           '-dimorder', $dimorder,
-           '-dimrange', "$space=$opt{'slice'},1",
-	        $infile, "$tmpdir/reshaped.mnc");
+   @args = ('mincreshape', '-clobber', '-quiet',
+            '-byte', '-normalize',
+            '+direction',
+            '-dimorder', $dimorder,
+            '-dimrange', "$space=$opt{'slice'},1",
+	         $infile, "$tmpdir/reshaped.mnc");                  
+   if(scalar(@{$opt{'range'}}) != 0){
+      push(@args, '-valid_range', @{$opt{'range'}}[0], @{$opt{'range'}}[1]);
+      }
+   if(scalar(@{$opt{'image_range'}}) != 0){
+      push(@args, '-image_range', @{$opt{'image_range'}}[0], @{$opt{'image_range'}}[1]);
+      }
+   &do_cmd(@args);
    
    # do the lookup if required
    $convert_infile = "$tmpdir/reshaped.mnc";
@@ -190,31 +197,14 @@ foreach $space (@{$opt{'dirs'}}){
       else{
          $convert_infile = "$tmpdir/lookup.mnc";
          $CODE = 'RGB';
-         @args = ('minclookup', '-quiet', 
-                  split(' ', $opt{'lookup'}), 
-                  "$tmpdir/reshaped.mnc", $convert_infile);
-                  
-         if(scalar(@{$opt{'range'}}) != 0){
-            push(@args, '-valid_range', @{$opt{'range'}}[0], @{$opt{'range'}}[1]);
-            }
-         if(scalar(@{$opt{'image_range'}}) != 0){
-            push(@args, '-range', @{$opt{'image_range'}}[0], @{$opt{'image_range'}}[1]);
-            }
-         
-         &do_cmd(@args);
+         &do_cmd('minclookup', '-quiet', 
+                 split(' ', $opt{'lookup'}), 
+                 "$tmpdir/reshaped.mnc", $convert_infile);
          }
       }
 
    # set up mincextract command
    @extract_args = ('mincextract', $convert_infile, '-byte', '-normalize');
-   if(!$opt{'lookup'}){
-      if(scalar(@{$opt{'range'}}) != 0){
-         push(@extract_args, '-range', @{$opt{'range'}}[0], @{$opt{'range'}}[1]);
-         }
-      if(scalar(@{$opt{'image_range'}}) != 0){
-         push(@extract_args, '-image_range', @{$opt{'image_range'}}[0], @{$opt{'image_range'}}[1]);
-         }
-      }
    
    # set up convert arguments
    # a flip is 'normal' due to the difference between mnc and most image co-ordinates
