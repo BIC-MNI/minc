@@ -54,7 +54,7 @@ struct dimension_struct{
   char *units;
   double width; 
   double *widths;
-  mihandle_t *volume_handle;
+  mihandle_t volume_handle;
 };
 
 /*! Volume handle  

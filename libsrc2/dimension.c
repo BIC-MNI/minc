@@ -22,7 +22,7 @@ miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume)
 
   if (dimension->volume_handle != NULL) {
     
-    volume = dimension->volume_handle;
+    *volume = dimension->volume_handle;
   }
   else {
     return (MI_ERROR);
@@ -184,7 +184,7 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   handle->size = size;
   handle->offsets = NULL;
   handle->widths = NULL;
-  handle->units = "mm";
+  handle->units = strdup("mm");
   handle->volume_handle = NULL;
 
   *new_dim_ptr = handle;
@@ -208,9 +208,13 @@ mifree_dimension_handle(midimhandle_t dim_ptr)
   }
   
   free(dim_ptr->name);
-  free(dim_ptr->offsets);
+  if (dim_ptr->offsets != NULL) {
+    free(dim_ptr->offsets);
+  }
   free(dim_ptr->units);
-  free(dim_ptr->widths);
+  if (dim_ptr->widths !=NULL) {
+    free(dim_ptr->widths);
+  }
   free(dim_ptr);
   
   return (MI_NOERROR);
@@ -334,7 +338,8 @@ miset_apparent_dimension_order(mihandle_t volume, int array_length,
   int diff;
   int i=0, j=0, k=0;
 
-  if (volume == NULL || array_length <= 0) {
+  if (volume == NULL || array_length <= 0 || 
+      array_length != volume->number_of_dims) {
     return (MI_ERROR);
   }
    /* If array_length was more than the number of dimensions
@@ -433,7 +438,7 @@ miset_apparent_record_dimension_flag(mihandle_t volume, int record_flag)
     return (MI_ERROR);
   }
   handle->class = MI_DIMCLASS_RECORD;
-  handle->volume_handle = &volume;
+  handle->volume_handle = volume;
 
   volume->dim_handles[volume->number_of_dims] = handle;
   /* Add one to the number of dimensions so the volume
