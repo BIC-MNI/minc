@@ -7,7 +7,10 @@
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: use_the_files.c,v $
- * Revision 6.1  1999-10-29 17:52:05  neelin
+ * Revision 6.2  2001-02-19 22:03:14  neelin
+ * Port to linux.
+ *
+ * Revision 6.1  1999/10/29 17:52:05  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:50  neelin
@@ -88,9 +91,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <gcomserver.h>
-
-/* Function prototypes */
-int gethostname (char *name, int namelen);
 
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.12  2000-10-31 00:53:13  neelin
+ * Revision 1.13  2001-02-19 22:03:13  neelin
+ * Port to linux.
+ *
+ * Revision 1.12  2000/10/31 00:53:13  neelin
  * Changed largest and smallest pixel values to largest and smallest
  * pixel values in series.
  *
@@ -70,7 +73,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.12 2000-10-31 00:53:13 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.13 2001-02-19 22:03:13 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -84,6 +87,8 @@ static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/conver
 #include <minc_def.h>
 #include <acr_nema.h>
 #include <spi_element_defs.h>
+
+#define MAKE_POSITIVE_ZEROS
 
 #ifndef public
 #  define public
@@ -172,6 +177,30 @@ static Acr_Element_Id *Elements_to_remove[] = {
 };
 
 
+#ifdef MAKE_POSITIVE_ZEROS
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : make_positive_zeros
+@INPUT      : values
+              nvalues
+@OUTPUT     : values
+@RETURNS    : (nothing)
+@DESCRIPTION: Ensures that zeros are positive (needed for linux).
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : January 29, 2001 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+private void make_positive_zeros(double values[], int nvalues)
+{
+   int i;
+
+   for (i=0; i < nvalues; i++) {
+      if (values[i] == 0.0) values[i] = 0.0;
+   }
+}
+#endif
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : convert_to_dicom
 @INPUT      : group_list
@@ -193,8 +222,8 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    Acr_Element element;
    Acr_Group group;
    double value;
-   char string[64], *ptr, *imagenum;
-   char comment[64];
+   char string[256], *ptr, *imagenum;
+   char comment[256];
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
    union {
       unsigned char ch[4];
@@ -330,6 +359,9 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
       column_world = YCOORD;
       break;
    }
+#ifdef MAKE_POSITIVE_ZEROS
+   make_positive_zeros((double *) dircos, WORLD_NDIMS * WORLD_NDIMS);
+#endif
    (void) sprintf(string, "%.8g\\%.8g\\%.8g\\%.8g\\%.8g\\%.8g",
                   dircos[row_world][XCOORD],
                   dircos[row_world][YCOORD],
@@ -346,12 +378,18 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    field_of_view = acr_find_double(group_list, SPI_Field_of_view, 0);
    calculate_image_position(orientation, field_of_view, field_of_view, 
                             centre, dircos, position);
+#ifdef MAKE_POSITIVE_ZEROS
+   make_positive_zeros(position, WORLD_NDIMS);
+#endif
    (void) sprintf(string, "%.8g\\%.8g\\%.8g",
                   position[XCOORD], position[YCOORD], position[ZCOORD]);
    acr_insert_string(&group_list, ACR_Image_position, string);
 
    /* Add slice location */
    calculate_slice_location(orientation, position, dircos, &location);
+#ifdef MAKE_POSITIVE_ZEROS
+   make_positive_zeros(&location, 1);
+#endif
    (void) sprintf(string, "%.8g", location);
    acr_insert_string(&group_list, ACR_Slice_location, string);
 
@@ -359,6 +397,9 @@ public void convert_to_dicom(Acr_Group group_list, char *uid_prefix,
    element = acr_find_group_element(group_list, ACR_Pixel_size);
    if (element != NULL) {
       if (acr_get_element_numeric_array(element, 1, &value) >= 1) {
+#ifdef MAKE_POSITIVE_ZEROS
+	 make_positive_zeros(&value, 1);
+#endif
          (void) sprintf(string, "%.6G\\%.6G", value, value);
          acr_insert_string(&group_list, ACR_Pixel_size, string);
       }

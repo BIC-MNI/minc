@@ -5,7 +5,10 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: open_connection.c,v $
- * Revision 6.1  1999-10-29 17:52:04  neelin
+ * Revision 6.2  2001-02-19 22:03:13  neelin
+ * Port to linux.
+ *
+ * Revision 6.1  1999/10/29 17:52:04  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:50  neelin
@@ -73,9 +76,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
-#include <dn/defs.h>
+#ifdef sgi
+#  include <dn/defs.h>
+#  define USE_4DDN
+#endif
 #include <acr_nema.h>
 #include <minc_def.h>
+
+/* Section specific to Irix 4DDN interface (includes input and 
+   output routines) */
+#ifdef USE_4DDN
 
 /* Decnet functions */
 #ifdef DNIOCTL
@@ -153,6 +163,8 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
    return nwritten;
 }
 
+#endif    /* USE_4DDN */
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : open_connection
 @INPUT      : argc - number of command-line arguments
@@ -171,16 +183,22 @@ private int output_routine(void *user_data, void *buffer, int nbytes)
 public void open_connection(int argc, char *argv[], 
                             Acr_File **afpin, Acr_File **afpout)
 {
+
+#ifdef USE_4DDN
    SessionData sd;
    Io_data *io_data;
    int link;
    long maxlength;
+#endif
 
    /* If there are no arguments, then assume that we are not using
-      decnet and just use stdin and stdout */
+      irix 4DDN decnet and just use stdin and stdout */
+#ifdef USE_4DDN
    if (argc == 1) {
+#endif
       *afpin = acr_file_initialize((void *) stdin, 0, acr_stdio_read);
       *afpout = acr_file_initialize((void *) stdout, 0, acr_stdio_write);
+#ifdef USE_4DDN
    }
 
    /* Otherwise, use decnet routines */
@@ -209,6 +227,7 @@ public void open_connection(int argc, char *argv[],
                                     output_routine);
 
    }        /* If decnet else */
+#endif /* USE_4DDN */
 
 }
 

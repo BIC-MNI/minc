@@ -8,7 +8,10 @@
 @CREATED    : February 14, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: project_file.c,v $
- * Revision 6.5  2000-06-14 18:24:08  neelin
+ * Revision 6.6  2001-02-19 22:03:13  neelin
+ * Port to linux.
+ *
+ * Revision 6.5  2000/06/14 18:24:08  neelin
  * Added UseSafeOrientations keyword to project files to allow forcing of
  * direction cosines to standard (safe) ones, and modified convert_to_dicom
  * so that this is no longer the default behaviour.
@@ -73,9 +76,6 @@
 #define STREQ(s1, s2) (strcmp(s1, s2) == 0)
 #define STRCOPY(s1, s2, maxlen) \
 { (void) strncpy(s1, s2, (maxlen)-1); s1[(maxlen)-1] = '\0'; }
-
-/* Function prototypes */
-int gethostname (char *name, int namelen);
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : read_project_file
