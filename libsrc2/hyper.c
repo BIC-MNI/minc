@@ -427,6 +427,8 @@ mirw_hyperslab_raw(int opcode,
         }
     }
     else {
+        volume->is_dirty = TRUE; /* Mark as modified. */
+
         /* Restructure array before writing to file.
          */
         if (n_different != 0) {
@@ -520,6 +522,8 @@ mirw_hyperslab_icv(int opcode,
         }
     }
     else {
+        volume->is_dirty = TRUE; /* Flag as modified */
+
         /* Restructure the data before writing.
          * Count must be in raw order here.
          */
