@@ -21,14 +21,17 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hid_t file_id;
   hid_t hdf_attr, hdf_type;
   hid_t hdf_plist;
+  hid_t fspc_id;
   hsize_t dim[1];
   hid_t grp_root_id, grp_image_id;
   hid_t grp_fullimage_id, grp_dimensions_id; 
-
+  herr_t status;
   hid_t dimage_id = -1;
   hid_t dataset_id = -1;
+  hid_t dataset_width = -1;
   hid_t dataspace_id = -1;
-  
+  char *name;
+  int size;
   hsize_t hdf_chunk_size[MI2_MAX_BLOCK_EDGES];
   volumehandle *handle;
   volprops *props_handle;
@@ -42,7 +45,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
   hdf_type = mitype_to_hdftype(volume_type);
 
   /* Create file in HDF5 with the given filename and
-     H5F_AA_TRUNC: Truncate file, if it already exists, 
+     H5F_ACC_TRUNC: Truncate file, if it already exists, 
                    erasing all data previously stored in the file.
      and create ID and ID access as default.
   */
@@ -145,55 +148,94 @@ micreate_volume(const char *filename, int number_of_dimensions,
   }
    
   for (i=0; i < number_of_dimensions ; i++) {
-    
+    /* First create the dataspace required to create a 
+       dimension variable (dataset)
+     */
     if (dimensions[i]->attr == MI_DIMATTR_REGULARLY_SAMPLED) {
-      /* Dimension variable for a regular dimension contains
-	 no meaningful data.
-      */
       dataspace_id = H5Screate(H5S_SCALAR);
     }
-    else {
-      /* Dimension variable for an irregular dimension contains
-	 a vector with the lengths equal to the sampled points
-	 along the dimension.
-      */
+    else if (dimensions[i]->attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED){
+      
       dim[0] = dimensions[i]->length;
       dataspace_id = H5Screate_simple(1, dim, NULL);
     }
+    else {
+      return (MI_ERROR);
+    }
+
     if (dataspace_id < 0) {
       return (MI_ERROR);
     }
-  
-    /* Create a dataset(dimension's name) in DIMENSIONS GROUP */
-    dataset_id = H5Dcreate(grp_dimensions_id, dimensions[i]->name, hdf_type, dataspace_id, H5P_DEFAULT);
+    
+    /* Create a dataset(dimension variable name) in DIMENSIONS GROUP */
+    dataset_id = H5Dcreate(grp_dimensions_id, dimensions[i]->name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+    
+    /* Dimension variable for a regular dimension contains
+       no meaningful data. Whereas, Dimension variable for 
+       an irregular dimension contains a vector with the lengths 
+       equal to the sampled points along the dimension.
+       Also, create a variable named "<dimension>-width" and 
+       write the dimension->widths.
+     */
+    
+    if (dimensions[i]->attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
+      fspc_id = H5Dget_space(dataset_id);
+      if (fspc_id < 0) {
+	return (MI_ERROR);
+      }
+      status = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->offsets);
+      if (status < 0) {
+	return (MI_ERROR);
+      }
+      size = strlen(dimensions[i]->name) + 6;
+      if (size <= MI2_CHAR_LENGTH) {
+	name = malloc(size);
+      }
+      else {
+	name = malloc(MI2_CHAR_LENGTH);
+      }
+      strcpy(name, dimensions[i]->name);
+      strcat(name, "-width");
+      dataset_width = H5Dcreate(grp_dimensions_id, name, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+      fspc_id = H5Dget_space(dataset_width);
+      if (fspc_id < 0) {
+	return (MI_ERROR);
+      }
+      status = H5Dwrite(dataset_width, H5T_NATIVE_DOUBLE, dataspace_id, fspc_id, H5P_DEFAULT, dimensions[i]->widths);
+      if (status < 0) {
+	return (MI_ERROR);
+      }
+      H5Dclose(dataset_width);
+    }
+    
     /* Create Dimension attribute  "attr" */
-   dataspace_id = H5Screate(H5S_SCALAR);
-   /* Create attribute. */
-   hdf_attr = H5Acreate(dataset_id, "attr", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
-   if (hdf_attr < 0) {
-     return (MI_ERROR);
-   }
+    dataspace_id = H5Screate(H5S_SCALAR);
+    /* Create attribute. */
+    hdf_attr = H5Acreate(dataset_id, "attr", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+    if (hdf_attr < 0) {
+      return (MI_ERROR);
+    }
   
-   /* Write data to the attribute. */
-   H5Awrite(hdf_attr, H5T_NATIVE_INT, &dimensions[i]->attr);
-   /* Close attribute dataspace. */
-   H5Sclose(dataspace_id); 
-   /* Close attribute. */
-   H5Aclose(hdf_attr);
+    /* Write data to the attribute. */
+    H5Awrite(hdf_attr, H5T_NATIVE_INT, &dimensions[i]->attr);
+    /* Close attribute dataspace. */
+    H5Sclose(dataspace_id); 
+    /* Close attribute. */
+    H5Aclose(hdf_attr);
 
-   /* Create Dimension attribute  "class" */
-   dataspace_id = H5Screate(H5S_SCALAR);
-   /* Create attribute. */
-   hdf_attr = H5Acreate(dataset_id, "class", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
-   if (hdf_attr < 0) {
-     return (MI_ERROR);
-   }
-   /* Write data to the attribute. */
-   H5Awrite(hdf_attr, H5T_NATIVE_INT, &dimensions[i]->class);
-   /* Close attribute dataspace. */
-   H5Sclose(dataspace_id); 
-   /* Close attribute. */
-   H5Aclose(hdf_attr);
+    /* Create Dimension attribute  "class" */
+    dataspace_id = H5Screate(H5S_SCALAR);
+    /* Create attribute. */
+    hdf_attr = H5Acreate(dataset_id, "class", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+    if (hdf_attr < 0) {
+      return (MI_ERROR);
+    }
+    /* Write data to the attribute. */
+    H5Awrite(hdf_attr, H5T_NATIVE_INT, &dimensions[i]->class);
+    /* Close attribute dataspace. */
+    H5Sclose(dataspace_id); 
+    /* Close attribute. */
+    H5Aclose(hdf_attr);
    
    /* Create Dimension attribute "direction_cosines"  */
    dim[0] = 3;
@@ -220,20 +262,6 @@ micreate_volume(const char *filename, int number_of_dimensions,
    /* Close attribute. */
    H5Aclose(hdf_attr);
 
-   if (dimensions[i]->offsets != NULL) {
-     /* Create Dimension attribute "offsets"  */
-     dim[0] = dimensions[i]->length;
-     dataspace_id = H5Screate_simple(1, dim, NULL);
-     hdf_attr = H5Acreate(dataset_id, "offsets", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-     if (hdf_attr < 0) {
-       return (MI_ERROR);
-     }
-     H5Awrite(hdf_attr, H5T_NATIVE_DOUBLE, dimensions[i]->offsets);
-     /* Close attribute dataspace. */
-     H5Sclose(dataspace_id); 
-     /* Close attribute. */
-     H5Aclose(hdf_attr);
-   }
    
    /* Create Dimension attribute "sampling_flag" */
    dataspace_id = H5Screate(H5S_SCALAR);
@@ -309,20 +337,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    H5Sclose(dataspace_id); 
    /* Close attribute. */
    H5Aclose(hdf_attr);
-   if (dimensions[i]->widths != NULL) {
-     /* Create Dimension attribute "widths" */
-     dim[0] = dimensions[i]->length;
-     dataspace_id = H5Screate_simple(1, dim, NULL);
-     hdf_attr = H5Acreate(dataset_id, "widths", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-     if (hdf_attr < 0) {
-       return (MI_ERROR);
-     }
-     H5Awrite(hdf_attr, H5T_NATIVE_DOUBLE, dimensions[i]->widths);
-     /* Close attribute dataspace. */
-     H5Sclose(dataspace_id); 
-     /* Close attribute. */
-     H5Aclose(hdf_attr);
-   }
+   
   }
   /* "mitype_to_hdftype" returns a copy of the datatype, so the returned value 
      must be explicitly freed with a call to H5Tclose().
@@ -330,6 +345,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
    */
   H5Tclose(hdf_type);
   H5Sclose(dataspace_id);
+  H5Dclose(dataset_id);
   H5Dclose(dimage_id);
   H5Gclose(grp_dimensions_id);
   H5Pclose(hdf_plist);

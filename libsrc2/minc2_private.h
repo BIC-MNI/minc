@@ -1,3 +1,4 @@
+
 /** The root of all MINC 2.0 objects in the HDF5 hierarchy.
  */
 #define MI_ROOT_PATH "/minc-2.0"

@@ -290,14 +290,17 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   hid_t hdf_file, hdf_type;	
   hid_t hdf_dims_grp;
   hid_t dataset, attribute;
+  hid_t dataset_width;
   hsize_t number_of_dims; 
   herr_t status;
   char *name;
+  char *name_width;
   ssize_t size_of_obj;
   midimclass_t dim_class;
   midimattr_t  dim_attr;
   double *direction_cosines;
-  
+  ssize_t name_len;   /* Length of an object's name */
+
   int i=0, j=0, max_dims;
   
   if (volume == NULL) {
@@ -338,16 +341,17 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
      which one has a matching class and attirbute.
    */
   for (i=0; i< max_dims; i++) {
-    /* Get the name of the dimension by providing its index
+    /* Get the length of the name of the dimension by providing its index
        to the following function.
      */
-    //PROBLEM FOUND WITH HDF H5Gget_objname_by_idx
-    // DOES NOT RETURN THE CORRECT SIZE OF THE OBJECT when name
-    // is set to NULL according to the documentation
-    // DOES NOT ALLOCATE SPACE FOR NAME
-    // LEFT malloc with MAX CHAR LENGTH until the problem is fixed
-    // EMAILED  Quincey Koziol DEC 22 /2003
-    name = malloc(MI2_CHAR_LENGTH);
+    name_len=H5Gget_objname_by_idx(hdf_dims_grp, i, NULL, 0);
+    
+    if (name_len < MI2_CHAR_LENGTH) {
+      name = malloc(name_len + 1);
+    }
+    else {
+      name = malloc(MI2_CHAR_LENGTH);
+    }
     size_of_obj = H5Gget_objname_by_idx(hdf_dims_grp, i, name, MI2_CHAR_LENGTH);
     
     if (size_of_obj < 0 || name == NULL) {
@@ -440,36 +444,37 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 	}
 	
 	if ( dim_attr == MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
-	  /* Attach to offsets attribute using its name
-	     ONLY IF an IRREGULAR SAMPLE is specified.
-           */
-	  attribute = H5Aopen_name(dataset, "offsets");
-	  if (attribute < 0) {
-	    return (MI_ERROR);
-	  }
-	
+
 	  handle->offsets = (double *) malloc(handle->length *sizeof(double));
-	  status = H5Aread(attribute, H5T_NATIVE_DOUBLE, handle->offsets);
+	  status = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, 
+			 H5P_DEFAULT, handle->offsets);
 	  if (status < 0) {
 	    return (MI_ERROR);
 	  }
 	  printf( " OFFSETS %f %f %f \n", handle->offsets[0], handle->offsets[1], handle->offsets[2]);
-	  /* Attach to widths attribute using its name
-	     ONLY IF an IRREGULAR SAMPLE is specified.
-           */
-	  attribute = H5Aopen_name(dataset, "widths");
-	  if (attribute < 0) {
-	    return (MI_ERROR);
+	  
+	  name_len = strlen(name) + 6;
+	  if (name_len < MI2_CHAR_LENGTH) {
+	    name_width = malloc(name_len);
 	  }
-	
+	  else {
+	    name_width = malloc(MI2_CHAR_LENGTH);
+	  }
+	  strcpy(name_width, name);
+	  strcat(name_width, "-width");
+	  dataset_width = H5Dopen(hdf_dims_grp, name_width);
+	  if (dataset_width < 0) {
+	     return (MI_ERROR);
+	  }
 	  handle->widths = (double *) malloc(handle->length *sizeof(double));
-	  status = H5Aread(attribute, H5T_NATIVE_DOUBLE, handle->widths);
+	  status = H5Dread(dataset_width, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, 
+			 H5P_DEFAULT, handle->widths);
 	  if (status < 0) {
 	    return (MI_ERROR);
 	  }
 	  printf( " WIDTHS %f %f %f \n", handle->widths[0], handle->widths[1], handle->widths[2]);
+	  
 	}
-
 	/* Attach to sampling_flag attribute using its name
          */
 	attribute = H5Aopen_name(dataset, "sampling_flag");
@@ -538,7 +543,7 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
 	dimensions[j] = handle;
 	j++;
       }
-    } 
+    }
   }
   
   return (MI_NOERROR);
