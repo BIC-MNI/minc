@@ -10,17 +10,22 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.6  1993-08-11 13:27:59  neelin
-@MODIFIED   : Converted to use Dave MacDonald's General_transform code.
-@MODIFIED   : Fixed bug in get_slice - for non-linear transformations coord was
-@MODIFIED   : transformed, then used again as a starting coordinate.
-@MODIFIED   : Handle files that have image-max/min that doesn't vary over slices.
-@MODIFIED   : Handle files that have image-max/min varying over row/cols.
-@MODIFIED   : Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
-@MODIFIED   : Handle out-of-range values (-fill values from a previous mincresample, for
-@MODIFIED   : example).
-@MODIFIED   : Save transformation file as a string attribute to processing variable.
+@MODIFIED   : Revision 1.7  1993-08-11 14:28:19  neelin
+@MODIFIED   : Modified get_arginfo and check_imageminmax to modify type of volume (not
+@MODIFIED   : file) so that output volume gets the input volume type by default when
+@MODIFIED   : an icv is used on input.
 @MODIFIED   :
+ * Revision 1.6  93/08/11  13:27:59  neelin
+ * Converted to use Dave MacDonald's General_transform code.
+ * Fixed bug in get_slice - for non-linear transformations coord was
+ * transformed, then used again as a starting coordinate.
+ * Handle files that have image-max/min that doesn't vary over slices.
+ * Handle files that have image-max/min varying over row/cols.
+ * Allow volume to extend to voxel edge for -nearest_neighbour interpolation.
+ * Handle out-of-range values (-fill values from a previous mincresample, for
+ * example).
+ * Save transformation file as a string attribute to processing variable.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -34,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.6 1993-08-11 13:27:59 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.7 1993-08-11 14:28:19 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -278,15 +283,7 @@ public void get_arginfo(int argc, char *argv[],
    create_inverse_general_transform(in_vol->voxel_to_world,
                                     in_vol->world_to_voxel);
 
-   /* Check min/max variables */
-   fp = in_vol->file;
-   fp->using_icv=FALSE;
-   if ((fp->maxid != MI_ERROR) && (fp->minid != MI_ERROR) &&
-       (fp->datatype!=NC_FLOAT) && (fp->datatype!=NC_DOUBLE)) {
-      check_imageminmax(fp);
-   }
-
-   /* Get for input volume data information */
+   /* Get input volume data information */
    in_vol->slice = NULL;
    in_vol->volume = MALLOC(sizeof(Volume_Data));
    in_vol->volume->datatype = in_vol->file->datatype;
@@ -302,6 +299,14 @@ public void get_arginfo(int argc, char *argv[],
       in_vol->volume->use_fill = FALSE;
    }
    in_vol->volume->interpolant = args.interpolant;
+
+   /* Check min/max variables */
+   fp = in_vol->file;
+   fp->using_icv=FALSE;
+   if ((fp->maxid != MI_ERROR) && (fp->minid != MI_ERROR) &&
+       (fp->datatype!=NC_FLOAT) && (fp->datatype!=NC_DOUBLE)) {
+      check_imageminmax(fp, in_vol->volume);
+   }
 
    /* Get space for volume data */
    total_size = 1;
@@ -413,6 +418,7 @@ public void get_arginfo(int argc, char *argv[],
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : check_imageminmax
 @INPUT      : fp - pointer to file description
+              volume - pointer to volume description
 @OUTPUT     : 
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to check that MIimagemax and MIimagemin do not vary
@@ -424,7 +430,7 @@ public void get_arginfo(int argc, char *argv[],
 @CREATED    : August 5, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void check_imageminmax(File_Info *fp)
+public void check_imageminmax(File_Info *fp, Volume_Data *volume)
 {
    int ndims, idim, dim[MAX_VAR_DIMS], imgdim[MAX_VAR_DIMS];
    int ivar, varid;
@@ -449,22 +455,22 @@ public void check_imageminmax(File_Info *fp)
 
       /* Change type to floating point so that there is no loss of 
          precision (except possibly for long values). */
-      if (fp->datatype != NC_DOUBLE)
-         fp->datatype = NC_FLOAT;
-      fp->is_signed = TRUE;
+      if (volume->datatype != NC_DOUBLE)
+         volume->datatype = NC_FLOAT;
+      volume->is_signed = TRUE;
 
       /* Create the icv */
       fp->icvid = miicv_create();
-      (void) miicv_setint(fp->icvid, MI_ICV_TYPE, fp->datatype);
+      (void) miicv_setint(fp->icvid, MI_ICV_TYPE, volume->datatype);
       (void) miicv_setstr(fp->icvid, MI_ICV_SIGN, 
-                          (fp->is_signed ? MI_SIGNED : MI_UNSIGNED));
+                          (volume->is_signed ? MI_SIGNED : MI_UNSIGNED));
       (void) miicv_setint(fp->icvid, MI_ICV_DO_NORM, TRUE);
       (void) miicv_setint(fp->icvid, MI_ICV_DO_FILLVALUE, TRUE);
       (void) miicv_attach(fp->icvid, fp->mincid, fp->imgid);
 
       /* Get max and min for doing valid range checking */
-      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MIN, &fp->vrange[0]);
-      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MAX, &fp->vrange[1]);
+      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MIN, &volume->vrange[0]);
+      (void) miicv_inqdbl(fp->icvid, MI_ICV_NORM_MAX, &volume->vrange[1]);
          
    }
 
