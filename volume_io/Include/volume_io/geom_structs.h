@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.19 2001-12-14 17:12:26 neelin Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.20 2003-06-02 20:30:07 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -124,11 +124,15 @@ typedef  struct
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-#ifdef  __alpha
+/* bert - redefined 'Colour' to be an 'int' instead of a 'long'. Jason
+ * Lerch found that MNI-Display was displaying garbled images when built
+ * for 64 bits on the SGI.
+ *
+ * Apparently the graphics functions in volume_io rely on Colour being
+ * exactly 4 bytes, so you get weird results on 64-bit architectures
+ * if Colour is a 'long'.
+ */
 typedef  unsigned  int     Colour;
-#else
-typedef  unsigned  long    Colour;
-#endif
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \
