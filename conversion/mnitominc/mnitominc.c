@@ -22,7 +22,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.10 1993-07-21 12:52:01 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 1.11 1993-08-06 14:18:51 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -718,7 +718,7 @@ int get_mni_image(mni_header_type *mni_header, mni_image_type *mni_image,
 {
    float qsc, zpos, time;
    short isea, tlen;
-   int i, j, nrow, nread;
+   long i, j, nrow, nread, image_bytes, bytes_read;
    unsigned char *image;
    double zero, denom, *valid_range;
 
@@ -743,7 +743,9 @@ int get_mni_image(mni_header_type *mni_header, mni_image_type *mni_image,
    /* Check for read of only part of image (happens to last image of files
       created by cnvmri) */
    if (nread<mni_image->image_pix) {
-      for (i=nread; i<mni_image->image_pix; i++)
+      bytes_read = nread * mni_header->pix_size; 
+      image_bytes = mni_image->image_pix * mni_header->pix_size;
+      for (i = bytes_read; i < image_bytes; i++)
          mni_image->image[i]=0;
    }
    image = mni_image->image;
