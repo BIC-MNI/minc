@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:36:16  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-01-04 08:10:16  neelin
+@MODIFIED   : Improved string printing in dump function (longer strings and replace
+@MODIFIED   : carriage returns, linefeeds and formfeeds by spaces).
 @MODIFIED   :
+ * Revision 2.0  94/09/28  10:36:16  neelin
+ * Release of minc version 0.2
+ * 
  * Revision 1.11  94/09/28  10:35:45  neelin
  * Pre-release
  * 
@@ -639,7 +643,7 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
    long element_length;
    int printable;
    int i;
-   char *string;
+   char *string, copy[1024];
 
    /* Check for empty list */
    cur_group = group_list;
@@ -682,18 +686,25 @@ public void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
          }
 
          /* Print string if short enough and is printable */
-         if ((element_length > 0) && (element_length <= 80)) {
+         if ((element_length > 0) && (element_length < sizeof(copy))) {
             string = acr_get_element_string(cur_element);
             printable = TRUE;
             for (i=0; i < element_length; i++) {
                if (! isprint((int) string[i])) {
                   printable = FALSE;
-                  break;
+                  copy[i] = ' ';
                }
+               else if ((string[i] == '\n') ||
+                        (string[i] == '\r') ||
+                        (string[i] == '\f'))
+                  copy[i] = ' ';
+               else
+                  copy[i] = string[i];
             }
+            copy[i] = '\0';
 
             if (printable) {
-               (void) fprintf(file_pointer, " string = \"%s\"", string);
+               (void) fprintf(file_pointer, " string = \"%s\"", copy);
             }
 
          }
