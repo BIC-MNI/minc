@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: use_the_files.c,v $
- * Revision 6.1  1999-10-29 17:52:00  neelin
+ * Revision 6.2  2002-12-07 13:02:28  neelin
+ * Fixed prototype for gethostname
+ *
+ * Revision 6.1  1999/10/29 17:52:00  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:24:27  neelin
@@ -42,7 +45,7 @@
 #include <dicomserver.h>
 
 /* Function prototypes */
-int gethostname (char *name, int namelen);
+int gethostname (char *name, size_t namelen);
 
 
 /* ----------------------------- MNI Header -----------------------------------
