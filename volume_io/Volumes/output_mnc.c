@@ -14,6 +14,14 @@ private  void  create_world_transform(
     Real        axis_spacing[N_DIMENSIONS],
     Transform   *transform );
 
+private  Status  get_dimension_ordering(
+    int          n_vol_dims,
+    char         *vol_dim_names[],
+    int          n_file_dims,
+    STRING       file_dim_names[],
+    int          to_volume[],
+    int          to_file[] );
+
 private  BOOLEAN  is_default_direction_cosine(
     int        axis,
     double     dir_cosines[] )
@@ -47,10 +55,11 @@ public  Minc_file  initialize_minc_output(
     Real                   real_min,
     Real                   real_max,
     General_transform      *voxel_to_world_transform,
+    Volume                 volume_to_attach,
     minc_output_options    *options )
 {
     minc_file_struct    *file;
-    int                 dim_vars[MAX_VAR_DIMS];
+    int                 dim_vars[MAX_VAR_DIMS], volume_sizes[MAX_DIMENSIONS];
     double              separation[MAX_VAR_DIMS], valid_range[2];
     double              start[MAX_VAR_DIMS];
     double              dir_cosines[MAX_VAR_DIMS][MI_NUM_SPACE_DIMS];
@@ -59,6 +68,7 @@ public  Minc_file  initialize_minc_output(
     Vector              axes[MAX_DIMENSIONS];
     static  char        *default_dim_names[] = { MIzspace, MIyspace, MIxspace };
     Transform           transform;
+    char                **vol_dimension_names;
     minc_output_options default_options;
 
     if( options == (minc_output_options *) NULL )
@@ -71,7 +81,8 @@ public  Minc_file  initialize_minc_output(
     {
         if( n_dimensions != 3 )
         {
-            print( "initialize_minc_output: can't use NULL dim_names except with 3 dimensions.\n" );
+            print( "initialize_minc_output: " );
+            print( "can't use NULL dim_names except with 3 dimensions.\n" );
             return( (Minc_file) NULL );
         }
 
@@ -82,6 +93,50 @@ public  Minc_file  initialize_minc_output(
 
     file->file_is_being_read = FALSE;
     file->n_file_dimensions = n_dimensions;
+    file->volume = volume_to_attach;
+    file->entire_file_written = FALSE;
+
+    /* --- check if dimension name correspondence between volume and file */
+
+    n_volume_dims = get_volume_n_dimensions( volume_to_attach );
+
+    if( n_volume_dims > n_file_dimensions )
+    {
+        print( "initialize_minc_output:" );
+        print( " volume (%d) has more dimensions than file (%d).\n",
+               n_volume_dims, n_file_dimensions );
+        return( (Minc_file) NULL );
+    }
+
+    /*--- find correspondence between volume dimensions and file dimensions */
+
+    vol_dimension_names = get_volume_dimension_names( volume_to_attach );
+
+    if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
+                            n_file_dimensions, dim_names,
+                            file->to_volume_index, file->to_file_index ) != OK )
+        return( (Minc_file) NULL );
+
+    delete_dimension_names( vol_dimension_names );
+
+    /*--- check sizes match between volume and file */
+
+    get_volume_sizes( volume_to_attach, volume_sizes );
+
+    for_less( d, 0, n_file_dimensions )
+    {
+        vol_index = file->to_volume_index[d];
+
+        if( vol_index >= 0 && volume_sizes[vol_index] != sizes[d] )
+        {
+            print( "initialize_minc_output: " );
+            print( "volume size[%d]=%d does not match file[%d]=%d.\n",
+                   vol_index, volume_sizes[vol_index], d, sizes[d] );
+            return( (Minc_file) NULL );
+        }
+    }
+
+    /*--- create the file */
 
     ncopts = NC_VERBOSE;
     file->cdfid =  micreate( filename, NC_CLOBBER );
@@ -92,7 +147,11 @@ public  Minc_file  initialize_minc_output(
         return( (Minc_file) 0 );
     }
 
-    if( get_transform_type( voxel_to_world_transform ) == LINEAR )
+    if( voxel_to_world_transform == (General_transform *) NULL )
+    {
+        make_identity_transform( &transform );
+    }
+    else if( get_transform_type( voxel_to_world_transform ) == LINEAR )
     {
         transform = *(get_linear_transform_ptr( voxel_to_world_transform ));
     }
@@ -164,6 +223,7 @@ public  Minc_file  initialize_minc_output(
     file->img_var_id = micreate_std_variable( file->cdfid, MIimage,
                                               file_nc_data_type,
                                               n_dimensions, dim_vars );
+    (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_FALSE );
 
     if( file_signed_flag )
         (void) miattputstr( file->cdfid, file->img_var_id, MIsigntype,
@@ -357,7 +417,7 @@ private  Status  get_dimension_ordering(
     int          n_vol_dims,
     char         *vol_dim_names[],
     int          n_file_dims,
-    char         *file_dim_names[],
+    STRING       file_dim_names[],
     int          to_volume[],
     int          to_file[] )
 {
@@ -478,8 +538,7 @@ private  void  output_slab(
 }
 
 public  Status  output_minc_volume(
-    Minc_file   file,
-    Volume      volume )
+    Minc_file   file )
 {
     int               d, axis, n_volume_dims, sizes[MAX_DIMENSIONS];
     int               slab_size, n_slab;
@@ -552,48 +611,11 @@ public  Status  output_minc_volume(
         ncopts = NC_VERBOSE | NC_FATAL;
     }
 
-    n_volume_dims = get_volume_n_dimensions( volume );
-
-    if( n_volume_dims > file->n_file_dimensions )
-    {
-        print(
-        "output_minc_volume: volume (%d) has more dimensions than file (%d).\n",
-            n_volume_dims, file->n_file_dimensions );
-        return( ERROR );
-    }
-
-    /*--- find correspondence between volume dimensions and file dimensions */
-
-    vol_dimension_names = get_volume_dimension_names( volume );
-
-    if( get_dimension_ordering( n_volume_dims, vol_dimension_names,
-                                file->n_file_dimensions, file->dim_names,
-                                to_volume, to_file ) != OK )
-        return( ERROR );
-
-    delete_dimension_names( vol_dimension_names );
-
-    get_volume_sizes( volume, sizes );
-
-    /*--- check sizes match between volume and file */
-
-    for_less( d, 0, file->n_file_dimensions )
-    {
-        vol_index = to_volume[d];
- 
-        if( vol_index >= 0 && sizes[vol_index] != file->sizes_in_file[d] )
-        {
-            print(
-            "output_minc_volume: volume size[%d]=%d does not match file[%d]=%d.\n",
-                vol_index, sizes[vol_index], d, file->sizes_in_file[d] );
-            return( ERROR );
-        }
-    }
-
     /*--- check number of volumes written */
 
     d = 0;
-    while( d < file->n_file_dimensions && to_volume[d] != INVALID_AXIS )
+    while( d < file->n_file_dimensions &&
+           file->to_volume_index[d] != INVALID_AXIS )
         ++d;
 
     if( d < file->n_file_dimensions &&
@@ -611,7 +633,7 @@ public  Status  output_minc_volume(
 
     do
     {
-        if( to_volume[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
         {
             ++file->n_slab_dims;
             slab_size *= file->sizes_in_file[d];
@@ -630,9 +652,10 @@ public  Status  output_minc_volume(
 
     for( d = file->n_file_dimensions-1;  d >= 0;  --d )
     {
-        if( to_volume[d] != INVALID_AXIS && n_slab >= file->n_slab_dims )
+        if( file->to_volume_index[d] != INVALID_AXIS &&
+            n_slab >= file->n_slab_dims )
             n_steps *= file->sizes_in_file[d];
-        if( to_volume[d] != INVALID_AXIS )
+        if( file->to_volume_index[d] != INVALID_AXIS )
             ++n_slab;
     }
 
@@ -648,16 +671,17 @@ public  Status  output_minc_volume(
         n_slab = 0;
         for( d = file->n_file_dimensions-1;  d >= 0;  --d )
         {
-            if( to_volume[d] == INVALID_AXIS || n_slab >= file->n_slab_dims )
+            if( file->to_volume_index[d] == INVALID_AXIS ||
+                n_slab >= file->n_slab_dims )
                 count[d] = 1;
             else
                 count[d] = file->sizes_in_file[d];
 
-            if( to_volume[d] != INVALID_AXIS )
+            if( file->to_volume_index[d] != INVALID_AXIS )
                 ++n_slab;
         }
 
-        output_slab( file, volume, to_volume, file->indices, count );
+        output_slab( file, volume, file->to_volume_index, file->indices, count);
 
         increment = TRUE;
 
@@ -668,7 +692,8 @@ public  Status  output_minc_volume(
         n_slab = 0;
         while( increment && d >= 0 )
         {
-            if( to_volume[d] != INVALID_AXIS && n_slab >= file->n_slab_dims )
+            if( file->to_volume_index[d] != INVALID_AXIS &&
+                n_slab >= file->n_slab_dims )
             {
                 ++file->indices[d];
                 if( file->indices[d] < file->sizes_in_file[d] )
@@ -677,7 +702,7 @@ public  Status  output_minc_volume(
                     file->indices[d] = 0;
             }
 
-            if( to_volume[d] != INVALID_AXIS )
+            if( file->to_volume_index[d] != INVALID_AXIS )
                 ++n_slab;
 
             --d;
@@ -697,7 +722,7 @@ public  Status  output_minc_volume(
     d = file->n_file_dimensions-1;
     while( increment && d >= 0 )
     {
-        if( to_volume[d] == INVALID_AXIS )
+        if( file->to_volume_index[d] == INVALID_AXIS )
         {
             ++file->indices[d];
 
@@ -709,6 +734,9 @@ public  Status  output_minc_volume(
 
         --d;
     }
+
+    if( increment )
+        file->entire_file_written = TRUE;
 
     return( OK );
 }
@@ -723,6 +751,14 @@ public  Status  close_minc_output(
         print( "close_minc_output(): NULL file.\n" );
         return( ERROR );
     }
+
+    if( !file->entire_file_written )
+    {
+        print( "Warning:  the MINC file has been " );
+        print( "closed without writing part of it.\n");
+    }
+
+    (void) miattputstr( file->cdfid, file->img_var_id, MIcomplete, MI_TRUE );
 
     (void) miclose( file->cdfid );
     (void) miicv_free( file->icv );
