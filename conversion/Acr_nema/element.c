@@ -5,9 +5,13 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 4.0  1997-05-07 20:01:23  neelin
-@MODIFIED   : Release of minc version 0.4
+@MODIFIED   : Revision 4.1  1997-05-13 22:46:25  neelin
+@MODIFIED   : Modified behaviour of acr_create_element_string (and numeric) so that
+@MODIFIED   : the VR type is taken from the elid if it is specified there.
 @MODIFIED   :
+ * Revision 4.0  1997/05/07  20:01:23  neelin
+ * Release of minc version 0.4
+ *
  * Revision 3.2  1997/04/21  20:21:09  neelin
  * Updated the library to handle dicom messages.
  *
@@ -1120,6 +1124,8 @@ public Acr_Element acr_create_element_long(Acr_Element_Id elid,
 @RETURNS    : Pointer to element structure
 @DESCRIPTION: Creates an acr-nema element structure containing one ascii 
               numeric.
+              Note that the VR type is taken from the elid structure unless
+              it is not specified there (ACR_VR_UNKNOWN).
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -1134,7 +1140,8 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
 
    (void) sprintf(string, "%.15g", value);
    element = acr_create_element_string(elid, string);
-   acr_set_element_vr(element, ACR_VR_DS);
+   if (elid->vr_code == ACR_VR_UNKNOWN)
+      acr_set_element_vr(element, ACR_VR_DS);
    return element;
 
 }
@@ -1147,6 +1154,8 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
 @RETURNS    : Pointer to element structure
 @DESCRIPTION: Creates an acr-nema element structure containing an ascii string.
               Note that the string is duplicated for the element structure.
+              Note also that the VR type is taken from the elid structure 
+              unless it is not specified there (ACR_VR_UNKNOWN).
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -1160,6 +1169,7 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
    long alloc_length;
    char *data;
    int pad;
+   Acr_VR_Type vr_code;
 
    /* Get string length and check for an odd length */
    data_length = strlen(value);
@@ -1181,8 +1191,11 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
       data[data_length] = '\0';
    }
 
+   /* Get the appropriate vr code */
+   vr_code = ((elid->vr_code == ACR_VR_UNKNOWN) ? ACR_VR_ST : elid->vr_code);
+
    return acr_create_element(elid->group_id, elid->element_id, 
-                             ACR_VR_ST, data_length, data);
+                             vr_code, data_length, data);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
