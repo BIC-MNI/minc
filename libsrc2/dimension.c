@@ -83,7 +83,6 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
     handle->offsets = NULL;
   }
   handle->start = dim_ptr->start;
-  handle->sampling_flag = dim_ptr->sampling_flag;
   handle->step = dim_ptr->step;
   if (dim_ptr->units != NULL) {
     handle->units = strdup(dim_ptr->units);
@@ -204,29 +203,18 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   default:
     return (MI_ERROR);
   }
-  /* "attr" can only be one of the following ,   
-     MI_DIMATTR_ALL is not valid for this function
-   */
+
   handle->offsets = NULL;
-  switch (attr) {
-  case MI_DIMATTR_REGULARLY_SAMPLED:
-    handle->attr = MI_DIMATTR_REGULARLY_SAMPLED;
-    handle->sampling_flag = 1;
-   
-    handle->widths = NULL;
-    break;
-  case MI_DIMATTR_NOT_REGULARLY_SAMPLED:
-    handle->attr = MI_DIMATTR_NOT_REGULARLY_SAMPLED;
-    handle->sampling_flag = 0;
-   
+  handle->attr = attr;
+  if (attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) {
     handle->widths = (double *) malloc(length *sizeof(double));
     for (i=0; i< length; i++) {
       
       handle->widths[i] = 1.0;
     }
-    break;
-  default:
-    return (MI_ERROR);
+  }
+  else {
+    handle->widths = NULL;
   }
   handle->start = 0.0;
   handle->step = 1.0;
@@ -779,7 +767,9 @@ miset_dimension_offsets(midimhandle_t dimension, unsigned long array_length,
   int i, j=0;
   /* Check to see whether the dimension is regularly sampled.
    */
-  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->length ) {
+  if (dimension == NULL || 
+      (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) == 0 || 
+      start_position > dimension->length ) {
     return (MI_ERROR);
   }
   if ((start_position + array_length) > dimension->length) {
@@ -813,7 +803,8 @@ miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
   if (dimension == NULL) {
     return (MI_ERROR);
   }
-  *sampling_flag = dimension->sampling_flag;
+
+  *sampling_flag = (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) != 0;
 
   return (MI_NOERROR);
 }
@@ -824,12 +815,16 @@ miget_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN *sampling_flag)
 int 
 miset_dimension_sampling_flag(midimhandle_t dimension, BOOLEAN sampling_flag)
 {
-  if (dimension == NULL) {
-    return (MI_ERROR);
-  }
-  dimension->sampling_flag = sampling_flag;
-
-  return (MI_NOERROR);
+    if (dimension == NULL) {
+        return (MI_ERROR);
+    }
+    if (sampling_flag) {
+        dimension->attr |= MI_DIMATTR_NOT_REGULARLY_SAMPLED;
+    }
+    else {
+        dimension->attr &= ~MI_DIMATTR_NOT_REGULARLY_SAMPLED;
+    }
+    return (MI_NOERROR);
 }
 
 /*! Get the sampling interval (STEP) for a single dimension.
@@ -1064,7 +1059,8 @@ int
 miget_dimension_width(midimhandle_t dimension, double *width_ptr)
 {
   
-  if (dimension == NULL || dimension->sampling_flag == 0) {
+  if (dimension == NULL || 
+      (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) != 0) {
     return (MI_ERROR);
   }
   *width_ptr = dimension->width;
@@ -1078,7 +1074,8 @@ miget_dimension_width(midimhandle_t dimension, double *width_ptr)
 int 
 miset_dimension_width(midimhandle_t dimension, double width_ptr)
 {
-  if (dimension == NULL || dimension->sampling_flag == 0) {
+  if (dimension == NULL || 
+      (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) != 0) {
     return (MI_ERROR);
   }
   /* Check to make sure width value is positive.
@@ -1162,7 +1159,9 @@ miset_dimension_widths(midimhandle_t dimension, unsigned long array_length,
   int i, j=0;
   /* Check to see whether the dimension is regularly sampled.
    */
-  if (dimension == NULL || dimension->sampling_flag || start_position > dimension->length) {
+  if (dimension == NULL || 
+      (dimension->attr & MI_DIMATTR_NOT_REGULARLY_SAMPLED) == 0 || 
+      start_position > dimension->length) {
     return (MI_ERROR);
   }
 
