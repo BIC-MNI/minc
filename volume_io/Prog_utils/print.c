@@ -2,11 +2,18 @@
 #include  <stdarg.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.8 1995-05-24 17:24:09 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.9 1995-06-23 14:24:21 david Exp $";
 #endif
 
-private  void  (*saved_print_function) ( char [] );
-private  void  (*print_function) ( char [] );
+#define  MAX_PRINT_STACK  100
+
+typedef  void (*print_function_type) ( char [] );
+
+private  print_function_type  print_function[MAX_PRINT_STACK] = { NULL };
+private  int                  top_of_stack = 0;
+
+private  print_function_type  print_error_function[MAX_PRINT_STACK] = { NULL };
+private  int                  top_of_error_stack = 0;
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_print_function
@@ -25,9 +32,9 @@ private  void  (*print_function) ( char [] );
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  void  set_print_function( void (*function) ( char [] ) )
+public  void  set_print_function( void  (*function) ( char [] ) )
 {
-    print_function = function;
+    print_function[top_of_stack] = function;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -46,8 +53,13 @@ public  void  set_print_function( void (*function) ( char [] ) )
 
 public  void  push_print_function()
 {
-    saved_print_function = print_function;
-    print_function = 0;
+    if( top_of_stack < MAX_PRINT_STACK - 1 )
+    {
+        ++top_of_stack;
+        print_function[top_of_stack] = NULL;
+    }
+    else
+        handle_internal_error( "Stack overflow in push_print_function" );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -65,7 +77,10 @@ public  void  push_print_function()
 
 public  void  pop_print_function()
 {
-    print_function = saved_print_function;
+    if( top_of_stack > 0 )
+        --top_of_stack;
+    else
+        handle_internal_error( "Stack underflow in pop_print_function" );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -93,11 +108,94 @@ public  void  print( char format[], ... )
     (void) vsprintf( print_buffer, format, ap );
     va_end( ap );
 
-    if( print_function == NULL )
+    if( print_function[top_of_stack] == NULL )
         (void) printf( "%s", print_buffer );
     else
-        (*print_function) ( print_buffer );
+        (*(print_function[top_of_stack])) ( print_buffer );
 }
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : set_print_error_function
+@INPUT      : function
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Sets the output function.  If you use the function print_error()
+              everywhere, in place of printf, then by default it uses
+              printf to send output to stderr.  However, you can call
+              the set_print_error_function() to tell it to use a different
+              output function, e.g. output to a GL or X window.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  set_print_error_function( void  (*function) ( char [] ) )
+{
+    print_error_function[top_of_error_stack] = function;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : push_print_error_function
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Save the current print error function, so, for instance, you can
+              print to stdout temporarily.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  push_print_error_function()
+{
+    if( top_of_error_stack < MAX_PRINT_STACK - 1 )
+    {
+        ++top_of_error_stack;
+        print_error_function[top_of_error_stack] = NULL;
+    }
+    else
+        handle_internal_error( "Stack overflow in push_print_error_function" );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : pop_print_error_function
+@INPUT      : 
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: Restore the print_error function.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  pop_print_error_function()
+{
+    if( top_of_error_stack > 0 )
+        --top_of_error_stack;
+    else
+        handle_internal_error( "Stack underflow in pop_print_error_function" );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : print_error
+@INPUT      : exactly same arguments as printf
+@OUTPUT     : 
+@RETURNS    : 
+@DESCRIPTION: prints the arguments to a temporary string buffer, then either
+              fprintf's to stderr or calls the user installed function to
+              output the string.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
 
 /* VARARGS */
 public  void  print_error( char format[], ... )
@@ -109,9 +207,11 @@ public  void  print_error( char format[], ... )
     (void) vsprintf( print_buffer, format, ap );
     va_end( ap );
 
-    (void) fprintf( stderr, "%s", print_buffer );
+    if( print_error_function[top_of_error_stack] == NULL )
+        (void) fprintf( stderr, "%s", print_buffer );
+    else
+        (*(print_error_function[top_of_error_stack])) ( print_buffer );
 }
-
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : handle_internal_error
@@ -129,10 +229,8 @@ public  void  print_error( char format[], ... )
 
 public  void   handle_internal_error( char  str[] )
 {
-    push_print_function();
-    print( "Internal error:  %s\n", str );
+    print_error( "Internal error:  %s\n", str );
     abort_if_allowed();
-    pop_print_function();
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -154,9 +252,7 @@ public  void  abort_if_allowed( void )
 
     if( ENV_EXISTS( "ABORT_FLAG" ) )
     {
-        set_print_function( NULL );
-
-        print( "Do you wish to abort (y/n): " );
+        print_error( "Do you wish to abort (y/n): " );
         do
         {
             ch = getchar();
@@ -172,15 +268,4 @@ public  void  abort_if_allowed( void )
             abort();
         }
     }
-}
-
-public  void  begin_error()
-{
-    push_print_function();
-    set_print_function( NULL );
-}
-
-public  void  end_error()
-{
-    pop_print_function();
 }

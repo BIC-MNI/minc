@@ -1,6 +1,6 @@
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.8 1995-05-24 17:24:38 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin_plate_spline.c,v 1.9 1995-06-23 14:24:39 david Exp $";
 #endif
 
 #include <internal_volume_io.h>
@@ -33,8 +33,8 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/thin
 
 typedef  struct
 {
-    float  **points;
-    float  **weights;
+    Real   **points;
+    Real   **weights;
     int    n_points;
     int    n_dims;
 } spline_data_struct;
@@ -83,14 +83,13 @@ public  void  evaluate_thin_plate_spline(
     int     n_dims,
     int     n_values,
     int     n_points,
-    float   **points,
-    float   **weights,
+    Real    **points,
+    Real    **weights,
     Real    pos[],
     Real    values[],
     Real    **derivs )
 {
     int       v, d, p;
-    Real      real_point[N_DIMENSIONS];
     Real      dist, dist_deriv;
 
     /* f(x,y[,z]) =a_{n} + a_{n+1}x + a_{n+1}y + sum_{0}^{n-1}
@@ -115,14 +114,9 @@ public  void  evaluate_thin_plate_spline(
 
     for_less( p, 0, n_points )
     {
-        /* --- get a Real[] array from the float[] array */
-
-        for_less( d, 0, n_dims )
-            real_point[d] = (Real) points[p][d];
-
         /* --- the thin plate spline weighting function for this point */
 
-        dist = thin_plate_spline_U( pos, real_point, n_dims );
+        dist = thin_plate_spline_U( pos, points[p], n_dims );
 
         /* --- add the weighted component to the values */
 
@@ -137,7 +131,7 @@ public  void  evaluate_thin_plate_spline(
             {
                 for_less( d, 0, n_dims )
                 {
-                    dist_deriv = thin_plate_spline_U_deriv( pos, real_point,
+                    dist_deriv = thin_plate_spline_U_deriv( pos, points[p],
                                                             n_dims, d );
                     derivs[v][d] += (Real) weights[p][v] * dist_deriv;
                 }
@@ -194,8 +188,8 @@ public  void  evaluate_thin_plate_spline(
 public  void  thin_plate_spline_transform(
     int     n_dims,
     int     n_points,
-    float   **points,
-    float   **weights,
+    Real    **points,
+    Real    **weights,
     Real    x,
     Real    y,
     Real    z,
@@ -252,8 +246,8 @@ public  void  thin_plate_spline_transform(
 public  void  thin_plate_spline_inverse_transform(
     int     n_dims,
     int     n_points,
-    float   **points,
-    float   **weights,
+    Real    **points,
+    Real    **weights,
     Real    x,
     Real    y,
     Real    z,

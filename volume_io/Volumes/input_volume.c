@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.34 1995-06-20 13:22:15 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.35 1995-06-23 14:24:27 david Exp $";
 #endif
 
 #include  <minc.h>
@@ -93,6 +93,9 @@ public  Status  start_volume_input(
                                                *volume, input_info );
         break;
     }
+
+    if( status != OK && create_volume_flag )
+        delete_volume( *volume );
 
     return( status );
 }

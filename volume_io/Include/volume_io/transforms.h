@@ -2,7 +2,7 @@
 #define  DEF_TAG_IO
 
 #ifndef lint
-static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.9 1995-03-21 19:01:42 david Exp $";
+static char transforms_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/transforms.h,v 1.10 1995-06-23 14:24:18 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -50,8 +50,8 @@ typedef struct General_transform
 
     int                         n_points;
     int                         n_dimensions;
-    float                       **points;
-    float                       **displacements;   /* n_points + n_dim + 1 by */
+    Real                        **points;
+    Real                        **displacements;   /* n_points + n_dim + 1 by */
                                                    /* n_dim */
 
     /* --- grid transform */

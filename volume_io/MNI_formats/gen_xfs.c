@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.17 1995-05-24 17:24:32 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xfs.c,v 1.18 1995-06-23 14:24:33 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -61,6 +61,62 @@ public  void  create_linear_transform(
     }
 }
 
+private  void  initialize_thin_plate_transform(
+    General_transform    *transform,
+    int                  n_dimensions,
+    int                  n_points )
+{
+    transform->type = THIN_PLATE_SPLINE;
+    transform->inverse_flag = FALSE;
+    transform->n_dimensions = n_dimensions;
+    transform->n_points = n_points;
+
+    ALLOC2D( transform->points, n_points, n_dimensions );
+    ALLOC2D( transform->displacements, n_points + n_dimensions + 1,
+             n_dimensions );
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : create_thin_plate_transform_real
+@INPUT      : n_dimensions
+              n_points
+              points
+              displacements
+@OUTPUT     : transform
+@RETURNS    : 
+@DESCRIPTION: Creates a general transform of type thin plate spline, given
+              Real-type points and displacements.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : 1993            David MacDonald
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+public  void  create_thin_plate_transform_real(
+    General_transform    *transform,
+    int                  n_dimensions,
+    int                  n_points,
+    Real                 **points,
+    Real                 **displacements )
+{
+    int    p, d;
+
+    initialize_thin_plate_transform( transform, n_dimensions, n_points );
+
+    for_less( p, 0, n_points )
+    {
+        for_less( d, 0, n_dimensions )
+            transform->points[p][d] = points[p][d];
+    }
+
+    for_less( p, 0, n_points + n_dimensions + 1 )
+    {
+        for_less( d, 0, n_dimensions )
+            transform->displacements[p][d] = displacements[p][d];
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_thin_plate_transform
 @INPUT      : n_dimensions
@@ -86,26 +142,18 @@ public  void  create_thin_plate_transform(
 {
     int    p, d;
 
-    transform->type = THIN_PLATE_SPLINE;
-    transform->inverse_flag = FALSE;
-    transform->n_dimensions = n_dimensions;
-    transform->n_points = n_points;
-
-    ALLOC2D( transform->points, n_points, n_dimensions );
+    initialize_thin_plate_transform( transform, n_dimensions, n_points );
 
     for_less( p, 0, n_points )
     {
         for_less( d, 0, n_dimensions )
-            transform->points[p][d] = points[p][d];
+            transform->points[p][d] = (Real) points[p][d];
     }
-
-    ALLOC2D( transform->displacements, n_points + n_dimensions + 1,
-             n_dimensions );
 
     for_less( p, 0, n_points + n_dimensions + 1 )
     {
         for_less( d, 0, n_dimensions )
-            transform->displacements[p][d] = displacements[p][d];
+            transform->displacements[p][d] = (Real) displacements[p][d];
     }
 }
 

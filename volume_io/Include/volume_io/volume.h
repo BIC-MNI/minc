@@ -2,7 +2,7 @@
 #define  DEF_VOLUME
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.31 1995-06-19 20:14:58 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.32 1995-06-23 14:24:17 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -26,6 +26,7 @@ static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/v
 #define  MAX_DIMENSIONS     5
 
 extern  char   *XYZ_dimension_names[];
+extern  char   *File_order_dimension_names[];
 
 /* -------------------------- volume struct --------------------- */
 

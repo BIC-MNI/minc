@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.14 1995-04-28 18:33:06 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/tag_points.c,v 1.15 1995-06-23 14:24:35 david Exp $";
 #endif
 
 static   const char      *TAG_FILE_HEADER = "MNI Tag Point File";
@@ -110,14 +110,14 @@ public  Status  output_tag_points(
 
     for( i = 0;  i < n_tag_points;  ++i )
     {
-        (void) fprintf( file, " %10.5f %10.5f %10.5f",
+        (void) fprintf( file, " %.8g %.8g %.8g",
                         tags_volume1[i][0],
                         tags_volume1[i][1],
                         tags_volume1[i][2] );
 
         if( n_volumes >= 2 )
         {
-            (void) fprintf( file, " %10.5f %10.5f %10.5f",
+            (void) fprintf( file, " %.8g %.8g %.8g",
                             tags_volume2[i][0],
                             tags_volume2[i][1],
                             tags_volume2[i][2] );
@@ -393,7 +393,7 @@ private  void  extract_label(
     while( str[i] == ' ' || str[i] == '\t' )
         ++i;
 
-    if( str[0] == '"' )
+    if( str[i] == '"' )
     {
         quoted = TRUE;
         ++i;
@@ -504,14 +504,14 @@ public  Status  input_tag_points(
 
     *n_tag_points = 0;
 
-    while( mni_input_double( file, &x1 ) == OK )
+    while( mni_input_real( file, &x1 ) == OK )
     {
-        if( mni_input_double( file, &y1 ) != OK ||
-            mni_input_double( file, &z1 ) != OK ||
+        if( mni_input_real( file, &y1 ) != OK ||
+            mni_input_real( file, &z1 ) != OK ||
             (*n_volumes == 2 &&
-             (mni_input_double( file, &x2 ) != OK ||
-              mni_input_double( file, &y2 ) != OK ||
-              mni_input_double( file, &z2 ) != OK)) )
+             (mni_input_real( file, &x2 ) != OK ||
+              mni_input_real( file, &y2 ) != OK ||
+              mni_input_real( file, &z2 ) != OK)) )
         {
             (void) fprintf( stderr,
                       "input_tag_points(): error reading tag point %d\n",
@@ -521,7 +521,7 @@ public  Status  input_tag_points(
 
         add_tag_point( tags_volume1, *n_tag_points, x1, y1, z1 );
 
-        if( *n_volumes == 2 )
+        if( *n_volumes == 2 && tags_volume2 != NULL )
             add_tag_point( tags_volume2, *n_tag_points, x2, y2, z2 );
 
         label[0] = (char) 0;

@@ -3,10 +3,11 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.45 1995-06-15 13:27:01 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.46 1995-06-23 14:24:29 david Exp $";
 #endif
 
 char   *XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
+char   *File_order_dimension_names[] = { "", "", "", "", "" };
 
 private  char  *default_dimension_names[MAX_DIMENSIONS][MAX_DIMENSIONS] =
 {

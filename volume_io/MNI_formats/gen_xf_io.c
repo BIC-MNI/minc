@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.14 1995-05-24 17:24:34 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/gen_xf_io.c,v 1.15 1995-06-23 14:24:36 david Exp $";
 #endif
 
 static   const char      *TRANSFORM_FILE_HEADER = "MNI Transform File";
@@ -285,8 +285,8 @@ private  Status  input_one_transform(
 {
     Status            status;
     int               i, j, n_points, n_dimensions;
-    float             **points, **displacements;
-    double            value, *points_1d;
+    Real              **points, **displacements;
+    Real              value, *points_1d;
     STRING            type_name, str, volume_filename, directory, tmp_filename;
     Volume            volume;
     Transform         linear_transform;
@@ -378,7 +378,7 @@ private  Status  input_one_transform(
         {
             for_less( j, 0, 4 )
             {
-                if( mni_input_double( file, &value ) != OK )
+                if( mni_input_real( file, &value ) != OK )
                 {
                     print_error(
                     "input_transform(): error reading transform elem [%d,%d]\n",
@@ -417,7 +417,7 @@ private  Status  input_one_transform(
 
         if( mni_input_keyword_and_equal_sign( file, POINTS_STRING, TRUE ) != OK)
             return( ERROR );
-        if( mni_input_doubles( file, &n_points, &points_1d ) != OK )
+        if( mni_input_reals( file, &n_points, &points_1d ) != OK )
             return( ERROR );
 
         if( n_points % n_dimensions != 0 )
@@ -451,7 +451,7 @@ private  Status  input_one_transform(
         {
             for_less( j, 0, n_dimensions )
             {
-                if( mni_input_double( file, &value ) != OK )
+                if( mni_input_real( file, &value ) != OK )
                 {
                     print_error( "Expected more displacements.\n" );
                     return( ERROR );
@@ -463,8 +463,8 @@ private  Status  input_one_transform(
         if( mni_skip_expected_character( file, (char) ';' ) != OK )
             return( ERROR );
 
-        create_thin_plate_transform( transform, n_dimensions, n_points, points,
-                                     displacements );
+        create_thin_plate_transform_real( transform, n_dimensions,
+                                          n_points, points, displacements );
         break;
 
     case GRID_TRANSFORM:

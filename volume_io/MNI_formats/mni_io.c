@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.7 1995-05-24 17:24:37 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.8 1995-06-23 14:24:38 david Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -269,11 +269,11 @@ private  void  unget_string(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : mni_input_double
+@NAME       : mni_input_real
 @INPUT      : file
 @OUTPUT     : d
 @RETURNS    : OK or ERROR
-@DESCRIPTION: Inputs an ascii representation of a double value.
+@DESCRIPTION: Inputs an ascii representation of a real value.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -281,9 +281,9 @@ private  void  unget_string(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_double(
+public  Status  mni_input_real(
     FILE    *file,
-    double  *d )
+    Real    *d )
 {
     Status   status;
     STRING   str;
@@ -301,12 +301,12 @@ public  Status  mni_input_double(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : mni_input_doubles
+@NAME       : mni_input_reals
 @INPUT      : file
 @OUTPUT     : n
-              doubles
+              reals
 @RETURNS    : OK or ERROR
-@DESCRIPTION: Inputs an arbitrary number of double values, up to the next
+@DESCRIPTION: Inputs an arbitrary number of real values, up to the next
               semicolon.
 @METHOD     : 
 @GLOBALS    : 
@@ -315,18 +315,18 @@ public  Status  mni_input_double(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-public  Status  mni_input_doubles(
+public  Status  mni_input_reals(
     FILE    *file,
     int     *n,
-    double  *doubles[] )
+    Real    *reals[] )
 {
-    double  d;
+    Real  d;
 
     *n = 0;
 
-    while( mni_input_double( file, &d ) != ERROR )
+    while( mni_input_real( file, &d ) != ERROR )
     {
-        ADD_ELEMENT_TO_ARRAY( *doubles, *n, d, DEFAULT_CHUNK_SIZE );
+        ADD_ELEMENT_TO_ARRAY( *reals, *n, d, DEFAULT_CHUNK_SIZE );
     }
 
     return( mni_skip_expected_character( file, (char) ';' ) );

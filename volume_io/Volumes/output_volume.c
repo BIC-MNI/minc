@@ -1,7 +1,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.10 1995-06-15 13:26:56 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_volume.c,v 1.11 1995-06-23 14:24:31 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

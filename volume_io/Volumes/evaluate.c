@@ -144,7 +144,7 @@ public  void  set_volume_real_value(
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : trilinear_interpolate_volume
+@NAME       : trilinear_interpolate
 @INPUT      : u              0 to 1 pos
               v              0 to 1 pos
               w              0 to 1 pos
@@ -163,7 +163,7 @@ public  void  set_volume_real_value(
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-private  void    trilinear_interpolate_volume(
+private  void    trilinear_interpolate(
     Real     u,
     Real     v,
     Real     w,
@@ -721,8 +721,8 @@ public  int   evaluate_volume(
             else
                 deriv = first_deriv[0];
 
-            trilinear_interpolate_volume( fraction[0], fraction[1], fraction[2],
-                                          coefs, values, deriv );
+            trilinear_interpolate( fraction[0], fraction[1], fraction[2],
+                                   coefs, values, deriv );
         }
         else
         {

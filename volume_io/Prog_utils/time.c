@@ -8,7 +8,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.12 1995-05-24 17:24:10 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.13 1995-06-23 14:24:22 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -206,6 +206,13 @@ public  void  get_clock_time(
 
 public  void  sleep_program( Real seconds )
 {
+    struct  timeval  timeout;
+
+    timeout.tv_sec = (long) seconds;
+    timeout.tv_usec = (long) (1.0e6 * (seconds - (Real) timeout.tv_sec) + 0.5);
+
+    (void) select( 0, NULL, NULL, NULL, &timeout );
+#ifdef OLD
 #ifdef sgi
     struct timespec  rqtp, rmtp;
 
@@ -221,6 +228,7 @@ public  void  sleep_program( Real seconds )
 
     n_microseconds = ROUND( 1.0e6 * FRACTION(seconds) );
     usleep( n_microseconds );
+#endif
 #endif
 }
 
