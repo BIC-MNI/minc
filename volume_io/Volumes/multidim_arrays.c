@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.9 1996-02-27 14:51:31 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.10 1996-02-28 16:04:00 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -348,6 +348,8 @@ public  int  get_multidim_n_dimensions(
               src_sizes
               counts
               to_dest_index
+              use_src_order   - whether to step through arrays in the
+                                reverse order of src or dest
 @OUTPUT     : 
 @RETURNS    : 
 @DESCRIPTION: Copies any type of multidimensional data from the src array
@@ -358,7 +360,7 @@ public  int  get_multidim_n_dimensions(
 @GLOBALS    : 
 @CALLS      : 
 @CREATED    : Sep. 1, 1995    David MacDonald
-@MODIFIED   : 
+@MODIFIED   : Feb. 27, 1996   D. MacDonald  - made more efficient
 ---------------------------------------------------------------------------- */
 
 public  void  copy_multidim_data_reordered(
@@ -370,10 +372,11 @@ public  void  copy_multidim_data_reordered(
     int                 n_src_dims,
     int                 src_sizes[],
     int                 counts[],
-    int                 to_dest_index[] )
+    int                 to_dest_index[],
+    BOOLEAN             use_src_order )
 {
     char      *src_ptr, *dest_ptr;
-    int       d;
+    int       i, d;
     int       dest_offsets[MAX_DIMENSIONS], src_offsets[MAX_DIMENSIONS];
     int       dest_offset0, dest_offset1, dest_offset2, dest_offset3;
     int       dest_offset4;
@@ -403,17 +406,45 @@ public  void  copy_multidim_data_reordered(
         src_steps[d] = src_steps[d+1] * src_sizes[d+1];
 
     n_transfer_dims = 0;
-    for_less( d, 0, n_src_dims )
+
+    if( getenv( "VOLUME_IO_SRC_ORDER" ) )
+        use_src_order = TRUE;
+    else if( getenv( "VOLUME_IO_DEST_ORDER" ) )
+        use_src_order = FALSE;
+
+    if( use_src_order )
     {
-        dest_index = to_dest_index[d];
-        if( dest_index >= 0 )
+        for_less( d, 0, n_src_dims )
         {
-            src_axis[n_transfer_dims] = d;
-            dest_axis[n_transfer_dims] = dest_index;
-            src_offsets[n_transfer_dims] = src_steps[d];
-            dest_offsets[n_transfer_dims] = dest_steps[dest_index];
-            transfer_counts[n_transfer_dims] = counts[d];
-            ++n_transfer_dims;
+            dest_index = to_dest_index[d];
+            if( dest_index >= 0 )
+            {
+                src_axis[n_transfer_dims] = d;
+                dest_axis[n_transfer_dims] = dest_index;
+                src_offsets[n_transfer_dims] = src_steps[d];
+                dest_offsets[n_transfer_dims] = dest_steps[dest_index];
+                transfer_counts[n_transfer_dims] = counts[d];
+                ++n_transfer_dims;
+            }
+        }
+    }
+    else
+    {
+        for_less( dest_index, 0, n_dest_dims )
+        {
+            for_less( d, 0, n_src_dims )
+                if( to_dest_index[d] == dest_index )
+                    break;
+
+            if( d < n_src_dims )
+            {
+                src_axis[n_transfer_dims] = d;
+                dest_axis[n_transfer_dims] = dest_index;
+                src_offsets[n_transfer_dims] = src_steps[d];
+                dest_offsets[n_transfer_dims] = dest_steps[dest_index];
+                transfer_counts[n_transfer_dims] = counts[d];
+                ++n_transfer_dims;
+            }
         }
     }
 
@@ -437,13 +468,22 @@ public  void  copy_multidim_data_reordered(
         --n_transfer_dims;
     }
 
-    for_down( d, n_transfer_dims-1, 1 )
+    for_less( d, 0, n_transfer_dims-1 )
     {
-        src_offsets[d] -= src_offsets[d-1] * transfer_counts[d-1];
-        dest_offsets[d] -= dest_offsets[d-1] * transfer_counts[d-1];
+        src_offsets[d] -= src_offsets[d+1] * transfer_counts[d+1];
+        dest_offsets[d] -= dest_offsets[d+1] * transfer_counts[d+1];
     }
 
-    for_less( d, n_transfer_dims, MAX_DIMENSIONS )
+    /*--- slide the transfer dims to the last of the 5 dimensions */
+
+    for_down( d, n_transfer_dims-1, 0 )
+    {
+        src_offsets[d+MAX_DIMENSIONS-n_transfer_dims] = src_offsets[d];
+        dest_offsets[d+MAX_DIMENSIONS-n_transfer_dims] = dest_offsets[d];
+        transfer_counts[d+MAX_DIMENSIONS-n_transfer_dims] = transfer_counts[d];
+    }
+
+    for_less( d, 0, MAX_DIMENSIONS-n_transfer_dims )
     {
         transfer_counts[d] = 1;
         src_offsets[d] = 0;
@@ -468,31 +508,31 @@ public  void  copy_multidim_data_reordered(
     dest_offset3 = dest_offsets[3];
     dest_offset4 = dest_offsets[4];
 
-    for_less( v4, 0, size4 )
+    for_less( v0, 0, size0 )
     {
-        for_less( v3, 0, size3 )
+        for_less( v1, 0, size1 )
         {
             for_less( v2, 0, size2 )
             {
-                for_less( v1, 0, size1 )
+                for_less( v3, 0, size3 )
                 {
-                    for_less( v0, 0, size0 )
+                    for_less( v4, 0, size4 )
                     {
                         (void) memcpy( dest_ptr, src_ptr, type_size );
-                        src_ptr += src_offset0;
-                        dest_ptr += dest_offset0;
+                        src_ptr += src_offset4;
+                        dest_ptr += dest_offset4;
                     }
-                    src_ptr += src_offset1;
-                    dest_ptr += dest_offset1;
+                    src_ptr += src_offset3;
+                    dest_ptr += dest_offset3;
                 }
                 src_ptr += src_offset2;
                 dest_ptr += dest_offset2;
             }
-            src_ptr += src_offset3;
-            dest_ptr += dest_offset3;
+            src_ptr += src_offset1;
+            dest_ptr += dest_offset1;
         }
-        src_ptr += src_offset4;
-        dest_ptr += dest_offset4;
+        src_ptr += src_offset0;
+        dest_ptr += dest_offset0;
     }
 }
 
@@ -546,5 +586,5 @@ public  void  copy_multidim_reordered(
     copy_multidim_data_reordered( type_size,
                                   dest_ptr, n_dest_dims, dest_sizes,
                                   src_ptr, n_src_dims, src_sizes,
-                                  counts, to_dest_index  );
+                                  counts, to_dest_index, TRUE );
 }

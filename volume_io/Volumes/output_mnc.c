@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.43 1995-12-19 15:47:18 david Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.44 1996-02-28 16:03:58 david Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -953,7 +953,7 @@ public  Status  output_minc_hyperslab(
         copy_multidim_data_reordered( get_type_size(data_type),
                                       void_ptr, n_tmp_dims, tmp_sizes,
                                       array_data_ptr, n_array_dims, array_sizes,
-                                      array_counts, array_indices );
+                                      array_counts, array_indices, TRUE );
 
         GET_MULTIDIM_PTR( void_ptr, buffer_array, 0, 0, 0, 0, 0 );
     }

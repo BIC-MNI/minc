@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.44 1995-12-07 17:12:05 david Exp $";
+static char volume_rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.45 1996-02-28 16:03:52 david Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -302,6 +302,7 @@ typedef  struct
     BOOLEAN     convert_vector_to_scalar_flag;
     BOOLEAN     convert_vector_to_colour_flag;
     int         dimension_size_for_colour_data;
+    int         max_dimension_size_for_colour_data;
     int         rgba_indices[4];
 } minc_input_options;
 
