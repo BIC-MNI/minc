@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.7  2005-03-29 20:21:44  bert
+   * Revision 1.8  2005-04-05 21:49:52  bert
+   * Use rescale slope and intercept to determine the proper slice minimum and maximum
+   *
+   * Revision 1.7  2005/03/29 20:21:44  bert
    * Fix use of slice spacing; fully check for position information if possible, otherwise create a reasonable position from the slice index
    *
    * Revision 1.6  2005/03/14 23:29:35  bert
@@ -670,6 +673,7 @@ static void
 get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
 {
     double window_centre, window_width;
+    double rescale_intercept, rescale_slope;
 
     /* Get pixel storage information */
     fi_ptr->bits_alloc = acr_find_short(group_list, ACR_Bits_allocated, 0);
@@ -690,17 +694,24 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
 
     }
     else {
-        // for now, use bits_stored to determine dynamic range
-        // DICOM info on largest pixel applies to first slice, 
-        // not whole volume - this caused problems (roundoff?)
-        // in Siemens Numaris 4 scans
-
+        /* for now, use bits_stored to determine dynamic range
+         * DICOM info on largest pixel applies to first slice, 
+         * not whole volume - this caused problems (roundoff?)
+         * in Siemens Numaris 4 scans
+         */
         fi_ptr->pixel_min = 0;
         fi_ptr->pixel_max = (1 << fi_ptr->bits_stored) - 1;
     }
 
-    fi_ptr->slice_min = fi_ptr->pixel_min;
-    fi_ptr->slice_max = fi_ptr->pixel_max;
+    /* Get the rescale intercept and slope.  If they are not present,
+     * we use the default values of 0.0 for the intercept and 1.0 for
+     * the slope.
+     */
+    rescale_intercept = acr_find_double(group_list, ACR_Rescale_intercept, 0);
+    rescale_slope = acr_find_double(group_list, ACR_Rescale_slope, 1);
+
+    fi_ptr->slice_min = fi_ptr->pixel_min * rescale_slope + rescale_intercept;
+    fi_ptr->slice_max = fi_ptr->pixel_max * rescale_slope + rescale_intercept;
 
     /* Get window min and max */
     window_centre = (fi_ptr->slice_max + fi_ptr->slice_min) / 2.0;
