@@ -140,6 +140,12 @@ else
    AC_MSG_RESULT(no)
 fi
 
+#------------------------------------------------------------------------
+# Look for library functions
+#------------------------------------------------------------------------
+AC_CHECK_FUNC(strerror, GLOBAL_CDEFINES="", GLOBAL_CDEFINES=NO_STRERROR)
+AC_SUBST(GLOBAL_CDEFINES)
+
 
 AC_PREFIX_DEFAULT('$(ROOT)/..')
 

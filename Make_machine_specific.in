@@ -10,6 +10,7 @@ TARGET_IN_DEPENDENCY = @TARGET_IN_DEPENDENCY@
 OPT           = -O
 MACHINE_LDOPT = @LIBS@
 CC            = @CC@
+GLOBAL_CDEFINES = @GLOBAL_CDEFINES@
 RM            = rm
 RM_FLAGS      = -f
 AR            = ar
