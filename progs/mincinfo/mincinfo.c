@@ -10,7 +10,11 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.1  1999-10-19 14:45:24  neelin
+ * Revision 6.2  2000-04-25 18:12:05  neelin
+ * Added modified version of patch from Steve Robbins to allow use on
+ * multiple input files.
+ *
+ * Revision 6.1  1999/10/19 14:45:24  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:35  neelin
@@ -63,7 +67,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.1 1999-10-19 14:45:24 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.2 2000-04-25 18:12:05 neelin Exp $";
 #endif
 
 #include <stdlib.h>
@@ -82,6 +86,10 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 
 #  define FALSE 0
 #endif
 #define MAX_NUM_OPTIONS 100
+
+/* Name of program, for error reporting */
+char* exec_name;
+
 char *type_names[] = {
    NULL, "byte", "char", "short", "long", "float", "double"
 };
@@ -116,14 +124,16 @@ typedef struct {
 } Option_type;
 
 /* Macros */
-#define REPORT_ERROR {report_error(); goto error_label;}
+#define REPORT_ERROR \
+   {int s;if ((s=report_error())!=EXIT_SUCCESS) return s; goto error_label;}
 #define CHK_ERR(code) if ((code) == MI_ERROR) {REPORT_ERROR}
 #define RTN_ERR(code) if ((code) == MI_ERROR) {return MI_ERROR;}
 
 /* Function prototypes */
 public int main(int argc, char *argv[]);
+public int process_file( char* filename, int header_only );
 public int get_option(char *dst, char *key, char *nextarg);
-public void report_error(void);
+public int report_error(void);
 public int get_attname(int mincid, char *string, int *varid, char *name);
 public int print_image_info(char *filename, int mincid);
 /* Variables used for argument parsing */
@@ -162,31 +172,20 @@ ArgvInfo argTable[] = {
 
 public int main(int argc, char *argv[])
 {
-   char *filename;
-   int mincid, varid, dimid;
-   int ndims, dims[MAX_VAR_DIMS];
-   nc_type datatype;
-   long length, var_length, row_length;
-   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
-   int att_length;
-   int idim, iatt, natts, option;
-   int nvars, ivar, ival;
-   char *string;
-   char name[MAX_NC_NAME];
-   char *cdata;
-   double *ddata;
-   int header_only, created_tempfile;
-   char *tempfile;
+   int ioption, ifile, header_only;
+   int ret_value = EXIT_SUCCESS;
+
+   exec_name = argv[0];
 
    /* Check arguments */
-   if (ParseArgv(&argc, argv, argTable, 0) || (argc != 2)) {
+   if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
       (void) fprintf(stderr, 
-                     "\nUsage: %s [<options>] <mincfile>\n", argv[0]);
+                     "\nUsage: %s [<options>] <mincfile> [<mincfile> ...]\n", 
+                     exec_name);
       (void) fprintf(stderr,
-                       "       %s -help\n\n", argv[0]);
+                       "       %s -help\n\n", exec_name);
       exit(EXIT_FAILURE);
    }
-   filename  = argv[1];
 
    /* Check for no print options */
    if (option_list[0].code == ENDLIST) {
@@ -203,17 +202,58 @@ public int main(int argc, char *argv[])
 
    /* Loop through print options, checking whether we need variable data */
    header_only = TRUE;
-   for (option=0; option < length_option_list; option++) {
-      if (option_list[option].code == VARVALUES)
+   for (ioption=0; ioption < length_option_list; ioption++) {
+      if (option_list[ioption].code == VARVALUES)
          header_only = FALSE;
    }
+
+   for (ifile=1; ifile < argc; ++ifile) {
+      if (process_file( argv[ifile], header_only ) != EXIT_SUCCESS)
+         ret_value = EXIT_FAILURE;
+      if (argc > 2)
+         printf("\n\n");
+   }
+   return ret_value;
+}
+
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : process_file
+@INPUT      : filename 
+              header_only - TRUE if only header needs to be expanded
+@OUTPUT     : (none)
+@RETURNS    : Exit value for program
+@DESCRIPTION: Runs mincinfo on one file
+@METHOD     : (Adapted from old main of mincinfo.)
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 25, 2000 (Steve Robbins)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int process_file( char* filename, int header_only )
+{
+   int mincid, varid, dimid;
+   int ndims, dims[MAX_VAR_DIMS];
+   nc_type datatype;
+   long length, var_length, row_length;
+   long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
+   int att_length;
+   int idim, iatt, natts, option;
+   int nvars, ivar, ival;
+   char *string;
+   char name[MAX_NC_NAME];
+   char *cdata;
+   double *ddata;
+   int created_tempfile;
+   char *tempfile;
+
 
    /* Expand file */
    tempfile = miexpand_file(filename, NULL, header_only, &created_tempfile);
    if (tempfile == NULL) {
       (void) fprintf(stderr, "%s: Error expanding file \"%s\"\n",
-                     argv[0], filename);
-      exit(EXIT_FAILURE);
+                     exec_name, filename);
+      return EXIT_FAILURE;
    }
 
    /* Open the file */
@@ -223,8 +263,8 @@ public int main(int argc, char *argv[])
    }
    if (mincid == MI_ERROR) {
       (void) fprintf(stderr, "%s: Error opening file \"%s\"\n",
-                     argv[0], tempfile);
-      exit(EXIT_FAILURE);
+                     exec_name, tempfile);
+      return EXIT_FAILURE;
    }
    /* Loop through print options */
    for (option=0; option < length_option_list; option++) {
@@ -326,7 +366,7 @@ public int main(int argc, char *argv[])
          if (datatype == NC_CHAR) {
             cdata = MALLOC((att_length+1)*sizeof(char));
             if (miattgetstr(mincid, varid, name, att_length+1, cdata)==NULL)
-               {REPORT_ERROR;}
+               {REPORT_ERROR}
             (void) printf("%s\n", cdata);
             FREE(cdata);
          }
@@ -342,8 +382,8 @@ public int main(int argc, char *argv[])
          }
          break;
       default:
-         (void) fprintf(stderr, "%s: Program bug!\n", argv[0]);
-         exit(EXIT_FAILURE);
+         (void) fprintf(stderr, "%s: Program bug!\n", exec_name);
+         return EXIT_FAILURE;
       }
    error_label: ;
    }
@@ -351,7 +391,7 @@ public int main(int argc, char *argv[])
    /* Close the file */
    (void) miclose(mincid);
 
-   exit(EXIT_SUCCESS);
+   return EXIT_SUCCESS;
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -412,7 +452,7 @@ public int get_option(char *dst, char *key, char *nextarg)
 @NAME       : report_error
 @INPUT      : (none)
 @OUTPUT     : (none)
-@RETURNS    : (none)
+@RETURNS    : Exit status.
 @DESCRIPTION: Prints out the error message
 @METHOD     : 
 @GLOBALS    : 
@@ -420,15 +460,15 @@ public int get_option(char *dst, char *key, char *nextarg)
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void report_error(void)
+public int report_error(void)
 {
    if (error_string == NULL) {
       (void) fprintf(stderr, "Error reading file.\n");
-      exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
    }
    else {
       (void) fprintf(stdout, "%s\n", error_string);
-      return;
+      return EXIT_SUCCESS;
    }
 }
 
@@ -449,27 +489,36 @@ public void report_error(void)
 ---------------------------------------------------------------------------- */
 public int get_attname(int mincid, char *string, int *varid, char *name)
 {
-   char *cptr;
 
-   /* Check for : */
-   cptr = strchr(string, ':');
-   if (cptr == NULL) {
-      if (error_string != NULL) return MI_ERROR;
-      (void) fprintf(stderr, "Invalid attribute name '%s'\n",
-                     string);
-      exit(EXIT_FAILURE);
+#define ATT_SEP_CHAR ':'
+
+   char *attname, varname[MAX_NC_NAME];
+   int i;
+
+   /* Get the variable name */
+   for (i=0; (i < MAX_NC_NAME) && (string[i] != ATT_SEP_CHAR) 
+           && (string[i] != '\0'); i++) {
+      varname[i] = string[i];
    }
-   *cptr = '\0';
-   cptr++;
-
+   if (string[i] != ATT_SEP_CHAR) {
+      if (error_string == NULL) {
+         (void) fprintf(stderr, "Invalid attribute name '%s'\n",
+                        string);
+      }
+      return MI_ERROR;
+   }
+   varname[i] = '\0';
+   attname = &string[i+1];
+   
    /* Get varid and name */
-   if (*string == '\0') {
+   if (varname[0] == '\0') {
       *varid = NC_GLOBAL;
    }
-   else {
-      RTN_ERR(*varid=ncvarid(mincid, string));
+   else if ((*varid = ncvarid(mincid, varname)) == MI_ERROR) {
+      return MI_ERROR;
    }
-   (void) strncpy(name, cptr, MAX_NC_NAME-1);
+   (void) strncpy(name, attname, MAX_NC_NAME-1);
+   name[MAX_NC_NAME] = '\0';
 
    return MI_NOERROR;
 
