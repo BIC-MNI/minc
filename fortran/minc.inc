@@ -25,7 +25,7 @@ C              notice appear in all copies.  The author and McGill University
 C              make no representations about the suitability of this
 C              software for any purpose.  It is provided "as is" without
 C              express or implied warranty.
-C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 1.6 1994-09-28 10:38:26 neelin Exp $ MINC (MNI)
+C@RCSID      : $Header: /private-cvsroot/minc/fortran/Attic/minc.inc,v 2.0 1994-09-28 10:38:43 neelin Exp $ MINC (MNI)
 C-----------------------------------------------------------------------------
 
 C     Some useful constants

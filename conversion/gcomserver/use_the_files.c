@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 23, 1993 (Peter Neelin)
 @MODIFIED   : $Log: use_the_files.c,v $
-@MODIFIED   : Revision 1.9  1994-09-28 10:34:53  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:35:37  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.9  94/09/28  10:34:53  neelin
+ * Pre-release
+ * 
  * Revision 1.8  94/05/24  15:09:53  neelin
  * Break up multiple echoes or time frames into separate files for 2 echoes
  * or 2 frames (put in 1 file for more).

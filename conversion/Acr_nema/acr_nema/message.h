@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : $Log: message.h,v $
-@MODIFIED   : Revision 1.4  1994-09-28 10:35:53  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:18  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.4  94/09/28  10:35:53  neelin
+ * Pre-release
+ * 
  * Revision 1.3  93/11/24  11:27:10  neelin
  * Added dump message routine./
  * 

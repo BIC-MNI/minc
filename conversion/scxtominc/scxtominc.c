@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxtominc.c,v $
-@MODIFIED   : Revision 1.12  1994-09-28 10:33:30  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:33:50  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.12  94/09/28  10:33:30  neelin
+ * Pre-release
+ * 
  * Revision 1.11  94/09/28  08:23:58  neelin
  * Find max and min pixel values for both bytes and shorts.
  * (Shorts are rescaled to full range).
@@ -38,7 +41,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 1.12 1994-09-28 10:33:30 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 2.0 1994-09-28 10:33:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -14,9 +14,12 @@
 @CALLS      : 
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   : $Log: minc_useful.h,v $
-@MODIFIED   : Revision 1.7  1994-09-28 10:37:31  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:10  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.7  94/09/28  10:37:31  neelin
+ * Pre-release
+ * 
  * Revision 1.6  93/08/11  12:06:44  neelin
  * Added RCS logging in source.
  * 
@@ -33,7 +36,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 1.7 1994-09-28 10:37:31 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 2.0 1994-09-28 10:38:10 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* ------------ define signed for vaxes ----------------- */

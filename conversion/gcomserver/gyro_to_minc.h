@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.h,v $
-@MODIFIED   : Revision 1.8  1994-09-28 10:35:04  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:35:29  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.8  94/09/28  10:35:04  neelin
+ * Pre-release
+ * 
  * Revision 1.7  94/05/24  15:10:00  neelin
  * Break up multiple echoes or time frames into separate files for 2 echoes
  * or 2 frames (put in 1 file for more).

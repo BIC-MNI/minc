@@ -17,9 +17,12 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 1.11  1994-09-28 10:37:35  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:37:52  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.11  94/09/28  10:37:35  neelin
+ * Pre-release
+ * 
  * Revision 1.10  94/07/05  15:31:07  neelin
  * Assume that MIstep is positive if it is not found (for flipping dimensions).
  * 
@@ -42,7 +45,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.11 1994-09-28 10:37:35 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.0 1994-09-28 10:37:52 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : August 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincexample1.c,v $
-@MODIFIED   : Revision 1.6  1994-09-28 10:34:35  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:34:41  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.6  94/09/28  10:34:35  neelin
+ * Pre-release
+ * 
  * Revision 1.5  94/03/16  12:10:50  neelin
  * Changed ncopen,create,close to miopen,...
  * Changed setting of step and start attributes in output file.
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 1.6 1994-09-28 10:34:35 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample1.c,v 2.0 1994-09-28 10:34:41 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -6,9 +6,12 @@
 @GLOBALS    : 
 @CREATED    : March 14, 1994 (Peter Neelin)
 @MODIFIED   : $Log: read_acr_nema.c,v $
-@MODIFIED   : Revision 1.3  1994-09-28 10:35:55  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:19  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.3  94/09/28  10:35:55  neelin
+ * Pre-release
+ * 
  * Revision 1.2  94/04/07  10:05:08  neelin
  * Added status ACR_ABNORMAL_END_OF_INPUT and changed some ACR_PROTOCOL_ERRORs
  * to that or ACR_OTHER_ERROR.

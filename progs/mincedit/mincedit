@@ -5,9 +5,12 @@
 # Usage: mincedit <minc file> [<editor>]
 #
 # Modifications: $Log: mincedit,v $
-# Modifications: Revision 1.6  1994-09-28 10:33:55  neelin
-# Modifications: Pre-release
+# Modifications: Revision 2.0  1994-09-28 10:33:58  neelin
+# Modifications: Release of minc version 0.2
 # Modifications:
+# Revision 1.6  94/09/28  10:33:55  neelin
+# Pre-release
+# 
 # Revision 1.5  93/08/25  11:24:48  neelin
 # Added checking for -h or -help options.
 # 

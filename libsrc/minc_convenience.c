@@ -20,9 +20,12 @@
                  MI_is_in_list
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc_convenience.c,v $
-@MODIFIED   : Revision 1.18  1994-09-28 10:37:12  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:02  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.18  94/09/28  10:37:12  neelin
+ * Pre-release
+ * 
  * Revision 1.17  93/08/11  12:06:19  neelin
  * Added RCS logging in source.
  * 
@@ -39,7 +42,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 1.18 1994-09-28 10:37:12 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 2.0 1994-09-28 10:38:02 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>

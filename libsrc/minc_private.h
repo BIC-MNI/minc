@@ -13,9 +13,12 @@
 @CALLS      : 
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_private.h,v $
-@MODIFIED   : Revision 1.7  1994-09-28 10:37:27  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:07  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.7  94/09/28  10:37:27  neelin
+ * Pre-release
+ * 
  * Revision 1.6  93/10/06  10:00:30  neelin
  * Added include of memory.h for memcpy on SUNs.
  * 
@@ -32,7 +35,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 1.7 1994-09-28 10:37:27 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_private.h,v 2.0 1994-09-28 10:38:07 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include  <stdlib.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: acr_nema.h,v $
-@MODIFIED   : Revision 1.6  1994-09-28 10:35:51  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:08  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.6  94/09/28  10:35:51  neelin
+ * Pre-release
+ * 
  * Revision 1.5  94/09/23  16:42:37  neelin
  * Changed acr_nema_io to acr_io and acr_nema_test to acr_test.
  * 

@@ -7,9 +7,12 @@
 @CALLS      : 
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : $Log: gyro_to_minc.c,v $
-@MODIFIED   : Revision 1.5  1994-09-28 10:35:01  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:35:28  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.5  94/09/28  10:35:01  neelin
+ * Pre-release
+ * 
  * Revision 1.4  94/01/18  13:36:11  neelin
  * Added command line options to gyrotominc and fixed error message bug in
  * gyro_to_minc.

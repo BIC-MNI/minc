@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincextract.c,v $
-@MODIFIED   : Revision 1.12  1994-09-28 10:34:12  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:34:16  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.12  94/09/28  10:34:12  neelin
+ * Pre-release
+ * 
  * Revision 1.11  94/04/14  08:45:51  neelin
  * Added options for flipping images.
  * 
@@ -43,7 +46,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 1.12 1994-09-28 10:34:12 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 2.0 1994-09-28 10:34:16 neelin Exp $";
 #endif
 
 #include <stdlib.h>

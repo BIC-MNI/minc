@@ -5,9 +5,12 @@
 # Usage: mincdiff [-l] <file1.mnc> <file2.mnc>
 #
 # Modifications: $Log: mincdiff,v $
-# Modifications: Revision 1.4  1994-09-28 10:34:44  neelin
-# Modifications: Pre-release
+# Modifications: Revision 2.0  1994-09-28 10:34:46  neelin
+# Modifications: Release of minc version 0.2
 # Modifications:
+# Revision 1.4  94/09/28  10:34:44  neelin
+# Pre-release
+# 
 # Revision 1.3  94/07/18  10:41:26  neelin
 # Added -nonormalize option to mincextract for comparing image data.
 # 

@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.h,v $
-@MODIFIED   : Revision 1.4  1994-09-28 10:33:33  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:33:48  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.4  94/09/28  10:33:33  neelin
+ * Pre-release
+ * 
  * Revision 1.3  93/08/11  15:27:45  neelin
  * Added RCS logging in source.
  * 

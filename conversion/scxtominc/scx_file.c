@@ -4,9 +4,12 @@
 @GLOBALS    : 
 @CREATED    : January 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scx_file.c,v $
-@MODIFIED   : Revision 1.9  1994-09-28 10:33:28  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:33:47  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.9  94/09/28  10:33:28  neelin
+ * Pre-release
+ * 
  * Revision 1.8  93/11/03  17:16:19  neelin
  * Removed check for DPR==1 when getting images (this applies only to data).
  * 
@@ -36,7 +39,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 1.9 1994-09-28 10:33:28 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scx_file.c,v 2.0 1994-09-28 10:33:47 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: group.h,v $
-@MODIFIED   : Revision 1.6  1994-09-28 10:35:52  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:17  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.6  94/09/28  10:35:52  neelin
+ * Pre-release
+ * 
  * Revision 1.5  93/12/10  09:20:44  neelin
  * Added acr_find_<type> routines.
  * 

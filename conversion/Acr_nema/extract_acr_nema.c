@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: extract_acr_nema.c,v $
-@MODIFIED   : Revision 1.4  1994-09-28 10:35:54  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:12  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.4  94/09/28  10:35:54  neelin
+ * Pre-release
+ * 
  * Revision 1.3  94/03/14  16:13:04  neelin
  * Changed name in header.
  * 

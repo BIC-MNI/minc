@@ -33,9 +33,12 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 1.18  1994-09-28 10:37:06  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:37:55  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.18  94/09/28  10:37:06  neelin
+ * Pre-release
+ * 
  * Revision 1.17  93/08/11  12:59:31  neelin
  * We need only increment the chunk pointer (see previous fix) if we are
  * not doing dimension conversion (dimension conversion handles the 
@@ -67,7 +70,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.18 1994-09-28 10:37:06 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.0 1994-09-28 10:37:55 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>

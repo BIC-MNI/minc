@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : November 3, 1993 (Peter Neelin)
 @MODIFIED   : $Log: scxmnem.c,v $
-@MODIFIED   : Revision 1.2  1994-09-28 10:33:36  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:33:49  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.2  94/09/28  10:33:36  neelin
+ * Pre-release
+ * 
  * Revision 1.1  93/11/03  16:51:41  neelin
  * Initial revision
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 1.2 1994-09-28 10:33:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 2.0 1994-09-28 10:33:49 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: resample_volumes.c,v $
-@MODIFIED   : Revision 1.15  1994-09-28 10:32:38  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:32:50  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.15  94/09/28  10:32:38  neelin
+ * Pre-release
+ * 
  * Revision 1.14  94/03/15  10:58:47  neelin
  * Fixed tricubic interpolation (wasn't initializing variable for fillvalue
  * detection).
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 1.15 1994-09-28 10:32:38 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 2.0 1994-09-28 10:32:50 neelin Exp $";
 #endif
 
 #include <stdlib.h>

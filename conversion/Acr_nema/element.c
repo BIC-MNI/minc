@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : $Log: element.c,v $
-@MODIFIED   : Revision 1.8  1994-09-28 10:35:44  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:10  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.8  94/09/28  10:35:44  neelin
+ * Pre-release
+ * 
  * Revision 1.7  93/11/30  12:19:15  neelin
  * Handle MALLOC returning NULL because of extremely large data element length.
  * 

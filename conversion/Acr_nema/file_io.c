@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.7  1994-09-28 10:35:42  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:36:13  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.7  94/09/28  10:35:42  neelin
+ * Pre-release
+ * 
  * Revision 1.6  94/04/08  10:34:47  neelin
  * Added include of string.h
  * 

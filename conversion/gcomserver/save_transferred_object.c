@@ -6,9 +6,12 @@
 @CALLS      : 
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : $Log: save_transferred_object.c,v $
-@MODIFIED   : Revision 1.6  1994-09-28 10:34:58  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:35:33  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.6  94/09/28  10:34:58  neelin
+ * Pre-release
+ * 
  * Revision 1.5  94/05/24  15:09:47  neelin
  * Break up multiple echoes or time frames into separate files for 2 echoes
  * or 2 frames (put in 1 file for more).

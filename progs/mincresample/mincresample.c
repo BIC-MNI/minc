@@ -10,9 +10,12 @@
 @CALLS      : 
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : $Log: mincresample.c,v $
-@MODIFIED   : Revision 1.16  1994-09-28 10:32:33  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:32:46  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.16  94/09/28  10:32:33  neelin
+ * Pre-release
+ * 
  * Revision 1.15  94/03/17  14:12:09  neelin
  * Exit with failure if no argument given for -transformation or -like.
  * .,
@@ -68,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 1.16 1994-09-28 10:32:33 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 2.0 1994-09-28 10:32:46 neelin Exp $";
 #endif
 
 #include <stdlib.h>

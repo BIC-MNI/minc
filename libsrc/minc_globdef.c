@@ -4,9 +4,12 @@
 @GLOBALS    : minc_routine_name
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_globdef.c,v $
-@MODIFIED   : Revision 1.5  1994-09-28 10:37:17  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:05  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.5  94/09/28  10:37:17  neelin
+ * Pre-release
+ * 
  * Revision 1.4  93/08/11  12:06:26  neelin
  * Added RCS logging in source.
  * 
@@ -23,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 1.5 1994-09-28 10:37:17 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 2.0 1994-09-28 10:38:05 neelin Exp $ MINC (MNI)";
 #endif
 
 /* Variable for storing the name of the current routine */

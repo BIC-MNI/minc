@@ -13,9 +13,12 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : $Log: minc_basic.h,v $
-@MODIFIED   : Revision 1.8  1994-09-28 10:37:26  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:01  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.8  94/09/28  10:37:26  neelin
+ * Pre-release
+ * 
  * Revision 1.7  93/10/28  10:18:23  neelin
  * Added FILLVALUE_EPSILON for doing fillvalue checking in icv's.
  * 
@@ -32,7 +35,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 1.8 1994-09-28 10:37:26 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 2.0 1994-09-28 10:38:01 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */

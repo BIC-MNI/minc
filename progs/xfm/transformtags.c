@@ -9,9 +9,12 @@
 @CALLS      : 
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : $Log: transformtags.c,v $
-@MODIFIED   : Revision 1.5  1994-09-28 10:33:21  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:33:24  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.5  94/09/28  10:33:21  neelin
+ * Pre-release
+ * 
  * Revision 1.4  93/10/12  12:52:16  neelin
  * Replaced def_mni.h with volume_io.h
  * 
@@ -28,7 +31,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 1.5 1994-09-28 10:33:21 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 2.0 1994-09-28 10:33:24 neelin Exp $";
 #endif
 
 #include <stdlib.h>

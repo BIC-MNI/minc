@@ -11,9 +11,12 @@
 @CALLS      : 
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : $Log: mincexample2.c,v $
-@MODIFIED   : Revision 1.3  1994-09-28 10:34:36  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:34:42  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+ * Revision 1.3  94/09/28  10:34:36  neelin
+ * Pre-release
+ * 
  * Revision 1.2  94/03/17  08:36:29  neelin
  * Added support for 2-d files.
  * 
@@ -23,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 1.3 1994-09-28 10:34:36 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 2.0 1994-09-28 10:34:42 neelin Exp $";
 #endif
 
 #include <stdlib.h>

@@ -58,9 +58,12 @@
 @CALLS      : 
 @CREATED    : January 28, 1993
 @MODIFIED   : $Log: minc_jackets.src,v $
-@MODIFIED   : Revision 1.6  1994-09-28 10:38:28  neelin
-@MODIFIED   : Pre-release
+@MODIFIED   : Revision 2.0  1994-09-28 10:38:47  neelin
+@MODIFIED   : Release of minc version 0.2
 @MODIFIED   :
+Revision 1.6  94/09/28  10:38:28  neelin
+Pre-release
+
 Revision 1.5  93/08/11  15:08:48  neelin
 Added RCS logging in sources code.
 
@@ -77,7 +80,7 @@ Added RCS logging in sources code.
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 1.6 1994-09-28 10:38:28 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/fortran/Attic/minc_jackets.src,v 2.0 1994-09-28 10:38:47 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <ctype.h>
