@@ -5,10 +5,13 @@
 @GLOBALS    : 
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : $Log: dicom_client_routines.c,v $
-@MODIFIED   : Revision 6.1  1997-09-15 16:50:59  neelin
-@MODIFIED   : Separated out connection timeouts from i/o timeouts and added functions
-@MODIFIED   : to change them.
+@MODIFIED   : Revision 6.2  1997-10-20 21:46:02  neelin
+@MODIFIED   : Delete answering message when making association.
 @MODIFIED   :
+ * Revision 6.1  1997/09/15  16:50:59  neelin
+ * Separated out connection timeouts from i/o timeouts and added functions
+ * to change them.
+ *
  * Revision 6.0  1997/09/12  13:23:59  neelin
  * Release of minc version 0.6
  *
@@ -44,7 +47,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.1 1997-09-15 16:50:59 neelin Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.2 1997-10-20 21:46:02 neelin Exp $";
 #endif
 
 #include <stdio.h>
@@ -419,6 +422,9 @@ public char *acr_make_dicom_association(Acr_File *afpin, Acr_File *afpout,
 
    /* Set the maximum length */
    acr_set_dicom_maximum_length(afpout, maximum_length);
+
+   /* Delete the input message */
+   acr_delete_message(message);
 
    /* Return the abstract syntax */
    return abstract_syntax;
