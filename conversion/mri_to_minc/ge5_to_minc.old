@@ -257,7 +257,7 @@ sub create_mincfile {
          "-xstart $xstart -ystart $ystart -zstart $zstart ".
          "-mri -attribute patient:full_name='".$fileinfo{'patient_name'}."' ".
          "-attribute acquisition:repetition_time='".$fileinfo{'tr'}."' ".
-         "-attribute acquisition:echo_time='".$fileinfo{'te'}."' ".
+         "-attribute acquisition:echo_time='".$fileinfo{'te',$echo}."' ".
          "-attribute acquisition:inversion_time='".$fileinfo{'ti'}."' ".
          "-attribute acquisition:flip_angle='".$fileinfo{'mr_flip'}."' ".
          "-attribute acquisition:scanning_sequence='".$fileinfo{'psdname'}.
@@ -475,7 +475,6 @@ while ($keep_looping) {
         $fileinfo{'sliceend'} = $cur_slicepos;
         $fileinfo{'tr'} = &unpack_value(*image_hdr, 194, 'i')/1000000;
         $fileinfo{'ti'} = &unpack_value(*image_hdr, 198, 'i')/1000000;
-        $fileinfo{'te'} = &unpack_value(*image_hdr, 202, 'i')/1000000;
         $fileinfo{'mr_flip'} = &unpack_value(*image_hdr, 254, 's');
         $fileinfo{'pseq'} = &unpack_value(*image_hdr, 304, 's');
         $fileinfo{'pseqmode'} = &unpack_value(*image_hdr, 306, 's');
@@ -499,6 +498,10 @@ while ($keep_looping) {
             $fileinfo{'lastslice'} = $cur_image;
             $fileinfo{'sliceend'} = $cur_slicepos;
         }
+    }
+    if (!defined($fileinfo{'te', $cur_echo})) {
+        $fileinfo{'te', $cur_echo} =
+            &unpack_value(*image_hdr, 202, 'i')/1000000;
     }
 
     # Keep track of files, image numbers and echo numbers
