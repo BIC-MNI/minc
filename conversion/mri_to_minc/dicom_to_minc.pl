@@ -267,7 +267,14 @@ sub dicom3_read_file_info {
     elsif ($series > 0) {$the_series = $series;}
     else {$the_series = $acquisition;}
     $file_info{'series'} = $the_series;
-    $file_info{'image'} = &acr_find_numeric(*header, &dc3_image);
+    local($the_image) = &acr_find_numeric(*header, &dc3_image);
+    if (!defined($the_image) || (length($the_image) == 0)) {
+       if (!defined($Image_Counter)) {        # Global variable
+          $Image_Counter = 1;
+       }
+       $the_image = $Image_Counter++;
+    }
+    $file_info{'image'} = $the_image;
 
     $file_info{'echo'} = &acr_find_numeric(*header, &dc3_echo);
     $file_info{'width'} = &acr_find_int(*header, &dc3_width);
