@@ -17,13 +17,14 @@
                  MI study variable
                  MI acquisition variable
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
-@MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.23 1993-03-03 11:30:07 neelin Exp $ MINC (MNI)
+@MODIFIED   : July 15, 1993 (P.N.)
+                 - added MI_ICV_DO_FILLVALUE and MI_FILLVALUE
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 1.24 1993-07-15 14:00:06 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #ifndef MINC_PRIVATE_HEADER_FILE
 #ifndef lint
-static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.23 1993-03-03 11:30:07 neelin Exp $ MINC (MNI)";
+static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.24 1993-07-15 14:00:06 neelin Exp $ MINC (MNI)";
 #endif
 #endif
 
@@ -273,6 +274,9 @@ static char minc_h_rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc.h,v 1.2
 /* Names of MIimagemax and MIimagemin variables */
 #define MI_ICV_MAXVAR          28
 #define MI_ICV_MINVAR          29
+/* For setting input values to a specified fillvalue */
+#define MI_ICV_DO_FILLVALUE    30
+#define MI_ICV_FILLVALUE       31
 /* Image dimension properties. For each dimension, add the dimension 
    number (counting from fastest to slowest). */
 #define MI_ICV_DIM_SIZE        1000

@@ -16,7 +16,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.2 1992-12-01 14:04:04 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 1.3 1993-07-15 14:00:02 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -92,10 +92,12 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
    if (icvp == NULL) {
       strc.do_scale      = FALSE;
       strc.do_dimconvert = FALSE;
+      strc.do_fillvalue  = FALSE;
    }
    else {
       strc.do_scale      = icvp->do_scale;
       strc.do_dimconvert = icvp->do_dimconvert;
+      strc.do_fillvalue  = icvp->do_fillvalue;
    }
 
    /* Inquire about the variable */
@@ -124,7 +126,7 @@ semiprivate int MI_varaccess(int operation, int cdfid, int varid,
       the signs are the same and no dimension conversion is needed. If so, 
       just get/put the values */
    if ((datatype == strc.var_type) && (strc.call_sign == strc.var_sign) && 
-                !strc.do_scale && !strc.do_dimconvert) {
+                !strc.do_scale && !strc.do_dimconvert && !strc.do_fillvalue) {
       switch (operation) {
       case MI_PRIV_GET:
          MI_CHK_ERR(ncvarget(cdfid, varid, start, count, values))
@@ -489,15 +491,25 @@ semiprivate int MI_convert_type(long number_of_values,
    double dvalue=0.0;      /* Temporary double for conversion */
    void *inptr, *outptr;   /* Pointers to input and output values */
    int do_scale;           /* Should scaling be done? */
+   int do_fillvalue;       /* Should fillvalue checking be done? */
+   double fillvalue;       /* Value to fill with */
+   double dmax, dmin;      /* Range of legal values */
 
    MI_SAVE_ROUTINE_NAME("MI_convert_type");
 
    /* Check to see if icv structure was passed and set variables needed */
    if (icvp == NULL) {
       do_scale=FALSE;
+      do_fillvalue = FALSE;
+      dmax = dmin = 0.0;
+      fillvalue = 0.0;
    }
    else {
       do_scale=icvp->do_scale;
+      do_fillvalue=icvp->do_fillvalue;
+      fillvalue = icvp->user_fillvalue;
+      dmax = icvp->var_vmax;
+      dmin = icvp->var_vmin;
    }
 
    /* Check the types and get their size */
@@ -516,7 +528,7 @@ semiprivate int MI_convert_type(long number_of_values,
 
    /* Check to see if a conversion needs to be made.
       If not, just copy the memory */
-   if ((intype==outtype) && (insgn==outsgn) && !do_scale) {
+   if ((intype==outtype) && (insgn==outsgn) && !do_scale && !do_fillvalue) {
          (void) memcpy(outvalues, invalues, 
                        (size_t) number_of_values*inincr);
    }
@@ -532,8 +544,11 @@ semiprivate int MI_convert_type(long number_of_values,
          /* Convert the input value */
          {MI_TO_DOUBLE(dvalue, intype, insgn, inptr)}
 
-         /* Scale the value if necessary */
-         if (do_scale) {
+         /* Check the value for range and scale the value if necessary */
+         if (do_fillvalue && ((dvalue < dmin) || (dvalue > dmax))) {
+            dvalue = fillvalue;
+         }
+         else if (do_scale) {
             dvalue = icvp->scale * dvalue + icvp->offset;
          }
 

@@ -15,8 +15,13 @@
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   : July 29, 1992       Peter Neelin
                  - changed name for MINC routines and added some macros
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 1.3 1992-12-01 14:04:58 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_useful.h,v 1.4 1993-07-15 14:00:15 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
+
+/* ------------ define signed for vaxes ----------------- */
+#if (defined(vax) && !defined(__STDC__))
+#define signed
+#endif
 
 /* --------- define the prefixes to all functions ---------- */
 

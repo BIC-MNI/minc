@@ -20,7 +20,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.5 1992-12-01 14:01:18 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 1.6 1993-07-15 13:58:48 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -553,6 +553,9 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    long ipix;                   /* Buffer subscript */
    int idim;                    /* Dimension subscript */
    int notmodified;             /* First dimension not reset */
+   int out_of_range;            /* Flag indicating one pixel of sum out of 
+                                   range */
+   double dmin, dmax;           /* Range limits */
 
    MI_SAVE_ROUTINE_NAME("MI_icv_dimconvert");
 
@@ -566,6 +569,8 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    optr    = dcp->ostart;
    end     = dcp->end;
    fastdim = icvp->derv_dimconv_fastdim;
+   dmax = icvp->var_vmax;
+   dmin = icvp->var_vmin;
 
    /* Initialize counters */
    for (idim=0; idim<=fastdim; idim++) {
@@ -581,10 +586,13 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
       /* Compress data by averaging if needed */
       if (!dcp->do_compress) {
          {MI_TO_DOUBLE(dvalue, dcp->intype, dcp->insign, iptr)}
+         out_of_range = (icvp->do_fillvalue && 
+                         ((dvalue < dmin) || (dvalue > dmax)));
       }
       else {
          sum1 = 0.0;
          sum0 = 0.0;
+         out_of_range=FALSE;
          for (ipix=0; ipix<dcp->in_pix_num; ipix++) {
             ptr=(void *) ((char *)iptr + dcp->in_pix_off[ipix]);
 
@@ -607,9 +615,14 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
                {MI_TO_DOUBLE(dvalue, dcp->intype, dcp->insign, ptr)}
             }
 
-            /* Add in the value */
-            sum1 += dvalue;
-            sum0++;
+            /* Add in the value, checking for range if needed */
+            if (icvp->do_fillvalue && ((dvalue < dmin) || (dvalue > dmax))) {
+               out_of_range = TRUE;
+            }
+            else {
+               sum1 += dvalue;
+               sum0++;
+            }
          }         /* Foreach pixel to compress */
 
          /* Average values */
@@ -619,8 +632,11 @@ private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
             dvalue = 0.0;
       }           /* If compress */
 
-      /* Scale result */
-      if (icvp->do_scale) {
+      /* Check for out of range values and scale result */
+      if (out_of_range) {
+         dvalue = icvp->user_fillvalue;
+      }
+      else if (icvp->do_scale) {
          dvalue = icvp->scale * dvalue + icvp->offset;
       }
 

@@ -40,7 +40,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.13 1993-05-13 16:48:38 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 1.14 1993-07-15 13:59:42 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
@@ -93,6 +93,7 @@ public int miicv_create()
    /* Stuff for calling MI_varaccess */
    icvp->do_scale = FALSE;
    icvp->do_dimconvert = FALSE;
+   icvp->do_fillvalue = FALSE;
 
    /* User defaults */
    icvp->user_type = NC_SHORT;
@@ -116,6 +117,8 @@ public int miicv_create()
    icvp->user_zdim_dir = MI_ICV_POSITIVE;
    icvp->user_num_imgdims = 2;
    icvp->user_keep_aspect = TRUE;
+   icvp->user_do_fillvalue = FALSE;
+   icvp->user_fillvalue = -DBL_MAX;
    for (idim=0; idim<MI_MAX_IMGDIMS; idim++) {
       icvp->user_dim_size[idim]=MI_ICV_ANYSIZE;
    }
@@ -228,6 +231,10 @@ public int miicv_setdbl(int icvid, int icv_property, double value)
       icvp->user_imgmax = value; break;
    case MI_ICV_IMAGE_MIN:
       icvp->user_imgmin = value; break;
+   case MI_ICV_DO_FILLVALUE:
+      icvp->user_do_fillvalue = value; break;
+   case MI_ICV_FILLVALUE:
+      icvp->user_fillvalue = value; break;
    case MI_ICV_DO_DIM_CONV:
       icvp->user_do_dimconv = value; break;
    case MI_ICV_DO_SCALAR:
@@ -478,6 +485,10 @@ public int miicv_inqdbl(int icvid, int icv_property, double *value)
       *value = icvp->derv_imgmax; break;
    case MI_ICV_NORM_MIN:
       *value = icvp->derv_imgmin; break;
+   case MI_ICV_DO_FILLVALUE:
+      *value = icvp->user_do_fillvalue; break;
+   case MI_ICV_FILLVALUE:
+      *value = icvp->user_fillvalue; break;
    case MI_ICV_DO_DIM_CONV:
       *value = icvp->user_do_dimconv; break;
    case MI_ICV_DO_SCALAR:
@@ -1197,6 +1208,9 @@ private int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
                         "ICV is not attached to an image variable");
       MI_RETURN_ERROR(MI_ERROR);
    }
+
+   /* Set the do_fillvalue flag only for input */
+   icvp->do_fillvalue = icvp->user_do_fillvalue && (operation == MI_PRIV_GET);
 
    /* Zero the user's buffer if needed */
    if ((operation == MI_PRIV_GET) && (icvp->derv_do_zero))

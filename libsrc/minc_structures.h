@@ -12,7 +12,7 @@
 @CALLS      : 
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 1.6 1993-02-01 10:51:32 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_structures.h,v 1.7 1993-07-15 14:00:13 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* Image conversion variable structure type */
@@ -32,6 +32,8 @@ struct mi_icv_struct {
    int   (*dimconvert_func) (int operation, mi_icv_type *icvp, 
                              long start[], long count[], void *values,
                              long bufstart[], long bufcount[], void *buffer);
+   int     do_fillvalue;   /* Indicates to MI_convert_type that fillvalue
+                              checking should be done */
 
    /* private : fields available only to icv routines */
 
@@ -60,6 +62,9 @@ struct mi_icv_struct {
                                               dimensions for user */
    int     user_keep_aspect; /* Indicates that user wants to preserve the
                                 aspect ratio when resizing images */
+   int     user_do_fillvalue; /* Indicates that user wants fillvalue checking
+                                 to be done */
+   double  user_fillvalue;    /* Fillvalue that user wants */
 
    /* Fields that hold values from real variable */
    int     cdfid;          /* Id of cdf */
@@ -130,6 +135,7 @@ typedef struct {
    mi_icv_type *icvp;
    int do_scale;
    int do_dimconvert;
+   int do_fillvalue;
    long *start, *count;
    void *values;
 } mi_varaccess_type;
