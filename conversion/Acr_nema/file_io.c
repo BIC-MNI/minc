@@ -5,9 +5,12 @@
 @GLOBALS    : 
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : $Log: file_io.c,v $
-@MODIFIED   : Revision 1.3  1993-11-23 16:02:12  neelin
-@MODIFIED   : Corrected header comment in acr_file_flush.
+@MODIFIED   : Revision 1.4  1993-11-25 10:36:14  neelin
+@MODIFIED   : Added file free and ungetc
 @MODIFIED   :
+ * Revision 1.3  93/11/23  16:02:12  neelin
+ * Corrected header comment in acr_file_flush.
+ * 
  * Revision 1.2  93/11/23  13:21:42  neelin
  * Added fflush for stdio write routine.
  * 
@@ -33,6 +36,49 @@
 
 /* Define some constants */
 #define ACR_MAX_BUFFER_LENGTH (8*1024)
+#ifndef TRUE
+#  define TRUE 1
+#endif
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+/* Stream type */
+#define ACR_UNKNOWN_STREAM 0
+#define ACR_READ_STREAM    1
+#define ACR_WRITE_STREAM   2
+
+/* Stuff for input and output tracing */
+static char *Input_trace_file = "acr_file.input";
+static char *Output_trace_file = "acr_file.output";
+static int Do_input_trace = FALSE;
+static int Do_output_trace = FALSE;
+static FILE *Input_trace = NULL;
+static FILE *Output_trace = NULL;
+
+public void acr_enable_input_trace(void)
+{
+   Do_input_trace = TRUE;
+   return;
+}
+
+public void acr_disable_input_trace(void)
+{
+   Do_input_trace = FALSE;
+   return;
+}
+
+public void acr_enable_output_trace(void)
+{
+   Do_output_trace = TRUE;
+   return;
+}
+
+public void acr_disable_output_trace(void)
+{
+   Do_output_trace = FALSE;
+   return;
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_file_initialize
@@ -72,6 +118,7 @@ public Acr_File *acr_file_initialize(void *user_data,
       afp->maxlength = maxlength;
    else
       afp->maxlength = ACR_MAX_BUFFER_LENGTH;
+   afp->stream_type = ACR_UNKNOWN_STREAM;
 
    /* Allocate the buffer */
    afp->start = MALLOC((size_t) afp->maxlength);
@@ -86,10 +133,10 @@ public Acr_File *acr_file_initialize(void *user_data,
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_file_free
-@INPUT      : afp - Acr_File pointer to free
+@INPUT      : afp
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
-@DESCRIPTION: Frees the Acr_File structure
+@DESCRIPTION: Frees the Acr_File structure, flushing the buffer if needed.
 @METHOD     : 
 @GLOBALS    : 
 @CALLS      : 
@@ -99,6 +146,9 @@ public Acr_File *acr_file_initialize(void *user_data,
 public void acr_file_free(Acr_File *afp)
 {
    if (afp != NULL) {
+      if (afp->stream_type == ACR_WRITE_STREAM) {
+         (void) acr_file_flush(afp);
+      }
       if (afp->start != NULL) {
          FREE(afp->start);
       }
@@ -128,8 +178,38 @@ public int acr_file_read_more(Acr_File *afp)
       return EOF;
    }
 
+   /* Check the stream type */
+   switch (afp->stream_type) {
+   case ACR_UNKNOWN_STREAM:
+      afp->stream_type = ACR_READ_STREAM; break;
+   case ACR_READ_STREAM:
+      break;
+   case ACR_WRITE_STREAM:
+   default:
+      return EOF;
+   }
+
    /* Read in another buffer-full */
    nread=afp->io_routine(afp->user_data, afp->start, afp->maxlength);
+
+   /* Do tracing */
+   if (Do_input_trace) {
+      if (Input_trace == NULL) {
+         Input_trace = fopen(Input_trace_file, "w");
+         if (Input_trace != NULL) {
+            (void) fprintf(stderr, "Opened input trace file %s.\n", 
+                           Input_trace_file);
+            (void) fflush(stderr);
+         }
+         else {
+            (void) fprintf(stderr, "Error opening input trace file %s.\n",
+                           Input_trace_file);
+            (void) fflush(stderr);
+         }
+      }
+      (void) fwrite(afp->start, sizeof(char), nread, Input_trace);
+      (void) fflush(Input_trace);
+   }
 
    /* Check for EOF */
    if (nread <= 0) {
@@ -198,12 +278,43 @@ public int acr_file_flush(Acr_File *afp)
       return EOF;
    }
 
+   /* Check the stream type */
+   switch (afp->stream_type) {
+   case ACR_UNKNOWN_STREAM:
+      afp->stream_type = ACR_WRITE_STREAM; break;
+   case ACR_WRITE_STREAM:
+      break;
+   case ACR_READ_STREAM:
+   default:
+      return EOF;
+   }
+
    /* Check for something to write */
    length = afp->ptr - afp->start;
    if (length > 0) {
       if (afp->io_routine(afp->user_data, afp->start, length) != length) {
          return EOF;
       }
+
+      /* Do trace, if needed */
+      if (Do_output_trace) {
+         if (Output_trace == NULL) {
+            Output_trace = fopen(Output_trace_file, "w");
+            if (Output_trace != NULL) {
+               (void) fprintf(stderr, "Opened output trace file %s.\n", 
+                              Output_trace_file);
+               (void) fflush(stderr);
+            }
+            else {
+               (void) fprintf(stderr, "Error opening output trace file %s.\n",
+                              Output_trace_file);
+               (void) fflush(stderr);
+            }
+         }
+         (void) fwrite(afp->start, sizeof(char), length, Output_trace);
+         (void) fflush(Output_trace);
+      }
+
    }
 
    /* Reset the buffer */
@@ -212,6 +323,42 @@ public int acr_file_flush(Acr_File *afp)
    afp->end = afp->start + afp->length;
 
    return 0;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_ungetc
+@INPUT      : c - character to unget
+              afp - Acr_File pointer
+@OUTPUT     : (none)
+@RETURNS    : (nothing)
+@DESCRIPTION: Puts a character back into the input stream. This command is
+              fragile - it will only work if it can back up on the current
+              buffer.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : November 25, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+public int acr_ungetc(int c, Acr_File *afp)
+{
+
+   /* Check the pointer */
+   if (afp == NULL) {
+      return EOF;
+   }
+
+   /* Check to see if we can put the character back */
+   if (afp->ptr > afp->start) {
+      afp->ptr--;
+      *afp->ptr = c;
+   }
+   else {
+      return EOF;
+   }
+
+   return (int) *afp->ptr;
+
 }
 
 /* ----------------------------- MNI Header -----------------------------------
