@@ -20,9 +20,12 @@
                  MI_is_in_list
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: minc_convenience.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:02  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 19:01:06  neelin
+@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:38:02  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.18  94/09/28  10:37:12  neelin
  * Pre-release
  * 
@@ -42,11 +45,29 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 2.0 1994-09-28 10:38:02 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 2.1 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
 #include <minc_varlists.h>
+
+/* Private functions */
+private int MI_create_dim_variable(int cdfid, char *name, 
+                                   nc_type datatype, int ndims);
+private int MI_create_dimwidth_variable(int cdfid, char *name, 
+                                        nc_type datatype, int ndims);
+private int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
+                                     int ndims, int dim[]);
+private int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
+                                       int ndims, int dim[]);
+private int MI_verify_maxmin_dims(int cdfid,
+                                  int image_ndims,  int image_dim[],
+                                  int maxmin_ndims, int maxmin_dim[]);
+private int MI_create_root_variable(int cdfid, char *name);
+private int MI_create_simple_variable(int cdfid, char *name);
+private int MI_add_stdgroup(int cdfid, int varid);
+private int MI_is_in_list(char *string, char *list[]);
+
 
 
 /* ----------------------------- MNI Header -----------------------------------

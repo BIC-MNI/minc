@@ -13,9 +13,12 @@
                  MI_var_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: value_conversion.c,v $
-@MODIFIED   : Revision 2.0  1994-09-28 10:38:21  neelin
-@MODIFIED   : Release of minc version 0.2
+@MODIFIED   : Revision 2.1  1995-02-08 19:01:06  neelin
+@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
 @MODIFIED   :
+ * Revision 2.0  1994/09/28  10:38:21  neelin
+ * Release of minc version 0.2
+ *
  * Revision 1.9  94/09/28  10:37:22  neelin
  * Pre-release
  * 
@@ -45,11 +48,16 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 2.0 1994-09-28 10:38:21 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 2.1 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
 #include <minc_private.h>
+
+/* Private functions */
+private int MI_var_action(int ndims, long var_start[], long var_count[], 
+                          long nvalues, void *var_buffer, void *caller_data);
+private int MI_get_sign(nc_type datatype, int sign);
 
 
 

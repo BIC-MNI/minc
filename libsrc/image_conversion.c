@@ -33,10 +33,13 @@
                  MI_icv_calc_scale
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: image_conversion.c,v $
-@MODIFIED   : Revision 2.1  1994-12-09 09:12:30  neelin
-@MODIFIED   : Added test in miicv_detach to make sure that icv is attached before
-@MODIFIED   : detaching it.
+@MODIFIED   : Revision 2.2  1995-02-08 19:01:06  neelin
+@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
 @MODIFIED   :
+ * Revision 2.1  1994/12/09  09:12:30  neelin
+ * Added test in miicv_detach to make sure that icv is attached before
+ * detaching it.
+ *
  * Revision 2.0  94/09/28  10:37:55  neelin
  * Release of minc version 0.2
  * 
@@ -74,11 +77,24 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.1 1994-12-09 09:12:30 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 2.2 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
 #include <minc_private.h>
+
+/* Private functions */
+private int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid);
+private int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid);
+private double MI_get_default_range(char *what, nc_type datatype, int sign);
+private int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid);
+private int MI_icv_access(int operation, mi_icv_type *icvp, long start[], 
+                          long count[], void *values);
+private int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values);
+private int MI_icv_coords_tovar(mi_icv_type *icvp, 
+                                long icv_start[], long icv_count[],
+                                long var_start[], long var_count[]);
+private int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 
 /* Array of pointers to image conversion structures */
 static mi_icv_type *minc_icv_list[MI_MAX_NUM_ICV] = {

@@ -17,10 +17,13 @@
                  MI_icv_dimconv_init
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : $Log: dim_conversion.c,v $
-@MODIFIED   : Revision 2.1  1994-11-02 09:42:37  neelin
-@MODIFIED   : Fixed conversion of vector to scalar (old code simply returned the first
-@MODIFIED   : component of the vector - now averaging is done properly).
+@MODIFIED   : Revision 2.2  1995-02-08 19:01:06  neelin
+@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
 @MODIFIED   :
+ * Revision 2.1  1994/11/02  09:42:37  neelin
+ * Fixed conversion of vector to scalar (old code simply returned the first
+ * component of the vector - now averaging is done properly).
+ *
  * Revision 2.0  94/09/28  10:37:52  neelin
  * Release of minc version 0.2
  * 
@@ -49,11 +52,27 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.1 1994-11-02 09:42:37 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 2.2 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <type_limits.h>
 #include <minc_private.h>
+
+/* Private functions */
+private int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid);
+private int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[], 
+                           int subsc[]);
+private int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[]);
+private int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[]);
+private int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[]);
+private int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
+                              long start[], long count[], void *values,
+                              long bufstart[], long bufcount[], void *buffer);
+private int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
+                              mi_icv_dimconv_type *dcp,
+                              long start[], long count[], void *values,
+                              long bufstart[], long bufcount[], void *buffer);
+
 
 
 /* ----------------------------- MNI Header -----------------------------------

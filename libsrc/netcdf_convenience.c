@@ -34,9 +34,12 @@
                  MI_vcopy_action
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : $Log: netcdf_convenience.c,v $
-@MODIFIED   : Revision 2.3  1995-01-24 08:34:11  neelin
-@MODIFIED   : Added optional tempfile argument to miexpand_file.
+@MODIFIED   : Revision 2.4  1995-02-08 19:01:06  neelin
+@MODIFIED   : Moved private function declarations from minc_routines.h to appropriate file.
 @MODIFIED   :
+ * Revision 2.3  1995/01/24  08:34:11  neelin
+ * Added optional tempfile argument to miexpand_file.
+ *
  * Revision 2.2  95/01/23  08:28:19  neelin
  * Changed name of midecompress_file to miexpand_file.
  * 
@@ -69,10 +72,17 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.3 1995-01-24 08:34:11 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 2.4 1995-02-08 19:01:06 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
+
+/* Private functions */
+private int execute_decompress_command(char *command, char *infile, 
+                                       char *outfile, int header_only);
+private int MI_vcopy_action(int ndims, long start[], long count[], 
+                            long nvalues, void *var_buffer, void *caller_data);
+
 
 
 
