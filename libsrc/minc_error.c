@@ -9,7 +9,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 1.3 1992-12-01 14:03:54 neelin Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 1.4 1993-01-22 11:39:21 neelin Exp $ MINC (MNI)";
 #endif
 
 #include <minc_private.h>
@@ -26,12 +26,12 @@ semiprivate int MI_save_routine_name(char *name)
    ncopts &= ~(NC_FATAL); 
    return(TRUE);
 }
-semiprivate int MI_return()
+semiprivate int MI_return(void)
 { 
    ncopts = MI_CALLERS_NCOPTS; 
    return(TRUE); 
 }
-semiprivate int MI_return_error()
+semiprivate int MI_return_error(void)
 { 
    ncopts = MI_CALLERS_NCOPTS; 
    MI_LOG_PKG_ERROR2(ncerr, "MINC package entry point"); 
