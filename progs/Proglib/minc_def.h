@@ -5,9 +5,15 @@
 @CALLS      : 
 @CREATED    : July 7, 1993 (Peter Neelin)
 @MODIFIED   : $Log: minc_def.h,v $
-@MODIFIED   : Revision 1.3  1993-08-04 13:03:30  neelin
-@MODIFIED   : Added RCS $Log$ to keep track of modifications in source.
+@MODIFIED   : Revision 1.4  1993-08-11 13:21:51  neelin
+@MODIFIED   : Added macros ROUND and STR_EQ.
 @MODIFIED   :
+ * Revision 1.3  93/08/04  13:03:30  neelin
+ * Added RCS $Log: minc_def.h,v $
+ * Added RCS Revision 1.4  1993-08-11 13:21:51  neelin
+ * Added RCS Added macros ROUND and STR_EQ.
+ * Added RCS to keep track of modifications in source.
+ * 
 @COPYRIGHT  :
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
@@ -51,3 +57,16 @@
 
 #define CALLOC(nelem, elsize) ((void *) calloc(nelem, elsize))
 
+/* Define useful macros */
+
+#ifdef ROUND
+#  undef ROUND
+#endif
+
+#ifdef STR_EQ
+#  undef STR_EQ
+#endif
+
+#define ROUND( x ) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) )
+
+#define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
