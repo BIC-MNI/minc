@@ -13,16 +13,19 @@ public  void  create_linear_transform(
     transform->type = LINEAR;
     transform->inverse_flag = FALSE;
 
+    ALLOC( transform->linear_transform, 1 );
+    ALLOC( transform->inverse_linear_transform, 1 );
+
     if( linear_transform != (Transform *) NULL )
     {
-        transform->linear_transform = *linear_transform;
+        *(transform->linear_transform) = *linear_transform;
         compute_transform_inverse( linear_transform,
-                                   &transform->inverse_linear_transform );
+                                   transform->inverse_linear_transform );
     }
     else
     {
-        make_identity_transform( &transform->linear_transform );
-        make_identity_transform( &transform->inverse_linear_transform );
+        make_identity_transform( transform->linear_transform );
+        make_identity_transform( transform->inverse_linear_transform );
     }
 }
 
@@ -46,7 +49,10 @@ public  Transform  *get_linear_transform_ptr(
 {
     if( transform->type == LINEAR )
     {
-        return( &transform->linear_transform );
+        if( transform->inverse_flag )
+            return( transform->inverse_linear_transform );
+        else
+            return( transform->linear_transform );
     }
     else
     {
@@ -73,10 +79,10 @@ public  void  general_transform_point(
         Point_y(point) = y;
         Point_z(point) = z;
         if( transform->inverse_flag )
-            transform_point( &transform->inverse_linear_transform,
+            transform_point( transform->inverse_linear_transform,
                              &point, &point );
         else
-            transform_point( &transform->linear_transform, &point, &point );
+            transform_point( transform->linear_transform, &point, &point );
 
         *x_transformed = Point_x(point);
         *y_transformed = Point_y(point);
@@ -104,6 +110,10 @@ public  void  general_transform_point(
                                          x_transformed, y_transformed,
                                          z_transformed );
         }
+        break;
+
+    default:
+        HANDLE_INTERNAL_ERROR( "general_transform_point" );
         break;
     }
 }
@@ -126,10 +136,9 @@ public  void  general_inverse_transform_point(
         Point_y(point) = y;
         Point_z(point) = z;
         if( transform->inverse_flag )
-            transform_point( &transform->linear_transform,
-                             &point, &point );
+            transform_point( transform->linear_transform, &point, &point );
         else
-            transform_point( &transform->inverse_linear_transform,
+            transform_point( transform->inverse_linear_transform,
                              &point, &point );
 
         *x_transformed = Point_x(point);
@@ -159,6 +168,10 @@ public  void  general_inverse_transform_point(
                                                  z_transformed );
         }
         break;
+
+    default:
+        HANDLE_INTERNAL_ERROR( "general_transform_point" );
+        break;
     }
 }
 
@@ -166,19 +179,29 @@ public  void  create_inverse_general_transform(
     General_transform   *transform,
     General_transform   *inverse )
 {
-    int   i, j;
+    int         i, j;
 
     switch( transform->type )
     {
     case LINEAR:
-        *inverse = *transform;
+        inverse->type = LINEAR;
+        inverse->inverse_flag = FALSE;
 
-        if( inverse->inverse_flag )
-            inverse->inverse_flag = FALSE;
+        ALLOC( inverse->linear_transform, 1 );
+        ALLOC( inverse->inverse_linear_transform, 1 );
+        
+        if( transform->inverse_flag )
+        {
+            *(inverse->linear_transform) = *(transform->linear_transform);
+            *(inverse->inverse_linear_transform) =
+                                      *(transform->inverse_linear_transform);
+        }
         else
         {
-            inverse->linear_transform = transform->inverse_linear_transform;
-            inverse->inverse_linear_transform = transform->linear_transform;
+            *(inverse->linear_transform) =
+                                      *(transform->inverse_linear_transform);
+            *(inverse->inverse_linear_transform) =
+                                      *(transform->linear_transform);
         }
         break;
 
@@ -199,6 +222,34 @@ public  void  create_inverse_general_transform(
                 inverse->displacements[i][j] = transform->displacements[i][j];
 
         inverse->inverse_flag = !transform->inverse_flag;
+        break;
+
+    default:
+        HANDLE_INTERNAL_ERROR( "general_transform_point" );
+        break;
+    }
+}
+
+public  void  delete_general_transform(
+    General_transform   *transform )
+{
+    switch( transform->type )
+    {
+    case LINEAR:
+        FREE( transform->linear_transform );
+        FREE( transform->inverse_linear_transform );
+        break;
+
+    case THIN_PLATE_SPLINE:
+        if( transform->n_points > 0 && transform->n_dimensions > 0 )
+        {
+            FREE2D( transform->points );
+            FREE2D( transform->displacements );
+        }
+        break;
+
+    default:
+        HANDLE_INTERNAL_ERROR( "delete_general_transform" );
         break;
     }
 }

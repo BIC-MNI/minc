@@ -39,10 +39,7 @@ public  Status  output_transform(
 
     switch( transform->type )
     {
-    case LINEAR6:
-    case LINEAR7:
-    case LINEAR9:
-    case LINEAR12:
+    case LINEAR:
         (void) fprintf( file, "%s = %s\n", TYPE_STRING, LINEAR_TYPE );
         if( transform->inverse_flag )
             (void) fprintf( file, "%s = %s\n", INVERT_FLAG_STRING, TRUE_STRING);
@@ -147,7 +144,7 @@ public  Status  input_transform(
         return( ERROR );
 
     if( strcmp( type_name, LINEAR_TRANSFORM_STRING ) == 0 )
-        type = LINEAR12;
+        type = LINEAR;
     else if( strcmp( type_name, THIN_PLATE_SPLINE_STRING ) == 0 )
         type = THIN_PLATE_SPLINE;
     else
@@ -187,7 +184,7 @@ public  Status  input_transform(
 
     switch( type )
     {
-    case LINEAR12:
+    case LINEAR:
         if( strcmp( str, LINEAR_TRANSFORM_STRING ) != 0 )
         {
             print( "Expected %s =\n", LINEAR_TRANSFORM_STRING );
