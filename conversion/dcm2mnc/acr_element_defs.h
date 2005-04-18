@@ -121,6 +121,8 @@ GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011, US);
 GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030, DS);
 GLOBAL_ELEMENT(ACR_Bits_allocated        , 0x0028, 0x0100, US);
 GLOBAL_ELEMENT(ACR_Bits_stored           , 0x0028, 0x0101, US);
+GLOBAL_ELEMENT(ACR_High_bit              , 0x0028, 0x0102, US);
+GLOBAL_ELEMENT(ACR_Pixel_representation  , 0x0028, 0x0103, US);
 GLOBAL_ELEMENT(ACR_Smallest_pixel_value  , 0x0028, 0x0106, US);
 GLOBAL_ELEMENT(ACR_Largest_pixel_value   , 0x0028, 0x0107, US);
 GLOBAL_ELEMENT(ACR_Image_location        , 0x0028, 0x0200, US);
