@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.11  2005-04-18 21:01:51  bert
+   * Revision 1.12  2005-04-18 21:43:04  bert
+   * Properly set default minimum and maximum values based on the pixel representation
+   *
+   * Revision 1.11  2005/04/18 21:01:51  bert
    * Set signed/unsigned flag correctly
    *
    * Revision 1.10  2005/04/18 20:43:25  bert
@@ -442,10 +445,10 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
          * signed/unsigned flag.
          */
         ivalue = acr_find_short(group_list, ACR_Pixel_representation, -1);
-        if (ivalue == 0) {
+        if (ivalue == ACR_PIXEL_REP_UNSIGNED) {
             gi_ptr->is_signed = 0;
         }
-        else if (ivalue == 1) {
+        else if (ivalue == ACR_PIXEL_REP_SIGNED) {
             gi_ptr->is_signed = 1;
         }
         else {
@@ -711,10 +714,26 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
 {
     double window_centre, window_width;
     double rescale_intercept, rescale_slope;
+    int ivalue;                 /* 0000 for unsigned, 0001 for signed */
+    int imin, imax;             /* Default minimum and maximum values */
 
     /* Get pixel storage information */
     fi_ptr->bits_alloc = acr_find_short(group_list, ACR_Bits_allocated, 0);
     fi_ptr->bits_stored = acr_find_short(group_list, ACR_Bits_stored, 0);
+
+    /* bert- properly set the minimum and maximum pixel values depending
+     * on whether or not this file specifies signed pixel values.
+     */
+    ivalue = acr_find_short(group_list, ACR_Pixel_representation, -1);
+
+    if (ivalue == ACR_PIXEL_REP_SIGNED) {
+        imin = -(1 << (fi_ptr->bits_stored - 1));
+        imax = (1 << (fi_ptr->bits_stored - 1)) - 1;
+    }
+    else {
+        imin = 0;
+        imax = (1 << fi_ptr->bits_stored) - 1;
+    }
 
     if (G.useMinMax) {
         // Get pixel value information
@@ -723,11 +742,10 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
         // to the current slice.
 
         fi_ptr->pixel_min = acr_find_short(group_list, 
-                                           ACR_Smallest_pixel_value, 0);
+                                           ACR_Smallest_pixel_value, imin);
 
         fi_ptr->pixel_max = acr_find_short(group_list,
-                                           ACR_Largest_pixel_value, 
-                                           (1 << fi_ptr->bits_stored)-1);
+                                           ACR_Largest_pixel_value, imax);
 
     }
     else {
@@ -736,8 +754,8 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
          * not whole volume - this caused problems (roundoff?)
          * in Siemens Numaris 4 scans
          */
-        fi_ptr->pixel_min = 0;
-        fi_ptr->pixel_max = (1 << fi_ptr->bits_stored) - 1;
+        fi_ptr->pixel_min = imin;
+        fi_ptr->pixel_max = imax;
     }
 
     /* Get the rescale intercept and slope.  If they are not present,
