@@ -18,9 +18,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-/* Element number for images */
-#define SPI_IMAGE_ELEMENT 0x0010
-
 /* Element id's for SPI */
 GLOBAL_ELEMENT(SPI_Net_frequency                      , 0x0019, 0x1010, IS);
 GLOBAL_ELEMENT(SPI_Measurement_mode                   , 0x0019, 0x1020, CS);
