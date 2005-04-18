@@ -33,6 +33,10 @@
 #define ACR_MODALITY_MR "MR"
 #define ACR_MODALITY_PT "PT"
 
+/* Defined values for pixel representation (0028,0103) */
+#define ACR_PIXEL_REP_UNSIGNED 0 /* Unsigned magnitude */
+#define ACR_PIXEL_REP_SIGNED 1  /* 2's complement signed */
+
 /* Element id's for DICOM */
 GLOBAL_ELEMENT(ACR_Affected_SOP_class_UID    , 0x0000, 0x0002, UI);
 GLOBAL_ELEMENT(ACR_Command                   , 0x0000, 0x0100, US);
