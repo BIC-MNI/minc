@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.4  2005-04-05 21:56:47  bert
+@MODIFIED   : Revision 1.5  2005-04-18 16:21:16  bert
+@MODIFIED   : Fix definition of siemens_to_dicom
+@MODIFIED   :
+@MODIFIED   : Revision 1.4  2005/04/05 21:56:47  bert
 @MODIFIED   : Add some conversion functions, remove some more proprietary junk, and improve range-checking on some functions
 @MODIFIED   :
 @MODIFIED   : Revision 1.3  2005/03/03 18:59:16  bert
@@ -44,7 +47,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.4 2005-04-05 21:56:47 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.5 2005-04-18 16:21:16 bert Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,7 +138,7 @@ siemens_header_t Siemens_hdr; /* Must define this first */
 ---------------------------------------------------------------------------- */
 
 Acr_Group
-siemens_to_dicom(const char *filename, int read_image)
+siemens_to_dicom(const char *filename, int max_group)
 {
     FILE *fp;
     Siemens_hdr_entry *entry;
@@ -164,7 +167,7 @@ siemens_to_dicom(const char *filename, int read_image)
     assert(((char *)&Siemens_hdr.G28-(char *)&Siemens_hdr) == 0x1380);
 
     if (G.Debug >= HI_LOGGING) {
-        printf("siemens_to_dicom(%s, %d)\n", filename, read_image);
+        printf("siemens_to_dicom(%s, %x)\n", filename, max_group);
     }
 
     /* Open the file */
@@ -181,7 +184,7 @@ siemens_to_dicom(const char *filename, int read_image)
     }
 
     /* Get the image if it is needed */
-    if (read_image) {
+    if (max_group >= ACR_IMAGE_GID) {
 
         /* Figure out how much space we need for the image */
         pixel_size = 2;         /* Apparently this never changes?? */
@@ -208,7 +211,7 @@ siemens_to_dicom(const char *filename, int read_image)
             return NULL;
         }
 
-    }         /* If read_image */
+    }         /* If (max_group >= ACR_IMAGE_GID) */
 
     /* Close the file */
     fclose(fp);
@@ -284,7 +287,7 @@ siemens_to_dicom(const char *filename, int read_image)
 
 
     /* Add the image if it is needed */
-    if (read_image) {
+    if (max_group >= ACR_IMAGE_GID) {
 
         /* Insert the image location */
         acr_insert_short(&group_list, ACR_Image_location, ACR_IMAGE_GID);
@@ -298,7 +301,7 @@ siemens_to_dicom(const char *filename, int read_image)
         /* explicitly label image data as big-endian */
         acr_set_element_byte_order(element, ACR_BIG_ENDIAN);
 
-    }        /* If read_image */
+    } /* if (max_group >= ACR_IMAGE_GID) */
 
     /* Return the group list */
     return group_list;
