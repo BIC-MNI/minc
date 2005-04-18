@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.6  2005-03-11 22:05:29  bert
+ * Revision 6.7  2005-04-18 23:22:29  bert
+ * Initialize newlist in acr_copy_element() to avoid problems with empty lists
+ *
+ * Revision 6.6  2005/03/11 22:05:29  bert
  * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
  *
  * Revision 6.5  2005/03/04 00:25:54  bert
@@ -718,6 +721,7 @@ Acr_Element acr_copy_element(Acr_Element element)
       length = -1;
       olditem = (Acr_Element) acr_get_element_data(element);
       newitem = NULL;
+      newlist = NULL;           /* bert- initialize in case list is empty */
       while (olditem != NULL) {
          if (newitem == NULL) {
             newlist = acr_copy_element(olditem);
