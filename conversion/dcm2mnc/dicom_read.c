@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.8  2005-04-05 21:49:52  bert
+   * Revision 1.9  2005-04-18 16:22:13  bert
+   * Don't allow non-slice MRI dimensions to grow arbitrarily
+   *
+   * Revision 1.8  2005/04/05 21:49:52  bert
    * Use rescale slope and intercept to determine the proper slice minimum and maximum
    *
    * Revision 1.7  2005/03/29 20:21:44  bert
@@ -495,6 +498,16 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 
         /* Look to see if indices have changed */
         for (imri = 0; imri < MRI_NDIMS; imri++) {
+            /* If a dimension is known to have a maximum size of one
+             * or less, we do NOT allow it to grow in any way.  An
+             * exception is made for the slice dimension, however,
+             * since it appears that it is common for it to be
+             * unspecified and can be guessed only by the number of
+             * distinct locations discovered.
+             */
+            if (imri != SLICE && gi_ptr->max_size[imri] <= 1) {
+                continue;
+            }
        
             /* Get current index */
             cur_index = fi_ptr->index[imri];
