@@ -1,3 +1,8 @@
+2005-04-18  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Move internal volume_io headers into the volume_io subdirectory 
+	permanently
+	* Update Makefile.am and configure.in to reflect this change.
+	
 2005-04-02  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* volume_io/Include/volume_io.h: Wrap contents in "extern C"

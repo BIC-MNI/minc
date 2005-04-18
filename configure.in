@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.14.2.3 $)
+AC_REVISION($Revision: 6.14.2.4 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -48,7 +48,7 @@ AC_FUNC_FORK
 AC_CHECK_FUNCS(system popen)
 
 dnl This link is needed to allow <volume_io/foo.h> style includes.
-AC_CONFIG_LINKS(volume_io/Include/volume_io:volume_io/Include)
+dnl AC_CONFIG_LINKS(volume_io/Include/volume_io:volume_io/Include)
 
 AC_CONFIG_FILES([
 Makefile 

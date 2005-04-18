@@ -28,22 +28,22 @@ include_HEADERS = \
 include_volume_iodir = $(includedir)/volume_io
 
 include_volume_io_HEADERS = \
-	volume_io/Include/alloc.h \
-	volume_io/Include/arrays.h \
-	volume_io/Include/basic.h \
-	volume_io/Include/def_math.h \
-	volume_io/Include/files.h \
-	volume_io/Include/geom_structs.h \
-	volume_io/Include/geometry.h \
+	volume_io/Include/volume_io/alloc.h \
+	volume_io/Include/volume_io/arrays.h \
+	volume_io/Include/volume_io/basic.h \
+	volume_io/Include/volume_io/def_math.h \
+	volume_io/Include/volume_io/files.h \
+	volume_io/Include/volume_io/geom_structs.h \
+	volume_io/Include/volume_io/geometry.h \
 	volume_io/Include/internal_volume_io.h \
-	volume_io/Include/multidim.h \
-	volume_io/Include/progress.h \
-	volume_io/Include/string_funcs.h \
-	volume_io/Include/system_dependent.h \
-	volume_io/Include/transforms.h \
-	volume_io/Include/vol_io_prototypes.h \
-	volume_io/Include/volume.h \
-	volume_io/Include/volume_cache.h
+	volume_io/Include/volume_io/multidim.h \
+	volume_io/Include/volume_io/progress.h \
+	volume_io/Include/volume_io/string_funcs.h \
+	volume_io/Include/volume_io/system_dependent.h \
+	volume_io/Include/volume_io/transforms.h \
+	volume_io/Include/volume_io/vol_io_prototypes.h \
+	volume_io/Include/volume_io/volume.h \
+	volume_io/Include/volume_io/volume_cache.h
 
 # Header files which must be included in the distribution but which are 
 # not part of the installation.
