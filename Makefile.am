@@ -33,22 +33,22 @@ include_HEADERS = \
 include_volume_iodir = $(includedir)/volume_io
 
 include_volume_io_HEADERS = \
-	volume_io/Include/alloc.h \
-	volume_io/Include/arrays.h \
-	volume_io/Include/basic.h \
-	volume_io/Include/def_math.h \
-	volume_io/Include/files.h \
-	volume_io/Include/geom_structs.h \
-	volume_io/Include/geometry.h \
+	volume_io/Include/volume_io/alloc.h \
+	volume_io/Include/volume_io/arrays.h \
+	volume_io/Include/volume_io/basic.h \
+	volume_io/Include/volume_io/def_math.h \
+	volume_io/Include/volume_io/files.h \
+	volume_io/Include/volume_io/geom_structs.h \
+	volume_io/Include/volume_io/geometry.h \
 	volume_io/Include/internal_volume_io.h \
-	volume_io/Include/multidim.h \
-	volume_io/Include/progress.h \
-	volume_io/Include/string_funcs.h \
-	volume_io/Include/system_dependent.h \
-	volume_io/Include/transforms.h \
-	volume_io/Include/vol_io_prototypes.h \
-	volume_io/Include/volume.h \
-	volume_io/Include/volume_cache.h
+	volume_io/Include/volume_io/multidim.h \
+	volume_io/Include/volume_io/progress.h \
+	volume_io/Include/volume_io/string_funcs.h \
+	volume_io/Include/volume_io/system_dependent.h \
+	volume_io/Include/volume_io/transforms.h \
+	volume_io/Include/volume_io/vol_io_prototypes.h \
+	volume_io/Include/volume_io/volume.h \
+	volume_io/Include/volume_io/volume_cache.h
 
 # Header files which must be included in the distribution but which are 
 # not part of the installation.
@@ -82,6 +82,8 @@ noinst_HEADERS = \
 	conversion/ecattominc/ecat_file.h \
 	conversion/ecattominc/machine_indep.h \
 	conversion/ecattominc/ecat_header_definition.h \
+	conversion/minctoecat/ecat_write.h \
+	conversion/minctoecat/machine_indep.h \
 	conversion/nifti1/nifti1.h \
 	conversion/nifti1/nifti1_io.h \
 	conversion/nifti1/nifti1_local.h
@@ -132,6 +134,7 @@ bin_PROGRAMS = \
 	mincconvert \
 	mincdump \
 	ecattominc \
+	minctoecat \
 	mnc2nii \
 	nii2mnc \
 	upet2mnc
@@ -264,6 +267,11 @@ ecattominc_SOURCES = \
 	conversion/ecattominc/ecat_file.c \
 	conversion/ecattominc/machine_indep.c
 
+minctoecat_SOURCES = \
+	conversion/minctoecat/minctoecat.c \
+	conversion/minctoecat/ecat_write.c \
+	conversion/minctoecat/machine_indep.c
+
 nii2mnc_SOURCES = \
 	conversion/nifti1/nii2mnc.c \
 	conversion/nifti1/nifti1_io.c
@@ -375,6 +383,8 @@ dist_man1_MANS = \
 	progs/xfm/transformtags.man1 \
 	progs/xfm/xfmconcat.man1 \
 	progs/xfm/xfminvert.man1 \
-	progs/mincconvert/mincconvert.man1
+	progs/mincconvert/mincconvert.man1 \
+	conversion/ecattominc/ecattominc.man1 \
+	conversion/minctoecat/minctoecat.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
