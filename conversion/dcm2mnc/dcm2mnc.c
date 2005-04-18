@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.10  2005-04-06 13:26:41  bert
+ * Revision 1.11  2005-04-18 16:38:42  bert
+ * Fix up file type detection code
+ *
+ * Revision 1.10  2005/04/06 13:26:41  bert
  * Fix listing option
  *
  * Revision 1.9  2005/04/05 21:52:24  bert
@@ -74,7 +77,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.10 2005-04-06 13:26:41 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.11 2005-04-18 16:38:42 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -274,8 +277,7 @@ main(int argc, char *argv[])
      * on Syngo CD's and exports) then the appropriate flag will be
      * set.
      */
-
-    printf("Checking file types...   ");
+    printf("Checking file types...\n");
 
     if (check_file_type_consistency(num_files, file_list) < 0) {
         exit(EXIT_FAILURE);
@@ -294,7 +296,7 @@ main(int argc, char *argv[])
         }
 
         if (G.file_type == IMA) {
-            group_list = siemens_to_dicom(cur_fname_ptr, TRUE);
+            group_list = siemens_to_dicom(cur_fname_ptr, ACR_IMAGE_GID - 1);
         }
         else {
             /* read up to but not including pixel data
@@ -678,7 +680,7 @@ use_the_files(int num_files,
                    di_ptr[acq_file_index[0]]->protocol_name,
                    acq_num_files);
             for (ifile = 0; ifile < acq_num_files; ifile++) {
-                printf("     %s\n", acq_file_list[ifile]);
+                printf("     %s\n", di_ptr[acq_file_index[ifile]]->file_name);
             }
             if (G.List) {
                 continue;
@@ -778,11 +780,57 @@ use_the_files(int num_files,
 }
 
 static int
+is_cdexport_file(const char *fullname)
+{
+    FILE *fp;
+    char tst_str[DICM_MAGIC_SIZE+1];
+    int result = 0;
+
+    if ((fp = fopen(fullname, "rb")) == NULL) {
+        fprintf(stderr, "Error opening file %s!\n", fullname);
+    }
+    else {
+        fseek(fp, DICM_MAGIC_OFFS, SEEK_SET);
+        fread(tst_str, 1, DICM_MAGIC_SIZE, fp);
+        tst_str[DICM_MAGIC_SIZE] = '\0';
+
+        if (!strcmp(tst_str, DICM_MAGIC_STR)) {
+            result = 1;
+        }
+        fclose(fp);
+    }
+    return (result);
+}
+
+static int
+is_ima_file(const char *fullname)
+{
+    FILE *fp;
+    char mfg_str[IMA_MAGIC_SIZE];
+    int result = 0;
+
+    if ((fp = fopen(fullname, "rb")) == NULL) {
+        fprintf(stderr, "Error opening file %s!\n", fullname);
+    }
+    else {
+        fseek(fp, IMA_MAGIC_OFFS, SEEK_SET);
+        fread(mfg_str, 1, IMA_MAGIC_SIZE, fp);
+
+        /* We only deal with Siemens IMA files - not sure any other kinds 
+         * exist, frankly.
+         */
+        if (!strcmp(mfg_str, IMA_MAGIC_STR)) {
+            result = 1;
+        }
+        fclose(fp);
+    }
+    return (result);
+}
+
+static int
 check_file_type_consistency(int num_files, const char *file_list[])
 {
     int i;
-    FILE *fp;
-    char dicm_test_string[DICM_MAGIC_SIZE];
     const char *fn_ptr;
     int n4_offset = 0;
 
@@ -790,37 +838,31 @@ check_file_type_consistency(int num_files, const char *file_list[])
 
         fn_ptr = file_list[i];
 
-        if ((fp = fopen(fn_ptr, "rb")) == NULL) {
-            fprintf(stderr, "Error opening file %s!\n", fn_ptr);
-            return (-1);
-        }
-
-        /* Numaris 4 DICOM CD/Export file? if so, bytes 129-132 will 
-         * contain the string `DICM' 
+        /* Numaris 4 DICOM CD/Export file? if so, bytes 128-131 will 
+         * contain the string `DICM' with no null termination.
          */
 
-        fseek(fp, DICM_MAGIC_OFFS, SEEK_SET);
-        fread(dicm_test_string, 1, DICM_MAGIC_SIZE, fp);
-
-        if (dicm_test_string[0] == 'D' && dicm_test_string[1] == 'I' &&
-            dicm_test_string[2] == 'C' && dicm_test_string[3] == 'M') {
+        if (is_cdexport_file(fn_ptr)) {
             if (G.file_type == UNDEF) {
                 G.file_type = N4DCM;
                 n4_offset = 1; 
-                printf("assuming files are Syngo DICOM (CD/Export).\n");
+                printf("File %s appears to be DICOM (CD/Export).\n",
+                       fn_ptr);
             }
             else if (G.file_type != N4DCM || n4_offset != 1) {
-                printf("file type mismatch detected\n");
+                printf("MISMATCH: File %s appears to be DICOM (CD/Export).\n",
+                       fn_ptr);
                 return (-1);
             }
         } 
-        else if (!strcmp(fn_ptr + strlen(fn_ptr) - 4, ".ima")) {
+        else if (is_ima_file(fn_ptr)) {
             if (G.file_type == UNDEF) {
                 G.file_type = IMA;
-                printf("assuming files are IMA.\n");
+                printf("File %s appears to be Siemens IMA.\n", fn_ptr);
             }
             else if (G.file_type != IMA) {
-                printf("file type mismatch detected\n");
+                printf("MISMATCH: File %s appears to be Siemens IMA.\n", 
+                       fn_ptr);
                 return (-1);
             }
         }
@@ -828,13 +870,14 @@ check_file_type_consistency(int num_files, const char *file_list[])
             if (G.file_type == UNDEF) {
                 G.file_type = N4DCM;
                 n4_offset = 0; 
-                printf("assuming files are standard DICOM.\n");
+                printf("File %s appears to be standard DICOM.\n", fn_ptr);
             }
             else if (G.file_type != N4DCM || n4_offset != 0) {
-                printf("file type mismatch detected\n");
+                printf("MISMATCH: File %s appears to be standard DICOM.\n",
+                       fn_ptr);
+                return (-1);
             }
         }
-        fclose(fp);
     }
     return (0);
 }
