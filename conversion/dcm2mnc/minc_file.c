@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.3  2005-03-13 19:34:21  bert
+   * Revision 1.4  2005-04-18 16:21:42  bert
+   * Add debugging information for intensity scaling
+   *
+   * Revision 1.3  2005/03/13 19:34:21  bert
    * Minor change to avoid core dump with strange files
    *
    * Revision 1.2  2005/03/03 18:59:15  bert
@@ -92,7 +95,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.3 2005-03-13 19:34:21 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.4 2005-04-18 16:21:42 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -953,8 +956,16 @@ save_minc_image(int icvid, General_Info *general_info,
     else
         scale = 0.0;
 
-    // debugging info for slice intensity scaling
-    //   printf("general_info->pixel_max = %10.2f    file_info->slice_max = %10.2f    pmax = %u\n",general_info->pixel_max,file_info->slice_max,pmax);
+    /* debugging info for slice intensity scaling
+     */
+    if (G.Debug >= HI_LOGGING) {
+        printf("global range: %.2f %.2f  file range: %.2f %.2f pmax: %u\n",
+               general_info->pixel_min,
+               general_info->pixel_max,
+               file_info->slice_min,
+               file_info->slice_max,
+               pmax);
+    }
 
     offset = file_info->slice_min - scale * general_info->pixel_min;
     minimum = (double) pmin * scale + offset;
