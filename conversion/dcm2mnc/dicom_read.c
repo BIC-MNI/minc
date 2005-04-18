@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.10  2005-04-18 20:43:25  bert
+   * Revision 1.11  2005-04-18 21:01:51  bert
+   * Set signed/unsigned flag correctly
+   *
+   * Revision 1.10  2005/04/18 20:43:25  bert
    * Added some additional debugging information for image position and orientation
    *
    * Revision 1.9  2005/04/18 16:22:13  bert
@@ -210,6 +213,7 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     double starts[VOL_NDIMS];   /* Start (origin) coordinates */
     Acr_Element_Id mri_index_list[MRI_NDIMS];
     Acr_Element_Id mri_total_list[MRI_NDIMS];
+    int ivalue;                 /* For pixel representation value. */
 
     // Initialize array of elements for MRI positions (indices)
     //
@@ -433,8 +437,25 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
             gi_ptr->datatype = NC_SHORT;
         }
 
-        gi_ptr->is_signed = ((gi_ptr->datatype == NC_SHORT) &&
-                             (fi_ptr->bits_stored < 16));
+        /* bert- modify code to correctly read the pixel
+         * representation if available and use that to set the
+         * signed/unsigned flag.
+         */
+        ivalue = acr_find_short(group_list, ACR_Pixel_representation, -1);
+        if (ivalue == 0) {
+            gi_ptr->is_signed = 0;
+        }
+        else if (ivalue == 1) {
+            gi_ptr->is_signed = 1;
+        }
+        else {
+            if (ivalue != -1) {
+                printf("WARNING: Unknown pixel representation value %d\n",
+                       ivalue);
+            }
+            gi_ptr->is_signed = ((gi_ptr->datatype == NC_SHORT) &&
+                                 (fi_ptr->bits_stored < 16));
+        }
 
         gi_ptr->pixel_min = fi_ptr->pixel_min;
         gi_ptr->pixel_max = fi_ptr->pixel_max;
@@ -1535,7 +1556,7 @@ get_siemens_dicom_image(Acr_Group group_list, Image_Data *image)
 
     /* Get image pointer */
     elid.group_id = image_group;
-    elid.element_id = SPI_IMAGE_ELEMENT;
+    elid.element_id = ACR_IMAGE_EID;
     element = acr_find_group_element(group_list, &elid);
     if (element == NULL) {
         memset(image->data, 0, imagepix * sizeof(short));
