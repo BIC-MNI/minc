@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.7  2005-04-05 21:55:33  bert
+   * Revision 1.8  2005-04-18 21:04:25  bert
+   * Get rid of old is_reversed behavior, always use most natural sort of the image. Also tried to fix listing function somewhat.
+   *
+   * Revision 1.7  2005/04/05 21:55:33  bert
    * Update handling of Siemens ASCCONV to reflect value of uc2DInterpolation field for mosaic images.  Additional cleanup of mosaic code and minor tweak to suppress GEMS warning message for PET data.
    *
    * Revision 1.6  2005/03/29 20:20:42  bert
@@ -132,7 +135,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.7 2005-04-05 21:55:33 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.8 2005-04-18 21:04:25 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -262,6 +265,9 @@ dicom_to_minc(int num_files,
     iimage = 0;
 
     for (ifile = 0; ifile < num_files; ifile++) {
+        if (G.Debug >= HI_LOGGING) {
+            printf("\nFile %s\n", file_list[ifile]);
+        }
 
         if (!G.Debug) {
             progress(ifile, num_files, "-Parsing series info");
@@ -629,6 +635,8 @@ add_siemens_info(Acr_Group group_list)
                            SPI_Number_of_3D_raw_partitions_nominal, 1);
     }
 
+    str_ptr = acr_find_string(group_list, ACR_Image_type, "");
+    if (strstr(str_ptr, "MOSAIC") != NULL) {
     /* Now figure out mosaic rows and columns, and put in EXT shadow group
      * Check for interpolation - will require 2x scaling of rows and columns.
      */
@@ -657,6 +665,13 @@ add_siemens_info(Acr_Group group_list)
         printf("WARNING: Can't read acquisition matrix\n");
     }
     else {
+        if (G.Debug >= HI_LOGGING) {
+            printf(" * Acquisition matrix %d %d %d %d\n",
+                   subimage_size[0],
+                   subimage_size[1],
+                   subimage_size[2],
+                   subimage_size[3]);
+        }
         /* Get subimage dimensions, assuming the OPPOSITE of the
          * reported phase-encode direction!!
          */
@@ -668,6 +683,10 @@ add_siemens_info(Acr_Group group_list)
         else if (!strncmp(str_ptr, "ROW", 3)) {
             subimage_rows = subimage_size[2];
             subimage_cols = subimage_size[1];
+        }
+        else {
+            printf("WARNING: Unknown phase encoding direction '%s'\n",
+                   str_ptr);
         }
 
         /* If interpolation, multiply rows and columns by 2 */
@@ -687,6 +706,10 @@ add_siemens_info(Acr_Group group_list)
         mosaic_cols = 1;
     }
     else {
+        if (G.Debug >= HI_LOGGING) {
+            printf("Assuming MOSAIC, %dx%d\n", 
+                   subimage_rows, subimage_cols);
+        }
         mosaic_rows = acr_find_int(group_list, ACR_Rows, 1) / subimage_rows;
         mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
     }
@@ -737,6 +760,7 @@ add_siemens_info(Acr_Group group_list)
     acr_insert_short(&group_list, EXT_Sub_image_rows, subimage_rows);
 
     /* should also correct the image position here? */
+    }
 
     /* correct dynamic scan info if diffusion scan:
      *
@@ -752,74 +776,74 @@ add_siemens_info(Acr_Group group_list)
      *  - change number of dynamic scans to 7
      *  - modify dynamic scan index to encoding index
      */
-     prot_find_string(protocol, "sDiffusion.ucMode", str_buf);
-     if (!strcmp(str_buf, "0x4")) {
+    prot_find_string(protocol, "sDiffusion.ucMode", str_buf);
+    if (!strcmp(str_buf, "0x4")) {
 
-         /* try to get b value */
-         prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
-         acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
-                            atoi(str_buf));
+        /* try to get b value */
+        prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
+        acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+                           atoi(str_buf));
 
-         /* if all averages in one series: */
-         prot_find_string(protocol, "ucOneSeriesForAllMeas", str_buf);
-         if (!strcmp(str_buf, "0x1")) {
+        /* if all averages in one series: */
+        prot_find_string(protocol, "ucOneSeriesForAllMeas", str_buf);
+        if (!strcmp(str_buf, "0x1")) {
 
-             num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+            num_encodings = 7; /* for now assume 7 shots in diffusion scan */
 
-             /* number of 'time points' */
-             acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                                num_encodings*
-                                acr_find_double(group_list,
-                                                ACR_Nr_of_averages, 1));
+            /* number of 'time points' */
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
+                               num_encodings*
+                               acr_find_double(group_list,
+                                               ACR_Nr_of_averages, 1));
 
-             /* time index of current scan: */
+            /* time index of current scan: */
                 
-             /* In the current scheme, the unencoded scan has a
-              * sequence name like "ep_b0" while the subsequent six
-              * diffusion encodings have names like "ep_b700#1" we
-              * could use this to come up with indices for an encoding
-              * dimension
-              */
-             str_ptr = strstr(acr_find_string(group_list,
-                                              ACR_Sequence_name,""), "#");
-             if (str_ptr == NULL) {
-                 enc_ix = 0;
-             } 
-             else {
-                 enc_ix = atoi(str_ptr + sizeof(char));
-             }
+            /* In the current scheme, the unencoded scan has a
+             * sequence name like "ep_b0" while the subsequent six
+             * diffusion encodings have names like "ep_b700#1" we
+             * could use this to come up with indices for an encoding
+             * dimension
+             */
+            str_ptr = strstr(acr_find_string(group_list,
+                                             ACR_Sequence_name,""), "#");
+            if (str_ptr == NULL) {
+                enc_ix = 0;
+            } 
+            else {
+                enc_ix = atoi(str_ptr + sizeof(char));
+            }
                 
-             /* however with the current sequence, we get usable
-              * time indices from floor(global_image_num/num_slices)
-              */
-              acr_insert_numeric(&group_list, ACR_Acquisition, 
-                                 (acr_find_int(group_list, ACR_Image, 1)-1) / 
-                                 num_slices);
+            /* however with the current sequence, we get usable
+             * time indices from floor(global_image_num/num_slices)
+             */
+            acr_insert_numeric(&group_list, ACR_Acquisition, 
+                               (acr_find_int(group_list, ACR_Image, 1)-1) / 
+                               num_slices);
 
-         } 
-         else { /* averages in different series - no special handling needed? */
+        } 
+        else { /* averages in different series - no special handling needed? */
 
-             num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+            num_encodings = 7; /* for now assume 7 shots in diffusion scan */
 
-             /* number of 'time points' */
-             acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
-                                num_encodings);
+            /* number of 'time points' */
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
+                               num_encodings);
                 
-             /* For multi-series scans, we DO USE THIS BECAUSE global
-              * image number may be broken!!
-              */
-             str_ptr = strstr(acr_find_string(group_list,
-                                              ACR_Sequence_name, ""), "#");
-             if (str_ptr == NULL) {
-                 enc_ix = 0;
-             } 
-             else {
-                 enc_ix = atoi(str_ptr + sizeof(char));
-             }
-             acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
-         }
-     } // end of diffusion scan handling
-     return (group_list);
+            /* For multi-series scans, we DO USE THIS BECAUSE global
+             * image number may be broken!!
+             */
+            str_ptr = strstr(acr_find_string(group_list,
+                                             ACR_Sequence_name, ""), "#");
+            if (str_ptr == NULL) {
+                enc_ix = 0;
+            } 
+            else {
+                enc_ix = atoi(str_ptr + sizeof(char));
+            }
+            acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+        }
+    } // end of diffusion scan handling
+    return (group_list);
 }
 
 #define PMS_SET_CREATOR(el, cr) \
@@ -930,13 +954,21 @@ add_gems_info(Acr_Group group_list)
         }
     }
 
-    /* Do this only for EPI images for now 
-     */
     tmp_str = acr_find_string(group_list, ACR_Image_type, "");
     image_index = acr_find_int(group_list, ACR_Image, -1);
     image_count = acr_find_int(group_list, GEMS_Images_in_series, -1);
     tr = acr_find_double(group_list, ACR_Repetition_time, 0.0);
 
+    /* If we found a valid image count in the proprietary field, copy it
+     * into the standard field if the standard field is not already set.
+     */
+    if (image_count > 0 &&
+        acr_find_int(group_list, ACR_Images_in_acquisition, -1) < 0) {
+        acr_insert_long(&group_list, ACR_Images_in_acquisition, image_count);
+    }
+
+    /* Do this only for EPI images for now 
+     */
     if (strstr(tmp_str, "\\EPI") != NULL &&
         image_index >= 0 &&
         image_count > 0 &&
@@ -1104,8 +1136,7 @@ sort_dimensions(General_Info *gi_ptr)
     Mri_Index imri;
     Sort_Element *sort_array;
     int nvalues;
-    int i, j;
-    int is_reversed;
+    int i;
 
     /* Sort the dimensions, if needed.
      */
@@ -1145,26 +1176,18 @@ sort_dimensions(General_Info *gi_ptr)
         qsort((void *) sort_array, (size_t) nvalues, sizeof(*sort_array), 
               dimension_sort_function);
 
-        /* Figure out if we should reverse the array to keep something 
-         * similar to the original ordering.
-         * TODO: Why is this needed?
-         */
-        is_reversed = (sort_array[0].original_index > 
-                       sort_array[nvalues - 1].original_index);
-
         /* Copy the information back into the appropriate arrays 
          */
         for (i = 0; i < nvalues; i++) {
-            j = (is_reversed ? nvalues - i - 1 : i);
-            gi_ptr->indices[imri][i] = sort_array[j].identifier;
-            gi_ptr->coordinates[imri][i] = sort_array[j].value;
+            gi_ptr->indices[imri][i] = sort_array[i].identifier;
+            gi_ptr->coordinates[imri][i] = sort_array[i].value;
         }
 
         if (G.Debug >= HI_LOGGING) {
             /* Print out all of the information about this dimension.
              */
-            printf(" is_reversed %d nvalues %d min %f max %f\n",
-                   is_reversed, nvalues, 
+            printf(" nvalues %d min %f max %f\n",
+                   nvalues, 
                    gi_ptr->coordinates[imri][0],
                    gi_ptr->coordinates[imri][nvalues - 1]);
             for (i = 0; i < nvalues; i++) {
@@ -1225,8 +1248,7 @@ sort_dimensions(General_Info *gi_ptr)
                  */
                 if (!NEARLY_EQUAL(dbl_tmp1, dbl_tmp2)) {
                     printf("WARNING: calculated slice width (%.10f) disagrees with file's slice width (%.10f)\n", dbl_tmp2, dbl_tmp1);
-                    if (dbl_tmp1 == 1.0 ||
-                        (is_reversed && NEARLY_EQUAL(dbl_tmp1, -dbl_tmp2))) {
+                    if (dbl_tmp1 == 1.0) {
                         gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
                     }
                 }
