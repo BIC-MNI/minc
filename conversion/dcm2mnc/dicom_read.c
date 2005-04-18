@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.9  2005-04-18 16:22:13  bert
+   * Revision 1.10  2005-04-18 20:43:25  bert
+   * Added some additional debugging information for image position and orientation
+   *
+   * Revision 1.9  2005/04/18 16:22:13  bert
    * Don't allow non-slice MRI dimensions to grow arbitrarily
    *
    * Revision 1.8  2005/04/05 21:49:52  bert
@@ -784,6 +787,7 @@ get_coordinate_info(Acr_Group group_list,
     double largest;
     double darray[DARRAY_SIZE];
     double dbl_tmp1, dbl_tmp2;
+    int result;
 
     double RowColVec[6]; /* row/column unit vectors in public dicom element */
 
@@ -851,10 +855,12 @@ get_coordinate_info(Acr_Group group_list,
                                              ACR_Image_orientation_patient_old);
         }
         if (element == NULL) {
-            printf("WARNING: Failed to find patient orientation!\n");
+            printf("WARNING: Failed to find image orientation!\n");
         }
-        else if (acr_get_element_numeric_array(element, 6, RowColVec) != 6) {
-            printf("WARNING: Failed to read patient orientation!\n");
+        else if ((result = acr_get_element_numeric_array(element, 6, 
+                                                         RowColVec)) != 6) {
+            printf("WARNING: Failed to read image orientation! (%d, '%s')\n", 
+                   result, acr_get_element_string(element));
         }
         else {
             dircos[VCOLUMN][XCOORD] = RowColVec[0];
@@ -1070,11 +1076,13 @@ get_coordinate_info(Acr_Group group_list,
                                              ACR_Image_position_patient_old);
         }
         if (element == NULL) {
-            printf("WARNING: failed to find patient position\n");
+            printf("WARNING: Failed to find image position\n");
         }
-        else if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
-                                               coordinate) != WORLD_NDIMS) {
-            printf("WARNING: failed to read patient position\n");
+        else if ((result = acr_get_element_numeric_array(element, 
+                                                         WORLD_NDIMS, 
+                                                         coordinate)) != WORLD_NDIMS) {
+            printf("WARNING: Failed to read image position (%d, '%s')\n", 
+                   result, acr_get_element_string(element));
         }
         else {
             found_coordinate = TRUE;
