@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.8  2005-04-05 21:50:11  bert
+ * Revision 1.9  2005-04-18 16:38:09  bert
+ * Add comments and defines for both DICOM and IMA file detection
+ *
+ * Revision 1.8  2005/04/05 21:50:11  bert
  * Add comment
  *
  * Revision 1.7  2005/03/18 19:10:39  bert
@@ -108,8 +111,21 @@
 #  define FALSE 0
 #endif
 
+/* Constants for "standard" DICOM files (herein referred to as
+ * CD/Export files).  For more details of this, see section 7.1 "DICOM
+ * FILE META INFORMATION" of the DICOM specification section 3.10.
+ */
 #define DICM_MAGIC_SIZE 4
-#define DICM_MAGIC_OFFS 128
+#define DICM_MAGIC_OFFS 0x0080
+#define DICM_MAGIC_STR "DICM"
+
+/* Constants for Siemens IMA file format detection.  These are somewhat
+ * arbitrary - I test for IMA format by looking for the manufacturer string
+ * SIEMENS at offset 0x0060
+ */
+#define IMA_MAGIC_SIZE (8+1)
+#define IMA_MAGIC_OFFS 0x0060
+#define IMA_MAGIC_STR "SIEMENS"
 
 /* Test to see if two floating-point numbers are very close in value.
  */
