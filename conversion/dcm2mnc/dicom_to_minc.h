@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.2  2005-03-02 18:25:13  bert
+ * Revision 1.3  2005-04-20 23:14:32  bert
+ * Remove unnecessary fields, add copy_spi_to_acr() function definition
+ *
+ * Revision 1.2  2005/03/02 18:25:13  bert
  * Add Mri_Names and Volume_Names
  *
  * Revision 1.1  2005/02/17 16:38:10  bert
@@ -165,8 +168,6 @@ typedef struct {
     } study;
     struct {
         string_t scan_seq;
-        string_t seq_owner;
-        string_t seq_descr;
         string_t protocol_name;
         string_t receive_coil;
         string_t transmit_coil;
@@ -180,24 +181,10 @@ typedef struct {
         double flip_angle;
         double num_avg;
         double num_dyn_scans;
-        double scan_dur;
-        double ky_lines;
-        double kymax_ix;
-        double kymin_ix;
-        double kz_lines;
-        double dummy_scans;
         double imaging_freq;
         string_t imaged_nucl;
-        double  adc_voltage;
-        double  adc_offset;
-        double  transmit_ampl;
-        double  rec_amp_gain;
-        double  rec_preamp_gain;
         double  win_center;
         double  win_width;
-        double  gy_ampl;
-        double  gx_ampl;
-        double  gz_ampl;
         double  num_phase_enc_steps;
         double  percent_sampling;
         double  percent_phase_fov;
@@ -246,3 +233,5 @@ extern Acr_Group read_std_dicom(const char *filename, int max_group);
 extern Acr_Group read_numa4_dicom(const char *filename, int max_group);
 extern int search_list(int value, const int *list_ptr, int list_length, 
                        int start_index);
+extern Acr_Group copy_spi_to_acr(Acr_Group group_list);
+
