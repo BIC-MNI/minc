@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.4  2005-04-18 16:21:42  bert
+   * Revision 1.5  2005-04-20 23:15:06  bert
+   * Don't save attributes that are no longer set
+   *
+   * Revision 1.4  2005/04/18 16:21:42  bert
    * Add debugging information for intensity scaling
    *
    * Revision 1.3  2005/03/13 19:34:21  bert
@@ -95,7 +98,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.4 2005-04-18 16:21:42 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.5 2005-04-20 23:15:06 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -617,15 +620,6 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputstr(mincid, varid, MIscanning_sequence, 
                     general_info->acq.scan_seq);
 
-    if (strlen(general_info->acq.seq_owner) > 0)
-        miattputstr(mincid, varid, "seq_owner", 
-                    general_info->acq.seq_owner);
-
-    if (strlen(general_info->acq.seq_descr) > 0)
-        miattputstr(mincid, varid, "seq_description", 
-                    general_info->acq.seq_descr);
-
-
     if (strlen(general_info->acq.protocol_name) > 0)
         miattputstr(mincid, varid, "protocol_name", 
                     general_info->acq.protocol_name);
@@ -675,55 +669,12 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputdbl(mincid, varid, MInum_averages, 
                     general_info->acq.num_avg);
 
-    if (general_info->acq.scan_dur != -DBL_MAX)
-        miattputdbl(mincid, varid, "scan_duration", 
-                    general_info->acq.scan_dur);
-
-    if (general_info->acq.ky_lines != -DBL_MAX)
-        miattputdbl(mincid, varid, "ky_lines", 
-                    general_info->acq.ky_lines);
-
-    if (general_info->acq.kymax_ix != -DBL_MAX)
-        miattputdbl(mincid, varid, "kymax_ix", 
-                    general_info->acq.kymax_ix);
-
-    if (general_info->acq.kymin_ix != -DBL_MAX)
-        miattputdbl(mincid, varid, "kymin_ix", 
-                    general_info->acq.kymin_ix);
-
-    if (general_info->acq.kz_lines != -DBL_MAX)
-        miattputdbl(mincid, varid, "kz_lines", 
-                    general_info->acq.kz_lines);
-
-    if (general_info->acq.dummy_scans != -DBL_MAX)
-        miattputdbl(mincid, varid, "dummy_excitations", 
-                    general_info->acq.dummy_scans);
     if (general_info->acq.imaging_freq != -DBL_MAX)
         miattputdbl(mincid, varid, MIimaging_frequency, 
                     general_info->acq.imaging_freq);
     if (strlen(general_info->acq.imaged_nucl) > 0)
         miattputstr(mincid, varid, MIimaged_nucleus, 
                     general_info->acq.imaged_nucl);
-
-    if (general_info->acq.adc_voltage != -DBL_MAX)
-        miattputdbl(mincid, varid, "adc_voltage", 
-                    general_info->acq.adc_voltage);
-
-    if (general_info->acq.adc_offset != -DBL_MAX)
-        miattputdbl(mincid, varid, "adc_offset", 
-                    general_info->acq.adc_offset);
-
-    if (general_info->acq.transmit_ampl != -DBL_MAX)
-        miattputdbl(mincid, varid, "transmit_ampl", 
-                    general_info->acq.transmit_ampl);
-
-    if (general_info->acq.rec_amp_gain != -DBL_MAX)
-        miattputdbl(mincid, varid, "rec_amp_gain", 
-                    general_info->acq.rec_amp_gain);
-
-    if (general_info->acq.rec_preamp_gain != -DBL_MAX)
-        miattputdbl(mincid, varid, "rec_preamp_gain", 
-                    general_info->acq.rec_preamp_gain);
 
     if (general_info->acq.win_center != -DBL_MAX)
         miattputdbl(mincid, varid, "window_center", 
@@ -732,18 +683,6 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (general_info->acq.win_width != -DBL_MAX)
         miattputdbl(mincid, varid, "window_width", 
                     general_info->acq.win_width);
-
-    if (general_info->acq.gy_ampl != -DBL_MAX)
-        miattputdbl(mincid, varid, "gy_ampl", 
-                    general_info->acq.gy_ampl);
-
-    if (general_info->acq.gx_ampl != -DBL_MAX)
-        miattputdbl(mincid, varid, "gx_ampl", 
-                    general_info->acq.gx_ampl);
-
-    if (general_info->acq.gz_ampl != -DBL_MAX)
-        miattputdbl(mincid, varid, "gz_ampl", 
-                    general_info->acq.gz_ampl);
 
     if (general_info->acq.num_phase_enc_steps != -DBL_MAX)
         miattputdbl(mincid, varid, "num_phase_enc_steps", 
