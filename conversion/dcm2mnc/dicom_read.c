@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.12  2005-04-18 21:43:04  bert
+   * Revision 1.13  2005-04-20 17:47:38  bert
+   * Fairly major restructuring, added init_general_info() function
+   *
+   * Revision 1.12  2005/04/18 21:43:04  bert
    * Properly set default minimum and maximum values based on the pixel representation
    *
    * Revision 1.11  2005/04/18 21:01:51  bert
@@ -176,6 +179,255 @@ static int irnd(double x)
 }
 
 
+/* ----------------------------- MNI Header -----------------------------------
+   @NAME       : init_general_info
+   @INPUT      : fi_ptr - file-specific info
+                 group_list - input data
+                 volume_to_world - correspondence of volume to world dimensions
+                 spatial_sizes - 3D voxel counts
+                 dircos - direction cosines
+                 steps - width of each voxel for each spatial dimension
+                 starts - starting position for each spatial dimension
+                 coordinate - 
+   @OUTPUT     : gi_ptr - general information about files in this series
+
+                 
+   @RETURNS    : (nothing)
+   @DESCRIPTION: Initializes a "General_Info" structure based upon several
+                 bits of information, including a previously initialized
+                 File_Info structure (fi_ptr) and the DICOM group_list.
+                 Broken out from the get_file_info() function to help
+                 simplify that function.
+   @METHOD     : 
+   @GLOBALS    : 
+   @CALLS      : 
+   @CREATED    : April 19, 2005 (Bert Vincent)
+   @MODIFIED   : 
+   ---------------------------------------------------------------------------- */
+static void
+init_general_info(General_Info *gi_ptr, /* OUT */
+                  const File_Info *fi_ptr, /* IN */
+                  const Acr_Group group_list, /* IN */
+                  const World_Index volume_to_world[VOL_NDIMS], /* IN */
+                  const int spatial_sizes[VOL_NDIMS], /* IN */
+                  double dircos[VOL_NDIMS][WORLD_NDIMS], /* IN */
+                  const double steps[VOL_NDIMS], /* IN */
+                  const double starts[VOL_NDIMS], /* IN */
+                  double study_id, /* IN */
+                  int acq_id,   /* IN */
+                  int rec_num)  /* IN */
+{
+    Acr_Element_Id mri_total_list[MRI_NDIMS];
+    int ivalue;                 /* For pixel representation value. */
+    World_Index iworld; /* World coordinate index (XCOORD, YCOORD...) */
+    World_Index jworld;         /* World coordinate index */
+    Volume_Index ivolume; /* Voxel coordinate index (VROW, VCOLUMN...) */
+    Mri_Index imri;
+    int index;
+
+    // Initialize array for MRI dimension lengths
+    //
+    mri_total_list[SLICE] = ACR_Images_in_acquisition;
+    mri_total_list[ECHO] = SPI_Number_of_echoes;
+    mri_total_list[TIME] = ACR_Acquisitions_in_series;
+    mri_total_list[PHASE] = NULL;
+    mri_total_list[CHEM_SHIFT] = NULL;
+
+    // Get row and columns sizes
+    gi_ptr->nrows = spatial_sizes[VROW];
+    gi_ptr->ncolumns = spatial_sizes[VCOLUMN];
+
+    // Save the study, acquisition, reconstruction and image type 
+    //   identifiers
+    gi_ptr->study_id = study_id;
+    gi_ptr->acq_id = acq_id;
+    gi_ptr->rec_num = rec_num;
+
+    strcpy(gi_ptr->image_type_string, acr_find_string(group_list,
+                                                      ACR_Image_type,
+                                                      ""));
+
+    /* Get dimension information 
+     */
+    for (imri = 0; imri < MRI_NDIMS; imri++) {
+
+        /* Get sizes along "MRI" dimensions... 
+         */
+        gi_ptr->cur_size[imri] = 1;
+
+        if (mri_total_list[imri] != NULL) {
+            int def_val = 1;
+
+            /* Special case for slice index - need to look at the 
+             * new standard element 0x0020:0x1002 "Images in 
+             * Acquisition".  We use this as a default, but override
+             * it with the Siemens-specific value if present.
+             */
+            if (imri == SLICE) {
+                /* Look for the standard slice count fields first. We
+                 * start with the (0054, 0081) first, and if that fails
+                 * we retry with (0020, 1002).
+                 */
+                def_val = acr_find_int(group_list, ACR_Number_of_slices, 0);
+                if (def_val == 0) {
+                    def_val = acr_find_int(group_list,
+                                           ACR_Images_in_acquisition,
+                                           1);
+                }
+            }
+
+            if (imri == TIME) {
+                /* Look for the official time slice count field first.
+                 */
+                def_val = acr_find_int(group_list,
+                                       ACR_Number_of_time_slices,
+                                       0);
+            }
+            gi_ptr->max_size[imri] = acr_find_int(group_list,
+                                                  mri_total_list[imri],
+                                                  def_val);
+        }
+        else {
+            gi_ptr->max_size[imri] = 1;
+        }
+
+        if (gi_ptr->max_size[imri] < 1) {
+            gi_ptr->max_size[imri] = 1;
+        }
+
+        /* Check for 3D partitions for slice dimensions */
+        if (imri == SLICE) {
+            /* Get number of 3D partitions for working out number of
+             * slices
+             */
+            int number_of_3D_partitions =  
+                acr_find_int(group_list, SPI_Number_of_3D_raw_partitions_nominal, 1);
+            if (number_of_3D_partitions < 1) {
+                number_of_3D_partitions = 1;
+            }
+
+            gi_ptr->max_size[imri] *= number_of_3D_partitions;
+        }
+
+        gi_ptr->default_index[imri] = fi_ptr->index[imri];
+        gi_ptr->image_index[imri] = -1;
+	
+        /* Allocate space for index and coordinate arrays.
+         * Set the first values.
+         */
+
+        gi_ptr->indices[imri] = malloc(gi_ptr->max_size[imri] * sizeof(int));
+
+        gi_ptr->coordinates[imri] = 
+            malloc(gi_ptr->max_size[imri] * sizeof(double));
+
+        for (index = 0; index < gi_ptr->max_size[imri]; index++) {
+            gi_ptr->indices[imri][index] = -1;
+            gi_ptr->coordinates[imri][index] = 0;
+        }
+        gi_ptr->search_start[imri] = 0;
+        gi_ptr->indices[imri][0] = fi_ptr->index[imri];
+        gi_ptr->coordinates[imri][0] = fi_ptr->coordinate[imri];
+
+        if (G.Debug) {
+            printf("%2d. %s axis length %d\n",
+                   imri, Mri_Names[imri], gi_ptr->max_size[imri]);
+        }
+    } /* Loop over dimensions */
+
+    /* Get spatial coordinate information */
+    gi_ptr->slice_world = volume_to_world[VSLICE];
+    gi_ptr->row_world = volume_to_world[VROW];
+    gi_ptr->column_world = volume_to_world[VCOLUMN];
+    for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
+        iworld = volume_to_world[ivolume];
+        gi_ptr->step[iworld] = steps[ivolume];
+        gi_ptr->start[iworld] = starts[ivolume];
+        for (jworld = 0; jworld < WORLD_NDIMS; jworld++) {
+            gi_ptr->dircos[iworld][jworld] = dircos[ivolume][jworld];
+        }
+
+        if (G.Debug) {
+            printf("%2d. %s axis length %d step %.3f, start %.3f, cosines %.3f,%.3f,%.3f\n",
+                   ivolume,
+                   World_Names[iworld],
+                   spatial_sizes[ivolume],
+                   gi_ptr->step[iworld],
+                   gi_ptr->start[iworld],
+                   gi_ptr->dircos[iworld][XCOORD],
+                   gi_ptr->dircos[iworld][YCOORD],
+                   gi_ptr->dircos[iworld][ZCOORD]
+                   );
+        }
+    }
+
+    /* Set data type and range */
+    if (fi_ptr->bits_alloc <= 8) {
+        gi_ptr->datatype = NC_BYTE;
+    }
+    else {
+        gi_ptr->datatype = NC_SHORT;
+    }
+
+    /* bert- modify code to correctly read the pixel
+     * representation if available and use that to set the
+     * signed/unsigned flag.
+     */
+    ivalue = acr_find_short(group_list, ACR_Pixel_representation, -1);
+    if (ivalue == ACR_PIXEL_REP_UNSIGNED) {
+        gi_ptr->is_signed = 0;
+    }
+    else if (ivalue == ACR_PIXEL_REP_SIGNED) {
+        gi_ptr->is_signed = 1;
+    }
+    else {
+        if (ivalue != -1) {
+            printf("WARNING: Unknown pixel representation value %d\n",
+                   ivalue);
+        }
+        gi_ptr->is_signed = ((gi_ptr->datatype == NC_SHORT) &&
+                             (fi_ptr->bits_stored < 16));
+    }
+
+    gi_ptr->pixel_min = fi_ptr->pixel_min;
+    gi_ptr->pixel_max = fi_ptr->pixel_max;
+        
+    /* Save display window info */
+    gi_ptr->window_min = fi_ptr->window_min;
+    gi_ptr->window_max = fi_ptr->window_max;
+
+    /* Get the rest of the header information */
+    get_general_header_info(group_list, gi_ptr);
+
+    /* Copy the group list */
+    gi_ptr->group_list = acr_copy_group_list(group_list);
+
+        // note that number of slices will be wrong here for mosaics
+        // we add some other mosaic-relevant fields...
+
+    gi_ptr->num_mosaic_rows =
+        acr_find_int(group_list, EXT_Mosaic_rows, 1);
+    gi_ptr->num_mosaic_cols =
+        acr_find_int(group_list, EXT_Mosaic_columns, 1);
+    gi_ptr->num_slices_in_file = 
+        acr_find_int(group_list, EXT_Slices_in_file, 1);
+    gi_ptr->sub_image_rows =
+        acr_find_short(group_list, EXT_Sub_image_rows,
+                       acr_find_short(group_list, ACR_Rows, 0));
+    gi_ptr->sub_image_columns =
+        acr_find_short(group_list, EXT_Sub_image_columns,
+                       acr_find_short(group_list, ACR_Rows, 0));
+
+    /* Set initialized flag */
+    gi_ptr->initialized = TRUE;
+
+    if (G.Debug) {
+        printf("Pixel minimum %.10f maximum %.10f\n",
+               gi_ptr->pixel_min, gi_ptr->pixel_max);
+        printf("Window minimum %.10f maximum %.10f\n",
+               gi_ptr->window_min, gi_ptr->window_max);
+    }
+}
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : get_file_info
@@ -196,9 +448,6 @@ void
 get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 {
     Mri_Index imri;             /* MRI index (SLICE, ECHO, TIME, PHASE...) */
-    World_Index iworld; /* World coordinate index (XCOORD, YCOORD...) */
-    World_Index jworld;         /* World coordinate index */
-    Volume_Index ivolume; /* Voxel coordinate index (VROW, VCOLUMN...) */
     int nrows;                  /* Row count in this file */
     int ncolumns;               /* Column count in this file */
     int spatial_sizes[VOL_NDIMS]; /* Voxel coordinate extents */
@@ -207,7 +456,6 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     int rec_num;                /* ? Seems to be a dummy */
     int cur_index;              /* Index of slice(s) in current file */
     int index;                  /* General index value */
-    int number_of_3D_partitions;
     Orientation orientation;    /* TRANSVERSE, SAGITTAL, or CORONAL */
     World_Index volume_to_world[VOL_NDIMS]; /* Maps voxel to world indices */
     double coordinate[WORLD_NDIMS]; /* Slice coordinates */
@@ -215,8 +463,6 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     double steps[VOL_NDIMS];    /* Step (spacing) coordinates */
     double starts[VOL_NDIMS];   /* Start (origin) coordinates */
     Acr_Element_Id mri_index_list[MRI_NDIMS];
-    Acr_Element_Id mri_total_list[MRI_NDIMS];
-    int ivalue;                 /* For pixel representation value. */
 
     // Initialize array of elements for MRI positions (indices)
     //
@@ -226,14 +472,6 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     mri_index_list[PHASE] = NULL;
     mri_index_list[CHEM_SHIFT] = NULL;
 
-    // Initialize array for MRI dimension lengths
-    //
-    mri_total_list[SLICE] = SPI_Number_of_slices_nominal;
-    mri_total_list[ECHO] = SPI_Number_of_echoes;
-    mri_total_list[TIME] = ACR_Acquisitions_in_series;
-    mri_total_list[PHASE] = NULL;
-    mri_total_list[CHEM_SHIFT] = NULL;
-
     /* Get image dimensions
      */
     nrows = acr_find_short(group_list, ACR_Rows, 0);
@@ -242,11 +480,8 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     spatial_sizes[VROW] = nrows;
     spatial_sizes[VCOLUMN] = ncolumns;
 
-    spatial_sizes[VSLICE] = acr_find_int(group_list,
-                                         mri_total_list[SLICE],
-                                         acr_find_int(group_list,
-                                                      ACR_Images_in_acquisition,
-                                                      1));
+    spatial_sizes[VSLICE] = acr_find_int(group_list, ACR_Images_in_acquisition,
+                                         1);
 
     /* Get intensity information
      */
@@ -267,14 +502,6 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     /* Get study, acq, rec, image type id's
      */
     get_identification_info(group_list, &study_id, &acq_id, &rec_num, NULL);
-
-    /* Get number of 3D partitions for working out number of slices
-     */
-    number_of_3D_partitions =  
-        acr_find_int(group_list, SPI_Number_of_3D_raw_partitions_nominal, 1);
-    if (number_of_3D_partitions < 1) {
-        number_of_3D_partitions = 1;
-    }
 
     /* Get indices for image in current file
      */
@@ -311,178 +538,17 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     /* Set up general info on first pass
      */
     if (!gi_ptr->initialized) {
-
-        // Get row and columns sizes
-        gi_ptr->nrows = nrows;
-        gi_ptr->ncolumns = ncolumns;
-
-        // Save the study, acquisition, reconstruction and image type 
-        //   identifiers
-        gi_ptr->study_id = study_id;
-        gi_ptr->acq_id = acq_id;
-        gi_ptr->rec_num = rec_num;
-
-        // No image type is available 
-        // (rhoge:  no longer true?)
-        gi_ptr->image_type_string[0] = '\0';
-
-        /* Get dimension information */
-        for (imri = 0; imri < MRI_NDIMS; imri++) {
-
-            /* Gets sizes */
-            gi_ptr->cur_size[imri] = 1;
-
-            if (mri_total_list[imri] != NULL) {
-                int def_val = 1;
-
-                /* Special case for slice index - need to look at the 
-                 * new standard element 0x0020:0x1002 "Images in 
-                 * Acquisition".  We use this as a default, but override
-                 * it with the Siemens-specific value if present.
-                 */
-                if (imri == SLICE) {
-                    /* Look for the standard slice count fields first. We
-                     * start with the (0054, 0081) first, and if that fails
-                     * we retry with (0020, 1002).
-                     */
-                    def_val = acr_find_int(group_list,
-                                           ACR_Number_of_slices,
-                                           0);
-                    if (def_val == 0) {
-                        def_val = acr_find_int(group_list,
-                                               ACR_Images_in_acquisition,
-                                               1);
-                    }
-                }
-
-                if (imri == TIME) {
-                    /* Look for the PET time slice count field first.
-                     */
-                    def_val = acr_find_int(group_list,
-                                           ACR_Number_of_time_slices,
-                                           0);
-                }
-                gi_ptr->max_size[imri] = acr_find_int(group_list,
-                                                      mri_total_list[imri],
-                                                      def_val);
-            }
-            else {
-                gi_ptr->max_size[imri] = 1;
-            }
-
-            if (gi_ptr->max_size[imri] < 1) {
-                gi_ptr->max_size[imri] = 1;
-            }
-
-            /* Check for 3D partitions for slice dimensions */
-            if (imri == SLICE) {
-                gi_ptr->max_size[imri] *= number_of_3D_partitions;
-            }
-
-            gi_ptr->default_index[imri] = fi_ptr->index[imri];
-            gi_ptr->image_index[imri] = -1;
-	
-            /* Allocate space for index and coordinate arrays.
-             * Set the first values.
-             */
-
-            gi_ptr->indices[imri] = 
-                malloc(gi_ptr->max_size[imri] * sizeof(int));
-
-            gi_ptr->coordinates[imri] = 
-                malloc(gi_ptr->max_size[imri] * sizeof(double));
-
-            for (index = 0; index < gi_ptr->max_size[imri]; index++) {
-                gi_ptr->indices[imri][index] = -1;
-                gi_ptr->coordinates[imri][index] = 0;
-            }
-            gi_ptr->search_start[imri] = 0;
-            gi_ptr->indices[imri][0] = fi_ptr->index[imri];
-            gi_ptr->coordinates[imri][0] = fi_ptr->coordinate[imri];
-
-            if (G.Debug) {
-                printf("%2d. %s axis length %d\n",
-                       imri, Mri_Names[imri], gi_ptr->max_size[imri]);
-            }
-        }          /* Loop over dimensions */
-
-        /* Get spatial coordinate information */
-        gi_ptr->slice_world = volume_to_world[VSLICE];
-        gi_ptr->row_world = volume_to_world[VROW];
-        gi_ptr->column_world = volume_to_world[VCOLUMN];
-        for (ivolume = 0; ivolume < VOL_NDIMS; ivolume++) {
-            iworld = volume_to_world[ivolume];
-            gi_ptr->step[iworld] = steps[ivolume];
-            gi_ptr->start[iworld] = starts[ivolume];
-            for (jworld = 0; jworld < WORLD_NDIMS; jworld++) {
-                gi_ptr->dircos[iworld][jworld] = dircos[ivolume][jworld];
-            }
-
-            if (G.Debug) {
-                printf("%2d. %s axis length %d step %.3f, start %.3f, cosines %.3f,%.3f,%.3f\n",
-                       ivolume,
-                       World_Names[iworld],
-                       spatial_sizes[ivolume],
-                       gi_ptr->step[iworld],
-                       gi_ptr->start[iworld],
-                       gi_ptr->dircos[iworld][XCOORD],
-                       gi_ptr->dircos[iworld][YCOORD],
-                       gi_ptr->dircos[iworld][ZCOORD]
-                       );
-            }
-        }
-
-        /* Set data type and range */
-        if (fi_ptr->bits_alloc <= 8) {
-            gi_ptr->datatype = NC_BYTE;
-        }
-        else {
-            gi_ptr->datatype = NC_SHORT;
-        }
-
-        /* bert- modify code to correctly read the pixel
-         * representation if available and use that to set the
-         * signed/unsigned flag.
-         */
-        ivalue = acr_find_short(group_list, ACR_Pixel_representation, -1);
-        if (ivalue == ACR_PIXEL_REP_UNSIGNED) {
-            gi_ptr->is_signed = 0;
-        }
-        else if (ivalue == ACR_PIXEL_REP_SIGNED) {
-            gi_ptr->is_signed = 1;
-        }
-        else {
-            if (ivalue != -1) {
-                printf("WARNING: Unknown pixel representation value %d\n",
-                       ivalue);
-            }
-            gi_ptr->is_signed = ((gi_ptr->datatype == NC_SHORT) &&
-                                 (fi_ptr->bits_stored < 16));
-        }
-
-        gi_ptr->pixel_min = fi_ptr->pixel_min;
-        gi_ptr->pixel_max = fi_ptr->pixel_max;
-        
-        /* Save display window info */
-        gi_ptr->window_min = fi_ptr->window_min;
-        gi_ptr->window_max = fi_ptr->window_max;
-
-        /* Get the rest of the header information */
-        get_general_header_info(group_list, gi_ptr);
-
-        /* Copy the group list */
-        gi_ptr->group_list = acr_copy_group_list(group_list);
-
-        /* Set initialized flag */
-        gi_ptr->initialized = TRUE;
-
-        if (G.Debug) {
-            printf("Pixel minimum %.10f maximum %.10f\n",
-                   gi_ptr->pixel_min, gi_ptr->pixel_max);
-            printf("Window minimum %.10f maximum %.10f\n",
-                   gi_ptr->window_min, gi_ptr->window_max);
-        }
-
+        init_general_info(gi_ptr, 
+                          fi_ptr, 
+                          group_list, 
+                          volume_to_world,
+                          spatial_sizes,
+                          dircos,
+                          steps,
+                          starts,
+                          study_id, 
+                          acq_id, 
+                          rec_num);
     }
 
     /* Set up file info */
@@ -491,34 +557,30 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
      */
     else {
 
+        /* Check for consistent pixel minimum and maximum. */
+        if ((gi_ptr->pixel_max != fi_ptr->pixel_max) ||
+            (gi_ptr->pixel_min != fi_ptr->pixel_min)) {
+            printf("WARNING: Inconsistent pixel minimum and maximum\n");
+        }
+     
         /* Check for consistent data type */
-        if (((gi_ptr->datatype == NC_BYTE) && 
-             (fi_ptr->bits_alloc > 8)) || 
-            ((gi_ptr->datatype == NC_SHORT) &&
-             (fi_ptr->bits_alloc <= 8))) {
-            if (G.Debug) {
-                printf("Inconsistent datatype, marking invalid\n");
-            }
+        if (((gi_ptr->datatype == NC_BYTE) && (fi_ptr->bits_alloc > 8)) || 
+            ((gi_ptr->datatype == NC_SHORT) && (fi_ptr->bits_alloc <= 8))) {
+            printf("Inconsistent datatype, marking invalid\n");
             fi_ptr->valid = FALSE;
             return;
         }
-     
+
         /* Check row and columns sizes */
-        if ((nrows != gi_ptr->nrows) &&
-            (ncolumns != gi_ptr->ncolumns))  {
-            if (G.Debug) {
-                printf("Mismatched rows/columns, marking invalid\n");
-            }
+        if ((nrows != gi_ptr->nrows) && (ncolumns != gi_ptr->ncolumns))  {
+            printf("Mismatched rows/columns, marking invalid\n");
             fi_ptr->valid = FALSE;
             return;
         }
      
         /* Check study and acquisition id's */
-        if ((gi_ptr->study_id != study_id) ||
-            (gi_ptr->acq_id != acq_id)) {
-            if (G.Debug) {
-                printf("Mismatched acquisition/study, marking invalid\n");
-            }
+        if ((gi_ptr->study_id != study_id) || (gi_ptr->acq_id != acq_id)) {
+            printf("Mismatched acquisition/study, marking invalid\n");
             fi_ptr->valid = FALSE;
             return;
         }
@@ -586,22 +648,6 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 	 
             }
         }              /* Loop over Mri_Index */
-
-        // note that number of slices will be wrong here for mosaics
-        // we add some other mosaic-relevant fields...
-
-        gi_ptr->num_mosaic_rows =
-            acr_find_int(group_list, EXT_Mosaic_rows, 1);
-        gi_ptr->num_mosaic_cols =
-            acr_find_int(group_list, EXT_Mosaic_columns, 1);
-        gi_ptr->num_slices_in_file = 
-            acr_find_int(group_list, EXT_Slices_in_file, 1);
-        gi_ptr->sub_image_rows =
-            acr_find_short(group_list, EXT_Sub_image_rows,
-                           acr_find_short(group_list, ACR_Rows, 0));
-        gi_ptr->sub_image_columns =
-            acr_find_short(group_list, EXT_Sub_image_columns,
-                           acr_find_short(group_list, ACR_Rows, 0));
 
         // Update display window info
         if (gi_ptr->window_min > fi_ptr->window_min) 
@@ -1403,7 +1449,7 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     gi_ptr->acq.slice_thickness = 
         acr_find_double(group_list, ACR_Slice_thickness, -DBL_MAX);
     gi_ptr->acq.num_slices = 
-        acr_find_double(group_list, SPI_Number_of_slices_nominal, -DBL_MAX);
+        acr_find_double(group_list, ACR_Images_in_acquisition, -DBL_MAX);
     gi_ptr->acq.num_dyn_scans = 
         acr_find_double(group_list, ACR_Acquisitions_in_series, -DBL_MAX);
     gi_ptr->acq.num_avg = 
@@ -1680,14 +1726,9 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
        WARNINGS:  the same thing may need to be done with `number of
        partitions' for it to work with 3D scans  */
 
-    di_ptr->num_slices_nominal = acr_find_int(group_list, 
-                                              SPI_Number_of_slices_nominal,
+    di_ptr->num_slices_nominal = acr_find_int(group_list,
+                                              ACR_Images_in_acquisition,
                                               IDEFAULT);
-    if (di_ptr->num_slices_nominal == IDEFAULT) {
-        di_ptr->num_slices_nominal = acr_find_int(group_list,
-                                                  ACR_Images_in_acquisition,
-                                                  IDEFAULT);
-    }
 
     di_ptr->slice_number = acr_find_int(group_list,
                                         SPI_Current_slice_number,
