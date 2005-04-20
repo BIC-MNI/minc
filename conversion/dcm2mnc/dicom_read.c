@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.13  2005-04-20 17:47:38  bert
+   * Revision 1.14  2005-04-20 23:14:04  bert
+   * Remove most SPI_ references
+   *
+   * Revision 1.13  2005/04/20 17:47:38  bert
    * Fairly major restructuring, added init_general_info() function
    *
    * Revision 1.12  2005/04/18 21:43:04  bert
@@ -228,7 +231,7 @@ init_general_info(General_Info *gi_ptr, /* OUT */
     // Initialize array for MRI dimension lengths
     //
     mri_total_list[SLICE] = ACR_Images_in_acquisition;
-    mri_total_list[ECHO] = SPI_Number_of_echoes;
+    mri_total_list[ECHO] = ACR_Echo_train_length;
     mri_total_list[TIME] = ACR_Acquisitions_in_series;
     mri_total_list[PHASE] = NULL;
     mri_total_list[CHEM_SHIFT] = NULL;
@@ -1404,26 +1407,21 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     get_string_field(gi_ptr->study.procedure, 
                      group_list, ACR_Procedure_description);
     sprintf(gi_ptr->study.study_id, "%.6f",gi_ptr->study_id);
+
     /* Acquisition id modified by rhoge to get rid of first digit that 
        is not required for identification of run */
     /*   sprintf(gi_ptr->study.acquisition_id, "%d_%d",
          acr_find_int(group_list, ACR_Series, 0), gi_ptr->acq_id); */
-    sprintf(gi_ptr->study.acquisition_id, "%d",
-            gi_ptr->acq_id);
+    sprintf(gi_ptr->study.acquisition_id, "%d", gi_ptr->acq_id);
 
     /* Get acquisition information */
 
     get_string_field(gi_ptr->acq.scan_seq, group_list, ACR_Sequence_name);
-    get_string_field(gi_ptr->acq.seq_owner,
-                     group_list, SPI_Sequence_file_owner);
-    get_string_field(gi_ptr->acq.seq_descr, 
-                     group_list, SPI_Sequence_description);
-    get_string_field(gi_ptr->acq.protocol_name, 
-                     group_list, ACR_Protocol_name);
-    get_string_field(gi_ptr->acq.receive_coil, 
-                     group_list, ACR_Receiving_coil);
-    get_string_field(gi_ptr->acq.transmit_coil, 
-                     group_list, ACR_Transmitting_coil);
+    get_string_field(gi_ptr->acq.protocol_name, group_list, ACR_Protocol_name);
+    get_string_field(gi_ptr->acq.receive_coil, group_list, 
+                     ACR_Receive_coil_name);
+    get_string_field(gi_ptr->acq.transmit_coil, group_list, 
+                     ACR_Transmit_coil_name);
 
     gi_ptr->acq.rep_time = 
         acr_find_double(group_list, ACR_Repetition_time, -DBL_MAX);
@@ -1454,46 +1452,16 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
         acr_find_double(group_list, ACR_Acquisitions_in_series, -DBL_MAX);
     gi_ptr->acq.num_avg = 
         acr_find_double(group_list, ACR_Nr_of_averages, -DBL_MAX);
-    gi_ptr->acq.scan_dur = 
-        acr_find_double(group_list, SPI_Total_measurement_time_cur, -DBL_MAX);
-    gi_ptr->acq.ky_lines = 
-        acr_find_double(group_list, SPI_Number_of_fourier_lines_current, 
-                        -DBL_MAX);
-    gi_ptr->acq.kymax_ix = 
-        acr_find_double(group_list, SPI_Number_of_fourier_lines_after_zero, 
-                        -DBL_MAX);
-    gi_ptr->acq.kymin_ix = 
-        acr_find_double(group_list, SPI_First_measured_fourier_line, -DBL_MAX);
-    gi_ptr->acq.kz_lines = 
-        acr_find_double(group_list, SPI_Number_of_3d_raw_part_cur, -DBL_MAX);
-    gi_ptr->acq.dummy_scans = 
-        acr_find_double(group_list, SPI_Number_of_prescans, -DBL_MAX);
     gi_ptr->acq.imaging_freq = 
         acr_find_double(group_list, ACR_Imaging_frequency, -DBL_MAX);
     if (gi_ptr->acq.imaging_freq != -DBL_MAX)
         gi_ptr->acq.imaging_freq *= 1e6;
     get_string_field(gi_ptr->acq.imaged_nucl, 
                      group_list, ACR_Imaged_nucleus);
-    gi_ptr->acq.adc_voltage = 
-        acr_find_double(group_list, SPI_ADC_voltage, -DBL_MAX);
-    gi_ptr->acq.adc_offset = 
-        acr_find_double(group_list, SPI_ADC_offset, -DBL_MAX);
-    gi_ptr->acq.transmit_ampl = 
-        acr_find_double(group_list, SPI_Transmitter_amplitude, -DBL_MAX);
-    gi_ptr->acq.rec_amp_gain = 
-        acr_find_double(group_list, SPI_Receiver_amplifier_gain, -DBL_MAX);
-    gi_ptr->acq.rec_preamp_gain = 
-        acr_find_double(group_list, SPI_Receiver_preamplifier_gain, -DBL_MAX);
     gi_ptr->acq.win_center = 
         acr_find_double(group_list, ACR_Window_centre, -DBL_MAX);
     gi_ptr->acq.win_width = 
         acr_find_double(group_list, ACR_Window_width, -DBL_MAX);
-    gi_ptr->acq.gy_ampl = 
-        acr_find_double(group_list, SPI_Phase_gradient_amplitude, -DBL_MAX);
-    gi_ptr->acq.gx_ampl = 
-        acr_find_double(group_list, SPI_Readout_gradient_amplitude, -DBL_MAX);
-    gi_ptr->acq.gz_ampl = 
-        acr_find_double(group_list, SPI_Selection_gradient_amplitude, -DBL_MAX);
 
     gi_ptr->acq.num_phase_enc_steps = 
         acr_find_double(group_list, ACR_Number_of_phase_encoding_steps, -DBL_MAX);
@@ -1691,13 +1659,9 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
      * dynamic_scan_number
      */
 
-    di_ptr->num_echoes = acr_find_int(group_list, 
-                                      SPI_Number_of_echoes, 
+    di_ptr->num_echoes = acr_find_int(group_list,
+                                      ACR_Echo_train_length, 
                                       IDEFAULT);
-    if (di_ptr->num_echoes == IDEFAULT) {
-        di_ptr->num_echoes = acr_find_int(group_list,
-                                          ACR_Echo_train_length, IDEFAULT);
-    }
 
     di_ptr->echo_number = acr_find_int(group_list, 
                                        ACR_Echo_number, 
