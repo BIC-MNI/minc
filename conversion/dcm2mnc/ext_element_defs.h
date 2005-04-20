@@ -19,6 +19,12 @@
 ---------------------------------------------------------------------------- */
 
 /* Element id's for EXT */
+/* bert- These appear to be completely nonstandard - I believe they were 
+ * created by Peter and Rick to facilitate communication among the various
+ * pieces of Siemens Mosaic handling code.  They do not represent any 
+ * externally defined DICOM standard and therefore they may conflict with 
+ * other manufacturer's proprietary fields.
+ */
 GLOBAL_ELEMENT(EXT_Mosaic_rows                        , 0x0023, 0x0001, LO);
 GLOBAL_ELEMENT(EXT_Mosaic_columns                     , 0x0023, 0x0002, LO);
 GLOBAL_ELEMENT(EXT_Slices_in_file                     , 0x0023, 0x0003, LO);
