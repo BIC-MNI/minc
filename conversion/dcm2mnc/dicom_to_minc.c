@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.9  2005-04-20 17:48:16  bert
+   * Revision 1.10  2005-04-20 23:25:50  bert
+   * Add copy_spi_to_acr() function, minor name and comment changes
+   *
+   * Revision 1.9  2005/04/20 17:48:16  bert
    * Copy SPI_Number_of_slices_nominal to ACR_Image_in_acquisition for Siemens
    *
    * Revision 1.8  2005/04/18 21:04:25  bert
@@ -138,7 +141,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.9 2005-04-20 17:48:16 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.10 2005-04-20 23:25:50 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -468,9 +471,9 @@ dicom_to_minc(int num_files,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-   @NAME       : read_numa4_dicom
+   @NAME       : read_std_dicom
    @INPUT      : filename - name of siemens Numaris 4 `dicom' file to read
-   max_group - maximum group number to read
+                 max_group - maximum group number to read
    @OUTPUT     : (none)
    @RETURNS    : group list read in from file
    @DESCRIPTION: Routine to read in a group list from a file.
@@ -583,12 +586,12 @@ add_siemens_info(Acr_Group group_list)
     prot_find_string(protocol, "lContrasts", str_buf);
     acr_insert_numeric(&group_list, SPI_Number_of_echoes, atoi(str_buf));
 
-    /* add receiving coil (for some reason this isn't in generic groups)
+    /* Add receiving coil (for some reason this isn't in generic groups)
      */
     prot_find_string(protocol,
                      "sCOIL_SELECT_MEAS.asList[0].sCoilElementID.tCoilID",
                      str_buf);
-    acr_insert_string(&group_list, ACR_Receiving_coil, str_buf);
+    acr_insert_string(&group_list, ACR_Receive_coil_name, str_buf);
 
     /* add MrProt dump
      */
@@ -1003,6 +1006,38 @@ add_gems_info(Acr_Group group_list)
     return (group_list);
 }
 
+
+Acr_Group 
+copy_spi_to_acr(Acr_Group group_list)
+{
+    int itemp;
+
+    itemp = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
+    if (itemp != 0) {
+        acr_insert_numeric(&group_list, ACR_Images_in_acquisition, itemp);
+    }
+
+    itemp = acr_find_int(group_list, SPI_Number_of_echoes, 0);
+    if (itemp != 0) {
+        acr_insert_numeric(&group_list, ACR_Echo_train_length, itemp);
+    }
+    return (group_list);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+   @NAME       : read_numa4_dicom
+   @INPUT      : filename - read a standard DICOM file
+   max_group - maximum group number to read
+   @OUTPUT     : (none)
+   @RETURNS    : group list read in from file
+   @DESCRIPTION: Routine to read in a group list from a file.
+   @METHOD     : 
+   @GLOBALS    : 
+   @CALLS      : 
+   @CREATED    : December 18, 2001 (Rick Hoge)
+   @MODIFIED   : 
+   ---------------------------------------------------------------------------- */
+
 Acr_Group
 read_numa4_dicom(const char *filename, int max_group)
 {
@@ -1021,18 +1056,14 @@ read_numa4_dicom(const char *filename, int max_group)
     str_ptr = acr_find_string(group_list, ACR_Manufacturer, "");
     if (strstr(str_ptr, "SIEMENS") != NULL ||
         strstr(str_ptr, "Siemens") != NULL) {
-        int num_slices;
 
         group_list = add_siemens_info(group_list);
 
         /* Now copy proprietary fields into the correct places in the 
          * standard groups.
          */
-        num_slices = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
-        if (num_slices != 0) {
-            acr_insert_numeric(&group_list, 
-                               ACR_Images_in_acquisition, num_slices);
-        }
+        group_list = copy_spi_to_acr(group_list);
+
     }
     else if (strstr(str_ptr, "Philips") != NULL) {
         group_list = add_philips_info(group_list);
