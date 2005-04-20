@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.8  2005-04-18 21:04:25  bert
+   * Revision 1.9  2005-04-20 17:48:16  bert
+   * Copy SPI_Number_of_slices_nominal to ACR_Image_in_acquisition for Siemens
+   *
+   * Revision 1.8  2005/04/18 21:04:25  bert
    * Get rid of old is_reversed behavior, always use most natural sort of the image. Also tried to fix listing function somewhat.
    *
    * Revision 1.7  2005/04/05 21:55:33  bert
@@ -135,7 +138,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.8 2005-04-18 21:04:25 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.9 2005-04-20 17:48:16 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -1018,7 +1021,18 @@ read_numa4_dicom(const char *filename, int max_group)
     str_ptr = acr_find_string(group_list, ACR_Manufacturer, "");
     if (strstr(str_ptr, "SIEMENS") != NULL ||
         strstr(str_ptr, "Siemens") != NULL) {
+        int num_slices;
+
         group_list = add_siemens_info(group_list);
+
+        /* Now copy proprietary fields into the correct places in the 
+         * standard groups.
+         */
+        num_slices = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
+        if (num_slices != 0) {
+            acr_insert_numeric(&group_list, 
+                               ACR_Images_in_acquisition, num_slices);
+        }
     }
     else if (strstr(str_ptr, "Philips") != NULL) {
         group_list = add_philips_info(group_list);
