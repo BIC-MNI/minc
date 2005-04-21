@@ -23,15 +23,15 @@
  * website (www.dclunie.com).
  */
 GLOBAL_ELEMENT(SPI_Number_of_data_bytes               , 0x0019, 0x1060, IS);
-GLOBAL_ELEMENT(SPI_Number_of_fourier_lines_nom        , 0x0019, 0x1220, IS);
-GLOBAL_ELEMENT(SPI_Number_of_fourier_lines_after_zero , 0x0019, 0x1226, IS);
+GLOBAL_ELEMENT(SPI_Fourier_lines_nominal              , 0x0019, 0x1220, IS);
+GLOBAL_ELEMENT(SPI_Fourier_lines_after_zero           , 0x0019, 0x1226, IS);
 GLOBAL_ELEMENT(SPI_First_measured_fourier_line        , 0x0019, 0x1228, IS);
 GLOBAL_ELEMENT(SPI_Acquisition_columns                , 0x0019, 0x1230, LO);
 GLOBAL_ELEMENT(SPI_Reconstruction_columns             , 0x0019, 0x1231, LO);
 GLOBAL_ELEMENT(SPI_Number_of_averages                 , 0x0019, 0x1250, IS);
 GLOBAL_ELEMENT(SPI_Flip_angle                         , 0x0019, 0x1260, DS);
 GLOBAL_ELEMENT(SPI_Number_of_prescans                 , 0x0019, 0x1270, IS);
-GLOBAL_ELEMENT(SPI_Number_of_saturation_regions       , 0x0019, 0x1290, IS);
+GLOBAL_ELEMENT(SPI_Saturation_regions                 , 0x0019, 0x1290, IS);
 GLOBAL_ELEMENT(SPI_Magnetic_field_strength            , 0x0019, 0x1412, DS);
 
 GLOBAL_ELEMENT(SPI_Field_of_view                      , 0x0021, 0x1120, DS);
