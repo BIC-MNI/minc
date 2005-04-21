@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.5  2005-04-18 16:21:16  bert
+@MODIFIED   : Revision 1.6  2005-04-21 22:32:15  bert
+@MODIFIED   : Continue Siemens IMA code cleanup
+@MODIFIED   :
+@MODIFIED   : Revision 1.5  2005/04/18 16:21:16  bert
 @MODIFIED   : Fix definition of siemens_to_dicom
 @MODIFIED   :
 @MODIFIED   : Revision 1.4  2005/04/05 21:56:47  bert
@@ -47,7 +50,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.5 2005-04-18 16:21:16 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.6 2005-04-21 22:32:15 bert Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,14 +65,6 @@ static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/sie
 #define SIEMENS_IMAGE_OFFSET 6144 /* From dclunie.com */
 
 #define IMAGE_NDIMS 2
-
-/* Conversion functions that are not defined */
-#define create_field_of_view_t_element NULL
-#define create_geometry_t_element NULL
-#define create_object_orientation_t_element NULL
-#define create_patient_orientation_t_element NULL
-#define create_rotation_direction_t_element NULL
-#define create_data_set_subtype_t_element NULL
 
 /* Types */
 #define ELEMENT_FUNC_ARGS \
@@ -105,16 +100,18 @@ DECLARE_ELEMENT_FUNC(create_modality_element);
 DECLARE_ELEMENT_FUNC(create_sex_element);
 DECLARE_ELEMENT_FUNC(create_age_element);
 DECLARE_ELEMENT_FUNC(create_slice_order_element);
-DECLARE_ELEMENT_FUNC(create_pixel_size_t_element);
+DECLARE_ELEMENT_FUNC(create_pixel_spacing_t_element);
 DECLARE_ELEMENT_FUNC(create_window_t_element);
 DECLARE_ELEMENT_FUNC(create_ima_vector_t_element);
 DECLARE_ELEMENT_FUNC(create_laterality_element);
-DECLARE_ELEMENT_FUNC(create_patient_position_t_element);
+DECLARE_ELEMENT_FUNC(create_ima_position_t_element);
 DECLARE_ELEMENT_FUNC(create_rest_direction_t_element);
 DECLARE_ELEMENT_FUNC(create_view_direction_t_element);
+DECLARE_ELEMENT_FUNC(create_ima_orientation_t_element);
+DECLARE_ELEMENT_FUNC(create_field_of_view_t_element);
 
 /* Define the table of header values */
-siemens_header_t Siemens_hdr; /* Must define this first */
+ima_header_t IMA_hdr;           /* Must define this first */
 #include "siemens_header_table.h" /* Now include the table */
 
 /* flag to print offset table, useful in debugging byte pad issues
@@ -158,13 +155,13 @@ siemens_to_dicom(const char *filename, int max_group)
 #endif
 
     /* Check the structure offsets */
-    assert(((char *)&Siemens_hdr.G08-(char *)&Siemens_hdr) == 0x0000);
-    assert(((char *)&Siemens_hdr.G10-(char *)&Siemens_hdr) == 0x0300);
-    assert(((char *)&Siemens_hdr.G18-(char *)&Siemens_hdr) == 0x0600);
-    assert(((char *)&Siemens_hdr.G19-(char *)&Siemens_hdr) == 0x0780);
-    assert(((char *)&Siemens_hdr.G20-(char *)&Siemens_hdr) == 0x0C80);
-    assert(((char *)&Siemens_hdr.G21-(char *)&Siemens_hdr) == 0x0E80);
-    assert(((char *)&Siemens_hdr.G28-(char *)&Siemens_hdr) == 0x1380);
+    assert(((char *)&IMA_hdr.G08 - (char *)&IMA_hdr) == 0x0000);
+    assert(((char *)&IMA_hdr.G10 - (char *)&IMA_hdr) == 0x0300);
+    assert(((char *)&IMA_hdr.G18 - (char *)&IMA_hdr) == 0x0600);
+    assert(((char *)&IMA_hdr.G19 - (char *)&IMA_hdr) == 0x0780);
+    assert(((char *)&IMA_hdr.G20 - (char *)&IMA_hdr) == 0x0C80);
+    assert(((char *)&IMA_hdr.G21 - (char *)&IMA_hdr) == 0x0E80);
+    assert(((char *)&IMA_hdr.G28 - (char *)&IMA_hdr) == 0x1380);
 
     if (G.Debug >= HI_LOGGING) {
         printf("siemens_to_dicom(%s, %x)\n", filename, max_group);
@@ -177,7 +174,7 @@ siemens_to_dicom(const char *filename, int max_group)
     }
 
     /* Read in the header */
-    if (fread(&Siemens_hdr, sizeof(Siemens_hdr), 1, fp) != 1) {
+    if (fread(&IMA_hdr, sizeof(IMA_hdr), 1, fp) != 1) {
         fprintf(stderr, "Error reading header in %s\n", filename);
         fclose(fp);
         return NULL;
@@ -191,8 +188,8 @@ siemens_to_dicom(const char *filename, int max_group)
 
         /* Need to byte swap row/col values if needed 
          */
-        acr_get_short(ACR_BIG_ENDIAN, 1, &Siemens_hdr.G28.Rows, &rows);
-        acr_get_short(ACR_BIG_ENDIAN, 1, &Siemens_hdr.G28.Columns, &cols);
+        acr_get_short(ACR_BIG_ENDIAN, 1, &IMA_hdr.G28.Rows, &rows);
+        acr_get_short(ACR_BIG_ENDIAN, 1, &IMA_hdr.G28.Columns, &cols);
 
         image_size = rows * cols;
 
@@ -201,12 +198,12 @@ siemens_to_dicom(const char *filename, int max_group)
 
         /* Read in the image */
         if (fseek(fp, (long) SIEMENS_IMAGE_OFFSET, SEEK_SET)) {
-            fprintf(stderr, "Error finding image in %s\n", filename);
+            printf("ERROR: Error finding image in %s\n", filename);
             fclose(fp);
             return NULL;
         }
         if (fread(image, pixel_size, image_size, fp) != image_size) {
-            fprintf(stderr, "Error reading image in %s\n", filename);
+            printf("ERROR: Error reading image in %s\n", filename);
             fclose(fp);
             return NULL;
         }
@@ -222,7 +219,7 @@ siemens_to_dicom(const char *filename, int max_group)
 
 #ifdef PRINT_OFFSET_TABLE
         data_ptr = entry->data;
-        header_ptr = &Siemens_hdr;
+        header_ptr = &IMA_hdr;
         offset = (long) data_ptr - (long) header_ptr;
         printf("DEBUG:  group = 0x%x, element = 0x%x, offset = 0x%lx, length = 0x%x\n",
                entry->grp_id, entry->elm_id, offset, entry->length);
@@ -407,7 +404,7 @@ update_coordinate_info(Acr_Group group_list)
     nrows = acr_find_int(group_list, ACR_Rows, 0);
     ncolumns = acr_find_int(group_list, ACR_Columns, 0);
     if ((nrows <= 0) || (ncolumns <= 0)) {
-        fprintf(stderr, "Illegal image size in Siemens file\n");
+        printf("ERROR: Illegal image size in Siemens IMA file\n");
         exit(1);
     }
 
@@ -434,8 +431,12 @@ update_coordinate_info(Acr_Group group_list)
     sprintf(string, "%.15g\\%.15g\\%.15g", coord[0], -coord[1], -coord[2]);
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
     if (G.Debug >= HI_LOGGING) {
-        printf("new %.3f %.3f %.3f\n", coord[0], -coord[1], -coord[2]);
+        printf(" new %.3f %.3f %.3f\n", coord[0], -coord[1], -coord[2]);
     }
+
+    /* Copy non-standard fields to standard fields.
+     */
+    group_list = copy_spi_to_acr(group_list);
 
     /* If this is a Mosaic image, we need to adjust the pixel spacing
      * to reflect the ratio between the number of mosaic columns
@@ -725,15 +726,15 @@ DEFINE_ELEMENT_FUNC(create_slice_order_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_pixel_size_t_element)
+DEFINE_ELEMENT_FUNC(create_pixel_spacing_t_element)
 {
-    pixel_size_t *ptr;
+    pixel_spacing_t *ptr;
     string_t string;
     double row;
     double col;
 
     /* Get the pixel sizes */
-    ptr = (pixel_size_t *) data;
+    ptr = (pixel_spacing_t *) data;
 
     /* Convert from big endian to native format */
     acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->row, &row); 
@@ -805,9 +806,9 @@ DEFINE_ELEMENT_FUNC(create_laterality_element)
                                      string);
 }
 
-DEFINE_ELEMENT_FUNC(create_patient_position_t_element)
+DEFINE_ELEMENT_FUNC(create_ima_position_t_element)
 {
-    ima_patient_position_t position;
+    ima_position_t position;
     char *string;
 
     acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &position);
@@ -829,15 +830,15 @@ DEFINE_ELEMENT_FUNC(create_patient_position_t_element)
 
 DEFINE_ELEMENT_FUNC(create_rest_direction_t_element)
 {
-    rest_direction_t dir;
+    ima_rest_direction_t dir;
     char *string;
 
     acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
     switch (dir) {
-    case Rest_HEAD:
+    case RD_HEAD:
         string = "HEAD";
         break;
-    case Rest_FEET:
+    case RD_FEET:
         string = "FEET";
         break;
     default:
@@ -850,27 +851,27 @@ DEFINE_ELEMENT_FUNC(create_rest_direction_t_element)
 
 DEFINE_ELEMENT_FUNC(create_view_direction_t_element)
 {
-    rest_direction_t dir;
+    ima_view_direction_t dir;
     char *string;
 
     acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
     switch (dir) {
-    case View_HEAD:
+    case VD_HEAD:
         string = "HEAD";
         break;
-    case View_FEET:
+    case VD_FEET:
         string = "FEET";
         break;
-    case View_AtoP:
+    case VD_AtoP:
         string = "AtoP";
         break;
-    case View_LtoR:
+    case VD_LtoR:
         string = "LtoR";
         break;
-    case View_PtoA:
+    case VD_PtoA:
         string = "PtoA";
         break;
-    case View_RtoL:
+    case VD_RtoL:
         string = "RtoL";
         break;
     default:
@@ -878,5 +879,50 @@ DEFINE_ELEMENT_FUNC(create_view_direction_t_element)
         break;
     }
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
+                                     string);
+}
+
+static void
+copy_to_space(char *dst_ptr, char *src_ptr, int max_chr)
+{
+    while (*src_ptr != ' ' && *src_ptr != '\0' && max_chr > 0) {
+        *dst_ptr++ = *src_ptr++;
+        max_chr--;
+    }
+    *dst_ptr = '\0';
+}
+
+DEFINE_ELEMENT_FUNC(create_ima_orientation_t_element)
+{
+    ima_orientation_t *po_ptr = (ima_orientation_t *) data;
+    char y[N_ORIENTATION + 1];
+    char x[N_ORIENTATION + 1];
+    char z[N_ORIENTATION + 1];
+    string_t string;
+
+    copy_to_space(y, po_ptr->y, N_ORIENTATION);
+    copy_to_space(x, po_ptr->x, N_ORIENTATION);
+    copy_to_space(z, po_ptr->z, N_ORIENTATION);
+
+    sprintf(string, "%s\\%s\\%s", y, x, z);
+
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
+                                     string);
+}
+
+DEFINE_ELEMENT_FUNC(create_field_of_view_t_element)
+{
+    ima_field_of_view_t *ptr;
+    string_t string;
+    double height;
+    double width;
+
+    ptr = (ima_field_of_view_t *) data;
+
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->height, &height);
+    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->width, &width);
+
+    sprintf(string, "%.15g\\%.15g", height, width);
+    return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DS),
                                      string);
 }
