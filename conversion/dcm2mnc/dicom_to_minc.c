@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.10  2005-04-20 23:25:50  bert
+   * Revision 1.11  2005-04-21 22:31:29  bert
+   * Copy SPI_Magnetic_field_strength to standard field in copy_spi_to_acr(); Relax some tests to avoid spurious warnings
+   *
+   * Revision 1.10  2005/04/20 23:25:50  bert
    * Add copy_spi_to_acr() function, minor name and comment changes
    *
    * Revision 1.9  2005/04/20 17:48:16  bert
@@ -141,7 +144,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.10 2005-04-20 23:25:50 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.11 2005-04-21 22:31:29 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -1011,6 +1014,7 @@ Acr_Group
 copy_spi_to_acr(Acr_Group group_list)
 {
     int itemp;
+    double dtemp;
 
     itemp = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
     if (itemp != 0) {
@@ -1020,6 +1024,11 @@ copy_spi_to_acr(Acr_Group group_list)
     itemp = acr_find_int(group_list, SPI_Number_of_echoes, 0);
     if (itemp != 0) {
         acr_insert_numeric(&group_list, ACR_Echo_train_length, itemp);
+    }
+
+    dtemp = acr_find_double(group_list, SPI_Magnetic_field_strength, 0);
+    if (dtemp != 0.0) {
+        acr_insert_numeric(&group_list, ACR_Magnetic_field_strength, dtemp);
     }
     return (group_list);
 }
@@ -1259,7 +1268,7 @@ sort_dimensions(General_Info *gi_ptr)
                 if (!fcmp(delta, 
                           (gi_ptr->coordinates[imri][i] - 
                            gi_ptr->coordinates[imri][i - 1]),
-                          1.0e-4)) {
+                          1.0e-3)) {
                     printf("WARNING: Missing data for %s dimension\n",
                            Mri_Names[imri]);
                     printf("   slice # %d %.12f %.12f\n",
@@ -1291,7 +1300,7 @@ sort_dimensions(General_Info *gi_ptr)
                  * assumed value is the default (1.0), we adopt the 
                  * calculated value.
                  */
-                if (!NEARLY_EQUAL(dbl_tmp1, dbl_tmp2)) {
+                if (!fcmp(dbl_tmp1, dbl_tmp2, 2.0e-5)) {
                     printf("WARNING: calculated slice width (%.10f) disagrees with file's slice width (%.10f)\n", dbl_tmp2, dbl_tmp1);
                     if (dbl_tmp1 == 1.0) {
                         gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
