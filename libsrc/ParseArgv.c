@@ -16,7 +16,7 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.2 2005-03-16 19:02:49 bert Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.3 2005-04-22 18:56:23 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
@@ -465,5 +465,6 @@ static void PrintVersion(ArgvInfo *argTable)
     }
     printf("program: %s\n", versionStr);
     printf("libminc: %s\n", miget_version());
+    printf("netcdf : %s\n", nc_inq_libvers());
     exit(0);
 }
