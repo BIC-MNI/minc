@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.11  2005-04-21 22:31:29  bert
+   * Revision 1.12  2005-04-28 17:38:06  bert
+   * Insert and retrieve width information when sorting a dimension
+   *
+   * Revision 1.11  2005/04/21 22:31:29  bert
    * Copy SPI_Magnetic_field_strength to standard field in copy_spi_to_acr(); Relax some tests to avoid spurious warnings
    *
    * Revision 1.10  2005/04/20 23:25:50  bert
@@ -144,7 +147,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.11 2005-04-21 22:31:29 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.12 2005-04-28 17:38:06 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -176,6 +179,7 @@ typedef struct {
    int identifier;
    int original_index;
    double value;
+   double width;
 } Sort_Element;
 
 /* Private function definitions */
@@ -261,6 +265,7 @@ dicom_to_minc(int num_files,
     for (imri = 0; imri < MRI_NDIMS; imri++) {
         gi.indices[imri] = NULL;
         gi.coordinates[imri] = NULL;
+        gi.widths[imri] = NULL;
     }
 
     /* Loop through file list getting information
@@ -1112,6 +1117,9 @@ free_info(General_Info *gi_ptr, File_Info *fi_ptr, int num_files)
         if (gi_ptr->coordinates[imri] != NULL) {
             free(gi_ptr->coordinates[imri]);
         }
+        if (gi_ptr->widths[imri] != NULL) {
+            free(gi_ptr->widths[imri]);
+        }
     }
 
     /* Free the group list */
@@ -1223,6 +1231,7 @@ sort_dimensions(General_Info *gi_ptr)
             sort_array[i].identifier = gi_ptr->indices[imri][i];
             sort_array[i].original_index = i;
             sort_array[i].value = gi_ptr->coordinates[imri][i];
+            sort_array[i].width = gi_ptr->widths[imri][i];
         }
 
         /* Sort the array.
@@ -1235,6 +1244,7 @@ sort_dimensions(General_Info *gi_ptr)
         for (i = 0; i < nvalues; i++) {
             gi_ptr->indices[imri][i] = sort_array[i].identifier;
             gi_ptr->coordinates[imri][i] = sort_array[i].value;
+            gi_ptr->widths[imri][i] = sort_array[i].width;
         }
 
         if (G.Debug >= HI_LOGGING) {
