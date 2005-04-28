@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.3  2005-04-20 23:14:32  bert
+ * Revision 1.4  2005-04-28 17:10:22  bert
+ * Added width information to General_Info and File_Info structures
+ *
+ * Revision 1.3  2005/04/20 23:14:32  bert
  * Remove unnecessary fields, add copy_spi_to_acr() function definition
  *
  * Revision 1.2  2005/03/02 18:25:13  bert
@@ -119,6 +122,8 @@ typedef struct {
     int search_start[MRI_NDIMS]; /* Indices into lists for starting searches */
     double *coordinates[MRI_NDIMS]; /* Array indicating coordinate of each
                                        index in indices array */
+    double *widths[MRI_NDIMS];  /* Array indicating width of each index in
+                                   indices array */
     int image_index[MRI_NDIMS];  /* Mapping from MRI dim to output image dim */
     World_Index slice_world;
     World_Index row_world;
@@ -212,6 +217,7 @@ typedef struct {
    double window_max;
    double window_min;
    double coordinate[MRI_NDIMS];
+   double width[MRI_NDIMS];     /* Sample width along each MRI dimension */
 } File_Info;
 
 /* Structure for storing the actual image data */
