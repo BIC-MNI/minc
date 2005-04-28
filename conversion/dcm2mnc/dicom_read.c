@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.14  2005-04-20 23:14:04  bert
+   * Revision 1.15  2005-04-28 17:17:57  bert
+   * Set and update new width information fields in a manner analogous to the coordinate fields in the General_Info and File_Info structures
+   *
+   * Revision 1.14  2005/04/20 23:14:04  bert
    * Remove most SPI_ references
    *
    * Revision 1.13  2005/04/20 17:47:38  bert
@@ -324,13 +327,18 @@ init_general_info(General_Info *gi_ptr, /* OUT */
         gi_ptr->coordinates[imri] = 
             malloc(gi_ptr->max_size[imri] * sizeof(double));
 
+        gi_ptr->widths[imri] = 
+            malloc(gi_ptr->max_size[imri] * sizeof(double));
+
         for (index = 0; index < gi_ptr->max_size[imri]; index++) {
             gi_ptr->indices[imri][index] = -1;
             gi_ptr->coordinates[imri][index] = 0;
+            gi_ptr->widths[imri][index] = 0; /* default */
         }
         gi_ptr->search_start[imri] = 0;
         gi_ptr->indices[imri][0] = fi_ptr->index[imri];
         gi_ptr->coordinates[imri][0] = fi_ptr->coordinate[imri];
+        gi_ptr->widths[imri][0] = fi_ptr->width[imri];
 
         if (G.Debug) {
             printf("%2d. %s axis length %d\n",
@@ -639,6 +647,10 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
                     gi_ptr->coordinates[imri] = 
                         realloc(gi_ptr->coordinates[imri],
                                 gi_ptr->max_size[imri] * sizeof(double));
+
+                    gi_ptr->widths[imri] = 
+                        realloc(gi_ptr->widths[imri],
+                                gi_ptr->max_size[imri] * sizeof(double));
                 }
 
 	 
@@ -647,6 +659,7 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
                 gi_ptr->search_start[imri] = index;
                 gi_ptr->indices[imri][index] = cur_index;
                 gi_ptr->coordinates[imri][index] = fi_ptr->coordinate[imri];
+                gi_ptr->widths[imri][index] = fi_ptr->width[imri];
                 gi_ptr->cur_size[imri]++;
 	 
             }
@@ -1220,6 +1233,13 @@ get_coordinate_info(Acr_Group group_list,
     fi_ptr->coordinate[ECHO] = 
         acr_find_double(group_list, ACR_Echo_time, 0.0) / MS_PER_SECOND;
 
+
+    /* Get the dimension width for time, if available.  The units are in
+     * milliseconds in DICOM, whereas we use seconds in MINC.
+     */
+    fi_ptr->width[TIME] = acr_find_double(group_list,
+                                          ACR_Actual_frame_duration,
+                                          0.0) / MS_PER_SECOND;
 
     /* PET scan times (bert)
      */
