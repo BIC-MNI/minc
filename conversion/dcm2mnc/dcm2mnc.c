@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.12  2005-04-26 23:49:24  bert
+ * Revision 1.13  2005-04-29 23:09:36  bert
+ * Add support for -stdin option to read file list from standard input
+ *
+ * Revision 1.12  2005/04/26 23:49:24  bert
  * Update version
  *
  * Revision 1.11  2005/04/18 16:38:42  bert
@@ -80,7 +83,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.12 2005-04-26 23:49:24 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.13 2005-04-29 23:09:36 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -149,7 +152,15 @@ ArgvInfo argTable[] = {
      (char *)TRUE, 
      (char *) &G.useMinMax,
      "Honor DICOM pixel minimum and pixel maximum values."},
+
+    {"-stdin",
+     ARGV_CONSTANT,
+     (char *)TRUE,
+     (char *)&G.use_stdin,
+     "Read file list from standard input."},
+
     {NULL, ARGV_END, NULL, NULL, NULL}
+
 };
 
 int 
@@ -170,6 +181,7 @@ main(int argc, char *argv[])
     G.mosaic_seq = MOSAIC_SEQ_ASCENDING; /* Assume ascending by default. */
     G.splitDynScan = FALSE;     /* Don't split dynamic scans by default */
     G.splitEcho = TRUE;         /* Do split by echo by default */
+    G.use_stdin = FALSE;        /* Do not read file list from stdin */
 
     G.minc_history = time_stamp(argc, argv); /* Create minc history string */
 
@@ -261,6 +273,26 @@ main(int argc, char *argv[])
         }
         else {
             file_list[num_files++] = strdup(argv[ifile + 1]);
+        }
+    }
+
+    if (G.use_stdin) {
+        char linebuf[1024];
+        char *p;
+
+        while (fgets(linebuf, sizeof(linebuf), stdin) != NULL) {
+            /* Strip off newline at end of string.
+             */
+            for (p = linebuf; *p != '\0'; p++) {
+                if (*p == '\n') {
+                    *p = '\0';
+                }
+            }
+            if (strlen(linebuf) != 0) {
+                file_list = realloc(file_list,
+                                    (num_files + 1) * sizeof(char *));
+                file_list[num_files++] = strdup(linebuf);
+            }
         }
     }
 

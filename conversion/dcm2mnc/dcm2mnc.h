@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.9  2005-04-18 16:38:09  bert
+ * Revision 1.10  2005-04-29 23:09:36  bert
+ * Add support for -stdin option to read file list from standard input
+ *
+ * Revision 1.9  2005/04/18 16:38:09  bert
  * Add comments and defines for both DICOM and IMA file detection
  *
  * Revision 1.8  2005/04/05 21:50:11  bert
@@ -212,6 +215,7 @@ struct globals {
     string_t command_line;
     unsigned long opts;
     mosaic_seq_t mosaic_seq;
+    short use_stdin;
 };
 
 /* Values for options flags */
