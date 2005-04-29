@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.5  2005-04-20 23:15:06  bert
+   * Revision 1.6  2005-04-29 23:09:06  bert
+   * Write sample-width information to file for irregular time dimensions
+   *
+   * Revision 1.5  2005/04/20 23:15:06  bert
    * Don't save attributes that are no longer set
    *
    * Revision 1.4  2005/04/18 16:21:42  bert
@@ -98,7 +101,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.5 2005-04-20 23:15:06 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6 2005-04-29 23:09:06 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -316,6 +319,139 @@ create_minc_file(const char *minc_file,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+   @NAME       : minc_set_spacing
+   @INPUT      : mincid
+                 varid
+                 imri
+                 gi_ptr
+   @OUTPUT     : (nothing)
+   @RETURNS    : (nothing)
+   @DESCRIPTION: This function checks the given MRI dimension (most typically
+                 the TIME dimension) to see if it has a "regular" structure.
+                 If so, the MINC file is updated accordingly.  If not, the
+                 function creates a "xxxx-width" variable corresponding to the
+                 dimension which will contain the width information from this
+                 dimension.  NOTE: At present only the time-width variable 
+                 is defined by MINC.
+   @METHOD     : 
+   @GLOBALS    : 
+   CALLS       : 
+   @CREATED    : April 27, 2005 (Bert Vincent)
+   @MODIFIED   :
+   ----------------------------------------------------------------------------
+ */
+
+static void 
+minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
+{
+    double sum;                 /* Sum of differences for computing average */
+    double avg;                 /* Average */
+    double diff;                /* Difference between adjacent coordinates */
+    double step;                /* Step size from widths */
+    int regular;                /* TRUE if dimension is regular */
+    int index;                  /* Loop/array index */
+    long length;                /* Length of this dimension (> 1) */
+
+    regular = TRUE;
+
+    length = gi_ptr->cur_size[imri];
+
+    /* First, see if the widths were set, and if so, if they are consistent.
+     */
+    for (index = 1; index < length; index++) {
+        if (gi_ptr->widths[imri][0] != gi_ptr->widths[imri][index]) {
+            regular = FALSE;
+            break;
+        }
+    }
+
+    /* OK, now set the step value according to the widths, if possible.
+     */
+    if (regular) {
+        step = gi_ptr->widths[imri][0];
+
+        /* Now calculate the average value for the coordinate spacing.
+         */
+        sum = 0.0;
+        for (index = 1; index < length; index++) {
+            sum += gi_ptr->coordinates[imri][index] - 
+                gi_ptr->coordinates[imri][index-1];
+        }
+
+        avg = sum / length;     /* compute mean */
+
+        if (step != 0.0 && avg != step) {
+            printf("WARNING: Sample width %f not equal to average delta %f\n",
+                   step, avg);
+        }
+
+        step = avg;             /* Use the average anyway. */
+
+        /* Check for uniformity of spacing */
+
+        for (index = 1; index < length; index++) {
+
+            /* Calculate the difference between two adjacent locations,
+             * less the average step value.
+             */
+
+            diff = gi_ptr->coordinates[imri][index] -
+                gi_ptr->coordinates[imri][index - 1] - step;
+        
+            if (diff < 0.0) {
+                diff = -diff;
+            }
+            if (step != 0.0) {
+                diff /= step;
+            }
+            if (diff > COORDINATE_EPSILON) {
+                regular = FALSE;
+                break;
+            }
+        }
+    }
+    else {
+        /* We have widths provided for us, so use them to calculate the
+         * average step size.
+         */
+        for (index = 0; index < length; index++) {
+            sum += gi_ptr->widths[imri][index];
+        }
+        step = sum / length;
+    }
+
+    /*
+     * Write the step value.  According to the MINC specifications, it is 
+     * always valid to store a step value even for irregular dimensions. 
+     * The step should always equal the average spacing of the dimension.
+     */
+    miattputdbl(mincid, varid, MIstep, step);
+
+    if (regular) {
+        miattputstr(mincid, varid, MIspacing, MI_REGULAR);
+    }
+    else {
+        miattputstr(mincid, varid, MIspacing, MI_IRREGULAR);
+
+        /* Create the <dimension-name>-width variable.  At present, this
+         * is only a valid operation if the dimension in question is the
+         * time dimension. MINC does not define a width variable for any of
+         * the other, non-standard dimensions.  So for now this code is 
+         * very much a special case.
+         */
+        if (imri == TIME) {
+            int dimid;
+
+            dimid = ncdimid(mincid, MItime);
+            if (dimid >= 0) {
+                micreate_std_variable(mincid, MItime_width, NC_DOUBLE,
+                                      1, &dimid);
+            }
+        }
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
    @NAME       : setup_minc_variables
    @INPUT      : mincid
    general_info
@@ -352,10 +488,6 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     int is_char;
     int ich;
 
-    /* stuff added by rhoge */
-    double sum;
-    double avg;
-
     /* Define the spatial dimension names */
     static char *spatial_dimnames[WORLD_NDIMS] = {MIxspace, MIyspace, MIzspace};
 
@@ -386,34 +518,8 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                 if (loop_type == MEAS) {
                     /* if Meas loop, time step is not equal to TR, and
                        frames should have time values (rhoge) */
-                    sum = 0.0;
-                    for (index=1; index < general_info->cur_size[TIME]; index++) {
-	     
-                        sum += general_info->coordinates[TIME][1]-
-                            general_info->coordinates[TIME][0];
 
-                    }
-                    /* compute mean */
-                    avg = sum/general_info->cur_size[TIME];
-                    miattputdbl(mincid, varid, MIstep,avg);
-
-                    /* check for uniformity of spacing */
-                    regular = TRUE;
-                    for (index=1; index < general_info->cur_size[TIME]; index++) {
-                        diff = general_info->coordinates[TIME][1]-
-                            general_info->coordinates[TIME][0] - avg;
-	     
-                        if (diff < 0.0) diff = -diff;
-                        if (separation != 0.0) diff /= avg;
-                        if (diff > COORDINATE_EPSILON) {
-                            regular = FALSE;
-                            break;
-                        }
-                    }
-                    if (regular)
-                        miattputstr(mincid, varid, MIspacing, MI_REGULAR);
-                    else 
-                        miattputstr(mincid, varid, MIspacing, MI_IRREGULAR);
+                    minc_set_spacing(mincid, varid, TIME, general_info);
                 } else {
 
                     /* assume ACQ loop and use TR for time step */
@@ -436,6 +542,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                     varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 1, 
                                                   &dim[ndims]);
                     miattputstr(mincid, varid, MIunits, "s");
+                    minc_set_spacing(mincid, varid, TIME, general_info);
                 }
                 else if (imri == ECHO) {
                     varid = ncvardef(mincid, dimname, NC_DOUBLE, 1, &dim[ndims]);
@@ -800,7 +907,7 @@ void
 save_minc_image(int icvid, General_Info *general_info, 
                 File_Info *file_info, Image_Data *image)
 {
-    int mincid, imgid;
+    int mincid;
     long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
     int file_index, array_index;
     int idim;
@@ -812,8 +919,7 @@ save_minc_image(int icvid, General_Info *general_info,
 
     /* Get the minc file id */
     miicv_inqint(icvid, MI_ICV_CDFID, &mincid);
-    miicv_inqint(icvid, MI_ICV_VARID, &imgid);
-
+    
     /* Create start and count variables */
     idim = 0;
     for (imri=MRI_NDIMS-1; (int) imri >= 0; imri--) {
@@ -856,6 +962,33 @@ save_minc_image(int icvid, General_Info *general_info,
         mivarput1(mincid, ncvarid(mincid, mri_dim_names[TIME]), 
                   &start[general_info->image_index[TIME]], 
                   NC_DOUBLE, NULL, &file_info->coordinate[TIME]);
+
+        /* If width information is present, save it to the appropriate
+         * location in the time-width variable.
+         */
+        if (file_info->width[TIME] != 0.0) {
+            int ncopts_prev;
+            int varid;
+
+            /* Since it is possible for width information to be present 
+             * in circumstances where we do not want to save it, the 
+             * time-width variable may not even exist when we get here.
+             * In order to avoid a nasty and unnecessary error message
+             * we have to disable netCDF errors here.
+             */
+            ncopts_prev = ncopts;
+            ncopts = 0;
+            varid = ncvarid(mincid, MItime_width); /* Get the variable id */
+            ncopts = ncopts_prev;
+
+            /* If the variable was created, update it as needed.
+             */
+            if (varid >= 0) {
+                mivarput1(mincid, varid, 
+                          &start[general_info->image_index[TIME]], 
+                          NC_DOUBLE, NULL, &file_info->width[TIME]);
+            }
+        }
     }
 
     /* Write out echo time of slice, if needed */
