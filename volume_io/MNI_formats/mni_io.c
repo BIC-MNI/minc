@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.10.2.1 2004-10-04 20:18:52 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.10.2.2 2005-05-03 19:45:20 bert Exp $";
 #endif
 
 static   const char      COMMENT_CHAR1 = '%';
@@ -57,7 +57,8 @@ VIOAPI Status  mni_get_nonwhite_character(
                 in_comment = FALSE;
     }
     while( status == OK &&
-           (in_comment || *ch == ' ' || *ch == '\t' || *ch == '\n') );
+           (in_comment || *ch == ' ' || *ch == '\t' || *ch == '\n' || 
+            *ch == '\r') );     /* ignore carriage returns */
 
     if( status == ERROR )
         status = END_OF_FILE;
@@ -133,7 +134,9 @@ VIOAPI Status  mni_input_line(
 
     while( status == OK && ch != '\n' )
     {
-        concat_char_to_string( string, ch );
+        if (ch != '\r') {       /* Always ignore carriage returns */
+            concat_char_to_string( string, ch );
+        }
 
         status = input_character( file, &ch );
     }
@@ -193,7 +196,9 @@ VIOAPI Status  mni_input_string(
     while( status == OK &&
            ch != termination_char1 && ch != termination_char2 && ch != '\n' )
     {
-        concat_char_to_string( string, ch );
+        if (ch != '\r') {       /* Always ignore carriage returns */
+            concat_char_to_string( string, ch );
+        }
         status = input_character( file, &ch );
     }
 
