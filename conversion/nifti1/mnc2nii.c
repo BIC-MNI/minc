@@ -1,4 +1,6 @@
-#include "minc.h"
+#include <minc.h>
+#include <ParseArgv.h>
+
 #include "nifti1_io.h"
 
 #include "nifti1_local.h"       /* Our local definitions */
@@ -23,20 +25,6 @@ static int usage(void)
     static const char msg[] = {
         "mnc2nii: Convert MINC files to NIfTI-1 format\n"
         "usage: mnc2nii [-q] [filetype] [datatype] filename.mnc [filename.nii]\n"
-        " -q: quiet operation\n"
-        "Filetype specifies the output file format:\n"
-        " -n: NIfTI-1 one-file format (.nii) *\n"
-        " -2: NIfTI-1 two-file format (.img and .hdr)\n"
-        " -A: NIfTI-1 ASCII format (.nia)\n"
-        " -a: Analyze two-file format (.img and .hdr)\n"
-        "Datatype specifies the output voxel data type:\n"
-        " -f32: 32-bit floating point output *\n"
-        " -f64: 64-bit floating point output\n"
-        " -i16: signed 16-bit integer output\n"
-        " -u16: unsigned 16-bit integer output\n"
-        " -i32: signed 32-bit integer output\n"
-        " -u32: unsigned 32-bit integer output\n"
-        "An asterisk (*) indicates default options\n"
     };
     fprintf(stderr, "%s", msg);
     return (-1);
@@ -155,8 +143,9 @@ main(int argc, char **argv)
     int nii_map[MAX_NII_DIMS];
     unsigned long nii_lens[MAX_NII_DIMS];
     int nii_ndims;
-    int nifti_filetype;
-    int nifti_datatype;
+    static int nifti_filetype;
+    static int nifti_datatype;
+    static int nifti_signed = 1;
 
     /* MINC stuff */
     int mnc_fd;                 /* MINC file descriptor */
@@ -180,7 +169,46 @@ main(int argc, char **argv)
     int j;                      /* Generic loop counter the second */
     char *str_ptr;              /* Generic ASCIZ string pointer */
     int r;                      /* Result code. */
-    int qflag = 0;              /* Quiet flag (default is non-quiet) */
+    static int qflag = 0;       /* Quiet flag (default is non-quiet) */
+
+    static ArgvInfo argTable[] = {
+        {NULL, ARGV_HELP, NULL, NULL,
+         "Output voxel data type specification"},
+        {"-byte", ARGV_CONSTANT, (char *)DT_INT8, (char *)&nifti_datatype,
+         "Write voxel data in 8-bit signed integer format."},
+        {"-short", ARGV_CONSTANT, (char *)DT_INT16, (char *)&nifti_datatype,
+         "Write voxel data in 16-bit signed integer format."},
+        {"-int", ARGV_CONSTANT, (char *)DT_INT32, (char *)&nifti_datatype,
+         "Write voxel data in 32-bit signed integer format."},
+        {"-float", ARGV_CONSTANT, (char *)DT_FLOAT32, (char *)&nifti_datatype,
+         "Write voxel data in 32-bit floating point format."},
+        {"-double", ARGV_CONSTANT, (char *)DT_FLOAT64, (char *)&nifti_datatype,
+         "Write voxel data in 64-bit floating point format."},
+        {"-signed", ARGV_CONSTANT, (char *)1, (char *)&nifti_signed,
+         "Write integer voxel data in signed format."},
+        {"-unsigned", ARGV_CONSTANT, (char *)0, (char *)&nifti_signed,
+         "Write integer voxel data in unsigned format."},
+        {NULL, ARGV_HELP, NULL, NULL,
+         "Output file format specification"},
+        {"-dual", ARGV_CONSTANT, (char *)FT_NIFTI_DUAL, 
+         (char *)&nifti_filetype,
+         "Write NIfTI-1 two-file format (.img and .hdr)"},
+        {"-ASCII", ARGV_CONSTANT, (char *)FT_NIFTI_ASCII, 
+         (char *)&nifti_filetype,
+         "Write NIfTI-1 ASCII header format (.nia)"},
+        {"-nii", ARGV_CONSTANT, (char *)FT_NIFTI_SINGLE, 
+         (char *)&nifti_filetype,
+         "Write NIfTI-1 one-file format (.nii)"},
+        {"-analyze", ARGV_CONSTANT, (char *)FT_ANALYZE, 
+         (char *)&nifti_filetype,
+         "Write an Analyze two-file format file (.img and .hdr)"},
+        {NULL, ARGV_HELP, NULL, NULL,
+         "Other options"},
+        {"-quiet", ARGV_CONSTANT, (char *)0, 
+         (char *)&qflag,
+         "Quiet operation"},
+        {NULL, ARGV_END, NULL, NULL, NULL}
+    };
 
     ncopts = 0;                 /* Clear global netCDF error reporting flag */
 
@@ -189,90 +217,54 @@ main(int argc, char **argv)
     nifti_filetype = FT_UNSPECIFIED;
     nifti_datatype = DT_UNKNOWN;
 
-    if (argc < 2) {
+    if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
         fprintf(stderr, "Too few arguments\n");
         return usage();
     }
 
-    for (i = 1; i < argc && *(str_ptr = argv[i]) == '-'; i++) {
-        for (j = 1; str_ptr[j] != '\0'; j++) {
-            switch (str_ptr[j]) {
-            case 'A':
-                nifti_filetype = FT_NIFTI_ASCII;
-                break;
-            case 'a':
-                nifti_filetype = FT_ANALYZE;
-                break;
-            case '2':
-                nifti_filetype = FT_NIFTI_DUAL;
-                break;
-            case 'n':
-                nifti_filetype = FT_NIFTI_SINGLE;
-                break;
-            case 'q':
-                qflag++;
-                break;
-            case 'u':
-                mnc_signed = 0;
-                if (str_ptr[j+1] == '1' && str_ptr[j+2] == '6') {
-                    nifti_datatype = DT_UINT16;
-                    mnc_type = NC_SHORT;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    nifti_datatype = DT_UINT32;
-                    mnc_type = NC_INT;
-                }
-                else {
-                    return usage();
-                }
-                j += 2;
-                break;
-            case 'i':
-                mnc_signed = 1;
-                if (str_ptr[j+1] == '1' && str_ptr[j+2] == '6') {
-                    nifti_datatype = DT_INT16;
-                    mnc_type = NC_SHORT;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    nifti_datatype = DT_INT32;
-                    mnc_type = NC_INT;
-                }
-                else {
-                    return usage();
-                }
-                j += 2;
-                break;
-            case 'f':
-                mnc_signed = 1;
-                if (str_ptr[j+1] == '6' && str_ptr[j+2] == '4') {
-                    nifti_datatype = DT_FLOAT64;
-                    mnc_type = NC_DOUBLE;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    nifti_datatype = DT_FLOAT32;
-                    mnc_type = NC_FLOAT;
-                }
-                else {
-                    return usage();
-                }
-                j += 2;
-                break;
-            default:
-                fprintf(stderr, "Unrecognized option '%c'\n", str_ptr[j]);
-                return usage();
-            }
+    if (!nifti_signed) {
+        switch (nifti_datatype) {
+        case DT_INT8:
+            nifti_datatype = DT_UINT8;
+            break;
+        case DT_INT16:
+            nifti_datatype = DT_UINT16;
+            break;
+        case DT_INT32:
+            nifti_datatype = DT_UINT32;
+            break;
         }
     }
+    switch (nifti_datatype){
+    case DT_INT8:
+    case DT_UINT8:
+        mnc_type = NC_BYTE;
+        break;
+    case DT_INT16:
+    case DT_UINT16:
+        mnc_type = NC_SHORT;
+        break;
+    case DT_INT32:
+    case DT_UINT32:
+        mnc_type = NC_INT;
+        break;
+    case DT_FLOAT32:
+        mnc_type = NC_FLOAT;
+        break;
+    case DT_FLOAT64:
+        mnc_type = NC_DOUBLE;
+        break;
+    }
 
-    if ((argc - i) == 1) {
-        strcpy(out_str, argv[i]);
+    if (argc == 2) {
+        strcpy(out_str, argv[1]);
         str_ptr = strrchr(out_str, '.');
         if (str_ptr != NULL && !strcmp(str_ptr, ".mnc")) {
             *str_ptr = '\0';
         }
     }
-    else if ((argc - i) == 2) {
-        strcpy(out_str, argv[i+1]);
+    else if (argc == 3) {
+        strcpy(out_str, argv[2]);
         str_ptr = strrchr(out_str, '.');
         if (str_ptr != NULL) {
             /* See if a recognized file extension was specified.  If so,
@@ -309,9 +301,9 @@ main(int argc, char **argv)
 
     /* Open the MINC file.  It needs to exist.
      */
-    mnc_fd = miopen(argv[i], NC_NOWRITE);
+    mnc_fd = miopen(argv[1], NC_NOWRITE);
     if (mnc_fd < 0) {
-        fprintf(stderr, "Can't find input file '%s'\n", argv[i]);
+        fprintf(stderr, "Can't find input file '%s'\n", argv[1]);
         return (-1);
     }
 
