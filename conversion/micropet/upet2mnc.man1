@@ -1,4 +1,4 @@
-.TH upet2mnc 1 "May 03 2005" "$Revision: 1.1.2.1 $" ""
+.TH upet2mnc 1 "May 03 2005" "$Revision: 1.1.2.2 $" ""
 .SH NAME
 
 .B upet2mnc
@@ -28,6 +28,19 @@ locate both files correctly.
 .SH "OPTIONS"
 Note that options can be specified in abbreviated form (as long as they
 are unique) and can be given anywhere on the command line.
+
+.TP
+.BI -head
+Orient the image according to typical neurological conventions, with the
+Y axis oriented from the posterior to anterior, the Z axis
+oriented from inferior to superior, and X oriented
+from patient left to patient right.
+
+.TP
+.BI -body
+Orient the image such that the Y axis is oriented from superior to
+inferior, the Z axis is oriented from posterior to anterior, and X from
+patient left to patient right.
 
 .TP
 .BI -quiet
