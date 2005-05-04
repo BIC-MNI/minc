@@ -989,6 +989,128 @@ DECLARE_FUNC(upet_vector_dim)
     return (0);
 }
 
+/* Parse a micropet time string of the form: Ddd Mmm NN HH:MM:SS YYYY
+ * e.g. Fri Jan 7 14:16:31 2005
+ */
+static int
+parse_time(char *str_ptr, struct tm *tm_ptr)
+{
+    /* Just skip the first three characters. */
+    while (*str_ptr != '\0' && *str_ptr != ' ') {
+        str_ptr++;
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    /* Decode the month */
+    if (str_ptr[0] == 'A') {
+        if (str_ptr[1] == 'p') {
+            tm_ptr->tm_mon = 4 - 1; /* April */
+        }
+        else {
+            tm_ptr->tm_mon = 8 - 1; /* August */
+        }
+    }
+    else if (str_ptr[0] == 'D') {
+        tm_ptr->tm_mon = 12 - 1; /* December */
+    }
+    else if (str_ptr[0] == 'F') { /* February */
+        tm_ptr->tm_mon = 2 - 1;
+    }
+    else if (str_ptr[0] == 'J') {
+        if (str_ptr[1] == 'a') {
+            tm_ptr->tm_mon = 1 - 1; /* January */
+        }
+        else if (str_ptr[2] == 'l') {
+            tm_ptr->tm_mon = 7 - 1; /* July */
+        }
+        else {
+            tm_ptr->tm_mon = 6 - 1; /* June */
+        }
+    }
+    else if (str_ptr[0] == 'M') {
+        if (str_ptr[2] == 'r') {
+            tm_ptr->tm_mon = 3 - 1; /* March */
+        }
+        else {
+            tm_ptr->tm_mon = 5 - 1; /* May */
+        }
+    }
+    else if (str_ptr[0] == 'N') {
+        tm_ptr->tm_mon = 11 - 1; /* November */
+    }
+    else if (str_ptr[0] == 'O') {
+        tm_ptr->tm_mon = 10 - 1; /* October */
+    }
+    else if (str_ptr[0] == 'S') {
+        tm_ptr->tm_mon = 9 - 1; /* September */
+    }
+    else {
+        return 0;
+    }
+
+    /* Skip past the month */
+    while (*str_ptr != ' ' && *str_ptr != '\0') {
+        str_ptr++;
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_mday = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_mday = (tm_ptr->tm_mday * 10) + (*str_ptr++ - '0');
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_hour = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_hour = (tm_ptr->tm_hour * 10) + (*str_ptr++ - '0');
+    }
+
+    if (*str_ptr == ':') {
+        str_ptr++;
+    }
+    else {
+        return 0;
+    }
+
+    tm_ptr->tm_min = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_min = (tm_ptr->tm_min * 10) + (*str_ptr++ - '0');
+    }
+
+    if (*str_ptr == ':') {
+        str_ptr++;
+    }
+    else {
+        return 0;
+    }
+
+    tm_ptr->tm_sec = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_sec = (tm_ptr->tm_sec * 10) + (*str_ptr++ - '0');
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_year = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_year = (tm_ptr->tm_year * 10) + (*str_ptr++ - '0');
+    }
+    tm_ptr->tm_year -= 1900;
+
+    return 1;
+}
+
 DECLARE_FUNC(upet_injection_time)
 {
     struct tm tmbuf;
@@ -997,7 +1119,7 @@ DECLARE_FUNC(upet_injection_time)
 
     id = ncvarid(ci_ptr->mnc_fd, MIacquisition);
 
-    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+    if (!parse_time(val_str, &tmbuf)) {
         strcpy(str_buf, "unknown");
         miattputstr(ci_ptr->mnc_fd, id, MIinjection_time, str_buf);
         miattputstr(ci_ptr->mnc_fd, id, MIinjection_year, str_buf);
@@ -1029,7 +1151,7 @@ DECLARE_FUNC(upet_scan_time)
 
     id = ncvarid(ci_ptr->mnc_fd, MIstudy);
 
-    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+    if (!parse_time(val_str, &tmbuf)) {
         strcpy(str_buf, "unknown");
         miattputstr(ci_ptr->mnc_fd, id, MIstart_time, str_buf);
         miattputstr(ci_ptr->mnc_fd, id, MIstart_year, str_buf);
