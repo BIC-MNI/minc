@@ -5,7 +5,10 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.3.2.1  2005-02-15 19:33:17  bert
+ * Revision 6.3.2.2  2005-05-04 18:31:10  bert
+ * Declare restructure_array() as MNCAPI
+ *
+ * Revision 6.3.2.1  2005/02/15 19:33:17  bert
  * Initial checkin on 1.X branch
  *
  * Revision 6.3  2005/01/04 22:45:57  bert
@@ -54,7 +57,7 @@ static char *minc_dimnames[] = {
  rework them into a more rational and easily described form. 
 */
 
-extern void restructure_array(int ndims,
+MNCAPI void restructure_array(int ndims,
                               unsigned char *array,
                               const unsigned long *lengths_perm,
                               int el_size,
@@ -1066,7 +1069,7 @@ offset_to_index(int ndims,
 
 /** The main restructuring code.
  */
-void
+MNCAPI void
 restructure_array(int ndims,    /* Dimension count */
                   unsigned char *array, /* Raw data */
                   const unsigned long *lengths_perm, /* Permuted lengths */
