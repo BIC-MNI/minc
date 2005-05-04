@@ -2,7 +2,7 @@
  *
  * Author: Bert Vincent
  *
- * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 1.1.2.1 2004-09-28 18:43:04 bert Exp $
+ * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 1.1.2.2 2005-05-04 18:30:32 bert Exp $
  */
 
 #define HAVE_FCNTL_H 1
@@ -19,6 +19,9 @@
 #define VERSION "1.4"
 #define sleep(x) _sleep(x)
 
+#ifndef __RINT_INLINE__
+#define __RINT_INLINE__ 1
+
 /* Quick implmentation of rint() for Intel, since thoughtless Microsoft
  * programmers failed to provide us with one...
  */
@@ -29,3 +32,5 @@ __inline double rint(double dblvar)
   __asm fst dblvar
   return dblvar;
 }
+#endif /* __RINT_INLINE__ */
+
