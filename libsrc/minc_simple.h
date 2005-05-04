@@ -19,7 +19,7 @@
 
 /* Get information about a MINC file.
  */
-extern int 
+MNCAPI int 
 minc_file_size(char *path,      /* Path to the file */
                long *ct,        /* Total length of time axis, in voxels */
                long *cz,        /* Total length of Z axis, in voxels */
@@ -30,7 +30,7 @@ minc_file_size(char *path,      /* Path to the file */
 
 /* Load data from a MINC file.
  */
-extern int 
+MNCAPI int 
 minc_load_data(char *path,      /* Path to the file */
                void *dataptr,   /* Buffer to store data */
                int datatype,    /* Type of data as read into memory */
@@ -41,7 +41,7 @@ minc_load_data(char *path,      /* Path to the file */
 /* Define an output file.  Return value is a file handle, or 
  * MINC_STATUS_ERROR if a problem is detected.
  */
-extern int
+MNCAPI int
 minc_save_start(char *path,     /* Path to the file */
                 int filetype,   /* Date type as stored in the file */
                 long ct,        /* Total length of time axis, in voxels */
@@ -57,7 +57,7 @@ minc_save_start(char *path,     /* Path to the file */
 
 /* Write data to file.  Return value is MINC_STATUS_OK or MINC_STATUS_ERROR.
  */
-extern int 
+MNCAPI int 
 minc_save_data(int handle,    /* Handle returned by minc_save_start */
                void *dataptr,   /* Data to write */
                int datatype,    /* Type of data in memory */
@@ -72,14 +72,14 @@ minc_save_data(int handle,    /* Handle returned by minc_save_start */
 
 /* Called when a particular file is complete.
  */
-extern int 
+MNCAPI int 
 minc_save_done(int handle);
 
 /* Called to free memory associated with the infoptr.
  */                          
-extern void 
+MNCAPI void 
 minc_free_info(void *infoptr);
 
-extern int 
+MNCAPI int 
 minc_get_world_transform(char *path, 
                          double transform[MINC_3D][MINC_3D + 1]);
