@@ -1,3 +1,9 @@
+2005-05-09  Robert Vincent  <bert@bic.mni.mcgill.ca>
+	* Add and update dicom.txt, a list of DICOM field names.
+	* Fix bug in group.c so that acr_find_short, acr_find_int,
+	acr_find_long, and acr_find_double will return the default
+	value if the element is present but contains no data.
+	
 2005-03-11  Robert Vincent  <bert@bic.mni.mcgill.ca>
 	* dump_acr_nema.c: add '-t' option to parse files which contain
 	lists of field names with corresponding group and element id's.
