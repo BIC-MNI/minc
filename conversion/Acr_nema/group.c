@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.9  2005-03-11 22:05:29  bert
+ * Revision 6.10  2005-05-09 15:34:46  bert
+ * For acr_find_{short,int,long,double}, treat a zero-length element as if it were absent, and return the default value.
+ *
+ * Revision 6.9  2005/03/11 22:05:29  bert
  * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
  *
  * Revision 6.8  2005/03/04 17:09:11  bert
@@ -1156,7 +1159,7 @@ int acr_find_short(Acr_Group group_list, Acr_Element_Id elid,
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
+   if (element != NULL && acr_get_element_length(element) > 0) 
       return (int) acr_get_element_short(element);
    else
       return default_value;
@@ -1183,7 +1186,7 @@ long acr_find_long(Acr_Group group_list, Acr_Element_Id elid,
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
+   if (element != NULL && acr_get_element_length(element) > 0) 
       return acr_get_element_long(element);
    else
       return default_value;
@@ -1210,7 +1213,7 @@ int acr_find_int(Acr_Group group_list, Acr_Element_Id elid,
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
+   if (element != NULL && acr_get_element_length(element) > 0) 
       return (int) acr_get_element_numeric(element);
    else
       return default_value;
@@ -1237,7 +1240,7 @@ double acr_find_double(Acr_Group group_list, Acr_Element_Id elid,
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
+   if (element != NULL && acr_get_element_length(element) > 0) 
       return acr_get_element_numeric(element);
    else
       return default_value;
@@ -1264,7 +1267,7 @@ char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid,
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
-   if (element != NULL) 
+   if (element != NULL)         /* Allow zero-length strings */
       return acr_get_element_string(element);
    else
       return default_value;
