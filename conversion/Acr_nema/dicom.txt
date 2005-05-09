@@ -49,6 +49,8 @@ Code_Meaning                            0x0008  0x0104  LO
 Mapping_Resource                        0x0008  0x0105  CS
 Context_Group_Version                   0x0008  0x0106  DT
 Context_Group_Local_Version             0x0008  0x0107  DT
+// Some omitted fields
+Timezone_Offset_From_UTC                0x0008  0x0201  SH
 // Some fields omitted here...
 Network_ID                              0x0008  0x1000  RET
 Station_Name                            0x0008  0x1010  SH
@@ -70,7 +72,7 @@ Manufacturer's_Model_Name               0x0008  0x1090  LO
 Referenced_Results_Sequence             0x0008  0x1100  SQ
 Referenced_Study_Sequence               0x0008  0x1110  SQ
 Referenced_Performed_Procedure_Step_Sequence 0x0008 0x1111 SQ
-Refernenced_Series_Sequence             0x0008  0x1115  SQ
+Referenced_Series_Sequence              0x0008  0x1115  SQ
 Referenced_Patient_Sequence             0x0008  0x1120  SQ
 Referenced_Visit_Sequence               0x0008  0x1125  SQ
 Referenced_Overlay_Sequence             0x0008  0x1130  SQ
@@ -80,6 +82,15 @@ Referenced_Curve_Sequence               0x0008  0x1145  SQ
 Referenced_Instance_Sequence            0x0008  0x114A  SQ
 Referenced_SOP_Class_UID                0x0008  0x1150  UI
 Referenced_SOP_Instance_UID             0x0008  0x1155  UI
+Referenced_SOP_Sequence                 0x0008  0x1199  SQ
+Anatomic_Region_Sequence                0x0008  0x2218  SQ
+Frame_Type                              0x0008  0x9007  CS
+Referenced_Raw_Data_Sequence            0x0008  0x9121  SQ
+Pixel_Presentation                      0x0008  0x9205  CS
+Volumetric_Properties                   0x0008  0x9206  CS
+Volume_Based_Calculation_Technique      0x0008  0x9207  CS
+Complex_Image_Component                 0x0008  0x9208  CS
+Acquisition_Contrast                    0x0008  0x9209  CS
 // More stuff omitted..
 // Group 10
 Patient's_Name                          0x0010  0x0010  PN
@@ -247,6 +258,18 @@ Exposures_on_Plate                      0x0018  0x1404  US
 //...
 Patient_Position                        0x0018  0x5100  CS
 //...
+Content_Qualification                   0x0018  0x9004  CS
+//...
+Applicable_Safety_Standard_Agency       0x0018  0x9174  CS
+MR_Image_Frame_Type_Sequence            0x0018  0x9226  SQ
+
+Contrast/Bolus_Agent_Number             0x0018  0x9337  US
+Contrast/Bolus_Ingredient_Code_Sequence 0x0018  0x9338  SQ
+Contrast/Bolus_Usage_Sequence           0x0018  0x9341  SQ
+Contrast/Bolus_Agent_Administered       0x0018  0x9342  CS
+Contrast/Bolus_Agent_Detected           0x0018  0x9343  CS
+Contrast/Bolus_Agent_Phase              0x0018  0x9344  CS
+//...
 // Group 20 (study)
 Study_Instance_UID                      0x0020  0x000D  UI
 Series_Instance_UID                     0x0020  0x000E  UI
@@ -292,6 +315,18 @@ Number_of_Patient_Related_Instances     0x0020  0x1204  IS
 Number_of_Study_Related_Series          0x0020  0x1206  IS
 Number_of_Study_Related_Instances       0x0020  0x1208  IS
 //...
+Image_Comments                          0x0020  0x4000  LT
+//...
+Frame_Anatomy_Sequence                  0x0020  0x9071  SQ
+Frame_Laterality                        0x0020  0x9072  CS
+Frame_Content_Sequence                  0x0020  0x9111  SQ
+Plane_Position_Sequence                 0x0020  0x9113  SQ
+Plane_Orientation_Sequence              0x0020  0x9116  SQ
+Frame_Acquisition_Number                0x0020  0x9156  US
+//...
+Dimension_Organization_Sequence         0x0020  0x9221  SQ
+Dimension_Index_Sequence                0x0020  0x9222  SQ
+//...
 //Group 28
 Samples_per_Pixel                       0x0028  0x0002  US
 Samples_per_Pixel_Used                  0x0028  0x0003  US
@@ -315,7 +350,7 @@ Corrected_Image                         0x0028  0x0051  CS
 Compression_Code                        0x0028  0x0060  RET
 Bits_Allocated                          0x0028  0x0100  US
 Bits_Stored                             0x0028  0x0101  US
-High_Bits                               0x0028  0x0102  US
+High_Bit                                0x0028  0x0102  US
 Pixel_Representation                    0x0028  0x0103  US
 Smallest_Valid_Pixel_Value              0x0028  0x0104  RET
 Largest_Valid_Pixel_Value               0x0028  0x0105  RET
@@ -338,9 +373,30 @@ Rescale_Slope                           0x0028  0x1053  DS
 Rescale_Type                            0x0028  0x1054  LO
 Window_Center&Width_Explanation         0x0028  0x1055  LO
 Gray_Scale                              0x0028  0x1080  RET
+Lossy_Image_Compression                 0x0028  0x2110  CS
+Lossy_Image_Compression_Ratio           0x0028  0x2112  DS
+Lossy_Image_Compression_Method          0x0028  0x2114  CS
+LUT_Explanation                         0x0028  0x3003  LO
+Pixel_Measures_Sequence                 0x0028  0x9110  SQ
+Frame_VOI_LUT_Sequence                  0x0028  0x9132  SQ
+Pixel_Value_Transformation_Sequence     0x0028  0x9145  SQ
 //...
 //Group 32
+Requested_Procedure_Description         0x0032  0x1060  LO
 Study_Comments                          0x0032  0x4000  LT
+//Group 40
+Performed_Procedure_Step_Start_Date     0x0040  0x0244  DA
+Performed_Procedure_Step_Start_Time     0x0040  0x0245  TM
+Performed_Procedure_Step_ID             0x0040  0x0253  SH
+Acquisition_Context_Sequence            0x0040  0x0555  SQ
+Measurement_Units_Code_Sequence         0x0040  0x08EA  SQ
+Real_World_Value_Mapping_Sequence       0x0040  0x9096  SQ
+LUT_Label                               0x0040  0x9210  SH
+Real_World_Value_Last_Value_Mapped      0x0040  0x9211  US
+Real_World_Value_LUT_Data               0x0040  0x9212  FD
+Real_World_Value_First_Value_Mapped     0x0040  0x9216  US
+Real_World_Value_Intercept              0x0040  0x9224  FD
+Real_World_Value_Slope                  0x0040  0x9225  FD
 //Group 54
 Energy_Window_Vector                    0x0054  0x0010  US
 Number_of_Energy_Windows                0x0054  0x0011  US
@@ -421,6 +477,13 @@ Dead_Time_Factor                        0x0054  0x1324  DS
 Image_Index                             0x0054  0x1330  US
 Counts_Included                         0x0054  0x1400  CS
 Dead_Time_Correction_Flag               0x0054  0x1401  CS
+//Group 0x2050
+Presentation_LUT_Sequence               0x2050  0x0010  SQ
+Presentation_LUT_Shape                  0x2050  0x0020  CS
+Referenced_Presentation_LUT_Sequence    0x2050  0x0500  SQ
+//Group 0x5200
+Shared_Functional_Groups_Sequence       0x5200  0x9229  SQ
+Per_Frame_Functional_Groups_Sequence    0x5200  0x9230  SQ
 
 //Group 0x7fe0
 Pixel_Data                              0x7fe0  0x0010  OW
