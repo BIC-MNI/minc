@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.12  2005-04-28 17:38:06  bert
+   * Revision 1.13  2005-05-09 15:33:20  bert
+   * Fix handing of descending mosaic sequences; don't print GEMS field missing warnings by default
+   *
+   * Revision 1.12  2005/04/28 17:38:06  bert
    * Insert and retrieve width information when sorting a dimension
    *
    * Revision 1.11  2005/04/21 22:31:29  bert
@@ -147,7 +150,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.12 2005-04-28 17:38:06 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13 2005-05-09 15:33:20 bert Exp $";
 #include "dcm2mnc.h"
 #include <math.h>
 
@@ -963,7 +966,7 @@ add_gems_info(Acr_Group group_list)
          * rely on this proprietary nonsense.
          */
         tmp_str = acr_find_string(group_list, ACR_Modality, "");
-        if (strcmp(tmp_str, "PT")) {
+        if (strcmp(tmp_str, "PT") && G.Debug) {
             printf("WARNING: GEMS data not found\n");
         }
     }
@@ -1728,13 +1731,6 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
         }
         break;
 
-    case MOSAIC_SEQ_DESCENDING:
-        /* For descending sequences, simply reverse the order in which 
-         * the slices are collected from the mosaic.
-         */
-        islice = mi_ptr->slice_count - iimage;
-        break;
-
     default:
         /* Otherwise, just use the image number without modification for
          * ascending or unknown slice ordering.
@@ -1760,6 +1756,15 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
     for (idim = 0; idim < WORLD_NDIMS; idim++) {
         position[idim] = mi_ptr->position[idim] + 
             (double) iimage * mi_ptr->step[idim];
+    }
+
+    /* If the sequence is descending, invert the slice coordinate.
+     * This involves subtracting the step * index from the mosaic
+     * slice position.
+     */
+    if (mi_ptr->mosaic_seq == MOSAIC_SEQ_DESCENDING) {
+        position[ZCOORD] = mi_ptr->position[ZCOORD] - 
+            (double) islice * mi_ptr->step[ZCOORD];
     }
 
     sprintf(string, "%.15g\\%.15g\\%.15g", 
