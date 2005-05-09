@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.15  2005-04-28 17:17:57  bert
+   * Revision 1.16  2005-05-09 15:30:32  bert
+   * Don't allow a rescale slope value of zero
+   *
+   * Revision 1.15  2005/04/28 17:17:57  bert
    * Set and update new width information fields in a manner analogous to the coordinate fields in the General_Info and File_Info structures
    *
    * Revision 1.14  2005/04/20 23:14:04  bert
@@ -826,6 +829,14 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
      */
     rescale_intercept = acr_find_double(group_list, ACR_Rescale_intercept, 0);
     rescale_slope = acr_find_double(group_list, ACR_Rescale_slope, 1);
+
+    /* If the rescale slope is set to zero, force the default value of 
+     * one and issue a warning.
+     */
+    if (rescale_slope == 0.0) {
+        printf("WARNING: File contains a rescale slope value of zero.\n");
+        rescale_slope = 1.0;
+    }
 
     fi_ptr->slice_min = fi_ptr->pixel_min * rescale_slope + rescale_intercept;
     fi_ptr->slice_max = fi_ptr->pixel_max * rescale_slope + rescale_intercept;
