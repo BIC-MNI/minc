@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.13  2005-04-29 23:09:36  bert
+ * Revision 1.14  2005-05-09 15:32:02  bert
+ * Change version to 2.0.05
+ *
+ * Revision 1.13  2005/04/29 23:09:36  bert
  * Add support for -stdin option to read file list from standard input
  *
  * Revision 1.12  2005/04/26 23:49:24  bert
@@ -83,7 +86,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.13 2005-04-29 23:09:36 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14 2005-05-09 15:32:02 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -110,7 +113,7 @@ static int check_file_type_consistency(int num_files, const char *file_list[]);
 
 struct globals G;
 
-#define VERSION_STRING "2.0.04 built " __DATE__ " " __TIME__
+#define VERSION_STRING "2.0.05 built " __DATE__ " " __TIME__
 
 ArgvInfo argTable[] = {
     {NULL, ARGV_VERINFO, VERSION_STRING, NULL, NULL },
