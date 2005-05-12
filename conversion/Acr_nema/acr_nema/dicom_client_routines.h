@@ -5,7 +5,10 @@
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.h,v $
- * Revision 6.5  1999-10-29 17:51:50  neelin
+ * Revision 6.5.2.1  2005-05-12 20:16:46  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.5  1999/10/29 17:51:50  neelin
  * Fixed Log keyword
  *
  * Revision 6.4  1998/11/13 15:55:27  neelin

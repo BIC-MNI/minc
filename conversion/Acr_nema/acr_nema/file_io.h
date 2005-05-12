@@ -6,7 +6,13 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.h,v $
- * Revision 6.2  2000-05-17 20:17:48  neelin
+ * Revision 6.3.2.1  2005-05-12 20:16:46  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.3  2005/03/04 00:08:08  bert
+ * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
+ *
+ * Revision 6.2  2000/05/17 20:17:48  neelin
  * Added mechanism to allow testing of input streams for more data through
  * function acr_file_ismore.
  * This is used in dicom_client_routines to allow asynchronous transfer
@@ -62,10 +68,6 @@
 
 /* Define constants */
 
-#ifndef public
-#  define public
-#endif
-
 #define ACR_NO_WATCHPOINT LONG_MAX
 
 /* Define io routine prototype */
@@ -111,26 +113,26 @@ typedef struct {
                          acr_file_write_more(afp, c) )
 
 /* Function definitions */
-public void acr_file_enable_trace(Acr_File *afp);
-public void acr_file_disable_trace(Acr_File *afp);
-public Acr_File *acr_file_initialize(void *io_data,
+extern void acr_file_enable_trace(Acr_File *afp);
+extern void acr_file_disable_trace(Acr_File *afp);
+extern Acr_File *acr_file_initialize(void *io_data,
                                      int maxlength,
                                      Acr_Io_Routine io_routine);
-public void acr_file_free(Acr_File *afp);
-public void acr_file_reset(Acr_File *afp);
-public void acr_file_set_ismore_function(Acr_File *afp, 
+extern void acr_file_free(Acr_File *afp);
+extern void acr_file_reset(Acr_File *afp);
+extern void acr_file_set_ismore_function(Acr_File *afp, 
                                          Acr_Ismore_Function ismore_function);
-public void acr_file_set_eof(Acr_File *afp);
-public void acr_file_set_client_data(Acr_File *afp, void *client_data);
-public void *acr_file_get_client_data(Acr_File *afp);
-public int acr_file_read_more(Acr_File *afp);
-public int acr_file_write_more(Acr_File *afp, int character);
-public int acr_file_flush(Acr_File *afp);
-public int acr_ungetc(int c, Acr_File *afp);
-public void *acr_file_get_io_data(Acr_File *afp);
-public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint);
-public long acr_get_io_watchpoint(Acr_File *afp);
-public int acr_file_ismore(Acr_File *afp);
-public int acr_stdio_read(void *io_data, void *buffer, int nbytes);
-public int acr_stdio_write(void *io_data, void *buffer, int nbytes);
-public int acr_stdio_ismore(void *io_data);
+extern void acr_file_set_eof(Acr_File *afp);
+extern void acr_file_set_client_data(Acr_File *afp, void *client_data);
+extern void *acr_file_get_client_data(Acr_File *afp);
+extern int acr_file_read_more(Acr_File *afp);
+extern int acr_file_write_more(Acr_File *afp, int character);
+extern int acr_file_flush(Acr_File *afp);
+extern int acr_ungetc(int c, Acr_File *afp);
+extern void *acr_file_get_io_data(Acr_File *afp);
+extern void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint);
+extern long acr_get_io_watchpoint(Acr_File *afp);
+extern int acr_file_ismore(Acr_File *afp);
+extern int acr_stdio_read(void *io_data, void *buffer, int nbytes);
+extern int acr_stdio_write(void *io_data, void *buffer, int nbytes);
+extern int acr_stdio_ismore(void *io_data);

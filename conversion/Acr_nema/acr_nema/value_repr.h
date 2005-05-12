@@ -6,7 +6,13 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: value_repr.h,v $
- * Revision 6.2  2000-08-16 15:53:46  neelin
+ * Revision 6.3.2.1  2005-05-12 20:16:46  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.3  2005/03/04 00:08:08  bert
+ * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
+ *
+ * Revision 6.2  2000/08/16 15:53:46  neelin
  * Added VR type UN (unknown) which has a length field similar to OB.
  *
  * Revision 6.1  1999/10/29 17:51:55  neelin
@@ -70,12 +76,12 @@ typedef enum {
 } Acr_VR_Type;
 
 /* Function prototypes */
-public char *acr_get_vr_name(Acr_VR_Type vr_code);
-public int acr_test_vr_name(char *vr_name);
-public Acr_VR_Type acr_lookup_vr_name(char *vr_name);
-public double acr_get_numeric_vr(Acr_VR_Type vr_code, 
+extern char *acr_get_vr_name(Acr_VR_Type vr_code);
+extern int acr_test_vr_name(char *vr_name);
+extern Acr_VR_Type acr_lookup_vr_name(char *vr_name);
+extern double acr_get_numeric_vr(Acr_VR_Type vr_code, 
                                  Acr_byte_order byte_order,
                                  char *data, long data_length);
-public char *acr_get_string_vr(Acr_VR_Type vr_code, 
+extern char *acr_get_string_vr(Acr_VR_Type vr_code, 
                                Acr_byte_order byte_order,
                                char *data, long data_length);
