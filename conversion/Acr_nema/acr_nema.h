@@ -6,7 +6,19 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_nema.h,v $
- * Revision 6.1  1999-10-29 17:51:50  neelin
+ * Revision 6.3.2.1  2005-05-12 21:15:48  bert
+ * Initial checkin
+ *
+ * Revision 6.3  2005/02/16 19:22:32  bert
+ * Autoconfiscation
+ *
+ * Revision 6.2  2004/10/29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.1  1999/10/29 17:51:50  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:59  neelin
@@ -75,11 +87,17 @@
 #endif
 
 /* Include files */
-#include <file_io.h>
-#include <acr_io.h>
-#include <value_repr.h>
-#include <element.h>
-#include <group.h>
-#include <message.h>
-#include <dicom_network.h>
-#include <dicom_client_routines.h>
+#include <acr_nema/file_io.h>
+#include <acr_nema/acr_io.h>
+#include <acr_nema/value_repr.h>
+#include <acr_nema/element.h>
+#include <acr_nema/group.h>
+#include <acr_nema/message.h>
+#include <acr_nema/dicom_network.h>
+#include <acr_nema/dicom_client_routines.h>
+
+/* these are pinched from minc_def.h */
+#define MALLOC(size) ((void *) malloc(size))
+#define FREE(ptr) free(ptr)
+#define REALLOC(ptr, size) ((void *) realloc(ptr, size))
+#define CALLOC(nelem, elsize) ((void *) calloc(nelem, elsize))

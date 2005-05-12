@@ -7,7 +7,19 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.5  2000-08-16 15:53:46  neelin
+ * Revision 6.7.2.1  2005-05-12 21:15:29  bert
+ * Initial checkin
+ *
+ * Revision 6.7  2005/03/04 00:15:14  bert
+ * Lose public and private keywords; change acr_read_one_element to assume implicit VR format for special sequence delimiters (group 0xfffe)
+ *
+ * Revision 6.6  2004/10/29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.5  2000/08/16 15:53:46  neelin
  * Added VR type UN (unknown) which has a length field similar to OB.
  *
  * Revision 6.4  2000/05/01 17:54:02  neelin
@@ -96,16 +108,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Define constants */
 #if (!defined(TRUE) || !defined(FALSE))
 #  define TRUE 1
 #  define FALSE 0
-#endif
-#ifndef private
-#  define private static
 #endif
 
 #define ACR_BYTE_ORDER_DEFAULT ACR_LITTLE_ENDIAN
@@ -120,13 +128,13 @@ typedef struct {
 } *Data_Info;
 
 /* Private functions */
-private int test_vr(char vr_to_test[2], char *vr_list[]);
-private int is_sequence_vr(char vr_to_test[2]);
-private int is_special_vr(char vr_to_test[2]);
-private Data_Info get_data_info(Acr_File *afp);
-private void invert_values(Acr_byte_order byte_order, 
-                           long nvals, size_t value_size, 
-                           void *input_value, void *mach_value);
+static int test_vr(char vr_to_test[2], char *vr_list[]);
+static int is_sequence_vr(char vr_to_test[2]);
+static int is_special_vr(char vr_to_test[2]);
+static Data_Info get_data_info(Acr_File *afp);
+static void invert_values(Acr_byte_order byte_order, 
+                          long nvals, size_t value_size, 
+                          void *input_value, void *mach_value);
 
 /* Macros */
 #define SIZEOF_ARRAY(a) (sizeof(a)/sizeof(a[0]))
@@ -146,7 +154,7 @@ private void invert_values(Acr_byte_order byte_order,
 @CREATED    : January 29, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private int test_vr(char vr_to_test[2], char *vr_list[])
+static int test_vr(char vr_to_test[2], char *vr_list[])
 {
    int found_special, i;
 
@@ -162,13 +170,13 @@ private int test_vr(char vr_to_test[2], char *vr_list[])
    return found_special;
 }
 
-private int is_sequence_vr(char vr_to_test[2])
+static int is_sequence_vr(char vr_to_test[2])
 {
    static char *sequence_vrs[] = {"SQ", NULL};
    return test_vr(vr_to_test, sequence_vrs);
 }
 
-private int is_special_vr(char vr_to_test[2])
+static int is_special_vr(char vr_to_test[2])
 {
    static char *special_vrs[] = {"OB", "OW", "SQ", "UN", NULL};
    return test_vr(vr_to_test, special_vrs);
@@ -187,7 +195,7 @@ private int is_special_vr(char vr_to_test[2])
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Data_Info get_data_info(Acr_File *afp)
+static Data_Info get_data_info(Acr_File *afp)
 {
    Data_Info data_info;
 
@@ -215,8 +223,7 @@ private Data_Info get_data_info(Acr_File *afp)
 @CREATED    : January 29, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_byte_order(Acr_File *afp, 
-                               Acr_byte_order byte_order)
+void acr_set_byte_order(Acr_File *afp, Acr_byte_order byte_order)
 {
    Data_Info data_info;
 
@@ -240,7 +247,7 @@ public void acr_set_byte_order(Acr_File *afp,
 @CREATED    : January 29, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_byte_order acr_get_byte_order(Acr_File *afp)
+Acr_byte_order acr_get_byte_order(Acr_File *afp)
 {
    Data_Info data_info;
 
@@ -264,7 +271,7 @@ public Acr_byte_order acr_get_byte_order(Acr_File *afp)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_get_machine_byte_order(void)
+int acr_get_machine_byte_order(void)
 {
    int dummy = 1;
    char *ptr = (char *) &dummy;
@@ -296,7 +303,7 @@ public int acr_get_machine_byte_order(void)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : January 29, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public int acr_need_invert(Acr_byte_order byte_order)
+int acr_need_invert(Acr_byte_order byte_order)
 {
    return (acr_get_machine_byte_order() != byte_order);
 }
@@ -314,8 +321,7 @@ public int acr_need_invert(Acr_byte_order byte_order)
 @CREATED    : January 29, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_vr_encoding(Acr_File *afp, 
-                                Acr_VR_encoding_type vr_encoding)
+void acr_set_vr_encoding(Acr_File *afp, Acr_VR_encoding_type vr_encoding)
 {
    Data_Info data_info;
 
@@ -339,7 +345,7 @@ public void acr_set_vr_encoding(Acr_File *afp,
 @CREATED    : January 29, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp)
+Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp)
 {
    Data_Info data_info;
 
@@ -366,8 +372,7 @@ public Acr_VR_encoding_type acr_get_vr_encoding(Acr_File *afp)
 @CREATED    : April 28, 2000 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_ignore_errors(Acr_File *afp, 
-                                  int ignore_nonfatal_protocol_errors)
+void acr_set_ignore_errors(Acr_File *afp, int ignore_nonfatal_protocol_errors)
 {
    Data_Info data_info;
 
@@ -392,7 +397,7 @@ public void acr_set_ignore_errors(Acr_File *afp,
 @CREATED    : April 28, 2000 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_ignore_protocol_errors(Acr_File *afp)
+int acr_ignore_protocol_errors(Acr_File *afp)
 {
    Data_Info data_info;
 
@@ -420,8 +425,8 @@ public int acr_ignore_protocol_errors(Acr_File *afp)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_reverse_byte_order(long nvals, size_t value_size, 
-                                   void *input_values, void *output_values)
+void acr_reverse_byte_order(long nvals, size_t value_size, 
+                            void *input_values, void *output_values)
 {
    long i, jlow, jhigh;
    char *ptr1, *ptr2, v0, v1;
@@ -464,9 +469,9 @@ public void acr_reverse_byte_order(long nvals, size_t value_size,
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void invert_values(Acr_byte_order byte_order, 
-                           long nvals, size_t value_size, 
-                           void *input_value, void *mach_value)
+static void invert_values(Acr_byte_order byte_order, 
+                          long nvals, size_t value_size, 
+                          void *input_value, void *mach_value)
 {
    long i;
    char *ptr1, *ptr2;
@@ -499,9 +504,9 @@ private void invert_values(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_get_short(Acr_byte_order byte_order, 
-                          long nvals, void *input_value, 
-                          unsigned short *mach_value)
+void acr_get_short(Acr_byte_order byte_order, 
+                   long nvals, void *input_value, 
+                   unsigned short *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_SHORT, 
                  input_value, mach_value);
@@ -522,8 +527,8 @@ public void acr_get_short(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_get_long(Acr_byte_order byte_order, 
-                         long nvals, void *input_value, long *mach_value)
+void acr_get_long(Acr_byte_order byte_order, 
+                  long nvals, void *input_value, long *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_LONG, 
                  input_value, mach_value);
@@ -545,8 +550,8 @@ public void acr_get_long(Acr_byte_order byte_order,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_get_float(Acr_byte_order byte_order, 
-                          long nvals, void *input_value, float *mach_value)
+void acr_get_float(Acr_byte_order byte_order, 
+                   long nvals, void *input_value, float *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_FLOAT, 
                  input_value, mach_value);
@@ -568,8 +573,8 @@ public void acr_get_float(Acr_byte_order byte_order,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_get_double(Acr_byte_order byte_order, 
-                           long nvals, void *input_value, double *mach_value)
+void acr_get_double(Acr_byte_order byte_order, 
+                    long nvals, void *input_value, double *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_DOUBLE, 
                  input_value, mach_value);
@@ -590,9 +595,9 @@ public void acr_get_double(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_put_short(Acr_byte_order byte_order, 
-                          long nvals, unsigned short *mach_value, 
-                          void *output_value)
+void acr_put_short(Acr_byte_order byte_order, 
+                   long nvals, unsigned short *mach_value, 
+                   void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_SHORT, 
                  mach_value, output_value);
@@ -613,8 +618,8 @@ public void acr_put_short(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_put_long(Acr_byte_order byte_order, 
-                         long nvals, long *mach_value, void *output_value)
+void acr_put_long(Acr_byte_order byte_order, 
+                  long nvals, long *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_LONG, 
                  mach_value, output_value);
@@ -635,8 +640,8 @@ public void acr_put_long(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_put_float(Acr_byte_order byte_order, 
-                          long nvals, float *mach_value, void *output_value)
+void acr_put_float(Acr_byte_order byte_order, 
+                   long nvals, float *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_FLOAT, 
                  mach_value, output_value);
@@ -657,8 +662,8 @@ public void acr_put_float(Acr_byte_order byte_order,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_put_double(Acr_byte_order byte_order, 
-                           long nvals, double *mach_value, void *output_value)
+void acr_put_double(Acr_byte_order byte_order, 
+                    long nvals, double *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_DOUBLE, 
                  mach_value, output_value);
@@ -681,7 +686,7 @@ public void acr_put_double(Acr_byte_order byte_order,
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip)
+Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip)
 {
    long i;
    int ch;
@@ -727,8 +732,8 @@ public Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip)
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
-                                  long nbytes_to_read, long *nbytes_read)
+Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
+                           long nbytes_to_read, long *nbytes_read)
 {
    long i;
    int ch;
@@ -775,8 +780,8 @@ public Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
-                                   long nbytes_to_unget)
+Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
+                            long nbytes_to_unget)
 {
    long i;
 
@@ -810,8 +815,8 @@ public Acr_Status acr_unget_buffer(Acr_File *afp, unsigned char buffer[],
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
-                                   long nbytes_to_write, long *nbytes_written)
+Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
+                            long nbytes_to_write, long *nbytes_written)
 {
    long i;
 
@@ -856,7 +861,7 @@ public Acr_Status acr_write_buffer(Acr_File *afp, unsigned char buffer[],
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : January 29, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_test_byte_order(Acr_File *afp)
+Acr_Status acr_test_byte_order(Acr_File *afp)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
@@ -917,6 +922,9 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
                        &data_length2);
       }
       if (data_length2 >= ACR_TEST_MAX2) {
+         /* If we get here, we have completely failed to make sense of 
+          * the byte ordering.
+          */
          acr_set_byte_order(afp, old_byte_order);
       }
    }
@@ -938,7 +946,7 @@ public Acr_Status acr_test_byte_order(Acr_File *afp)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_copy_file_encoding(Acr_File *afp1, Acr_File *afp2)
+void acr_copy_file_encoding(Acr_File *afp1, Acr_File *afp2)
 {
    acr_set_byte_order(afp2, acr_get_byte_order(afp1));
    acr_set_vr_encoding(afp2, acr_get_vr_encoding(afp1));
@@ -957,8 +965,8 @@ public void acr_copy_file_encoding(Acr_File *afp1, Acr_File *afp2)
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_get_element_header_size(char vr_name[2], 
-                                       Acr_VR_encoding_type vr_encoding)
+int acr_get_element_header_size(char vr_name[2], 
+                                Acr_VR_encoding_type vr_encoding)
 {
    int length;
 
@@ -985,8 +993,8 @@ public int acr_get_element_header_size(char vr_name[2],
 @CREATED    : February 5, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
-                                              int *group_id, int *element_id)
+Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
+                                       int *group_id, int *element_id)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT];
@@ -1042,10 +1050,10 @@ public Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : January 29, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_read_one_element(Acr_File *afp,
-                                       int *group_id, int *element_id,
-                                       char vr_name[],
-                                       long *data_length, char **data_pointer)
+Acr_Status acr_read_one_element(Acr_File *afp,
+                                int *group_id, int *element_id,
+                                char vr_name[],
+                                long *data_length, char **data_pointer)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
@@ -1071,7 +1079,7 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
    *element_id = elid;
 
    /* Look for VR and length of data */
-   if (acr_get_vr_encoding(afp) == ACR_IMPLICIT_VR) {
+   if (grpid == ACR_ITEM_GROUP || acr_get_vr_encoding(afp) == ACR_IMPLICIT_VR) {
       vr_name[0] = '\0';
       vr_name[1] = '\0';
       acr_get_long(byte_order, 1, &buffer[offset], (long *) &datalen);
@@ -1148,10 +1156,10 @@ public Acr_Status acr_read_one_element(Acr_File *afp,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : January 29, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_write_one_element(Acr_File *afp,
-                                        int group_id, int element_id,
-                                        char vr_name[],
-                                        long data_length, char *data_pointer)
+Acr_Status acr_write_one_element(Acr_File *afp,
+                                 int group_id, int element_id,
+                                 char vr_name[],
+                                 long data_length, char *data_pointer)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+2*ACR_SIZEOF_LONG];
@@ -1233,7 +1241,7 @@ public Acr_Status acr_write_one_element(Acr_File *afp,
 @CREATED    : July 10, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_status_string(Acr_Status status)
+char *acr_status_string(Acr_Status status)
 {
    char *status_string;
 

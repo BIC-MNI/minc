@@ -6,7 +6,19 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   :  
  * $Log: value_repr.c,v $
- * Revision 6.2  2000-08-16 15:53:46  neelin
+ * Revision 6.4.2.1  2005-05-12 21:15:31  bert
+ * Initial checkin
+ *
+ * Revision 6.4  2005/03/04 00:08:37  bert
+ * Lose private and public
+ *
+ * Revision 6.3  2004/10/29 13:08:42  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.2  2000/08/16 15:53:46  neelin
  * Added VR type UN (unknown) which has a length field similar to OB.
  *
  * Revision 6.1  1999/10/29 17:51:54  neelin
@@ -47,7 +59,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Types for VR table entries and conversion functions */
@@ -67,40 +78,40 @@ struct Acr_VR_Entry {
 };
 
 /* Private functions */
-private void check_table_integrity();
-private Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code);
-private Acr_VR_Type find_vr_name(char *vr_name);
-private double return_zero(Acr_VR_Entry *vr_entry, 
-                           Acr_byte_order byte_order,
-                           char *data, long data_length);
-private double string_to_numeric(Acr_VR_Entry *vr_entry, 
-                                 Acr_byte_order byte_order,
-                                 char *data, long data_length);
-private double get_short(Acr_VR_Entry *vr_entry, 
-                         Acr_byte_order byte_order,
-                         char *data, long data_length);
-private double get_long(Acr_VR_Entry *vr_entry, 
-                        Acr_byte_order byte_order,
-                        char *data, long data_length);
-private double get_float(Acr_VR_Entry *vr_entry, 
-                         Acr_byte_order byte_order,
-                         char *data, long data_length);
-private double get_double(Acr_VR_Entry *vr_entry, 
+static void check_table_integrity();
+static Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code);
+static Acr_VR_Type find_vr_name(char *vr_name);
+static double return_zero(Acr_VR_Entry *vr_entry, 
                           Acr_byte_order byte_order,
                           char *data, long data_length);
-private double guess_numeric_type(Acr_VR_Entry *vr_entry, 
-                                  Acr_byte_order byte_order,
-                                  char *data, long data_length);
-private void extend_internal_buffer(int length);
-private char *return_empty_string(Acr_VR_Entry *vr_entry, 
-                                  Acr_byte_order byte_order,
-                                  char *data, long data_length);
-private char *return_the_string(Acr_VR_Entry *vr_entry, 
+static double string_to_numeric(Acr_VR_Entry *vr_entry, 
                                 Acr_byte_order byte_order,
                                 char *data, long data_length);
-private char *numeric_to_string(Acr_VR_Entry *vr_entry, 
-                                Acr_byte_order byte_order,
-                                char *data, long data_length);
+static double get_short(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
+                        char *data, long data_length);
+static double get_long(Acr_VR_Entry *vr_entry, 
+                       Acr_byte_order byte_order,
+                       char *data, long data_length);
+static double get_float(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
+                        char *data, long data_length);
+static double get_double(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
+                         char *data, long data_length);
+static double guess_numeric_type(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length);
+static void extend_internal_buffer(int length);
+static char *return_empty_string(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length);
+static char *return_the_string(Acr_VR_Entry *vr_entry, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length);
+static char *numeric_to_string(Acr_VR_Entry *vr_entry, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length);
 
 /* Table of VRs and conversion routines */
 static Acr_VR_Entry VR_table[] = {
@@ -155,7 +166,7 @@ static int table_integrity_checked = FALSE;
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void check_table_integrity()
+static void check_table_integrity()
 {
    int ientry;
 
@@ -194,7 +205,7 @@ private void check_table_integrity()
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code)
+static Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code)
 {
    CHECK_TABLE_INTEGRITY;
 
@@ -226,7 +237,7 @@ private Acr_VR_Entry *get_vr_entry(Acr_VR_Type vr_code)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Acr_VR_Type find_vr_name(char *vr_name)
+static Acr_VR_Type find_vr_name(char *vr_name)
 {
    int ientry;
 
@@ -265,7 +276,7 @@ private Acr_VR_Type find_vr_name(char *vr_name)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_get_vr_name(Acr_VR_Type vr_code)
+char *acr_get_vr_name(Acr_VR_Type vr_code)
 {
    Acr_VR_Entry *entry;
 
@@ -287,7 +298,7 @@ public char *acr_get_vr_name(Acr_VR_Type vr_code)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_test_vr_name(char *vr_name)
+int acr_test_vr_name(char *vr_name)
 {
    Acr_VR_Type vr_code;
 
@@ -308,7 +319,7 @@ public int acr_test_vr_name(char *vr_name)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_VR_Type acr_lookup_vr_name(char *vr_name)
+Acr_VR_Type acr_lookup_vr_name(char *vr_name)
 {
    Acr_VR_Type vr_code;
    int ientry;
@@ -364,9 +375,9 @@ public Acr_VR_Type acr_lookup_vr_name(char *vr_name)
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public double acr_get_numeric_vr(Acr_VR_Type vr_code, 
-                                 Acr_byte_order byte_order,
-                                 char *data, long data_length)
+double acr_get_numeric_vr(Acr_VR_Type vr_code, 
+                          Acr_byte_order byte_order,
+                          char *data, long data_length)
 {
    Acr_VR_Entry *entry;
 
@@ -392,9 +403,9 @@ public double acr_get_numeric_vr(Acr_VR_Type vr_code,
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_get_string_vr(Acr_VR_Type vr_code, 
-                               Acr_byte_order byte_order,
-                               char *data, long data_length)
+char *acr_get_string_vr(Acr_VR_Type vr_code, 
+                        Acr_byte_order byte_order,
+                        char *data, long data_length)
 {
    Acr_VR_Entry *entry;
 
@@ -426,25 +437,25 @@ public char *acr_get_string_vr(Acr_VR_Type vr_code,
 ---------------------------------------------------------------------------- */
 
 /* ARGSUSED */
-private double return_zero(Acr_VR_Entry *vr_entry, 
-                           Acr_byte_order byte_order,
-                           char *data, long data_length)
+static double return_zero(Acr_VR_Entry *vr_entry, 
+                          Acr_byte_order byte_order,
+                          char *data, long data_length)
 {
    return 0.0;
 }
 
 /* ARGSUSED */
-private double string_to_numeric(Acr_VR_Entry *vr_entry, 
-                                 Acr_byte_order byte_order,
-                                 char *data, long data_length)
+static double string_to_numeric(Acr_VR_Entry *vr_entry, 
+                                Acr_byte_order byte_order,
+                                char *data, long data_length)
 {
    return atof((char *) data);
 }
 
 /* ARGSUSED */
-private double get_short(Acr_VR_Entry *vr_entry, 
-                         Acr_byte_order byte_order,
-                         char *data, long data_length)
+static double get_short(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
+                        char *data, long data_length)
 {
    unsigned short value;
 
@@ -458,9 +469,9 @@ private double get_short(Acr_VR_Entry *vr_entry,
 }
 
 /* ARGSUSED */
-private double get_long(Acr_VR_Entry *vr_entry, 
-                        Acr_byte_order byte_order,
-                        char *data, long data_length)
+static double get_long(Acr_VR_Entry *vr_entry, 
+                       Acr_byte_order byte_order,
+                       char *data, long data_length)
 {
    long value;
 
@@ -474,9 +485,9 @@ private double get_long(Acr_VR_Entry *vr_entry,
 }
 
 /* ARGSUSED */
-private double get_float(Acr_VR_Entry *vr_entry, 
-                         Acr_byte_order byte_order,
-                         char *data, long data_length)
+static double get_float(Acr_VR_Entry *vr_entry, 
+                        Acr_byte_order byte_order,
+                        char *data, long data_length)
 {
    float value;
 
@@ -490,9 +501,9 @@ private double get_float(Acr_VR_Entry *vr_entry,
 }
 
 /* ARGSUSED */
-private double get_double(Acr_VR_Entry *vr_entry, 
-                          Acr_byte_order byte_order,
-                          char *data, long data_length)
+static double get_double(Acr_VR_Entry *vr_entry, 
+                         Acr_byte_order byte_order,
+                         char *data, long data_length)
 {
    double value;
 
@@ -506,9 +517,9 @@ private double get_double(Acr_VR_Entry *vr_entry,
 }
 
 /* ARGSUSED */
-private double guess_numeric_type(Acr_VR_Entry *vr_entry, 
-                                  Acr_byte_order byte_order,
-                                  char *data, long data_length)
+static double guess_numeric_type(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length)
 {
    switch (data_length) {
    case ACR_SIZEOF_SHORT:
@@ -547,7 +558,7 @@ private double guess_numeric_type(Acr_VR_Entry *vr_entry,
 static char *internal_string_buffer = NULL;
 static int length_of_internal_string = 0;
 
-private void extend_internal_buffer(int length)
+static void extend_internal_buffer(int length)
 {
 
    if (length+1 > length_of_internal_string) {
@@ -561,9 +572,9 @@ private void extend_internal_buffer(int length)
 }
 
 /* ARGSUSED */
-private char *return_empty_string(Acr_VR_Entry *vr_entry, 
-                                  Acr_byte_order byte_order,
-                                  char *data, long data_length)
+static char *return_empty_string(Acr_VR_Entry *vr_entry, 
+                                 Acr_byte_order byte_order,
+                                 char *data, long data_length)
 {
    extend_internal_buffer(LINE_LENGTH);
 
@@ -573,17 +584,17 @@ private char *return_empty_string(Acr_VR_Entry *vr_entry,
 }
 
 /* ARGSUSED */
-private char *return_the_string(Acr_VR_Entry *vr_entry, 
-                                Acr_byte_order byte_order,
-                                char *data, long data_length)
+static char *return_the_string(Acr_VR_Entry *vr_entry, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length)
 {
    return (char *) data;
 }
 
 /* ARGSUSED */
-private char *numeric_to_string(Acr_VR_Entry *vr_entry, 
-                                Acr_byte_order byte_order,
-                                char *data, long data_length)
+static char *numeric_to_string(Acr_VR_Entry *vr_entry, 
+                               Acr_byte_order byte_order,
+                               char *data, long data_length)
 {
    extend_internal_buffer(LINE_LENGTH);
    (void) sprintf(internal_string_buffer, "%.6g",

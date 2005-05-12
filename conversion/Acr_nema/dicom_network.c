@@ -6,7 +6,16 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.c,v $
- * Revision 6.10  2001-03-19 18:30:32  neelin
+ * Revision 6.11.2.1  2005-05-12 21:15:30  bert
+ * Initial checkin
+ *
+ * Revision 6.11  2004/10/29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.10  2001/03/19 18:30:32  neelin
  * Added function to set implementation uid and changed name of function
  * that gets it.
  *
@@ -91,7 +100,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Constants */

@@ -6,7 +6,25 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.3  2002-12-07 01:37:24  neelin
+ * Revision 6.7.2.1  2005-05-12 21:15:30  bert
+ * Initial checkin
+ *
+ * Revision 6.7  2005/04/18 23:22:29  bert
+ * Initialize newlist in acr_copy_element() to avoid problems with empty lists
+ *
+ * Revision 6.6  2005/03/11 22:05:29  bert
+ * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
+ *
+ * Revision 6.5  2005/03/04 00:25:54  bert
+ * Avoid memory leak by freeing unused elements in a sequence.  Fix order of initialization in acr_create_element() to set variable length property correctly. Don't change VR encoding when parsing a sequence, rely on the new handling of 0xfffe group items by the acr_io functions
+ *
+ * Revision 6.4  2004/10/29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.3  2002/12/07 01:37:24  neelin
  * Added missing type
  *
  * Revision 6.2  2001/12/12 19:00:54  neelin
@@ -93,14 +111,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include <minc_def.h>
 #include <acr_nema.h>
 
 /* Private functions */
-private void delete_element_data(Acr_Element element);
-private Acr_Element create_element_mem(Acr_Element_Id elid,
-                                       Acr_VR_Type vr_code, 
-                                       size_t value_size, void *value);
+static void delete_element_data(Acr_Element element);
+static Acr_Element create_element_mem(Acr_Element_Id elid,
+                                      Acr_VR_Type vr_code, 
+                                      size_t value_size, void *value);
 
 /* Macros */
 #define SIZEOF_ARRAY(a) (sizeof(a)/sizeof(a[0]))
@@ -128,9 +145,9 @@ private Acr_Element create_element_mem(Acr_Element_Id elid,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : February 4, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element(int group_id, int element_id, 
-                                      Acr_VR_Type vr_code, 
-                                      long data_length, char *data_pointer)
+Acr_Element acr_create_element(int group_id, int element_id, 
+                               Acr_VR_Type vr_code, 
+                               long data_length, char *data_pointer)
 {
    Acr_Element element;
 
@@ -144,9 +161,9 @@ public Acr_Element acr_create_element(int group_id, int element_id,
    acr_set_element_vr(element, vr_code);
    acr_set_element_vr_encoding(element, ACR_EXPLICIT_VR);
    acr_set_element_byte_order(element, acr_get_machine_byte_order());
-   acr_set_element_variable_length(element, (data_length < 0));
    acr_set_element_next(element, NULL);
    acr_set_element_data(element, data_length, data_pointer);
+   acr_set_element_variable_length(element, (data_length < 0));
 
    return element;
 }
@@ -164,7 +181,7 @@ public Acr_Element acr_create_element(int group_id, int element_id,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private void delete_element_data(Acr_Element element)
+static void delete_element_data(Acr_Element element)
 {
    char *data_pointer;
 
@@ -193,7 +210,7 @@ private void delete_element_data(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : February 4, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public void acr_delete_element(Acr_Element element)
+void acr_delete_element(Acr_Element element)
 {
 
    if (element == NULL) return;
@@ -215,7 +232,7 @@ public void acr_delete_element(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_delete_element_list(Acr_Element element_list)
+void acr_delete_element_list(Acr_Element element_list)
 {
    Acr_Element next, cur;
 
@@ -246,8 +263,8 @@ public void acr_delete_element_list(Acr_Element element_list)
 @CREATED    : February 11, 1997 (P.N.)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_element_list_add(Acr_Element element_list, 
-                                        Acr_Element element)
+Acr_Element acr_element_list_add(Acr_Element element_list, 
+                                 Acr_Element element)
 {
    Acr_Element current;
 
@@ -281,8 +298,8 @@ public Acr_Element acr_element_list_add(Acr_Element element_list,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_id(Acr_Element element,
-                               int group_id, int element_id)
+void acr_set_element_id(Acr_Element element,
+                        int group_id, int element_id)
 {
    element->group_id = group_id;
    element->element_id = element_id;
@@ -303,8 +320,8 @@ public void acr_set_element_id(Acr_Element element,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_vr(Acr_Element element,
-                               Acr_VR_Type vr_code)
+void acr_set_element_vr(Acr_Element element,
+                        Acr_VR_Type vr_code)
 {
    element->vr_code = (short) vr_code;
    return;
@@ -324,8 +341,8 @@ public void acr_set_element_vr(Acr_Element element,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_vr_encoding(Acr_Element element,
-                                        Acr_VR_encoding_type vr_encoding)
+void acr_set_element_vr_encoding(Acr_Element element,
+                                 Acr_VR_encoding_type vr_encoding)
 {
    element->uses_explicit_vr = (vr_encoding == ACR_EXPLICIT_VR);
    return;
@@ -345,8 +362,8 @@ public void acr_set_element_vr_encoding(Acr_Element element,
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_byte_order(Acr_Element element,
-                                       Acr_byte_order byte_order)
+void acr_set_element_byte_order(Acr_Element element,
+                                Acr_byte_order byte_order)
 {
    element->has_little_endian_order = (byte_order == ACR_LITTLE_ENDIAN);
    return;
@@ -367,8 +384,8 @@ public void acr_set_element_byte_order(Acr_Element element,
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_variable_length(Acr_Element element,
-                                            int has_variable_length)
+void acr_set_element_variable_length(Acr_Element element,
+                                     int has_variable_length)
 {
    if (acr_element_is_sequence(element)) {
       element->has_variable_length = (has_variable_length != FALSE);
@@ -396,8 +413,8 @@ public void acr_set_element_variable_length(Acr_Element element,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : February 4, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public void acr_set_element_data(Acr_Element element,
-                                 long data_length, char *data_pointer)
+void acr_set_element_data(Acr_Element element,
+                          long data_length, char *data_pointer)
 {
    Acr_Element item, last, last2;
    long last_length;
@@ -465,7 +482,7 @@ public void acr_set_element_data(Acr_Element element,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_element_next(Acr_Element element, Acr_Element next)
+void acr_set_element_next(Acr_Element element, Acr_Element next)
 {
    element->next = next;
    return;
@@ -483,7 +500,7 @@ public void acr_set_element_next(Acr_Element element, Acr_Element next)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_get_element_group(Acr_Element element)
+int acr_get_element_group(Acr_Element element)
 {
    return element->group_id;
 }
@@ -500,7 +517,7 @@ public int acr_get_element_group(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_get_element_element(Acr_Element element)
+int acr_get_element_element(Acr_Element element)
 {
    return element->element_id;
 }
@@ -517,7 +534,7 @@ public int acr_get_element_element(Acr_Element element)
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_VR_Type acr_get_element_vr(Acr_Element element)
+Acr_VR_Type acr_get_element_vr(Acr_Element element)
 {
    return (Acr_VR_Type) element->vr_code;
 }
@@ -534,7 +551,7 @@ public Acr_VR_Type acr_get_element_vr(Acr_Element element)
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element)
+Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element)
 {
    return (element->uses_explicit_vr ? ACR_EXPLICIT_VR : ACR_IMPLICIT_VR);
 }
@@ -551,7 +568,7 @@ public Acr_VR_encoding_type acr_get_element_vr_encoding(Acr_Element element)
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_element_is_sequence(Acr_Element element)
+int acr_element_is_sequence(Acr_Element element)
 {
    return element->is_sequence;
 }
@@ -568,7 +585,7 @@ public int acr_element_is_sequence(Acr_Element element)
 @CREATED    : February 17, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_byte_order acr_get_element_byte_order(Acr_Element element)
+Acr_byte_order acr_get_element_byte_order(Acr_Element element)
 {
    return (element->has_little_endian_order ? 
            ACR_LITTLE_ENDIAN : ACR_BIG_ENDIAN);
@@ -586,7 +603,7 @@ public Acr_byte_order acr_get_element_byte_order(Acr_Element element)
 @CREATED    : February 4, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_element_has_variable_length(Acr_Element element)
+int acr_element_has_variable_length(Acr_Element element)
 {
    return element->has_variable_length;
 }
@@ -604,7 +621,7 @@ public int acr_element_has_variable_length(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_element_length(Acr_Element element)
+long acr_get_element_length(Acr_Element element)
 {
    long data_length;
 
@@ -629,7 +646,7 @@ public long acr_get_element_length(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_get_element_data(Acr_Element element)
+char *acr_get_element_data(Acr_Element element)
 {
    return element->data_pointer;
 }
@@ -639,7 +656,7 @@ public char *acr_get_element_data(Acr_Element element)
 @INPUT      : element
               vr_encoding - ACR_IMPLICIT_VR or ACR_EXPLICIT_VR
 @OUTPUT     : (none)
-@RETURNS    : total length for element
+@RETURNS    : total length for element, or zero if error.
 @DESCRIPTION: Get total length for element in ACR-NEMA representation
               depending on VR
 @METHOD     : 
@@ -648,12 +665,19 @@ public char *acr_get_element_data(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_element_total_length(Acr_Element element,
-                                         Acr_VR_encoding_type vr_encoding)
+long acr_get_element_total_length(Acr_Element element,
+                                  Acr_VR_encoding_type vr_encoding)
 {
+   /* bert- verify that the VR name is non-null. This protects against
+    * core dumps when reading improperly-formatted files.
+    */
+   char *vr_name = acr_get_vr_name(acr_get_element_vr(element));
+   if (vr_name == NULL) {
+      return (0);
+   }
+
    return acr_get_element_length(element) + 
-      acr_get_element_header_size(acr_get_vr_name(acr_get_element_vr(element)),
-                                  vr_encoding);
+      acr_get_element_header_size(vr_name, vr_encoding);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -668,7 +692,7 @@ public long acr_get_element_total_length(Acr_Element element,
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_get_element_next(Acr_Element element)
+Acr_Element acr_get_element_next(Acr_Element element)
 {
    return element->next;
 }
@@ -685,7 +709,7 @@ public Acr_Element acr_get_element_next(Acr_Element element)
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : February 4, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_copy_element(Acr_Element element)
+Acr_Element acr_copy_element(Acr_Element element)
 {
    Acr_Element copy;
    long length;
@@ -700,6 +724,7 @@ public Acr_Element acr_copy_element(Acr_Element element)
       length = -1;
       olditem = (Acr_Element) acr_get_element_data(element);
       newitem = NULL;
+      newlist = NULL;           /* bert- initialize in case list is empty */
       while (olditem != NULL) {
          if (newitem == NULL) {
             newlist = acr_copy_element(olditem);
@@ -754,7 +779,7 @@ public Acr_Element acr_copy_element(Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
+Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
 {
    int group_id, element_id, item_gid, item_elid;
    long data_length;
@@ -764,10 +789,12 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
    int is_sequence, more_to_read, found_delimiter, has_variable_length;
    Acr_Element item, itemlist, previtem;
    Acr_VR_Type vr_code;
-   Acr_VR_encoding_type old_vr_encoding;
+   Acr_VR_encoding_type vr_encoding;
 
    /* Set element in case of error */
    *element = NULL;
+
+   vr_encoding = acr_get_vr_encoding(afp);
 
    /* Read in the value */
    status = acr_read_one_element(afp, &group_id, &element_id, vr_name,
@@ -785,16 +812,16 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
    if ((data_length > 0)  && (data_pointer == NULL)) {
       is_sequence = TRUE;
    }
+
    has_variable_length = (data_length < 0);
 
    /* If we have a sequence, read in all the items and store them as a 
-      list of elements. We must turn off explicit VR encoding for items. */
+      list of elements. */
    if (is_sequence) {
 
       more_to_read = TRUE;
       itemlist = NULL;
-      old_vr_encoding = acr_get_vr_encoding(afp);
-      acr_set_vr_encoding(afp, ACR_IMPLICIT_VR);
+
       while (more_to_read) {
 
          /* Read in an item */
@@ -803,7 +830,7 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
 
          /* If we know the length of the whole sequence, check it */
          if ((status == ACR_OK) && (data_length > 0)) {
-            data_length -= acr_get_element_total_length(item, ACR_IMPLICIT_VR);
+            data_length -= acr_get_element_total_length(item, vr_encoding);
             if (data_length < 0) status = ACR_PROTOCOL_ERROR;
          }
 
@@ -825,15 +852,15 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
             }
             previtem = item;
          }
+         else {
+             free(item);        /* Avoid leaking memory */
+         }
 
          /* Check for end of items */
          if ((data_length == 0) || found_delimiter || (status != ACR_OK)) {
             more_to_read = FALSE;
          }
       }        /* End of loop over items */
-
-      /* Restore the VR encoding */
-      acr_set_vr_encoding(afp, old_vr_encoding);
 
       /* Save the item list as the data */
       data_pointer = (char *) itemlist;
@@ -866,7 +893,7 @@ public Acr_Status acr_input_element(Acr_File *afp, Acr_Element *element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
+Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
 {
    char *vr_name;
    Acr_VR_Type vr_code;
@@ -957,8 +984,8 @@ public Acr_Status acr_output_element(Acr_File *afp, Acr_Element element)
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_convert_element_byte_order(Acr_Element element, 
-                                           Acr_byte_order byte_order)
+void acr_convert_element_byte_order(Acr_Element element, 
+                                    Acr_byte_order byte_order)
 {
    Acr_byte_order element_byte_order;
    long nvalues;
@@ -1015,8 +1042,8 @@ public void acr_convert_element_byte_order(Acr_Element element,
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_match_element_id(Acr_Element_Id elid,
-                                Acr_Element element)
+int acr_match_element_id(Acr_Element_Id elid,
+                         Acr_Element element)
 {
    return ((elid->group_id == acr_get_element_group(element)) &&
            (elid->element_id == acr_get_element_element(element)));
@@ -1037,8 +1064,8 @@ public int acr_match_element_id(Acr_Element_Id elid,
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_find_element_id(Acr_Element element_list,
-                                       Acr_Element_Id elid)
+Acr_Element acr_find_element_id(Acr_Element element_list,
+                                Acr_Element_Id elid)
 {
    Acr_Element element;
 
@@ -1071,7 +1098,7 @@ public Acr_Element acr_find_element_id(Acr_Element element_list,
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void *acr_memdup(size_t value_size, void *value)
+void *acr_memdup(size_t value_size, void *value)
 {
    char *copy, *original;
    size_t i;
@@ -1100,9 +1127,9 @@ public void *acr_memdup(size_t value_size, void *value)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private Acr_Element create_element_mem(Acr_Element_Id elid,
-                                       Acr_VR_Type vr_code, 
-                                       size_t value_size, void *value)
+static Acr_Element create_element_mem(Acr_Element_Id elid,
+                                      Acr_VR_Type vr_code, 
+                                      size_t value_size, void *value)
 {
    return acr_create_element(elid->group_id, elid->element_id, vr_code,
                              value_size, acr_memdup(value_size, value));
@@ -1121,8 +1148,8 @@ private Acr_Element create_element_mem(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_short(Acr_Element_Id elid,
-                                            unsigned short value)
+Acr_Element acr_create_element_short(Acr_Element_Id elid,
+                                     unsigned short value)
 {
    return create_element_mem(elid, ACR_VR_US, sizeof(value), (void *) &value);
 }
@@ -1140,8 +1167,8 @@ public Acr_Element acr_create_element_short(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_long(Acr_Element_Id elid,
-                                           long value)
+Acr_Element acr_create_element_long(Acr_Element_Id elid,
+                                    long value)
 {
    return create_element_mem(elid, ACR_VR_UL, sizeof(value), (void *) &value);
 }
@@ -1162,8 +1189,8 @@ public Acr_Element acr_create_element_long(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
-                                              double value)
+Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
+                                       double value)
 {
    char string[256];
    Acr_Element element;
@@ -1192,8 +1219,8 @@ public Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_string(Acr_Element_Id elid,
-                                             char *value)
+Acr_Element acr_create_element_string(Acr_Element_Id elid,
+                                      char *value)
 {
    long data_length;
    long alloc_length;
@@ -1243,8 +1270,8 @@ public Acr_Element acr_create_element_string(Acr_Element_Id elid,
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
-                                               Acr_Element itemlist)
+Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
+                                        Acr_Element itemlist)
 {
    return acr_create_element(elid->group_id, elid->element_id, 
                              ACR_VR_SQ, -1L, (char *) itemlist);
@@ -1263,7 +1290,7 @@ public Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public unsigned short acr_get_element_short(Acr_Element element)
+unsigned short acr_get_element_short(Acr_Element element)
 {
    unsigned short value;
 
@@ -1288,7 +1315,7 @@ public unsigned short acr_get_element_short(Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_element_long(Acr_Element element)
+long acr_get_element_long(Acr_Element element)
 {
    long value;
 
@@ -1313,7 +1340,7 @@ public long acr_get_element_long(Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public double acr_get_element_numeric(Acr_Element element)
+double acr_get_element_numeric(Acr_Element element)
 {
    double value;
 
@@ -1337,7 +1364,7 @@ public double acr_get_element_numeric(Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public char *acr_get_element_string(Acr_Element element)
+char *acr_get_element_string(Acr_Element element)
 {
 
    return acr_get_string_vr(acr_get_element_vr(element),
@@ -1363,8 +1390,8 @@ public char *acr_get_element_string(Acr_Element element)
 @CREATED    : February 17, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_element_short_array(Acr_Element element, long max_values, 
-                                        unsigned short values[])
+long acr_get_element_short_array(Acr_Element element, long max_values, 
+                                 unsigned short values[])
 {
    long nvalues;
 
@@ -1407,7 +1434,7 @@ public long acr_get_element_short_array(Acr_Element element, long max_values,
 @CREATED    : February 27, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int *acr_element_numeric_array_separator(int character)
+int *acr_element_numeric_array_separator(int character)
 {
    static int *separator_list = NULL;
    static int nseparators = 0;
@@ -1457,8 +1484,8 @@ public int *acr_element_numeric_array_separator(int character)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_get_element_numeric_array(Acr_Element element,
-                                         int max_values, double values[])
+int acr_get_element_numeric_array(Acr_Element element,
+                                  int max_values, double values[])
 {
    char *start, *end, *cur, *prev;
    int *separator_list;
@@ -1519,8 +1546,8 @@ public int acr_get_element_numeric_array(Acr_Element element,
 @CREATED    : February 12, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_dump_element_list(FILE *file_pointer, 
-                                  Acr_Element element_list)
+void acr_dump_element_list(FILE *file_pointer, 
+                           Acr_Element element_list)
 {
 #define INDENT_AMOUNT 3
    Acr_Element cur_element;
@@ -1548,10 +1575,22 @@ public void acr_dump_element_list(FILE *file_pointer,
 
       /* Print the element id */
       (void) fprintf(file_pointer, 
-                     "0x%04x  0x%04x  length = %d :",
+                     "0x%04x  0x%04x  length = %d ",
                      acr_get_element_group(cur_element),
                      acr_get_element_element(cur_element),
                      (int) acr_get_element_length(cur_element));
+
+      if (_acr_name_proc != NULL) {
+          char *name_ptr;
+
+          name_ptr = (*_acr_name_proc)(acr_get_element_group(cur_element),
+                                       acr_get_element_element(cur_element));
+
+          if (name_ptr != NULL) {
+              fprintf(file_pointer, "(%s)", name_ptr);
+          }
+      }
+      fprintf(file_pointer, ":");
 
       /* Print value if needed */
       vr_code = acr_get_element_vr(cur_element);

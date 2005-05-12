@@ -6,7 +6,22 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.4  2001-11-08 14:17:05  neelin
+ * Revision 6.7.2.1  2005-05-12 21:15:30  bert
+ * Initial checkin
+ *
+ * Revision 6.7  2005/03/04 00:09:00  bert
+ * Lose private and public
+ *
+ * Revision 6.6  2005/02/16 19:22:32  bert
+ * Autoconfiscation
+ *
+ * Revision 6.5  2004/10/29 13:08:41  rotor
+ *  * rewrote Makefile with no dependency on a minc distribution
+ *  * removed all references to the abominable minc_def.h
+ *  * I should autoconf this really, but this is old code that
+ *      is now replaced by Jon Harlaps PERL version..
+ *
+ * Revision 6.4  2001/11/08 14:17:05  neelin
  * Added acr_test_dicom_file to allow reading of DICOM part 10 format
  * files. This function also calls acr_test_byte_order to set up the stream
  * properly and can be used as a direct replacement for that function.
@@ -88,8 +103,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
-#include <minc_def.h>
-#include <file_io.h>
+#include <acr_nema/file_io.h>
 
 /* Define some constants */
 #define ACR_MAX_BUFFER_LENGTH (64*1024)
@@ -122,7 +136,7 @@ static char *Output_trace_file = "acr_file_output_XXXXXX";
 @CREATED    : February 18, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_enable_trace(Acr_File *afp)
+void acr_file_enable_trace(Acr_File *afp)
 {
    afp->do_trace = TRUE;
 }
@@ -139,7 +153,7 @@ public void acr_file_enable_trace(Acr_File *afp)
 @CREATED    : February 18, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_disable_trace(Acr_File *afp)
+void acr_file_disable_trace(Acr_File *afp)
 {
    afp->do_trace = FALSE;
 }
@@ -161,9 +175,9 @@ public void acr_file_disable_trace(Acr_File *afp)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public Acr_File *acr_file_initialize(void *io_data,
-                                     int maxlength,
-                                     Acr_Io_Routine io_routine)
+Acr_File *acr_file_initialize(void *io_data,
+                              int maxlength,
+                              Acr_Io_Routine io_routine)
 {
    Acr_File *afp;
 
@@ -173,7 +187,7 @@ public Acr_File *acr_file_initialize(void *io_data,
    }
 
    /* Allocate the strcture */
-   afp = MALLOC(sizeof(*afp));
+   afp = malloc(sizeof(*afp));
 
    /* Initialize fields */
    afp->io_data = io_data;
@@ -191,7 +205,7 @@ public Acr_File *acr_file_initialize(void *io_data,
    afp->client_data = NULL;
 
    /* Allocate the buffer */
-   afp->start = MALLOC((size_t) afp->buffer_length);
+   afp->start = malloc((size_t) afp->buffer_length);
 
    /* Set ptr and end to start so that we can detect beginning of i/o */
    afp->length = 0;
@@ -217,22 +231,22 @@ public Acr_File *acr_file_initialize(void *io_data,
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_free(Acr_File *afp)
+void acr_file_free(Acr_File *afp)
 {
    if (afp != NULL) {
       if (afp->stream_type == ACR_WRITE_STREAM) {
          (void) acr_file_flush(afp);
       }
       if (afp->start != NULL) {
-         FREE(afp->start);
+         free(afp->start);
       }
       if (afp->tracefp != NULL) {
          (void) fclose(afp->tracefp);
       }
       if (afp->client_data != NULL) {
-         FREE(afp->client_data);
+         free(afp->client_data);
       }
-      FREE(afp);
+      free(afp);
    }
    return;
 }
@@ -250,7 +264,7 @@ public void acr_file_free(Acr_File *afp)
 @CREATED    : February 18, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_reset(Acr_File *afp)
+void acr_file_reset(Acr_File *afp)
 {
    afp->watchpoint_set = FALSE;
    afp->bytes_to_watchpoint = 0;
@@ -277,8 +291,8 @@ public void acr_file_reset(Acr_File *afp)
 @CREATED    : May 17, 2000 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_set_ismore_function(Acr_File *afp, 
-                                         Acr_Ismore_Function ismore_function)
+void acr_file_set_ismore_function(Acr_File *afp, 
+                                  Acr_Ismore_Function ismore_function)
 {
    afp->ismore_function = ismore_function;
 }
@@ -298,7 +312,7 @@ public void acr_file_set_ismore_function(Acr_File *afp,
 @CREATED    : March 10, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_set_eof(Acr_File *afp)
+void acr_file_set_eof(Acr_File *afp)
 {
    afp->reached_eof = TRUE;
 }
@@ -320,10 +334,10 @@ public void acr_file_set_eof(Acr_File *afp)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_file_set_client_data(Acr_File *afp, void *client_data)
+void acr_file_set_client_data(Acr_File *afp, void *client_data)
 {
    if (afp->client_data != NULL) {
-      FREE(afp->client_data);
+      free(afp->client_data);
    }
    afp->client_data = client_data;
 }
@@ -340,7 +354,7 @@ public void acr_file_set_client_data(Acr_File *afp, void *client_data)
 @CREATED    : February 14, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void *acr_file_get_client_data(Acr_File *afp)
+void *acr_file_get_client_data(Acr_File *afp)
 {
    return afp->client_data;
 }
@@ -358,7 +372,7 @@ public void *acr_file_get_client_data(Acr_File *afp)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public int acr_file_read_more(Acr_File *afp)
+int acr_file_read_more(Acr_File *afp)
 {
    int nread, ichar;
    char trace_file[128];
@@ -434,8 +448,7 @@ public int acr_file_read_more(Acr_File *afp)
    if (afp->do_trace) {
       if (afp->tracefp == NULL) {
          (void) strcpy(trace_file, Input_trace_file);
-         (void) mktemp(trace_file);
-         afp->tracefp = fopen(trace_file, "w");
+         afp->tracefp = fdopen(mkstemp(trace_file), "w");
          if (afp->tracefp != NULL) {
             (void) fprintf(stderr, "Opened input trace file %s.\n", 
                            trace_file);
@@ -482,7 +495,7 @@ public int acr_file_read_more(Acr_File *afp)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public int acr_file_write_more(Acr_File *afp, int character)
+int acr_file_write_more(Acr_File *afp, int character)
 {
 
    /* Check the pointer */
@@ -517,7 +530,7 @@ public int acr_file_write_more(Acr_File *afp, int character)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public int acr_file_flush(Acr_File *afp)
+int acr_file_flush(Acr_File *afp)
 {
    int length, nwritten;
    char trace_file[128];
@@ -549,8 +562,7 @@ public int acr_file_flush(Acr_File *afp)
       if (afp->do_trace) {
          if (afp->tracefp == NULL) {
             (void) strcpy(trace_file, Output_trace_file);
-            (void) mktemp(trace_file);
-            afp->tracefp = fopen(trace_file, "w");
+            afp->tracefp = fdopen(mkstemp(trace_file), "w");
             if (afp->tracefp != NULL) {
                (void) fprintf(stderr, "Opened output trace file %s.\n", 
                               trace_file);
@@ -607,7 +619,7 @@ public int acr_file_flush(Acr_File *afp)
 @CREATED    : November 25, 1993 (Peter Neelin)
 @MODIFIED   : February 5, 1997 (P.N.)
 ---------------------------------------------------------------------------- */
-public int acr_ungetc(int c, Acr_File *afp)
+int acr_ungetc(int c, Acr_File *afp)
 {
 
    /* Check the pointer */
@@ -645,7 +657,7 @@ public int acr_ungetc(int c, Acr_File *afp)
 @CREATED    : February 17, 1997 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void *acr_file_get_io_data(Acr_File *afp)
+void *acr_file_get_io_data(Acr_File *afp)
 {
    return afp->io_data;
 }
@@ -666,7 +678,7 @@ public void *acr_file_get_io_data(Acr_File *afp)
 @CREATED    : February 5, 1997 (P.N.)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint)
+void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint)
 {
    if (afp == NULL) return;
 
@@ -710,7 +722,7 @@ public void acr_set_io_watchpoint(Acr_File *afp, long bytes_to_watchpoint)
 @CREATED    : February 5, 1997 (P.N.)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public long acr_get_io_watchpoint(Acr_File *afp)
+long acr_get_io_watchpoint(Acr_File *afp)
 {
    if ((afp == NULL) || !afp->watchpoint_set) return ACR_NO_WATCHPOINT;
 
@@ -738,7 +750,7 @@ public long acr_get_io_watchpoint(Acr_File *afp)
 @CREATED    : May 17, 2000 (P.N.)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_file_ismore(Acr_File *afp)
+int acr_file_ismore(Acr_File *afp)
 {
    int retval;
 
@@ -791,7 +803,7 @@ public int acr_file_ismore(Acr_File *afp)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_stdio_read(void *io_data, void *buffer, int nbytes)
+int acr_stdio_read(void *io_data, void *buffer, int nbytes)
 {
    FILE *fp;
    int nread;
@@ -821,7 +833,7 @@ public int acr_stdio_read(void *io_data, void *buffer, int nbytes)
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_stdio_write(void *io_data, void *buffer, int nbytes)
+int acr_stdio_write(void *io_data, void *buffer, int nbytes)
 {
    FILE *fp;
    int nwritten;
@@ -855,7 +867,7 @@ public int acr_stdio_write(void *io_data, void *buffer, int nbytes)
 @CREATED    : May 17, 2000 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-public int acr_stdio_ismore(void *io_data)
+int acr_stdio_ismore(void *io_data)
 {
    FILE *fp;
    int val;

@@ -24,5 +24,4 @@
 #include <stdio.h>
 #include <limits.h>
 #include <ctype.h>
-#include <minc_def.h>
 #include <acr_nema.h>

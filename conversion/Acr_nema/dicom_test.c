@@ -3,7 +3,6 @@
 #include <limits.h>
 
 #include <acr_nema.h>
-#include <minc_def.h>
 
 #if 0
 #define WRITING
