@@ -37,3 +37,16 @@ voxeltoworld
 worldtovoxel
 xfmconcat
 xfminvert
+*.mnc
+dump_acr_nema
+extract_acr_nema
+read_acr_nema
+copy_acr_nema
+acr_test
+dicom_test
+mnc2nii
+nii2mnc
+dcm2mnc
+upet2mnc
+ecattominc
+minctoecat
