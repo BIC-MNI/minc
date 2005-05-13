@@ -446,6 +446,7 @@ dist_man1_MANS = \
 	conversion/minctoecat/minctoecat.man1 \
 	conversion/nifti1/nii2mnc.man1 \
 	conversion/nifti1/mnc2nii.man1 \
-	conversion/micropet/upet2mnc.man1
+	conversion/micropet/upet2mnc.man1 \
+	conversion/dcm2mnc/dcm2mnc.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
