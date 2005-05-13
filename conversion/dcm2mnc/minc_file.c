@@ -7,7 +7,13 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6  2005-04-29 23:09:06  bert
+   * Revision 1.7  2005-05-13 21:23:09  bert
+   * Fix uninitialized variable problem, also correct file names to be _pet instead of _mri for PET modality
+   *
+   * Revision 1.6.2.1  2005/05/12 21:16:48  bert
+   * Initial checkin
+   *
+   * Revision 1.6  2005/04/29 23:09:06  bert
    * Write sample-width information to file for irregular time dimensions
    *
    * Revision 1.5  2005/04/20 23:15:06  bert
@@ -101,7 +107,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6 2005-04-29 23:09:06 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.7 2005-05-13 21:23:09 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -145,6 +151,7 @@ create_minc_file(const char *minc_file,
     char patient_name[256];
     char reg_time[256];
     char temp_str[256];
+    char suffix_str[256];
     const char *filename;
     int minc_clobber;
     int mincid, icvid;
@@ -228,8 +235,15 @@ create_minc_file(const char *minc_file,
         }
 
         /* Create file name */
-        /* changed by leili, omitted the scanner info, changed - to _ */
-        sprintf(temp_name, "%s%s_%s_%s_%s%s%s%s%s%s_mri.mnc", 
+
+        if (!strcmp(general_info->study.modality, MI_MRI)) {
+            strcpy(suffix_str, "_mri");
+        }
+        else if (!strcmp(general_info->study.modality, MI_PET)) {
+            strcpy(suffix_str, "_pet");
+        }
+
+        sprintf(temp_name, "%s%s_%s_%s_%s%s%s%s%s%s%s.mnc", 
                 full_path,
                 patient_name,
                 general_info->patient.reg_date,
@@ -239,7 +253,9 @@ create_minc_file(const char *minc_file,
                 scan_label[ECHO],
                 scan_label[TIME],
                 scan_label[PHASE],
-                scan_label[CHEM_SHIFT]);
+                scan_label[CHEM_SHIFT],
+                suffix_str);
+
         filename = temp_name;
 
         if (G.Debug) {
@@ -344,7 +360,7 @@ create_minc_file(const char *minc_file,
 static void 
 minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
 {
-    double sum;                 /* Sum of differences for computing average */
+    double sum = 0.0;   /* Sum of differences for computing average */
     double avg;                 /* Average */
     double diff;                /* Difference between adjacent coordinates */
     double step;                /* Step size from widths */
@@ -372,7 +388,6 @@ minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
 
         /* Now calculate the average value for the coordinate spacing.
          */
-        sum = 0.0;
         for (index = 1; index < length; index++) {
             sum += gi_ptr->coordinates[imri][index] - 
                 gi_ptr->coordinates[imri][index-1];
