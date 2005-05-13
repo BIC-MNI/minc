@@ -1,3 +1,30 @@
+2005-05-13  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Add --enable-acr-nema option to configure.in and Makefile.am
+	* Add ACR/NEMA and dcm2mnc sources to the build and distribution
+	
+2005-05-04  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Add options to upet2mnc to allow user to select either 
+	head-centered or body-centered orientation, following my
+	understanding of the Mouse Imaging Centre's conventions for rodent 
+	images.
+	* Update declarations in minc_simple.c and minc_simple.h to
+	properly build on Windows.
+	* Update ecattominc/minctoecat to build properly on Windows.
+	* Update upet2mnc to avoid use of the strptime() function, that is
+	not available on Windows.
+	
+2005-05-03  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Added man pages for the NIfTI and microPET converters
+	* Modified NIfTI converters to use ParseArgv(), the standard 
+	argument parser.
+	* Fixed a problem in mni_io.c that caused the library to fail when
+	a UNIX program read tag point files that had been written on
+	MS-DOS.
+	* Streamlined the m4_files included with the distribution.
+	
 2005-04-18  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Move internal volume_io headers into the volume_io subdirectory 
 	permanently
@@ -24,7 +51,7 @@
 2005-02-15  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Add conversions to the branch
 	* Add simplified interface to the branch
-	
+
 2004-08-11  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Fix MI_MAX_IMGDIMS at 100 to avoid netCDF 3.5.1 problem.
 	

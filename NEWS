@@ -1,9 +1,13 @@
-                New in Release 1.4-test
+                New in Release 1.4
                 ------------------
-* New support for Windows
+* New support for Windows builds - see Makefile.msvc-win32
 
-* Added conversion programs for ecat, NIfTI-1/Analyze, and microPET
-  formats.
+* Added conversion programs for ecat, NIfTI-1/Analyze, DICOM, and 
+  microPET formats.
+
+* Added optional installation of ACR/NEMA (DICOM) library, headers, and
+  tools. Use the --enable-acr-nema option when running configure to
+  request installation of these tools.
 
 * Added "simplified" MINC programming interface.
 
