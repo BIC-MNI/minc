@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.2  2005-05-16 19:45:52  bert
+ * Revision 1.14.2.3  2005-05-16 19:55:50  bert
+ * Fix usage of G.command_line
+ *
+ * Revision 1.14.2.2  2005/05/16 19:45:52  bert
  * Minor fix to argument structure, to reflect correct usage of ARGV_STRING items
  *
  * Revision 1.14.2.1  2005/05/12 21:16:47  bert
@@ -92,7 +95,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.2 2005-05-16 19:45:52 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.3 2005-05-16 19:55:50 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -788,7 +791,7 @@ use_the_files(int num_files,
         /* Invoke a command on the file (if requested) and get the 
          * returned file name 
          */
-        if (G.command_line[0] != '\0') {
+        if (G.command_line != NULL && *G.command_line != '\0') {
             sprintf(string, "%s %s", G.command_line, output_file_name);
             printf("-Applying command '%s' to output file...  ", 
                    G.command_line);
