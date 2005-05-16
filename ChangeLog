@@ -1,3 +1,15 @@
+2005-05-16  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Housekeeping - remove README.binary_packaging, rename
+	mni_minc.epm.header to epm-header.in and update
+	Makefile.am and configure.in accordingly.
+	* Update Makefile.msvc-win32
+	* Some minor fixes to dcm2mnc (dcm2mnc.h, dcm2mnc.c, and
+	minc_file.c)
+	* Make dcm2mnc build on Windows with appropriate updates to 
+	acr_nema library and dcm2mnc sources
+	* Add checks for int32_t and int16_t
+	
 2005-05-13  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Add --enable-acr-nema option to configure.in and Makefile.am
