@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.14.2.8 $)
+AC_REVISION($Revision: 6.14.2.9 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -19,6 +19,7 @@ AM_PROG_LEX
 AC_PROG_YACC
 
 AC_HEADER_TIME
+AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/time.h sys/stat.h sys/wait.h unistd.h)
 AC_CHECK_HEADERS(fcntl.h pwd.h float.h values.h)
 
