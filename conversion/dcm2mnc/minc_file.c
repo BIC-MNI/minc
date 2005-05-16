@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6.2.2  2005-05-13 21:40:15  bert
+   * Revision 1.6.2.3  2005-05-16 19:55:26  bert
+   * Fix usage of G.Name
+   *
+   * Revision 1.6.2.2  2005/05/13 21:40:15  bert
    * properly initialize variable, also use _pet instead of _mri suffix for PET modality
    *
    * Revision 1.6.2.1  2005/05/12 21:16:48  bert
@@ -107,7 +110,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.2 2005-05-13 21:40:15 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.3 2005-05-16 19:55:26 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -178,7 +181,7 @@ create_minc_file(const char *minc_file,
         /******************************************/
         /* Changed by Leili from "string_to_initials" to "string_to_filename" */
         /* based on people's request at MNI */ 
-        if (G.Name[0] != '\0') {
+        if (G.Name != NULL && *G.Name != '\0') {
             strcpy(patient_name, G.Name);
         } 
         else {
