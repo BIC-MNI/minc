@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.14.2.6 $)
+AC_REVISION($Revision: 6.14.2.7 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -61,6 +61,7 @@ AM_CONDITIONAL(ACR_NEMA_TOOLS, test x$acr_nema = xtrue)
 
 AC_CONFIG_FILES([
 Makefile 
+epm-header
 doc/Makefile
 testdir/Makefile 
 volume_io/Makefile
