@@ -202,7 +202,6 @@ EXTRA_DIST = GETTING_STARTED \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
 	epm-header.in \
-	README.binary_packaging \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
 	conversion/Acr_nema/dicom.txt
