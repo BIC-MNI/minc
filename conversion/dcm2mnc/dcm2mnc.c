@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.3  2005-05-16 19:55:50  bert
+ * Revision 1.14.2.4  2005-05-16 22:39:56  bert
+ * Insert conditionals to make the file build properly under Windows
+ *
+ * Revision 1.14.2.3  2005/05/16 19:55:50  bert
  * Fix usage of G.command_line
  *
  * Revision 1.14.2.2  2005/05/16 19:45:52  bert
@@ -95,18 +98,17 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.3 2005-05-16 19:55:50 bert Exp $";
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <math.h>
-#include <dirent.h>
-#include <ParseArgv.h>
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.4 2005-05-16 22:39:56 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
+
+#include <sys/stat.h>
+#include <math.h>
+#if HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#include <ParseArgv.h>
 
 /* Function Prototypes */
 static int dcm_sort_function(const void *entry1, const void *entry2);
@@ -124,6 +126,14 @@ struct globals G;
 
 #define VERSION_STRING "2.0.05 built " __DATE__ " " __TIME__
 
+#ifndef S_ISDIR
+#define S_ISDIR(x) (((x) & _S_IFMT) == _S_IFDIR)
+#endif
+
+#ifndef S_ISREG
+#define S_ISREG(x) (((x) & _S_IFMT) == _S_IFREG)
+#endif
+
 ArgvInfo argTable[] = {
     {NULL, ARGV_VERINFO, VERSION_STRING, NULL, NULL },
     {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &G.clobber,
@@ -134,8 +144,10 @@ ArgvInfo argTable[] = {
      "Exclude subject name from file header"},
     {"-descr", ARGV_STRING, (char *) 1, (char *) &G.Name,
      "Use <str> as session descriptor (default = patient initials)"},
+#if HAVE_POPEN
     {"-cmd", ARGV_STRING, (char *) 1, (char *) &G.command_line, 
      "Apply <command> to output files (e.g. gzip)"},
+#endif
     {"-verbose", ARGV_CONSTANT, (char *) LO_LOGGING, (char *) &G.Debug,
      "Print debugging information"},
     {"-debug", ARGV_CONSTANT, (char *) HI_LOGGING, (char *) &G.Debug,
@@ -244,6 +256,7 @@ main(int argc, char *argv[])
      */
     num_files = 0;
     for (ifile = 0 ; ifile < num_file_args; ifile++) {
+#if HAVE_DIRENT_H
         if (stat(argv[ifile + 1], &st) == 0 && S_ISDIR(st.st_mode)) {
             DIR *dp;
             struct dirent *np;
@@ -286,6 +299,9 @@ main(int argc, char *argv[])
         else {
             file_list[num_files++] = strdup(argv[ifile + 1]);
         }
+#else
+        file_list[num_files++] = strdup(argv[ifile + 1]);
+#endif
     }
 
     if (G.use_stdin) {
@@ -598,8 +614,6 @@ use_the_files(int num_files,
     int exit_status;
     char *output_file_name;
     string_t file_prefix;
-    int output_uid;
-    int output_gid;
     string_t string;
     FILE *fp;
     int trust_location;
@@ -787,7 +801,8 @@ use_the_files(int num_files,
         if (G.Debug) {
             printf("Created minc file %s.\n", output_file_name);
         }
-       
+
+#if HAVE_POPEN       
         /* Invoke a command on the file (if requested) and get the 
          * returned file name 
          */
@@ -813,11 +828,7 @@ use_the_files(int num_files,
             }
             printf("Done.\n");
         }
-       
-        /* Change the ownership */
-        if ((output_uid != INT_MIN) && (output_gid != INT_MIN)) {
-            chown(output_file_name, (uid_t) output_uid, (gid_t) output_gid);
-        }
+#endif /* HAVE_POPEN */
     }
    
     /* Free acquisition file list */
