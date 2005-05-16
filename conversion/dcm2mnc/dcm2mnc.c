@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.1  2005-05-12 21:16:47  bert
+ * Revision 1.14.2.2  2005-05-16 19:45:52  bert
+ * Minor fix to argument structure, to reflect correct usage of ARGV_STRING items
+ *
+ * Revision 1.14.2.1  2005/05/12 21:16:47  bert
  * Initial checkin
  *
  * Revision 1.14  2005/05/09 15:32:02  bert
@@ -89,7 +92,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.1 2005-05-12 21:16:47 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.2 2005-05-16 19:45:52 bert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -126,9 +129,9 @@ ArgvInfo argTable[] = {
      "Print list of series (don't create files)"},
     {"-anon", ARGV_CONSTANT, (char *) TRUE, (char *) &G.Anon,
      "Exclude subject name from file header"},
-    {"-descr", ARGV_STRING, (char *) 1, G.Name,
+    {"-descr", ARGV_STRING, (char *) 1, (char *) &G.Name,
      "Use <str> as session descriptor (default = patient initials)"},
-    {"-cmd", ARGV_STRING, (char *) 1, G.command_line, 
+    {"-cmd", ARGV_STRING, (char *) 1, (char *) &G.command_line, 
      "Apply <command> to output files (e.g. gzip)"},
     {"-verbose", ARGV_CONSTANT, (char *) LO_LOGGING, (char *) &G.Debug,
      "Print debugging information"},
