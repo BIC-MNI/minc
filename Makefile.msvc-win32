@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.4 2005-05-13 18:46:49 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 1.1.2.5 2005-05-16 22:38:51 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -41,7 +41,8 @@ PROGS = worldtovoxel.exe \
         minctoecat.exe \
         mnc2nii.exe \
         nii2mnc.exe \
-        upet2mnc.exe
+        upet2mnc.exe \
+        dcm2mnc.exe
 
 MINC_HDRS = \
 	libsrc\minc.h \
@@ -128,8 +129,27 @@ VOLIO_HDRS = \
         volume_io\Include\volume_io\volume_cache.h \
         volume_io\Include\volume_io\volume.h
 
-INCLUDES = -I$(NETCDF_ROOT) -Ilibsrc -Iprogs/Proglib -Ivolume_io/Include
-DEFINES = -DDLL_NETCDF -D_POSIX_
+ACR_NEMA_OBJS = \
+        conversion\Acr_nema\acr_io.obj \
+        conversion\Acr_nema\element.obj \
+        conversion\Acr_nema\file_io.obj \
+        conversion\Acr_nema\group.obj \
+        conversion\Acr_nema\message.obj \
+        conversion\Acr_nema\value_repr.obj
+
+ACR_NEMA_HDRS = \
+        conversion\Acr_nema\acr_nema.h \
+        conversion\Acr_nema\acr_nema\acr_io.h \
+        conversion\Acr_nema\acr_nema\element.h \
+        conversion\Acr_nema\acr_nema\file_io.h \
+        conversion\Acr_nema\acr_nema\group.h \
+        conversion\Acr_nema\acr_nema\message.h \
+        conversion\Acr_nema\acr_nema\value_repr.h
+
+INCLUDES = -I$(NETCDF_ROOT) -Ilibsrc -Iprogs/Proglib -Ivolume_io/Include \
+        -Iconversion/Acr_nema
+
+DEFINES = -DDLL_NETCDF -D_POSIX_ -DHAVE_CONFIG_H
 NETCDF_LIB = $(NETCDF_ROOT)/netcdf.lib
 LIBS = minc.lib volume_io.lib $(NETCDF_LIB)
 CFLAGS = $(INCLUDES) $(DEFINES)
@@ -328,4 +348,18 @@ UPET2MNC_OBJS = \
 upet2mnc.exe: $(UPET2MNC_OBJS)
 	$(LINK) $(UPET2MNC_OBJS) $(LIBS)
 
+$(ACR_NEMA_OBJS): $(ACR_NEMA_HDRS)
+
+DCM2MNC_OBJS = \
+       conversion/dcm2mnc/dcm2mnc.obj \
+       conversion/dcm2mnc/dicom_to_minc.obj \
+       conversion/dcm2mnc/dicom_read.obj \
+       conversion/dcm2mnc/minc_file.obj \
+       conversion/dcm2mnc/progress.obj \
+       conversion/dcm2mnc/siemens_to_dicom.obj \
+       conversion/dcm2mnc/string_to_filename.obj \
+       $(ACR_NEMA_OBJS)
+
+dcm2mnc.exe: $(DCM2MNC_OBJS)
+	$(LINK) $(DCM2MNC_OBJS) $(LIBS)
 
