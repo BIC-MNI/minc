@@ -201,7 +201,7 @@ EXTRA_DIST = GETTING_STARTED \
 	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
-	mni_minc.epm.header \
+	epm-header.in \
 	README.binary_packaging \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
