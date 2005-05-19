@@ -4,6 +4,9 @@
 * Fixes to the MINC 2.0 library (libminc2) courtesy of Leila Baghdadi
 * Some progress on documentation
 * Improved nii2mnc, Analyze and NIfTI-1 conversion utility
+* Fix MINC 2 code to work with HDF5 1.6.4 as well as 1.6.2.  There is a
+  problem with the  "make check" self-test code when using HDF5 1.6.3,
+  but this problem should not affect normal operation of the code.
 
                 New in Release 2.0.08
                 ---------------------
