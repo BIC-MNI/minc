@@ -11,6 +11,25 @@
 #include "minc2.h"
 #include "minc2_private.h"
 
+/* Uggh!!! The HDF5 team changed the definition of the H5Tconvert(),
+ * H5Tregister(), and H5T_conv_t functions, and the result is that we
+ * have to special-case these types.  I am bummed.
+ */
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MINOR > 6) || (H5_VERS_RELEASE > 2)
+#define H5_NELEMENTS_T size_t
+#else
+#define H5_NELEMENTS_T hsize_t
+#endif
+
+/* They also redefined the type of the 4th argument to H5Sselect_elements.
+ * This is harmless as long as sizeof(hssize_t) == sizeof(hsize_t).
+ */
+#if (H5_VERS_MAJOR > 1) || (H5_VERS_MINOR > 6) || (H5_VERS_RELEASE > 3)
+#define H5_START_T hsize_t
+#else
+#define H5_START_T hssize_t
+#endif
+
 /*! Convert a MINC 2 datatype into a HDF5 datatype.  Actually returns a copy
  * of the datatype, so the returned value must be explicitly freed with a
  * call to H5Tclose().
@@ -196,12 +215,12 @@ midescend_path(hid_t file_id, const char *path)
      * automatic error reporting of HDF5.
      */
     H5E_BEGIN_TRY {
-        tmp_id = H5Gopen(file_id, path);
+        tmp_id = H5Dopen(file_id, path);
 
-        /* If the group open fails, try opening the object as a dataset.
+        /* If the dataset open fails, try opening the object as a group.
          */
         if (tmp_id < 0) {
-            tmp_id = H5Dopen(file_id, path);
+            tmp_id = H5Gopen(file_id, path);
         }
     } H5E_END_TRY;
     return (tmp_id);
@@ -637,7 +656,7 @@ static herr_t
 mi2_int_to_dbl(hid_t src_id,
                hid_t dst_id,
                H5T_cdata_t *cdata,
-               hsize_t nelements,
+               H5_NELEMENTS_T nelements,
                size_t buf_stride,
                size_t bkg_stride,
                void *buf_ptr,
@@ -810,7 +829,7 @@ static herr_t
 mi2_dbl_to_int(hid_t src_id,
                hid_t dst_id,
                H5T_cdata_t *cdata,
-               hsize_t nelements,
+               H5_NELEMENTS_T nelements,
                size_t buf_stride,
                size_t bkg_stride,
                void *buf_ptr,
@@ -1172,7 +1191,7 @@ miinit(void)
 herr_t mi2_null_conv(hid_t src_id,
                      hid_t dst_id,
                      H5T_cdata_t *cdata,
-                     hsize_t nelements,
+                     H5_NELEMENTS_T nelements,
                      size_t buf_stride,
                      size_t bkg_stride,
                      void *buf_ptr,
@@ -1421,7 +1440,7 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
     hsize_t isize[MI2_MAX_VAR_DIMS];
     hsize_t osize[MI2_MAX_VAR_DIMS];
     hsize_t count[MI2_MAX_VAR_DIMS];
-    hssize_t start[MI2_MAX_VAR_DIMS];
+    H5_START_T start[MI2_MAX_VAR_DIMS];
     hid_t idst_id;              /* Input dataset */
     hid_t odst_id;              /* Output dataset */
     hid_t ifspc_id;             /* Input "file" dataspace */
@@ -1595,7 +1614,7 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
         if (volume->volume_class == MI_CLASS_REAL) {
             /* Select the right point in tfspc_id */
             H5Sselect_elements(tfspc_id, H5S_SELECT_SET, 1, 
-                               (const hssize_t **) &start[0]);
+                               (const H5_START_T **) &start[0]);
 
             H5Dwrite(omax_id, H5T_NATIVE_DOUBLE, tmspc_id, tfspc_id, 
                      H5P_DEFAULT, &smax);
