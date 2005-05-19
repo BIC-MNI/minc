@@ -2,6 +2,7 @@
 #include <float.h>
 
 #include <minc.h>
+#include <ParseArgv.h>
 
 #include <volume_io.h>
 #undef X                        /* These are used in nifti1_io */
@@ -33,17 +34,7 @@ static int usage(void)
 {
     static const char msg[] = {
         "nii2mnc: Convert NIfTI-1 files to MINC format\n"
-        "usage: nii2mnc [-q -r] [datatype] filename.nii [filename.mnc]\n"
-        "-q: quiet operation\n"
-        "-r: don't scan data to determine valid range\n"
-        "Datatype specifies the voxel type of the output MINC file.  The\n"
-        "default is the same as the voxel type of the input NIfTI-1 file.\n"
-        " -f32: 32-bit floating point output\n"
-        " -f64: 64-bit floating point output\n"
-        " -i16: signed 16-bit integer output\n"
-        " -u16: unsigned 16-bit integer output\n"
-        " -i32: signed 32-bit integer output\n"
-        " -u32: unsigned 32-bit integer output\n"
+        "usage: nii2mnc [options] filename.nii [filename.mnc]\n"
     };
     fprintf(stderr, "%s", msg);
     return (-1);
@@ -116,8 +107,8 @@ main(int argc, char **argv)
     int mnc_fd;                 /* MINC file descriptor */
     nc_type mnc_mtype;          /* MINC memory data type */
     int mnc_msign;              /* MINC !0 if signed data */
-    nc_type mnc_vtype;          /* MINC voxel data type */
-    int mnc_vsign;            /* MINC !0 if signed data */
+    static nc_type mnc_vtype;   /* MINC voxel data type */
+    static int mnc_vsign;       /* MINC !0 if signed data */
     int mnc_ndims;              /* MINC image dimension count */
     int mnc_dimids[MAX_VAR_DIMS]; /* MINC image dimension identifiers */
     int mnc_icv;                /* MINC image conversion variable */
@@ -137,7 +128,6 @@ main(int argc, char **argv)
     General_transform mnc_linear_xform;
     int mnc_did;                /* Dimension variable id */
 
-
     /* Other stuff */
     char out_str[1024];         /* Big string for filename */
     char att_str[1024];         /* Big string for attribute values */
@@ -145,64 +135,44 @@ main(int argc, char **argv)
     int j;                      /* Generic loop counter the second */
     char *str_ptr;              /* Generic ASCIZ string pointer */
     int r;                      /* Result code. */
-    int qflag = 0;              /* Quiet flag (default is non-quiet) */
-    int rflag = 1;              /* Scan range flag */
+    static int qflag = 0;       /* Quiet flag (default is non-quiet) */
+    static int rflag = 1;       /* Scan range flag */
+
+    static ArgvInfo argTable[] = {
+        {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *)&mnc_vtype,
+         "Write voxel data in 8-bit integer format."},
+        {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *)&mnc_vtype,
+         "Write voxel data in 16-bit integer format."},
+        {"-int", ARGV_CONSTANT, (char *) NC_INT, (char *)&mnc_vtype,
+         "Write voxel data in 32-bit integer format."},
+        {"-float", ARGV_CONSTANT, (char *) NC_FLOAT, (char *)&mnc_vtype,
+         "Write voxel data in 32-bit floating point format."},
+        {"-double", ARGV_CONSTANT, (char *) NC_DOUBLE, (char *)&mnc_vtype,
+         "Write voxel data in 64-bit floating point format."},
+        {"-signed", ARGV_CONSTANT, (char *) 1, (char *)&mnc_vsign, 
+         "Write integer voxel data in signed format."},
+        {"-unsigned", ARGV_CONSTANT, (char *) 0, (char *)&mnc_vsign, 
+         "Write integer voxel data in unsigned format."},
+        {"-noscanrange", ARGV_CONSTANT, (char *) 0, (char *)&rflag,
+         "Do not scan data range."},
+        {"-quiet", ARGV_CONSTANT, (char *) 0, (char *)&qflag,
+         "Quiet operation"},
+        {NULL, ARGV_END, NULL, NULL, NULL}
+    };
+
 
     ncopts = 0;                 /* Clear global netCDF error reporting flag */
 
     mnc_hist = time_stamp(argc, argv);
     mnc_vtype = NC_NAT;
 
-    if (argc < 2) {
+    if (ParseArgv(&argc, argv, argTable, 0) || (argc < 2)) {
         fprintf(stderr, "Too few arguments\n");
         return usage();
     }
 
-    for (i = 1; i < argc && *(str_ptr = argv[i]) == '-'; i++) {
-        for (j = 1; str_ptr[j] != '\0'; j++) {
-            switch (str_ptr[1]) {
-            case 'q':
-                qflag++;
-                break;
-            case 'r':
-                rflag = 0;
-                break;
-            case 'i':
-                mnc_vsign = 1;
-                if (str_ptr[j+1] == '1' && str_ptr[j+2] == '6') {
-                    mnc_vtype = NC_SHORT;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    mnc_vtype = NC_INT;
-                }
-                break;
-            case 'u':
-                mnc_vsign = 0;
-                if (str_ptr[j+1] == '1' && str_ptr[j+2] == '6') {
-                    mnc_vtype = NC_SHORT;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    mnc_vtype = NC_INT;
-                }
-                break;
-            case 'f':
-                mnc_vsign = 1;
-                if (str_ptr[j+1] == '6' && str_ptr[j+2] == '4') {
-                    mnc_vtype = NC_DOUBLE;
-                }
-                else if (str_ptr[j+1] == '3' && str_ptr[j+2] == '2') {
-                    mnc_vtype = NC_FLOAT;
-                }
-                break;
-            default:
-                fprintf(stderr, "Unrecognized option '%c'\n", str_ptr[j]);
-                return usage();
-            }
-        }
-    }
-
-    if ((argc - i) == 1) {
-        strcpy(out_str, argv[i]);
+    if (argc == 2) {
+        strcpy(out_str, argv[1]);
         str_ptr = strrchr(out_str, '.');
         if (str_ptr != NULL) {
             if (!strcmp(str_ptr, ".nii") || !strcmp(str_ptr, ".hdr")) {
@@ -211,8 +181,8 @@ main(int argc, char **argv)
             }
         }
     }
-    else if ((argc - i) == 2) {
-        strcpy(out_str, argv[i+1]);
+    else if (argc == 3) {
+        strcpy(out_str, argv[2]);
     }
     else {
         fprintf(stderr, "Filename argument required\n");
@@ -220,7 +190,7 @@ main(int argc, char **argv)
     }
 
     /* Read in the entire NIfTI file. */
-    nii_ptr = nifti_image_read(argv[i], 1);
+    nii_ptr = nifti_image_read(argv[1], 1);
 
     if (!qflag) {
         nifti_image_infodump(nii_ptr);
@@ -424,6 +394,17 @@ main(int argc, char **argv)
                 printf("\n");
             }
         }
+    }
+    else {
+        /* No official transform was found (possibly this is an Analyze 
+         * file).  Just use some reasonable defaults.
+         */
+        Transform_elem(mnc_xform, DIM_X, DIM_I) *= nii_ptr->dx;
+        Transform_elem(mnc_xform, DIM_Y, DIM_J) *= nii_ptr->dy;
+        Transform_elem(mnc_xform, DIM_Z, DIM_K) *= nii_ptr->dz;
+        Transform_elem(mnc_xform, DIM_X, 3) = -(nii_ptr->dx * nii_ptr->nx) / 2;
+        Transform_elem(mnc_xform, DIM_Y, 3) = -(nii_ptr->dy * nii_ptr->ny) / 2;
+        Transform_elem(mnc_xform, DIM_Z, 3) = -(nii_ptr->dz * nii_ptr->nz) / 2;
     }
 
     create_linear_transform(&mnc_linear_xform, &mnc_xform);
