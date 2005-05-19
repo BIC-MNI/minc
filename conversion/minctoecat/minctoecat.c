@@ -976,8 +976,8 @@ void write_ecat_frame(MatrixFile *mf, Image_subheader *sh, short *ptr,int fr, fl
   md.matfile = mf;
   md.mat_type = mf->mhptr->file_type;
   md.data_type = sh->data_type;
-  md.shptr = (caddr_t)sh;
-  md.data_ptr = (caddr_t)ptr;
+  md.shptr = sh;
+  md.data_ptr = ptr;
   md.xdim = sh->x_dimension;
   md.ydim = sh->y_dimension;
   md.zdim = sh->z_dimension;

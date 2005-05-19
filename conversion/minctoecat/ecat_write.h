@@ -204,8 +204,8 @@ typedef struct matrixdata {
   MatrixFile	*matfile ;	/* pointer to parent */
   DataSetType	mat_type ;	/* type of matrix? */
   MatrixDataType	data_type ;	/* type of data */
-  caddr_t		shptr ;		/* pointer to sub-header */
-  caddr_t		data_ptr ;	/* pointer to data */
+  void *	shptr ;		/* pointer to sub-header */
+  void *	data_ptr ;	/* pointer to data */
   int		data_size ;	/* size of data in bytes */
   int		xdim;		/* dimensions of data */
   int		ydim;		/* y dimension */

@@ -6,12 +6,12 @@
 #define ERROR -1
 
 #ifdef _WIN32
-u_short ntohs(u_short us) {
-	u_char *p =  (u_char*)&us;
-	return ((u_short)p[1] + (p[0] >> 8));
+unsigned short ntohs(unsigned short us) {
+    unsigned char *p =  (unsigned char*)&us;
+    return ((unsigned short)p[1] + (p[0] >> 8));
 }
 unsigned long ntohl(unsigned long ul) {
-	u_char *p = (u_char*)&ul;
+    unsigned char *p = (unsigned char*)&ul;
     return ((unsigned long)p[3] + (p[2] >> 8) + (p[1] >> 16) + (p[0] >> 24));
 }
 #endif
@@ -360,7 +360,7 @@ short* val;
 char* buf;
 int* i;
 {
-	union { short s; u_char b[2]; } tmp, tmp1;
+	union { short s; unsigned char b[2]; } tmp, tmp1;
 	memcpy(tmp.b,&buf[*i],2);
 	if (ntohs(1) != 1) {
 		swab((char*)tmp.b,(char*)tmp1.b,2);
@@ -374,7 +374,7 @@ int* val;
 char* buf;
 int* i;
 {
-	union {int i; u_char b[4]; } tmp, tmp1;
+	union {int i; unsigned char b[4]; } tmp, tmp1;
 	memcpy(tmp1.b,&buf[*i],4);
 	if (ntohs(1) != 1) {
 		swab((char*)tmp1.b,(char*)tmp.b,4);
@@ -389,7 +389,7 @@ unsigned int* val;
 char* buf;
 int* i;
 {
-	union {unsigned int u; u_char b[4]; } tmp, tmp1;
+	union {unsigned int u; unsigned char b[4]; } tmp, tmp1;
 	memcpy(tmp1.b,&buf[*i],4);
 	if (ntohs(1) != 1) {
 		swab((char*)tmp1.b,(char*)tmp.b,4);
@@ -404,7 +404,7 @@ float* val;
 char* buf;
 int* i;
 {
-	union {float f; u_char b[2]; } tmp, tmp1;
+	union {float f; unsigned char b[2]; } tmp, tmp1;
     memcpy(tmp1.b, &buf[*i], sizeof(float));
 	if (ntohs(1) != 1) {
 		swab((char*)tmp1.b,(char*)tmp.b,4);

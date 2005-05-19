@@ -349,7 +349,7 @@ int write_host_data(MatrixFile *mptr, int matnum, MatrixData *data) {
   imagesub = (Image_subheader *) data->shptr ;
   if (imagesub == NULL) {
     imagesub = (Image_subheader *) calloc(1, MatBLKSIZE);
-    data->shptr = (caddr_t)imagesub;
+    data->shptr = imagesub;
   }                                                     /* use MatrixData info */
   imagesub->x_pixel_size = data->pixel_size;
   imagesub->y_pixel_size = data->y_size;
