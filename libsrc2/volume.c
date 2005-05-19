@@ -380,8 +380,10 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   /* Set fill value to guarantee valid data on incomplete datasets.
    */
-  {
-    char *tmp = calloc(1, H5Tget_size(handle->ftype_id));
+  if (volume_class != MI_CLASS_LABEL &&
+      volume_class != MI_CLASS_UNIFORM_RECORD) {
+    size_t siz = H5Tget_size(handle->ftype_id);
+    char *tmp = calloc(1, siz);
     H5Pset_fill_value(hdf_plist, handle->ftype_id, tmp);
     free(tmp);
   }
