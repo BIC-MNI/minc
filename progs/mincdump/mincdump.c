@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.7 2005-01-19 20:00:43 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.8 2005-05-19 19:52:52 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -229,11 +229,12 @@ pr_att_vals(
         int isstring = 1;
         int ch;
         ch = ((signed char *)vals)[len-1];
-        if (isprint(ch) || ch == '\0') {
+        if (isprint(ch) || ch == '\0' || ch == '\n') {
             for (iel = 0; iel < len-1; iel++) {
                 ch = ((signed char *)vals)[iel];
                 if (!isprint(ch) && ch != '\n') {
                     isstring = 0;
+                    break;
                 }
             }
             if (isstring) {
