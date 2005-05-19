@@ -6,7 +6,16 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.7  2005-03-04 00:09:00  bert
+ * Revision 6.8  2005-05-19 20:57:20  bert
+ * Fixes for Windows, ported from 1.X branch
+ *
+ * Revision 6.7.2.2  2005/05/16 22:39:30  bert
+ * Insert conditionals to get it building under Windows
+ *
+ * Revision 6.7.2.1  2005/05/12 21:15:30  bert
+ * Initial checkin
+ *
+ * Revision 6.7  2005/03/04 00:09:00  bert
  * Lose private and public
  *
  * Revision 6.6  2005/02/16 19:22:32  bert
@@ -97,7 +106,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <acr_nema/file_io.h>
@@ -444,8 +452,14 @@ int acr_file_read_more(Acr_File *afp)
    /* Do tracing */
    if (afp->do_trace) {
       if (afp->tracefp == NULL) {
-         (void) strcpy(trace_file, Input_trace_file);
+#if HAVE_MKSTEMP
+         (void) strcpy(trace_file, Input_trace_file);          
          afp->tracefp = fdopen(mkstemp(trace_file), "w");
+#endif
+#if HAVE_TMPNAM
+         tmpnam(trace_file);
+         afp->tracefp = fopen(trace_file, "w");
+#endif
          if (afp->tracefp != NULL) {
             (void) fprintf(stderr, "Opened input trace file %s.\n", 
                            trace_file);
@@ -558,8 +572,14 @@ int acr_file_flush(Acr_File *afp)
       /* Do trace, if needed */
       if (afp->do_trace) {
          if (afp->tracefp == NULL) {
+#if HAVE_MKSTEMP
             (void) strcpy(trace_file, Output_trace_file);
             afp->tracefp = fdopen(mkstemp(trace_file), "w");
+#endif
+#if HAVE_TMPNAM
+            tmpnam(trace_file);
+            afp->tracefp = fopen(trace_file, "w");
+#endif
             if (afp->tracefp != NULL) {
                (void) fprintf(stderr, "Opened output trace file %s.\n", 
                               trace_file);
@@ -866,6 +886,7 @@ int acr_stdio_write(void *io_data, void *buffer, int nbytes)
 ---------------------------------------------------------------------------- */
 int acr_stdio_ismore(void *io_data)
 {
+#ifdef O_NONBLOCK
    FILE *fp;
    int val;
    int old_flags, new_flags;
@@ -898,6 +919,7 @@ int acr_stdio_ismore(void *io_data)
    else if (ferror(fp) && (errno != EAGAIN)) {
       return -1;
    }
+#endif /* O_NONBLOCK defined */
    return 0;
 
 }
