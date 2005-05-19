@@ -1,4 +1,16 @@
 MINC 2:
+2005-05-19  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Fix volume.c and m2util.c to be compatible with HDF5 1.6.3 and
+	later.
+	* Port nifti converter changes from MINC 1.X branch
+	* Port dcm2mnc converter changes from MINC 1.X branch
+	* Port build changes for dcm2mnc and ACR/NEMA library from MINC
+	1.X branch
+	
+2005-04-18  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Move volume_io headers into Include/volume_io subdirectory.
+	
 2005-03-17  Andrew Janke  <a.janke@gmail.com>
 	* removed ':' from temporary filenames for windows compatibility
 
