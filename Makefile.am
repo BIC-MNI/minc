@@ -15,7 +15,8 @@ INCLUDES = \
 	-I$(top_srcdir)/libsrc \
 	-I$(top_builddir)/volume_io/Include \
 	-I$(top_srcdir)/volume_io/Include \
-	-I$(top_srcdir)/progs/Proglib
+	-I$(top_srcdir)/progs/Proglib \
+	-I$(top_srcdir)/conversion/Acr_nema
 
 # Headers which must be installed.
 #
@@ -86,11 +87,68 @@ noinst_HEADERS = \
 	conversion/minctoecat/machine_indep.h \
 	conversion/nifti1/nifti1.h \
 	conversion/nifti1/nifti1_io.h \
-	conversion/nifti1/nifti1_local.h
+	conversion/nifti1/nifti1_local.h \
+	conversion/dcm2mnc/acr_element_defs.h \
+	conversion/dcm2mnc/dcm2mnc.h \
+	conversion/dcm2mnc/dicom_read.h \
+	conversion/dcm2mnc/dicom_to_minc.h \
+	conversion/dcm2mnc/ext_element_defs.h \
+	conversion/dcm2mnc/minc_file.h \
+	conversion/dcm2mnc/progress.h \
+	conversion/dcm2mnc/siemens_to_dicom.h \
+	conversion/dcm2mnc/siemens_header_defs.h \
+	conversion/dcm2mnc/siemens_header_table.h \
+	conversion/dcm2mnc/spi_element_defs.h \
+	conversion/dcm2mnc/string_to_filename.h \
+	conversion/dcm2mnc/pms_element_defs.h \
+	conversion/dcm2mnc/gems_element_defs.h
+
+if ACR_NEMA_TOOLS
+include_HEADERS += conversion/Acr_nema/acr_nema.h
+
+include_acr_nemadir = $(includedir)/acr_nema
+
+include_acr_nema_HEADERS = \
+	conversion/Acr_nema/acr_nema/acr_io.h \
+	conversion/Acr_nema/acr_nema/dicom_client_routines.h \
+	conversion/Acr_nema/acr_nema/dicom_network.h \
+	conversion/Acr_nema/acr_nema/element.h \
+	conversion/Acr_nema/acr_nema/file_io.h \
+	conversion/Acr_nema/acr_nema/group.h \
+	conversion/Acr_nema/acr_nema/message.h \
+	conversion/Acr_nema/acr_nema/value_repr.h
+
+else
+#
+# If not installing the full ACR/NEMA package, just add these headers to 
+# list of headers not to be installed.
+#
+noinst_HEADERS += \
+	conversion/Acr_nema/acr_nema.h \
+	conversion/Acr_nema/acr_nema/acr_io.h \
+	conversion/Acr_nema/acr_nema/dicom_client_routines.h \
+	conversion/Acr_nema/acr_nema/dicom_network.h \
+	conversion/Acr_nema/acr_nema/element.h \
+	conversion/Acr_nema/acr_nema/file_io.h \
+	conversion/Acr_nema/acr_nema/group.h \
+	conversion/Acr_nema/acr_nema/message.h \
+	conversion/Acr_nema/acr_nema/value_repr.h
+
+endif
+
 
 # Libraries which must be built and installed.
 #
 lib_LTLIBRARIES = libminc2.la libvolume_io2.la
+
+# Conditionally install the libacr_nema.la library.  It must always be
+# built even if it is not installed.
+#
+if ACR_NEMA_TOOLS
+lib_LTLIBRARIES += libacr_nema.la
+else
+noinst_LTLIBRARIES = libacr_nema.la
+endif
 
 # Scripts we install: sh, csh, or perl.
 #
@@ -137,7 +195,20 @@ bin_PROGRAMS = \
 	minctoecat \
 	mnc2nii \
 	nii2mnc \
-	upet2mnc
+	upet2mnc \
+	dcm2mnc
+
+if ACR_NEMA_TOOLS
+bin_PROGRAMS += \
+	mincexample1 \
+	mincexample2 \
+	acr_test \
+	dump_acr_nema \
+	extract_acr_nema \
+	read_acr_nema \
+	dicom_test \
+	copy_acr_nema
+endif
 
 noinst_PROGRAMS = \
 	mincexample1 \
@@ -150,11 +221,11 @@ EXTRA_DIST = GETTING_STARTED \
 	fortran \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
-	README.binary_packaging \
+	epm-header.in \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
-	WHATSNEW-2.0 \
-	epm-header.in
+	conversion/Acr_nema/dicom.txt \
+	WHATSNEW-2.0
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS
@@ -164,12 +235,6 @@ dist-hook:
 
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \
-	m4/mni_REQUIRE_MNILIBS.m4 \
-	m4/mni_REQUIRE_OPENINVENTOR.m4 \
-	m4/mni_cxx_have_koenig_lookup.m4 \
-	m4/smr_CGAL_MAKEFILE.m4 \
-	m4/smr_OPTIONAL_LIB.m4 \
-	m4/smr_REQUIRED_LIB.m4 \
 	m4/smr_WITH_BUILD_PATH.m4
 
 
@@ -283,6 +348,43 @@ mnc2nii_SOURCES = \
 upet2mnc_SOURCES = \
 	conversion/micropet/upet2mnc.c
 
+dcm2mnc_LDADD = libacr_nema.la $(LDADD)
+
+dcm2mnc_SOURCES = \
+	conversion/dcm2mnc/dcm2mnc.c \
+	conversion/dcm2mnc/dicom_to_minc.c \
+	conversion/dcm2mnc/siemens_to_dicom.c \
+	conversion/dcm2mnc/dicom_read.c \
+	conversion/dcm2mnc/minc_file.c \
+	conversion/dcm2mnc/progress.c \
+	conversion/dcm2mnc/string_to_filename.c
+
+acr_test_LDADD = libacr_nema.la
+
+acr_test_SOURCES = conversion/Acr_nema/acr_test.c
+
+dump_acr_nema_LDADD = libacr_nema.la
+
+dump_acr_nema_SOURCES = conversion/Acr_nema/dump_acr_nema.c
+
+extract_acr_nema_LDADD = libacr_nema.la
+
+extract_acr_nema_SOURCES = conversion/Acr_nema/extract_acr_nema.c
+
+read_acr_nema_LDADD = libacr_nema.la
+
+read_acr_nema_SOURCES = conversion/Acr_nema/read_acr_nema.c
+
+dicom_test_LDADD = libacr_nema.la
+
+dicom_test_SOURCES = conversion/Acr_nema/dicom_test.c
+
+copy_acr_nema_LDADD = libacr_nema.la
+
+copy_acr_nema_SOURCES = conversion/Acr_nema/copy_acr_nema.c
+
+
+
 libminc2_la_LDFLAGS = -version-info 2:0:1
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
@@ -350,6 +452,17 @@ libvolume_io2_la_SOURCES = \
 	volume_io/Volumes/volume_cache.c \
 	volume_io/Volumes/volumes.c
 
+libacr_nema_la_SOURCES = \
+	conversion/Acr_nema/acr_io.c \
+	conversion/Acr_nema/dicom_client_routines.c \
+	conversion/Acr_nema/dicom_network.c \
+	conversion/Acr_nema/element.c \
+	conversion/Acr_nema/file_io.c \
+	conversion/Acr_nema/globals.c \
+	conversion/Acr_nema/group.c \
+	conversion/Acr_nema/message.c \
+	conversion/Acr_nema/value_repr.c
+
 # MAN pages go here.  The "dist_" prefix signals that they files
 # are to be included in source distribution.
 #
@@ -385,6 +498,10 @@ dist_man1_MANS = \
 	progs/xfm/xfminvert.man1 \
 	progs/mincconvert/mincconvert.man1 \
 	conversion/ecattominc/ecattominc.man1 \
-	conversion/minctoecat/minctoecat.man1
+	conversion/minctoecat/minctoecat.man1 \
+	conversion/nifti1/nii2mnc.man1 \
+	conversion/nifti1/mnc2nii.man1 \
+	conversion/micropet/upet2mnc.man1 \
+	conversion/dcm2mnc/dcm2mnc.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
