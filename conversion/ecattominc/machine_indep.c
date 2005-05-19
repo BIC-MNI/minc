@@ -1,6 +1,15 @@
 #include <stdlib.h>
-#include <unistd.h>
-#include <netinet/in.h>
+
+#ifdef _WIN32
+unsigned short ntohs(unsigned short us) {
+    unsigned char *p =  (unsigned char*)&us;
+    return ((unsigned short)p[1] + (p[0] >> 8));
+}
+unsigned long ntohl(unsigned long ul) {
+    unsigned char *p = (unsigned char*)&ul;
+    return ((unsigned long)p[3] + (p[2] >> 8) + (p[1] >> 16) + (p[0] >> 24));
+}
+#endif
 
 void get_short_value(const void *from, void *to) {
   short int short_value;
@@ -24,7 +33,16 @@ void get_long_value(const void *from, void *to) {
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: machine_indep.c,v $
- * Revision 6.1  2005-01-19 19:46:28  bert
+ * Revision 6.2  2005-05-19 20:58:37  bert
+ * Fixes for Windows builds ported from 1.X branch
+ *
+ * Revision 6.1.2.2  2005/05/04 20:19:30  bert
+ * Modify for Windows builds
+ *
+ * Revision 6.1.2.1  2005/02/15 19:59:54  bert
+ * Initial checkin on 1.X branch
+ *
+ * Revision 6.1  2005/01/19 19:46:28  bert
  * Changes from Anthonin Reilhac
  *
  * Revision 6.2  1999/10/19 15:57:18  neelin
@@ -67,7 +85,7 @@ void get_long_value(const void *from, void *to) {
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/machine_indep.c,v 6.1 2005-01-19 19:46:28 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/machine_indep.c,v 6.2 2005-05-19 20:58:37 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
