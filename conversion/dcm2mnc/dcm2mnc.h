@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.10  2005-04-29 23:09:36  bert
+ * Revision 1.11  2005-05-19 16:01:19  bert
+ * Changes ported from 1.X branch: Fix conditionals for Windows compilation, change argument structure for ARGV_STRING elements, fix usage of G.command_line
+ *
+ * Revision 1.10  2005/04/29 23:09:36  bert
  * Add support for -stdin option to read file list from standard input
  *
  * Revision 1.9  2005/04/18 16:38:09  bert
@@ -91,13 +94,24 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <memory.h>
 #include <limits.h>
+#if HAVE_FLOAT_H
 #include <float.h>
+#endif
+
 #include <time_stamp.h>
 #include <acr_nema.h>
 
@@ -136,6 +150,14 @@
 extern int fcmp(double x, double y, double delta);
 
 #define NEARLY_EQUAL(x, y) (fcmp(x, y, 1e-6))
+
+#if !HAVE_INT16_T
+typedef short int16_t;
+#endif
+
+#if !HAVE_INT32_T
+typedef int int32_t;
+#endif
 
 typedef char string_t[511+1];
 #define STRING_T_LEN (sizeof(string_t) - 1)
@@ -211,8 +233,8 @@ struct globals {
     short splitEcho;            /* TRUE if echos in separate files */
     short splitDynScan;  /* TRUE if dynamic scans in separate files */
     short clobber;
-    string_t Name;
-    string_t command_line;
+    char * Name;
+    char * command_line;
     unsigned long opts;
     mosaic_seq_t mosaic_seq;
     short use_stdin;
