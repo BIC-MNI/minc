@@ -384,11 +384,14 @@ struct keywd_entry vol_atts[] = {
 };
 
 /* Reflects "normal" image data order */
+
 #define DIM_T 0
 #define DIM_Z 1
 #define DIM_Y 2
 #define DIM_X 3
 #define DIM_W 4
+
+static char *_dimnames[5];
 
 /* Calculate the overall scaling factor for the image data from the
  * conversion information structure.
@@ -397,9 +400,18 @@ struct keywd_entry vol_atts[] = {
      ((ci_ptr->scale_factor * ci_ptr->calibration_factor) / \
       (ci_ptr->isotope_branching_fraction))
 
+
+#define ORIENT_BODY 1
+#define ORIENT_HEAD 2
+
+int _orient_flag = ORIENT_HEAD;
 int _verbose_flag = 1;
 
 ArgvInfo argTable[] = {
+    {"-head", ARGV_CONSTANT, (char *) ORIENT_HEAD, (char *) &_orient_flag,
+     "Orient image for cerebral viewing (as with human brain)"},
+    {"-body", ARGV_CONSTANT, (char *) ORIENT_BODY, (char *) &_orient_flag,
+     "Orient image for whole-body viewing (Z along long axis)"},
     {"-quiet", ARGV_CONSTANT, (char *) 0, (char *) &_verbose_flag,
      "Turn off the various progress reporting messages."},
      {NULL, ARGV_VERINFO, (char *) VERSIONSTR, (char *) NULL, NULL},
@@ -660,6 +672,23 @@ main(int argc, char **argv)
         return (-1);
     }
 
+    /* Set the dimension names.  This is done here since the correct 
+     * arrangement depends on the value of _orient_flag 
+     */
+    _dimnames[DIM_T] = MItime;
+    _dimnames[DIM_X] = MIxspace;
+    _dimnames[DIM_Y] = MIyspace;
+    _dimnames[DIM_Z] = MIzspace;
+    _dimnames[DIM_W] = MIvector_dimension;
+
+    if (_orient_flag == ORIENT_HEAD) {
+        /* If using head orientation, exchange Y and Z.
+         */
+        _dimnames[DIM_Y] = MIzspace;
+        _dimnames[DIM_Z] = MIyspace;
+    }
+
+
     /* Open the header and the associated binary file. */
 
     for (i = 1; i < argc; i++) {
@@ -892,14 +921,35 @@ DECLARE_FUNC(upet_ndims)
     return (0);
 }
 
+static void
+create_dimension(struct conversion_info *ci_ptr, int index, int length)
+{
+    ci_ptr->dim_lengths[index] = length;
+    if (length > 1) {
+        ci_ptr->dim_ids[index] = ncdimdef(ci_ptr->mnc_fd, 
+                                          _dimnames[index], 
+                                          length);
+        if (index != DIM_W) {
+            if (index == DIM_T) {
+                micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
+                                      NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
+                micreate_std_variable(ci_ptr->mnc_fd, MItime_width, 
+                                      NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
+            }
+            else {
+                micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
+                                      NC_DOUBLE, 0, NULL);
+            }
+        }
+    }
+    else {
+        ci_ptr->dim_ids[index] = -1;
+    }
+}
+
 DECLARE_FUNC(upet_total_frames)
 {
-    ci_ptr->dim_lengths[DIM_T] = atoi(val_str);
-    ci_ptr->dim_ids[DIM_T] = ncdimdef(ci_ptr->mnc_fd, MItime, ci_ptr->dim_lengths[DIM_T]);
-    micreate_std_variable(ci_ptr->mnc_fd, MItime, NC_DOUBLE, 
-                          1, &ci_ptr->dim_ids[DIM_T]);
-    micreate_std_variable(ci_ptr->mnc_fd, MItime_width, NC_DOUBLE,
-                          1, &ci_ptr->dim_ids[DIM_T]);
+    create_dimension(ci_ptr, DIM_T, atoi(val_str));
     return (0);
 }
 
@@ -908,9 +958,7 @@ DECLARE_FUNC(upet_x_dim)
     int x = atoi(val_str);
     ci_ptr->frame_nbytes *= x;
     ci_ptr->frame_nvoxels *= x;
-    ci_ptr->dim_lengths[DIM_X] = x;
-    ci_ptr->dim_ids[DIM_X] = ncdimdef(ci_ptr->mnc_fd, MIxspace, x);
-    micreate_std_variable(ci_ptr->mnc_fd, MIxspace, NC_DOUBLE, 0, NULL);
+    create_dimension(ci_ptr, DIM_X, x);
     return (0);
 }
 
@@ -919,9 +967,7 @@ DECLARE_FUNC(upet_y_dim)
     int y = atoi(val_str);
     ci_ptr->frame_nbytes *= y;
     ci_ptr->frame_nvoxels *= y;
-    ci_ptr->dim_lengths[DIM_Y] = y;
-    ci_ptr->dim_ids[DIM_Y] = ncdimdef(ci_ptr->mnc_fd, MIyspace, y);
-    micreate_std_variable(ci_ptr->mnc_fd, MIyspace, NC_DOUBLE, 0, NULL);
+    create_dimension(ci_ptr, DIM_Y, y);
     return (0);
 }
 
@@ -930,9 +976,7 @@ DECLARE_FUNC(upet_z_dim)
     int z = atoi(val_str);
     ci_ptr->frame_nbytes *= z;
     ci_ptr->frame_nvoxels *= z;
-    ci_ptr->dim_lengths[DIM_Z] = z;
-    ci_ptr->dim_ids[DIM_Z] = ncdimdef(ci_ptr->mnc_fd, MIzspace, z);
-    micreate_std_variable(ci_ptr->mnc_fd, MIzspace, NC_DOUBLE, 0, NULL);
+    create_dimension(ci_ptr, DIM_Z, z);
     return (0);
 }
 
@@ -941,14 +985,130 @@ DECLARE_FUNC(upet_vector_dim)
     int w = atoi(val_str);
     ci_ptr->frame_nbytes *= w;
     ci_ptr->frame_nvoxels *= w;
-    ci_ptr->dim_lengths[DIM_W] = w;
-    if (w > 1) {
-        ci_ptr->dim_ids[DIM_W] = ncdimdef(ci_ptr->mnc_fd, MIvector_dimension, w);
+    create_dimension(ci_ptr, DIM_W, w);
+    return (0);
+}
+
+/* Parse a micropet time string of the form: Ddd Mmm NN HH:MM:SS YYYY
+ * e.g. Fri Jan 7 14:16:31 2005
+ */
+static int
+parse_time(char *str_ptr, struct tm *tm_ptr)
+{
+    /* Just skip the first three characters. */
+    while (*str_ptr != '\0' && *str_ptr != ' ') {
+        str_ptr++;
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    /* Decode the month */
+    if (str_ptr[0] == 'A') {
+        if (str_ptr[1] == 'p') {
+            tm_ptr->tm_mon = 4 - 1; /* April */
+        }
+        else {
+            tm_ptr->tm_mon = 8 - 1; /* August */
+        }
+    }
+    else if (str_ptr[0] == 'D') {
+        tm_ptr->tm_mon = 12 - 1; /* December */
+    }
+    else if (str_ptr[0] == 'F') { /* February */
+        tm_ptr->tm_mon = 2 - 1;
+    }
+    else if (str_ptr[0] == 'J') {
+        if (str_ptr[1] == 'a') {
+            tm_ptr->tm_mon = 1 - 1; /* January */
+        }
+        else if (str_ptr[2] == 'l') {
+            tm_ptr->tm_mon = 7 - 1; /* July */
+        }
+        else {
+            tm_ptr->tm_mon = 6 - 1; /* June */
+        }
+    }
+    else if (str_ptr[0] == 'M') {
+        if (str_ptr[2] == 'r') {
+            tm_ptr->tm_mon = 3 - 1; /* March */
+        }
+        else {
+            tm_ptr->tm_mon = 5 - 1; /* May */
+        }
+    }
+    else if (str_ptr[0] == 'N') {
+        tm_ptr->tm_mon = 11 - 1; /* November */
+    }
+    else if (str_ptr[0] == 'O') {
+        tm_ptr->tm_mon = 10 - 1; /* October */
+    }
+    else if (str_ptr[0] == 'S') {
+        tm_ptr->tm_mon = 9 - 1; /* September */
     }
     else {
-        ci_ptr->dim_ids[DIM_W] = -1;
+        return 0;
     }
-    return (0);
+
+    /* Skip past the month */
+    while (*str_ptr != ' ' && *str_ptr != '\0') {
+        str_ptr++;
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_mday = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_mday = (tm_ptr->tm_mday * 10) + (*str_ptr++ - '0');
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_hour = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_hour = (tm_ptr->tm_hour * 10) + (*str_ptr++ - '0');
+    }
+
+    if (*str_ptr == ':') {
+        str_ptr++;
+    }
+    else {
+        return 0;
+    }
+
+    tm_ptr->tm_min = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_min = (tm_ptr->tm_min * 10) + (*str_ptr++ - '0');
+    }
+
+    if (*str_ptr == ':') {
+        str_ptr++;
+    }
+    else {
+        return 0;
+    }
+
+    tm_ptr->tm_sec = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_sec = (tm_ptr->tm_sec * 10) + (*str_ptr++ - '0');
+    }
+
+    while (*str_ptr == ' ') {
+        str_ptr++;
+    }
+
+    tm_ptr->tm_year = 0;
+    while (isdigit(*str_ptr)) {
+        tm_ptr->tm_year = (tm_ptr->tm_year * 10) + (*str_ptr++ - '0');
+    }
+    tm_ptr->tm_year -= 1900;
+
+    return 1;
 }
 
 DECLARE_FUNC(upet_injection_time)
@@ -959,7 +1119,7 @@ DECLARE_FUNC(upet_injection_time)
 
     id = ncvarid(ci_ptr->mnc_fd, MIacquisition);
 
-    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+    if (!parse_time(val_str, &tmbuf)) {
         strcpy(str_buf, "unknown");
         miattputstr(ci_ptr->mnc_fd, id, MIinjection_time, str_buf);
         miattputstr(ci_ptr->mnc_fd, id, MIinjection_year, str_buf);
@@ -991,7 +1151,7 @@ DECLARE_FUNC(upet_scan_time)
 
     id = ncvarid(ci_ptr->mnc_fd, MIstudy);
 
-    if (strptime(val_str, "%A %B %d %H:%M:%S %Y", &tmbuf) == NULL) {
+    if (!parse_time(val_str, &tmbuf)) {
         strcpy(str_buf, "unknown");
         miattputstr(ci_ptr->mnc_fd, id, MIstart_time, str_buf);
         miattputstr(ci_ptr->mnc_fd, id, MIstart_year, str_buf);
@@ -1036,7 +1196,8 @@ DECLARE_FUNC(upet_pixel_size)
     /* dbl_tmp is in cm.  Convert to mm. */
     dbl_tmp *= 10.0;
 
-    ci_ptr->dim_steps[DIM_X] = ci_ptr->dim_steps[DIM_Y] = dbl_tmp;
+    ci_ptr->dim_steps[DIM_X] = dbl_tmp;
+    ci_ptr->dim_steps[DIM_Y] = dbl_tmp;
     return (0);
 }
 
@@ -1284,19 +1445,20 @@ copy_init(struct conversion_info *ci_ptr)
      * put the animal's nose at the top of the display.
      * TODO: allow this behavior to be controlled on the command line.
      */
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIzspace), MIstep, 
-                -ci_ptr->dim_steps[DIM_Z]);
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIxspace), MIstep, 
-                ci_ptr->dim_steps[DIM_X]);
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIyspace), MIstep, 
-                -ci_ptr->dim_steps[DIM_Y]);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Z]), 
+                MIstep, -ci_ptr->dim_steps[DIM_Z]);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_X]), 
+                MIstep, ci_ptr->dim_steps[DIM_X]);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Y]), 
+                MIstep, -ci_ptr->dim_steps[DIM_Y]);
 
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIzspace), MIstart, 
-                ci_ptr->dim_steps[DIM_Z] * ci_ptr->dim_lengths[DIM_Z]);
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIxspace), MIstart, 
-                0.0);
-    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIyspace), MIstart, 
-                ci_ptr->dim_steps[DIM_Y] * ci_ptr->dim_lengths[DIM_Y]);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Z]), 
+                MIstart, ci_ptr->dim_steps[DIM_Z] * ci_ptr->dim_lengths[DIM_Z]);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_X]), 
+                MIstart, 0.0);
+    miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Y]), 
+                MIstart, ci_ptr->dim_steps[DIM_Y] * ci_ptr->dim_lengths[DIM_Y]);
+
 
     ncendef(ci_ptr->mnc_fd);
 }
