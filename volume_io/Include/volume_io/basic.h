@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.34 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/basic.h,v 1.35 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -53,7 +53,8 @@
 #endif
 
 /* These are the internal typedefs, which are aliased to their "classic"
- * volume_io names below, if the new MINC_PLAY_NICE macro is not installed
+ * volume_io names below, if the new VIO_PREFIX_NAMES macro is set to
+ * zero.
  */
 typedef char *VIO_STR;
 typedef int VIO_BOOL;
@@ -69,7 +70,7 @@ typedef enum {
              } VIO_Status;
 
 
-#ifndef MINC_PLAY_NICE          /* Play nice with others */
+#if !VIO_PREFIX_NAMES           /* Play nice with others */
 
 #ifndef __cplusplus
 #ifndef private
@@ -193,6 +194,6 @@ typedef VIO_Status Status;
 #define  HANDLE_INTERNAL_ERROR( X )                                           \
          handle_internal_error( X )
 
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
 #endif /* DEF_BASIC */

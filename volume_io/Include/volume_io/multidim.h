@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.6 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/multidim.h,v 1.7 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -278,10 +278,10 @@ typedef  struct
          case 5:  GET_MULTIDIM_PTR_5D( ptr, array, x, y, z, t, v );  break; \
          }
 
-#ifndef MINC_PLAY_NICE
+#if !VIO_PREFIX_NAMES
 typedef VIO_multidim_array multidim_array;
 typedef VIO_Data_types Data_types;
 #define MAX_DIMENSIONS VIO_MAX_DIMENSIONS
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
 #endif

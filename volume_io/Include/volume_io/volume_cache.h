@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.10 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume_cache.h,v 1.11 2005-05-19 21:19:28 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -96,11 +96,11 @@ typedef struct
     int                         n_prev_hits;
 } VIO_volume_cache_struct;
 
-#ifndef MINC_PLAY_NICE
+#if !VIO_PREFIX_NAMES
 typedef VIO_Cache_block_size_hints Cache_block_size_hints;
 typedef VIO_cache_block_struct cache_block_struct;
 typedef VIO_cache_lookup_struct cache_lookup_struct;
 typedef VIO_volume_cache_struct volume_cache_struct;
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
 #endif

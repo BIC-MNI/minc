@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.9 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/files.h,v 1.10 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,9 +36,9 @@ typedef  enum  { ASCII_FORMAT, BINARY_FORMAT }          VIO_File_formats;
 
 typedef  enum  { READ_FILE, WRITE_FILE, APPEND_FILE }   VIO_IO_types;
 
-#ifndef MINC_PLAY_NICE
+#if !VIO_PREFIX_NAMES
 typedef VIO_File_formats File_formats;
 typedef VIO_IO_types IO_types;
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
 #endif /* DEF_FILES */

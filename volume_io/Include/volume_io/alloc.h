@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.18 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.19 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -45,7 +45,7 @@
          print_alloc_source_line( filename, line_number );
 #endif
 
-#ifndef MINC_PLAY_NICE
+#if !VIO_PREFIX_NAMES
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : ALLOC
@@ -294,5 +294,5 @@
 #define  FREE5D( ptr )                                                        \
          free_memory_5d( (void ******) &(ptr) _ALLOC_SOURCE_LINE )
 
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 #endif

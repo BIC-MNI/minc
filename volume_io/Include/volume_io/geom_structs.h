@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.21 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.22 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -35,7 +35,7 @@
 #define VIO_Y 1
 #define VIO_Z 2
 
-#ifndef MINC_PLAY_NICE /* Don't define commonly used symbols */
+#if !VIO_PREFIX_NAMES         /* Don't define commonly used symbols */
 
 #define  N_DIMENSIONS  VIO_N_DIMENSIONS
 
@@ -43,7 +43,7 @@
 #define  Y             VIO_Y
 #define  Z             VIO_Z
 
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : Point   type
@@ -262,7 +262,7 @@ typedef  struct
 
 #define  Transform_elem( t, i, j ) ((t).m[j][i])
 
-#ifndef MINC_PLAY_NICE
+#if !VIO_PREFIX_NAMES
 typedef VIO_Transform Transform;
 typedef VIO_Vector Vector;
 typedef VIO_Colour Colour;
@@ -270,8 +270,15 @@ typedef VIO_Transform_2d Transform_2d;
 typedef VIO_Transform_elem_type Transform_elem_type;
 typedef VIO_Spr_type Spr_type;
 typedef VIO_Surfprop Surfprop;
+/* Th 'Point' typedef is annoying to Mac OS users, since Point has been 
+ * a basic type on Macs since the beginning.  Testing __MACTYPES__ should
+ * work at least with the OS X codebase, I don't know if it existed in
+ * earlier versions of the MacTypes.h header.
+ */
+#ifndef __MACTYPES__
 typedef VIO_Point Point;
+#endif /* __MACTYPES__ not defined */
 typedef VIO_Point_coord_type Point_coord_type;
-#endif /* MINC_PLAY_NICE */
+#endif /* !VIO_PREFIX_NAMES */
 
-#endif
+#endif /* DEF_GEOM_STRUCTS */

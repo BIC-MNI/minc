@@ -1,6 +1,9 @@
-
 #ifndef  DEF_VOLUME_IO
 #define  DEF_VOLUME_IO
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ----------------------------------------------------------------------------
 @COPYRIGHT  :
@@ -14,7 +17,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.12 2004-10-04 20:23:51 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.13 2005-05-19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -29,6 +32,10 @@
 @CREATED    : July 15, 1991       David MacDonald
 @MODIFIED   :  
 ---------------------------------------------------------------------------- */
+
+#ifndef VIO_PREFIX_NAMES
+#define VIO_PREFIX_NAMES 0      /* Allow old-fashioned namespace pollution */
+#endif /* VIO_PREFIX_NAMES */
 
 #include  <volume_io/basic.h>
 #include  <volume_io/string_funcs.h>
@@ -50,5 +57,9 @@
 #endif /* VIOAPI not defined */
 
 #include  <volume_io/vol_io_prototypes.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DEF_VOLUME_IO */
