@@ -2,15 +2,18 @@
  *
  * Author: Bert Vincent
  *
- * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 1.1.2.2 2005-05-04 18:30:32 bert Exp $
+ * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 1.1.2.3 2005-05-20 21:18:10 bert Exp $
  */
+
+#ifndef _CONFIG_H_
+#define _CONFIG_H_ 1
 
 #define HAVE_FCNTL_H 1
 #define HAVE_FLOAT_H 1
 #define HAVE_MEMORY_H 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDLIB_H 1
-#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TEMPNAM 1
@@ -18,9 +21,6 @@
 #define STDC_HEADERS 1
 #define VERSION "1.4"
 #define sleep(x) _sleep(x)
-
-#ifndef __RINT_INLINE__
-#define __RINT_INLINE__ 1
 
 /* Quick implmentation of rint() for Intel, since thoughtless Microsoft
  * programmers failed to provide us with one...
@@ -32,5 +32,7 @@ __inline double rint(double dblvar)
   __asm fst dblvar
   return dblvar;
 }
-#endif /* __RINT_INLINE__ */
+
+#endif /* _CONFIG_H_ not defined */
+
 
