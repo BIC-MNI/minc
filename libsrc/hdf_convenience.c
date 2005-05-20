@@ -2132,7 +2132,7 @@ hdf_open(const char *path, int mode)
     struct m2_var *var;
 
     H5E_BEGIN_TRY {
-#ifdef HDF5_MMAP_TEST
+#if HDF5_MMAP_TEST
         if (mode & 0x8000) {
             hid_t prp_id;
 

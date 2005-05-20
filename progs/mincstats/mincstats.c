@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.19  2004-12-14 23:39:36  bert
+ * Revision 1.20  2005-05-20 15:39:45  bert
+ * Remove and/or conditionalize test code for memory-mapped files (see HDF5_MMAP_TEST)
+ *
+ * Revision 1.19  2004/12/14 23:39:36  bert
  * New bimodal threshold algorithms
  *
  * Revision 1.18  2004/12/06 15:28:50  rotor
@@ -827,7 +830,7 @@ int main(int argc, char *argv[])
    }
 
    /* Open the file to get some information */
-   mincid = miopen(infiles[0], NC_NOWRITE | 0x8000);
+   mincid = miopen(infiles[0], NC_NOWRITE);
    imgid = ncvarid(mincid, MIimage);
    nvoxels = get_minc_nvoxels(mincid);
    voxel_volume = get_minc_voxel_volume(mincid);

@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.16  2004-12-14 23:53:46  bert
+ * Revision 6.17  2005-05-20 15:39:45  bert
+ * Remove and/or conditionalize test code for memory-mapped files (see HDF5_MMAP_TEST)
+ *
+ * Revision 6.16  2004/12/14 23:53:46  bert
  * Get rid of compilation warnings
  *
  * Revision 6.15  2004/12/03 21:52:35  bert
@@ -163,7 +166,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.16 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.17 2005-05-20 15:39:45 bert Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -592,7 +595,9 @@ MNCAPI int miopen(char *path, int mode)
      hmode = H5F_ACC_RDONLY;
    }
 
+#if HDF5_MMAP_TEST
    hmode = (mode & 0x8000);     /* !!!! Pass along magic memory-mapping bit */
+#endif /* HDF5_MMAP_TEST */
 
    status = hdf_open(path, hmode);
 
