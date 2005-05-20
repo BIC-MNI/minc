@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.3 2004-12-07 17:30:41 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.4 2005-05-20 21:13:45 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -39,7 +39,14 @@ PROGS = worldtovoxel.exe \
 	mincwindow.exe \
 	rawtominc.exe \
 	xfmconcat.exe \
-	xfminvert.exe
+	xfminvert.exe \
+        ecattominc.exe \
+        minctoecat.exe \
+        mnc2nii.exe \
+        nii2mnc.exe \
+        upet2mnc.exe \
+        dcm2mnc.exe
+
 
 MINC_HDRS = \
 	libsrc\minc.h \
@@ -144,7 +151,26 @@ VOLIO_HDRS = \
 	volume_io\Include\volume_io\volume_cache.h \
 	volume_io\Include\volume_io\volume.h
 
-INCLUDES = -I$(NETCDF_ROOT) -I$(HDF5_ROOT)/include -Ilibsrc -Iprogs/Proglib -Ivolume_io/Include
+ACR_NEMA_OBJS = \
+        conversion\Acr_nema\acr_io.obj \
+        conversion\Acr_nema\element.obj \
+        conversion\Acr_nema\file_io.obj \
+        conversion\Acr_nema\group.obj \
+        conversion\Acr_nema\message.obj \
+        conversion\Acr_nema\value_repr.obj
+
+ACR_NEMA_HDRS = \
+        conversion\Acr_nema\acr_nema.h \
+        conversion\Acr_nema\acr_nema\acr_io.h \
+        conversion\Acr_nema\acr_nema\element.h \
+        conversion\Acr_nema\acr_nema\file_io.h \
+        conversion\Acr_nema\acr_nema\group.h \
+        conversion\Acr_nema\acr_nema\message.h \
+        conversion\Acr_nema\acr_nema\value_repr.h
+
+INCLUDES = -I$(NETCDF_ROOT) -I$(HDF5_ROOT)/include -Ilibsrc \
+           -Iprogs/Proglib -Ivolume_io/Include -Iconversion/Acr_nema
+
 DEFINES = -DDLL_NETCDF -D_POSIX_ -DMINC2 -DWIN32 -D_HDF5USEDLL_ -DHAVE_CONFIG_H
 NETCDF_LIB = $(NETCDF_ROOT)/netcdf.lib
 HDF5_LIB = $(HDF5_ROOT)/dll/hdf5dll.lib
@@ -181,66 +207,6 @@ volume_io2.dll: $(VOLIO_OBJS) minc2.dll
 	link /dll /nologo /map:volume_io2.map /out:volume_io2.dll $(VOLIO_OBJS) minc2.lib $(NETCDF_LIB) $(HDF5_LIB)
 
 $(VOLIO_OBJS): $(VOLIO_HDRS)
-
-volume_io\Include\volume_io\alloc.h: volume_io\Include\alloc.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\arrays.h: volume_io\Include\arrays.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\basic.h: volume_io\Include\basic.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\def_math.h: volume_io\Include\def_math.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\files.h: volume_io\Include\files.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\geometry.h: volume_io\Include\geometry.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\geom_structs.h: volume_io\Include\geom_structs.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\multidim.h: volume_io\Include\multidim.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\progress.h: volume_io\Include\progress.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\string_funcs.h: volume_io\Include\string_funcs.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\system_dependent.h: volume_io\Include\system_dependent.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\transforms.h: volume_io\Include\transforms.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\vol_io_prototypes.h: volume_io\Include\vol_io_prototypes.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\volume_cache.h: volume_io\Include\volume_cache.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
-
-volume_io\Include\volume_io\volume.h: volume_io\Include\volume.h
-	-mkdir volume_io\Include\volume_io
-	copy $? $@
 
 libsrc\config.h: libsrc\config.h.msvc-win32
 	copy libsrc\config.h.msvc-win32 libsrc\config.h
@@ -291,7 +257,8 @@ minccopy.exe: $(MINCCOPY_OBJS)
 MINCDUMP_OBJS = \
 	progs/mincdump/mincdump.obj \
 	progs/mincdump/vardata.obj \
-	progs/mincdump/dumplib.obj \
+	progs/mincdump/dumplib.obj
+        
 mincdump.exe: $(MINCDUMP_OBJS)
 	$(LINK) $(MINCDUMP_OBJS) $(LIBS) 
 
@@ -381,3 +348,68 @@ xfmconcat.exe: $(XFMCONCAT_OBJS)
 XFMINVERT_OBJS = progs/xfm/xfminvert.obj
 xfminvert.exe: $(XFMINVERT_OBJS)
 	$(LINK) $(XFMINVERT_OBJS) $(LIBS)
+
+ECATTOMINC_OBJS = \
+        conversion/ecattominc/ecat_file.obj \
+        conversion/ecattominc/ecattominc.obj \
+        conversion/ecattominc/insertblood.obj \
+        conversion/ecattominc/machine_indep.obj
+
+$(ECATTOMINC_OBJS): conversion/ecattominc/ecat_file.h \
+                    conversion/ecattominc/machine_indep.h \
+                    conversion/ecattominc/ecat_header_definition.h
+
+ecattominc.exe: $(ECATTOMINC_OBJS)
+	$(LINK) $(ECATTOMINC_OBJS) $(LIBS) WS2_32.LIB
+                           
+MINCTOECAT_OBJS = \
+        conversion/minctoecat/ecat_write.obj \
+        conversion/minctoecat/minctoecat.obj \
+        conversion/minctoecat/machine_indep.obj
+
+$(MINCTOECAT_OBJS): conversion/minctoecat/ecat_write.h \
+                    conversion/minctoecat/machine_indep.h
+
+minctoecat.exe: $(MINCTOECAT_OBJS)
+	$(LINK) $(MINCTOECAT_OBJS) $(LIBS)
+
+NII2MNC_OBJS = \
+        conversion/nifti1/nii2mnc.obj \
+        conversion/nifti1/nifti1_io.obj
+
+NII2MNC_OBJS: conversion/nifti1/nifti1.h \
+              conversion/nifti1/nifti1_io.h
+
+nii2mnc.exe: $(NII2MNC_OBJS)
+	$(LINK) $(NII2MNC_OBJS) $(LIBS)
+
+MNC2NII_OBJS = \
+        conversion/nifti1/mnc2nii.obj \
+        conversion/nifti1/nifti1_io.obj
+
+MNC2NII_OBJS: conversion/nifti1/nifti1.h \
+              conversion/nifti1/nifti1_io.h
+
+mnc2nii.exe: $(MNC2NII_OBJS)
+	$(LINK) $(MNC2NII_OBJS) $(LIBS)
+
+UPET2MNC_OBJS = \
+        conversion/micropet/upet2mnc.obj
+
+upet2mnc.exe: $(UPET2MNC_OBJS)
+	$(LINK) $(UPET2MNC_OBJS) $(LIBS)
+
+$(ACR_NEMA_OBJS): $(ACR_NEMA_HDRS)
+
+DCM2MNC_OBJS = \
+       conversion/dcm2mnc/dcm2mnc.obj \
+       conversion/dcm2mnc/dicom_to_minc.obj \
+       conversion/dcm2mnc/dicom_read.obj \
+       conversion/dcm2mnc/minc_file.obj \
+       conversion/dcm2mnc/progress.obj \
+       conversion/dcm2mnc/siemens_to_dicom.obj \
+       conversion/dcm2mnc/string_to_filename.obj \
+       $(ACR_NEMA_OBJS)
+
+dcm2mnc.exe: $(DCM2MNC_OBJS)
+	$(LINK) $(DCM2MNC_OBJS) $(LIBS)
