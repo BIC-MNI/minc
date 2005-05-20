@@ -2,7 +2,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: ncgenyy.l,v 1.1 2004-06-15 20:14:41 bert Exp $
+ *   $Id: ncgenyy.l,v 1.2 2005-05-20 17:59:01 bert Exp $
  *********************************************************************/
 
 /* lex specification for tokens for ncgen */
@@ -26,7 +26,10 @@ extern int int_val;
 extern float float_val;
 #ifndef YYSTYPE
 extern void * yylval;
-#endif /* YYSTYPE not defined */
+#define YYLVAL_NULL ((void *) NULL)
+#else
+#define YYLVAL_NULL ((YYSTYPE) NULL)
+#endif /* YYSTYPE defined */
 extern int lineno;
 extern signed char byte_val;
 extern short short_val;
@@ -125,7 +128,7 @@ FloatInf|-?Inff	{ /* missing value (pre-2.4 backward compatibility) */
 [A-Za-z_][A-Z.@#\[\]a-z_0-9-]*	{
                 if (STREQ((char *)yytext, FILL_STRING))
 		        return (FILLVALUE);
-		if ((yylval = lookup((char *)yytext)) == NULL) {
+		if ((yylval = lookup((char *)yytext)) == YYLVAL_NULL) {
 			yylval = install((char *)yytext);
 			}
 		return (IDENT);

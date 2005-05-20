@@ -1,14 +1,14 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: ncgentab.y,v 1.1 2004-06-15 20:14:41 bert Exp $
+ *   $Id: ncgentab.y,v 1.2 2005-05-20 17:59:01 bert Exp $
  *********************************************************************/
 
 /* yacc source for "ncgen", a netCDL parser and netCDF generator */
 
 %{
 #ifndef lint
-static char SccsId[] = "$Id: ncgentab.y,v 1.1 2004-06-15 20:14:41 bert Exp $";
+static char SccsId[] = "$Id: ncgentab.y,v 1.2 2005-05-20 17:59:01 bert Exp $";
 #endif
 #include        <string.h>
 #include	<stdlib.h>
@@ -26,8 +26,6 @@ typedef struct Symbol {		/* symbol table entry */
 	int             dnum;	        /* handle as a dimension */
 	int             vnum;	        /* handle as a variable */
 	} *YYSTYPE1;
-
-#define NC_UNSPECIFIED ((nc_type)0)	/* unspecified (as yet) type */
 
 #define YYSTYPE YYSTYPE1
 YYSTYPE symlist;		/* symbol table: linked list */
