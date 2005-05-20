@@ -395,6 +395,17 @@ main(int argc, char **argv)
             }
         }
     }
+    else {
+        /* No official transform was found (possibly this is an Analyze 
+         * file).  Just use some reasonable defaults.
+         */
+        Transform_elem(mnc_xform, DIM_X, DIM_I) *= nii_ptr->dx;
+        Transform_elem(mnc_xform, DIM_Y, DIM_J) *= nii_ptr->dy;
+        Transform_elem(mnc_xform, DIM_Z, DIM_K) *= nii_ptr->dz;
+        Transform_elem(mnc_xform, DIM_X, 3) = -(nii_ptr->dx * nii_ptr->nx) / 2;
+        Transform_elem(mnc_xform, DIM_Y, 3) = -(nii_ptr->dy * nii_ptr->ny) / 2;
+        Transform_elem(mnc_xform, DIM_Z, 3) = -(nii_ptr->dz * nii_ptr->nz) / 2;
+    }
 
     create_linear_transform(&mnc_linear_xform, &mnc_xform);
 
