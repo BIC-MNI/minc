@@ -71,7 +71,7 @@ offset_to_index(int ndims,
 
 /** The main restructuring code.
  */
-void
+MNCAPI void
 restructure_array(int ndims,    /* Dimension count */
                   unsigned char *array, /* Raw data */
                   const unsigned long *lengths_perm, /* Permuted lengths */
