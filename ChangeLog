@@ -1,4 +1,26 @@
 MINC 2:
+2005-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Update Makefile.msvc-win32 to build converters.
+	
+	* Declare restructure_array() in hyper.c to be MNCAPI so that
+	nii2mnc can link to it.
+	
+	* Get rid of warnings in mincgen build.  Affected files are 
+	progs/mincgen/ncgenyy.l and progs/mincgen/ncgentab.y
+	
+	* Replace direct usage of H5Fis_hdf5() function to avoid annoying
+	error messages for nonexistant files.  Instead there is now a 
+	function named hdf_access() that returns a boolean value TRUE if
+	the file can be accessed and is in HDF5 format.  This change
+	affected the files libsrc/hdf_convenience.h,
+	libsrc/hdf_convenience.c, and libsrc/netcdf_convenience.c
+
+	* Remove and/or conditionalize some test code for memory-mapped
+	files that should not have been checked in.  Affected files are
+	libsrc/netcdf_convenience.c, libsrc/hdf_convenience.c, and 
+	progs/mincstats/mincstats.c
+	
 2005-05-19  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Fix volume.c and m2util.c to be compatible with HDF5 1.6.3 and
