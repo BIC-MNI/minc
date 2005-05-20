@@ -2300,6 +2300,22 @@ hdf_close(int fd)
     return (MI_NOERROR);
 }
 
+/* 
+ * Returns one (1) if the argument is the path name of an existing HDF5
+ * file, or zero if the file does not exist or is not in the right format.
+ */
+int
+hdf_access(const char *path)
+{
+    htri_t status;
+
+    H5E_BEGIN_TRY {
+        status = H5Fis_hdf5(path);
+    } H5E_END_TRY;
+
+    return (status > 0);        /* Return non-zero if success */
+}
+
 #ifdef HDF_TEST
 main(int argc, char **argv)
 {

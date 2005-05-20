@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.17  2005-05-20 15:39:45  bert
+ * Revision 6.18  2005-05-20 16:49:51  bert
+ * Avoid direct usage of H5Fis_hdf5(), replace with hdf_access() function
+ *
+ * Revision 6.17  2005/05/20 15:39:45  bert
  * Remove and/or conditionalize test code for memory-mapped files (see HDF5_MMAP_TEST)
  *
  * Revision 6.16  2004/12/14 23:53:46  bert
@@ -166,7 +169,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.17 2005-05-20 15:39:45 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.18 2005-05-20 16:49:51 bert Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -302,7 +305,7 @@ PRIVATE int execute_decompress_command(char *command, char *infile,
          }
 
 #ifdef MINC2
-	 successful_ncopen = (H5Fis_hdf5(outfile) > 0);
+	 successful_ncopen = hdf_access(outfile);
 	 if (successful_ncopen) {
              break;
          }
@@ -416,8 +419,7 @@ MNCAPI char *miexpand_file(char *path, char *tempfile, int header_only,
    *created_tempfile = FALSE;
 
 #ifdef MINC2
-   status = H5Fis_hdf5(path);
-   if (status > 0) {
+   if (hdf_access(path)) {
       newfile = strdup(path);
       MI_RETURN(newfile);
    }
