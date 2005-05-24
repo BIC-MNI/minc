@@ -1,3 +1,10 @@
+2005-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* Use default transform when converting an Analyze file with
+	nii2mnc. Change ported from main branch.
+
+	* Update config.h.msvc-win32
+	
 2005-05-16  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Housekeeping - remove README.binary_packaging, rename
