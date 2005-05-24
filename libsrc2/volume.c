@@ -1122,9 +1122,6 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
                      "/minc-2.0/image/0/image-max", &handle->scale_max);
     }
     
-    /* Read the current settings for valid-range */
-    miread_valid_range(handle, &handle->valid_max, &handle->valid_min);
-
     /* Read the current voxel-to-world transform */
     miget_voxel_to_world(handle, handle->v2w_transform);
 
@@ -1222,6 +1219,10 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     default:
         return (MI_ERROR);
     }
+
+    /* Read the current settings for valid-range */
+    miread_valid_range(handle, &handle->valid_max, &handle->valid_min);
+
     *volume = handle;
     return (MI_NOERROR);
 }
