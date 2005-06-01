@@ -5,7 +5,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.1.2.1  2004-09-28 20:23:41  bert
+ * Revision 6.1.2.2  2005-06-01 18:15:37  bert
+ * Change name of parameter to avoid shadowing index() function
+ *
+ * Revision 6.1.2.1  2004/09/28 20:23:41  bert
  * Minor portability fixes for Windows
  *
  * Revision 6.1  2002/01/14 21:28:26  neelin
@@ -288,7 +291,7 @@ MNCAPI void set_loop_allocate_buffer_function(Loop_Options *loop_options,
 MNCAPI void get_info_shape(Loop_Info *loop_info, int ndims,
                            long start[], long count[]);
 MNCAPI void get_info_voxel_index(Loop_Info *loop_info, long subscript, 
-                                 int ndims, long index[]);
+                                 int ndims, long idx[]);
 MNCAPI int get_info_current_file(Loop_Info *loop_info);
 MNCAPI int get_info_current_mincid(Loop_Info *loop_info);
 MNCAPI int get_info_current_index(Loop_Info *loop_info);
