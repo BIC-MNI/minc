@@ -1,12 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(minc, [1.4], [bert@bic.mni.mcgill.ca])
+AC_INIT(minc, [1.5], [bert@bic.mni.mcgill.ca])
 AC_CONFIG_SRCDIR([libsrc/minc.h])
 AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.14.2.9 $)
+AC_REVISION($Revision: 6.14.2.10 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
