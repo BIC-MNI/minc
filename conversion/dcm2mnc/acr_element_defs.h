@@ -120,6 +120,8 @@ GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001, IS);
 GLOBAL_ELEMENT(ACR_Images_in_acquisition,  0x0020, 0x1002, IS);
 GLOBAL_ELEMENT(ACR_Slice_location,         0x0020, 0x1041, DS);
 
+GLOBAL_ELEMENT(ACR_Number_of_frames      , 0x0028, 0x0008, IS);
+GLOBAL_ELEMENT(ACR_Frame_increment_ptr   , 0x0028, 0x0009, AT);
 GLOBAL_ELEMENT(ACR_Rows                  , 0x0028, 0x0010, US);
 GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011, US);
 GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030, DS);
