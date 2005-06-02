@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6.2.3  2005-05-16 19:55:26  bert
+   * Revision 1.6.2.4  2005-06-02 18:20:06  bert
+   * Fix generation and scaling of files with signed data
+   *
+   * Revision 1.6.2.3  2005/05/16 19:55:26  bert
    * Fix usage of G.Name
    *
    * Revision 1.6.2.2  2005/05/13 21:40:15  bert
@@ -110,7 +113,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.3 2005-05-16 19:55:26 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.4 2005-06-02 18:20:06 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -150,7 +153,7 @@ create_minc_file(const char *minc_file,
                  char **output_file_name,
                  Loop_Type loop_type)
 {
-    static char temp_name[256];
+    static char temp_name[1024];
     char patient_name[256];
     char reg_time[256];
     char temp_str[256];
@@ -244,6 +247,9 @@ create_minc_file(const char *minc_file,
         }
         else if (!strcmp(general_info->study.modality, MI_PET)) {
             strcpy(suffix_str, "_pet");
+        }
+        else {
+            suffix_str[0] = '\0';
         }
 
         sprintf(temp_name, "%s%s_%s_%s_%s%s%s%s%s%s%s.mnc", 
@@ -922,8 +928,8 @@ void setup_minc_variables(int mincid, General_Info *general_info,
    @MODIFIED   :
    ---------------------------------------------------------------------------- */
 void
-save_minc_image(int icvid, General_Info *general_info, 
-                File_Info *file_info, Image_Data *image)
+save_minc_image(int icvid, General_Info *gi_ptr, 
+                File_Info *fi_ptr, Image_Data *image)
 {
     int mincid;
     long start[MAX_VAR_DIMS], count[MAX_VAR_DIMS];
@@ -931,7 +937,7 @@ save_minc_image(int icvid, General_Info *general_info,
     int idim;
     Mri_Index imri;
     char *dimname;
-    unsigned short pvalue, pmax, pmin;
+    int pvalue, pmax, pmin;
     double dvalue, maximum, minimum, scale, offset;
     long ipix, imagepix;
 
@@ -941,15 +947,15 @@ save_minc_image(int icvid, General_Info *general_info,
     /* Create start and count variables */
     idim = 0;
     for (imri=MRI_NDIMS-1; (int) imri >= 0; imri--) {
-        if (general_info->image_index[imri] >= 0) {
-            file_index = general_info->image_index[imri];
-            if (general_info->cur_size[imri] > 1) {
-                array_index = search_list(file_info->index[imri], 
-                                          general_info->indices[imri],
-                                          general_info->cur_size[imri],
-                                          general_info->search_start[imri]);
+        if (gi_ptr->image_index[imri] >= 0) {
+            file_index = gi_ptr->image_index[imri];
+            if (gi_ptr->cur_size[imri] > 1) {
+                array_index = search_list(fi_ptr->index[imri], 
+                                          gi_ptr->indices[imri],
+                                          gi_ptr->cur_size[imri],
+                                          gi_ptr->search_start[imri]);
                 if (array_index < 0) array_index = 0;
-                general_info->search_start[imri] = array_index;
+                gi_ptr->search_start[imri] = array_index;
             }
             else {
                 array_index = 0;
@@ -961,30 +967,30 @@ save_minc_image(int icvid, General_Info *general_info,
     }
     start[idim] = 0;
     start[idim+1] = 0;
-    count[idim] = general_info->nrows;
-    count[idim+1] = general_info->ncolumns;
+    count[idim] = gi_ptr->nrows;
+    count[idim+1] = gi_ptr->ncolumns;
 
     /* Write out slice position */
-    switch (general_info->slice_world) {
+    switch (gi_ptr->slice_world) {
     case XCOORD: dimname = MIxspace; break;
     case YCOORD: dimname = MIyspace; break;
     case ZCOORD: dimname = MIzspace; break;
     default: dimname = MIzspace;
     }
     mivarput1(mincid, ncvarid(mincid, dimname), 
-              &start[general_info->image_index[SLICE]], 
-              NC_DOUBLE, NULL, &file_info->coordinate[SLICE]);
+              &start[gi_ptr->image_index[SLICE]], 
+              NC_DOUBLE, NULL, &fi_ptr->coordinate[SLICE]);
 
     /* Write out time of slice, if needed */
-    if (general_info->cur_size[TIME] > 1) {
+    if (gi_ptr->cur_size[TIME] > 1) {
         mivarput1(mincid, ncvarid(mincid, mri_dim_names[TIME]), 
-                  &start[general_info->image_index[TIME]], 
-                  NC_DOUBLE, NULL, &file_info->coordinate[TIME]);
+                  &start[gi_ptr->image_index[TIME]], 
+                  NC_DOUBLE, NULL, &fi_ptr->coordinate[TIME]);
 
         /* If width information is present, save it to the appropriate
          * location in the time-width variable.
          */
-        if (file_info->width[TIME] != 0.0) {
+        if (fi_ptr->width[TIME] != 0.0) {
             int ncopts_prev;
             int varid;
 
@@ -1003,63 +1009,123 @@ save_minc_image(int icvid, General_Info *general_info,
              */
             if (varid >= 0) {
                 mivarput1(mincid, varid, 
-                          &start[general_info->image_index[TIME]], 
-                          NC_DOUBLE, NULL, &file_info->width[TIME]);
+                          &start[gi_ptr->image_index[TIME]], 
+                          NC_DOUBLE, NULL, &fi_ptr->width[TIME]);
             }
         }
     }
 
     /* Write out echo time of slice, if needed */
-    if (general_info->cur_size[ECHO] > 1) {
+    if (gi_ptr->cur_size[ECHO] > 1) {
         mivarput1(mincid, ncvarid(mincid, mri_dim_names[ECHO]), 
-                  &start[general_info->image_index[ECHO]], 
-                  NC_DOUBLE, NULL, &file_info->coordinate[ECHO]);
+                  &start[gi_ptr->image_index[ECHO]], 
+                  NC_DOUBLE, NULL, &fi_ptr->coordinate[ECHO]);
     }
 
-    /* Search image for max and min */
-    imagepix = general_info->nrows * general_info->ncolumns;
-    pmax = 0;
-    pmin = USHRT_MAX;
-    for (ipix=0; ipix < imagepix; ipix++) {
-        pvalue = image->data[ipix];
-        if (pvalue > pmax) pmax = pvalue;
-        if (pvalue < pmin) pmin = pvalue;
+    /* Search image for max and min.  This needs to be done such
+     * that we interpret signed data correctly, so there are separate
+     * loops for signed and unsigned data.
+     *
+     * If the data is signed, we need to search for the smallest and
+     * lowest 2's complement 16-bit values.  These will range from (at
+     * most) -32768 to 32767.  For unsigned values, we know that the
+     * range will be from 0 to 65535.  Since pmin, pmax, and pvalue
+     * are declared to be 'int', they will always be able to represent
+     * these values on 32-bit or 64-bit architectures.
+     *
+     * First, calculate the total number of voxels in this image.
+     */
+    imagepix = gi_ptr->nrows * gi_ptr->ncolumns;
+
+    pmax = INT_MIN;             /* Initialize to smallest possible int  */
+    pmin = INT_MAX;             /* Initialize to largest possible int */
+
+    if (gi_ptr->is_signed) {
+        short *ssh_ptr = (short *) image->data; /* Cast to signed data */
+
+        for (ipix = 0; ipix < imagepix; ipix++) {
+            pvalue = ssh_ptr[ipix];
+            if (pvalue > pmax)
+                pmax = pvalue;
+            if (pvalue < pmin) 
+                pmin = pvalue;
+        }
+    }
+    else {
+        unsigned short *ush_ptr = (unsigned short *) image->data;
+
+        for (ipix = 0; ipix < imagepix; ipix++) {
+            pvalue = ush_ptr[ipix];
+            if (pvalue > pmax)
+                pmax = pvalue;
+            if (pvalue < pmin) 
+                pmin = pvalue;
+        }
     }
 
-    /* Re-scale the images */
-    if (pmax > pmin)
-        scale = (general_info->pixel_max - general_info->pixel_min) /
+    /* Calculate the 'scale' and 'offset' (slope and intercept) we
+     * must use to scale the data.
+     */
+    if (pmax > pmin) {
+        scale = (gi_ptr->pixel_max - gi_ptr->pixel_min) / 
             ((double) pmax - (double) pmin);
-    else
+    }
+    else {
         scale = 0.0;
-
-    offset = general_info->pixel_min - scale * (double) pmin;
-    for (ipix=0; ipix < imagepix; ipix++) {
-        dvalue = image->data[ipix];
-        image->data[ipix] = dvalue * scale + offset;
     }
 
-    /* Calculate new intensity max and min */
-    if (general_info->pixel_max > general_info->pixel_min)
-        scale = (file_info->slice_max - file_info->slice_min) /
-            (general_info->pixel_max - general_info->pixel_min);
-    else
-        scale = 0.0;
+    offset = gi_ptr->pixel_min - scale * (double) pmin;
 
     /* debugging info for slice intensity scaling
      */
     if (G.Debug >= HI_LOGGING) {
-        printf("global range: %.2f %.2f  file range: %.2f %.2f pmax: %u\n",
-               general_info->pixel_min,
-               general_info->pixel_max,
-               file_info->slice_min,
-               file_info->slice_max,
-               pmax);
+        printf("ranges: global %.2f %.2f,  file %.2f %.2f, ",
+               gi_ptr->pixel_min,
+               gi_ptr->pixel_max,
+               fi_ptr->slice_min,
+               fi_ptr->slice_max);
+        printf("slice %d %d\n", pmin, pmax);
+        printf("1. scale %.2f offset %.2f\n", scale, offset);
     }
 
-    offset = file_info->slice_min - scale * general_info->pixel_min;
+    /* Re-scale the images. Again, this has to be done in a 
+     * "signedness-aware" way, so that negative values will be 
+     * dealt with properly in signed data.
+     */
+
+    if (gi_ptr->is_signed) {
+        short *ssh_ptr = (short *) image->data;
+
+        for (ipix = 0; ipix < imagepix; ipix++) {
+            dvalue = ssh_ptr[ipix];
+            ssh_ptr[ipix] = (short) (dvalue * scale + offset);
+        }
+    }
+    else {
+        unsigned short *ush_ptr = (unsigned short *) image->data;
+
+        for (ipix = 0; ipix < imagepix; ipix++) {
+            dvalue = ush_ptr[ipix];
+            ush_ptr[ipix] = (unsigned short) (dvalue * scale + offset);
+        }
+    }
+
+    if (gi_ptr->pixel_max > gi_ptr->pixel_min) {
+        scale = (fi_ptr->slice_max - fi_ptr->slice_min) /
+            (gi_ptr->pixel_max - gi_ptr->pixel_min);
+    }
+    else {
+        scale = 0.0;
+    }
+
+    offset = fi_ptr->slice_min - scale * gi_ptr->pixel_min;
     minimum = (double) pmin * scale + offset;
     maximum = (double) pmax * scale + offset;
+
+    if (G.Debug >= HI_LOGGING) {
+        printf("2. scale %.2f offset %.2f min %.2f max %.2f\n", scale, offset,
+               minimum, maximum);
+    }
 
     /* Write out the max and min values */
     mivarput1(mincid, ncvarid(mincid, MIimagemin), start, NC_DOUBLE,
