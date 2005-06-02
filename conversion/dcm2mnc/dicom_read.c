@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.16.2.1  2005-05-12 21:16:47  bert
+   * Revision 1.16.2.2  2005-06-02 17:04:26  bert
+   * 1. Fix handling of signed values for pixel minimum and maximum, 2. Set found_dircos[] when we adopt the default direction cosines for files with null direction cosines
+   *
+   * Revision 1.16.2.1  2005/05/12 21:16:47  bert
    * Initial checkin
    *
    * Revision 1.16  2005/05/09 15:30:32  bert
@@ -804,17 +807,36 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
     }
 
     if (G.useMinMax) {
-        // Get pixel value information
-        // I think this might wrongly assume that the ACR values min/max
-        // apply to the whole volume - it actually appears that they apply
-        // to the current slice.
+        int pmin;
+        int pmax;
 
-        fi_ptr->pixel_min = acr_find_short(group_list, 
-                                           ACR_Smallest_pixel_value, imin);
+        /* Get pixel value information
+         * I think this might wrongly assume that the ACR values min/max
+         * apply to the whole volume - it actually appears that they apply
+         * to the current slice.
+         */
 
-        fi_ptr->pixel_max = acr_find_short(group_list,
-                                           ACR_Largest_pixel_value, imax);
+        pmin = acr_find_short(group_list, ACR_Smallest_pixel_value, imin);
+        pmax = acr_find_short(group_list, ACR_Largest_pixel_value, imax);
 
+        /* Hack to convert to signed representation if indicated - if
+         * bit 15 is set, we have to "promote" to 2's complement by
+         * sign-extending the result before converting it to a double.
+         * Perhaps this sort of thing needs to be pushed down into the
+         * ACR-NEMA library somehow, so that the representations of
+         * short values are automatically converted properly?
+         */
+        if (ivalue == ACR_PIXEL_REP_SIGNED) {
+            if (pmin & 0x8000) {
+                pmin -= 0x10000;
+            }
+            if (pmax & 0x8000) {
+                pmax -= 0x10000;
+            }
+        }
+
+        fi_ptr->pixel_min = (double) pmin;
+        fi_ptr->pixel_max = (double) pmax;
     }
     else {
         /* for now, use bits_stored to determine dynamic range
@@ -1044,7 +1066,8 @@ get_coordinate_info(Acr_Group group_list,
 
     /* If we don't find direction cosines, then assume transverse volume
      */
-    if (!found_dircos[VSLICE] || !found_dircos[VROW] || 
+    if (!found_dircos[VSLICE] || 
+        !found_dircos[VROW] || 
         !found_dircos[VCOLUMN]) {
 
         if (G.Debug) {
@@ -1055,6 +1078,7 @@ get_coordinate_info(Acr_Group group_list,
             for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
                 dircos[ivolume][iworld] = 
                     ((ivolume == (WORLD_NDIMS-iworld-1)) ? -1.0 : 0.0);
+                found_dircos[iworld] = TRUE;
             }
         }
     }
