@@ -142,6 +142,13 @@ GLOBAL_ELEMENT(ACR_Number_of_time_slices , 0x0054, 0x0101, US);
 GLOBAL_ELEMENT(ACR_Units                 , 0x0054, 0x1001, CS);
 GLOBAL_ELEMENT(ACR_Frame_reference_time  , 0x0054, 0x1300, DS);
 
+GLOBAL_ELEMENT(ACR_Shared_func_groups_seq, 0x5200, 0x9229, SQ);
+GLOBAL_ELEMENT(ACR_Plane_orientation_seq , 0x0020, 0x9116, SQ);
+GLOBAL_ELEMENT(ACR_Pixel_measurement_seq , 0x0020, 0x9118, SQ);
+
+GLOBAL_ELEMENT(ACR_Perframe_func_groups_seq, 0x5200, 0x9230, SQ);
+GLOBAL_ELEMENT(ACR_Plane_position_seq    , 0x0020, 0x9113, SQ);
+
 GLOBAL_ELEMENT(ACR_Pixel_data            , ACR_IMAGE_GID, ACR_IMAGE_EID, OW);
 
 
