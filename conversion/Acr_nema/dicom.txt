@@ -227,8 +227,49 @@ Image_Trigger_Delay                     0x0018  0x1067  DS
 Multiplex_Group_Time_Offset             0x0018  0x1068  DS
 Trigger_Time_Offset                     0x0018  0x1069  DS
 Synchronization_Trigger                 0x0018  0x106A  CS
-// ...
+Synchronization_Channel                 0x0018  0x106C  US
+Trigger_Sample_Position                 0x0018  0x106E  UL
+Radiopharmaceutical_Route               0x0018  0x1070  LO
+Radiopharmaceutical_Volume              0x0018  0x1071  DS
+Radiopharmaceutical_Start_Time          0x0018  0x1072  TM
+Radiopharmaceutical_Stop_Time           0x0018  0x1073  TM
+Radionuclide_Total_Dose                 0x0018  0x1074  DS
+Radionuclide_Half_Life                  0x0018  0x1075  DS
+Radionuclide_Positron_Fraction          0x0018  0x1076  DS
+Radiopharmaceutical_Specific_Activity   0x0018  0x1077  DS
+Beat_Rejection_Flag                     0x0018  0x1080  CS
+Low_R-R_Value                           0x0018  0x1081  IS
+High_R-R_Value                          0x0018  0x1082  IS
+Intervals_Acquired                      0x0018  0x1083  IS
+Intervals_Rejected                      0x0018  0x1084  IS
+PVC_Rejection                           0x0018  0x1085  LO
+Skip_Beats                              0x0018  0x1086  IS
+Heart_Rate                              0x0018  0x1088  IS
 Cardiac_Number_of_Images                0x0018  0x1090  IS
+// ...
+Reconstruction_Diameter                 0x0018  0x1100  DS
+Distance_Source_to_Detector             0x0018  0x1110  DS
+Distance_Source_to_Patient              0x0018  0x1111  DS
+Estimated_Radiographic_Magnification_Factor 0x0018 0x1114 DS
+Gantry/Detector_Tilt                    0x0018  0x1120  DS
+Gantry/Detector_Slew                    0x0018  0x1121  DS
+Table_Height                            0x0018  0x1130  DS
+Table_Traverse                          0x0018  0x1131  DS
+Table_Motion                            0x0018  0x1134  CS
+Table_Vertical_Increment                0x0018  0x1135  DS
+Table_Lateral_Increment                 0x0018  0x1136  DS
+Table_Longitudinal_Increment            0x0018  0x1137  DS
+Table_Angle                             0x0018  0x1138  DS
+Table_Type                              0x0018  0x113A  CS
+Rotation_Direction                      0x0018  0x1140  CS
+Angular_Position                        0x0018  0x1141  DS
+Radial_Position                         0x0018  0x1142  DS
+Scan_Arc                                0x0018  0x1143  DS
+Angular_Step                            0x0018  0x1144  DS
+Center_of_Rotation_Offset               0x0018  0x1145  DS
+// ...
+Collimator/Grid_Name                    0x0018  0x1180  SH
+Collimator_Type                         0x0018  0x1181  CS
 // ...
 Date_of_Last_Calibration                0x0018  0x1200  DA
 Time_of_Last_Calibration                0x0018  0x1201  TM
@@ -373,6 +414,17 @@ Rescale_Slope                           0x0028  0x1053  DS
 Rescale_Type                            0x0028  0x1054  LO
 Window_Center&Width_Explanation         0x0028  0x1055  LO
 Gray_Scale                              0x0028  0x1080  RET
+Recommended_Viewing_Mode                0x0028  0x1090  CS
+Gray_Lookup_Table_Descriptor            0x0028  0x1100  RET
+Red_Palette_Lookup_Table_Descriptor     0x0028  0x1101  US
+Green_Palette_Lookup_Table_Descriptor   0x0028  0x1102  US
+Blue_Palette_Lookup_Table_Descriptor    0x0028  0x1103  US
+Palette_Color_Lookup_Table_UID          0x0028  0x1199  UI
+Gray_Lookup_Table_Data                  0x0028  0x1200  RET
+Red_Palette_Color_Lookup_Table_Data     0x0028  0x1201  OW
+Green_Palette_Color_Lookup_Table_Data   0x0028  0x1202  OW
+Blue_Palette_Color_Lookup_Table_Data    0x0028  0x1203  OW
+//...
 Lossy_Image_Compression                 0x0028  0x2110  CS
 Lossy_Image_Compression_Ratio           0x0028  0x2112  DS
 Lossy_Image_Compression_Method          0x0028  0x2114  CS
