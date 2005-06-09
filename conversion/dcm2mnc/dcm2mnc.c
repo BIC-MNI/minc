@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.5  2005-06-02 18:35:32  bert
+ * Revision 1.14.2.6  2005-06-09 20:48:36  bert
+ * Remove obsolete -descr option, add shiny new -fname and -dname options.  Also don't explicitly include math.h
+ *
+ * Revision 1.14.2.5  2005/06/02 18:35:32  bert
  * Change version to 2.0.06
  *
  * Revision 1.14.2.4  2005/05/16 22:39:56  bert
@@ -101,13 +104,12 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.5 2005-06-02 18:35:32 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.6 2005-06-09 20:48:36 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
 
 #include <sys/stat.h>
-#include <math.h>
 #if HAVE_DIRENT_H
 #include <dirent.h>
 #endif
@@ -145,8 +147,6 @@ ArgvInfo argTable[] = {
      "Print list of series (don't create files)"},
     {"-anon", ARGV_CONSTANT, (char *) TRUE, (char *) &G.Anon,
      "Exclude subject name from file header"},
-    {"-descr", ARGV_STRING, (char *) 1, (char *) &G.Name,
-     "Use <str> as session descriptor (default = patient initials)"},
 #if HAVE_POPEN
     {"-cmd", ARGV_STRING, (char *) 1, (char *) &G.command_line, 
      "Apply <command> to output files (e.g. gzip)"},
@@ -186,6 +186,18 @@ ArgvInfo argTable[] = {
      (char *)&G.use_stdin,
      "Read file list from standard input."},
 
+    {"-fname",
+     ARGV_STRING,
+     (char *)1,
+     (char *)&G.filename_format,
+     "Set format for output file name."},
+
+    {"-dname",
+     ARGV_STRING,
+     (char *)1,
+     (char *)&G.dirname_format,
+     "Set format for output directory name."},
+
     {NULL, ARGV_END, NULL, NULL, NULL}
 
 };
@@ -209,6 +221,8 @@ main(int argc, char *argv[])
     G.splitDynScan = FALSE;     /* Don't split dynamic scans by default */
     G.splitEcho = TRUE;         /* Do split by echo by default */
     G.use_stdin = FALSE;        /* Do not read file list from stdin */
+    G.filename_format = NULL;
+    G.dirname_format = NULL;
 
     G.minc_history = time_stamp(argc, argv); /* Create minc history string */
 
