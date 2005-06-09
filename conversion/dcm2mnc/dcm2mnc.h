@@ -1,5 +1,5 @@
 /* ----------------------------- MNI Header -----------------------------------
-@NAME       : dicomserver.h
+@NAME       : dcm2mnc.h
 @DESCRIPTION: Header file that includes things needed for dicomserver.
 @METHOD     : 
 @GLOBALS    : 
@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.10.2.2  2005-05-16 19:45:23  bert
+ * Revision 1.10.2.3  2005-06-09 20:46:11  bert
+ * Fairly major fixes to use integers for all arguments, add filename_format and dirname_format to global options, always include math.h, and defined OPTS_NO_RESCALE for testing converter without ICV
+ *
+ * Revision 1.10.2.2  2005/05/16 19:45:23  bert
  * Add config.h, sys/types.h, other config.h conditionals for float.h, int32_t and int16_t.  Also fix definitions of Name and command_line in the globals structure.
  *
  * Revision 1.10.2.1  2005/05/12 21:16:47  bert
@@ -111,6 +114,7 @@
 #include <ctype.h>
 #include <memory.h>
 #include <limits.h>
+#include <math.h>
 #if HAVE_FLOAT_H
 #include <float.h>
 #endif
@@ -229,24 +233,26 @@ struct globals {
     char *minc_history;         /* Global for minc history */
     char *pname;                /* program name */
     File_Type file_type;        /* type of input files */
-    short Debug;                /* Debug on/off */
-    short Anon;                 /* "Anonymize" the output */
-    short List;
-    short useMinMax;            /* TRUE if need to use pixel min/max values */
-    short splitEcho;            /* TRUE if echos in separate files */
-    short splitDynScan;  /* TRUE if dynamic scans in separate files */
-    short clobber;
-    char * Name;
+    int Debug;                  /* Debug on/off */
+    int Anon;                   /* "Anonymize" the output */
+    int List;
+    int useMinMax;      /* TRUE if need to use pixel min/max values */
+    int splitEcho;              /* TRUE if echos in separate files */
+    int splitDynScan;    /* TRUE if dynamic scans in separate files */
+    int clobber;
     char * command_line;
-    unsigned long opts;
+    int opts;
     mosaic_seq_t mosaic_seq;
-    short use_stdin;
+    int use_stdin;
+    char * filename_format;
+    char * dirname_format;
 };
 
 /* Values for options flags */
 #define OPTS_NO_MOSAIC   0x00000001 /* Don't parse mosaic information. */
 #define OPTS_KEEP_COORD  0x00000002 /* Don't flip DICOM coordinates */
 #define OPTS_NO_LOCATION 0x00000004 /* Never rely on slice location */
+#define OPTS_NO_RESCALE  0x00000008 /* Do NOT rescale pixel data in any way! */
 
 extern struct globals G;
 
