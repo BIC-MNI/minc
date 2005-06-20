@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6.2.4  2005-06-02 18:20:06  bert
+   * Revision 1.6.2.5  2005-06-20 21:59:33  bert
+   * Add strfminc() to allow arbitrary output file naming, implement OPTS_NO_RESCALE debug option, fix rounding
+   *
+   * Revision 1.6.2.4  2005/06/02 18:20:06  bert
    * Fix generation and scaling of files with signed data
    *
    * Revision 1.6.2.3  2005/05/16 19:55:26  bert
@@ -113,16 +116,123 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.4 2005-06-02 18:20:06 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.5 2005-06-20 21:59:33 bert Exp $";
 
 #include "dcm2mnc.h"
 
 #include <sys/stat.h>
-#include <ctype.h>
 
 /* Define mri dimension names */
 static char *mri_dim_names[] = {
     NULL, "echo_time", MItime, "phase_number", "chemical_shift", NULL};
+
+int 
+strfminc(char *str_ptr, int str_max, const char *fmt_ptr, 
+         General_Info *gi_ptr)
+{
+    char *tmp_ptr;
+    int str_len = 0;
+    char scan_label[MRI_NDIMS][20];
+    Mri_Index imri;
+    static char *scan_prefix[MRI_NDIMS] = {"sl", "e", "d", "p", "cs"};
+    char tmp_str[1024];
+
+    /* Get strings for echo number, etc. 
+     */
+    for (imri = 0; imri < MRI_NDIMS; imri++) {
+        if ((gi_ptr->cur_size[imri] < gi_ptr->max_size[imri]) &&
+            (gi_ptr->cur_size[imri] == 1)) {
+            sprintf(scan_label[imri], "%s%d", 
+                    scan_prefix[imri],
+                    gi_ptr->default_index[imri]);
+        }
+        else {
+            strcpy(scan_label[imri], "");
+        }
+    }
+
+    while (*fmt_ptr != '\0') {
+        tmp_ptr = NULL;
+        if (*fmt_ptr == '%') {
+            fmt_ptr++;
+            switch (*fmt_ptr) {
+            case 'N':           /* Subject name */
+                string_to_filename(gi_ptr->patient.name,
+                                   tmp_str, sizeof(tmp_str));
+                if (tmp_str[0] == '\0') {
+                    tmp_ptr = "no_name";
+                }
+                else {
+                    tmp_ptr = tmp_str;
+                }
+                break;
+            case 'D':
+                string_to_filename(gi_ptr->patient.reg_date,
+                                   tmp_str, sizeof(tmp_str));
+                tmp_ptr = tmp_str;
+                break;
+            case 'S':
+                string_to_filename(gi_ptr->study.study_id,
+                                   tmp_str, sizeof(tmp_str));
+                tmp_ptr = tmp_str;
+                break;
+            case 'T':
+                string_to_filename(gi_ptr->patient.reg_time,
+                                   tmp_str, sizeof(tmp_str));
+                tmp_ptr = tmp_str;
+                break;
+            case 'A':
+                string_to_filename(gi_ptr->study.acquisition_id,
+                                   tmp_str, sizeof(tmp_str));
+                tmp_ptr = tmp_str;
+                break;
+            case 's':
+                tmp_ptr = scan_label[SLICE];
+                break;
+            case 'e':
+                tmp_ptr = scan_label[ECHO];
+                break;
+            case 't':
+                tmp_ptr = scan_label[TIME];
+                break;
+            case 'p':
+                tmp_ptr = scan_label[PHASE];
+                break;
+            case 'c':
+                tmp_ptr = scan_label[CHEM_SHIFT];
+                break;
+            case 'm':
+                if (!strcmp(gi_ptr->study.modality, MI_MRI)) {
+                    tmp_ptr = "_mri";
+                }
+                else if (!strcmp(gi_ptr->study.modality, MI_PET)) {
+                    tmp_ptr = "_pet";
+                }
+                else {
+                    tmp_ptr = "";
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        if (tmp_ptr == NULL) {
+            if (str_len < str_max) {
+                *str_ptr++ = *fmt_ptr++;
+                str_len++;
+            }
+        }
+        else {
+            fmt_ptr++;
+            while (str_len < str_max && *tmp_ptr != '\0') {
+                *str_ptr++ = *tmp_ptr++;
+                str_len++;
+            }
+        }
+    }
+    *str_ptr++ = '\0';
+    return (str_len);
+}
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : create_minc_file
@@ -144,7 +254,8 @@ static char *mri_dim_names[] = {
    CALLS       : 
    @CREATED    : November 26, 1993 (Peter Neelin)
    @MODIFIED   : rhoge - modified to create directory for session
-   ---------------------------------------------------------------------------- */
+ -------------------------------------------------------------------------- */
+
 int
 create_minc_file(const char *minc_file, 
                  int clobber,
@@ -153,20 +264,11 @@ create_minc_file(const char *minc_file,
                  char **output_file_name,
                  Loop_Type loop_type)
 {
-    static char temp_name[1024];
-    char patient_name[256];
-    char reg_time[256];
-    char temp_str[256];
-    char suffix_str[256];
-    const char *filename;
+    char temp_name[1024];
+    char *filename;
     int minc_clobber;
     int mincid, icvid;
-    Mri_Index imri;
-    char scan_label[MRI_NDIMS][20];
-
-    /* added by rhoge for study directory, new naming conventions: */
-
-    char full_path[256];
+    static char full_path[1024];
 
     /* Prefixes for creating file name */
     static char *scan_prefix[MRI_NDIMS] = 
@@ -177,100 +279,50 @@ create_minc_file(const char *minc_file,
 
     /* Create the file name if needed */
     if (minc_file != NULL) {
-        filename = minc_file;
+        filename = (char *) minc_file;
     }
     else {
-        /* Get patient name */
-        /******************************************/
-        /* Changed by Leili from "string_to_initials" to "string_to_filename" */
-        /* based on people's request at MNI */ 
-        if (G.Name != NULL && *G.Name != '\0') {
-            strcpy(patient_name, G.Name);
-        } 
-        else {
-            string_to_filename(general_info->patient.name, patient_name,
-                               sizeof(patient_name));
-        }
-
-        if (strlen(patient_name) == 0) {
-            strcpy(patient_name, "no_name");
-        }
-
-        /******************************************/
-        /* Get Study Time */
-        string_to_filename(general_info->patient.reg_time, temp_str,
-                           sizeof(temp_str));
-        /* truncate to first 6 chars (hhmmss) */
-        strncpy(reg_time, temp_str, 6);
-        if (strlen(reg_time) == 0) {
-            strcpy(reg_time, "no_time");
-        }
-        reg_time[6]='\0'; /* terminate with null (strncpy does not) */
-
-        /* Get strings for echo number, etc. */
-        for (imri=0; imri < MRI_NDIMS; imri++) {
-            if ((general_info->cur_size[imri] < general_info->max_size[imri]) &&
-                (general_info->cur_size[imri] == 1)) {
-                sprintf(scan_label[imri], "%s%d", scan_prefix[imri],
-                        general_info->default_index[imri]);
-            }
-            else {
-                strcpy(scan_label[imri], "");
-            }
-        }
-
         /* rhoge:  add session directory to prefix */
       
         strcpy(full_path, file_prefix);
 
-        sprintf(temp_name, "%s_%s_%s/",
-                patient_name,
-                general_info->patient.reg_date,
-                reg_time);
+        if (G.dirname_format == NULL) {
+            G.dirname_format = "%N_%D_%T";
+        }
+        strfminc(temp_name, sizeof(temp_name), G.dirname_format, general_info);
         strcat(full_path, temp_name);
 
+        if (strlen(full_path) != 0) {
+            if (mkdir(full_path, 0777) && G.Debug) {
+                printf("Directory %s exists...\n", full_path);
+            }
+            strcat(full_path, "/");
+        }
 
         /* if measurement loop, make sure that acquisition_id is
-           a 6 digit (hhmmss) string with leading zero if needed */
-
+         * a 6 digit (hhmmss) string with leading zero if needed 
+         */
         if (loop_type == MEAS) {
-
             sprintf(general_info->study.acquisition_id, "%06d",
                     general_info->acq_id);
-
         }
 
         /* Create file name */
 
-        if (!strcmp(general_info->study.modality, MI_MRI)) {
-            strcpy(suffix_str, "_mri");
+        if (G.filename_format == NULL) {
+            G.filename_format = "%N_%D_%T_%A%s%e%t%p%c%m";
         }
-        else if (!strcmp(general_info->study.modality, MI_PET)) {
-            strcpy(suffix_str, "_pet");
-        }
-        else {
-            suffix_str[0] = '\0';
-        }
+        strfminc(temp_name, sizeof(temp_name), G.filename_format,
+                 general_info);
 
-        sprintf(temp_name, "%s%s_%s_%s_%s%s%s%s%s%s%s.mnc", 
-                full_path,
-                patient_name,
-                general_info->patient.reg_date,
-                reg_time,
-                general_info->study.acquisition_id,
-                scan_label[SLICE],
-                scan_label[ECHO],
-                scan_label[TIME],
-                scan_label[PHASE],
-                scan_label[CHEM_SHIFT],
-                suffix_str);
-
-        filename = temp_name;
+        strcat(full_path, temp_name);
+        strcat(full_path, ".mnc"); /* Always append the extension */
+        filename = full_path;
 
         if (G.Debug) {
             printf("MINC file name:  %s\n", filename);
-            printf("File prefix:     %s\n", full_path);
-            printf("Patient name:    %s\n", patient_name);
+            printf("Patient name:    %s\n", 
+                   general_info->patient.name);
             printf("Study ID:        %s\n", 
                    general_info->study.study_id);
             printf("Acquisition ID:  %s\n", 
@@ -292,15 +344,9 @@ create_minc_file(const char *minc_file,
         }
     }
 
-    /* create the session directory if none exists */
-
-    if (mkdir(full_path, 0777) && G.Debug) {
-        printf("Directory %s exists...\n", full_path);
-    }
-
     /* Set output file name */
     if (output_file_name != NULL) {
-        *output_file_name = (char *) filename;
+        *output_file_name = filename;
     }
 
     /* Set the clobber value */
@@ -310,7 +356,7 @@ create_minc_file(const char *minc_file,
         minc_clobber = NC_NOCLOBBER;
 
     /* Create the file */
-    mincid = micreate((char *) filename, minc_clobber);
+    mincid = micreate(filename, minc_clobber);
     if (mincid == MI_ERROR) {
         return MI_ERROR;
     }
@@ -674,7 +720,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputstr(mincid, varid, MIbirthdate, 
                     general_info->patient.birth_date);
     if (strlen(general_info->patient.age) > 0)
-        miattputstr(mincid, varid, "age", 
+        miattputstr(mincid, varid, MIage, 
                     general_info->patient.age);
     if (strlen(general_info->patient.sex) > 0)
         miattputstr(mincid, varid, MIsex, 
@@ -691,16 +737,16 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputstr(mincid, varid, "start_date", 
                     general_info->patient.reg_date);
     if (strlen(general_info->patient.reg_time) > 0)
-        miattputstr(mincid, varid, "start_time", 
+        miattputstr(mincid, varid, MIstart_time, 
                     general_info->patient.reg_time);
     if (strlen(general_info->study.modality) > 0)
         miattputstr(mincid, varid, MImodality, 
                     general_info->study.modality);
     if (strlen(general_info->study.manufacturer) > 0)
-        miattputstr(mincid, varid, "manufacturer", 
+        miattputstr(mincid, varid, MImanufacturer, 
                     general_info->study.manufacturer);
     if (strlen(general_info->study.model) > 0)
-        miattputstr(mincid, varid, "model", 
+        miattputstr(mincid, varid, MIdevice_model, 
                     general_info->study.model);
     if (general_info->study.field_value != -DBL_MAX)
         miattputdbl(mincid, varid, "field_value", 
@@ -728,7 +774,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputstr(mincid, varid, "performing_physician", 
                     general_info->study.referring_physician);
     if (strlen(general_info->study.operator) > 0)
-        miattputstr(mincid, varid, "operator", 
+        miattputstr(mincid, varid, MIoperator, 
                     general_info->study.operator);
 
     if (strlen(general_info->study.procedure) > 0)
@@ -752,7 +798,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                     general_info->acq.scan_seq);
 
     if (strlen(general_info->acq.protocol_name) > 0)
-        miattputstr(mincid, varid, "protocol_name", 
+        miattputstr(mincid, varid, MIprotocol, 
                     general_info->acq.protocol_name);
     if (strlen(general_info->acq.receive_coil) > 0)
         miattputstr(mincid, varid, "receive_coil", 
@@ -927,6 +973,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
    @CREATED    : November 26, 1993 (Peter Neelin)
    @MODIFIED   :
    ---------------------------------------------------------------------------- */
+
 void
 save_minc_image(int icvid, General_Info *gi_ptr, 
                 File_Info *fi_ptr, Image_Data *image)
@@ -1098,7 +1145,7 @@ save_minc_image(int icvid, General_Info *gi_ptr,
 
         for (ipix = 0; ipix < imagepix; ipix++) {
             dvalue = ssh_ptr[ipix];
-            ssh_ptr[ipix] = (short) (dvalue * scale + offset);
+            ssh_ptr[ipix] = (short) rint(dvalue * scale + offset);
         }
     }
     else {
@@ -1106,7 +1153,7 @@ save_minc_image(int icvid, General_Info *gi_ptr,
 
         for (ipix = 0; ipix < imagepix; ipix++) {
             dvalue = ush_ptr[ipix];
-            ush_ptr[ipix] = (unsigned short) (dvalue * scale + offset);
+            ush_ptr[ipix] = (unsigned short) rint(dvalue * scale + offset);
         }
     }
 
@@ -1125,6 +1172,7 @@ save_minc_image(int icvid, General_Info *gi_ptr,
     if (G.Debug >= HI_LOGGING) {
         printf("2. scale %.2f offset %.2f min %.2f max %.2f\n", scale, offset,
                minimum, maximum);
+        printf("3. position %d,%d,%d\n", start[0], start[1], start[2]);
     }
 
     /* Write out the max and min values */
@@ -1133,8 +1181,19 @@ save_minc_image(int icvid, General_Info *gi_ptr,
     mivarput1(mincid, ncvarid(mincid, MIimagemax), start, NC_DOUBLE,
               NULL, &maximum);
 
-    /* Write out the image */
-    miicv_put(icvid, start, count, image->data);
+    if (G.opts & OPTS_NO_RESCALE) {
+        mivarput(mincid, 
+                 ncvarid(mincid, MIimage),
+                 start,
+                 count,
+                 NC_SHORT, 
+                 (gi_ptr->is_signed) ? MI_SIGNED : MI_UNSIGNED,
+                 image->data);
+    }
+    else {
+        /* Write out the image */
+        miicv_put(icvid, start, count, image->data);
+    }
 
     return;
 }
