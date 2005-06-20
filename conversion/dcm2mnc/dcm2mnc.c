@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.6  2005-06-09 20:48:36  bert
+ * Revision 1.14.2.7  2005-06-20 22:03:31  bert
+ * Add simple test for binary files to avoid choking on text files
+ *
+ * Revision 1.14.2.6  2005/06/09 20:48:36  bert
  * Remove obsolete -descr option, add shiny new -fname and -dname options.  Also don't explicitly include math.h
  *
  * Revision 1.14.2.5  2005/06/02 18:35:32  bert
@@ -104,7 +107,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.6 2005-06-09 20:48:36 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.7 2005-06-20 22:03:31 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -265,7 +268,7 @@ main(int argc, char *argv[])
     /* Allocate the array of pointers used to implement the
      * list of filenames.
      */
-    file_list = malloc(num_file_args * sizeof(char *));
+    file_list = malloc(1 * sizeof(char *));
     CHKMEM(file_list);
 
     /* Go through the list of files, expanding directories where they
@@ -314,9 +317,11 @@ main(int argc, char *argv[])
             }
         }
         else {
+            file_list = realloc(file_list, (num_files + 1) * sizeof(char *));
             file_list[num_files++] = strdup(argv[ifile + 1]);
         }
 #else
+        file_list = realloc(file_list, (num_files + 1) * sizeof(char *));
         file_list[num_files++] = strdup(argv[ifile + 1]);
 #endif
     }
@@ -902,6 +907,41 @@ is_ima_file(const char *fullname)
     return (result);
 }
 
+/* _very_ limited test for "binary-ness" of a file.  This is just to keep
+ * text files and other junk present in a directory from screwing up our
+ * file type detection.
+ */
+static int
+is_binary_file(const char *fullname)
+{
+    FILE *fp;
+    int result = 0;
+    int i;
+
+    if ((fp = fopen(fullname, "rb")) == NULL) {
+        fprintf(stderr, "Error opening file %s!\n", fullname);
+    }
+    else {
+        /* This is an extremely trivial test for binary-ness.  Basically, we
+         * look at the first 512 bytes, and if there aren't lots of unprintable
+         * characters, we assume it is not a binary file.
+         */
+        for (i = 0; i < 128; i++) {
+            int cc = getc(fp);
+            if (cc == -1) {
+                result = 0;     /* too short!! */
+                break;
+            }
+            if (!isprint(cc) && cc != '\n' && cc != '\r') {
+                result++;
+            }
+        }
+        fclose(fp);
+    }
+    return (result > 3);        /* Binary if more than 3 unprintables */
+}
+
+
 static int
 check_file_type_consistency(int num_files, const char *file_list[])
 {
@@ -941,7 +981,7 @@ check_file_type_consistency(int num_files, const char *file_list[])
                 return (-1);
             }
         }
-        else {
+        else if (is_binary_file(fn_ptr)) {
             if (G.file_type == UNDEF) {
                 G.file_type = N4DCM;
                 n4_offset = 0; 
