@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.13.2.1  2005-05-12 21:16:47  bert
+   * Revision 1.13.2.2  2005-06-20 22:01:15  bert
+   * Add basic support for multiframe DICOM images
+   *
+   * Revision 1.13.2.1  2005/05/12 21:16:47  bert
    * Initial checkin
    *
    * Revision 1.13  2005/05/09 15:33:20  bert
@@ -153,9 +156,8 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.1 2005-05-12 21:16:47 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.2 2005-06-20 22:01:15 bert Exp $";
 #include "dcm2mnc.h"
-#include <math.h>
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
 const char *Volume_Names[VOL_NDIMS] = { "Slice", "Row", "Column" };
@@ -180,6 +182,29 @@ typedef struct {
     double position[WORLD_NDIMS];
 } Mosaic_Info;
 
+/* DICOM Multiframe information.  NOTE: This represents at best a very
+ * partial implementation of the DICOM multiframe specification, barely 
+ * adequate for conversion of basic 3D files. More work is needed to 
+ * support dynamic scans and other more complex objects.
+ */
+typedef struct {
+    int frame_count;
+    int frame_size;
+    Acr_Element big_image;
+    Acr_Element sub_image;
+    double normal[WORLD_NDIMS];
+    double step[WORLD_NDIMS];
+    double position[WORLD_NDIMS];
+} Multiframe_Info;    
+
+/* For dicom_to_minc(), these codes specify whether we are dealing
+ * with a "normal" DICOM sequence, a Siemens mosaic sequence, or a
+ * DICOM multiframe sequence.
+ */
+#define SUBIMAGE_TYPE_NONE 0
+#define SUBIMAGE_TYPE_MOSAIC 1
+#define SUBIMAGE_TYPE_MULTIFRAME 2
+
 /* Structure for sorting dimensions */
 typedef struct {
    int identifier;
@@ -190,8 +215,13 @@ typedef struct {
 
 /* Private function definitions */
 static int mosaic_init(Acr_Group, Mosaic_Info *, int);
-static void mosaic_cleanup(Acr_Group, Mosaic_Info *);
-static int mosaic_modify_group_list(Acr_Group, Mosaic_Info *, int, int);
+static void mosaic_cleanup(Mosaic_Info *);
+static int mosaic_insert_subframe(Acr_Group, Mosaic_Info *, int, int);
+
+/* DICOM Multiframe conversion functions (see NOTE: above) */
+static void multiframe_init(Acr_Group, Multiframe_Info *, int);
+static void multiframe_cleanup(Multiframe_Info *);
+static void multiframe_insert_subframe(Acr_Group, Multiframe_Info *, int, int);
 
 static void free_info(General_Info *gi_ptr, File_Info *fi_ptr, 
                       int num_files);
@@ -223,6 +253,7 @@ static char *dump_protocol_text(Acr_Element Protocol);
    @CREATED    : November 25, 1993 (Peter Neelin)
    @MODIFIED   : 
    ---------------------------------------------------------------------------- */
+
 int
 dicom_to_minc(int num_files, 
               const char *file_list[], 
@@ -244,15 +275,19 @@ dicom_to_minc(int num_files,
     const Loop_Type loop_type = NONE; /* MINC loop type always none for now */
     int subimage;               /* Loop counter for MOSAIC images per file */
     int iimage;                 /* Loop counter for all files/images */
-    int num_images_allocated;   /* Total number of slices (>= # files) */
+    int num_images;             /* Total number of slices (>= # files) */
     Mosaic_Info mi;             /* Mosaic (multi-image) information */
-    int n_slices_in_file;
+    Multiframe_Info mfi;        /* Multiframe information */
+    int n_slices_in_file;       /* Number of slices in file */
+    int subimage_type;          /* Subimage type */
+
+    subimage_type = SUBIMAGE_TYPE_NONE;
 
     /* Allocate space for the file information */
     fi_ptr = malloc(num_files * sizeof(*fi_ptr));
     CHKMEM(fi_ptr);
 
-    num_images_allocated = num_files;
+    num_images = num_files;
 
     /* Last group needed for first pass
      */
@@ -319,22 +354,58 @@ dicom_to_minc(int num_files,
          */
         if (n_slices_in_file > 1) {
 
+            subimage_type = SUBIMAGE_TYPE_MOSAIC;
+
             mosaic_init(group_list, &mi, FALSE);
 
-            num_images_allocated += n_slices_in_file - 1;
+            num_images += n_slices_in_file - 1;
 
-            fi_ptr = realloc(fi_ptr, num_images_allocated * sizeof(*fi_ptr));
+            fi_ptr = realloc(fi_ptr, num_images * sizeof(*fi_ptr));
             CHKMEM(fi_ptr);
         }
+        else {
+            /* See if we have an DICOM multiframe image, or at least a
+             * reasonable facsimile of one such as the files produced
+             * by the Shimadzu PET scanner.
+             * 
+             * It is probably not correct to rely on the presence of the
+             * "Number of Frames" (0x0028, 0x0008) field, but the Shimadzu
+             * multiframe implementation is far from complete and does not
+             * seem to implement any of the other components of the 
+             * specification.
+             */
+
+            n_slices_in_file = acr_find_int(group_list, ACR_Number_of_frames,
+                                            1);
+
+            if (n_slices_in_file > 1) {
+                subimage_type = SUBIMAGE_TYPE_MULTIFRAME;
+            
+                multiframe_init(group_list, &mfi, FALSE);
+
+                num_images += n_slices_in_file - 1;
+                
+                fi_ptr = realloc(fi_ptr, num_images * sizeof(*fi_ptr));
+                CHKMEM(fi_ptr);
+            }
+        }
+        
 
         /* loop over subimages in mosaic
          */
         for (subimage = 0; subimage < n_slices_in_file; subimage++) {
 
-            /* Modify the group list for this image if mosaic
+            /* Modify the group list for this image if mosaic or multiframe
              */
-            if (n_slices_in_file > 1) {
-                mosaic_modify_group_list(group_list, &mi, subimage, FALSE);
+            switch (subimage_type) {
+            case SUBIMAGE_TYPE_MOSAIC:
+                mosaic_insert_subframe(group_list, &mi, subimage, FALSE);
+                break;
+            case SUBIMAGE_TYPE_MULTIFRAME:
+                multiframe_insert_subframe(group_list, &mfi, subimage, FALSE);
+                break;
+            default:
+                break;
             }
 
             /* Get file-specific information
@@ -352,8 +423,17 @@ dicom_to_minc(int num_files,
 
         /* cleanup mosaic struct if used
          */
-        if (n_slices_in_file > 1) {
-            mosaic_cleanup(group_list, &mi);
+        switch (subimage_type) {
+        case SUBIMAGE_TYPE_MOSAIC:
+            mosaic_cleanup(&mi);
+            break;
+
+        case SUBIMAGE_TYPE_MULTIFRAME:
+            multiframe_cleanup(&mfi);
+            break;
+
+        default:
+            break;
         }
     }
 
@@ -430,8 +510,17 @@ dicom_to_minc(int num_files,
 
         /* initialize big and small images, if mosaic
          */
-        if (n_slices_in_file > 1) {
+        switch (subimage_type) {
+        case SUBIMAGE_TYPE_MOSAIC:
             mosaic_init(group_list, &mi, TRUE);
+            break;
+
+        case SUBIMAGE_TYPE_MULTIFRAME:
+            multiframe_init(group_list, &mfi, TRUE);
+            break;
+
+        default:
+            break;
         }
 
         /* loop over subimages in mosaic
@@ -440,18 +529,32 @@ dicom_to_minc(int num_files,
 
             /* Modify the group list for this image if mosaic
              */
-            if (n_slices_in_file > 1) {
-                mosaic_modify_group_list(group_list, &mi, 
-                                              subimage, TRUE);
+            switch (subimage_type) {
+            case SUBIMAGE_TYPE_MOSAIC:
+                mosaic_insert_subframe(group_list, &mi, subimage, TRUE);
+                break;
+
+            case SUBIMAGE_TYPE_MULTIFRAME:
+                multiframe_insert_subframe(group_list, &mfi, subimage, TRUE);
+                break;
+
+            default:
+                break;
             }
        
             /* Get image
              */
-            get_siemens_dicom_image(group_list, &image);
+            get_dicom_image_data(group_list, &image);
        
             /* Save the image and any other information
              */
             save_minc_image(icvid, &gi, &fi_ptr[iimage], &image);
+
+            /* Free the image data */
+            if (image.data != NULL) {
+                free(image.data);
+                image.data = NULL;
+            }
 
             /* increment image counter
              */
@@ -464,13 +567,17 @@ dicom_to_minc(int num_files,
 
         /* cleanup mosaic struct if used
          */
-        if (n_slices_in_file > 1) {
-            mosaic_cleanup(group_list, &mi);
-        }
-     
-        /* Free the image data */
-        if ((image.data != NULL) && (image.free)) {
-            free(image.data);
+        switch (subimage_type) {
+        case SUBIMAGE_TYPE_MOSAIC:
+            mosaic_cleanup(&mi);
+            break;
+
+        case SUBIMAGE_TYPE_MULTIFRAME:
+            multiframe_cleanup(&mfi);
+            break;
+
+        default:
+            break;
         }
     }
 
@@ -537,6 +644,30 @@ read_std_dicom(const char *filename, int max_group)
     return (group_list);
 }
 
+/* Return non-zero if this image looks like it is a mosaic image.
+ */
+int
+is_siemens_mosaic(Acr_Group group_list)
+{
+    char *str_ptr;
+    int num_slices;
+
+    str_ptr = acr_find_string(group_list, ACR_Image_type, "");
+    if (strstr(str_ptr, "MOSAIC") != NULL)
+        return 1;               /* slam dunk, this is mosaic data */
+
+    /* OK, we did not find the word "mosaic" in the image type.  But this
+     * could still be a mosaic image.  Let's look for some other clues.
+     */
+    if (acr_find_int(group_list, SPI_Number_of_slices_nominal, 0) > 1)
+        return 1;               /* probably mosaic. */
+
+    if (acr_find_int(group_list, SPI_Number_of_3D_raw_partitions_nominal, 0) > 1)
+        return 1;               /* probably mosaic */
+
+    return 0;                   /* probably not mosaic */
+}
+
 static Acr_Group 
 add_siemens_info(Acr_Group group_list)
 {
@@ -545,12 +676,7 @@ add_siemens_info(Acr_Group group_list)
      */
     Acr_Element protocol; 
     Acr_Element element;
-    int mosaic_rows, mosaic_cols;
-    short subimage_size[4];
-    int subimage_rows, subimage_cols;
     int num_slices, num_partitions;
-    int num_encodings;
-    int enc_ix;
     string_t str_buf;
     char *str_ptr;
     int interpolation_flag;
@@ -578,291 +704,325 @@ add_siemens_info(Acr_Group group_list)
     /* read in Protocol group */
 
     protocol = acr_find_group_element(group_list, SPI_Protocol);
-    if (protocol == NULL) {
+    if (protocol != NULL) {
         if (G.Debug >= HI_LOGGING) {
-            printf("No Siemens protocol structure found...\n");
+            printf("Incorporating Siemens protocol structure...\n");
         }
-        return group_list;
-    }
 
-    if (G.Debug >= HI_LOGGING) {
-        printf("Incorporating Siemens protocol structure...\n");
-    }
+        /* Add number of dynamic scans:
+         */
+        prot_find_string(protocol, "lRepetitions", str_buf);
+        acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
+                           atoi(str_buf) + 1);
 
-    /* Add number of dynamic scans:
-     */
-    prot_find_string(protocol, "lRepetitions", str_buf);
-    acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
-                       atoi(str_buf) + 1);
+        /* add number of echoes:
+         */
+        prot_find_string(protocol, "lContrasts", str_buf);
+        acr_insert_numeric(&group_list, SPI_Number_of_echoes, atoi(str_buf));
 
-    /* add number of echoes:
-     */
-    prot_find_string(protocol, "lContrasts", str_buf);
-    acr_insert_numeric(&group_list, SPI_Number_of_echoes, atoi(str_buf));
+        /* Add receiving coil (for some reason this isn't in generic groups)
+         */
+        prot_find_string(protocol,
+                         "sCOIL_SELECT_MEAS.asList[0].sCoilElementID.tCoilID",
+                         str_buf);
+        acr_insert_string(&group_list, ACR_Receive_coil_name, str_buf);
 
-    /* Add receiving coil (for some reason this isn't in generic groups)
-     */
-    prot_find_string(protocol,
-                     "sCOIL_SELECT_MEAS.asList[0].sCoilElementID.tCoilID",
-                     str_buf);
-    acr_insert_string(&group_list, ACR_Receive_coil_name, str_buf);
+        /* add MrProt dump
+         */
+        str_ptr = dump_protocol_text(protocol);
+        acr_insert_string(&group_list, EXT_MrProt_dump, str_ptr);
+        free(str_ptr);
 
-    /* add MrProt dump
-     */
-    str_ptr = dump_protocol_text(protocol);
-    acr_insert_string(&group_list, EXT_MrProt_dump, str_ptr);
-    free(str_ptr);
-
-    /* add number of slices: (called `Partitions' for 3D) */
-    prot_find_string(protocol, "sSliceArray.lSize", str_buf);
-    num_slices = atoi(str_buf);
+        /* add number of slices: (called `Partitions' for 3D) */
+        prot_find_string(protocol, "sSliceArray.lSize", str_buf);
+        num_slices = atoi(str_buf);
         
-    prot_find_string(protocol, "sKSpace.lPartitions", str_buf);
-    num_partitions = atoi(str_buf);
+        prot_find_string(protocol, "sKSpace.lPartitions", str_buf);
+        num_partitions = atoi(str_buf);
 
-    /* This is a hack based upon the observation that for at least some
-     * conversions, this value seems to give the true number of slices
-     * rather than the sKSpace.lPartitions value (bert)
-     */
-    prot_find_string(protocol, "sKSpace.lImagesPerSlab", str_buf);
-    if (str_buf[0] != '\0') {
-        int num_images_per_slab = atoi(str_buf);
-        if (num_images_per_slab > num_partitions) {
-            num_partitions = num_images_per_slab;
-        }
-    }
-    
-    /* NOTE:  for some reason, lPartitions > 1 even for 2D scans
-     * (e.g. EPI, scouts)
-     */
-    if (!strncmp(acr_find_string(group_list, ACR_MR_acquisition_type,""),
-                 "3D", 2)) {
-        /* Use partitions if 3D.
-         * (note that this gets more complicated if the 3D scan
-         *  is mosaiced - see below)
+        /* This is a hack based upon the observation that for at least some
+         * conversions, this value seems to give the true number of slices
+         * rather than the sKSpace.lPartitions value (bert)
          */
-        acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 1);
-        acr_insert_numeric(&group_list, 
-                           SPI_Number_of_3D_raw_partitions_nominal, 
-                           num_partitions);
-    } 
+        prot_find_string(protocol, "sKSpace.lImagesPerSlab", str_buf);
+        if (str_buf[0] != '\0') {
+            int num_images_per_slab = atoi(str_buf);
+            if (num_images_per_slab > num_partitions) {
+                num_partitions = num_images_per_slab;
+            }
+        }
+        
+        /* NOTE:  for some reason, lPartitions > 1 even for 2D scans
+         * (e.g. EPI, scouts)
+         */
+        if (!strncmp(acr_find_string(group_list, ACR_MR_acquisition_type,""),
+                     "3D", 2)) {
+            /* Use partitions if 3D.
+             * (note that this gets more complicated if the 3D scan
+             *  is mosaiced - see below)
+             */
+            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 1);
+            acr_insert_numeric(&group_list, 
+                               SPI_Number_of_3D_raw_partitions_nominal, 
+                               num_partitions);
+        } 
+        else {
+            /* use slices for 2D
+             */
+            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
+                               num_slices);
+            acr_insert_numeric(&group_list, 
+                               SPI_Number_of_3D_raw_partitions_nominal, 1);
+        }
+
+        /* See if the field of view is set, if not, see if we can find
+         * it in the ASCCONV dump and copy it into the proprietary
+         * fields.
+         */
+        if (acr_find_group_element(group_list, SPI_Field_of_view) == NULL) {
+            /* TODO: This assumes a symmetric field of view.  We need to
+             * figure out what to do if this is not true!!
+             */
+            prot_find_string(protocol, "sSliceArray.asSlice[0].sReadoutFOV",
+                             str_buf);
+            if (str_buf[0] != '\0') {
+                int fov = atoi(str_buf);
+
+                sprintf(str_buf, "%d\\%d", fov, fov);
+                acr_insert_string(&group_list, SPI_Field_of_view, str_buf);
+            }
+        }
+
+        prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
+        interpolation_flag = strtol(str_buf, NULL, 0);
+
+        /* correct dynamic scan info if diffusion scan:
+         *
+         * assumptions:
+         *
+         *  - diffusion protocol indicated by sDiffusion.ucMode = 0x4
+         *  - there are 7 shots for DTI (b=0 + 6 encodings)
+         *  - b=0 scan has sequence name "ep_b0"
+         *  - encoded scans have seq names "ep_b700#1, ep_b700#2, ..." etc.
+         *
+         * actions:
+         * 
+         *  - change number of dynamic scans to 7
+         *  - modify dynamic scan index to encoding index
+         */
+        prot_find_string(protocol, "sDiffusion.ucMode", str_buf);
+        if (!strcmp(str_buf, "0x4")) {
+            int enc_ix;
+            int num_encodings;
+
+            /* try to get b value */
+            prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
+            acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+                               atoi(str_buf));
+
+            /* if all averages in one series: */
+            prot_find_string(protocol, "ucOneSeriesForAllMeas", str_buf);
+            if (!strcmp(str_buf, "0x1")) {
+
+                num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+
+                /* number of 'time points' */
+                acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
+                                   num_encodings *
+                                   acr_find_double(group_list,
+                                                   ACR_Nr_of_averages, 1));
+
+                /* time index of current scan: */
+                
+#if 0
+                /* In the current scheme, the unencoded scan has a
+                 * sequence name like "ep_b0" while the subsequent six
+                 * diffusion encodings have names like "ep_b700#1" we
+                 * could use this to come up with indices for an encoding
+                 * dimension
+                 */
+                str_ptr = strstr(acr_find_string(group_list,
+                                                 ACR_Sequence_name, ""), "#");
+                if (str_ptr == NULL) {
+                    enc_ix = 0;
+                } 
+                else {
+                    enc_ix = atoi(str_ptr + sizeof(char));
+                }
+#endif
+                
+                /* however with the current sequence, we get usable
+                 * time indices from floor(global_image_num/num_slices)
+                 */
+                acr_insert_numeric(&group_list, ACR_Acquisition, 
+                                   (acr_find_int(group_list, ACR_Image, 1)-1) / 
+                                   num_slices);
+
+            } 
+            else { /* averages in different series - no special handling needed? */
+
+                num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+
+                /* number of 'time points' */
+                acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
+                                   num_encodings);
+                
+                /* For multi-series scans, we DO USE THIS BECAUSE global
+                 * image number may be broken!!
+                 */
+                str_ptr = strstr(acr_find_string(group_list,
+                                                 ACR_Sequence_name, ""), "#");
+                if (str_ptr == NULL) {
+                    enc_ix = 0;
+                } 
+                else {
+                    enc_ix = atoi(str_ptr + sizeof(char));
+                }
+                acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+            }
+        } /* end of diffusion scan handling */
+    }
     else {
-        /* use slices for 2D
+        /* If no protocol dump was found we have to assume no interpolation since
+         * at the momemnt I have no idea where it would live...
          */
-        acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
-                           num_slices);
-        acr_insert_numeric(&group_list, 
-                           SPI_Number_of_3D_raw_partitions_nominal, 1);
+        interpolation_flag = 0;
+        num_partitions = acr_find_int(group_list, 
+                                      SPI_Number_of_3D_raw_partitions_nominal, 0);
+        num_slices = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
     }
 
-    str_ptr = acr_find_string(group_list, ACR_Image_type, "");
-    if (strstr(str_ptr, "MOSAIC") != NULL) {
-    /* Now figure out mosaic rows and columns, and put in EXT shadow group
-     * Check for interpolation - will require 2x scaling of rows and columns.
+    /* Handle mosaic images if necessary.
      */
-    prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
-    interpolation_flag = strtol(str_buf, NULL, 0);
+    if (is_siemens_mosaic(group_list)) {
+        
+        int mosaic_rows, mosaic_cols;
+        short subimage_size[4];
+        int subimage_rows, subimage_cols;
 
-    /* Assign defaults in case something goes wrong below...
-     */
-    subimage_rows = 0;
-    subimage_cols = 0;
-
-    /* Compute mosaic rows and columns
-     * Here is a hack to handle non-square mosaiced images
-     *
-     * WARNING: as far as I can tell, the phase-encoding dir (row/col)
-     * is reversed for mosaic EPI scans (don't know if this is a
-     * mosaic thing, an EPI thing, or whatever).  
-     * Get the array of sizes: freq row/freq col/phase row/phase col
-     */
-
-    element = acr_find_group_element(group_list, ACR_Acquisition_matrix);
-    if (element == NULL) {
-        printf("WARNING: Can't find acquisition matrix\n");
-    }
-    else if (acr_get_element_short_array(element, 4, subimage_size) != 4) {
-        printf("WARNING: Can't read acquisition matrix\n");
-    }
-    else {
-        if (G.Debug >= HI_LOGGING) {
-            printf(" * Acquisition matrix %d %d %d %d\n",
-                   subimage_size[0],
-                   subimage_size[1],
-                   subimage_size[2],
-                   subimage_size[3]);
-        }
-        /* Get subimage dimensions, assuming the OPPOSITE of the
-         * reported phase-encode direction!!
+        /* Now figure out mosaic rows and columns, and put in EXT
+         * shadow group Check for interpolation - will require 2x
+         * scaling of rows and columns.
          */
-        str_ptr = acr_find_string(group_list, ACR_Phase_encoding_direction,"");
-        if (!strncmp(str_ptr, "COL", 3)) {
-            subimage_rows = subimage_size[3];
-            subimage_cols = subimage_size[0];
+
+        /* Assign defaults in case something goes wrong below...
+         */
+        subimage_rows = 0;
+        subimage_cols = 0;
+
+        /* Compute mosaic rows and columns
+         * Here is a hack to handle non-square mosaiced images
+         *
+         * WARNING: as far as I can tell, the phase-encoding dir (row/col)
+         * is reversed for mosaic EPI scans (don't know if this is a
+         * mosaic thing, an EPI thing, or whatever).  
+         * Get the array of sizes: freq row/freq col/phase row/phase col
+         */
+
+        element = acr_find_group_element(group_list, ACR_Acquisition_matrix);
+        if (element == NULL) {
+            printf("WARNING: Can't find acquisition matrix\n");
         }
-        else if (!strncmp(str_ptr, "ROW", 3)) {
-            subimage_rows = subimage_size[2];
-            subimage_cols = subimage_size[1];
+        else if (acr_get_element_short_array(element, 4, subimage_size) != 4) {
+            printf("WARNING: Can't read acquisition matrix\n");
         }
         else {
-            printf("WARNING: Unknown phase encoding direction '%s'\n",
-                   str_ptr);
+            if (G.Debug >= HI_LOGGING) {
+                printf(" * Acquisition matrix %d %d %d %d\n",
+                       subimage_size[0],
+                       subimage_size[1],
+                       subimage_size[2],
+                       subimage_size[3]);
+            }
+            /* Get subimage dimensions, assuming the OPPOSITE of the
+             * reported phase-encode direction!!
+             */
+            str_ptr = acr_find_string(group_list, ACR_Phase_encoding_direction,
+                                      "");
+            if (!strncmp(str_ptr, "COL", 3)) {
+                subimage_rows = subimage_size[3];
+                subimage_cols = subimage_size[0];
+            }
+            else if (!strncmp(str_ptr, "ROW", 3)) {
+                subimage_rows = subimage_size[2];
+                subimage_cols = subimage_size[1];
+            }
+            else {
+                printf("WARNING: Unknown phase encoding direction '%s'\n",
+                       str_ptr);
+            }
+
+            /* If interpolation, multiply rows and columns by 2 */
+            if (interpolation_flag) {
+                subimage_rows *= 2;
+                subimage_cols *= 2;
+            }
         }
 
-        /* If interpolation, multiply rows and columns by 2 */
-        if (interpolation_flag) {
-            subimage_rows *= 2;
-            subimage_cols *= 2;
+        /* If these are not set or still zero, assume this is NOT a mosaic
+         * format file.
+         */
+        if (subimage_rows == 0 || subimage_cols == 0) {
+            subimage_rows = acr_find_int(group_list, ACR_Rows, 1);
+            subimage_cols = acr_find_int(group_list, ACR_Columns, 1);
+            mosaic_rows = 1;
+            mosaic_cols = 1;
         }
-    }
-
-    /* If these are not set or still zero, assume this is NOT a mosaic
-     * format file.
-     */
-    if (subimage_rows == 0 || subimage_cols == 0) {
-        subimage_rows = acr_find_int(group_list, ACR_Rows, 1);
-        subimage_cols = acr_find_int(group_list, ACR_Columns, 1);
-        mosaic_rows = 1;
-        mosaic_cols = 1;
-    }
-    else {
-        if (G.Debug >= HI_LOGGING) {
-            printf("Assuming MOSAIC, %dx%d\n", 
-                   subimage_rows, subimage_cols);
+        else {
+            if (G.Debug >= HI_LOGGING) {
+                printf("Assuming %dx%d mosaic\n", subimage_rows, subimage_cols);
+            }
+            mosaic_rows = acr_find_int(group_list, ACR_Rows, 1) / subimage_rows;
+            mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
         }
-        mosaic_rows = acr_find_int(group_list, ACR_Rows, 1) / subimage_rows;
-        mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
-    }
 
-    acr_insert_numeric(&group_list, EXT_Mosaic_rows, mosaic_rows);
-    acr_insert_numeric(&group_list, EXT_Mosaic_columns, mosaic_cols);
+        acr_insert_numeric(&group_list, EXT_Mosaic_rows, mosaic_rows);
+        acr_insert_numeric(&group_list, EXT_Mosaic_columns, mosaic_cols);
 
-    if (mosaic_rows * mosaic_cols > 1) {
+        if (mosaic_rows * mosaic_cols > 1) {
 
-        str_ptr = acr_find_string(group_list, ACR_MR_acquisition_type, "");
+            str_ptr = acr_find_string(group_list, ACR_MR_acquisition_type, "");
              
-        /* assume any mosaiced file contains all slices
-         * (we now support mosaics for 2D and 3D acquisitions,
-         *  so we may need to use partitions instead of slices)
-         */
-
-        if (!strncmp(str_ptr, "2D", 2)) {
-            acr_insert_numeric(&group_list, EXT_Slices_in_file, num_slices);
-            acr_insert_numeric(&group_list, 
-                               SPI_Number_of_slices_nominal, num_slices);
-        } 
-
-        /* if 3D mosaiced scan, write number of partitions to number of 
-         * slices in dicom group 
-         */
-        else if (!strncmp(str_ptr, "3D", 2)) {
-            acr_insert_numeric(&group_list, EXT_Slices_in_file, 
-                               num_partitions);
-            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
-                               num_partitions);
-            /* also have to provide slice spacing - in case of 3D it's same
-             * as slice thickness (and not provided in dicom header!)
+            /* assume any mosaiced file contains all slices
+             * (we now support mosaics for 2D and 3D acquisitions,
+             *  so we may need to use partitions instead of slices)
              */
-            acr_insert_numeric(&group_list, ACR_Spacing_between_slices,
-                               acr_find_double(group_list, 
-                                               ACR_Slice_thickness, 1.0));
-        }
-    } 
-    else {
-        acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
-    }
 
-    /* Correct the rows and columns values -
-     * These will reflect those of the subimages in the mosaics
-     * NOT the total image dimensions
-     */
-    acr_insert_short(&group_list, EXT_Sub_image_columns, subimage_cols);
-    acr_insert_short(&group_list, EXT_Sub_image_rows, subimage_rows);
-
-    /* should also correct the image position here? */
-    }
-
-    /* correct dynamic scan info if diffusion scan:
-     *
-     * assumptions:
-     *
-     *  - diffusion protocol indicated by sDiffusion.ucMode = 0x4
-     *  - there are 7 shots for DTI (b=0 + 6 encodings)
-     *  - b=0 scan has sequence name "ep_b0"
-     *  - encoded scans have seq names "ep_b700#1, ep_b700#2, ..." etc.
-     *
-     * actions:
-     * 
-     *  - change number of dynamic scans to 7
-     *  - modify dynamic scan index to encoding index
-     */
-    prot_find_string(protocol, "sDiffusion.ucMode", str_buf);
-    if (!strcmp(str_buf, "0x4")) {
-
-        /* try to get b value */
-        prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
-        acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
-                           atoi(str_buf));
-
-        /* if all averages in one series: */
-        prot_find_string(protocol, "ucOneSeriesForAllMeas", str_buf);
-        if (!strcmp(str_buf, "0x1")) {
-
-            num_encodings = 7; /* for now assume 7 shots in diffusion scan */
-
-            /* number of 'time points' */
-            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                               num_encodings*
-                               acr_find_double(group_list,
-                                               ACR_Nr_of_averages, 1));
-
-            /* time index of current scan: */
-                
-            /* In the current scheme, the unencoded scan has a
-             * sequence name like "ep_b0" while the subsequent six
-             * diffusion encodings have names like "ep_b700#1" we
-             * could use this to come up with indices for an encoding
-             * dimension
-             */
-            str_ptr = strstr(acr_find_string(group_list,
-                                             ACR_Sequence_name,""), "#");
-            if (str_ptr == NULL) {
-                enc_ix = 0;
+            if (!strncmp(str_ptr, "2D", 2)) {
+                acr_insert_numeric(&group_list, EXT_Slices_in_file, num_slices);
+                acr_insert_numeric(&group_list, 
+                                   SPI_Number_of_slices_nominal, num_slices);
             } 
-            else {
-                enc_ix = atoi(str_ptr + sizeof(char));
-            }
-                
-            /* however with the current sequence, we get usable
-             * time indices from floor(global_image_num/num_slices)
-             */
-            acr_insert_numeric(&group_list, ACR_Acquisition, 
-                               (acr_find_int(group_list, ACR_Image, 1)-1) / 
-                               num_slices);
 
+            /* if 3D mosaiced scan, write number of partitions to number of 
+             * slices in dicom group 
+             */
+            else if (!strncmp(str_ptr, "3D", 2)) {
+                acr_insert_numeric(&group_list, EXT_Slices_in_file, 
+                                   num_partitions);
+                acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
+                                   num_partitions);
+                /* also have to provide slice spacing - in case of 3D it's same
+                 * as slice thickness (and not provided in dicom header!)
+                 */
+                acr_insert_numeric(&group_list, ACR_Spacing_between_slices,
+                                   acr_find_double(group_list, 
+                                                   ACR_Slice_thickness, 1.0));
+            }
         } 
-        else { /* averages in different series - no special handling needed? */
-
-            num_encodings = 7; /* for now assume 7 shots in diffusion scan */
-
-            /* number of 'time points' */
-            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
-                               num_encodings);
-                
-            /* For multi-series scans, we DO USE THIS BECAUSE global
-             * image number may be broken!!
-             */
-            str_ptr = strstr(acr_find_string(group_list,
-                                             ACR_Sequence_name, ""), "#");
-            if (str_ptr == NULL) {
-                enc_ix = 0;
-            } 
-            else {
-                enc_ix = atoi(str_ptr + sizeof(char));
-            }
-            acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+        else {
+            acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
         }
-    } // end of diffusion scan handling
+
+        /* Correct the rows and columns values -
+         * These will reflect those of the subimages in the mosaics
+         * NOT the total image dimensions
+         */
+        acr_insert_short(&group_list, EXT_Sub_image_columns, subimage_cols);
+        acr_insert_short(&group_list, EXT_Sub_image_rows, subimage_rows);
+
+        /* TODO: should also correct the image position here? */
+    }
     return (group_list);
 }
 
@@ -1454,6 +1614,16 @@ dump_protocol_text(Acr_Element elem_ptr)
     return (output);
 }
 
+static int
+copy_element_properties(Acr_Element new_element, Acr_Element old_element)
+{
+    acr_set_element_byte_order(new_element,
+                               acr_get_element_byte_order(old_element));
+
+    acr_set_element_vr_encoding(new_element,
+                                acr_get_element_vr_encoding(old_element));
+}
+
 static int 
 mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
 {
@@ -1542,15 +1712,9 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     mi_ptr->sub_images = mi_ptr->grid[0] * mi_ptr->grid[1];
 
 
-    /* get the pixel size
+    /* Get the pixel size.
      */
-    element = acr_find_group_element(group_list, ACR_Pixel_size);
-    if ((element == NULL) ||
-        (acr_get_element_numeric_array(element, 2, pixel_spacing) != 2)) {
-        if (G.Debug) {
-            printf("WARNING: Can't get pixel size element\n");
-        }
-    }
+    dicom_read_pixel_size(group_list, pixel_spacing);
 
     /* Get step between slices
      */
@@ -1566,12 +1730,12 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
      * TODO: This code (and other code in this function) could probably
      * be broken out and made redundant with other code in the converter.
      */
-    element = acr_find_group_element(group_list, ACR_Image_orientation_patient);
-    if (element != NULL) {
-        acr_get_element_numeric_array(element, WORLD_NDIMS * 2, RowColVec);
-   
-        memcpy(dircos[VCOLUMN], RowColVec, sizeof(RowColVec[0]) * WORLD_NDIMS);
-        memcpy(dircos[VROW], &RowColVec[3], sizeof(RowColVec[0]) * WORLD_NDIMS);
+    if (dicom_read_orientation(group_list, RowColVec)) {
+        memcpy(dircos[VCOLUMN], RowColVec, sizeof(*RowColVec) * WORLD_NDIMS);
+        memcpy(dircos[VROW], &RowColVec[3], sizeof(*RowColVec) * WORLD_NDIMS);
+
+        convert_dicom_coordinate(dircos[VROW]);
+        convert_dicom_coordinate(dircos[VCOLUMN]);
    
         /* compute slice normal as cross product of row/column unit vectors
          * (should check for unit length?)
@@ -1588,11 +1752,6 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
             dircos[VCOLUMN][XCOORD] * dircos[VROW][YCOORD] -
             dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
     }
-    else {
-        if (G.Debug) {
-            printf("WARNING: No image orientation found\n");
-        }
-    }
 
     /* compute slice-to-slice step vector
      */
@@ -1602,31 +1761,27 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
 
     /* Get position and correct to first slice
      */
-    element = acr_find_group_element(group_list, ACR_Image_position_patient);
-    if (element == NULL) {
-        element = acr_find_group_element(group_list, 
-                                         ACR_Image_position_patient_old);
-    }
-    if (element != NULL) {
-        acr_get_element_numeric_array(element, WORLD_NDIMS, 
-                                      mi_ptr->position);
-    }
-    else {
+    if (!dicom_read_position(group_list, 0, mi_ptr->position)) {
         if (G.Debug) {
             printf("WARNING: No image position found\n");
         }
         mi_ptr->position[XCOORD] = mi_ptr->position[YCOORD] = 
             mi_ptr->position[ZCOORD] = 0.0;
     }
+    convert_dicom_coordinate(mi_ptr->position);
 
     if (G.Debug >= HI_LOGGING) {
-        printf(" step %.3f %.3f %.3f position %.3f %.3f %.3f\n",
+        printf(" step %.3f %.3f %.3f pos %.3f %.3f %.3f normal %.3f,%.3f,%.3f\n",
                mi_ptr->step[0],
                mi_ptr->step[1],
                mi_ptr->step[2],
                mi_ptr->position[0],
                mi_ptr->position[1],
-               mi_ptr->position[2]);
+               mi_ptr->position[2],
+               mi_ptr->normal[0],
+               mi_ptr->normal[1],
+               mi_ptr->normal[2]
+               );
     }
 
     if (mi_ptr->mosaic_seq != MOSAIC_SEQ_INTERLEAVED) {
@@ -1659,7 +1814,60 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
                mi_ptr->position[2]);
     }
 
-    if (load_image) {
+    /* Now that we've corrected the _position_, we still might need to correct
+     * the pixel spacing.  For some gadawful reason, some (but not all) Siemens
+     * mosaic files store the pixel spacing such that it is scaled by the ratio
+     * between the mosaic image size and the subimage size.  The best way I can 
+     * think of to detect this is by comparing the field of view to the product
+     * of the pixel spacing and the actual subimage size, and if they are 
+     * wildly different, assume that we need to perform the scaling...
+     */
+    element = acr_find_group_element(group_list, SPI_Field_of_view);
+    if (element != NULL) {
+        double fov[2];          /* field of view (row/column) */
+
+        acr_get_element_numeric_array(element, 2, fov);
+        if (fov[0] != 0.0 && fov[1] != 0.0) {
+            double derived_spacing[2];
+            int ratio[2];
+            char str_buf[128];
+
+            /* Calculate the actual spacing required to cover the field of view.
+             */
+            derived_spacing[0] = fov[0] / mi_ptr->size[0];
+            derived_spacing[1] = fov[1] / mi_ptr->size[1];
+
+            ratio[0] = (int) rint(derived_spacing[0] / pixel_spacing[0]);
+            ratio[1] = (int) rint(derived_spacing[1] / pixel_spacing[1]);
+
+            /* If the ratio of the derived spacing to the pixel spacing is
+             * the same as the ratio between the edge length of the large 
+             * and small images, adopt the derived spacing as the correct
+             * value.
+             */
+            if (ratio[0] == (mi_ptr->big[0] / mi_ptr->size[0]) ||
+                ratio[1] == (mi_ptr->big[1] / mi_ptr->size[1])) {
+
+                if (G.Debug) {
+                    printf("Updating mosaic pixel spacing from %f,%f to %f,%f\n",
+                           pixel_spacing[0],pixel_spacing[1],
+                           derived_spacing[0],derived_spacing[1]);
+                }
+
+                /* Store the updated pixel spacing in the group list.
+                 */
+                sprintf(str_buf, "%.15g\\%.15g", 
+                        derived_spacing[0], derived_spacing[1]);
+                acr_insert_string(&group_list, ACR_Pixel_size, str_buf);
+            }
+        }
+    }
+
+    if (!load_image) {
+        mi_ptr->big_image = NULL;
+        mi_ptr->small_image = NULL;
+    }
+    else {
 
         /* Steal the image element from the group list
          */
@@ -1675,8 +1883,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
         
         /* Add a small image
          */
-        new_image_size = 
-            mi_ptr->size[0] * mi_ptr->size[1] * mi_ptr->pixel_size;
+        new_image_size = mi_ptr->size[0] * mi_ptr->size[1] * mi_ptr->pixel_size;
         data = malloc(new_image_size);
         CHKMEM(data);
         mi_ptr->small_image = acr_create_element(group_id, element_id,
@@ -1684,10 +1891,9 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
                                                  new_image_size, data);
         acr_set_element_vr(mi_ptr->small_image,
                            acr_get_element_vr(mi_ptr->big_image));
-        acr_set_element_byte_order(mi_ptr->small_image,
-                                   acr_get_element_byte_order(mi_ptr->big_image));
-        acr_set_element_vr_encoding(mi_ptr->small_image,
-                                    acr_get_element_vr_encoding(mi_ptr->big_image));
+
+        copy_element_properties(mi_ptr->small_image, mi_ptr->big_image);
+
         acr_insert_element_into_group_list(&group_list, mi_ptr->small_image);
     }
 
@@ -1696,8 +1902,8 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
 }
 
 static int 
-mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
-                         int iimage, int load_image)
+mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
+                       int iimage, int load_image)
 {
     int irow;
     int idim;
@@ -1713,7 +1919,7 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
     int islice;
 
     if (G.Debug >= HI_LOGGING) {
-        printf("mosaic_modify_group_list(%lx, %lx, %d, %d)\n",
+        printf("mosaic_insert_subframe(%lx, %lx, %d, %d)\n",
                (unsigned long)group_list, (unsigned long)mi_ptr,
                iimage, load_image);
     }
@@ -1772,7 +1978,7 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
 
     sprintf(string, "%.15g\\%.15g\\%.15g", 
             position[XCOORD], position[YCOORD], position[ZCOORD]);
-    acr_insert_string(&group_list, SPI_Image_position, string);
+
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
 
     if (G.Debug >= HI_LOGGING) {
@@ -1804,20 +2010,288 @@ mosaic_modify_group_list(Acr_Group group_list, Mosaic_Info *mi_ptr,
         /* Reset the byte order and VR encoding. This will be modified on each
          * send according to what the connection needs.
          */
-        acr_set_element_byte_order(mi_ptr->small_image,
-                                   acr_get_element_byte_order(mi_ptr->big_image));
-        acr_set_element_vr_encoding(mi_ptr->small_image,
-                                    acr_get_element_vr_encoding(mi_ptr->big_image));
+        copy_element_properties(mi_ptr->small_image, mi_ptr->big_image);
     }
     return 1;
 
 }
 
 static void 
-mosaic_cleanup(Acr_Group group_list, Mosaic_Info *mi_ptr)
+mosaic_cleanup(Mosaic_Info *mi_ptr)
 {
     if (mi_ptr->packed && mi_ptr->big_image != NULL) {
         acr_delete_element(mi_ptr->big_image);
+    }
+}
+
+/************************************************************************
+ * Multiframe functions, which mimic the behavior of the older mosaic
+ * functions.  This is not yet a complete or correct implementation of
+ * multiframe DICOM - see the NOTE: above!
+ */
+/* ----------------------------- MNI Header -----------------------------------
+   @NAME       : multiframe_init()
+   @INPUT      : group_list - the list of DICOM groups/elements that make up
+                 this file.
+                 int load_image - a boolean value, non-zero if the function
+                 should actually load the data into memory.
+   @OUTPUT     : mfi_ptr - a pointer to a Multiframe_Info structure that will
+                 contain information used to expand this multiframe file into
+                 a series of slices.
+   @RETURNS    : void
+   @DESCRIPTION: Initialize a multiframe conversion process.
+   @METHOD     : 
+   @GLOBALS    :
+   @CALLS      : 
+   @CREATED    : June 3, 2005 Bert Vincent
+   @MODIFIED   : 
+---------------------------------------------------------------------------- */
+
+static void
+multiframe_init(Acr_Group group_list, Multiframe_Info *mfi_ptr, int load_image)
+{
+    int grp_id;
+    int elm_id;
+    void *data_ptr;
+    Acr_Element element;
+    int i;
+    double spacing;
+    double RowColVec[6];
+    double dircos[VOL_NDIMS][WORLD_NDIMS];
+    int rows;
+    int cols;
+    int pixel_size;
+
+    if (G.Debug >= HI_LOGGING) {
+        printf("multiframe_init(%lx, %lx, %d)\n",
+               (unsigned long) group_list, (unsigned long) mfi_ptr,
+               load_image);
+    }
+
+    cols = acr_find_int(group_list, ACR_Columns, 1);
+    rows = acr_find_int(group_list, ACR_Rows, 1);
+    pixel_size = 
+        (acr_find_int(group_list, ACR_Bits_allocated, 16) - 1) / 8 + 1;
+
+    /* Get image image index info (number of slices in file)
+     */
+    mfi_ptr->frame_count = acr_find_int(group_list, ACR_Number_of_frames, 1);
+
+    /* Get spacing between slices
+     */
+    spacing = acr_find_double(group_list, ACR_Slice_thickness, 0.0);
+    if (spacing == 0.0) {
+        spacing = acr_find_double(group_list, ACR_Spacing_between_slices, 1.0);
+    }
+
+    /* get image normal vector
+     * (need to compute based on dicom field, which gives
+     *  unit vectors for row and column direction)
+     * TODO: This code (and other code in this function) could probably
+     * be broken out and made redundant with other code in the converter.
+     */
+    if (dicom_read_orientation(group_list, RowColVec)) {
+        memcpy(dircos[VCOLUMN], RowColVec, sizeof(*RowColVec) * WORLD_NDIMS);
+        memcpy(dircos[VROW], &RowColVec[3], sizeof(*RowColVec) * WORLD_NDIMS);
+
+        convert_dicom_coordinate(dircos[VROW]);
+        convert_dicom_coordinate(dircos[VCOLUMN]);
+
+        /* compute slice normal as cross product of row/column unit vectors
+         * (should check for unit length?)
+         */
+        mfi_ptr->normal[XCOORD] = 
+            dircos[VCOLUMN][YCOORD] * dircos[VROW][ZCOORD] -
+            dircos[VCOLUMN][ZCOORD] * dircos[VROW][YCOORD];
+   
+        mfi_ptr->normal[YCOORD] = 
+            dircos[VCOLUMN][ZCOORD] * dircos[VROW][XCOORD] -
+            dircos[VCOLUMN][XCOORD] * dircos[VROW][ZCOORD];
+   
+        mfi_ptr->normal[ZCOORD] = 
+            dircos[VCOLUMN][XCOORD] * dircos[VROW][YCOORD] -
+            dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
+    }
+
+    /* If the normal is unreliable, use a default value.
+     */
+    if (mfi_ptr->normal[XCOORD] == mfi_ptr->normal[YCOORD] &&
+        mfi_ptr->normal[XCOORD] == mfi_ptr->normal[ZCOORD]) {
+        mfi_ptr->normal[ZCOORD] = -1.0;
+        mfi_ptr->normal[YCOORD] = 0.0;
+        mfi_ptr->normal[XCOORD] = 0.0;
+    }
+
+    /* Compute slice-to-slice step vector
+     */
+    for (i = 0; i < WORLD_NDIMS; i++) {
+        mfi_ptr->step[i] = spacing * mfi_ptr->normal[i];
+    }
+
+    /* Get position and correct to first slice
+     */
+    if (!dicom_read_position(group_list, 0, mfi_ptr->position)) {
+        if (G.Debug) {
+            printf("WARNING: No image position found\n");
+        }
+        mfi_ptr->position[XCOORD] = mfi_ptr->position[YCOORD] = 
+            mfi_ptr->position[ZCOORD] = 0.0;
+    }
+    convert_dicom_coordinate(mfi_ptr->position);
+
+    if (G.Debug >= HI_LOGGING) {
+        printf(" step %.3f %.3f %.3f position %.3f %.3f %.3f\n",
+               mfi_ptr->step[0],
+               mfi_ptr->step[1],
+               mfi_ptr->step[2],
+               mfi_ptr->position[0],
+               mfi_ptr->position[1],
+               mfi_ptr->position[2]);
+    }
+
+    if (!load_image) {
+        mfi_ptr->big_image = NULL;
+        mfi_ptr->sub_image = NULL;
+    }
+    else {
+        /* We need to load the image (we're probably on the second pass).
+         */
+
+        /* Steal the image element from the group list
+         */
+        element = acr_find_group_element(group_list, ACR_Pixel_data);
+        if (element == NULL) {
+            fprintf(stderr, "Couldn't find an image\n");
+            exit(EXIT_FAILURE);
+        }
+
+        mfi_ptr->big_image = element; /* Save pointer to pixel data element. */
+
+        grp_id = acr_get_element_group(element);
+        elm_id = acr_get_element_element(element);
+        acr_group_steal_element(acr_find_group(group_list, grp_id), element);
+        
+        /* Add a small image
+         */
+        mfi_ptr->frame_size = rows * cols * pixel_size;
+        data_ptr = malloc(mfi_ptr->frame_size);
+        CHKMEM(data_ptr);
+
+        mfi_ptr->sub_image = acr_create_element(grp_id,
+                                                elm_id,
+                                                acr_get_element_vr(element),
+                                                mfi_ptr->frame_size, 
+                                                data_ptr);
+
+        copy_element_properties(mfi_ptr->sub_image, mfi_ptr->big_image);
+        
+        acr_insert_element_into_group_list(&group_list, mfi_ptr->sub_image);
+    }
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+   @NAME       : multiframe_insert_subframe()
+   @INPUT      : group_list - the list of DICOM groups/elements that make up
+                 this file.
+                 mfi_ptr - a pointer to a Multiframe_Info structure that will
+                 contain information used to expand this multiframe file into
+                 a series of slices.
+                 int iimage - the index of the subimage to parse and possibly
+                 to load.
+                 int load_image - a boolean value, non-zero if the function
+                 should actually load the data into memory.
+   @OUTPUT     : mfi_ptr - may be modified by the function.
+   @RETURNS    : void
+   @DESCRIPTION: This function decomposes a multiframe DICOM image
+                 into a series of single-frame images. Modifies the
+                 group_list to include updated image and position
+                 information.
+   @METHOD     : 
+   @GLOBALS    :
+   @CALLS      : 
+   @CREATED    : June 3, 2005 Bert Vincent
+   @MODIFIED   : 
+---------------------------------------------------------------------------- */
+static void
+multiframe_insert_subframe(Acr_Group group_list, Multiframe_Info *mfi_ptr,
+                           int iframe, int load_image)
+{
+    int idim;
+    char *new_ptr;
+    char *old_ptr;
+    double position[WORLD_NDIMS];
+    string_t string;
+    int result;
+
+    if (G.Debug >= HI_LOGGING) {
+        printf("multiframe_insert_subframe(%lx, %lx, %d, %d)\n",
+               (unsigned long)group_list, (unsigned long)mfi_ptr,
+               iframe, load_image);
+    }
+
+    /* Check the frame number 
+     */
+    if ((iframe < 0) || (iframe > mfi_ptr->frame_count)) {
+        fprintf(stderr, "Invalid image number to send: %d of %d\n",
+                iframe, mfi_ptr->frame_count);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Update the index in the file's group list.
+     */
+    acr_insert_numeric(&group_list, SPI_Current_slice_number, (double) iframe);
+
+    result = dicom_read_position(group_list, iframe, position);
+    convert_dicom_coordinate(position);
+
+    if (result != DICOM_POSITION_LOCAL) {
+        /* If either no position was found for this frame number, or if
+         * only a global position was found, we need to update the 
+         * position for this particular frame number.
+         * 
+         * If a local position is found, as in some multiframe files,
+         * this step is unnecessary and possibly wrong.
+         */
+        for (idim = 0; idim < WORLD_NDIMS; idim++) {
+            position[idim] = mfi_ptr->position[idim] + 
+                (double) iframe * mfi_ptr->step[idim];
+        }
+    }
+
+    sprintf(string, "%.15g\\%.15g\\%.15g", 
+            position[XCOORD], position[YCOORD], position[ZCOORD]);
+
+    acr_insert_string(&group_list, ACR_Image_position_patient, string);
+
+    if (G.Debug >= HI_LOGGING) {
+        printf(" position %s\n", string);
+    }
+
+    if (load_image) {
+        /* Get pointers
+         */
+        old_ptr = acr_get_element_data(mfi_ptr->big_image);
+        new_ptr = acr_get_element_data(mfi_ptr->sub_image);
+
+        /* Copy the image
+         */
+        memcpy(new_ptr,         /* destination */
+               old_ptr + (iframe * mfi_ptr->frame_size), /* source */
+               mfi_ptr->frame_size); /* length */
+        
+        /* Reset the byte order and VR encoding. This will be modified
+         * on each send according to what the connection needs.
+         */
+        copy_element_properties(mfi_ptr->sub_image, mfi_ptr->big_image);
+    }
+}
+
+static void 
+multiframe_cleanup(Multiframe_Info *mfi_ptr)
+{
+    if (mfi_ptr->big_image != NULL) {
+        acr_delete_element(mfi_ptr->big_image);
+        mfi_ptr->big_image = NULL;
     }
 }
 
