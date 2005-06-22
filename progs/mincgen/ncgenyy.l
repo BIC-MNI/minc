@@ -2,7 +2,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: ncgenyy.l,v 1.2 2005-05-20 17:59:01 bert Exp $
+ *   $Id: ncgenyy.l,v 1.3 2005-06-22 21:02:11 bert Exp $
  *********************************************************************/
 
 /* lex specification for tokens for ncgen */
@@ -24,7 +24,7 @@ char errstr[100];		/* for short error messages */
 
 extern int int_val;
 extern float float_val;
-#ifndef YYSTYPE
+#if !defined (YYSTYPE) && !defined(YYSTYPE_IS_DECLARED)
 extern void * yylval;
 #define YYLVAL_NULL ((void *) NULL)
 #else

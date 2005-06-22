@@ -1,4 +1,7 @@
 MINC 2:
+2005-06-22  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Minor fix to ncgenyy.l to avoid compiler complaint on ia64.
+	
 2005-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Update Makefile.msvc-win32 to build converters.
