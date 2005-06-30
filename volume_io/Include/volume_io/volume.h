@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.53.2.2 2005-03-31 17:39:49 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.53.2.3 2005-06-30 20:15:32 bert Exp $
 ---------------------------------------------------------------------------- */
 
 
@@ -79,7 +79,10 @@ typedef  struct
     VIO_BOOL                voxel_to_world_transform_uptodate;
     VIO_General_transform   voxel_to_world_transform;
 
-    VIO_STR                  coordinate_system_name;
+    VIO_STR                 coordinate_system_name;
+
+    VIO_Real               *irregular_starts[VIO_MAX_DIMENSIONS];
+    VIO_Real               *irregular_widths[VIO_MAX_DIMENSIONS];
 } volume_struct;
 
 typedef  volume_struct  *VIO_Volume;
