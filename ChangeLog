@@ -1,3 +1,10 @@
+2005-07-03  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* configure.in: Check for sysconf().
+
+	* volume_io/Prog_utils/time.c (get_clock_ticks_per_second): Use
+        POSIX sysconf() function, if available.
+
 2005-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Use default transform when converting an Analyze file with
