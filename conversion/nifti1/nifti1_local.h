@@ -33,6 +33,13 @@
 #define DIM_J 1
 #define DIM_K 2
 
+#define DIMORDER_ZYX 0
+#define DIMORDER_YZX 1
+#define DIMORDER_XZY 2
+#define DIMORDER_XYZ 3
+#define DIMORDER_ZXY 4
+#define DIMORDER_YXZ 5
+
 /* This list is in the order in which dimension lengths and sample
  * widths are stored in the NIfTI-1 structure.
  */
