@@ -5,6 +5,45 @@
 	* volume_io/Prog_utils/time.c (get_clock_ticks_per_second): Use
         POSIX sysconf() function, if available.
 
+2005-06-27  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/mincconcat/mincconcat.c: Added -fileoffsets option to 
+	specify offsets to be added to successive files' start values 
+	in a concatenation operation.
+	
+2005-06-23  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Added nonspatial_voxel_to_world() and
+	nonspatial_world_to_voxel() functions to translate (for example)
+	time coordinates.
+	
+2005-06-17  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Add dimension order and direction flipping options to the 
+	nii2mnc command.
+	
+2005-06-08  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc:
+	   - Implemented rounding in the MINC file writing code (oops).
+           - More work on Siemens mosaic images. Turns out that many such
+           images may not contain the all-important ASCCONV protocol
+	   dump, so we have to work with other fields in these files.
+	
+2005-06-07  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc: Partial support for DICOM multiframe 
+	conversions now	implemented.
+	
+2005-06-06  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Minor correction to ACR/NEMA code to dump raw bytes for
+	otherwise unrecognized fields.
+	* Added code to handle searching for fields within sequences and
+	sub-sequences in DICOM multiframe files.
+	
+2005-06-02  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Several fixes and additions to the dcm2mnc converter. These are
+	intended to deal with signed data properly, and also to deal with
+	the odd format used by the Shimadzu PET scanner.
+	
+2005-06-01  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Fix voxel_loop.h to avoid shadowing the index() function.
+	
 2005-05-20  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* Use default transform when converting an Analyze file with
