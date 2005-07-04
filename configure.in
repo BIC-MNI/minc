@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.22 $)
+AC_REVISION($Revision: 6.23 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -45,7 +45,7 @@ dnl Verify existence of mkstemp, tempnam, and tmpnam
 AC_CHECK_FUNCS(mkstemp tempnam tmpnam)
 
 dnl Verify existence of some functions we'd like to use
-AC_CHECK_FUNCS(getpwnam select strerror)
+AC_CHECK_FUNCS(getpwnam select strerror sysconf)
 
 # Functions required for execute_decompress_command().
 AC_FUNC_FORK

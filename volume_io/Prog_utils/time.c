@@ -35,7 +35,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.23 2004-12-14 23:38:22 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.24 2005-07-04 03:13:31 stever Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -60,7 +60,11 @@ static Real  get_clock_ticks_per_second( void )
     if( !initialized )
     {
         initialized = TRUE;
+#if HAVE_SYSCONF
+        clock_ticks_per_second = (Real) sysconf( _SC_CLK_TCK );
+#else
         clock_ticks_per_second = (Real) CLK_TCK;
+#endif
     }
 
     return( clock_ticks_per_second );
