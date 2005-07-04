@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.65.2.1 2004-10-04 20:20:14 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.65.2.2 2005-07-04 12:43:35 bert Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -131,6 +131,9 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
     int                 spatial_axis_indices[MAX_VAR_DIMS];
     minc_input_options  default_options;
     BOOLEAN             no_volume_data_type;
+    char                spacing_type[MI_MAX_ATTSTR_LEN+1];
+    double              *irr_starts[MAX_VAR_DIMS];
+    double              *irr_widths[MAX_VAR_DIMS];
 
     ALLOC( file, 1 );
 
@@ -298,6 +301,9 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
         file_separations[d] = 1.0;
         start_position[d] = 0.0;
 
+        irr_starts[d] = NULL;
+        irr_widths[d] = NULL;
+
         if( spatial_dim_flags[d] )
         {
             dir_cosines[d][0] = 0.0;
@@ -344,6 +350,43 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
                         (void) strcpy( prev_space_type, space_type );
                 }
             }
+            else if (!strcmp(MItime, file->dim_names[d])) {
+                /* For the moment this is implemented for time dimensions
+                 * only.
+                 */
+                miattgetstr(file->cdfid, dimvar, MIspacing,
+                            MI_MAX_ATTSTR_LEN+1, spacing_type);
+                if (!strcmp(spacing_type, MI_IRREGULAR)) {
+                    long start[1];
+                    long count[1];
+                    int i;
+
+                    irr_starts[d] = malloc(sizeof(Real) * file->sizes_in_file[d]);
+                    irr_widths[d] = malloc(sizeof(Real) * file->sizes_in_file[d]);
+
+                    start[0] = 0;
+                    count[0] = file->sizes_in_file[d];
+
+                    mivarget(file->cdfid, dimvar, start, count,
+                             NC_DOUBLE, MI_SIGNED, irr_starts[d]);
+
+                    dimvar = ncvarid(file->cdfid, MItime_width);
+                    if (dimvar < 0) {
+                        for (i = 0; i < count[0]; i++) {
+                            irr_widths[d][i] = file_separations[d];
+                        }
+                    }
+                    else {
+                        mivarget(file->cdfid, dimvar, start, count,
+                                 NC_DOUBLE, MI_SIGNED, irr_widths[d]);
+                    }
+                }
+                else {
+                    if( miattget1(file->cdfid, dimvar, MIstart, NC_DOUBLE,
+                                  (void *) (&start_position[d]) ) == MI_ERROR )
+                        start_position[d] = 0.0;
+                }
+            }
         }
 
         if( file->to_volume_index[d] == INVALID_AXIS )
@@ -362,6 +405,7 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
                 set_volume_direction_unit_cosine( volume,
                                 file->to_volume_index[d], dir_cosines[d] );
             }
+
         }
     }
 
@@ -410,6 +454,24 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
 
     set_volume_sizes( volume, sizes );
 
+    for_less( d, 0, file->n_file_dimensions ) 
+    {
+        if (file->to_volume_index[d] == INVALID_AXIS) {
+            continue;
+        }
+
+        if (irr_starts[d] != NULL) {
+            set_volume_irregular_starts(volume, file->to_volume_index[d],
+                                        file->sizes_in_file[d],
+                                        irr_starts[d]);
+        }
+        if (irr_widths[d] != NULL) {
+            set_volume_irregular_widths(volume, file->to_volume_index[d],
+                                        file->sizes_in_file[d],
+                                        irr_widths[d]);
+        }
+    }
+                                        
     /* --- create the image conversion variable */
 
     file->minc_icv = miicv_create();

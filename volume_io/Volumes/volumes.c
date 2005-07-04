@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.72.2.1 2004-10-04 20:20:14 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.72.2.2 2005-07-04 12:43:36 bert Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -187,6 +187,8 @@ VIOAPI   Volume   create_volume(
         volume->direction_cosines[i][X] = 0.0;
         volume->direction_cosines[i][Y] = 0.0;
         volume->direction_cosines[i][Z] = 0.0;
+        volume->irregular_starts[i] = NULL;
+        volume->irregular_widths[i] = NULL;
 
         sizes[i] = 0;
 
@@ -2335,6 +2337,19 @@ VIOAPI  Volume   copy_volume_definition_no_alloc(
 
     set_volume_space_type( copy, volume->coordinate_system_name );
 
+    for_less( c, 0, get_volume_n_dimensions(volume) )
+    {
+        if (is_volume_dimension_irregular(volume, c)) {
+            Real *irr_starts = malloc(sizeof(Real) * sizes[c]);
+            Real *irr_widths = malloc(sizeof(Real) * sizes[c]);
+            get_volume_irregular_starts( volume, c, sizes[c], irr_starts);
+            set_volume_irregular_starts( volume, c, sizes[c], irr_starts);
+
+            get_volume_irregular_widths( volume, c, sizes[c], irr_starts);
+            set_volume_irregular_widths( volume, c, sizes[c], irr_starts);
+        }
+    }
+
     return( copy );
 }
 
@@ -2423,4 +2438,182 @@ VIOAPI  Volume  copy_volume(
                                          get_volume_data_type(volume)) );
 
     return( copy );
+}
+
+/* These are not public functions, so they are not VIOAPI yet */
+BOOLEAN 
+is_volume_dimension_irregular(Volume volume, int idim)
+{
+    if (idim > volume->array.n_dimensions) {
+        return (0);
+    }
+    return (volume->irregular_starts[idim] != NULL);
+}
+
+int
+get_volume_irregular_starts(Volume volume, int idim, int count, Real *starts)
+{
+    int i;
+
+    if (idim >= volume->array.n_dimensions) {
+        return (0);
+    }
+
+    if (volume->irregular_starts[idim] == NULL) {
+        return (0);
+    }
+
+    if (count > volume->array.sizes[idim]) {
+        count = volume->array.sizes[idim];
+    }
+
+    for (i = 0; i < count; i++) {
+        starts[i] = volume->irregular_starts[idim][i];
+    }
+
+    return (count);
+}
+
+int
+get_volume_irregular_widths(Volume volume, int idim, int count, Real *widths)
+{
+    int i;
+
+    if (idim >= volume->array.n_dimensions) {
+        return (0);
+    }
+
+    if (volume->irregular_widths[idim] == NULL) {
+        return (0);
+    }
+
+    if (count > volume->array.sizes[idim]) {
+        count = volume->array.sizes[idim];
+    }
+
+    for (i = 0; i < count; i++) {
+        widths[i] = volume->irregular_widths[idim][i];
+    }
+
+    return (count);
+}
+
+int
+set_volume_irregular_starts(Volume volume, int idim, int count, Real *starts)
+{
+    int i;
+
+    if (idim >= volume->array.n_dimensions) {
+        return (0);
+    }
+
+    if (volume->irregular_starts[idim] != NULL) {
+        free(volume->irregular_starts[idim]);
+    }
+
+    if (starts == NULL) {
+        return (0);
+    }
+
+    if (count > volume->array.sizes[idim]) {
+        count = volume->array.sizes[idim];
+    }
+
+    volume->irregular_starts[idim] = malloc(count * sizeof (Real));
+    if (volume->irregular_starts[idim] == NULL) {
+        return (0);
+    }
+
+    for (i = 0; i < count; i++) {
+        volume->irregular_starts[idim][i] = starts[i];
+    }
+
+    return (count);
+}
+
+int
+set_volume_irregular_widths(Volume volume, int idim, int count, Real *widths)
+{
+    int i;
+
+    if (idim >= volume->array.n_dimensions) {
+        return (0);
+    }
+
+    if (volume->irregular_widths[idim] != NULL) {
+        free(volume->irregular_widths[idim]);
+    }
+
+    if (widths == NULL) {
+        return (0);
+    }
+
+    if (count > volume->array.sizes[idim]) {
+        count = volume->array.sizes[idim];
+    }
+
+    volume->irregular_widths[idim] = malloc(count * sizeof (Real));
+    if (volume->irregular_widths[idim] == NULL) {
+        return (0);
+    }
+
+    for (i = 0; i < count; i++) {
+        volume->irregular_widths[idim][i] = widths[i];
+    }
+
+    return (count);
+}
+
+
+VIOAPI VIO_Real
+nonspatial_voxel_to_world(Volume volume, int idim, int voxel)
+{
+    VIO_Real world;
+
+    if (is_volume_dimension_irregular(volume, idim)) {
+        if (voxel < 0) {
+            world = 0.0;
+        }
+        else if (voxel >= volume->array.sizes[idim]) {
+            /* If we are asking for a position PAST the end of the axis,
+             * return the very last position on the axis, defined as the
+             * last start position plus the last width.
+             * NOTE! TODO: FIXME! We should take the axis alignment into
+             * account here.
+             */
+            voxel = volume->array.sizes[idim] - 1;
+
+            world = (volume->irregular_starts[idim][voxel] + 
+                     volume->irregular_widths[idim][voxel]);
+        }
+        else {
+            world = volume->irregular_starts[idim][voxel];
+        }
+    }
+    else {
+        world = volume->starts[idim] + (voxel * volume->separations[idim]);
+    }
+    return (world);
+}
+
+VIOAPI int
+nonspatial_world_to_voxel(Volume volume, int idim, VIO_Real world)
+{
+    int voxel;
+    int i;
+
+    if (is_volume_dimension_irregular(volume, idim)) {
+        voxel = volume->array.sizes[idim];
+        for (i = 0; i < volume->array.sizes[idim]; i++) {
+            if (world < (volume->irregular_starts[idim][i] + 
+                         volume->irregular_widths[idim][i])) {
+                voxel = i;
+                break;
+            }
+        }
+    }
+    else {
+        voxel = ROUND((world - volume->starts[idim]) / volume->separations[idim]);
+    }
+    return (voxel);
 }
