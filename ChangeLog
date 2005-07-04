@@ -1,3 +1,6 @@
+2005-07-04  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/micropet/upet2mnc.c - save units for dimensions
+	
 2005-07-03  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* configure.in: Check for sysconf().
