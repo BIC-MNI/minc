@@ -424,6 +424,7 @@ dist_man1_MANS = \
 	progs/mincexpand/mincexpand.man1 \
 	progs/mincextract/mincextract.man1 \
 	progs/mincheader/mincheader.man1 \
+	progs/minchistory/minchistory.man1 \
 	progs/mincinfo/mincinfo.man1 \
 	progs/minclookup/minclookup.man1 \
 	progs/mincmakescalar/mincmakescalar.man1 \
