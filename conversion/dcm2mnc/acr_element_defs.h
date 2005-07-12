@@ -106,6 +106,7 @@ GLOBAL_ELEMENT(ACR_SAR                   , 0x0018, 0x1316, DS);
 GLOBAL_ELEMENT(ACR_Acq_comments          , 0x0018, 0x4000, LT);
 GLOBAL_ELEMENT(ACR_Patient_position      , 0x0018, 0x5100, CS);
 
+GLOBAL_ELEMENT(ACR_Series_instance_UID   , 0x0020, 0x000E, UI);
 GLOBAL_ELEMENT(ACR_Study                 , 0x0020, 0x0010, SH);
 GLOBAL_ELEMENT(ACR_Series                , 0x0020, 0x0011, IS);
 GLOBAL_ELEMENT(ACR_Acquisition           , 0x0020, 0x0012, IS);
