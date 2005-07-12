@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.7  2005-06-20 22:03:31  bert
+ * Revision 1.14.2.8  2005-07-12 16:01:14  bert
+ * Sort on filename if all else fails
+ *
+ * Revision 1.14.2.7  2005/06/20 22:03:31  bert
  * Add simple test for binary files to avoid choking on text files
  *
  * Revision 1.14.2.6  2005/06/09 20:48:36  bert
@@ -107,7 +110,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.7 2005-06-20 22:03:31 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.8 2005-07-12 16:01:14 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -599,7 +602,11 @@ dcm_sort_function(const void *entry1, const void *entry2)
     else if (image1 > image2) return 1;
     else if (slice1 < slice2) return -1;
     else if (slice1 > slice2) return 1;
-    else return 0;
+
+    /* Last chance - if all else is equal, sort by the file names. 
+     */
+    else return strcmp((*file_info_list1)->file_name,
+                       (*file_info_list2)->file_name);
 }
 
 static void 
