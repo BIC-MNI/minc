@@ -13,7 +13,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.26.2.2 2005-07-13 19:42:56 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.26.2.3 2005-07-13 19:47:27 bert Exp $";
 #endif
 
 #include  <internal_volume_io.h>
@@ -969,8 +969,9 @@ VIOAPI  void  cache_volume_range_has_changed(
 
     if( volume->cache.minc_file == NULL && volume->cache.n_blocks == 0 )
         return;
-
-    /* print( "Not implemented yet in cache_volume_range_has_changed()\n" ); */
+    /* This message is not useful.
+    print( "Not implemented yet in cache_volume_range_has_changed()\n" );
+    */
 }
 
 /* ----------------------------- MNI Header -----------------------------------
