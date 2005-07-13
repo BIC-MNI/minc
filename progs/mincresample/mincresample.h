@@ -7,7 +7,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.h,v $
- * Revision 6.4.2.1  2005-03-16 19:02:51  bert
+ * Revision 6.4.2.2  2005-07-13 19:34:48  bert
+ * Implemented sinc interpolant
+ *
+ * Revision 6.4.2.1  2005/03/16 19:02:51  bert
  * Port changes from 2.0 branch
  *
  * Revision 6.4  2002/11/06 13:32:23  jason
@@ -143,7 +146,7 @@
 #endif
 
 /* Types used in program */
-enum Interpolant_type { TRILINEAR, TRICUBIC, N_NEIGHBOUR };
+enum Interpolant_type { TRILINEAR, TRICUBIC, N_NEIGHBOUR, WINDOWED_SINC };
 
 typedef double Coord_Vector[WORLD_NDIMS];
 
@@ -397,6 +400,19 @@ static int do_Ncubic_interpolation(Volume_Data *volume,
                                    double frac[], double *result);
 extern int nearest_neighbour_interpolant(Volume_Data *volume, 
                                          Coord_Vector coord, double *result);
+extern int windowed_sinc_interpolant(Volume_Data *volume,
+                                     Coord_Vector coord, double *result);
 static void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
                                double slice_min[], double slice_max[]);
 
+#define SINC_HALF_WIDTH_MAX 10
+#define SINC_HALF_WIDTH_MIN 1
+
+enum sinc_interpolant_window_t {
+    SINC_WINDOW_NONE,
+    SINC_WINDOW_HANNING,
+    SINC_WINDOW_HAMMING
+};
+
+extern enum sinc_interpolant_window_t sinc_window_type;
+extern int sinc_half_width;

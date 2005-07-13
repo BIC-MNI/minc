@@ -1,3 +1,14 @@
+2005-07-13  Bert Vincent <bert@bic,mni.mcgill.ca>
+	
+	* progs/mincresample/mincresample.c:
+	* progs/mincresample/mincresample.h:
+	* progs/mincresample/resample_volumes.c:
+	* progs/mincresample/mincresample.man1:	Implemented "windowed 
+	sinc" interpolant, as described by Thacker et al., "Improved 
+	Quality of Re-sliced MR Images Using Re-normalized Sinc 
+	Interpolation", Journal of Magnetic Resonance Imaging 
+	10:582-588 (1999).
+	
 2005-07-04  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* Makefile.am:

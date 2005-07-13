@@ -1,4 +1,3 @@
-.\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre,
 .\" Montreal Neurological Institute, McGill University.
 .\" Permission to use, copy, modify, and distribute this
@@ -9,9 +8,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.3 2004-05-20 21:52:09 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.2.2.1 2005-07-13 19:34:48 bert Exp $
 .\"
-.TH MINCRESAMPLE 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCRESAMPLE 1
 
 .SH NAME
 mincresample - resamples a minc file along new spatial dimensions
@@ -21,7 +20,7 @@ mincresample - resamples a minc file along new spatial dimensions
 [<options>] <infile> <outfile>
 
 .SH DESCRIPTION
-\fIMincresample\fR
+.I Mincresample
 will resample a minc file along new spatial dimensions with new
 voxel positions. Each volume in the input file (given by the spatial
 dimensions xspace, yspace and zspace) is resampled according to the
@@ -88,134 +87,152 @@ Note that options can be specified in abbreviated form (as long as
 they are unique) and can be given anywhere on the command line.
 
 .SH General options
-.TP
-\fB\-2\fR
-Create MINC 2.0 format output files.
-.TP
-\fB\-clobber\fR
+.P
+.I -clobber:
 Overwrite an existing file.
-.TP
-\fB\-noclobber\fR
+.P
+.I -noclobber:
 Don't overwrite an existing file (default).
-.TP
-\fB-verbose\fR
+.P
+.I -verbose:
 Print out progress information for each slice computed (default).
-.TP
-\fB\-quiet\fR
+.P
+.I -quiet:
 Do not print out progress information.
 
 .SH Resampling specification
 Options that give the output sampling (all of the following except
-\fB\-transformation\fR) are parsed in the order that they appear on the
-command line. Thus a command with \fB\-like file.mnc \-znelements 34
-\-zstep 2\fR will give a sampling like that in file in \fIfile.mnc\fR but with
-34 samples at 2 mm along the \fIzspace\fR axis. The default sampling is
+-transformation) are parsed in the order that they appear on the
+command line. Thus a command with -like file.mnc -znelements 34
+-zstep 2 will give a sampling like that in file in file.mnc but with
+34 samples at 2 mm along the zspace axis. The default sampling is
 taken from the input file, transformed according to any transformation.
-.TP
-\fB\-transformation\fR\ \fIfile.xfm\fR
+.P
+.I -transformation 
+<file.xfm>:
 Specify a file giving the world coordinate transformation (default is
 the identity transformation).
-.TP
-\fB\-invert_transformation\fR
+.P
+.I -invert_transformation:
 Invert the transformation before using it.
-.TP
-\fB\-noinvert_transformation\fR
+.P
+.I -noinvert_transformation:
 Do no invert the transformation (default).
-.TP
-\fB\-tfm_input_sampling\fR
+.P
+.I -tfm_input_sampling:
 Transform the input sampling (using the transform specified by
-\fB\-transformation\fR) along with the data and use this as the default 
-sampling (default).
-.TP
-\fB\-use_input_sampling\fR
+-transformation) along with the data and use this as the default sampling
+(default).
+.P
+.I -use_input_sampling:
 Use the input sampling as the default sampling, as is, without
 transformation, even though the data is being transformed (old
 behaviour). 
-.TP
-\fB\-like\fR\ \fIfile.mnc\fR
+.P
+.I -like 
+<file.mnc>:
 Specify a model file that gives the output world to voxel
 transformation and number of elements (ie. transform this file so that it
 looks like that one).
-.TP
-\fB\-standard_sampling\fR
+.P
+.I -standard_sampling:
 Set the sampling to standard values (start = 0, step = 1, direction
 cosines point along appropriate axes).
-.TP
-\fB\-spacetype\fR\ \fIstring\fR
-Set the name of the output space (usually \fBnative____\fR or \fBtalairach_\fR).
-.TP
-\fB\-talairach\fR
+.P
+.I -spacetype
+<string>:
+Set the name of the output space (usually native____ or talairach_).
+.P
+.I -talairach:
 Set the name of the output space to talairach_.
-.TP
-\fB\-units\fR\ \fIstring\fR
+.P
+.I -units
+<string>:
 Set the units of the output space.
-.TP
-\fB\-origin\fR\ \fIox\ oy\ oz\fR
+.P
+.I -origin
+<ox> <oy> <oz>:
 Specify the coordinate of the first voxel. This is not the same as the
 start value if the direction cosines are non-standard. As well, the
 start is not just a perpendicular projection of the origin onto the
 axis, it is a parallel projection (as in a multi-dimensional
 parallelogram projection). The conversion is handled properly by this
 option.
-.TP
-\fB\-nelements\fR\ \fInx\ ny\ nz\fR
+.P
+.I -nelements 
+<nx> <ny> <nz>:
 Number of elements along each of the world dimensions.
-.TP
-\fB\-xnelements\fR\ \fInx\fR
+.P
+.I -xnelements 
+<nx>:
 Number of elements along the xspace dimension.
-.TP
-\fB\-ynelements\fR\ \fIny\fR
+.P
+.I -ynelements 
+<ny>:
 Number of elements along the yspace dimension.
-.TP
-\fB\-znelements\fR\ \fInz\fR
+.P
+.I -znelements 
+<nz>:
 Number of elements along the zspace dimension.
-.TP
-\fB\-step\fR\ \fIxstep\ ystep\ zstep\fR
+.P
+.I -step 
+<xstep> <ystep> <zstep>:
 Step between voxels along each of the world dimensions.
-.TP
-\fB\-xstep\fR\ \fIxstep\fR
+.P
+.I -xstep 
+<xstep>:
 Step between voxels along the xspace dimension.
-.TP
-\fB\-ystep\fR\ \fIystep\fR
+.P
+.I -ystep
+<ystep>:
 Step between voxels along the yspace dimension.
-.TP
-\fB\-zstep\fR\ \fIzstep\fR
+.P
+.I -zstep
+<zstep>:
 Step between voxels along the zspace dimension.
-.TP
-\fB\-start\fR\ \fIxstart\ ystart\ zstart\fR
+.P
+.I -start 
+<xstep> <ystep> <zstep>:
 Position of centre of first voxel along each of the world dimensions.
-.TP
-\fB\-xstart\fR\ \fIxstart\fR
+.P
+.I -xstart 
+<xstep>:
 Position of centre of first voxel along the xspace dimension.
-.TP
-\fB\-ystart\fR\ \fIystart\fR
+.P
+.I -ystart 
+<ystep>:
 Position of centre of first voxel along the yspace dimension.
-.TP
-\fB\-zstart\fR\ \fIzstart\fR
+.P
+.I -zstart 
+<zstep>:
 Position of centre of first voxel along the zspace dimension.
-.TP
-\fB\-dircos\fR\ \fIx1\ x2\ x3\ y1\ y2\ y3\ z1\ z2\ z3\fR
+.P
+.I -dircos 
+<x1> <x2> <x3> <y1> <y2> <y3> <z1> <z2> <z3>:
 Direction cosines for each of the world axes.
-.TP
-\fB\-xdircos\fR\ \fIx1\ x2\ x3\fR
+.P
+.I -xdircos 
+<x1> <x2> <x3>:
 Direction cosines for the xspace dimension.
-.TP
-\fB\-ydircos\fR\ \fIy1\ y2\ y3\fR
+.P
+.I -ydircos 
+<y1> <y2> <y3>:
 Direction cosines for the yspace dimension.
-.TP
-\fB\-zdircos\fR\ \fIz1\ z2\ z3\fR
+.P
+.I -zdircos 
+<z1> <z2> <z3>:
 Direction cosines for the zspace dimension.
 
 .SH Dimension ordering
 The default is to preserve the original dimension order.
-.TP
-\fB\-transverse\fR
+.P
+.I -transverse:
 Write out transverse slices.
-.TP
-\fB\-sagittal\fR
+.P
+.I -sagittal:
 Write out sagittal slices.
-.TP
-\fB\-coronal\fR
+.P
+.I -coronal:
 Write out coronal slices.
 
 .SH Output data type and range
@@ -223,93 +240,107 @@ The default for type, sign and valid range is to use those of the input
 file. If type is specified, then both sign and valid range are set to
 the default for that type. If sign is specified, then valid range is
 set to the default for the type and sign.
-.TP
-\fB\-byte\fR
-Store output voxels in 8-bit integer format.
-.TP
-\fB\-short\fR
-Store output voxels in 16-bit integer format.
-.TP
-\fB\-int\fR
-Store output voxels in 32-bit integer format.
-.TP
-\fB\-long\fR
-Superseded by \fB\-int\fR.
-.TP
-\fB-float\fR
-Store output voxels in 32-bit floating point format.
-.TP
-\fB-double\fR
-Store output voxels in 64-bit floating point format.
-.TP
-\fB\-signed\fR
+.P
+.I -byte:
+Write out bytes values.
+.P
+.I -short:
+Write out short integer values.
+.P
+.I -int:
+Write out 32-bit integer values.
+.P
+.I -long:
+Superseded by -int.
+.P
+.I -float:
+Write out single-precision floating point values.
+.P
+.I -double:
+Write out double-precision floating point values.
+.P
+.I -signed:
 Write out values as signed integers (default for short and long). Ignored for
 floating point types.
-.TP
-\fB\-unsigned\fR
+.P
+.I -unsigned:
 Write out values as unsigned integers (default for byte). Ignored for
 floating point types.
-.TP
-\fB\-range\fR \fImin max\fR
+.P
+.I -range 
+<min> <max>:
 specifies the valid range of output voxel values. Default is the full range
 for the type and sign. This option is ignored for floating point
 values.
-.TP
-\fB\-keep_real_range\fR
+.P
+.I -keep_real_range:
 Preserve the real minimum and maximum from the input volume, so that
 values are scaled in the same way on output. This is particularly
 useful for resampling label volumes where interpolating intensity
 values does not make sense.
-.TP
-\fB\-nokeep_real_range\fR
+.P
+.I -nokeep_real_range:
 Recompute the real minimum and maximum for each output slice. This is
 the default.
 
 .SH Handling of undefined (invalid) voxel values
-.TP
-\fB\-fill\fR
+.P
+.I -fill:
 Output voxels that fall outside of the input volume have undefined
-values. When the \fB-fill\fR option is used, these voxels are given a value
+values. When the -fill option is used, these voxels are given a value
 that is outside of the valid range (less than the valid minimum, if
 the type, sign and valid range permit) so that they can be detected
 by other software. The values of these voxels are not included in the
-\fIimage-max\fR and \fIimage-min\fR variables.
-.TP
-\fB\-nofill\fR
+image-max and image-min variables.
+.P
+.I -nofill:
 Use a real/physical value (not voxel value) of zero for points
 outside of the input volume. These points are included in the
-calculation of the \fIimage-max\fR and \fIimage-min\fR variables.
-This is the default.
-.TP
-\fB\-fillvalue\fR\ \fIfillvalue\fR
+calculation of the image-max and image-min variables. This is the default.
+.P
+.I -fillvalue 
+<fillvalue>:
 Specifies a real/physical value (not voxel value) for points outside
 of the input volume. The points are not included in the calculation
-of the \fIimage-max\fR and \fIimage-min\fR variables.
+of the image-max and image-min variables.
 
 .SH Interpolation options
-.TP
-\fB\-trilinear\fR
+.P
+.I -trilinear:
 Do a tri-linear interpolation between voxels. The edges of the volume
 are at the centre of the first and last voxels of a dimension. This
 is the default.
-.TP
-\fB\-tricubic\fR
+.P
+.I -tricubic:
 Do a tri-cubic interpolation between voxels. The edges of the volume
 are at the centre of the first and last voxels of a dimension.
-.TP
-\fB\-nearest_neighbour\fR
+.P
+.I -nearest_neighbour:
 Do nearest neighbour interpolation between voxels (ie. find the voxel
 closest to the point and use its value). The edges of the volume
 are at the edge of the first and last voxels of a dimension (centre
 +/- half voxel separation).
+.P
+.I -sinc
+: Do renormalized windowed-sinc interpolation between voxels, as described
+by Thacker et al. JMRI 10:582-588 (1999).
+.P
+.I -width
+<n>
+: Specifies the half-width of the sinc interpolation kernel, in the range
+from 1 to 10. The full sinc kernel width is <n> * 2 + 1, and therefore
+varies from 3 to 21.  The default value is 5 giving a full-width of 11.
+.P
+.I -hanning
+: Use a Hanning window with the sinc interpolant. This is the default.
+.P
+.I -hamming
+: Use a Hamming window with the sinc interpolant.
 
 .SH Generic options
-.TP
-\fB\-help\fR
-Print summary of command-line options and exit.
-.TP
-\fB\-version\fR
-Print the program's version number and exit.
+.P
+.I -help:
+Print summary of command-line options and abort.
 
 .SH EXAMPLES
 
@@ -348,8 +379,5 @@ Get a finer axial sampling on a PET volume:
 Peter Neelin
 
 .SH COPYRIGHTS
-Copyright \(co 1993 by Peter Neelin
-
-.SH "SEE ALSO"
-.LP
-.BR mincreshape (1)
+.ps 18
+Copyright 1993 by Peter Neelin
