@@ -8,7 +8,7 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.2.2.1 2005-07-04 12:42:07 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.2.2.2 2005-07-13 20:12:57 bert Exp $
 .\"
 .TH MINCCONCAT 1
 
@@ -128,7 +128,7 @@ specifies a comma-separated list of coordinates along the new dimension.
 <w1>,<w2>,...:
 specifies a comma-separated list of widths along the new dimension.
 .P
-.I -fileoffsets
+.I -filestarts
 <s1>,<s2>,...:
 specifies a comma-separated list of offsets to the coordinate origins
 for each of the files listed on the command line. This option is useful
