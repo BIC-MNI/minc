@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.16  2004-11-01 22:38:39  bert
+ * Revision 6.17  2005-07-13 21:34:24  bert
+ * Add sinc interpolant (ported from 1.X branch)
+ *
+ * Revision 6.16  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.15  2004/04/30 19:53:40  bert
@@ -174,7 +177,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.16 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.17 2005-07-13 21:34:24 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -427,6 +430,22 @@ static void get_arginfo(int argc, char *argv[],
           (char *) N_NEIGHBOUR, 
           (char *) &args.interpolant_type,
           "Do nearest neighbour interpolation"},
+      {"-sinc", ARGV_CONSTANT,
+       (char *) WINDOWED_SINC,
+       (char *) &args.interpolant_type,
+       "Do windowed sinc interpolation"},
+      {"-width", ARGV_INT,
+       (char *) 1,
+       (char *) &sinc_half_width,
+      "Set half-width of sinc window (1-10)" },
+      {"-hanning", ARGV_CONSTANT,
+       (char *) SINC_WINDOW_HANNING,
+       (char *) &sinc_window_type,
+       "Set sinc window type to Hanning"},
+      {"-hamming", ARGV_CONSTANT,
+       (char *) SINC_WINDOW_HAMMING,
+       (char *) &sinc_window_type,
+       "Set sinc window type to Hamming"},
       {NULL, ARGV_END, NULL, NULL, NULL}
    };
 
@@ -555,6 +574,15 @@ static void get_arginfo(int argc, char *argv[],
      break;
    case N_NEIGHBOUR:
      in_vol->volume->interpolant = nearest_neighbour_interpolant;
+     break;
+   case WINDOWED_SINC:
+     in_vol->volume->interpolant = windowed_sinc_interpolant;
+     if (sinc_half_width < SINC_HALF_WIDTH_MIN ||
+         sinc_half_width > SINC_HALF_WIDTH_MAX) {
+         fprintf(stderr, "Invalid sinc half-window size %d\n", 
+                 sinc_half_width);
+         exit(EXIT_FAILURE);
+     }
      break;
    default:
      (void) fprintf(stderr, "Error determining interpolation type\n");

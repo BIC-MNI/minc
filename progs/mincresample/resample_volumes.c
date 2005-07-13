@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.4  2004-11-01 22:38:39  bert
+ * Revision 6.5  2005-07-13 21:34:25  bert
+ * Add sinc interpolant (ported from 1.X branch)
+ *
+ * Revision 6.4  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.3  2001/08/16 13:32:39  neelin
@@ -87,7 +90,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.4 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.5 2005-07-13 21:34:25 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -802,6 +805,412 @@ int do_Ncubic_interpolation(Volume_Data *volume,
 
    return TRUE;
 }
+
+/************************************************************************
+ * Windowed Sinc Interpolant
+ *  
+ * The technique used is borrowed from Neil Thacker et al., "Improved
+ * Quality of Re-sliced MR Images Using Re-normalized Sinc
+ * Interpolation", Journal of Magnetic Resonance Imaging 10:582-588
+ * (1999).
+ *
+ * Any bugs are of course my own fault!
+ *
+ *     -bert
+ */
+
+int sinc_half_width = SINC_HALF_WIDTH_MAX / 2;
+
+enum sinc_interpolant_window_t sinc_window_type = SINC_WINDOW_HANNING;
+
+/* basic windowed sinc function */
+
+static double 
+windowed_sinc(double delta)
+{
+    double phase;
+    double sinc;
+    double window;
+
+    /* Calculate the sinc function. 
+     */
+    phase = delta * M_PI;
+
+    if (phase == 0.0) {
+        sinc = 1.0;
+    }
+    else {
+        sinc = sin(phase) / phase;
+    }
+
+    switch (sinc_window_type) {
+    case SINC_WINDOW_HANNING:
+        /* Calculate the Hanning window.
+         */
+        window = 0.50 + 0.50 * cos(phase / (1.0 + sinc_half_width));
+        break;
+
+    case SINC_WINDOW_HAMMING:
+        /* Calculate the Hamming window.
+         */
+        window = 0.54 + 0.46 * cos(phase / (1.0 + sinc_half_width));
+        break;
+
+    default:
+        window = 1.0;           /* No window */
+        break;
+    }
+    return (sinc * window);
+}
+
+/* Floating-point (unscaled) multiply/accumulate operations */
+#define SINC_FRND result += *pix_ptr++ * *win_ptr++
+
+/* Unroll those loops!! */     
+#define SINC_FMAC \
+    result = 0.0; \
+    switch (sinc_half_width) { \
+    case 10: SINC_FRND; SINC_FRND; \
+    case 9:  SINC_FRND; SINC_FRND; \
+    case 8:  SINC_FRND; SINC_FRND; \
+    case 7:  SINC_FRND; SINC_FRND; \
+    case 6:  SINC_FRND; SINC_FRND; \
+    case 5:  SINC_FRND; SINC_FRND; \
+    case 4:  SINC_FRND; SINC_FRND; \
+    case 3:  SINC_FRND; SINC_FRND; \
+    case 2:  SINC_FRND; SINC_FRND; \
+    case 1:  SINC_FRND; SINC_FRND; \
+    SINC_FRND; /* Do the leftover */ \
+    }
+
+/* Integer (scaled) multiply/accumulate operations */
+#define SINC_IRND result += ((slope * *pix_ptr++) + intercept) * *win_ptr++
+
+/* Unroll the loops!! */
+#define SINC_IMAC \
+    result = 0.0; \
+    switch (sinc_half_width) { \
+    case 10: SINC_IRND; SINC_IRND; \
+    case 9:  SINC_IRND; SINC_IRND; \
+    case 8:  SINC_IRND; SINC_IRND; \
+    case 7:  SINC_IRND; SINC_IRND; \
+    case 6:  SINC_IRND; SINC_IRND; \
+    case 5:  SINC_IRND; SINC_IRND; \
+    case 4:  SINC_IRND; SINC_IRND; \
+    case 3:  SINC_IRND; SINC_IRND; \
+    case 2:  SINC_IRND; SINC_IRND; \
+    case 1:  SINC_IRND; SINC_IRND; \
+    SINC_IRND; /* Do the leftover */ \
+    }
+
+static double 
+sinc_mac_d(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    long offset;
+    double *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (double *) volume->data + offset;
+
+    SINC_FMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_f(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    long offset;
+    float *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (float *) volume->data + offset;
+
+    SINC_FMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_uc(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    unsigned char *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (unsigned char *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_sc(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    char *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (char *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_us(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    unsigned short *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (unsigned short *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_ss(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    short *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (short *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_ui(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    unsigned int *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (unsigned int *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+static double 
+sinc_mac_si(Volume_Data *volume, int z, int y, int x, double *win_ptr)
+{
+    double result;
+    double value;
+    double slope = volume->scale[z];
+    double intercept = volume->offset[z];
+    long offset;
+    int *pix_ptr;
+
+    offset = (z * volume->size[ROW_AXIS] + y) * volume->size[COL_AXIS] + x;
+
+    pix_ptr = (int *) volume->data + offset;
+
+    SINC_IMAC;
+
+    return (result);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : windowed_sinc_interpolant
+@INPUT      : volume - pointer to volume data
+              coord - point at which volume should be interpolated in voxel 
+                 units (with 0 being first point of the volume).
+@OUTPUT     : result - interpolated value.
+@RETURNS    : TRUE if coord is within the volume, FALSE otherwise.
+@DESCRIPTION: Routine to interpolate a volume at a point with windowed
+              sinc interpolation.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : July 11 2005 (Robert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+int
+windowed_sinc_interpolant(Volume_Data *volume, Coord_Vector coord, 
+                          double *result)
+{
+    double zt, yt, xt;
+    double zf, yf, xf;
+    int zi, yi, xi;
+    int i, j, k;
+    double new;
+    double tmp;
+    long slcmax, rowmax, colmax;
+    double zw[SINC_HALF_WIDTH_MAX * 2 + 1];
+    double yw[SINC_HALF_WIDTH_MAX * 2 + 1];
+    double xw[SINC_HALF_WIDTH_MAX * 2 + 1];
+
+    slcmax = volume->size[SLC_AXIS] - 1;
+    rowmax = volume->size[ROW_AXIS] - 1;
+    colmax = volume->size[COL_AXIS] - 1;
+
+    if ((coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
+        (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
+        (coord[COLUMN] < 0) || (coord[COLUMN] > colmax)) {
+        *result = volume->fillvalue;
+        return FALSE;
+    }
+
+    zi = (int) coord[SLICE];
+    yi = (int) coord[ROW];
+    xi = (int) coord[COLUMN];
+
+    /* Check for edges - do linear interpolation at edges */
+    if ((zi > slcmax-sinc_half_width) || (zi < sinc_half_width) ||
+        (yi > rowmax-sinc_half_width) || (yi < sinc_half_width) ||
+        (xi > colmax-sinc_half_width) || (xi < sinc_half_width)) {
+        return trilinear_interpolant(volume, coord, result);
+    }
+
+    /* Calculate fractional part of the coordinate.
+     */
+    zf = coord[SLICE] - zi;
+    yf = coord[ROW] - yi;
+    xf = coord[COLUMN] - xi;
+    
+    /* Initialize the totals.
+     */
+    zt = 0.0;
+    yt = 0.0;
+    xt = 0.0;
+
+    /* Generate the three windowed sinc functions.
+     */
+    for (i = -sinc_half_width; i <= sinc_half_width; i++) {
+        tmp = windowed_sinc(zf - i);
+        zw[i + sinc_half_width] = tmp;
+        zt += tmp;
+        
+        tmp = windowed_sinc(yf - i);
+        yw[i + sinc_half_width] = tmp;
+        yt += tmp;
+        
+        tmp = windowed_sinc(xf - i);
+        xw[i + sinc_half_width] = tmp;
+        xt += tmp;
+    }
+
+    /* Now calculate the new value.
+     */
+    new = 0.0;
+    for (i = -sinc_half_width; i <= sinc_half_width; i++) {
+        for (j = -sinc_half_width; j <= sinc_half_width; j++) {
+            switch (volume->datatype) {
+            case NC_BYTE:
+                if (volume->is_signed) {
+                    tmp = sinc_mac_sc(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                else {
+                    tmp = sinc_mac_uc(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                break;
+            case NC_SHORT:
+                if (volume->is_signed) {
+                    tmp = sinc_mac_ss(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                else {
+                    tmp = sinc_mac_us(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                break;
+            case NC_INT:
+                if (volume->is_signed) {
+                    tmp = sinc_mac_si(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                else {
+                    tmp = sinc_mac_ui(volume, 
+                                      zi + i, 
+                                      yi + j, 
+                                      xi - sinc_half_width, 
+                                      xw);
+                }
+                break;
+            case NC_FLOAT:
+                tmp = sinc_mac_f(volume, 
+                                 zi + i, 
+                                 yi + j, 
+                                 xi - sinc_half_width,
+                                 xw);
+                break;
+            case NC_DOUBLE:
+                tmp = sinc_mac_d(volume,
+                                 zi + i,
+                                 yi + j,
+                                 xi - sinc_half_width,
+                                 xw);
+                break;
+
+            default:
+                fprintf(stderr, "UNHANDLED TYPE!!!\n");
+                break;
+            }
+            new += zw[i + sinc_half_width] * yw[j + sinc_half_width] * tmp;
+        }
+    }
+    *result = (new / (zt * yt * xt));
+    return TRUE;
+}
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : nearest_neighbour_interpolant

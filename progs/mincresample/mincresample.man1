@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.3 2004-05-20 21:52:09 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincresample/mincresample.man1,v 6.4 2005-07-13 21:34:25 bert Exp $
 .\"
-.TH MINCRESAMPLE 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCRESAMPLE 1 "$Date: 2005-07-13 21:34:25 $" "" "MINC User's Guide"
 
 .SH NAME
 mincresample - resamples a minc file along new spatial dimensions
@@ -302,6 +302,21 @@ Do nearest neighbour interpolation between voxels (ie. find the voxel
 closest to the point and use its value). The edges of the volume
 are at the edge of the first and last voxels of a dimension (centre
 +/- half voxel separation).
+.TP
+\fB\-sinc\fR
+Do renormalized windowed-sinc interpolation between voxels, as described
+by Thacker et al. JMRI 10:582-588 (1999).
+.TP
+\fB\-width\fR \fIn\fR
+Specifies the half-width of the sinc interpolation kernel, in the range
+from 1 to 10. The full sinc kernel width is \fIn\fR * 2 + 1, and therefore
+varies from 3 to 21.  The default value is 5 giving a full-width of 11.
+.TP
+\fB\-hanning\fR
+Use a Hanning window with the sinc interpolant. This is the default.
+.TP
+\fB\-hamming\fR
+Use a Hamming window with the sinc interpolant.
 
 .SH Generic options
 .TP
