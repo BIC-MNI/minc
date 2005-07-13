@@ -63,6 +63,7 @@ GLOBAL_ELEMENT(ACR_Institution_id        , 0x0008, 0x0080, LO);
 GLOBAL_ELEMENT(ACR_Referring_physician   , 0x0008, 0x0090, PN);
 GLOBAL_ELEMENT(ACR_Station_id            , 0x0008, 0x1010, SH);
 GLOBAL_ELEMENT(ACR_Procedure_description , 0x0008, 0x1030, LO);
+GLOBAL_ELEMENT(ACR_Series_description    , 0x0008, 0x103E, LO);
 GLOBAL_ELEMENT(ACR_Performing_physician  , 0x0008, 0x1050, PN);
 GLOBAL_ELEMENT(ACR_Operators_name        , 0x0008, 0x1070, PN);
 GLOBAL_ELEMENT(ACR_Manufacturer_model    , 0x0008, 0x1090, LO);
