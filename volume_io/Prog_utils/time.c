@@ -30,8 +30,12 @@
 #include  <unistd.h>
 #endif
 
+#ifndef CLK_TCK
+#define CLK_TCK CLOCKS_PER_SEC
+#endif
+
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.21.2.2 2005-07-04 03:22:59 stever Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.21.2.3 2005-07-13 19:59:19 bert Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
