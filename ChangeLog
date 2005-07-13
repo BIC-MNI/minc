@@ -8,6 +8,9 @@
 	Quality of Re-sliced MR Images Using Re-normalized Sinc 
 	Interpolation", Journal of Magnetic Resonance Imaging 
 	10:582-588 (1999).
+
+	* volume_io/Volumes/volume_cache.c:
+	Remove useless warning message in cache_volume_range_has_changed().
 	
 2005-07-04  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
