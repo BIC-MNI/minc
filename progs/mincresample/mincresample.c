@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.12.2.2  2005-07-13 19:34:47  bert
+ * Revision 6.12.2.3  2005-07-13 21:09:28  bert
+ * Remove unused variables (port from 2.0 branch)
+ *
+ * Revision 6.12.2.2  2005/07/13 19:34:47  bert
  * Implemented sinc interpolant
  *
  * Revision 6.12.2.1  2005/03/16 19:02:51  bert
@@ -168,7 +171,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.12.2.2 2005-07-13 19:34:47 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.12.2.3 2005-07-13 21:09:28 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -436,8 +439,8 @@ static void get_arginfo(int argc, char *argv[],
 
    /* Other variables */
    int idim, index;
-   int in_vindex, out_vindex;  /* Volume indices (0, 1 or 2) */
-   int in_findex, out_findex;  /* File indices (0 to ndims-1) */
+   int out_vindex;              /* Volume indices (0, 1 or 2) */
+   int out_findex;              /* File indices (0 to ndims-1) */
    long size, total_size;
    char *infile, *outfile;
    File_Info *fp;
@@ -657,9 +660,7 @@ static void get_arginfo(int argc, char *argv[],
    for (idim=0; idim < WORLD_NDIMS; idim++) {
       
       /* Get the index for input and output volumes */
-      in_vindex = in_vol->file->axes[idim];       /* 0, 1 or 2 */
       out_vindex = args.volume_def.axes[idim];    /* 0, 1 or 2 */
-      in_findex = in_vol->file->indices[in_vindex];     /* 0 to ndims-1 */
       out_findex = in_vol->file->indices[out_vindex];   /* 0 to ndims-1 */
       size = args.volume_def.nelements[idim];
 
@@ -776,13 +777,12 @@ static void get_file_info(char *filename, int initialized_volume_def,
                           Volume_Definition *volume_def,
                           File_Info *file_info)
 {
-   int dim[MAX_VAR_DIMS], dimid, status, length;
+   int dim[MAX_VAR_DIMS], dimid;
    int axis_counter, idim, jdim, cur_axis;
    int varndims, vardim[MAX_VAR_DIMS];
    long varstart, varcount, dimlength;
    char attstr[MI_MAX_ATTSTR_LEN];
    char dimname[MAX_NC_NAME];
-   double vrange[2];
    enum {UNKNOWN, REGULAR, IRREGULAR} coord_spacing;
 
    /* Open the minc file */
