@@ -911,6 +911,18 @@ VIOAPI  void  get_volume_direction_cosine(
     int      axis,
     VIO_Real     dir[] );
 
+/* These next 5 functions may be called by other modules in the library, 
+ * but they are not truly public. That is why they are not declared VIOAPI.
+ */
+VIO_BOOL is_volume_dimension_irregular(VIO_Volume, int);
+int get_volume_irregular_starts(VIO_Volume, int, int, VIO_Real *);
+int get_volume_irregular_widths(VIO_Volume, int, int, VIO_Real *);
+int set_volume_irregular_starts(VIO_Volume, int, int, VIO_Real *);
+int set_volume_irregular_widths(VIO_Volume, int, int, VIO_Real *);
+
+VIOAPI  VIO_Real nonspatial_voxel_to_world(VIO_Volume, int, int);
+VIOAPI  int nonspatial_world_to_voxel(VIO_Volume, int, VIO_Real);
+
 VIOAPI  void  set_volume_translation(
     VIO_Volume  volume,
     VIO_Real    voxel[],
