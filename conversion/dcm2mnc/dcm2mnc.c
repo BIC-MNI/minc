@@ -5,8 +5,32 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.15  2005-05-19 16:01:20  bert
- * Changes ported from 1.X branch: Fix conditionals for Windows compilation, change argument structure for ARGV_STRING elements, fix usage of G.command_line
+ * Revision 1.16  2005-07-14 19:00:30  bert
+ * Changes ported from 1.X branch
+ *
+ * Revision 1.14.2.8  2005/07/12 16:01:14  bert
+ * Sort on filename if all else fails
+ *
+ * Revision 1.14.2.7  2005/06/20 22:03:31  bert
+ * Add simple test for binary files to avoid choking on text files
+ *
+ * Revision 1.14.2.6  2005/06/09 20:48:36  bert
+ * Remove obsolete -descr option, add shiny new -fname and -dname options.  Also don't explicitly include math.h
+ *
+ * Revision 1.14.2.5  2005/06/02 18:35:32  bert
+ * Change version to 2.0.06
+ *
+ * Revision 1.14.2.4  2005/05/16 22:39:56  bert
+ * Insert conditionals to make the file build properly under Windows
+ *
+ * Revision 1.14.2.3  2005/05/16 19:55:50  bert
+ * Fix usage of G.command_line
+ *
+ * Revision 1.14.2.2  2005/05/16 19:45:52  bert
+ * Minor fix to argument structure, to reflect correct usage of ARGV_STRING items
+ *
+ * Revision 1.14.2.1  2005/05/12 21:16:47  bert
+ * Initial checkin
  *
  * Revision 1.14  2005/05/09 15:32:02  bert
  * Change version to 2.0.05
@@ -89,13 +113,12 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.15 2005-05-19 16:01:20 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.16 2005-07-14 19:00:30 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
 
 #include <sys/stat.h>
-#include <math.h>
 #if HAVE_DIRENT_H
 #include <dirent.h>
 #endif
@@ -115,7 +138,7 @@ static int check_file_type_consistency(int num_files, const char *file_list[]);
 
 struct globals G;
 
-#define VERSION_STRING "2.0.05 built " __DATE__ " " __TIME__
+#define VERSION_STRING "2.0.06 built " __DATE__ " " __TIME__
 
 #ifndef S_ISDIR
 #define S_ISDIR(x) (((x) & _S_IFMT) == _S_IFDIR)
@@ -133,8 +156,6 @@ ArgvInfo argTable[] = {
      "Print list of series (don't create files)"},
     {"-anon", ARGV_CONSTANT, (char *) TRUE, (char *) &G.Anon,
      "Exclude subject name from file header"},
-    {"-descr", ARGV_STRING, (char *) 1, (char *) &G.Name,
-     "Use <str> as session descriptor (default = patient initials)"},
 #if HAVE_POPEN
     {"-cmd", ARGV_STRING, (char *) 1, (char *) &G.command_line, 
      "Apply <command> to output files (e.g. gzip)"},
@@ -174,6 +195,18 @@ ArgvInfo argTable[] = {
      (char *)&G.use_stdin,
      "Read file list from standard input."},
 
+    {"-fname",
+     ARGV_STRING,
+     (char *)1,
+     (char *)&G.filename_format,
+     "Set format for output file name."},
+
+    {"-dname",
+     ARGV_STRING,
+     (char *)1,
+     (char *)&G.dirname_format,
+     "Set format for output directory name."},
+
     {NULL, ARGV_END, NULL, NULL, NULL}
 
 };
@@ -197,6 +230,8 @@ main(int argc, char *argv[])
     G.splitDynScan = FALSE;     /* Don't split dynamic scans by default */
     G.splitEcho = TRUE;         /* Do split by echo by default */
     G.use_stdin = FALSE;        /* Do not read file list from stdin */
+    G.filename_format = NULL;
+    G.dirname_format = NULL;
 
     G.minc_history = time_stamp(argc, argv); /* Create minc history string */
 
@@ -239,7 +274,7 @@ main(int argc, char *argv[])
     /* Allocate the array of pointers used to implement the
      * list of filenames.
      */
-    file_list = malloc(num_file_args * sizeof(char *));
+    file_list = malloc(1 * sizeof(char *));
     CHKMEM(file_list);
 
     /* Go through the list of files, expanding directories where they
@@ -288,9 +323,11 @@ main(int argc, char *argv[])
             }
         }
         else {
+            file_list = realloc(file_list, (num_files + 1) * sizeof(char *));
             file_list[num_files++] = strdup(argv[ifile + 1]);
         }
 #else
+        file_list = realloc(file_list, (num_files + 1) * sizeof(char *));
         file_list[num_files++] = strdup(argv[ifile + 1]);
 #endif
     }
@@ -568,7 +605,11 @@ dcm_sort_function(const void *entry1, const void *entry2)
     else if (image1 > image2) return 1;
     else if (slice1 < slice2) return -1;
     else if (slice1 > slice2) return 1;
-    else return 0;
+
+    /* Last chance - if all else is equal, sort by the file names. 
+     */
+    else return strcmp((*file_info_list1)->file_name,
+                       (*file_info_list2)->file_name);
 }
 
 static void 
@@ -876,6 +917,41 @@ is_ima_file(const char *fullname)
     return (result);
 }
 
+/* _very_ limited test for "binary-ness" of a file.  This is just to keep
+ * text files and other junk present in a directory from screwing up our
+ * file type detection.
+ */
+static int
+is_binary_file(const char *fullname)
+{
+    FILE *fp;
+    int result = 0;
+    int i;
+
+    if ((fp = fopen(fullname, "rb")) == NULL) {
+        fprintf(stderr, "Error opening file %s!\n", fullname);
+    }
+    else {
+        /* This is an extremely trivial test for binary-ness.  Basically, we
+         * look at the first 512 bytes, and if there aren't lots of unprintable
+         * characters, we assume it is not a binary file.
+         */
+        for (i = 0; i < 128; i++) {
+            int cc = getc(fp);
+            if (cc == -1) {
+                result = 0;     /* too short!! */
+                break;
+            }
+            if (!isprint(cc) && cc != '\n' && cc != '\r') {
+                result++;
+            }
+        }
+        fclose(fp);
+    }
+    return (result > 3);        /* Binary if more than 3 unprintables */
+}
+
+
 static int
 check_file_type_consistency(int num_files, const char *file_list[])
 {
@@ -915,7 +991,7 @@ check_file_type_consistency(int num_files, const char *file_list[])
                 return (-1);
             }
         }
-        else {
+        else if (is_binary_file(fn_ptr)) {
             if (G.file_type == UNDEF) {
                 G.file_type = N4DCM;
                 n4_offset = 0; 

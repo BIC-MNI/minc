@@ -63,6 +63,7 @@ GLOBAL_ELEMENT(ACR_Institution_id        , 0x0008, 0x0080, LO);
 GLOBAL_ELEMENT(ACR_Referring_physician   , 0x0008, 0x0090, PN);
 GLOBAL_ELEMENT(ACR_Station_id            , 0x0008, 0x1010, SH);
 GLOBAL_ELEMENT(ACR_Procedure_description , 0x0008, 0x1030, LO);
+GLOBAL_ELEMENT(ACR_Series_description    , 0x0008, 0x103E, LO);
 GLOBAL_ELEMENT(ACR_Performing_physician  , 0x0008, 0x1050, PN);
 GLOBAL_ELEMENT(ACR_Operators_name        , 0x0008, 0x1070, PN);
 GLOBAL_ELEMENT(ACR_Manufacturer_model    , 0x0008, 0x1090, LO);
@@ -106,6 +107,7 @@ GLOBAL_ELEMENT(ACR_SAR                   , 0x0018, 0x1316, DS);
 GLOBAL_ELEMENT(ACR_Acq_comments          , 0x0018, 0x4000, LT);
 GLOBAL_ELEMENT(ACR_Patient_position      , 0x0018, 0x5100, CS);
 
+GLOBAL_ELEMENT(ACR_Series_instance_UID   , 0x0020, 0x000E, UI);
 GLOBAL_ELEMENT(ACR_Study                 , 0x0020, 0x0010, SH);
 GLOBAL_ELEMENT(ACR_Series                , 0x0020, 0x0011, IS);
 GLOBAL_ELEMENT(ACR_Acquisition           , 0x0020, 0x0012, IS);
@@ -120,6 +122,8 @@ GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001, IS);
 GLOBAL_ELEMENT(ACR_Images_in_acquisition,  0x0020, 0x1002, IS);
 GLOBAL_ELEMENT(ACR_Slice_location,         0x0020, 0x1041, DS);
 
+GLOBAL_ELEMENT(ACR_Number_of_frames      , 0x0028, 0x0008, IS);
+GLOBAL_ELEMENT(ACR_Frame_increment_ptr   , 0x0028, 0x0009, AT);
 GLOBAL_ELEMENT(ACR_Rows                  , 0x0028, 0x0010, US);
 GLOBAL_ELEMENT(ACR_Columns               , 0x0028, 0x0011, US);
 GLOBAL_ELEMENT(ACR_Pixel_size            , 0x0028, 0x0030, DS);
@@ -139,6 +143,13 @@ GLOBAL_ELEMENT(ACR_Number_of_slices      , 0x0054, 0x0081, US);
 GLOBAL_ELEMENT(ACR_Number_of_time_slices , 0x0054, 0x0101, US);
 GLOBAL_ELEMENT(ACR_Units                 , 0x0054, 0x1001, CS);
 GLOBAL_ELEMENT(ACR_Frame_reference_time  , 0x0054, 0x1300, DS);
+
+GLOBAL_ELEMENT(ACR_Shared_func_groups_seq, 0x5200, 0x9229, SQ);
+GLOBAL_ELEMENT(ACR_Plane_orientation_seq , 0x0020, 0x9116, SQ);
+GLOBAL_ELEMENT(ACR_Pixel_measurement_seq , 0x0020, 0x9118, SQ);
+
+GLOBAL_ELEMENT(ACR_Perframe_func_groups_seq, 0x5200, 0x9230, SQ);
+GLOBAL_ELEMENT(ACR_Plane_position_seq    , 0x0020, 0x9113, SQ);
 
 GLOBAL_ELEMENT(ACR_Pixel_data            , ACR_IMAGE_GID, ACR_IMAGE_EID, OW);
 

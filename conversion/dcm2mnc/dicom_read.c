@@ -7,7 +7,19 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.16  2005-05-09 15:30:32  bert
+   * Revision 1.17  2005-07-14 19:00:30  bert
+   * Changes ported from 1.X branch
+   *
+   * Revision 1.16.2.3  2005/06/20 22:03:01  bert
+   * Add functions for traversing DICOM sequences and recursively hunting for needed fields.
+   *
+   * Revision 1.16.2.2  2005/06/02 17:04:26  bert
+   * 1. Fix handling of signed values for pixel minimum and maximum, 2. Set found_dircos[] when we adopt the default direction cosines for files with null direction cosines
+   *
+   * Revision 1.16.2.1  2005/05/12 21:16:47  bert
+   * Initial checkin
+   *
+   * Revision 1.16  2005/05/09 15:30:32  bert
    * Don't allow a rescale slope value of zero
    *
    * Revision 1.15  2005/04/28 17:17:57  bert
@@ -156,7 +168,7 @@
 
 #include "dcm2mnc.h"
 
-#include <math.h>
+#define IMAGE_NDIMS 2
 
 static double convert_time_to_seconds(double dicom_time);
 static void get_intensity_info(Acr_Group group_list, File_Info *file_info);
@@ -171,7 +183,6 @@ static void get_coordinate_info(Acr_Group group_list, File_Info *file_info,
 static void get_general_header_info(Acr_Group group_list,
                                     General_Info *general_info);
 static void convert_numa3_coordinate(double coordinate[WORLD_NDIMS]);
-static void convert_dicom_coordinate(double coordinate[WORLD_NDIMS]);
 static void get_identification_info(Acr_Group group_list, 
                                     double *study_id, int *acq_id, 
                                     int *rec_num, int *image_type);
@@ -801,17 +812,36 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
     }
 
     if (G.useMinMax) {
-        // Get pixel value information
-        // I think this might wrongly assume that the ACR values min/max
-        // apply to the whole volume - it actually appears that they apply
-        // to the current slice.
+        int pmin;
+        int pmax;
 
-        fi_ptr->pixel_min = acr_find_short(group_list, 
-                                           ACR_Smallest_pixel_value, imin);
+        /* Get pixel value information
+         * I think this might wrongly assume that the ACR values min/max
+         * apply to the whole volume - it actually appears that they apply
+         * to the current slice.
+         */
 
-        fi_ptr->pixel_max = acr_find_short(group_list,
-                                           ACR_Largest_pixel_value, imax);
+        pmin = acr_find_short(group_list, ACR_Smallest_pixel_value, imin);
+        pmax = acr_find_short(group_list, ACR_Largest_pixel_value, imax);
 
+        /* Hack to convert to signed representation if indicated - if
+         * bit 15 is set, we have to "promote" to 2's complement by
+         * sign-extending the result before converting it to a double.
+         * Perhaps this sort of thing needs to be pushed down into the
+         * ACR-NEMA library somehow, so that the representations of
+         * short values are automatically converted properly?
+         */
+        if (ivalue == ACR_PIXEL_REP_SIGNED) {
+            if (pmin & 0x8000) {
+                pmin -= 0x10000;
+            }
+            if (pmax & 0x8000) {
+                pmax -= 0x10000;
+            }
+        }
+
+        fi_ptr->pixel_min = (double) pmin;
+        fi_ptr->pixel_max = (double) pmax;
     }
     else {
         /* for now, use bits_stored to determine dynamic range
@@ -853,6 +883,213 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
 
 }
 
+/* Function to recursively search an element list for a specific
+ * element, skipping a specified number of occurrences before
+ * returning.  This is only called by acr_recurse_for_element().
+ */
+static Acr_Element
+acr_recursive_search(Acr_Element el_lst, int *nskip, Acr_Element_Id srch_id)
+{
+    Acr_Element el_ret = NULL;
+    Acr_Element el_tmp;
+    int i;
+
+    for (el_tmp = el_lst; el_tmp != NULL; 
+         el_tmp = acr_get_element_next(el_tmp)) {
+
+        /* If we find what we're looking for, return it.
+         */
+        if (acr_get_element_group(el_tmp) == srch_id->group_id &&
+            acr_get_element_element(el_tmp) == srch_id->element_id) {
+            if (*nskip <= 0) {
+                el_ret = el_tmp;
+                break;
+            }
+            else {
+                --(*nskip);
+            }
+        }
+        /* See if we need to recurse.
+         */
+        if (acr_element_is_sequence(el_tmp)) {
+            el_lst = (Acr_Element) acr_get_element_data(el_tmp);
+            el_ret = acr_recursive_search(el_lst, nskip, srch_id);
+            if (el_ret != NULL) {
+                break;
+            }
+        }
+    }
+    return (el_ret);
+}
+
+/* acr_recurse_for_element()
+ *
+ * Function to search a group list for a particular element.  Unlike other
+ * functions along these lines, this function will recursively descend into
+ * compound datatypes (DICOM sequences) to hunt for instances of a particular
+ * element.  
+ *
+ * The search proceeds in two stages: The first is to search for 
+ * a particular sequence object.  This must be found or else the search is
+ * called off.  Once the expected sequences is found, the function will
+ * recursively search all of the substructure of that sequence for the 
+ * requested subelement.  The "nskip" parameter tells the function to ignore
+ * the first "nskip" matches that it locates.
+ */
+Acr_Element
+acr_recurse_for_element(Acr_Group group_list, 
+                        int nskip, 
+                        Acr_Element_Id seq_id,
+                        Acr_Element_Id srch_id)
+{
+    Acr_Element el_seq;
+
+    /* Hunt for the necessary sequence object. 
+     */
+    el_seq = acr_find_group_element(group_list, seq_id);
+    if (el_seq == NULL || !acr_element_is_sequence(el_seq)) {
+        /* If not found, or not a sequence, abort the search.
+         */
+        return (NULL);
+    }
+
+    /* Otherwise proceed to "stage 2" and hunt for the requested subelement.
+     */
+    return acr_recursive_search((Acr_Element) acr_get_element_data(el_seq), 
+                                &nskip, srch_id);
+}
+
+int
+dicom_read_position(Acr_Group group_list, int n, double coordinate[3])
+{
+    Acr_Element element;
+    int result;
+
+    /* Try to read a unique element from the sequences.  If this
+     * succeeds, we need to flag this fact so that the higher-level
+     * processing can adapt accordingly.
+     */
+    element = acr_recurse_for_element(group_list, n,
+                                      ACR_Perframe_func_groups_seq,
+                                      ACR_Image_position_patient);
+    if (element != NULL) {
+        result = DICOM_POSITION_LOCAL; /* Found a slice-specific position */
+    }
+    else {
+        result = DICOM_POSITION_GLOBAL; /* Found a global position */
+
+        element = acr_find_group_element(group_list, 
+                                         ACR_Image_position_patient);
+
+        if (element == NULL) {
+            element = acr_find_group_element(group_list, 
+                                             ACR_Image_position_patient_old);
+        }
+    }
+
+    if (element == NULL) {
+        printf("WARNING: Failed to find image position\n");
+    }
+    else {
+        if (acr_get_element_numeric_array(element, 
+                                          WORLD_NDIMS, 
+                                          coordinate) == WORLD_NDIMS) {
+            return (result);
+        }
+        
+        if (G.Debug) {
+            printf("WARNING: Failed to read image position ('%s')\n", 
+                   acr_get_element_string(element));
+        }
+    }
+    return DICOM_POSITION_NONE;
+}
+
+int
+dicom_read_orientation(Acr_Group group_list, double orientation[6])
+{
+    Acr_Element element;
+    int result;
+
+    /* read in row/col vectors:
+     */
+        /* Try to find the element buried in a sequence. 
+         */
+    element = acr_recurse_for_element(group_list, 0, 
+                                      ACR_Shared_func_groups_seq,
+                                      ACR_Image_orientation_patient);
+    if (element == NULL) {
+        element = acr_find_group_element(group_list, 
+                                         ACR_Image_orientation_patient);
+    }
+    if (element == NULL) {
+        /* If we failed to find the newer, better patient orientation
+         * information, try to use the obsolete information if present.
+         */
+        element = acr_find_group_element(group_list,
+                                         ACR_Image_orientation_patient_old);
+    }
+    if (element == NULL) {
+        printf("WARNING: Failed to find image orientation!\n");
+        return (0);
+    }
+    else if ((result = acr_get_element_numeric_array(element, 6, 
+                                                     orientation)) != 6) {
+        printf("WARNING: Failed to read image orientation! (%d, '%s')\n", 
+               result, acr_get_element_string(element));
+        return (0);
+    }
+    return (1);
+}
+
+/* 
+ * Read the pixel size, an array of 2 floating point numbers, from the
+ * DICOM group list.
+ */
+int
+dicom_read_pixel_size(Acr_Group group_list, double pixel_size[IMAGE_NDIMS])
+{
+    Acr_Element element;
+    int result = 0;
+    int i;
+
+    for (i = 0; i < IMAGE_NDIMS; i++) {
+        pixel_size[i] = -DBL_MAX;
+    }
+
+    element = acr_recurse_for_element(group_list, 0,
+                                      ACR_Shared_func_groups_seq,
+                                      ACR_Pixel_size);
+    if (element == NULL) {
+        element = acr_find_group_element(group_list, ACR_Pixel_size);
+    }
+    if (element == NULL) {
+        printf("WARNING: Can't find pixel size element\n");
+    }
+    else {
+        if (acr_get_element_numeric_array(element, IMAGE_NDIMS,
+
+                                          pixel_size) != IMAGE_NDIMS) {
+            printf("WARNING: Can't read pixel size element\n");
+        }
+        else {
+            result = 1;
+        }
+    }
+
+    /* If the values are still uninitialized, set them to some reasonable
+     * defaults.
+     */
+    if (pixel_size[0] == -DBL_MAX) {
+        pixel_size[0] = 1.0;    /* Assume 1mm spacing */
+    }
+
+    if (pixel_size[1] == -DBL_MAX) {
+        pixel_size[1] = pixel_size[0]; /* Assume uniform sample grid. */
+    }
+    return (result);
+}
+
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : get_coordinate_info
    @INPUT      : group_list - input data
@@ -872,10 +1109,6 @@ get_intensity_info(Acr_Group group_list, File_Info *fi_ptr)
    @CREATED    : February 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    ---------------------------------------------------------------------------- */
-
-#define SPECIAL_CASE_IMA 1
-
-#define DARRAY_SIZE 2
 
 static void
 get_coordinate_info(Acr_Group group_list, 
@@ -897,7 +1130,7 @@ get_coordinate_info(Acr_Group group_list,
     double start_time;
     double magnitude;
     double largest;
-    double darray[DARRAY_SIZE];
+    double psize[IMAGE_NDIMS];
     double dbl_tmp1, dbl_tmp2;
     int result;
 
@@ -917,20 +1150,26 @@ get_coordinate_info(Acr_Group group_list,
     }
     found_coordinate = FALSE;
 
-#ifdef SPECIAL_CASE_IMA
     /* TODO: For now this appears to be necessary.  In cases I don't fully
-     * understand, the IMA file's simulated image orientation does not
-     * give the correct direction cosines.  This appears to be an issue
-     * that may be related to the handedness of the coordinate system or
-     * some similar issue.
+     * understand, the Siemens Numaris 3 DICOM image orientation does not
+     * give the correct direction cosines, so we use the nonstandard Siemens
+     * fields instead.  Someday I should figure out the relation (if any) 
+     * between the standard fields and these fields, and try to normalize
+     * this mess.
+     * 
+     * We only attempt this for files that are clearly marked as SIEMENS
+     * files, with a version string that looks like VB33 (VB33D, VB33G, etc.)
+     * Later versions do not seem to use these fields.
      */
-    if (G.file_type == N3DCM || G.file_type == IMA) {
+    if (strstr(acr_find_string(group_list, ACR_Manufacturer, ""), "SIEMENS") &&
+        strstr(acr_find_string(group_list, ACR_Software_versions, ""), "VB33")) {
         Acr_Element_Id dircos_elid[VOL_NDIMS];
 
         /* Set direction cosine element ids. Note that the reversal of
-           rows and columns is intentional - their idea of the meaning
-           of theses labels is different from ours. (Their row vector
-           points along the row and not along the row dimension.) */
+         * rows and columns is intentional - their idea of the meaning
+         * of theses labels is different from ours. (Their row vector
+         * points along the row and not along the row dimension.) 
+         */
 
         dircos_elid[VSLICE] = SPI_Image_normal;
         dircos_elid[VROW] = SPI_Image_column;
@@ -943,8 +1182,8 @@ get_coordinate_info(Acr_Group group_list,
             if (element == NULL) {
                 continue;
             }
-            if (acr_get_element_numeric_array(element, WORLD_NDIMS, dircos[ivolume])
-                != WORLD_NDIMS) {
+            if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
+                                              dircos[ivolume]) != WORLD_NDIMS) {
                 continue;
             }
             /* negate the X and Z coordinates
@@ -953,28 +1192,12 @@ get_coordinate_info(Acr_Group group_list,
             found_dircos[ivolume] = TRUE;
         }
     }
-    else {
-#endif
-        /* read in row/col vectors:
-         */
-        element = acr_find_group_element(group_list, 
-                                         ACR_Image_orientation_patient);
-        if (element == NULL) {
-            /* If we failed to find the newer, better patient orientation
-             * information, try to use the obsolete information if present.
-             */
-            element = acr_find_group_element(group_list,
-                                             ACR_Image_orientation_patient_old);
-        }
-        if (element == NULL) {
-            printf("WARNING: Failed to find image orientation!\n");
-        }
-        else if ((result = acr_get_element_numeric_array(element, 6, 
-                                                         RowColVec)) != 6) {
-            printf("WARNING: Failed to read image orientation! (%d, '%s')\n", 
-                   result, acr_get_element_string(element));
-        }
-        else {
+
+    /* If we did not find the Siemens proprietary image vectors, try
+     * the DICOM standard image position.
+     */
+    if (!found_dircos[VCOLUMN] || !found_dircos[VROW] || !found_dircos[VSLICE]) {
+        if (dicom_read_orientation(group_list, RowColVec)) {
             dircos[VCOLUMN][XCOORD] = RowColVec[0];
             dircos[VCOLUMN][YCOORD] = RowColVec[1];
             dircos[VCOLUMN][ZCOORD] = RowColVec[2];
@@ -1005,9 +1228,7 @@ get_coordinate_info(Acr_Group group_list,
                 dircos[VCOLUMN][YCOORD] * dircos[VROW][XCOORD];
             found_dircos[VSLICE] = TRUE;
         }
-#ifdef SPECIAL_CASE_IMA
     }
-#endif
 
     if (G.Debug >= HI_LOGGING) {
         printf("dircos %f %f %f %f %f %f %f %f %f\n",
@@ -1041,7 +1262,8 @@ get_coordinate_info(Acr_Group group_list,
 
     /* If we don't find direction cosines, then assume transverse volume
      */
-    if (!found_dircos[VSLICE] || !found_dircos[VROW] || 
+    if (!found_dircos[VSLICE] || 
+        !found_dircos[VROW] || 
         !found_dircos[VCOLUMN]) {
 
         if (G.Debug) {
@@ -1052,6 +1274,7 @@ get_coordinate_info(Acr_Group group_list,
             for (iworld = 0; iworld < WORLD_NDIMS; iworld++) {
                 dircos[ivolume][iworld] = 
                     ((ivolume == (WORLD_NDIMS-iworld-1)) ? -1.0 : 0.0);
+                found_dircos[iworld] = TRUE;
             }
         }
     }
@@ -1090,24 +1313,11 @@ get_coordinate_info(Acr_Group group_list,
 
     /* Get step information
      */
-    for (ivolume=0; ivolume < DARRAY_SIZE; ivolume++) {
-        darray[ivolume] = -DBL_MAX;
-    }
 
-    /* note ACR_Pixel_size should now be called Pixel_spacing
-     */
-    element = acr_find_group_element(group_list, ACR_Pixel_size);
-    if (element != NULL) {
-        acr_get_element_numeric_array(element, DARRAY_SIZE, darray);
-    }
+    dicom_read_pixel_size(group_list, psize);
 
-    if (darray[0] == -DBL_MAX) 
-        darray[0] = 1.0;
-    if (darray[1] == -DBL_MAX) 
-        darray[1] = darray[0];
-
-    steps[VCOLUMN] = darray[0];
-    steps[VROW] = darray[1];    /* anisotropic resolution? */
+    steps[VCOLUMN] = psize[0];
+    steps[VROW] = psize[1];     /* anisotropic resolution? */
 
     /* Figure out the slice thickness.  It could be from either one of
      * two possible places in the file.
@@ -1140,7 +1350,9 @@ get_coordinate_info(Acr_Group group_list,
             printf("WARNING: slice thickness conflict: ");
             printf("old = %.10f, new = %.10f\n", dbl_tmp1, dbl_tmp2);
         }
-        steps[VSLICE] = dbl_tmp2;
+        /* Use the minimum slice spacing. */
+        steps[VSLICE] = (dbl_tmp2 < dbl_tmp1) ? dbl_tmp2 : dbl_tmp1;
+        /* steps[VSLICE] = dbl_tmp2; */
     }
 
     /* Make sure that direction cosines point the right way (dot
@@ -1181,24 +1393,9 @@ get_coordinate_info(Acr_Group group_list,
         found_coordinate = TRUE;
     }
     else {
-        element = acr_find_group_element(group_list, 
-                                         ACR_Image_position_patient);
-        if (element == NULL) {
-            element = acr_find_group_element(group_list, 
-                                             ACR_Image_position_patient_old);
-        }
-        if (element == NULL) {
-            printf("WARNING: Failed to find image position\n");
-        }
-        else if ((result = acr_get_element_numeric_array(element, 
-                                                         WORLD_NDIMS, 
-                                                         coordinate)) != WORLD_NDIMS) {
-            printf("WARNING: Failed to read image position (%d, '%s')\n", 
-                   result, acr_get_element_string(element));
-        }
-        else {
-            found_coordinate = TRUE;
-        }
+        found_coordinate = dicom_read_position(group_list, 
+                                               fi_ptr->index[SLICE] - 1, 
+                                               coordinate);
         if (!found_coordinate) {
             /* Last gasp - try to interpret the slice location as our slice
              * position.  It might work.
@@ -1315,7 +1512,7 @@ convert_numa3_coordinate(double coordinate[WORLD_NDIMS])
    @CREATED    : February 28, 1997 (Peter Neelin)
    @MODIFIED   : made new dicom version (rhoge)
    ---------------------------------------------------------------------------- */
-static void
+void
 convert_dicom_coordinate(double coordinate[WORLD_NDIMS])
 {
     /* Allow the user to override this, if only for debugging purposes...
@@ -1570,7 +1767,7 @@ convert_time_to_seconds(double dicom_time)
 }
 
 /* ----------------------------- MNI Header -----------------------------------
-   @NAME       : get_siemens_dicom_image
+   @NAME       : get_dicom_image_data
    @INPUT      : group_list - input data
    @OUTPUT     : image - image data structure (user must free data)
    @RETURNS    : (nothing)
@@ -1582,14 +1779,13 @@ convert_time_to_seconds(double dicom_time)
    @MODIFIED   : 
    ---------------------------------------------------------------------------- */
 void 
-get_siemens_dicom_image(Acr_Group group_list, Image_Data *image)
+get_dicom_image_data(Acr_Group group_list, Image_Data *image)
 {
 
     /* Variables */
     Acr_Element element;
     int nrows, ncolumns;
     int bits_alloc;
-    int bits_stored;
     int image_group;
     void *data = NULL;
     long imagepix, ipix;
@@ -1598,11 +1794,9 @@ get_siemens_dicom_image(Acr_Group group_list, Image_Data *image)
 
     /* Get the image information */
     bits_alloc = acr_find_short(group_list, ACR_Bits_allocated, 0);
-    bits_stored = acr_find_short(group_list, ACR_Bits_stored, bits_alloc);
     nrows = acr_find_short(group_list, ACR_Rows, 0);
     ncolumns = acr_find_short(group_list, ACR_Columns, 0);
-    image_group = acr_find_short(group_list, ACR_Image_location, 
-                                 ACR_IMAGE_GID);
+    image_group = acr_find_short(group_list, ACR_Image_location, ACR_IMAGE_GID);
 
     /* Figure out type */
     if (bits_alloc > CHAR_BIT)
@@ -1611,11 +1805,9 @@ get_siemens_dicom_image(Acr_Group group_list, Image_Data *image)
         datatype = NC_BYTE;
 
     /* Set image info */
-    image->nrows = nrows;
-    image->ncolumns = ncolumns;
     imagepix = nrows * ncolumns;
-    image->data = (unsigned short *) MALLOC(imagepix * sizeof(short));
-    image->free = TRUE;
+    image->data = (unsigned short *) malloc(imagepix * sizeof(short));
+    CHKMEM(image->data);
 
     /* Get image pointer */
     elid.group_id = image_group;
@@ -1733,18 +1925,7 @@ parse_dicom_groups(Acr_Group group_list, Data_Object_Info *di_ptr)
                                              ACR_Slice_location,
                                              0.0);
 
-    di_ptr->coord_found = 0;
-    element = acr_find_group_element(group_list, ACR_Image_position_patient);
-    if (element == NULL) {
-        element = acr_find_group_element(group_list,
-                                         ACR_Image_position_patient_old);
-    }
-    if (element != NULL) {
-        if (acr_get_element_numeric_array(element, WORLD_NDIMS, 
-                                          slice_coord) == WORLD_NDIMS) {
-            di_ptr->coord_found = 1;
-        }
-    }
+    di_ptr->coord_found = dicom_read_position(group_list, 0, slice_coord);
 
     /* identification info needed to generate unique session id
      * for file names

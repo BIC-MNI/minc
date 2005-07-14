@@ -7,7 +7,16 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.4  2005-04-28 17:10:22  bert
+ * Revision 1.5  2005-07-14 19:00:30  bert
+ * Changes ported from 1.X branch
+ *
+ * Revision 1.4.2.2  2005/06/20 22:00:26  bert
+ * Simplify Image_Data structure, add is_siemens_mosaic() function declaration
+ *
+ * Revision 1.4.2.1  2005/05/12 21:16:47  bert
+ * Initial checkin
+ *
+ * Revision 1.4  2005/04/28 17:10:22  bert
  * Added width information to General_Info and File_Info structures
  *
  * Revision 1.3  2005/04/20 23:14:32  bert
@@ -222,9 +231,6 @@ typedef struct {
 
 /* Structure for storing the actual image data */
 typedef struct {
-    int free;
-    int nrows;
-    int ncolumns;
     unsigned short *data;
 } Image_Data;
 
@@ -241,3 +247,4 @@ extern int search_list(int value, const int *list_ptr, int list_length,
                        int start_index);
 extern Acr_Group copy_spi_to_acr(Acr_Group group_list);
 
+extern int is_siemens_mosaic(Acr_Group group_list);

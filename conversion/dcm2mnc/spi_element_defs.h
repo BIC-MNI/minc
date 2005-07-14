@@ -33,6 +33,7 @@ GLOBAL_ELEMENT(SPI_Flip_angle                         , 0x0019, 0x1260, DS);
 GLOBAL_ELEMENT(SPI_Number_of_prescans                 , 0x0019, 0x1270, IS);
 GLOBAL_ELEMENT(SPI_Saturation_regions                 , 0x0019, 0x1290, IS);
 GLOBAL_ELEMENT(SPI_Magnetic_field_strength            , 0x0019, 0x1412, DS);
+GLOBAL_ELEMENT(SPI_Base_raw_matrix_size               , 0x0019, 0x14d4, IS);
 
 GLOBAL_ELEMENT(SPI_Field_of_view                      , 0x0021, 0x1120, DS);
 GLOBAL_ELEMENT(SPI_Image_magnification_factor         , 0x0021, 0x1122, DS);
