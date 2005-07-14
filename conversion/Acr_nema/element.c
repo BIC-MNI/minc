@@ -6,7 +6,16 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.7  2005-04-18 23:22:29  bert
+ * Revision 6.8  2005-07-14 15:56:56  bert
+ * Print raw byte data when dumping fields with unknown value representations and sizes other than 2 or 4. (ported from 1.X)
+ *
+ * Revision 6.7.2.2  2005/06/06 20:48:14  bert
+ * Print raw byte data when dumping fields with unknown value representations and sizes other than 2 or 4.
+ *
+ * Revision 6.7.2.1  2005/05/12 21:15:30  bert
+ * Initial checkin
+ *
+ * Revision 6.7  2005/04/18 23:22:29  bert
  * Initialize newlist in acr_copy_element() to avoid problems with empty lists
  *
  * Revision 6.6  2005/03/11 22:05:29  bert
@@ -1549,9 +1558,10 @@ void acr_dump_element_list(FILE *file_pointer,
 #define INDENT_AMOUNT 3
    Acr_Element cur_element;
    long element_length;
+   long string_length;
    int printable;
    int i;
-   char *string, copy[1024];
+   char *string, *copy;
    static int current_indent_level = 0;
    Acr_VR_Type vr_code;
 
@@ -1632,30 +1642,35 @@ void acr_dump_element_list(FILE *file_pointer,
          (void) putc((int) '\n', file_pointer);
       }
       else {
+         int done_already = 0;
+
          element_length = acr_get_element_length(cur_element);
          switch (element_length) {
          case ACR_SIZEOF_SHORT:
             (void) fprintf(file_pointer, " short = %d (0x%04x)",
                            (int) acr_get_element_short(cur_element),
                            (int) acr_get_element_short(cur_element));
+            done_already = 1;
             break;
          case ACR_SIZEOF_LONG:
             (void) fprintf(file_pointer, " long = %d (0x%08x)",
                            (int) acr_get_element_long(cur_element),
                            (int) acr_get_element_long(cur_element));
+            done_already = 1;
             break;
          }
 
-         /* Remove trailing NULs from string */
          string = acr_get_element_string(cur_element);
-         while ((element_length > 0) && (string[element_length-1] == '\0')) {
-            element_length--;
+         string_length = element_length;
+         while ((string_length > 0) && (string[string_length-1] == '\0')) {
+            string_length--;
          }
 
          /* Print string if short enough and is printable */
-         if ((element_length > 0) && (element_length < sizeof(copy)-1)) {
-            printable = TRUE;
-            for (i=0; i < element_length; i++) {
+         if (element_length > 0) {
+            copy = malloc(string_length + 1);
+            printable = (string_length > 0);
+            for (i=0; i < string_length; i++) {
                if (! isprint((int) string[i])) {
                   printable = FALSE;
                   copy[i] = ' ';
@@ -1672,7 +1687,20 @@ void acr_dump_element_list(FILE *file_pointer,
             if (printable) {
                (void) fprintf(file_pointer, " string = \"%s\"", copy);
             }
-
+            else if (!done_already && element_length < 2048) {
+                /* If unknown length print as a series of bytes.
+                 */
+                string = acr_get_element_data(cur_element);
+                fprintf(file_pointer, " byte = ");
+                for (i = 0; i < element_length; i++) {
+                    fprintf(file_pointer, "0x%02x", 
+                            (unsigned char)string[i]);
+                    if (i != element_length - 1) {
+                        fprintf(file_pointer, ", ");
+                    }
+                }
+            }
+            free(copy);
          }
 
          /* End line */
