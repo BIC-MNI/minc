@@ -88,6 +88,7 @@ noinst_HEADERS = \
 	conversion/nifti1/nifti1.h \
 	conversion/nifti1/nifti1_io.h \
 	conversion/nifti1/nifti1_local.h \
+	conversion/nifti1/analyze75.h \
 	conversion/dcm2mnc/acr_element_defs.h \
 	conversion/dcm2mnc/dcm2mnc.h \
 	conversion/dcm2mnc/dicom_read.h \
