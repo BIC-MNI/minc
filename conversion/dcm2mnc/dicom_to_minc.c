@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.13.2.2  2005-06-20 22:01:15  bert
+   * Revision 1.13.2.3  2005-07-14 16:47:55  bert
+   * Handle additional classes of Numa3 mosaics by using the Siemens 'base raw matrix size' element
+   *
+   * Revision 1.13.2.2  2005/06/20 22:01:15  bert
    * Add basic support for multiframe DICOM images
    *
    * Revision 1.13.2.1  2005/05/12 21:16:47  bert
@@ -156,7 +159,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.2 2005-06-20 22:01:15 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.3 2005-07-14 16:47:55 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -883,8 +886,9 @@ add_siemens_info(Acr_Group group_list)
         } /* end of diffusion scan handling */
     }
     else {
-        /* If no protocol dump was found we have to assume no interpolation since
-         * at the momemnt I have no idea where it would live...
+        /* If no protocol dump was found we have to assume no
+         * interpolation since at the momemnt I have no idea where it
+         * would live...
          */
         interpolation_flag = 0;
         num_partitions = acr_find_int(group_list, 
@@ -901,61 +905,71 @@ add_siemens_info(Acr_Group group_list)
         int subimage_rows, subimage_cols;
 
         /* Now figure out mosaic rows and columns, and put in EXT
-         * shadow group Check for interpolation - will require 2x
+         * shadow group. Check for interpolation - will require 2x
          * scaling of rows and columns.
          */
 
         /* Assign defaults in case something goes wrong below...
          */
-        subimage_rows = 0;
-        subimage_cols = 0;
+        subimage_rows = subimage_cols = acr_find_int(group_list, 
+                                                     SPI_Base_raw_matrix_size, 
+                                                     0);
 
-        /* Compute mosaic rows and columns
-         * Here is a hack to handle non-square mosaiced images
-         *
-         * WARNING: as far as I can tell, the phase-encoding dir (row/col)
-         * is reversed for mosaic EPI scans (don't know if this is a
-         * mosaic thing, an EPI thing, or whatever).  
-         * Get the array of sizes: freq row/freq col/phase row/phase col
+        /* If we don't have an "SPI_Base_raw_matrix_size" field, try using
+         * the acquisition matrix.
          */
+        if (subimage_rows == 0) {
 
-        element = acr_find_group_element(group_list, ACR_Acquisition_matrix);
-        if (element == NULL) {
-            printf("WARNING: Can't find acquisition matrix\n");
-        }
-        else if (acr_get_element_short_array(element, 4, subimage_size) != 4) {
-            printf("WARNING: Can't read acquisition matrix\n");
-        }
-        else {
-            if (G.Debug >= HI_LOGGING) {
-                printf(" * Acquisition matrix %d %d %d %d\n",
-                       subimage_size[0],
-                       subimage_size[1],
-                       subimage_size[2],
-                       subimage_size[3]);
-            }
-            /* Get subimage dimensions, assuming the OPPOSITE of the
-             * reported phase-encode direction!!
+            /* Compute mosaic rows and columns
+             * Here is a hack to handle non-square mosaiced images
+             *
+             * WARNING: as far as I can tell, the phase-encoding dir (row/col)
+             * is reversed for mosaic EPI scans (don't know if this is a
+             * mosaic thing, an EPI thing, or whatever).  
+             * Get the array of sizes: freq row/freq col/phase row/phase col
              */
-            str_ptr = acr_find_string(group_list, ACR_Phase_encoding_direction,
-                                      "");
-            if (!strncmp(str_ptr, "COL", 3)) {
-                subimage_rows = subimage_size[3];
-                subimage_cols = subimage_size[0];
+
+            element = acr_find_group_element(group_list, 
+                                             ACR_Acquisition_matrix);
+            if (element == NULL) {
+                printf("WARNING: Can't find acquisition matrix\n");
             }
-            else if (!strncmp(str_ptr, "ROW", 3)) {
-                subimage_rows = subimage_size[2];
-                subimage_cols = subimage_size[1];
+            else if (acr_get_element_short_array(element, 4, 
+                                                 subimage_size) != 4) {
+                printf("WARNING: Can't read acquisition matrix\n");
             }
             else {
-                printf("WARNING: Unknown phase encoding direction '%s'\n",
-                       str_ptr);
-            }
+                if (G.Debug >= HI_LOGGING) {
+                    printf(" * Acquisition matrix %d %d %d %d\n",
+                           subimage_size[0],
+                           subimage_size[1],
+                           subimage_size[2],
+                           subimage_size[3]);
+                }
+                /* Get subimage dimensions, assuming the OPPOSITE of the
+                 * reported phase-encode direction!!
+                 */
+                str_ptr = acr_find_string(group_list, 
+                                          ACR_Phase_encoding_direction,
+                                          "");
+                if (!strncmp(str_ptr, "COL", 3)) {
+                    subimage_rows = subimage_size[3];
+                    subimage_cols = subimage_size[0];
+                }
+                else if (!strncmp(str_ptr, "ROW", 3)) {
+                    subimage_rows = subimage_size[2];
+                    subimage_cols = subimage_size[1];
+                }
+                else {
+                    printf("WARNING: Unknown phase encoding direction '%s'\n",
+                           str_ptr);
+                }
 
-            /* If interpolation, multiply rows and columns by 2 */
-            if (interpolation_flag) {
-                subimage_rows *= 2;
-                subimage_cols *= 2;
+                /* If interpolation, multiply rows and columns by 2 */
+                if (interpolation_flag) {
+                    subimage_rows *= 2;
+                    subimage_cols *= 2;
+                }
             }
         }
 
@@ -1181,6 +1195,20 @@ add_gems_info(Acr_Group group_list)
 }
 
 
+/* ----------------------------- MNI Header -----------------------------------
+   @NAME       : copy_spi_to_acr()
+   @INPUT      : group_list - read a standard DICOM file
+   @OUTPUT     : (none)
+   @RETURNS    : modified group list 
+   @DESCRIPTION: Routine to copy Siemens-specific (SPI) fields to generic
+                 ACR/NEMA fields.
+   @METHOD     : 
+   @GLOBALS    : 
+   @CALLS      : 
+   @CREATED    : 2005 (Bert Vincent)
+   @MODIFIED   : 
+   ---------------------------------------------------------------------------- */
+
 Acr_Group 
 copy_spi_to_acr(Acr_Group group_list)
 {
@@ -1200,6 +1228,19 @@ copy_spi_to_acr(Acr_Group group_list)
     dtemp = acr_find_double(group_list, SPI_Magnetic_field_strength, 0);
     if (dtemp != 0.0) {
         acr_insert_numeric(&group_list, ACR_Magnetic_field_strength, dtemp);
+    }
+    return (group_list);
+}
+
+Acr_Group 
+add_shimadzu_info(Acr_Group group_list)
+{
+    char *str_ptr;
+
+    /* TODO: Figure out what can be done here...
+     */
+    str_ptr = acr_find_string(group_list, ACR_Series_instance_UID, "");
+    if (*str_ptr != '\0') {
     }
     return (group_list);
 }
@@ -1251,6 +1292,9 @@ read_numa4_dicom(const char *filename, int max_group)
     else if (strstr(str_ptr, "GEMS") != NULL ||
              strstr(str_ptr, "GE MEDICAL") != NULL) {
         group_list = add_gems_info(group_list);
+    }
+    else if (strstr(str_ptr, "shimadzu") != NULL) {
+        group_list = add_shimadzu_info(group_list);
     }
     return (group_list);
 }
