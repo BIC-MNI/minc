@@ -1459,6 +1459,14 @@ copy_init(struct conversion_info *ci_ptr)
     miattputdbl(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Y]), 
                 MIstart, ci_ptr->dim_steps[DIM_Y] * ci_ptr->dim_lengths[DIM_Y]);
 
+    miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Z]), 
+                MIunits, "mm");
+    miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_X]), 
+                MIunits, "mm");
+    miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_Y]), 
+                MIunits, "mm");
+    miattputstr(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, _dimnames[DIM_T]), 
+                MIunits, "s");
 
     ncendef(ci_ptr->mnc_fd);
 }
