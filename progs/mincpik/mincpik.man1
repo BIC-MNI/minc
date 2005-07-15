@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCPIK 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCPIK 1 "$Date: 2005-07-15 20:14:43 $" "" "MINC User's Guide"
 
 .SH NAME
 mincpik \- generate images from minc files
@@ -34,6 +34,9 @@ valid range of values to use from MINC file
 \fB\-image_range\fR\ \fImin max\fR
 range of image values to use for pixel intensity
 .TP
+\fB\-auto_range\fR
+automatically determine image range using a 5 and 95% PcT. (histogram)
+.TP
 \fB\-lookup\fR\ \fIarguments\fR
 arguments to pass to minclookup
 
@@ -60,7 +63,7 @@ get all three dimensions
 Print summary of command-line options and abort.
 
 .SH AUTHOR
-Andrew Janke - <rotor@cmr.uq.edu.au>
+Andrew Janke - <a.janke@gmail.com>
 
 .SH "SEE ALSO"
 .IR minclookup (1),
