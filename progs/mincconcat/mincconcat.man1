@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.3 2004-05-20 21:52:07 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.4 2005-07-15 17:38:08 bert Exp $
 .\"
-.TH MINCCONCAT 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
+.TH MINCCONCAT 1 "$Date: 2005-07-15 17:38:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincconcat - concatenate minc files along a specific dimension
@@ -121,6 +121,14 @@ Specifies a comma-separated list of coordinates along the new dimension.
 .TP
 \fB\-widthlist\fR \fIw1,w2,...\fR
 Specifies a comma-separated list of widths along the new dimension.
+.TP
+\fB\-filestarts\fR \fIs1,s2,...\fR
+Specifies a comma-separated list of offsets to the coordinate origins
+for each of the files listed on the command line. This option is useful
+for concatenating files along an existing dimension, for example for
+concatenating multiple functional runs along a 
+.B time
+dimension.
 .TP
 \fB\-check_dimensions\fR
 Check that all input files have matching sampling in world dimensions

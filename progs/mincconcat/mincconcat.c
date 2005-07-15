@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.11  2004-12-14 23:52:08  bert
+ * Revision 6.12  2005-07-15 17:38:08  bert
+ * Add -filestarts option
+ *
+ * Revision 6.11  2004/12/14 23:52:08  bert
  * Get rid of compilation warnings w/c99
  *
  * Revision 6.10  2004/11/01 22:38:38  bert
@@ -100,7 +103,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.11 2004-12-14 23:52:08 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.12 2005-07-15 17:38:08 bert Exp $";
 #endif
 
 #define _GNU_SOURCE 1
@@ -155,6 +158,7 @@ typedef struct {
    int **file_to_dim_order;
    double **file_coords;
    double **file_widths;        /* Array of NULL pointers if no widths */
+   double *file_offsets;        /* Per-file offsets from start of dimension */
    int coords_specified;
    int dimension_in_input_file;
    int concat_dimension_length;
@@ -309,6 +313,7 @@ static void get_arginfo(int argc, char *argv[],
    static double dimension_width = DBL_MAX;
    static Double_Array dimension_coords = {0, NULL};
    static Double_Array dimension_widths = {0, NULL};
+   static Double_Array file_offsets = {0, NULL};
    static int max_chunk_size_in_kb = 4 * 1024;
    static int check_dim_info = TRUE;
    static char *filelist = NULL;
@@ -375,6 +380,9 @@ static void get_arginfo(int argc, char *argv[],
       {"-widthlist", ARGV_FUNC, (char *) get_double_list, 
           (char *) &dimension_widths,
           "Specify the dimension widths (\"<w1>,<w2>,...\")."},
+      {"-filestarts", ARGV_FUNC, (char *) get_double_list,
+       (char *) &file_offsets,
+       "Specify the start offset of each file (\"<s1>,<s2>...\")."},
       {"-check_dimensions", ARGV_CONSTANT, (char *) TRUE, 
           (char *) &check_dim_info,
           "Check that files have matching dimensions (default)."},
@@ -498,6 +506,13 @@ static void get_arginfo(int argc, char *argv[],
       exit(EXIT_FAILURE);
    }
 
+   if ((file_offsets.numvalues > 0) &&
+       (file_offsets.numvalues != *num_input_files)) {
+       (void) fprintf(stderr,
+          "Number of file offsets does not match number of input files.\n");
+       exit(EXIT_FAILURE);
+   }
+
    /* Set defaults for start and step */
    if (dimension_start == DBL_MAX) dimension_start = 0;
    if (dimension_step == DBL_MAX) dimension_step = 1;
@@ -537,6 +552,7 @@ static void get_arginfo(int argc, char *argv[],
    concat_info->num_file_coords = malloc(sizeof(int) * (*num_input_files));
    concat_info->file_coords = malloc(sizeof(void *) * (*num_input_files));
    concat_info->file_widths = malloc(sizeof(void *) * (*num_input_files));
+   concat_info->file_offsets = malloc(sizeof(double) * (*num_input_files));
    for (ifile=0; ifile < *num_input_files; ifile++) {
       concat_info->num_file_coords[ifile] = 1;
       concat_info->file_coords[ifile] = malloc(sizeof(double));
@@ -552,6 +568,9 @@ static void get_arginfo(int argc, char *argv[],
       }
       else
          concat_info->file_widths[ifile] = NULL;
+
+      concat_info->file_offsets[ifile] = 
+          (ifile < file_offsets.numvalues) ? file_offsets.values[ifile] : 0.0;
    }
 
 }
@@ -816,6 +835,8 @@ static void get_input_file_info(void *caller_data, int input_mincid,
             (void) mivarget1(input_mincid, varid, &index, NC_DOUBLE, NULL,
                              &concat_info->file_coords[input_curfile][index]);
          }
+         concat_info->file_coords[input_curfile][index] += 
+             concat_info->file_offsets[input_curfile];
       }
 
       /* Look for dimension width variable */
