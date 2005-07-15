@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# Andrew Janke - a.janke@gmail.com
 # Center for Magnetic Resonance
 # The University of Queensland
 # http://www.cmr.uq.edu.au/~rotor
@@ -12,26 +12,6 @@
 # author and the University of Queensland make no representations about the
 # suitability of this software for any purpose.  It is provided "as is"
 # without express or implied warranty.
-#
-# Script for dumping a miff file from a minc file to STDOUT.
-#
-# Thu Jun  1 17:46:19 EST 2000 - major rewrite to speed things
-#                                  also added transverse/coronal/sagital
-# Fri Jun  2 19:05:59 EST 2000 - removed pnm code and now use convert
-#                                  to get "right" size images
-# Wed Jun 21 20:45:33 EST 2000 - added correct flipping and floping of
-#                                  output images as per the radiological
-#                                  convention (-ve z dimension)
-# Mon Jul  3 12:39:50 EST 2000 - added multiple dimension output
-# Fri Sep  1 12:46:13 EST 2000 - added -axial option
-# Tue Nov 21 16:14:07 EST 2000 - added strict and multiple image type output
-# Thu Feb 22 15:52:27 EST 2001 - changed to mincextract for range stuff
-# Thu Nov 22 14:05:11 EST 2001 - added -depth 8 to convert args
-# Tue Dec  3 17:35:05 EST 2002 - added steves -lookup option (minclookup)
-#                              - major rewrite of the dimension ordering
-#                                  the hard bit is done by mincreshape now
-# Thu Jan 23 17:05:41 EST 2003 - fixed bug with step directions
-#                                  added -dimsize {z,y,z}space=-1
 
 
 use strict;
@@ -54,11 +34,13 @@ $me = &basename($0);
 $CODE = "GRAY";
 %opt = ('verbose' => 0,
         'clobber' => 0,
+        'fake' => 0,
         'slice' => undef,
         'scale' => 2,
         'bitdepth' => 8,
         'range' => undef,
         'image_range' => undef,
+        'auto_range' => 0,
         'lookup' => undef,
         'dirs' => ['zspace'],
         );
@@ -66,7 +48,8 @@ $CODE = "GRAY";
 $Help = <<HELP;
 | $me generates image files from MINC volumes using the Imagemagick
 |    convert utility. For a complete list of output file types see the
-|    convert man pages. (man convert)
+|    convert man pages. (man convert) The resulting image is piped to
+|    STDOUT
 |
 | EXAMPLES:
 | To display a default view, transverse slicing, middle slice
@@ -81,45 +64,58 @@ $Help = <<HELP;
 | To generate a JPG file using the hotmetal lookup table
 |    with the image range 0 to 100
 |
-|    \$ mincpik -lookup -hotmetal -image_range 0 100 infile.mnc outfile.jpg
+|    \$ mincpik -lookup '-hotmetal' -image_range 0 100 infile.mnc outfile.jpg
 |
-| Problems or comments should be sent to: rotor\@cmr.uq.edu.au
+| ImageMagick:  http://www.wizards.dupont.com/cristy/ImageMagick.html
+|    NB: ImageMagick should be compiled without 16-bit quanta.
+|
+| Problems or comments should be sent to: a.janke\@gmail.com
 HELP
 
 $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
          "       $me -help to list options\n\n";
 
 @opt_table = (
-   ["-verbose", "boolean", 0, \$opt{'verbose'},
-      "be verbose"],
-   ["-clobber", "boolean", 0, \$opt{'clobber'},
-      "overwrite existing files"],
-   ["-slice", "integer", 1, \$opt{'slice'},
-      "slice number to get"],
-   ["-scale", "integer", 1, \$opt{'scale'},
-      "scaling factor for resulting image (Default: 2)"],
-   ["-depth", "integer", 1, \$opt{'bitdepth'},
-      "bitdepth for resulting image 8 or 16 (Default: 8) (MSB machines only!)"],
+   ['-verbose', 'boolean', 0, \$opt{verbose},
+      'be verbose'],
+   ['-clobber', 'boolean', 0, \$opt{clobber},
+      'overwrite existing files'],
+   ['-fake', 'boolean', 0, \$opt{fake},
+      'do a dry run, (echo cmds only)' ],
+   ['-slice', 'integer', 1, \$opt{slice},
+      'slice number to get',
+      '<int>'],
+   ['-scale', 'integer', 1, \$opt{scale},
+      'scaling factor for resulting image',
+      '<int>'],
+   ['-depth', 'integer', 1, \$opt{bitdepth},
+      'bitdepth for resulting image 8 or 16 (MSB machines only!)',
+      '<int>'],
    
-   ["Image range and lookup table options", "section" ],
-   ["-range", "float",   2, \@{$opt{'range'}},
-      "valid range of values for MINC file"],
-   ["-image_range", "float", 2, \@{$opt{'image_range'}},
-      "range of image values to use for pixel intensity"],
-   ["-lookup", "string", 1, \$opt{'lookup'},
-      "arguments to pass to minclookup"],
+   ['Image range and lookup table options', 'section' ],
+   ['-range', 'float',   2, \@{$opt{range}},
+      'valid range of values for MINC file',
+      '<real> <real>'],
+   ['-image_range', 'float', 2, \@{$opt{image_range}},
+      'range of image values to use for pixel intensity',
+      '<real> <real>'],
+   ['-auto_range', 'boolean', 0, \$opt{auto_range},
+      'automatically determine image range'],
+   ['-lookup', 'string', 1, \$opt{lookup},
+      'arguments to pass to minclookup',
+      '<\'argument list\'>'],
    
-   ["Slicing options", "section" ],
-   ["-transverse", "arrayconst", ['zspace'], \@{$opt{'dirs'}},
-      "get a transverse slice"],
-   ["-axial", "arrayconst", ['zspace'], \@{$opt{'dirs'}},
-      "synonym for transverse"],
-   ["-coronal", "arrayconst", ['yspace'], \@{$opt{'dirs'}},
-      "get a coronal slice"],
-   ["-sagittal", "arrayconst", ['xspace'], \@{$opt{'dirs'}},
-      "get a sagital slice"],
-   ["-allthree", "arrayconst", ['zspace', 'xspace', 'yspace'], \@{$opt{'dirs'}},
-      "get all three directions"],
+   ['Slicing options', 'section' ],
+   ['-transverse', 'arrayconst', ['zspace'], \@{$opt{dirs}},
+      'get a transverse slice'],
+   ['-axial', 'arrayconst', ['zspace'], \@{$opt{dirs}},
+      'synonym for transverse'],
+   ['-coronal', 'arrayconst', ['yspace'], \@{$opt{dirs}},
+      'get a coronal slice'],
+   ['-sagittal', 'arrayconst', ['xspace'], \@{$opt{dirs}},
+      'get a sagital slice'],
+   ['-allthree', 'arrayconst', ['zspace', 'xspace', 'yspace'], \@{$opt{dirs}},
+      'get all three directions'],
    );
 
 # Check arguments
@@ -135,19 +131,45 @@ $infile = $ARGV[0];
 $outfile = (defined($ARGV[1])) ? $ARGV[1] : 'MIFF:-';
 
 die "$me: Couldn't find $infile\n\n" if (!-e $infile);
-if($outfile ne 'MIFF:-' && -e $outfile && !$opt{'clobber'}){
-   die "$me: $outfile exists, use -clobber to overwrite\n\n";
+if($outfile ne 'MIFF:-' && -e $outfile && !$opt{clobber}){
+   die "\n$me: $outfile exists, use -clobber to overwrite\n\n";
    }
 
-if($opt{'bitdepth'} != 16 && $opt{'bitdepth'} != 8) {
-   die "$me: Invalid bitdepth specified - $opt{'bitdepth'} instead of 8 or 16\n\n";
+if($opt{bitdepth} != 16 && $opt{bitdepth} != 8) {
+   die "\n$me: Invalid bitdepth specified - $opt{bitdepth} instead of 8 or 16\n\n";
    }
 
-my ($space, $n_slices, $convert_infile, @extract_args, @convert_args, $pipe_args, $dimorder);
-my ($img_x, $img_y, $img_step_x, $img_step_y, $img_length_x, $img_length_y, $dim_names);
+if($opt{auto_range} && @{$opt{image_range}}){
+   die "\n$me: only specify one of -auto_range and -image_range (not both)\n\n";
+   }
+
+my ($space, $n_slices, $convert_infile,
+    @extract_args, @convert_args,
+    $img_x, $img_y,
+    $img_step_x, $img_step_y, 
+    $img_length_x, $img_length_y,
+    $dim_names, $pipe_args, $dimorder);
+
+# find the 5% to 95% PcT image range if -auto_range
+if($opt{auto_range}){
+   my $buf;
+   
+   chomp($buf = `mincstats -quiet -pctT 5 $infile`);
+   $buf *= 1.0;
+   @{$opt{image_range}}[0] = $buf;
+
+   chomp($buf = `mincstats -quiet -pctT 95 $infile`);
+   $buf *= 1.0;
+   @{$opt{image_range}}[1] = $buf;
+   }
+
+# a bit of output
+if($opt{verbose}){
+   print STDERR "Using image range of [@{$opt{image_range}}[0]:@{$opt{image_range}}[1]]\n";
+   }
 
 # foreach slicing direction
-foreach $space (@{$opt{'dirs'}}){
+foreach $space (@{$opt{dirs}}){
    
    # Get the info we need
    $args = "mincinfo ".
@@ -160,15 +182,15 @@ foreach $space (@{$opt{'dirs'}}){
            $infile;
    ($n_slices, $img_x, $img_y, $img_step_x, $img_step_y, $dim_names) = split("\n", `$args`);
    
-   $img_length_x = abs(int($img_step_x * $img_x * $opt{'scale'}));
-   $img_length_y = abs(int($img_step_y * $img_y * $opt{'scale'}));
+   $img_length_x = abs(int($img_step_x * $img_x * $opt{scale}));
+   $img_length_y = abs(int($img_step_y * $img_y * $opt{scale}));
    
    # figure out the slice to get
-   if(!defined($opt{'slice'})){
-      $opt{'slice'} = int($n_slices/2);
+   if(!defined($opt{slice})){
+      $opt{slice} = int($n_slices/2);
       }
-   if($opt{'slice'} >= $n_slices || $opt{'slice'} < 0){ 
-      die "Slice $opt{'slice'} out of range (0-" . ($n_slices-1) . ")\n\n";
+   if($opt{slice} >= $n_slices || $opt{slice} < 0){ 
+      die "Slice $opt{slice} out of range (0-" . ($n_slices-1) . ")\n\n";
       }
 
    # check if we have a vector_dimension already
@@ -188,19 +210,19 @@ foreach $space (@{$opt{'dirs'}}){
             '-dimsize', "$ordering{$space}[0]=-1",
             '-dimsize', "$ordering{$space}[1]=-1",
             '-dimorder', $dimorder,
-            '-dimrange', "$space=$opt{'slice'},1",
+            '-dimrange', "$space=$opt{slice},1",
             $infile, "$tmpdir/reshaped.mnc");                  
-   if(scalar(@{$opt{'range'}}) != 0){
-      push(@args, '-valid_range', @{$opt{'range'}}[0], @{$opt{'range'}}[1]);
+   if(scalar(@{$opt{range}}) != 0){
+      push(@args, '-valid_range', @{$opt{range}}[0], @{$opt{range}}[1]);
       }
-   if(scalar(@{$opt{'image_range'}}) != 0){
-      push(@args, '-image_range', @{$opt{'image_range'}}[0], @{$opt{'image_range'}}[1]);
+   if(scalar(@{$opt{image_range}}) != 0){
+      push(@args, '-image_range', @{$opt{image_range}}[0], @{$opt{image_range}}[1]);
       }
    &do_cmd(@args);
    
    # do the lookup if required
    $convert_infile = "$tmpdir/reshaped.mnc";
-   if($opt{'lookup'}){
+   if($opt{lookup}){
       if($CODE eq 'RGB'){
          warn "$me: Input is vector-valued already.  No colour lookup done.\n";
          }
@@ -208,7 +230,7 @@ foreach $space (@{$opt{'dirs'}}){
          $convert_infile = "$tmpdir/lookup.mnc";
          $CODE = 'RGB';
          &do_cmd('minclookup', '-quiet', 
-                 split(' ', $opt{'lookup'}), 
+                 split(' ', $opt{lookup}), 
                  "$tmpdir/reshaped.mnc", $convert_infile);
          }
       }
@@ -216,12 +238,12 @@ foreach $space (@{$opt{'dirs'}}){
    # set up mincextract command
    @extract_args = ('mincextract', $convert_infile,
                     '-normalize',
-                    ($opt{'bitdepth'} == 16) ? ('-short', '-unsigned') : '-byte');
+                    ($opt{bitdepth} == 16) ? ('-short', '-unsigned') : '-byte');
    
    # set up convert arguments
    # a flip is 'normal' due to the difference between mnc and most image co-ordinates
    @convert_args = ('convert',
-                    '-depth', $opt{'bitdepth'},
+                    '-depth', $opt{bitdepth},
                     '-flip', 
                     '-size', $img_y . 'x' . $img_x,
                     '-geometry', $img_length_y . 'x' . $img_length_x . '!',
@@ -229,7 +251,7 @@ foreach $space (@{$opt{'dirs'}}){
    
    # check if we are big or little endian for convert's MSB wierdity
    $pipe_args = '|';
-   if($opt{'bitdepth'} == 16){
+   if($opt{bitdepth} == 16){
       if(unpack("c",substr(pack("s",1),0,1))){
          warn "$me: LSB machine, swapping bytes with dd and crossing fingers\n";
          $pipe_args .= ' dd conv=swab | ';
@@ -240,6 +262,8 @@ foreach $space (@{$opt{'dirs'}}){
    }
 
 sub do_cmd {
-   print STDERR "@_\n" if $opt{'verbose'};
-   system(@_) == 0 or die;
+   print STDERR "@_\n" if $opt{verbose};
+   if(!$opt{fake}){
+      system(@_) == 0 or die "\n$me: Failed executing @_\n\n";
+      }
    }
