@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.8.2.2  2005-07-04 12:42:07  bert
+ * Revision 6.8.2.3  2005-07-15 16:30:18  bert
+ * Fix up filestarts option implementation
+ *
+ * Revision 6.8.2.2  2005/07/04 12:42:07  bert
  * Add -fileoffsets option
  *
  * Revision 6.8.2.1  2005/03/16 19:02:50  bert
@@ -97,7 +100,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.8.2.2 2005-07-04 12:42:07 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.8.2.3 2005-07-15 16:30:18 bert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -762,7 +765,7 @@ static void get_input_file_info(void *caller_data, int input_mincid,
 
       /* Set defaults */
       if (!Sort_sequential || (input_curfile < 1)) {
-         dimstart = concat_info->file_offsets[input_curfile];
+         dimstart = 0;
       }
       else {
          index = concat_info->num_file_coords[input_curfile-1] - 1;
@@ -810,7 +813,8 @@ static void get_input_file_info(void *caller_data, int input_mincid,
             (void) mivarget1(input_mincid, varid, &index, NC_DOUBLE, NULL,
                              &concat_info->file_coords[input_curfile][index]);
          }
-         concat_info->file_coords[input_curfile][index] += dimstart;
+         concat_info->file_coords[input_curfile][index] += 
+             concat_info->file_offsets[input_curfile];
       }
 
       /* Look for dimension width variable */
