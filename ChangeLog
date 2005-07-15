@@ -1,4 +1,22 @@
 MINC 2:
+2005-07-15 Bert Vincent <bert@bic.mni.mcgill.ca>
+	
+	* libsrc/hdf_convenience.c: Two minor fixes.  First, when
+	emulating 'signtype' attributes in MINC 2 files, comparisons
+	with MI_SIGNED and MI_UNSIGNED should NOT depend on a properly-
+	null-terminated  attribute value.  Second, suppress HDF5 errors 
+	in hdf_attdel()
+	
+	* progs/mincresample/mincresample.c
+	* progs/mincresample/mincresample.h
+	* progs/mincresample/mincresample.man1
+	* progs/mincresample/resample_volumes.c
+	Support windowed sinc interpolation, as ported from 1.X branch.
+	
+	* progs/mincconcat/mincconcat.c:
+	* progs/mincconcat/mincconcat.man1:
+	Add support for -filestarts option, as ported from 1.X branch.
+	
 2005-07-04  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* Makefile.am:

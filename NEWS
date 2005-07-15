@@ -1,5 +1,7 @@
                 New in Release 2.0.09
                 ---------------------
+* mincresample now supports the sinc interpolant
+* mincconcat has new -filestarts option
 * Many updates and fixes to upet2mnc (Concorde microPET conversion)
 * Fixes to the MINC 2.0 library (libminc2) courtesy of Leila Baghdadi
 * Some progress on documentation
