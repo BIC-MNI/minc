@@ -1,4 +1,8 @@
 MINC 2:
+2005-07-15 Andrew Janke <a.janke@gmail.com>
+
+	* added -auto_range option to mincpik (thanks to Jon Harlap)
+
 2005-07-15 Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* libsrc/hdf_convenience.c: Two minor fixes.  First, when
