@@ -403,7 +403,7 @@ convert_transform_origin_to_starts(mihandle_t hvol,
             starts[which[2]] = solution[2];
         }
 
-        free(matrix);
+        free2d(MI2_3D, matrix);
 
         break;
     }

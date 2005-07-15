@@ -161,6 +161,7 @@ extern int scaled_maximal_pivoting_gaussian_elimination_real(int n,
 
 extern double *alloc1d(int);
 extern double **alloc2d(int, int);
+extern void free2d(int, double **);
 
 /* From hyper.c */
 extern int mitranslate_hyperslab_origin(mihandle_t volume, 

@@ -1688,24 +1688,30 @@ alloc1d(int n)
 double **
 alloc2d(int n, int m)
 {
-    char *tmp = malloc((n * sizeof (double *)) + 
-                       (n * m * sizeof (double)));
-    if (tmp != NULL) {
-        int i;
-        double **mat;
+    double **mat;
+    int i;
 
-        mat = (double **) tmp;
-
-        tmp += n * sizeof (double *);
-
-        for (i = 0; i < n; i++) {
-            mat[i] = (double *) tmp;
-            tmp += m * sizeof (double);
-        }
-
-        return (mat);
+    mat = (double **) malloc(n * sizeof(double *));
+    if (mat == NULL) {
+        return NULL;
     }
-    return (NULL);
+    for (i = 0; i < n; i++) {
+        mat[i] = (double *) malloc(m * sizeof(double));
+        if (mat[i] == NULL) {
+            return NULL;
+        }
+    }
+    return (mat);
+}
+
+void
+free2d(int n, double **mat)
+{
+    int i;
+    for (i = 0; i < n; i++) {
+        free(mat[i]);
+    }
+    free(mat);
 }
 
 
