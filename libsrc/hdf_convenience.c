@@ -1060,11 +1060,10 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
         /* Need to recreate dataset with new type.  Sigh.
          */
-
-        if (!strcmp(val_ptr, MI_SIGNED)) {
+        if (!strncmp(val_ptr, MI_SIGNED, 8)) {
             new_signed = 1;
         }
-        else if (!strcmp(val_ptr, MI_UNSIGNED)) {
+        else if (!strncmp(val_ptr, MI_UNSIGNED, 8)) {
             new_signed = 0;
         }
         else {
@@ -1947,7 +1946,9 @@ hdf_attdel(int fd, int varid, const char *attnm)
         }
         loc_id = var->dset_id;
     }
-    H5Adelete(loc_id, attnm);
+    H5E_BEGIN_TRY {
+        H5Adelete(loc_id, attnm);
+    } H5E_END_TRY;
     return 1;                   /* success */
 }
 
