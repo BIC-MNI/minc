@@ -12,7 +12,7 @@
 # more flexible to allow the library and header to reside in 
 # different directories.
 #
-# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.4 2005-05-20 21:13:45 bert Exp $
+# $Header: /private-cvsroot/minc/Makefile.msvc-win32,v 6.5 2005-07-18 22:19:01 bert Exp $
 #
 PROGS = worldtovoxel.exe \
 	voxeltoworld.exe \
@@ -171,7 +171,8 @@ ACR_NEMA_HDRS = \
 INCLUDES = -I$(NETCDF_ROOT) -I$(HDF5_ROOT)/include -Ilibsrc \
            -Iprogs/Proglib -Ivolume_io/Include -Iconversion/Acr_nema
 
-DEFINES = -DDLL_NETCDF -D_POSIX_ -DMINC2 -DWIN32 -D_HDF5USEDLL_ -DHAVE_CONFIG_H
+DEFINES = -DDLL_NETCDF -D_POSIX_ -DMINC2 -DWIN32 -D_HDF5USEDLL_ \
+        -DHAVE_CONFIG_H -D_USE_MATH_DEFINES
 NETCDF_LIB = $(NETCDF_ROOT)/netcdf.lib
 HDF5_LIB = $(HDF5_ROOT)/dll/hdf5dll.lib
 LIBS = minc2.lib volume_io2.lib $(NETCDF_LIB) $(HDF5_LIB)

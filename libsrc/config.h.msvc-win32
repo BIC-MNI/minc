@@ -2,7 +2,7 @@
  *
  * Author: Bert Vincent
  *
- * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 6.2 2004-12-03 21:52:35 bert Exp $
+ * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 6.3 2005-07-18 22:19:01 bert Exp $
  */
 
 #ifndef _CONFIG_H_
@@ -19,7 +19,7 @@
 #define HAVE_TEMPNAM 1
 #define HAVE_TMPNAM 1
 #define STDC_HEADERS 1
-#define VERSION "2.0.08"
+#define VERSION "2.0.09"
 #define sleep(x) _sleep(x)
 #define snprintf _snprintf
 #define strncasecmp(x,y,z) strnicmp(x,y,z)
