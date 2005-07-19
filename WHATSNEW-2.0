@@ -1,3 +1,24 @@
+Release 2.0.09 ("beta 5")
+--------------
+This release is primarily a bug fix release for the core MINC libraries,
+as well as an opportunity to port library changes from the 1.X series.
+One of the most important changes involves support for HDF5 versions
+subsequent to version 1.6.2.  Previous releases of MINC 2 would not work
+properly with HDF5 1.6.3 or later, but these issues should now be fixed.
+
+Additional major changes include:
+
+New converters added in this release:
+ * minctoecat, as contributed by Anthonin Reilhac.
+ * dcm2mnc
+
+mincresample now supports "windowed sinc" interpolation. See the man
+page for more details.
+
+mincconcat now has a "-filestarts" option for greater flexibility in
+combining files.  This is especially useful for concatenating functional
+runs.
+
 Release 2.0.08 ("beta 4")
 --------------
 Several major changes are incorporated into this release.
