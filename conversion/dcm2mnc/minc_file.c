@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6.2.5  2005-06-20 21:59:33  bert
+   * Revision 1.6.2.6  2005-07-22 20:02:45  bert
+   * 1) Save start value for time coordinate. 2) Don't append fractional seconds to time in filename
+   *
+   * Revision 1.6.2.5  2005/06/20 21:59:33  bert
    * Add strfminc() to allow arbitrary output file naming, implement OPTS_NO_RESCALE debug option, fix rounding
    *
    * Revision 1.6.2.4  2005/06/02 18:20:06  bert
@@ -116,7 +119,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.5 2005-06-20 21:59:33 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.6 2005-07-22 20:02:45 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -177,8 +180,15 @@ strfminc(char *str_ptr, int str_max, const char *fmt_ptr,
                 tmp_ptr = tmp_str;
                 break;
             case 'T':
-                string_to_filename(gi_ptr->patient.reg_time,
-                                   tmp_str, sizeof(tmp_str));
+                strcpy(tmp_str, gi_ptr->patient.reg_time);
+                tmp_ptr = tmp_str;
+                while (*tmp_ptr != '\0') {
+                    if (!isdigit(*tmp_ptr)) {
+                        *tmp_ptr = '\0';
+                        break;
+                    }
+                    tmp_ptr++;
+                }
                 tmp_ptr = tmp_str;
                 break;
             case 'A':
@@ -496,6 +506,7 @@ minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
      * The step should always equal the average spacing of the dimension.
      */
     miattputdbl(mincid, varid, MIstep, step);
+    miattputdbl(mincid, varid, MIstart, gi_ptr->coordinates[imri][0]);
 
     if (regular) {
         miattputstr(mincid, varid, MIspacing, MI_REGULAR);
