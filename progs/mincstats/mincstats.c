@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.20  2005-05-20 15:39:45  bert
+ * Revision 1.21  2005-07-25 19:56:52  bert
+ * Fix pct_T calculation by taking into account a possibly non-zero histogram floor
+ *
+ * Revision 1.20  2005/05/20 15:39:45  bert
  * Remove and/or conditionalize test code for memory-mapped files (see HDF5_MMAP_TEST)
  *
  * Revision 1.19  2004/12/14 23:39:36  bert
@@ -1064,6 +1067,7 @@ int main(int argc, char *argv[])
                stats->pct_T = ((double)pctt_bin + (pctT - cdf[pctt_bin])
                                * pdf[pctt_bin + 1]) * hist_sep;
             }
+            stats->pct_T += hist_centre[0]; /* Add histogram minimum */
 
             switch (BMTMethod) {
             case BMT_KITTLER:
