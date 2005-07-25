@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.14.2.3  2005-03-16 19:02:52  bert
+ * Revision 1.14.2.4  2005-07-25 19:55:37  bert
+ * Fix pct_T calculation by taking into account a possibly non-zero histogram floor
+ *
+ * Revision 1.14.2.3  2005/03/16 19:02:52  bert
  * Port changes from 2.0 branch
  *
  * Revision 1.14.2.2  2004/10/18 15:02:13  bert
@@ -1050,6 +1053,7 @@ int main(int argc, char *argv[])
                stats->pct_T = ((double)pctt_bin + (pctT - cdf[pctt_bin])
                                * pdf[pctt_bin + 1]) * hist_sep;
             }
+            stats->pct_T += hist_centre[0]; /* Add histogram minimum */
 
             switch (BMTMethod) {
             case BMT_KITTLER:
