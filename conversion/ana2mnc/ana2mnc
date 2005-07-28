@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# Andrew Janke - a.janke@gmail.com
 # Center for Magnetic Resonance
 # The University of Queensland
 # http://www.cmr.uq.edu.au/~rotor
@@ -32,7 +32,7 @@ use File::Basename;
 my($Help, $Usage, $me, @files, $history, %opt, @opt_table);
 my($anabase, $anahdr, $anaimg, $mncfile, $matfile, $xfmfile);
 
-my $version="1.3c";
+my $version="1.3d";
 $me = basename($0);
 my $versioninfo = "print '$me version $version\n\n'; exit 0;";
 
@@ -687,7 +687,7 @@ sub create_analyze_header{
    $h->{session_error} = 0;      $h->{regular}       = 'r';
    $h->{hkey_un0}      = 0;
    
-   $h->{dim}           = [0,0,0,0,0,0,0,0];
+   $h->{dim}           = [1,1,1,1,1,1,1,1];
    $h->{vox_units}     = '';     $h->{cal_units}     = '';
    $h->{unused1}       = 0;      $h->{datatype}      = 0;
    $h->{bitpix}        = 0;      $h->{dim_un0}       = 0;
