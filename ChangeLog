@@ -1,4 +1,13 @@
-2005-07-13  Bert Vincent <bert@bic,mni.mcgill.ca>
+2005-07-28  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/nifti1/mnc2nii.c: Implement fix suggested by
+	Hyun-Pil Kim to set unused dimension lengths to 1 rather than
+	zero.
+	
+2005-07-25  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/mincstats/mincstats.c: Fix calculation of percent
+	threshold to correctly account for non-zero histogram floor.
+	
+2005-07-13  Bert Vincent <bert@bic.mni.mcgill.ca>
 	
 	* progs/mincresample/mincresample.c:
 	* progs/mincresample/mincresample.h:
