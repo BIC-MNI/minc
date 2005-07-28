@@ -48,7 +48,9 @@ init_nifti_header(nifti_image *nii_ptr)
         nii_ptr->nv = nii_ptr->nw = 0;
 
     for (i = 0; i < MAX_NII_DIMS; i++) {
-        nii_ptr->dim[i] = 0;
+        /* Fix suggested by Hyun-Pil Kim (hpkim@ihanyang.ac.kr):
+           Use 1 as the default, not zero */
+        nii_ptr->dim[i] = 1;
     }
 
     nii_ptr->nvox = 0;
