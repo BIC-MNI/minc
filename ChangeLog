@@ -1,4 +1,8 @@
 MINC 2:
+2005-07-29  Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/mincstats/mincstats.c: Add warning when mask file
+	specified with no mask range option.
+	
 2005-07-28  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/nifti1/mnc2nii.c: Implement fix suggested by
 	Hyun-Pil Kim to set unused dimension lengths to 1 rather than

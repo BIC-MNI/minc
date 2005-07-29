@@ -5,7 +5,10 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.21  2005-07-25 19:56:52  bert
+ * Revision 1.22  2005-07-29 16:46:21  bert
+ * Add warning message for mincstats -mask w/o -mask_range, -mask_binvalue, etc.
+ *
+ * Revision 1.21  2005/07/25 19:56:52  bert
  * Fix pct_T calculation by taking into account a possibly non-zero histogram floor
  *
  * Revision 1.20  2005/05/20 15:39:45  bert
@@ -780,6 +783,13 @@ int main(int argc, char *argv[])
       in mask_min/mask_max */
    verify_range_options(&mask_min, &mask_max, &mask_range, &mask_binvalue);
    num_masks = mask_min.numvalues;
+
+   if (mask_file != NULL && num_masks == 1 && 
+       *mask_min.values == -DBL_MAX && *mask_max.values == DBL_MAX) {
+       fprintf(stderr, 
+               "%s: Warning: Mask specified without a range. Mask will be ignored.\n",
+               argv[0]);
+   }
 
    /* Check histogramming options */
    if((discrete_histogram && integer_histogram) ||
