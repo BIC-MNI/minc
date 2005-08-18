@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.14.2.9  2005-07-22 20:03:16  bert
+ * Revision 1.14.2.10  2005-08-18 18:17:36  bert
+ * Add -usecoordinates option
+ *
+ * Revision 1.14.2.9  2005/07/22 20:03:16  bert
  * Minor change to consider sequence name when finding series boundaries
  *
  * Revision 1.14.2.8  2005/07/12 16:01:14  bert
@@ -113,7 +116,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.9 2005-07-22 20:03:16 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.14.2.10 2005-08-18 18:17:36 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -207,6 +210,11 @@ ArgvInfo argTable[] = {
      (char *)&G.dirname_format,
      "Set format for output directory name."},
 
+    {"-usecoordinates",
+     ARGV_CONSTANT,
+     (char *) TRUE,
+     (char *) &G.prefer_coords,
+     "Derive step value from coordinates rather than slice spacing."},
     {NULL, ARGV_END, NULL, NULL, NULL}
 
 };
@@ -234,6 +242,7 @@ main(int argc, char *argv[])
     G.dirname_format = NULL;
 
     G.minc_history = time_stamp(argc, argv); /* Create minc history string */
+    G.prefer_coords = FALSE;
 
     G.pname = argv[0];          /* get program name */
     
