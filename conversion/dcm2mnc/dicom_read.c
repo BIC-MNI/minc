@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.16.2.3  2005-06-20 22:03:01  bert
+   * Revision 1.16.2.4  2005-08-18 16:38:43  bert
+   * Minor updates for dealing w/older numaris data
+   *
+   * Revision 1.16.2.3  2005/06/20 22:03:01  bert
    * Add functions for traversing DICOM sequences and recursively hunting for needed fields.
    *
    * Revision 1.16.2.2  2005/06/02 17:04:26  bert
@@ -195,6 +198,14 @@ static int irnd(double x)
     return (int) floor(x);
 }
 
+int
+is_numaris3(Acr_Group group_list)
+{
+    return (strstr(acr_find_string(group_list, ACR_Manufacturer, ""), 
+                   "SIEMENS") != NULL &&
+            strstr(acr_find_string(group_list, ACR_Software_versions, ""), 
+                   "VB33") != NULL);
+}
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : init_general_info
@@ -1147,6 +1158,7 @@ get_coordinate_info(Acr_Group group_list,
     }
     found_coordinate = FALSE;
 
+#if 0
     /* TODO: For now this appears to be necessary.  In cases I don't fully
      * understand, the Siemens Numaris 3 DICOM image orientation does not
      * give the correct direction cosines, so we use the nonstandard Siemens
@@ -1158,8 +1170,7 @@ get_coordinate_info(Acr_Group group_list,
      * files, with a version string that looks like VB33 (VB33D, VB33G, etc.)
      * Later versions do not seem to use these fields.
      */
-    if (strstr(acr_find_string(group_list, ACR_Manufacturer, ""), "SIEMENS") &&
-        strstr(acr_find_string(group_list, ACR_Software_versions, ""), "VB33")) {
+    if (is_numaris3(group_list)) {
         Acr_Element_Id dircos_elid[VOL_NDIMS];
 
         /* Set direction cosine element ids. Note that the reversal of
@@ -1189,6 +1200,7 @@ get_coordinate_info(Acr_Group group_list,
             found_dircos[ivolume] = TRUE;
         }
     }
+#endif
 
     /* If we did not find the Siemens proprietary image vectors, try
      * the DICOM standard image position.

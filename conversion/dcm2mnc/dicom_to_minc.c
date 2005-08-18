@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.13.2.3  2005-07-14 16:47:55  bert
+   * Revision 1.13.2.4  2005-08-18 16:38:44  bert
+   * Minor updates for dealing w/older numaris data
+   *
+   * Revision 1.13.2.3  2005/07/14 16:47:55  bert
    * Handle additional classes of Numa3 mosaics by using the Siemens 'base raw matrix size' element
    *
    * Revision 1.13.2.2  2005/06/20 22:01:15  bert
@@ -159,7 +162,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.3 2005-07-14 16:47:55 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.4 2005-08-18 16:38:44 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -1037,6 +1040,64 @@ add_siemens_info(Acr_Group group_list)
 
         /* TODO: should also correct the image position here? */
     }
+
+    /* Hacks for specific numaris3 sequences.
+     */
+    if (is_numaris3(group_list)) {
+        int tmp;
+
+        str_ptr = acr_find_string(group_list, ACR_Sequence_name, "");
+
+        /* This first hack is for Sebastian's Numaris-3 DTI scans.
+         */
+        if (!strcmp(str_ptr, "ep_d33a ")) {
+            /* Numaris-3 DTI scan.  Individual scans are identified by
+             * echo number.  We need to change echos to time.
+             */
+            tmp = acr_find_int(group_list, SPI_Number_of_echoes, 1);
+            acr_insert_numeric(&group_list, SPI_Number_of_echoes, 1);
+
+            element = acr_find_group_element(group_list,
+                                             ACR_Acquisitions_in_series);
+            if (element != NULL) {
+                int grp_id = acr_get_element_group(element);
+                int elm_id = acr_get_element_element(element);
+                acr_group_remove_element(acr_find_group(group_list, grp_id),
+                                        elm_id);
+            }
+            acr_insert_short(&group_list, ACR_Number_of_time_slices, tmp);
+
+            tmp = acr_find_int(group_list, ACR_Echo_number, 0);
+            acr_insert_numeric(&group_list, ACR_Echo_number, 1);
+            acr_insert_numeric(&group_list, ACR_Frame_reference_time, 
+                               tmp * 1000);
+
+            /* Just use defaults for these values. */
+            acr_insert_numeric(&group_list, ACR_Actual_frame_duration, 1000);
+        }
+
+        /* An additional hack required for Sebastian's Numaris-3 FMRI scans.
+         */
+        if (!strcmp(str_ptr, "ep_fid")) {
+            /* Numaris-3 FMRI scan.  Each time slice uses a different 
+             * series number!!
+             */
+            tmp = acr_find_int(group_list, ACR_Series_time, 0);
+            acr_insert_numeric(&group_list, ACR_Series, tmp);
+
+            tmp = acr_find_int(group_list, ACR_Acquisitions_in_series, 0);
+            acr_insert_short(&group_list, ACR_Number_of_time_slices, tmp);
+
+            element = acr_find_group_element(group_list,
+                                             ACR_Acquisitions_in_series);
+            if (element != NULL) {
+                int grp_id = acr_get_element_group(element);
+                int elm_id = acr_get_element_element(element);
+                acr_group_remove_element(acr_find_group(group_list, grp_id),
+                                        elm_id);
+            }
+        }
+    }
     return (group_list);
 }
 
@@ -1778,9 +1839,6 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
         memcpy(dircos[VCOLUMN], RowColVec, sizeof(*RowColVec) * WORLD_NDIMS);
         memcpy(dircos[VROW], &RowColVec[3], sizeof(*RowColVec) * WORLD_NDIMS);
 
-        convert_dicom_coordinate(dircos[VROW]);
-        convert_dicom_coordinate(dircos[VCOLUMN]);
-   
         /* compute slice normal as cross product of row/column unit vectors
          * (should check for unit length?)
          */
@@ -1812,7 +1870,6 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
         mi_ptr->position[XCOORD] = mi_ptr->position[YCOORD] = 
             mi_ptr->position[ZCOORD] = 0.0;
     }
-    convert_dicom_coordinate(mi_ptr->position);
 
     if (G.Debug >= HI_LOGGING) {
         printf(" step %.3f %.3f %.3f pos %.3f %.3f %.3f normal %.3f,%.3f,%.3f\n",
@@ -1829,25 +1886,33 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     }
 
     if (mi_ptr->mosaic_seq != MOSAIC_SEQ_INTERLEAVED) {
-        /* Numaris 4 mosaic correction:
-         * - position given is edge of huge slice constructed as if 
-         *   real slice was at center of mosaic
-         * - mi_ptr->big[0,1] are number of columns and rows of mosaic
-         * - mi_ptr->size[0,1] are number of columns and rows of sub-image
-         */
+        if (is_numaris3(group_list)) {
+            for (i = 0; i < WORLD_NDIMS; i++) {
+                mi_ptr->position[i] -= 
+                    (double) (mi_ptr->sub_images-1) * mi_ptr->step[i];
+            } 
+        }
+        else {
+            /* Numaris 4 mosaic correction:
+             * - position given is edge of huge slice constructed as if 
+             *   real slice was at center of mosaic
+             * - mi_ptr->big[0,1] are number of columns and rows of mosaic
+             * - mi_ptr->size[0,1] are number of columns and rows of sub-image
+             */
 
-        for (i = 0; i < WORLD_NDIMS; i++) {
-            /* Correct offset from mosaic Center
-             */
-            mi_ptr->position[i] += (double)
-                ((dircos[VCOLUMN][i] * mi_ptr->big[0] * pixel_spacing[0]/2.0) +
-                 (dircos[VROW][i] * mi_ptr->big[1] * pixel_spacing[1]/2));
-            
-            /* Move from center to corner of slice
-             */
-            mi_ptr->position[i] -= 
-                ((dircos[VCOLUMN][i] * mi_ptr->size[0] * pixel_spacing[0]/2.0) +
-                 (dircos[VROW][i] * mi_ptr->size[1] * pixel_spacing[1]/2.0));
+            for (i = 0; i < WORLD_NDIMS; i++) {
+                /* Correct offset from mosaic Center
+                 */
+                mi_ptr->position[i] += (double)
+                    ((dircos[VCOLUMN][i] * mi_ptr->big[0] * pixel_spacing[0]/2.0) +
+                     (dircos[VROW][i] * mi_ptr->big[1] * pixel_spacing[1]/2));
+                
+                /* Move from center to corner of slice
+                 */
+                mi_ptr->position[i] -= 
+                    ((dircos[VCOLUMN][i] * mi_ptr->size[0] * pixel_spacing[0]/2.0) +
+                     (dircos[VROW][i] * mi_ptr->size[1] * pixel_spacing[1]/2.0));
+            }
         }
     }
 
@@ -1992,6 +2057,12 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
         break;
     }
 
+#if 0
+    if (is_numaris3(group_list)) {
+        islice = mi_ptr->slice_count - islice - 1;
+    }
+#endif
+
     /* Check the image number 
      */
     if ((iimage < 0) || (iimage > mi_ptr->sub_images)) {
@@ -2024,6 +2095,12 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
             position[XCOORD], position[YCOORD], position[ZCOORD]);
 
     acr_insert_string(&group_list, ACR_Image_position_patient, string);
+    acr_insert_string(&group_list, SPI_Image_position, string);
+
+    /* HMM - is this necessary?? */
+    if (is_numaris3(group_list)) {
+        update_coordinate_info(group_list);
+    }
 
     if (G.Debug >= HI_LOGGING) {
         printf(" position %s\n", string);
