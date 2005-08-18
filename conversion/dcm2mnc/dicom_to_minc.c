@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.13.2.4  2005-08-18 16:38:44  bert
+   * Revision 1.13.2.5  2005-08-18 18:18:35  bert
+   * Implement the -usecoordinates option, also some minor cleanup and fixes for some warning messages.
+   *
+   * Revision 1.13.2.4  2005/08/18 16:38:44  bert
    * Minor updates for dealing w/older numaris data
    *
    * Revision 1.13.2.3  2005/07/14 16:47:55  bert
@@ -162,7 +165,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.4 2005-08-18 16:38:44 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.13.2.5 2005-08-18 18:18:35 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -1542,17 +1545,22 @@ sort_dimensions(General_Info *gi_ptr)
          * many PET scanners produce irregular timings.
          */
         if (nvalues >= 2 && imri == SLICE) {
+            /* Calculate the spacing between the first and second slice.
+             */
             double delta = (gi_ptr->coordinates[imri][1] - 
                             gi_ptr->coordinates[imri][0]);
 
             for (i = 1; i < nvalues; i++) {
+                /* Check that each successive slice has roughly the same
+                 * spacing, to within 2 percent of the initial delta.
+                 */
                 if (!fcmp(delta, 
                           (gi_ptr->coordinates[imri][i] - 
                            gi_ptr->coordinates[imri][i - 1]),
-                          1.0e-3)) {
-                    printf("WARNING: Missing data for %s dimension\n",
-                           Mri_Names[imri]);
-                    printf("   slice # %d %.12f %.12f\n",
+                          2.0 * (delta / 100.0))) {
+                    /* TODO: Perhaps this message could be improved?? */
+                    printf("WARNING: Missing %s data at index %d, %g %g\n",
+                           Mri_Names[imri],
                            i, 
                            delta,
                            (gi_ptr->coordinates[imri][i] -
@@ -1581,11 +1589,16 @@ sort_dimensions(General_Info *gi_ptr)
                  * assumed value is the default (1.0), we adopt the 
                  * calculated value.
                  */
-                if (!fcmp(dbl_tmp1, dbl_tmp2, 2.0e-5)) {
-                    printf("WARNING: calculated slice width (%.10f) disagrees with file's slice width (%.10f)\n", dbl_tmp2, dbl_tmp1);
-                    if (dbl_tmp1 == 1.0) {
+                if (!fcmp(dbl_tmp1, dbl_tmp2, (dbl_tmp1 / 1000.0))) {
+                    printf("WARNING: Coordinate spacing (%g) differs from DICOM slice spacing (%g)\n", dbl_tmp2, dbl_tmp1);
+                    if (!G.prefer_coords) {
+                        printf(" (perhaps you should consider the -usecoordinates option)\n");
+                    }
+                    if (dbl_tmp1 == 1.0 || G.prefer_coords) {
                         gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
                     }
+                    printf(" Using %g for the slice spacing value.\n", 
+                           gi_ptr->step[gi_ptr->slice_world]);
                 }
                 
             }
