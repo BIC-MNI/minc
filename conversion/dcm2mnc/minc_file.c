@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.6.2.6  2005-07-22 20:02:45  bert
+   * Revision 1.6.2.7  2005-08-18 18:17:55  bert
+   * Fix up one warning message
+   *
+   * Revision 1.6.2.6  2005/07/22 20:02:45  bert
    * 1) Save start value for time coordinate. 2) Don't append fractional seconds to time in filename
    *
    * Revision 1.6.2.5  2005/06/20 21:59:33  bert
@@ -119,7 +122,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.6 2005-07-22 20:02:45 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.6.2.7 2005-08-18 18:17:55 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -461,7 +464,7 @@ minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
         avg = sum / length;     /* compute mean */
 
         if (step != 0.0 && avg != step) {
-            printf("WARNING: Sample width %f not equal to average delta %f\n",
+            printf("WARNING: Sample width (%g) not equal to average delta (%g)\n",
                    step, avg);
         }
 
