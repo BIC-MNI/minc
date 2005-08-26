@@ -1,4 +1,15 @@
 MINC 2:
+2005-08-26 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* Implemented --enable-hdf5 option in ./configure
+	script so that we can selectively enable or disable MINC2 support.
+	This required changing the way we treat the MINC2 symbol, and
+	being careful to include config.h in all files that call netCDF 
+	functions.
+	* libsrc2/grpattr.c - Fixed issue in micreate_group() function -
+	it would not function properly when a group already existed in the 
+	file.
+	* conversion/dcm2mnc - Ported changes from MINC 1 branch.
+	
 2005-07-29  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* progs/mincstats/mincstats.c: Add warning when mask file
 	specified with no mask range option.
