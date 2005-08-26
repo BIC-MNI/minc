@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -25,7 +29,7 @@ int main(int argc, char **argv)
    static int ivallen = sizeof(ivalue)/sizeof(ivalue[0]);
    int cflag = 0;
 
-#ifdef MINC2
+#if MINC2
    if (argc == 2 && !strcmp(argv[1], "-2")) {
        cflag = MI2_CREATE_V2;
    }

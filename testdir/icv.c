@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <minc.h>
 
@@ -31,7 +35,7 @@ int main(int argc, char **argv)
    int i, j, k, intype, inorm, outtype, imax, ival;
    int cflag = 0;
 
-#ifdef MINC2
+#if MINC2
    if (argc == 2 && !strcmp(argv[1], "-2")) {
        cflag = MI2_CREATE_V2;
    }

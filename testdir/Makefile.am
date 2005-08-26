@@ -11,7 +11,6 @@ script_tests = \
 all-local:
 	cd $(srcdir) && chmod +x $(script_tests)
 
-AM_CPPFLAGS = -DMINC2
 LDADD = ../libvolume_io2.la ../libminc2.la
 TESTS = run_tests.csh \
 	run_test2.csh \
