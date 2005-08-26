@@ -1,3 +1,4 @@
+#if MINC2
 /* Functions for enabling/disabling error messages from the library.
  */
 MNCAPI int MI2typelen(int);
@@ -90,3 +91,5 @@ MNCAPI int MI2setfill(int fd, int fillmode);
 #define NC_NOFILL 0x100
 #endif
 #endif /* _MI2_FORCE_NETCDF_ not defined */
+#endif /* MINC2 */
+

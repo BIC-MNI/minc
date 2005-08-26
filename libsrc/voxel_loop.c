@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.6  2004-11-01 22:23:14  bert
+ * Revision 6.7  2005-08-26 21:04:58  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.6  2004/11/01 22:23:14  bert
  * Get rid of minc_def.h, use standard MALLOC() macro
  *
  * Revision 6.5  2004/10/15 13:46:52  bert
@@ -126,7 +129,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.6 2004-11-01 22:23:14 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.7 2005-08-26 21:04:58 bert Exp $";
 #endif
 
 #include "minc_private.h"
@@ -186,9 +189,9 @@ struct Loop_Options {
    Loop_Info *loop_info;
    int is_floating_type;
    AllocateBufferFunction allocate_buffer_function;
-#ifdef MINC2
+#if MINC2
    int v2format;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 };
 
 struct Loopfile_Info {
@@ -1935,11 +1938,11 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
        loopfile_info->cflags = NC_NOCLOBBER;
    }
 
-#ifdef MINC2
+#if MINC2
    if (loop_options->v2format) {
        loopfile_info->cflags |= MI2_CREATE_V2;
    }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
    /* Save number of input and output files */
    loopfile_info->num_input_files = num_input_files;
@@ -2700,9 +2703,9 @@ MNCAPI Loop_Options *create_loop_options(void)
 
    loop_options->allocate_buffer_function = NULL;
 
-#ifdef MINC2
+#if MINC2
    loop_options->v2format = FALSE; /* Use MINC 2.0 file format (HDF5)? */
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
    /* Return the structure pointer */
    return loop_options;
@@ -2747,7 +2750,7 @@ MNCAPI void set_loop_clobber(Loop_Options *loop_options,
    loop_options->clobber = clobber;
 }
 
-#ifdef MINC2
+#if MINC2
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_v2format
 @INPUT      : loop_options - user options for looping
@@ -2765,7 +2768,7 @@ MNCAPI void set_loop_v2format(Loop_Options *loop_options, int v2format)
 {
    loop_options->v2format = v2format;
 }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : set_loop_verbose

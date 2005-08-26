@@ -1,4 +1,8 @@
-#ifdef MINC2                    /* Ignore this file if not MINC2 */
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if MINC2                    /* Ignore this file if not MINC2 */
 
 /* #define NC_FILL_INT 1 */
 #include "minc_private.h"

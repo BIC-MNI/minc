@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.18  2005-05-20 16:49:51  bert
+ * Revision 6.19  2005-08-26 21:04:58  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.18  2005/05/20 16:49:51  bert
  * Avoid direct usage of H5Fis_hdf5(), replace with hdf_access() function
  *
  * Revision 6.17  2005/05/20 15:39:45  bert
@@ -169,7 +172,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.18 2005-05-20 16:49:51 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.19 2005-08-26 21:04:58 bert Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -188,7 +191,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.
 
 #include <ctype.h>
 
-#ifdef MINC2
+#if MINC2
 #undef ncopen
 #undef ncclose
 #undef nccreate
@@ -206,7 +209,7 @@ PRIVATE int MI_vcopy_action(int ndims, long start[], long count[],
                             long nvalues, void *var_buffer, void *caller_data);
 
 
-#ifdef MINC2
+#if MINC2
 /* These flags are used to count miopen() calls which open either an HDF5
  * file or a NetCDF file.  The exact count is not important; the library
  * will automatically choose to create a HDF5 output file if only HDF5
@@ -304,7 +307,7 @@ PRIVATE int execute_decompress_command(char *command, char *infile,
             return 1;
          }
 
-#ifdef MINC2
+#if MINC2
 	 successful_ncopen = hdf_access(outfile);
 	 if (successful_ncopen) {
              break;
@@ -418,7 +421,7 @@ MNCAPI char *miexpand_file(char *path, char *tempfile, int header_only,
    /* We have not created a temporary file yet */
    *created_tempfile = FALSE;
 
-#ifdef MINC2
+#if MINC2
    if (hdf_access(path)) {
       newfile = strdup(path);
       MI_RETURN(newfile);
@@ -573,7 +576,7 @@ MNCAPI int miopen(char *path, int mode)
 {
    int status, oldncopts, created_tempfile;
    char *tempfile;
-#ifdef MINC2
+#if MINC2
    int hmode;
 #endif /* MINC2 defined */
 
@@ -584,7 +587,7 @@ MNCAPI int miopen(char *path, int mode)
    status = ncopen(path, mode);
    ncopts = oldncopts;
 
-#ifdef MINC2
+#if MINC2
    if (status != MI_ERROR) {
      mi_nc_files++;             /* Count open netcdf files */
      MI_RETURN(status);
@@ -633,7 +636,7 @@ MNCAPI int miopen(char *path, int mode)
    status = ncopen(tempfile, mode);
    ncopts = oldncopts;
 
-#ifdef MINC2
+#if MINC2
    if (status == MI_ERROR) {
      status = hdf_open(tempfile, hmode);
      if (status >= 0) {
@@ -669,7 +672,7 @@ MNCAPI int miopen(char *path, int mode)
 @CREATED    : November 2, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-#ifdef MINC2
+#if MINC2
 MNCAPI int micreatex(char *path, int cmode, struct mi2opts *opts_ptr)
 {
     int fd;
@@ -748,7 +751,7 @@ MNCAPI int miclose(int cdfid)
 
    MI_SAVE_ROUTINE_NAME("miclose");
 
-#ifdef MINC2
+#if MINC2
    if (MI2_ISH5OBJ(cdfid)) {
        status = hdf_close(cdfid);
    }

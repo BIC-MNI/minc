@@ -13,7 +13,10 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_routines.h,v $
- * Revision 6.3  2004-12-14 23:53:46  bert
+ * Revision 6.4  2005-08-26 21:04:58  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.3  2004/12/14 23:53:46  bert
  * Get rid of compilation warnings
  *
  * Revision 6.2  2004/10/15 13:47:39  bert
@@ -59,7 +62,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 6.3 2004-12-14 23:53:46 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_routines.h,v 6.4 2005-08-26 21:04:58 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* MINC routines that should only be visible to the package (semiprivate) */
@@ -92,7 +95,7 @@ SEMIPRIVATE int MI_convert_type(long number_of_values,
 /* From image_conversion.c */
 SEMIPRIVATE mi_icv_type *MI_icv_chkid(int icvid);
 
-#ifdef MINC2
+#if MINC2
 extern int hdf_var_declare(int fd, char *varnm, char *varpath, int ndims,
                            hsize_t *sizes);
 

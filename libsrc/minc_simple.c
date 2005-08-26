@@ -5,7 +5,10 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.4  2005-05-20 21:01:52  bert
+ * Revision 6.5  2005-08-26 21:04:58  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.4  2005/05/20 21:01:52  bert
  * Declare all public functions MNCAPI
  *
  * Revision 6.3  2005/01/04 22:45:57  bert
@@ -1005,7 +1008,7 @@ minc_get_world_transform(char *path, double transform[MINC_3D][MINC_3D+1])
    return (MINC_STATUS_OK);
 }
 
-#ifndef MINC2
+#if !MINC2
 
 typedef unsigned long mioffset_t;
 
@@ -1239,7 +1242,7 @@ restructure_array(int ndims,    /* Dimension count */
     free(temp);
 }
 
-#endif /* MINC2 not defined */
+#endif /* !MINC2 */
 
 #ifdef MINC_SIMPLE_TEST
 /*

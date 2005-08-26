@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.16  2004-12-03 21:52:35  bert
+ * Revision 6.17  2005-08-26 21:04:57  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.16  2004/12/03 21:52:35  bert
  * Minor changes for Windows build
  *
  * Revision 6.15  2004/10/15 13:48:13  bert
@@ -134,7 +137,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.16 2004-12-03 21:52:35 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.17 2005-08-26 21:04:57 bert Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -549,7 +552,7 @@ MNCAPI int miicv_attach(int icvid, int cdfid, int varid);
 MNCAPI void milog_init(const char *);
 MNCAPI int milog_set_verbosity(int);
 
-#ifdef MINC2
+#if MINC2
 
 /* New functions, not directly part of compatibility layer. */
 extern int MI2varsize(int fd, int varid, long *size_ptr);
@@ -583,7 +586,9 @@ struct mi2opts {
 
 #define MI2_ISH5OBJ(x) (H5Iget_type(x) > 0)
 
-#endif /* MINC2 defined */
+#else
+#define MI2_ISH5OBJ(x) (0)
+#endif /* MINC2 */
 
 #ifdef __cplusplus
 }

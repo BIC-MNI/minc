@@ -5,7 +5,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.3  2004-10-15 13:46:52  bert
+ * Revision 6.4  2005-08-26 21:04:58  bert
+ * Use #if rather than #ifdef with MINC2 symbol
+ *
+ * Revision 6.3  2004/10/15 13:46:52  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.2  2004/04/27 15:43:04  bert
@@ -253,10 +256,10 @@ MNCAPI Loop_Options *create_loop_options(void);
 MNCAPI void free_loop_options(Loop_Options *loop_options);
 MNCAPI void set_loop_clobber(Loop_Options *loop_options, 
                              int clobber);
-#ifdef MINC2
+#if MINC2
 MNCAPI void set_loop_v2format(Loop_Options *loop_options,
 			      int use_v2_format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 MNCAPI void set_loop_verbose(Loop_Options *loop_options, 
                              int verbose);
 MNCAPI void set_loop_datatype(Loop_Options *loop_options, 

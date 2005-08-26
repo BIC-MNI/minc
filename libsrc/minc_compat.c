@@ -1,4 +1,8 @@
-#ifdef MINC2                    /* Ignore if not MINC2 */
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if MINC2                       /* Ignore if not MINC2 */
 /* minc_compat.c
  * 
  * this code exists to provide a dispatch layer between the MI2* low-level
