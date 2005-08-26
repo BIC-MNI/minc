@@ -118,6 +118,8 @@ GLOBAL_ELEMENT(ACR_Image_orientation_patient_old,
 	                                   0x0020, 0x0035, DS);
 GLOBAL_ELEMENT(ACR_Image_orientation_patient,
 	                                   0x0020, 0x0037, DS);
+GLOBAL_ELEMENT(ACR_Number_of_temporal_positions,
+                                           0x0020, 0x0105, IS);
 GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001, IS);
 GLOBAL_ELEMENT(ACR_Images_in_acquisition,  0x0020, 0x1002, IS);
 GLOBAL_ELEMENT(ACR_Slice_location,         0x0020, 0x1041, DS);
