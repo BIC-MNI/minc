@@ -1,8 +1,12 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/dumplib.c,v 1.2 2004-06-16 16:15:58 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/dumplib.c,v 1.3 2005-08-26 22:35:33 bert Exp $
  *********************************************************************/
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
  * We potentially include <stdarg.h> before <stdio.h> in order to obtain a

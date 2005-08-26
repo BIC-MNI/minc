@@ -1,8 +1,12 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.2 2005-01-19 20:00:43 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.3 2005-08-26 22:35:33 bert Exp $
  *********************************************************************/
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
