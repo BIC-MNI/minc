@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.16.2.4  2005-08-18 16:38:43  bert
+   * Revision 1.16.2.5  2005-08-26 03:50:16  bert
+   * Use ACR_Number_of_temporal_positions for number of time slices
+   *
+   * Revision 1.16.2.4  2005/08/18 16:38:43  bert
    * Minor updates for dealing w/older numaris data
    *
    * Revision 1.16.2.3  2005/06/20 22:03:01  bert
@@ -308,8 +311,13 @@ init_general_info(General_Info *gi_ptr, /* OUT */
                 /* Look for the official time slice count field first.
                  */
                 def_val = acr_find_int(group_list,
-                                       ACR_Number_of_time_slices,
+                                       ACR_Number_of_temporal_positions,
                                        0);
+
+                def_val = acr_find_int(group_list,
+                                       ACR_Number_of_time_slices,
+                                       def_val);
+
             }
             gi_ptr->max_size[imri] = acr_find_int(group_list,
                                                   mri_total_list[imri],
