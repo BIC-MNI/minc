@@ -7,8 +7,11 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.12  2005-07-14 19:00:30  bert
- * Changes ported from 1.X branch
+ * Revision 1.13  2005-08-26 21:25:54  bert
+ * Latest changes ported from 1.0 branch
+ *
+ * Revision 1.10.2.4  2005/08/18 18:17:36  bert
+ * Add -usecoordinates option
  *
  * Revision 1.10.2.3  2005/06/09 20:46:11  bert
  * Fairly major fixes to use integers for all arguments, add filename_format and dirname_format to global options, always include math.h, and defined OPTS_NO_RESCALE for testing converter without ICV
@@ -249,6 +252,9 @@ struct globals {
     int use_stdin;
     char * filename_format;
     char * dirname_format;
+    int prefer_coords;           /* In event of slice thickness conflict, 
+                                    use the coordinate information rather 
+                                    than the slice thickness or spacing. */
 };
 
 /* Values for options flags */

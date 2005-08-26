@@ -1,4 +1,4 @@
-.TH dcm2mnc 1 "May 03 2005" "$Revision: 1.3 $" ""
+.TH dcm2mnc 1 "May 03 2005" "$Revision: 1.4 $" ""
 .SH NAME
 
 .B dcm2mnc
@@ -152,6 +152,13 @@ about the program's operation. This information can probably only be
 interpreted by someone familiar with both this program and the DICOM standard.
 
 .TP
+.BI -usecoordinates
+This option requests that the conversion rely on the slice coordinates
+rather than the standard DICOM fields for slice thickness and spacing.
+It is useful if for some reason the standard DICOM fields for
+slice thickness and spacing are incorrect.
+
+.TP
 .BI -opts " <value>"
 This is a private option intended only for debugging purposes.  Please
 avoid using it.
@@ -230,8 +237,7 @@ dcm2mnc -dname \'\' filenames...
 
 
 .SH AUTHORS
-Peter Neelin
-Richard D. Hoge
+Peter Neelin and Richard D. Hoge
 
 Please direct all complaints and inquiries to Robert Vincent 
 (bert@bic.mni.mcgill.ca)

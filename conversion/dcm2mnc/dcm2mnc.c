@@ -5,8 +5,14 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.16  2005-07-14 19:00:30  bert
- * Changes ported from 1.X branch
+ * Revision 1.17  2005-08-26 21:25:54  bert
+ * Latest changes ported from 1.0 branch
+ *
+ * Revision 1.14.2.10  2005/08/18 18:17:36  bert
+ * Add -usecoordinates option
+ *
+ * Revision 1.14.2.9  2005/07/22 20:03:16  bert
+ * Minor change to consider sequence name when finding series boundaries
  *
  * Revision 1.14.2.8  2005/07/12 16:01:14  bert
  * Sort on filename if all else fails
@@ -113,7 +119,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.16 2005-07-14 19:00:30 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.17 2005-08-26 21:25:54 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -207,6 +213,11 @@ ArgvInfo argTable[] = {
      (char *)&G.dirname_format,
      "Set format for output directory name."},
 
+    {"-usecoordinates",
+     ARGV_CONSTANT,
+     (char *) TRUE,
+     (char *) &G.prefer_coords,
+     "Derive step value from coordinates rather than slice spacing."},
     {NULL, ARGV_END, NULL, NULL, NULL}
 
 };
@@ -234,6 +245,7 @@ main(int argc, char *argv[])
     G.dirname_format = NULL;
 
     G.minc_history = time_stamp(argc, argv); /* Create minc history string */
+    G.prefer_coords = FALSE;
 
     G.pname = argv[0];          /* get program name */
     
@@ -643,6 +655,7 @@ use_the_files(int num_files,
     int cur_dyn_scan_number;
     string_t cur_patient_name;
     string_t cur_patient_id;
+    string_t cur_sequence_name;
     int exit_status;
     char *output_file_name;
     string_t file_prefix;
@@ -723,6 +736,7 @@ use_the_files(int num_files,
 
                 strcpy(cur_patient_name, di_ptr[ifile]->patient_name);
                 strcpy(cur_patient_id, di_ptr[ifile]->patient_id);
+                strcpy(cur_sequence_name, di_ptr[ifile]->sequence_name);
 
                 used_file[ifile] = TRUE;
             }
@@ -738,7 +752,8 @@ use_the_files(int num_files,
                      (di_ptr[ifile]->dyn_scan_number == cur_dyn_scan_number ||
                       !G.splitDynScan) &&
                      !strcmp(cur_patient_name, di_ptr[ifile]->patient_name) &&
-                     !strcmp(cur_patient_id, di_ptr[ifile]->patient_id)) {
+                     !strcmp(cur_patient_id, di_ptr[ifile]->patient_id) &&
+                     !strcmp(cur_sequence_name, di_ptr[ifile]->sequence_name)) {
 
                 used_file[ifile] = TRUE;
             }
