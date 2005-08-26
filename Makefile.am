@@ -3,11 +3,13 @@
 AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CPPFLAGS = -DMINC2
 AM_CFLAGS = 
 AM_YFLAGS = -d
 
-SUBDIRS = . volume_io testdir doc libsrc2
+SUBDIRS = . volume_io testdir doc
+if MINC2
+SUBDIRS += libsrc2
+endif
 
 # Add these to the include searches.
 #
@@ -401,7 +403,10 @@ libminc2_la_SOURCES = \
 	libsrc/voxel_loop.c \
 	libsrc/hdf_convenience.c \
 	libsrc/minc_compat.c \
-	libsrc/minc_simple.c \
+	libsrc/minc_simple.c
+
+if MINC2
+libminc2_la_SOURCES += \
 	libsrc2/convert.c \
 	libsrc2/datatype.c \
 	libsrc2/dimension.c \
@@ -415,6 +420,22 @@ libminc2_la_SOURCES = \
 	libsrc2/valid.c \
 	libsrc2/volprops.c \
 	libsrc2/volume.c
+else
+EXTRA_DIST += \
+	libsrc2/convert.c \
+	libsrc2/datatype.c \
+	libsrc2/dimension.c \
+	libsrc2/free.c \
+	libsrc2/grpattr.c \
+	libsrc2/hyper.c \
+	libsrc2/label.c \
+	libsrc2/m2util.c \
+	libsrc2/record.c \
+	libsrc2/slice.c \
+	libsrc2/valid.c \
+	libsrc2/volprops.c \
+	libsrc2/volume.c
+endif
 
 libvolume_io2_la_LDFLAGS = -version-info 2:0:1
 libvolume_io2_la_SOURCES = \
