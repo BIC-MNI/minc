@@ -310,12 +310,21 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
 	return (MI_ERROR);
     }
 
-    /* Actually create the requested group.
-     */
-    hdf_new_grp = H5Gcreate(hdf_grp, name, 0);
-    if (hdf_new_grp < 0) {
-	return (MI_ERROR);
-    }
+    H5E_BEGIN_TRY {
+        /* See if the group already exists.  If so, just return.
+         */
+        hdf_new_grp = H5Gopen(hdf_grp, name);
+        if (hdf_new_grp >= 0) {
+            H5Gclose(hdf_new_grp);
+            return (MI_NOERROR);
+        }
+        /* Actually create the requested group.
+         */
+        hdf_new_grp = H5Gcreate(hdf_grp, name, 0);
+        if (hdf_new_grp < 0) {
+            return (MI_ERROR);
+        }
+    } H5E_END_TRY;
 
     /* Close the handles we created.
      */
