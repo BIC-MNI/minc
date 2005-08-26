@@ -13,7 +13,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.10  2004-11-01 22:38:39  bert
+ * Revision 6.11  2005-08-26 21:07:18  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.10  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.9  2004/04/27 15:30:02  bert
@@ -95,7 +98,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.10 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.11 2005-08-26 21:07:18 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -173,9 +180,9 @@ static void get_arginfo(int argc, char *argv[],
    static long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
    static double fillvalue = NOFILL;
    static int max_chunk_size_in_kb = DEFAULT_MAX_CHUNK_SIZE_IN_KB;
-#ifdef MINC2
+#if MINC2
    static int minc2_format = 0;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    int cflags;			/* File creation flags */
 
    /* Argument table */
@@ -193,10 +200,10 @@ static void get_arginfo(int argc, char *argv[],
       {"-max_chunk_size_in_kb", ARGV_INT, (char *) 0, 
           (char *) &max_chunk_size_in_kb,
           "Specify the maximum size of the copy buffer (in kbytes)."},
-#ifdef MINC2
+#if MINC2
       {"-2", ARGV_CONSTANT, (char *) TRUE, (char *)&minc2_format,
        "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "Image conversion options (pixel type and range):"},
@@ -445,11 +452,11 @@ static void get_arginfo(int argc, char *argv[],
    else {
        cflags = NC_NOCLOBBER;
    }
-#ifdef MINC2
+#if MINC2
    if (minc2_format) {
        cflags |= MI2_CREATE_V2;
    }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    reshape_info->outmincid = micreate(outfile, cflags);
    setup_output_file(reshape_info->outmincid, history, reshape_info);
 

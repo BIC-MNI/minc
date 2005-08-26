@@ -11,7 +11,10 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.6  2004-11-01 22:38:38  bert
+ * Revision 6.7  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.6  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.5  2004/04/30 19:53:30  bert
@@ -44,7 +47,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.6 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.7 2005-08-26 21:07:17 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -83,9 +90,9 @@ static long get_vector_length(int mincid);
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
-#ifdef MINC2
+#if MINC2
 int v2format = FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 nc_type datatype = MI_ORIGINAL_TYPE;
 int is_signed = FALSE;
 double valid_range[2] = {0.0, 0.0};
@@ -93,10 +100,10 @@ int buffer_size = 10 * 1024;
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
+#if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -171,9 +178,9 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
-#ifdef MINC2
+#if MINC2
    set_loop_v2format(loop_options, v2format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_output_vector_size(loop_options, num_input_files);

@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.12  2005-07-15 17:38:08  bert
+ * Revision 6.13  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.12  2005/07/15 17:38:08  bert
  * Add -filestarts option
  *
  * Revision 6.11  2004/12/14 23:52:08  bert
@@ -103,7 +106,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.12 2005-07-15 17:38:08 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.13 2005-08-26 21:07:17 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #define _GNU_SOURCE 1
@@ -300,9 +307,9 @@ static void get_arginfo(int argc, char *argv[],
 
    /* Argument variables */
    static int clobber = FALSE;
-#ifdef MINC2
+#if MINC2
    static int minc2_format = FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    static int verbose = TRUE;
    static nc_type datatype = MI_ORIGINAL_TYPE;
    static int is_signed = INT_MIN;
@@ -323,10 +330,10 @@ static void get_arginfo(int argc, char *argv[],
       {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
           "General options:"},
 
-#ifdef MINC2
+#if MINC2
       {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
        "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber, 
           "Overwrite existing file."},
       {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber, 
@@ -527,11 +534,11 @@ static void get_arginfo(int argc, char *argv[],
    else {
        concat_info->cflags = NC_NOCLOBBER;
    }
-#ifdef MINC2
+#if MINC2
    if (minc2_format) {
        concat_info->cflags |= MI2_CREATE_V2;
    }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    concat_info->verbose = verbose;
    concat_info->max_memory_use_in_kb = max_chunk_size_in_kb;
    concat_info->check_dim_info = check_dim_info;

@@ -11,7 +11,10 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.6  2004-12-03 21:57:08  bert
+ * Revision 6.7  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.6  2004/12/03 21:57:08  bert
  * Include config.h
  *
  * Revision 6.5  2004/11/01 22:38:38  bert
@@ -72,10 +75,12 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.6 2004-12-03 21:57:08 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.7 2005-08-26 21:07:17 bert Exp $";
 #endif
 
+#if HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -210,16 +215,16 @@ double lookup_min = DEFAULT_RANGE;
 double lookup_max = DEFAULT_RANGE;
 int discrete_lookup = FALSE;
 char *null_value_string = NULL;
-#ifdef MINC2
+#if MINC2
 int minc2_format = FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
+#if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
      "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -347,9 +352,9 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_clobber(loop_options, clobber);
    set_loop_verbose(loop_options, verbose);
-#ifdef MINC2
+#if MINC2
    set_loop_v2format(loop_options, minc2_format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_convert_input_to_scalar(loop_options, TRUE);

@@ -1,8 +1,12 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.2 2004-06-16 16:19:27 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.3 2005-08-26 21:07:17 bert Exp $
  *********************************************************************/
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,8 +41,12 @@ gen_netcdf(
     int dimid;
     int varid;
     int stat;
+#if MINC2
     ncid = micreate(filename, 
                     (is_hdf5) ? (MI2_CREATE_V2 | NC_CLOBBER) : NC_CLOBBER);
+#else
+    ncid = micreate(filename, NC_CLOBBER);
+#endif
 
     check_err(ncid);
 

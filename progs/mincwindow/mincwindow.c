@@ -10,7 +10,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.3  2004-11-01 22:38:39  bert
+ * Revision 6.4  2005-08-26 21:07:18  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.3  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.2  2004/04/27 15:28:39  bert
@@ -67,7 +70,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.3 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.4 2005-08-26 21:07:18 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -103,16 +110,16 @@ static void do_window(void *caller_data, long num_voxels,
 /* Argument variables */
 int clobber = FALSE;
 int verbose = TRUE;
-#ifdef MINC2
+#if MINC2
 int v2format = FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
+#if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -175,9 +182,9 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
-#ifdef MINC2
+#if MINC2
    set_loop_v2format(loop_options, v2format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    voxel_loop(1, &infile, 1, &outfile, arg_string, loop_options,
               do_window, (void *) &window_data);
 

@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.7  2004-12-14 23:52:50  bert
+ * Revision 6.8  2005-08-26 21:07:16  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.7  2004/12/14 23:52:50  bert
  * Get rid of compilation warnings w/c99
  *
  * Revision 6.6  2004/11/01 22:38:38  bert
@@ -74,7 +77,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.7 2004-12-14 23:52:50 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.8 2005-08-26 21:07:16 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #define _GNU_SOURCE
@@ -175,16 +182,16 @@ double binvalue = -DBL_MAX;
 Double_Array weights = {0, NULL};
 int width_weighted = FALSE;
 char *filelist = NULL;
-#ifdef MINC2
+#if MINC2
 int minc2_format = FALSE;
 #endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
-#ifdef MINC2
+#if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
      "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -491,7 +498,7 @@ int main(int argc, char *argv[])
       vol_mean = malloc(sizeof(*vol_mean) * nfiles);
       loop_options = create_loop_options();
       set_loop_verbose(loop_options, FALSE);
-#ifdef MINC2
+#if MINC2
       set_loop_v2format(loop_options, minc2_format);
 #endif /* MINC2 */
       set_loop_accumulate(loop_options, TRUE, 0, NULL, NULL);

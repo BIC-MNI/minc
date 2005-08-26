@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.12  2004-12-14 23:52:23  bert
+ * Revision 1.13  2005-08-26 21:07:16  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 1.12  2004/12/14 23:52:23  bert
  * Get rid of compilation warnings w/c99
  *
  * Revision 1.11  2004/11/01 22:38:38  bert
@@ -75,7 +78,11 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.12 2004-12-14 23:52:23 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.13 2005-08-26 21:07:16 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #define _GNU_SOURCE 1
@@ -143,18 +150,18 @@ char     *filelist =                   NULL;
 char     *expr_file =                  NULL;
 char     *expression =                 NULL;
 int      eval_width =                  200;
-#ifdef MINC2
+#if MINC2
 int      minc2_format =                FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "General options:"},
-#ifdef MINC2
+#if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
      "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -371,9 +378,9 @@ int main(int argc, char *argv[]){
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
-#ifdef MINC2
+#if MINC2
    set_loop_v2format(loop_options, minc2_format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_copy_all_header(loop_options, copy_all_header);

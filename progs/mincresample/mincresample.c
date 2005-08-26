@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.17  2005-07-13 21:34:24  bert
+ * Revision 6.18  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.17  2005/07/13 21:34:24  bert
  * Add sinc interpolant (ported from 1.X branch)
  *
  * Revision 6.16  2004/11/01 22:38:39  bert
@@ -177,7 +180,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.17 2005-07-13 21:34:24 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.18 2005-08-26 21:07:17 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -281,11 +288,11 @@ static void get_arginfo(int argc, char *argv[],
    };
 
    static ArgvInfo argTable[] = {
-#ifdef MINC2
+#if MINC2
        {"-2", ARGV_CONSTANT, (char *) TRUE, 
 	(char *) &args.v2format,
        "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
       {"-clobber", ARGV_CONSTANT, (char *) TRUE, 
           (char *) &args.clobber,
           "Overwrite existing file."},
@@ -698,11 +705,11 @@ static void get_arginfo(int argc, char *argv[],
    else {
        cflags = NC_NOCLOBBER;
    }
-#ifdef MINC2
+#if MINC2
    if (args.v2format) {
        cflags |= MI2_CREATE_V2;
    }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    create_output_file(outfile, cflags, &args.volume_def, 
                       in_vol->file, out_vol->file,
                       tm_stamp, &args.transform_info);

@@ -10,7 +10,10 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.3  2004-11-01 22:38:38  bert
+ * Revision 1.4  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 1.3  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 1.2  2004/09/09 19:25:32  bert
@@ -32,7 +35,11 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.3 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.4 2005-08-26 21:07:17 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -101,9 +108,9 @@ main(int argc, char **argv)
     int old_fd;
     int new_fd;
     int flags;
-#ifdef MINC2
+#if MINC2
     struct mi2opts opts;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
     char *new_history = time_stamp(argc, argv);
 
@@ -171,7 +178,7 @@ main(int argc, char **argv)
     }
 #else
     new_fd = micreate(new_fname, flags);
-#endif /* MINC2 not defined */
+#endif /* not MINC2 */
 
     micopy(old_fd, new_fd, new_history, do_template);
 

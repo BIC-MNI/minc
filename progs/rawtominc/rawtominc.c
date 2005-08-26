@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.17  2004-12-14 23:38:52  bert
+ * Revision 6.18  2005-08-26 21:07:18  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.17  2004/12/14 23:38:52  bert
  * Get rid of c99 compilation problems
  *
  * Revision 6.16  2004/12/03 21:54:27  bert
@@ -152,11 +155,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.17 2004-12-14 23:38:52 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.18 2005-08-26 21:07:18 bert Exp $";
 #endif
 
 #define _GNU_SOURCE 1
+#if HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -236,9 +241,9 @@ nc_type convert_types[] = {
 char *pname;
 char *filename;
 int clobber=FALSE;
-#ifdef MINC2
+#if MINC2
 int v2format=FALSE;		/* Version 2.0 file format? */
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
@@ -378,10 +383,10 @@ ArgvInfo argTable[] = {
        "Do not scan input for min and max (default)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for writing output file. Default = -noclobber."},
-#ifdef MINC2
+#if MINC2
    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -590,11 +595,11 @@ int main(int argc, char *argv[])
    else {
        cflags = NC_NOCLOBBER;
    }
-#ifdef MINC2
+#if MINC2
    if (v2format) {
        cflags |= MI2_CREATE_V2;
    }
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    cdfid=micreate(filename, cflags);
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 

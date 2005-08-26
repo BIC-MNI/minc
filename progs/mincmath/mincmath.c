@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.9  2004-12-14 23:40:07  bert
+ * Revision 6.10  2005-08-26 21:07:17  bert
+ * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ *
+ * Revision 6.9  2004/12/14 23:40:07  bert
  * Get rid of c99 compilation problems
  *
  * Revision 6.8  2004/12/03 21:56:51  bert
@@ -78,11 +81,13 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.9 2004-12-14 23:40:07 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.10 2005-08-26 21:07:17 bert Exp $";
 #endif
 
 #define _GNU_SOURCE 1
+#if HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -209,18 +214,18 @@ int use_nan_for_illegal_values = TRUE;
 double value_for_illegal_operations = DEFAULT_DBL;
 int check_dim_info = TRUE;
 char *filelist = NULL;
-#ifdef MINC2
+#if MINC2
 int minc2_format = FALSE;
-#endif /* MINC2 defined */
+#endif /* MINC2 */
 
 /* Argument table */
 ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *) NULL, (char *) NULL, 
        "General options:"},
-#ifdef MINC2
+#if MINC2
    {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &minc2_format,
     "Produce a MINC 2.0 format output file"},
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file."},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -490,9 +495,9 @@ int main(int argc, char *argv[])
    loop_options = create_loop_options();
    set_loop_verbose(loop_options, verbose);
    set_loop_clobber(loop_options, clobber);
-#ifdef MINC2
+#if MINC2
    set_loop_v2format(loop_options, minc2_format);
-#endif /* MINC2 defined */
+#endif /* MINC2 */
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    if (num_operands == NARY_NUMOP) {
