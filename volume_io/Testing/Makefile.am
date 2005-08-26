@@ -6,7 +6,6 @@ INCLUDES = \
         -I$(top_srcdir)/volume_io/Include \
         -I$(top_srcdir)/progs/Proglib
 
-AM_CPPFLAGS = -DMINC2
 LDADD = ../../libvolume_io2.la ../../libminc2.la
 
 noinst_PROGRAMS = example_modify example_tags example_volume_io
