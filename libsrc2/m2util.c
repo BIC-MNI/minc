@@ -359,10 +359,10 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 {
     hid_t hdf_file;
     hid_t hdf_loc;
-    hid_t mtyp_id;             /* Parameter type */
-    hid_t spc_id;
-    hid_t hdf_attr;
-    int status;
+    hid_t mtyp_id = -1;         /* Parameter type */
+    hid_t spc_id = -1;
+    hid_t hdf_attr = -1;
+    int status = MI_ERROR;      /* Guilty until proven innocent */
 
     /* Get a handle to the actual HDF file 
      */
@@ -375,14 +375,14 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
      */
     hdf_loc = midescend_path(hdf_file, path);
     if (hdf_loc < 0) {
-	return (MI_ERROR);
+        return (MI_ERROR);
     }
     
     H5E_BEGIN_TRY {
         hdf_attr = H5Aopen_name(hdf_loc, name);
     } H5E_END_TRY;
     if (hdf_attr < 0) {
-	return (MI_ERROR);
+        goto cleanup;
     }
 
     switch (data_type) {
@@ -403,12 +403,12 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 	H5Tset_size(mtyp_id, length);
 	break;
     default:
-	return (MI_ERROR);
+        goto cleanup;
     }
 
     spc_id = H5Aget_space(hdf_attr);
     if (spc_id < 0) {
-	return (MI_ERROR);
+        goto cleanup;
     }
 
     /* If we're retrieving a vector, make certain the length passed into this
@@ -419,14 +419,15 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
 
 	H5Sget_simple_extent_dims(spc_id, hdf_dims, NULL);
 	if (length < hdf_dims[0]) {
-	    return (MI_ERROR);
+            goto cleanup;
 	}
     }
     
-    status = H5Aread(hdf_attr, mtyp_id, values);
-    if (status < 0) {
-        return (MI_ERROR);
+    if (H5Aread(hdf_attr, mtyp_id, values) < 0) {
+        goto cleanup;
     }
+
+    status = MI_NOERROR;        /* We succeeded! */
 
     /* Be certain that the string is null-terminated.
      */
@@ -442,19 +443,28 @@ miget_attribute(mihandle_t volume, const char *path, const char *name,
         H5Tclose(atype);
     }
 
-    H5Aclose(hdf_attr);
-    H5Tclose(mtyp_id);
-    H5Sclose(spc_id);
+ cleanup:
+    if (hdf_attr >= 0) {
+        H5Aclose(hdf_attr);
+    }
+    if (mtyp_id >= 0) {
+        H5Tclose(mtyp_id);
+    }
+    if (spc_id >= 0) {
+        H5Sclose(spc_id);
+    }
 
-    /* The hdf_loc identifier could be a group or a dataset.
-     */
-    if (H5Iget_type(hdf_loc) == H5I_GROUP) {
-        H5Gclose(hdf_loc);
+    if (hdf_loc >= 0) {
+        /* The hdf_loc identifier could be a group or a dataset.
+         */
+        if (H5Iget_type(hdf_loc) == H5I_GROUP) {
+            H5Gclose(hdf_loc);
+        }
+        else {
+            H5Dclose(hdf_loc);
+        }
     }
-    else {
-        H5Dclose(hdf_loc);
-    }
-    return (MI_NOERROR);
+    return (status);
 }
 
 /* Get the mapping from spatial dimension - x, y, z - to file dimensions
