@@ -743,7 +743,7 @@ miget_real_value_hyperslab(mihandle_t volume,
     miicv_setint(icv, MI_ICV_TYPE, nctype);
     miicv_setstr(icv, MI_ICV_SIGN, is_signed ? MI_SIGNED : MI_UNSIGNED);
     miicv_setint(icv, MI_ICV_DO_RANGE, TRUE);
-    miicv_setint(icv, MI_ICV_DO_NORM, FALSE);
+    miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
 
     result = miicv_attach(icv, file_id, var_id);
     if (result == MI_NOERROR) {
