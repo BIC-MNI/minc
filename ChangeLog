@@ -1,4 +1,12 @@
 MINC 2:
+2005-09-14 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* libsrc2/slice.c - in function mirw_slice_minmax(), properly 
+	reorient access for slice minimum and maximum if dimension 
+	order has been altered.
+	* libsrc2/hyper.c - normalize data correctly in 
+	miget_real_value_hyperslab().
+	* progs/mincinfo/mincinfo.c - include config.h
+	
 2005-08-26 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* Implemented --enable-hdf5 option in ./configure
 	script so that we can selectively enable or disable MINC2 support.
