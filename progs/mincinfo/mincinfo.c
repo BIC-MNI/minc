@@ -10,7 +10,10 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.5  2004-11-01 22:38:38  bert
+ * Revision 6.6  2005-09-14 04:31:17  bert
+ * include config.h
+ *
+ * Revision 6.5  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.4  2001/10/31 19:40:21  neelin
@@ -82,7 +85,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.6 2005-09-14 04:31:17 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
