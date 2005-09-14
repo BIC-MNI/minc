@@ -39,7 +39,10 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     hid_t dset_id;
     hid_t fspc_id;
     hid_t mspc_id;
-    hssize_t coords[MI2_MAX_VAR_DIMS][1];
+    hssize_t hdf_start[MI2_MAX_VAR_DIMS];
+    hsize_t hdf_count[MI2_MAX_VAR_DIMS];
+    unsigned long count[MI2_MAX_VAR_DIMS];
+    int dir[MI2_MAX_VAR_DIMS];
     int ndims;
     int i;
     int result;
@@ -70,11 +73,18 @@ mirw_slice_minmax(int opcode, mihandle_t volume,
     }
 
     for (i = 0; i < ndims; i++) {
-	coords[i][0] = start_positions[i];
+        count[i] = 1;
     }
 
+    mitranslate_hyperslab_origin(volume,
+                                 start_positions,
+                                 count,
+                                 hdf_start,
+                                 hdf_count,
+                                 dir);
+                                 
     result = H5Sselect_elements(fspc_id, H5S_SELECT_SET, 1, 
-				(const hssize_t **) coords);
+				(const hsize_t **) &hdf_start);
     if (result < 0) {
 	return (MI_ERROR);
     }
