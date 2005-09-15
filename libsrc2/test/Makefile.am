@@ -8,6 +8,7 @@ TESTS =	\
 	full-test \
 	grpattr-test \
 	hyper-test \
+        hyper-test-2 \
 	label-test \
 	record-test \
 	slice-test \
@@ -15,7 +16,7 @@ TESTS =	\
 	volprops-test \
 	multires-test \
 	convert-test \
-	vector_dimension-test
+	vector_dimension-test 
 
 check_PROGRAMS = $(TESTS)
 
