@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     create_test_file();
 
     printf(" \n");
-    printf("This test uses the vector_dimension file in test directory\n");
+    printf("Opening vector-dimension file!\n");
     printf(" \n");
 
     r = miopen_volume("example_vector2.mnc", MI2_OPEN_READ, &vol);
