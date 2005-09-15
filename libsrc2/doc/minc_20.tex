@@ -10,7 +10,7 @@
 \documentclass{article}
 \title{MINC 2.0 Application Programming Interface (API)}
 \author{Bert Vincent and Leila Baghdadi and John G Sled}
-\date{FEB 01, 2004}
+\date{Sept 15, 2005}
 \textwidth 6.0in
 \oddsidemargin 0.125in
 \textheight 8.5in
@@ -1670,7 +1670,10 @@ DESCRIPTION
 
 The real values in the volume from the interval min through max
 is mapped to the maximum representable range for the requested
-data type. Float type is NOT an allowed data type.
+data type. This function is also intended to be used for 
+visualization tools in which the data is scaled to map onto 
+an integer range for passing through color maps or displaying by video cards.
+Float type is NOT an allowed data type.
 
 RETURN VALUE
 
@@ -1757,8 +1760,9 @@ int miget_real_value_hyperslab( mihandle_t     volume,
 DESCRIPTION
 
 This method converts the data from the type that is in the file in a value
-preserving way.If real value exceeds range of the requested data type, the
-result is UNDEFINED. The void pointer is pointing to memory which has to be 
+preserving way irrespective of the underlying datatype.If real value 
+exceeds range of the requested data type, the result is UNDEFINED. 
+The void pointer is pointing to memory which has to be 
 allocated by the programmer in advance.
 
 
