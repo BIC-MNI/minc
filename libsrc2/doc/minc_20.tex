@@ -1264,7 +1264,6 @@ int miget_dimension_separation ( midimhandle_t          dimension,
                                  double                 *separation_ptr );
 
 int miset_dimension_separation ( midimhandle_t          dimension,
-                                 mivoxel_order_t        voxel_order,
                                  double                 separation );
 
 DESCRIPTION
@@ -1311,7 +1310,6 @@ int miget_dimension_separations ( const midimhandle_t   dimensions[],
                                   double                separations[] );
 
 int miset_dimension_separations ( const midimhandle_t   dimensions[],
-                                  mivoxel_order_t       voxel_order,
                                   int                   array_length,
                                   const double          separations[] );
 
@@ -1407,7 +1405,6 @@ int miget_dimension_start ( midimhandle_t       dimension,
                             double              *start_ptr);
 
 int miset_dimension_start ( midimhandle_t       dimension,
-                            mivoxel_order_t     voxel_order,
                             double              start);
 
 DESCRIPTION
@@ -1439,9 +1436,8 @@ int miget_dimension_starts ( const midimhandle_t        dimensions[],
                              double                     starts[]);
       
 int miset_dimension_starts ( const midimhandle_t        dimensions[],
-                             mivoxel_order_t            voxel_order,
                              int                        array_length,
-                             const                      double starts[]);
+                             const double               starts[]);
 
 DESCRIPTION
 
