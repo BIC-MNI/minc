@@ -2398,7 +2398,9 @@ int miset_slice_scaling_flag ( mihandle_t       volume,
 DESCRIPTION
 
 This method sets the scaling flag for slices which determines whether 
-the volume slices have different scale factors.
+the volume slices have different scale factors. 
+NOTE: when creating a volume with slice scaling , this fuction MUST
+be called before micreate_volume_image().
 
 RETURN VALUE
 

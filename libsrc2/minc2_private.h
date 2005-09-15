@@ -106,7 +106,7 @@ struct mivolume {
   hid_t plist_id;               /* Image property list */
   hid_t image_id;               /* Dataset for image */
   hid_t imax_id;                /* Dataset for image-max */
-  hid_t imin_id;                /* Dataset for image-max */
+  hid_t imin_id;                /* Dataset for image-min */
   double scale_min;             /* Global minimum */
   double scale_max;             /* Global maximum */
   miboolean_t is_dirty;             /* TRUE if data has been modified. */
