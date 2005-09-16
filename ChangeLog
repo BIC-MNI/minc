@@ -1,4 +1,12 @@
 MINC 2:
+2005-09-16 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* libsrc2/conversion/dcm2mnc/dicom_read.c - again change the
+	handling of the slice thickness / slice spacing issue to
+	accomodate Andrew Janke's Philips data. If both slice thickness
+	and slice spacing are set, we select the maximum. For some reason
+	I had been choosing the minimum, but logically the opposite seems
+	more reasonable (and is certainly correct in Andrew's case).
+	
 2005-09-14 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* libsrc2/slice.c - in function mirw_slice_minmax(), properly 
 	reorient access for slice minimum and maximum if dimension 

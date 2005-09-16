@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.18  2005-08-26 21:25:54  bert
+   * Revision 1.19  2005-09-16 22:13:33  bert
+   * Fix slice spacing handling
+   *
+   * Revision 1.18  2005/08/26 21:25:54  bert
    * Latest changes ported from 1.0 branch
    *
    * Revision 1.16.2.5  2005/08/26 03:50:16  bert
@@ -1150,7 +1153,7 @@ get_coordinate_info(Acr_Group group_list,
     double magnitude;
     double largest;
     double psize[IMAGE_NDIMS];
-    double dbl_tmp1, dbl_tmp2;
+    double slice_thickness, slice_spacing;
     int result;
 
     double RowColVec[6]; /* row/column unit vectors in public dicom element */
@@ -1341,12 +1344,18 @@ get_coordinate_info(Acr_Group group_list,
 
     /* Figure out the slice thickness.  It could be from either one of
      * two possible places in the file.
+     * 
+     * This code has changed several times, and there may be no single
+     * correct way of deriving the true slice spacing from the official
+     * DICOM slice thickness and slice spacing fields.  My best guess is
+     * to look for both fields, and to adopt the 
      */
-    dbl_tmp1 = acr_find_double(group_list, ACR_Slice_thickness, 0.0);
-    dbl_tmp2 = acr_find_double(group_list, ACR_Spacing_between_slices, 0.0);
+    slice_thickness = acr_find_double(group_list, ACR_Slice_thickness, 0);
+    slice_spacing = acr_find_double(group_list, ACR_Spacing_between_slices, 0);
 
-    if (dbl_tmp1 == 0.0) {
-        if (dbl_tmp2 == 0.0) {
+    if (slice_thickness == 0.0) {
+        /* No slice thickness value found. */
+        if (slice_spacing == 0.0) {
             if (G.Debug >= HI_LOGGING) {
                 printf("Using default slice thickness of 1.0\n");
             }
@@ -1356,23 +1365,35 @@ get_coordinate_info(Acr_Group group_list,
             if (G.Debug >= HI_LOGGING) {
                 printf("Using (0018,0088) for slice thickness\n");
             }
-            steps[VSLICE] = dbl_tmp2;
+            steps[VSLICE] = slice_spacing;
         }
     }
-    else if (dbl_tmp2 == 0.0) {
+    else if (slice_spacing == 0.0) {
+        /* No slice spacing value found. */
         if (G.Debug >= HI_LOGGING) {
             printf("Using (0018,0050) for slice thickness\n");
         }
-        steps[VSLICE] = dbl_tmp1;
+        steps[VSLICE] = slice_thickness;
     }
     else {
-        if (G.Debug && !NEARLY_EQUAL(dbl_tmp1, dbl_tmp2)) {
+        /* Both fields are set.  I choose the maximum of the two, as
+         * this seems likely to be more correct. However, I believe
+         * there is some evidence that this can cause problems in rare
+         * cases.
+         */
+        if (G.Debug && !NEARLY_EQUAL(slice_thickness, slice_spacing)) {
             printf("WARNING: slice thickness conflict: ");
-            printf("old = %.10f, new = %.10f\n", dbl_tmp1, dbl_tmp2);
+            printf("old = %.10f, new = %.10f\n", 
+                   slice_thickness, slice_spacing);
         }
-        /* Use the minimum slice spacing. */
-        steps[VSLICE] = (dbl_tmp2 < dbl_tmp1) ? dbl_tmp2 : dbl_tmp1;
-        /* steps[VSLICE] = dbl_tmp2; */
+        /* Use the maximum of the slice spacing and the slice thickness.
+         */
+        if (slice_spacing > slice_thickness) {
+            steps[VSLICE] = slice_spacing;
+        }
+        else {
+            steps[VSLICE] = slice_thickness;
+        }
     }
 
     /* Make sure that direction cosines point the right way (dot
