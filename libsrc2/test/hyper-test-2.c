@@ -30,7 +30,7 @@ int create_test_file(void)
     double separations[3]={0.09,0.09,0.09};
     midimhandle_t hdim[NDIMS];
     mihandle_t hvol;
-    unsigned short *buf = malloc(CZ*CX*CY);
+    unsigned short *buf = ( unsigned short *) malloc(CX * CY * CZ * sizeof(unsigned short));
     int i;
     long count[NDIMS];
     long start[NDIMS];
@@ -90,14 +90,11 @@ int main(int argc, char **argv)
     unsigned long count[NDIMS];
     unsigned long howfar[NDIMS];
     unsigned long location[NDIMS];
-
-    unsigned short * Atmp;
     double *buffer,value;
     int r = 0;
     
     static char *dimorder[] = {"xspace", "yspace", "zspace"};
-    Atmp = ( unsigned short *) malloc(CX * CY * CZ * sizeof(unsigned short));
-   
+    
     printf("Creating image with slice scaling!! \n");
     create_test_file();
     printf("Opening hyperslab-test2.mnc! \n");
