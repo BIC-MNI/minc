@@ -1176,13 +1176,15 @@ SYNOPSIS
 
 #include <minc2.h>
 
-int miget_dimension_offsets ( midimhandle_t     dimension, double       offsets[],
+int miget_dimension_offsets ( midimhandle_t     dimension, 
                               unsigned long     array_length, 
-                              unsigned long     start_position);
+                              unsigned long     start_position,
+                              double            offsets[]);
 
-int miset_dimension_offsets ( midimhandle_t     dimension, const double offsets[],
+int miset_dimension_offsets ( midimhandle_t     dimension, 
                               unsigned long     array_length, 
-                              unsigned long     start_position);
+                              unsigned long     start_position,
+                              const double      offsets[]);
 
 DESCRIPTION
 
