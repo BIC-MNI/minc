@@ -1165,8 +1165,8 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 
     case H5T_ENUM:
         handle->mtype_id = H5Tcopy(handle->ftype_id);
-        /* Set native order */
-        H5Tset_order(handle->mtype_id, H5Tget_order(H5T_NATIVE_INT));
+        /* Set native order ---> is not allowed after order is set */
+        //H5Tset_order(handle->mtype_id, H5Tget_order(H5T_NATIVE_INT));
         break;
 
     default:
@@ -1217,6 +1217,10 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     case H5T_COMPOUND:
 	/* TODO: handle this case for non-uniform records? */
 	break;
+    case H5T_ENUM:
+        /* label images */
+        handle->volume_type = MI_TYPE_UINT;
+        break;
     default:
         return (MI_ERROR);
     }

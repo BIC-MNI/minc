@@ -98,13 +98,33 @@ main(int argc, char **argv)
 
     micreate_volume_image(hvol);
 
-    coords[0] = 0;
-    coords[1] = 0;
-    coords[2] = 0;
-    miset_voxel_value(hvol, coords, 3, 0xffffff);
-    coords[2] = 2;
-    miset_voxel_value(hvol, coords, 3, 0x00ff00);
-
+    for (i=0; i < 10; i++) {
+      for (j=0; j < 10 ; j++) {
+	for (k=0; k < 6 ; k++) {
+	  coords[0] = i;
+	  coords[1] = j;
+	  coords[2] = k;
+	  if ((i*j*k) < 150) {
+	    miset_voxel_value(hvol,coords, 3, 0);
+	  }
+	  else if ((i*j*k) < 250) {
+	    miset_voxel_value(hvol,coords, 3, 0xffffff);
+	  }
+	  else if ((i*j*k) < 350) {
+	    miset_voxel_value(hvol,coords, 3, 0x808080);
+	  }
+	  else if ((i*j*k) < 450) {
+	    miset_voxel_value(hvol,coords, 3, 0xff0000);
+	  }
+	  else if ((i*j*k) < 550) {
+	    miset_voxel_value(hvol,coords, 3, 0x00ff00);
+	  }
+	  else {
+	    miset_voxel_value(hvol,coords, 3,0x0000ff );
+	  }
+	}
+      }
+    }
     miclose_volume(hvol);
 
     if (error_cnt != 0) {
