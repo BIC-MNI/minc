@@ -510,10 +510,11 @@ micreate_volume(const char *filename, int number_of_dimensions,
 	/* Write the raw data from buffer (dimensions[i]->offsets)
 	   to the dataset.
 	 */
-	size = strlen(dimensions[i]->name) + 6;
+	size = strlen(dimensions[i]->name) + 6 + 1;
         name = malloc(size);
-	strcpy(name, dimensions[i]->name);
+        strcpy(name, dimensions[i]->name);
 	strcat(name, "-width");
+
 	/* Create dataset dimension_name-width */
 	dataset_width = H5Dcreate(grp_id, name, H5T_IEEE_F64LE, 
                                   dataspace_id, H5P_DEFAULT);
