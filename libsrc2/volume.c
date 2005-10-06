@@ -1165,6 +1165,8 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 
     case H5T_ENUM:
         handle->mtype_id = H5Tcopy(handle->ftype_id);
+	miinit_enum(handle->ftype_id);
+	miinit_enum(handle->mtype_id);
         /* Set native order ---> is not allowed after order is set */
         //H5Tset_order(handle->mtype_id, H5Tget_order(H5T_NATIVE_INT));
         break;
