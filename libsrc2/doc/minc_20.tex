@@ -129,6 +129,9 @@ TUE JAN 18/2005 Leila\\*
 TUE MAR 08/2005 Leila\\*
 * Changed BOOLEAN to miboolean_t due to conflicts with other libraries
 
+TUE OCT 11/2005 Leila\\*
+* Added new function to label  functions.
+
 \section{Introduction}
 
 
@@ -1980,7 +1983,7 @@ voxel value hyperslab with specified size and type and MI_ERROR otherwise
 %MI_NOERROR on success, MI_ERROR on failure.
 %\end{verbatim}
 
-\section{LABEL FUNCTIONS (4)}
+\section{LABEL FUNCTIONS (5)}
 \subsection{midefine\_label}
 \begin{verbatim}
 NAME
@@ -2076,6 +2079,30 @@ int miget_number_of_defined_labels ( mihandle_t      volume,
 DESCRIPTION
 
 This function returns the number of defined labels, if any, or zero otherwise.
+
+RETURN VALUE
+
+MI_NOERROR on success, MI_ERROR on failure.
+\end{verbatim}
+
+\subsection{miget\_label\_value\_by\_index}
+\begin{verbatim}
+
+NAME
+
+miget_label_value_by_index - Retrive the label value from its index
+
+SYNOPSIS
+
+#include <minc2.h>
+
+int miget_label_value_by_index ( mihandle_t      volume, 
+                                 int             idx,
+                                 int             *value);
+
+DESCRIPTION
+
+This function returns the label value from its indexs, if any, or zero otherwise.
 
 RETURN VALUE
 

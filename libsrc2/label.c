@@ -1,3 +1,4 @@
+
 /**
  * \file label.c
  * \brief MINC 2.0 Label functions
@@ -189,5 +190,34 @@ miget_number_of_defined_labels(mihandle_t volume, int *number_of_labels)
     *number_of_labels = result;
   }
     
+  return (MI_NOERROR);
+}
+
+/**
+This function returns the label value associated with an index (0,1,...)
+*/
+int
+miget_label_value_by_index(mihandle_t volume, int idx, int *value)
+{
+  int result;
+  if (volume == NULL) {
+    return (MI_ERROR);
+  }
+  if (volume->volume_class != MI_CLASS_LABEL) {
+    return (MI_ERROR);
+  }
+  
+  if (volume->mtype_id <= 0) {
+    return (MI_ERROR);
+  }
+
+  H5E_BEGIN_TRY {
+    result = H5Tget_member_value(volume->mtype_id,idx,value);
+  } H5E_END_TRY;
+   
+  if (result < 0) {
+    return (MI_ERROR);
+  }
+
   return (MI_NOERROR);
 }
