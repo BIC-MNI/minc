@@ -290,12 +290,9 @@ micreate_volume(const char *filename, int number_of_dimensions,
       break;
 
   case MI_CLASS_LABEL:
-      /* A volume of class LABEL must have an integer type.
+      /* A volume of class LABEL must have an integer type (positive).
        */
       switch (volume_type) {
-      case MI_TYPE_BYTE:
-      case MI_TYPE_SHORT:
-      case MI_TYPE_INT:
       case MI_TYPE_UBYTE:
       case MI_TYPE_USHORT:
       case MI_TYPE_UINT:
@@ -1221,7 +1218,19 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 	break;
     case H5T_ENUM:
         /* label images */
-        handle->volume_type = MI_TYPE_UINT;
+      switch (nbytes) {
+	case 1:
+	    handle->volume_type = MI_TYPE_UBYTE;
+	    break;
+	case 2:
+	    handle->volume_type = MI_TYPE_USHORT;
+	    break;
+	case 4:
+	    handle->volume_type = MI_TYPE_UINT;
+	    break;
+	default:
+            return (MI_ERROR);
+	}
         break;
     default:
         return (MI_ERROR);
