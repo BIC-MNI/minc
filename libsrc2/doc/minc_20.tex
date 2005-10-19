@@ -730,7 +730,7 @@ SYNOPSIS
 
 int micreate_dimension ( const char     *name,
                          midimclass_t   class, midimattr_t      attr,
-                         unsigned long  size, midimhandle_t     *new_dim_ptr);
+                         unsigned int  size, midimhandle_t     *new_dim_ptr);
 
 DESCRIPTION
 
@@ -1348,10 +1348,10 @@ SYNOPSIS
 #include <minc2.h>
 
 int miget_dimension_size ( midimhandle_t        dimension, 
-                           unsigned long        *size_ptr );
+                           unsigned int         *size_ptr );
 
 int miset_dimension_size ( midimhandle_t        dimension, 
-                           unsigned long        size );
+                           unsigned int         size );
 
 DESCRIPTION
 
@@ -1377,7 +1377,7 @@ SYNOPSIS
 
 int miget_dimension_sizes ( const midimhandle_t         dimensions[],
                             int                         array_length,
-                            unsigned long               sizes[] );
+                            unsigned int                sizes[] );
 
 DESCRIPTION
 

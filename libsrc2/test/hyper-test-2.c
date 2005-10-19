@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     
     midimhandle_t dim[NDIMS];
 
-    unsigned long sizes[NDIMS];    
+    unsigned int sizes[NDIMS];    
     unsigned long start[NDIMS];
     unsigned long count[NDIMS];
     unsigned long howfar[NDIMS];

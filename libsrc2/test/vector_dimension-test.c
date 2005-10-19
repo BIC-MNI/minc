@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     mihandle_t vol;
     int r = 0;
     midimhandle_t dim[NDIMS];
-    unsigned long lengths[NDIMS];
+    unsigned int lengths[NDIMS];
     midimhandle_t copy_dim[NDIMS];
     int n;
     unsigned long coords[NDIMS];

@@ -171,7 +171,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
 
 int 
 micreate_dimension(const char *name, midimclass_t class, midimattr_t attr, 
-		   unsigned long length, midimhandle_t *new_dim_ptr)
+		   unsigned int length, midimhandle_t *new_dim_ptr)
 {  
   
   midimhandle_t handle;
@@ -1251,7 +1251,7 @@ miset_dimension_separations(const midimhandle_t dimensions[],
   */
 
 int 
-miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
+miget_dimension_size(midimhandle_t dimension, unsigned int *size_ptr)
 {
     if (dimension == NULL) {
         return (MI_ERROR);
@@ -1270,7 +1270,7 @@ miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr)
   */
 
 int 
-miset_dimension_size(midimhandle_t dimension, unsigned long size)
+miset_dimension_size(midimhandle_t dimension, unsigned int size)
 {
     /* Check whether the dimension is associated with a volume.
      */
@@ -1295,7 +1295,7 @@ miset_dimension_size(midimhandle_t dimension, unsigned long size)
 
 int 
 miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
-		      unsigned long sizes[])
+		      unsigned int sizes[])
 {
     int i;
 

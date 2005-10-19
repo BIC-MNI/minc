@@ -270,7 +270,7 @@ extern int miset_space_name(mihandle_t vol, const char *name);
 extern int miget_volume_from_dimension(midimhandle_t dimension, mihandle_t *volume);
 extern int micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr);
 extern int micreate_dimension(const char *name, midimclass_t dimclass, midimattr_t attr, 
-			      unsigned long length, midimhandle_t *new_dim_ptr);
+			      unsigned int length, midimhandle_t *new_dim_ptr);
 extern int mifree_dimension_handle(midimhandle_t dim_ptr);
 extern int miget_volume_dimensions(mihandle_t volume, midimclass_t dimclass, midimattr_t attr,
 				   miorder_t order, int array_length, 
@@ -308,10 +308,10 @@ extern int miget_dimension_separations(const midimhandle_t dimensions[],
                                        double separations[]);
 extern int miset_dimension_separations(const midimhandle_t dimensions[], int array_length,
 				 const double separations[]);
-extern int miget_dimension_size(midimhandle_t dimension, unsigned long *size_ptr);
-extern int miset_dimension_size(midimhandle_t dimension, unsigned long size);
+extern int miget_dimension_size(midimhandle_t dimension, unsigned int *size_ptr);
+extern int miset_dimension_size(midimhandle_t dimension, unsigned int size);
 extern int miget_dimension_sizes(const midimhandle_t dimensions[], int array_length,
-				 unsigned long sizes[]);
+				 unsigned int sizes[]);
 extern int miget_dimension_start(midimhandle_t dimension, 
                                  mivoxel_order_t voxel_order,
 				 double *start_ptr);

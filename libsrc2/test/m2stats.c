@@ -915,7 +915,7 @@ int get_minc_lengths(mihandle_t hvol, int *cx, int *cy, int *cz)
     int ndims;
     int i;
     char *name;
-    unsigned long length;
+    unsigned int length;
 
     miget_volume_dimensions(hvol, MI_DIMCLASS_ANY, MI_DIMATTR_ALL, 0, 
                             MI2_MAX_VAR_DIMS, dims);
