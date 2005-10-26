@@ -522,16 +522,18 @@ main(int argc, char **argv)
 
         miattgetstr(mnc_fd, id, MIspacetype, sizeof(att_str), att_str);
 
-        /* Try to set the S-transform code correctly.  It is unclear that
-         * this is the right way to do it.
+        /* Try to set the S-transform code correctly.
          */
-        if (!strcmp(att_str, MI_NATIVE)) {
-            nii_ptr->sform_code = NIFTI_XFORM_SCANNER_ANAT;
-        }
         if (!strcmp(att_str, MI_TALAIRACH)) {
             nii_ptr->sform_code = NIFTI_XFORM_TALAIRACH;
         }
-        /* TODO: Anything for MI_CALLOSAL? */
+        else if (!strcmp(att_str, MI_CALLOSAL)) {
+            /* TODO: Not clear what do do here... */
+            nii_ptr->sform_code = NIFTI_XFORM_SCANNER_ANAT;
+        }
+        else {                  /* MI_NATIVE or unknown */
+            nii_ptr->sform_code = NIFTI_XFORM_SCANNER_ANAT;
+        }
     }
 
     /* So the last row is right... */
