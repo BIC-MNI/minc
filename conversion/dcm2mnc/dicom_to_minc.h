@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.5  2005-07-14 19:00:30  bert
+ * Revision 1.6  2005-10-26 23:43:55  bert
+ * Fix COORDINATE_EPSILON at 0.0001
+ *
+ * Revision 1.5  2005/07/14 19:00:30  bert
  * Changes ported from 1.X branch
  *
  * Revision 1.4.2.2  2005/06/20 22:00:26  bert
@@ -88,7 +91,7 @@
 #define HOURS_PER_DAY 24
 #define SECONDS_PER_DAY (HOURS_PER_DAY*SECONDS_PER_HOUR)
 #define MS_PER_SECOND 1000
-#define COORDINATE_EPSILON (100.0*FLT_EPSILON)
+#define COORDINATE_EPSILON (0.0001)
 
 /* Default value for ncopts */
 #define NCOPTS_DEFAULT NC_VERBOSE
