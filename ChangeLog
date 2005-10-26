@@ -1,4 +1,10 @@
 MINC 2:
+2005-10-26 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc/dicom_to_minc.h - set COORDINATE_EPSILON to
+	a fixed value of 0.0001 rather than 100*FLT_EPSILON to allow for
+	more slop in coordinates.
+	* conversion/nifti1/mnc2nii.c - handle missing value for spacetype.
+	
 2005-09-16 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* libsrc2/conversion/dcm2mnc/dicom_read.c - again change the
 	handling of the slice thickness / slice spacing issue to
