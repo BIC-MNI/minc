@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.19  2005-09-16 22:13:33  bert
+   * Revision 1.20  2005-10-26 23:43:35  bert
+   * Latest attempt at getting slice spacing consistent
+   *
+   * Revision 1.19  2005/09/16 22:13:33  bert
    * Fix slice spacing handling
    *
    * Revision 1.18  2005/08/26 21:25:54  bert
@@ -1376,8 +1379,8 @@ get_coordinate_info(Acr_Group group_list,
         steps[VSLICE] = slice_thickness;
     }
     else {
-        /* Both fields are set.  I choose the maximum of the two, as
-         * this seems likely to be more correct. However, I believe
+        /* Both fields are set.  I choose the slice spacing rather
+         * than the slice thickness in this case. However, I believe
          * there is some evidence that this can cause problems in rare
          * cases.
          */
@@ -1386,14 +1389,7 @@ get_coordinate_info(Acr_Group group_list,
             printf("old = %.10f, new = %.10f\n", 
                    slice_thickness, slice_spacing);
         }
-        /* Use the maximum of the slice spacing and the slice thickness.
-         */
-        if (slice_spacing > slice_thickness) {
-            steps[VSLICE] = slice_spacing;
-        }
-        else {
-            steps[VSLICE] = slice_thickness;
-        }
+        steps[VSLICE] = slice_spacing;
     }
 
     /* Make sure that direction cosines point the right way (dot
