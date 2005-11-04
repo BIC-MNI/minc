@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.17  2005-08-26 21:25:54  bert
+ * Revision 1.18  2005-11-04 22:25:04  bert
+ * Update version string to 2.0.07
+ *
+ * Revision 1.17  2005/08/26 21:25:54  bert
  * Latest changes ported from 1.0 branch
  *
  * Revision 1.14.2.10  2005/08/18 18:17:36  bert
@@ -119,7 +122,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.17 2005-08-26 21:25:54 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.18 2005-11-04 22:25:04 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -144,7 +147,7 @@ static int check_file_type_consistency(int num_files, const char *file_list[]);
 
 struct globals G;
 
-#define VERSION_STRING "2.0.06 built " __DATE__ " " __TIME__
+#define VERSION_STRING "2.0.07 built " __DATE__ " " __TIME__
 
 #ifndef S_ISDIR
 #define S_ISDIR(x) (((x) & _S_IFMT) == _S_IFDIR)
