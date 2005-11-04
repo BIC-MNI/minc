@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.10  2005-08-26 21:25:54  bert
+   * Revision 1.11  2005-11-04 22:26:16  bert
+   * Combined cloned code into a single check_regular() function
+   *
+   * Revision 1.10  2005/08/26 21:25:54  bert
    * Latest changes ported from 1.0 branch
    *
    * Revision 1.6.2.7  2005/08/18 18:17:55  bert
@@ -125,7 +128,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.10 2005-08-26 21:25:54 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.11 2005-11-04 22:26:16 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -134,6 +137,38 @@ static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/m
 /* Define mri dimension names */
 static char *mri_dim_names[] = {
     NULL, "echo_time", MItime, "phase_number", "chemical_shift", NULL};
+
+/*
+ * verify that a list of coordinates is "regular", that is, that the
+ * spacing between each adjacent pair does not vary by more than a
+ * small amount relative to an average stepsize.
+ */
+int
+check_regular(double step, double coordinates[], int length)
+{
+    int index;
+    double diff;
+
+    if (step == 0.0) {
+        step = 1.0;             /* avoid division by zero */
+    }
+
+    for (index = 1; index < length; index++) {
+        /* Calculate the difference between two adjacent locations,
+         * less the average step value.
+         */
+        diff = (coordinates[index] - coordinates[index - 1]) - step;
+        
+        if (diff < 0.0) {
+            diff = -diff;
+        }
+        diff /= step;
+        if (diff > COORDINATE_EPSILON) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
 
 int 
 strfminc(char *str_ptr, int str_max, const char *fmt_ptr, 
@@ -433,7 +468,6 @@ minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
 {
     double sum = 0.0;   /* Sum of differences for computing average */
     double avg;                 /* Average */
-    double diff;                /* Difference between adjacent coordinates */
     double step;                /* Step size from widths */
     int regular;                /* TRUE if dimension is regular */
     int index;                  /* Loop/array index */
@@ -475,26 +509,7 @@ minc_set_spacing(int mincid, int varid, Mri_Index imri, General_Info *gi_ptr)
 
         /* Check for uniformity of spacing */
 
-        for (index = 1; index < length; index++) {
-
-            /* Calculate the difference between two adjacent locations,
-             * less the average step value.
-             */
-
-            diff = gi_ptr->coordinates[imri][index] -
-                gi_ptr->coordinates[imri][index - 1] - step;
-        
-            if (diff < 0.0) {
-                diff = -diff;
-            }
-            if (step != 0.0) {
-                diff /= step;
-            }
-            if (diff > COORDINATE_EPSILON) {
-                regular = FALSE;
-                break;
-            }
-        }
+        regular = check_regular(step, gi_ptr->coordinates[imri], length);
     }
     else {
         /* We have widths provided for us, so use them to calculate the
@@ -566,7 +581,6 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     char name[MAX_NC_NAME];
     int index;
     int regular;
-    double separation, diff;
     Acr_Group cur_group;
     Acr_Element cur_element;
     int length;
@@ -668,23 +682,15 @@ void setup_minc_variables(int mincid, General_Info *general_info,
             varid = micreate_std_variable(mincid, dimname, NC_DOUBLE, 
                                           1, &dim[ndims]);
             /* Check for regular slices */
-            regular = TRUE;
-            separation = general_info->step[general_info->slice_world];
-            for (index=1; index < general_info->cur_size[SLICE]; index++) {
-                diff = general_info->coordinates[SLICE][index] -
-                    general_info->coordinates[SLICE][index-1] - separation;
-                if (diff < 0.0) diff = -diff;
-                if (separation != 0.0) diff /= separation;
-                if (diff > COORDINATE_EPSILON) {
-                    regular = FALSE;
-                    break;
-                }
-            }
-            if (regular)
+            if (check_regular(general_info->step[general_info->slice_world],
+                              general_info->coordinates[SLICE],
+                              general_info->cur_size[SLICE])) {
                 miattputstr(mincid, varid, MIspacing, MI_REGULAR);
+            }
         }
-        else
+        else {
             varid = micreate_std_variable(mincid, dimname, NC_LONG, 0, NULL);
+        }
         miattputdbl(mincid, varid, MIstep, 
                     general_info->step[iworld]);
         miattputdbl(mincid, varid, MIstart, 
