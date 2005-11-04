@@ -1,4 +1,12 @@
 MINC 2:
+2005-11-04 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc/dicom_to_minc.h - further relaxation of 
+	COORDINATE_EPSILON, now set to 0.005
+	* conversion/dcm2mnc/minc_file.c - combine cloned
+	regular/irregular dimension checking code into new function,
+	check_regular()
+	* conversion/dcm2mnc/dcm2mnc.c - update version to 2.0.07
+	
 2005-10-26 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dicom_to_minc.h - set COORDINATE_EPSILON to
 	a fixed value of 0.0001 rather than 100*FLT_EPSILON to allow for
