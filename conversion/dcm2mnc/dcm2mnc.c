@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.18  2005-11-04 22:25:04  bert
+ * Revision 1.19  2005-11-11 18:42:54  bert
+ * Latest fixes to dcm2mnc
+ *
+ * Revision 1.18  2005/11/04 22:25:04  bert
  * Update version string to 2.0.07
  *
  * Revision 1.17  2005/08/26 21:25:54  bert
@@ -122,7 +125,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.18 2005-11-04 22:25:04 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.19 2005-11-11 18:42:54 bert Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -927,7 +930,7 @@ is_ima_file(const char *fullname)
         /* We only deal with Siemens IMA files - not sure any other kinds 
          * exist, frankly.
          */
-        if (!strcmp(mfg_str, IMA_MAGIC_STR)) {
+        if (!memcmp(mfg_str, IMA_MAGIC_STR, IMA_MAGIC_SIZE)) {
             result = 1;
         }
         fclose(fp);

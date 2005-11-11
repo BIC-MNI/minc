@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.13  2005-08-26 21:25:54  bert
+ * Revision 1.14  2005-11-11 18:42:54  bert
+ * Latest fixes to dcm2mnc
+ *
+ * Revision 1.13  2005/08/26 21:25:54  bert
  * Latest changes ported from 1.0 branch
  *
  * Revision 1.10.2.4  2005/08/18 18:17:36  bert
@@ -153,7 +156,7 @@
  * arbitrary - I test for IMA format by looking for the manufacturer string
  * SIEMENS at offset 0x0060
  */
-#define IMA_MAGIC_SIZE (8+1)
+#define IMA_MAGIC_SIZE 7
 #define IMA_MAGIC_OFFS 0x0060
 #define IMA_MAGIC_STR "SIEMENS"
 

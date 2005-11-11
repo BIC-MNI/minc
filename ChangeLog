@@ -1,4 +1,8 @@
 MINC 2:
+2005-11-11 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc/dcm2mnc.h - fix definition of IMA_MAGIC_SIZE
+	* conversion/dcm2mnc/dcm2mnc.c - fix test for is_ima_file()
+	
 2005-11-04 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dicom_to_minc.h - further relaxation of 
 	COORDINATE_EPSILON, now set to 0.005
