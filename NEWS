@@ -1,3 +1,8 @@
+                New in Release 2.0.10
+                ---------------------
+* Many small fixes to dcm2mnc
+* Fix mincgen HDF5 support
+
                 New in Release 2.0.09
                 ---------------------
 * mincresample now supports the sinc interpolant
