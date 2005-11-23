@@ -1,4 +1,8 @@
 MINC 2:
+2005-11-22 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/mincgen/genlib.c - fix free() issue
+	* progs/mincgen/load.c - #include config.h
+	
 2005-11-11 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dcm2mnc.h - fix definition of IMA_MAGIC_SIZE
 	* conversion/dcm2mnc/dcm2mnc.c - fix test for is_ima_file()

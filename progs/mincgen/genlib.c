@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.3 2005-08-26 21:07:17 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/genlib.c,v 1.4 2005-11-23 04:37:22 bert Exp $
  *********************************************************************/
 
 #if HAVE_CONFIG_H
@@ -1510,7 +1510,9 @@ define_netcdf(
       gen_c(filename);
     if (fortran_flag)		/* create Fortran code to create netcdf */
       gen_fortran(filename);
-    free(filename);
+    if (!netcdf_name) {
+      free(filename);
+    }
 }
 
 
