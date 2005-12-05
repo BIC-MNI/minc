@@ -650,7 +650,6 @@ upet_to_minc(char *hdr_fname, char *img_fname, char *out_fname,
         }
     }
 
-
     fclose(ci.hdr_fp);
     fclose(ci.img_fp);
     miclose(ci.mnc_fd);
@@ -671,6 +670,8 @@ main(int argc, char **argv)
         usage(argv[0]);
         return (-1);
     }
+
+    ncopts = 0;
 
     /* Set the dimension names.  This is done here since the correct 
      * arrangement depends on the value of _orient_flag 
@@ -925,25 +926,22 @@ static void
 create_dimension(struct conversion_info *ci_ptr, int index, int length)
 {
     ci_ptr->dim_lengths[index] = length;
-    if (length > 1) {
-        ci_ptr->dim_ids[index] = ncdimdef(ci_ptr->mnc_fd, 
-                                          _dimnames[index], 
-                                          length);
-        if (index != DIM_W) {
-            if (index == DIM_T) {
-                micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
-                                      NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
-                micreate_std_variable(ci_ptr->mnc_fd, MItime_width, 
-                                      NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
-            }
-            else {
-                micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
-                                      NC_DOUBLE, 0, NULL);
-            }
-        }
+    if (index == DIM_W && length <= 1) {
+        return;
     }
-    else {
-        ci_ptr->dim_ids[index] = -1;
+
+    ci_ptr->dim_ids[index] = ncdimdef(ci_ptr->mnc_fd, 
+                                      _dimnames[index], 
+                                      length);
+    if (index == DIM_T) {
+        micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
+                              NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
+        micreate_std_variable(ci_ptr->mnc_fd, MItime_width, 
+                              NC_DOUBLE, 1, &ci_ptr->dim_ids[index]);
+    }
+    else if (index != DIM_W) {
+        micreate_std_variable(ci_ptr->mnc_fd, _dimnames[index], 
+                              NC_DOUBLE, 0, NULL);
     }
 }
 
@@ -1524,3 +1522,4 @@ copy_frame(struct conversion_info *ci_ptr)
     ncvarput(ci_ptr->mnc_fd, ncvarid(ci_ptr->mnc_fd, MIimage), start, count, 
              ci_ptr->frame_buffer);
 }
+
