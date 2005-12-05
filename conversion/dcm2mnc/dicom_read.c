@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.20  2005-10-26 23:43:35  bert
+   * Revision 1.21  2005-12-05 16:50:08  bert
+   * Deal with weird XMedCon images
+   *
+   * Revision 1.20  2005/10/26 23:43:35  bert
    * Latest attempt at getting slice spacing consistent
    *
    * Revision 1.19  2005/09/16 22:13:33  bert
@@ -1003,8 +1006,16 @@ dicom_read_position(Acr_Group group_list, int n, double coordinate[3])
     else {
         result = DICOM_POSITION_GLOBAL; /* Found a global position */
 
-        element = acr_find_group_element(group_list, 
-                                         ACR_Image_position_patient);
+        /* bert-look for field in weird XMedCon location
+         */
+        element = acr_recurse_for_element(group_list, 0,
+                                          ACR_Detector_information_seq,
+                                          ACR_Image_position_patient);
+
+        if (element == NULL) {
+            element = acr_find_group_element(group_list, 
+                                             ACR_Image_position_patient);
+        }
 
         if (element == NULL) {
             element = acr_find_group_element(group_list, 
@@ -1043,6 +1054,15 @@ dicom_read_orientation(Acr_Group group_list, double orientation[6])
     element = acr_recurse_for_element(group_list, 0, 
                                       ACR_Shared_func_groups_seq,
                                       ACR_Image_orientation_patient);
+
+    /* bert - deal with weird XMedCon images...
+     */
+    if (element == NULL) {
+        element = acr_recurse_for_element(group_list, 0,
+                                          ACR_Detector_information_seq,
+                                          ACR_Image_orientation_patient);
+    }
+
     if (element == NULL) {
         element = acr_find_group_element(group_list, 
                                          ACR_Image_orientation_patient);
