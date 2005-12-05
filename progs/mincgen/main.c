@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.3 2004-12-07 17:27:37 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.4 2005-12-05 16:40:59 bert Exp $
  *********************************************************************/
 
 #include <stdio.h>
@@ -113,6 +113,10 @@ main(
     if (fortran_flag && c_flag) {
 	derror("Only one of -c or -f may be specified");
 	return(8);
+    }
+
+    if (netcdf_name != NULL) {
+      netcdf_flag = 1;
     }
 
     argc -= 1;
