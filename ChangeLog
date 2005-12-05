@@ -1,4 +1,8 @@
 MINC 2:
+2005-12-03 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/micropet/upet2mnc.c - fix handling of single-frame data
+	* progs/mincgen/main.c - make "-o" option imply "-b"
+	
 2005-11-22 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* progs/mincgen/genlib.c - fix free() issue
 	* progs/mincgen/load.c - #include config.h
