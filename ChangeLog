@@ -1,4 +1,10 @@
 MINC 2:
+2005-12-13 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc/dicom_to_minc.c: Ignore DICOM protocol
+	errors. This change was necessitated by images from a Philips
+	Intera scanner version 'NT 10.4.1\\PIIM V2.1.4.1 MIMIT MCS' that
+	appears to set the DICOM length field incorrectly.
+
 2005-12-03 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/micropet/upet2mnc.c - fix handling of single-frame data
 	* progs/mincgen/main.c - make "-o" option imply "-b"
