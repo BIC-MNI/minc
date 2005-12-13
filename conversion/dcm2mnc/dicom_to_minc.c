@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.15  2005-08-26 21:25:54  bert
+   * Revision 1.16  2005-12-13 17:31:13  bert
+   * Ignore DICOM protocol errors. This change was necessitated by images from a Philips Intera scanner version 'NT 10.4.1\\PIIM V2.1.4.1 MIMIT MCS' that appears to set the DICOM length field incorrectly.
+   *
+   * Revision 1.15  2005/08/26 21:25:54  bert
    * Latest changes ported from 1.0 branch
    *
    * Revision 1.13.2.5  2005/08/18 18:18:35  bert
@@ -168,7 +171,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.15 2005-08-26 21:25:54 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.16 2005-12-13 17:31:13 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -638,6 +641,8 @@ read_std_dicom(const char *filename, int max_group)
     if (afp == NULL) {
         return NULL;
     }
+
+    acr_set_ignore_errors(afp, 1); /* ignore protocol errors */
 
     if (acr_test_dicom_file(afp) != ACR_OK) {
         return NULL;
