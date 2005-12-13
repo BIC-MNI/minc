@@ -2,6 +2,8 @@
                 ---------------------
 * Many small fixes to dcm2mnc
 * Fix mincgen HDF5 support
+* Fix upet2mnc handling of single-frame files
+* Fix mincgen -o option to imply -b
 
                 New in Release 2.0.09
                 ---------------------
