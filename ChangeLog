@@ -1,4 +1,8 @@
 MINC 2:
+2005-12-15 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* libsrc2/volume.c - set units field unconditionally in 
+	_miget_file_dimension()
+	
 2005-12-13 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dicom_to_minc.c: Ignore DICOM protocol
 	errors. This change was necessitated by images from a Philips

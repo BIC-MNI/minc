@@ -999,6 +999,16 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
                 hdim->direction_cosines[MI2_Z] = 1.0;
             }
         }
+
+        r = miget_attribute(volume, path, "units", MI_TYPE_STRING,
+                            MI2_CHAR_LENGTH, temp);
+        if (r < 0) {
+            hdim->units = strdup("");
+        }
+        else {
+            hdim->units = strdup(temp);
+        }
+            
     } H5E_END_TRY;
     /* Return the dimension handle */
     *hdim_ptr = hdim;
