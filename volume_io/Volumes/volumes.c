@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.74 2005-07-14 15:42:50 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.75 2005-12-20 21:08:46 rotor Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -2240,8 +2240,13 @@ VIOAPI  void  set_volume_real_range(
     if( get_volume_data_type(volume) == FLOAT ||
         get_volume_data_type(volume) == DOUBLE )
     {
+		/* as float and double use the voxel range */
+        volume->real_range_set = FALSE;
+
         set_volume_voxel_range( volume, real_min, real_max );
-        volume->real_value_scale = 1.0;
+        
+		/* these really shouldn't be needed but let's be "safe" */
+		volume->real_value_scale = 1.0;
         volume->real_value_translation = 0.0;
     }
     else
