@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.18  2005-08-26 21:07:18  bert
+ * Revision 6.19  2006-02-08 19:07:23  bert
+ * Use "rb" mode when calling fopen()
+ *
+ * Revision 6.18  2005/08/26 21:07:18  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.17  2004/12/14 23:38:52  bert
@@ -155,7 +158,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.18 2005-08-26 21:07:18 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.19 2006-02-08 19:07:23 bert Exp $";
 #endif
 
 #define _GNU_SOURCE 1
@@ -550,7 +553,7 @@ int main(int argc, char *argv[])
       instream=stdin;
    }
    else {
-      instream = fopen(inputfile, "r");
+      instream = fopen(inputfile, "rb");
       if (instream == NULL) {
          (void) fprintf(stderr, "Error opening input file \"%s\"\n", 
                         inputfile);

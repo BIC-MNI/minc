@@ -501,13 +501,13 @@ upet_to_minc(char *hdr_fname, char *img_fname, char *out_fname,
     char *argv_tmp[5];
     char *out_history;
 
-    ci.hdr_fp = fopen(hdr_fname, "r");
+    ci.hdr_fp = fopen(hdr_fname, "r"); /* Text file */
     if (ci.hdr_fp == NULL) {
         perror(hdr_fname);
         return (-1);
     }
 
-    ci.img_fp = fopen(img_fname, "r");
+    ci.img_fp = fopen(img_fname, "rb"); /* Binary file */
     if (ci.img_fp == NULL) {
         perror(img_fname);
         return (-1);

@@ -221,7 +221,7 @@ main(int argc, char **argv)
         int ss;
         int must_swap;
 
-        fp = fopen(argv[1], "r");
+        fp = fopen(argv[1], "rb");
         if (fp != NULL) {
             fread(&ana_hdr, sizeof (ana_hdr), 1, fp);
             fclose(fp);
