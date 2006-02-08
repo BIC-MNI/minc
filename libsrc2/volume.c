@@ -296,6 +296,9 @@ micreate_volume(const char *filename, int number_of_dimensions,
       case MI_TYPE_UBYTE:
       case MI_TYPE_USHORT:
       case MI_TYPE_UINT:
+      case MI_TYPE_BYTE:
+      case MI_TYPE_SHORT:
+      case MI_TYPE_INT:
           handle->ftype_id = H5Tenum_create(hdf_type);
           if (handle->ftype_id < 0) {
               return (MI_ERROR);
@@ -1198,6 +1201,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
 
     switch (class) {
     case H5T_INTEGER:
+    case H5T_ENUM:              /* label images */
 	is_signed = (H5Tget_sign(handle->ftype_id) == H5T_SGN_2);
 
 	switch (nbytes) {
@@ -1226,22 +1230,6 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     case H5T_COMPOUND:
 	/* TODO: handle this case for non-uniform records? */
 	break;
-    case H5T_ENUM:
-        /* label images */
-      switch (nbytes) {
-	case 1:
-	    handle->volume_type = MI_TYPE_UBYTE;
-	    break;
-	case 2:
-	    handle->volume_type = MI_TYPE_USHORT;
-	    break;
-	case 4:
-	    handle->volume_type = MI_TYPE_UINT;
-	    break;
-	default:
-            return (MI_ERROR);
-	}
-        break;
     default:
         return (MI_ERROR);
     }
