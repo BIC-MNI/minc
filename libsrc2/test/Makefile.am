@@ -2,7 +2,11 @@ INCLUDES = -I$(top_srcdir)/libsrc2
 
 LDADD = ../../libminc2.la
 
+AM_CFLAGS = -DAPPARENTORDER
+
 TESTS =	\
+	create-test-images \
+	create-test-images-2 \
 	datatype-test \
 	dimension-test \
 	full-test \
