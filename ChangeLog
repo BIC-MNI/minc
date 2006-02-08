@@ -1,4 +1,11 @@
 MINC 2:
+2006-02-08 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/rawtominc/rawtominc.c, conversion/nifti1/nii2mnc.c, 
+	  conversion/micropet/upet2mnc.c: Change fopen() parameter
+	  to "rb" to force correct operation on DOS/Windows.
+	* libsrc2/volume.c: Allow signed as well as unsigned base
+	  types for labels.
+	
 2005-12-15 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* libsrc2/volume.c - set units field unconditionally in 
 	_miget_file_dimension()
