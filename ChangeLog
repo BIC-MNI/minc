@@ -1,4 +1,9 @@
 MINC 2:
+2006-02-09 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc/dicom_to_minc.c, 
+	conversion/dcm2mnc/siemens_to_dicom.c - Deal more correctly
+	with some odd cases in .IMA files.
+	
 2006-02-08 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* progs/rawtominc/rawtominc.c, conversion/nifti1/nii2mnc.c, 
 	  conversion/micropet/upet2mnc.c: Change fopen() parameter

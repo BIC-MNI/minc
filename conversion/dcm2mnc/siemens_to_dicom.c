@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.6  2005-04-21 22:32:15  bert
+@MODIFIED   : Revision 1.7  2006-02-09 20:54:29  bert
+@MODIFIED   : More changes to dcm2mnc
+@MODIFIED   :
+@MODIFIED   : Revision 1.6  2005/04/21 22:32:15  bert
 @MODIFIED   : Continue Siemens IMA code cleanup
 @MODIFIED   :
 @MODIFIED   : Revision 1.5  2005/04/18 16:21:16  bert
@@ -50,7 +53,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.6 2005-04-21 22:32:15 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/siemens_to_dicom.c,v 1.7 2006-02-09 20:54:29 bert Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,6 +150,7 @@ siemens_to_dicom(const char *filename, int max_group)
     double flip_angle;
     short rows;
     short cols;
+    int n_slices;
 
 #ifdef PRINT_OFFSET_TABLE
     void *header_ptr;           /* debug junk */
@@ -246,20 +250,31 @@ siemens_to_dicom(const char *filename, int max_group)
         }
     }
 
-    if (acr_find_int(group_list, SPI_Number_of_slices_nominal, 1) > 1) {
+    n_slices = acr_find_int(group_list, SPI_Number_of_slices_nominal, 1);
+    if (n_slices > 1) {
         short acq_cols;
+        int n_acq;
+        int n_avg;
 
         acq_cols = acr_find_short(group_list, SPI_Acquisition_columns,
                                   acr_find_short(group_list, ACR_Columns, 1));
 
-        acr_insert_long(&group_list, EXT_Mosaic_rows, 
-                        acr_find_int(group_list, ACR_Rows, 1));
+        rows = acr_find_int(group_list, ACR_Rows, 1);
+        acr_insert_long(&group_list, EXT_Mosaic_rows, rows);
+                        
+        cols = acr_find_int(group_list, ACR_Columns, 1);
+        acr_insert_long(&group_list, EXT_Mosaic_columns, cols);
 
-        acr_insert_long(&group_list, EXT_Mosaic_columns, 
-                        acr_find_int(group_list, ACR_Columns, 1));
-
-        acr_insert_long(&group_list, EXT_Slices_in_file, 
-                        acr_find_int(group_list, SPI_Number_of_slices_nominal, 1));
+        /* Don't allow acq_cols greater than actual size! */
+        if (acq_cols > rows) { 
+            n_slices = 1;
+            acq_cols = rows;
+        }
+        if (acq_cols > cols) {
+            n_slices = 1;
+            acq_cols = cols;
+        }
+        acr_insert_long(&group_list, EXT_Slices_in_file, n_slices);
         acr_insert_short(&group_list, EXT_Sub_image_rows, acq_cols);
         acr_insert_short(&group_list, EXT_Sub_image_columns, acq_cols);
 
@@ -268,12 +283,21 @@ siemens_to_dicom(const char *filename, int max_group)
          *
          * TODO: This appears to work for SOME IMA files, but it may
          * not be correct for all sequences.
+         *
+         * BERT: My latest change here is to examine both values and
+         * use the larger of the two. Jens Pruessner had some IMA files
+         * that had a value for acquisitions_in_series that was correctly
+         * giving the number of time steps, while the nr_averages was 1.
+         * Other files apparently contradict this!
          */
         acr_insert_long(&group_list, ACR_Acquisition, 
                         acr_find_int(group_list, ACR_Image, 1));
 
-        acr_insert_long(&group_list, ACR_Acquisitions_in_series, 
-                        acr_find_int(group_list, ACR_Nr_of_averages, 1));
+        n_avg = acr_find_int(group_list, ACR_Nr_of_averages, 1);
+        n_acq = acr_find_int(group_list, ACR_Acquisitions_in_series, 1);
+        if (n_avg > n_acq) {
+            acr_insert_long(&group_list, ACR_Acquisitions_in_series, n_avg);
+        }
     }
 
     /* Insert a series number */
@@ -447,8 +471,8 @@ update_coordinate_info(Acr_Group group_list)
         int acq_cols = acr_find_short(group_list, SPI_Acquisition_columns, 
                                       ncolumns);
         if (G.Debug >= HI_LOGGING) {
-            printf("Hmmm... This appears to be a mosaic image %d %d\n",
-                   acq_cols, ncolumns);
+            printf("Hmmm... This appears to be a mosaic image %d %d %d\n",
+                   acq_cols, ncolumns, n_slices);
         }
 
         /* Mosaic images in IMA format appear to need to have their

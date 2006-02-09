@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.16  2005-12-13 17:31:13  bert
+   * Revision 1.17  2006-02-09 20:54:29  bert
+   * More changes to dcm2mnc
+   *
+   * Revision 1.16  2005/12/13 17:31:13  bert
    * Ignore DICOM protocol errors. This change was necessitated by images from a Philips Intera scanner version 'NT 10.4.1\\PIIM V2.1.4.1 MIMIT MCS' that appears to set the DICOM length field incorrectly.
    *
    * Revision 1.15  2005/08/26 21:25:54  bert
@@ -171,7 +174,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.16 2005-12-13 17:31:13 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.17 2006-02-09 20:54:29 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -1807,8 +1810,10 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     mi_ptr->grid[0] = mi_ptr->big[0] / mi_ptr->size[0];
     mi_ptr->grid[1] = mi_ptr->big[1] / mi_ptr->size[1];
     if ((mi_ptr->grid[0] < 1) || (mi_ptr->grid[0] < 1)) {
-        fprintf(stderr, "Grid too small: %d x %d\n",
-                mi_ptr->grid[0], mi_ptr->grid[1]);
+        fprintf(stderr, "Grid too small: %d x %d, size %d x %d, big %d x %d\n",
+                mi_ptr->grid[0], mi_ptr->grid[1],
+                mi_ptr->size[0], mi_ptr->size[1],
+                mi_ptr->big[0], mi_ptr->big[1]);
         exit(EXIT_FAILURE);
     }
 
