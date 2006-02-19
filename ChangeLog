@@ -1,3 +1,8 @@
+2006-02-19  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* testdir/create_grid_xfm.c (main): Initialize variable
+	mio before using.
+
 2005-07-29  Bert Vincent <bert@bic.mni.mcgill.ca>
 	* progs/mincstats/mincstats.c: Add warning when mask file
 	specified with no mask range option.

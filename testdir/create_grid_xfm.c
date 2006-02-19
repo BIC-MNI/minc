@@ -21,6 +21,7 @@ int main( int ac, char* av[] )
     /* The displacement volume must retain the vector dimension,
      * so we turn off "vector -> scalar" conversion.
      */
+    set_default_minc_input_options( &mio );
     set_minc_input_vector_to_scalar_flag( &mio, 0 );
 
     st = input_volume( av[1],
