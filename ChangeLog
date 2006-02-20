@@ -1,3 +1,8 @@
+2006-02-19  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
+
+	* testdir/create_grid_xfm.c (main): Initialize variable
+        mio before using.
+
 MINC 2:
 2006-02-09 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dicom_to_minc.c, 
