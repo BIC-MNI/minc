@@ -1366,6 +1366,14 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
      */
     hdf_put_dimorder(file, dst_id, ndims, dimids);
 
+    /* bert - Closing the dataset here is necessary for HDF5 1.6.5. 
+     * Without this we get nasty errors caused by re-opening the 
+     * dataset in hdf_var_add(). The conclusion seems to be that
+     * HDF5 1.6.5 does not allow re-opening a newly created dataset.
+     */
+    H5Dclose(dst_id);
+    dst_id = -1;
+
     /* Add the variable to the internal table.
      */
     var = hdf_var_add(file, varnm, varpath, ndims, dims);

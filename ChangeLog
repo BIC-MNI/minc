@@ -1,9 +1,13 @@
+MINC 2:
+2006-02-28 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* libsrc/hdf_convenience.c - Modify the hdf_vardef() function
+	to avoid errors in HDF5 1.6.5
+	
 2006-02-19  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
 	* testdir/create_grid_xfm.c (main): Initialize variable
         mio before using.
 
-MINC 2:
 2006-02-09 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc/dicom_to_minc.c, 
 	conversion/dcm2mnc/siemens_to_dicom.c - Deal more correctly
