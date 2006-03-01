@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.25 $)
+AC_REVISION($Revision: 6.26 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -33,17 +33,17 @@ smr_WITH_BUILD_PATH
 # Check for required C libraries
 mni_REQUIRE_LIB(m,[#include <math.h>],[double x = sqrt(3.);])
 mni_REQUIRE_LIB(netcdf,[#include <netcdf.h>],[int i = ncopen("",0);])
-AC_ARG_ENABLE(hdf5,
-    [  --enable-hdf5           enable HDF5 (MINC 2) functionality],
+AC_ARG_ENABLE(minc2,
+    [  --enable-minc2          enable HDF5 (MINC 2) functionality],
     [ case "${enableval}" in
-      yes) hdf5=true ;;
-      no)  hdf5=false ;;
-      *) AC_MSG_ERROR(bad value ${enableval} for --enable-hdf5) ;;
+      yes) minc2=true ;;
+      no)  minc2=false ;;
+      *) AC_MSG_ERROR(bad value ${enableval} for --enable-minc2) ;;
       esac],
-    [hdf5=false])
-AM_CONDITIONAL(MINC2, test x$hdf5 = xtrue)
+    [minc2=false])
+AM_CONDITIONAL(MINC2, test x$minc2 = xtrue)
 
-if test x$hdf5 = xtrue; then
+if test x$minc2 = xtrue; then
 mni_REQUIRE_LIB(z, [#include <zlib.h>],[compress2;])
 mni_REQUIRE_LIB(hdf5,[#include <hdf5.h>],[int f = H5Fopen("",0,H5P_DEFAULT);])
 AC_DEFINE_UNQUOTED([MINC2],[1],[Define if MINC 2.0 is enabled.])
