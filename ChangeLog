@@ -1,4 +1,9 @@
 MINC 2:
+2006-03-10 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/Acr_nema/element.c - Modify acr_dump_element_list()
+	to use helper function maybe_print_as_string() to print data with
+	unknown VR as either ASCII or a string of hex bytes.
+	
 2006-02-28 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* libsrc/hdf_convenience.c - Modify the hdf_vardef() function
 	to avoid errors in HDF5 1.6.5

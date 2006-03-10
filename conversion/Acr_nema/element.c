@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.8  2005-07-14 15:56:56  bert
+ * Revision 6.9  2006-03-10 19:22:56  bert
+ * Update to conversion/Acr_nema/element.c for value printing
+ *
+ * Revision 6.8  2005/07/14 15:56:56  bert
  * Print raw byte data when dumping fields with unknown value representations and sizes other than 2 or 4. (ported from 1.X)
  *
  * Revision 6.7.2.2  2005/06/06 20:48:14  bert
@@ -1539,6 +1542,88 @@ int acr_get_element_numeric_array(Acr_Element element,
    return nvalues;
 }
 
+static void 
+maybe_print_as_string(FILE *file_pointer, Acr_Element cur_element,
+                      int element_length, int done_already)
+{
+    char *string;
+    char *copy;
+    int string_length;
+    int printable = 0;
+    int i;
+    int j;
+
+    string = acr_get_element_string(cur_element);
+    string_length = element_length;
+    while ((string_length > 0) && (string[string_length-1] == '\0')) {
+        string_length--;
+    }
+
+    /* Print string if short enough and is printable */
+    if (element_length > 0 &&
+        acr_get_element_group(cur_element) != 0x7fe0 &&
+        acr_get_element_element(cur_element) != 0x0010) {
+        copy = malloc(string_length + 1);
+        printable = (string_length > 0);
+        for (i=0; i < string_length; i++) {
+            if (! isprint((int) string[i])) {
+                printable = FALSE;
+                copy[i] = ' ';
+            }
+            else if ((string[i] == '\n') ||
+                     (string[i] == '\r') ||
+                     (string[i] == '\f'))
+                copy[i] = ' ';
+            else
+                copy[i] = string[i];
+        }
+        copy[i] = '\0';
+
+        if (printable) {
+            (void) fprintf(file_pointer, " string = \"%s\"", copy);
+        }
+        else if (!done_already) {
+            /* If unknown length print as a series of bytes.
+             */
+            string = acr_get_element_data(cur_element);
+            fprintf(file_pointer, " byte = ");
+            if (element_length < 1000) {
+                for (i = 0; i < element_length; i++) {
+                    fprintf(file_pointer, "%#x", 
+                            (unsigned char)string[i]);
+                    if (i != element_length - 1) {
+                        fprintf(file_pointer, ", ");
+                    }
+                }
+            }
+            else {
+                fprintf(file_pointer, "\n");
+                for (i = 0; i < element_length; i += 16) {
+                    for (j = 0; j < 16; j++) {
+                            if (i + j < element_length) {
+                                fprintf(file_pointer, "%02x ", 
+                                        (unsigned char)string[i+j]);
+                            }
+                            else {
+                                fprintf(file_pointer, "   ");
+                            }
+                        }
+                        fprintf(file_pointer, "| ");
+                        for (j = 0; j < 16; j++) {
+                            if (i + j < element_length) {
+                                int c = (unsigned char)string[i+j];
+                                fprintf(file_pointer, "%c", 
+                                        isprint(c) ? c : '.');
+                            }
+                        }
+                        fprintf(file_pointer, "\n");
+                    }
+            }
+        }
+        free(copy);
+    }
+}
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_dump_element_list
 @INPUT      : file_pointer - where output should go
@@ -1558,10 +1643,7 @@ void acr_dump_element_list(FILE *file_pointer,
 #define INDENT_AMOUNT 3
    Acr_Element cur_element;
    long element_length;
-   long string_length;
-   int printable;
    int i;
-   char *string, *copy;
    static int current_indent_level = 0;
    Acr_VR_Type vr_code;
 
@@ -1580,12 +1662,14 @@ void acr_dump_element_list(FILE *file_pointer,
          (void) putc((int) ' ', file_pointer);
       }
 
+      element_length = acr_get_element_length(cur_element);
+
       /* Print the element id */
       (void) fprintf(file_pointer, 
                      "0x%04x  0x%04x  length = %d ",
                      acr_get_element_group(cur_element),
                      acr_get_element_element(cur_element),
-                     (int) acr_get_element_length(cur_element));
+                     (int) element_length);
 
       if (_acr_name_proc != NULL) {
           char *name_ptr;
@@ -1633,6 +1717,8 @@ void acr_dump_element_list(FILE *file_pointer,
             break;
          case ACR_VR_OB:
          case ACR_VR_OW:
+            maybe_print_as_string(file_pointer, cur_element,
+                                  element_length, 0);
             break;
          default:
             (void) fprintf(file_pointer, "value = \"%s\"",
@@ -1644,7 +1730,6 @@ void acr_dump_element_list(FILE *file_pointer,
       else {
          int done_already = 0;
 
-         element_length = acr_get_element_length(cur_element);
          switch (element_length) {
          case ACR_SIZEOF_SHORT:
             (void) fprintf(file_pointer, " short = %d (0x%04x)",
@@ -1660,48 +1745,8 @@ void acr_dump_element_list(FILE *file_pointer,
             break;
          }
 
-         string = acr_get_element_string(cur_element);
-         string_length = element_length;
-         while ((string_length > 0) && (string[string_length-1] == '\0')) {
-            string_length--;
-         }
-
-         /* Print string if short enough and is printable */
-         if (element_length > 0) {
-            copy = malloc(string_length + 1);
-            printable = (string_length > 0);
-            for (i=0; i < string_length; i++) {
-               if (! isprint((int) string[i])) {
-                  printable = FALSE;
-                  copy[i] = ' ';
-               }
-               else if ((string[i] == '\n') ||
-                        (string[i] == '\r') ||
-                        (string[i] == '\f'))
-                  copy[i] = ' ';
-               else
-                  copy[i] = string[i];
-            }
-            copy[i] = '\0';
-
-            if (printable) {
-               (void) fprintf(file_pointer, " string = \"%s\"", copy);
-            }
-            else if (!done_already && element_length < 2048) {
-                /* If unknown length print as a series of bytes.
-                 */
-                string = acr_get_element_data(cur_element);
-                fprintf(file_pointer, " byte = ");
-                for (i = 0; i < element_length; i++) {
-                    fprintf(file_pointer, "0x%02x", 
-                            (unsigned char)string[i]);
-                    if (i != element_length - 1) {
-                        fprintf(file_pointer, ", ");
-                    }
-                }
-            }
-            free(copy);
-         }
+         maybe_print_as_string(file_pointer, cur_element, element_length, 
+                               done_already);
 
          /* End line */
          (void) fprintf(file_pointer, "\n");
