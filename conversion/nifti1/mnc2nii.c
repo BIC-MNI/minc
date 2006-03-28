@@ -362,8 +362,8 @@ main(int argc, char **argv)
         *str_ptr = '\0';
     }
 
-    nii_ptr->fname = malloc(strlen(out_str) + 4);
-    nii_ptr->iname = malloc(strlen(out_str) + 4);
+    nii_ptr->fname = malloc(strlen(out_str) + 4 + 1);
+    nii_ptr->iname = malloc(strlen(out_str) + 4 + 1);
     strcpy(nii_ptr->fname, out_str);
     strcpy(nii_ptr->iname, out_str);
 
@@ -452,6 +452,20 @@ main(int argc, char **argv)
         nii_ptr->nvox *= mnc_dlen;
 
         nii_ptr->pixdim[dimmap[i]] = (float) mnc_dstep;
+    }
+
+    /* Here we do some "post-processing" of the results. Make certain that
+     * the nt value is never zero, and make certain that ndim is set to
+     * 4 if there is a time dimension and 5 if there is a vector dimension
+     */
+
+    if (nii_ptr->dim[3] > 1 && nii_ndims < 4) {
+        nii_ndims = 4;
+    }
+
+    if (nii_ptr->dim[4] > 1) {
+        nii_ptr->intent_code = NIFTI_INTENT_VECTOR;
+        nii_ndims = 5;
     }
 
     nii_ptr->ndim = nii_ndims; /* Total number of dimensions in file */
