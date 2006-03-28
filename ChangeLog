@@ -1,4 +1,10 @@
 MINC 2:
+2006-03-27 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/nifti1/mnc2nii.c - Set time and vector dimensions 
+	"properly" for some versions of Analyze and NIfTI libraries. Also
+	set the intent_code field to NIFTI_INTENT_VECTOR if the 
+	vector_dimension is set. Also fixed an issue with file names.
+	
 2006-03-10 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/Acr_nema/element.c - Modify acr_dump_element_list()
 	to use helper function maybe_print_as_string() to print data with
