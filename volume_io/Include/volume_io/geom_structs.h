@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.22 2005-05-19 21:19:27 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/geom_structs.h,v 1.23 2006-04-07 14:47:15 rotor Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -146,7 +146,7 @@ typedef  unsigned  int     VIO_Colour;
 
 #define  MULT_COLOURS( prod, c1, c2 )                  \
         { \
-            Real r, g, b, r1, g1, b1, r2, g2, b2; \
+            VIO_Real r, g, b, r1, g1, b1, r2, g2, b2; \
             r1 = get_Colour_r_0_1(c1); \
             g1 = get_Colour_g_0_1(c1); \
             b1 = get_Colour_b_0_1(c1); \

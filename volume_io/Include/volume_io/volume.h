@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.56 2005-07-14 15:42:50 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/volume.h,v 1.57 2006-04-07 14:47:15 rotor Exp $
 ---------------------------------------------------------------------------- */
 
 
@@ -124,31 +124,31 @@ typedef VIO_Volume Volume;
 
 #define  SET_VOXEL_1D( volume, x, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, 0, 0, 0, 0, (Real) value ); \
+               set_cached_volume_voxel( volume, x, 0, 0, 0, 0, (VIO_Real) value ); \
            else \
                SET_MULTIDIM_1D( (volume)->array, x, value )
 
 #define  SET_VOXEL_2D( volume, x, y, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, 0, 0, 0, (Real) value ); \
+               set_cached_volume_voxel( volume, x, y, 0, 0, 0, (VIO_Real) value ); \
            else \
                SET_MULTIDIM_2D( (volume)->array, x, y, value )
 
 #define  SET_VOXEL_3D( volume, x, y, z, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, 0, 0, (Real) value ); \
+               set_cached_volume_voxel( volume, x, y, z, 0, 0, (VIO_Real) value ); \
            else \
                SET_MULTIDIM_3D( (volume)->array, x, y, z, value )
 
 #define  SET_VOXEL_4D( volume, x, y, z, t, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, 0, (Real) value ); \
+               set_cached_volume_voxel( volume, x, y, z, t, 0, (VIO_Real) value ); \
            else \
                SET_MULTIDIM_4D( (volume)->array, x, y, z, t, value )
 
 #define  SET_VOXEL_5D( volume, x, y, z, t, v, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
+               set_cached_volume_voxel( volume, x, y, z, t, v, (VIO_Real) value ); \
            else \
                SET_MULTIDIM_5D( (volume)->array, x, y, z, t, v, value )
 
@@ -156,7 +156,7 @@ typedef VIO_Volume Volume;
 
 #define  SET_VOXEL( volume, x, y, z, t, v, value )       \
            if( (volume)->is_cached_volume ) \
-               set_cached_volume_voxel( volume, x, y, z, t, v, (Real) value ); \
+               set_cached_volume_voxel( volume, x, y, z, t, v, (VIO_Real) value ); \
            else \
                SET_MULTIDIM( (volume)->array, x, y, z, t, v, value )
 
