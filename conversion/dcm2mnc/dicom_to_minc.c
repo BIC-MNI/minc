@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.17  2006-02-09 20:54:29  bert
+   * Revision 1.18  2006-04-09 15:39:04  bert
+   * Improve support for DTI
+   *
+   * Revision 1.17  2006/02/09 20:54:29  bert
    * More changes to dcm2mnc
    *
    * Revision 1.16  2005/12/13 17:31:13  bert
@@ -174,7 +177,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.17 2006-02-09 20:54:29 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.18 2006-04-09 15:39:04 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -676,6 +679,21 @@ is_siemens_mosaic(Acr_Group group_list)
     if (strstr(str_ptr, "MOSAIC") != NULL)
         return 1;               /* slam dunk, this is mosaic data */
 
+    /* For some reason, some Localizer scans look like MOSAICs in that
+     * they appear to be upsampled in such a way that their
+     * rows/columns are larger than the acquisition matrix. The
+     * details of this are probably buried in the Siemens ASCCONV dump
+     * and therefore I have not been able to figure out how to tweak
+     * the MOSAIC stuff to get this right. Instead I am taking the
+     * cheesy way out and declaring that anything that is NOT
+     * explictly marked MOSAIC, and IS marked a localizer, should not
+     * be treated as a mosaic.
+     */
+    str_ptr = acr_find_string(group_list, ACR_Series_description, "");
+    if (strstr(str_ptr, "localizer") || strstr(str_ptr, "LOCALIZER")) {
+        return 0;
+    }
+
     /* OK, we did not find the word "mosaic" in the image type.  But this
      * could still be a mosaic image.  Let's look for some other clues.
      */
@@ -686,6 +704,114 @@ is_siemens_mosaic(Acr_Group group_list)
         return 1;               /* probably mosaic */
 
     return 0;                   /* probably not mosaic */
+}
+
+#define MAXVM 32
+
+Acr_Group
+parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
+{
+    int byte_cnt;
+    int byte_pos;
+    unsigned char *byte_ptr;
+    int n_items;
+    int n_values;
+    int vm;
+    char vr[4];
+    int syngodt;
+    int i;
+    char name[64];
+    char *value[MAXVM];
+    int len;
+
+    byte_cnt = element->data_length;
+    byte_ptr = element->data_pointer;
+    byte_pos = 0;
+
+    /* See if the magic 8-byte header is present. If not, we start
+     * right off with the number of elements.
+     */
+    if (byte_ptr[0] == 'S' && byte_ptr[1] == 'V' &&
+        byte_ptr[2] == '1' && byte_ptr[3] == '0') {
+        byte_pos += 8;          /* Skip header */
+    }
+
+    n_items = *((int *)(byte_ptr + byte_pos));
+
+    byte_pos += 8;              /* Skip # items and 4 bytes of unknown junk */
+
+    while (n_items-- > 0) {
+        strncpy(name, (byte_ptr + byte_pos), 64);
+        byte_pos += 64;
+
+        vm = *((int *)(byte_ptr + byte_pos));
+        byte_pos += 4;
+
+        strncpy(vr, (byte_ptr + byte_pos), 4);
+        byte_pos += 4;
+
+        syngodt = *((int *)(byte_ptr + byte_pos));
+        byte_pos += 4;
+
+        n_values = *((int *)(byte_ptr + byte_pos));
+        byte_pos += 4;
+
+        byte_pos += 4;          /* skip dummy */
+
+        if (n_values > 0) {
+            for (i = 0; i < n_values; i++) {
+                byte_pos += 4;      /* skip */
+                
+                len = *((int *)(byte_ptr + byte_pos));
+
+                byte_pos += 4;
+
+                byte_pos += 8;
+
+                if (i < vm && i < MAXVM) {
+                    value[i] = (byte_ptr + byte_pos);
+                }
+
+                byte_pos += ((len + 3) / 4) * 4;
+            }
+        }
+
+        if (!strcmp(name, "DiffusionDirectionality")) {
+            acr_insert_string(&group_list, ACR_Diffusion_directionality,
+                              value[0]);
+        }
+        else if (!strcmp(name, "B_value")) {
+            double tmp = atof(value[0]);
+            acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp);
+        }
+        else if (!strcmp(name, "DiffusionGradientDirection")) {
+            double tmp[3];
+            if (vm == 3 && n_values >= vm) {
+                tmp[0] = atof(value[0]);
+                tmp[1] = atof(value[1]);
+                tmp[2] = atof(value[2]);
+                
+                acr_insert_double(&group_list, 
+                                  ACR_Diffusion_gradient_orientation,
+                                  3,
+                                  tmp);
+            }
+        }
+
+#if 0
+        if (G.Debug >= HI_LOGGING) {
+            printf("%s VM=%d VR=%s %d ", name, vm, vr, n_values);
+
+            if (n_values != 0) {
+                for (i = 0; i < vm && i < MAXVM; i++) {
+                    printf("%s ", value[i]);
+                }
+            }
+            printf("\n");
+        }
+#endif
+    }
+    return (group_list);
 }
 
 static Acr_Group 
@@ -700,6 +826,11 @@ add_siemens_info(Acr_Group group_list)
     string_t str_buf;
     char *str_ptr;
     int interpolation_flag;
+
+    element = acr_find_group_element(group_list, SPI_Protocol2);
+    if (element != NULL) {
+        group_list = parse_siemens_proto2(group_list, element);
+    }
 
     /* now fix the group list to provide essential info
      * via standard dicom elements
@@ -725,6 +856,8 @@ add_siemens_info(Acr_Group group_list)
 
     protocol = acr_find_group_element(group_list, SPI_Protocol);
     if (protocol != NULL) {
+        /* parse_siemens_junk(protocol); */
+
         if (G.Debug >= HI_LOGGING) {
             printf("Incorporating Siemens protocol structure...\n");
         }
@@ -901,6 +1034,56 @@ add_siemens_info(Acr_Group group_list)
                 acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
             }
         } /* end of diffusion scan handling */
+
+        /* There is another whole class of (probably newer) diffusion
+         * weighted images that use a very different arrangement and
+         * need better handling.
+         */
+        prot_find_string(protocol, "sDiffusion.ucDiffWeightedImage", str_buf);
+        if (!strcmp(str_buf, "0x1")) {
+            int enc_ix;
+
+            /* Flag this as a diffusion image.
+             */
+            acr_insert_string(&group_list, ACR_Acquisition_contrast, 
+                              "DIFFUSION");
+
+            prot_find_string(protocol, "sDiffusion.lDiffDirections", str_buf);
+            
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
+                               atoi(str_buf) + 1);
+                
+            str_ptr = strchr(acr_find_string(group_list,
+                                             ACR_Sequence_name, ""), '#');
+            if (str_ptr == NULL) {
+                enc_ix = 0;
+            } 
+            else {
+                enc_ix = atoi(str_ptr + sizeof(char)) + 1;
+            }
+            acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+
+            /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
+             * used as one of the criteria for starting a new
+             * file. For a DTI sequence, we don't want this to
+             * happen. For now I replace the sequence name with a
+             * bogus value in order to keep the DTI scan from being
+             * split into pieces.  This isn't right. We should deal
+             * with this in a more graceful way.
+             */
+            acr_insert_string(&group_list, ACR_Sequence_name, "DTI");
+
+            /* Reset acquisition time to series time plus the series
+             * index.  Otherwise each slice may get its own
+             * time. This is also probably wrong and in the ideal
+             * world we should deal with this gracefully. But we have
+             * no good way of storing per-slice timing information
+             * right now.
+             */
+            acr_insert_numeric(&group_list, ACR_Acquisition_time,
+                               acr_find_double(group_list, ACR_Series_time, 0) 
+                               + enc_ix);
+        }
     }
     else {
         /* If no protocol dump was found we have to assume no
@@ -1128,6 +1311,7 @@ add_philips_info(Acr_Group group_list)
     char *str_ptr;
     int slice_count;
     int slice_index;
+    char str_buf[128];
 
     /* To use the Philips proprietary group, we have to figure out the
      * DICOM private creator ID in use.  The group ID is always 0x2001,
@@ -1158,8 +1342,88 @@ add_philips_info(Acr_Group group_list)
             }
         }
     }
-    if (creator_id.element_id > 0xff) {
+    else {
+        creator_id.element_id = 0;
+    }
+    if (creator_id.element_id > 0xff || creator_id.element_id < 0x01) {
         printf("WARNING: Can't find Philips private creator ID.\n");
+
+        /* OK, this may be an old Philips file with the SPI stuff in it.
+         */
+        str_ptr = acr_find_string(group_list, SPI_PMS_grp19_tag, "");
+        if (!strncmp(str_ptr, "PHILIPS MR", 10)) {
+            if (G.Debug >= HI_LOGGING) {
+                printf("Found Philips SPI information\n");
+            }
+
+            str_ptr = acr_find_string(group_list, ACR_Image_position_patient, "");
+            if (*str_ptr == '\0') {
+                double x, y, z;
+
+                x = acr_find_double(group_list, SPI_PMS_lr_position2, 0);
+                y = acr_find_double(group_list, SPI_PMS_ap_position2, 0);
+                z = acr_find_double(group_list, SPI_PMS_cc_position2, 0);
+                sprintf(str_buf, "%.15g\\%.15g\\%.15g", x, y, z);
+                printf("New position: %s\n", str_buf);
+                acr_insert_string(&group_list, ACR_Image_position_patient, 
+                                  str_buf);
+
+            }
+            str_ptr = acr_find_string(group_list, ACR_Number_of_slices, "");
+            if (*str_ptr == '\0') {
+                short n;
+                n = acr_find_short(group_list, SPI_PMS_slice_count, 0);
+                acr_insert_short(&group_list, ACR_Number_of_slices, n);
+            }
+            str_ptr = acr_find_string(group_list, 
+                                      ACR_Image_orientation_patient, "");
+            if (strchr(str_ptr, '\\') == NULL) {
+                int orientation = acr_find_int(group_list, 
+                                               SPI_PMS_slice_orientation,
+                                               1);
+                switch (orientation) {
+                case 1:         /* transverse, slice=Z */
+                    strcpy(str_buf, "1\\0\\0\\0\\1\\0");
+                    break;
+                case 2:         /* sagittal, slice=X */
+                    strcpy(str_buf, "0\\1\\0\\0\\0\\1");
+                    break;
+                case 3:         /* coronal, slice=Y */
+                    strcpy(str_buf, "1\\0\\0\\0\\0\\1");
+                    break;
+                }
+
+                acr_insert_string(&group_list, ACR_Image_orientation_patient,
+                                  str_buf);
+            }
+#if 0 /* not clear that this is needed */
+            str_ptr = acr_find_string(group_list, ACR_Pixel_size, "");
+            if (*str_ptr == '\0') {
+                pms_element = acr_find_group_element(group_list, 
+                                                     SPI_PMS_field_of_view);
+                if (pms_element != NULL) {
+                    double fov[2];
+                    acr_get_element_numeric_array(pms_element, 2, fov);
+                    if (fov[0] != 0.0 && fov[1] != 0.0) {
+                        double derived_spacing[2];
+                        int rows = acr_find_int(group_list, ACR_Rows, 1);
+                        int cols = acr_find_int(group_list, ACR_Columns, 1);
+
+                        derived_spacing[0] = fov[0] / cols;
+                        derived_spacing[1] = fov[1] / rows;
+
+                        sprintf(str_buf, "%.15g\\%.15g", 
+                                derived_spacing[0], derived_spacing[1]);
+
+                        printf("PHILIPS: New pixel size %s\n", str_buf);
+
+                        acr_insert_string(&group_list, ACR_Pixel_size, 
+                                          str_buf);
+                    }
+                }
+            }
+#endif
+        }
     }
     else {
         if (G.Debug >= HI_LOGGING) {
