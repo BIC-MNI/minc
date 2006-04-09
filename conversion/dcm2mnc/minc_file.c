@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.11  2005-11-04 22:26:16  bert
+   * Revision 1.12  2006-04-09 15:34:32  bert
+   * Add ability to save DTI parameters using Jennifer Campbell's convention
+   *
+   * Revision 1.11  2005/11/04 22:26:16  bert
    * Combined cloned code into a single check_regular() function
    *
    * Revision 1.10  2005/08/26 21:25:54  bert
@@ -128,7 +131,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.11 2005-11-04 22:26:16 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.12 2006-04-09 15:34:32 bert Exp $";
 
 #include "dcm2mnc.h"
 
@@ -918,6 +921,19 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         miattputstr(mincid, varid, "MrProt_dump", 
                     general_info->acq.MrProt);
 
+
+    /* Add DTI stuff if needed */
+    if (general_info->acq.dti) {
+        int length = general_info->cur_size[TIME];
+
+        double *tmp_ptr = calloc(length, sizeof(double));
+
+        ncattput(mincid, varid, "bvalues", NC_DOUBLE, length, tmp_ptr);
+        ncattput(mincid, varid, "direction_x", NC_DOUBLE, length, tmp_ptr);
+        ncattput(mincid, varid, "direction_y", NC_DOUBLE, length, tmp_ptr);
+        ncattput(mincid, varid, "direction_z", NC_DOUBLE, length, tmp_ptr);
+    }
+
     /* Create the dicom info variable */
     varid = ncvardef(mincid, "dicominfo", NC_LONG, 0, NULL);
     miattputstr(mincid, varid, MIvartype, MI_GROUP);
@@ -981,6 +997,21 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     return;
 }
 
+/* Insert a scalar 'value' at 'position' along the given vector attribute
+ * of preallocated 'length'.
+ */
+void
+put_att_dbl(int mincid, int varid, char *attname, int length, int position,
+            double value)
+{
+    double *val_ptr = malloc(sizeof(double) * length);
+    if (val_ptr != NULL) {
+        ncattget(mincid, varid, attname, val_ptr);
+        val_ptr[position] = value;
+        ncattput(mincid, varid, attname, NC_DOUBLE, length, val_ptr);
+    }
+}
+            
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : save_minc_image
    @INPUT      : icvid
@@ -1056,6 +1087,36 @@ save_minc_image(int icvid, General_Info *gi_ptr,
         mivarput1(mincid, ncvarid(mincid, mri_dim_names[TIME]), 
                   &start[gi_ptr->image_index[TIME]], 
                   NC_DOUBLE, NULL, &fi_ptr->coordinate[TIME]);
+
+        if (gi_ptr->acq.dti) {
+            put_att_dbl(mincid, 
+                        ncvarid(mincid, MIacquisition),
+                        "bvalues", 
+                        gi_ptr->cur_size[TIME],
+                        start[gi_ptr->image_index[TIME]],
+                        fi_ptr->b_value);
+            
+            put_att_dbl(mincid, 
+                        ncvarid(mincid, MIacquisition),
+                        "direction_x", 
+                        gi_ptr->cur_size[TIME],
+                        start[gi_ptr->image_index[TIME]],
+                        fi_ptr->grad_direction[XCOORD]);
+                              
+            put_att_dbl(mincid, 
+                        ncvarid(mincid, MIacquisition),
+                        "direction_y", 
+                        gi_ptr->cur_size[TIME],
+                        start[gi_ptr->image_index[TIME]],
+                        fi_ptr->grad_direction[YCOORD]);
+                              
+            put_att_dbl(mincid, 
+                        ncvarid(mincid, MIacquisition),
+                        "direction_z",
+                        gi_ptr->cur_size[TIME],
+                        start[gi_ptr->image_index[TIME]],
+                        fi_ptr->grad_direction[ZCOORD]);
+        }
 
         /* If width information is present, save it to the appropriate
          * location in the time-width variable.
