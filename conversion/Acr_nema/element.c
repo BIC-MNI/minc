@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.9  2006-03-10 19:22:56  bert
+ * Revision 6.10  2006-04-09 15:28:40  bert
+ * Add functions acr_get_element_double_array and acr_create_element_double
+ *
+ * Revision 6.9  2006/03/10 19:22:56  bert
  * Update to conversion/Acr_nema/element.c for value printing
  *
  * Revision 6.8  2005/07/14 15:56:56  bert
@@ -1183,6 +1186,29 @@ Acr_Element acr_create_element_long(Acr_Element_Id elid,
 }
 
 /* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_create_element_double
+@INPUT      : elid
+              nvalues
+              values
+@OUTPUT     : (none)
+@RETURNS    : Pointer to element structure
+@DESCRIPTION: Creates an acr-nema element structure containing an array of 
+              doubles.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 8, 2006 (Bert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+Acr_Element acr_create_element_double(Acr_Element_Id elid,
+                                      int nvalues,
+                                      double *values)
+{
+   return create_element_mem(elid, ACR_VR_FD, (ACR_SIZEOF_DOUBLE * nvalues), 
+                             values);
+}
+
+/* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_create_element_numeric
 @INPUT      : elid
               value
@@ -1204,12 +1230,17 @@ Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
    char string[256];
    Acr_Element element;
 
-   (void) sprintf(string, "%.15g", value);
-   element = acr_create_element_string(elid, string);
-   if (elid->vr_code == ACR_VR_UNKNOWN)
-      acr_set_element_vr(element, ACR_VR_DS);
+   if (elid->vr_code == ACR_VR_FD) {
+       element = create_element_mem(elid, ACR_VR_FD, sizeof(value), 
+                                    (void *) &value);
+   }
+   else {
+       (void) sprintf(string, "%.15g", value);
+       element = acr_create_element_string(elid, string);
+       if (elid->vr_code == ACR_VR_UNKNOWN)
+           acr_set_element_vr(element, ACR_VR_DS);
+   }
    return element;
-
 }
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -1424,6 +1455,50 @@ long acr_get_element_short_array(Acr_Element element, long max_values,
    /* Get the data */
    acr_get_short(acr_get_element_byte_order(element),
                  max_values, acr_get_element_data(element), values);
+
+   /* Return the number of values in the structure */
+   return nvalues;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_get_element_double_array
+@INPUT      : element
+              max_values - maximum number of values to return
+@OUTPUT     : values - array of values found
+@RETURNS    : Number of values found
+@DESCRIPTION: Gets an array of doubles from an element structure. If the 
+              number of values in the element is greater than max_values, 
+              then only max_values values are extracted, but the total
+              number of values in the element is returned.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 8, 2006 (Bert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+long acr_get_element_double_array(Acr_Element element, long max_values, 
+                                  double values[])
+{
+   long nvalues;
+
+   /* Check VR of element */
+   switch (acr_get_element_vr(element)) {
+   case ACR_VR_FD:
+   case ACR_VR_UNKNOWN:
+      break;
+   default:
+      return (long) 0;
+   }
+
+   /* Get number of values in element */
+   nvalues = acr_get_element_length(element) / ACR_SIZEOF_DOUBLE;
+
+   /* Check the maximum number of values */
+   if (max_values > nvalues) max_values = nvalues;
+
+   /* Get the data */
+   acr_get_double(acr_get_element_byte_order(element),
+                  max_values, acr_get_element_data(element), values);
 
    /* Return the number of values in the structure */
    return nvalues;

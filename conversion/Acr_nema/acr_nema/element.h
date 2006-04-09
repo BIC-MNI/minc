@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.h,v $
- * Revision 6.3  2005-03-04 00:08:08  bert
+ * Revision 6.4  2006-04-09 15:28:40  bert
+ * Add functions acr_get_element_double_array and acr_create_element_double
+ *
+ * Revision 6.3  2005/03/04 00:08:08  bert
  * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
  *
  * Revision 6.2  2004/10/29 13:08:41  rotor
@@ -187,6 +190,9 @@ extern Acr_Element acr_create_element_short(Acr_Element_Id elid,
                                             unsigned short value);
 extern Acr_Element acr_create_element_long(Acr_Element_Id elid,
                                            long value);
+extern Acr_Element acr_create_element_double(Acr_Element_Id elid,
+                                             int nvalues,
+                                             double *values);
 extern Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
 extern Acr_Element acr_create_element_string(Acr_Element_Id elid,
@@ -199,6 +205,8 @@ extern double acr_get_element_numeric(Acr_Element element);
 extern char *acr_get_element_string(Acr_Element element);
 extern long acr_get_element_short_array(Acr_Element element, long max_values, 
                                         unsigned short values[]);
+extern long acr_get_element_double_array(Acr_Element element, long max_values, 
+                                         double values[]);
 extern int *acr_element_numeric_array_separator(int character);
 extern int acr_get_element_numeric_array(Acr_Element element,
                                          int max_values, double values[]);
