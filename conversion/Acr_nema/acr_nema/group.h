@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.h,v $
- * Revision 6.5  2005-03-11 22:05:29  bert
+ * Revision 6.6  2006-04-09 15:29:43  bert
+ * Add acr_insert_double()
+ *
+ * Revision 6.5  2005/03/11 22:05:29  bert
  * Implement _acr_name_proc to allow printing of field names in dump_acr_nema
  *
  * Revision 6.4  2005/03/04 00:08:08  bert
@@ -137,6 +140,8 @@ extern Acr_Status acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid,
                              int value);
 extern Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
                             long value);
+extern Acr_Status acr_insert_double(Acr_Group *group_list, Acr_Element_Id elid,
+                                    int nvalues, double *values);
 extern Acr_Status acr_insert_numeric(Acr_Group *group_list, 
                                      Acr_Element_Id elid, 
                                      double value);

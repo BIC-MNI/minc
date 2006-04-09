@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.10  2005-05-09 15:34:46  bert
+ * Revision 6.11  2006-04-09 15:29:43  bert
+ * Add acr_insert_double()
+ *
+ * Revision 6.10  2005/05/09 15:34:46  bert
  * For acr_find_{short,int,long,double}, treat a zero-length element as if it were absent, and return the default value.
  *
  * Revision 6.9  2005/03/11 22:05:29  bert
@@ -1383,6 +1386,29 @@ Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid,
    element = acr_create_element_long(elid, value);
    return acr_insert_element_into_group_list(group_list, element);
 
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : acr_insert_double
+@INPUT      : group_list - may be NULL if list empty
+              elid
+              nvalues
+              values
+@OUTPUT     : group_list - modified group list
+@RETURNS    : Acr_Status
+@DESCRIPTION: Creates and inserts an element into a group list.
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : April 8, 2006 (Bert Vincent)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+Acr_Status acr_insert_double(Acr_Group *group_list, Acr_Element_Id elid,
+                             int nvalues, double *values)
+{
+    Acr_Element element;
+    element = acr_create_element_double(elid, nvalues, values);
+    return acr_insert_element_into_group_list(group_list, element);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
