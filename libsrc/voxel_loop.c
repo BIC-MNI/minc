@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.7  2005-08-26 21:04:58  bert
+ * Revision 6.8  2006-04-09 15:40:25  bert
+ * Minor change
+ *
+ * Revision 6.7  2005/08/26 21:04:58  bert
  * Use #if rather than #ifdef with MINC2 symbol
  *
  * Revision 6.6  2004/11/01 22:23:14  bert
@@ -129,7 +132,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.7 2005-08-26 21:04:58 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.8 2006-04-09 15:40:25 bert Exp $";
 #endif
 
 #include "minc_private.h"
@@ -147,7 +150,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.7 20
 #define NC_OPTS_VAL NC_VERBOSE | NC_FATAL
 
 /* Epsilon for coordinate comparisons */
-#define COORD_EPSILON FLT_EPSILON * 10.0
+#define COORD_EPSILON (FLT_EPSILON * 10.0)
 
 /* Typedefs */
 typedef struct Loopfile_Info Loopfile_Info;
