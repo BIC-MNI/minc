@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.7  2005-11-04 22:25:34  bert
+ * Revision 1.8  2006-04-09 15:33:10  bert
+ * Add flags and fields for DTI
+ *
+ * Revision 1.7  2005/11/04 22:25:34  bert
  * Change COORDINATE_EPSILON again, now set to 0.005
  *
  * Revision 1.6  2005/10/26 23:43:55  bert
@@ -215,6 +218,7 @@ typedef struct {
         double  sar;
         string_t comments;
         char *MrProt;           // Siemens Numaris 4 specific
+        short dti;              /* TRUE if we think this is DTI */
     } acq;
     Acr_Group group_list;
 } General_Info;
@@ -233,6 +237,8 @@ typedef struct {
    double window_min;
    double coordinate[MRI_NDIMS];
    double width[MRI_NDIMS];     /* Sample width along each MRI dimension */
+   double b_value;              /* DTI b-value, if present */
+   double grad_direction[WORLD_NDIMS]; /* DTI gradient direction */
 } File_Info;
 
 /* Structure for storing the actual image data */
