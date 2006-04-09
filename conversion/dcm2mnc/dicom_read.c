@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.21  2005-12-05 16:50:08  bert
+   * Revision 1.22  2006-04-09 15:38:02  bert
+   * Add support for standard DTI fields
+   *
+   * Revision 1.21  2005/12/05 16:50:08  bert
    * Deal with weird XMedCon images
    *
    * Revision 1.20  2005/10/26 23:43:35  bert
@@ -516,6 +519,7 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     double steps[VOL_NDIMS];    /* Step (spacing) coordinates */
     double starts[VOL_NDIMS];   /* Start (origin) coordinates */
     Acr_Element_Id mri_index_list[MRI_NDIMS];
+    Acr_Element element;
 
     // Initialize array of elements for MRI positions (indices)
     //
@@ -614,6 +618,17 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
         if ((gi_ptr->pixel_max != fi_ptr->pixel_max) ||
             (gi_ptr->pixel_min != fi_ptr->pixel_min)) {
             printf("WARNING: Inconsistent pixel minimum and maximum\n");
+            printf("    %f %f, %f %f\n",
+                   gi_ptr->pixel_min, gi_ptr->pixel_max,
+                   fi_ptr->pixel_min, fi_ptr->pixel_max);
+#if 0
+            if (gi_ptr->pixel_max < fi_ptr->pixel_max) {
+                gi_ptr->pixel_max = fi_ptr->pixel_max;
+            }
+            if (gi_ptr->pixel_min > fi_ptr->pixel_min) {
+                gi_ptr->pixel_min = fi_ptr->pixel_min;
+            }
+#endif
         }
      
         /* Check for consistent data type */
@@ -715,6 +730,20 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
      
     }  // Update general info for this file
 
+    /* Get DTI information if available. 
+     */
+    fi_ptr->b_value = acr_find_double(group_list, ACR_Diffusion_b_value, -1);
+
+    element = acr_find_group_element(group_list, 
+                                     ACR_Diffusion_gradient_orientation);
+    if (element == NULL ||
+        acr_get_element_double_array(element, WORLD_NDIMS,
+                                     fi_ptr->grad_direction) != WORLD_NDIMS) {
+        fi_ptr->grad_direction[XCOORD] = 
+            fi_ptr->grad_direction[YCOORD] = 
+            fi_ptr->grad_direction[ZCOORD] = -1;
+    }
+    
     // If we get to here, then we have a valid file
     fi_ptr->valid = TRUE;
     return;
@@ -1785,6 +1814,9 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
 #else
     gi_ptr->acq.MrProt = strdup("");
 #endif
+
+    string = acr_find_string(group_list, ACR_Acquisition_contrast, "");
+    gi_ptr->acq.dti = (strstr(string, "DIFFUSION") != NULL);
 }
 
 /* ----------------------------- MNI Header -----------------------------------
