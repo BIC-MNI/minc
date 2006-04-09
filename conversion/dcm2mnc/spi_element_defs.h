@@ -22,6 +22,45 @@
 /* Most of this information is available at David Clunie's medical imaging 
  * website (www.dclunie.com).
  */
+GLOBAL_ELEMENT(SPI_PMS_grp19_tag                      , 0x0019, 0x0010, CS);
+
+GLOBAL_ELEMENT(SPI_PMS_field_of_view                  , 0x0019, 0x1000, DS);
+
+GLOBAL_ELEMENT(SPI_PMS_cc_angle                       , 0x0019, 0x1005, DS);
+GLOBAL_ELEMENT(SPI_PMS_ap_angle                       , 0x0019, 0x1006, DS);
+GLOBAL_ELEMENT(SPI_PMS_lr_angle                       , 0x0019, 0x1007, DS);
+
+/* 0 undefined, 1 head first, 2 feet first */
+GLOBAL_ELEMENT(SPI_PMS_patient_position               , 0x0019, 0x1008, CS);
+
+/* 0 undefined, 1 supine, 2 prone, 3 left decubitus, 4 right decubitus */
+GLOBAL_ELEMENT(SPI_PMS_patient_orientation            , 0x0019, 0x1009, CS);
+
+/* 0 undefined 1 transverse 2 sagittal 3 coronal */
+GLOBAL_ELEMENT(SPI_PMS_slice_orientation              , 0x0019, 0x100a, CS);
+
+/* caudal-cranial position (MINC Z) */
+GLOBAL_ELEMENT(SPI_PMS_cc_position                    , 0x0019, 0x100b, DS);
+
+/* anterior-posterior position (MINC Y) */
+GLOBAL_ELEMENT(SPI_PMS_ap_position                    , 0x0019, 0x100c, DS);
+
+/* left-right position (MINC X) */
+GLOBAL_ELEMENT(SPI_PMS_lr_position                    , 0x0019, 0x100d, DS);
+
+GLOBAL_ELEMENT(SPI_PMS_slice_count                    , 0x0019, 0x100f, IS);
+
+GLOBAL_ELEMENT(SPI_PMS_flip_angle                     , 0x0019, 0x101a, DS);
+
+/* caudal-cranial position (MINC X) */
+GLOBAL_ELEMENT(SPI_PMS_lr_position2                   , 0x0019, 0x110b, DS);
+
+/* anterior-posterior position (MINC Z) */
+GLOBAL_ELEMENT(SPI_PMS_cc_position2                   , 0x0019, 0x110c, DS);
+
+/* left-right position (MINC Z) */
+GLOBAL_ELEMENT(SPI_PMS_ap_position2                   , 0x0019, 0x110d, DS);
+
 GLOBAL_ELEMENT(SPI_Number_of_data_bytes               , 0x0019, 0x1060, IS);
 GLOBAL_ELEMENT(SPI_Fourier_lines_nominal              , 0x0019, 0x1220, IS);
 GLOBAL_ELEMENT(SPI_Fourier_lines_after_zero           , 0x0019, 0x1226, IS);
@@ -59,6 +98,11 @@ GLOBAL_ELEMENT(SPI_Current_slice_number               , 0x0021, 0x1342, IS);
 GLOBAL_ELEMENT(SPI_Order_of_slices                    , 0x0021, 0x134f, IS);
 GLOBAL_ELEMENT(SPI_Number_of_echoes                   , 0x0021, 0x1370, IS);
 
+/* These are the two large fields in Siemens files in which many parameters
+ * are dumped. The ASCCONV block is located in the second (0029, 1020), but
+ * many of the DTI parameters are available in the first.
+ */
+GLOBAL_ELEMENT(SPI_Protocol2                          , 0x0029, 0x1010, CS);
 GLOBAL_ELEMENT(SPI_Protocol                           , 0x0029, 0x1020, CS);
 
 
