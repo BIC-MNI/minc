@@ -33,3 +33,18 @@ GLOBAL_ELEMENT(GEMS_Fast_phases            , 0x0019, 0x10f2, SS);
 GLOBAL_ELEMENT(GEMS_Sers_private_creator_id, 0x0025, 0x0010, SH);
 GLOBAL_ELEMENT(GEMS_Images_in_series       , 0x0025, 0x1007, SL);
 
+/* not yet fully defined */
+/* from http://www.gehealthcare.com/usen/interoperability/dicom/docs/5162373r1.pdf */
+#if 0
+/* If release 10.0 or above (0019,10e0) gives # diffusion directions, 
+ * otherwise (0019,10df) and/or (0019,10d9) are used.
+ */
+GLOBAL_ELEMENT(GEMS_DTI_diffusion_directions, 0x0019, 0x10e0, DS);
+GLOBAL_ELEMENT(GEMS_DTI_diffusion_directions, 0x0019, 0x10df, DS);
+GLOBAL_ELEMENT(GEMS_Concatenated_SAT, 0x0019, 0x10d9, DS);
+GLOBAL_ELEMENT(GEMS_Diffusion_direction, 0x0021, 0x105a, SL);
+/* this field apparently consists of 4 integers - the first gives the
+ * b-value in DTI??
+ */
+GLOBAL_ELEMENT(GEMS_Slop_int_69, 0x0049, 0x1039, IS);
+#endif
