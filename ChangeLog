@@ -1,4 +1,9 @@
 MINC 2:
+2006-04-09 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* conversion/dcm2mnc, conversion/Acr_nema - added general support
+	for Siemens DTI sequences, inserting attributes according to
+	Jennifer Campbell's conventions.
+	
 2006-03-27 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/nifti1/mnc2nii.c - Set time and vector dimensions 
 	"properly" for some versions of Analyze and NIfTI libraries. Also
