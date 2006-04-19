@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussian.c,v 1.9 2004-10-04 20:23:51 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussian.c,v 1.10 2006-04-19 16:28:19 claude Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -36,7 +36,7 @@ static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/gaussia
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 
-VIOAPI  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
+static  BOOLEAN  scaled_maximal_pivoting_gaussian_elimination(
     int   n,
     int   row[],
     Real  **a,

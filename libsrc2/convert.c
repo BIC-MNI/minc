@@ -305,7 +305,7 @@ dot_vectors(int n, double v1[], double v2[])
     return ( d );
 }
 
-int
+static int
 solve_linear_system( int n, double **coefs, double *values, double *solution)
 {
     int i;

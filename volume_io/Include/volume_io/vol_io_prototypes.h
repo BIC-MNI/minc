@@ -1388,13 +1388,6 @@ VIOAPI  VIO_Colour  make_rgba_Colour_0_1(
     VIO_Real   b,
     VIO_Real   a );
 
-VIOAPI  VIO_BOOL scaled_maximal_pivoting_gaussian_elimination(
-    int   n,
-    int   row[],
-    VIO_Real  **a,
-    int   n_values,
-    VIO_Real  **solution );
-
 VIOAPI  VIO_BOOL solve_linear_system(
     int   n,
     VIO_Real  **coefs,
