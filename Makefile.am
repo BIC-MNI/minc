@@ -388,7 +388,7 @@ copy_acr_nema_SOURCES = conversion/Acr_nema/copy_acr_nema.c
 
 
 
-libminc2_la_LDFLAGS = -version-info 2:0:10
+libminc2_la_LDFLAGS = -version-info 2:0:1
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/dim_conversion.c \
@@ -437,7 +437,7 @@ EXTRA_DIST += \
 	libsrc2/volume.c
 endif
 
-libvolume_io2_la_LDFLAGS = -version-info 2:0:10
+libvolume_io2_la_LDFLAGS = -version-info 2:0:1
 libvolume_io2_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \
