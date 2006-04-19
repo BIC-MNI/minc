@@ -4,6 +4,9 @@
 * Fix mincgen HDF5 support
 * Fix upet2mnc handling of single-frame files
 * Fix mincgen -o option to imply -b
+* Fix duplicate symbols of solve_linear_system and
+  scaled_maximal_pivoting_gaussian_elimination in
+  volume_io/Geometry/gaussian.c and libsrc.2.
 
                 New in Release 2.0.09
                 ---------------------
