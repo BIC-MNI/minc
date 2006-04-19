@@ -1,4 +1,10 @@
 MINC 2:
+2006-04-19 Claude Lepage <claude@bic.mni.mcgill.ca>
+	* fix duplicate instances of solve_linear_system and 
+        scaled_maximal_pivoting_gaussian_elimination in
+        volume_io/Geometry/gaussian.c and libsrc.2. Make static.
+        This is to avoid linker problems with minc2.
+
 2006-04-09 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc, conversion/Acr_nema - added general support
 	for Siemens DTI sequences, inserting attributes according to
