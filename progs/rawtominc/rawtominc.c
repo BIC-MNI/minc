@@ -11,23 +11,14 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.19  2006-02-08 19:07:23  bert
- * Use "rb" mode when calling fopen()
+ * Revision 6.20  2006-05-11 15:09:57  claude
+ * added float and double to -swap_bytes
  *
- * Revision 6.18  2005/08/26 21:07:18  bert
- * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
+ * Revision 6.13.2.2  2005/03/16 19:02:52  bert
+ * Port changes from 2.0 branch
  *
- * Revision 6.17  2004/12/14 23:38:52  bert
- * Get rid of c99 compilation problems
- *
- * Revision 6.16  2004/12/03 21:54:27  bert
- * Minor changes for Windows build
- *
- * Revision 6.15  2004/11/01 22:38:39  bert
- * Eliminate all references to minc_def.h
- *
- * Revision 6.14  2004/04/27 15:26:34  bert
- * Added -2 option
+ * Revision 6.13.2.1  2004/09/28 20:07:30  bert
+ * Minor portability fixes for Windows
  *
  * Revision 6.13  2004/02/02 18:24:58  bert
  * Include a ARGV_VERINFO record in the argTable[]
@@ -158,13 +149,10 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.19 2006-02-08 19:07:23 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.20 2006-05-11 15:09:57 claude Exp $";
 #endif
 
-#define _GNU_SOURCE 1
-#if HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -244,9 +232,6 @@ nc_type convert_types[] = {
 char *pname;
 char *filename;
 int clobber=FALSE;
-#if MINC2
-int v2format=FALSE;		/* Version 2.0 file format? */
-#endif /* MINC2 */
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
@@ -351,7 +336,7 @@ ArgvInfo argTable[] = {
    {"-real_range", ARGV_FLOAT, (char *) 2, (char *) real_range, 
        "Real range of input values (ignored for floating-point types)."},
    {"-swap_bytes", ARGV_CONSTANT, (char *) TRUE, (char *)&swap_bytes,
-       "Swap bytes on short or long integer input." },
+       "Swap bytes on short, long integer, float or double input." },
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for type of output minc data. Default = input data type"},
    {"-obyte", ARGV_CONSTANT, (char *) BYTE_TYPE, (char *) &otype,
@@ -386,10 +371,6 @@ ArgvInfo argTable[] = {
        "Do not scan input for min and max (default)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for writing output file. Default = -noclobber."},
-#if MINC2
-   {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
-       "Produce a MINC 2.0 format output file."},
-#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -488,7 +469,6 @@ int main(int argc, char *argv[])
    int status;
    double scale, offset, denom, pixel_min, pixel_max;
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
-   int cflags;
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -553,7 +533,7 @@ int main(int argc, char *argv[])
       instream=stdin;
    }
    else {
-      instream = fopen(inputfile, "rb");
+      instream = fopen(inputfile, "r");
       if (instream == NULL) {
          (void) fprintf(stderr, "Error opening input file \"%s\"\n", 
                         inputfile);
@@ -592,18 +572,7 @@ int main(int argc, char *argv[])
    }
 
    /* Create the file and save the time stamp */
-   if (clobber) {
-       cflags = NC_CLOBBER;
-   }
-   else {
-       cflags = NC_NOCLOBBER;
-   }
-#if MINC2
-   if (v2format) {
-       cflags |= MI2_CREATE_V2;
-   }
-#endif /* MINC2 */
-   cdfid=micreate(filename, cflags);
+   cdfid=micreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Set the number of image dimensions */
@@ -802,6 +771,7 @@ int main(int argc, char *argv[])
               break;
 
           case NC_INT:
+          case NC_FLOAT:
               /* Harder case - have to do a more complex 4-byte swap. */
               if ((image_size & 3) != 0) {
                   fprintf(stderr, 
@@ -831,12 +801,44 @@ int main(int argc, char *argv[])
               }
               break;
 
+          case NC_DOUBLE : 
+              /* Harder case - have to do a more complex 8-byte swap. */
+              if ((image_size & 7) != 0) {
+                  fprintf(stderr, 
+                          "%s: image size must be divisible by 8 for -swap_bytes!\n",
+                          pname);
+                  exit(ERROR_STATUS);
+              } else {
+                  unsigned char *img_ptr = image;
+                  unsigned char *img_end = (unsigned char*)image + image_size;
+
+                  for ( ; img_ptr < img_end; img_ptr += 8) {
+                      unsigned char tmp;
+
+                      /* Swap bytes [0,1,2,3,4,5,6,7] to [7,6,5,4,3,2,1,0] */
+
+                      tmp = img_ptr[3];
+                      img_ptr[3] = img_ptr[4];
+                      img_ptr[4] = tmp;
+
+                      tmp = img_ptr[2];
+                      img_ptr[2] = img_ptr[5];
+                      img_ptr[5] = tmp;
+
+                      tmp = img_ptr[1];
+                      img_ptr[1] = img_ptr[6];
+                      img_ptr[6] = tmp;
+
+                      tmp = img_ptr[0];
+                      img_ptr[0] = img_ptr[7];
+                      img_ptr[7] = tmp;
+                  }
+              }
+              break;
+
           default:
-              /* I don't see any point in implementing swap for bytes, floats,
-               * or doubles.
-               */
               fprintf(stderr, 
-                      "Warning: you specified -swap_bytes, but I can't swap this type if input\n");
+                      "Warning: you specified -swap_bytes, but I can't swap this type of input\n");
               break;
           }
       }
