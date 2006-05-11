@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.18  2006-04-09 15:39:04  bert
+   * Revision 1.19  2006-05-11 14:45:14  bert
+   * Fix endian-ness issues when parsing Siemens proprietary fields
+   *
+   * Revision 1.18  2006/04/09 15:39:04  bert
    * Improve support for DTI
    *
    * Revision 1.17  2006/02/09 20:54:29  bert
@@ -177,7 +180,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.18 2006-04-09 15:39:04 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.19 2006-05-11 14:45:14 bert Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -736,24 +739,23 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
         byte_pos += 8;          /* Skip header */
     }
 
-    n_items = *((int *)(byte_ptr + byte_pos));
-
+    acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &n_items);
     byte_pos += 8;              /* Skip # items and 4 bytes of unknown junk */
 
     while (n_items-- > 0) {
         strncpy(name, (byte_ptr + byte_pos), 64);
         byte_pos += 64;
 
-        vm = *((int *)(byte_ptr + byte_pos));
+        acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &vm);
         byte_pos += 4;
 
         strncpy(vr, (byte_ptr + byte_pos), 4);
         byte_pos += 4;
 
-        syngodt = *((int *)(byte_ptr + byte_pos));
+        acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &syngodt);
         byte_pos += 4;
 
-        n_values = *((int *)(byte_ptr + byte_pos));
+        acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &n_values);
         byte_pos += 4;
 
         byte_pos += 4;          /* skip dummy */
@@ -761,8 +763,8 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
         if (n_values > 0) {
             for (i = 0; i < n_values; i++) {
                 byte_pos += 4;      /* skip */
-                
-                len = *((int *)(byte_ptr + byte_pos));
+
+                acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &len);
 
                 byte_pos += 4;
 
