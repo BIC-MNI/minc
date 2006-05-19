@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.5  2005-07-13 21:34:25  bert
+ * Revision 6.6  2006-05-19 00:13:39  bert
+ * Add config.h
+ *
+ * Revision 6.5  2005/07/13 21:34:25  bert
  * Add sinc interpolant (ported from 1.X branch)
  *
  * Revision 6.4  2004/11/01 22:38:39  bert
@@ -90,7 +93,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.5 2005-07-13 21:34:25 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.6 2006-05-19 00:13:39 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>
