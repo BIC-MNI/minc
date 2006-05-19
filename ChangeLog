@@ -1,4 +1,8 @@
 MINC 2:
+2006-05-18 Bert Vincent <bert@bic.mni.mcgill.ca>
+	* progs/various... added config.h to source files that need it for
+	proper operation with MINC 2.0
+	
 2006-04-19 Claude Lepage <claude@bic.mni.mcgill.ca>
 	* fix duplicate instances of solve_linear_system and 
         scaled_maximal_pivoting_gaussian_elimination in
