@@ -10,7 +10,10 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: worldtovoxel.c,v $
- * Revision 6.5  2004-11-01 22:38:38  bert
+ * Revision 6.6  2006-05-19 00:35:58  bert
+ * Add config.h to several files that might need it
+ *
+ * Revision 6.5  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.4  2004/02/02 18:27:51  bert
@@ -65,7 +68,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/coordinates/worldtovoxel.c,v 6.6 2006-05-19 00:35:58 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>

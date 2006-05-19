@@ -1,8 +1,12 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.4 2005-12-05 16:40:59 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/main.c,v 1.5 2006-05-19 00:35:58 bert Exp $
  *********************************************************************/
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>

@@ -10,7 +10,10 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.8  2004-11-01 22:38:39  bert
+ * Revision 6.9  2006-05-19 00:35:58  bert
+ * Add config.h to several files that might need it
+ *
+ * Revision 6.8  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.7  2003/10/28 20:32:09  bert
@@ -82,7 +85,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.8 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.9 2006-05-19 00:35:58 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>

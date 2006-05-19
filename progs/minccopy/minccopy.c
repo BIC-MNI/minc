@@ -11,7 +11,10 @@
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minccopy.c,v $
- * Revision 6.2  2004-11-01 22:38:38  bert
+ * Revision 6.3  2006-05-19 00:35:58  bert
+ * Add config.h to several files that might need it
+ *
+ * Revision 6.2  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.1  1999/10/19 14:45:20  neelin
@@ -54,7 +57,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.2 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.3 2006-05-19 00:35:58 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdlib.h>

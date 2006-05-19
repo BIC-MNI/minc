@@ -10,7 +10,10 @@
 @CREATED    : January 20, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexpand.c,v $
- * Revision 6.3  2004-12-14 23:51:24  bert
+ * Revision 6.4  2006-05-19 00:35:58  bert
+ * Add config.h to several files that might need it
+ *
+ * Revision 6.3  2004/12/14 23:51:24  bert
  * Get rid of compilation warning with c99
  *
  * Revision 6.2  2004/11/01 22:38:38  bert
@@ -56,7 +59,11 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.3 2004-12-14 23:51:24 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.c,v 6.4 2006-05-19 00:35:58 bert Exp $";
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #define _GNU_SOURCE 1
