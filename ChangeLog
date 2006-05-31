@@ -1,4 +1,9 @@
 MINC 2:
+2006-05-31 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
+	* Makefile.am - modified to build and install
+	image_filters/extract and image_filters/byte_swap if the ACR NEMA
+	tools are intstalled, as they are required by dicom_to_minc.pl
+	
 2006-05-18 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* progs/various... added config.h to source files that need it for
 	proper operation with MINC 2.0

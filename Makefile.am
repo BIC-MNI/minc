@@ -210,7 +210,9 @@ bin_PROGRAMS += \
 	extract_acr_nema \
 	read_acr_nema \
 	dicom_test \
-	copy_acr_nema
+	copy_acr_nema \
+	byte_swap \
+	extract
 endif
 
 noinst_PROGRAMS = \
@@ -386,6 +388,8 @@ copy_acr_nema_LDADD = libacr_nema.la
 
 copy_acr_nema_SOURCES = conversion/Acr_nema/copy_acr_nema.c
 
+extract_SOURCES = conversion/image_filters/extract.c
+byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 
 
 libminc2_la_LDFLAGS = -version-info 2:0:1
