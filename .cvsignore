@@ -50,3 +50,9 @@ dcm2mnc
 upet2mnc
 ecattominc
 minctoecat
+byte_swap
+epm-header
+extract
+mincconvert
+mincdump
+mincgen
