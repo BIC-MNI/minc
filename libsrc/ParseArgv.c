@@ -16,7 +16,7 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.3 2005-04-22 18:56:23 bert Exp $ SPRITE (Berkeley)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.4.2.4 2006-06-01 19:38:46 bert Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
@@ -175,10 +175,10 @@ ParseArgv(argcPtr, argv, argTable, flags)
       infoPtr = matchPtr;
       switch (infoPtr->type) {
       case ARGV_CONSTANT:
-         *((int *) infoPtr->dst) = (int) infoPtr->src;
+         *((int *) infoPtr->dst) = *((int*)(&infoPtr->src));
          break;
       case ARGV_INT:
-         nargs = (int) infoPtr->src;
+         nargs = *((int*)(&infoPtr->src));
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -200,7 +200,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          }
          break;
       case ARGV_LONG:
-         nargs = (int) infoPtr->src;
+         nargs = *((int*)(&infoPtr->src));
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -223,7 +223,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          break;
 
       case ARGV_STRING:
-         nargs = (int) infoPtr->src;
+         nargs = *((int*)(&infoPtr->src));
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -239,7 +239,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          *((int *) infoPtr->dst) = dstIndex;
          goto argsDone;
       case ARGV_FLOAT:
-         nargs = (int) infoPtr->src;
+         nargs = *((int*)(&infoPtr->src));
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -400,7 +400,7 @@ PrintUsage(argTable, flags)
          switch (infoPtr->type) {
          case ARGV_INT: {
             FPRINTF(stderr, "\n\t\tDefault value:");
-            nargs = (int) infoPtr->src;
+            nargs = *((int*)(&infoPtr->src));
             if (nargs<1) nargs=1;
             for (j=0; j<nargs; j++) {
                FPRINTF(stderr, " %d", *(((int *) infoPtr->dst)+j));
@@ -409,7 +409,7 @@ PrintUsage(argTable, flags)
          }
          case ARGV_FLOAT: {
             FPRINTF(stderr, "\n\t\tDefault value:");
-            nargs = (int) infoPtr->src;
+            nargs = *((int*)(&infoPtr->src));
             if (nargs<1) nargs=1;
             for (j=0; j<nargs; j++) {
                FPRINTF(stderr, " %g", *(((double *) infoPtr->dst)+j));
@@ -419,7 +419,7 @@ PrintUsage(argTable, flags)
          case ARGV_STRING: {
             char *string;
 
-            nargs = (int) infoPtr->src;
+            nargs = *((int*)(&infoPtr->src));
             if (nargs<1) nargs=1;
             string = *((char **) infoPtr->dst);
             if ((nargs==1) && (string == NULL)) break;
