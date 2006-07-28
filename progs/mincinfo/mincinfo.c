@@ -10,12 +10,12 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.7  2006-07-28 17:51:01  baghdadi
+ * Revision 6.8  2006-07-28 18:20:53  baghdadi
+ * *** empty log message ***
+ *
+ * Revision 6.7  2006/07/28 17:51:01  baghdadi
  * Added option to print version of file
  * must use -minc_version -image_info
- *
- * Revision 6.7  2006/04/07 12:14:00 Leila
- * added minc_version flag
  *
  * Revision 6.6  2005/09/14 04:31:17  bert
  * include config.h
@@ -92,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.7 2006-07-28 17:51:01 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.8 2006-07-28 18:20:53 baghdadi Exp $";
 #endif
 
 #if HAVE_CONFIG_H
