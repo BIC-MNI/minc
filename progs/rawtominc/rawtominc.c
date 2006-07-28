@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.20  2006-05-11 15:09:57  claude
+ * Revision 6.21  2006-07-28 18:17:15  baghdadi
+ * Added -like option to list of arguments similar behaviour like mincresample.
+ *
+ * Revision 6.20  2006/05/11 15:09:57  claude
  * added float and double to -swap_bytes
  *
  * Revision 6.13.2.2  2005/03/16 19:02:52  bert
@@ -149,7 +152,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.20 2006-05-11 15:09:57 claude Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.21 2006-07-28 18:17:15 baghdadi Exp $";
 #endif
 
 #include "config.h"
@@ -198,8 +201,60 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,
 #define DEF_ORIGIN DBL_MAX
 #define ARG_SEPARATOR ','
 
+/* LB. needed for volume_def */
+#define VOL_NDIMS    3   /* Number of volume dimensions */
+#define WORLD_NDIMS  3   /* Number of world spatial dimensions */
+int Specified_like = FALSE;
+
 /* Macros */
 #define STR_EQ(s1,s2) (strcmp(s1,s2)==0)
+
+/* LB. For referring to world axes in arrays subscripted by WORLD_NDIMS */
+#define NO_AXIS -1
+#define XAXIS 0
+#define YAXIS 1
+#define ZAXIS 2
+typedef struct {
+   char *name;
+   int mincid;
+   int imgid;
+   int maxid;
+   int minid;
+   int ndims;
+   nc_type datatype;
+   int is_signed;
+   double vrange[2];                /* [0]=min, [1]=max */
+   long nelements[MAX_VAR_DIMS];    /* Size of each dimension */
+   int world_axes[MAX_VAR_DIMS];    /* Relates variable index to X, Y, Z 
+                                       or NO_AXIS */
+   int indices[VOL_NDIMS];        /* Indices of volume dimenions (subscripted
+                                       from slowest to fastest) */
+   int axes[WORLD_NDIMS];    /* Relates world X,Y,Z (index) to dimension 
+                                order (value=0,1,2; 0=slowest varying) */
+   int using_icv;            /* True if we are using an icv to read data */
+   int icvid;                /* Id of icv (if used) */
+   long slices_per_image;    /* Number of volume slices (row, column) per
+                                minc file image */
+   long images_per_file;     /* Number of minc file images in the file */
+   int do_slice_renormalization; /* Flag indicating that we need to 
+                                    loop through the data a second time, 
+                                    recomputing the slices to normalize
+                                    images properly */
+   int keep_real_range;      /* Flag indicating whether we should keep
+                                the real range of the input data or not */
+} File_Info;
+
+typedef struct {
+   int axes[WORLD_NDIMS];    /* Relates world X,Y,Z (index) to dimension 
+                                order (value=0,1,2; 0=slowest varying) */
+   long nelements[WORLD_NDIMS]; /* These are subscripted by X, Y and Z */
+   double step[WORLD_NDIMS];
+   double start[WORLD_NDIMS];
+   double dircos[WORLD_NDIMS][WORLD_NDIMS];
+   double *coords[WORLD_NDIMS];
+   char units[WORLD_NDIMS][MI_MAX_ATTSTR_LEN];
+   char spacetype[WORLD_NDIMS][MI_MAX_ATTSTR_LEN];
+} Volume_Definition;
 
 /* Function declarations */
 static void parse_args(int argc, char *argv[]);
@@ -207,6 +262,12 @@ static void usage_error(char *pname);
 static int get_attribute(char *dst, char *key, char *nextarg);
 static int get_times(char *dst, char *key, char *nextarg);
 static int get_axis_order(char *dst, char *key, char *nextArg);
+
+/* LB. function prototypes */
+static void get_file_info(char *filename, int initialized_volume_def, 
+                          Volume_Definition *volume_def,
+                          File_Info *file_info);
+static int get_model_file(char *dst, char *key, char *nextArg);
 
 /* Array containing information about signs. It is subscripted by
    [signtype][type]. Note that the first row should never be used, since
@@ -235,6 +296,8 @@ int clobber=FALSE;
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
+/* LB. */
+int NDims=0;
 int type = BYTE_TYPE;
 int signtype = DEF_SIGN;
 nc_type datatype;
@@ -275,6 +338,8 @@ double real_range[2] = {DEF_RANGE, DEF_RANGE};
 long skip_length;
 int swap_bytes = FALSE;
 char *axis_order[MAX_DIMS+1] = { MItime, MIzspace, MIyspace, MIxspace };
+/* LB. */
+static Volume_Definition volume_def;
 
 /* Argument table */
 ArgvInfo argTable[] = {
@@ -437,6 +502,8 @@ ArgvInfo argTable[] = {
        "Specify the frame starting times (\"<t1>,<t2>,<t3>,...\")."},
    {"-frame_widths", ARGV_FUNC, (char *) get_times, NULL,
        "Specify the frame lengths (\"<w1>,<w2>,<w3>,...\")."},
+    {"-like", ARGV_FUNC, (char *) get_model_file, (char *) &volume_def,
+       "Specifies a model file."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -975,32 +1042,50 @@ static void parse_args(int argc, char *argv[])
    if (ParseArgv(&argc, argv, argTable, 0)) {
       usage_error(pname);
    }
+    /* Get filename */
+   filename = argv[1];
 
    /* Check dimensions */
    ndims = argc - 2;
-   if ((ndims<MIN_DIMS)||(ndims>MAX_DIMS)) {
-      (void) fprintf(stderr, 
-         "\nWrong number of arguments.\n");
-      usage_error(pname);
-   }
-
-   /* Get filename */
-   filename = argv[1];
-
-   /* Get dimensions */
-   for (i=0; i<ndims; i++) {
-      dimlength[i] = strtol(argv[2+i], &ptr, 0);
-      if ((ptr==argv[2+i]) || (*ptr!=0)) {
-         if (ptr==argv[2+i]) {
-            (void) fprintf(stderr, "\nBad argument \"%s\".\n", ptr);
-         }
-         else {
-            (void) fprintf(stderr, 
-                           "\nDimension sizes must be integer values.\n");
-         }
-         usage_error(pname);
-      }
-      dimname[i]=axis_order[i+MAX_DIMS-ndims];
+   
+   /* LB. Modified to take -like with no dimension length provided */
+   if (ndims == 0)
+     {
+       if (!Specified_like) 
+	 {
+	   (void) fprintf(stderr, 
+			  "\nEither provide dimension lengths or use -like.\n");
+	   usage_error(pname);
+	 }
+       else {
+	 ndims = NDims;
+	 for (i=0; i<ndims; i++) {
+	   dimname[i]=axis_order[i+MAX_DIMS-ndims];
+	 }
+       }
+	   
+     }
+   else {
+     if ((ndims<MIN_DIMS)||(ndims>MAX_DIMS)) {
+       (void) fprintf(stderr, 
+		      "\nWrong number of arguments.\n");
+       usage_error(pname);
+     }
+     /* Get dimensions */
+     for (i=0; i<ndims; i++) {
+       dimlength[i] = strtol(argv[2+i], &ptr, 0);
+       if ((ptr==argv[2+i]) || (*ptr!=0)) {
+	 if (ptr==argv[2+i]) {
+	   (void) fprintf(stderr, "\nBad argument \"%s\".\n", ptr);
+	 }
+	 else {
+	   (void) fprintf(stderr, 
+			  "\nDimension sizes must be integer values.\n");
+	 }
+	 usage_error(pname);
+       }
+       dimname[i]=axis_order[i+MAX_DIMS-ndims];
+     }
    }
 
    /* Set types and signs */
@@ -1329,6 +1414,14 @@ static int get_axis_order(char *dst, char *key, char *nextArg)
         {MItime, MIzspace, MIxspace, MIyspace}, /* ZXY_ORIENTATION */
     };
 
+    /* LB. To avoid confusion for dimension order with -like*/
+    if (Specified_like) {
+      (void) fprintf(stderr, 
+		     "\"%s\" can not use this option with -like\n",
+		     key);
+      exit(EXIT_FAILURE);
+    }
+
     /* Get pointer to client data */
     dim_name_array = (char **) dst;
 
@@ -1430,4 +1523,286 @@ static int get_axis_order(char *dst, char *key, char *nextArg)
      * extra from the argument list.
      */
     return (FALSE);
+}
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_file_info
+@INPUT      : filename - name of file to read
+              initialized_volume_def - if TRUE, then volume_def is taken 
+                 as being properly initialized and arrays are freed if
+                 non-NULL. Otherwise arrays are not freed.
+@OUTPUT     : volume_def - description of volume
+              file_info - description of file
+@RETURNS    : (nothing)
+@DESCRIPTION: Routine to get information about the volume definition of
+              a minc file. 
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 9, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+static void get_file_info(char *filename, int initialized_volume_def, 
+                          Volume_Definition *volume_def,
+                          File_Info *file_info)
+{
+   int dim[MAX_VAR_DIMS], dimid;
+   int axis_counter, idim, jdim, cur_axis;
+   int varndims, vardim[MAX_VAR_DIMS];
+   long varstart, varcount, dimlength1;
+   char attstr[MI_MAX_ATTSTR_LEN];
+   char dimname1[MAX_NC_NAME];
+   enum {UNKNOWN, REGULAR, IRREGULAR} coord_spacing;
+   
+   /* Open the minc file */
+   file_info->mincid = miopen(filename, NC_NOWRITE);
+   file_info->name = filename;
+
+   /* Get variable identifiers */
+   file_info->imgid = ncvarid(file_info->mincid, MIimage);
+   ncopts = 0;
+   file_info->maxid = ncvarid(file_info->mincid, MIimagemax);
+   file_info->minid = ncvarid(file_info->mincid, MIimagemin);
+   ncopts = NC_VERBOSE | NC_FATAL;
+
+   /* Get information about datatype dimensions of variable */
+   (void) miget_datatype(file_info->mincid, file_info->imgid, 
+                         &file_info->datatype, &file_info->is_signed);
+
+   /* Get valid max and min */
+   (void) miget_valid_range(file_info->mincid, file_info->imgid, 
+                            file_info->vrange);
+
+   /* Get information about dimensions */
+   (void) ncvarinq(file_info->mincid, file_info->imgid, NULL, NULL,
+                   &file_info->ndims, dim, NULL);
+
+   /* Set variables for keeping track of spatial dimensions */
+   axis_counter = 0;                   /* Keeps track of values for axes */
+
+   /* Initialize volume definition variables */
+   for (idim=0; idim < WORLD_NDIMS; idim++) {
+      volume_def->axes[idim] = NO_AXIS;
+      volume_def->step[idim] = 1.0;
+      volume_def->start[idim] = 0.0;
+      for (jdim=0; jdim < WORLD_NDIMS; jdim++) {
+         if (jdim==idim)
+            volume_def->dircos[idim][jdim] = 1.0;
+         else
+            volume_def->dircos[idim][jdim] = 0.0;
+      }
+      if (initialized_volume_def && (volume_def->coords[idim] != NULL)) {
+         free(volume_def->coords[idim]);
+      }
+      volume_def->coords[idim] = NULL;
+      (void) strcpy(volume_def->units[idim], "mm");
+      (void) strcpy(volume_def->spacetype[idim], MI_NATIVE);
+   }
+
+   /* Loop through dimensions, getting dimension information */
+
+   for (idim=0; idim < file_info->ndims; idim++) {
+
+      /* Get size of dimension */
+      (void) ncdiminq(file_info->mincid, dim[idim], dimname1, 
+                      &file_info->nelements[idim]);
+      
+      /* Check variable name */
+      /* LB. added minor modification to change axis_order
+	 for dimension order and name */
+      cur_axis = NO_AXIS;
+      if (strcmp(dimname1, MIxspace)==0)
+	{
+         cur_axis = XAXIS;
+	 axis_order[idim+1]= MIxspace;
+	}
+      else if (strcmp(dimname1, MIyspace)==0)
+	{
+         cur_axis = YAXIS;
+	 axis_order[idim+1]= MIyspace;
+	}
+      else if (strcmp(dimname1, MIzspace)==0)
+	{
+         cur_axis = ZAXIS;
+	 axis_order[idim+1]= MIzspace;
+	}
+      
+      /* Save world axis info */
+      file_info->world_axes[idim] = cur_axis;
+
+      /* Check for spatial dimension */
+      if (cur_axis == NO_AXIS) continue;
+
+      /* Set axis */
+      if (volume_def->axes[cur_axis] != NO_AXIS) {
+         (void) fprintf(stderr, "Repeated spatial dimension %s in file %s.\n",
+                 dimname1, filename);
+         exit(EXIT_FAILURE);
+      }
+      volume_def->axes[cur_axis] = axis_counter++;
+
+      /* Save spatial axis specific info */
+      file_info->axes[cur_axis] = volume_def->axes[cur_axis];
+      file_info->indices[volume_def->axes[cur_axis]] = idim;
+      volume_def->nelements[cur_axis] = file_info->nelements[idim];
+      
+      /* Check for existence of variable */
+      ncopts = 0;
+      dimid = ncvarid(file_info->mincid, dimname1);
+      ncopts = NC_VERBOSE | NC_FATAL;
+      if (dimid == MI_ERROR) continue;
+             
+      /* Get attributes from variable */
+      ncopts = 0;
+      (void) miattget1(file_info->mincid, dimid, MIstep, 
+                       NC_DOUBLE, &volume_def->step[cur_axis]);
+     
+      if (volume_def->step[cur_axis] == 0.0)
+         volume_def->step[cur_axis] = 1.0;
+       
+      (void) miattget1(file_info->mincid, dimid, MIstart, 
+                       NC_DOUBLE, &volume_def->start[cur_axis]);
+      
+      (void) miattget(file_info->mincid, dimid, MIdirection_cosines, 
+                      NC_DOUBLE, WORLD_NDIMS, 
+                      volume_def->dircos[cur_axis], NULL);
+
+      (void) miattgetstr(file_info->mincid, dimid, MIunits, 
+                         MI_MAX_ATTSTR_LEN, volume_def->units[cur_axis]);
+      (void) miattgetstr(file_info->mincid, dimid, MIspacetype, 
+                         MI_MAX_ATTSTR_LEN, volume_def->spacetype[cur_axis]);
+      ncopts = NC_VERBOSE | NC_FATAL;
+
+      /* Normalize the direction cosine */
+      // normalize_vector(volume_def->dircos[cur_axis]);
+
+      /* Look for irregular coordinates for dimension variable */
+      ncopts = 0;
+      coord_spacing = UNKNOWN;
+      dimlength1 = volume_def->nelements[cur_axis];
+      
+      if (miattgetstr(file_info->mincid, dimid, MIspacing, MI_MAX_ATTSTR_LEN,
+                       attstr) != NULL) {
+         if (strcmp(attstr, MI_IRREGULAR) == 0)
+            coord_spacing = IRREGULAR;
+         else if (strcmp(attstr, MI_REGULAR) == 0)
+            coord_spacing = REGULAR;
+      }
+      if (ncvarinq(file_info->mincid, dimid, NULL, NULL, 
+                   &varndims, vardim, NULL) == MI_ERROR) {
+         ncopts = NC_VERBOSE | NC_FATAL;
+         continue;
+      }
+      if ((coord_spacing != REGULAR) && 
+          (varndims == 1) && (vardim[0] == dim[idim])) {
+         coord_spacing = IRREGULAR;
+      }
+      if ((coord_spacing == UNKNOWN) || (dimlength1 <= 1)) {
+         coord_spacing = REGULAR;
+      }
+      if (coord_spacing == IRREGULAR) {
+         volume_def->coords[cur_axis] = malloc(sizeof(double) * dimlength1);
+         varstart = 0;
+         varcount = dimlength1;
+         if (mivarget(file_info->mincid, dimid, &varstart, &varcount,
+                      NC_DOUBLE, MI_SIGNED, volume_def->coords[cur_axis])
+                   == MI_ERROR) {
+            ncopts = NC_VERBOSE | NC_FATAL;
+            free(volume_def->coords[cur_axis]);
+            volume_def->coords[cur_axis] = NULL;
+            continue;
+         }
+         volume_def->start[cur_axis] = volume_def->coords[cur_axis][0];
+         if (dimlength1 > 1) {
+            volume_def->step[cur_axis] = 
+               (volume_def->coords[cur_axis][dimlength1-1] - 
+                            volume_def->coords[cur_axis][0]) /
+                               (dimlength1 - 1);
+            if (volume_def->step[cur_axis] == 0.0)
+               volume_def->step[cur_axis] = 1.0;
+         }
+      }
+      ncopts = NC_VERBOSE | NC_FATAL;
+     
+
+   }   /* End of loop over dimensions */
+
+   /* Check that we have the correct number of spatial dimensions */
+   if (axis_counter != WORLD_NDIMS) {
+      (void) fprintf(stderr, 
+                     "Incorrect number of spatial dimensions in file %s.\n",
+                     filename);
+         exit(EXIT_FAILURE);
+   }
+
+   return;
+}
+
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : get_model_file
+@INPUT      : dst - Pointer to client data from argument table
+              key - argument key
+              nextArg - argument following key
+@OUTPUT     : (nothing) 
+@RETURNS    : TRUE so that ParseArgv will discard nextArg unless there
+              is no following argument.
+@DESCRIPTION: Routine called by ParseArgv to read in a model file (-like)
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : February 15, 1993 (Peter Neelin)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+static int get_model_file(char *dst, char *key, char *nextArg)
+     /* ARGSUSED */
+{
+  Volume_Definition *volume_def;
+  File_Info file;
+  int i;
+   /* Check for following argument */
+   if (nextArg == NULL) {
+      (void) fprintf(stderr, 
+                     "\"%s\" option requires an additional argument\n",
+                     key);
+      exit(EXIT_FAILURE);
+   }
+   /* set this flag so we know that -like is used */
+   Specified_like = TRUE;
+   /* Get pointer to volume definition structure */
+   volume_def = (Volume_Definition *) dst;
+   
+   /* Get file information */
+   get_file_info(nextArg, TRUE, volume_def, &file);
+   
+   /* LB. Set number of dimensions */
+   NDims = file.ndims;
+   /* LB. Set dimension lengths and other info */
+   dimlength[0] = volume_def->nelements[file.world_axes[0]];
+   dimlength[1] = volume_def->nelements[file.world_axes[1]];  
+   dimlength[2] = volume_def->nelements[file.world_axes[2]];
+   
+   /* start */
+   dimstart[0]=  volume_def->start[0];
+   dimstart[1]=  volume_def->start[1];
+   dimstart[2]=  volume_def->start[2];
+   /* step */
+   dimstep[0]=  volume_def->step[0];
+   dimstep[1]=  volume_def->step[1];
+   dimstep[2]=  volume_def->step[2];
+   /* modify dircos X */
+   dimdircos[0][0] = volume_def->dircos[0][0];
+   dimdircos[0][1] = volume_def->dircos[0][1];
+   dimdircos[0][2] = volume_def->dircos[0][2];
+   /* modify dircos Y */
+   dimdircos[1][0] = volume_def->dircos[1][0];
+   dimdircos[1][1] = volume_def->dircos[1][1];
+   dimdircos[1][2] = volume_def->dircos[1][2];
+   /* modify dircos Z */
+   dimdircos[2][0] = volume_def->dircos[2][0];
+   dimdircos[2][1] = volume_def->dircos[2][1];
+   dimdircos[2][2] = volume_def->dircos[2][2];  
+   
+   /* Close the file */
+   (void) miclose(file.mincid);
+   
+   return TRUE;
 }
