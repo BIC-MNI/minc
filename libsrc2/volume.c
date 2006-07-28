@@ -1291,7 +1291,8 @@ miclose_volume(mihandle_t volume)
     if (volume->plist_id > 0) {
         H5Pclose(volume->plist_id);
     }
-    if (H5Fclose(volume->hdf_id) < 0) {
+    //if (H5Fclose(volume->hdf_id) < 0) {
+    if (hdf_close(volume->hdf_id) < 0) {
       return (MI_ERROR);
     }
     if (volume->dim_handles != NULL) {
