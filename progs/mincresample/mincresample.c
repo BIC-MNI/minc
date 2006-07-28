@@ -11,7 +11,13 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.18  2005-08-26 21:07:17  bert
+ * Revision 6.19  2006-07-28 17:54:57  baghdadi
+ * added vector dimension to list of excluded files (minc2.
+ *
+ * Revision 6.19  2006/06/21 12:07:17  leila
+ * added vector_dimension to the list of excluded dimensions for minc2.0 files.
+ *
+ * Revision 6.18  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.17  2005/07/13 21:34:24  bert
@@ -180,7 +186,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.18 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.19 2006-07-28 17:54:57 baghdadi Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -1242,6 +1248,10 @@ static void create_output_file(char *filename, int cflags,
       excluded_vars[nexcluded++] = varid;
    if ((varid=ncvarid(in_file->mincid, MIimagemin)) != MI_ERROR)
       excluded_vars[nexcluded++] = varid;
+#if MINC2
+   if ((varid=ncvarid(in_file->mincid, MIvector_dimension)) != MI_ERROR)
+      excluded_vars[nexcluded++] = varid;
+#endif /* MINC2 */
    ncopts = NC_VERBOSE | NC_FATAL;
 
    /* Create the file */
