@@ -10,7 +10,14 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.4  2005-08-26 21:07:17  bert
+ * Revision 1.5  2006-07-28 16:47:22  baghdadi
+ * *** empty log message ***
+ *
+ * Revision 1.6  2006/06/21 11:30:00  Leila
+ * added return value for main function
+ * Revision 1.5  2006/04/10 11:30:00  Leila
+ * check the version of file and Abort if converting to itself!
+ * Revision 1.4  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 1.3  2004/11/01 22:38:38  bert
@@ -35,7 +42,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.4 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.5 2006-07-28 16:47:22 baghdadi Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -130,7 +137,21 @@ main(int argc, char **argv)
         perror(old_fname);
         exit(EXIT_FAILURE);
     }
-
+    
+    /* check the version of file and Abort if converting to itself */
+    if (MI2_ISH5OBJ(old_fd)) {
+      if (v2format) {
+	fprintf(stderr,"Abort: Converting Version 2 (HDF5) to itself!! \n");
+	exit(EXIT_FAILURE);
+      }
+    }
+    else {
+       if (!v2format) {
+	 fprintf(stderr,"Abort: Converting Version 1 (netCDF) to itself!! \n");
+	 exit(EXIT_FAILURE);
+       }
+    }
+    
     flags = 0;
 
     if (clobber) {
@@ -185,4 +206,6 @@ main(int argc, char **argv)
     miclose(old_fd);
     miclose(new_fd);
     free(new_history);
+
+    exit(EXIT_SUCCESS);
 }
