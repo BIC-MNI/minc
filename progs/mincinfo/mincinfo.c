@@ -10,7 +10,14 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.6  2005-09-14 04:31:17  bert
+ * Revision 6.7  2006-07-28 17:51:01  baghdadi
+ * Added option to print version of file
+ * must use -minc_version -image_info
+ *
+ * Revision 6.7  2006/04/07 12:14:00 Leila
+ * added minc_version flag
+ *
+ * Revision 6.6  2005/09/14 04:31:17  bert
  * include config.h
  *
  * Revision 6.5  2004/11/01 22:38:38  bert
@@ -85,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.6 2005-09-14 04:31:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.7 2006-07-28 17:51:01 baghdadi Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -118,7 +125,7 @@ char *type_names[] = {
 typedef enum  {
    ENDLIST, IMAGE_INFO, DIMNAMES, VARNAMES,
    DIMLENGTH, VARTYPE, VARDIMS, VARATTS, VARVALUES,
-   ATTTYPE, ATTVALUE
+   ATTTYPE, ATTVALUE, MINC_VERSION
 } Option_code;
 typedef struct {
    Option_code code;
@@ -166,6 +173,8 @@ ArgvInfo argTable[] = {
        "Print the value(s) of the specified attribute (variable:attribute)."},
    {"-error_string", ARGV_STRING, (char *) 0, (char *) &error_string,
        "Error to print on stdout (default = exit with error status)."},
+   {"-minc_version", ARGV_FUNC, (char *) get_option, (char *) MINC_VERSION,
+    "Print the minc file version, netcdf or hdf5."},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -217,6 +226,29 @@ int main(int argc, char *argv[])
    return ret_value;
 }
 
+/* ----------------------------- MNI Header -----------------------------------
+@NAME       : print_image_version
+@INPUT      : (boolean)
+@OUTPUT     : (none)
+@RETURNS    : Exit status.
+@DESCRIPTION: Prints out image netcdf or hdf5
+@METHOD     : 
+@GLOBALS    : 
+@CALLS      : 
+@CREATED    : Apr 6, 2005 (Leila Baghdadi)
+@MODIFIED   : 
+---------------------------------------------------------------------------- */
+static int print_image_version(int Is_MINC2_File)
+{
+   if (Is_MINC2_File) {
+     (void) printf("Version: 2 (HDF5)\n");
+   }
+   else {
+     (void) printf("Version: 1 (netCDF)\n");
+     
+   }
+    return EXIT_SUCCESS;
+}
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : process_file
@@ -247,7 +279,7 @@ static int process_file( char* filename, int header_only )
    double *ddata;
    int created_tempfile;
    char *tempfile;
-
+   int Is_MINC2_File=0;
 
    /* Expand file */
    tempfile = miexpand_file(filename, NULL, header_only, &created_tempfile);
@@ -267,6 +299,14 @@ static int process_file( char* filename, int header_only )
                      exec_name, tempfile);
       return EXIT_FAILURE;
    }
+
+   /* check whether the file is Version 2 */
+#ifdef MINC2
+   if (MI2_ISH5OBJ(mincid)) {
+     Is_MINC2_File = 1;
+   }
+#endif
+
    /* Loop through print options */
    for (option=0; option < length_option_list; option++) {
       string = option_list[option].value;
@@ -382,6 +422,9 @@ static int process_file( char* filename, int header_only )
             free(ddata);
          }
          break;
+      case MINC_VERSION:
+	CHK_ERR(print_image_version(Is_MINC2_File));
+	break;
       default:
          (void) fprintf(stderr, "%s: Program bug!\n", exec_name);
          return EXIT_FAILURE;
@@ -426,6 +469,7 @@ static int get_option(char *dst, char *key, char *nextarg)
    code  = (Option_code) dst;
    option_list[length_option_list].code = code;
    if ((code == IMAGE_INFO) |
+       (code == MINC_VERSION) || 
        (code == DIMNAMES) ||
        (code == VARNAMES)){
       option_list[length_option_list].value = NULL;
