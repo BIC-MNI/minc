@@ -1,3 +1,11 @@
+		New in Release 2.0.11
+                ---------------------
+* Many small fixes
+* fix to mincresample
+* Small fix to mincconvert
+* -like flag added to rawtominc
+* Added additional tests for minc2 files.
+
                 New in Release 2.0.10
                 ---------------------
 * Many small fixes to dcm2mnc
