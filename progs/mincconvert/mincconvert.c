@@ -10,8 +10,8 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.5  2006-07-28 16:47:22  baghdadi
- * *** empty log message ***
+ * Revision 1.6  2006-07-28 16:49:55  baghdadi
+ * added message to disallow conversion to itself and exit with success
  *
  * Revision 1.6  2006/06/21 11:30:00  Leila
  * added return value for main function
@@ -42,7 +42,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.5 2006-07-28 16:47:22 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.6 2006-07-28 16:49:55 baghdadi Exp $";
 #endif
 
 #if HAVE_CONFIG_H
