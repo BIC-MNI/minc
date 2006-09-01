@@ -1,4 +1,8 @@
 MINC 2:
+2006-09-01  Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
+	* conversion/Acr_nema - Fixed a bug causing dump_acr_nema to skip
+	all elements with element number 0x0010
+
 2006-05-31 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
 	* Makefile.am - modified to build and install
 	image_filters/extract and image_filters/byte_swap if the ACR NEMA

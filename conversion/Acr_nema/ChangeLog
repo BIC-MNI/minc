@@ -1,3 +1,7 @@
+2006-09-01  Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
+	* Fix bug in element.c: modified maybe_print_as_string to only skip element
+	0x7fe0,0x0010 rather than all elements with element number 0x0010
+
 2005-05-09  Robert Vincent  <bert@bic.mni.mcgill.ca>
 	* Add and update dicom.txt, a list of DICOM field names.
 	* Fix bug in group.c so that acr_find_short, acr_find_int,

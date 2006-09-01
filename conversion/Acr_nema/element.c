@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.10  2006-04-09 15:28:40  bert
+ * Revision 6.11  2006-09-01 16:33:49  jharlap
+ * fixed bug in Acr_nema that caused dump_acr_nema to skip all elements with element number 0x0010 when it should only have skipped 0x7fe0,0x0010.
+ *
+ * Revision 6.10  2006/04/09 15:28:40  bert
  * Add functions acr_get_element_double_array and acr_create_element_double
  *
  * Revision 6.9  2006/03/10 19:22:56  bert
@@ -1636,8 +1639,8 @@ maybe_print_as_string(FILE *file_pointer, Acr_Element cur_element,
 
     /* Print string if short enough and is printable */
     if (element_length > 0 &&
-        acr_get_element_group(cur_element) != 0x7fe0 &&
-        acr_get_element_element(cur_element) != 0x0010) {
+		  !(acr_get_element_group(cur_element) == 0x7fe0 &&
+        acr_get_element_element(cur_element) == 0x0010)) {
         copy = malloc(string_length + 1);
         printable = (string_length > 0);
         for (i=0; i < string_length; i++) {
