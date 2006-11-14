@@ -1,3 +1,8 @@
+		New in Release 2.0.12
+                ---------------------
+* Fixed a bug causing dump_acr_nema to skip all elements 
+with element number 0x0010.
+
 		New in Release 2.0.11
                 ---------------------
 * Many small fixes
