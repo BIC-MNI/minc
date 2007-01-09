@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.21  2006-07-28 18:17:15  baghdadi
+ * Revision 6.22  2007-01-09 21:56:59  baghdadi
+ * Added -2 option for minc2.0 support
+ *
+ * Revision 6.21  2006/07/28 18:17:15  baghdadi
  * Added -like option to list of arguments similar behaviour like mincresample.
  *
  * Revision 6.20  2006/05/11 15:09:57  claude
@@ -152,7 +155,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.21 2006-07-28 18:17:15 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.22 2007-01-09 21:56:59 baghdadi Exp $";
 #endif
 
 #include "config.h"
@@ -293,6 +296,9 @@ nc_type convert_types[] = {
 char *pname;
 char *filename;
 int clobber=FALSE;
+#if MINC2
+int v2format=FALSE; /* Version 2.0 file format? */
+#endif /* MINC2 */
 char *dimname[MAX_VAR_DIMS];
 long dimlength[MAX_VAR_DIMS];
 int ndims;
@@ -436,6 +442,10 @@ ArgvInfo argTable[] = {
        "Do not scan input for min and max (default)."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for writing output file. Default = -noclobber."},
+#if MINC2
+   {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
+       "Produce a MINC 2.0 format output file."},
+#endif /* MINC2 */
    {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
        "Overwrite existing file"},
    {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
@@ -536,6 +546,7 @@ int main(int argc, char *argv[])
    int status;
    double scale, offset, denom, pixel_min, pixel_max;
    double dircos[WORLD_NDIMS][WORLD_NDIMS];
+   int cflags;
 
    /* Save time stamp and args */
    tm_stamp = time_stamp(argc, argv);
@@ -639,7 +650,18 @@ int main(int argc, char *argv[])
    }
 
    /* Create the file and save the time stamp */
-   cdfid=micreate(filename, (clobber ? NC_CLOBBER : NC_NOCLOBBER));
+   if (clobber) {
+     cflags = NC_CLOBBER;
+   }
+   else {
+     cflags = NC_NOCLOBBER;
+   }
+#if MINC2
+   if (v2format) {
+     cflags |= MI2_CREATE_V2;
+   }
+#endif /* MINC2 */
+   cdfid=micreate(filename, cflags);
    (void) miattputstr(cdfid, NC_GLOBAL, MIhistory, tm_stamp);
 
    /* Set the number of image dimensions */
