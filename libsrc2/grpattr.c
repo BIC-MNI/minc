@@ -666,6 +666,14 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     hid_t hdf_grp;
     int result;
     char fullpath[256];
+    hid_t tmp_id;
+    hid_t dataset_info = -1;
+    hid_t dataspace_info = -1;
+    hid_t grp_info;
+    hid_t grp_id;
+    char *std_name;
+    char *pch;
+    int i,slength;
 
     /* Get a handle to the actual HDF file 
      */
@@ -680,6 +688,39 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     }
     strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
 
+    /* find last occurance of '/' */
+    pch = strrchr(path,'/');
+    if(pch !=NULL) {
+      slength = strlen(path) - (pch-path);
+      std_name = malloc(slength);
+      for (i=0; i < slength; i++)
+	std_name[i] = path[pch-path+1+i];
+      std_name[slength]='\0';
+    }
+    else {
+      std_name = malloc(strlen(path) + 1);
+      strcpy(std_name, path);
+    }
+    
+    /* might need to create standard dataset first*/
+    
+    if (!strcmp(std_name,"acquisition") || 
+	!strcmp(std_name,"patient") ||
+	!strcmp(std_name,"study") )
+      {
+	H5E_BEGIN_TRY {
+	  tmp_id = H5Dopen(hdf_file, fullpath);
+	  if (tmp_id < 0) {
+	    create_standard_dataset(hdf_file,std_name);
+	  }
+	  else {
+	    H5Dclose(tmp_id);
+	  }
+	} H5E_END_TRY;
+      }
+    
+    free(std_name);
+
     /* Search through the path, descending into each group encountered.
      */
     hdf_grp = midescend_path(hdf_file, fullpath);
@@ -688,8 +729,53 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     }
 
     result = miset_attr_at_loc(hdf_grp, name, data_type, length, values);
+    
+    if (result < 0) {
+      return (MI_ERROR);
+    }
 
-    H5Gclose(hdf_grp);
+     /* added the following instead H5Gclose(hdf_grp) */
+    H5E_BEGIN_TRY {
+      tmp_id = H5Gclose(hdf_grp);
+      if (tmp_id < 0) {
+            tmp_id = H5Dclose(hdf_grp);
+        }
+    } H5E_END_TRY;
 
-    return (result);
+    return (MI_NOERROR);
+}
+
+int
+miadd_history_attr(mihandle_t vol, int length, const void *values)
+{
+  int result;
+  hid_t hdf_file;
+  hid_t hdf_grp;
+  hid_t tmp_id;
+  /* Get a handle to the actual HDF file 
+   */
+    
+  hdf_file = vol->hdf_id;
+  if (hdf_file < 0) {
+    return (MI_ERROR);
+  }
+  hdf_grp = midescend_path(hdf_file, "/minc-2.0");
+  if (hdf_grp < 0) {
+    return (MI_ERROR);
+  }
+  result = miset_attr_at_loc(hdf_grp, "history", MI_TYPE_STRING, length, values);
+  if (result < 0) {
+    return (MI_ERROR);
+  }
+
+  /* added the following instead H5Gclose(hdf_grp) */
+  H5E_BEGIN_TRY {
+    tmp_id = H5Gclose(hdf_grp);
+    if (tmp_id < 0) {
+      tmp_id = H5Dclose(hdf_grp);
+    }
+  } H5E_END_TRY;
+  
+  return (MI_NOERROR);
+  
 }
