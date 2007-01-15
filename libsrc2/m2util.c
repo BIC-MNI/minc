@@ -1724,6 +1724,55 @@ free2d(int n, double **mat)
     free(mat);
 }
 
+/** Function for create a dataset (acquisition, patient, study)
+ */
+
+int
+create_standard_dataset(hid_t hdf_file, const char *name)
+{
+  hid_t dataset_info;
+  hid_t dataspace_info;
+  hid_t grp_info;
+  int result;
+
+  grp_info = H5Gopen(hdf_file, "/minc-2.0/info");
+  if (grp_info < 0) {
+    return (MI_ERROR);
+  }
+  dataspace_info = H5Screate(H5S_SCALAR);
+  if (dataspace_info < 0) {
+    return (MI_ERROR);
+  }
+  
+  dataset_info = H5Dcreate(grp_info, name, 
+			   H5T_STD_I32LE, dataspace_info, H5P_DEFAULT);
+  if (dataset_info < 0) {
+    return (MI_ERROR);
+  }
+  
+  result = miset_attr_at_loc(dataset_info,MIvarid, MI_TYPE_STRING, strlen(MI_STDVAR), MI_STDVAR);
+  if (result < 0){
+    return (MI_ERROR);
+  }
+
+  result = miset_attr_at_loc(dataset_info,MIvartype, MI_TYPE_STRING, strlen(MI_GROUP), MI_GROUP);
+  if (result < 0){
+    return (MI_ERROR);
+  }
+
+  result = miset_attr_at_loc(dataset_info,MIversion, MI_TYPE_STRING, strlen(MI_VERSION_2_0), MI_VERSION_2_0);
+  if (result < 0){
+    return (MI_ERROR);
+  }
+   
+  H5Dclose(dataset_info);
+  H5Sclose(dataspace_info);
+  H5Gclose(grp_info);
+
+  return (MI_NOERROR);
+}
+
+
 
 /** Performs scaled maximal pivoting gaussian elimination as a
     numerically robust method to solve systems of linear equations.
