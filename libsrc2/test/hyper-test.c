@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include "minc2.h"
+#include "config.h"
 
 #define NDIMS 3
 #define CX 11
