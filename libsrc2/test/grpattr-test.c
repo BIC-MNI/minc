@@ -24,6 +24,10 @@ int main(int argc, char **argv)
     int intarr[TESTARRAYSIZE];
     char valstr[128];
     milisthandle_t hlist, h1list;
+    char pathbuf[256];
+    char namebuf[256];
+    char pathbuf1[256];
+    int count=0;
 
     r = micreate_volume("tst-grpa.mnc", 0, NULL, MI_TYPE_UINT, 
                         MI_CLASS_INT, NULL, &hvol);
@@ -217,9 +221,7 @@ int main(int argc, char **argv)
 	TESTRPT("miget_attr_values failed", 0);
     }
 
-    char pathbuf[256];
-    char namebuf[256];
-    int count=0;
+    
     r = milist_start(hvol, "/", 1, &hlist);
     if (r == MI_NOERROR) {
       count++;
@@ -231,8 +233,6 @@ int main(int argc, char **argv)
     milist_finish(hlist);
     
     printf("***************** \n");
-    
-    char pathbuf1[256];
     
     r = milist_start(hvol, "/", 1, &h1list);
     if (r == MI_NOERROR) {

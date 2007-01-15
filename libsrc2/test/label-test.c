@@ -23,6 +23,7 @@ int create_label_image(void)
   midimhandle_t hdim[3];
   unsigned long coords[3];
   int i,j,k;
+  int counter=0;
 
   result = micreate_dimension("xspace", MI_DIMCLASS_SPATIAL, 
 			      MI_DIMATTR_REGULARLY_SAMPLED, 10, &hdim[0]);
@@ -103,7 +104,7 @@ int create_label_image(void)
 
   micreate_volume_image(hvol);
 
-  int counter=0;
+  
   for (i=0; i < CX; i++) {
     for (j=0; j < CY ; j++) {
       for (k=0; k < CZ ; k++) {
@@ -154,6 +155,8 @@ main(int argc, char **argv)
   unsigned long coords[NDIMS];
   unsigned long count[NDIMS];
   int value;
+  int counter = 0;
+  int id;
   int *buf = (int *)malloc(CX * CY * CZ * sizeof(int));
   printf("Creating label image !! \n");
   error_cnt += create_label_image();
@@ -167,8 +170,7 @@ main(int argc, char **argv)
   coords[0] = coords[1] = coords[2] = 0;
   count[0] = CX; count[1] = CY; count[2] = CZ;
   error_cnt += miget_voxel_value_hyperslab(vol,MI_TYPE_INT, coords, count,buf); 
-  int counter = 0;
-  int id;
+  
   printf("Print label file with file order x,y,z \n");
   for (i=0; i < CX; i++) {
     for (j=0; j < CY; j++) {
