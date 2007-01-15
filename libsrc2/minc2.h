@@ -66,6 +66,7 @@ extern "C" {               /* Hey, Mr. Compiler - this is "C" code! */
 #define MI2_OPEN_READ 0x0001
 #define MI2_OPEN_RDWR 0x0002
 
+#define MI_VERSION_2_0 "MINC Version    2.0"
 /************************************************************************
  * ENUMS, STRUCTS, and TYPEDEFS
  ************************************************************************/
@@ -254,7 +255,7 @@ extern int miget_attr_values(mihandle_t vol, mitype_t data_type,
 extern int miset_attr_values(mihandle_t vol, mitype_t data_type,
 			     const char *path, const char *name, int length,
 			     const void *values);
-			     
+extern int miadd_history_attr(mihandle_t vol, int length, const void *values);			     
 /* FREE FUNCTIONS */
 extern int mifree_name(char *name_ptr);
 extern int mifree_names(char **name_pptr);
