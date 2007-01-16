@@ -1,0 +1,49 @@
+.TH "vff2mnc" "1" "Jul 10 2006" "$Revision: 1.1 $" ""
+.SH "NAME"
+.B vff2mnc
+\- convert set of vff file(s) to one 3D MINC2.0 format file.
+
+.SH "SYNOPSIS"
+.B vff2mnc 
+.I [<options>] <output\-file> <input\-list>
+
+.B vff2mnc 
+.I \-help
+
+.SH "DESCRIPTION"
+The 
+.B vff2mnc 
+command is used to convert vff format files to MINC2.0 format.
+
+"VFF" stands for "Vextractor File Format". This format is used for storing vector data between sessions. The vff file contains the image information at the very top in text format and the actual image right after the form feed character '\f' in binary.
+
+.SH "OPTIONS"
+
+.SH "Output file options"
+.TP 
+.BI \-noswap
+Do not swap bytes when creating the MINC2.0 file.
+
+.TP 
+.BI \-list
+Print list of series (don't create files).
+.SH "Generic options for all commands"
+.TP 	
+.BI \-help
+Print summary of command\-line options and abort
+.TP 
+.BI \-version
+Print the program and library versions and abort
+
+.SH "AUTHORS"
+Leila Baghdadi (adopted from JG Sled Perl code)
+
+Please direct all complaints and inquiries to Leila Baghdadi 
+
+.SH "BUGS"
+Probably many. But must discover them first
+
+.SH "SEE ALSO"
+
+.SH "COPYRIGHTS"
+Copyrights 1993\-2006 for the Montreal Neurological Institute.
