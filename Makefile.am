@@ -104,7 +104,8 @@ noinst_HEADERS = \
 	conversion/dcm2mnc/spi_element_defs.h \
 	conversion/dcm2mnc/string_to_filename.h \
 	conversion/dcm2mnc/pms_element_defs.h \
-	conversion/dcm2mnc/gems_element_defs.h
+	conversion/dcm2mnc/gems_element_defs.h \
+	conversion/vff2mnc/vff2mnc.h
 
 if ACR_NEMA_TOOLS
 include_HEADERS += conversion/Acr_nema/acr_nema.h
@@ -199,7 +200,8 @@ bin_PROGRAMS = \
 	mnc2nii \
 	nii2mnc \
 	upet2mnc \
-	dcm2mnc
+	dcm2mnc \
+	vff2mnc
 
 if ACR_NEMA_TOOLS
 bin_PROGRAMS += \
@@ -363,6 +365,9 @@ dcm2mnc_SOURCES = \
 	conversion/dcm2mnc/minc_file.c \
 	conversion/dcm2mnc/progress.c \
 	conversion/dcm2mnc/string_to_filename.c
+
+vff2mnc_SOURCES = \
+	conversion/vff2mnc/vff2mnc.c
 
 acr_test_LDADD = libacr_nema.la
 
@@ -529,6 +534,7 @@ dist_man1_MANS = \
 	conversion/nifti1/nii2mnc.man1 \
 	conversion/nifti1/mnc2nii.man1 \
 	conversion/micropet/upet2mnc.man1 \
-	conversion/dcm2mnc/dcm2mnc.man1
+	conversion/dcm2mnc/dcm2mnc.man1 \
+	conversion/vff2mnc/vff2mnc.man1
 
 dist_man3_MANS = libsrc/ParseArgv.man3
