@@ -5,7 +5,10 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.1  2007-01-16 18:37:57  baghdadi
+ * Revision 1.2  2007-01-19 17:52:56  baghdadi
+ * Added minor revision for string manipulations.
+ *
+ * Revision 1.1  2007/01/16 18:37:57  baghdadi
  * To convert vff files produced by the CT scanner to MINC2.0
  *
  * Adopted from vfftominc (perl script) of John G. Sled.
@@ -1069,8 +1072,10 @@ add_attributes_from_files(mihandle_t hvol)
     else {
       strbuf = malloc(MAX_BUF_LINE + 1);
       CHKMEM(strbuf);
+      strbuf[0]='\0';
       buffer = malloc(MAX_BUF_TEXT + 1);
       CHKMEM(buffer);
+      buffer[0]='\0';
       while (fgets(strbuf, MAX_BUF_LINE, inf) != NULL) {
 	strcat(buffer,strbuf);
       }
@@ -1143,8 +1148,10 @@ add_attributes_from_files(mihandle_t hvol)
    else {
      strbuf = malloc(MAX_BUF_LINE + 1);
      CHKMEM(strbuf);
+     strbuf[0]='\0';
      buffer = malloc(MAX_BUF_TEXT + 1);
      CHKMEM(buffer);
+     buffer[0]='\0';
      while (fgets(strbuf, MAX_BUF_LINE, inf) != NULL) {
        strcat(buffer,strbuf);
      }
@@ -1213,10 +1220,12 @@ find_filenames_first(string_t fullpath_pro,string_t fullpath_des,string_t fullpa
   char dirname[MAX_BUF_LINE + 1];
   DWORD dwError;
   
-  strncpy(DirSpec, G.dirname, strlen(G.dirname)+1);
+  strncpy(DirSpec, G.dirname, MAX_BUF_LINE);
+  DirSpec[MAX_BUF_LINE]='\0';
   strncat(DirSpec, "\\*", 3);
   /* make sure the directory ends with '/' */
-  strncpy(dirname, G.dirname, strlen(G.dirname));
+  strncpy(dirname, G.dirname, MAX_BUF_LINE);
+  dirname[MAX_BUF_LINE]='\0';
   if (G.dirname[strlen(G.dirname)-1] != '/') {
 	strcat(dirname,"/");
   }
