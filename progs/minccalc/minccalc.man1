@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 2000 Andrew Janke
-.TH MINCCALC 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
+.TH MINCCALC 1 "$Date: 2007-02-01 00:53:52 $" "" "MINC User's Guide"
 
 .SH NAME
 minccalc - perform complex math operations on minc files
@@ -186,9 +186,9 @@ Scalars literals are floating point numbers or may appear as symbols
 whose name starts with a lowercase letter.
 
 Besides normal scalar operators such as +, -, * and /, the expression
-language also supports the infix exponentiation operator ^ and the
-usual boolean operators <, <=, >, >=, ==, != as well as && (and), ||
-(or) and ! (not). Note that the && and || boolean operators always
+language also supports the infix exponentiation operator ^ , the
+usual relational operators <, <=, >, >=, ==, != as well as the boolean operators
+&& (and), || (or) and ! (not). Note that the && and || boolean operators always
 evaluate both operands, unlike C. Scalar mathematical functions include
 \fBabs\fR, \fBsqrt\fR, \fBexp\fR, \fBlog\fR, \fBsin\fR, \fBcos\fR, \fBtan\fR,
 \fBasin\fR, \fBacos\fR and \fBatan\fR. There are also some specialized 
