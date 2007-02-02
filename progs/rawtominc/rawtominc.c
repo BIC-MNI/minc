@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.22  2007-01-09 21:56:59  baghdadi
+ * Revision 6.23  2007-02-02 18:53:46  baghdadi
+ * Create global scaling for float dat
+ *
+ * Revision 6.22  2007/01/09 21:56:59  baghdadi
  * Added -2 option for minc2.0 support
  *
  * Revision 6.21  2006/07/28 18:17:15  baghdadi
@@ -155,7 +158,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.22 2007-01-09 21:56:59 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.23 2007-02-02 18:53:46 baghdadi Exp $";
 #endif
 
 #include "config.h"
@@ -760,10 +763,19 @@ int main(int argc, char *argv[])
 
    /* Create the image */
    if (do_minmax || do_real_range) {
+     if (!floating_type) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
                                     NC_DOUBLE, ndims-image_dims, dim);
       minid = micreate_std_variable(cdfid, MIimagemin, 
                                     NC_DOUBLE, ndims-image_dims, dim);
+     }
+     else
+       {
+	 maxid = micreate_std_variable(cdfid, MIimagemax, 
+				       NC_DOUBLE, 0, NULL);
+	 minid = micreate_std_variable(cdfid, MIimagemin, 
+				       NC_DOUBLE, 0, NULL);
+       }
    }
    imgid=micreate_std_variable(cdfid, MIimage, odatatype, ndims, dim);
    (void) miattputstr(cdfid, imgid, MIcomplete, MI_FALSE);
@@ -991,8 +1003,10 @@ int main(int argc, char *argv[])
       if (do_minmax || do_real_range) {
          imgmin = imgmin * scale + offset;
          imgmax = imgmax * scale + offset;
+	 if (!floating_type) {
          (void) mivarput1(cdfid, minid, start, NC_DOUBLE, NULL, &imgmin);
          (void) mivarput1(cdfid, maxid, start, NC_DOUBLE, NULL, &imgmax);
+	 }
       }
       
       /* Write the image */
@@ -1014,6 +1028,13 @@ int main(int argc, char *argv[])
    /* Write the valid max and min */
    if (do_vrange) {
       (void) miset_valid_range(cdfid, imgid, ovalid_range);
+   }
+
+   /* Write Global scaling for float data*/
+   if (floating_type) {
+     (void) mivarput1(cdfid, minid, 0, NC_DOUBLE, NULL, &ovalid_range[0]);
+     (void) mivarput1(cdfid, maxid, 0, NC_DOUBLE, NULL, &ovalid_range[1]);
+     
    }
 
    /* Close the file */
