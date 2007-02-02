@@ -3,11 +3,11 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/ncgen.h,v 1.1 2004-06-15 20:14:41 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/ncgen.h,v 1.2 2007-02-02 18:49:36 baghdadi Exp $
  *********************************************************************/
 
-#define MAX_NC_ATTSIZE    20000	/* max size of attribute (for ncgen) */
-#define MAXTRST		  5000	/* max size of string value (for ncgen) */
+#define MAX_NC_ATTSIZE    500000     /* max size of attribute (for ncgen) */
+#define MAXTRST		  100000     /* max size of string value (for ncgen) */
 
 /* True if string a equals string b*/
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
