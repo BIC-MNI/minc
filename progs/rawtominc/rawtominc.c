@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.23  2007-02-02 18:53:46  baghdadi
+ * Revision 6.24  2007-02-20 18:24:45  baghdadi
+ * make sure the global scaling happens when input is float and output is float or double
+ *
+ * Revision 6.23  2007/02/02 18:53:46  baghdadi
  * Create global scaling for float dat
  *
  * Revision 6.22  2007/01/09 21:56:59  baghdadi
@@ -158,7 +161,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.23 2007-02-02 18:53:46 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.24 2007-02-20 18:24:45 baghdadi Exp $";
 #endif
 
 #include "config.h"
@@ -763,7 +766,7 @@ int main(int argc, char *argv[])
 
    /* Create the image */
    if (do_minmax || do_real_range) {
-     if (!floating_type) {
+     if (!floating_type || (otype != FLOAT_TYPE && otype != DOUBLE_TYPE)) {
       maxid = micreate_std_variable(cdfid, MIimagemax, 
                                     NC_DOUBLE, ndims-image_dims, dim);
       minid = micreate_std_variable(cdfid, MIimagemin, 
@@ -1003,7 +1006,7 @@ int main(int argc, char *argv[])
       if (do_minmax || do_real_range) {
          imgmin = imgmin * scale + offset;
          imgmax = imgmax * scale + offset;
-	 if (!floating_type) {
+	 if (!floating_type || (otype != FLOAT_TYPE && otype != DOUBLE_TYPE)) {
          (void) mivarput1(cdfid, minid, start, NC_DOUBLE, NULL, &imgmin);
          (void) mivarput1(cdfid, maxid, start, NC_DOUBLE, NULL, &imgmax);
 	 }
@@ -1031,7 +1034,7 @@ int main(int argc, char *argv[])
    }
 
    /* Write Global scaling for float data*/
-   if (floating_type) {
+   if (floating_type && (otype == FLOAT_TYPE || otype == DOUBLE_TYPE)) {
      (void) mivarput1(cdfid, minid, 0, NC_DOUBLE, NULL, &ovalid_range[0]);
      (void) mivarput1(cdfid, maxid, 0, NC_DOUBLE, NULL, &ovalid_range[1]);
      
