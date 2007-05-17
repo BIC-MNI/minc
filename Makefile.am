@@ -20,6 +20,10 @@ INCLUDES = \
 	-I$(top_srcdir)/progs/Proglib \
 	-I$(top_srcdir)/conversion/Acr_nema
 
+if MINC2
+INCLUDES += -I$(top_srcdir)/libsrc2
+endif
+
 # Headers which must be installed.
 #
 include_HEADERS = \

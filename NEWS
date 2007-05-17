@@ -1,3 +1,9 @@
+
+		New in Release 2.0.13
+                ---------------------
+* Fixed a few small build errors for make check
+* Changes to ensure there is a clean ITK minc build
+
 		New in Release 2.0.12
                 ---------------------
 * Fixed a bug causing dump_acr_nema to skip all elements 

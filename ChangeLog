@@ -1,4 +1,9 @@
 MINC 2:
+2007-05-18  Andrew L Janke <a.janke@gmail.com>
+	* Fixed up small problems with build process
+	* replaced csh scripts with sh. (checks fail if no tcsh)
+	* added libsrc2 to the INCLUDES. why this was not in before beats me
+
 2006-09-01  Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
 	* conversion/Acr_nema - Fixed a bug causing dump_acr_nema to skip
 	all elements with element number 0x0010
