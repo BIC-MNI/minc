@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.19  2005-11-11 18:42:54  bert
+ * Revision 1.20  2007-05-30 15:17:34  ilana
+ * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
+ *
+ * Revision 1.19  2005/11/11 18:42:54  bert
  * Latest fixes to dcm2mnc
  *
  * Revision 1.18  2005/11/04 22:25:04  bert
@@ -125,7 +128,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.19 2005-11-11 18:42:54 bert Exp $";
+static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.20 2007-05-30 15:17:34 ilana Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
@@ -844,7 +847,7 @@ use_the_files(int num_files,
                                     G.clobber, 
                                     file_prefix, 
                                     &output_file_name);
-
+				    
         G.opts = user_opts;
        
         if (exit_status != EXIT_SUCCESS) 

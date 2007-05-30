@@ -7,7 +7,10 @@
 @MODIFIED   : 
 
  * $Log: dcm2mnc.h,v $
- * Revision 1.14  2005-11-11 18:42:54  bert
+ * Revision 1.15  2007-05-30 15:17:34  ilana
+ * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
+ *
+ * Revision 1.14  2005/11/11 18:42:54  bert
  * Latest fixes to dcm2mnc
  *
  * Revision 1.13  2005/08/26 21:25:54  bert
@@ -253,6 +256,7 @@ struct globals {
     int opts;
     mosaic_seq_t mosaic_seq;
     int use_stdin;
+    int use_filelist; 		/*use file with list of filenames   ilana*/
     char * filename_format;
     char * dirname_format;
     int prefer_coords;           /* In event of slice thickness conflict, 

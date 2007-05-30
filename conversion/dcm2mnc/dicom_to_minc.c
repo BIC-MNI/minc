@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.19  2006-05-11 14:45:14  bert
+   * Revision 1.20  2007-05-30 15:17:34  ilana
+   * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
+   *
+   * Revision 1.19  2006/05/11 14:45:14  bert
    * Fix endian-ness issues when parsing Siemens proprietary fields
    *
    * Revision 1.18  2006/04/09 15:39:04  bert
@@ -180,7 +183,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.19 2006-05-11 14:45:14 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.20 2007-05-30 15:17:34 ilana Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -435,6 +438,10 @@ dicom_to_minc(int num_files,
             /* Get file-specific information
              */
             get_file_info(group_list, &fi_ptr[iimage], &gi);
+	    
+	    //ilana debug
+	    /*int acq=acr_find_int(group_list, ACR_Acquisition, 1);
+	    printf("****WE HAVE ACQUISITION# %i",acq);*/
 
             /* increment iimage here
              */
@@ -783,16 +790,32 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
                               value[0]);
         }
         else if (!strcmp(name, "B_value")) {
-            double tmp = atof(value[0]);
-            acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp);
+		
+            /*double tmp = atof(value[0]); this atof makes the value null!  ilana*/
+	     double tmp = atoi(value[0]);
+	     /*need a hack for ICBM scan, see below ilana*/
+            acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp); 
         }
         else if (!strcmp(name, "DiffusionGradientDirection")) {
             double tmp[3];
             if (vm == 3 && n_values >= vm) {
-                tmp[0] = atof(value[0]);
+		/*For the ICBM WIP scan, the b0 images do not have
+		B_value=0 or DiffusionGradientDirection=0 0 0, they
+		actually have DiffusionGradientDirection=-1.00010000 -1.00010000 -1.00010000
+		Use this to detect the b=0 images and hopefully this doesn't ever correspond
+		to a real gradient direction (have to change bvalues correspondingly)!   ilana*/
+		
+		if(!strcmp(value[0],"-1.00010000") && !strcmp(value[1],"-1.00010000")  && !strcmp(value[2],"-1.00010000")){
+			value[0] = value[1] = value[2] = "0"; /*grad directions should be 0*/
+			double tmp2 = atoi("0");
+			acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp2); /*also have to modify B values ilana*/
+		}
+		                  
+		tmp[0] = atof(value[0]);
                 tmp[1] = atof(value[1]);
-                tmp[2] = atof(value[2]);
-                
+                tmp[2] = -1*atof(value[2]); /*dicom z = -minc z ilana*/
+		
+		
                 acr_insert_double(&group_list, 
                                   ACR_Diffusion_gradient_orientation,
                                   3,
@@ -825,9 +848,10 @@ add_siemens_info(Acr_Group group_list)
     Acr_Element protocol; 
     Acr_Element element;
     int num_slices, num_partitions;
-    string_t str_buf;
-    char *str_ptr;
+    string_t str_buf, str_buf2; 
+    char *str_ptr, *str_ptr2;
     int interpolation_flag;
+    int enc_ix, num_encodings, num_b0; /*added by ilana*/
 
     element = acr_find_group_element(group_list, SPI_Protocol2);
     if (element != NULL) {
@@ -951,120 +975,207 @@ add_siemens_info(Acr_Group group_list)
         prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
         interpolation_flag = strtol(str_buf, NULL, 0);
 
-        /* correct dynamic scan info if diffusion scan:
+        /*Modified by ilana to handle the common types of diffusion scans (ref: siemens_dicom_to_minc for dicomserver)
+	
+	/* correct dynamic scan info if *MGH* diffusion scan:
          *
          * assumptions:
          *
-         *  - diffusion protocol indicated by sDiffusion.ucMode = 0x4
-         *  - there are 7 shots for DTI (b=0 + 6 encodings)
-         *  - b=0 scan has sequence name "ep_b0"
-         *  - encoded scans have seq names "ep_b700#1, ep_b700#2, ..." etc.
+         *  - diffusion protocol indicated by sDiffusion.ulMode = 0x100
+	 *  - bvalue is in sDiffusionalBValue[1]
+         *  - there are 10 b=0 scans and a user defined number of diffusion directions
+         *  - b=0 scans have sequence name "ep_b0#0, ep_b0#1... etc"
+         *  - encoded scans have seq names "ep_b1000#1, ep_b1000#2, ...,ep_b1300#1, ep_b1300#2, ..." etc.
          *
          * actions:
          * 
-         *  - change number of dynamic scans to 7
+         *  - change number of dynamic scans to sDiffusion.lDiffDirections  + num b0 images
+	 *  - use sWiPMemBlock.alFree[8] for number of b=0 scans
          *  - modify dynamic scan index to encoding index
          */
-        prot_find_string(protocol, "sDiffusion.ucMode", str_buf);
-        if (!strcmp(str_buf, "0x4")) {
-            int enc_ix;
-            int num_encodings;
+	 /* correct dynamic scan info if standard *ep2d_diff* diffusion scan
+         *
+         * assumptions:
+         *
+         *  - diffusion protocol indicated by sDiffusion.ulMode = 0x100
+	 *  - bvalue is in sDiffusionalBValue[0]
+         *  - there is 1 b=0 scans and 12 diffusion directions
+         *  - b=0 scan havs sequence name "ep_b0"
+         *  - encoded scans have seq names "ep_b1000#1, ep_b1000#2, ..." etc.
+         *
+         * actions:
+         * 
+         *  - change number of dynamic scans to sDiffusion.lDiffDirections + num b0 images
+         *  - modify dynamic scan index to encoding index
+         */
+        /* correct dynamic scan info if standard *ICBM_WIP* diffusion scan
+         *
+         * assumptions:
+         *
+         *  - diffusion protocol indicated by sDiffusion.ulMode = 0x80
+	 *  - bvalue is in sDiffusionalBValue[1]
+         *  - there is 1 b=0 scans and user defined number of diffusion directions
+         *  - b=0 scan has sequence name "ep_b0"
+         *  - encoded scans have seq names "ep_b1000#1, ep_b1000#2, ..." etc.
+         *
+         * actions:
+         * 
+         *  - change number of dynamic scans to sDiffusion.lDiffDirections + num b0 images
+         *  - modify dynamic scan index to encoding index
+         */
 
-            /* try to get b value */
+	prot_find_string(protocol, "sDiffusion.ulMode", str_buf);
+	if (!strcmp(str_buf, "0x100") | !strcmp(str_buf, "0x80")) { 
+          /*we have a diffusion scan*/
+          /*----MGH-----*/
+	  prot_find_string(protocol,"sWiPMemBlock.alFree[8]", str_buf);
+	  if ((atoi ((char*)str_buf))!= 0 ) { /*num b0 images for MGH sequence*/
+            
+		  /* get number of b=0 images*/
+            num_b0 = atoi ((char*)str_buf);
+		  
+	    /* try to get b value */
             prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
-            acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+
+	    acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
                                atoi(str_buf));
 
-            /* if all averages in one series: */
-            prot_find_string(protocol, "ucOneSeriesForAllMeas", str_buf);
-            if (!strcmp(str_buf, "0x1")) {
 
-                num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+          }
+	  else
+	  {
+		prot_find_string(protocol, "sDiffusion.ulMode", str_buf);
+	  	/*-----ep2d_diff-----*/
+		if (!strcmp(str_buf, "0x100")) { 
+            	/* try to get b value */
+            	prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
+            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+                               atoi(str_buf));
+	    	num_b0=1;
+	  
+          	}
+	   	/*-----ICBM_WIP-----*/
+	  	else if(!strcmp(str_buf, "0x80")) { 
+            	/* try to get b value */
+            	prot_find_string(protocol, "sDiffusion.alBValue[0]", str_buf);
+            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+                               atoi(str_buf));
+	    	num_b0=1;	  
+          	}
+	   }  
+	    
+          /* if all averages in one series: */
+	  prot_find_string(protocol,"ucDixon",str_buf);
+          if (!strcmp(str_buf,"0x1")) {
+            prot_find_string(protocol, "sDiffusion.lDiffDirections", str_buf);
+            num_encodings = atoi ((char*)str_buf) + num_b0;
+             
+	    /* number of 'time points' */
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
+                                     num_encodings *
+                                     acr_find_double(group_list,
+                                                     ACR_Nr_of_averages, 1));
 
-                /* number of 'time points' */
-                acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                                   num_encodings *
-                                   acr_find_double(group_list,
-                                                   ACR_Nr_of_averages, 1));
+            /* time index of current scan: */
 
-                /* time index of current scan: */
-                
-#if 0
-                /* In the current scheme, the unencoded scan has a
-                 * sequence name like "ep_b0" while the subsequent six
-                 * diffusion encodings have names like "ep_b700#1" we
-                 * could use this to come up with indices for an encoding
-                 * dimension
-                 */
-                str_ptr = strstr(acr_find_string(group_list,
-                                                 ACR_Sequence_name, ""), "#");
-                if (str_ptr == NULL) {
-                    enc_ix = 0;
-                } 
-                else {
-                    enc_ix = atoi(str_ptr + sizeof(char));
-                }
-#endif
-                
-                /* however with the current sequence, we get usable
-                 * time indices from floor(global_image_num/num_slices)
-                 */
-                acr_insert_numeric(&group_list, ACR_Acquisition, 
-                                   (acr_find_int(group_list, ACR_Image, 1)-1) / 
-                                   num_slices);
-
+            /* For multi-series scans, we DO USE THIS BECAUSE global
+            * image number may be broken!!
+            */
+	    
+	    /*Have to also take care of numbered b=0 images (ep_b0#0, etc...) ilana*/
+	    
+	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
+	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
+			    
+            if (str_ptr == NULL) {
+                enc_ix = 0;
             } 
-            else { /* averages in different series - no special handling needed? */
+            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
+		enc_ix = atoi(str_ptr2 + sizeof(char));
+	    }
+	    else{
+		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
+            }
+	  
+	    /* however with the current sequence, we get usable
+            * time indices from floor(global_image_num/num_slices)*/ /*i'm not sure that works here ilana*/
+	    
+	    acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+            /*acr_insert_numeric(&group_list, ACR_Acquisition, 
+                                   (acr_find_int(group_list, ACR_Image, 1)-1) / 
+                                   num_slices);*/
 
-                num_encodings = 7; /* for now assume 7 shots in diffusion scan */
+          } 
+          else { /* averages in different series - no special handling needed? */
+	    
+            prot_find_string(protocol, "sDiffusion.lDiffDirections", str_buf);
+            num_encodings = atoi((char*)str_buf) + num_b0; 
+            //num_encodings = 7; /* for now assume 7 shots in diffusion scan */
 
-                /* number of 'time points' */
-                acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
+             /* number of 'time points' */
+             acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
                                    num_encodings);
                 
                 /* For multi-series scans, we DO USE THIS BECAUSE global
                  * image number may be broken!!
                  */
-                str_ptr = strstr(acr_find_string(group_list,
-                                                 ACR_Sequence_name, ""), "#");
-                if (str_ptr == NULL) {
-                    enc_ix = 0;
-                } 
-                else {
-                    enc_ix = atoi(str_ptr + sizeof(char));
-                }
-                acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+	    /*Have to also take care of numbered b=0 images (ep_b0#0, etc...) ilana*/
+	    
+	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
+	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
+			    
+            if (str_ptr == NULL) {
+                enc_ix = 0;
+            } 
+            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
+		enc_ix = atoi(str_ptr2 + sizeof(char));
+	    }
+	    else{
+		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
             }
+                acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+          }
         } /* end of diffusion scan handling */
+
 
         /* There is another whole class of (probably newer) diffusion
          * weighted images that use a very different arrangement and
          * need better handling.
          */
         prot_find_string(protocol, "sDiffusion.ucDiffWeightedImage", str_buf);
-        if (!strcmp(str_buf, "0x1")) {
-            int enc_ix;
+	/*for TIM images, this field does not exist, so use sDiffusion.ulMode=0x100
+	should find a field that will be consistent for all diffusion sequences  ilana*/
+	prot_find_string(protocol, "sDiffusion.ulMode", str_buf2);
+        if (!strcmp(str_buf, "0x1") || !strcmp(str_buf2, "0x100")) {
 
-            /* Flag this as a diffusion image.
-             */
-            acr_insert_string(&group_list, ACR_Acquisition_contrast, 
-                              "DIFFUSION");
+            /* Flag this as a diffusion image.*/
+	    
+            acr_insert_string(&group_list, ACR_Acquisition_contrast, "DIFFUSION");
 
             prot_find_string(protocol, "sDiffusion.lDiffDirections", str_buf);
             
-            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
-                               atoi(str_buf) + 1);
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, atoi(str_buf) + num_b0);
                 
-            str_ptr = strchr(acr_find_string(group_list,
-                                             ACR_Sequence_name, ""), '#');
+	    /*Have to also take care of numbered b=0 images (ep_b0#0, etc...) ilana*/
+	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
+	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
+			    
             if (str_ptr == NULL) {
                 enc_ix = 0;
             } 
-            else {
-                enc_ix = atoi(str_ptr + sizeof(char)) + 1;
+            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
+		enc_ix = atoi(str_ptr2 + sizeof(char));
+	    }
+	    else{
+		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now (i.e. no '0' after 'b')*/
             }
             acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
 
+	    //ilana debug
+	    /*printf("did we find b? str_ptr %i str_ptr2 %i",atoi(str_ptr + sizeof(char)),atoi(str_ptr2 + sizeof(char)));
+	     printf("**the incr for %s is: %i\n",acr_find_string(group_list, ACR_Sequence_name, ""),enc_ix);	*/
+		
+		
             /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
              * used as one of the criteria for starting a new
              * file. For a DTI sequence, we don't want this to
@@ -1082,11 +1193,10 @@ add_siemens_info(Acr_Group group_list)
              * no good way of storing per-slice timing information
              * right now.
              */
-            acr_insert_numeric(&group_list, ACR_Acquisition_time,
-                               acr_find_double(group_list, ACR_Series_time, 0) 
-                               + enc_ix);
+            acr_insert_numeric(&group_list, ACR_Acquisition_time, acr_find_double(group_list, ACR_Series_time, 0) + enc_ix);
         }
     }
+   	   
     else {
         /* If no protocol dump was found we have to assume no
          * interpolation since at the momemnt I have no idea where it

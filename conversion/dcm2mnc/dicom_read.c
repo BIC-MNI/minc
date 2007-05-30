@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.22  2006-04-09 15:38:02  bert
+   * Revision 1.23  2007-05-30 15:17:34  ilana
+   * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
+   *
+   * Revision 1.22  2006/04/09 15:38:02  bert
    * Add support for standard DTI fields
    *
    * Revision 1.21  2005/12/05 16:50:08  bert
@@ -519,15 +522,21 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
     double steps[VOL_NDIMS];    /* Step (spacing) coordinates */
     double starts[VOL_NDIMS];   /* Start (origin) coordinates */
     Acr_Element_Id mri_index_list[MRI_NDIMS];
+    Acr_Element_Id mri_total_list[MRI_NDIMS]; /*added by ilana*/
     Acr_Element element;
 
-    // Initialize array of elements for MRI positions (indices)
-    //
-    mri_index_list[SLICE] = SPI_Current_slice_number;
-    mri_index_list[ECHO] = ACR_Echo_number;
-    mri_index_list[TIME] = ACR_Acquisition;
-    mri_index_list[PHASE] = NULL;
-    mri_index_list[CHEM_SHIFT] = NULL;
+   // Array of elements for mri dimensions
+   mri_index_list[SLICE] = SPI_Current_slice_number;
+   mri_index_list[ECHO] = ACR_Echo_number;
+   // dicom time element may be different on old systems
+   mri_index_list[TIME] = ACR_Acquisition;
+   mri_index_list[PHASE] = NULL;
+   mri_index_list[CHEM_SHIFT] = NULL;
+   mri_total_list[SLICE] = SPI_Number_of_slices_nominal;
+   mri_total_list[ECHO] = SPI_Number_of_echoes;
+   mri_total_list[TIME] = ACR_Acquisitions_in_series;
+   mri_total_list[PHASE] = NULL;
+   mri_total_list[CHEM_SHIFT] = NULL;
 
     /* Get image dimensions
      */
@@ -562,15 +571,18 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 
     /* Get indices for image in current file
      */
-    for (imri = 0; imri < MRI_NDIMS; imri++) {
-        if (mri_index_list[imri] != NULL) {
-            fi_ptr->index[imri] = acr_find_int(group_list,
-                                               mri_index_list[imri], 1);
-        }
-        else {
-            fi_ptr->index[imri] = 1;
-        }
-    }
+   for (imri=0; imri < MRI_NDIMS; imri++) {
+     
+     if (mri_index_list[imri] != NULL) {
+       fi_ptr->index[imri] = 
+	 /* note that for TIME this will use ACR_Acqusition,
+	    which does not work for measurement loop scans */
+	 acr_find_int(group_list, mri_index_list[imri], 1);
+     }
+     else {
+       fi_ptr->index[imri] = 1;
+     }
+   }
 
     /* Get coordinate information
      */
@@ -588,10 +600,14 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
      * index.  IMA files do not seem to have a reliable slice time
      * indicator.
      */
-    if (G.file_type != IMA) {
+    /*if (G.file_type != IMA) {
         fi_ptr->index[TIME] = irnd(fi_ptr->coordinate[TIME] * 100.0);
-    }
+    }*/
 
+    //ilana debug
+    //int test = fi_ptr->coordinate[TIME];
+    //print ("*******Time coordinate IS: %i\n\n",test);
+    
     /* Set up general info on first pass
      */
     if (!gi_ptr->initialized) {
@@ -669,6 +685,9 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
             /* Get current index */
             cur_index = fi_ptr->index[imri];
        
+	    //ilana debug
+	    //print ("************CURRENT INDEX IS: %i\n\n",cur_index);
+	    
             /* Check whether this index is in the list.
              */
             if (gi_ptr->cur_size[imri] == 1) {
@@ -736,12 +755,13 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
 
     element = acr_find_group_element(group_list, 
                                      ACR_Diffusion_gradient_orientation);
+    
     if (element == NULL ||
         acr_get_element_double_array(element, WORLD_NDIMS,
                                      fi_ptr->grad_direction) != WORLD_NDIMS) {
         fi_ptr->grad_direction[XCOORD] = 
             fi_ptr->grad_direction[YCOORD] = 
-            fi_ptr->grad_direction[ZCOORD] = -1;
+            fi_ptr->grad_direction[ZCOORD] = 0; /*this should be 0 for the b=0 images  ilana*/
     }
     
     // If we get to here, then we have a valid file
