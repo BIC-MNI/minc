@@ -102,6 +102,7 @@ GLOBAL_ELEMENT(ACR_Device_serial_number  , 0x0018, 0x1000, LO);
 GLOBAL_ELEMENT(ACR_Software_versions     , 0x0018, 0x1020, LO);
 GLOBAL_ELEMENT(ACR_Protocol_name         , 0x0018, 0x1030, LO);
 GLOBAL_ELEMENT(ACR_Calibration_date      , 0x0018, 0x1200, DA);
+GLOBAL_ELEMENT(ACR_Calibration_time      , 0x0018, 0x1201, TM); /*added ilana*/
 GLOBAL_ELEMENT(ACR_Actual_frame_duration , 0x0018, 0x1242, IS);
 GLOBAL_ELEMENT(ACR_Receive_coil_name     , 0x0018, 0x1250, SH);
 GLOBAL_ELEMENT(ACR_Transmit_coil_name    , 0x0018, 0x1251, SH);
@@ -118,6 +119,7 @@ GLOBAL_ELEMENT(ACR_Diffusion_b_value     , 0x0018, 0x9087, FD);
 GLOBAL_ELEMENT(ACR_Diffusion_gradient_orientation, 0x0018, 0x9089, FD);
 GLOBAL_ELEMENT(ACR_MR_Diffusion_seq      , 0x0018, 0x9117, SQ);
 GLOBAL_ELEMENT(ACR_Diffusion_anisotropy_type, 0x0018, 0x9147, CS);
+
 GLOBAL_ELEMENT(ACR_Series_instance_UID   , 0x0020, 0x000E, UI);
 GLOBAL_ELEMENT(ACR_Study                 , 0x0020, 0x0010, SH);
 GLOBAL_ELEMENT(ACR_Series                , 0x0020, 0x0011, IS);
@@ -134,6 +136,7 @@ GLOBAL_ELEMENT(ACR_Number_of_temporal_positions,
 GLOBAL_ELEMENT(ACR_Acquisitions_in_series, 0x0020, 0x1001, IS);
 GLOBAL_ELEMENT(ACR_Images_in_acquisition,  0x0020, 0x1002, IS);
 GLOBAL_ELEMENT(ACR_Slice_location,         0x0020, 0x1041, DS);
+GLOBAL_ELEMENT(ACR_Image_comments,         0x0020, 0x4000, DS);
 
 GLOBAL_ELEMENT(ACR_Number_of_frames      , 0x0028, 0x0008, IS);
 GLOBAL_ELEMENT(ACR_Frame_increment_ptr   , 0x0028, 0x0009, AT);

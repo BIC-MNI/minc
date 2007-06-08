@@ -7,7 +7,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
- * Revision 1.8  2006-04-09 15:33:10  bert
+ * Revision 1.9  2007-06-08 20:28:57  ilana
+ * added several fields to mincheader (dicom elements and found in ASCONV header)
+ *
+ * Revision 1.8  2006/04/09 15:33:10  bert
  * Add flags and fields for DTI
  *
  * Revision 1.7  2005/11/04 22:25:34  bert
@@ -170,6 +173,7 @@ typedef struct {
         string_t reg_date;
         string_t reg_time;
         double weight;
+	string_t position; /*added ilana*/
     } patient;
     struct {
         string_t start_time;
@@ -180,6 +184,7 @@ typedef struct {
         string_t software_version;
         string_t serial_no;
         string_t calibration_date;
+	string_t calibration_time;
         string_t institution;
         string_t station_id;
         string_t referring_physician;
@@ -191,15 +196,22 @@ typedef struct {
     } study;
     struct {
         string_t scan_seq;
+	string_t acquisition_time; /*added by ilana*/
+	string_t image_time; /*added by ilana*/
+	string_t series_time; /*added by ilana*/
         string_t protocol_name;
+	string_t series_description; /*added by ilana*/
         string_t receive_coil;
         string_t transmit_coil;
         double rep_time;
         double slice_thickness;
         double num_slices;
+	string_t slice_order;
         double echo_time;
+	double echo_train_length; /*added by ilana*/
         double echo_number;
         double inv_time;
+	double delay_in_TR; /*added by ilana*/
         double b_value;
         double flip_angle;
         double num_avg;

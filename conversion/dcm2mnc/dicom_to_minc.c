@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.20  2007-05-30 15:17:34  ilana
+   * Revision 1.21  2007-06-08 20:28:57  ilana
+   * added several fields to mincheader (dicom elements and found in ASCONV header)
+   *
+   * Revision 1.20  2007/05/30 15:17:34  ilana
    * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
    *
    * Revision 1.19  2006/05/11 14:45:14  bert
@@ -183,7 +186,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.20 2007-05-30 15:17:34 ilana Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.21 2007-06-08 20:28:57 ilana Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -975,6 +978,21 @@ add_siemens_info(Acr_Group group_list)
         prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
         interpolation_flag = strtol(str_buf, NULL, 0);
 
+	/*find Delay time in TR in ASCONV header ilana*/
+	prot_find_string(protocol, "lDelayTimeInTR", str_buf);
+	acr_insert_numeric(&group_list, EXT_Delay_in_TR,
+                               atol(str_buf));
+	
+	/*Find slice acquisition mode in ASCONV header, 
+	can't seem to find is in a standard dicom field
+	sSliceArray.ucMode takes on 3 values:
+	0x1 means ASCENDING
+	0x2 means DESCENDING
+	0x4 means INTERLEAVED*/
+	prot_find_string(protocol, "sSliceArray.ucMode", str_buf);
+	acr_insert_string(&group_list,EXT_Slice_order,str_buf);
+
+			
         /*Modified by ilana to handle the common types of diffusion scans (ref: siemens_dicom_to_minc for dicomserver)
 	
 	/* correct dynamic scan info if *MGH* diffusion scan:
@@ -1237,7 +1255,9 @@ add_siemens_info(Acr_Group group_list)
              *
              * WARNING: as far as I can tell, the phase-encoding dir (row/col)
              * is reversed for mosaic EPI scans (don't know if this is a
-             * mosaic thing, an EPI thing, or whatever).  
+             * mosaic thing, an EPI thing, or whatever). 
+	     * (Something is wrong here, it seems that it's not reversed, but not sure
+	     * obviously doesn't show up when the acquisition matrix is square ilana)
              * Get the array of sizes: freq row/freq col/phase row/phase col
              */
 
@@ -1264,13 +1284,19 @@ add_siemens_info(Acr_Group group_list)
                 str_ptr = acr_find_string(group_list, 
                                           ACR_Phase_encoding_direction,
                                           "");
-                if (!strncmp(str_ptr, "COL", 3)) {
+                if (!strncmp(str_ptr, "COL", 3)) { /*TODO test that this is right for non-square acquisition matrices ilana*/
                     subimage_rows = subimage_size[3];
                     subimage_cols = subimage_size[0];
                 }
                 else if (!strncmp(str_ptr, "ROW", 3)) {
-                    subimage_rows = subimage_size[2];
-                    subimage_cols = subimage_size[1];
+		/*not sure the subimage dimensions should be opposite of the phase encoding direction, 
+		running into some problems, so I changed it to be the same
+		but I also might be breaking for other cases! ilana*/
+                    /*subimage_rows = subimage_size[2];
+                    subimage_cols = subimage_size[1];*/
+		    subimage_rows = subimage_size[1];
+                    subimage_cols = subimage_size[2];
+			
                 }
                 else {
                     printf("WARNING: Unknown phase encoding direction '%s'\n",

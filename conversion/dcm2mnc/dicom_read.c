@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.23  2007-05-30 15:17:34  ilana
+   * Revision 1.24  2007-06-08 20:28:57  ilana
+   * added several fields to mincheader (dicom elements and found in ASCONV header)
+   *
+   * Revision 1.23  2007/05/30 15:17:34  ilana
    * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
    *
    * Revision 1.22  2006/04/09 15:38:02  bert
@@ -1701,8 +1704,15 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
 
     get_string_field(gi_ptr->patient.reg_time, 
                      group_list, ACR_Study_time);
-
+    
+    get_string_field(gi_ptr->patient.position, /*position of patient added by ilana*/
+                     group_list, ACR_Patient_position);
+    
     /* Get study info */
+    
+    /*some more timing info added by ilana*/
+    get_string_field(gi_ptr->acq.series_time, group_list, ACR_Series_time);
+        
     get_string_field(gi_ptr->study.start_time, 
                      group_list, ACR_Study_date);
 
@@ -1728,6 +1738,8 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
                      group_list, ACR_Device_serial_number);
     get_string_field(gi_ptr->study.calibration_date, 
                      group_list, ACR_Calibration_date);
+    get_string_field(gi_ptr->study.calibration_time, /*add time as well ilana*/
+                     group_list, ACR_Calibration_time);
     get_string_field(gi_ptr->study.institution, 
                      group_list, ACR_Institution_id);
     get_string_field(gi_ptr->study.station_id, 
@@ -1748,14 +1760,31 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
          acr_find_int(group_list, ACR_Series, 0), gi_ptr->acq_id); */
     sprintf(gi_ptr->study.acquisition_id, "%d", gi_ptr->acq_id);
 
-    /* Get acquisition information */
 
+    
+    /* Get acquisition information */
+    
+    get_string_field(gi_ptr->acq.acquisition_time, group_list, ACR_Acquisition_time); /*add acquisition start time ilana*/
+    get_string_field(gi_ptr->acq.image_time, group_list, ACR_Image_time);
     get_string_field(gi_ptr->acq.scan_seq, group_list, ACR_Sequence_name);
     get_string_field(gi_ptr->acq.protocol_name, group_list, ACR_Protocol_name);
+    get_string_field(gi_ptr->acq.series_description,         /*add series description ilana*/
+                     group_list, ACR_Series_description);
     get_string_field(gi_ptr->acq.receive_coil, group_list, 
                      ACR_Receive_coil_name);
     get_string_field(gi_ptr->acq.transmit_coil, group_list, 
                      ACR_Transmit_coil_name);
+    get_string_field(gi_ptr->acq.slice_order, group_list,
+		     EXT_Slice_order);
+      /*0x1 means ASCENDING
+	0x2 means DESCENDING
+	0x4 means INTERLEAVED*/
+    if(!strcmp(gi_ptr->acq.slice_order,"0x1 "))
+	strncpy(gi_ptr->acq.slice_order, "ascending", STRING_T_LEN);
+    else if(!strcmp(gi_ptr->acq.slice_order,"0x2 "))
+	strncpy(gi_ptr->acq.slice_order, "descending", STRING_T_LEN);
+    else if(!strcmp(gi_ptr->acq.slice_order,"0x4 "))
+	strncpy(gi_ptr->acq.slice_order, "interleaved", STRING_T_LEN);
 
     gi_ptr->acq.rep_time = 
         acr_find_double(group_list, ACR_Repetition_time, -DBL_MAX);
@@ -1767,6 +1796,9 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     if (gi_ptr->acq.echo_time != -DBL_MAX)
         gi_ptr->acq.echo_time /= 1000.0;
 
+    gi_ptr->acq.echo_time = 
+        acr_find_double(group_list, ACR_Echo_train_length, -DBL_MAX); /*added echo train length ilana*/
+    
     gi_ptr->acq.echo_number = 
         acr_find_double(group_list, ACR_Echo_number, -DBL_MAX);
 
@@ -1774,6 +1806,10 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
         acr_find_double(group_list, ACR_Inversion_time, -DBL_MAX);
     if (gi_ptr->acq.inv_time != -DBL_MAX)
         gi_ptr->acq.inv_time /= 1000.0;
+    gi_ptr->acq.delay_in_TR = 
+        acr_find_double(group_list, EXT_Delay_in_TR, -DBL_MAX);  /*added delay in TR ilana*/
+    if (gi_ptr->acq.delay_in_TR != -DBL_MAX)
+        gi_ptr->acq.delay_in_TR /= 1000000.0; /*write in seconds*/ 
     gi_ptr->acq.b_value = 
         acr_find_double(group_list, EXT_Diffusion_b_value, -DBL_MAX);
     gi_ptr->acq.flip_angle = 
@@ -1799,11 +1835,11 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
 
     gi_ptr->acq.num_phase_enc_steps = 
         acr_find_double(group_list, ACR_Number_of_phase_encoding_steps, -DBL_MAX);
-    gi_ptr->acq.percent_sampling = 100 * 
-        acr_find_double(group_list, ACR_Percent_sampling, -DBL_MAX);
+    gi_ptr->acq.percent_sampling = 
+		    acr_find_double(group_list, ACR_Percent_sampling, -DBL_MAX); /*don't need to multiply by 100 ilana*/
 
-    gi_ptr->acq.percent_phase_fov = 100 *
-        acr_find_double(group_list, ACR_Percent_phase_field_of_view, -DBL_MAX);
+    gi_ptr->acq.percent_phase_fov = 
+		    acr_find_double(group_list, ACR_Percent_phase_field_of_view, -DBL_MAX); /*don't need to multiply by 100 ilana*/
 
     gi_ptr->acq.pixel_bandwidth = 
         acr_find_double(group_list, ACR_Pixel_bandwidth, -DBL_MAX);
@@ -1823,8 +1859,11 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     get_string_field(gi_ptr->acq.phase_enc_dir, 
                      group_list, ACR_Phase_encoding_direction);
 
-    strncpy(gi_ptr->acq.comments, "", STRING_T_LEN);
-
+    /*Add image comments ilana*/
+    /*strncpy(gi_ptr->acq.comments, "", STRING_T_LEN);*/
+    get_string_field(gi_ptr->acq.comments, 
+                     group_list, ACR_Image_comments);
+    
     /* Siemens Numaris 4 specific!
      */
 

@@ -32,5 +32,7 @@ GLOBAL_ELEMENT(EXT_Sub_image_rows                     , 0x0023, 0x0004, US);
 GLOBAL_ELEMENT(EXT_Sub_image_columns                  , 0x0023, 0x0005, US);
 GLOBAL_ELEMENT(EXT_MrProt_dump                        , 0x0023, 0x0006, LO);
 GLOBAL_ELEMENT(EXT_Diffusion_b_value                  , 0x0023, 0x0007, LO);
-
-
+GLOBAL_ELEMENT(EXT_Delay_in_TR                        , 0x0023, 0x0008, LO); /*add for fMRI scans*/
+/*Can't find slice acquisition in any standard fields; using ASCONV header sSliceArray.ucMode  ilana*/
+/*0x1 ascending 0x2 descending 0x3 interleaved*/
+GLOBAL_ELEMENT(EXT_Slice_order		      , 0x0023, 0x0009, LO); 

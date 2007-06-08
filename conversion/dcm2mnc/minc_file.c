@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.12  2006-04-09 15:34:32  bert
+   * Revision 1.13  2007-06-08 20:28:57  ilana
+   * added several fields to mincheader (dicom elements and found in ASCONV header)
+   *
+   * Revision 1.12  2006/04/09 15:34:32  bert
    * Add ability to save DTI parameters using Jennifer Campbell's convention
    *
    * Revision 1.11  2005/11/04 22:26:16  bert
@@ -131,7 +134,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.12 2006-04-09 15:34:32 bert Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.13 2007-06-08 20:28:57 ilana Exp $";
 
 #include "dcm2mnc.h"
 
@@ -754,6 +757,9 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (general_info->patient.weight != -DBL_MAX) 
         miattputdbl(mincid, varid, MIweight, 
                     general_info->patient.weight);
+    if (strlen(general_info->patient.position) > 0)
+        miattputstr(mincid, varid, "position", 
+                    general_info->patient.position);
 
     /* Create the study variable */
     varid = micreate_group_variable(mincid, MIstudy);
@@ -765,6 +771,8 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (strlen(general_info->patient.reg_time) > 0)
         miattputstr(mincid, varid, MIstart_time, 
                     general_info->patient.reg_time);
+
+    
     if (strlen(general_info->study.modality) > 0)
         miattputstr(mincid, varid, MImodality, 
                     general_info->study.modality);
@@ -786,6 +794,9 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (strlen(general_info->study.calibration_date) > 0)
         miattputstr(mincid, varid, "calibration_date", 
                     general_info->study.calibration_date);
+    if (strlen(general_info->study.calibration_time) > 0)
+        miattputstr(mincid, varid, "calibration_time", 
+                    general_info->study.calibration_time);
     if (strlen(general_info->study.institution) > 0)
         miattputstr(mincid, varid, MIinstitution, 
                     general_info->study.institution);
@@ -818,11 +829,23 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (strlen(general_info->study.start_time) > 0)
         miattputstr(mincid, varid, MIstart_time, 
                     general_info->study.start_time);
-
+        /*added some more study info*/
+    if (strlen(general_info->acq.series_time) > 0)
+        miattputstr(mincid, varid, "series_time", 
+                    general_info->acq.series_time);
+    if (strlen(general_info->acq.acquisition_time) > 0) /*should use this instead of the Study time*/ 
+        miattputstr(mincid, varid, "acquisition_time",  
+                    general_info->acq.acquisition_time);
+    if (strlen(general_info->acq.image_time) > 0)
+        miattputstr(mincid, varid, "image_time", 
+                    general_info->acq.image_time);
+    
     if (strlen(general_info->acq.scan_seq) > 0)
         miattputstr(mincid, varid, MIscanning_sequence, 
                     general_info->acq.scan_seq);
-
+    if (strlen(general_info->acq.series_description) > 0) /*add Series Description*/
+        miattputstr(mincid, varid, "series_description", 
+                    general_info->acq.series_description);
     if (strlen(general_info->acq.protocol_name) > 0)
         miattputstr(mincid, varid, MIprotocol, 
                     general_info->acq.protocol_name);
@@ -843,6 +866,9 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (general_info->acq.echo_number != -DBL_MAX)
         miattputdbl(mincid, varid, "echo_number", 
                     general_info->acq.echo_number);
+    if (general_info->acq.echo_train_length != -DBL_MAX) /*add echo train length ilana*/
+        miattputdbl(mincid, varid, "echo_train_length", 
+                    general_info->acq.echo_train_length);
     if (general_info->acq.inv_time != -DBL_MAX)
         miattputdbl(mincid, varid, MIinversion_time, 
                     general_info->acq.inv_time);
@@ -855,9 +881,15 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     if (general_info->acq.num_slices != -DBL_MAX)
         miattputdbl(mincid, varid, "num_slices", 
                     general_info->acq.num_slices);
+    if (strlen(general_info->acq.slice_order) > 0) /* add slice ordering info*/
+        miattputstr(mincid, varid, "slice_order", 
+                    general_info->acq.slice_order);
     if (general_info->acq.b_value != -DBL_MAX)
         miattputdbl(mincid, varid, "b_value", 
                     general_info->acq.b_value);
+    if (general_info->acq.delay_in_TR != -DBL_MAX) /*add delay in TR*/
+        miattputdbl(mincid, varid, "delay_in_TR", 
+                    general_info->acq.delay_in_TR);
 
     /* add number of dynamic scans (rhoge) */
     /* this will be relevant if we are receiving siemens scans that
@@ -913,15 +945,14 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                     general_info->acq.image_type);
 
     if (strlen(general_info->acq.comments) > 0)
-        miattputstr(mincid, varid, MIcomments, 
+        miattputstr(mincid, varid, "image_comments", 
                     general_info->acq.comments);
 
     // this is Siemens Numaris 4 specific!
     if (strlen(general_info->acq.MrProt) > 0)
         miattputstr(mincid, varid, "MrProt_dump", 
                     general_info->acq.MrProt);
-
-
+    
     /* Add DTI stuff if needed */
     if (general_info->acq.dti) {
         int length = general_info->cur_size[TIME];
@@ -947,22 +978,29 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     miattputdbl(mincid, varid, "window_max", general_info->window_max);
 
     /* Put group info in header */
-    cur_group = general_info->group_list;
+    /* A lot of these dicom groups dump lots of junk into
+    the mincheader, and most of the information here has already
+    been included in the minc fields, we just should add those that
+    are missing and might be of use. Removing the fields starting with
+    "dicom_0x... for now   ilana*/
+    /*cur_group = general_info->group_list;
     dicomvar = ncvardef(mincid, DICOM_ROOT_VAR, NC_LONG, 0, NULL);
     miattputstr(mincid, dicomvar, MIvartype, MI_GROUP);
     miattputstr(mincid, dicomvar, MIvarid, "MNI DICOM variable");
-    miadd_child(mincid, ncvarid(mincid, MIrootvariable), dicomvar);
-    while (cur_group != NULL) {
+    miadd_child(mincid, ncvarid(mincid, MIrootvariable), dicomvar);*/
+
+    
+    /*while (cur_group != NULL) {*/
 
         /* Create variable for group */
-        sprintf(name, "dicom_0x%04x", acr_get_group_group(cur_group));
+        /*sprintf(name, "dicom_0x%04x", acr_get_group_group(cur_group));
         varid = ncvardef(mincid, name, NC_LONG, 0, NULL);
         miattputstr(mincid, varid, MIvartype, MI_GROUP);
         miattputstr(mincid, varid, MIvarid, "MNI DICOM variable");
-        miadd_child(mincid, dicomvar, varid);
+        miadd_child(mincid, dicomvar, varid);*/
 
         /* Loop through elements of group */
-        cur_element = acr_get_group_element_list(cur_group);
+        /*cur_element = acr_get_group_element_list(cur_group);
         while (cur_element != NULL) {
             sprintf(name, "el_0x%04x", 
                     acr_get_element_element(cur_element));
@@ -987,7 +1025,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
             cur_element = acr_get_element_next(cur_element);
         }
         cur_group = acr_get_group_next(cur_group);
-    }
+    }*/
 
     /* Create the history attribute */
     if (G.minc_history != NULL) {
