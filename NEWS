@@ -3,6 +3,7 @@
                 ---------------------
 * Fixed a few small build errors for make check
 * Changes to ensure there is a clean ITK minc build
+* Fixed buffering and chunking for fast internal file compression
 
 		New in Release 2.0.12
                 ---------------------

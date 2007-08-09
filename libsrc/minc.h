@@ -19,7 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.17  2005-08-26 21:04:57  bert
+ * Revision 6.18  2007-08-09 17:05:25  rotor
+ *  * added some fixes of Claudes for chunking and internal compression
+ *
+ * Revision 6.17  2005/08/26 21:04:57  bert
  * Use #if rather than #ifdef with MINC2 symbol
  *
  * Revision 6.16  2004/12/03 21:52:35  bert
@@ -137,7 +140,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.17 2005-08-26 21:04:57 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.18 2007-08-09 17:05:25 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -570,6 +573,7 @@ extern int MI2varsize(int fd, int varid, long *size_ptr);
 #define MI2_CHUNK_UNKNOWN (-1)
 #define MI2_CHUNK_OFF 0
 #define MI2_CHUNK_ON 1
+#define MI2_CHUNK_MIN_SIZE 4
 
 #define MI2_OPTS_V1 1
 

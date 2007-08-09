@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <float.h>
 #include <time.h>
+#include <string.h>
 #include <minc.h>
 #include <time_stamp.h>
 #include <ParseArgv.h>

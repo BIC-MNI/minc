@@ -19,7 +19,6 @@ INCLUDES = \
 	-I$(top_srcdir)/volume_io/Include \
 	-I$(top_srcdir)/progs/Proglib \
 	-I$(top_srcdir)/conversion/Acr_nema
-
 if MINC2
 INCLUDES += -I$(top_srcdir)/libsrc2
 endif

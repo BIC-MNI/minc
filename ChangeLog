@@ -1,4 +1,10 @@
 MINC 2:
+
+2007-08-08 Claude Lepage <claude@bic.mni.mcgill.ca>
+	* Increased size of MI_MAX_VAR_BUFFER_SIZE and fix chunking
+	for internal file compression using hdf5
+	* Modified mincconvert to use default chunking
+
 2007-05-18  Andrew L Janke <a.janke@gmail.com>
 	* Fixed up small problems with build process
 	* replaced csh scripts with sh. (checks fail if no tcsh)

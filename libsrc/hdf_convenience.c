@@ -1299,40 +1299,66 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
 
 	spc_id = H5Screate_simple(ndims, dims, NULL);
 
-        if (file->chunk_type == MI2_CHUNK_UNKNOWN) {
-            chunk_length = miget_cfg_int(MICFG_CHUNKING);
-        }
-        else {
-            chunk_length = file->chunk_param;
-        }
-
         if (file->comp_type == MI2_COMP_UNKNOWN) {
             comp_level = miget_cfg_int(MICFG_COMPRESS);
-        }
-        else {
+        } else {
             if (file->comp_type == MI2_COMP_ZLIB) {
                 comp_level = file->comp_param;
-            }
-            else {
+            } else {
                 comp_level = 0;
             }
         }
 
         if (comp_level != 0) {
-            /* If compression is specified, chunking must be enabled.
-             */
-            if (chunk_length == 0) {
-                chunk_length = 32;  /* TODO: define somewhere??? */
-            }
-            H5Pset_deflate(prp_id, comp_level);
-        }
-
-        if (chunk_length > 4) {
-            for (i = 0; i < ndims; i++) {
-                if ((chkdims[i] = dims[i]) > chunk_length) {
-                    chkdims[i] = chunk_length;
+            /* If compression is specified, chunking must be enabled. */
+            if (file->chunk_type == MI2_CHUNK_UNKNOWN) {
+                /* read from minc config file or environment variable */
+                chunk_length = miget_cfg_int(MICFG_CHUNKING);
+            } else if( file->chunk_type == MI2_CHUNK_OFF ) {
+                chunk_length = 0;
+            } else {
+                chunk_length = file->chunk_param;
+                if( chunk_length < MI2_CHUNK_MIN_SIZE ) {
+                    chunk_length = MI2_CHUNK_MIN_SIZE;
+                    fprintf(stdout, "Warning: using chunk size of %d\n", 
+                            MI2_CHUNK_MIN_SIZE );
                 }
             }
+
+            /* If nothing good was found for the chunking, use chunking
+               that matches the hyperslab that fits into the work buffer. 
+               This seems to be the optimal chunking performance-wise. */
+            if (chunk_length <= 0 ) {
+                chunk_length = 0;
+            }
+
+            /* This mimics the way the buffer is filled in MI_var_loop
+               so that a good (optimal) chunking can be set from the
+               dimensions filling up the buffer. This seems pretty 
+               optimal in terms of speed and gives a very good 
+               compression ratio, often better than gzip. */
+
+            hsize_t val = 1;
+            int unit_size = nctypelen( vartype );
+            for( i = ndims-1; i >= 0; i-- ) {
+                if( MI_MAX_VAR_BUFFER_SIZE > dims[i] * val * unit_size ) {
+                    chkdims[i] = dims[i];
+                    val *= dims[i];
+                } else {
+                    chkdims[i] = MIN( dims[i], 
+                                      (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( val * unit_size ) ) );
+                }
+            }
+
+	    for (i = 0; i < ndims; i++) {
+                if( chunk_length >= MI2_CHUNK_MIN_SIZE ) {
+                    if( chkdims[i] > chunk_length ) {
+                        chkdims[i] = chunk_length;
+                    }
+                }
+            }
+
+            H5Pset_deflate(prp_id, comp_level);
             H5Pset_chunk(prp_id, ndims, chkdims);
         }
     }

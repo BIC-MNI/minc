@@ -14,7 +14,10 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.3  2004-04-27 15:48:15  bert
+ * Revision 6.4  2007-08-09 17:05:25  rotor
+ *  * added some fixes of Claudes for chunking and internal compression
+ *
+ * Revision 6.3  2004/04/27 15:48:15  bert
  * Minor changes
  *
  * Revision 6.2  2001/04/17 18:40:13  neelin
@@ -60,7 +63,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.3 2004-04-27 15:48:15 bert Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.4 2007-08-09 17:05:25 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 /* --------- MINC specific constants ------------- */
@@ -68,7 +71,7 @@
 /* Maximum buffer size for conversions. Should not be a power of 2 - this
    can cause poor performance on some systems (e.g. SGI) due to caching-
    related inefficiencies */
-#define MI_MAX_VAR_BUFFER_SIZE 10000
+#define MI_MAX_VAR_BUFFER_SIZE 1000000
 
 /* Possible values for sign of a value */
 #define MI_PRIV_DEFSIGN   0

@@ -10,7 +10,10 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.6  2006-07-28 16:49:55  baghdadi
+ * Revision 1.7  2007-08-09 17:05:25  rotor
+ *  * added some fixes of Claudes for chunking and internal compression
+ *
+ * Revision 1.6  2006/07/28 16:49:55  baghdadi
  * added message to disallow conversion to itself and exit with success
  *
  * Revision 1.6  2006/06/21 11:30:00  Leila
@@ -42,7 +45,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.6 2006-07-28 16:49:55 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.7 2007-08-09 17:05:25 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -72,7 +75,7 @@ ArgvInfo argTable[] = {
     {"-compress", ARGV_INT, (char *) 1, (char *)&compress, 
      "Set the compression level, from 0 (disabled) to 9 (maximum)."},
     {"-chunk", ARGV_INT, (char *) 1, (char *)&chunking,
-     "Set the target block size for chunking."},
+     "Set the target block size for chunking (-1 unknown, 0 default, >1 block size)."},
     {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
@@ -140,7 +143,14 @@ main(int argc, char **argv)
     
     /* check the version of file and Abort if converting to itself */
     if (MI2_ISH5OBJ(old_fd)) {
-      if (v2format) {
+      if (v2format && compress <= 0 ) {
+      
+        /* If already a minc2 file, allow to do compression if
+           requested by the user. Ideally, one should call the
+           HDF5 function H5Pget_deflate to query the compression
+           level of the input image, but this function does not
+           seem to be supported anymore in HDF5. */
+
 	fprintf(stderr,"Abort: Converting Version 2 (HDF5) to itself!! \n");
 	exit(EXIT_FAILURE);
       }
