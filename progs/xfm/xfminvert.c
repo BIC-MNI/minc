@@ -10,7 +10,11 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfminvert.c,v $
- * Revision 6.3  2004-11-01 22:38:39  bert
+ * Revision 6.4  2007-08-10 11:55:35  rotor
+ *  * added -clobber and -verbose to xfminvert to get it up to scratch
+ *  * a bit of code cleanup (not there there is much in there!)
+ *
+ * Revision 6.3  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.2  2004/02/02 18:24:11  bert
@@ -63,14 +67,17 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 6.3 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 6.4 2007-08-10 11:55:35 rotor Exp $";
 #endif
 
+#include <config.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
+#include <time_stamp.h>
 
 /* Constants */
 #ifndef TRUE
@@ -78,39 +85,80 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 6.3 
 #  define FALSE 0
 #endif
 
+/* Argument variables */
+int clobber = FALSE;
+int verbose = FALSE;
+
+
 /* Argument table */
 ArgvInfo argTable[] = {
+   {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
+       "Overwrite existing file."},
+   {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
+       "Don't overwrite existing file (default)."},
+   {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
+       "Print out extra information."},
+   
+   {NULL, ARGV_HELP, NULL, NULL, ""},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
 /* Main program */
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
    General_transform transform, inverse;
-
+   char *arg_string;
+   char *pname;
+   char    *infile;
+   char    *outfile;
+   
+   /* Save time stamp and args */
+   arg_string = time_stamp(argc, argv);
+   
    /* Check arguments */
+   pname = argv[0];
    if (ParseArgv(&argc, argv, argTable, 0) || argc != 3) {
-      (void) fprintf(stderr, "Usage: %s <input.xfm> <result.xfm>\n",
-                     argv[0]);
+      (void) fprintf(stderr, "\nUsage: %s [options] <in.xfm> <out.xfm>\n",
+                     pname);
+      (void) fprintf(stderr, 
+        "       %s -help\n\n", pname);
+      exit(EXIT_FAILURE);
+   }
+   infile = argv[1];
+   outfile = argv[2];
+   
+   /* check for the infile */
+   if(access(infile, F_OK) != 0){
+      fprintf(stderr, "%s: Couldn't find %s\n\n", pname, infile);
       exit(EXIT_FAILURE);
    }
 
+   /* check for the outfile */
+   if(access(outfile, F_OK) == 0 && !clobber){
+      fprintf(stderr, "%s: %s exists! (use -clobber to overwrite)\n\n", pname, outfile);
+      exit(EXIT_FAILURE);
+   }
+   
    /* Read in file to invert */
-   if (input_transform_file(argv[1], &transform) != OK) {
+   if (input_transform_file(infile, &transform) != OK) {
       (void) fprintf(stderr, "%s: Error reading transform file %s\n",
-                     argv[0], argv[1]);
+                     pname, infile);
       exit(EXIT_FAILURE);
    }
 
    /* Invert the transform */
    create_inverse_general_transform(&transform, &inverse);
-
+   if(verbose){
+      (void) fprintf(stdout, "[%s]: Inverted %s\n", pname, infile);
+   }
+   
    /* Write out the transform */
-   if (output_transform_file(argv[2], NULL, &inverse) != OK) {
+   if (output_transform_file(outfile, arg_string, &inverse) != OK) {
       (void) fprintf(stderr, "%s: Error writing transform file %s\n",
-                     argv[0], argv[2]);
+                     pname, outfile);
       exit(EXIT_FAILURE);
+   }
+   if(verbose){
+      (void) fprintf(stdout, "[%s]: Wrote out %s\n", pname, outfile);
    }
 
    exit(EXIT_SUCCESS);
