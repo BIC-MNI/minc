@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.21  2007-06-08 20:28:57  ilana
+   * Revision 1.22  2007-08-13 16:34:52  ilana
+   * mods to handle naming scheme of more diffusion sequences
+   *
+   * Revision 1.21  2007/06/08 20:28:57  ilana
    * added several fields to mincheader (dicom elements and found in ASCONV header)
    *
    * Revision 1.20  2007/05/30 15:17:34  ilana
@@ -186,7 +189,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.21 2007-06-08 20:28:57 ilana Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.22 2007-08-13 16:34:52 ilana Exp $";
 #include "dcm2mnc.h"
 
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
@@ -852,9 +855,12 @@ add_siemens_info(Acr_Group group_list)
     Acr_Element element;
     int num_slices, num_partitions;
     string_t str_buf, str_buf2; 
-    char *str_ptr, *str_ptr2;
+    char *str_ptr=NULL;
+    char *str_ptr2=NULL;
     int interpolation_flag;
     int enc_ix, num_encodings, num_b0; /*added by ilana*/
+    char DiffSeqName[50];
+    int i=0;
 
     element = acr_find_group_element(group_list, SPI_Protocol2);
     if (element != NULL) {
@@ -1044,12 +1050,13 @@ add_siemens_info(Acr_Group group_list)
 
 	prot_find_string(protocol, "sDiffusion.ulMode", str_buf);
 	if (!strcmp(str_buf, "0x100") | !strcmp(str_buf, "0x80")) { 
-          /*we have a diffusion scan*/
-          /*----MGH-----*/
+          /*we have a diffusion scan; flag it*/
+          acr_insert_string(&group_list, ACR_Acquisition_contrast, "DIFFUSION");
+	  /*----MGH-----*/
 	  prot_find_string(protocol,"sWiPMemBlock.alFree[8]", str_buf);
 	  if ((atoi ((char*)str_buf))!= 0 ) { /*num b0 images for MGH sequence*/
             
-		  /* get number of b=0 images*/
+	    /* get number of b=0 images*/
             num_b0 = atoi ((char*)str_buf);
 		  
 	    /* try to get b value */
@@ -1063,22 +1070,26 @@ add_siemens_info(Acr_Group group_list)
 	  else
 	  {
 		prot_find_string(protocol, "sDiffusion.ulMode", str_buf);
-	  	/*-----ep2d_diff-----*/
+	  	/*-----ep2d_diff-----OR-----
+		ep2d_diff_WIP_ICBM with "Diffusion mode"=MDDW & DiffusionWeightings=2-----------*/
 		if (!strcmp(str_buf, "0x100")) { 
-            	/* try to get b value */
-            	prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
-            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+	            	/* try to get b value */
+        	    	prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
+            		acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
                                atoi(str_buf));
-	    	num_b0=1;
+		    	num_b0=1;
 	  
           	}
-	   	/*-----ICBM_WIP-----*/
-	  	else if(!strcmp(str_buf, "0x80")) { 
-            	/* try to get b value */
-            	prot_find_string(protocol, "sDiffusion.alBValue[0]", str_buf);
-            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
+	   	/*-----ICBM_WIP  with "Diffusion mode"=Free (5 b=0 scans) -----*/
+	  	else if(!strcmp(str_buf, "0x80")) {
+        	    	/* try to get b value */
+            		prot_find_string(protocol, "sDiffusion.alBValue[0]", str_buf);
+	            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
                                atoi(str_buf));
-	    	num_b0=1;	  
+		    	num_b0=0; 
+			/*there are 5 b=0 scans but they are not identified 
+			any differently than the diffusion weighted images, 
+			sDiffusion.lDiffDirections includes the b=0 images*/	  
           	}
 	   }  
 	    
@@ -1101,16 +1112,17 @@ add_siemens_info(Acr_Group group_list)
             */
 	    
 	    /*Have to also take care of numbered b=0 images (ep_b0#0, etc...) ilana*/
-	    
+	    /*the Siemems-based sequences, in MDDW mode with 2 diff weightings have b=0 images called ep_b0*/
+
 	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
 	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
 			    
-            if (str_ptr == NULL) {
+            if (str_ptr == NULL || str_ptr2 == NULL) {
                 enc_ix = 0;
-            } 
-            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
-		enc_ix = atoi(str_ptr2 + sizeof(char));
-	    }
+            }
+	    else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
+			enc_ix = atoi(str_ptr2 + sizeof(char));
+			}
 	    else{
 		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
             }
@@ -1141,8 +1153,8 @@ add_siemens_info(Acr_Group group_list)
 	    
 	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
 	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
-			    
-            if (str_ptr == NULL) {
+	    
+            if (str_ptr == NULL || str_ptr2 == NULL){
                 enc_ix = 0;
             } 
             else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
@@ -1153,48 +1165,8 @@ add_siemens_info(Acr_Group group_list)
             }
                 acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
           }
-        } /* end of diffusion scan handling */
-
-
-        /* There is another whole class of (probably newer) diffusion
-         * weighted images that use a very different arrangement and
-         * need better handling.
-         */
-        prot_find_string(protocol, "sDiffusion.ucDiffWeightedImage", str_buf);
-	/*for TIM images, this field does not exist, so use sDiffusion.ulMode=0x100
-	should find a field that will be consistent for all diffusion sequences  ilana*/
-	prot_find_string(protocol, "sDiffusion.ulMode", str_buf2);
-        if (!strcmp(str_buf, "0x1") || !strcmp(str_buf2, "0x100")) {
-
-            /* Flag this as a diffusion image.*/
-	    
-            acr_insert_string(&group_list, ACR_Acquisition_contrast, "DIFFUSION");
-
-            prot_find_string(protocol, "sDiffusion.lDiffDirections", str_buf);
-            
-            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, atoi(str_buf) + num_b0);
-                
-	    /*Have to also take care of numbered b=0 images (ep_b0#0, etc...) ilana*/
-	    str_ptr = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "b");
-	    str_ptr2 = strstr(acr_find_string(group_list, ACR_Sequence_name, ""), "#");
-			    
-            if (str_ptr == NULL) {
-                enc_ix = 0;
-            } 
-            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
-		enc_ix = atoi(str_ptr2 + sizeof(char));
-	    }
-	    else{
-		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now (i.e. no '0' after 'b')*/
-            }
-            acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
-
-	    //ilana debug
-	    /*printf("did we find b? str_ptr %i str_ptr2 %i",atoi(str_ptr + sizeof(char)),atoi(str_ptr2 + sizeof(char)));
-	     printf("**the incr for %s is: %i\n",acr_find_string(group_list, ACR_Sequence_name, ""),enc_ix);	*/
-		
-		
-            /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
+	  
+	   /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
              * used as one of the criteria for starting a new
              * file. For a DTI sequence, we don't want this to
              * happen. For now I replace the sequence name with a
@@ -1212,9 +1184,16 @@ add_siemens_info(Acr_Group group_list)
              * right now.
              */
             acr_insert_numeric(&group_list, ACR_Acquisition_time, acr_find_double(group_list, ACR_Series_time, 0) + enc_ix);
-        }
-    }
-   	   
+        /* end of diffusion scan handling */
+
+
+        /* There is another whole class of (probably newer) diffusion
+         * weighted images that use a very different arrangement and
+         * need better handling.
+         */
+        
+    }  
+} 
     else {
         /* If no protocol dump was found we have to assume no
          * interpolation since at the momemnt I have no idea where it
@@ -2007,7 +1986,11 @@ sort_dimensions(General_Info *gi_ptr)
                     if (!G.prefer_coords) {
                         printf(" (perhaps you should consider the -usecoordinates option)\n");
                     }
-                    if (dbl_tmp1 == 1.0 || G.prefer_coords) {
+                    if (dbl_tmp1 == 1.0 || G.prefer_coords || !fcmp(dbl_tmp1, -dbl_tmp2, (dbl_tmp1 / 1000.0))) { 
+			    /*Although in the comment above it says that we should use the
+			    calculated value if the assumed and calculated value only differ
+			    by a sign change, this was not included in this if statement, added 
+			    by ilana because default was wrong (i.e. w/o using -usecoordinates option)*/
                         gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
                     }
                     printf(" Using %g for the slice spacing value.\n", 
