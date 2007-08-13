@@ -36,19 +36,23 @@ $CODE = "GRAY";
    'verbose' => 0,
    'clobber' => 0,
    'fake' => 0,
+   
    'slice' => undef,
    'scale' => 2,
+   'width' => undef,
    'bitdepth' => 8,
    'range' => undef,
    'image_range' => undef,
    'auto_range' => 0,
    'lookup' => undef,
    'dirs' => ['zspace'],
+   
    'triplanar' => 0,
    'tilesize' => 250,
    'title' => 0,
    'title_text' => undef,
    'sagittal_offset' => undef,
+   'orientation' => 'vertical',
    );
 
 $Help = <<HELP;
@@ -94,6 +98,9 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
    ['-scale', 'integer', 1, \$opt{scale},
       'scaling factor for resulting image',
       '<int>'],
+   ['-width', 'integer', 1, \$opt{width},
+      'autoscale the image to have a fixed image width (in pixels)',
+      '<int>'],
    ['-depth', 'integer', 1, \$opt{bitdepth},
       'bitdepth for resulting image 8 or 16 (MSB machines only!)',
       '<int>'],
@@ -136,7 +143,10 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
    ['-sagittal_offset', "integer", 1, \$opt{sagittal_offset},
       "offset the sagittal slice from the centre in the triplanar",
       "<# slices>"],
-   
+   ['-vertical', 'const', 'vertical', \$opt{orientation},
+     'create a vertical triplanar view'],
+   ['-horizontal', 'const', 'horizontal', \$opt{orientation},
+     'create a horizontal triplanar view'],
    );
 
 # Check arguments
@@ -230,7 +240,11 @@ foreach $space (@{$opt{dirs}}){
            "-dimnames ".
            $infile;
    ($n_slices, $img_x, $img_y, $img_step_x, $img_step_y, $dim_names) = split("\n", `$args`);
-   
+
+   if(defined($opt{width})){ 
+      $opt{scale} = $opt{width}/abs($img_step_y * $img_y);
+      print STDOUT "Auto-scaling width factor: $opt{scale}\n" if $opt{verbose}; 
+      }
    $img_length_x = abs(int($img_step_x * $img_x * $opt{scale}));
    $img_length_y = abs(int($img_step_y * $img_y * $opt{scale}));
    
@@ -316,6 +330,7 @@ foreach $space (@{$opt{dirs}}){
 
 # do the triplanar if requested
 if($opt{triplanar}){
+   my @orient_args;
    
    if($opt{title}){
       $imgfile = "$tmpdir/mont.miff";
@@ -324,9 +339,16 @@ if($opt{triplanar}){
       $imgfile = $outfile;
       }
    
+   if($opt{orientation} eq 'vertical'){
+      @orient_args = ('-tile', ('1x' . ($#mont_files + 1)));
+      }
+   else{ # $opt{orientation} eq 'horizontal'
+      @orient_args = ('-tile', (($#mont_files + 1) . 'x1'));
+      }
+   
    # do the montage
    &do_cmd('montage',
-           '-tile', ('1x' . ($#mont_files + 1)),
+           @orient_args, 
            '-background', 'grey10',
            '-geometry', "$opt{tilesize}x$opt{tilesize}+1+1",
            @mont_files, $imgfile);
