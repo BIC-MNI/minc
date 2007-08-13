@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.75 2005-12-20 21:08:46 rotor Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.76 2007-08-13 14:06:11 rotor Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -2341,7 +2341,10 @@ VIOAPI  Volume   copy_volume_definition_no_alloc(
     }
 
     set_volume_space_type( copy, volume->coordinate_system_name );
-
+    
+    // this string was allocated in create_volume()
+    FREE(volume->coordinate_system_name);
+ 
     for_less( c, 0, get_volume_n_dimensions(volume) )
     {
         if (is_volume_dimension_irregular(volume, c)) {

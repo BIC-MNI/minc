@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.67 2005-07-14 15:42:50 bert Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.68 2007-08-13 14:06:11 rotor Exp $";
 #endif
 
 #define  INVALID_AXIS   -1
@@ -465,11 +465,14 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
                                         file->sizes_in_file[d],
                                         irr_starts[d]);
         }
+        FREE( irr_starts[d] );
+        
         if (irr_widths[d] != NULL) {
             set_volume_irregular_widths(volume, file->to_volume_index[d],
                                         file->sizes_in_file[d],
                                         irr_widths[d]);
         }
+        FREE( irr_widths[d] );
     }
                                         
     /* --- create the image conversion variable */
