@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = check-news subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CFLAGS = 
-AM_YFLAGS = -d
+AM_YFLAGS = -d --debug
 
 SUBDIRS = . volume_io testdir doc
 if MINC2
@@ -19,6 +19,7 @@ INCLUDES = \
 	-I$(top_srcdir)/volume_io/Include \
 	-I$(top_srcdir)/progs/Proglib \
 	-I$(top_srcdir)/conversion/Acr_nema
+
 if MINC2
 INCLUDES += -I$(top_srcdir)/libsrc2
 endif
@@ -93,6 +94,7 @@ noinst_HEADERS = \
 	conversion/nifti1/nifti1.h \
 	conversion/nifti1/nifti1_io.h \
 	conversion/nifti1/nifti1_local.h \
+	conversion/nifti1/znzlib.h \
 	conversion/nifti1/analyze75.h \
 	conversion/dcm2mnc/acr_element_defs.h \
 	conversion/dcm2mnc/dcm2mnc.h \
@@ -349,11 +351,13 @@ minctoecat_SOURCES = \
 
 nii2mnc_SOURCES = \
 	conversion/nifti1/nii2mnc.c \
-	conversion/nifti1/nifti1_io.c
+	conversion/nifti1/nifti1_io.c \
+	conversion/nifti1/znzlib.c
 
 mnc2nii_SOURCES = \
 	conversion/nifti1/mnc2nii.c \
-	conversion/nifti1/nifti1_io.c
+	conversion/nifti1/nifti1_io.c \
+	conversion/nifti1/znzlib.c
 
 upet2mnc_SOURCES = \
 	conversion/micropet/upet2mnc.c
