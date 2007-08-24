@@ -1,0 +1,137 @@
+#! /usr/bin/env perl
+#
+# Andrew Janke - a.janke@gmail.com
+#
+# Copyright Andrew Janke, The University of Queensland.
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies.
+# The author and the University make no representations about the
+# suitability of this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
+#
+# Flips an xfm in the given direction
+
+
+use strict;
+use warnings "all";
+use Getopt::Tabular;
+use File::Basename;
+use File::Temp qw/ tempdir /;
+
+
+my($Help, $Usage, $me, @opt_table, $tmpdir, $history, %opt);
+my(@args, $inxfm, $outxfm);
+
+# Argument variables and table
+$me = &basename($0);
+$tmpdir = "/tmp/$me-$$";
+%opt = (
+   'verbose' => 0,
+   'clobber' => 0,
+   'fake' => 0,
+   'todo' => 0,
+   );
+
+$Help = <<HELP;
+| $me is designed to flip a .xfm file in a given direction
+|    This can done in either the coronal, sagittal or 
+|    transverse plane.
+|
+| Thanks to Vladimir Fonov for pointing out that I was 
+|    was making things somewhat hard for myself and
+|    suggesting a slightly more abridged version..
+|
+| Problems or comments should be sent to: a.janke\@gmail.com
+HELP
+
+$Usage = "Usage: $me [options] <in.xfm> <out.xfm>\n".
+         "       $me -help to list options\n\n";
+
+@opt_table = (
+   ["General Options", "section" ],
+   ["-version", "call", 0, \&print_version_info,
+      "print version and exit" ],
+   ["-verbose", "boolean", 0, \$opt{verbose},
+      "be verbose"],
+   ["-clobber", "boolean", 0, \$opt{clobber},
+      "clobber existing files"],
+   ["-fake", "boolean", 0, \$opt{fake},
+      "do a dry run, (echo cmds only)" ],
+      
+   ["Flipping Options", "section" ],
+   ["-x", "const", '0', \$opt{todo}, 
+      "flip xfm in x (default)" ],
+   ["-y", "const", '1', \$opt{todo}, 
+      "flip xfm in y" ],
+   ["-z", "const", '2', \$opt{todo}, 
+      "flip xfm in z" ],
+   );
+
+# get history string
+chomp($history = `date`);
+$history .= '>>>> ' . join(' ', $me, @ARGV);
+
+# check arguments
+&Getopt::Tabular::SetHelp($Help, $Usage);
+&GetOptions (\@opt_table, \@ARGV) || exit 1;
+die $Usage if ($#ARGV < 1);
+$inxfm = $ARGV[0];
+$outxfm = $ARGV[1];
+
+# check for the input and output xfm
+die "$me: Couldn't find $inxfm\n" if (!-e $inxfm);
+die "$me: $outxfm exists! use -clobber to overwrite\n" if (-e $outxfm && !$opt{'clobber'});
+
+# make tmpdir
+$tmpdir = &tempdir( "$me-XXXXXXXX", TMPDIR => 1, CLEANUP => 1 );
+
+my @flips = (
+   [-1,  1,  1], 
+   [ 1, -1,  1], 
+   [ 1,  1, -1]
+   );
+
+# generate a temporary flip xfm
+&do_cmd('param2xfm', '-clobber', 
+        '-center', 0, 0, 0,
+        '-scales', @{$flips[$opt{todo}]},
+        "$tmpdir/flip.xfm");
+
+# create the flip xfm
+&do_cmd('xfmconcat', 
+        "$tmpdir/flip.xfm", $inxfm, "$tmpdir/flip.xfm",
+        $outxfm);
+
+
+# do the dogy and add a history string (this may well bite me later on)
+my @buf = split("\n", `cat $outxfm`);
+open(FH, ">$outxfm");
+
+print FH shift(@buf) . "\n" .
+         "%\n" .
+         "% Created by $me\n" .
+         "%\n" .
+         "% $history \n" .
+         "\n" .
+         join("\n", @buf) . "\n";
+close(FH);
+
+sub do_cmd { 
+   print STDOUT "@_\n" if $opt{verbose};
+   if(!$opt{fake}){
+      system(@_) == 0 or die;
+      }
+   }
+   
+sub print_version_info {
+   my($package, $version, $package_bugreport);
+
+   $package = '@PACKAGE@';
+   $version = '@VERSION@';
+   $package_bugreport = '@PACKAGE_BUGREPORT@';
+
+   print STDOUT "\n$package version $version\n".
+                "Comments to $package_bugreport\n\n";
+   exit;
+   }

@@ -169,6 +169,8 @@ dist_bin_SCRIPTS = \
 	progs/mincpik/mincpik \
 	progs/mincview/mincview
 
+# Scripts that we process (to add version #s) before install
+bin_SCRIPTS = progs/xfm/xfmflip
 
 # Programs we build and install.
 #
@@ -231,6 +233,7 @@ LDADD = libvolume_io2.la libminc2.la
 EXTRA_DIST = GETTING_STARTED \
 	$(m4_files) \
 	fortran \
+	progs/xfm/xfmflip.in \
 	libsrc/strdup.c \
 	progs/Get_image_offset/get_image_offset.c \
 	epm-header.in \

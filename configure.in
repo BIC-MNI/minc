@@ -1,12 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(minc, [2.0.13], [baghdadi@bic.mni.mcgill.ca])
+AC_INIT(minc, [2.0.13], [a.janke@gmail.com])
 AC_CONFIG_SRCDIR([libsrc2/minc2.h])
 AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.29 $)
+AC_REVISION($Revision: 6.30 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -89,5 +89,6 @@ volume_io/Makefile
 volume_io/Documentation/Makefile
 volume_io/Testing/Makefile
 ])
-AC_OUTPUT
+AC_OUTPUT(progs/xfm/xfmflip
+)
 
