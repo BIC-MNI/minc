@@ -1,0 +1,36 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH XFMFLIP 1 "$Date: 2007-08-24 04:05:44 $" "" "MINC User's Guide"
+.SH NAME
+xfmflip \- flip an MNI transform file
+
+.SH SYNOPSIS
+\fBxfmflip\fR\ \fIin.xfm\fR\ \fIout.xfm\fR
+
+.SH DESCRIPTION
+\fIxfmflip\fR flips an input transform \fIinput.xfm\fR about an axis (x, y or z) and puts the result in the file \fIresult.xfm\fR. The default flip is about the X axis (Left-Right) but can be changed to the Y axis (via the -y option) or Z axis (-z)
+
+.SH OPTIONS
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+.TP
+\fB\-verbose\fR
+Print out extra progress information while running.
+.TP
+\fB\-clobber\fR
+Overwrite any existing output file
+.TP
+\fB\-fake\fR
+Dont actually run the commands, just echo them to STDOUT
+
+.SH AUTHOR
+Andrew Janke
+Vladimir Fonov
+
+.SH COPYRIGHTS
+Copyright \(co 2007 Andrew Janke - a.janke@gmail.com
+
+
