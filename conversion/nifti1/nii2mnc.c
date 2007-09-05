@@ -230,7 +230,7 @@ main(int argc, char **argv)
             ss = ana_hdr.dime.dim[0];
             if (ss != 0) {
                 if (ss < 0 || ss > 7) {
-                    swap_2(ss);
+                    nifti_swap_2bytes(1, &(ss));
                     if (ss < 0 || ss > 7) {
                         /* We should never get here!! */
                         fprintf(stderr, "Bad dimension count!!\n");
@@ -243,7 +243,7 @@ main(int argc, char **argv)
             else {
                 ss = ana_hdr.hk.sizeof_hdr;
                 if (ss != sizeof(ana_hdr)) {
-                    swap_4(ss);
+                    nifti_swap_4bytes(1, &(ss));
                     if (ss != sizeof(ana_hdr)) {
                         /* We should never get here!! */
                         fprintf(stderr, "Bad header size!!\n");
@@ -255,21 +255,21 @@ main(int argc, char **argv)
             }
 
             if (must_swap) {
-                swap_4(ana_hdr.hk.sizeof_hdr) ;
-                swap_4(ana_hdr.hk.extents) ;
-                swap_2(ana_hdr.hk.session_error) ;
+                nifti_swap_4bytes(1, &(ana_hdr.hk.sizeof_hdr));
+                nifti_swap_4bytes(1, &(ana_hdr.hk.extents));
+                nifti_swap_2bytes(1, &(ana_hdr.hk.session_error));
 
-                swap_4(ana_hdr.dime.compressed) ;
-                swap_4(ana_hdr.dime.verified) ;
-                swap_4(ana_hdr.dime.glmax) ; 
-                swap_4(ana_hdr.dime.glmin) ;
-                swap_2bytes( 8 , ana_hdr.dime.dim ) ;
-                swap_4bytes( 8 , ana_hdr.dime.pixdim ) ;
-                swap_2(ana_hdr.dime.datatype) ;
-                swap_2(ana_hdr.dime.bitpix) ;
-                swap_4(ana_hdr.dime.vox_offset);
-                swap_4(ana_hdr.dime.cal_max); 
-                swap_4(ana_hdr.dime.cal_min);
+                nifti_swap_4bytes(1, &(ana_hdr.dime.compressed));
+                nifti_swap_4bytes(1, &(ana_hdr.dime.verified));
+                nifti_swap_4bytes(1, &(ana_hdr.dime.glmax)); 
+                nifti_swap_4bytes(1, &(ana_hdr.dime.glmin));
+                nifti_swap_2bytes(8, ana_hdr.dime.dim);
+                nifti_swap_4bytes(8, ana_hdr.dime.pixdim);
+                nifti_swap_2bytes(1, &(ana_hdr.dime.datatype));
+                nifti_swap_2bytes(1, &(ana_hdr.dime.bitpix));
+                nifti_swap_4bytes(1, &(ana_hdr.dime.vox_offset));
+                nifti_swap_4bytes(1, &(ana_hdr.dime.cal_max)); 
+                nifti_swap_4bytes(1, &(ana_hdr.dime.cal_min));
             }
 
             if (!qflag) {

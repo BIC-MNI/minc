@@ -109,7 +109,7 @@ init_nifti_header(nifti_image *nii_ptr)
     nii_ptr->iname = NULL;
     nii_ptr->iname_offset = 0;
     nii_ptr->swapsize = 0;
-    nii_ptr->byteorder = LSB_FIRST; /* Use LSB first by default. */
+    nii_ptr->byteorder = 1; /* default order (LSB) */
     nii_ptr->data = NULL;
 
     for (i = 0; i < 4; i++) {
@@ -556,7 +556,7 @@ main(int argc, char **argv)
     nii_ptr->sto_xyz.m[3][2] = 0.0;
     nii_ptr->sto_xyz.m[3][3] = 1.0;
 
-    nii_ptr->sto_ijk = mat44_inverse(nii_ptr->sto_xyz);
+    nii_ptr->sto_ijk = nifti_mat44_inverse(nii_ptr->sto_xyz);
 
     nifti_datatype_sizes(nii_ptr->datatype, 
                          &nii_ptr->nbyper, &nii_ptr->swapsize);
@@ -636,6 +636,7 @@ main(int argc, char **argv)
         test_xform(nii_ptr->sto_xyz, 10, 10, 10);
     }
     
+    fprintf(stdout, "Calling NIFTI-1 Write routine\n");
     nifti_image_write(nii_ptr);
 
     return (0);
