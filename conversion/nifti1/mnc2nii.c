@@ -1,4 +1,4 @@
-#include <minc.h>
+#include <minc2.h>
 #include <ParseArgv.h>
 
 #include "nifti1_io.h"
@@ -316,7 +316,7 @@ main(int argc, char **argv)
      */
     mnc_vid = ncvarid(mnc_fd, MIimage);
     if (mnc_vid < 0) {
-        fprintf(stderr, "Can't locate the image variable\n");
+        fprintf(stderr, "Can't locate the image variable (mnc_vid=%d)\n", mnc_vid);
         return (-1);
     }
 
