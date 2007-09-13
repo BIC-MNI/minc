@@ -538,6 +538,7 @@ dist_man1_MANS = \
 	progs/xfm/transformtags.man1 \
 	progs/xfm/xfmconcat.man1 \
 	progs/xfm/xfminvert.man1 \
+	progs/xfm/xfmflip.man1 \
 	progs/mincconvert/mincconvert.man1 \
 	conversion/ecattominc/ecattominc.man1 \
 	conversion/minctoecat/minctoecat.man1 \

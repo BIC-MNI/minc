@@ -1,4 +1,11 @@
 MINC 2:
+2007-09-13  Andrew L Janke <a.janke@gmail.com>
+	* Added a few more free's for memory thanks to Claude
+
+2007-08-24  Andrew L Janke <a.janke@gmail.com>
+	* added xfmflip and man page
+	* fixed a bug in the build of minccalc
+	* updated nifti library for nii2mnc
 
 2007-08-08 Claude Lepage <claude@bic.mni.mcgill.ca>
 	* Increased size of MI_MAX_VAR_BUFFER_SIZE and fix chunking
