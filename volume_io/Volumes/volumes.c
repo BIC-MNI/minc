@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.76 2007-08-13 14:06:11 rotor Exp $";
+static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.77 2007-09-13 01:31:38 rotor Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };
@@ -481,8 +481,11 @@ VIOAPI  void  delete_volume(
 
     delete_general_transform( &volume->voxel_to_world_transform );
 
-    for_less( d, 0, get_volume_n_dimensions(volume) )
+    for_less( d, 0, get_volume_n_dimensions(volume) ) {
         delete_string( volume->dimension_names[d] );
+        if( volume->irregular_starts[d] ) FREE( volume->irregular_starts[d] );
+        if( volume->irregular_widths[d] ) FREE( volume->irregular_widths[d] );
+    }
 
     delete_string( volume->coordinate_system_name );
 
@@ -2342,9 +2345,6 @@ VIOAPI  Volume   copy_volume_definition_no_alloc(
 
     set_volume_space_type( copy, volume->coordinate_system_name );
     
-    // this string was allocated in create_volume()
-    FREE(volume->coordinate_system_name);
- 
     for_less( c, 0, get_volume_n_dimensions(volume) )
     {
         if (is_volume_dimension_irregular(volume, c)) {
@@ -2353,8 +2353,10 @@ VIOAPI  Volume   copy_volume_definition_no_alloc(
             get_volume_irregular_starts( volume, c, sizes[c], irr_starts);
             set_volume_irregular_starts( volume, c, sizes[c], irr_starts);
 
-            get_volume_irregular_widths( volume, c, sizes[c], irr_starts);
-            set_volume_irregular_widths( volume, c, sizes[c], irr_starts);
+            get_volume_irregular_widths( volume, c, sizes[c], irr_widths);
+            set_volume_irregular_widths( volume, c, sizes[c], irr_widths);
+            free( irr_starts );
+            free( irr_widths );
         }
     }
 
