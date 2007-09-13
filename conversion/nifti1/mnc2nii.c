@@ -120,6 +120,8 @@ init_nifti_header(nifti_image *nii_ptr)
             nii_ptr->sto_ijk.m[i][j] = 0.0;
         }
     }
+    
+    nii_ptr->num_ext = 0;
 }    
 
 /* private function from from libminc2.  This function is private partially
