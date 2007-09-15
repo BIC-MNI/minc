@@ -5,6 +5,7 @@
 * Changes to ensure there is a clean ITK minc build
 * added xfmflip 
 * Fixed buffering and chunking for fast internal file compression
+* updated nii2mnc and mnc2nii with the latest version of niftilib
 
 		New in Release 2.0.12
                 ---------------------
