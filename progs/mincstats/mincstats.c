@@ -5,7 +5,11 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.22  2005-07-29 16:46:21  bert
+ * Revision 1.23  2007-09-27 01:06:31  rotor
+ *  * bugfix to histogram stats with a zero volume, discovered by Simon, fixed by
+ *       Claude
+ *
+ * Revision 1.22  2005/07/29 16:46:21  bert
  * Add warning message for mincstats -mask w/o -mask_range, -mask_binvalue, etc.
  *
  * Revision 1.21  2005/07/25 19:56:52  bert
@@ -1369,7 +1373,8 @@ void do_stats(double value, long index[], Stats_Info * stats)
          }
       }
 
-      if(Hist && (value >= hist_range[0]) && (value <= hist_range[1])) {
+      if(Hist && (value >= hist_range[0]) && (value <= hist_range[1]) && 
+           (hist_sep > 0.0) ) {
          /*lower limit <= value < upper limit */
          hist_index = (int)floor((value - hist_range[0]) / hist_sep);
          if(hist_index >= hist_bins) {
