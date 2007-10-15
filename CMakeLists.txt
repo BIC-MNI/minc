@@ -28,6 +28,7 @@ SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
 # yes, build as minc2
 SET(MINC2 "1")
+ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 # aliases
 SET(VERSION "${PACKAGE_VERSION}")
@@ -39,8 +40,8 @@ INCLUDE(CheckFunctionExists)
 CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
 
-#INCLUDE(CheckIncludeFiles)
-# CHECK_INCLUDE_FILES(tmpnam.h
+INCLUDE(CheckIncludeFiles)
+CHECK_INCLUDE_FILES(float.h HAVE_FLOAT_H)
 
 # netcdf and HDF5
 SET(NETCDF_FIND_REQUIRED TRUE)
@@ -54,8 +55,6 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
 
 # others
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/epm-header.in ${CMAKE_SOURCE_DIR}/epm-header)
-
-# LINK_LIBRARIES( ${NETCDF_LIBRARY} ${HDF5_LIBRARY} )
 
 # set the master INCLUDE directories
 INCLUDE_DIRECTORIES(
@@ -179,5 +178,7 @@ INSTALL(FILES volume_io/Include/volume_io/alloc.h
 SET_TARGET_PROPERTIES(volume_io2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
 
 
-# now build the progs subdir -- this should eventually be split off
+# now build the progs subdir
 ADD_SUBDIRECTORY( progs )
+
+
