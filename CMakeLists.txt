@@ -6,6 +6,7 @@ PROJECT(libminc2)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
 
+
 #ADD_SUBDIRECTORY( testdir )
 #ADD_SUBDIRECTORY( doc )
 
@@ -33,6 +34,11 @@ ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 # aliases
 SET(VERSION "${PACKAGE_VERSION}")
 
+# progs needed to build
+SET(FLEX_FIND_REQUIRED)
+SET(BISON_FIND_REQUIRED)
+FIND_PACKAGE(BISON)
+FIND_PACKAGE(FLEX)
 
 # check for prereqs
 INCLUDE(CheckFunctionExists)
