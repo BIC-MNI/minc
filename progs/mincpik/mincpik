@@ -363,10 +363,19 @@ if($opt{title}){
       $opt{title_text} =~ s/\.mnc$//;
       }
      
-   &do_cmd('convert', '-box', 'black', 
-           '-font', '7x13', 
+#   This really does not work all that well
+#   &do_cmd('convert', '-box', 'black', 
+#           '-font', '7x13', 
+#           '-fill', 'white',
+#           '-draw', "text 4,12 \"$opt{title_text}\"",
+#           $imgfile, $outfile);
+#
+   # use montage instead
+   &do_cmd('montage', 
+           '-geometry', '100x100%',  
+           '-background', 'black',
            '-fill', 'white',
-           '-draw', "text 4,12 \"$opt{title_text}\"",
+           '-label', $opt{title_text},
            $imgfile, $outfile);
    }
 
