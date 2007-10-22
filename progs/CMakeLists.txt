@@ -18,19 +18,18 @@ FIND_PACKAGE(FLEX)
 ADD_EXECUTABLE(../invert_raw_image mincview/invert_raw_image.c)
 ADD_EXECUTABLE(../mincaverage mincaverage/mincaverage.c)
 
-#ADD_EXECUTABLE(../minccalc minccalc/minccalc.c
-#                           minccalc/gram.y
-#                           minccalc/eval.c
-#                           minccalc/ident.c
-#                           minccalc/lex.l
-#                           minccalc/node.c
-#                           minccalc/optim.c
-#                           minccalc/scalar.c
-#                           minccalc/sym.c
-#                           minccalc/vector.c)
-#BISON_TARGET(../minccalc minccalc/gram.y minccalc/gram.c)
-#FLEX_TARGET(../minccalc minccalc/lex.l minccalc/lex.c)
-#ADD_FLEX_BISON_DEPENDENCY(minccalc/lex.l minccalc/gram.y)
+BISON_TARGET(../minccalc minccalc/gram.y minccalc/gram.c COMPILE_FLAGS "--debug")
+FLEX_TARGET(../minccalc minccalc/lex.l minccalc/lex.c)
+ADD_EXECUTABLE(../minccalc minccalc/minccalc.c
+                           minccalc/gram.c
+                           minccalc/eval.c
+                           minccalc/ident.c
+                           minccalc/lex.c
+                           minccalc/node.c
+                           minccalc/optim.c
+                           minccalc/scalar.c
+                           minccalc/sym.c
+                           minccalc/vector.c)
 
 ADD_EXECUTABLE(../mincconcat mincconcat/mincconcat.c)
 ADD_EXECUTABLE(../mincconvert mincconvert/mincconvert.c)
@@ -45,14 +44,16 @@ ADD_EXECUTABLE(../mincexample2 mincexample/mincexample2.c)
 ADD_EXECUTABLE(../mincexpand mincexpand/mincexpand.c)
 ADD_EXECUTABLE(../mincextract mincextract/mincextract.c)
 
-#ADD_EXECUTABLE(../mincgen mincgen/main.c
-#                          mincgen/escapes.c
-#                          mincgen/genlib.c
-#                          mincgen/getfill.c
-#                          mincgen/init.c
-#                          mincgen/load.c
-#                          mincgen/ncgentab.y
-#                          mincgen/ncgenyy.l)
+BISON_TARGET(../mincgen mincgen/ncgentab.y mincgen/nccentab.c)
+FLEX_TARGET(../mincgen mincgen/ncgenyy.l mincgen/ncgenyy.c)
+ADD_EXECUTABLE(../mincgen mincgen/main.c
+                          mincgen/escapes.c
+                          mincgen/genlib.c
+                          mincgen/getfill.c
+                          mincgen/init.c
+                          mincgen/load.c
+                          mincgen/ncgentab.c
+                          mincgen/ncgenyy.c)
 
 ADD_EXECUTABLE(../mincinfo mincinfo/mincinfo.c)
 ADD_EXECUTABLE(../minclookup minclookup/minclookup.c)
@@ -96,7 +97,7 @@ TARGET_LINK_LIBRARIES(../xfminvert volume_io2 minc2)
 INSTALL(TARGETS
    ../invert_raw_image 
    ../mincaverage
-#   ../minccalc
+   ../minccalc
    ../mincconcat
    ../mincconvert
    ../minccopy
@@ -105,7 +106,7 @@ INSTALL(TARGETS
 #   ../mincexample2
    ../mincexpand
    ../mincextract
-#   ../mincgen
+   ../mincgen
    ../mincinfo
    ../minclookup
    ../mincmakescalar

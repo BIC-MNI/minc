@@ -1,5 +1,6 @@
+#line 2 "minccalc/lex.c"
 
-#line 3 "progs/minccalc/lex.c"
+#line 4 "minccalc/lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -518,15 +519,15 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lex.l"
-#line 2 "lex.l"
+#line 1 "minccalc/lex.l"
+#line 2 "minccalc/lex.l"
 #include <string.h>
 #include "node.h"
 #include "y.tab.h"
 
 int lexpos = 0;
 #define setpos() yylval.pos = lexpos; lexpos += yyleng
-#line 530 "progs/minccalc/lex.c"
+#line 531 "minccalc/lex.c"
 
 #define INITIAL 0
 
@@ -679,10 +680,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 10 "lex.l"
+#line 10 "minccalc/lex.l"
 
 
-#line 686 "progs/minccalc/lex.c"
+#line 687 "minccalc/lex.c"
 
 	if ( !(yy_init) )
 		{
@@ -767,182 +768,182 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 12 "lex.l"
+#line 12 "minccalc/lex.l"
 setpos(); return AVG;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 13 "lex.l"
+#line 13 "minccalc/lex.l"
 setpos(); return SUM;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 14 "lex.l"
+#line 14 "minccalc/lex.l"
 setpos(); return PROD;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 15 "lex.l"
+#line 15 "minccalc/lex.l"
 setpos(); return LET;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 16 "lex.l"
+#line 16 "minccalc/lex.l"
 setpos(); return LEN;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 17 "lex.l"
+#line 17 "minccalc/lex.l"
 setpos(); return ISNAN;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 18 "lex.l"
+#line 18 "minccalc/lex.l"
 setpos(); return SQRT;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 19 "lex.l"
+#line 19 "minccalc/lex.l"
 setpos(); return ABS;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 20 "lex.l"
+#line 20 "minccalc/lex.l"
 setpos(); return MAX;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 21 "lex.l"
+#line 21 "minccalc/lex.l"
 setpos(); return MIN;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 22 "lex.l"
+#line 22 "minccalc/lex.l"
 setpos(); return EXP;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 23 "lex.l"
+#line 23 "minccalc/lex.l"
 setpos(); return LOG;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 24 "lex.l"
+#line 24 "minccalc/lex.l"
 setpos(); return SIN;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 25 "lex.l"
+#line 25 "minccalc/lex.l"
 setpos(); return COS;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 26 "lex.l"
+#line 26 "minccalc/lex.l"
 setpos(); return TAN;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 27 "lex.l"
+#line 27 "minccalc/lex.l"
 setpos(); return ASIN;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 28 "lex.l"
+#line 28 "minccalc/lex.l"
 setpos(); return ACOS;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 29 "lex.l"
+#line 29 "minccalc/lex.l"
 setpos(); return ATAN;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 30 "lex.l"
+#line 30 "minccalc/lex.l"
 setpos(); return CLAMP;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 31 "lex.l"
+#line 31 "minccalc/lex.l"
 setpos(); return SEGMENT;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 32 "lex.l"
+#line 32 "minccalc/lex.l"
 setpos(); return IN;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 33 "lex.l"
+#line 33 "minccalc/lex.l"
 setpos(); return TO;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 34 "lex.l"
+#line 34 "minccalc/lex.l"
 setpos(); return IF;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 35 "lex.l"
+#line 35 "minccalc/lex.l"
 setpos(); return ELSE;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 36 "lex.l"
+#line 36 "minccalc/lex.l"
 setpos(); return FOR;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 37 "lex.l"
+#line 37 "minccalc/lex.l"
 setpos(); return NAN;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 38 "lex.l"
+#line 38 "minccalc/lex.l"
 setpos(); return LT;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 39 "lex.l"
+#line 39 "minccalc/lex.l"
 setpos(); return LE;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 40 "lex.l"
+#line 40 "minccalc/lex.l"
 setpos(); return GT;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 41 "lex.l"
+#line 41 "minccalc/lex.l"
 setpos(); return GE;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 42 "lex.l"
+#line 42 "minccalc/lex.l"
 setpos(); return EQ;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 43 "lex.l"
+#line 43 "minccalc/lex.l"
 setpos(); return NE;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 44 "lex.l"
+#line 44 "minccalc/lex.l"
 setpos(); return NOT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 45 "lex.l"
+#line 45 "minccalc/lex.l"
 setpos(); return AND;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 46 "lex.l"
+#line 46 "minccalc/lex.l"
 setpos(); return OR;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 47 "lex.l"
+#line 47 "minccalc/lex.l"
 {
                   setpos();
                   yylval.ident = new_ident(yytext); 
@@ -951,7 +952,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 52 "lex.l"
+#line 52 "minccalc/lex.l"
 {
                   setpos();
                   yylval.real = atof(yytext);;
@@ -961,20 +962,20 @@ YY_RULE_SETUP
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 57 "lex.l"
+#line 57 "minccalc/lex.l"
 setpos();
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 58 "lex.l"
+#line 58 "minccalc/lex.l"
 setpos(); return yytext[0];
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 61 "lex.l"
+#line 61 "minccalc/lex.l"
 ECHO;
 	YY_BREAK
-#line 978 "progs/minccalc/lex.c"
+#line 979 "minccalc/lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1960,7 +1961,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 61 "lex.l"
+#line 61 "minccalc/lex.l"
 
 
 
