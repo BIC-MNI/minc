@@ -2,7 +2,7 @@
 #
 # Andrew Janke - a.janke@gmail.com
 
-SET(CMAKE_MODULE_PATH "../cmake-modules")
+#SET(CMAKE_MODULE_PATH "../cmake-modules")
 
 LINK_DIRECTORIES(../)
 INCLUDE_DIRECTORIES(Proglib)
@@ -10,25 +10,27 @@ LINK_LIBRARIES( minc2 ${NETCDF_LIBRARY} ${HDF5_LIBRARY} )
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 SET(BISON_FIND_REQUIRED)
+SET(FLEX_FIND_REQUIRED)
 FIND_PACKAGE(BISON)
+FIND_PACKAGE(FLEX)
 
 # all the progs
 ADD_EXECUTABLE(../invert_raw_image mincview/invert_raw_image.c)
 ADD_EXECUTABLE(../mincaverage mincaverage/mincaverage.c)
 
-ADD_EXECUTABLE(../minccalc minccalc/minccalc.c
+#ADD_EXECUTABLE(../minccalc minccalc/minccalc.c
 #                           minccalc/gram.y
-                           minccalc/gram.c
-                           minccalc/eval.c
-                           minccalc/ident.c
+#                           minccalc/eval.c
+#                           minccalc/ident.c
 #                           minccalc/lex.l
-                           minccalc/lex.c
-                           minccalc/node.c
-                           minccalc/optim.c
-                           minccalc/scalar.c
-                           minccalc/sym.c
-                           minccalc/vector.c)
-BISON_TARGET(../minccalc minccalc/gram.y minccalc/gram.c)
+#                           minccalc/node.c
+#                           minccalc/optim.c
+#                           minccalc/scalar.c
+#                           minccalc/sym.c
+#                           minccalc/vector.c)
+#BISON_TARGET(../minccalc minccalc/gram.y minccalc/gram.c)
+#FLEX_TARGET(../minccalc minccalc/lex.l minccalc/lex.c)
+#ADD_FLEX_BISON_DEPENDENCY(minccalc/lex.l minccalc/gram.y)
 
 ADD_EXECUTABLE(../mincconcat mincconcat/mincconcat.c)
 ADD_EXECUTABLE(../mincconvert mincconvert/mincconvert.c)
@@ -92,108 +94,44 @@ TARGET_LINK_LIBRARIES(../xfminvert volume_io2 minc2)
 
 # install progs
 INSTALL(TARGETS
-        ../invert_raw_image 
-        ../mincaverage
-        ../minccalc
-        ../mincconcat
-        ../mincconvert
-        ../minccopy
-        ../mincdump
-#        ../mincexample1
-#        ../mincexample2
-        ../mincexpand
-        ../mincextract
-#        ../mincgen
-        ../mincinfo
-        ../minclookup
-        ../mincmakescalar
-        ../mincmakevector
-        ../mincmath
-        ../minc_modify_header
-        ../mincresample
-        ../mincreshape
-        ../mincstats
-        ../minctoraw
-        ../mincwindow
-        ../rawtominc
-        ../voxeltoworld
-        ../worldtovoxel
-        ../transformtags
-        ../xfmconcat
-        ../xfminvert
-        DESTINATION bin)
-
-
-
-
-
-# SET(acr_nema_STAT_SRCS
-#    conversion/Acr_nema/acr_io.c
-#    conversion/Acr_nema/dicom_client_routines.c
-#    conversion/Acr_nema/dicom_network.c
-#    conversion/Acr_nema/element.c
-#    conversion/Acr_nema/file_io.c
-#    conversion/Acr_nema/globals.c
-#    conversion/Acr_nema/group.c
-#    conversion/Acr_nema/message.c
-#    conversion/Acr_nema/value_repr.c
-#    )
-# ADD_LIBRARY(acr_nema STATIC ${acr_nema_STAT_SRCS})
-
-
-# SET(ecattominc_SRCS
-#    conversion/ecattominc/ecattominc.c
-#    conversion/ecattominc/insertblood.c
-#    conversion/ecattominc/ecat_file.c
-#    conversion/ecattominc/machine_indep.c
-#    )
-# 
-# SET(minctoecat_SRCS
-#    conversion/minctoecat/minctoecat.c
-#    conversion/minctoecat/ecat_write.c
-#    conversion/minctoecat/machine_indep.c
-#    )
-# 
-# SET(mnc2nii_SRCS
-#    conversion/nifti1/mnc2nii.c
-#    conversion/nifti1/nifti1_io.c
-#    conversion/nifti1/znzlib.c
-#    )
-# 
-# SET(nii2mnc_SRCS
-#    conversion/nifti1/nii2mnc.c
-#    conversion/nifti1/nifti1_io.c
-#    conversion/nifti1/znzlib.c
-#    )
-# 
-# SET(upet2mnc_SRCS
-#    conversion/micropet/upet2mnc.c
-#    )
-# 
-# SET(dcm2mnc_SRCS
-#    conversion/dcm2mnc/dcm2mnc.c
-#    conversion/dcm2mnc/dicom_to_minc.c
-#    conversion/dcm2mnc/siemens_to_dicom.c
-#    conversion/dcm2mnc/dicom_read.c
-#    conversion/dcm2mnc/minc_file.c
-#    conversion/dcm2mnc/progress.c
-#    conversion/dcm2mnc/string_to_filename.c
-#    )
-# TARGET_LINK_LIBRARIES(dcm2mnc acr_nema )
-# 
-# SET(vff2mnc_SRCS
-#    conversion/vff2mnc/vff2mnc.c
-#    )
-
+   ../invert_raw_image 
+   ../mincaverage
+#   ../minccalc
+   ../mincconcat
+   ../mincconvert
+   ../minccopy
+   ../mincdump
+#   ../mincexample1
+#   ../mincexample2
+   ../mincexpand
+   ../mincextract
+#   ../mincgen
+   ../mincinfo
+   ../minclookup
+   ../mincmakescalar
+   ../mincmakevector
+   ../mincmath
+   ../minc_modify_header
+   ../mincresample
+   ../mincreshape
+   ../mincstats
+   ../minctoraw
+   ../mincwindow
+   ../rawtominc
+   ../voxeltoworld
+   ../worldtovoxel
+   ../transformtags
+   ../xfmconcat
+   ../xfminvert
+   DESTINATION bin)
 
 
 # perl and shell scripts
-INSTALL(FILES mincdiff/mincdiff  
-              mincedit/mincedit  
-              mincheader/mincheader  
-              minchistory/minchistory  
-              mincpik/mincpik  
-              mincview/mincview
-        DESTINATION bin )
-
-# INSTALL(FILES   DESTINATION /include/acr_nema )
+INSTALL(FILES
+   mincdiff/mincdiff  
+   mincedit/mincedit  
+   mincheader/mincheader  
+   minchistory/minchistory  
+   mincpik/mincpik  
+   mincview/mincview
+   DESTINATION bin )
