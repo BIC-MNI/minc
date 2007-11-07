@@ -6,5 +6,3 @@
 %readme README
 %description Medical Imaging library
 %version @VERSION@
-%requires netcdf
-%requires hdf5
