@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.22  2007-08-13 16:34:52  ilana
+   * Revision 1.23  2007-11-23 20:28:23  ilana
+   * condition on picking between DICOM slice spacing and coordinate spacing was wrong (extra ! in if statement)
+   *
+   * Revision 1.22  2007/08/13 16:34:52  ilana
    * mods to handle naming scheme of more diffusion sequences
    *
    * Revision 1.21  2007/06/08 20:28:57  ilana
@@ -189,9 +192,8 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.22 2007-08-13 16:34:52 ilana Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.23 2007-11-23 20:28:23 ilana Exp $";
 #include "dcm2mnc.h"
-
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
 const char *Volume_Names[VOL_NDIMS] = { "Slice", "Row", "Column" };
 const char *Mri_Names[MRI_NDIMS] = {"Slice", "Echo", "Time", "Phase", "ChmSh"};
@@ -1740,7 +1742,6 @@ read_numa4_dicom(const char *filename, int max_group)
          * standard groups.
          */
         group_list = copy_spi_to_acr(group_list);
-
     }
     else if (strstr(str_ptr, "Philips") != NULL) {
         group_list = add_philips_info(group_list);
@@ -1986,7 +1987,7 @@ sort_dimensions(General_Info *gi_ptr)
                     if (!G.prefer_coords) {
                         printf(" (perhaps you should consider the -usecoordinates option)\n");
                     }
-                    if (dbl_tmp1 == 1.0 || G.prefer_coords || !fcmp(dbl_tmp1, -dbl_tmp2, (dbl_tmp1 / 1000.0))) { 
+                    if (dbl_tmp1 == 1.0 || G.prefer_coords || fcmp(dbl_tmp1, -dbl_tmp2, (dbl_tmp1 / 1000.0))) { 
 			    /*Although in the comment above it says that we should use the
 			    calculated value if the assumed and calculated value only differ
 			    by a sign change, this was not included in this if statement, added 
