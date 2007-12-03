@@ -30,7 +30,12 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.18  2004-12-14 23:53:46  bert
+ * Revision 6.19  2007-12-03 14:19:35  rotor
+ *  * fixed history appending bug (Thanks Claude)
+ *  * updated version for release
+ *  * few more fixes for CMake build
+ *
+ * Revision 6.18  2004/12/14 23:53:46  bert
  * Get rid of compilation warnings
  *
  * Revision 6.17  2004/12/03 21:52:35  bert
@@ -137,7 +142,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.18 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.19 2007-12-03 14:19:35 rotor Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -1369,6 +1374,7 @@ miappend_history(int fd, const char *tm_stamp)
      * additional newline.
      */
     att_val = malloc(att_len + strlen(tm_stamp) + 2);
+
     if (att_val == NULL) {
         return (MI_ERROR);
     }
@@ -1378,13 +1384,20 @@ miappend_history(int fd, const char *tm_stamp)
             return (MI_ERROR);
         }
 
+        /* Remove any trailing null characters. Make sure not to go before
+           the start of the string. */
         while (att_val[att_len-1] == '\0' ) {
             att_len--;
+            if( att_len == 0 ) break;
         }
 
-        if (att_val[att_len-1] != '\n') {
+        /* Add a carriage return to separate from the new history line
+           if there is a previous history line. */
+        if( att_len > 0 ) {
+          if (att_val[att_len-1] != '\n') {
             att_val[att_len] = '\n';
             att_len++;
+          }
         }
     }
 
