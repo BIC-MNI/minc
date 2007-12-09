@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.24  2007-06-08 20:28:57  ilana
+   * Revision 1.25  2007-12-09 19:52:15  alex
+   * Fixed error in echo_time extraction
+   *
+   * Revision 1.24  2007/06/08 20:28:57  ilana
    * added several fields to mincheader (dicom elements and found in ASCONV header)
    *
    * Revision 1.23  2007/05/30 15:17:34  ilana
@@ -1796,7 +1799,7 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     if (gi_ptr->acq.echo_time != -DBL_MAX)
         gi_ptr->acq.echo_time /= 1000.0;
 
-    gi_ptr->acq.echo_time = 
+    gi_ptr->acq.echo_train_length = 
         acr_find_double(group_list, ACR_Echo_train_length, -DBL_MAX); /*added echo train length ilana*/
     
     gi_ptr->acq.echo_number = 
