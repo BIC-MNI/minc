@@ -10,7 +10,11 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.7  2007-08-09 17:05:25  rotor
+ * Revision 1.8  2007-12-10 13:25:12  rotor
+ *  * few more fixes for CMake build
+ *  * started adding static to globals for a wierd zlib bug
+ *
+ * Revision 1.7  2007/08/09 17:05:25  rotor
  *  * added some fixes of Claudes for chunking and internal compression
  *
  * Revision 1.6  2006/07/28 16:49:55  baghdadi
@@ -45,7 +49,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.7 2007-08-09 17:05:25 rotor Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.8 2007-12-10 13:25:12 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -59,11 +63,11 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconver
 #include <ParseArgv.h>
 #include <time_stamp.h>
 
-int clobber = 0;
-int v2format = 0;
-int do_template = 0;
-int compress = -1;
-int chunking = -1;
+static int clobber = 0;
+static int v2format = 0;
+static int do_template = 0;
+static int compress = -1;
+static int chunking = -1;
 
 ArgvInfo argTable[] = {
     {"-clobber", ARGV_CONSTANT, (char *) 1, (char *) &clobber, 

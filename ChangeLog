@@ -1,4 +1,8 @@
 MINC 2:
+2007-10-23  Andrew L Janke <a.janke@gmail.com>
+	* Added most things needed for a CMake build
+	* Fixed a linking bug with nii2mnc and mnc2nii
+	
 2007-09-13  Andrew L Janke <a.janke@gmail.com>
 	* Added a few more free's for memory thanks to Claude
 

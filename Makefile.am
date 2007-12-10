@@ -240,7 +240,16 @@ EXTRA_DIST = GETTING_STARTED \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
 	conversion/Acr_nema/dicom.txt \
-	WHATSNEW-2.0
+	WHATSNEW-2.0 \
+	CMakeLists.txt \
+	config.h.cmake \
+	progs/CMakeLists.txt \
+	conversion/CMakeLists.txt \
+	cmake-modules/FindBISON.cmake \
+	cmake-modules/FindFLEX.cmake \
+	cmake-modules/FindHDF5.cmake \
+	cmake-modules/FindMINC.cmake \
+	cmake-modules/FindNETCDF.cmake
 
 # The fortran directory is not yet automakified, so it is just
 # listed in EXTRA_DIST.  This will copy everything including CVS

@@ -1,4 +1,9 @@
 
+		New in Release 2.0.14
+                ---------------------
+* Added files needed for a CMake build of MINC
+* Fixed a linking problem with nii2mnc mnc2nii
+
 		New in Release 2.0.13
                 ---------------------
 * Fixed a few small build errors for make check
