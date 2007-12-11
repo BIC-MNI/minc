@@ -6,7 +6,11 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.h,v $
- * Revision 1.1  2007-01-16 18:38:18  baghdadi
+ * Revision 1.2  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 1.1  2007/01/16 18:38:18  baghdadi
  * header file for vff2mnc
  *
  * Adopted from vfftominc (perl script) of John G. Sled.
@@ -30,8 +34,7 @@
 #include <float.h>
 #endif
 
-#include <time_stamp.h>
-#include "minc2.h"
+#include <minc2.h>
 
 #ifndef TRUE
 #  define TRUE 1

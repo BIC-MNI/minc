@@ -10,7 +10,11 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincaverage.c,v $
- * Revision 6.8  2005-08-26 21:07:16  bert
+ * Revision 6.9  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.8  2005/08/26 21:07:16  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.7  2004/12/14 23:52:50  bert
@@ -77,7 +81,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.8 2005-08-26 21:07:16 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincaverage/mincaverage.c,v 6.9 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -160,30 +164,30 @@ static int get_double_list(char *dst, char *key, char *nextarg);
 static char **read_file_names(char *filelist, int *num_files);
 
 /* Argument variables */
-int clobber = FALSE;
-int verbose = TRUE;
-int debug = FALSE;
-int check_dimensions = TRUE;
+static int clobber = FALSE;
+static int verbose = TRUE;
+static int debug = FALSE;
+static int check_dimensions = TRUE;
 #ifdef NO_DEFAULT_NORM
-int normalize = -1;
+static int normalize = -1;
 #else
-int normalize = FALSE;
+static int normalize = FALSE;
 #endif
-char *sdfile = NULL;
-nc_type datatype = MI_ORIGINAL_TYPE;
-int is_signed = FALSE;
-double valid_range[2] = {0.0, 0.0};
-int copy_all_header = DEFAULT_BOOLEAN;
-char *averaging_dimension = NULL;
-int max_buffer_size_in_kb = 4 * 1024;
-int binarize = FALSE;
-double binrange[2] = {DBL_MAX, -DBL_MAX};
-double binvalue = -DBL_MAX;
-Double_Array weights = {0, NULL};
-int width_weighted = FALSE;
-char *filelist = NULL;
+static char *sdfile = NULL;
+static nc_type datatype = MI_ORIGINAL_TYPE;
+static int is_signed = FALSE;
+static double valid_range[2] = {0.0, 0.0};
+static int copy_all_header = DEFAULT_BOOLEAN;
+static char *averaging_dimension = NULL;
+static int max_buffer_size_in_kb = 4 * 1024;
+static int binarize = FALSE;
+static double binrange[2] = {DBL_MAX, -DBL_MAX};
+static double binvalue = -DBL_MAX;
+static Double_Array weights = {0, NULL};
+static int width_weighted = FALSE;
+static char *filelist = NULL;
 #if MINC2
-int minc2_format = FALSE;
+static int minc2_format = FALSE;
 #endif /* MINC2 */
 
 /* Argument table */

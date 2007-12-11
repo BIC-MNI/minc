@@ -10,7 +10,11 @@
 @CREATED    : June 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincextract.c,v $
- * Revision 6.6  2006-05-19 00:35:58  bert
+ * Revision 6.7  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.6  2006/05/19 00:35:58  bert
  * Add config.h to several files that might need it
  *
  * Revision 6.5  2004/11/01 22:38:38  bert
@@ -91,7 +95,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.6 2006-05-19 00:35:58 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincextract/mincextract.c,v 6.7 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -129,18 +133,18 @@ static nc_type nc_type_list[8] = {
 static int get_arg_vector(char *dst, char *key, char *nextArg);
 
 /* Variables used for argument parsing */
-int arg_odatatype = TYPE_ASCII;
-nc_type output_datatype = NC_DOUBLE;
-int output_signed = INT_MAX;
-double valid_range[2] = {DBL_MAX, DBL_MAX};
-int normalize_output = TRUE;
-double image_range[2] = {DBL_MAX, DBL_MAX};
-long hs_start[MAX_VAR_DIMS] = {LONG_MIN};
-long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
-int xdirection = INT_MAX;
-int ydirection = INT_MAX;
-int zdirection = INT_MAX;
-int default_direction = INT_MAX;
+static int arg_odatatype = TYPE_ASCII;
+static nc_type output_datatype = NC_DOUBLE;
+static int output_signed = INT_MAX;
+static double valid_range[2] = {DBL_MAX, DBL_MAX};
+static int normalize_output = TRUE;
+static double image_range[2] = {DBL_MAX, DBL_MAX};
+static long hs_start[MAX_VAR_DIMS] = {LONG_MIN};
+static long hs_count[MAX_VAR_DIMS] = {LONG_MIN};
+static int xdirection = INT_MAX;
+static int ydirection = INT_MAX;
+static int zdirection = INT_MAX;
+static int default_direction = INT_MAX;
 
 /* Argument table */
 ArgvInfo argTable[] = {

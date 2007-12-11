@@ -1,11 +1,15 @@
 /* mincstats.c
  *
- * Andrew Janke - rotor@cmr.uq.edu.au
+ * Andrew Janke - a.janke@gmail.com
  * Centre for Magnetic Resonance
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.23  2007-09-27 01:06:31  rotor
+ * Revision 1.24  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 1.23  2007/09/27 01:06:31  rotor
  *  * bugfix to histogram stats with a zero volume, discovered by Simon, fixed by
  *       Claude
  *
@@ -267,7 +271,7 @@ int      dim_to_space[MAX_VAR_DIMS];
 int      file_ndims = 0;
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *)NULL, (char *)NULL, "General options:"},
    {"-verbose", ARGV_CONSTANT, (char *)TRUE, (char *)&verbose,
     "Print out extra information."},

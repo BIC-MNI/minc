@@ -19,7 +19,11 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.13  2005-08-26 21:07:16  bert
+ * Revision 1.14  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 1.13  2005/08/26 21:07:16  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 1.12  2004/12/14 23:52:23  bert
@@ -78,7 +82,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.13 2005-08-26 21:07:16 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.14 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -126,32 +130,32 @@ static char *read_expression_file(char *filename);
 static int get_list_option(char *dst, char *key, int argc, char **argv);
 
 /* Argument variables */
-int Output_list_size = 0;
-int Output_list_alloc = 0;
+static int Output_list_size = 0;
+static int Output_list_alloc = 0;
 struct {
    char *symbol;
    char *file;
 } *Output_list = NULL;
-int      clobber =                     FALSE;
-int      verbose =                     TRUE;
-int      debug =                       FALSE;
-int      is_signed =                   FALSE;
-int      propagate_nan =               TRUE;
-int      check_dim_info =              TRUE;
-int      copy_all_header =             DEFAULT_BOOL;
-int      use_nan_for_illegal_values =  TRUE;
-int      max_buffer_size_in_kb =       4 * 1024;
-double   valid_range[2] =              {0.0, 0.0};
-double   constant =                    DEFAULT_DBL;
-double   constant2[2] =                {DEFAULT_DBL, DEFAULT_DBL};
-double   value_for_illegal_operations = DEFAULT_DBL;
-nc_type  datatype =                    MI_ORIGINAL_TYPE;
-char     *filelist =                   NULL;
-char     *expr_file =                  NULL;
-char     *expression =                 NULL;
-int      eval_width =                  200;
+static int clobber = FALSE;
+static int verbose = TRUE;
+int debug = FALSE;
+static int is_signed = FALSE;
+int propagate_nan = TRUE;
+static int check_dim_info = TRUE;
+static int copy_all_header = DEFAULT_BOOL;
+static int use_nan_for_illegal_values = TRUE;
+static int max_buffer_size_in_kb = 4 * 1024;
+static double valid_range[2] = {0.0, 0.0};
+static double constant = DEFAULT_DBL;
+static double constant2[2] = {DEFAULT_DBL, DEFAULT_DBL};
+double value_for_illegal_operations = DEFAULT_DBL;
+static nc_type datatype = MI_ORIGINAL_TYPE;
+static char *filelist = NULL;
+static char *expr_file = NULL;
+char *expression = NULL;
+static int eval_width = 200;
 #if MINC2
-int      minc2_format =                FALSE;
+static int minc2_format = FALSE;
 #endif /* MINC2 */
 
 /* Argument table */

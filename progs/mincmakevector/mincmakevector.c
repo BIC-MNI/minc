@@ -11,7 +11,11 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.7  2005-08-26 21:07:17  bert
+ * Revision 6.8  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.7  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.6  2004/11/01 22:38:38  bert
@@ -47,7 +51,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.7 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.8 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -88,18 +92,18 @@ static void do_makevector(void *caller_data, long num_voxels,
 static long get_vector_length(int mincid);
 
 /* Argument variables */
-int clobber = FALSE;
-int verbose = TRUE;
+static int clobber = FALSE;
+static int verbose = TRUE;
 #if MINC2
-int v2format = FALSE;
+static int v2format = FALSE;
 #endif /* MINC2 */
-nc_type datatype = MI_ORIGINAL_TYPE;
-int is_signed = FALSE;
-double valid_range[2] = {0.0, 0.0};
-int buffer_size = 10 * 1024;
+static nc_type datatype = MI_ORIGINAL_TYPE;
+static int is_signed = FALSE;
+static double valid_range[2] = {0.0, 0.0};
+static int buffer_size = 10 * 1024;
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
 #if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},

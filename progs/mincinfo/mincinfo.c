@@ -10,7 +10,11 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.8  2006-07-28 18:20:53  baghdadi
+ * Revision 6.9  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.8  2006/07/28 18:20:53  baghdadi
  * *** empty log message ***
  *
  * Revision 6.7  2006/07/28 17:51:01  baghdadi
@@ -92,7 +96,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.8 2006-07-28 18:20:53 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.9 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -115,9 +119,9 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 
 #define MAX_NUM_OPTIONS 100
 
 /* Name of program, for error reporting */
-char* exec_name;
+static char* exec_name;
 
-char *type_names[] = {
+static char *type_names[] = {
    NULL, "byte", "char", "short", "long", "float", "double"
 };
 
@@ -145,9 +149,9 @@ static int report_error(void);
 static int get_attname(int mincid, char *string, int *varid, char *name);
 static int print_image_info(char *filename, int mincid);
 /* Variables used for argument parsing */
-char *error_string = NULL;
-Option_type option_list[MAX_NUM_OPTIONS] = {ENDLIST};
-int length_option_list = 0;
+static char *error_string = NULL;
+static Option_type option_list[MAX_NUM_OPTIONS] = {ENDLIST};
+static int length_option_list = 0;
 
 /* Argument table */
 ArgvInfo argTable[] = {

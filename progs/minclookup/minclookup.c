@@ -11,7 +11,11 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.7  2005-08-26 21:07:17  bert
+ * Revision 6.8  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.7  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.6  2004/12/03 21:57:08  bert
@@ -75,7 +79,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.7 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minclookup/minclookup.c,v 6.8 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -200,23 +204,23 @@ static Lookup_Table hotmetal_lookup = {
 };
 
 /* Argument variables */
-int clobber = FALSE;
-int verbose = TRUE;
-nc_type datatype = MI_ORIGINAL_TYPE;
-int is_signed = FALSE;
-double valid_range[2] = {0.0, 0.0};
-int buffer_size = 10 * 1024;
-char *lookup_file = NULL;
-char *lookup_string = NULL;
-Lookup_Type lookup_type = LU_GRAY;
-int invert_table = FALSE;
-double lookup_range[2] = {DEFAULT_RANGE, DEFAULT_RANGE};
-double lookup_min = DEFAULT_RANGE;
-double lookup_max = DEFAULT_RANGE;
-int discrete_lookup = FALSE;
-char *null_value_string = NULL;
+static int clobber = FALSE;
+static int verbose = TRUE;
+static nc_type datatype = MI_ORIGINAL_TYPE;
+static int is_signed = FALSE;
+static double valid_range[2] = {0.0, 0.0};
+static int buffer_size = 10 * 1024;
+static char *lookup_file = NULL;
+static char *lookup_string = NULL;
+static Lookup_Type lookup_type = LU_GRAY;
+static int invert_table = FALSE;
+static double lookup_range[2] = {DEFAULT_RANGE, DEFAULT_RANGE};
+static double lookup_min = DEFAULT_RANGE;
+static double lookup_max = DEFAULT_RANGE;
+static int discrete_lookup = FALSE;
+static char *null_value_string = NULL;
 #if MINC2
-int minc2_format = FALSE;
+static int minc2_format = FALSE;
 #endif /* MINC2 */
 
 /* Argument table */

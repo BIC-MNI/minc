@@ -10,7 +10,11 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.4  2005-08-26 21:07:18  bert
+ * Revision 6.5  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.4  2005/08/26 21:07:18  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.3  2004/11/01 22:38:39  bert
@@ -70,7 +74,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.4 2005-08-26 21:07:18 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.5 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -108,14 +112,14 @@ static void do_window(void *caller_data, long num_voxels,
                       Loop_Info *loop_info);
 
 /* Argument variables */
-int clobber = FALSE;
-int verbose = TRUE;
+static int clobber = FALSE;
+static int verbose = TRUE;
 #if MINC2
-int v2format = FALSE;
+static int v2format = FALSE;
 #endif /* MINC2 */
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
 #if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},

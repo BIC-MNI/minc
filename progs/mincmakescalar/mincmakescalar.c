@@ -10,7 +10,11 @@
 @CREATED    : August 7, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakescalar.c,v $
- * Revision 6.7  2005-08-26 21:07:17  bert
+ * Revision 6.8  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.7  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.6  2005/01/28 19:34:09  bert
@@ -49,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.7 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.c,v 6.8 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -104,20 +108,20 @@ static int get_double_list(char *dst, char *key, char *nextarg);
 static long get_vector_length(int mincid);
 
 /* Argument variables */
-int clobber = FALSE;
+static int clobber = FALSE;
 #if MINC2
-int v2format = FALSE;
+static int v2format = FALSE;
 #endif /* MINC2 */
-int verbose = TRUE;
-nc_type datatype = MI_ORIGINAL_TYPE;
-int is_signed = FALSE;
-double valid_range[2] = {0.0, 0.0};
-int buffer_size = 10 * 1024;
-Conversion_Type conversion_type = CONV_DEFAULT;
-Double_Array linear_coefficients = {0, NULL};
+static int verbose = TRUE;
+static nc_type datatype = MI_ORIGINAL_TYPE;
+static int is_signed = FALSE;
+static double valid_range[2] = {0.0, 0.0};
+static int buffer_size = 10 * 1024;
+static Conversion_Type conversion_type = CONV_DEFAULT;
+static Double_Array linear_coefficients = {0, NULL};
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
 #if MINC2
     {"-2", ARGV_CONSTANT, (char *) TRUE, (char *) &v2format,
        "Produce a MINC 2.0 format output file."},
@@ -168,7 +172,7 @@ ArgvInfo argTable[] = {
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
-const char str_wrong_dimension_order[] = {
+static const char str_wrong_dimension_order[] = {
     "Your input file contains an image with a vector dimension, but the\n"
     "vector dimension isn't the last (i.e. fastest-varying) dimension in\n"
     "the image. Please restructure the file using mincreshape before\n"

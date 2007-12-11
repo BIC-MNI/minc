@@ -11,7 +11,11 @@
 @CREATED    : May 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minccopy.c,v $
- * Revision 6.3  2006-05-19 00:35:58  bert
+ * Revision 6.4  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.3  2006/05/19 00:35:58  bert
  * Add config.h to several files that might need it
  *
  * Revision 6.2  2004/11/01 22:38:38  bert
@@ -57,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.3 2006-05-19 00:35:58 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 6.4 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -77,7 +81,7 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccopy/minccopy.c,v 
 #endif
 
 /* Variables used for argument parsing */
-int copy_pixel_values = FALSE;
+static int copy_pixel_values = FALSE;
 
 /* Argument table */
 ArgvInfo argTable[] = {

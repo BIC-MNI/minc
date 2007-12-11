@@ -10,7 +10,11 @@
 @CREATED    : March 31, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_modify_header.c,v $
- * Revision 6.10  2004-11-01 22:38:38  bert
+ * Revision 6.11  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.10  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.9  2004/06/11 15:19:34  bert
@@ -78,7 +82,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.10 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.c,v 6.11 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #include "config.h"
@@ -126,7 +130,7 @@ struct {
 } *attribute_list = NULL;
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying attribute values by name."},
    {"-sinsert", ARGV_FUNC, (char *) get_attribute, NULL,

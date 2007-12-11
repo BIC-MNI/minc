@@ -10,7 +10,11 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.9  2006-05-19 00:35:58  bert
+ * Revision 6.10  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 6.9  2006/05/19 00:35:58  bert
  * Add config.h to several files that might need it
  *
  * Revision 6.8  2004/11/01 22:38:39  bert
@@ -85,7 +89,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.9 2006-05-19 00:35:58 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.10 2007-12-11 12:43:01 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -108,13 +112,13 @@ static char rcsid[]="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,
 #define BOOLEAN_DEFAULT -1
 
 /* Variables used for argument parsing */
-int output_datatype = INT_MAX;
-int output_signed = INT_MAX;
-double valid_range[2] = {DBL_MAX, DBL_MAX};
-int normalize_output = BOOLEAN_DEFAULT;
+static int output_datatype = INT_MAX;
+static int output_signed = INT_MAX;
+static double valid_range[2] = {DBL_MAX, DBL_MAX};
+static int normalize_output = BOOLEAN_DEFAULT;
 
 /* Argument table */
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
    {"-byte", ARGV_CONSTANT, (char *) NC_BYTE, (char *) &output_datatype,
        "Write out data as bytes"},
    {"-short", ARGV_CONSTANT, (char *) NC_SHORT, (char *) &output_datatype,

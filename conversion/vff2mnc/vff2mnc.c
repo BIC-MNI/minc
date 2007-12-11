@@ -5,7 +5,11 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.2  2007-01-19 17:52:56  baghdadi
+ * Revision 1.3  2007-12-11 12:43:01  rotor
+ *  * added static to all global variables in main programs to avoid linking
+ *       problems with libraries (compress in mincconvert and libz for example)
+ *
+ * Revision 1.2  2007/01/19 17:52:56  baghdadi
  * Added minor revision for string manipulations.
  *
  * Revision 1.1  2007/01/16 18:37:57  baghdadi
@@ -25,8 +29,8 @@
 #include <windows.h>
 #endif
 
+#include <time_stamp.h>
 #include <ParseArgv.h>
-#include <../dcm2mnc/string_to_filename.h>
 
 
 /* Function Prototypes */
@@ -55,7 +59,7 @@ struct globals G;
 
 #define VERSION_STRING "2.0.12 built " __DATE__ " " __TIME__
 
-ArgvInfo argTable[] = {
+static ArgvInfo argTable[] = {
     {NULL, ARGV_VERINFO, VERSION_STRING, NULL, NULL },
     {"-noswap", ARGV_CONSTANT, (char *) FALSE, (char *) &G.little_endian,
      "Change to noswap default is swap"},
