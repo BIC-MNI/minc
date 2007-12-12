@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.6  2006-05-19 00:13:39  bert
+ * Revision 6.7  2007-12-12 20:55:26  rotor
+ *  * added a bunch of bug fixes from Claude.
+ *
+ * Revision 6.6  2006/05/19 00:13:39  bert
  * Add config.h
  *
  * Revision 6.5  2005/07/13 21:34:25  bert
@@ -93,7 +96,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.6 2006-05-19 00:13:39 bert Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.7 2007-12-12 20:55:26 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -680,17 +683,29 @@ int tricubic_interpolant(Volume_Data *volume,
    slcmax = volume->size[SLC_AXIS] - 1;
    rowmax = volume->size[ROW_AXIS] - 1;
    colmax = volume->size[COL_AXIS] - 1;
-   if ((coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
-       (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
-       (coord[COLUMN] < 0) || (coord[COLUMN] > colmax)) {
-      *result = volume->fillvalue;
-      return FALSE;
+
+   /* Identify a slice or a volume. Slice must be in x-y. */
+   if( slcmax == 0 ) {
+     /* 2-d slice */
+     if( (coord[ROW] < 0) || (coord[ROW] > rowmax) ||
+         (coord[COLUMN] < 0) || (coord[COLUMN] > colmax) ) {
+       *result = volume->fillvalue;
+       return FALSE;
+     }
+   } else {
+     /* 3-d volume */
+     if( (coord[SLICE]  < 0) || (coord[SLICE]  > slcmax) ||
+         (coord[ROW]    < 0) || (coord[ROW]    > rowmax) ||
+         (coord[COLUMN] < 0) || (coord[COLUMN] > colmax) ) {
+       *result = volume->fillvalue;
+       return FALSE;
+     }
    }
 
    /* Get the whole and fractional part of the coordinate */
-   slcind = (long) coord[SLICE];
-   rowind = (long) coord[ROW];
-   colind = (long) coord[COLUMN];
+   slcind = (long)coord[SLICE];
+   rowind = (long)coord[ROW];
+   colind = (long)coord[COLUMN];
    frac[0] = coord[SLICE]  - slcind;
    frac[1] = coord[ROW]    - rowind;
    frac[2] = coord[COLUMN] - colind;
@@ -698,16 +713,39 @@ int tricubic_interpolant(Volume_Data *volume,
    rowind--;
    colind--;
 
-   /* Check for edges - do linear interpolation at edges */
+   /* Check for dimension of image. */
+
+   /* Check for edges in the 2-d plane - do linear interpolation at edges */
+   /* Note: Spline stencil is right-sided, so ok to start at 0. */
+   if( slcmax == 0 && rowmax > 0 && colmax > 0 ) {
+     if( (rowind > rowmax-3) || (rowind < 0) ||
+         (colind > colmax-3) || (colind < 0)) {
+       return trilinear_interpolant(volume, coord, result);
+     } else {
+       slcind = 0;  /* there is only slice 0 */
+       index[0]=slcind; index[1]=rowind; index[2]=colind;
+       if( do_Ncubic_interpolation(volume, index, 1, frac, result) ) {
+         /* scaling not done for a slice in do_Ncubic_interpolation, */
+         /* only done for a volume */
+         *result = (*result) * volume->scale[slcind] + volume->offset[slcind];
+         return TRUE;
+       } else {
+         return FALSE;
+       }
+     }
+   }
+
+   /* Check for edges in the 3-d volume - do linear interpolation at edges */
+   /* Note: Spline stencil is right-sided, so ok to start at 0. */
    if ((slcind > slcmax-3) || (slcind < 0) ||
        (rowind > rowmax-3) || (rowind < 0) ||
        (colind > colmax-3) || (colind < 0)) {
       return trilinear_interpolant(volume, coord, result);
+   } else {
+     index[0]=slcind; index[1]=rowind; index[2]=colind;
+     /* Do the interpolation and return its value */
+     return do_Ncubic_interpolation(volume, index, 0, frac, result);
    }
-   index[0]=slcind; index[1]=rowind; index[2]=colind;
-
-   /* Do the interpolation and return its value */
-   return do_Ncubic_interpolation(volume, index, 0, frac, result);
 
 }
 
@@ -757,6 +795,7 @@ int do_Ncubic_interpolation(Volume_Data *volume,
           (v3 < volume->vrange[0]) || (v3 > volume->vrange[1])) {
          found_fillvalue = TRUE;
       }
+
    }
 
    /* Otherwise, recurse */

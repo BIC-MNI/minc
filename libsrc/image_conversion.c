@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.13  2004-12-14 23:53:46  bert
+ * Revision 6.14  2007-12-12 20:55:26  rotor
+ *  * added a bunch of bug fixes from Claude.
+ *
+ * Revision 6.13  2004/12/14 23:53:46  bert
  * Get rid of compilation warnings
  *
  * Revision 6.12  2004/10/15 13:45:28  bert
@@ -156,7 +159,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.13 2004-12-14 23:53:46 bert Exp $ MINC (MNI)";
+static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.14 2007-12-12 20:55:26 rotor Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"
@@ -328,6 +331,16 @@ MNCAPI int miicv_free(int icvid)
    /* Free the structure */
    FREE(icvp);
    minc_icv_list[icvid]=NULL;
+
+   /* Delete entire structure if no longer in use. */
+   int new_icv;
+   for (new_icv=0; new_icv<minc_icv_list_nalloc; new_icv++)
+      if (minc_icv_list[new_icv]!=NULL) break;
+
+   if (new_icv>=minc_icv_list_nalloc) {
+      FREE(minc_icv_list);
+      minc_icv_list_nalloc=0;
+   }
 
    MI_RETURN(MI_NOERROR);
 }

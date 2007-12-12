@@ -1,4 +1,16 @@
 MINC 2:
+2007-12-06 Claude Lepage <claude@bic.mni.mcgill.ca>
+	* Freed more memory in miicv_free (libsrc/image_conversion.c)
+	* Added cubic interpolation in mincresample for x-y slices
+	* Fixed seg fault bug with null history string (libsrc/minc_convenience.c)
+	* Changed hard-coded strings for MIxspace (y,z) (libsrc2/volume.c and
+          libsrc2/dimension.c)
+	* Made global variables static in minccompress to avoid conflict with libz
+
+2007-12-03 Andrew L Janke <a.janke@gmail.com>
+	* changed all global variables to static in progs directory to 
+	   avoid possible linker errors in the future. 
+
 2007-10-23  Andrew L Janke <a.janke@gmail.com>
 	* Added most things needed for a CMake build
 	* Fixed a linking bug with nii2mnc and mnc2nii

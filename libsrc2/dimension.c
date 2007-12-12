@@ -193,19 +193,19 @@ micreate_dimension(const char *name, midimclass_t class, midimattr_t attr,
   switch (class) {
   case MI_DIMCLASS_SPATIAL:
     handle->class  = MI_DIMCLASS_SPATIAL;
-    if (strcmp(name, "xspace") == 0) {
+    if (strcmp(name, MIxspace) == 0) {
       handle->direction_cosines[MI2_X] = 1.0;
       handle->direction_cosines[MI2_Y] = 0.0;
       handle->direction_cosines[MI2_Z] = 0.0;
       handle->comments = strdup("X increases from patient left to right");
     }
-    else if (strcmp(name, "yspace") == 0) {
+    else if (strcmp(name, MIyspace) == 0) {
       handle->direction_cosines[MI2_X] = 0.0;
       handle->direction_cosines[MI2_Y] = 1.0;
       handle->direction_cosines[MI2_Z] = 0.0;
       handle->comments = strdup("Y increases from patient posterior to anterior");
     }
-    else if (strcmp(name, "zspace") == 0) {
+    else if (strcmp(name, MIzspace) == 0) {
       handle->direction_cosines[MI2_X] = 0.0;
       handle->direction_cosines[MI2_Y] = 0.0;
       handle->direction_cosines[MI2_Z] = 1.0;

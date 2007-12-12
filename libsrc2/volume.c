@@ -992,13 +992,13 @@ _miget_file_dimension(mihandle_t volume, const char *dimname,
             hdim->direction_cosines[MI2_X] = 0.0;
             hdim->direction_cosines[MI2_Y] = 0.0;
             hdim->direction_cosines[MI2_Z] = 0.0;
-            if (!strcmp(dimname, "xspace")) {
+            if (!strcmp(dimname, MIxspace)) {
                 hdim->direction_cosines[MI2_X] = 1.0;
             }
-            else if (!strcmp(dimname, "yspace")) {
+            else if (!strcmp(dimname, MIyspace)) {
                 hdim->direction_cosines[MI2_Y] = 1.0;
             }
-            else if (!strcmp(dimname, "zspace")) {
+            else if (!strcmp(dimname, MIzspace)) {
                 hdim->direction_cosines[MI2_Z] = 1.0;
             }
         }
