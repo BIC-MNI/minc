@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.13  2007-06-08 20:28:57  ilana
+   * Revision 1.14  2007-12-18 15:19:48  jharlap
+   * reverted acq.comments from its new image_comments name to maintain backwards compatibility.  also restored all the dicom elements which ilana decided to remove, with the exception of 0-length elements which make HDF spit out lots of warnings
+   *
+   * Revision 1.13  2007/06/08 20:28:57  ilana
    * added several fields to mincheader (dicom elements and found in ASCONV header)
    *
    * Revision 1.12  2006/04/09 15:34:32  bert
@@ -134,7 +137,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.13 2007-06-08 20:28:57 ilana Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.14 2007-12-18 15:19:48 jharlap Exp $";
 
 #include "dcm2mnc.h"
 
@@ -945,7 +948,7 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                     general_info->acq.image_type);
 
     if (strlen(general_info->acq.comments) > 0)
-        miattputstr(mincid, varid, "image_comments", 
+        miattputstr(mincid, varid, MIcomments,
                     general_info->acq.comments);
 
     // this is Siemens Numaris 4 specific!
@@ -983,24 +986,25 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     been included in the minc fields, we just should add those that
     are missing and might be of use. Removing the fields starting with
     "dicom_0x... for now   ilana*/
-    /*cur_group = general_info->group_list;
+    /* contrary to ilanas view - this *is* useful info! */
+    cur_group = general_info->group_list;
     dicomvar = ncvardef(mincid, DICOM_ROOT_VAR, NC_LONG, 0, NULL);
     miattputstr(mincid, dicomvar, MIvartype, MI_GROUP);
     miattputstr(mincid, dicomvar, MIvarid, "MNI DICOM variable");
-    miadd_child(mincid, ncvarid(mincid, MIrootvariable), dicomvar);*/
+    miadd_child(mincid, ncvarid(mincid, MIrootvariable), dicomvar);
 
     
-    /*while (cur_group != NULL) {*/
+    while (cur_group != NULL) {
 
         /* Create variable for group */
-        /*sprintf(name, "dicom_0x%04x", acr_get_group_group(cur_group));
+        sprintf(name, "dicom_0x%04x", acr_get_group_group(cur_group));
         varid = ncvardef(mincid, name, NC_LONG, 0, NULL);
         miattputstr(mincid, varid, MIvartype, MI_GROUP);
         miattputstr(mincid, varid, MIvarid, "MNI DICOM variable");
-        miadd_child(mincid, dicomvar, varid);*/
+        miadd_child(mincid, dicomvar, varid);
 
         /* Loop through elements of group */
-        /*cur_element = acr_get_group_element_list(cur_group);
+        cur_element = acr_get_group_element_list(cur_group);
         while (cur_element != NULL) {
             sprintf(name, "el_0x%04x", 
                     acr_get_element_element(cur_element));
@@ -1020,12 +1024,15 @@ void setup_minc_variables(int mincid, General_Info *general_info,
                 datatype = NC_CHAR;
             else
                 datatype = NC_BYTE;
-            ncattput(mincid, varid, name, datatype, length, data);
+
+            /* Do not insert 0-length elements as it makes HDF complain */
+            if(length > 0)
+                ncattput(mincid, varid, name, datatype, length, data);
          
             cur_element = acr_get_element_next(cur_element);
         }
         cur_group = acr_get_group_next(cur_group);
-    }*/
+    }
 
     /* Create the history attribute */
     if (G.minc_history != NULL) {
