@@ -1,4 +1,10 @@
 MINC 2:
+2007-12-18 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
+	* dcm2mnc: Restored dicom fields in minc headers. 
+                (conversion/dcm2mnc/minc_file.c)
+	* dcm2mnc: Restored old name of acquisition comments 
+                attribute. (conversion/dcm2mnc/minc_file.c)
+
 2007-12-06 Claude Lepage <claude@bic.mni.mcgill.ca>
 	* Freed more memory in miicv_free (libsrc/image_conversion.c)
 	* Added cubic interpolation in mincresample for x-y slices
