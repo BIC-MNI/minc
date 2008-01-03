@@ -1,3 +1,9 @@
+2008-01-02  Steve M. Robbins  <smr@sumost.ca>
+
+	* testdir/run_tests.sh: 
+	* testdir/run_test2.sh: Quote the value assigned to variable tests,
+	so that the scripts run.
+
 MINC 2:
 2007-12-18 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
 	* dcm2mnc: Restored dicom fields in minc headers. 
