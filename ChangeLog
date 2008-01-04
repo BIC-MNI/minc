@@ -1,10 +1,13 @@
-2008-01-02  Steve M. Robbins  <smr@sumost.ca>
 
+MINC 2:
+2008-01-04  Andrew L Janke <a.janke@gmail.com>
+	* mincheader: updatedscripting style and replaced tmpdir code
+
+2008-01-02  Steve M. Robbins  <smr@sumost.ca>
 	* testdir/run_tests.sh: 
 	* testdir/run_test2.sh: Quote the value assigned to variable tests,
 	so that the scripts run.
 
-MINC 2:
 2007-12-18 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
 	* dcm2mnc: Restored dicom fields in minc headers. 
                 (conversion/dcm2mnc/minc_file.c)
@@ -25,7 +28,7 @@ MINC 2:
 
 2007-10-23  Andrew L Janke <a.janke@gmail.com>
 	* Added most things needed for a CMake build
-	* Fixed a linking bug with nii2mnc and mnc2nii
+	* nii2mnc mnc2nii: Fixed a linking bug 
 	
 2007-09-13  Andrew L Janke <a.janke@gmail.com>
 	* Added a few more free's for memory thanks to Claude
@@ -60,9 +63,9 @@ MINC 2:
 	
 2006-04-19 Claude Lepage <claude@bic.mni.mcgill.ca>
 	* fix duplicate instances of solve_linear_system and 
-        scaled_maximal_pivoting_gaussian_elimination in
-        volume_io/Geometry/gaussian.c and libsrc.2. Make static.
-        This is to avoid linker problems with minc2.
+	   scaled_maximal_pivoting_gaussian_elimination in
+	   volume_io/Geometry/gaussian.c and libsrc.2. Make static.
+	   This is to avoid linker problems with minc2.
 
 2006-04-09 Bert Vincent <bert@bic.mni.mcgill.ca>
 	* conversion/dcm2mnc, conversion/Acr_nema - added general support
