@@ -8,7 +8,10 @@
 #
 # Modifications: 
 #   $Log: mincheader,v $
-#   Revision 6.3  2004-04-27 15:32:58  bert
+#   Revision 6.4  2008-01-04 06:01:23  rotor
+#    * updated shell scripting style and added more verbose help
+#
+#   Revision 6.3  2004/04/27 15:32:58  bert
 #   Use mincdump instead of ncdump
 #
 #   Revision 6.2  2000/09/12 15:20:07  neelin
@@ -51,52 +54,78 @@
 #   Added RCS logging in source.
 # 
 
+set -o errexit
+set -o nounset
+
+
+# simple little function to emulate perl's die();
 die () {
     echo >&2 $@
+    echo ""
     exit 1
 }
 
-usage="Usage: $0 [-data] <minc file>" 
+# create tmpdir
+tmpdir=${TMPDIR:-/tmp}/mincedit.$$
+trap 'rm -rf "$tmpdir"' 0
+trap ' exit ' 1 2 15
+(umask 077 && mkdir $tmpdir) || {
+   echo "$0: Could not create temporary directory! Exiting." 1>&2
+   echo ""
+   exit 1
+   }
+
+me=`basename $0`
+usage="Usage: $me [-data] <minc file>"
+
+# set defaults and then get arguments
 header_opts='-header_only'
 header_only=yes
+while [ $# -gt 0 ]
+do 
+   case $1 in
+      -h|-he|-hel|-help)
+         echo $usage;
+         echo ""
+         exit 0
+         ;;
+   
+      -d|-da|-dat|-data)
+         header_opts='-all_data';
+         header_only=no
+         ;;
+   
+      *)
+         break;
+   
+   esac
+   shift
+done
 
-while test $# -gt 0; do 
-    case $1 in
-	-h|-help) echo $usage; exit 0 ;;
-	-data) header_opts='-all_data'; header_only=no ;;
-	*) break;
-    esac
-    shift
-done	
-test $# -eq 1 || die $usage
-test -f $1 || die "no such file $1"
+# only allow one input file and check for it
+[ $# -eq 1 ] || die $usage
+[ -f $1 ] || die "$me: no such file $1"
 
 
-if test x$TMPDIR = x; then
-    for TMPDIR in /usr/tmp /var/tmp /tmp; do
-	test -d $TMPDIR && break;
-    done
-fi
-test -d $TMPDIR || die "TMPDIR $TMPDIR does not exist."
-
-tmpfile="$TMPDIR/mincheader-$$-tmp"
-trap "/bin/rm -f $tmpfile" 0 1 2 15
-dumpfile=`mincexpand $1 $tmpfile -name_only $header_opts`
+tmpfile="$tmpdir/mincheader-$$-tmp"
 
 # For a compressed file, dump header only unless directed otherwise
-if test $dumpfile = $tmpfile -a $header_only = yes; then
+dumpfile=`mincexpand $1 $tmpfile -name_only $header_opts`
+if [ $dumpfile = $tmpfile -a $header_only = yes ]
+then
     mincdump -h $dumpfile
 else
-#  Get variables names (excluding image): remove leading "image", remove word 
-#  "image", collapse multiple blanks to one, remove leading blanks, remove
-#  trailing blanks, replace blanks with commas
-    vars=`mincinfo -varnames $dumpfile | \
-	sed -e 's/^image //g' \
-	    -e 's/ image / /g' \
-	    -e 's/  */ /g' \
-	    -e 's/^ //' \
-	    -e 's/ $//' \
-	    -e 's/ /,/g'`
-    test x$vars = x || mincdump -v "$vars" $dumpfile
+   #  Get variables names (excluding image): remove leading "image", remove word 
+   #  "image", collapse multiple blanks to one, remove leading blanks, remove
+   #  trailing blanks, replace blanks with commas
+   vars=`mincinfo -varnames $dumpfile | \
+   sed -e 's/^image //g' \
+       -e 's/ image / /g' \
+       -e 's/  */ /g' \
+       -e 's/^ //' \
+       -e 's/ $//' \
+       -e 's/ /,/g'`
+   
+   [ x$vars = x ] || mincdump -v "$vars" $dumpfile
 fi
 
