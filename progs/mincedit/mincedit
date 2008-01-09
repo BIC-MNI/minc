@@ -1,4 +1,4 @@
-#! /bin/csh -f
+#! /bin/sh
 #
 # Script to allow editing of minc files
 #
@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.3  2004-06-16 16:27:27  bert
+#   Revision 6.4  2008-01-09 12:31:08  rotor
+#    * complete rewrite in sh
+#
+#   Revision 6.3  2004/06/16 16:27:27  bert
 #   Use mincgen instead of ncgen
 #
 #   Revision 6.2  2000/09/12 15:43:37  neelin
@@ -51,112 +54,136 @@
 # software for any purpose.  It is provided "as is" without
 # express or implied warranty.
 
-# Create temporary directory
-if (! $?TMPDIR) then
-    if (-d /var/tmp) then
-	set TMPDIR = /var/tmp
-    else if (-d /usr/tmp) then
-	set TMPDIR = /usr/tmp
-    else
-	set TMPDIR = /tmp
-    endif
-endif
-if (! -d $TMPDIR) then
-    echo "Working directory $TMPDIR does not exist."
+
+# set -o errexit
+set -o nounset
+
+# simple little function to emulate perl's die();
+die () {
+    echo >&2 $@
+    echo ""
     exit 1
-endif
-set working_dir = $TMPDIR
+}
+
+me=`basename $0`
+usage="Usage: $me <minc file> [<editor>]\n"
+
+# create tmpdir
+tmpdir=${TMPDIR:-/tmp}/mincedit.$$
+trap 'rm -rf "$tmpdir"' 0
+trap ' exit ' 0 1 2 3 15
+(umask 077 && mkdir $tmpdir) || {
+   echo "$me: Could not create temporary directory! Exiting." 1>&2 
+   exit 1
+   }
 
 # Set default editor
-set editor = emacs
+editor="emacs"
 
-# Check arguments
-switch ("$#argv")
-case 1:
-   if (("$1" == "-help") || ("$1" == "-h") || ("$1" == "")) then
-      echo "Usage: $0 <minc file> [<editor>]"
-      exit
-   endif
-   if ($?EDITOR) then
-      set editor = $EDITOR
-   endif
-   breaksw
-case 2:
-   set editor = "$2"
-   breaksw
-default:
-   echo "Usage: $0 <minc file> [<editor>]"
-   exit
-endsw
+# check arguments
+case $# in
+   1)
+      if [ "$1" = "-help" -o "$1" = "-h" -o "$1" = "" ]
+      then
+         echo $usage
+         exit 0
+      fi
+      
+      if [ $?EDITOR ]
+      then
+         editor=${EDITOR}
+      fi
+      ;;
+   
+   2)
+      editor="$2"
+      ;;
+   
+   *)
+      echo $usage
+      exit 0
+esac
 
-# Set up the file names
-set filename = $1
-set backup_filename = ${filename}~
-set cdl_prefix = mincedit-$$
-set cdl_orig = $working_dir/${cdl_prefix}-orig.cdl
-set cdl_edit = $working_dir/${cdl_prefix}-edit.cdl
+# only allow one input file and check for it
+[ $# -eq 1 ] || die $usage
+[ -f $1 ] || die "$me: no such file $1"
 
-# Set interrupt handling
-onintr cleanup
+# set up the file names
+infile="$1"
+backup_infile=`echo ${infile} | sed -e "s/\.mnc/\.bu-$$\.mnc/"`
+cdl_prefix=mincedit-$$
+cdl_orig=${tmpdir}/${cdl_prefix}-orig.cdl
+cdl_edit=${tmpdir}/${cdl_prefix}-edit.cdl
 
-# Dump the file
-mincheader $filename > $cdl_orig
-if ($status) then
-   echo "${0}: Error reading file '$filename'"
-   goto cleanup
-endif
+# dump the file
+mincdump -h $infile > $cdl_orig
+status=$?
+if [ $status -ne 0 ]
+then
+   echo "${0}: Error reading file '$infile'\n"
+   exit 1
+fi
+
+# make a copy to fiddle with
 cp $cdl_orig $cdl_edit
 
-# Loop until successful file generation
-set do_edit = 1
-while ($do_edit)
-
-#  Edit the cdl file
+# loop until successful file generation
+do_edit=1
+while [ $do_edit -ne 0 ]
+do
+   # edit the cdl file
    $editor $cdl_edit
-   if ($status) then
-      echo "${0}: Error editing with editor '$editor'"
-      goto cleanup
-   endif
-   set do_edit = 0
+   status=$?
+   if [ $status -ne 0 ] 
+   then
+      echo "$me: Error editing with editor '$editor'\n"
+      exit 1
+   fi
+   do_edit=0
+   
+   # compare the files for difference
+   diff $cdl_orig $cdl_edit > /dev/null 2>&1
+   status=$?
+   if [ $status -eq 0 ] 
+   then
+      echo "$me: File $infile not modified\n"
+      exit 0
+   fi
+   
+   # rename the original file and generate a new one
+   mv "$infile" "$backup_infile"
+   status=$?
+   mincgen -o $infile $cdl_edit
+   status=$?
+   if [ $status -ne 0 ]
+   then
+      mv $backup_infile $infile
+      echo -n "$me: Error generating new file. Redit the file (y/n)? (def=n):"
+      read answer
+      case "$answer" in
+         y*)
+            do_edit=1
+            continue
+            ;;
+      esac
+      exit 0
+   fi
 
-#  Compare the files for difference
-   diff $cdl_orig $cdl_edit >& /dev/null
-   if ($status == 0) then
-      echo "File $filename not modified"
-      goto cleanup
-   endif
-
-#  Rename the original file and generate a new one
-   mv $filename $backup_filename
-   mincgen -o $filename $cdl_edit
-   if ($status) then
-      mv $backup_filename $filename
-      echo -n "Error generating new file. Redit the file (y/n)? (def=n):"
-      set answer = $<
-      if ("$answer" =~ y*) then
-         set do_edit = 1
-         continue
-      endif
-      goto cleanup
-   endif
-
-#  Copy the data
-   minccopy $backup_filename $filename
-   if ($status) then
-      mv $backup_filename $filename
+   # copy the data back in
+   minccopy $backup_infile $infile
+   status=$?
+   if [ $status -ne 0 ]
+   then
+      mv $backup_infile $infile
       echo -n "Error copying image data. Redit the file (y/n)? (def=n):"
-      set answer = $<
-      if ("$answer" =~ y*) then
-         set do_edit = 1
-         continue
-      endif
-      goto cleanup
-   endif
+      read answer
+      case "$answer" in
+         y*)
+            do_edit=1
+            continue
+            ;;
+      esac
+      exit 0
+   fi
 
-# End while loop
-end
-
-cleanup:
-   rm -f $working_dir/*${cdl_prefix}*
-   exit
-
+done
