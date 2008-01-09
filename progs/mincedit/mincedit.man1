@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCEDIT 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCEDIT 1 "$Date: 2008-01-09 12:25:43 $" "" "MINC User's Guide"
 .SH NAME
 mincedit \- edit a MINC file header
 .SH SYNOPSIS
@@ -12,9 +12,13 @@ can edit in your favourite editor.  If any changes are made,
 the MINC file is regenerated and the image data is copied.
 The header is presented in netCDF's  common data form
 language (CDL).
+
 .SH AUTHOR
 Peter Neelin
+
 .SH COPYRIGHT
 Copyright \(co 1993 by Peter Neelin
+rewrite 2008 Andrew Janke - a.janke@gmail.com
+
 .SH "SEE ALSO"
-.IR mincdump (1),
+.IR mincdump (1), mincgen (1)
