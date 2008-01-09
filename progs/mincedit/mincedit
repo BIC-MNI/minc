@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.4  2008-01-09 12:31:08  rotor
+#   Revision 6.5  2008-01-09 12:39:46  rotor
+#    * added errexit option
+#
+#   Revision 6.4  2008/01/09 12:31:08  rotor
 #    * complete rewrite in sh
 #
 #   Revision 6.3  2004/06/16 16:27:27  bert
@@ -44,8 +47,13 @@
 # 
 #
 #
-# Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
-# Montreal Neurological Institute, McGill University.
+# Copyright 2008 Andrew Janke
+# Based upon original version of Peter Neelins (1993)
+#
+# McConnell Brain Imaging Centre, 
+# Montreal Neurological Institute, 
+# McGill University.
+#
 # Permission to use, copy, modify, and distribute this
 # software and its documentation for any purpose and without
 # fee is hereby granted, provided that the above copyright
@@ -55,7 +63,7 @@
 # express or implied warranty.
 
 
-# set -o errexit
+set -o errexit
 set -o nounset
 
 # simple little function to emulate perl's die();
