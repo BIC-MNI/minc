@@ -8,8 +8,8 @@ A shared version of the library may be enabled using the configure
 flag "--enabled-shared".  See also "--disable-static".
 
 
-		Finding NetCDF
-		--------------
+		Finding NetCDF/HDF5
+		-------------------
 
 The NetCDF library 
 
@@ -18,7 +18,7 @@ The NetCDF library
 must be built and installed before you can build MINC.  
 
 Teaching MINC to find the NetCDF library depends on where
-the latter is installed.  There are three cases.
+the latter is installed.  There are two
 
 1. NetCDF may be installed in a location where the compiler can find
 it.  If so, you have nothing to do.
@@ -27,25 +27,39 @@ it.  If so, you have nothing to do.
 live in /usr/local/include and the library file lives in
 /usr/local/include.  The prefix may be something else; "/opt" is
 common, too.  If this is the case, you should pass the argument
-"--build-path=/usr/local" (substitute appropriate prefix) to
+"--with-build-path=/usr/local" (substitute appropriate prefix) to
 configure.
 
-3. Otherwise, you need to pass appropriate -I and -L flags to
-configure using something like 
 
-    ./configure CPPFLAGS="-I/a/b/c" LDFLAGS="-L/d/e/f"
-
-
-
-		FORTRAN Interface
+		Running configure
 		-----------------
 
-The fortran interface is no longer built.
+We not also need to tell configure that we want the build a MINC2
+version of MINC so we need to add the --enable-minc2 argument to
+the configure line as below. If you dont use this option the HDF5
+back-end of MINC will not be built and you will be left with what 
+will essentially be a MINC 1.X build.
 
-The FORTRAN interface is no longer maintained.  Should you need it,
-all the sources and the old Makefiles are located in the fortran
-directory.  Please let us know of your success should you get it
-to build.
+Now run configure with the arguments you have deduced above, if you
+are a csh user you should type: 
 
-The minc fortran interface is only supported under irix.
+   sh ./configure --enable-minc2 <other options>
+
+If you are an educated bash/sh user, then you can just type:
+
+   ./configure --enable-minc2 <options>
+
+
+		compiling
+		---------
+
+Now that things are configured all you need to do is run:
+
+  make
+
+and then
+
+  make install
+
+
 
