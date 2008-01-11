@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <minc2.h>
 #include <ParseArgv.h>
 

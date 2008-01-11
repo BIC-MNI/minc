@@ -1,5 +1,3 @@
-
-
   Source Code Files for NIfTI-1 Format
   ====================================
 

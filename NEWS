@@ -1,11 +1,15 @@
 
 		New in Release 2.0.14
-                ---------------------
+        ---------------------
+
+
+		New in Release 2.0.14
+        ---------------------
 * Added files needed for a CMake build of MINC
 * Fixed a linking problem with nii2mnc mnc2nii
 
 		New in Release 2.0.13
-                ---------------------
+        ---------------------
 * Fixed a few small build errors for make check
 * Changes to ensure there is a clean ITK minc build
 * added xfmflip 
@@ -13,12 +17,12 @@
 * updated nii2mnc and mnc2nii with the latest version of niftilib
 
 		New in Release 2.0.12
-                ---------------------
+        ---------------------
 * Fixed a bug causing dump_acr_nema to skip all elements 
 with element number 0x0010.
 
 		New in Release 2.0.11
-                ---------------------
+        ---------------------
 * Many small fixes
 * fix to mincresample
 * Small fix to mincconvert

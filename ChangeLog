@@ -1,7 +1,7 @@
 
 MINC 2:
 2008-01-04  Andrew L Janke <a.janke@gmail.com>
-	* mincheader: updatedscripting style and replaced tmpdir code
+	* mincheader: updated scripting style and replaced tmpdir code
 
 2008-01-02  Steve M. Robbins  <smr@sumost.ca>
 	* testdir/run_tests.sh: 

@@ -1,21 +1,22 @@
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <limits.h>
 #include <float.h>
-
 #include <minc.h>
 #include <ParseArgv.h>
-
 #include <volume_io.h>
+
 #undef X                        /* These are used in nifti1_io */
 #undef Y
 #undef Z
 
 #include <time_stamp.h>
-
 #include "nifti1_io.h"
-
 #include "analyze75.h"
-
 #include "nifti1_local.h"
+
 
 void test_xform(mat44 m, int i, int j, int k)
 {
