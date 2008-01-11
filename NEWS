@@ -1,6 +1,8 @@
 
-		New in Release 2.0.14
+		New in Release 2.0.15
         ---------------------
+
+* Began to aggregate and update all docs for a clean(er) 2.1 release
 
 
 		New in Release 2.0.14
@@ -41,6 +43,25 @@ with element number 0x0010.
 
                 New in Release 2.0.09
                 ---------------------
+This release is primarily a bug fix release for the core MINC libraries,
+as well as an opportunity to port library changes from the 1.X series.
+One of the most important changes involves support for HDF5 versions
+subsequent to version 1.6.2.  Previous releases of MINC 2 would not work
+properly with HDF5 1.6.3 or later, but these issues should now be fixed.
+
+Additional major changes include:
+
+New converters added in this release:
+ * minctoecat, as contributed by Anthonin Reilhac.
+ * dcm2mnc
+
+mincresample now supports "windowed sinc" interpolation. See the man
+page for more details.
+
+mincconcat now has a "-filestarts" option for greater flexibility in
+combining files.  This is especially useful for concatenating functional
+runs.
+
 * mincresample now supports the sinc interpolant
 * mincconcat has new -filestarts option
 * Many updates and fixes to upet2mnc (Concorde microPET conversion)
@@ -53,6 +74,35 @@ with element number 0x0010.
 
                 New in Release 2.0.08
                 ---------------------
+Several major changes are incorporated into this release.
+
+First, the "simplified" MINC interface is now included in the
+release. This interface, which is still under development, is intended
+to provide easier access for software that does not need to use MINC's
+more advanced features.
+
+Second, we are beginning to include conversion programs with MINC.  For
+this release, we are including converters for the new NIfTI-1 format,
+created as a successor to Analyze.  FSL 3.2 and other popular fMRI
+packages now support this format.  For PET users we are also including the 
+ECAT to MINC format converter, with updates from Anthonin Reilhac
+
+Third, some new tool features have been added and bugs have been fixed.
+ * The mincstats bimodal threshold calculation has been fixed and
+ improved.  Mincstats now supports multiple algorithms for calculating
+ the bimodal threshold.  The default is still the "Otsu '97" algorithm,
+ where the code for this has been corrected to give more reasonable
+ results. In addition we have implemented the "Kittler & Illingworth
+ '86", the "Kapur et al. '85", and a simple "mean of means" algorithms 
+ as options.
+* mincmakescalar now warns the user if an attempt is made to convert
+a file that has a vector_dimension that is NOT the fastest-varying 
+dimension in the image.  Previously the program would simply copy the
+input file to the output unmodified, without warning the user.
+
+In addition to these changes, many bugs and issues with the MINC 2.0
+format and interface have been fixed. 
+
 * Added conversion subdirectory with PRELIMINARY converters for ECAT, 
 Concorde microPET, and NIfTI-1 data files.
 * Simplified MINC programming interface.
@@ -75,11 +125,38 @@ Concorde microPET, and NIfTI-1 data files.
 
                 New in Release 2.0.05
                 ---------------------
+This version represents several weeks of effort cleaning up the
+existing code and trying to put things into better shape for a
+release.  In particular, the existing test suites ("make check") now
+run for both MINC 1.0 and MINC 2.0 format files.
+
+One functional change is that the MINC 2.0 tools should now create
+MINC 2.0 format files by default if all of the input files are
+themselves in MINC 2.0 format.  In other words, you only have to
+specify the "-2" option to force a MINC 2.0 file if one or more of
+your input files are MINC 1.0 format.  The environment variable
+"MINC_FORCE_V2" should force all output to MINC 2.0 even if MINC 1.0
+files are present at the input.
+
+There is additional documentation on the new "2.0" MINC programming
+interface.  This is still very much a work in progress so your
+feedback is very much appreciated, both as to the form and content of
+these documents:
+
+libsrc2/doc/minc_20.tex - Interface reference
+libsrc2/doc/minc2_uguide.tex - Programmer's guide
+
+This distribution will build its libraries as "libminc2.a" and
+"libvolume_io2.a", rather than the previous "libminc.a" and
+"libvolume_io.a".  This decission was intended to make it easier to
+keep both MINC1 and MINC2 libraries installed simultaneously, but this
+may prove to be unwieldy or unnecessary.  We welcome suggestions from
+beta testers.
+
 * More bugs fixed
 * "make check" expanded to test MINC 2.0 format.
 * "mincdump" added to the distribution.
 * Almost all MINC 2.0 specific changes are now surrounded by "#ifdef MINC2"
-* See "WHATSNEW-2.0" for more information.
 
                 New in Release 2.0.04
                 ---------------------

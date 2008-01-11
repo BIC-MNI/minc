@@ -1,5 +1,9 @@
 
 MINC 2:
+2008-01-11  Andrew L Janke <a.janke@gmail.com>
+	* removed outdated TODO file
+	* merged WHATSNEW-2.0 into NEWS/README
+
 2008-01-04  Andrew L Janke <a.janke@gmail.com>
 	* mincheader: updated scripting style and replaced tmpdir code
 
