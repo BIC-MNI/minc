@@ -77,7 +77,6 @@ milist_recursion(milisthandle_t handle, char *path)
 {
     struct milistdata *data = (struct milistdata *) handle;
     herr_t r;
-    int i=0;
     struct milistframe *frame;
   
     for(;;){
@@ -667,10 +666,6 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     int result;
     char fullpath[256];
     hid_t tmp_id;
-    hid_t dataset_info = -1;
-    hid_t dataspace_info = -1;
-    hid_t grp_info;
-    hid_t grp_id;
     char *std_name;
     char *pch;
     int i,slength;

@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.9 2005-08-26 21:07:17 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.10 2008-01-11 07:17:08 stever Exp $
  *********************************************************************/
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -696,7 +696,6 @@ main(int argc, char *argv[])
 	  0,			/* if -v specified, number of variables */
 	  0			/* if -v specified, list of variable names */
 	  };
-    int c;
     int i;
     static int max_len = 80;    /* default maximum line length */
     static ArgvInfo argTable[] = {

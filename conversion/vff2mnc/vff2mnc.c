@@ -5,7 +5,10 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.3  2007-12-11 12:43:01  rotor
+ * Revision 1.4  2008-01-11 07:17:07  stever
+ * Remove unused variables.
+ *
+ * Revision 1.3  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *
@@ -481,9 +484,7 @@ read_2Dvff_files_header(const char **file_list, int num_files,
   char temp[10];
   char *pch;
   long rawsize;
-  long count;
   
-  int r;
   double element_size = 1;
   
   m2->mnc_steps[0] = 1;
@@ -704,7 +705,6 @@ read_3Dvff_file_header(char *filename, struct mnc_vars *m2, struct vff_attrs *va
   char linebuf[1024];
   char temp[20];
   
-  int r;
   double element_size;
   char *pch;
   int counter;
@@ -858,7 +858,7 @@ read_3Dvff_file_image(mihandle_t hvol, char *filename,
 		      double range[2])
 {
   FILE *fp ;
-  int i,j,counts,r;
+  int i,counts,r;
   void *buffer;
   int number_of_bits = vattrs.bits/8;
   unsigned long start[MAX_VFF_DIMS]; /* MINC data starts */

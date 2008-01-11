@@ -99,12 +99,6 @@ main(int argc, char **argv)
 {
     /* NIFTI stuff */
     nifti_image *nii_ptr;
-    int nii_dimids[MAX_NII_DIMS];
-    int nii_dir[MAX_NII_DIMS];
-    int nii_map[MAX_NII_DIMS];
-    unsigned long nii_lens[MAX_NII_DIMS];
-    int nii_ndims;
-    int nifti_file_type;
 
     /* MINC stuff */
     int mnc_fd;                 /* MINC file descriptor */
@@ -133,7 +127,6 @@ main(int argc, char **argv)
 
     /* Other stuff */
     char out_str[1024];         /* Big string for filename */
-    char att_str[1024];         /* Big string for attribute values */
     int i;                      /* Generic loop counter the first */
     int j;                      /* Generic loop counter the second */
     char *str_ptr;              /* Generic ASCIZ string pointer */

@@ -11,10 +11,9 @@
 int main(int argc, char *argv[])
      /* ARGSUSED */
 {
-   Acr_File *afpin, *afpout;
+   Acr_File *afpin;
    Acr_Message message;
    Acr_Status status;
-   Acr_Element element;
    char *error_type, *error_string;
 
    afpin=acr_initialize_dicom_input(stdin, 0, acr_stdio_read);

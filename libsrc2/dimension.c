@@ -363,7 +363,6 @@ miget_volume_dimensions(mihandle_t volume, midimclass_t class, midimattr_t attr,
   hsize_t number_of_dims; 
   int i=0, max_dims;
   int num_ret_dims = 0;
-  midimhandle_t hdim;
   
   if (volume == NULL) {
     return (MI_ERROR);

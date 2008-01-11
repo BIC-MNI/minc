@@ -311,7 +311,6 @@ MatDirBlk *mat_rdirblk(MatrixFile *file, int blknum) {
 }
 
 int matrix_write(MatrixFile *mptr, int matnum,MatrixData *data) {
-  int   slice ;
   
   matrix_errno = MAT_OK;
   matrix_errtxt[0] = '\0';
@@ -394,7 +393,6 @@ int matrix_find(MatrixFile *matfile, int matnum,struct MatDir *matdir) {
 
 int mat_enter(FILE *fptr, Main_header *mhptr, int matnum, int nblks) {
   int dirblk, dirbufr[128], i, nxtblk, busy, oldsize;
-  short sw_version = mhptr->sw_version;
   
   matrix_errno = MAT_OK;
   matrix_errtxt[0] = '\0';

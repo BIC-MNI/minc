@@ -375,7 +375,7 @@ mirw_hyperslab_raw(int opcode,
                    const unsigned long start[], 
                    const unsigned long count[],
                    void *buffer)
-{   int j;
+{
     hid_t dset_id = -1;
     hid_t mspc_id = -1;
     hid_t fspc_id = -1;

@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.25  2007-12-09 19:52:15  alex
+   * Revision 1.26  2008-01-11 07:17:07  stever
+   * Remove unused variables.
+   *
+   * Revision 1.25  2007/12/09 19:52:15  alex
    * Fixed error in echo_time extraction
    *
    * Revision 1.24  2007/06/08 20:28:57  ilana
@@ -975,7 +978,6 @@ acr_recursive_search(Acr_Element el_lst, int *nskip, Acr_Element_Id srch_id)
 {
     Acr_Element el_ret = NULL;
     Acr_Element el_tmp;
-    int i;
 
     for (el_tmp = el_lst; el_tmp != NULL; 
          el_tmp = acr_get_element_next(el_tmp)) {
@@ -1223,7 +1225,6 @@ get_coordinate_info(Acr_Group group_list,
 {
     Volume_Index ivolume;
     World_Index iworld;
-    Acr_Element element;
     int found_dircos[VOL_NDIMS];
     int found_coordinate;
     double frame_time;
@@ -1232,7 +1233,6 @@ get_coordinate_info(Acr_Group group_list,
     double largest;
     double psize[IMAGE_NDIMS];
     double slice_thickness, slice_spacing;
-    int result;
 
     double RowColVec[6]; /* row/column unit vectors in public dicom element */
 

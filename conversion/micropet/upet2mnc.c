@@ -1301,7 +1301,6 @@ DECLARE_FUNC(upet_frame_max)
 
 DECLARE_FUNC(upet_frame_file_ptr)
 {
-    long index = ci_ptr->frame_index - ci_ptr->frame_zero;
     long hipart;
     long lopart;
     char *end_ptr;

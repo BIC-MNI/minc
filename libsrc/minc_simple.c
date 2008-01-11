@@ -5,7 +5,10 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.5  2005-08-26 21:04:58  bert
+ * Revision 6.6  2008-01-11 07:17:07  stever
+ * Remove unused variables.
+ *
+ * Revision 6.5  2005/08/26 21:04:58  bert
  * Use #if rather than #ifdef with MINC2 symbol
  *
  * Revision 6.4  2005/05/20 21:01:52  bert
@@ -230,9 +233,7 @@ minc_load_data(char *path, void *dataptr, int datatype,
     int i, j;                   /* Generic loop counters */
     int var_id;
     int var_ndims;
-    int var_natts;
     int var_dims[MAX_NC_DIMS];
-    char var_name[128];
     int icv;                    /* MINC image conversion variable */
     long start[MI_S_NDIMS];
     long count[MI_S_NDIMS];
@@ -537,7 +538,6 @@ minc_save_start(char *path,     /* Path to the file */
     int dim_id[MI_S_NDIMS];     /* netCDF dimension ID array */
     int var_ndims;              /* Number of dimensions per variable */
     int var_dims[MI_S_NDIMS];   /* Dimension ID's per variable */
-    long dim_len[MI_S_NDIMS];   /* Lengths of dimensions */
     int i, j;                   /* Generic loop counters */
     int old_ncopts;             /* For supressing fatal error messages */
     struct file_info *p_file;   /* For accessing the file structure */
@@ -546,7 +546,6 @@ minc_save_start(char *path,     /* Path to the file */
     int var_id;                 /* netCDF ID for variable */
     char *signstr;
     nc_type nctype;
-    int r;
 
     old_ncopts = ncopts;
     ncopts = 0;
@@ -795,7 +794,7 @@ minc_save_data(int fd, void *dataptr, int datatype,
 {
     nc_type nctype;
     char *signstr;
-    int i, j;
+    int i;
     int var_id;
     int var_ndims;
     int var_dims[MAX_NC_DIMS];

@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.23  2007-11-23 20:28:23  ilana
+   * Revision 1.24  2008-01-11 07:17:07  stever
+   * Remove unused variables.
+   *
+   * Revision 1.23  2007/11/23 20:28:23  ilana
    * condition on picking between DICOM slice spacing and coordinate spacing was wrong (extra ! in if statement)
    *
    * Revision 1.22  2007/08/13 16:34:52  ilana
@@ -192,7 +195,7 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.23 2007-11-23 20:28:23 ilana Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.24 2008-01-11 07:17:07 stever Exp $";
 #include "dcm2mnc.h"
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
 const char *Volume_Names[VOL_NDIMS] = { "Slice", "Row", "Column" };
@@ -691,7 +694,6 @@ int
 is_siemens_mosaic(Acr_Group group_list)
 {
     char *str_ptr;
-    int num_slices;
 
     str_ptr = acr_find_string(group_list, ACR_Image_type, "");
     if (strstr(str_ptr, "MOSAIC") != NULL)
@@ -856,13 +858,11 @@ add_siemens_info(Acr_Group group_list)
     Acr_Element protocol; 
     Acr_Element element;
     int num_slices, num_partitions;
-    string_t str_buf, str_buf2; 
+    string_t str_buf;
     char *str_ptr=NULL;
     char *str_ptr2=NULL;
     int interpolation_flag;
     int enc_ix, num_encodings, num_b0; /*added by ilana*/
-    char DiffSeqName[50];
-    int i=0;
 
     element = acr_find_group_element(group_list, SPI_Protocol2);
     if (element != NULL) {

@@ -61,12 +61,9 @@ int main(int argc, char **argv)
     midimhandle_t dim[NDIMS];
     unsigned int lengths[NDIMS];
     midimhandle_t copy_dim[NDIMS];
-    int n;
     unsigned long coords[NDIMS];
     unsigned long count[NDIMS];
-    int i,j,k;
-    double offset;
-    unsigned int voxel;
+    int i,j;
     unsigned char * Atmp;
     midimclass_t dimension_class;
     int ndims;

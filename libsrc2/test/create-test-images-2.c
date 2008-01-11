@@ -10,8 +10,6 @@
      "Error reported on line #%d, %s: %d\n", \
      __LINE__, msg, val))
 
-static int error_cnt = 0;
-
 #define CZ 142
 #define CY 245
 #define CX 120

@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.24  2007-02-20 18:24:45  baghdadi
+ * Revision 6.25  2008-01-11 07:17:08  stever
+ * Remove unused variables.
+ *
+ * Revision 6.24  2007/02/20 18:24:45  baghdadi
  * make sure the global scaling happens when input is float and output is float or double
  *
  * Revision 6.23  2007/02/02 18:53:46  baghdadi
@@ -161,7 +164,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.24 2007-02-20 18:24:45 baghdadi Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.25 2008-01-11 07:17:08 stever Exp $";
 #endif
 
 #include "config.h"
@@ -1803,7 +1806,6 @@ static int get_model_file(char *dst, char *key, char *nextArg)
 {
   Volume_Definition *volume_def;
   File_Info file;
-  int i;
    /* Check for following argument */
    if (nextArg == NULL) {
       (void) fprintf(stderr, 

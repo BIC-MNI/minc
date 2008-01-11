@@ -1917,7 +1917,6 @@ static int
 invert_4x4_matrix(double matrix[4][4], /**< Input matrix */
                   double inverse[4][4]) /**< Output (inverted) matrix */
 {
-    double tmp;
     int result;
     int i, j;
     double **mtmp;

@@ -560,7 +560,6 @@ void get_acquisition_info(char *file, Main_header *mh) {
     ncvarinq(minc_fd, var_id, NULL, NULL, NULL, NULL, &num_att);
     for(i = 0; i < num_att; i++) {
       char attname[NC_MAX_NAME+1];
-      char buffer_val[NC_MAX_NAME+1];
       
       ncattname(minc_fd,var_id,i,attname);      
       

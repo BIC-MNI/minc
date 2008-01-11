@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.14  2007-12-18 15:19:48  jharlap
+   * Revision 1.15  2008-01-11 07:17:07  stever
+   * Remove unused variables.
+   *
+   * Revision 1.14  2007/12/18 15:19:48  jharlap
    * reverted acq.comments from its new image_comments name to maintain backwards compatibility.  also restored all the dicom elements which ilana decided to remove, with the exception of 0-length elements which make HDF spit out lots of warnings
    *
    * Revision 1.13  2007/06/08 20:28:57  ilana
@@ -137,7 +140,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.14 2007-12-18 15:19:48 jharlap Exp $";
+static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.15 2008-01-11 07:17:07 stever Exp $";
 
 #include "dcm2mnc.h"
 
@@ -329,10 +332,6 @@ create_minc_file(const char *minc_file,
     int minc_clobber;
     int mincid, icvid;
     static char full_path[1024];
-
-    /* Prefixes for creating file name */
-    static char *scan_prefix[MRI_NDIMS] = 
-        {"sl", "e", "d", "p", "cs"};
 
     /* Turn off fatal errors */
     ncopts = NCOPTS_DEFAULT;
@@ -588,8 +587,6 @@ void setup_minc_variables(int mincid, General_Info *general_info,
     int varid, imgid, dicomvar;
     double valid_range[2];
     char name[MAX_NC_NAME];
-    int index;
-    int regular;
     Acr_Group cur_group;
     Acr_Element cur_element;
     int length;

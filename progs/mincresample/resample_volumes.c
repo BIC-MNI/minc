@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.7  2007-12-12 20:55:26  rotor
+ * Revision 6.8  2008-01-11 07:17:08  stever
+ * Remove unused variables.
+ *
+ * Revision 6.7  2007/12/12 20:55:26  rotor
  *  * added a bunch of bug fixes from Claude.
  *
  * Revision 6.6  2006/05/19 00:13:39  bert
@@ -96,7 +99,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.7 2007-12-12 20:55:26 rotor Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.8 2008-01-11 07:17:08 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -953,7 +956,6 @@ static double
 sinc_mac_d(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     long offset;
     double *pix_ptr;
 
@@ -970,7 +972,6 @@ static double
 sinc_mac_f(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     long offset;
     float *pix_ptr;
 
@@ -987,7 +988,6 @@ static double
 sinc_mac_uc(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1006,7 +1006,6 @@ static double
 sinc_mac_sc(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1025,7 +1024,6 @@ static double
 sinc_mac_us(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1044,7 +1042,6 @@ static double
 sinc_mac_ss(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1063,7 +1060,6 @@ static double
 sinc_mac_ui(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1082,7 +1078,6 @@ static double
 sinc_mac_si(Volume_Data *volume, int z, int y, int x, double *win_ptr)
 {
     double result;
-    double value;
     double slope = volume->scale[z];
     double intercept = volume->offset[z];
     long offset;
@@ -1119,7 +1114,7 @@ windowed_sinc_interpolant(Volume_Data *volume, Coord_Vector coord,
     double zt, yt, xt;
     double zf, yf, xf;
     int zi, yi, xi;
-    int i, j, k;
+    int i, j;
     double new;
     double tmp;
     long slcmax, rowmax, colmax;
