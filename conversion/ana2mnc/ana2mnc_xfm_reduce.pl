@@ -1,9 +1,8 @@
 #! /usr/bin/env perl
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# Andrew Janke - a.janke@gmail.com
 # Center for Magnetic Resonance
 # The University of Queensland
-# http://www.cmr.uq.edu.au/~rotor
 #
 # MINC is a free file format from the MNI: www.bic.mni.mcgill.ca
 # ANALYZE is a commercial file format from the mayo clinic: www.mayo.edu/bir
@@ -654,7 +653,7 @@ sub read_minc{
 # Returns the translation, scale, shear and rotations encoded in the input
 # matrix.
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# Andrew Janke - a.janke@gmail.com
 # Losely based on Louis Collins' make_rots.c from the mni_autoreg package
 # With substantial help from Mark Griffin - mark.griffin@cmr.uq.edu.au
 sub decompose_transformation_matrix{

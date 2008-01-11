@@ -282,14 +282,14 @@ MINC 2:
      * Got rid of lots of C99-related warnings
      * Added new biModalT algorithms to mincstats
 
-2004-12-15 Andrew Janke <rotor@bic.mni.mcgill.ca>
+2004-12-15 Andrew Janke <a.janke@gmail.com>
     * added epm-header.in, removed mni_minc.epm.header
 
-2004-12-07 Andrew Janke <rotor@bic.mni.mcgill.ca>
+2004-12-07 Andrew Janke <a.janke@gmail.com>
     * Squashed yet another bug with the BiModalT code
 	    aaargh!  This should now replicate volume_stats even closer!
 
-2004-10-18 Andrew Janke <rotor@cmr.uq.edu.au>
+2004-10-18 Andrew Janke <a.janke@gmail.com>
 	* Fixed bug in mincstats -BimodalT code to
            exactly replicate (within reason) volume_stats
 	* Changed default # of int histogram bins from 10000 to 65536
@@ -418,7 +418,7 @@ MINC 1:
 
 	* Created miget_version() and miappend_history() functions.
 	
-2003-12-05  Andrew L. Janke <rotor@cmr.uq.edu.au>
+2003-12-05  Andrew L. Janke <a.janke@gmail.com>
 
     * Changes to mincpik: added -depth option (as per a diff supplied
     by Jonathan HARLAP); while at it, did a bit of clean-up including
@@ -627,7 +627,7 @@ MINC 1:
 	* progs/mincresample/mincresample.c: changed the parsing of the
 	nelements arguments to be ARGV_LONG.
 
-2002-09-05  Andrew Janke  <rotor@bic.mni.mcgill.ca>
+2002-09-05  Andrew Janke  <a.janke@gmail.com>
 
 	* progs/mincstats/mincstats.c: Change command line option
 	"-max_bins" to "-int_max_bins", to avoid clash with option "-max".

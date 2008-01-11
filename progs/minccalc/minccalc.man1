@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 2000 Andrew Janke
-.TH MINCCALC 1 "$Date: 2007-02-01 00:53:52 $" "" "MINC User's Guide"
+.TH MINCCALC 1 "$Date: 2008-01-11 04:24:16 $" "" "MINC User's Guide"
 
 .SH NAME
 minccalc - perform complex math operations on minc files
@@ -381,7 +381,7 @@ symbols that they both modify. If this is not clear, just try it - the
 program will complain if it is not happy.
 
 .SH AUTHOR
-Andrew Janke - rotor@cmr.uq.edu.au
+Andrew Janke - a.janke@gmail.com
 
 .SH COPYRIGHTS
 Copyright \(co 2000 by Andrew Janke

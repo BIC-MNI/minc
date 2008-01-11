@@ -1,6 +1,6 @@
 /* dbh.h - Analyze 7.5 header file                                */
 /*                                                                */
-/* Compiled by Andrew Janke (rotor@cmr.uq.edu.au)                 */    
+/* Compiled by Andrew Janke (a.janke@gmail.com)                   */
 /* from http://www.mayo.edu/bir/analyze/AnalyzeFileInfo.html      */
 /*      http://homepage2.nifty.com/peco/gpetview/gpetview.html    */
 /*      Chris Rorden  - chris.rorden@nottingham.ac.uk             */

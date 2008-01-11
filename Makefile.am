@@ -241,6 +241,7 @@ EXTRA_DIST = GETTING_STARTED \
 	Makefile.msvc-win32 \
 	conversion/Acr_nema/dicom.txt \
 	WHATSNEW-2.0 \
+	INSTALL.minc \
 	CMakeLists.txt \
 	config.h.cmake \
 	progs/CMakeLists.txt \

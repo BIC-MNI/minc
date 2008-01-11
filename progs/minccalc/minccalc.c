@@ -2,7 +2,7 @@
 minccalc.c
 A expression parser that works voxel-by-voxel for minc files
 
-Andrew Janke - rotor@cmr.uq.edu.au
+Andrew Janke - a.janke@gmail.com
 Center for Magnetic Resonance
 University of Queensland
 
@@ -19,7 +19,11 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.14  2007-12-11 12:43:01  rotor
+ * Revision 1.15  2008-01-11 04:24:16  rotor
+ *  * updated all my email addresses
+ *  * removed a (very) outdated TODO file
+ *
+ * Revision 1.14  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *
@@ -82,7 +86,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.14 2007-12-11 12:43:01 rotor Exp $";
+static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.15 2008-01-11 04:24:16 rotor Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -415,7 +419,7 @@ int main(int argc, char *argv[]){
 @GLOBALS    : Output_values, A
 @CALLS      : 
 @CREATED    : April 25, 1995 (Peter Neelin)
-@MODIFIED   : Thu Dec 21 17:08:40 EST 2000 (Andrew Janke - rotor@cmr.uq.edu.au)
+@MODIFIED   : Thu Dec 21 17:08:40 EST 2000 (Andrew Janke - a.janke@gmail.com)
 ---------------------------------------------------------------------------- */
 static void do_math(void *caller_data, long num_voxels, 
                     int input_num_buffers, int input_vector_length,

@@ -1,9 +1,8 @@
 #! /usr/bin/env perl 
 #
-# Andrew Janke - rotor@cmr.uq.edu.au
+# Andrew Janke - a.janke@gmail.com
 # Center for Magnetic Resonance
 # The University of Queensland
-# http://www.cmr.uq.edu.au/~rotor
 #
 # ANALYZE is a commercial file format from the mayo clinic: www.mayo.edu/bir
 # This script merely dumps the contents of a header file
