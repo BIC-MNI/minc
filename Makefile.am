@@ -212,8 +212,6 @@ bin_PROGRAMS = \
 
 if ACR_NEMA_TOOLS
 bin_PROGRAMS += \
-	mincexample1 \
-	mincexample2 \
 	acr_test \
 	dump_acr_nema \
 	extract_acr_nema \
