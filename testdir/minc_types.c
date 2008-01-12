@@ -42,8 +42,7 @@ int main(int argc, char **argv)
    long start[MAX_VAR_DIMS];
    long count[MAX_VAR_DIMS];
    double image[256*256];
-   long limage[256*256];
-   int i, j, k, ioff, itype, jtype;
+   int i, itype, jtype;
    int cflag = 0;
 
 #if MINC2

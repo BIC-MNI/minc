@@ -734,9 +734,6 @@ int
 main(int argc, char **argv)
 {
   int stat;
-  int icv;
-  float flt;
-  double dbl;
   struct testinfo info;
 
   milog_init("mincapi");      /* Disable error messages completely. */
@@ -796,8 +793,6 @@ void icv_tests(void)
 {
   /* Some random ICV tests */
   int icv;
-  int prop;
-  double dbl;
   int stat;
   int i;
   double min, max;

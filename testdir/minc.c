@@ -20,18 +20,13 @@
 int main()
 {
    int cdf, cdf2;
-   int img, img2;
+   int img;
    int dim[MAX_VAR_DIMS];
    int dim2[MAX_VAR_DIMS];
    long start[MAX_VAR_DIMS];
    long count[MAX_VAR_DIMS];
-   long start2[MAX_VAR_DIMS];
    double image[256*256];
-   long limage[256*256];
-   int i, j, k, ioff, itype, jtype;
-   double attr[3]={10.54, 15.77, 18.9};
-   float fval[3];
-   int length;
+   int i, j, k, ioff;
 
    ncopts=NC_VERBOSE|NC_FATAL;
    cdf=micreate("test.mnc",NC_CLOBBER);
