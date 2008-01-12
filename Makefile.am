@@ -159,7 +159,7 @@ else
 noinst_LTLIBRARIES = libacr_nema.la
 endif
 
-# Scripts we install: sh, csh, or perl.
+# Scripts we install: sh or perl.
 #
 dist_bin_SCRIPTS = \
 	progs/mincdiff/mincdiff \

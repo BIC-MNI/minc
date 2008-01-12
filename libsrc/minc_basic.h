@@ -14,7 +14,10 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.4  2007-08-09 17:05:25  rotor
+ * Revision 6.5  2008-01-12 01:05:37  rotor
+ *  * initial commits from Steve to remove warnings
+ *
+ * Revision 6.4  2007/08/09 17:05:25  rotor
  *  * added some fixes of Claudes for chunking and internal compression
  *
  * Revision 6.3  2004/04/27 15:48:15  bert
@@ -63,8 +66,10 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.4 2007-08-09 17:05:25 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.5 2008-01-12 01:05:37 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
+
+#include <minc.h>
 
 /* --------- MINC specific constants ------------- */
 
@@ -129,6 +134,7 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
 #define MI_TO_DOUBLE(dvalue, type, sign, ptr) \
    switch (type) { \
    case NC_BYTE : \
+   case NC_CHAR: \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
          dvalue = (double) *((unsigned char *) ptr); break; \
@@ -158,11 +164,17 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
    case NC_DOUBLE : \
       dvalue = (double) *((double *) ptr); \
       break; \
+   case NC_NAT : \
+      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC, \
+         "Attempt to convert NC_NAT value to double"); \
+      dvalue = 0; \
+      break; \
    } 
 
 #define MI_FROM_DOUBLE(dvalue, type, sign, ptr) \
    switch (type) { \
    case NC_BYTE : \
+   case NC_CHAR : \
       switch (sign) { \
       case MI_PRIV_UNSIGNED : \
          dvalue = MAX(0, dvalue); \
@@ -210,6 +222,11 @@ extern int minc_trash_var;        /* Just for getting rid of lint messages */
       break; \
    case NC_DOUBLE : \
       *((double *) ptr) = dvalue; \
+      break; \
+   case NC_NAT : \
+      MI_LOG_PKG_ERROR2(MI_ERR_NONNUMERIC, \
+         "Attempt to convert to NC_NAT from double"); \
+      dvalue = 0; \
       break; \
    }
 
