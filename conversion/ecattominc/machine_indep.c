@@ -33,7 +33,10 @@ void get_long_value(const void *from, void *to) {
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: machine_indep.c,v $
- * Revision 6.2  2005-05-19 20:58:37  bert
+ * Revision 6.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  2005/05/19 20:58:37  bert
  * Fixes for Windows builds ported from 1.X branch
  *
  * Revision 6.1.2.2  2005/05/04 20:19:30  bert
@@ -85,7 +88,7 @@ void get_long_value(const void *from, void *to) {
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/machine_indep.c,v 6.2 2005-05-19 20:58:37 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/ecattominc/machine_indep.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

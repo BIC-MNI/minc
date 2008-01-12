@@ -6,7 +6,10 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.c,v $
- * Revision 6.21  2005-02-16 19:22:32  bert
+ * Revision 6.22  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.21  2005/02/16 19:22:32  bert
  * Autoconfiscation
  *
  * Revision 6.20  2004/10/29 13:08:41  rotor
@@ -119,7 +122,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.21 2005-02-16 19:22:32 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/Acr_nema/dicom_client_routines.c,v 6.22 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdio.h>

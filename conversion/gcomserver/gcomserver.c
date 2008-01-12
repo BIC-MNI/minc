@@ -5,7 +5,10 @@
 @CREATED    : November 22, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gcomserver.c,v $
- * Revision 6.6  2001-04-21 13:29:38  neelin
+ * Revision 6.7  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.6  2001/04/21 13:29:38  neelin
  * Added support for PROJECT_CAPTURE project type.
  *
  * Revision 6.5  2001/04/09 23:02:48  neelin
@@ -123,7 +126,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.6 2001-04-21 13:29:38 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomserver.c,v 6.7 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <sys/types.h>

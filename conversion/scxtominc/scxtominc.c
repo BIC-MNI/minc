@@ -10,7 +10,10 @@
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: scxtominc.c,v $
- * Revision 6.2  1999-11-09 13:34:48  neelin
+ * Revision 6.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  1999/11/09 13:34:48  neelin
  * Year 2000 fix for date stored in minc file.
  *
  * Revision 6.1  1999/10/29 17:52:07  neelin
@@ -78,7 +81,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 6.2 1999-11-09 13:34:48 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdlib.h>

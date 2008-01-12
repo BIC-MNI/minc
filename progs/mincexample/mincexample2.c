@@ -12,7 +12,10 @@
 @CREATED    : March 16, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincexample2.c,v $
- * Revision 6.5  2004-11-01 22:38:38  bert
+ * Revision 6.6  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.5  2004/11/01 22:38:38  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.4  2001/09/18 15:32:46  neelin
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.5 2004-11-01 22:38:38 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincexample/mincexample2.c,v 6.6 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include <stdlib.h>

@@ -5,7 +5,10 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.19  2001-04-21 18:30:23  neelin
+ * Revision 1.20  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.19  2001/04/21 18:30:23  neelin
  * Do not modify uid_prefix string that is passed in, since it could be a
  * constant.
  *
@@ -89,7 +92,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.19 2001-04-21 18:30:23 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.20 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdio.h>

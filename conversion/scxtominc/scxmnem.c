@@ -10,7 +10,10 @@
 @CREATED    : November 3, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: scxmnem.c,v $
- * Revision 6.1  1999-10-29 17:52:07  neelin
+ * Revision 6.2  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.1  1999/10/29 17:52:07  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:31  neelin
@@ -47,7 +50,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 6.1 1999-10-29 17:52:07 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/scxtominc/scxmnem.c,v 6.2 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdlib.h>

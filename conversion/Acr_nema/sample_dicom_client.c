@@ -5,7 +5,10 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: sample_dicom_client.c,v $
- * Revision 6.3  2004-10-29 13:08:42  rotor
+ * Revision 6.4  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.3  2004/10/29 13:08:42  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -60,7 +63,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.3 2004-10-29 13:08:42 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.4 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdlib.h>

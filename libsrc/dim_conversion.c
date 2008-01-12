@@ -18,7 +18,10 @@
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
  * $Log: dim_conversion.c,v $
- * Revision 6.4  2004-10-15 13:44:52  bert
+ * Revision 6.5  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.4  2004/10/15 13:44:52  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.3  2003/11/14 16:52:24  stever
@@ -83,7 +86,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.4 2004-10-15 13:44:52 bert Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.5 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"

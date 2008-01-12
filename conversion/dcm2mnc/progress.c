@@ -4,7 +4,7 @@
 //
 //      for (index =  0; index < end; index++) { ...
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/progress.c,v 1.2 2005-03-03 18:59:15 bert Exp $";
+static const char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/progress.c,v 1.3 2008-01-12 19:08:14 stever Exp $";
 
 #include <stdio.h>
 #include <math.h>

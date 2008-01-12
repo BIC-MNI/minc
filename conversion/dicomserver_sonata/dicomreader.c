@@ -5,8 +5,11 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dicomreader.c,v $
- * Revision 1.1  2003-08-15 19:52:55  leili
- * Initial revision
+ * Revision 1.2  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.1.1.1  2003/08/15 19:52:55  leili
+ * Leili's dicom server for sonata
  *
  * Revision 1.3  2002/03/22 00:38:08  rhoge
  * Added progress bar, wait for children at end, updated feedback statements
@@ -22,7 +25,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/dicomreader.c,v 1.1 2003-08-15 19:52:55 leili Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/dicomreader.c,v 1.2 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <sys/types.h>

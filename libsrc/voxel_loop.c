@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.8  2006-04-09 15:40:25  bert
+ * Revision 6.9  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.8  2006/04/09 15:40:25  bert
  * Minor change
  *
  * Revision 6.7  2005/08/26 21:04:58  bert
@@ -132,7 +135,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.8 2006-04-09 15:40:25 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.9 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include "minc_private.h"

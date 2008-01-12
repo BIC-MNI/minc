@@ -11,7 +11,10 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.13  2005-08-26 21:07:17  bert
+ * Revision 6.14  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.13  2005/08/26 21:07:17  bert
  * Use #if rather than #ifdef with MINC2 symbol, and be sure to include config.h whereever MINC2 is used
  *
  * Revision 6.12  2005/07/15 17:38:08  bert
@@ -106,7 +109,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.13 2005-08-26 21:07:17 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.14 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

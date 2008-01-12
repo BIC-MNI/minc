@@ -11,7 +11,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.20  2006-07-28 18:19:46  baghdadi
+ * Revision 6.21  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.20  2006/07/28 18:19:46  baghdadi
  * *** empty log message ***
  *
  * Revision 6.19  2006/07/28 17:54:57  baghdadi
@@ -186,7 +189,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.20 2006-07-28 18:19:46 baghdadi Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.21 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

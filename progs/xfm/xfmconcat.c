@@ -10,7 +10,10 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.3  2004-11-01 22:38:39  bert
+ * Revision 6.4  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.3  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.2  2004/02/02 18:24:11  bert
@@ -63,7 +66,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.3 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/xfm/xfmconcat.c,v 6.4 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include <stdlib.h>

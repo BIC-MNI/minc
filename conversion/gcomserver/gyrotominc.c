@@ -5,7 +5,10 @@
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gyrotominc.c,v $
- * Revision 6.2  2001-04-09 23:02:50  neelin
+ * Revision 6.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  2001/04/09 23:02:50  neelin
  * Modified copyright notice, removing permission statement since copying,
  * etc. is probably not permitted by our non-disclosure agreement with
  * Philips.
@@ -56,7 +59,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 6.2 2001-04-09 23:02:50 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <gcomserver.h>

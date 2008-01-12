@@ -14,7 +14,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.6  2004-10-15 13:45:28  bert
+ * Revision 6.7  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.6  2004/10/15 13:45:28  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.5  2004/04/27 15:49:51  bert
@@ -88,7 +91,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.6 2004-10-15 13:45:28 bert Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.7 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"

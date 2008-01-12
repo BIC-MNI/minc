@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.25  2008-01-11 07:17:08  stever
+ * Revision 6.26  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.25  2008/01/11 07:17:08  stever
  * Remove unused variables.
  *
  * Revision 6.24  2007/02/20 18:24:45  baghdadi
@@ -164,7 +167,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.25 2008-01-11 07:17:08 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.26 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include "config.h"

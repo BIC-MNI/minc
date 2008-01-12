@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.15  2008-01-11 04:24:16  rotor
+ * Revision 1.16  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.15  2008/01/11 04:24:16  rotor
  *  * updated all my email addresses
  *  * removed a (very) outdated TODO file
  *
@@ -86,7 +89,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.15 2008-01-11 04:24:16 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.16 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

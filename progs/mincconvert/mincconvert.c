@@ -10,7 +10,10 @@
 @CREATED    : 2003-12-17
 @MODIFIED   : 
  * $Log: mincconvert.c,v $
- * Revision 1.8  2007-12-10 13:25:12  rotor
+ * Revision 1.9  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.8  2007/12/10 13:25:12  rotor
  *  * few more fixes for CMake build
  *  * started adding static to globals for a wierd zlib bug
  *
@@ -49,7 +52,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.8 2007-12-10 13:25:12 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincconvert/mincconvert.c,v 1.9 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

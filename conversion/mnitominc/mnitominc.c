@@ -10,7 +10,10 @@
 @CREATED    : December 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mnitominc.c,v $
- * Revision 6.1  1999-10-29 17:52:06  neelin
+ * Revision 6.2  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.1  1999/10/29 17:52:06  neelin
  * Fixed Log keyword
  *
  * Revision 6.0  1997/09/12 13:23:27  neelin
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 6.1 1999-10-29 17:52:06 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 6.2 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdlib.h>

@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.8  2008-01-11 07:17:08  stever
+ * Revision 6.9  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.8  2008/01/11 07:17:08  stever
  * Remove unused variables.
  *
  * Revision 6.7  2007/12/12 20:55:26  rotor
@@ -99,7 +102,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.8 2008-01-11 07:17:08 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.9 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

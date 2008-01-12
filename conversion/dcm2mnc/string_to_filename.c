@@ -8,7 +8,10 @@
 @CREATED    : January 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: string_to_filename.c,v $
- * Revision 1.2  2005-03-03 18:59:16  bert
+ * Revision 1.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.2  2005/03/03 18:59:16  bert
  * Fix handling of image position so that we work with the older field (0020, 0030) as well as the new (0020, 0032)
  *
  * Revision 1.1  2005/02/17 16:38:11  bert
@@ -57,7 +60,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/string_to_filename.c,v 1.2 2005-03-03 18:59:16 bert Exp $";
+static const char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/string_to_filename.c,v 1.3 2008-01-12 19:08:14 stever Exp $";
 
 #include "dcm2mnc.h"
 #include <ctype.h>

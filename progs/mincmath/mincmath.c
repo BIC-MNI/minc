@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.11  2007-12-11 12:43:01  rotor
+ * Revision 6.12  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.11  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *
@@ -85,7 +88,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.11 2007-12-11 12:43:01 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.12 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #define _GNU_SOURCE 1

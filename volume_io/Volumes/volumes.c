@@ -17,7 +17,7 @@
 #include  <float.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.77 2007-09-13 01:31:38 rotor Exp $";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/volumes.c,v 1.78 2008-01-12 19:08:16 stever Exp $";
 #endif
 
 STRING   XYZ_dimension_names[] = { MIxspace, MIyspace, MIzspace };

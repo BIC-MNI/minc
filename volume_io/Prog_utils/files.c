@@ -24,7 +24,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.42 2005-05-19 21:19:28 bert Exp $";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/files.c,v 1.43 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 static  BOOLEAN  has_no_extension( STRING );

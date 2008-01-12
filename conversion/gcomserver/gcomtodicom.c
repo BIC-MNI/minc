@@ -5,7 +5,10 @@
 @GLOBALS    : 
 @CREATED    : June 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: gcomtodicom.c,v $
-@MODIFIED   : Revision 6.3  2001-04-21 12:50:47  neelin
+@MODIFIED   : Revision 6.4  2008-01-12 19:08:14  stever
+@MODIFIED   : Add __attribute__ ((unused)) to all rcsid variables.
+@MODIFIED   :
+@MODIFIED   : Revision 6.3  2001/04/21 12:50:47  neelin
 @MODIFIED   : Added in -d (dump) and -t (trace) options.
 @MODIFIED   :
 @MODIFIED   : Revision 6.2  2001/04/09 23:02:49  neelin
@@ -23,7 +26,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.3 2001-04-21 12:50:47 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.4 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdio.h>

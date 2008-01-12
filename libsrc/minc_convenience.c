@@ -30,7 +30,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.19  2007-12-03 14:19:35  rotor
+ * Revision 6.20  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.19  2007/12/03 14:19:35  rotor
  *  * fixed history appending bug (Thanks Claude)
  *  * updated version for release
  *  * few more fixes for CMake build
@@ -142,7 +145,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.19 2007-12-03 14:19:35 rotor Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.20 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"

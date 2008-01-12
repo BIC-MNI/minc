@@ -10,7 +10,10 @@
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: transformtags.c,v $
- * Revision 6.2  2004-11-01 22:38:39  bert
+ * Revision 6.3  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.1  1999/10/19 14:45:31  neelin
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 6.2 2004-11-01 22:38:39 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/xfm/transformtags.c,v 6.3 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include <stdlib.h>

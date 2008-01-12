@@ -5,7 +5,10 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.5  2001-06-26 10:19:41  neelin
+ * Revision 6.6  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.5  2001/06/26 10:19:41  neelin
  * Only check for children when doing forking.
  *
  * Revision 6.4  2001/03/20 16:17:01  neelin
@@ -58,7 +61,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.5 2001-06-26 10:19:41 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.6 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <sys/types.h>

@@ -34,7 +34,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.14  2007-12-12 20:55:26  rotor
+ * Revision 6.15  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.14  2007/12/12 20:55:26  rotor
  *  * added a bunch of bug fixes from Claude.
  *
  * Revision 6.13  2004/12/14 23:53:46  bert
@@ -159,7 +162,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.14 2007-12-12 20:55:26 rotor Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.15 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"

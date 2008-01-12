@@ -35,7 +35,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.24 2005-07-04 03:13:31 stever Exp $";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.25 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

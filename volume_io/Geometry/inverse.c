@@ -15,7 +15,7 @@
 #include  <internal_volume_io.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.9 2004-10-04 20:23:51 bert Exp $";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Geometry/inverse.c,v 1.10 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 /* ----------------------------- MNI Header -----------------------------------

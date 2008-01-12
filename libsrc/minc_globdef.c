@@ -5,7 +5,10 @@
 @CREATED    : July 29, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_globdef.c,v $
- * Revision 6.2  2004-04-27 15:48:34  bert
+ * Revision 6.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  2004/04/27 15:48:34  bert
  * Get rid of minc_callers_ncopts
  *
  * Revision 6.1  1999/10/19 14:45:09  neelin
@@ -45,7 +48,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 6.2 2004-04-27 15:48:34 bert Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/Attic/minc_globdef.c,v 6.3 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 /* Variable for storing the name of the current routine */

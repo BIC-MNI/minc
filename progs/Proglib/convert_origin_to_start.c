@@ -7,7 +7,10 @@
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_origin_to_start.c,v $
- * Revision 6.1  1999-10-19 14:45:12  neelin
+ * Revision 6.2  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.1  1999/10/19 14:45:12  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:23:41  neelin
@@ -35,7 +38,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/Proglib/convert_origin_to_start.c,v 6.1 1999-10-19 14:45:12 neelin Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/Proglib/convert_origin_to_start.c,v 6.2 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include <stdlib.h>

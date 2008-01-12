@@ -10,7 +10,10 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.4  2005-01-19 19:46:01  bert
+ * Revision 6.5  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.4  2005/01/19 19:46:01  bert
  * Changes from Anthonin Reilhac
  *
  *
@@ -68,7 +71,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.4 2005-01-19 19:46:01 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.5 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include <stdlib.h>

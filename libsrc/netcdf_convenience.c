@@ -39,7 +39,10 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.19  2005-08-26 21:04:58  bert
+ * Revision 6.20  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.19  2005/08/26 21:04:58  bert
  * Use #if rather than #ifdef with MINC2 symbol
  *
  * Revision 6.18  2005/05/20 16:49:51  bert
@@ -172,7 +175,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.19 2005-08-26 21:04:58 bert Exp $ MINC (MNI)";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.20 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
 #endif
 
 #include "minc_private.h"

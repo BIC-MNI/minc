@@ -16,7 +16,7 @@
 #include  <minc.h>
 
 #ifndef lint
-static char rcsid[] = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.60 2004-10-04 20:23:52 bert Exp $";
+static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/output_mnc.c,v 1.61 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #define  INVALID_AXIS   -1

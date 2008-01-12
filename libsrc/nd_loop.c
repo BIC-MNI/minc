@@ -6,7 +6,10 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: nd_loop.c,v $
- * Revision 6.2  2004-10-15 13:47:13  bert
+ * Revision 6.3  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.2  2004/10/15 13:47:13  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.1  2002/01/14 21:28:26  neelin
@@ -50,7 +53,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/libsrc/nd_loop.c,v 6.2 2004-10-15 13:47:13 bert Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/nd_loop.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
 #endif
 
 #include "minc_private.h"

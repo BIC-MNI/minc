@@ -7,7 +7,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.15  2008-01-11 07:17:07  stever
+   * Revision 1.16  2008-01-12 19:08:14  stever
+   * Add __attribute__ ((unused)) to all rcsid variables.
+   *
+   * Revision 1.15  2008/01/11 07:17:07  stever
    * Remove unused variables.
    *
    * Revision 1.14  2007/12/18 15:19:48  jharlap
@@ -140,7 +143,7 @@
    software for any purpose.  It is provided "as is" without
    express or implied warranty.
 ---------------------------------------------------------------------------- */
-static const char rcsid[] = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.15 2008-01-11 07:17:07 stever Exp $";
+static const char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/minc_file.c,v 1.16 2008-01-12 19:08:14 stever Exp $";
 
 #include "dcm2mnc.h"
 

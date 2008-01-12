@@ -10,7 +10,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.5  2007-12-11 12:43:01  rotor
+ * Revision 6.6  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.5  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *
@@ -74,7 +77,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.5 2007-12-11 12:43:01 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.6 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H

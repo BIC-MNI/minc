@@ -10,7 +10,10 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfminvert.c,v $
- * Revision 6.4  2007-08-10 11:55:35  rotor
+ * Revision 6.5  2008-01-12 19:08:15  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 6.4  2007/08/10 11:55:35  rotor
  *  * added -clobber and -verbose to xfminvert to get it up to scratch
  *  * a bit of code cleanup (not there there is much in there!)
  *
@@ -67,7 +70,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[]="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 6.4 2007-08-10 11:55:35 rotor Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/xfm/xfminvert.c,v 6.5 2008-01-12 19:08:15 stever Exp $";
 #endif
 
 #include <config.h>

@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.20  2007-05-30 15:17:34  ilana
+ * Revision 1.21  2008-01-12 19:08:14  stever
+ * Add __attribute__ ((unused)) to all rcsid variables.
+ *
+ * Revision 1.20  2007/05/30 15:17:34  ilana
  * fix so that diffusion images all written into 1 4d volume, gradient directions and bvalues are written to mincheader, some fixes for TIM diffusion images
  *
  * Revision 1.19  2005/11/11 18:42:54  bert
@@ -128,7 +131,7 @@
  *
 ---------------------------------------------------------------------------- */
 
-static const char rcsid[]="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.20 2007-05-30 15:17:34 ilana Exp $";
+static const char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.21 2008-01-12 19:08:14 stever Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"
