@@ -12,8 +12,11 @@ int main(int argc, char **argv)
 {
    int icv, cdfid, img, max, min, dimvar;
    static int dim[MAX_VAR_DIMS];
-   static struct { long len; char *name;} diminfo[]=
-      {3, MIzspace, 4, MIyspace, 5, MIxspace};
+   static struct { long len; char *name;} diminfo[] = {
+      { 3, MIzspace }, 
+      { 4, MIyspace },
+      { 5, MIxspace } 
+   };
    static int numdims=sizeof(diminfo)/sizeof(diminfo[0]);
    static long coord[]={0,0,0};
    static long count[]={3,4,5};

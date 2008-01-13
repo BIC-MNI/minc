@@ -10,7 +10,10 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.12  2008-01-12 19:08:15  stever
+ * Revision 6.13  2008-01-13 04:30:28  stever
+ * Add braces around static initializers.
+ *
+ * Revision 6.12  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.11  2007/12/11 12:43:01  rotor
@@ -88,7 +91,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.12 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.13 2008-01-13 04:30:28 stever Exp $";
 #endif
 
 #define _GNU_SOURCE 1
@@ -137,37 +140,37 @@ typedef enum {
 /* Table that matches [Operation][Number of constants (0,1,2)] to a number
    of volume operands */
 Num_Operands OperandTable[][3] = {
-   ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* UNSPECIFIED_OP */
-   NARY_NUMOP,    UNARY_NUMOP,   ILLEGAL_NUMOP,       /* ADD_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* SUB_OP */
-   NARY_NUMOP,    UNARY_NUMOP,   ILLEGAL_NUMOP,       /* MULT_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* DIV_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* SQRT_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* SQUARE_OP */
-   ILLEGAL_NUMOP, UNARY_NUMOP,   UNARY_NUMOP,         /* SCALE_OP */
-   ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP,         /* CLAMP_OP */
-   ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP,         /* SEGMENT_OP */
-   ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP,         /* NSEGMENT_OP */
-   BINARY_NUMOP,  BINARY_NUMOP,  ILLEGAL_NUMOP,       /* PERCENTDIFF_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* EQ_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* NE_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* GT_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* GE_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* LT_OP */
-   BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP,       /* LE_OP */
-   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* AND_OP */
-   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* OR_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* NOT_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ISNAN_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* NISNAN_OP */
-   UNARY_NUMOP,   UNARY_NUMOP,   ILLEGAL_NUMOP,       /* INVERT_OP */
-   UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* EXP_OP */
-   UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP,         /* LOG_OP */
-   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MAX_OP */
-   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* MIN_OP */
-   UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* ABS_OP */
-   NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP,       /* COUNT_OP */
-   ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP        /* nothing */
+   { ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* UNSPECIFIED_OP */
+   { NARY_NUMOP,    UNARY_NUMOP,   ILLEGAL_NUMOP },     /* ADD_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* SUB_OP */
+   { NARY_NUMOP,    UNARY_NUMOP,   ILLEGAL_NUMOP },     /* MULT_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* DIV_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* SQRT_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* SQUARE_OP */
+   { ILLEGAL_NUMOP, UNARY_NUMOP,   UNARY_NUMOP },       /* SCALE_OP */
+   { ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP },       /* CLAMP_OP */
+   { ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP },       /* SEGMENT_OP */
+   { ILLEGAL_NUMOP, ILLEGAL_NUMOP, UNARY_NUMOP },       /* NSEGMENT_OP */
+   { BINARY_NUMOP,  BINARY_NUMOP,  ILLEGAL_NUMOP },     /* PERCENTDIFF_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* EQ_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* NE_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* GT_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* GE_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* LT_OP */
+   { BINARY_NUMOP,  UNARY_NUMOP,   ILLEGAL_NUMOP },     /* LE_OP */
+   { NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* AND_OP */
+   { NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* OR_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* NOT_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* ISNAN_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* NISNAN_OP */
+   { UNARY_NUMOP,   UNARY_NUMOP,   ILLEGAL_NUMOP },     /* INVERT_OP */
+   { UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP },       /* EXP_OP */
+   { UNARY_NUMOP,   UNARY_NUMOP,   UNARY_NUMOP },       /* LOG_OP */
+   { NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* MAX_OP */
+   { NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* MIN_OP */
+   { UNARY_NUMOP,   ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* ABS_OP */
+   { NARY_NUMOP,    ILLEGAL_NUMOP, ILLEGAL_NUMOP },     /* COUNT_OP */
+   { ILLEGAL_NUMOP, ILLEGAL_NUMOP, ILLEGAL_NUMOP }      /* nothing */
 };
 
 /* Structure for window information */

@@ -1,3 +1,15 @@
+2008-01-12  Steve M. Robbins  <smr@sumost.ca>
+
+	* libsrc/voxel_loop.c:
+	* progs/mincinfo/mincinfo.c:
+	* progs/mincmath/mincmath.c:
+	* progs/rawtominc/rawtominc.c:
+	* testdir/icv.c:
+	* testdir/icv_dim.c:
+	* testdir/icv_dim1.c:
+	* testdir/icv_fillvalue.c:
+	* testdir/icv_range.c:
+	* testdir/minc_types.c: Add braces around static initializers.
 
 MINC 2:
 2008-01-11  Andrew L Janke <a.janke@gmail.com>

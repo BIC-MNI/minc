@@ -11,7 +11,10 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.26  2008-01-12 19:08:15  stever
+ * Revision 6.27  2008-01-13 04:30:28  stever
+ * Add braces around static initializers.
+ *
+ * Revision 6.26  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.25  2008/01/11 07:17:08  stever
@@ -167,7 +170,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.26 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/rawtominc/rawtominc.c,v 6.27 2008-01-13 04:30:28 stever Exp $";
 #endif
 
 #include "config.h"
@@ -331,9 +334,9 @@ int ovrange_set;
 double dimstep[3] = {DEF_STEP, DEF_STEP, DEF_STEP};
 double dimstart[3] = {DEF_START, DEF_START, DEF_START};
 double dimdircos[3][3] = {
-   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS,
-   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS,
-   DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS
+    { DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS },
+    { DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS },
+    { DEF_DIRCOS, DEF_DIRCOS, DEF_DIRCOS }
 };
 double origin[3] = {DEF_ORIGIN, DEF_ORIGIN, DEF_ORIGIN};
 int vector_dimsize = -1;

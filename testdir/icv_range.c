@@ -25,8 +25,11 @@ int main(int argc, char **argv)
    static int maxpresent[] = {TRUE, FALSE};
    static int valpresent[] = {TRUE, FALSE};
    static int dim[MAX_VAR_DIMS];
-   static struct { long len; char *name;} diminfo[]=
-      {3, MIzspace, 1, MIyspace, 1, MIxspace};
+   static struct { long len; char *name;} diminfo[] = {
+      { 3, MIzspace }, 
+      { 1, MIyspace }, 
+      { 1, MIxspace } 
+   };
    static int numdims=sizeof(diminfo)/sizeof(diminfo[0]);
    static long coord[]={0,0,0};
    static long count[]={1,1,1};

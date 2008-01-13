@@ -24,14 +24,15 @@ struct {
    nc_type type;
    char *sign;
    char *ctype;
-} types[]={NC_BYTE,   MI_UNSIGNED, "byte",
-           NC_BYTE,   MI_SIGNED,   "byte",
-           NC_SHORT,  MI_UNSIGNED, "short",
-           NC_SHORT,  MI_SIGNED,   "short",
-           NC_INT,    MI_UNSIGNED, "int",
-           NC_INT,    MI_SIGNED,   "int",
-           NC_FLOAT,  MI_SIGNED,   "float",
-           NC_DOUBLE, MI_SIGNED,   "double"};
+
+} types[]= { { NC_BYTE,   MI_UNSIGNED, "byte" },
+	     { NC_BYTE,   MI_SIGNED,   "byte" },
+	     { NC_SHORT,  MI_UNSIGNED, "short" },
+	     { NC_SHORT,  MI_SIGNED,   "short" },
+	     { NC_INT,    MI_UNSIGNED, "int" },
+	     { NC_INT,    MI_SIGNED,   "int" },
+	     { NC_FLOAT,  MI_SIGNED,   "float" },
+	     { NC_DOUBLE, MI_SIGNED,   "double" } };
 int ntypes = sizeof(types)/sizeof(types[0]);
 
 int main(int argc, char **argv)

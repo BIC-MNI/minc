@@ -10,7 +10,10 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.10  2008-01-12 19:08:15  stever
+ * Revision 6.11  2008-01-13 04:30:28  stever
+ * Add braces around static initializers.
+ *
+ * Revision 6.10  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.9  2007/12/11 12:43:01  rotor
@@ -99,7 +102,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.10 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.c,v 6.11 2008-01-13 04:30:28 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -153,7 +156,7 @@ static int get_attname(int mincid, char *string, int *varid, char *name);
 static int print_image_info(char *filename, int mincid);
 /* Variables used for argument parsing */
 static char *error_string = NULL;
-static Option_type option_list[MAX_NUM_OPTIONS] = {ENDLIST};
+static Option_type option_list[MAX_NUM_OPTIONS] = { { ENDLIST, "" } };
 static int length_option_list = 0;
 
 /* Argument table */

@@ -7,7 +7,10 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.9  2008-01-12 19:08:14  stever
+ * Revision 6.10  2008-01-13 04:30:28  stever
+ * Add braces around static initializers.
+ *
+ * Revision 6.9  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.8  2006/04/09 15:40:25  bert
@@ -135,7 +138,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.9 2008-01-12 19:08:14 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.10 2008-01-13 04:30:28 stever Exp $";
 #endif
 
 #include "minc_private.h"
@@ -767,10 +770,10 @@ PRIVATE void get_dim_info(int mincid, int *ndims, long size[],
    int old_ncopts;
    enum {XAXIS, YAXIS, ZAXIS, OAXIS} dimtype;
    static double default_dircos[][3] = {
-      1.0, 0.0, 0.0,
-      0.0, 1.0, 0.0,
-      0.0, 0.0, 1.0,
-      0.0, 0.0, 0.0
+      { 1.0, 0.0, 0.0 },
+      { 0.0, 1.0, 0.0 },
+      { 0.0, 0.0, 1.0 },
+      { 0.0, 0.0, 0.0 }
    };
    char regstring[MI_MAX_ATTSTR_LEN];
 
