@@ -1451,7 +1451,7 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   int mspc_id = -1;
   int i;
   int ndims;
-  hssize_t fstart[MAX_VAR_DIMS];
+  hsize_t fstart[MAX_VAR_DIMS];
   hsize_t count[MAX_VAR_DIMS];
   struct m2_file *file;
   struct m2_var *var;
@@ -1536,7 +1536,7 @@ hdf_varputg(int fd, int varid, const long *start,
     int status = MI_ERROR;      /* Assume guilty */
     int maxidim;		/* maximum dimensional index */
     int idim;
-    hssize_t *mystart = NULL;
+    hsize_t *mystart = NULL;
     hsize_t *myedges;
     hsize_t *iocount;	/* count vector */
     hsize_t *stop;	/* stop indexes */
@@ -1588,12 +1588,12 @@ hdf_varputg(int fd, int varid, const long *start,
 	}
     }
 
-    mystart = (hssize_t *)calloc(varp->ndims * 7, sizeof(hsize_t));
+    mystart = (hsize_t *)calloc(varp->ndims * 7, sizeof(hsize_t));
     if (mystart == NULL) {
         goto cleanup;
     }
 
-    myedges = (hsize_t *)(mystart + varp->ndims);
+    myedges = (mystart + varp->ndims);
     iocount = myedges + varp->ndims;
     stop = iocount + varp->ndims;
     length = stop + varp->ndims;
@@ -1885,7 +1885,7 @@ hdf_varput(int fd, int varid, const long *start_ptr, const long *length_ptr,
   int mspc_id = -1;
   int i;
   int ndims;
-  hssize_t fstart[MAX_VAR_DIMS];
+  hsize_t fstart[MAX_VAR_DIMS];
   hsize_t count[MAX_VAR_DIMS];
   struct m2_file *file;
   struct m2_var *var;

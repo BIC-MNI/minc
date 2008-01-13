@@ -381,7 +381,7 @@ mirw_hyperslab_raw(int opcode,
     hid_t fspc_id = -1;
     hid_t type_id = -1;
     int result = MI_ERROR;
-    hssize_t hdf_start[MI2_MAX_VAR_DIMS];
+    hsize_t hdf_start[MI2_MAX_VAR_DIMS];
     hsize_t hdf_count[MI2_MAX_VAR_DIMS];
     int dir[MI2_MAX_VAR_DIMS];  /* Direction vector in file order */
     int ndims;

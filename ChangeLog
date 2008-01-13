@@ -1,5 +1,9 @@
 2008-01-12  Steve M. Robbins  <smr@sumost.ca>
 
+	* libsrc2/hyper.c (mirw_hyperslab_raw): 
+	* libsrc/hdf_convenience.c (hdf_varget): Use hsize_t rather than
+	hssize_t for 3rd argument to H5Sselect_hyperslab().
+
 	* libsrc/voxel_loop.c:
 	* progs/mincinfo/mincinfo.c:
 	* progs/mincmath/mincmath.c:
