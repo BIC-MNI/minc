@@ -11,7 +11,13 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincresample.c,v $
- * Revision 6.21  2008-01-12 19:08:15  stever
+ * Revision 6.22  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.21  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.20  2006/07/28 18:19:46  baghdadi
@@ -189,7 +195,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.21 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/mincresample.c,v 6.22 2008-01-13 09:38:54 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -217,6 +223,53 @@ int Specified_like = FALSE;
 int Specified_transform = FALSE;
 #define SAMPLING_ACTION_NOT_SET (-1)
 #endif
+
+static void get_arginfo(int argc, char *argv[],
+                        Program_Flags *program_flags,
+                        VVolume *in_vol, VVolume *out_vol,
+                        General_transform *transformation);
+static void check_imageminmax(File_Info *fp, Volume_Data *volume);
+static void get_file_info(char *filename, int initialized_volume_def,
+                          Volume_Definition *volume_def,
+                          File_Info *file_info);
+static void get_args_volume_def(Volume_Definition *input_volume_def,
+                                Volume_Definition *args_volume_def);
+static void transform_volume_def(Transform_Info *transform_info,
+                                 Volume_Definition *input_volume_def,
+                                 Volume_Definition *transformed_volume_def);
+static int is_zero_vector(double vector[]);
+static void normalize_vector(double vector[]);
+static void create_output_file(char *filename, int clobber,
+                               Volume_Definition *volume_def,
+                               File_Info *in_file,
+                               File_Info *out_file,
+                               char *tm_stamp,
+                               Transform_Info *transform_info);
+static void get_voxel_to_world_transf(Volume_Definition *volume_def,
+                                      General_transform *voxel_to_world);
+static void irregular_transform_function(void *user_data,
+                                         Real x,
+                                         Real y,
+                                         Real z,
+                                         Real *x_trans,
+                                         Real *y_trans,
+                                         Real *z_trans);
+static void irregular_inverse_transform_function(void *user_data,
+                                                 Real x,
+                                                 Real y,
+                                                 Real z,
+                                                 Real *x_trans,
+                                                 Real *y_trans,
+                                                 Real *z_trans);
+static double get_default_range(char *what, nc_type datatype, int is_signed);
+static void finish_up(VVolume *in_vol, VVolume *out_vol);
+static int get_transformation(char *dst, char *key, char *nextArg);
+static int get_model_file(char *dst, char *key, char *nextArg);
+static int set_standard_sampling(char *dst, char *key, char *nextArg);
+static int set_spacetype(char *dst, char *key, char *nextArg);
+static int set_units(char *dst, char *key, char *nextArg);
+static int get_axis_order(char *dst, char *key, char *nextArg);
+static int get_fillvalue(char *dst, char *key, char *nextArg);
 
 /* Main program */
 

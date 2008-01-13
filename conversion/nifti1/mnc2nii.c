@@ -9,6 +9,21 @@
 
 #include "nifti1_local.h"       /* Our local definitions */
 
+/* This list is in the order in which dimension lengths and sample
+ * widths are stored in the NIfTI-1 structure.
+ */
+static const char *dimnames[MAX_NII_DIMS] = {
+    MIvector_dimension,
+    MItime,
+    MIzspace,
+    MIyspace,
+    MIxspace,
+    NULL,
+    NULL,
+    NULL
+};
+
+
 void test_xform(mat44 m, int i, int j, int k)
 {
     double x, y, z;

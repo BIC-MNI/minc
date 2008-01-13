@@ -19,7 +19,13 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.16  2008-01-12 19:08:15  stever
+ * Revision 1.17  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 1.16  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 1.15  2008/01/11 04:24:16  rotor
@@ -89,7 +95,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.16 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.17 2008-01-13 09:38:54 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -153,8 +159,6 @@ static int copy_all_header = DEFAULT_BOOL;
 static int use_nan_for_illegal_values = TRUE;
 static int max_buffer_size_in_kb = 4 * 1024;
 static double valid_range[2] = {0.0, 0.0};
-static double constant = DEFAULT_DBL;
-static double constant2[2] = {DEFAULT_DBL, DEFAULT_DBL};
 double value_for_illegal_operations = DEFAULT_DBL;
 static nc_type datatype = MI_ORIGINAL_TYPE;
 static char *filelist = NULL;

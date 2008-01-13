@@ -6,7 +6,13 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.8  2005-05-19 20:57:20  bert
+ * Revision 6.9  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.8  2005/05/19 20:57:20  bert
  * Fixes for Windows, ported from 1.X branch
  *
  * Revision 6.7.2.2  2005/05/16 22:39:30  bert
@@ -102,6 +108,10 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -125,9 +135,11 @@
 #define ACR_READ_STREAM    1
 #define ACR_WRITE_STREAM   2
 
+#if HAVE_MKSTEMP
 /* Stuff for input and output tracing */
 static char *Input_trace_file = "acr_file_input_XXXXXX";
 static char *Output_trace_file = "acr_file_output_XXXXXX";
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : acr_file_enable_trace
@@ -455,10 +467,11 @@ int acr_file_read_more(Acr_File *afp)
 #if HAVE_MKSTEMP
          (void) strcpy(trace_file, Input_trace_file);          
          afp->tracefp = fdopen(mkstemp(trace_file), "w");
-#endif
-#if HAVE_TMPNAM
+#elif HAVE_TMPNAM
          tmpnam(trace_file);
          afp->tracefp = fopen(trace_file, "w");
+#else
+#error Must have mkstemp() or tmpnam() available.
 #endif
          if (afp->tracefp != NULL) {
             (void) fprintf(stderr, "Opened input trace file %s.\n", 
@@ -575,10 +588,11 @@ int acr_file_flush(Acr_File *afp)
 #if HAVE_MKSTEMP
             (void) strcpy(trace_file, Output_trace_file);
             afp->tracefp = fdopen(mkstemp(trace_file), "w");
-#endif
-#if HAVE_TMPNAM
+#elif HAVE_TMPNAM
             tmpnam(trace_file);
             afp->tracefp = fopen(trace_file, "w");
+#else
+#error Must have mkstemp() or tmpnam() available.
 #endif
             if (afp->tracefp != NULL) {
                (void) fprintf(stderr, "Opened output trace file %s.\n", 

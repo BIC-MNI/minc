@@ -6,7 +6,13 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.9  2008-01-12 19:08:15  stever
+ * Revision 6.10  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.9  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.8  2008/01/11 07:17:08  stever
@@ -102,7 +108,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.9 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.10 2008-01-13 09:38:54 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -117,6 +123,16 @@ static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/pro
 #include <minc.h>
 #include <volume_io.h>
 #include "mincresample.h"
+
+static void load_volume(File_Info *file, long start[], long count[],
+                        Volume_Data *volume);
+static void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol,
+                      General_transform *transformation,
+                      double *minimum, double *maximum);
+static void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
+                               double slice_min[], double slice_max[]);
+
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : resample_volumes

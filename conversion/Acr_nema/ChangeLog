@@ -1,3 +1,11 @@
+2008-01-13  Steve M. Robbins  <smr@sumost.ca>
+
+	* file_io.c: Include "config.h" for access to symbols HAVE_MKSTEMP
+	and HAVE_TMPNAM.  Ensure that only one or the other is used and
+	add #error directives for the case that neither is
+	defined. Conditionalize definitions of Input_trace_file and
+	Output_trace_file to avoid compiler warning.
+
 2006-09-01  Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
 	* Fix bug in element.c: modified maybe_print_as_string to only skip element
 	0x7fe0,0x0010 rather than all elements with element number 0x0010

@@ -7,7 +7,13 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
- * Revision 6.10  2008-01-13 04:30:28  stever
+ * Revision 6.11  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.10  2008/01/13 04:30:28  stever
  * Add braces around static initializers.
  *
  * Revision 6.9  2008/01/12 19:08:14  stever
@@ -138,7 +144,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.10 2008-01-13 04:30:28 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/voxel_loop.c,v 6.11 2008-01-13 09:38:54 stever Exp $";
 #endif
 
 #include "minc_private.h"
@@ -283,7 +289,6 @@ PRIVATE void cleanup_loopfile_info(Loopfile_Info *loopfile_info);
 PRIVATE int get_input_numfiles(Loopfile_Info *loopfile_info);
 PRIVATE int get_output_numfiles(Loopfile_Info *loopfile_info);
 PRIVATE char *get_input_filename(Loopfile_Info *loopfile_info, int file_num);
-PRIVATE char *get_output_filename(Loopfile_Info *loopfile_info, int file_num);
 PRIVATE void set_input_headers_only(Loopfile_Info *loopfile_info,
                                     int headers_only);
 PRIVATE void set_input_sequential(Loopfile_Info *loopfile_info,
@@ -2154,30 +2159,6 @@ PRIVATE char *get_input_filename(Loopfile_Info *loopfile_info, int file_num)
    }
 
    return loopfile_info->input_files[file_num];
-}
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : get_output_filename
-@INPUT      : loopfile_info - looping information
-              file_num - output file number
-@OUTPUT     : (none)
-@RETURNS    : Pointer to string containing output file name for file ifile.
-@DESCRIPTION: Routine to get name of an output file.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : March 1, 1995 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-PRIVATE char *get_output_filename(Loopfile_Info *loopfile_info, int file_num)
-{
-   /* Check for bad file_num */
-   if ((file_num < 0) || (file_num >= loopfile_info->num_output_files)) {
-      (void) fprintf(stderr, "Bad output file number %d\n", file_num);
-      exit(EXIT_FAILURE);
-   }
-
-   return loopfile_info->output_files[file_num];
 }
 
 /* ----------------------------- MNI Header -----------------------------------

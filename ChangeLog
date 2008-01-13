@@ -1,3 +1,29 @@
+2008-01-13  Steve M. Robbins  <smr@sumost.ca>
+
+	* progs/mincreshape/mincreshape.h: 
+	* progs/mincreshape/mincreshape.c: 
+	* progs/mincreshape/copy_data.c: Move static function declarations
+	from header file to .c files that define the function.  Avoids
+	compiler warnings.
+
+	* progs/mincresample/mincresample.h: 
+	* progs/mincresample/mincresample.c: 
+	* progs/mincresample/resample_volumes.c: Move static function
+	declarations from header file to .c files that define the
+	function.  Avoids compiler warnings.
+
+	* progs/minccalc/minccalc.c (constant,constant2): Remove unushed
+	variables.
+
+	* libsrc/voxel_loop.c (get_output_filename): Remove unused function.
+
+	* conversion/nifti1/nifti1_local.h:
+	* conversion/nifti1/mnc2nii.c: Move definition of dimnames to .c
+	file where it is used.  Avoids compiler warning.
+
+	* conversion/dcm2mnc/dicom_read.c: Don't declare or define
+	convert_numa3_coordinate(), since the caller is #if 0'd out.
+
 2008-01-12  Steve M. Robbins  <smr@sumost.ca>
 
 	* libsrc2/hyper.c (mirw_hyperslab_raw): 

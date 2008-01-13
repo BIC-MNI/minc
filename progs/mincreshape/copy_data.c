@@ -6,7 +6,13 @@
 @CREATED    : October 25, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: copy_data.c,v $
- * Revision 6.6  2008-01-12 19:08:15  stever
+ * Revision 6.7  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.6  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.5  2006/05/19 00:35:58  bert
@@ -72,7 +78,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.6 2008-01-12 19:08:15 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincreshape/copy_data.c,v 6.7 2008-01-13 09:38:54 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -90,6 +96,44 @@ static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/pro
 #include "mincreshape.h"
 
 #define ROUND( x ) ((long) ((x) + ( ((x) >= 0) ? 0.5 : (-0.5) ) ))
+
+static void get_num_minmax_values(Reshape_info *reshape_info,
+                                  long *block_start, long *block_count,
+                                  long *num_min_values, long *num_max_values);
+static void handle_normalization(Reshape_info *reshape_info,
+                                 long *block_start,
+                                 long *block_count,
+                                 double *minmax_buffer,
+                                 double *fillvalue);
+static void get_block_min_and_max(Reshape_info *reshape_info,
+                                  long *block_start,
+                                  long *block_count,
+                                  double *minmax_buffer,
+                                  double *minimum,
+                                  double *maximum);
+static void truncate_input_vectors(Reshape_info *reshape_info,
+                                   long *input_start,
+				   long *input_count);
+static void translate_output_to_input(Reshape_info *reshape_info,
+                                      long *output_start,
+                                      long *output_count,
+                                      long *input_start,
+                                      long *input_count);
+static void translate_input_to_output(Reshape_info *reshape_info,
+                                      long *input_start,
+                                      long *input_count,
+                                      long *output_start,
+                                      long *output_count);
+static void copy_the_chunk(Reshape_info *reshape_info,
+                           long chunk_start[],
+                           long chunk_count[],
+                           void *chunk_data,
+                           double fillvalue);
+static void convert_value_from_double(double dvalue,
+                                      nc_type datatype, int is_signed,
+                                      void *ptr);
+
+
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : copy_data

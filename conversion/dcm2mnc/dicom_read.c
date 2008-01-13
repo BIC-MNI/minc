@@ -7,7 +7,13 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
-   * Revision 1.26  2008-01-11 07:17:07  stever
+   * Revision 1.27  2008-01-13 09:38:54  stever
+   * Avoid compiler warnings about functions and variables that are defined
+   * but not used.  Remove some such functions and variables,
+   * conditionalize some, and move static declarations out of header files
+   * into C files.
+   *
+   * Revision 1.26  2008/01/11 07:17:07  stever
    * Remove unused variables.
    *
    * Revision 1.25  2007/12/09 19:52:15  alex
@@ -212,7 +218,7 @@ static void get_coordinate_info(Acr_Group group_list, File_Info *file_info,
                                 double coordinate[WORLD_NDIMS]);
 static void get_general_header_info(Acr_Group group_list,
                                     General_Info *general_info);
-static void convert_numa3_coordinate(double coordinate[WORLD_NDIMS]);
+//static void convert_numa3_coordinate(double coordinate[WORLD_NDIMS]);
 static void get_identification_info(Acr_Group group_list, 
                                     double *study_id, int *acq_id, 
                                     int *rec_num, int *image_type);
@@ -1593,6 +1599,7 @@ get_coordinate_info(Acr_Group group_list,
 
 }
 
+#if 0
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : convert_numa3_coordinate
    @INPUT      : coordinate
@@ -1611,6 +1618,7 @@ convert_numa3_coordinate(double coordinate[WORLD_NDIMS])
     coordinate[XCOORD] = -coordinate[XCOORD];
     coordinate[ZCOORD] = -coordinate[ZCOORD];
 }
+#endif
 
 /* ----------------------------- MNI Header -----------------------------------
    @NAME       : convert_dicom_coordinate

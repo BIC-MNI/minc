@@ -7,7 +7,13 @@
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.h,v $
- * Revision 6.4  2004-11-01 22:38:39  bert
+ * Revision 6.5  2008-01-13 09:38:54  stever
+ * Avoid compiler warnings about functions and variables that are defined
+ * but not used.  Remove some such functions and variables,
+ * conditionalize some, and move static declarations out of header files
+ * into C files.
+ *
+ * Revision 6.4  2004/11/01 22:38:39  bert
  * Eliminate all references to minc_def.h
  *
  * Revision 6.3  2001/12/06 14:12:45  neelin
@@ -115,65 +121,4 @@ typedef struct {
 #define  MIN( x, y )  ( ((x) <= (y)) ? (x) : (y) )
 
 /* Function prototypes */
-static void get_arginfo(int argc, char *argv[],
-                        Reshape_info *reshape_info);
-static int get_fillvalue(char *dst, char *key, char *nextArg);
-static int get_dimsize(char *dst, char *key, char *nextArg);
-static int get_axis_order(char *dst, char *key, char *nextArg);
-static int get_axis_range(char *dst, char *key, char *nextArg);
-static int get_arg_vector(char *dst, char *key, char *nextArg);
-static void get_default_datatype(int mincid, nc_type *datatype, int *is_signed,
-                                 double valid_range[2]);
-static void setup_dim_sizes(int icvid, int mincid, Dimsize_list *dimsize_list);
-static void setup_reshaping_info(int icvid, int mincid, 
-                                 int do_norm, double fillvalue, int do_scalar,
-                                 char *axis_order[], Axis_ranges *axis_ranges,
-                                 long hs_start[], long hs_count[],
-                                 int max_chunk_size_in_kb,
-                                 Reshape_info *reshape_info);
-static void setup_output_file(int mincid, char *history, 
-                              Reshape_info *reshape_info);
-static void create_dim_var(int outmincid, int outdimid,
-                           int inicvid, int cur_image_dim, int inmincid, 
-                           long input_start, long input_count);
-static void copy_dimension_values(int outmincid, int outdimid, int inmincid,
-                                  long input_start, long input_count);
-static void copy_dim_var_values(int outmincid, char *dimname, char *varname,
-                                int inmincid,
-                                long input_start, long input_count);
 extern void copy_data(Reshape_info *reshape_info);
-static void get_num_minmax_values(Reshape_info *reshape_info,
-                                  long *block_start, long *block_count,
-                                  long *num_min_values, long *num_max_values);
-static void handle_normalization(Reshape_info *reshape_info,
-                                 long *block_start,
-                                 long *block_count,
-                                 double *minmax_buffer,
-                                 double *fillvalue);
-static void get_block_min_and_max(Reshape_info *reshape_info,
-                                  long *block_start,
-                                  long *block_count,
-                                  double *minmax_buffer,
-                                  double *minimum,
-                                  double *maximum);
-static void truncate_input_vectors(Reshape_info *reshape_info,
-                                   long *input_start,
-                                   long *input_count);
-static void translate_output_to_input(Reshape_info *reshape_info,
-                                      long *output_start,
-                                      long *output_count,
-                                      long *input_start,
-                                      long *input_count);
-static void translate_input_to_output(Reshape_info *reshape_info,
-                                      long *input_start,
-                                      long *input_count,
-                                      long *output_start,
-                                      long *output_count);
-static void copy_the_chunk(Reshape_info *reshape_info,
-                           long chunk_start[],
-                           long chunk_count[],
-                           void *chunk_data,
-                           double fillvalue);
-static void convert_value_from_double(double dvalue, 
-                                      nc_type datatype, int is_signed,
-                                      void *ptr);
