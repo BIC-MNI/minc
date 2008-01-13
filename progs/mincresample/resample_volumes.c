@@ -6,7 +6,10 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.10  2008-01-13 09:38:54  stever
+ * Revision 6.11  2008-01-13 09:49:00  stever
+ * Add do_Ncubic_interpolation declaration, moved here from mincresample.h.
+ *
+ * Revision 6.10  2008/01/13 09:38:54  stever
  * Avoid compiler warnings about functions and variables that are defined
  * but not used.  Remove some such functions and variables,
  * conditionalize some, and move static declarations out of header files
@@ -108,7 +111,7 @@
 ---------------------------------------------------------------------------- */
 
 #ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.10 2008-01-13 09:38:54 stever Exp $";
+static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.11 2008-01-13 09:49:00 stever Exp $";
 #endif
 
 #if HAVE_CONFIG_H
@@ -131,6 +134,9 @@ static void get_slice(long slice_num, VVolume *in_vol, VVolume *out_vol,
                       double *minimum, double *maximum);
 static void renormalize_slices(Program_Flags *program_flags, VVolume *out_vol,
                                double slice_min[], double slice_max[]);
+static int do_Ncubic_interpolation(Volume_Data *volume, 
+                                   long index[], int cur_dim, 
+                                   double frac[], double *result);
 
 
 
