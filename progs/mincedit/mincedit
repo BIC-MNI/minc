@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.6  2008-01-09 14:42:24  rotor
+#   Revision 6.7  2008-01-16 00:45:34  rotor
+#    * replaced mincdump -h with mincheader to preserver image ranges
+#
+#   Revision 6.6  2008/01/09 14:42:24  rotor
 #    * tidied up the man page and removed problematic errexit option
 #
 #   Revision 6.5  2008/01/09 12:39:46  rotor
@@ -125,7 +128,7 @@ cdl_orig=${tmpdir}/${cdl_prefix}-orig.cdl
 cdl_edit=${tmpdir}/${cdl_prefix}-edit.cdl
 
 # dump the file
-mincdump -h $infile > $cdl_orig
+mincheader $infile > $cdl_orig
 status=$?
 if [ $status -ne 0 ]
 then
