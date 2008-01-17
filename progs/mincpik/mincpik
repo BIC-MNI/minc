@@ -65,7 +65,7 @@ $Help = <<HELP;
 | To display a default view, transverse slicing, middle slice
 | using display. (display is part of the Imagemagick package)
 |
-|    \$ mincpik infile.mnc MIFF:- | display -
+|    \$ mincpik infile.mnc PNG:- | display -
 |
 | To generate a PNG file of the 15th coronal slice
 |
@@ -159,10 +159,10 @@ $tmpdir = &tempdir( "$me-XXXXXXXX", TMPDIR => 1, CLEANUP => 1 );
 
 # set up file names and do a few checks
 $infile = $ARGV[0];
-$outfile = (defined($ARGV[1])) ? $ARGV[1] : 'MIFF:-';
+$outfile = (defined($ARGV[1])) ? $ARGV[1] : 'PNG:-';
 
 die "$me: Couldn't find $infile\n\n" if (!-e $infile);
-if($outfile ne 'MIFF:-' && -e $outfile && !$opt{clobber}){
+if($outfile ne 'PNG:-' && -e $outfile && !$opt{clobber}){
    die "\n$me: $outfile exists, use -clobber to overwrite\n\n";
    }
 
@@ -220,11 +220,11 @@ foreach $space (@{$opt{dirs}}){
    
    # set up the imgfile depending on triplanar and -title
    if($opt{triplanar}){
-      $imgfile = "$tmpdir/trip-$space.miff";
+      $imgfile = "$tmpdir/trip-$space.png";
       push(@mont_files, $imgfile);
       }
    elsif($opt{title}){
-      $imgfile = "$tmpdir/image.miff";
+      $imgfile = "$tmpdir/image.png";
       }
    else{
       $imgfile = $outfile;
@@ -333,7 +333,7 @@ if($opt{triplanar}){
    my @orient_args;
    
    if($opt{title}){
-      $imgfile = "$tmpdir/mont.miff";
+      $imgfile = "$tmpdir/mont.png";
       }
    else{
       $imgfile = $outfile;
