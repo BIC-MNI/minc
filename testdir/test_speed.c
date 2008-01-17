@@ -29,6 +29,8 @@ char *nctypename(nc_type datatype)
     case NC_DOUBLE:
         return "double";
     }
+
+    return "unknown";
 }
 
 int
