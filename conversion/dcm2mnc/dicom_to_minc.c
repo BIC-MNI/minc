@@ -8,7 +8,13 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.26  2008-01-17 02:33:01  rotor
+   * Revision 1.27  2008-01-17 06:20:54  stever
+   * 	* conversion/dcm2mnc/dicom_to_minc.c (copy_element_properties):
+   * 	Change return type from int to void; no callers require a return value.
+   *
+   * 	* conversion/micropet/upet2mnc.c (main): Return 0 at end of function.
+   *
+   * Revision 1.26  2008/01/17 02:33:01  rotor
    *  * removed all rcsids
    *  * removed a bunch of ^L's that somehow crept in
    *  * removed old (and outdated) BUGS file
@@ -2136,7 +2142,7 @@ dump_protocol_text(Acr_Element elem_ptr)
     return (output);
 }
 
-static int
+static void
 copy_element_properties(Acr_Element new_element, Acr_Element old_element)
 {
     acr_set_element_byte_order(new_element,

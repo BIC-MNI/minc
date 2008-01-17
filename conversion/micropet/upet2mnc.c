@@ -761,6 +761,8 @@ main(int argc, char **argv)
             message(MSG_INFO, "Finished creating %s\n", out_fname);
         }
     }
+
+    return 0;
 }
 
 
