@@ -330,6 +330,8 @@ nc_to_hdf5_type(nc_type dtype, int is_signed)
 	return (H5T_IEEE_F32LE);
     case NC_DOUBLE:
 	return (H5T_IEEE_F64LE);
+    case NC_NAT:
+       return (H5T_NO_CLASS);
     }
     return (-1);
 }
