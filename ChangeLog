@@ -1,5 +1,11 @@
-2008-01-13  Steve M. Robbins  <smr@sumost.ca>
 
+MINC 2:
+2008-01-17  Andrew L Janke <a.janke@gmail.com>
+	* removed add rcsid's as they are not used
+	* removed a bunch of ^L's that crept in somehow
+	* removed old and out of date BUGS file
+
+2008-01-13  Steve M. Robbins  <smr@sumost.ca>
 	* progs/mincreshape/mincreshape.h: 
 	* progs/mincreshape/mincreshape.c: 
 	* progs/mincreshape/copy_data.c: Move static function declarations
@@ -25,7 +31,6 @@
 	convert_numa3_coordinate(), since the caller is #if 0'd out.
 
 2008-01-12  Steve M. Robbins  <smr@sumost.ca>
-
 	* libsrc2/hyper.c (mirw_hyperslab_raw): 
 	* libsrc/hdf_convenience.c (hdf_varget): Use hsize_t rather than
 	hssize_t for 3rd argument to H5Sselect_hyperslab().
@@ -41,7 +46,6 @@
 	* testdir/icv_range.c:
 	* testdir/minc_types.c: Add braces around static initializers.
 
-MINC 2:
 2008-01-11  Andrew L Janke <a.janke@gmail.com>
 	* removed outdated TODO file
 	* merged WHATSNEW-2.0 into NEWS/README

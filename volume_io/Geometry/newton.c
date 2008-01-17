@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Geometry/newton.c,v 1.8 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #define  STEP_RATIO  1.0
 
 /* ----------------------------- MNI Header -----------------------------------

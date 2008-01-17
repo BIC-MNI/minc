@@ -10,7 +10,12 @@
 @CREATED    : December 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mnitominc.c,v $
- * Revision 6.2  2008-01-12 19:08:14  stever
+ * Revision 6.3  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.2  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.1  1999/10/29 17:52:06  neelin
@@ -59,10 +64,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/mnitominc/mnitominc.c,v 6.2 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>

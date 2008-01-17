@@ -16,7 +16,6 @@
  *
  * This file has been modified to not rely on tcl, tk or X11.
  * Based on tkArgv.c from tk2.3 : 
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/ParseArgv.c,v 6.7 2008-01-12 19:08:14 stever Exp $ SPRITE (Berkeley)";
  *
  * Modifications by Peter Neelin (November 27, 1992)
  */
@@ -48,7 +47,7 @@ static ArgvInfo defaultTable[] = {
 
 static void	PrintUsage _ANSI_ARGS_((ArgvInfo *argTable, int flags));
 static void     PrintVersion(ArgvInfo *argTable);
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -317,7 +316,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
    FPRINTF(stderr, "\"%s\" option requires an additional argument\n", curArg);
    return TRUE;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *

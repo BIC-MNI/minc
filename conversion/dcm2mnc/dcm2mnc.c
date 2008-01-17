@@ -5,7 +5,12 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.21  2008-01-12 19:08:14  stever
+ * Revision 1.22  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 1.21  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 1.20  2007/05/30 15:17:34  ilana
@@ -130,8 +135,6 @@
  * Will probably not work for Numa 3 files yet.
  *
 ---------------------------------------------------------------------------- */
-
-static const char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dcm2mnc/dcm2mnc.c,v 1.21 2008-01-12 19:08:14 stever Exp $";
 
 #define GLOBAL_ELEMENT_DEFINITION /* To define elements */
 #include "dcm2mnc.h"

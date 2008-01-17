@@ -11,7 +11,12 @@
 @CREATED    : March 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincconcat.c,v $
- * Revision 6.14  2008-01-12 19:08:15  stever
+ * Revision 6.15  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.14  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.13  2005/08/26 21:07:17  bert
@@ -107,10 +112,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.c,v 6.14 2008-01-12 19:08:15 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

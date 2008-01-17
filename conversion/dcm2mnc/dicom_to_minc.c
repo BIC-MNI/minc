@@ -8,7 +8,12 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.25  2008-01-12 19:08:14  stever
+   * Revision 1.26  2008-01-17 02:33:01  rotor
+   *  * removed all rcsids
+   *  * removed a bunch of ^L's that somehow crept in
+   *  * removed old (and outdated) BUGS file
+   *
+   * Revision 1.25  2008/01/12 19:08:14  stever
    * Add __attribute__ ((unused)) to all rcsid variables.
    *
    * Revision 1.24  2008/01/11 07:17:07  stever
@@ -198,7 +203,6 @@
    provided "as is" without express or implied warranty.
    ---------------------------------------------------------------------------- */
 
-static const char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/dicom_to_minc.c,v 1.25 2008-01-12 19:08:14 stever Exp $";
 #include "dcm2mnc.h"
 const char *World_Names[WORLD_NDIMS] = { "X", "Y", "Z" };
 const char *Volume_Names[VOL_NDIMS] = { "Slice", "Row", "Column" };

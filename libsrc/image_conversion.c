@@ -34,7 +34,12 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.15  2008-01-12 19:08:14  stever
+ * Revision 6.16  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.15  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.14  2007/12/12 20:55:26  rotor
@@ -161,10 +166,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/image_conversion.c,v 6.15 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
-
 #include "minc_private.h"
 #include "type_limits.h"
 
@@ -184,7 +185,7 @@ PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[]);
 /* Array of pointers to image conversion structures */
 static int minc_icv_list_nalloc = 0;
 static mi_icv_type **minc_icv_list = NULL;
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_create
 @INPUT      : (none)
@@ -298,7 +299,7 @@ MNCAPI int miicv_create()
 
    MI_RETURN(new_icv);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_free
 @INPUT      : icvid
@@ -347,7 +348,7 @@ MNCAPI int miicv_free(int icvid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_setdbl
 @INPUT      : icvid        - icv id
@@ -464,7 +465,7 @@ MNCAPI int miicv_setdbl(int icvid, int icv_property, double value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_setint
 @INPUT      : icvid        - icv id
@@ -493,7 +494,7 @@ MNCAPI int miicv_setint(int icvid, int icv_property, int value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_setlong
 @INPUT      : icvid        - icv id
@@ -521,7 +522,7 @@ MNCAPI int miicv_setlong(int icvid, int icv_property, long value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_setstr
 @INPUT      : icvid        - icv id
@@ -610,7 +611,7 @@ MNCAPI int miicv_setstr(int icvid, int icv_property, char *value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_inqdbl
 @INPUT      : icvid        - icv id
@@ -727,7 +728,8 @@ MNCAPI int miicv_inqdbl(int icvid, int icv_property, double *value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_inqint
 @INPUT      : icvid        - icv id
@@ -755,7 +757,8 @@ MNCAPI int miicv_inqint(int icvid, int icv_property, int *value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_inqlong
 @INPUT      : icvid        - icv id
@@ -783,7 +786,8 @@ MNCAPI int miicv_inqlong(int icvid, int icv_property, long *value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_inqstr
 @INPUT      : icvid        - icv id
@@ -875,7 +879,8 @@ MNCAPI int miicv_inqstr(int icvid, int icv_property, char *value)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_ndattach
 @INPUT      : icvid - icv id
@@ -975,7 +980,8 @@ MNCAPI int miicv_ndattach(int icvid, int cdfid, int varid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_type
 @INPUT      : icvp  - pointer to icv structure
@@ -1022,7 +1028,8 @@ PRIVATE int MI_icv_get_type(mi_icv_type *icvp, int cdfid, int varid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_vrange
 @INPUT      : icvp  - pointer to icv structure
@@ -1051,7 +1058,8 @@ PRIVATE int MI_icv_get_vrange(mi_icv_type *icvp, int cdfid, int varid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_get_default_range
 @INPUT      : what     - MIvalid_min means get default min, MIvalid_min means 
@@ -1089,7 +1097,8 @@ PRIVATE double MI_get_default_range(char *what, nc_type datatype, int sign)
 
    MI_RETURN(MI_DEFAULT_MIN);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_norm
 @INPUT      : icvp  - pointer to icv structure
@@ -1177,7 +1186,8 @@ PRIVATE int MI_icv_get_norm(mi_icv_type *icvp, int cdfid, int varid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_detach
 @INPUT      : icvid - icv id
@@ -1223,7 +1233,8 @@ MNCAPI int miicv_detach(int icvid)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_get
 @INPUT      : icvid  - icv id
@@ -1255,7 +1266,8 @@ MNCAPI int miicv_get(int icvid, long start[], long count[], void *values)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_put
 @INPUT      : icvid  - icv id
@@ -1288,7 +1300,8 @@ MNCAPI int miicv_put(int icvid, long start[], long count[], void *values)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_access
 @INPUT      : operation - MI_PRIV_GET or MI_PRIV_PUT
@@ -1422,7 +1435,8 @@ PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_zero_buffer
 @INPUT      : icvp      - icv structure pointer
@@ -1476,7 +1490,8 @@ PRIVATE int MI_icv_zero_buffer(mi_icv_type *icvp, long count[], void *values)
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_coords_tovar
 @INPUT      : icvp      - icv structure pointer
@@ -1578,7 +1593,8 @@ PRIVATE int MI_icv_coords_tovar(mi_icv_type *icvp,
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_calc_scale
 @INPUT      : operation - MI_PRIV_GET or MI_PRIV_PUT
@@ -1773,7 +1789,8 @@ PRIVATE int MI_icv_calc_scale(int operation, mi_icv_type *icvp, long coords[])
 
    MI_RETURN(MI_NOERROR);
 }
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_chkid
 @INPUT      : icvid  - icv id

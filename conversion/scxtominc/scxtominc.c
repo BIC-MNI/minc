@@ -10,7 +10,12 @@
 @CREATED    : January 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: scxtominc.c,v $
- * Revision 6.3  2008-01-12 19:08:14  stever
+ * Revision 6.4  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.3  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.2  1999/11/09 13:34:48  neelin
@@ -79,10 +84,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/scxtominc/scxtominc.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -499,7 +500,6 @@ int main(int argc, char *argv[])
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : usage_error
 @INPUT      : progname - program name
@@ -522,7 +522,6 @@ void usage_error(char *progname)
    exit(EXIT_FAILURE);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_scx_file_info
 @INPUT      : num_scx_files - number of scanditronix files.
@@ -821,7 +820,6 @@ int get_scx_file_info(int num_scx_files, char **scx_files,
    return -1;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : sort_scx_slices
 @INPUT      : sort_over_time - boolean indicating whether sort should be
@@ -906,7 +904,6 @@ void sort_scx_slices(int sort_over_time, int num_scx_files,
    return;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : sortcmp
 @INPUT      : val1 - first value
@@ -936,7 +933,6 @@ int sortcmp(const void *val1, const void *val2)
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : setup_minc_file
 @INPUT      : mincid - id of minc file
@@ -1153,7 +1149,6 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    return icv;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_scx_slice
 @INPUT      : scx_fp - file pointer for scanditronix file
@@ -1205,7 +1200,6 @@ int get_scx_slice(scx_file *scx_fp, int slice_num,
    return FALSE;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : write_minc_slice
 @INPUT      : scale - scale for decay correcting image
@@ -1286,7 +1280,6 @@ int write_minc_slice(double scale, int write_byte_data,
    return FALSE;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : decay_correction
 @INPUT      : scan_time - time of beginning of sample

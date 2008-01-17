@@ -5,7 +5,12 @@
 @CREATED    : November 26, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: gyrotominc.c,v $
- * Revision 6.3  2008-01-12 19:08:14  stever
+ * Revision 6.4  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.3  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.2  2001/04/09 23:02:50  neelin
@@ -57,10 +62,6 @@
               Copyright 1993 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/gyrotominc.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <gcomserver.h>
 #include <ParseArgv.h>

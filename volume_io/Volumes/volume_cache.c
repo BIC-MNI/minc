@@ -12,10 +12,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/volume_cache.c,v 1.30 2008-01-12 19:08:16 stever Exp $";
-#endif
-
 #include  <internal_volume_io.h>
 
 #define   HASH_FUNCTION_CONSTANT          0.6180339887498948482

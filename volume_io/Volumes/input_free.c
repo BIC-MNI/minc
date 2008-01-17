@@ -15,10 +15,6 @@
 #include  <internal_volume_io.h>
 #include  <minc.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_free.c,v 1.30 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #define  DEFAULT_SUFFIX  "fre"
 
 #define  NUM_BYTE_VALUES      256

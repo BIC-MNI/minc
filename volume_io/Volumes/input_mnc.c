@@ -15,10 +15,6 @@
 #include  <internal_volume_io.h>
 #include  <minc.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_mnc.c,v 1.70 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #define  INVALID_AXIS   -1
 
 #define  MIN_SLAB_SIZE    10000     /* at least 10000 entries per read */

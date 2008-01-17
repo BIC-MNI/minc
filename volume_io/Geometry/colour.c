@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour.c,v 1.5 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : make_Colour
 @INPUT      : r

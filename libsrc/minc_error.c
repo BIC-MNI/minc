@@ -7,7 +7,12 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_error.c,v $
- * Revision 6.5  2008-01-12 19:08:14  stever
+ * Revision 6.6  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.5  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.4  2004/10/15 13:46:15  bert
@@ -57,10 +62,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/minc_error.c,v 6.5 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
 
 #include <errno.h>
 #include <stdarg.h>

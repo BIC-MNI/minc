@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Geometry/splines.c,v 1.7 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 /*--- Weighting functions which define the splines, all of which are
       interpolation splines, with the exception of the quadratic spline */
 

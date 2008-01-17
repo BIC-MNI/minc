@@ -13,7 +13,12 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.c,v $
- * Revision 6.13  2008-01-13 09:38:54  stever
+ * Revision 6.14  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.13  2008/01/13 09:38:54  stever
  * Avoid compiler warnings about functions and variables that are defined
  * but not used.  Remove some such functions and variables,
  * conditionalize some, and move static declarations out of header files
@@ -105,10 +110,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincreshape/mincreshape.c,v 6.13 2008-01-13 09:38:54 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

@@ -19,7 +19,12 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.17  2008-01-13 09:38:54  stever
+ * Revision 1.18  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 1.17  2008/01/13 09:38:54  stever
  * Avoid compiler warnings about functions and variables that are defined
  * but not used.  Remove some such functions and variables,
  * conditionalize some, and move static declarations out of header files
@@ -93,10 +98,6 @@ Mon May 28 01:00:01 EST 2000 - First minc version - Andrew Janke
 Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/minccalc/minccalc.c,v 1.17 2008-01-13 09:38:54 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

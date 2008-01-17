@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Geometry/colour_def.c,v 1.8 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : make_rgba_Colour
 @INPUT      : r

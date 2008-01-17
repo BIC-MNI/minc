@@ -16,10 +16,6 @@
 #include  <limits.h>
 #include  <float.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/multidim_arrays.c,v 1.17 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : create_empty_multidim_array
 @INPUT      : n_dimensions

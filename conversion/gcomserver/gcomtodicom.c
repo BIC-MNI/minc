@@ -5,7 +5,12 @@
 @GLOBALS    : 
 @CREATED    : June 9, 1997 (Peter Neelin)
 @MODIFIED   : $Log: gcomtodicom.c,v $
-@MODIFIED   : Revision 6.4  2008-01-12 19:08:14  stever
+@MODIFIED   : Revision 6.5  2008-01-17 02:33:02  rotor
+@MODIFIED   :  * removed all rcsids
+@MODIFIED   :  * removed a bunch of ^L's that somehow crept in
+@MODIFIED   :  * removed old (and outdated) BUGS file
+@MODIFIED   :
+@MODIFIED   : Revision 6.4  2008/01/12 19:08:14  stever
 @MODIFIED   : Add __attribute__ ((unused)) to all rcsid variables.
 @MODIFIED   :
 @MODIFIED   : Revision 6.3  2001/04/21 12:50:47  neelin
@@ -24,10 +29,6 @@
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/gcomtodicom.c,v 6.4 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

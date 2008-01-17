@@ -10,7 +10,12 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.6  2008-01-12 19:08:15  stever
+ * Revision 6.7  2008-01-17 02:33:06  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.6  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.5  2007/12/11 12:43:01  rotor
@@ -75,10 +80,6 @@
  * Initial revision
  * 
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincwindow/mincwindow.c,v 6.6 2008-01-12 19:08:15 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

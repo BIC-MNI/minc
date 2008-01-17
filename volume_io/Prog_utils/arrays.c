@@ -12,10 +12,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/arrays.c,v 1.5 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #include  <internal_volume_io.h>
 
 /* ----------------------------- MNI Header -----------------------------------

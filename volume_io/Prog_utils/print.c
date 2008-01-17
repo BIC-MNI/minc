@@ -15,10 +15,6 @@
 #include  <internal_volume_io.h>
 #include  <stdarg.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/print.c,v 1.14 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #define  MAX_PRINT_STACK  100
 
 typedef  void (*print_function_type) ( STRING );

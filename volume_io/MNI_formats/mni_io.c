@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/MNI_formats/mni_io.c,v 1.13 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 static   const char      COMMENT_CHAR1 = '%';
 static   const char      COMMENT_CHAR2 = '#';
 

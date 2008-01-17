@@ -5,7 +5,12 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicomserver.c,v $
- * Revision 6.6  2008-01-12 19:08:14  stever
+ * Revision 6.7  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.6  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.5  2001/06/26 10:19:41  neelin
@@ -59,10 +64,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dicomserver/dicomserver.c,v 6.6 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

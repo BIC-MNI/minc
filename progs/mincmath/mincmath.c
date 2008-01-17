@@ -10,7 +10,12 @@
 @CREATED    : April 28, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmath.c,v $
- * Revision 6.13  2008-01-13 04:30:28  stever
+ * Revision 6.14  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.13  2008/01/13 04:30:28  stever
  * Add braces around static initializers.
  *
  * Revision 6.12  2008/01/12 19:08:15  stever
@@ -89,10 +94,6 @@
  * Initial revision
  *
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincmath/mincmath.c,v 6.13 2008-01-13 04:30:28 stever Exp $";
-#endif
 
 #define _GNU_SOURCE 1
 #if HAVE_CONFIG_H

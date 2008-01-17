@@ -6,7 +6,12 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.2  2008-01-12 19:08:14  stever
+@MODIFIED   : Revision 1.3  2008-01-17 02:33:01  rotor
+@MODIFIED   :  * removed all rcsids
+@MODIFIED   :  * removed a bunch of ^L's that somehow crept in
+@MODIFIED   :  * removed old (and outdated) BUGS file
+@MODIFIED   :
+@MODIFIED   : Revision 1.2  2008/01/12 19:08:14  stever
 @MODIFIED   : Add __attribute__ ((unused)) to all rcsid variables.
 @MODIFIED   :
 @MODIFIED   : Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -34,10 +39,6 @@
  * Initial revision
  *
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/siemens_to_dicom.c,v 1.2 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

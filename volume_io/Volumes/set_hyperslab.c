@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/set_hyperslab.c,v 1.4 2008-01-12 19:08:16 stever Exp $";
-#endif
-
 VIOAPI  void  convert_values_to_voxels(
     Volume   volume,
     int      n_voxels,

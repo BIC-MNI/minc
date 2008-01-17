@@ -6,7 +6,12 @@
 @CREATED    : February 8, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: resample_volumes.c,v $
- * Revision 6.11  2008-01-13 09:49:00  stever
+ * Revision 6.12  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.11  2008/01/13 09:49:00  stever
  * Add do_Ncubic_interpolation declaration, moved here from mincresample.h.
  *
  * Revision 6.10  2008/01/13 09:38:54  stever
@@ -109,10 +114,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincresample/resample_volumes.c,v 6.11 2008-01-13 09:49:00 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

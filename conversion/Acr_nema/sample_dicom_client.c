@@ -5,7 +5,12 @@
 @CREATED    : May 6, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: sample_dicom_client.c,v $
- * Revision 6.4  2008-01-12 19:08:14  stever
+ * Revision 6.5  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.4  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.3  2004/10/29 13:08:42  rotor
@@ -61,10 +66,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/Acr_nema/sample_dicom_client.c,v 6.4 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>

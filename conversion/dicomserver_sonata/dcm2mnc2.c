@@ -5,7 +5,12 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc2.c,v $
- * Revision 1.2  2008-01-12 19:08:14  stever
+ * Revision 1.3  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 1.2  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 1.1.1.1  2003/08/15 19:52:55  leili
@@ -46,10 +51,6 @@
  * Will probably not work for Numa 3 files yet.
  *
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/dicomserver_sonata/dcm2mnc2.c,v 1.2 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

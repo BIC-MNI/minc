@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/progress.c,v 1.11 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #define  FIRST_MESSAGE_THRESHOLD   5.0
 
 #define  ONE_LINE_THRESHOLD        160.0

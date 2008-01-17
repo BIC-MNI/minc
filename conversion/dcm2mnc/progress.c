@@ -4,8 +4,6 @@
 //
 //      for (index =  0; index < end; index++) { ...
 
-static const char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/conversion/dcm2mnc/progress.c,v 1.3 2008-01-12 19:08:14 stever Exp $";
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

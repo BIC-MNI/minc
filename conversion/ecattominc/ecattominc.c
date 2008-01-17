@@ -10,7 +10,12 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.5  2008-01-12 19:08:14  stever
+ * Revision 6.6  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.5  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.4  2005/01/19 19:46:01  bert
@@ -69,10 +74,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/ecattominc/ecattominc.c,v 6.5 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -551,7 +552,6 @@ int main(int argc, char *argv[])
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : usage_error
 @INPUT      : progname - program name
@@ -574,7 +574,6 @@ void usage_error(char *progname)
    exit(EXIT_FAILURE);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_frame_info
 @INPUT      : ecat_fp - file pointer for ecat file
@@ -1038,7 +1037,6 @@ int get_frame_info(Ecat_file *ecat_fp, int slice_range[2],
    return -1;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : sort_slices
 @INPUT      : sort_over_time - boolean indicating whether sort should be
@@ -1122,7 +1120,6 @@ void sort_slices(int sort_over_time, int num_frames,
    return;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : sortcmp
 @INPUT      : val1 - first value
@@ -1152,7 +1149,6 @@ int sortcmp(const void *val1, const void *val2)
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : setup_minc_file
 @INPUT      : mincid - id of minc file
@@ -1440,7 +1436,6 @@ int setup_minc_file(int mincid, int write_byte_data, int copy_all_header,
    return icv;
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_slice
 @INPUT      : ecat_fp - file pointer for file

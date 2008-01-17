@@ -39,7 +39,12 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: netcdf_convenience.c,v $
- * Revision 6.20  2008-01-12 19:08:14  stever
+ * Revision 6.21  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.20  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.19  2005/08/26 21:04:58  bert
@@ -174,10 +179,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/netcdf_convenience.c,v 6.20 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
-
 #include "minc_private.h"
 
 #if HAVE_UNISTD_H
@@ -223,7 +224,6 @@ static int mi_h5_files = 0;
 
 #endif /* MINC2 defined */
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : execute_decompress_command
 @INPUT      : command - command to execute
@@ -369,7 +369,6 @@ PRIVATE int execute_decompress_command(char *command, char *infile,
 #endif         /* ifndef unix else */
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miexpand_file
 @INPUT      : path  - name of file to open.
@@ -559,7 +558,6 @@ MNCAPI char *miexpand_file(char *path, char *tempfile, int header_only,
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miopen
 @INPUT      : path  - name of file to open
@@ -661,7 +659,6 @@ MNCAPI int miopen(char *path, int mode)
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micreate
 @INPUT      : path  - name of file to create
@@ -734,7 +731,6 @@ MNCAPI int micreate(char *path, int cmode)
 }
 #endif /* MINC2 not defined */
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miclose
 @INPUT      : cdfid - id of file to close
@@ -771,7 +767,6 @@ MNCAPI int miclose(int cdfid)
    MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattget
 @INPUT      : cdfid      - cdf file id
@@ -811,7 +806,6 @@ MNCAPI int miattget(int cdfid, int varid, char *name, nc_type datatype,
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattget_with_sign
 @INPUT      : cdfid      - cdf file id
@@ -914,7 +908,6 @@ MNCAPI int miattget_with_sign(int cdfid, int varid, char *name,
    MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattget1
 @INPUT      : cdfid      - cdf file id
@@ -958,7 +951,6 @@ MNCAPI int miattget1(int cdfid, int varid, char *name, nc_type datatype,
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattgetstr
 @INPUT      : cdfid    - cdf file id
@@ -1040,7 +1032,6 @@ MNCAPI char *miattgetstr(int cdfid, int varid, char *name,
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattputint
 @INPUT      : cdfid    - cdf file id
@@ -1071,7 +1062,6 @@ MNCAPI int miattputint(int cdfid, int varid, char *name, int value)
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattputdbl
 @INPUT      : cdfid    - cdf file id
@@ -1098,7 +1088,6 @@ MNCAPI int miattputdbl(int cdfid, int varid, char *name, double value)
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattputstr
 @INPUT      : cdfid    - cdf file id
@@ -1127,7 +1116,6 @@ MNCAPI int miattputstr(int cdfid, int varid, char *name, char *value)
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivarget
 @INPUT      : cdfid    - cdf file id
@@ -1168,7 +1156,6 @@ MNCAPI int mivarget(int cdfid, int varid, long start[], long count[],
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivarget1
 @INPUT      : cdfid    - cdf file id
@@ -1211,7 +1198,6 @@ MNCAPI int mivarget1(int cdfid, int varid, long mindex[],
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivarput
 @INPUT      : cdfid    - cdf file id
@@ -1253,7 +1239,6 @@ MNCAPI int mivarput(int cdfid, int varid, long start[], long count[],
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivarput1
 @INPUT      : cdfid    - cdf file id
@@ -1296,7 +1281,6 @@ MNCAPI int mivarput1(int cdfid, int varid, long mindex[],
     MI_RETURN(status);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miset_coords
 @INPUT      : nvals  - number of values in coordinate vector to set
@@ -1322,7 +1306,6 @@ MNCAPI long *miset_coords(int nvals, long value, long coords[])
    MI_RETURN(coords);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mitranslate_coords
 @INPUT      : cdfid     - cdf file id
@@ -1377,7 +1360,6 @@ MNCAPI long *mitranslate_coords(int cdfid,
    MI_RETURN(outcoords);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micopy_all_atts
 @INPUT      : incdfid  - input cdf file id
@@ -1470,7 +1452,6 @@ MNCAPI int micopy_all_atts(int incdfid, int invarid,
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micopy_var_def
 @INPUT      : incdfid  - input cdf file id
@@ -1580,7 +1561,6 @@ MNCAPI int micopy_var_def(int incdfid, int invarid, int outcdfid)
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivarsize
 @INPUT      : fd  - file id
@@ -1616,7 +1596,6 @@ mivarsize(int fd, int varid, long *size_ptr)
     return (MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micopy_var_values
 @INPUT      : incdfid  - input cdf file id
@@ -1689,7 +1668,6 @@ MNCAPI int micopy_var_values(int incdfid, int invarid,
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_vcopy_action
 @INPUT      : ndims       - number of dimensions
@@ -1734,7 +1712,6 @@ PRIVATE int MI_vcopy_action(int ndims, long start[], long count[],
 
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micopy_all_var_defs
 @INPUT      : incdfid       - input cdf file id
@@ -1800,7 +1777,6 @@ MNCAPI int micopy_all_var_defs(int incdfid, int outcdfid, int nexclude,
        
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micopy_all_var_values
 @INPUT      : incdfid       - input cdf file id
@@ -1876,7 +1852,6 @@ MNCAPI int micopy_all_var_values(int incdfid, int outcdfid, int nexclude,
        
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micreate_tempfile
 @INPUT      : void

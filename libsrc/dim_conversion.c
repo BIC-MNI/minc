@@ -18,7 +18,12 @@
 @CREATED    : September 9, 1992. (Peter Neelin)
 @MODIFIED   : 
  * $Log: dim_conversion.c,v $
- * Revision 6.5  2008-01-12 19:08:14  stever
+ * Revision 6.6  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.5  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.4  2004/10/15 13:44:52  bert
@@ -85,10 +90,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/dim_conversion.c,v 6.5 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
-
 #include "minc_private.h"
 #include <math.h>
 #include <type_limits.h>
@@ -109,7 +110,6 @@ PRIVATE int MI_icv_dimconv_init(int operation, mi_icv_type *icvp,
                               long bufstart[], long bufcount[], void *buffer);
 
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miicv_attach
 @INPUT      : icvid - icv id
@@ -190,7 +190,6 @@ MNCAPI int miicv_attach(int icvid, int cdfid, int varid)
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_dim
 @INPUT      : icvp  - pointer to icv structure
@@ -267,7 +266,6 @@ PRIVATE int MI_icv_get_dim(mi_icv_type *icvp, int cdfid, int varid)
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_dim_flip
 @INPUT      : icvp  - icv pointer
@@ -340,7 +338,6 @@ PRIVATE int MI_get_dim_flip(mi_icv_type *icvp, int cdfid, int dimvid[],
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_dim_scale
 @INPUT      : icvp  - icv pointer
@@ -491,7 +488,6 @@ PRIVATE int MI_get_dim_scale(mi_icv_type *icvp, int cdfid, int dimvid[])
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_dim_bufsize_step
 @INPUT      : icvp  - icv pointer
@@ -533,7 +529,7 @@ PRIVATE int MI_get_dim_bufsize_step(mi_icv_type *icvp, int subsc[])
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_get_dim_conversion
 @INPUT      : icvp  - icv pointer
@@ -596,7 +592,6 @@ PRIVATE int MI_icv_get_dim_conversion(mi_icv_type *icvp, int subsc[])
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_dimconvert
 @INPUT      : operation  - MI_PRIV_GET or MI_PRIV_PUT
@@ -778,7 +773,6 @@ PRIVATE int MI_icv_dimconvert(int operation, mi_icv_type *icvp,
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_icv_dimconv_init
 @INPUT      : operation  - MI_PRIV_GET or MI_PRIV_PUT

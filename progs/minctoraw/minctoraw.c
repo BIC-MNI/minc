@@ -10,7 +10,12 @@
 @CREATED    : February 11, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minctoraw.c,v $
- * Revision 6.11  2008-01-12 19:08:15  stever
+ * Revision 6.12  2008-01-17 02:33:06  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.11  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.10  2007/12/11 12:43:01  rotor
@@ -90,10 +95,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/minctoraw/minctoraw.c,v 6.11 2008-01-12 19:08:15 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"

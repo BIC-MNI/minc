@@ -5,7 +5,12 @@
 @CREATED    : February 1, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: time_stamp.c,v $
- * Revision 6.3  2008-01-12 19:08:14  stever
+ * Revision 6.4  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.3  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.2  2004/10/15 13:46:51  bert
@@ -57,10 +62,6 @@
 #include "minc_private.h"
 #include <time.h>
 #include <time_stamp.h>
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/libsrc/time_stamp.c,v 6.3 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : time_stamp

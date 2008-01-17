@@ -6,7 +6,12 @@
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: vax_conversions.c,v $
- * Revision 6.3  2008-01-12 19:08:15  stever
+ * Revision 6.4  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.3  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.2  1999/10/19 15:57:18  neelin
@@ -47,10 +52,6 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/Proglib/vax_conversions.c,v 6.3 2008-01-12 19:08:15 stever Exp $";
-#endif
 
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_vax_short

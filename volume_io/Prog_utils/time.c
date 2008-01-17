@@ -34,10 +34,6 @@
 #define CLK_TCK CLOCKS_PER_SEC
 #endif
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Prog_utils/time.c,v 1.25 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : get_clock_ticks_per_second
 @INPUT      : 

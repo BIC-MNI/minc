@@ -14,7 +14,12 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: value_conversion.c,v $
- * Revision 6.7  2008-01-12 19:08:14  stever
+ * Revision 6.8  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.7  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.6  2004/10/15 13:45:28  bert
@@ -90,10 +95,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/value_conversion.c,v 6.7 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
-
 #include "minc_private.h"
 #include <math.h>
 #include "type_limits.h"
@@ -104,7 +105,8 @@ PRIVATE int MI_var_action(int ndims, long var_start[], long var_count[],
 PRIVATE int MI_get_sign(nc_type datatype, int sign);
 
 
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_varaccess
 @INPUT      : operation - either MI_PRIV_GET or MI_PRIV_PUT, indicating
@@ -242,7 +244,8 @@ SEMIPRIVATE int MI_varaccess(int operation, int cdfid, int varid,
    
 }
 
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_var_action
 @INPUT      : ndims       - number of dimensions
@@ -330,7 +333,8 @@ PRIVATE int MI_var_action(int ndims, long var_start[], long var_count[],
 
 }
 
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_var_loop
 @INPUT      : ndims       - number of dimensions in variable
@@ -458,7 +462,8 @@ SEMIPRIVATE int MI_var_loop(int ndims, long start[], long count[],
    
 }
 
-
+
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_get_sign_from_string
 @INPUT      : type - type of value
@@ -485,7 +490,6 @@ SEMIPRIVATE int MI_get_sign_from_string(nc_type datatype, char *sign)
                                                       MI_PRIV_DEFSIGN));
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_get_sign
 @INPUT      : type - type of value
@@ -522,7 +526,6 @@ PRIVATE int MI_get_sign(nc_type datatype, int sign)
                                                   MI_PRIV_SIGNED );
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_convert_type
 @INPUT      : number_of_values  - number of values to copy

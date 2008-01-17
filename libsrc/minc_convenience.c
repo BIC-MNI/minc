@@ -30,7 +30,12 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_convenience.c,v $
- * Revision 6.20  2008-01-12 19:08:14  stever
+ * Revision 6.21  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.20  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.19  2007/12/03 14:19:35  rotor
@@ -144,10 +149,6 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/libsrc/minc_convenience.c,v 6.20 2008-01-12 19:08:14 stever Exp $ MINC (MNI)";
-#endif
-
 #include "minc_private.h"
 #include "type_limits.h"
 #include "minc_varlists.h"
@@ -236,7 +237,7 @@ MNCAPI int miget_datatype(int cdfid, int imgid,
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miget_default_range
 @INPUT      : datatype
@@ -284,7 +285,7 @@ MNCAPI int miget_default_range(nc_type datatype, int is_signed,
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miget_valid_range
 @INPUT      : cdfid    - cdf file id
@@ -384,7 +385,7 @@ MNCAPI int miget_valid_range(int cdfid, int imgid, double valid_range[])
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miset_valid_range
 @INPUT      : cdfid    - cdf file id
@@ -438,7 +439,7 @@ MNCAPI int miset_valid_range(int cdfid, int imgid, double valid_range[])
    MI_RETURN(status);
 
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miget_image_range
 @INPUT      : cdfid    - cdf file id
@@ -577,7 +578,7 @@ MNCAPI int miget_image_range(int cdfid, double image_range[])
 
    MI_RETURN(MI_NOERROR);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : mivar_exists
 @INPUT      : cdfid    - cdf file id
@@ -605,7 +606,7 @@ MNCAPI int mivar_exists(int cdfid, char *varname)
 
    MI_RETURN(exists);
 }
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattput_pointer
 @INPUT      : cdfid    - cdf file id
@@ -656,7 +657,7 @@ MNCAPI int miattput_pointer(int cdfid, int varid, char *name, int ptrvarid)
    MI_RETURN(MI_NOERROR);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miattget_pointer
 @INPUT      : cdfid - cdf file id
@@ -701,7 +702,7 @@ MNCAPI int miattget_pointer(int cdfid, int varid, char *name)
    MI_RETURN(ptrvarid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miadd_child
 @INPUT      : cdfid        - cdf file id
@@ -804,7 +805,7 @@ MNCAPI int miadd_child(int cdfid, int parent_varid, int child_varid)
 
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micreate_std_variable
 @INPUT      : cdfid    - cdf file id
@@ -873,7 +874,7 @@ MNCAPI int micreate_std_variable(int cdfid, char *name, nc_type datatype,
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_dim_variable
 @INPUT      : cdfid    - cdf file id
@@ -946,7 +947,7 @@ PRIVATE int MI_create_dim_variable(int cdfid, char *name,
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_dimwidth_variable
 @INPUT      : cdfid    - cdf file id
@@ -1006,7 +1007,7 @@ PRIVATE int MI_create_dimwidth_variable(int cdfid, char *name,
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_image_variable
 @INPUT      : cdfid    - cdf file id
@@ -1072,7 +1073,7 @@ PRIVATE int MI_create_image_variable(int cdfid, char *name, nc_type datatype,
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_imaxmin_variable
 @INPUT      : cdfid    - cdf file id
@@ -1152,7 +1153,7 @@ PRIVATE int MI_create_imaxmin_variable(int cdfid, char *name, nc_type datatype,
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_verify_maxmin_dims
 @INPUT      : cdfid        - cdf file id
@@ -1202,7 +1203,7 @@ PRIVATE int MI_verify_maxmin_dims(int cdfid,
    MI_RETURN(MI_NOERROR);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_root_variable
 @INPUT      : cdfid    - cdf file id
@@ -1237,7 +1238,7 @@ PRIVATE int MI_create_root_variable(int cdfid, char *name)
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_create_simple_variable
 @INPUT      : cdfid    - cdf file id
@@ -1267,7 +1268,7 @@ PRIVATE int MI_create_simple_variable(int cdfid, char *name)
    MI_RETURN(varid);
 }
 
-
+
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_add_stdgroup
 @INPUT      : cdfid    - cdf file id
@@ -1309,7 +1310,6 @@ PRIVATE int MI_add_stdgroup(int cdfid, int varid)
    MI_RETURN(MI_NOERROR);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : micreate_group_variable
 @INPUT      : cdfid - cdf file id
@@ -1337,7 +1337,6 @@ MNCAPI int micreate_group_variable(int cdfid, char *name)
    MI_RETURN(varid);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : miappend_history
 @INPUT      : id - cdf file id
@@ -1415,7 +1414,6 @@ miappend_history(int fd, const char *tm_stamp)
     return (r);
 }
 
-
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : MI_is_in_list
 @INPUT      : string    - string for which to look

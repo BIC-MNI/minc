@@ -5,7 +5,12 @@
 @CREATED    : September 12, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_to_dicom.c,v $
- * Revision 1.20  2008-01-12 19:08:14  stever
+ * Revision 1.21  2008-01-17 02:33:01  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 1.20  2008/01/12 19:08:14  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 1.19  2001/04/21 18:30:23  neelin
@@ -90,10 +95,6 @@
               Copyright 1997 Peter Neelin, McConnell Brain Imaging Centre, 
               Montreal Neurological Institute, McGill University.
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/conversion/gcomserver/convert_to_dicom.c,v 1.20 2008-01-12 19:08:14 stever Exp $";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

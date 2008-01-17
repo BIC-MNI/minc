@@ -14,10 +14,6 @@
 
 #include  <internal_volume_io.h>
 
-#ifndef lint
-static char rcsid[] __attribute__ ((unused)) = "$Header: /private-cvsroot/minc/volume_io/Volumes/input_volume.c,v 1.43 2008-01-12 19:08:15 stever Exp $";
-#endif
-
 #include  <minc.h>
 
 #define   FREE_ENDING   "fre"

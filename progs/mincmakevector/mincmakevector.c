@@ -11,7 +11,12 @@
 @CREATED    : August 11, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincmakevector.c,v $
- * Revision 6.9  2008-01-12 19:08:15  stever
+ * Revision 6.10  2008-01-17 02:33:02  rotor
+ *  * removed all rcsids
+ *  * removed a bunch of ^L's that somehow crept in
+ *  * removed old (and outdated) BUGS file
+ *
+ * Revision 6.9  2008/01/12 19:08:15  stever
  * Add __attribute__ ((unused)) to all rcsid variables.
  *
  * Revision 6.8  2007/12/11 12:43:01  rotor
@@ -52,10 +57,6 @@
  * Initial revision
  *
 ---------------------------------------------------------------------------- */
-
-#ifndef lint
-static char rcsid[] __attribute__ ((unused))="$Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.c,v 6.9 2008-01-12 19:08:15 stever Exp $";
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
