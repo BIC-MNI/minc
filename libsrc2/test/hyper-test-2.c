@@ -23,7 +23,7 @@ static int error_cnt = 0;
 #define CX 210
 #define NDIMS 3
 
-int create_test_file(void)
+void create_test_file(void)
 {
     int r;
     double start_values[3]={-6.96, -12.453,  -9.48};

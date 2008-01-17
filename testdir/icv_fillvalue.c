@@ -92,4 +92,5 @@ int main(int argc, char **argv)
 
    (void) miclose(mincid);
 
+   return 0;
 }
