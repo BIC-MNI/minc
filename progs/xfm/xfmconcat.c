@@ -10,7 +10,11 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.5  2008-01-17 02:33:06  rotor
+ * Revision 6.6  2008-01-23 22:54:35  rotor
+ *  * added Claude to AUTHORS
+ *  * added a patch for history to xfmconcat from Mishkin Derakhshan
+ *
+ * Revision 6.5  2008/01/17 02:33:06  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -75,6 +79,7 @@
 #include <string.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
+ #include <time_stamp.h>
 
 /* Constants */
 #ifndef TRUE
@@ -94,7 +99,11 @@ int main(int argc, char *argv[])
    General_transform trans1, trans2, trans3;
    General_transform *new_result, *old_result, *input, *temp_result;
    int iarg, first_arg, last_arg, output_arg;
-
+   char *arg_string;
+   
+   /* collect the command line for history */
+   arg_string = time_stamp(argc, argv);
+   
    /* Check arguments */
    if (ParseArgv(&argc, argv, argTable, 0) || argc < 3) {
       (void) fprintf(stderr, 
@@ -138,7 +147,7 @@ int main(int argc, char *argv[])
    }     /* End of loop through arguments */
 
    /* Write out the transform */
-   if (output_transform_file(argv[output_arg], NULL, new_result) != OK) {
+   if (output_transform_file(argv[output_arg], arg_string, new_result) != OK) {
       (void) fprintf(stderr, "%s: Error writing transform file %s\n",
                      argv[0], argv[output_arg]);
       exit(EXIT_FAILURE);
