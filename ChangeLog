@@ -1,6 +1,7 @@
 2008-01-24  Andrew L Janke <a.janke@gmail.com>
 	* AUTHORS: added Claude Lepage
 	* progs/xfm/xfmconcat.c: Added a history patch from Mishkin Derakhshan
+	* conversion/nifti1/nii2mnc.c: Added a patch from Claude for patient names
 
 2008-01-17   Andrew L Janke <a.janke@gmail.com>
 	* libsrc/hdf_convenience.c (hdf_path_from_name): added NC_NAT to switch
