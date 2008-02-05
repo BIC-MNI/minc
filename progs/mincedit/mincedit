@@ -6,7 +6,10 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.7  2008-01-16 00:45:34  rotor
+#   Revision 6.8  2008-02-05 13:48:45  rotor
+#    * added code for checking VISUAL and EDITOR before falling back to emacs
+#
+#   Revision 6.7  2008/01/16 00:45:34  rotor
 #    * replaced mincdump -h with mincheader to preserver image ranges
 #
 #   Revision 6.6  2008/01/09 14:42:24  rotor
@@ -68,7 +71,6 @@
 # software for any purpose.  It is provided "as is" without
 # express or implied warranty.
 
-set -o nounset
 
 # simple little function to emulate perl's die();
 die () {
@@ -89,9 +91,6 @@ trap ' exit ' 0 1 2 3 15
    exit 1
    }
 
-# Set default editor
-editor="emacs"
-
 # check arguments
 case $# in
    1)
@@ -101,9 +100,17 @@ case $# in
          exit 0
       fi
       
-      if [ $?EDITOR ]
+      # if no editor is specified, find a suitable one
+      if [ -n "$VISUAL" ]
       then
-         editor=${EDITOR}
+         editor=${VISUAL}
+      else
+         if [ -n "$EDITOR" ]
+         then
+            editor=${EDITOR}
+         else
+            editor="emacs"
+         fi
       fi
       ;;
    
