@@ -415,7 +415,7 @@ extract_SOURCES = conversion/image_filters/extract.c
 byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 
 
-libminc2_la_LDFLAGS = -version-info 2:0:1
+libminc2_la_LDFLAGS = -version-info 2:1:1
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/dim_conversion.c \
@@ -464,7 +464,7 @@ EXTRA_DIST += \
 	libsrc2/volume.c
 endif
 
-libvolume_io2_la_LDFLAGS = -version-info 2:0:1
+libvolume_io2_la_LDFLAGS = -version-info 2:1:1
 libvolume_io2_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \

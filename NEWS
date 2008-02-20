@@ -1,9 +1,17 @@
 
 		New in Release 2.0.15
         ---------------------
-
 * Began to aggregate and update all docs for a clean(er) 2.1 release
-
+* Added cubic interpoation in mincresample for x-y slices
+* Fixed a seg-fault with null history strings
+* Changed all global variables to static to avoid linking problems
+   with other libraries (eg: libz)
+* new version of mincedit/mincheader in sh instead of csh
+* Many fixes to remove compile warnings
+* removed all rcsid's in files given that we have a -version argument
+* Added preservation of "patient name" in nii2mnc (where patient name 
+   is the descriptor field in a nifti/analyze file)
+* xfmconcat now records history in the output file
 
 		New in Release 2.0.14
         ---------------------
