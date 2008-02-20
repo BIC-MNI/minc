@@ -1,6 +1,7 @@
 
 		New in Release 2.0.15
         ---------------------
+* MINC2 is now built by default (or disabled with --diable-minc2).
 * Began to aggregate and update all docs for a clean(er) 2.1 release
 * Added cubic interpoation in mincresample for x-y slices
 * Fixed a seg-fault with null history strings
@@ -12,6 +13,12 @@
 * Added preservation of "patient name" in nii2mnc (where patient name 
    is the descriptor field in a nifti/analyze file)
 * xfmconcat now records history in the output file
+* removed all fortran build bits. This code was both out of date and
+   not ever built
+* removed get_image_offset as with a MINC2 file this would not work
+   as it was it wouldn't work that well with MINC1 let along MINC2
+* changed --enable-minc2 to --disable-minc2 in configure.ac
+   (come what may....)
 
 		New in Release 2.0.14
         ---------------------

@@ -230,15 +230,12 @@ LDADD = libvolume_io2.la libminc2.la
 
 EXTRA_DIST = GETTING_STARTED \
 	$(m4_files) \
-	fortran \
 	progs/xfm/xfmflip.in \
 	libsrc/strdup.c \
-	progs/Get_image_offset/get_image_offset.c \
 	epm-header.in \
 	libsrc/config.h.msvc-win32 \
 	Makefile.msvc-win32 \
 	conversion/Acr_nema/dicom.txt \
-	WHATSNEW-2.0 \
 	INSTALL.minc \
 	CMakeLists.txt \
 	config.h.cmake \
@@ -249,12 +246,6 @@ EXTRA_DIST = GETTING_STARTED \
 	cmake-modules/FindHDF5.cmake \
 	cmake-modules/FindMINC.cmake \
 	cmake-modules/FindNETCDF.cmake
-
-# The fortran directory is not yet automakified, so it is just
-# listed in EXTRA_DIST.  This will copy everything including CVS
-# files.  We use this hook to get rid of the latter.
-dist-hook:
-	rm -rf $(distdir)/fortran/CVS $(distdir)/fortran/vms/CVS
 
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \

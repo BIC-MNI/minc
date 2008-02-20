@@ -1,3 +1,9 @@
+2008-02-15  Andrew L Janke <a.janke@gmail.com>
+	* Removed all fortran code (the subdirectory anyhow)
+	* removed get_image_offset.c as it will not work with MINC2
+	* updated configure.in and Makefile.am to suit
+	* changed --enable-minc2 to --disable-minc2
+
 2008-01-24  Andrew L Janke <a.janke@gmail.com>
 	* AUTHORS: added Claude Lepage
 	* progs/xfm/xfmconcat.c: Added a history patch from Mishkin Derakhshan
