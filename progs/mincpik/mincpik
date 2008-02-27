@@ -53,6 +53,7 @@ $CODE = "GRAY";
    'title_text' => undef,
    'sagittal_offset' => undef,
    'orientation' => 'vertical',
+   'anot_bar' => undef,
    );
 
 $Help = <<HELP;
@@ -109,6 +110,9 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
    ['-title_text', "string", 1, \$opt{title_text},
       "use <string> for the title [default: input-filename]",
       "<string>"],
+   ['-anot_bar', "string", 1, \$opt{anot_bar},
+      "create an annotated bar to match the image (use height of the output image)",
+      "<fname.png>"],
    
    ['Image range and lookup table options', 'section' ],
    ['-range', 'float',   2, \@{$opt{range}},
@@ -378,6 +382,95 @@ if($opt{title}){
            '-label', $opt{title_text},
            $imgfile, $outfile);
    }
+
+# create the annotated bar if required
+if(defined($opt{anot_bar})){
+   
+   my($min,$max, $pcode, $q0, $q1, $q2, $q3, $q4, $bh, $bw, $bb, $ob, $textbump, $i);
+   
+   # set up a few constants
+   $textbump = 3;
+   $pcode = '%6g';
+   
+   # text border, other border, height, width
+   $bb = 50;
+   $ob = 25;
+   $bh = $img_length_y - ($ob*2);
+   $bw = $bh/10;
+   
+   $min = @{$opt{image_range}}[0];
+   $max = @{$opt{image_range}}[1];
+   
+   # set up the datafile
+   my(@data) = undef;
+   my($packstring) = '';
+   for($i=0; $i<$bh; $i++){
+      $data[$i] = $i;
+      $packstring .= 'f';
+      }
+   
+   open(FH, ">$tmpdir/tmp-float.raw");
+   for($i=0; $i<$bw; $i++){
+      syswrite(FH, pack($packstring, @data));
+      }
+   close(FH);
+   
+   # make minc file
+   &do_cmd('rawtominc', '-clobber',
+           '-float',
+           '-input', "$tmpdir/tmp-float.raw",
+           '-xstep',  1, '-ystep',  1, '-zstep',  1,
+           '-xstart', 0, '-ystart', 0, '-zstart', 0,
+           '-dimorder', 'xspace,yspace,zspace',
+           "$tmpdir/bar.mnc", $bw, $bh, 1);
+   
+
+   # make .miff bar image (whoa... recursion!)
+   &do_cmd('mincpik', '-clobber',
+           '-scale', 1,
+           (defined($opt{lookup})) ? ('-lookup', $opt{lookup}) : (),
+           "$tmpdir/bar.mnc", "$tmpdir/bar.png");
+   
+   # set up the text
+   $q0 = sprintf($pcode, $min);
+   $q1 = sprintf($pcode, (($max-$min) * 0.25) + $min);
+   $q2 = sprintf($pcode, (($max-$min) * 0.5)  + $min);
+   $q3 = sprintf($pcode, (($max-$min) * 0.75) + $min);
+   $q4 = sprintf($pcode, $max);
+   
+   
+   # create the bar itself via convert
+   &do_cmd('convert',
+           '-bordercolor', 'white',
+           '-border', $bb,
+
+           # color for all the decorations
+           '-fill', 'black',
+
+           # bar border
+           '-draw', "line " . join(',',  $bb,      $bb,      ($bb+$bw),  $bb     ),
+           '-draw', "line " . join(',',  $bb,     ($bb+$bh), ($bb+$bw), ($bb+$bh)),
+           '-draw', "line " . join(',',  $bb,      $bb,       $bb,      ($bb+$bh)),
+           '-draw', "line " . join(',', ($bb+$bw), $bb,      ($bb+$bw), ($bb+$bh)),
+
+           # 3 ticks at 1/4, 1/2 and 3/4
+           '-draw', "line " . join(',', ($bb+($bw*3/4)), ($bb+($bh*1/4)), ($bb+$bw), ($bb+($bh*1/4))),
+           '-draw', "line " . join(',', ($bb+($bw*3/4)), ($bb+($bh*2/4)), ($bb+$bw), ($bb+($bh*2/4))),
+           '-draw', "line " . join(',', ($bb+($bw*3/4)), ($bb+($bh*3/4)), ($bb+$bw), ($bb+($bh*3/4))),
+
+           # text
+           '-draw', 'text ' . ($bb+$bw) . ',' . ($bb+($bh*0/4)+$textbump) . " '$q4'",
+           '-draw', 'text ' . ($bb+$bw) . ',' . ($bb+($bh*1/4)+$textbump) . " '$q3'",
+           '-draw', 'text ' . ($bb+$bw) . ',' . ($bb+($bh*2/4)+$textbump) . " '$q2'",
+           '-draw', 'text ' . ($bb+$bw) . ',' . ($bb+($bh*3/4)+$textbump) . " '$q1'",
+           '-draw', 'text ' . ($bb+$bw) . ',' . ($bb+($bh*4/4)+$textbump) . " '$q0'",
+
+           # finally crop of the extra border
+           '-crop', (($bb*2)+$bw-($bb-$ob)) . "x" . (($bb*2)+$bh-$bb) . "+" . ($bb-$ob) . "+" . ($bb-$ob),
+
+           "$tmpdir/bar.png", $opt{anot_bar});
+   }
+
 
 sub do_cmd {
    print STDERR "@_\n" if $opt{verbose};
