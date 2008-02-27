@@ -1,3 +1,6 @@
+2008-02-28  Andrew L Janke <a.janke@gmail.com>
+	* progs/mincpik/mincpik: added the -anot_bar option
+
 2008-02-15  Andrew L Janke <a.janke@gmail.com>
 	* Removed all fortran code (the subdirectory anyhow)
 	* removed get_image_offset.c as it will not work with MINC2
