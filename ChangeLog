@@ -1,3 +1,7 @@
+
+2008-03-07  Andrew L Janke <a.janke@gmail.com>
+	* progs/mincpik/mincpik: fixed two bugs with lookup triplanars
+
 2008-02-28  Andrew L Janke <a.janke@gmail.com>
 	* progs/mincpik/mincpik: added the -anot_bar option
 

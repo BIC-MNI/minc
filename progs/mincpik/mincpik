@@ -31,7 +31,6 @@ my(@args, $args, $infile, $outfile, %ordering, $CODE);
    );
 
 $me = &basename($0);
-$CODE = "GRAY";
 %opt = (
    'verbose' => 0,
    'clobber' => 0,
@@ -221,6 +220,7 @@ if($opt{auto_range}){
 foreach $space (@{$opt{dirs}}){
    
    my($slice);
+   $CODE = "GRAY";
    
    # set up the imgfile depending on triplanar and -title
    if($opt{triplanar}){
@@ -300,7 +300,7 @@ foreach $space (@{$opt{dirs}}){
       else{
          $convert_infile = "$tmpdir/lookup.mnc";
          $CODE = 'RGB';
-         &do_cmd('minclookup', '-quiet', 
+         &do_cmd('minclookup', '-clobber', '-quiet', 
                  split(' ', $opt{lookup}), 
                  "$tmpdir/reshaped.mnc", $convert_infile);
          }
