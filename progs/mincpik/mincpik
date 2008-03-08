@@ -396,7 +396,7 @@ if(defined($opt{anot_bar})){
    $bb = 50;
    $ob = 25;
    $bh = $img_length_y - ($ob*2);
-   $bw = $bh/10;
+   $bw = int($bh/10);
    
    $min = @{$opt{image_range}}[0];
    $max = @{$opt{image_range}}[1];
