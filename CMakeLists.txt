@@ -77,7 +77,6 @@ SET(minc1_LIB_SRCS
    libsrc/image_conversion.c
    libsrc/minc_convenience.c
    libsrc/minc_error.c
-   libsrc/minc_globdef.c
    libsrc/nd_loop.c
    libsrc/netcdf_convenience.c
    libsrc/time_stamp.c
