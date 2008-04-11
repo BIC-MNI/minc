@@ -10,7 +10,11 @@
 @CREATED    : January 3, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecattominc.c,v $
- * Revision 6.6  2008-01-17 02:33:01  rotor
+ * Revision 6.7  2008-04-11 05:16:02  rotor
+ *  * added config.h to ecattominc
+ *  * removed minc_globdef.h from Makefile.am
+ *
+ * Revision 6.6  2008/01/17 02:33:01  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -74,6 +78,10 @@
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
 ---------------------------------------------------------------------------- */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

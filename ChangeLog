@@ -1,3 +1,9 @@
+2008-04-07  Andrew L Janke <a.janke@gmail.com>
+	* conversion/ecattominc/ecattominc.c: added config.h
+	* Makefile.am: removed minc_globdef.h
+	* libsrc/minc_basic.h: rewrote error code to avoid global vars (Claude)
+	* libsrc/minc_error.h: changes for error code (Claude)
+	* libsrc/minc_error.c: changes for error code (Claude)
 
 2008-03-08  Andrew L Janke <a.janke@gmail.com>
 	* progs/mincpik/mincpik: fixed a bug with bar width from Mike Ferreira
