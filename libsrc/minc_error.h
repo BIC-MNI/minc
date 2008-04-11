@@ -7,7 +7,11 @@
 @MODIFIED   : 
  *
  * $Log: minc_error.h,v $
- * Revision 6.3  2004-12-03 21:52:35  bert
+ * Revision 6.4  2008-04-11 05:15:00  rotor
+ *  * rewrote error code  (Claude) to remove global defs that were
+ *     causing build problems with DYLIB on OSX
+ *
+ * Revision 6.3  2004/12/03 21:52:35  bert
  * Minor changes for Windows build
  *
  * Revision 6.2  2004/10/15 13:46:15  bert
@@ -97,4 +101,5 @@ typedef enum mimsgcode {
 } mimsgcode_t;
 
 MNCAPI int milog_message(mimsgcode_t code, ...);
+
 #endif /* _MINC_ERROR_H_ not defined */

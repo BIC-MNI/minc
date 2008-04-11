@@ -7,7 +7,11 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_error.c,v $
- * Revision 6.6  2008-01-17 02:33:02  rotor
+ * Revision 6.7  2008-04-11 05:15:00  rotor
+ *  * rewrote error code  (Claude) to remove global defs that were
+ *     causing build problems with DYLIB on OSX
+ *
+ * Revision 6.6  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -73,6 +77,13 @@ struct mierror_entry {
     char *msgfmt;
 };
 
+/* MINC routine name variable, call depth counter (for keeping track of
+   minc routines calling minc routines) and variable for keeping track
+   of callers ncopts. All of these are for error logging. */
+static char *minc_routine_name = "MINC";
+static int minc_call_depth = 0;
+static int minc_trash_var = 0;
+
 static struct mierror_entry mierror_table[] = {
     { MI_MSG_ERROR, "Cannot uncompress the file" }, /* MI_MSG_UNCMPFAIL */
     { MI_MSG_ERROR, "Can't write compressed file" }, /* MI_MSG_NOWRITECMP */
@@ -130,28 +141,46 @@ static struct mierror_entry mierror_table[] = {
 
 SEMIPRIVATE int MI_save_routine_name(char *name)
 {
-   MI_ROUTINE_VAR = name; 
+   /* no idea what peter was up to here */
+   /* minc_trash_var = (((minc_call_depth++)==0) ? MI_save_routine_name(name) : * MI_NOERROR)) */
+
+   if( (minc_call_depth++)==0 ) {
+     minc_routine_name = name; 
+     minc_trash_var = TRUE;
+   } else {
+     minc_trash_var = MI_NOERROR;
+   }
    return(TRUE);
 }
+
 SEMIPRIVATE int MI_return(void)
 { 
-   return(TRUE); 
+   /* no idea what peter was up to here */
+   /* return( (((--minc_call_depth)!=0) || MI_return()) ? (value) : (value)) */
+
+   return( ((--minc_call_depth)!=0) || TRUE );
 }
+
 SEMIPRIVATE int MI_return_error(void)
 { 
-   MI_LOG_PKG_ERROR2(0, "MINC package entry point"); 
-   return(TRUE);
+   /* no idea what peter was up to here */
+   /* return( (((--minc_call_depth)!=0) || MI_return_error()) ? (error) : (error)) */
+
+   if( (--minc_call_depth)==0 ) {
+     MI_LOG_PKG_ERROR2(0, "MINC package entry point"); 
+   }
+   return( TRUE );
 }
 SEMIPRIVATE void MI_log_pkg_error2(int p1, char *p2)
 {
-  (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
+  (void) fprintf(stderr, "%s: ", minc_routine_name);
   (void) fprintf(stderr, p2);
   (void) fputc('\n', stderr);
   (void) fflush(stderr);
 }
 SEMIPRIVATE void MI_log_pkg_error3(int p1, char *p2, char *p3)
 { 
-  (void) fprintf(stderr, "%s: ", MI_ROUTINE_VAR);
+  (void) fprintf(stderr, "%s: ", minc_routine_name);
   (void) fprintf(stderr, p2, p3);
   (void) fputc('\n', stderr);
   (void) fflush(stderr);
@@ -161,7 +190,7 @@ SEMIPRIVATE void MI_log_sys_error1(char *p1)
    char *message;
    int errnum = errno;
 
-   (void) fprintf(stderr, "%s", MI_ROUTINE_VAR);
+   (void) fprintf(stderr, "%s", minc_routine_name);
    (void) fprintf(stderr, p1);
    if (errnum == 0) {
      (void) fputc('\n', stderr);
@@ -242,7 +271,7 @@ MNCAPI int milog_message(mimsgcode_t code, ...)
 	if (_MI_log.prog[0] != '\0') {
 	    fprintf(_MI_log.fp, "%s ", _MI_log.prog);
 	}
-	fprintf(_MI_log.fp, "(from %s): ", MI_ROUTINE_VAR);
+	fprintf(_MI_log.fp, "(from %s): ", minc_routine_name);
 	va_start(ap, code);
 	vfprintf(_MI_log.fp, fmt, ap);
 	va_end(ap);

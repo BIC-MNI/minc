@@ -14,7 +14,11 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.5  2008-01-12 01:05:37  rotor
+ * Revision 6.6  2008-04-11 05:15:00  rotor
+ *  * rewrote error code  (Claude) to remove global defs that were
+ *     causing build problems with DYLIB on OSX
+ *
+ * Revision 6.5  2008/01/12 01:05:37  rotor
  *  * initial commits from Steve to remove warnings
  *
  * Revision 6.4  2007/08/09 17:05:25  rotor
@@ -66,7 +70,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.5 2008-01-12 01:05:37 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.6 2008-04-11 05:15:00 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <minc.h>
@@ -97,34 +101,20 @@
 extern char *cdf_routine_name ; /* defined in globdef.c */
 #define MI_NC_ROUTINE_VAR cdf_routine_name
 
-/* MINC routine name variable, call depth counter (for keeping track of
-   minc routines calling minc routines) and variable for keeping track
-   of callers ncopts. All of these are for error logging. They are
-   defined in minc_globdef.c */
-extern char *minc_routine_name;
-extern int minc_call_depth;
-extern int minc_trash_var;        /* Just for getting rid of lint messages */
-#define MI_ROUTINE_VAR minc_routine_name
-#define MI_CALL_DEPTH minc_call_depth
-#define MI_TRASH_VAR minc_trash_var
-
 /* Macros for logging errors. All routines should start with MI_SAVE_ROUTINE
    and exit with MI_RETURN (which includes MI_RETURN_ERROR and 
    MI_CHK_ERROR). All the macros except MI_CHK_ERROR are single line
    commands. MI_CHK_ERROR is in a block and so should not be followed by
    a ';' */
-#define MI_SAVE_ROUTINE_NAME(name) \
-   (MI_TRASH_VAR = (((MI_CALL_DEPTH++)==0) ? \
-       MI_save_routine_name(name) : MI_NOERROR))
+#define MI_SAVE_ROUTINE_NAME(name) MI_save_routine_name(name)
 #define MI_RETURN(value) \
-   return( (((--MI_CALL_DEPTH)!=0) || MI_return()) ? (value) : (value))
+   return( MI_return() ? (value) : (value) )
 #define MI_RETURN_ERROR(error) \
-   return( (((--MI_CALL_DEPTH)!=0) || MI_return_error()) ? (error) : (error))
+   return( MI_return_error() ? (error) : (error) )
 #define MI_LOG_PKG_ERROR2(p1,p2) MI_log_pkg_error2(p1, p2)
 #define MI_LOG_PKG_ERROR3(p1,p2,p3) MI_log_pkg_error3(p1, p2, p3)
 #define MI_LOG_SYS_ERROR1(p1) MI_log_sys_error1(p1)
 #define MI_CHK_ERR(expr) {if ((expr)<0) MI_RETURN_ERROR(MI_ERROR);}
-
 
 /* Macros for converting data types. These macros are compound statements, 
    so don't put a semi-colon after them. dvalue should be a double, type
