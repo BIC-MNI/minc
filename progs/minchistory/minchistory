@@ -39,7 +39,7 @@ foreach $fname (@ARGV){
    print STDOUT $text->format("--- History of $fname ---\n");
 
    $counter = 1;
-   foreach (`mincinfo -attvalue :history $fname`){
+   foreach (`mincinfo -attvalue :history "$fname"`){
       chomp;
       next if $_ eq '';
       
