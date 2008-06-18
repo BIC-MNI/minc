@@ -6,7 +6,11 @@
 #
 # Modifications: 
 #   $Log: mincedit,v $
-#   Revision 6.8  2008-02-05 13:48:45  rotor
+#   Revision 6.9  2008-06-18 03:55:25  stever
+#   Remove illegitimate escape sequences (\n) from echo statements.
+#   See Debian bug 486048 for details.
+#
+#   Revision 6.8  2008/02/05 13:48:45  rotor
 #    * added code for checking VISUAL and EDITOR before falling back to emacs
 #
 #   Revision 6.7  2008/01/16 00:45:34  rotor
@@ -80,7 +84,7 @@ die () {
 }
 
 me=`basename $0`
-usage="Usage: $me <minc file> [<editor>]\n"
+usage="Usage: $me <minc file> [<editor>]"
 
 # create tmpdir
 tmpdir=${TMPDIR:-/tmp}/mincedit.$$
@@ -139,7 +143,7 @@ mincheader $infile > $cdl_orig
 status=$?
 if [ $status -ne 0 ]
 then
-   echo "${0}: Error reading file '$infile'\n"
+   echo "${0}: Error reading file '$infile'"
    exit 1
 fi
 
@@ -155,7 +159,7 @@ do
    status=$?
    if [ $status -ne 0 ] 
    then
-      echo "$me: Error editing with editor '$editor'\n"
+      echo "$me: Error editing with editor '$editor'"
       exit 1
    fi
    do_edit=0
@@ -165,7 +169,7 @@ do
    status=$?
    if [ $status -eq 0 ] 
    then
-      echo "$me: File $infile not modified\n"
+      echo "$me: File $infile not modified"
       exit 0
    fi
    
