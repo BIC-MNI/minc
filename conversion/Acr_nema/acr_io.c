@@ -7,7 +7,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.c,v $
- * Revision 6.7  2005-03-04 00:15:14  bert
+ * Revision 6.8  2008-08-12 05:00:22  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.7  2005/03/04 00:15:14  bert
  * Lose public and private keywords; change acr_read_one_element to assume implicit VR format for special sequence delimiters (group 0xfffe)
  *
  * Revision 6.6  2004/10/29 13:08:41  rotor
@@ -503,7 +506,7 @@ static void invert_values(Acr_byte_order byte_order,
 ---------------------------------------------------------------------------- */
 void acr_get_short(Acr_byte_order byte_order, 
                    long nvals, void *input_value, 
-                   unsigned short *mach_value)
+                   Acr_Short *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_SHORT, 
                  input_value, mach_value);
@@ -525,7 +528,7 @@ void acr_get_short(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_get_long(Acr_byte_order byte_order, 
-                  long nvals, void *input_value, long *mach_value)
+                  long nvals, void *input_value, Acr_Long *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_LONG, 
                  input_value, mach_value);
@@ -548,7 +551,7 @@ void acr_get_long(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_get_float(Acr_byte_order byte_order, 
-                   long nvals, void *input_value, float *mach_value)
+                   long nvals, void *input_value, Acr_Float *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_FLOAT, 
                  input_value, mach_value);
@@ -571,7 +574,7 @@ void acr_get_float(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_get_double(Acr_byte_order byte_order, 
-                    long nvals, void *input_value, double *mach_value)
+                    long nvals, void *input_value, Acr_Double *mach_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_DOUBLE, 
                  input_value, mach_value);
@@ -593,7 +596,7 @@ void acr_get_double(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_put_short(Acr_byte_order byte_order, 
-                   long nvals, unsigned short *mach_value, 
+                   long nvals, Acr_Short *mach_value, 
                    void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_SHORT, 
@@ -616,7 +619,7 @@ void acr_put_short(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_put_long(Acr_byte_order byte_order, 
-                  long nvals, long *mach_value, void *output_value)
+                  long nvals, Acr_Long *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_LONG, 
                  mach_value, output_value);
@@ -638,7 +641,7 @@ void acr_put_long(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_put_float(Acr_byte_order byte_order, 
-                   long nvals, float *mach_value, void *output_value)
+                   long nvals, Acr_Float *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_FLOAT, 
                  mach_value, output_value);
@@ -660,7 +663,7 @@ void acr_put_float(Acr_byte_order byte_order,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 void acr_put_double(Acr_byte_order byte_order, 
-                    long nvals, double *mach_value, void *output_value)
+                    long nvals, Acr_Double *mach_value, void *output_value)
 {
    invert_values(byte_order, nvals, (size_t) ACR_SIZEOF_DOUBLE, 
                  mach_value, output_value);
@@ -862,8 +865,8 @@ Acr_Status acr_test_byte_order(Acr_File *afp)
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
-   unsigned long data_length;
-   unsigned short data_length2;
+   Acr_Long data_length;
+   Acr_Short data_length2;
    Acr_Status status;
    Acr_byte_order byte_order, old_byte_order;
 
@@ -886,14 +889,14 @@ Acr_Status acr_test_byte_order(Acr_File *afp)
    byte_order = ACR_BIG_ENDIAN;
    acr_set_byte_order(afp, byte_order);
    acr_get_long(byte_order, 1, &buffer[2*ACR_SIZEOF_SHORT], 
-                (long *) &data_length);
+                &data_length);
 
    /* If that doesn't work, set it to little-endian ordering. */
    if (data_length >= ACR_TEST_MAX) {
       byte_order = ACR_LITTLE_ENDIAN;
       acr_set_byte_order(afp, byte_order);
       acr_get_long(byte_order, 1, &buffer[2*ACR_SIZEOF_SHORT], 
-                   (long *) &data_length);
+                   &data_length);
    }
 
    /* If one of them worked, then it means that we have implicit VR 
@@ -995,7 +998,7 @@ Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT];
-   unsigned short svalue;
+   Acr_Short svalue;
    Acr_Status status, status2;
    Acr_byte_order byte_order;
 
@@ -1017,9 +1020,9 @@ Acr_Status acr_peek_at_next_element_id(Acr_File *afp,
    /* Get the id's */
    byte_order = acr_get_byte_order(afp);
    acr_get_short(byte_order, 1, &buffer[0], &svalue);
-   *group_id = svalue;
+   *group_id = (int)svalue;
    acr_get_short(byte_order, 1, &buffer[ACR_SIZEOF_SHORT], &svalue);
-   *element_id = svalue;
+   *element_id = (int)svalue;
 
    return status;
 
@@ -1054,8 +1057,8 @@ Acr_Status acr_read_one_element(Acr_File *afp,
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+ACR_SIZEOF_LONG];
-   unsigned short grpid, elid, sval;
-   unsigned long datalen;
+   Acr_Short grpid, elid, sval;
+   Acr_Long datalen;
    size_t size_allocated;
    int offset;
    Acr_byte_order byte_order;
@@ -1070,16 +1073,16 @@ Acr_Status acr_read_one_element(Acr_File *afp,
    offset = 0;
    acr_get_short(byte_order, 1, &buffer[offset], &grpid);
    offset += ACR_SIZEOF_SHORT;
-   *group_id = grpid;
+   *group_id = (int)grpid;
    acr_get_short(byte_order, 1, &buffer[offset], &elid);
    offset += ACR_SIZEOF_SHORT;
-   *element_id = elid;
+   *element_id = (int)elid;
 
    /* Look for VR and length of data */
    if (grpid == ACR_ITEM_GROUP || acr_get_vr_encoding(afp) == ACR_IMPLICIT_VR) {
       vr_name[0] = '\0';
       vr_name[1] = '\0';
-      acr_get_long(byte_order, 1, &buffer[offset], (long *) &datalen);
+      acr_get_long(byte_order, 1, &buffer[offset], &datalen);
       offset += ACR_SIZEOF_LONG;
    }
    else {
@@ -1087,14 +1090,14 @@ Acr_Status acr_read_one_element(Acr_File *afp,
       vr_name[1] = buffer[offset++];
       acr_get_short(byte_order, 1, &buffer[offset], &sval);
       offset += ACR_SIZEOF_SHORT;
-      datalen = sval;
+      datalen = (Acr_Long)sval;
    }
 
    /* Read in length for special VR's */
    if (is_special_vr(vr_name)) {
       status = acr_read_buffer(afp, buffer, (long) ACR_SIZEOF_LONG, NULL);
       if (status != ACR_OK) return ACR_ABNORMAL_END_OF_INPUT;
-      acr_get_long(byte_order, 1, &buffer[0], (long *) &datalen);
+      acr_get_long(byte_order, 1, &buffer[0], &datalen);
    }
 
    /* Check for undefined length */
@@ -1103,7 +1106,7 @@ Acr_Status acr_read_one_element(Acr_File *afp,
       *data_pointer = NULL;
       return ACR_OK;
    }
-   *data_length = datalen;
+   *data_length = (long)datalen;
 
    /* Check for sequence VR */
    if (is_sequence_vr(vr_name)) {
@@ -1160,8 +1163,8 @@ Acr_Status acr_write_one_element(Acr_File *afp,
 {
    long buflen;
    unsigned char buffer[2*ACR_SIZEOF_SHORT+2*ACR_SIZEOF_LONG];
-   unsigned short grpid, elid, sval;
-   unsigned long datalen;
+   Acr_Short grpid, elid, sval;
+   Acr_Long datalen;
    int offset;
    Acr_byte_order byte_order;
    Acr_Status status;
@@ -1173,22 +1176,22 @@ Acr_Status acr_write_one_element(Acr_File *afp,
 
    /* Get the group id and element id */
    offset = 0;
-   grpid = (unsigned short) group_id;
+   grpid = (Acr_Short) group_id;
    acr_put_short(byte_order, 1, &grpid, &buffer[offset]);
    offset += ACR_SIZEOF_SHORT;
-   elid = (unsigned short) element_id;
+   elid = (Acr_Short) element_id;
    acr_put_short(byte_order, 1, &elid, &buffer[offset]);
    offset += ACR_SIZEOF_SHORT;
 
    /* Check data length */
-   if (data_length == ACR_VARIABLE_LENGTH)
+   if ((Acr_Long)data_length == ACR_VARIABLE_LENGTH)
       datalen = ACR_UNDEFINED_ELEMENT_LENGTH;
    else
-      datalen = data_length;
+      datalen = (Acr_Long)data_length;
 
    /* Check whether we need VR */
    if (acr_get_vr_encoding(afp) == ACR_IMPLICIT_VR) {
-      acr_put_long(byte_order, 1, (long *) &datalen, &buffer[offset]);
+      acr_put_long(byte_order, 1, &datalen, &buffer[offset]);
       offset += ACR_SIZEOF_LONG;
    }
    else {
@@ -1196,7 +1199,7 @@ Acr_Status acr_write_one_element(Acr_File *afp,
       buffer[offset++] = vr_name[0];
       buffer[offset++] = vr_name[1];
       if (!is_special_vr(vr_name)) {
-         sval = (unsigned short) datalen;
+         sval = (Acr_Short) datalen;
          acr_put_short(byte_order, 1, &sval, &buffer[offset]);
          offset += ACR_SIZEOF_SHORT;
       }
@@ -1204,7 +1207,7 @@ Acr_Status acr_write_one_element(Acr_File *afp,
          sval = 0;
          acr_put_short(byte_order, 1, &sval, &buffer[offset]);
          offset += ACR_SIZEOF_SHORT;
-         acr_put_long(byte_order, 1, (long *) &datalen, &buffer[offset]);
+         acr_put_long(byte_order, 1, &datalen, &buffer[offset]);
          offset += ACR_SIZEOF_LONG;
          buflen += ACR_SIZEOF_LONG;
       }

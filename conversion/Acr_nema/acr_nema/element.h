@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.h,v $
- * Revision 6.4  2006-04-09 15:28:40  bert
+ * Revision 6.5  2008-08-12 05:00:23  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.4  2006/04/09 15:28:40  bert
  * Add functions acr_get_element_double_array and acr_create_element_double
  *
  * Revision 6.3  2005/03/04 00:08:08  bert
@@ -187,26 +190,26 @@ extern Acr_Element acr_find_element_id(Acr_Element element_list,
                                        Acr_Element_Id elid);
 extern void *acr_memdup(size_t value_size, void *value);
 extern Acr_Element acr_create_element_short(Acr_Element_Id elid,
-                                            unsigned short value);
+                                            Acr_Short value);
 extern Acr_Element acr_create_element_long(Acr_Element_Id elid,
-                                           long value);
+                                           Acr_Long value);
 extern Acr_Element acr_create_element_double(Acr_Element_Id elid,
                                              int nvalues,
-                                             double *values);
+                                             Acr_Double *values);
 extern Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
                                               double value);
 extern Acr_Element acr_create_element_string(Acr_Element_Id elid,
-                                             char *value);
+                                             Acr_String value);
 extern Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
                                                Acr_Element itemlist);
-extern unsigned short acr_get_element_short(Acr_Element element);
-extern long acr_get_element_long(Acr_Element element);
+extern Acr_Short acr_get_element_short(Acr_Element element);
+extern Acr_Long acr_get_element_long(Acr_Element element);
 extern double acr_get_element_numeric(Acr_Element element);
-extern char *acr_get_element_string(Acr_Element element);
+extern Acr_String acr_get_element_string(Acr_Element element);
 extern long acr_get_element_short_array(Acr_Element element, long max_values, 
-                                        unsigned short values[]);
+                                        Acr_Short values[]);
 extern long acr_get_element_double_array(Acr_Element element, long max_values, 
-                                         double values[]);
+                                         Acr_Double values[]);
 extern int *acr_element_numeric_array_separator(int character);
 extern int acr_get_element_numeric_array(Acr_Element element,
                                          int max_values, double values[]);

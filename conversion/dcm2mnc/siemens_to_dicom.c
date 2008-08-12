@@ -6,7 +6,10 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.9  2008-01-17 02:33:01  rotor
+@MODIFIED   : Revision 1.10  2008-08-12 05:00:23  rotor
+@MODIFIED   :  * large number of changes from Claude (64 bit and updates)
+@MODIFIED   :
+@MODIFIED   : Revision 1.9  2008/01/17 02:33:01  rotor
 @MODIFIED   :  * removed all rcsids
 @MODIFIED   :  * removed a bunch of ^L's that somehow crept in
 @MODIFIED   :  * removed old (and outdated) BUGS file
@@ -258,7 +261,7 @@ siemens_to_dicom(const char *filename, int max_group)
 
     n_slices = acr_find_int(group_list, SPI_Number_of_slices_nominal, 1);
     if (n_slices > 1) {
-        short acq_cols;
+        Acr_Short acq_cols;
         int n_acq;
         int n_avg;
 
@@ -266,10 +269,10 @@ siemens_to_dicom(const char *filename, int max_group)
                                   acr_find_short(group_list, ACR_Columns, 1));
 
         rows = acr_find_int(group_list, ACR_Rows, 1);
-        acr_insert_long(&group_list, EXT_Mosaic_rows, rows);
+        acr_insert_long(&group_list, EXT_Mosaic_rows, (Acr_Long)rows);
                         
         cols = acr_find_int(group_list, ACR_Columns, 1);
-        acr_insert_long(&group_list, EXT_Mosaic_columns, cols);
+        acr_insert_long(&group_list, EXT_Mosaic_columns, (Acr_Long)cols);
 
         /* Don't allow acq_cols greater than actual size! */
         if (acq_cols > rows) { 
@@ -280,9 +283,9 @@ siemens_to_dicom(const char *filename, int max_group)
             n_slices = 1;
             acq_cols = cols;
         }
-        acr_insert_long(&group_list, EXT_Slices_in_file, n_slices);
-        acr_insert_short(&group_list, EXT_Sub_image_rows, acq_cols);
-        acr_insert_short(&group_list, EXT_Sub_image_columns, acq_cols);
+        acr_insert_long(&group_list, EXT_Slices_in_file, (Acr_Long)n_slices);
+        acr_insert_short(&group_list, EXT_Sub_image_rows, (Acr_Long)acq_cols);
+        acr_insert_short(&group_list, EXT_Sub_image_columns, (Acr_Long)acq_cols);
 
         /* We need to set up the ACR_Acquisition (and 
          * ACR_Acquisitions_in_series) objects to make everyone happy.
@@ -297,12 +300,12 @@ siemens_to_dicom(const char *filename, int max_group)
          * Other files apparently contradict this!
          */
         acr_insert_long(&group_list, ACR_Acquisition, 
-                        acr_find_int(group_list, ACR_Image, 1));
+                        (Acr_Long)acr_find_int(group_list, ACR_Image, 1));
 
         n_avg = acr_find_int(group_list, ACR_Nr_of_averages, 1);
         n_acq = acr_find_int(group_list, ACR_Acquisitions_in_series, 1);
         if (n_avg > n_acq) {
-            acr_insert_long(&group_list, ACR_Acquisitions_in_series, n_avg);
+            acr_insert_long(&group_list, ACR_Acquisitions_in_series, (Acr_Long)n_avg);
         }
     }
 
@@ -474,8 +477,8 @@ update_coordinate_info(Acr_Group group_list)
      */
     n_slices = acr_find_int(group_list, EXT_Slices_in_file, 1);
     if (n_slices != 1) {
-        int acq_cols = acr_find_short(group_list, SPI_Acquisition_columns, 
-                                      ncolumns);
+        int acq_cols = (int)acr_find_short(group_list, SPI_Acquisition_columns, 
+                                          (Acr_Short)ncolumns);
         if (G.Debug >= HI_LOGGING) {
             printf("Hmmm... This appears to be a mosaic image %d %d %d\n",
                    acq_cols, ncolumns, n_slices);
@@ -556,17 +559,17 @@ DEFINE_ELEMENT_FUNC(create_char_element)
 
 DEFINE_ELEMENT_FUNC(create_long_element)
 {
-    long data_out;
+    Acr_Long data_out;
 
     acr_get_long(ACR_BIG_ENDIAN, 1, data, &data_out);
 
-    return acr_create_element_numeric(get_elid(grp_id, elm_id, ACR_VR_IS), 
-                                      data_out); 
+    return acr_create_element_long(get_elid(grp_id, elm_id, ACR_VR_IS), 
+                                   data_out); 
 }
 
 DEFINE_ELEMENT_FUNC(create_short_element)
 {
-    unsigned short data_out;
+    Acr_Short data_out;
 
     acr_get_short(ACR_BIG_ENDIAN, 1, data, &data_out);
 
@@ -576,21 +579,21 @@ DEFINE_ELEMENT_FUNC(create_short_element)
 
 DEFINE_ELEMENT_FUNC(create_double_element)
 {
-    double data_out;
+    Acr_Double data_out;
   
     acr_get_double(ACR_BIG_ENDIAN, 1, data, &data_out);
 
     return acr_create_element_numeric(get_elid(grp_id, elm_id, ACR_VR_DS),
-                                      data_out);
+                                      (double)data_out);
 }
 
 DEFINE_ELEMENT_FUNC(create_ima_date_t_element)
 {
     string_t string;
     ima_date_t *ptr;
-    long year;
-    long month;
-    long day;
+    Acr_Long year;
+    Acr_Long month;
+    Acr_Long day;
 
     ptr = (ima_date_t *) data;
 
@@ -608,26 +611,26 @@ DEFINE_ELEMENT_FUNC(create_ima_date_t_element)
     sprintf(string, "%04d%02d%02d", (int) year, (int) month, (int) day);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DA),
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_ima_time_t_element)
 {
     string_t string;
     ima_time_t *ptr;
-    long hour;
-    long minute;
-    long second;
-    long msec;
+    Acr_Long hour;
+    Acr_Long minute;
+    Acr_Long second;
+    Acr_Long msec;
 
     ptr = (ima_time_t *) data;
 
     /* Convert data from big endian to native:
      */
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->hour, &hour); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->minute, &minute); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->second, &second); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->msec, &msec); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->hour, &hour); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->minute, &minute); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->second, &second); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->msec, &msec); 
 
     if ((hour < 0) || (hour >= 24)) 
         return NULL;
@@ -641,17 +644,17 @@ DEFINE_ELEMENT_FUNC(create_ima_time_t_element)
     sprintf(string, "%02d%02d%02d.%03d", (int) hour, (int) minute, 
             (int) second, (int) msec);
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_TM), 
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_modality_element)
 {
-    char *string;
-    int32_t modality;
+    Acr_String string;
+    Acr_Long modality;
 
     /* Get the appropriate string */
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &modality); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &modality); 
     switch (modality) {
     case 1:
         string = "CT";
@@ -670,11 +673,11 @@ DEFINE_ELEMENT_FUNC(create_modality_element)
 
 DEFINE_ELEMENT_FUNC(create_sex_element)
 {
-    char *string;
-    int32_t sex;
+    Acr_String string;
+    Acr_Long sex;
 
     /* Get the appropriate string */
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &sex); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &sex); 
     switch (sex) {
     case 1:
         string = "F ";
@@ -723,17 +726,17 @@ DEFINE_ELEMENT_FUNC(create_age_element)
     }
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_AS), 
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_slice_order_element)
 {
-    char *string;
-    ima_slice_order_t slice_order;
+    Acr_String string;
+    Acr_Long slice_order;
 
     /* Get the appropriate string */
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &slice_order); 
-    switch (slice_order) {
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &slice_order); 
+    switch ((ima_slice_order_t)slice_order) {
     case SO_ASCENDING:
         string = "ASCENDING ";
         break;
@@ -760,66 +763,66 @@ DEFINE_ELEMENT_FUNC(create_pixel_spacing_t_element)
 {
     pixel_spacing_t *ptr;
     string_t string;
-    double row;
-    double col;
+    Acr_Double row;
+    Acr_Double col;
 
     /* Get the pixel sizes */
     ptr = (pixel_spacing_t *) data;
 
     /* Convert from big endian to native format */
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->row, &row); 
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->col, &col); 
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->row, &row); 
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->col, &col); 
 
     sprintf(string, "%.15g\\%.15g", row, col);
     
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DS), 
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_window_t_element)
 {
     window_t *ptr;
     string_t string;
-    long x;
-    long y;
+    Acr_Long x;
+    Acr_Long y;
 
     ptr = (window_t *) data;    /* Get the window info */
 
     /* Convert from big endian to native format */
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->x, &x); 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) &ptr->y, &y); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->x, &x); 
+    acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->y, &y); 
     
-    sprintf(string, "%ld\\%ld", x, y);
+    sprintf(string, "%ld\\%ld", (double)x, (double)y);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_IS), 
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_ima_vector_t_element)
 {
     ima_vector_t *ptr;
     string_t string;
-    double x, y, z;
+    Acr_Double x, y, z;
 
     /* Get the coordinate */
     ptr = (ima_vector_t *) data;
    
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->x, &x);
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->y, &y);
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->z, &z);
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->x, &x);
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->y, &y);
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->z, &z);
 
     sprintf(string, "%.15g\\%.15g\\%.15g", x, y, z);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DS),
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_laterality_element)
 {
-    long laterality;
-    char *string;
+    Acr_Long laterality;
+    Acr_String string;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, &laterality);
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &laterality);
 
     switch (laterality) {
     case 1:
@@ -838,11 +841,11 @@ DEFINE_ELEMENT_FUNC(create_laterality_element)
 
 DEFINE_ELEMENT_FUNC(create_ima_position_t_element)
 {
-    ima_position_t position;
-    char *string;
+    Acr_Long position;
+    Acr_String string;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &position);
-    switch (position) {
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &position);
+    switch ((ima_position_t)position) {
     case PP_LEFT:
         string = "HFL"; break;
     case PP_RIGHT:
@@ -860,11 +863,11 @@ DEFINE_ELEMENT_FUNC(create_ima_position_t_element)
 
 DEFINE_ELEMENT_FUNC(create_rest_direction_t_element)
 {
-    ima_rest_direction_t dir;
-    char *string;
+    Acr_Long dir;
+    Acr_String string;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
-    switch (dir) {
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &dir);
+    switch ((ima_rest_direction_t)dir) {
     case RD_HEAD:
         string = "HEAD";
         break;
@@ -881,11 +884,11 @@ DEFINE_ELEMENT_FUNC(create_rest_direction_t_element)
 
 DEFINE_ELEMENT_FUNC(create_view_direction_t_element)
 {
-    ima_view_direction_t dir;
-    char *string;
+    Acr_Long dir;
+    Acr_String string;
 
-    acr_get_long(ACR_BIG_ENDIAN, 1, (long *) data, (long *) &dir);
-    switch (dir) {
+    acr_get_long(ACR_BIG_ENDIAN, 1, data, &dir);
+    switch ((ima_view_direction_t)dir) {
     case VD_HEAD:
         string = "HEAD";
         break;
@@ -937,22 +940,22 @@ DEFINE_ELEMENT_FUNC(create_ima_orientation_t_element)
     sprintf(string, "%s\\%s\\%s", y, x, z);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_CS),
-                                     string);
+                                     (Acr_String)string);
 }
 
 DEFINE_ELEMENT_FUNC(create_field_of_view_t_element)
 {
     ima_field_of_view_t *ptr;
     string_t string;
-    double height;
-    double width;
+    Acr_Double height;
+    Acr_Double width;
 
     ptr = (ima_field_of_view_t *) data;
 
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->height, &height);
-    acr_get_double(ACR_BIG_ENDIAN, 1, (double *) &ptr->width, &width);
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->height, &height);
+    acr_get_double(ACR_BIG_ENDIAN, 1, &ptr->width, &width);
 
     sprintf(string, "%.15g\\%.15g", height, width);
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_DS),
-                                     string);
+                                     (Acr_String)string);
 }

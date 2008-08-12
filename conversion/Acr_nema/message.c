@@ -6,7 +6,10 @@
 @CREATED    : November 16, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: message.c,v $
- * Revision 6.7  2004-10-29 13:08:42  rotor
+ * Revision 6.8  2008-08-12 05:00:22  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.7  2004/10/29 13:08:42  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that
@@ -290,7 +293,7 @@ public void acr_message_add_group(Acr_Message message, Acr_Group group)
 private void update_message_length_element(Acr_Message message, 
                                            Acr_VR_encoding_type vr_encoding)
 {
-   long message_length;
+   Acr_Long message_length;
    Acr_Element length_element;
    void *message_length_data;
 
@@ -421,6 +424,7 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
    Acr_Status status;
    Acr_Group group;
    Acr_Element length_element;
+   Acr_Long lvalue;
    long message_length;
    long group_length;
    long watchpoint;
@@ -455,7 +459,8 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
    /* Get the message length from the element */
    if (length_element != NULL) {
       acr_get_long(acr_get_element_byte_order(length_element), (long) 1, 
-                   acr_get_element_data(length_element), &message_length);
+                   acr_get_element_data(length_element), &lvalue);
+      message_length = (long)lvalue;
    }
 
    /* Create the message and add the group (this will modify the message 
@@ -468,7 +473,8 @@ public Acr_Status acr_input_message(Acr_File *afp, Acr_Message *message)
       message length to include only the first group */
    if (length_element != NULL) {
       acr_get_long(acr_get_element_byte_order(length_element), (long) 1, 
-                   acr_get_element_data(length_element), &group_length);
+                   acr_get_element_data(length_element), &lvalue);
+      group_length = (long)lvalue;
       message_length -= group_length;
    }
 

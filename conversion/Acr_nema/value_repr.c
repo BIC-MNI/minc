@@ -6,7 +6,10 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   :  
  * $Log: value_repr.c,v $
- * Revision 6.4  2005-03-04 00:08:37  bert
+ * Revision 6.5  2008-08-12 05:00:22  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.4  2005/03/04 00:08:37  bert
  * Lose private and public
  *
  * Revision 6.3  2004/10/29 13:08:42  rotor
@@ -454,7 +457,7 @@ static double get_short(Acr_VR_Entry *vr_entry,
                         Acr_byte_order byte_order,
                         char *data, long data_length)
 {
-   unsigned short value;
+   Acr_Short value;
 
    if (data_length == ACR_SIZEOF_SHORT) {
       acr_get_short(byte_order, 1, data, &value);
@@ -470,7 +473,7 @@ static double get_long(Acr_VR_Entry *vr_entry,
                        Acr_byte_order byte_order,
                        char *data, long data_length)
 {
-   long value;
+   Acr_Long value;
 
    if (data_length == ACR_SIZEOF_LONG) {
       acr_get_long(byte_order, 1, data, &value);
@@ -486,7 +489,7 @@ static double get_float(Acr_VR_Entry *vr_entry,
                         Acr_byte_order byte_order,
                         char *data, long data_length)
 {
-   float value;
+   Acr_Float value;
 
    if (data_length == ACR_SIZEOF_FLOAT) {
       acr_get_float(byte_order, 1, data, &value);
@@ -502,7 +505,7 @@ static double get_double(Acr_VR_Entry *vr_entry,
                          Acr_byte_order byte_order,
                          char *data, long data_length)
 {
-   double value;
+   Acr_Double value;
 
    if (data_length == ACR_SIZEOF_DOUBLE) {
       acr_get_double(byte_order, 1, data, &value);

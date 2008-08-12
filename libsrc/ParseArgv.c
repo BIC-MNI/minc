@@ -174,7 +174,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
       infoPtr = matchPtr;
       switch (infoPtr->type) {
       case ARGV_CONSTANT:
-         *((int *) infoPtr->dst) = (int) infoPtr->src;
+         *((long *) infoPtr->dst) = (long) infoPtr->src;
          break;
       case ARGV_INT:
          nargs = (int) infoPtr->src;

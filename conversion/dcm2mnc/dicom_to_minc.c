@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.27  2008-01-17 06:20:54  stever
+   * Revision 1.28  2008-08-12 05:00:23  rotor
+   *  * large number of changes from Claude (64 bit and updates)
+   *
+   * Revision 1.27  2008/01/17 06:20:54  stever
    * 	* conversion/dcm2mnc/dicom_to_minc.c (copy_element_properties):
    * 	Change return type from int to void; no callers require a return value.
    *
@@ -706,7 +709,7 @@ read_std_dicom(const char *filename, int max_group)
 int
 is_siemens_mosaic(Acr_Group group_list)
 {
-    char *str_ptr;
+    Acr_String str_ptr;
 
     str_ptr = acr_find_string(group_list, ACR_Image_type, "");
     if (strstr(str_ptr, "MOSAIC") != NULL)
@@ -747,15 +750,15 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
     int byte_cnt;
     int byte_pos;
     unsigned char *byte_ptr;
-    int n_items;
-    int n_values;
-    int vm;
+    Acr_Long n_items;
+    Acr_Long n_values;
+    Acr_Long vm;
     char vr[4];
-    int syngodt;
+    Acr_Long syngodt;
     int i;
     char name[64];
     char *value[MAXVM];
-    int len;
+    Acr_Long len;
 
     byte_cnt = element->data_length;
     byte_ptr = element->data_pointer;
@@ -791,7 +794,7 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
         byte_pos += 4;          /* skip dummy */
 
         if (n_values > 0) {
-            for (i = 0; i < n_values; i++) {
+            for (i = 0; i < (int)n_values; i++) {
                 byte_pos += 4;      /* skip */
 
                 acr_get_long(ACR_LITTLE_ENDIAN, 1, byte_ptr + byte_pos, &len);
@@ -815,12 +818,12 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
         else if (!strcmp(name, "B_value")) {
 		
             /*double tmp = atof(value[0]); this atof makes the value null!  ilana*/
-	     double tmp = atoi(value[0]);
+	     Acr_Double tmp = atoi(value[0]);
 	     /*need a hack for ICBM scan, see below ilana*/
             acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp); 
         }
         else if (!strcmp(name, "DiffusionGradientDirection")) {
-            double tmp[3];
+            Acr_Double tmp[3];
             if (vm == 3 && n_values >= vm) {
 		/*For the ICBM WIP scan, the b0 images do not have
 		B_value=0 or DiffusionGradientDirection=0 0 0, they
@@ -830,7 +833,7 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
 		
 		if(!strcmp(value[0],"-1.00010000") && !strcmp(value[1],"-1.00010000")  && !strcmp(value[2],"-1.00010000")){
 			value[0] = value[1] = value[2] = "0"; /*grad directions should be 0*/
-			double tmp2 = atoi("0");
+			Acr_Double tmp2 = atoi("0");
 			acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp2); /*also have to modify B values ilana*/
 		}
 		                  
@@ -916,12 +919,12 @@ add_siemens_info(Acr_Group group_list)
          */
         prot_find_string(protocol, "lRepetitions", str_buf);
         acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                           atoi(str_buf) + 1);
+                           (double)(atoi(str_buf) + 1));
 
         /* add number of echoes:
          */
         prot_find_string(protocol, "lContrasts", str_buf);
-        acr_insert_numeric(&group_list, SPI_Number_of_echoes, atoi(str_buf));
+        acr_insert_numeric(&group_list, SPI_Number_of_echoes, (double)atoi(str_buf));
 
         /* Add receiving coil (for some reason this isn't in generic groups)
          */
@@ -933,7 +936,7 @@ add_siemens_info(Acr_Group group_list)
         /* add MrProt dump
          */
         str_ptr = dump_protocol_text(protocol);
-        acr_insert_string(&group_list, EXT_MrProt_dump, str_ptr);
+        acr_insert_string(&group_list, EXT_MrProt_dump, (Acr_String)str_ptr);
         free(str_ptr);
 
         /* add number of slices: (called `Partitions' for 3D) */
@@ -964,18 +967,18 @@ add_siemens_info(Acr_Group group_list)
              * (note that this gets more complicated if the 3D scan
              *  is mosaiced - see below)
              */
-            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 1);
+            acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, (double)1);
             acr_insert_numeric(&group_list, 
                                SPI_Number_of_3D_raw_partitions_nominal, 
-                               num_partitions);
+                               (double)num_partitions);
         } 
         else {
             /* use slices for 2D
              */
             acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
-                               num_slices);
+                               (double)num_slices);
             acr_insert_numeric(&group_list, 
-                               SPI_Number_of_3D_raw_partitions_nominal, 1);
+                               SPI_Number_of_3D_raw_partitions_nominal, (double)1);
         }
 
         /* See if the field of view is set, if not, see if we can find
@@ -1002,7 +1005,7 @@ add_siemens_info(Acr_Group group_list)
 	/*find Delay time in TR in ASCONV header ilana*/
 	prot_find_string(protocol, "lDelayTimeInTR", str_buf);
 	acr_insert_numeric(&group_list, EXT_Delay_in_TR,
-                               atol(str_buf));
+                           (double)atol(str_buf));
 	
 	/*Find slice acquisition mode in ASCONV header, 
 	can't seem to find is in a standard dicom field
@@ -1078,8 +1081,7 @@ add_siemens_info(Acr_Group group_list)
             prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
 
 	    acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
-                               atoi(str_buf));
-
+                               (double)atoi(str_buf));
 
           }
 	  else
@@ -1091,7 +1093,7 @@ add_siemens_info(Acr_Group group_list)
 	            	/* try to get b value */
         	    	prot_find_string(protocol, "sDiffusion.alBValue[1]", str_buf);
             		acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
-                               atoi(str_buf));
+                                           (double)atoi(str_buf));
 		    	num_b0=1;
 	  
           	}
@@ -1100,7 +1102,7 @@ add_siemens_info(Acr_Group group_list)
         	    	/* try to get b value */
             		prot_find_string(protocol, "sDiffusion.alBValue[0]", str_buf);
 	            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
-                               atoi(str_buf));
+                                           (double)atoi(str_buf));
 		    	num_b0=0; 
 			/*there are 5 b=0 scans but they are not identified 
 			any differently than the diffusion weighted images, 
@@ -1116,9 +1118,8 @@ add_siemens_info(Acr_Group group_list)
              
 	    /* number of 'time points' */
             acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                                     num_encodings *
-                                     acr_find_double(group_list,
-                                                     ACR_Nr_of_averages, 1));
+                               num_encodings *
+                               acr_find_double(group_list, ACR_Nr_of_averages, 1));
 
             /* time index of current scan: */
 
@@ -1145,7 +1146,7 @@ add_siemens_info(Acr_Group group_list)
 	    /* however with the current sequence, we get usable
             * time indices from floor(global_image_num/num_slices)*/ /*i'm not sure that works here ilana*/
 	    
-	    acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+	    acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
             /*acr_insert_numeric(&group_list, ACR_Acquisition, 
                                    (acr_find_int(group_list, ACR_Image, 1)-1) / 
                                    num_slices);*/
@@ -1159,7 +1160,7 @@ add_siemens_info(Acr_Group group_list)
 
              /* number of 'time points' */
              acr_insert_numeric(&group_list, ACR_Acquisitions_in_series,
-                                   num_encodings);
+                                (double)num_encodings);
                 
                 /* For multi-series scans, we DO USE THIS BECAUSE global
                  * image number may be broken!!
@@ -1178,7 +1179,7 @@ add_siemens_info(Acr_Group group_list)
 	    else{
 		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
             }
-                acr_insert_numeric(&group_list, ACR_Acquisition, enc_ix);
+                acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
           }
 	  
 	   /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
@@ -1225,7 +1226,7 @@ add_siemens_info(Acr_Group group_list)
     if (is_siemens_mosaic(group_list)) {
         
         int mosaic_rows, mosaic_cols;
-        short subimage_size[4];
+        Acr_Short subimage_size[4];
         int subimage_rows, subimage_cols;
 
         /* Now figure out mosaic rows and columns, and put in EXT
@@ -1275,9 +1276,9 @@ add_siemens_info(Acr_Group group_list)
                 /* Get subimage dimensions, assuming the OPPOSITE of the
                  * reported phase-encode direction!!
                  */
-                str_ptr = acr_find_string(group_list, 
-                                          ACR_Phase_encoding_direction,
-                                          "");
+                str_ptr = (char *)acr_find_string(group_list, 
+                                                  ACR_Phase_encoding_direction,
+                                                  "");
                 if (!strncmp(str_ptr, "COL", 3)) { /*TODO test that this is right for non-square acquisition matrices ilana*/
                     subimage_rows = subimage_size[3];
                     subimage_cols = subimage_size[0];
@@ -1322,12 +1323,12 @@ add_siemens_info(Acr_Group group_list)
             mosaic_cols = acr_find_int(group_list, ACR_Columns, 1) / subimage_cols;
         }
 
-        acr_insert_numeric(&group_list, EXT_Mosaic_rows, mosaic_rows);
-        acr_insert_numeric(&group_list, EXT_Mosaic_columns, mosaic_cols);
+        acr_insert_numeric(&group_list, EXT_Mosaic_rows, (double)mosaic_rows);
+        acr_insert_numeric(&group_list, EXT_Mosaic_columns, (double)mosaic_cols);
 
         if (mosaic_rows * mosaic_cols > 1) {
 
-            str_ptr = acr_find_string(group_list, ACR_MR_acquisition_type, "");
+            str_ptr = (char *)acr_find_string(group_list, ACR_MR_acquisition_type, "");
              
             /* assume any mosaiced file contains all slices
              * (we now support mosaics for 2D and 3D acquisitions,
@@ -1335,9 +1336,9 @@ add_siemens_info(Acr_Group group_list)
              */
 
             if (!strncmp(str_ptr, "2D", 2)) {
-                acr_insert_numeric(&group_list, EXT_Slices_in_file, num_slices);
+                acr_insert_numeric(&group_list, EXT_Slices_in_file, (double)num_slices);
                 acr_insert_numeric(&group_list, 
-                                   SPI_Number_of_slices_nominal, num_slices);
+                                   SPI_Number_of_slices_nominal, (double)num_slices);
             } 
 
             /* if 3D mosaiced scan, write number of partitions to number of 
@@ -1345,9 +1346,9 @@ add_siemens_info(Acr_Group group_list)
              */
             else if (!strncmp(str_ptr, "3D", 2)) {
                 acr_insert_numeric(&group_list, EXT_Slices_in_file, 
-                                   num_partitions);
+                                   (double)num_partitions);
                 acr_insert_numeric(&group_list, SPI_Number_of_slices_nominal, 
-                                   num_partitions);
+                                   (double)num_partitions);
                 /* also have to provide slice spacing - in case of 3D it's same
                  * as slice thickness (and not provided in dicom header!)
                  */
@@ -1357,7 +1358,7 @@ add_siemens_info(Acr_Group group_list)
             }
         } 
         else {
-            acr_insert_numeric(&group_list, EXT_Slices_in_file, 1);
+            acr_insert_numeric(&group_list, EXT_Slices_in_file, (double)1);
         }
 
         /* Correct the rows and columns values -
@@ -1375,7 +1376,7 @@ add_siemens_info(Acr_Group group_list)
     if (is_numaris3(group_list)) {
         int tmp;
 
-        str_ptr = acr_find_string(group_list, ACR_Sequence_name, "");
+        str_ptr = (char *)acr_find_string(group_list, ACR_Sequence_name, "");
 
         /* This first hack is for Sebastian's Numaris-3 DTI scans.
          */
@@ -1384,7 +1385,7 @@ add_siemens_info(Acr_Group group_list)
              * echo number.  We need to change echos to time.
              */
             tmp = acr_find_int(group_list, SPI_Number_of_echoes, 1);
-            acr_insert_numeric(&group_list, SPI_Number_of_echoes, 1);
+            acr_insert_numeric(&group_list, SPI_Number_of_echoes, (double)1);
 
             element = acr_find_group_element(group_list,
                                              ACR_Acquisitions_in_series);
@@ -1397,12 +1398,12 @@ add_siemens_info(Acr_Group group_list)
             acr_insert_short(&group_list, ACR_Number_of_time_slices, tmp);
 
             tmp = acr_find_int(group_list, ACR_Echo_number, 0);
-            acr_insert_numeric(&group_list, ACR_Echo_number, 1);
+            acr_insert_numeric(&group_list, ACR_Echo_number, (double)1);
             acr_insert_numeric(&group_list, ACR_Frame_reference_time, 
-                               tmp * 1000);
+                               (double)(tmp * 1000));
 
             /* Just use defaults for these values. */
-            acr_insert_numeric(&group_list, ACR_Actual_frame_duration, 1000);
+            acr_insert_numeric(&group_list, ACR_Actual_frame_duration, (double)1000);
         }
 
         /* An additional hack required for Sebastian's Numaris-3 FMRI scans.
@@ -1412,7 +1413,7 @@ add_siemens_info(Acr_Group group_list)
              * series number!!
              */
             tmp = acr_find_int(group_list, ACR_Series_time, 0);
-            acr_insert_numeric(&group_list, ACR_Series, tmp);
+            acr_insert_numeric(&group_list, ACR_Series, (double)tmp);
 
             tmp = acr_find_int(group_list, ACR_Acquisitions_in_series, 0);
             acr_insert_short(&group_list, ACR_Number_of_time_slices, tmp);
@@ -1464,7 +1465,7 @@ add_philips_info(Acr_Group group_list)
              creator_id.element_id++) {
             pms_element = acr_find_element_id(pms_element_list, &creator_id);
             if (pms_element != NULL) {
-                str_ptr = acr_get_element_string(pms_element);
+                str_ptr = (char *)acr_get_element_string(pms_element);
                 if (str_ptr != NULL && 
                     (!strcmp(str_ptr, "Philips Imaging DD 001") ||
                      !strcmp(str_ptr, "PHILIPS IMAGING DD 001"))) {
@@ -1482,33 +1483,33 @@ add_philips_info(Acr_Group group_list)
 
         /* OK, this may be an old Philips file with the SPI stuff in it.
          */
-        str_ptr = acr_find_string(group_list, SPI_PMS_grp19_tag, "");
+        str_ptr = (char *)acr_find_string(group_list, SPI_PMS_grp19_tag, "");
         if (!strncmp(str_ptr, "PHILIPS MR", 10)) {
             if (G.Debug >= HI_LOGGING) {
                 printf("Found Philips SPI information\n");
             }
 
-            str_ptr = acr_find_string(group_list, ACR_Image_position_patient, "");
+            str_ptr = (char *)acr_find_string(group_list, ACR_Image_position_patient, "");
             if (*str_ptr == '\0') {
                 double x, y, z;
 
-                x = acr_find_double(group_list, SPI_PMS_lr_position2, 0);
-                y = acr_find_double(group_list, SPI_PMS_ap_position2, 0);
-                z = acr_find_double(group_list, SPI_PMS_cc_position2, 0);
+                x = (double)acr_find_double(group_list, SPI_PMS_lr_position2, 0);
+                y = (double)acr_find_double(group_list, SPI_PMS_ap_position2, 0);
+                z = (double)acr_find_double(group_list, SPI_PMS_cc_position2, 0);
                 sprintf(str_buf, "%.15g\\%.15g\\%.15g", x, y, z);
                 printf("New position: %s\n", str_buf);
                 acr_insert_string(&group_list, ACR_Image_position_patient, 
-                                  str_buf);
+                                  (Acr_String)str_buf);
 
             }
-            str_ptr = acr_find_string(group_list, ACR_Number_of_slices, "");
+            str_ptr = (char *)acr_find_string(group_list, ACR_Number_of_slices, "");
             if (*str_ptr == '\0') {
-                short n;
+                Acr_Short n;
                 n = acr_find_short(group_list, SPI_PMS_slice_count, 0);
                 acr_insert_short(&group_list, ACR_Number_of_slices, n);
             }
-            str_ptr = acr_find_string(group_list, 
-                                      ACR_Image_orientation_patient, "");
+            str_ptr = (char*)acr_find_string(group_list, 
+                                             ACR_Image_orientation_patient, "");
             if (strchr(str_ptr, '\\') == NULL) {
                 int orientation = acr_find_int(group_list, 
                                                SPI_PMS_slice_orientation,
@@ -1529,7 +1530,7 @@ add_philips_info(Acr_Group group_list)
                                   str_buf);
             }
 #if 0 /* not clear that this is needed */
-            str_ptr = acr_find_string(group_list, ACR_Pixel_size, "");
+            str_ptr = (char *)acr_find_string(group_list, ACR_Pixel_size, "");
             if (*str_ptr == '\0') {
                 pms_element = acr_find_group_element(group_list, 
                                                      SPI_PMS_field_of_view);
@@ -1592,7 +1593,7 @@ add_philips_info(Acr_Group group_list)
 Acr_Group
 add_gems_info(Acr_Group group_list)
 {
-    char *tmp_str;
+    Acr_String tmp_str;
     int image_count;
     int image_index;
     double tr;
@@ -1622,7 +1623,7 @@ add_gems_info(Acr_Group group_list)
     tmp_str = acr_find_string(group_list, ACR_Image_type, "");
     image_index = acr_find_int(group_list, ACR_Image, -1);
     image_count = acr_find_int(group_list, GEMS_Images_in_series, -1);
-    tr = acr_find_double(group_list, ACR_Repetition_time, 0.0);
+    tr = (double)acr_find_double(group_list, ACR_Repetition_time, 0.0);
 
     /* If we found a valid image count in the proprietary field, copy it
      * into the standard field if the standard field is not already set.
@@ -1643,13 +1644,13 @@ add_gems_info(Acr_Group group_list)
         if (frame_count > 0) {
             if (acr_find_int(group_list, ACR_Acquisitions_in_series, -1) < 0) {
                 acr_insert_long(&group_list, ACR_Acquisitions_in_series,
-                                frame_count);
+                                (Acr_Long)frame_count);
             }
         }
 
         if (acr_find_double(group_list, ACR_Frame_reference_time, -1.0) < 0) {
             acr_insert_numeric(&group_list, ACR_Frame_reference_time,
-                               ((image_index - 1) / image_count) * tr);
+                               (double)(((image_index - 1) / image_count) * tr) );
         }
         if (acr_find_double(group_list, ACR_Actual_frame_duration, -1.0) < 0) {
             acr_insert_numeric(&group_list, ACR_Actual_frame_duration,
@@ -1688,15 +1689,15 @@ copy_spi_to_acr(Acr_Group group_list)
 
     itemp = acr_find_int(group_list, SPI_Number_of_slices_nominal, 0);
     if (itemp != 0) {
-        acr_insert_numeric(&group_list, ACR_Images_in_acquisition, itemp);
+        acr_insert_numeric(&group_list, ACR_Images_in_acquisition, (double)itemp);
     }
 
     itemp = acr_find_int(group_list, SPI_Number_of_echoes, 0);
     if (itemp != 0) {
-        acr_insert_numeric(&group_list, ACR_Echo_train_length, itemp);
+        acr_insert_numeric(&group_list, ACR_Echo_train_length, (double)itemp);
     }
 
-    dtemp = acr_find_double(group_list, SPI_Magnetic_field_strength, 0);
+    dtemp = (double)acr_find_double(group_list, SPI_Magnetic_field_strength, 0);
     if (dtemp != 0.0) {
         acr_insert_numeric(&group_list, ACR_Magnetic_field_strength, dtemp);
     }
@@ -1706,7 +1707,7 @@ copy_spi_to_acr(Acr_Group group_list)
 Acr_Group 
 add_shimadzu_info(Acr_Group group_list)
 {
-    char *str_ptr;
+    Acr_String str_ptr;
 
     /* TODO: Figure out what can be done here...
      */
@@ -1734,7 +1735,7 @@ Acr_Group
 read_numa4_dicom(const char *filename, int max_group)
 {
     Acr_Group group_list;
-    char *str_ptr;
+    Acr_String str_ptr;
 
     group_list = read_std_dicom(filename, max_group);
     if (group_list == NULL) {
@@ -2162,10 +2163,10 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     Acr_Element element;
     int i;
     double pixel_spacing[2];
-    double separation;
+    Acr_Double separation;
     double RowColVec[6];
     double dircos[VOL_NDIMS][WORLD_NDIMS];
-    char *str_tmp;
+    Acr_String str_tmp;
 
     if (G.Debug >= HI_LOGGING) {
         printf("mosaic_init(%lx, %lx, %d)\n",
@@ -2202,8 +2203,8 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     /* Get the image size
      * (size[0/1] is number of columns/rows in a single slice)
      */
-    mi_ptr->size[0] = acr_find_short(group_list, EXT_Sub_image_columns, 1);
-    mi_ptr->size[1] = acr_find_short(group_list, EXT_Sub_image_rows, 1);
+    mi_ptr->size[0] = (int)acr_find_short(group_list, EXT_Sub_image_columns, 1);
+    mi_ptr->size[1] = (int)acr_find_short(group_list, EXT_Sub_image_rows, 1);
 
     // Get the grid shape, checking that it is not too big if specified
     mi_ptr->grid[0] = mi_ptr->big[0] / mi_ptr->size[0];
@@ -2601,7 +2602,7 @@ multiframe_init(Acr_Group group_list, Multiframe_Info *mfi_ptr, int load_image)
     void *data_ptr;
     Acr_Element element;
     int i;
-    double spacing;
+    Acr_Double spacing;
     double RowColVec[6];
     double dircos[VOL_NDIMS][WORLD_NDIMS];
     int rows;

@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.c,v $
- * Revision 6.11  2006-09-01 16:33:49  jharlap
+ * Revision 6.12  2008-08-12 05:00:22  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.11  2006/09/01 16:33:49  jharlap
  * fixed bug in Acr_nema that caused dump_acr_nema to skip all elements with element number 0x0010 when it should only have skipped 0x7fe0,0x0010.
  *
  * Revision 6.10  2006/04/09 15:28:40  bert
@@ -1164,7 +1167,7 @@ static Acr_Element create_element_mem(Acr_Element_Id elid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Element acr_create_element_short(Acr_Element_Id elid,
-                                     unsigned short value)
+                                     Acr_Short value)
 {
    return create_element_mem(elid, ACR_VR_US, sizeof(value), (void *) &value);
 }
@@ -1183,7 +1186,7 @@ Acr_Element acr_create_element_short(Acr_Element_Id elid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Element acr_create_element_long(Acr_Element_Id elid,
-                                    long value)
+                                    Acr_Long value)
 {
    return create_element_mem(elid, ACR_VR_UL, sizeof(value), (void *) &value);
 }
@@ -1205,7 +1208,7 @@ Acr_Element acr_create_element_long(Acr_Element_Id elid,
 ---------------------------------------------------------------------------- */
 Acr_Element acr_create_element_double(Acr_Element_Id elid,
                                       int nvalues,
-                                      double *values)
+                                      Acr_Double *values)
 {
    return create_element_mem(elid, ACR_VR_FD, (ACR_SIZEOF_DOUBLE * nvalues), 
                              values);
@@ -1263,7 +1266,7 @@ Acr_Element acr_create_element_numeric(Acr_Element_Id elid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Element acr_create_element_string(Acr_Element_Id elid,
-                                      char *value)
+                                      Acr_String value)
 {
    long data_length;
    long alloc_length;
@@ -1333,14 +1336,14 @@ Acr_Element acr_create_element_sequence(Acr_Element_Id elid,
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-unsigned short acr_get_element_short(Acr_Element element)
+Acr_Short acr_get_element_short(Acr_Element element)
 {
-   unsigned short value;
+   Acr_Short value;
 
-   value = acr_get_numeric_vr(acr_get_element_vr(element),
-                              acr_get_element_byte_order(element),
-                              acr_get_element_data(element),
-                              acr_get_element_length(element));
+   value = (Acr_Short)acr_get_numeric_vr(acr_get_element_vr(element),
+                                         acr_get_element_byte_order(element),
+                                         acr_get_element_data(element),
+                                         acr_get_element_length(element));
 
    return value;
 }
@@ -1358,14 +1361,14 @@ unsigned short acr_get_element_short(Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-long acr_get_element_long(Acr_Element element)
+Acr_Long acr_get_element_long(Acr_Element element)
 {
-   long value;
+   Acr_Long value;
 
-   value = acr_get_numeric_vr(acr_get_element_vr(element),
-                              acr_get_element_byte_order(element),
-                              acr_get_element_data(element),
-                              acr_get_element_length(element));
+   value = (Acr_Long)acr_get_numeric_vr(acr_get_element_vr(element),
+                                        acr_get_element_byte_order(element),
+                                        acr_get_element_data(element),
+                                        acr_get_element_length(element));
 
    return value;
 }
@@ -1407,7 +1410,7 @@ double acr_get_element_numeric(Acr_Element element)
 @CREATED    : November 17, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-char *acr_get_element_string(Acr_Element element)
+Acr_String acr_get_element_string(Acr_Element element)
 {
 
    return acr_get_string_vr(acr_get_element_vr(element),
@@ -1434,7 +1437,7 @@ char *acr_get_element_string(Acr_Element element)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 long acr_get_element_short_array(Acr_Element element, long max_values, 
-                                 unsigned short values[])
+                                 Acr_Short values[])
 {
    long nvalues;
 
@@ -1480,7 +1483,7 @@ long acr_get_element_short_array(Acr_Element element, long max_values,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 long acr_get_element_double_array(Acr_Element element, long max_values, 
-                                  double values[])
+                                  Acr_Double values[])
 {
    long nvalues;
 

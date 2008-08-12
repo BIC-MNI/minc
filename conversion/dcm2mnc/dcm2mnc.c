@@ -5,7 +5,10 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
- * Revision 1.22  2008-01-17 02:33:01  rotor
+ * Revision 1.23  2008-08-12 05:00:23  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 1.22  2008/01/17 02:33:01  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -926,7 +929,7 @@ static int
 is_ima_file(const char *fullname)
 {
     FILE *fp;
-    char mfg_str[IMA_MAGIC_SIZE];
+    char mfg_str[IMA_MAGIC_SIZE+1];
     int result = 0;
 
     if ((fp = fopen(fullname, "rb")) == NULL) {

@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.h,v $
- * Revision 6.6  2006-04-09 15:29:43  bert
+ * Revision 6.7  2008-08-12 05:00:23  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.6  2006/04/09 15:29:43  bert
  * Add acr_insert_double()
  *
  * Revision 6.5  2005/03/11 22:05:29  bert
@@ -124,30 +127,30 @@ extern Acr_Group acr_find_group(Acr_Group group_list, int group_id);
 extern Acr_Element acr_find_group_element(Acr_Group group_list,
                                           Acr_Element_Id elid);
 extern void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list);
-extern int acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
-                          int default_value);
-extern long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
-                          long default_value);
+extern Acr_Short acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
+                                Acr_Short default_value);
+extern Acr_Long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
+                              Acr_Long default_value);
 extern int acr_find_int(Acr_Group group_list, Acr_Element_Id elid, 
                         int default_value);
-extern double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
-                              double default_value);
-extern char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
-                             char *default_value);
+extern Acr_Double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
+                                  Acr_Double default_value);
+extern Acr_String acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
+                                  Acr_String default_value);
 extern Acr_Status acr_insert_element_into_group_list(Acr_Group *group_list,
                                                      Acr_Element element);
 extern Acr_Status acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
-                             int value);
+                                   Acr_Short value);
 extern Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
-                            long value);
+                                  Acr_Long value);
 extern Acr_Status acr_insert_double(Acr_Group *group_list, Acr_Element_Id elid,
-                                    int nvalues, double *values);
+                                    int nvalues, Acr_Double *values);
 extern Acr_Status acr_insert_numeric(Acr_Group *group_list, 
                                      Acr_Element_Id elid, 
                                      double value);
 extern Acr_Status acr_insert_string(Acr_Group *group_list, 
                                     Acr_Element_Id elid, 
-                                    char *value);
+                                    Acr_String value);
 extern Acr_Status acr_insert_sequence(Acr_Group *group_list,
                                       Acr_Element_Id elid, 
                                       Acr_Element itemlist);

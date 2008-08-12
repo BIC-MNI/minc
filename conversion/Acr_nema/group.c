@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.11  2006-04-09 15:29:43  bert
+ * Revision 6.12  2008-08-12 05:00:22  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.11  2006/04/09 15:29:43  bert
  * Add acr_insert_double()
  *
  * Revision 6.10  2005/05/09 15:34:46  bert
@@ -634,7 +637,7 @@ void acr_group_steal_element(Acr_Group group, Acr_Element element)
 static void update_group_length_element(Acr_Group group, 
                                         Acr_VR_encoding_type vr_encoding)
 {
-   long group_length;
+   Acr_Long group_length;
    Acr_Element length_element;
    void *group_length_data;
 
@@ -1156,14 +1159,14 @@ void acr_dump_group_list(FILE *file_pointer, Acr_Group group_list)
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-int acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
-                   int default_value)
+Acr_Short acr_find_short(Acr_Group group_list, Acr_Element_Id elid, 
+                         Acr_Short default_value)
 {
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
    if (element != NULL && acr_get_element_length(element) > 0) 
-      return (int) acr_get_element_short(element);
+      return acr_get_element_short(element);
    else
       return default_value;
 }
@@ -1183,8 +1186,8 @@ int acr_find_short(Acr_Group group_list, Acr_Element_Id elid,
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
-                   long default_value)
+Acr_Long acr_find_long(Acr_Group group_list, Acr_Element_Id elid, 
+                       Acr_Long default_value)
 {
    Acr_Element element;
 
@@ -1237,14 +1240,14 @@ int acr_find_int(Acr_Group group_list, Acr_Element_Id elid,
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
-                       double default_value)
+Acr_Double acr_find_double(Acr_Group group_list, Acr_Element_Id elid, 
+                           Acr_Double default_value)
 {
    Acr_Element element;
 
    element = acr_find_group_element(group_list, elid);
    if (element != NULL && acr_get_element_length(element) > 0) 
-      return acr_get_element_numeric(element);
+      return (Acr_Double)acr_get_element_numeric(element);
    else
       return default_value;
 }
@@ -1264,8 +1267,8 @@ double acr_find_double(Acr_Group group_list, Acr_Element_Id elid,
 @CREATED    : December 10, 1993 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-char *acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
-                      char *default_value)
+Acr_String acr_find_string(Acr_Group group_list, Acr_Element_Id elid, 
+                           Acr_String default_value)
 {
    Acr_Element element;
 
@@ -1355,7 +1358,7 @@ Acr_Status acr_insert_element_into_group_list(Acr_Group *group_list,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Status acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid, 
-                            int value)
+                            Acr_Short value)
 {
    Acr_Element element;
 
@@ -1379,7 +1382,7 @@ Acr_Status acr_insert_short(Acr_Group *group_list, Acr_Element_Id elid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid, 
-                           long value)
+                           Acr_Long value)
 {
    Acr_Element element;
 
@@ -1404,7 +1407,7 @@ Acr_Status acr_insert_long(Acr_Group *group_list, Acr_Element_Id elid,
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
 Acr_Status acr_insert_double(Acr_Group *group_list, Acr_Element_Id elid,
-                             int nvalues, double *values)
+                             int nvalues, Acr_Double *values)
 {
     Acr_Element element;
     element = acr_create_element_double(elid, nvalues, values);
@@ -1452,7 +1455,7 @@ Acr_Status acr_insert_numeric(Acr_Group *group_list,
 ---------------------------------------------------------------------------- */
 Acr_Status acr_insert_string(Acr_Group *group_list, 
                              Acr_Element_Id elid, 
-                             char *value)
+                             Acr_String value)
 {
    Acr_Element element;
 

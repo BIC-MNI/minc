@@ -6,7 +6,10 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_io.h,v $
- * Revision 6.3  2005-03-04 00:08:08  bert
+ * Revision 6.4  2008-08-12 05:00:23  rotor
+ *  * large number of changes from Claude (64 bit and updates)
+ *
+ * Revision 6.3  2005/03/04 00:08:08  bert
  * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
  *
  * Revision 6.2  2000/04/28 15:03:11  neelin
@@ -85,6 +88,15 @@
 #define ACR_SIZEOF_FLOAT  4
 #define ACR_SIZEOF_DOUBLE 8
 
+/* Define the C data types for ACR-NEMA protocol.
+   Note: "numeric" functions use the C double datatype directly. */
+
+typedef unsigned short Acr_Short;
+typedef unsigned int Acr_Long;  /* 4 bytes in both 32 and 64 bits */
+typedef float Acr_Float;
+typedef double Acr_Double;
+typedef char * Acr_String;
+
 /* Undefined element length value for VRs of SQ, OB, OW */
 #define ACR_UNDEFINED_ELEMENT_LENGTH 0xFFFFFFFFU
 
@@ -143,22 +155,22 @@ extern void acr_reverse_byte_order(long nvals, size_t value_size,
                                    void *input_values, void *output_values);
 extern void acr_get_short(Acr_byte_order byte_order, 
                           long nvals, void *input_value, 
-                          unsigned short *mach_value);
+                          Acr_Short *mach_value);
 extern void acr_get_long(Acr_byte_order byte_order, 
-                         long nvals, void *input_value, long *mach_value);
+                         long nvals, void *input_value, Acr_Long *mach_value);
 extern void acr_get_float(Acr_byte_order byte_order, 
-                          long nvals, void *input_value, float *mach_value);
+                          long nvals, void *input_value, Acr_Float *mach_value);
 extern void acr_get_double(Acr_byte_order byte_order, 
-                           long nvals, void *input_value, double *mach_value);
+                           long nvals, void *input_value, Acr_Double *mach_value);
 extern void acr_put_short(Acr_byte_order byte_order, 
-                          long nvals, unsigned short *mach_value, 
+                          long nvals, Acr_Short *mach_value, 
                           void *output_value);
 extern void acr_put_long(Acr_byte_order byte_order, 
-                         long nvals, long *mach_value, void *output_value);
+                         long nvals, Acr_Long *mach_value, void *output_value);
 extern void acr_put_float(Acr_byte_order byte_order, 
-                          long nvals, float *mach_value, void *output_value);
+                          long nvals, Acr_Float *mach_value, void *output_value);
 extern void acr_put_double(Acr_byte_order byte_order, 
-                           long nvals, double *mach_value, void *output_value);
+                           long nvals, Acr_Double *mach_value, void *output_value);
 extern Acr_Status acr_skip_input_data(Acr_File *afp, long nbytes_to_skip);
 extern Acr_Status acr_read_buffer(Acr_File *afp, unsigned char buffer[],
                                   long nbytes_to_read, long *nbytes_read);
