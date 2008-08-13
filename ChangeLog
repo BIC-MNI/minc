@@ -1,3 +1,8 @@
+2008-08-13  Andrew L Janke <a.janke@gmail.com>
+	* progs/rawtominc/rawtominc.c: changed to an enum for modalities
+	   to get around an esoteric bug with use of ParseArgv and strings
+	   passed by reference on 64 bit architectures
+
 2008-08-11  Andrew L Janke <a.janke@gmail.com>
 	* conversion/Acr_Nema: Many changes from Claude
 	* conversion/dcm2mnc: Many changes for 64 bit and "new" DICOM types

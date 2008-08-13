@@ -11,7 +11,11 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.28  2008-01-17 02:33:06  rotor
+ * Revision 6.29  2008-08-13 06:26:29  rotor
+ *  * added Claudes (many) 64 bit fixes to dicom code and updates
+ *  * 64 bit fix for rawtominc's use of ParseArgv
+ *
+ * Revision 6.28  2008/01/17 02:33:06  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -308,6 +312,12 @@ nc_type convert_types[] = {
    MI_ORIGINAL_TYPE, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE
 };
 
+/* enum for modality types to avoid problems with passing pointers in ParseArgv */
+typedef enum {
+   MODALITY_NONE, MODALITY_PET, MODALITY_MRI, MODALITY_SPECT, MODALITY_GAMMA, 
+   MODALITY_MRS, MODALITY_MRA, MODALITY_CT, MODALITY_DSA, MODALITY_DR
+} Modality_code;
+
 /* Argument variables */
 char *pname;
 char *filename;
@@ -341,7 +351,7 @@ double dimdircos[3][3] = {
 };
 double origin[3] = {DEF_ORIGIN, DEF_ORIGIN, DEF_ORIGIN};
 int vector_dimsize = -1;
-char *modality = NULL;
+Modality_code modality = MODALITY_NONE;
 int attribute_list_size = 0;
 int attribute_list_alloc = 0;
 struct {
@@ -494,25 +504,25 @@ ArgvInfo argTable[] = {
        "Coordinate of first pixel."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying imaging modality. Default = -nomodality."},
-   {"-nomodality", ARGV_CONSTANT, NULL, (char *) &modality,
+   {"-nomodality", ARGV_CONSTANT, (char *)MODALITY_NONE, (char *) &modality,
        "Do not store modality type in file."},
-   {"-pet", ARGV_CONSTANT, MI_PET, (char *) &modality,
+   {"-pet", ARGV_CONSTANT, (char *)MODALITY_PET, (char *) &modality,
        "PET data."},
-   {"-mri", ARGV_CONSTANT, MI_MRI, (char *) &modality,
+   {"-mri", ARGV_CONSTANT, (char *)MODALITY_MRI, (char *) &modality,
        "MRI data."},
-   {"-spect", ARGV_CONSTANT, MI_SPECT, (char *) &modality,
+   {"-spect", ARGV_CONSTANT, (char *)MODALITY_SPECT, (char *) &modality,
        "SPECT data."},
-   {"-gamma", ARGV_CONSTANT, MI_GAMMA, (char *) &modality,
+   {"-gamma", ARGV_CONSTANT,(char *) MODALITY_GAMMA, (char *) &modality,
        "Data from a gamma camera."},
-   {"-mrs", ARGV_CONSTANT, MI_MRS, (char *) &modality,
+   {"-mrs", ARGV_CONSTANT, (char *)MODALITY_MRS, (char *) &modality,
        "MR spectroscopy data."},
-   {"-mra", ARGV_CONSTANT, MI_MRA, (char *) &modality,
+   {"-mra", ARGV_CONSTANT, (char *)MODALITY_MRA, (char *) &modality,
        "MR angiography data."},
-   {"-ct", ARGV_CONSTANT, MI_CT, (char *) &modality,
+   {"-ct", ARGV_CONSTANT, (char *)MODALITY_CT, (char *) &modality,
        "CT data."},
-   {"-dsa", ARGV_CONSTANT, MI_DSA, (char *) &modality,
+   {"-dsa", ARGV_CONSTANT, (char *)MODALITY_DSA, (char *) &modality,
        "DSA data"},
-   {"-dr", ARGV_CONSTANT, MI_DR, (char *) &modality,
+   {"-dr", ARGV_CONSTANT, (char *)MODALITY_DR, (char *) &modality,
        "Digital radiography data."},
    {NULL, ARGV_HELP, NULL, NULL,
        "Options for specifying attribute values by name."},
@@ -738,9 +748,44 @@ int main(int argc, char *argv[])
    }
 
    /* Create the modality attribute */
-   if (modality != NULL) {
+   if (modality != MODALITY_NONE) {
       varid = micreate_group_variable(cdfid, MIstudy);
-      (void) miattputstr(cdfid, varid, MImodality, modality);
+      
+      switch (modality){
+         case MODALITY_PET:
+            (void) miattputstr(cdfid, varid, MImodality, MI_PET);
+            break;
+         case MODALITY_MRI:
+            (void) miattputstr(cdfid, varid, MImodality, MI_MRI);
+            break;
+         case MODALITY_SPECT:
+            (void) miattputstr(cdfid, varid, MImodality, MI_SPECT);
+            break;
+         case MODALITY_GAMMA:
+            (void) miattputstr(cdfid, varid, MImodality, MI_GAMMA);
+            break;
+         case MODALITY_MRS:
+            (void) miattputstr(cdfid, varid, MImodality, MI_MRS);
+            break;
+         case MODALITY_MRA:
+            (void) miattputstr(cdfid, varid, MImodality, MI_MRA);
+            break;
+         case MODALITY_CT:
+            (void) miattputstr(cdfid, varid, MImodality, MI_CT);
+            break;
+         case MODALITY_DSA:
+            (void) miattputstr(cdfid, varid, MImodality, MI_DSA);
+            break;
+         case MODALITY_DR:
+            (void) miattputstr(cdfid, varid, MImodality, MI_DR);
+            break;
+            
+         case MODALITY_NONE:
+         default:
+            (void) fprintf(stderr, "%s: Unknown Modality, this should not happen (call houston).\n", pname);
+            exit(ERROR_STATUS);
+            break;
+      }
    }
 
    /* Create any special attributes */
