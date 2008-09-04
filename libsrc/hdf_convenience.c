@@ -8,7 +8,7 @@
 #include "minc_private.h"
 #include "hdf_convenience.h"
 
-#define MI2_STD_DIM_COUNT 8
+#define MI2_STD_DIM_COUNT  9
 #define MI2_DIMORDER "dimorder"
 #define MI2_LENGTH "length"
 #define MI2_CLASS "class"
@@ -275,7 +275,8 @@ hdf_is_dimension_name(struct m2_file *file, const char *varnm)
 	MIxfrequency,
 	MIyfrequency,
 	MIzfrequency,
-	MItfrequency
+	MItfrequency,
+        MIvector_dimension,
     };
     int i;
 
@@ -919,8 +920,13 @@ hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
 
     aspc_id = H5Screate(H5S_SCALAR);
     if (aspc_id >= 0) {
+      H5E_BEGIN_TRY {
+        H5Adelete(dst_id, MI2_LENGTH);
+        /* Create the attribute anew.
+	 */
         att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
                            H5P_DEFAULT);
+      }  H5E_END_TRY;
         if (att_id >= 0) {
             H5Awrite(att_id, H5T_NATIVE_LONG, (void *) &length);
             H5Aclose(att_id);
