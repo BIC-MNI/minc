@@ -1,3 +1,8 @@
+2008-09-04  Andrew L Janke <a.janke@gmail.com>
+	* progs/xfm/xfmconcat.c: Added -verbose and -clobber options
+	* progs/xfm/xfmconcat.man1: added -verbose and -clobber
+	* progs/xfm/xfminvert.man1: added -verbose and -clobber
+
 2008-08-13  Andrew L Janke <a.janke@gmail.com>
 	* progs/rawtominc/rawtominc.c: changed to an enum for modalities
 	   to get around an esoteric bug with use of ParseArgv and strings

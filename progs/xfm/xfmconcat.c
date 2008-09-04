@@ -10,7 +10,10 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.6  2008-01-23 22:54:35  rotor
+ * Revision 6.7  2008-09-04 03:20:16  rotor
+ *  * added -clobber option to xfmconcat and readied for 2.0.16 release
+ *
+ * Revision 6.6  2008/01/23 22:54:35  rotor
  *  * added Claude to AUTHORS
  *  * added a patch for history to xfmconcat from Mishkin Derakhshan
  *
@@ -74,9 +77,11 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#include <config.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <volume_io.h>
 #include <ParseArgv.h>
  #include <time_stamp.h>
@@ -87,28 +92,43 @@
 #  define FALSE 0
 #endif
 
+/* Argument variables */
+int clobber = FALSE;
+int verbose = FALSE;
+
 /* Argument table */
 ArgvInfo argTable[] = {
+   {"-clobber", ARGV_CONSTANT, (char *) TRUE, (char *) &clobber,
+       "Overwrite existing file."},
+   {"-noclobber", ARGV_CONSTANT, (char *) FALSE, (char *) &clobber,
+       "Don't overwrite existing file (default)."},
+   {"-verbose", ARGV_CONSTANT, (char *) TRUE, (char *) &verbose,
+       "Print out extra information."},
+   
+   {NULL, ARGV_HELP, NULL, NULL, ""},
    {NULL, ARGV_END, NULL, NULL, NULL}
 };
 
 /* Main program */
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
    General_transform trans1, trans2, trans3;
    General_transform *new_result, *old_result, *input, *temp_result;
-   int iarg, first_arg, last_arg, output_arg;
+   int iarg, first_arg, last_arg;
+   char *outfile;
    char *arg_string;
+   char *pname;
    
    /* collect the command line for history */
    arg_string = time_stamp(argc, argv);
    
    /* Check arguments */
+   pname = argv[0];
    if (ParseArgv(&argc, argv, argTable, 0) || argc < 3) {
       (void) fprintf(stderr, 
                 "Usage: %s <input1.xfm> [<input2.xfm> ...] <result.xfm>\n",
-                     argv[0]);
+                     pname);
+      (void) fprintf(stderr, 
+        "       %s -help\n\n", pname);
       exit(EXIT_FAILURE);
    }
 
@@ -118,16 +138,21 @@ int main(int argc, char *argv[])
    input = &trans3;
    first_arg = 1;
    last_arg = argc-2;
-   output_arg = argc-1;
+   outfile = argv[argc-1];
 
+   /* check for the outfile */
+   if(access(outfile, F_OK) == 0 && !clobber){
+      fprintf(stderr, "%s: %s exists! (use -clobber to overwrite)\n\n", pname, outfile);
+      exit(EXIT_FAILURE);
+   }
+   
    /* Loop through arguments */
-
    for (iarg=first_arg; iarg <= last_arg; iarg++) {
 
       /* Read in file to concatenate */
       if (input_transform_file(argv[iarg], input) != OK) {
          (void) fprintf(stderr, "%s: Error reading transform file %s\n",
-                        argv[0], argv[iarg]);
+                        pname, argv[iarg]);
          exit(EXIT_FAILURE);
       }
 
@@ -147,9 +172,9 @@ int main(int argc, char *argv[])
    }     /* End of loop through arguments */
 
    /* Write out the transform */
-   if (output_transform_file(argv[output_arg], arg_string, new_result) != OK) {
+   if (output_transform_file(outfile, arg_string, new_result) != OK) {
       (void) fprintf(stderr, "%s: Error writing transform file %s\n",
-                     argv[0], argv[output_arg]);
+                     pname, outfile);
       exit(EXIT_FAILURE);
    }
 

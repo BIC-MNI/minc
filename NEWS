@@ -1,6 +1,13 @@
 
-		New in Release 2.0.15
-        ---------------------
+New in Release 2.0.16
+---------------------
+* new option to mincpik (-anot_bar) and two bugfixed for lookup triplanars
+* updates to dcm2mnc for 64bit machines thanks to Claude
+* bug fixes for rawtominc for 64bit
+* added -clobber option to xfmconcat
+
+New in Release 2.0.15
+---------------------
 * MINC2 is now built by default (or disabled with --diable-minc2).
 * Began to aggregate and update all docs for a clean(er) 2.1 release
 * Added cubic interpoation in mincresample for x-y slices
@@ -20,34 +27,34 @@
 * changed --enable-minc2 to --disable-minc2 in configure.ac
    (come what may....)
 
-		New in Release 2.0.14
-        ---------------------
+New in Release 2.0.14
+---------------------
 * Added files needed for a CMake build of MINC
 * Fixed a linking problem with nii2mnc mnc2nii
 
-		New in Release 2.0.13
-        ---------------------
+New in Release 2.0.13
+---------------------
 * Fixed a few small build errors for make check
 * Changes to ensure there is a clean ITK minc build
 * added xfmflip 
 * Fixed buffering and chunking for fast internal file compression
 * updated nii2mnc and mnc2nii with the latest version of niftilib
 
-		New in Release 2.0.12
-        ---------------------
+New in Release 2.0.12
+---------------------
 * Fixed a bug causing dump_acr_nema to skip all elements 
 with element number 0x0010.
 
-		New in Release 2.0.11
-        ---------------------
+New in Release 2.0.11
+---------------------
 * Many small fixes
 * fix to mincresample
 * Small fix to mincconvert
 * -like flag added to rawtominc
 * Added additional tests for minc2 files.
 
-                New in Release 2.0.10
-                ---------------------
+New in Release 2.0.10
+---------------------
 * Many small fixes to dcm2mnc
 * Fix mincgen HDF5 support
 * Fix upet2mnc handling of single-frame files
@@ -56,8 +63,8 @@ with element number 0x0010.
   scaled_maximal_pivoting_gaussian_elimination in
   volume_io/Geometry/gaussian.c and libsrc.2.
 
-                New in Release 2.0.09
-                ---------------------
+New in Release 2.0.09
+---------------------
 This release is primarily a bug fix release for the core MINC libraries,
 as well as an opportunity to port library changes from the 1.X series.
 One of the most important changes involves support for HDF5 versions
@@ -87,8 +94,8 @@ runs.
   problem with the  "make check" self-test code when using HDF5 1.6.3,
   but this problem should not affect normal operation of the code.
 
-                New in Release 2.0.08
-                ---------------------
+New in Release 2.0.08
+---------------------
 Several major changes are incorporated into this release.
 
 First, the "simplified" MINC interface is now included in the
@@ -124,8 +131,8 @@ Concorde microPET, and NIfTI-1 data files.
 * Many bug fixes
 * See WHATSNEW-2.0 for additional details
 
-                New in Release 2.0.07
-                ---------------------
+New in Release 2.0.07
+---------------------
 * Added automatic creation of "ident" attribute in all MINC files.
 * Added -sappend and -dappend arguments to minc_modify_header
 * Most man pages updated
@@ -133,13 +140,13 @@ Concorde microPET, and NIfTI-1 data files.
   MINC 2.0 format
 * Changed volume_io caching defaults
 
-                New in Release 2.0.06
-                ---------------------
+New in Release 2.0.06
+---------------------
 * No functional changes - this release is intended only to address compilation
   issues found with the SGI IRIX MIPSpro compiler.
 
-                New in Release 2.0.05
-                ---------------------
+New in Release 2.0.05
+---------------------
 This version represents several weeks of effort cleaning up the
 existing code and trying to put things into better shape for a
 release.  In particular, the existing test suites ("make check") now
@@ -173,28 +180,28 @@ beta testers.
 * "mincdump" added to the distribution.
 * Almost all MINC 2.0 specific changes are now surrounded by "#ifdef MINC2"
 
-                New in Release 2.0.04
-                ---------------------
+New in Release 2.0.04
+---------------------
 * More bugs fixed
 * mincconvert now takes a -compress and -chunk option to force the output
 file to take on a desired structure.
 * User's guide to MINC 2.0 library is now in doc/minc2_uguide.tex.  It's a
 work in progress but it should contain some useful information.
 
-                New in Release 2.0.03
-                ---------------------
+New in Release 2.0.03
+---------------------
 * Actually implemented MINC_COMPRESS
 
 * Many bugs fixed
 
-                New in Release 2.0.02
-                ---------------------
+New in Release 2.0.02
+---------------------
 * Several bug fixes
 
 * Even newer error handling
 
-                New in Release 2.0.01
-                ------------------
+New in Release 2.0.01
+---------------------
 * Support for HDF5 "MINC 2.0" format files.
 
 * Revised error message handling.  Some new, unwanted messages are probably 
@@ -204,32 +211,23 @@ present.
 
 * New programming interface.
 
-	        New in Release 1.3
-        	------------------
-
+New in Release 1.3
+------------------
 * Build fixes.
 
 
-	        New in Release 1.2
-        	------------------
-
+New in Release 1.2
+------------------
 * New tools: mincpik, minchistory.
-
 * Rawtominc has new options -dimorder and -swap_bytes.
-
 * Ability to easily create binary packages; see README.binary_packaging.
 
-
-		New in Release 1.1
-		------------------
-
+New in Release 1.1
+------------------
 * All MINC programs now ship with a man page.
-
 * Rawtominc has new "-skip" option, to allow skipping header information.
-
 * Mincstats option "-max_bins" renamed to "-int_max_bins", to avoid clash
   with "-max".
-
 * Minccalc has new functions: tan, asin, acos, and atan.
 
 

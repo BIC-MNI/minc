@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH XFMINVERT 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH XFMINVERT 1 "$Date: 2008-09-04 03:20:16 $" "" "MINC User's Guide"
 .SH NAME
 xfminvert \- invert an MNI transform file
 
@@ -14,6 +14,12 @@ inverse transformation of \fIinput.xfm\fR.
 .TP
 \fB\-help\fR
 Print summary of command-line options and exit.
+.TP
+\fB\-clobber\fR
+Overwrite an existing file.
+.TP
+\fB\-verbose\fR
+Print out progress information.
 .TP
 \fB\-version\fR
 Print the program's version number and exit.
