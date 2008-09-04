@@ -5,7 +5,10 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.4  2008-01-11 07:17:07  stever
+ * Revision 1.5  2008-09-04 16:15:01  baghdadi
+ * corrected start value to world coordinate system
+ *
+ * Revision 1.4  2008/01/11 07:17:07  stever
  * Remove unused variables.
  *
  * Revision 1.3  2007/12/11 12:43:01  rotor
@@ -96,6 +99,7 @@ main(int argc, char *argv[])
     int is_file=0;
     int is_list=0;
     int ival;
+    char *extension;
 
     mnc2.mnc_srange[0]= -1;
     mnc2.mnc_srange[1]= -1;
@@ -127,6 +131,16 @@ main(int argc, char *argv[])
     else 
       {
 	strcpy(out_str, argv[1]);
+        extension = strrchr(out_str, '.');
+        if (extension != NULL )
+	  {
+	    extension++;
+            if (strcmp(extension, "mnc") !=0)
+	      {
+		usage();
+		exir(EXIT_FAILURE);
+	      }
+	  }
 	if (argc == 3)
 	  {
 	  /* check if last argument is dir */
@@ -578,7 +592,10 @@ read_2Dvff_files_header(const char **file_list, int num_files,
 	else if (strcmp(temp, "elementsize") == 0) {
 	element_size = atof(pch+1);
 	for(i=0; i<MAX_VFF_DIMS;i++)
+	  {
 	  m2->mnc_steps[i] *= element_size;
+          m2->mnc_starts[i] *= element_size;
+	  }
 	}
       }
     }
@@ -823,7 +840,10 @@ read_3Dvff_file_header(char *filename, struct mnc_vars *m2, struct vff_attrs *va
       else if (strcmp(temp, "elementsize") == 0) {
 	element_size = atof(pch+1);
 	for(i=0; i<MAX_VFF_DIMS;i++)
+	  {
 	  m2->mnc_steps[i] *= element_size;
+          m2->mnc_starts[i] *= element_size;
+	  }
       }
       else if (strcmp(temp, "cmdLine") == 0) {
 	strcpy(vattrs->cmd_line,linebuf);
