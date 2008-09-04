@@ -86,7 +86,7 @@ milist_recursion(milisthandle_t handle, char *path)
             r = H5Gget_objtype_by_idx(data->frame_ptr->grp_id,
                                       data->frame_ptr->grp_idx);
         } H5E_END_TRY;
- 
+        r--;
         if (r < 0) {
 
             /* End of this group, need to pop the frame. */
@@ -103,6 +103,7 @@ milist_recursion(milisthandle_t handle, char *path)
             data->frame_ptr->grp_idx++;
             /* If the object is a group, we need to recurse into it.
              */
+            r = 1;
             if (r == H5G_GROUP) {
                 char tmp[256];
                 int l;
