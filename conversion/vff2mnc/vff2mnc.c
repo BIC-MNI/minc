@@ -5,7 +5,10 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.5  2008-09-04 16:15:01  baghdadi
+ * Revision 1.6  2008-09-23 02:18:08  alex
+ * Fixed typo on line 141 which prevented minc to be built
+ *
+ * Revision 1.5  2008/09/04 16:15:01  baghdadi
  * corrected start value to world coordinate system
  *
  * Revision 1.4  2008/01/11 07:17:07  stever
@@ -138,7 +141,7 @@ main(int argc, char *argv[])
             if (strcmp(extension, "mnc") !=0)
 	      {
 		usage();
-		exir(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	      }
 	  }
 	if (argc == 3)
