@@ -1,10 +1,10 @@
 
 New in Release 2.0.16
 ---------------------
-* new option to mincpik (-anot_bar) and two bugfixed for lookup triplanars
+* new option for mincpik (-anot_bar) and two bugs fixed for lookup triplanars
 * updates to dcm2mnc for 64bit machines thanks to Claude
-* bug fixes for rawtominc for 64bit
-* added -clobber option to xfmconcat
+* 64bit bug fixes for rawtominc
+* added -clobber and -verbose options to xfmconcat
 
 New in Release 2.0.15
 ---------------------

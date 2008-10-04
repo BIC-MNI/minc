@@ -1,3 +1,4 @@
+
 2008-09-04  Andrew L Janke <a.janke@gmail.com>
 	* progs/xfm/xfmconcat.c: Added -verbose and -clobber options
 	* progs/xfm/xfmconcat.man1: added -verbose and -clobber
