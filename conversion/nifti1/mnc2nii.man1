@@ -1,4 +1,4 @@
-.TH mnc2mnc 1 "Apr 22 2005" "$Revision: 1.2 $" ""
+.TH mnc2mnc 1 "Apr 22 2005" "$Revision: 1.3 $" ""
 .SH NAME
 
 .B mnc2nii
@@ -82,7 +82,7 @@ Don't scan data to determine valid range.
 .BI -quiet
 Quiet operation - do not print progress or debugging information.
 .SH "Generic options for all commands"
-.TP 	
+.TP 
 .BI -help
 Print summary of command\-line options and abort
 .TP

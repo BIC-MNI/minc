@@ -1,4 +1,4 @@
-.TH dcm2mnc 1 "May 03 2005" "$Revision: 1.4 $" ""
+.TH dcm2mnc 1 "May 03 2005" "$Revision: 1.5 $" ""
 .SH NAME
 
 .B dcm2mnc
@@ -164,7 +164,7 @@ This is a private option intended only for debugging purposes.  Please
 avoid using it.
 
 .SH "Generic options for all commands"
-.TP 	
+.TP 
 .BI -help
 Print summary of command\-line options and abort
 .TP

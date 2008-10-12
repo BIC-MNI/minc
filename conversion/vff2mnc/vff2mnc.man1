@@ -1,4 +1,4 @@
-.TH "vff2mnc" "1" "Jul 10 2006" "$Revision: 1.1 $" ""
+.TH "vff2mnc" "1" "Jul 10 2006" "$Revision: 1.2 $" ""
 .SH "NAME"
 .B vff2mnc
 \- convert set of vff file(s) to one 3D MINC2.0 format file.
@@ -28,7 +28,7 @@ Do not swap bytes when creating the MINC2.0 file.
 .BI \-list
 Print list of series (don't create files).
 .SH "Generic options for all commands"
-.TP 	
+.TP 
 .BI \-help
 Print summary of command\-line options and abort
 .TP 

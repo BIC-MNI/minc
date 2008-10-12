@@ -53,7 +53,7 @@ Note that options can be specified in abbreviated form (as long as they are uniq
 
 
 .SH "Generic options for all commands"
-.TP 	
+.TP
 \fI\-help:\fR Print summary of command\-line options and abort
 .SH "KNOWN BUGS"
 No bug listed so far :=)

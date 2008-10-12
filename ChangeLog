@@ -1,3 +1,14 @@
+2008-10-12  Steve M. Robbins  <smr@sumost.ca>
+
+	* conversion/dcm2mnc/dcm2mnc.man1: 
+	* conversion/ecattominc/ecattominc.man1:
+	* conversion/micropet/upet2mnc.man1:
+	* conversion/minctoecat/minctoecat.man1:
+	* conversion/nifti1/mnc2nii.man1:
+	* conversion/nifti1/nii2mnc.man1:
+	* conversion/vff2mnc/vff2mnc.man1:
+	* progs/mincgen/mincgen.man1: Fix errors, mainly removing trailing
+	TAB characters.
 
 2008-09-04  Andrew L Janke <a.janke@gmail.com>
 	* progs/xfm/xfmconcat.c: Added -verbose and -clobber options

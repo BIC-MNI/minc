@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.2 2004-06-21 20:06:15 bert Exp $
-.TH MINCGEN 1 "$Date: 2004-06-21 20:06:15 $" "" "MINC User's Guide"
+.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.3 2008-10-12 05:07:12 stever Exp $
+.TH MINCGEN 1 "$Date: 2008-10-12 05:07:12 $" "" "MINC User's Guide"
 .SH NAME
 mincgen \- Generate a MINC file from a CDL file.
 .SH SYNOPSIS
@@ -292,7 +292,6 @@ are all acceptable \fIfloat\fP constants:
 -2.0f
 3.14159265358979f	// will be truncated to less precision
 1.f
-.1f
 .fi
 .RE
 .LP
