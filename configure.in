@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.35 $)
+AC_REVISION($Revision: 6.36 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -82,7 +82,6 @@ Makefile
 epm-header
 doc/Makefile
 testdir/Makefile 
-libsrc2/Makefile
 libsrc2/test/Makefile
 volume_io/Makefile
 volume_io/Documentation/Makefile

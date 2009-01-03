@@ -1,5 +1,9 @@
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
 
+	* libsrc2/Makefile.am: Remove; the only content was SUBDIRS = test.
+	* Makefile.am: Change SUBDIRS from libsrc2 to libsrc2/test.
+	* configure.in: Remove libsrc2/Makefile output.
+
 	* testdir/xfmconcat_01.sh:
 	* testdir/xfmconcat_02.sh: Add -clobber to output-generating commands.
 
