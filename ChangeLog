@@ -1,14 +1,17 @@
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
 
+	* testdir/run_test_progs.sh: New.  Test that programs like
+	mincheader and mincdiff work properly.
+
 	* configure.in: Bump to version 2.0.17.
 
 	* libsrc/ParseArgv.c (ParseArgv): Change ARGV_CONSTANT to treat
 	src and dst and pointer to integer, as documented.  Reverts change
 	6.9 of this file.
 
-	* testdir/test_arg_parse.c: Test program for argument parsing
+	* testdir/test_arg_parse.c: New. Test program for argument parsing
 	(ParseArgv.[ch]).
-	* testdir/run_test_arg_parse.sh: Test driver for above.
+	* testdir/run_test_arg_parse.sh: New. Test driver for above.
 	* testdir/Makefile.am (TESTS): Add run_test_arg_parse.sh.
 
 	* libsrc2/Makefile.am: Remove; the only content was SUBDIRS = test.

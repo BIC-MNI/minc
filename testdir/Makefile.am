@@ -7,7 +7,8 @@ script_tests = \
 	run_tests.sh \
 	run_test2.sh \
 	xfmconcat_01.sh \
-	xfmconcat_02.sh
+	xfmconcat_02.sh \
+	run_test_progs.sh
 
 all-local:
 	cd $(srcdir) && chmod +x $(script_tests)
@@ -18,7 +19,8 @@ TESTS = run_test_arg_parse.sh \
 	run_test2.sh \
 	xfmconcat_01.sh \
 	xfmconcat_02.sh \
-	mincapi
+	mincapi \
+	run_test_progs.sh
 
 check_PROGRAMS = minc test_mconv minc_types icv icv_range \
 	icv_dim test_speed icv_dim1 icv_fillvalue \
