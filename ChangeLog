@@ -1,3 +1,8 @@
+2009-01-03  Steve M. Robbins  <smr@sumost.ca>
+
+	* configure.in: Remove AC_PROG_RANLIB, obsoleted by use of
+	AC_PROG_LIBTOOL.
+
 2008-10-12  Steve M. Robbins  <smr@sumost.ca>
 
 	* conversion/dcm2mnc/dcm2mnc.man1: 
