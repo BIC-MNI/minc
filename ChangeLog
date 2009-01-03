@@ -1,5 +1,10 @@
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
 
+	* testdir/xfmconcat_01.sh:
+	* testdir/xfmconcat_02.sh: Add -clobber to output-generating commands.
+
+	* libsrc2/test/testminctools.sh: Add "set -e" to exit on any error.
+
 	* configure.in: Remove AC_PROG_RANLIB, obsoleted by use of
 	AC_PROG_LIBTOOL.
 

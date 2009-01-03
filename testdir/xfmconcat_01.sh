@@ -10,7 +10,7 @@ dd if=/dev/zero | ../rawtominc -vector 3 -byte -clobber _grid.mnc 8 8 8
 
 ./create_grid_xfm _grid.mnc _t1.xfm
 ./create_grid_xfm _grid.mnc _t2.xfm
-../xfmconcat _t1.xfm _t2.xfm _t3.xfm
+../xfmconcat -clobber _t1.xfm _t2.xfm _t3.xfm
 
 # Make sure the displacement volumes have unique filenames.
 #

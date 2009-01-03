@@ -26,17 +26,17 @@ dd if=/dev/zero | ../rawtominc -vector 3 -byte -clobber _grid.mnc 8 8 8
 
 # Test concatenations.
 #
-../xfmconcat _t1.xfm _t3.xfm _t5.xfm
+../xfmconcat -clobber _t1.xfm _t3.xfm _t5.xfm
 ./test_xfm 10000 _t5.xfm
 
-../xfmconcat _t1.xfm _t4.xfm _t6.xfm
+../xfmconcat -clobber _t1.xfm _t4.xfm _t6.xfm
 ./test_xfm 10000 _t6.xfm
 
-../xfmconcat _t5.xfm _t6.xfm _t7.xfm
+../xfmconcat -clobber _t5.xfm _t6.xfm _t7.xfm
 ./test_xfm 10000 _t7.xfm
 
 ../xfminvert -clobber _t7.xfm _t8.xfm
 ./test_xfm 10000 _t8.xfm
 
-../xfmconcat _t8.xfm _t2.xfm _t4.xfm _t7.xfm _t9.xfm
+../xfmconcat -clobber _t8.xfm _t2.xfm _t4.xfm _t7.xfm _t9.xfm
 ./test_xfm 10000 _t9.xfm

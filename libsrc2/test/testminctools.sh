@@ -2,6 +2,8 @@
 #
 # Test minc tools on minc2 file.
 
+set -e
+
 ../../mincconvert ../../volume_io/Testing/t3_grid_0.mnc t3_grid_0_2.mnc -2 -clobber && echo "Converted file to MINC2.0 format." || exit 1
  
 ../../mincinfo -minc_version -image_info t3_grid_0_2.mnc
