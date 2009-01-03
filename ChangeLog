@@ -1,5 +1,10 @@
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
 
+	* testdir/test_arg_parse.c: Test program for argument parsing
+	(ParseArgv.[ch]).
+	* testdir/run_test_arg_parse.sh: Test driver for above.
+	* testdir/Makefile.am (TESTS): Add run_test_arg_parse.sh.
+
 	* libsrc2/Makefile.am: Remove; the only content was SUBDIRS = test.
 	* Makefile.am: Change SUBDIRS from libsrc2 to libsrc2/test.
 	* configure.in: Remove libsrc2/Makefile output.

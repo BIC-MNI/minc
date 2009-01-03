@@ -3,6 +3,7 @@ INCLUDES = -I$(top_srcdir)/libsrc \
 	-I$(top_builddir)/volume_io/Include
 
 script_tests = \
+	run_test_arg_parse.sh \
 	run_tests.sh \
 	run_test2.sh \
 	xfmconcat_01.sh \
@@ -12,7 +13,8 @@ all-local:
 	cd $(srcdir) && chmod +x $(script_tests)
 
 LDADD = ../libvolume_io2.la ../libminc2.la
-TESTS = run_tests.sh \
+TESTS = run_test_arg_parse.sh \
+	run_tests.sh \
 	run_test2.sh \
 	xfmconcat_01.sh \
 	xfmconcat_02.sh \
@@ -20,7 +22,7 @@ TESTS = run_tests.sh \
 
 check_PROGRAMS = minc test_mconv minc_types icv icv_range \
 	icv_dim test_speed icv_dim1 icv_fillvalue \
-	test_xfm create_grid_xfm mincapi test_speed
+	test_xfm create_grid_xfm mincapi test_speed test_arg_parse
 
 EXTRA_DIST = $(script_tests) $(expect_files) t1.xfm
 
