@@ -1,5 +1,11 @@
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
 
+	* configure.in: Bump to version 2.0.17.
+
+	* libsrc/ParseArgv.c (ParseArgv): Change ARGV_CONSTANT to treat
+	src and dst and pointer to integer, as documented.  Reverts change
+	6.9 of this file.
+
 	* testdir/test_arg_parse.c: Test program for argument parsing
 	(ParseArgv.[ch]).
 	* testdir/run_test_arg_parse.sh: Test driver for above.
